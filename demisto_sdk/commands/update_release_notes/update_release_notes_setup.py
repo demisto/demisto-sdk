@@ -62,7 +62,11 @@ def update_release_notes(
         help="Force update release notes for a pack (even if not required).",
     ),
     text: str = typer.Option(
-        None, help="Text to add to all of the release notes files."
+        None,
+        "-t",
+        "--text",
+        help="Text to add to all of the release notes files.",
+        metavar="TEXT",
     ),
     prev_ver: str = typer.Option(
         None, help="Previous branch or SHA1 commit to run checks against."

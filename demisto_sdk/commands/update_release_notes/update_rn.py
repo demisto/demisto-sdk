@@ -105,11 +105,6 @@ def get_deprecated_comment_from_desc(description: str) -> str:
     return deprecate_line[0] if deprecate_line else ""
 
 
-def deprecated_commands(commands: list) -> set:
-    """return a set of the deprecated commands only"""
-    return {command.get("name") for command in commands if command.get("deprecated")}
-
-
 def create_content_item_object(
     path: str, prev_ver: Union[str, None], is_new_file: bool
 ) -> Optional["BaseContent"]:
@@ -392,12 +387,10 @@ def generate_rn_for_updated_content_items(
     if changed_content_object:
         deprecate_rn = generate_deprecated_content_item_rn(changed_content_object)
         if deprecate_rn:
-            if text:
-                rn_desc += f"- {text}\n"
             rn_desc += deprecate_rn
         else:
             rn_desc += generate_rn_for_content_item_updates(changed_content_object)
-            rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+            rn_desc += '- %%UPDATE_RN%%\n'
     return rn_desc
 
 
@@ -1139,7 +1132,7 @@ class UpdateRN:
 
         if self.is_force:
             rn_desc = f"## {content_name}\n\n"
-            rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+            rn_desc += '- %%UPDATE_RN%%"\n'
         else:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
@@ -1166,6 +1159,8 @@ class UpdateRN:
                     rn_desc += generate_rn_for_updated_content_items(
                         changed_content_object, text
                     )
+        if text:
+            rn_desc += f'-{text}\n'
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n\n"

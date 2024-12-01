@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where the **setup-env** command is missing the `-i` flag.
+- description: Fixed an issue where using the `-i` flag with **setup-env** would fail.
   type: fix
 pr_number: 4690

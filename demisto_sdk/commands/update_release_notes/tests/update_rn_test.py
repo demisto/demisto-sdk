@@ -1384,11 +1384,14 @@ class TestRNUpdate:
             Ensure the function returns a valid rn when the command is deprecated compared to last yml
         """
         from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+
         FILES_PATH = os.path.normpath(
             os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files")
         )
         NOT_DEP_INTEGRATION_PATH = pathlib.Path(
-            FILES_PATH, "deprecated_rn_test", "not_deprecated_integration_deprecated_command.yml"
+            FILES_PATH,
+            "deprecated_rn_test",
+            "not_deprecated_integration_deprecated_command.yml",
         )
 
         content_object = BaseContent.from_path(NOT_DEP_INTEGRATION_PATH)
@@ -1396,14 +1399,14 @@ class TestRNUpdate:
             content_object.old_base_content_object = content_object
             # When the command is already deprecated
             res = get_deprecated_rn(content_object)
-            assert (
-                res == ""
-            )
+            assert res == ""
 
             INTEGRATION_WITH_DEPRECATED_COMMAND = pathlib.Path(
                 FILES_PATH, "deprecated_rn_test", "not_deprecated_integration.yml"
             )
-            content_object.old_base_content_object = BaseContent.from_path(INTEGRATION_WITH_DEPRECATED_COMMAND)
+            content_object.old_base_content_object = BaseContent.from_path(
+                INTEGRATION_WITH_DEPRECATED_COMMAND
+            )
             # When the command is already deprecated
             res = get_deprecated_rn(content_object)
             assert res == ""
@@ -2972,8 +2975,6 @@ def test_handle_existing_rn_version_path(mocker, repo):
         )
     ],
 )
-
-
 def test_no_release_notes_for_first_version(mocker):
     """
     Given:

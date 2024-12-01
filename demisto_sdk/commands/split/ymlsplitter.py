@@ -129,7 +129,7 @@ class YmlSplitter:
         yaml_out = f"{output_path}/{base_name}.yml"
         logger.debug(f"Creating yml file: {yaml_out} ...")
         if self.yml_data:
-            yaml_obj = self.yml_data
+            yaml_obj = self.yml_data.copy()
         else:
             yaml_obj = get_file(self.input, raise_on_error=True)
 

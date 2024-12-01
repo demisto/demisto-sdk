@@ -95,13 +95,9 @@ class PreCommitRunner:
             else:
                 # this is used to handle the mode property correctly even for non-custom hooks which do not require
                 # special preparation
-                hook = Hook(
+                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = Hook(
                     **hooks.pop(hook_id), context=pre_commit_context
-                )
-                hook.parallel = False
-                PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = hook.prepare_hook()
-
-
+                ).prepare_hook()
 
             logger.debug(f"Prepared hook {hook_id} successfully")
 
@@ -118,76 +114,37 @@ class PreCommitRunner:
 
     @staticmethod
     def run_hook(
-            hook_id: str,
-            precommit_env: dict,
-            verbose: bool = False,
+        hook_id: str,
+        precommit_env: dict,
+        verbose: bool = False,
+        stdout: Optional[int] = subprocess.PIPE,
     ) -> int:
-        """Runs a pre-commit hook and writes output to console and log file in real-time.
+        """This function runs the pre-commit process and waits until finished.
+        We run this function in multithread.
 
         Args:
-            hook_id (str): The hook ID to run.
-            precommit_env (dict): The pre-commit environment variables.
-            verbose (bool, optional): Whether to print verbose output. Defaults to False.
+            hook_id (str): The hook ID to run
+            precommit_env (dict): The pre-commit environment variables
+            verbose (bool, optional): Whether print verbose output. Defaults to False.
+            stdout (Optional[int], optional): The way to handle stdout. Defaults to subprocess.PIPE.
 
         Returns:
-            int: Return code - 0 if the hook passed, 1 if it failed.
+            int: return code - 0 if hook passed, 1 if failed
         """
-
-        import signal
-        import sys
-
-        def handle_signal(signum, frame):
-            print(f"Received signal {signum}, shutting down gracefully...")
-            sys.exit(0)
-
-        signal.signal(signal.SIGTERM, handle_signal)
-        signal.signal(signal.SIGINT, handle_signal)
-
         logger.debug(f"Running hook {hook_id}")
-        os.makedirs(Path('/tmp/pre-commit'), exist_ok=True)
+        process = PreCommitRunner._run_pre_commit_process(
+            PRECOMMIT_CONFIG_MAIN_PATH,
+            precommit_env,
+            verbose,
+            stdout,
+            command=["run", "-a", hook_id],
+        )
 
-        command = [
-            sys.executable,
-            "-m",
-            "pre_commit",
-            "run",
-            "--verbose",
-            hook_id,
-        ]
-
-        try:
-            # Open log file for appending
-            # Start the process
-            process = subprocess.Popen(
-                command,
-                env=precommit_env,
-                cwd=CONTENT_PATH,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                universal_newlines=True,
-            )
-
-            # # Read and process output line by line
-            # for line in iter(process.stdout.readline, ""):
-            #     print(line, end="")  # Print to console in real-time
-            #     log_file.write(line)  # Write to the log file
-            #     log_file.flush()  # Ensure immediate write to disk
-
-            # Wait for the process to complete
-            process.stdout.close()
-            return_code = process.wait()
-
-            # Log the result
-            if return_code != 0:
-                logger.error(f"Hook {hook_id} failed with return code {return_code}")
-            else:
-                logger.info(f"Hook {hook_id} completed successfully.")
-
-            return return_code
-
-        except Exception as e:
-            logger.error(f"Error running hook {hook_id}: {e}")
-            return 1
+        if process.stdout:
+            logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
+        if process.stderr:
+            logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
+        return process.returncode
 
     @staticmethod
     def _run_pre_commit_process(
@@ -211,7 +168,6 @@ class PreCommitRunner:
         """
         if command is None:
             command = ["run", "-a"]
-
         return subprocess.run(
             list(
                 filter(
@@ -262,13 +218,13 @@ class PreCommitRunner:
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
         # we don't need the context anymore, we can clear it to free up memory for the pre-commit checks
         del pre_commit_context
-        # # install dependencies of all hooks in advance
-        # PreCommitRunner._run_pre_commit_process(
-        #     PRECOMMIT_CONFIG_MAIN_PATH,
-        #     precommit_env,
-        #     verbose,
-        #     command=["install-hooks"],
-        # )
+        # install dependencies of all hooks in advance
+        PreCommitRunner._run_pre_commit_process(
+            PRECOMMIT_CONFIG_MAIN_PATH,
+            precommit_env,
+            verbose,
+            command=["install-hooks"],
+        )
 
         num_processes = cpu_count()
         all_hooks_exit_codes = []
@@ -296,6 +252,7 @@ class PreCommitRunner:
                             hook_id,
                             precommit_env=precommit_env,
                             verbose=verbose,
+                            stdout=None,
                         )
                         for hook_id in hook_ids
                     ]
@@ -388,12 +345,10 @@ class PreCommitRunner:
                 f"Dry run, skipping pre-commit.\nConfig file saved to {PRECOMMIT_CONFIG_MAIN_PATH}"
             )
             return ret_val
-        # ret_val = PreCommitRunner.run(
-        #     pre_commit_context, precommit_env, verbose, show_diff_on_failure
-        # )
-        # return ret_val
-        return 0
-
+        ret_val = PreCommitRunner.run(
+            pre_commit_context, precommit_env, verbose, show_diff_on_failure
+        )
+        return ret_val
 
 
 def group_by_language(
@@ -441,110 +396,92 @@ def group_by_language(
     language_to_files: Dict[str, Set] = defaultdict(set)
     integrations_scripts: Set[IntegrationScript] = set()
     logger.debug("Pre-Commit: Starting to parse all integrations and scripts")
-    iterable = more_itertools.chunked_even(
+    for integration_script_paths in more_itertools.chunked_even(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
-    )
-
-    logger.debug(f'group_by_language {str(iterable)}')
-    for integration_script_paths in iterable:
-        logger.debug(f'group_by_language {integration_script_paths=}')
-
+    ):
         # Process each path sequentially
         content_items = [BaseContent.from_path(path) for path in integration_script_paths]
         logger.debug(f'group_by_language {content_items=}')
-
         for content_item in content_items:
             if not content_item or not isinstance(content_item, IntegrationScript):
                 continue
             # content-item is a script/integration
             integrations_scripts.add(content_item)
-    # for integration_script_paths in iterable:
-    #     with multiprocessing.Pool(processes=cpu_count()) as pool:
-    #
-    #         # content_items = pool.map(print, [8])
-    #         logger.debug(f'group_by_language {integration_script_paths=}')
-    #         logger.debug(f'group_by_language {content_items=}')
-    #         content_items = pool.map(BaseContent.from_path, integration_script_paths)
-    #         for content_item in content_items:
-    #             if not content_item or not isinstance(content_item, IntegrationScript):
-    #                 continue
-    #             # content-item is a script/integration
-    #             integrations_scripts.add(content_item)
     logger.debug("Pre-Commit: Finished parsing all integrations and scripts")
     exclude_integration_script = set()
-    # for integration_script in integrations_scripts:
-    #     if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
-    #         # add api modules to the api_modules list, we will handle them later
-    #         api_modules.append(integration_script)
-    #         continue
-    #
-    # if api_modules:
-    #     logger.debug("Pre-Commit: Starting to handle API Modules")
-    #     with ContentGraphInterface() as graph:
-    #         update_content_graph(graph)
-    #         api_modules: List[Script] = graph.search(  # type: ignore[no-redef]
-    #             object_id=[api_module.object_id for api_module in api_modules]
-    #         )
-    #     for api_module in api_modules:
-    #         assert isinstance(api_module, Script)
-    #         for imported_by in api_module.imported_by:
-    #             # we need to add the api module for each integration that uses it, so it will execute the api module check
-    #             integrations_scripts.add(imported_by)
-    #             integrations_scripts_mapping[imported_by.path.parent].update(
-    #                 add_related_files(
-    #                     api_module.path
-    #                     if not api_module.path.is_absolute()
-    #                     else api_module.path.relative_to(CONTENT_PATH)
-    #                 )
-    #                 | add_related_files(
-    #                     imported_by.path
-    #                     if not imported_by.path.is_absolute()
-    #                     else imported_by.path.relative_to(CONTENT_PATH)
-    #                 )
-    #             )
-    #     logger.debug("Pre-Commit: Finished handling API Modules")
-    # for integration_script in integrations_scripts:
-    #     if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
-    #         # we dont need to lint them individually, they will be run with the integrations that uses them
-    #         continue
-    #     if integration_script.deprecated:
-    #         # we exclude deprecate integrations and scripts from pre-commit.
-    #         # the reason we maintain this set is for performance when running with --all-files. It is much faster to exclude.
-    #         if integration_script.is_unified:
-    #             exclude_integration_script.add(
-    #                 integration_script.path.relative_to(CONTENT_PATH)
-    #             )
-    #         else:
-    #             exclude_integration_script.add(
-    #                 integration_script.path.parent.relative_to(CONTENT_PATH)
-    #             )
-    #         continue
-    #
-    #     code_file_path = integration_script.path.parent
-    #     if python_version := integration_script.python_version:
-    #         version = Version(python_version)
-    #         language = f"{version.major}.{version.minor}"
-    #     else:
-    #         language = integration_script.type
-    #     language_to_files[language].update(
-    #         {
-    #             (path, integration_script)
-    #             for path in integrations_scripts_mapping[code_file_path]
-    #         },
-    #         {
-    #             (
-    #                 integration_script.path.relative_to(CONTENT_PATH)
-    #                 if integration_script.path.is_absolute()
-    #                 else integration_script.path,
-    #                 integration_script,
-    #             )
-    #         },
-    #     )
-    #
-    # if infra_files:
-    #     language_to_files[DEFAULT_PYTHON_VERSION].update(
-    #         [(infra, None) for infra in infra_files]
-    #     )
+    for integration_script in integrations_scripts:
+        if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
+            # add api modules to the api_modules list, we will handle them later
+            api_modules.append(integration_script)
+            continue
+
+    if api_modules:
+        logger.debug("Pre-Commit: Starting to handle API Modules")
+        with ContentGraphInterface() as graph:
+            update_content_graph(graph)
+            api_modules: List[Script] = graph.search(  # type: ignore[no-redef]
+                object_id=[api_module.object_id for api_module in api_modules]
+            )
+        for api_module in api_modules:
+            assert isinstance(api_module, Script)
+            for imported_by in api_module.imported_by:
+                # we need to add the api module for each integration that uses it, so it will execute the api module check
+                integrations_scripts.add(imported_by)
+                integrations_scripts_mapping[imported_by.path.parent].update(
+                    add_related_files(
+                        api_module.path
+                        if not api_module.path.is_absolute()
+                        else api_module.path.relative_to(CONTENT_PATH)
+                    )
+                    | add_related_files(
+                        imported_by.path
+                        if not imported_by.path.is_absolute()
+                        else imported_by.path.relative_to(CONTENT_PATH)
+                    )
+                )
+        logger.debug("Pre-Commit: Finished handling API Modules")
+    for integration_script in integrations_scripts:
+        if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
+            # we dont need to lint them individually, they will be run with the integrations that uses them
+            continue
+        if integration_script.deprecated:
+            # we exclude deprecate integrations and scripts from pre-commit.
+            # the reason we maintain this set is for performance when running with --all-files. It is much faster to exclude.
+            if integration_script.is_unified:
+                exclude_integration_script.add(
+                    integration_script.path.relative_to(CONTENT_PATH)
+                )
+            else:
+                exclude_integration_script.add(
+                    integration_script.path.parent.relative_to(CONTENT_PATH)
+                )
+            continue
+
+        code_file_path = integration_script.path.parent
+        if python_version := integration_script.python_version:
+            version = Version(python_version)
+            language = f"{version.major}.{version.minor}"
+        else:
+            language = integration_script.type
+        language_to_files[language].update(
+            {
+                (path, integration_script)
+                for path in integrations_scripts_mapping[code_file_path]
+            },
+            {
+                (
+                    integration_script.path.relative_to(CONTENT_PATH)
+                    if integration_script.path.is_absolute()
+                    else integration_script.path,
+                    integration_script,
+                )
+            },
+        )
+
+    if infra_files:
+        language_to_files[DEFAULT_PYTHON_VERSION].update(
+            [(infra, None) for infra in infra_files]
+        )
 
     if exclude_integration_script:
         logger.info(
@@ -596,7 +533,6 @@ def pre_commit_manager(
     Returns:
         int: Return code of pre-commit.
     """
-    logger.debug(f'pre_commit_manager pre-commit 1')
     # We have imports to this module, however it does not exists in the repo.
     (CONTENT_PATH / "CommonServerUserPython.py").touch()
 
@@ -615,56 +551,54 @@ def pre_commit_manager(
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
         return 0
-    #
+
     language_to_files_with_objects, exclude_files = group_by_language(files_to_run)
-    # if not language_to_files_with_objects:
-    #     logger.info("No files to run pre-commit on, skipping pre-commit.")
-    #     return 0
-    #
-    # skipped_hooks: set = SKIPPED_HOOKS
-    # skipped_hooks.update(set(skip_hooks or ()))
-    # if validate and "validate" in skipped_hooks:
-    #     skipped_hooks.remove("validate")
-    # if format and "format" in skipped_hooks:
-    #     skipped_hooks.remove("format")
-    # if secrets and "secrets" in skipped_hooks:
-    #     skipped_hooks.remove("secrets")
-    #
-    # if not pre_commit_template_path:
-    #     if PRECOMMIT_TEMPLATE_PATH.exists():
-    #         pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
-    #     else:
-    #         pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
-    #
-    # if pre_commit_template_path and not pre_commit_template_path.exists():
-    #     logger.error(
-    #         f"pre-commit template {pre_commit_template_path} does not exist, enter a valid pre-commit template"
-    #     )
-    #     return 1
-    #
-    # logger.info(f"Running pre-commit using template {pre_commit_template_path}")
+    if not language_to_files_with_objects:
+        logger.info("No files to run pre-commit on, skipping pre-commit.")
+        return 0
 
-    # pre_commit_context = PreCommitContext(
-    #     list(input_files) if input_files else None,
-    #     all_files,
-    #     mode,
-    #     language_to_files_with_objects,
-    #     run_hook,
-    #     skipped_hooks,
-    #     run_docker_hooks,
-    #     image_ref,
-    #     docker_image,
-    #     pre_commit_template_path=pre_commit_template_path,
-    # )
+    skipped_hooks: set = SKIPPED_HOOKS
+    skipped_hooks.update(set(skip_hooks or ()))
+    if validate and "validate" in skipped_hooks:
+        skipped_hooks.remove("validate")
+    if format and "format" in skipped_hooks:
+        skipped_hooks.remove("format")
+    if secrets and "secrets" in skipped_hooks:
+        skipped_hooks.remove("secrets")
 
-    return 0
-    # return PreCommitRunner.prepare_and_run(
-    #     pre_commit_context,
-    #     verbose,
-    #     show_diff_on_failure,
-    #     exclude_files,
-    #     dry_run,
-    # )
+    if not pre_commit_template_path:
+        if PRECOMMIT_TEMPLATE_PATH.exists():
+            pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
+        else:
+            pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
+    if pre_commit_template_path and not pre_commit_template_path.exists():
+        logger.error(
+            f"pre-commit template {pre_commit_template_path} does not exist, enter a valid pre-commit template"
+        )
+        return 1
+
+    logger.info(f"Running pre-commit using template {pre_commit_template_path}")
+
+    pre_commit_context = PreCommitContext(
+        list(input_files) if input_files else None,
+        all_files,
+        mode,
+        language_to_files_with_objects,
+        run_hook,
+        skipped_hooks,
+        run_docker_hooks,
+        image_ref,
+        docker_image,
+        pre_commit_template_path=pre_commit_template_path,
+    )
+
+    return PreCommitRunner.prepare_and_run(
+        pre_commit_context,
+        verbose,
+        show_diff_on_failure,
+        exclude_files,
+        dry_run,
+    )
 
 
 def add_related_files(file: Path) -> Set[Path]:
@@ -761,7 +695,4 @@ def preprocess_files(
         for file in files_to_run
     }
     # filter out files that are not in the content git repo (e.g in .gitignore)
-    logger.debug(f'preprocess_files {relative_paths=} | {all_git_files=}')
-    res = relative_paths & all_git_files
-    logger.debug(f'preprocess_files {res=}')
-    return res
+    return relative_paths & all_git_files

@@ -1,7 +1,9 @@
 ## xsoar-lint
+
+### Overview
 Run the xsoar lint on the given paths.
 
-**Arguments**:
+### Options
 The python files to run on.
 
 **Examples**

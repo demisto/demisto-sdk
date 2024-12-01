@@ -55,8 +55,11 @@ def xsoar_config_file_update(
 ):
     """
     Handle your XSOAR Configuration File.
-    Add automatically all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
-    Add a Pack to both marketplace_packs and custom_packs sections in the Configuration File.
+
+    **Use Cases**:
+    - Add automatically all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
+    - Add a Pack to the marketplace_packs section in the Configuration File.
+    - Add a Pack to the custom_packs section in the Configuration File.
     """
     file_updater = XSOARConfigFileUpdater(
         pack_id=pack_id,

@@ -54,6 +54,11 @@ def secrets(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
+    """
+    Run the secrets validator to catch sensitive data before exposing your code to a public repository.
+
+    You can attach the full path to manually allow an allow list.
+    """
     if file_paths and not input:
         # If file_paths is given as an argument, use it as the input (if not provided via -i)
         input = ",".join([str(path) for path in file_paths])

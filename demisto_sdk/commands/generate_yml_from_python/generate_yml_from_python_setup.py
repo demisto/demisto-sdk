@@ -21,7 +21,11 @@ def generate_yml_from_python(
     ),
 ):
     """
-    Generate a YML file from a Python file with special syntax for integrations.
+    Generate YML file from Python code that includes special syntax.
+    The output file name will be the same as the Python code with the `.yml` extension instead of `.py`.
+    The generation currently supports integrations only.
+
+    The feature is supported from content Base pack version 1.20.0 and on.
     """
     # Initialize the YML generator
     yml_generator = YMLGenerator(

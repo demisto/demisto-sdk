@@ -1,4 +1,5 @@
-### Lint
+## Lint
+### Overview
 
   Deprecated, use demisto-sdk pre-commit instead.
 
@@ -13,7 +14,7 @@
   lookup up what docker image to use and will setup the dev dependencies and file in the target
   folder.
 
-Options:
+### Options
 * **-clt, --console_log_threshold**
   Minimum logging threshold for the console logger.  [default: INFO]
 * **-flt --file_log_threshold**

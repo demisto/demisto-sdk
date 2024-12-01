@@ -60,6 +60,7 @@ class PreCommitContext:
         """
         We initialize the hooks and all_files for later use.
         """
+        logger.debug(f'__post_init__ {PRECOMMIT_FOLDER=} | {Path(PRECOMMIT_FOLDER).exists()=} |\n{PRE_COMMIT_FOLDER_SHARED=} | {Path(PRE_COMMIT_FOLDER_SHARED).exists()=}')
         shutil.rmtree(PRECOMMIT_FOLDER, ignore_errors=True)
         shutil.rmtree(PRE_COMMIT_FOLDER_SHARED, ignore_errors=True)
         PRECOMMIT_FOLDER.mkdir(parents=True)

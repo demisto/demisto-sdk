@@ -553,6 +553,7 @@ def pre_commit_manager(
         return 0
 
     language_to_files_with_objects, exclude_files = group_by_language(files_to_run)
+    logger.debug(f'pre_commit_manager {language_to_files_with_objects=}')
     if not language_to_files_with_objects:
         logger.info("No files to run pre-commit on, skipping pre-commit.")
         return 0

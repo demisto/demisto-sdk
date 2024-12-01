@@ -449,7 +449,7 @@ def group_by_language(
     for integration_script_paths in iterable:
         with multiprocessing.Pool(processes=cpu_count()) as pool:
 
-            content_items = pool.map(print, 8)
+            content_items = pool.map(print, [8])
             logger.debug(f'group_by_language {integration_script_paths=}')
             logger.debug(f'group_by_language {content_items=}')
             # content_items = pool.map(BaseContent.from_path, integration_script_paths)

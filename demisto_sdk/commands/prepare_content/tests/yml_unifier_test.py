@@ -9,9 +9,9 @@ from typing import List
 
 import pytest
 import requests
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import (
     GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH,
     MarketplaceVersions,
@@ -1358,7 +1358,7 @@ def test_unify_partner_contributed_pack(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         result = CliRunner(mix_stderr=False).invoke(
-            main,
+            app,
             [
                 UNIFY_CMD,
                 "-i",
@@ -1415,7 +1415,7 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 UNIFY_CMD,
                 "-i",
@@ -1471,7 +1471,7 @@ def test_unify_contributor_emails_list(mocker, repo, pack_metadata):
 
     with ChangeCWD(pack.repo_path):
         CliRunner(mix_stderr=False).invoke(
-            main,
+            app,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
         )
@@ -1522,7 +1522,7 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         result = CliRunner(mix_stderr=False).invoke(
-            main,
+            app,
             [
                 UNIFY_CMD,
                 "-i",
@@ -1575,7 +1575,7 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         result = CliRunner(mix_stderr=False).invoke(
-            main,
+            app,
             [
                 UNIFY_CMD,
                 "-i",
@@ -1631,7 +1631,7 @@ def test_unify_community_contributed(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         result = CliRunner(mix_stderr=False).invoke(
-            main,
+            app,
             [
                 UNIFY_CMD,
                 "-i",

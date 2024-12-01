@@ -4359,14 +4359,18 @@ def check_timestamp_format(timestamp: str) -> bool:
         return False
 
 
-def get_pack_latest_rn_version(pack_path: str) -> str:
+def get_pack_latest_rn_version(pack_path: str, git_sha: Optional[str] = None) -> str:
     """
     Extract all the Release notes from the pack and return the highest version of release note in the Pack.
 
     Return:
         (str): The lastest version of RN.
     """
-    list_of_files = glob.glob(pack_path + "/ReleaseNotes/*")
+    if git_sha:
+        git_util = GitUtil.from_content_path()
+        list_of_files = git_util.list_files_in_dir(f"{pack_path}/ReleaseNotes", git_sha)
+    else:
+        list_of_files = glob.glob(f"{pack_path}/ReleaseNotes/*")
     list_of_release_notes = [
         Path(file).name for file in list_of_files if Path(file).suffix == ".md"
     ]

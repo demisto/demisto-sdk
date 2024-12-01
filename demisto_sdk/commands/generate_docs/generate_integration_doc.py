@@ -693,6 +693,8 @@ def generate_setup_section(yaml_data: dict) -> List[str]:
     access_data: List[Dict] = []
 
     for conf in yaml_data["configuration"]:
+        if conf.get("hidden") is True:
+            continue
         if conf["type"] == CREDENTIALS:
             add_access_data_of_type_credentials(access_data, conf)
         else:
@@ -961,6 +963,8 @@ def generate_single_command_section(
             ]
         )
         for arg in arguments:
+            if arg.get("hidden") and not any(key.startswith("hidden:") for key in arg):
+                continue
             description = arg.get("description", DEFAULT_ARG_DESCRIPTION)
             if not description:
                 errors.append(
@@ -1301,28 +1305,30 @@ def add_access_data_of_type_credentials(
     Returns:
         (None): Adds the data to 'access_data'.
     """
-    display_name = credentials_conf.get("display")
-    if display_name:
+    hidden_user_name = credentials_conf.get("hiddenusername")
+    if not hidden_user_name:
         access_data.append(
             {
-                "Parameter": display_name,
+                "Parameter": credentials_conf.get("display")
+                or credentials_conf["name"],
                 "Description": string_escape_md(
                     credentials_conf.get("additionalinfo", "")
                 ),
                 "Required": credentials_conf.get("required", ""),
             }
         )
-    access_data.append(
-        {
-            "Parameter": credentials_conf.get("displaypassword", "Password"),
-            "Description": (
-                ""
-                if display_name
-                else string_escape_md(credentials_conf.get("additionalinfo", ""))
-            ),
-            "Required": credentials_conf.get("required", ""),
-        }
-    )
+    if not credentials_conf.get("hiddenpassword"):
+        access_data.append(
+            {
+                "Parameter": credentials_conf.get("displaypassword", "Password"),
+                "Description": (
+                    ""
+                    if not hidden_user_name
+                    else string_escape_md(credentials_conf.get("additionalinfo", ""))
+                ),
+                "Required": credentials_conf.get("required", ""),
+            }
+        )
 
 
 def get_integration_commands(yaml_data: Dict[str, Any]) -> List[Dict[str, Any]]:

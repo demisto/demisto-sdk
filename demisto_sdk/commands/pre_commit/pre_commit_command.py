@@ -440,10 +440,13 @@ def group_by_language(
 
     language_to_files: Dict[str, Set] = defaultdict(set)
     integrations_scripts: Set[IntegrationScript] = set()
-    # logger.debug("Pre-Commit: Starting to parse all integrations and scripts")
-    # for integration_script_paths in more_itertools.chunked_even(
-    #     integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
-    # ):
+    logger.debug("Pre-Commit: Starting to parse all integrations and scripts")
+    iterable = more_itertools.chunked_even(
+        integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
+    )
+
+    logger.debug(f'group_by_language {str(iterable)}')
+    # for integration_script_paths in iterable:
     #     with multiprocessing.Pool(processes=cpu_count()) as pool:
     #         content_items = pool.map(BaseContent.from_path, integration_script_paths)
     #         for content_item in content_items:
@@ -451,7 +454,7 @@ def group_by_language(
     #                 continue
     #             # content-item is a script/integration
     #             integrations_scripts.add(content_item)
-    # logger.debug("Pre-Commit: Finished parsing all integrations and scripts")
+    logger.debug("Pre-Commit: Finished parsing all integrations and scripts")
     exclude_integration_script = set()
     # for integration_script in integrations_scripts:
     #     if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:

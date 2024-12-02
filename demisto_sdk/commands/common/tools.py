@@ -869,7 +869,6 @@ def get_file(
     file_path = Path(file_path)  # type: ignore[arg-type]
     if git_sha:
         if file_path.is_absolute():
-            logger.debug(f'TODO-REMOVE {os.environ=}')
             file_path = file_path.relative_to(get_content_path())
         return get_remote_file(
             str(file_path), tag=git_sha, return_content=return_content
@@ -914,11 +913,13 @@ def get_file(
 
 def get_file_or_remote(file_path: Path, clear_cache=False):
     content_path = get_content_path()
+    logger.debug(f'get_file_or_remote {content_path=}')
     relative_file_path = None
     if file_path.is_absolute():
         absolute_file_path = file_path
         try:
             relative_file_path = file_path.relative_to(content_path)
+            logger.debug(f'get_file_or_remote {relative_file_path=}')
         except ValueError:
             logger.debug(
                 f"{file_path} is not a subpath of {content_path}. If the file does not exists locally, it could not be fetched."
@@ -926,6 +927,7 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
     else:
         absolute_file_path = content_path / file_path
         relative_file_path = file_path
+        logger.debug(f'get_file_or_remote {relative_file_path=}')
     try:
         return get_file(absolute_file_path, clear_cache=clear_cache)
     except FileNotFoundError:

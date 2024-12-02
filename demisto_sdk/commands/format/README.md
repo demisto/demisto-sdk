@@ -1,11 +1,12 @@
 ## Format
 
+### Overview
+
 This command formats new or modified files to align with the Cortex standard.
 This is useful when developing a new integration, script, playbook, incident field, incident type, indicator field, indicator type, layout, or dashboard.
 When formatting is complete, the `validate` command runs and notifies you of any issues the formatter could not fix.
 
-
-### Arguments
+### Options
 * **-i --input**
 
     The path of the desired file to be formatted. If no input is specified, the format will be executed on all new/changed files.
@@ -36,6 +37,29 @@ When formatting is complete, the `validate` command runs and notifies you of any
 * **-iu --include-untracked** Whether to include untracked files in the formatting.
 * **-at --add-tests** Whether to answer manually to add tests configuration prompt when running interactively.
 * **-gr/-ngr -graph/--no-graph** Whether to use the content graph or not.
+
+### Setting fromVersion key in different kind of files:
+
+#### Run without fromVersion flag
+
+**If the source file name already exist in content repo:**
+
+* If fromversion key exists already in current file -> fromversion key will not change.
+
+* If fromversion key does not exist in current file:
+    * If fromversion key exist in old file in content repo -> set fromverion key as in old file
+    * If fromversion key does not exist in old file -> set fromversion key to default 6.10.0
+
+**If the source file name does not exist in content repo:**
+
+* If fromversion key exists already in current file -> fromversion key will not change.
+* If fromversion key does not exist in current file -> is not in file than it will set it to '6.10.0'
+
+
+#### Run with fromVersion flag
+
+* If fromversion exist already in current file -> will be set to requested fromversion.
+* If fromversion does not exist in current file -> add key and set to requested fromversion.
 
 ### Examples
 ```
@@ -76,28 +100,3 @@ demisto-sdk format -i /Users/user/Downloads/Kenna_-_Search_and_Handle_Asset_Vuln
 Formats the given YML file and save it in content repository under the specified file path.
 Also, validation will run as the output file is in the content repository.
 <br/><br/>
-
-
-
-### Setting fromVersion key in different kind of files:
-
-#### Run without fromVersion flag
-
-**If the source file name already exist in content repo:**
-
-* If fromversion key exists already in current file -> fromversion key will not change.
-
-* If fromversion key does not exist in current file:
-    * If fromversion key exist in old file in content repo -> set fromverion key as in old file
-    * If fromversion key does not exist in old file -> set fromversion key to default 6.10.0
-
-**If the source file name does not exist in content repo:**
-
-* If fromversion key exists already in current file -> fromversion key will not change.
-* If fromversion key does not exist in current file -> is not in file than it will set it to '6.10.0'
-
-
-#### Run with fromVersion flag
-
-* If fromversion exist already in current file -> will be set to requested fromversion.
-* If fromversion does not exist in current file -> add key and set to requested fromversion.

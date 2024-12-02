@@ -307,7 +307,8 @@ def show_release_notes():
         fg=typer.colors.YELLOW,
     )
     if rn_entries:
-        # rich library places md headings in the center by default, so the ### prefix is removed to align the sub-titles to the left
+        # The Rich library centers Markdown headings by default. 
+        # So the '###' prefix is removed temporary in this command so subtitles will be aligned to the left when printed.
         rn_entries = rn_entries.replace("###", "")
         md = Markdown(rn_entries, justify="left")
         Console().print(

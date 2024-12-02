@@ -1,0 +1,4 @@
+changes:
+- description: Modifying the `prepare-content` command to replace all occurrences of an incorrect marketplace reference in the content.
+  type: feature
+pr_number: 4659

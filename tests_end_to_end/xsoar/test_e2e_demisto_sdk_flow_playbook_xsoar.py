@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import typer
 from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
@@ -43,7 +44,11 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmp_path):
     assert source_playbook_path.exists()
 
     logger.info(f"Trying to upload playbook from {source_playbook_path}")
-    Uploader(input=source_playbook_path, insecure=True).upload()
+    uploader = Uploader(input=source_playbook_path, insecure=True)
+    try:
+        uploader.upload()
+    except typer.Exit as e:
+        assert e.exit_code == 0
 
     # Preparing updated pack folder
     e2e_tests_utils.cli(f"mkdir {tmp_path}/Packs/{pack_name}_testsuite")
@@ -51,11 +56,15 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmp_path):
     logger.info(
         f"Trying to download the updated playbook from {playbook_name} to {tmp_path}/Packs/{pack_name}_testsuite/Playbooks"
     )
-    Downloader(
+    downloader = Downloader(
         output=f"{tmp_path}/Packs/{pack_name}_testsuite",
         input=(playbook_name,),
         insecure=True,
-    ).download()
+    )
+    try:
+        downloader.download()
+    except typer.Exit as e:
+        assert e.exit_code == 0
     dest_playbook_path = Path(
         f"{tmp_path}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     )
@@ -69,18 +78,25 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmp_path):
 
     logger.info(f"Formating playbook {dest_playbook_path}")
     with ChangeCWD(pack.repo_path):
-        format_manager(
-            input=str(dest_playbook_path),
-            assume_answer=True,
-        )
+        try:
+            format_manager(
+                input=str(dest_playbook_path),
+                assume_answer=True,
+            )
+        except typer.Exit as e:
+            assert e.exit_code == 0
         logger.info(f"Validating playbook {dest_playbook_path}")
         OldValidateManager(file_path=str(dest_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {dest_playbook_path}")
-        Uploader(
+        uploader = Uploader(
             input=dest_playbook_path,
             insecure=True,
-        ).upload()
+        )
+        try:
+            uploader.upload()
+        except typer.Exit as e:
+            assert e.exit_code == 0
 
 
 def test_e2e_demisto_sdk_flow_playbook_client(tmp_path, insecure: bool = True):
@@ -145,11 +161,15 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmp_path, insecure: bool = True):
     logger.info(
         f"Trying to download the updated playbook from {playbook_name} to {tmp_path}/Packs/{pack_name}_client/Playbooks"
     )
-    Downloader(
+    downloader = Downloader(
         output=f"{tmp_path}/Packs/{pack_name}_client",
         input=(playbook_name,),
         insecure=True,
-    ).download()
+    )
+    try:
+        downloader.download()
+    except typer.Exit as e:
+        assert e.exit_code == 0
     dest_playbook_path = Path(
         f"{tmp_path}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
@@ -166,15 +186,22 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmp_path, insecure: bool = True):
     logger.info(f"Formating playbook {dest_playbook_path}")
 
     with ChangeCWD(str(dest_playbook_path.parent)):
-        format_manager(
-            input=str(dest_playbook_path),
-            assume_answer=True,
-        )
+        try:
+            format_manager(
+                input=str(dest_playbook_path),
+                assume_answer=True,
+            )
+        except typer.Exit as e:
+            assert e.exit_code == 0
         logger.info(f"Validating playbook {dest_playbook_path}")
         OldValidateManager(file_path=str(dest_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {dest_playbook_path}")
-        Uploader(
+        uploader = Uploader(
             input=dest_playbook_path,
             insecure=True,
-        ).upload()
+        )
+        try:
+            uploader.upload()
+        except typer.Exit as e:
+            assert e

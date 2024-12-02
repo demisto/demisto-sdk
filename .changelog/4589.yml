@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the *generate-docs* command failed to ignore hidden parameters.
+  type: fix
+pr_number: 4589

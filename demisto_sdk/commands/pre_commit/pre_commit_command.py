@@ -414,7 +414,7 @@ def group_by_language(
             # add api modules to the api_modules list, we will handle them later
             api_modules.append(integration_script)
             continue
-
+    logger.debug(f'group_by_language {api_modules=}')
     if api_modules:
         logger.debug("Pre-Commit: Starting to handle API Modules")
         with ContentGraphInterface() as graph:

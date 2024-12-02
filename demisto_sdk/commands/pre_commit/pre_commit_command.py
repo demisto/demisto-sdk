@@ -140,10 +140,12 @@ class PreCommitRunner:
             command=["run", "-a", hook_id],
         )
 
-        if process.stdout:
-            logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
-        if process.stderr:
-            logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
+        if process:
+            logger.info(f'run_hook {process.__dict__=}')
+        # if process.stdout:
+        #     logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
+        # if process.stderr:
+        #     logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
         return process.returncode
 
     @staticmethod
@@ -559,7 +561,6 @@ def pre_commit_manager(
         return 0
 
     language_to_files_with_objects, exclude_files = group_by_language(files_to_run)
-    logger.debug(f'pre_commit_manager {language_to_files_with_objects=}')
     if not language_to_files_with_objects:
         logger.info("No files to run pre-commit on, skipping pre-commit.")
         return 0

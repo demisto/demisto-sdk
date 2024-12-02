@@ -166,9 +166,10 @@ class PreCommitRunner:
         Returns:
             _type_: _description_
         """
+        import os
         if command is None:
             command = ["run", "-a"]
-        return subprocess.run(
+        completed_process = subprocess.run(
             list(
                 filter(
                     None,
@@ -185,11 +186,12 @@ class PreCommitRunner:
             ),
             env=precommit_env,
             cwd=CONTENT_PATH,
-            stdout=stdout,
-            stderr=stdout,
+            stdout=subprocess.PIPE, # od.devnull TODO
+            stderr=subprocess.PIPE,
             universal_newlines=True,
         )
 
+        logger.debug(f'_run_pre_commit_process {completed_process.__dict__=}')
     @staticmethod
     def run(
         pre_commit_context: PreCommitContext,
@@ -218,6 +220,7 @@ class PreCommitRunner:
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
         # we don't need the context anymore, we can clear it to free up memory for the pre-commit checks
         del pre_commit_context
+
         # install dependencies of all hooks in advance
         PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,

@@ -11,44 +11,79 @@ def test_content(
     ctx: typer.Context,
     artifacts_path: str = typer.Option(
         Path("./Tests"),
+        "-a",
+        "--artifacts-path",
         help="Destination directory to create the artifacts.",
         dir_okay=True,
         resolve_path=True,
     ),
-    api_key: str = typer.Option(..., help="The Demisto API key for the server"),
-    artifacts_bucket: str = typer.Option(
-        None, help="The artifacts bucket name to upload the results to"
+    api_key: str = typer.Option(
+        ..., "-k", "--api-key", help="The Demisto API key for the server"
     ),
-    server: str = typer.Option(None, help="The server URL to connect to"),
-    conf: str = typer.Option(..., help="Path to content conf.json file"),
-    secret: str = typer.Option(None, help="Path to content-test-conf conf.json file"),
-    nightly: bool = typer.Option(None, help="Run nightly tests"),
-    service_account: str = typer.Option(None, help="GCP service account."),
-    slack: str = typer.Option(..., help="The token for slack"),
-    build_number: str = typer.Option(..., help="The build number"),
-    branch_name: str = typer.Option(..., help="The current content branch name"),
-    is_ami: bool = typer.Option(False, help="is AMI build or not"),
-    mem_check: bool = typer.Option(False, help="Should trigger memory checks or not."),
+    artifacts_bucket: str = typer.Option(
+        None,
+        "-ab",
+        "--artifacts_bucket",
+        help="The artifacts bucket name to upload the results to",
+    ),
+    server: str = typer.Option(
+        None, "-s", "--server", help="The server URL to connect to"
+    ),
+    conf: str = typer.Option(
+        ..., "-c", "--conf", help="Path to content conf.json file"
+    ),
+    secret: str = typer.Option(
+        None, "-e", "--secret", help="Path to content-test-conf conf.json file"
+    ),
+    nightly: bool = typer.Option(None, "-n", "--nightly", help="Run nightly tests"),
+    service_account: str = typer.Option(
+        None, "-sa", "--service_account", help="GCP service account."
+    ),
+    slack: str = typer.Option(..., "-t", "--slack", help="The token for slack"),
+    build_number: str = typer.Option(
+        ..., "-b", "--build-number", help="The build number"
+    ),
+    branch_name: str = typer.Option(
+        ..., "-g", "--branch-name", help="The current content branch name"
+    ),
+    is_ami: bool = typer.Option(False, "-i", "--is-ami", help="is AMI build or not"),
+    mem_check: bool = typer.Option(
+        False, "-m", "--mem-check", help="Should trigger memory checks or not."
+    ),
     server_version: str = typer.Option(
         "NonAMI",
+        "-d",
+        "--server-version",
         help="Which server version to run the tests on(Valid only when using AMI)",
     ),
-    use_retries: bool = typer.Option(False, help="Should use retries mechanism or not"),
+    use_retries: bool = typer.Option(
+        False, "-u", "--use-retries", help="Should use retries mechanism or not"
+    ),
     server_type: str = typer.Option(
-        "XSOAR", help="On which server type runs the tests: XSIAM, XSOAR, XSOAR SAAS"
+        "XSOAR",
+        "--server-type",
+        help="On which server type runs the tests: XSIAM, XSOAR, XSOAR SAAS",
     ),
     product_type: str = typer.Option(
-        "XSOAR", help="On which product type runs the tests: XSIAM, XSOAR"
+        "XSOAR",
+        "--product-type",
+        help="On which product type runs the tests: XSIAM, XSOAR",
     ),
-    cloud_machine_ids: str = typer.Option(None, help="Cloud machine ids to use."),
+    cloud_machine_ids: str = typer.Option(
+        None, "--cloud_machine_ids", help="Cloud machine ids to use."
+    ),
     cloud_servers_path: str = typer.Option(
-        None, help="Path to secret cloud server metadata file."
+        None, "--cloud_servers_path", help="Path to secret cloud server metadata file."
     ),
     cloud_servers_api_keys: str = typer.Option(
-        None, help="Path to file with cloud Servers API keys."
+        None,
+        "--cloud_servers_api_keys",
+        help="Path to file with cloud Servers API keys.",
     ),
     machine_assignment: str = typer.Option(
-        "./machine_assignment.json", help="Path to the machine assignment file."
+        "./machine_assignment.json",
+        "--machine_assignment",
+        help="Path to the machine assignment file.",
     ),
     console_log_threshold: str = typer.Option(
         None,

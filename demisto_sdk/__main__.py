@@ -64,6 +64,9 @@ from demisto_sdk.commands.test_content.content_test_setup import test_content
 from demisto_sdk.commands.test_content.test_modeling_rule.modeling_rules_setup import (
     modeling_rules_app,
 )
+from demisto_sdk.commands.test_content.playbook_flow_test.playbook_flow_test_setup import (
+    playbook_flow_app
+)
 from demisto_sdk.commands.update_release_notes.update_release_notes_setup import (
     update_release_notes,
 )
@@ -200,6 +203,7 @@ app.add_typer(modeling_rules_app, name="modeling-rules")
 app.command(name="generate-modeling-rules", help="Generated modeling-rules.")(
     generate_modeling_rules
 )
+app.add_typer(playbook_flow_app, name="playbook-flow")
 app.command(
     name="lint", help="Deprecated, use demisto-sdk pre-commit instead.", hidden=True
 )(lint)

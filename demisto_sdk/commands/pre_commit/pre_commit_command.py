@@ -327,6 +327,7 @@ class PreCommitRunner:
 
         PreCommitRunner.prepare_hooks(pre_commit_context)
 
+        logger.debug(f"Finished preparing hooks: {pre_commit_context.__dict__}")
         if pre_commit_context.all_files:
             if exclude_files:
                 pre_commit_context.precommit_template["exclude"] += (
@@ -345,6 +346,8 @@ class PreCommitRunner:
                 f"Dry run, skipping pre-commit.\nConfig file saved to {PRECOMMIT_CONFIG_MAIN_PATH}"
             )
             return ret_val
+
+        logger.info(f"Running pre-commit with: {show_diff_on_failure=} | {verbose=} | {os.environ=} | {pre_commit_context=}")
         ret_val = PreCommitRunner.run(
             pre_commit_context, precommit_env, verbose, show_diff_on_failure
         )

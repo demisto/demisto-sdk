@@ -3,6 +3,7 @@ from pathlib import Path
 import typer
 
 from demisto_sdk.commands.common.logger import logging_setup_decorator
+from demisto_sdk.commands.common.string_to_bool import string_to_bool
 from demisto_sdk.commands.test_content.execute_test_content import execute_test_content
 
 
@@ -35,9 +36,7 @@ def test_content(
     secret: str = typer.Option(
         None, "-e", "--secret", help="Path to content-test-conf conf.json file"
     ),
-    nightly: bool = typer.Option(
-        None, "-n", "--nightly", help="Run nightly tests", is_flag=False
-    ),
+    nightly: str = typer.Option(None, "-n", "--nightly", help="Run nightly tests"),
     service_account: str = typer.Option(
         None, "-sa", "--service_account", help="GCP service account."
     ),
@@ -48,15 +47,12 @@ def test_content(
     branch_name: str = typer.Option(
         ..., "-g", "--branch-name", help="The current content branch name"
     ),
-    is_ami: bool = typer.Option(
-        False, "-i", "--is-ami", help="is AMI build or not", is_flag=False
-    ),
-    mem_check: bool = typer.Option(
-        False,
+    is_ami: str = typer.Option("false", "-i", "--is-ami", help="is AMI build or not"),
+    mem_check: str = typer.Option(
+        "false",
         "-m",
         "--mem-check",
         help="Should trigger memory checks or not.",
-        is_flag=False,
     ),
     server_version: str = typer.Option(
         "NonAMI",
@@ -112,6 +108,10 @@ def test_content(
     Run the test playbook on the created investigation using mock if possible.
     Collect the result and give a report.
     """
+    is_ami = string_to_bool(is_ami)
+    nightly = string_to_bool(nightly)
+    mem_check = string_to_bool(mem_check)
+
     kwargs = {
         "artifacts_path": artifacts_path,
         "api_key": api_key,

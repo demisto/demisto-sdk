@@ -199,10 +199,10 @@ class PreCommitRunner:
         )
         if Path(json_output_path).is_dir():
             with open(Path(json_output_path) / f"{'-'.join(command)}.json", "w") as json_file:
-                json_file.write(json.dumps(completed_process, indent=4))
+                json_file.write(json.dumps(completed_process.__dict__, indent=4))
         else:
             with open(json_output_path, "w") as json_file:
-                json_file.write(json.dumps(completed_process, indent=4))
+                json_file.write(json.dumps(completed_process.__dict__, indent=4))
 
         return completed_process
     @staticmethod

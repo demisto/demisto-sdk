@@ -412,7 +412,7 @@ def group_by_language(
     for integration_script in integrations_scripts:
         if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
             # add api modules to the api_modules list, we will handle them later
-            api_modules.append(integration_script)˜
+            api_modules.append(integration_script)
             continue
     logger.debug(f'group_by_language {api_modules=}')
     if api_modules:

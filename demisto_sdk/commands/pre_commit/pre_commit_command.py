@@ -1,3 +1,4 @@
+import json
 import multiprocessing
 import os
 import re
@@ -118,6 +119,7 @@ class PreCommitRunner:
         precommit_env: dict,
         verbose: bool = False,
         stdout: Optional[int] = subprocess.PIPE,
+        json_output_path: Optional[Path] = None
     ) -> int:
         """This function runs the pre-commit process and waits until finished.
         We run this function in multithread.
@@ -127,7 +129,8 @@ class PreCommitRunner:
             precommit_env (dict): The pre-commit environment variables
             verbose (bool, optional): Whether print verbose output. Defaults to False.
             stdout (Optional[int], optional): The way to handle stdout. Defaults to subprocess.PIPE.
-
+            json_output_path (Optional[Path]): Optional path to a JSON formatted output file where pre-commit hooks
+                results are stored. None by deafult, and file is not created.
         Returns:
             int: return code - 0 if hook passed, 1 if failed
         """
@@ -138,16 +141,16 @@ class PreCommitRunner:
             verbose,
             stdout,
             command=["run", "-a", hook_id],
+            json_output_path=json_output_path
         )
 
         if process:
             logger.info(f'run_hook {process.__dict__=}')
-        # if process.stdout:
-        #     logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
-        # if process.stderr:
-        #     logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
-        # return process.returncode
-        return 0
+        if process.stdout:
+            logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
+        if process.stderr:
+            logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
+        return process.returncode
 
     @staticmethod
     def _run_pre_commit_process(
@@ -156,6 +159,7 @@ class PreCommitRunner:
         verbose: bool,
         stdout=None,
         command: Optional[List[str]] = None,
+        json_output_path: Optional[Path] = None
     ) -> subprocess.CompletedProcess:
         """Runs a process of pre-commit
 
@@ -165,11 +169,11 @@ class PreCommitRunner:
             verbose (bool): whether to print verbose output
             stdout (optional): use `subprocess.PIPE` to capture stdout. Use None to print it. Defaults to None.
             command (Optional[List[str]], optional): The pre-commit command to run. Defaults to None.
-
+            json_output_path (Optional[Path]): Optional path to a JSON formatted output file where pre-commit hooks
+                results are stored. None by deafult, and file is not created.
         Returns:
             _type_: _description_
         """
-        import os
         if command is None:
             command = ["run", "-a"]
         completed_process = subprocess.run(
@@ -189,18 +193,25 @@ class PreCommitRunner:
             ),
             env=precommit_env,
             cwd=CONTENT_PATH,
-            stdout=subprocess.PIPE, # od.devnull TODO
-            stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE if json_output_path else stdout,
+            stderr=subprocess.PIPE if json_output_path else stdout,
             universal_newlines=True,
         )
+        if Path(json_output_path).is_dir():
+            with open(Path(json_output_path) / f"{'-'.join(command)}.json", "w") as json_file:
+                json_file.write(json.dumps(completed_process, indent=4))
+        else:
+            with open(json_output_path, "w") as json_file:
+                json_file.write(json.dumps(completed_process, indent=4))
 
-        logger.debug(f'_run_pre_commit_process {completed_process.__dict__=}')
+        return completed_process
     @staticmethod
     def run(
         pre_commit_context: PreCommitContext,
         precommit_env: dict,
         verbose: bool,
         show_diff_on_failure: bool,
+        json_output_path: Optional[Path] = None
     ) -> int:
         """Execute the pre-commit hooks on the files.
 
@@ -209,7 +220,8 @@ class PreCommitRunner:
             precommit_env (dict): The environment variables dict.
             verbose (bool):  Whether run pre-commit in verbose mode.
             show_diff_on_failure (bool): Whether to show diff when a hook fail or not.
-
+            json_output_path (Optional[Path]): Optional path to a JSON formatted output file where pre-commit hooks
+                results are stored. None by deafult, and file is not created.
         Returns:
             int: The exit code - 0 if everything is valid.
         """
@@ -223,13 +235,13 @@ class PreCommitRunner:
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
         # we don't need the context anymore, we can clear it to free up memory for the pre-commit checks
         del pre_commit_context
-
         # install dependencies of all hooks in advance
         PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
             verbose,
             command=["install-hooks"],
+            json_output_path=json_output_path,
         )
 
         num_processes = cpu_count()
@@ -249,6 +261,7 @@ class PreCommitRunner:
                                 precommit_env=precommit_env,
                                 verbose=verbose,
                                 stdout=subprocess.PIPE,
+                                json_output_path=json_output_path,
                             ),
                             hook_ids,
                         )
@@ -258,7 +271,7 @@ class PreCommitRunner:
                             hook_id,
                             precommit_env=precommit_env,
                             verbose=verbose,
-                            stdout=None,
+                            json_output_path=json_output_path,
                         )
                         for hook_id in hook_ids
                     ]
@@ -290,6 +303,7 @@ class PreCommitRunner:
         show_diff_on_failure: bool = False,
         exclude_files: Optional[Set[Path]] = None,
         dry_run: bool = False,
+        json_output_path: Optional[Path] = None
     ) -> int:
         """Trigger the relevant hooks.
 
@@ -299,7 +313,8 @@ class PreCommitRunner:
             show_diff_on_failure (bool, optional): Whether to show diff when a hook fail or not. Defaults to False.
             exclude_files (Optional[Set[Path]], optional): Files to exclude when running. Defaults to None.
             dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode. Defaults to False.
-
+            json_output_path (Path, optional): Optional path to a JSON formatted output file where pre-commit hooks
+                results are stored. None by default, and file is not created.
         Returns:
             int: The exit code, 0 if nothing failed.
         """
@@ -333,7 +348,6 @@ class PreCommitRunner:
 
         PreCommitRunner.prepare_hooks(pre_commit_context)
 
-        logger.debug(f"Finished preparing hooks: {pre_commit_context.__dict__}")
         if pre_commit_context.all_files:
             if exclude_files:
                 pre_commit_context.precommit_template["exclude"] += (
@@ -353,9 +367,8 @@ class PreCommitRunner:
             )
             return ret_val
 
-        logger.info(f"Running pre-commit with: {show_diff_on_failure=} | {verbose=} | {os.environ=} | {pre_commit_context=}")
         ret_val = PreCommitRunner.run(
-            pre_commit_context, precommit_env, verbose, show_diff_on_failure
+            pre_commit_context, precommit_env, verbose, show_diff_on_failure, json_output_path
         )
         return ret_val
 
@@ -519,6 +532,7 @@ def pre_commit_manager(
     docker_image: Optional[str] = None,
     run_hook: Optional[str] = None,
     pre_commit_template_path: Optional[Path] = None,
+    json_output_path: Optional[Path] = None
 ) -> int:
     """Run pre-commit hooks .
 
@@ -533,12 +547,15 @@ def pre_commit_manager(
         force_run_hooks (Optional[List[str]], optional): List for hooks to force run. Defaults to None.
         verbose (bool, optional): Whether run pre-commit in verbose mode. Defaults to False.
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
-        dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.
+        dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the
+            config file.
         run_docker_hooks (bool, optional): Whether to run docker based hooks or not.
         image_ref: (str, optional): Override the image from YAML / native config file with this image reference.
-        docker_image: (str, optional): Override the `docker_image` property in the template file. This is a comma separated list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.
+        docker_image: (str, optional): Override the `docker_image` property in the template file. This is a comma
+            separated list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.
         pre_commit_template_path (Path, optional): Path to the template pre-commit file.
-
+        json_output_path (Path, optional): Optional path to a JSON formatted output file where pre-commit hooks results
+            are stored. None by default, and file is not created.
     Returns:
         int: Return code of pre-commit.
     """
@@ -607,6 +624,7 @@ def pre_commit_manager(
         show_diff_on_failure,
         exclude_files,
         dry_run,
+        json_output_path,
     )
 
 

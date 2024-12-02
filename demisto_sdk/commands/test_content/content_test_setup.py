@@ -35,7 +35,9 @@ def test_content(
     secret: str = typer.Option(
         None, "-e", "--secret", help="Path to content-test-conf conf.json file"
     ),
-    nightly: bool = typer.Option(None, "-n", "--nightly", help="Run nightly tests"),
+    nightly: bool = typer.Option(
+        None, "-n", "--nightly", help="Run nightly tests", is_flag=False
+    ),
     service_account: str = typer.Option(
         None, "-sa", "--service_account", help="GCP service account."
     ),
@@ -46,9 +48,15 @@ def test_content(
     branch_name: str = typer.Option(
         ..., "-g", "--branch-name", help="The current content branch name"
     ),
-    is_ami: bool = typer.Option(False, "-i", "--is-ami", help="is AMI build or not"),
+    is_ami: bool = typer.Option(
+        False, "-i", "--is-ami", help="is AMI build or not", is_flag=False
+    ),
     mem_check: bool = typer.Option(
-        False, "-m", "--mem-check", help="Should trigger memory checks or not."
+        False,
+        "-m",
+        "--mem-check",
+        help="Should trigger memory checks or not.",
+        is_flag=False,
     ),
     server_version: str = typer.Option(
         "NonAMI",

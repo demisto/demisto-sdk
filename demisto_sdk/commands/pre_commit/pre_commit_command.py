@@ -410,7 +410,7 @@ def group_by_language(
     logger.debug("Pre-Commit: Finished parsing all integrations and scripts")
     exclude_integration_script = set()
     for integration_script in integrations_scripts:
-        if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
+        if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:˜
             # add api modules to the api_modules list, we will handle them later
             api_modules.append(integration_script)
             continue

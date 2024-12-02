@@ -193,7 +193,11 @@ class PackMetadata(BaseModel):
                     f"Skip loading the {content_item.name} test playbook/script into metadata.json"
                 )
                 continue
-
+            if content_item.is_silent:
+                logger.debug(
+                    f"Skip loading the {content_item.name} silent playbook/trigger into metadata.json"
+                )
+                continue
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,

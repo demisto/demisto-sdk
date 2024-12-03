@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    write_dict,
+    write_dict
 )
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -52,6 +52,7 @@ SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 INTEGRATIONS_BATCH = 300
+
 
 
 class PreCommitRunner:

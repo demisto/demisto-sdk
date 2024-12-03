@@ -309,6 +309,8 @@ mapping:
                 - include: arg_filters_schema
               scriptId:
                 type: str
+              scriptName:
+                type: str
               scriptId_x2:
                 type: str
               scriptId:xsoar:

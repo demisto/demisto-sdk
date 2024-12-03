@@ -64,7 +64,7 @@ class JobJSONFormat(BaseUpdateJSON):
 
         except Exception as err:
             logger.exception(
-                "".join(traceback.format_exception(err, err, err.__traceback__))
+                "".join(traceback.format_exception(err, tb=err.__traceback__))
             )
             logger.debug(
                 f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"

@@ -24,11 +24,11 @@ if sys.version_info >= (3, 11):
         ) -> Self: ...
 
         def __new__(cls, *values):
-            return _StrEnum._new_member_(cls, *values)
+            return _StrEnum._new_member_(cls, *values)  # pylint: disable=E1101
 
 else:
     from enum import Enum
 
     class StrEnum(str, Enum):  # type:ignore[no-redef]
-        def __str__(self):
+        def __str__(self):  # pylint: disable=invalid-str-returned # edge case
             return self

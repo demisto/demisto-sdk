@@ -679,7 +679,7 @@ class ReadMeValidator(BaseValidator):
             markdown_response = run_markdownlint(self.readme_content)
             if markdown_response.has_errors:
                 error_message, error_code = Errors.readme_lint_errors(
-                    self.file_path_str
+                    self.file_path_str, markdown_response.validations
                 )
                 if self.handle_error(
                     error_message, error_code, file_path=self.file_path

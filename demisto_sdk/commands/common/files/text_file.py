@@ -82,7 +82,7 @@ class TextFile(File):
         output_path = Path(output_path)
 
         try:
-            cls.as_default(encoding=encoding).write_safe_unicode(data, path=output_path)
+            cls.as_default(encoding=encoding).write_safe_unicode(data, path=output_path)  # pylint: disable=E1101
         except Exception as e:
             logger.error(f"Could not write {output_path} as {cls.__name__} file")
             raise FileWriteError(output_path, exc=e)

@@ -65,7 +65,7 @@ class JobJSONFormat(BaseUpdateJSON):
         except Exception as err:
             logger.exception(
                 "".join(
-                    traceback.format_exception(
+                    traceback.format_exception(  # pylint: disable=no-value-for-parameter,unexpected-keyword-arg
                         etype=type(err), value=err, tb=err.__traceback__
                     )
                 )

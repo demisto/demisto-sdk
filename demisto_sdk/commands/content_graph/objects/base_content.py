@@ -78,7 +78,7 @@ class BaseContentMetaclass(ModelMetaclass):
         Returns:
             BaseNode: The model class.
         """
-        super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
+        super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)  # pylint:disable=E1121
         # for type checking
         model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
         if content_type:
@@ -95,7 +95,7 @@ class BaseContentMetaclass(ModelMetaclass):
         return model_cls
 
 
-class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
+class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):  # pylint: disable=E1139
     database_id: Optional[str] = Field(None, exclude=True)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)

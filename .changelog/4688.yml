@@ -1,4 +1,4 @@
 changes:
-- description: Introducing functionality for updating CONTENT_PATH global.
+- description: Determining logger setup via environment variable. Writing pre-commit results to files.
   type: feature
-pr_number: 4677
+pr_number: 4688

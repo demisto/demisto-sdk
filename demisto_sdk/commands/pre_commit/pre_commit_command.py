@@ -204,7 +204,7 @@ class PreCommitRunner:
 
         if json_output_path:
             with open(json_output_path, "w") as json_file:
-                json_file.write(json.dumps(completed_process.__dict__, indent=4))
+                json.dump(completed_process.__dict__, json_file, indent=4)
 
         return completed_process
 
@@ -433,7 +433,6 @@ def group_by_language(
     ):
         # Process each path sequentially
         content_items = [BaseContent.from_path(path) for path in integration_script_paths]
-        logger.debug(f'group_by_language {content_items=}')
         for content_item in content_items:
             if not content_item or not isinstance(content_item, IntegrationScript):
                 continue
@@ -446,7 +445,6 @@ def group_by_language(
             # add api modules to the api_modules list, we will handle them later
             api_modules.append(integration_script)
             continue
-    logger.debug(f'group_by_language {api_modules=}')
     if api_modules:
         logger.debug("Pre-Commit: Starting to handle API Modules")
         with ContentGraphInterface() as graph:

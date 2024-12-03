@@ -1,0 +1,4 @@
+changes:
+- description: Added validation to ensure every silent trigger points to a silent playbook, and vice versa.
+  type: feature
+pr_number: 4670

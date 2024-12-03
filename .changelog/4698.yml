@@ -1,4 +1,4 @@
 changes:
-- description: Demisto-SDK will soon stop supporting Python 3.8
+- description: Demisto-SDK will soon stop supporting Python 3.9
   type: internal
 pr_number: 4698

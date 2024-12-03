@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import subprocess
@@ -22,9 +21,10 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    write_dict
+    write_dict,
 )
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -48,11 +48,12 @@ from demisto_sdk.commands.pre_commit.pre_commit_context import (
     PreCommitContext,
 )
 
+json = JSON_Handler()
+
 SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 INTEGRATIONS_BATCH = 300
-
 
 
 class PreCommitRunner:

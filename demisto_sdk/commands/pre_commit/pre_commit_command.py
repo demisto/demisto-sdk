@@ -1,5 +1,4 @@
 import json
-import multiprocessing
 import os
 import re
 import subprocess
@@ -119,7 +118,7 @@ class PreCommitRunner:
         precommit_env: dict,
         verbose: bool = False,
         stdout: Optional[int] = subprocess.PIPE,
-        json_output_path: Optional[Path] = None
+        json_output_path: Optional[Path] = None,
     ) -> int:
         """This function runs the pre-commit process and waits until finished.
         We run this function in multithread.
@@ -138,7 +137,7 @@ class PreCommitRunner:
 
         # Otherwise it's None and file won't be created or already a file's path.
         if json_output_path and json_output_path.is_dir():
-            json_output_path = json_output_path / f'{hook_id}.json'
+            json_output_path = json_output_path / f"{hook_id}.json"
 
         process = PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
@@ -162,7 +161,7 @@ class PreCommitRunner:
         verbose: bool,
         stdout=None,
         command: Optional[List[str]] = None,
-        json_output_path: Optional[Path] = None
+        json_output_path: Optional[Path] = None,
     ) -> subprocess.CompletedProcess:
         """Runs a process of pre-commit
 
@@ -214,7 +213,7 @@ class PreCommitRunner:
         precommit_env: dict,
         verbose: bool,
         show_diff_on_failure: bool,
-        json_output_path: Optional[Path] = None
+        json_output_path: Optional[Path] = None,
     ) -> int:
         """Execute the pre-commit hooks on the files.
 
@@ -238,14 +237,16 @@ class PreCommitRunner:
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
         # we don't need the context anymore, we can clear it to free up memory for the pre-commit checks
         del pre_commit_context
+
         # install dependencies of all hooks in advance
         PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
             verbose,
             command=["install-hooks"],
-            json_output_path=json_output_path if not json_output_path.is_dir()
-            else json_output_path / 'install-hooks.json',
+            json_output_path=json_output_path
+            if not json_output_path or json_output_path.is_file()
+            else json_output_path / "install-hooks.json",
         )
 
         num_processes = cpu_count()
@@ -261,7 +262,9 @@ class PreCommitRunner:
                     # We shall not write results to the same file if running hooks in parallel, therefore,
                     # writing the results to a parallel directory.
                     if json_output_path and not json_output_path.is_dir():
-                        json_output_path = json_output_path.parent / json_output_path.stem
+                        json_output_path = (
+                            json_output_path.parent / json_output_path.stem
+                        )
                         json_output_path.mkdir(exist_ok=True)
 
                     with ThreadPool(num_processes) as pool:
@@ -313,7 +316,7 @@ class PreCommitRunner:
         show_diff_on_failure: bool = False,
         exclude_files: Optional[Set[Path]] = None,
         dry_run: bool = False,
-        json_output_path: Optional[Path] = None
+        json_output_path: Optional[Path] = None,
     ) -> int:
         """Trigger the relevant hooks.
 
@@ -377,7 +380,11 @@ class PreCommitRunner:
             )
             return ret_val
         ret_val = PreCommitRunner.run(
-            pre_commit_context, precommit_env, verbose, show_diff_on_failure, json_output_path
+            pre_commit_context,
+            precommit_env,
+            verbose,
+            show_diff_on_failure,
+            json_output_path,
         )
         return ret_val
 
@@ -434,7 +441,9 @@ def group_by_language(
         #  with multiprocessing.Pool(processes=cpu_count()) as pool:
         #             content_items = pool.map(BaseContent.from_path, integration_script_paths)
         # Process each path sequentially
-        content_items = [BaseContent.from_path(path) for path in integration_script_paths]
+        content_items = [
+            BaseContent.from_path(path) for path in integration_script_paths
+        ]
         for content_item in content_items:
             if not content_item or not isinstance(content_item, IntegrationScript):
                 continue
@@ -543,7 +552,7 @@ def pre_commit_manager(
     docker_image: Optional[str] = None,
     run_hook: Optional[str] = None,
     pre_commit_template_path: Optional[Path] = None,
-    json_output_path: Optional[Path] = None
+    json_output_path: Optional[Path] = None,
 ) -> int:
     """Run pre-commit hooks .
 

@@ -13,7 +13,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from pathlib import Path
 from time import ctime
-from typing import List, Union
+from typing import List, Union, Tuple
 
 from dateparser import parse
 from mitmproxy import ctx
@@ -218,12 +218,12 @@ class TimestampReplacer:
             req (Request): The request to modify
         """
         if req.multipart_form and self.form_keys:
-            updated_multipart_form_data = []
+            updated_multipart_form_data: List[Tuple[bytes, bytes]] = []
             for key, val in req.multipart_form.items(multi=True):
                 if key in self.form_keys:
-                    updated_multipart_form_data.append((key, self.constant))
+                    updated_multipart_form_data.append((bytes(key), bytes(self.constant)))
                 else:
-                    updated_multipart_form_data.append((key, val))
+                    updated_multipart_form_data.append((bytes(key), bytes(val)))
             req._set_multipart_form(updated_multipart_form_data)
 
     def clean_json_body(self, req: Request) -> None:

@@ -1,0 +1,4 @@
+changes:
+- description: Added isSilent key to the Playbook and Trigger schemas.
+  type: feature
+pr_number: 4689

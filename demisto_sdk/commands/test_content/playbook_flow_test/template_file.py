@@ -27,7 +27,7 @@ def util_load_json(path):
 @pytest.fixture
 def client_conf(request):
     # Manually parse command-line arguments
-    return get_client_conf_from_pytest_request()
+    return get_client_conf_from_pytest_request(request)
 
 
 @pytest.fixture

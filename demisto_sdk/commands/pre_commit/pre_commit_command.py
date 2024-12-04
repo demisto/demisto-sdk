@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 import re
 import subprocess
@@ -439,13 +440,8 @@ def group_by_language(
     for integration_script_paths in more_itertools.chunked_even(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
-        # TODO - Enable multiprocessing -
-        #  with multiprocessing.Pool(processes=cpu_count()) as pool:
-        #             content_items = pool.map(BaseContent.from_path, integration_script_paths)
-        # Process each path sequentially
-        content_items = [
-            BaseContent.from_path(path) for path in integration_script_paths
-        ]
+        with multiprocessing.Pool(processes=cpu_count()) as pool:
+            content_items = pool.map(BaseContent.from_path, integration_script_paths)
         for content_item in content_items:
             if not content_item or not isinstance(content_item, IntegrationScript):
                 continue

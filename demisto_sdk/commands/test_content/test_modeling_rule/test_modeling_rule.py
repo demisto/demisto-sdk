@@ -59,7 +59,20 @@ from demisto_sdk.commands.test_content.test_modeling_rule.constants import (
     TIME_ZONE_WARNING,
     XQL_QUERY_ERROR_EXPLANATION,
 )
-from demisto_sdk.commands.test_content.tools import get_ui_url
+from demisto_sdk.commands.test_content.tools import (
+    get_ui_url,
+    XSIAM_CLIENT_SLEEP_INTERVAL,
+    XSIAM_CLIENT_RETRY_ATTEMPTS,
+    logs_token_cb,
+    tenant_config_cb,
+    xsiam_get_installed_packs,
+    create_retrying_caller,
+    get_type_pretty_name,
+    day_suffix,
+    get_relative_path_to_content,
+    duration_since_start_time,
+    get_utc_now
+)
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
     TestData,
     Validations,
@@ -72,27 +85,14 @@ from demisto_sdk.commands.upload.upload import upload_content_entity as upload_c
 from demisto_sdk.utils.utils import get_containing_pack
 
 CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
-XSIAM_CLIENT_SLEEP_INTERVAL = 60
-XSIAM_CLIENT_RETRY_ATTEMPTS = 5
+
 
 app = typer.Typer()
 
 
-def get_utc_now() -> datetime:
-    """Get the current time in UTC, with timezone aware."""
-    return datetime.now(tz=pytz.UTC)
 
 
-def duration_since_start_time(start_time: datetime) -> float:
-    """Get the duration since the given start time, in seconds.
 
-    Args:
-        start_time (datetime): Start time.
-
-    Returns:
-        float: Duration since the given start time, in seconds.
-    """
-    return (get_utc_now() - start_time).total_seconds()
 
 
 def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
@@ -114,37 +114,7 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
     )
 
 
-def day_suffix(day: int) -> str:
-    """
-    Returns a suffix string base on the day of the month.
-        for 1, 21, 31 => st
-        for 2, 22 => nd
-        for 3, 23 => rd
-        for to all the others => th
 
-        see here for more details: https://en.wikipedia.org/wiki/English_numerals#Ordinal_numbers
-
-    Args:
-        day: The day of the month represented by a number.
-
-    Returns:
-        suffix string (st, nd, rd, th).
-    """
-    return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
-
-
-def get_relative_path_to_content(path: Path) -> str:
-    """Get the relative path to the content directory.
-
-    Args:
-        path: The path to the content item.
-
-    Returns:
-        Path: The relative path to the content directory.
-    """
-    if path.is_absolute() and path.as_posix().startswith(CONTENT_PATH.as_posix()):
-        return path.as_posix().replace(f"{CONTENT_PATH.as_posix()}{os.path.sep}", "")
-    return path.as_posix()
 
 
 def convert_epoch_time_to_string_time(
@@ -169,29 +139,6 @@ def convert_epoch_time_to_string_time(
     )
     return datetime_object.strftime(time_format)
 
-
-def get_type_pretty_name(obj: Any) -> str:
-    """Get the pretty name of the type of the given object.
-
-    Args:
-        obj (Any): The object to get the type name for.
-
-    Returns:
-        str: The pretty name of the type of the given object.
-    """
-    return {
-        type(None): "null",
-        list: "list",
-        dict: "dict",
-        tuple: "tuple",
-        set: "set",
-        UUID: "UUID",
-        str: "string",
-        int: "int",
-        float: "float",
-        bool: "boolean",
-        datetime: "datetime",
-    }.get(type(obj), str(type(obj)))
 
 
 def sanitize_received_value_by_expected_type(
@@ -218,18 +165,6 @@ def sanitize_received_value_by_expected_type(
     return received_value_type, received_value
 
 
-def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying:
-    """Create a Retrying object with the given retry_attempts and sleep_interval."""
-    sleep_interval = parse_int_or_default(sleep_interval, XSIAM_CLIENT_SLEEP_INTERVAL)
-    retry_attempts = parse_int_or_default(retry_attempts, XSIAM_CLIENT_RETRY_ATTEMPTS)
-    retry_params: Dict[str, Any] = {
-        "reraise": True,
-        "before_sleep": before_sleep_log(logging.getLogger(), logging.DEBUG),
-        "retry": retry_if_exception_type(requests.exceptions.RequestException),
-        "stop": stop_after_attempt(retry_attempts),
-        "wait": wait_fixed(sleep_interval),
-    }
-    return Retrying(**retry_params)
 
 
 def xsiam_execute_query(xsiam_client: XsiamApiClient, query: str) -> List[dict]:
@@ -248,12 +183,6 @@ def xsiam_push_to_dataset(
     """
     return xsiam_client.push_to_dataset(events_test_data, rule.vendor, rule.product)
 
-
-def xsiam_get_installed_packs(xsiam_client: XsiamApiClient) -> List[Dict[str, Any]]:
-    """Get the list of installed packs from the XSIAM tenant.
-    Wrapper for XsiamApiClient.get_installed_packs() with retry logic.
-    """
-    return xsiam_client.installed_packs
 
 
 def verify_results(
@@ -1355,38 +1284,6 @@ def add_result_to_test_case(
 
 
 # ====================== test-modeling-rule ====================== #
-
-
-def tenant_config_cb(
-    ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]
-):
-    if ctx.resilient_parsing:
-        return
-    # Only check the params if the machine_assignment is not set.
-    if param.value_is_missing(value) and not ctx.params.get("machine_assignment"):
-        err_str = (
-            f"{param.name} must be set either via the environment variable "
-            f'"{param.envvar}" or passed explicitly when running the command'
-        )
-        raise typer.BadParameter(err_str)
-    return value
-
-
-def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]):
-    if ctx.resilient_parsing:
-        return
-    # Only check the params if the machine_assignment is not set.
-    if param.value_is_missing(value) and not ctx.params.get("machine_assignment"):
-        parameter_to_check = "xsiam_token"
-        other_token = ctx.params.get(parameter_to_check)
-        if not other_token:
-            err_str = (
-                f"One of {param.name} or {parameter_to_check} must be set either via it's associated"
-                " environment variable or passed explicitly when running the command"
-            )
-            raise typer.BadParameter(err_str)
-    return value
-
 
 class TestResults:
     def __init__(

@@ -1,82 +1,54 @@
-import io
 import logging  # noqa: TID251 # specific case, passed as argument to 3rd party
 import os
-from contextlib import redirect_stdout
-from datetime import datetime
+
 from pathlib import Path
 from threading import Thread
-from time import sleep
-from typing import Any, Dict, List, Optional, Tuple, Union
-from uuid import UUID
+from typing import Any, List, Optional, Tuple, Union
 
-import dateparser
 import demisto_client
 import pytest
-import pytz
-import requests
+
 import typer
 from google.cloud import storage  # type: ignore[attr-defined]
 from junitparser import Error, JUnitXml, TestCase, TestSuite
 from junitparser.junitparser import Failure, Result, Skipped
-from packaging.version import Version
-from tabulate import tabulate
-from tenacity import (
-    Retrying,
-    before_sleep_log,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_fixed,
-)
-from typer.main import get_command_from_info
+
 
 from demisto_sdk.commands.common.constants import (
-    TEST_MODELING_RULES,
+    PLAYBOOKS_FLOW_TEST,
     XSIAM_SERVER_TYPE,
 )
-from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
-    ModelingRule,
-    SingleModelingRule,
-)
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+
 from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
     logger,
     logging_setup,
 )
 from demisto_sdk.commands.common.tools import (
-    get_file,
     get_json_file,
-    is_epoch_datetime,
-    parse_int_or_default,
     string_to_bool,
 )
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
     ParallelLoggingManager,
 )
-from demisto_sdk.commands.test_content.test_modeling_rule.constants import (
-    EXPECTED_SCHEMA_MAPPINGS,
-    FAILURE_TO_PUSH_EXPLANATION,
-    NOT_AVAILABLE,
-    SYNTAX_ERROR_IN_MODELING_RULE,
-    TIME_ZONE_WARNING,
-    XQL_QUERY_ERROR_EXPLANATION,
+from demisto_sdk.commands.test_content.tools import (
+    get_ui_url,
+    XSIAM_CLIENT_SLEEP_INTERVAL,
+    XSIAM_CLIENT_RETRY_ATTEMPTS,
+    logs_token_cb,
+    tenant_config_cb,
+    create_retrying_caller,
+    get_relative_path_to_content,
+    duration_since_start_time,
+    get_utc_now
 )
-from demisto_sdk.commands.test_content.tools import get_ui_url
-from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
-    TestData,
-    Validations,
-)
+
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
     XsiamApiClient,
     XsiamApiClientConfig,
 )
-from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
-from demisto_sdk.utils.utils import get_containing_pack
 
 CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
-XSIAM_CLIENT_SLEEP_INTERVAL = 60
-XSIAM_CLIENT_RETRY_ATTEMPTS = 5
 
 app = typer.Typer()
 
@@ -118,7 +90,7 @@ class TestResults:
         self.service_account = service_account
         self.artifacts_bucket = artifacts_bucket
 
-    def upload_modeling_rules_result_json_to_bucket(
+    def upload_result_json_to_bucket(
             self,
             repository_name: str,
             file_name,
@@ -131,22 +103,22 @@ class TestResults:
           original_file_path: The path to the JSON file to upload.
           repository_name: The name of the repository within the bucket.
           file_name: The desired filename for the uploaded JSON data.
-          logging_module: Logging module to use for upload_modeling_rules_result_json_to_bucket.
+          logging_module: Logging module to use for upload_result_json_to_bucket.
         """
-        logging_module.info("Start uploading modeling rules results file to bucket")
+        logging_module.info("Start uploading playbook flow test results file to bucket")
 
         storage_client = storage.Client.from_service_account_json(self.service_account)
         storage_bucket = storage_client.bucket(self.artifacts_bucket)
 
         blob = storage_bucket.blob(
-            f"content-test-modeling-rules/{repository_name}/{file_name}"
+            f"content-playbook-flow-test/{repository_name}/{file_name}"
         )
         blob.upload_from_filename(
             original_file_path.as_posix(),
             content_type="application/xml",
         )
 
-        logging_module.info("Finished uploading modeling rules results file to bucket")
+        logging_module.info("Finished uploading playbook flow test results file to bucket")
 
 
 class BuildContext:
@@ -236,10 +208,10 @@ class BuildContext:
         for machine, assignment in self.machine_assignment_json.items():
             tests = [
                 BuildContext.prefix_with_packs(test)
-                for test in assignment.get("tests", {}).get(TEST_MODELING_RULES, [])
+                for test in assignment.get("tests", {}).get(PLAYBOOKS_FLOW_TEST, [])
             ]
             if not tests:
-                logger.info(f"No modeling rules found for machine {machine}")
+                logger.info(f"No playbook flow tests found for machine {machine}")
                 continue
             servers_list.append(
                 CloudServerContext(
@@ -326,7 +298,7 @@ class CloudServerContext:
 
             for i, playbook_flow_test_directory in enumerate(self.tests, start=1):
                 logger.info(
-                    f"<cyan>[{i}/{len(self.tests)}] Test Modeling Rule: {get_relative_path_to_content(playbook_flow_test_directory)}</cyan>",
+                    f"<cyan>[{i}/{len(self.tests)}] playbook flow tests: {get_relative_path_to_content(playbook_flow_test_directory)}</cyan>",
                 )
 
                 success, playbook_flow_test_test_suite = run_playbook_flow_test_pytest(
@@ -366,135 +338,6 @@ class CloudServerContext:
             self.build_context.tests_data_keeper.errors = True
         finally:
             self.build_context.logging_module.execute_logs()
-
-
-# ============================================== Helper methods ============================================ #
-
-def get_utc_now() -> datetime:
-    """Get the current time in UTC, with timezone aware."""
-    return datetime.now(tz=pytz.UTC)
-
-
-def duration_since_start_time(start_time: datetime) -> float:
-    """Get the duration since the given start time, in seconds.
-
-    Args:
-        start_time (datetime): Start time.
-
-    Returns:
-        float: Duration since the given start time, in seconds.
-    """
-    return (get_utc_now() - start_time).total_seconds()
-
-
-def day_suffix(day: int) -> str:
-    """
-    Returns a suffix string base on the day of the month.
-        for 1, 21, 31 => st
-        for 2, 22 => nd
-        for 3, 23 => rd
-        for to all the others => th
-
-        see here for more details: https://en.wikipedia.org/wiki/English_numerals#Ordinal_numbers
-
-    Args:
-        day: The day of the month represented by a number.
-
-    Returns:
-        suffix string (st, nd, rd, th).
-    """
-    return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
-
-
-def get_relative_path_to_content(path: Path) -> str:
-    """Get the relative path to the content directory.
-
-    Args:
-        path: The path to the content item.
-
-    Returns:
-        Path: The relative path to the content directory.
-    """
-    if path.is_absolute() and path.as_posix().startswith(CONTENT_PATH.as_posix()):
-        return path.as_posix().replace(f"{CONTENT_PATH.as_posix()}{os.path.sep}", "")
-    return path.as_posix()
-
-
-def get_type_pretty_name(obj: Any) -> str:
-    """Get the pretty name of the type of the given object.
-
-    Args:
-        obj (Any): The object to get the type name for.
-
-    Returns:
-        str: The pretty name of the type of the given object.
-    """
-    return {
-        type(None): "null",
-        list: "list",
-        dict: "dict",
-        tuple: "tuple",
-        set: "set",
-        UUID: "UUID",
-        str: "string",
-        int: "int",
-        float: "float",
-        bool: "boolean",
-        datetime: "datetime",
-    }.get(type(obj), str(type(obj)))
-
-
-def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying:
-    """Create a Retrying object with the given retry_attempts and sleep_interval."""
-    sleep_interval = parse_int_or_default(sleep_interval, XSIAM_CLIENT_SLEEP_INTERVAL)
-    retry_attempts = parse_int_or_default(retry_attempts, XSIAM_CLIENT_RETRY_ATTEMPTS)
-    retry_params: Dict[str, Any] = {
-        "reraise": True,
-        "before_sleep": before_sleep_log(logging.getLogger(), logging.DEBUG),
-        "retry": retry_if_exception_type(requests.exceptions.RequestException),
-        "stop": stop_after_attempt(retry_attempts),
-        "wait": wait_fixed(sleep_interval),
-    }
-    return Retrying(**retry_params)
-
-
-def xsiam_get_installed_packs(xsiam_client: XsiamApiClient) -> List[Dict[str, Any]]:
-    """Get the list of installed packs from the XSIAM tenant.
-    Wrapper for XsiamApiClient.get_installed_packs() with retry logic.
-    """
-    return xsiam_client.installed_packs
-
-
-def tenant_config_cb(
-        ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]
-):
-    if ctx.resilient_parsing:
-        return
-    # Only check the params if the machine_assignment is not set.
-    if param.value_is_missing(value) and not ctx.params.get("machine_assignment"):
-        err_str = (
-            f"{param.name} must be set either via the environment variable "
-            f'"{param.envvar}" or passed explicitly when running the command'
-        )
-        raise typer.BadParameter(err_str)
-    return value
-
-
-def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]):
-    if ctx.resilient_parsing:
-        return
-    # Only check the params if the machine_assignment is not set.
-    if param.value_is_missing(value) and not ctx.params.get("machine_assignment"):
-        parameter_to_check = "xsiam_token"
-        other_token = ctx.params.get(parameter_to_check)
-        if not other_token:
-            err_str = (
-                f"One of {param.name} or {parameter_to_check} must be set either via it's associated"
-                " environment variable or passed explicitly when running the command"
-            )
-            raise typer.BadParameter(err_str)
-    return value
-
 
 # ============================================== Command logic ============================================ #
 
@@ -560,7 +403,7 @@ def test_playbook_flow_test(
             dir_okay=True,
             resolve_path=True,
             show_default=False,
-            help="The path to a directory of a modeling rule. May pass multiple paths to test multiple modeling rules.",
+            help="The path to a directory of a playbook flow tests. May pass multiple paths to test multiple playbook flow tests.",
         ),
         xsiam_url: Optional[str] = typer.Option(
             None,
@@ -696,7 +539,7 @@ def test_playbook_flow_test(
         ),
 ):
     """
-    Test a modeling rule against an XSIAM tenant
+    Test a playbook flow test against an XSIAM tenant
     """
     logging_setup(
         console_threshold=console_log_threshold,  # type: ignore[arg-type]
@@ -707,7 +550,7 @@ def test_playbook_flow_test(
     handle_deprecated_args(ctx.args)
 
     logging_module = ParallelLoggingManager(
-        "test_modeling_rules.log", real_time_logs_only=not nightly
+        "playbook_flow_test.log", real_time_logs_only=not nightly
     )
 
     if machine_assignment:
@@ -746,7 +589,7 @@ def test_playbook_flow_test(
     )
 
     logging_module.info(
-        "Test Modeling Rules to test:",
+        "playbook flow tests to test:",
     )
 
     for build_context_server in build_context.servers:
@@ -779,7 +622,7 @@ def test_playbook_flow_test(
         )
         if nightly:
             if service_account and artifacts_bucket:
-                build_context.tests_data_keeper.upload_modeling_rules_result_json_to_bucket(
+                build_context.tests_data_keeper.upload_result_json_to_bucket(
                     XSIAM_SERVER_TYPE,
                     f"playbook_flow_test_{build_number}.xml",
                     output_junit_file,

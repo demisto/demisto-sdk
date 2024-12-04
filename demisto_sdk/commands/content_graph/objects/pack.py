@@ -370,9 +370,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME
             )
             try:
-                shutil.copy(self.path / VERSION_CONFIG_FILENAME, path / VERSION_CONFIG_FILENAME)
+                shutil.copy(
+                    self.path / VERSION_CONFIG_FILENAME, path / VERSION_CONFIG_FILENAME
+                )
             except FileNotFoundError:
-                logger.debug(f'No such file {self.path / VERSION_CONFIG_FILENAME}')
+                logger.debug(f"No such file {self.path / VERSION_CONFIG_FILENAME}")
 
             try:
                 shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")

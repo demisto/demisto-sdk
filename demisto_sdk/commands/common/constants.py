@@ -1268,7 +1268,7 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "doc_files",
     "doc_imgs",
     ".secrets-ignore",
-    "version_config.json"  # TODO: remove and validate this file CIAC-12331
+    "version_config.json",  # TODO: remove and validate this file CIAC-12331
 )
 
 

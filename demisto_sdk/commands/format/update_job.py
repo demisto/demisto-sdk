@@ -83,4 +83,3 @@ class JobJSONFormat(BaseUpdateJSON):
             else SKIP_RETURN_CODE
         )
         return format_result, result_code
-        

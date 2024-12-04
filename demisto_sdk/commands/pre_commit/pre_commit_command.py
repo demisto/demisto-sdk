@@ -242,15 +242,15 @@ class PreCommitRunner:
         del pre_commit_context
 
         # install dependencies of all hooks in advance
-        PreCommitRunner._run_pre_commit_process(
-            PRECOMMIT_CONFIG_MAIN_PATH,
-            precommit_env,
-            verbose,
-            command=["install-hooks"],
-            json_output_path=json_output_path
-            if not json_output_path or json_output_path.is_file()
-            else json_output_path / "install-hooks.json",
-        )
+        # PreCommitRunner._run_pre_commit_process(
+        #     PRECOMMIT_CONFIG_MAIN_PATH,
+        #     precommit_env,
+        #     verbose,
+        #     command=["install-hooks"],
+        #     json_output_path=json_output_path
+        #     if not json_output_path or json_output_path.is_file()
+        #     else json_output_path / "install-hooks.json",
+        # )
 
         num_processes = cpu_count()
         all_hooks_exit_codes = []

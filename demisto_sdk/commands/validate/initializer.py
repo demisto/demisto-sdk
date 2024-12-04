@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
+    PACKS_VERSION_CONFIG_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
     PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
@@ -748,6 +749,7 @@ class Initializer:
                 AUTHOR_IMAGE_FILE_NAME,
                 PACKS_CONTRIBUTORS_FILE_NAME,
                 DOC_FILES_DIR,
+                PACKS_VERSION_CONFIG_FILE_NAME,
             )
         )
 

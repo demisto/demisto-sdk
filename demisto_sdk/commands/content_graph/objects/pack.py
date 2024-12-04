@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.content_graph.common import (
     PACK_METADATA_FILENAME,
+    VERSION_CONFIG_FILENAME,
     ContentType,
     Nodes,
     Relationships,
@@ -367,6 +368,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             self.dump_readme(path / "README.md", marketplace)
             shutil.copy(
                 self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME
+            )
+            shutil.copy(
+                self.path / VERSION_CONFIG_FILENAME, path / VERSION_CONFIG_FILENAME
             )
             try:
                 shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")

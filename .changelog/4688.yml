@@ -1,0 +1,4 @@
+changes:
+- description: Determining logger setup via environment variable. Writing pre-commit results to files.
+  type: feature
+pr_number: 4688

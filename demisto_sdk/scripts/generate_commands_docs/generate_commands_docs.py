@@ -28,14 +28,14 @@ def get_sdk_command(command_name: str):
     return command
 
 
-def get_command_description(command_name: str) -> str:
-    """Retrieve the description (docstring) for the command."""
+def get_command_overview(command_name: str) -> str:
+    """Retrieve the overview (docstring) for the command."""
     command = get_sdk_command(command_name)
     if isinstance(command, str):
         return command
 
     command_func = command.callback
-    return inspect.getdoc(command_func) or "No description provided"
+    return inspect.getdoc(command_func) or "No overview provided."
 
 
 def get_command_options(command_name: str) -> str:
@@ -72,20 +72,20 @@ def update_readme(command_name: str, description: str, options: str):
         readme_content = f.read()
 
     # Update the Description section
-    description_start = readme_content.find("## Description")
+    description_start = readme_content.find("## Overview")
     if description_start != -1:
         description_end = readme_content.find(
-            "##", description_start + len("## Description")
+            "##", description_start + len("## Overview")
         )
         if description_end == -1:
             description_end = len(readme_content)
         updated_readme = (
             readme_content[:description_start]
-            + f"## Description\n{description}\n\n"
+            + f"## Overview\n{description}\n\n"
             + readme_content[description_end:]
         )
     else:
-        updated_readme = f"{readme_content}\n## Description\n{description}\n\n"
+        updated_readme = f"{readme_content}\n## Overview\n{description}\n\n"
 
     # Update the Options section
     options_start = updated_readme.find("### Options")
@@ -103,12 +103,12 @@ def update_readme(command_name: str, description: str, options: str):
     with command_doc_path.open("w") as f:
         f.write(updated_readme)
 
-    print(f"Description and options section updated for command: {command_name}")  # noqa: T201
+    print(f"Overview and options section updated for command: {command_name}")  # noqa: T201
 
 
 def generate_docs_for_command(command_name: str):
     """Generate documentation for a specific command."""
-    description = get_command_description(command_name)
+    description = get_command_overview(command_name)
     options = get_command_options(command_name)
     update_readme(command_name, description, options)
 

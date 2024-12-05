@@ -138,16 +138,18 @@ class PreCommitRunner:
         """
         logger.debug(f"Running hook {hook_id}")
 
-        # Otherwise it's None and file won't be created or already a file's path.
-        if json_output_path and json_output_path.is_dir():
-            json_output_path = json_output_path / f"{hook_id}.json"
+        command = ["run", hook_id, "--all-files"]
+        if json_output_path:
+            command.append("--json")
+            if json_output_path.is_dir():
+                json_output_path = json_output_path / f"{hook_id}.json"
 
         process = PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
             verbose,
             stdout,
-            command=["run", "-a", hook_id],
+            command=command,
             json_output_path=json_output_path,
         )
 

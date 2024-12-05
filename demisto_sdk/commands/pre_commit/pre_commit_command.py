@@ -256,10 +256,9 @@ class PreCommitRunner:
 
         num_processes = cpu_count()
         all_hooks_exit_codes = []
-        for (
-            original_hook_id,
-            generated_hooks,
-        ) in PreCommitRunner.original_hook_id_to_generated_hook_ids.items():
+        hooks_to_run = PreCommitRunner.original_hook_id_to_generated_hook_ids.items()
+        logger.debug(f'run {hooks_to_run=}')
+        for (original_hook_id, generated_hooks) in hooks_to_run:
             if generated_hooks:
                 logger.debug(f"Running hook {original_hook_id} with {generated_hooks}")
                 hook_ids = generated_hooks.hook_ids

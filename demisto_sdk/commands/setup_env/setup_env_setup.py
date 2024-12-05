@@ -3,6 +3,7 @@ from typing import Tuple
 
 import typer
 
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.setup_env.setup_environment import IDEType, setup_env
 
@@ -67,14 +68,13 @@ def setup_env_command(
     The setup-env command creates a content environment and integration/script environment.
     The command will configure VSCode and XSOAR/XSIAM instances for development and testing.
     """
-
     if ide.lower() == "auto-detect":
-        if (Path("CONTENT_PATH") / ".vscode").exists():
+        if (CONTENT_PATH / ".vscode").exists():
             typer.echo(
                 "Visual Studio Code IDEType has been detected and will be configured."
             )
             ide_type = IDEType.VSCODE
-        elif (Path("CONTENT_PATH") / ".idea").exists():
+        if (CONTENT_PATH / ".idea").exists():
             typer.echo(
                 "PyCharm / IDEA IDEType has been detected and will be configured."
             )

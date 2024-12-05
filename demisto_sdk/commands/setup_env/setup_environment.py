@@ -739,7 +739,6 @@ def configure_integration(
             or if the configuration failed (for instance, Docker is turned off)
     """
     base_path = CONTENT_PATH
-
     integration_script = BaseContent.from_path(Path(file_path))
     assert isinstance(
         integration_script, IntegrationScript

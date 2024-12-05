@@ -63,6 +63,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB126_is_default_not
 from demisto_sdk.commands.validate.validators.PB_validators.PB127_marketplace_keys_have_default_value import (
     MarketplaceKeysHaveDefaultValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB121_is_correct_value_references_interface import (
+    IsCorrectValueReferencesInterface,
+)
 
 
 @pytest.mark.parametrize(
@@ -1338,3 +1341,402 @@ def test_MarketplaceKeysHaveDefaultValidator(
             assert expected_bad_key in fix_message
 
         assert fixed_content_item.data == expected_playbook_obj.data
+
+
+def test_IsCorrectValueReferencesInterface_correct_pb():
+    pb = {
+        'id': 'e6989d60-60c1-415a-8449-198f2d84b102',
+        'name': 'PB121',
+        'tasks': {
+            '0': {
+                'continueonerrortype': '',
+                'id': '0',
+                'isoversize': False,
+                'nexttasks': {'#none#': ['1']},
+                'note': False,
+                'quietmode': 0,
+                'separatecontext': False,
+                'skipunavailable': False,
+                'task': {
+                    'brand': '',
+                    'id': '08c98bec-e1c3-4fc3-8112-bf69676573f0',
+                    'iscommand': False,
+                    'name': '',
+                    'version': -1
+                },
+                'taskid': '08c98bec-e1c3-4fc3-8112-bf69676573f0',
+                'timertriggers': [],
+                'type': 'start',
+            },
+            '1': {
+                'conditions': [
+                    {
+                        'condition': [
+                            [
+                                {
+                                    'left': {'value': {'simple': 'incident.as_value'}},
+                                    'operator': 'isExists'
+                                }
+                            ],
+                            [
+                                {
+                                    'left': {'iscontext': True, 'value': {'simple': 'incident.from_context'}},
+                                    'operator': 'AnyMatch',
+                                    'right': {'value': {'simple': 'incident.as_value'}}
+                                }
+                            ]
+                        ],
+                        'label': 'yes'
+                    },
+                    {
+                        'condition': [
+                            [
+                                {
+                                    'left': {'iscontext': True, 'value': {'simple': 'incident.from_context'}},
+                                    'operator': 'isTrue'
+                                }
+                            ]
+                        ],
+                        'label': 'no'
+                    }
+                ],
+                'continueonerrortype': '',
+                'id': '1',
+                'ignoreworker': False,
+                'isautoswitchedtoquietmode': False,
+                'isoversize': False,
+                'nexttasks': {'yes': ['2']},
+                'note': False,
+                'quietmode': 0,
+                'separatecontext': False,
+                'skipunavailable': False,
+                'task': {
+                    'brand': '',
+                    'description': 'incident.desc',
+                    'id': '1ed95b8a-fcdd-4aa5-858a-85b4d79c7c34',
+                    'iscommand': False,
+                    'name': '${incident.name} conditional Built-in',
+                    'tags': ['a', 'b'],
+                    'type': 'condition',
+                    'version': -1},
+                'taskid': '1ed95b8a-fcdd-4aa5-858a-85b4d79c7c34',
+                'timertriggers': [],
+                'type': 'condition',
+            },
+            '2': {
+                'continueonerrortype': '',
+                'defaultassigneecomplex': {'simple': '${incident.accountid}'},
+                'id': '2',
+                'ignoreworker': False,
+                'isautoswitchedtoquietmode': False,
+                'isoversize': False,
+                'nexttasks': {'#default#': ['3']},
+                'note': False,
+                'quietmode': 0,
+                'separatecontext': False,
+                'skipunavailable': False,
+                'task': {
+                    'brand': '',
+                    'description': '${incident.accountid}',
+                    'id': '5bc96b47-4044-4c44-8f80-bf4b15fe6233',
+                    'iscommand': False,
+                    'name': 'Conditional Manual',
+                    'tags': ['a'],
+                    'type': 'condition',
+                    'version': -1},
+                'taskid': '5bc96b47-4044-4c44-8f80-bf4b15fe6233',
+                'timertriggers': [],
+                'type': 'condition',
+            },
+            '3': {
+                'continueonerrortype': '',
+                'id': '3',
+                'ignoreworker': False,
+                'isautoswitchedtoquietmode': False,
+                'isoversize': False,
+                'message': {
+                    'bcc': None,
+                    'body': {'simple': '${incident.alerttags}'},
+                    'cc': {'simple': 'Read-Only'},
+                    'format': '',
+                    'methods': ['email'],
+                    'replyOptions': ['Yes', 'No'],
+                    'subject': {'simple': '${incident.accountname}'},
+                    'timings': {
+                        'completeafterreplies': 1,
+                        'completeaftersla': False,
+                        'completeafterv2': True,
+                        'retriescount': 2,
+                        'retriesinterval': 360},
+                    'to': {'simple': '${incident.asn}'}},
+                'nexttasks': {'Yes': ['4']},
+                'note': False,
+                'quietmode': 0,
+                'scriptarguments': {   'using': {   'simple': '${incident.approver}'}},
+                'separatecontext': False,
+                'skipunavailable': False,
+                'task': {
+                    'brand': '',
+                    'description': '${incident.additionaldata}',
+                    'id': '9d366fdc-da13-4d7d-8c04-88f6c403bc6e',
+                    'iscommand': False,
+                    'name': 'Conditional Ask',
+                    'tags': ['b'],
+                    'type': 'condition',
+                    'version': -1},
+                'taskid': '9d366fdc-da13-4d7d-8c04-88f6c403bc6e',
+                'timertriggers': [],
+                'type': 'condition',
+            },
+            '4': {
+                'continueonerrortype': '',
+                'fieldMapping': [{'output': {'simple': '${DBotPredictURLPhishing.URL}'}}],
+                'id': '4',
+                'ignoreworker': False,
+                'isautoswitchedtoquietmode': False,
+                'isoversize': False,
+                'nexttasks': {'#default#': ['5']},
+                'note': False,
+                'quietmode': 0,
+                'scriptarguments': {
+                    'extend-context': {'simple': 'incident.not_from_context'},
+                    'urls': {'simple': '${incident.additionaldata}'},
+                    'using': {'simple': '${incident.accountname}'}},
+                'separatecontext': False,
+                'skipunavailable': False,
+                'task': {
+                    'brand': '',
+                    'description': '${incident}',
+                    'id': '91c388dd-6bdb-4a27-84bc-82770b7ae6ff',
+                    'iscommand': False,
+                    'name': 'Conditional Run Command',
+                    'scriptName': 'DBotPredictURLPhishingCandidate',
+                    'tags': ['a'],
+                    'type': 'condition',
+                    'version': -1},
+                'taskid': '91c388dd-6bdb-4a27-84bc-82770b7ae6ff',
+                'timertriggers': [],
+                'type': 'condition',
+            },
+            '5': {
+                'continueonerrortype': '',
+                'id': '5',
+                'ignoreworker': False,
+                'isautoswitchedtoquietmode': False,
+                'isoversize': False,
+                'nexttasks': {'#none#': ['6']},
+                'note': False,
+                'quietmode': 0,
+                'scriptarguments': {
+                    'action': {
+                        'complex': {
+                            'filters': [
+                                [
+                                    {
+                                        'left': {
+                                            'iscontext': True,
+                                            'value': {'simple': 'incident'}},
+                                            'operator': 'isEqualString',
+                                            'right': {
+                                                'value': {'simple': 'as_value'}
+                                            }
+                                    }
+                                ]
+                            ],
+                            'root': 'incident',
+                            'transformers': [
+                                {
+                                    'args': {
+                                        'conditions': {
+                                            'iscontext': True,
+                                            'value': {'simple': 'incident.from_context'}
+                                        },
+                                        'flags': {'value': {'simple': 'incident.as_value'}}
+                                    },
+                                    'operator': 'If-Elif'
+                                }
+                            ]
+                        }
+                    },
+                    'associatedDomains': {'simple': '${incident}'},
+                    'using': {'simple': '${incident.asn}'}
+                },
+                'separatecontext': False,
+                'skipunavailable': False,
+                'task': {
+                    'brand': '',
+                    'description': '${incident.affectedhosts}',
+                    'id': 'a6215bdd-8d94-46df-807a-991d9209f0e2',
+                    'iscommand': False,
+                    'name': 'Regular',
+                    'scriptName': 'DBotUpdateLogoURLPhishing',
+                    'type': 'regular',
+                    'version': -1},
+                'taskid': 'a6215bdd-8d94-46df-807a-991d9209f0e2',
+                'timertriggers': [],
+                'type': 'regular',
+            },
+            '6': {
+                'continueonerrortype': '',
+                'form': {
+                    'description': 'desc',
+                    'expired': False,
+                    'questions': [
+                        {
+                            'defaultrows': [],
+                            'fieldassociated': '',
+                            'gridcolumns': [],
+                            'id': '0',
+                            'label': '',
+                            'labelarg': {   'simple': '${incident.city}'},
+                            'options': [],
+                            'optionsarg': [],
+                            'placeholder': '',
+                            'readonly': False,
+                            'required': False,
+                            'tooltip': '',
+                            'type': 'shortText'
+                        },
+                        {
+                            'defaultrows': [],
+                            'fieldassociated': 'attackmode',
+                            'gridcolumns': [],
+                            'id': '1',
+                            'label': '',
+                            'labelarg': {   'simple': 'why?'},
+                            'options': [],
+                            'optionsarg': [],
+                            'placeholder': '',
+                            'readonly': False,
+                            'required': False,
+                            'tooltip': '',
+                            'type': 'shortText'
+                        }
+                    ],
+                    'sender': '',
+                    'title': 'Title',
+                    'totalanswers': 0
+                },
+                'id': '6',
+                'ignoreworker': False,
+                'isautoswitchedtoquietmode': False,
+                'isoversize': False,
+                'message': {
+                    'bcc': None,
+                    'body': {'simple': '${incident.email}'},
+                    'cc': None,
+                    'format': '',
+                    'methods': [],
+                    'subject': None,
+                    'timings': {
+                        'completeafterreplies': 1,
+                        'completeaftersla': False,
+                        'completeafterv2': True,
+                        'retriescount': 2,
+                        'retriesinterval': 360},
+                    'to': None},
+                'nexttasks': {'#none#': ['7']},
+                'note': False,
+                'quietmode': 0,
+                'scriptarguments': {'extend-context': {'simple': 'incident.no_context'},
+                'using': {'simple': 'incident.using,incident.thing'}},
+                'separatecontext': False,
+                'skipunavailable': False,
+                'task': {
+                    'brand': '',
+                    'description': '${incident.acquisitionhire}',
+                    'id': '1df1fc5c-ec39-40ee-867a-52a677bb8699',
+                    'iscommand': False,
+                    'name': 'Collection Task Only',
+                    'type': 'collection',
+                    'version': -1},
+                'taskid': '1df1fc5c-ec39-40ee-867a-52a677bb8699',
+                'timertriggers': [],
+                'type': 'collection',
+            },
+            '7': {
+                'continueonerrortype': '',
+                'form': {
+                    'description': '',
+                    'expired': False,
+                    'questions': [
+                        {
+                            'defaultrows': [],
+                            'fieldassociated': '',
+                            'gridcolumns': [],
+                            'id': '0',
+                            'label': '',
+                            'labelarg': {'simple': 'why?'},
+                            'options': [],
+                            'optionsarg': [],
+                            'placeholder': '',
+                            'readonly': False,
+                            'required': False,
+                            'tooltip': '',
+                            'type': 'shortText'
+                        }
+                    ],
+                    'sender': '',
+                    'title': 'incident',
+                    'totalanswers': 0
+                },
+                'id': '7',
+                'ignoreworker': False,
+                'isautoswitchedtoquietmode': False,
+                'isoversize': False,
+                'message': {
+                    'bcc': None,
+                    'body': {'simple': 'incident'},
+                    'cc': {   'simple': 'incident.should_be_from_context'},
+                    'format': '',
+                    'methods': ['email'],
+                    'subject': {'simple': 'incident'},
+                    'timings': {
+                        'completeafterreplies': 1,
+                        'completeaftersla': False,
+                        'completeafterv2': True,
+                        'retriescount': 2,
+                        'retriesinterval': 360},
+                    'to': {'simple': '${incident.acquisitionhire}'}
+                },
+                'nexttasks': {'#none#': ['8']},
+                'note': False,
+                'quietmode': 0,
+                'separatecontext': False,
+                'skipunavailable': False,
+                'task': {
+                    'brand': '',
+                    'id': 'f25d3769-3903-470a-898c-e6561a716253',
+                    'iscommand': False,
+                    'name': 'Collection Email',
+                    'type': 'collection',
+                    'version': -1},
+                'taskid': 'f25d3769-3903-470a-898c-e6561a716253',
+                'timertriggers': [],
+                'type': 'collection',
+            },
+            '8': {
+                'continueonerrortype': '',
+                'id': '8',
+                'ignoreworker': False,
+                'isautoswitchedtoquietmode': False,
+                'isoversize': False,
+                'note': False,
+                'quietmode': 0,
+                'separatecontext': False,
+                'skipunavailable': False,
+                'task': {
+                    'brand': '',
+                    'id': '4a775481-62cc-405c-8f5f-b01437eac66c',
+                    'iscommand': False,
+                    'name': 'incident.asn',
+                    'type': 'title',
+                    'version': -1},
+                'taskid': '4a775481-62cc-405c-8f5f-b01437eac66c',
+                'timertriggers': [],
+                'type': 'title',
+            }
+        },
+    }
+
+    pb = create_playbook_object()

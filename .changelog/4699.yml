@@ -1,0 +1,4 @@
+changes:
+- description: Added support for a new pack version_config.json file.
+  type: feature
+pr_number: 4699

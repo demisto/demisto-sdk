@@ -74,7 +74,7 @@ def setup_env_command(
                 "Visual Studio Code IDEType has been detected and will be configured."
             )
             ide_type = IDEType.VSCODE
-        if (CONTENT_PATH / ".idea").exists():
+        elif (CONTENT_PATH / ".idea").exists():
             typer.echo(
                 "PyCharm / IDEA IDEType has been detected and will be configured."
             )

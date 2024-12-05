@@ -1344,7 +1344,7 @@ def test_MarketplaceKeysHaveDefaultValidator(
 
 
 def test_IsCorrectValueReferencesInterface_correct_pb():
-    pb = {
+    pb_content = {
         'id': 'e6989d60-60c1-415a-8449-198f2d84b102',
         'name': 'PB121',
         'tasks': {
@@ -1739,4 +1739,8 @@ def test_IsCorrectValueReferencesInterface_correct_pb():
         },
     }
 
-    pb = create_playbook_object()
+    pb_object = create_playbook_object(values=pb_content)
+    
+    validator = IsCorrectValueReferencesInterface().obtain_invalid_content_items([pb_object])
+    
+    assert validator == [], f"Playbook should have valid value references, but got: {validator}"

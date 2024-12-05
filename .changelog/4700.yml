@@ -3,4 +3,6 @@ changes:
   type: fix
 - description: Fixed an issue in the **validate** command where new files could not be parsed.
   type: fix
+- description: Fixed an issue in the **validate** command where .pack-ignore files could not be parsed.
+  type: fix
 pr_number: 4700

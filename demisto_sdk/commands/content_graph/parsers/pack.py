@@ -360,9 +360,14 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     def parse_ignored_errors(self):
         """Sets the pack's ignored_errors field."""
-        self.ignored_errors_dict = (
-            dict(get_pack_ignore_content(self.path.name) or {})  # type:ignore[var-annotated]
-        )
+        try:
+            self.ignored_errors_dict = (
+                dict(get_pack_ignore_content(self.path.name) or {})  # type:ignore[var-annotated]
+            )
+        except Exception:
+            logger.warning(
+                f"Failed to extract ignored errors list for {self.path.name} for {self.object_id}"
+            )
 
     def get_rn_info(self, git_sha: Optional[str] = None):
         self.latest_rn_version = get_pack_latest_rn_version(str(self.path), git_sha)

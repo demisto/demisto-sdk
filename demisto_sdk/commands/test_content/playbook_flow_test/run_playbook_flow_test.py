@@ -596,7 +596,7 @@ def test_playbook_flow_test(
         for playbook_flow_test_directory in build_context_server.tests:
             logging_module.info(
                 f"\tmachine:{build_context_server.base_url} - "
-                f"{get_relative_path_to_content(playbook_flow_test_directory)}"
+                f"{get_relative_path_to_content(Path(playbook_flow_test_directory))}"
             )
 
     threads_list = []

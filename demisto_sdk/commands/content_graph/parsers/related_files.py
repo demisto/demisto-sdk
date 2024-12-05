@@ -142,9 +142,18 @@ class RNRelatedFile(TextFiles):
     def all_rns(self) -> List[str]:
         if not self.rns_list:
             if self.git_sha:
-                self.rns_list = GitUtil.from_content_path().list_files_in_dir(
-                    self.main_file_path / RELEASE_NOTES_DIR, self.git_sha
-                )
+                git_util = GitUtil.from_content_path()
+                if all(
+                    RELEASE_NOTES_DIR not in f
+                    for f in git_util.list_files_in_dir(
+                        self.main_file_path, self.git_sha
+                    )
+                ):
+                    self.rns_list = []
+                else:
+                    self.rns_list = git_util.list_files_in_dir(
+                        self.main_file_path / RELEASE_NOTES_DIR, self.git_sha
+                    )
             else:
                 self.rns_list = get_child_files(self.main_file_path / RELEASE_NOTES_DIR)
         return self.rns_list

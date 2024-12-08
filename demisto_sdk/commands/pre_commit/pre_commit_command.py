@@ -4,6 +4,7 @@ import re
 import subprocess
 import sys
 from collections import defaultdict
+from copy import deepcopy
 from functools import partial
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -272,7 +273,7 @@ class PreCommitRunner:
                         current_hooks_exit_codes = pool.map(
                             partial(
                                 PreCommitRunner.run_hook,
-                                precommit_env=precommit_env,
+                                precommit_env=deepcopy(precommit_env),
                                 verbose=verbose,
                                 stdout=subprocess.PIPE,
                                 json_output_path=json_output_path,

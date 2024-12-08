@@ -1,11 +1,12 @@
 ## generate-unit-tests
+### Overview
 This command generates unit tests automatically from an integration's Python code.
 It also supports generating unit tests for specific commands.
 Note that this command is not intended to fully replace manual work on unit tests but is intended to make it easier to write them.
 
 >NOTE: The generate-unit-test command only works if demisto-sdk is installed with pip install demisto-sdk [generate-unit-tests].
 
-**Arguments**:
+### Options
 * *-i, --input_path*
   Path of the integration python file. (Mandatory)
 * *-c, --commands*

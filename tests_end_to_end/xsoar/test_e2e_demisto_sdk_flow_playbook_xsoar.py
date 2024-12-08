@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import typer
 from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
@@ -13,7 +14,7 @@ from tests_end_to_end import e2e_tests_utils
 from TestSuite.test_tools import ChangeCWD
 
 
-def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
+def test_e2e_demisto_sdk_flow_playbook_testsuite(tmp_path):
     """This flow checks:
     1. Creates a new playbook and uploads it demisto-sdk upload command.
     2. Downloads the playbook using demisto-sdk upload command.
@@ -23,15 +24,15 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     6. Uploads the playbook using the demisto-sdk upload command.
     """
     # Importing TestSuite classes from Demisto-SDK, as they are excluded when pip installing the SDK.
-    e2e_tests_utils.cli(f"mkdir {tmpdir}/git")
+    e2e_tests_utils.cli(f"mkdir {tmp_path}/git")
     e2e_tests_utils.git_clone_demisto_sdk(
-        destination_folder=f"{tmpdir}/git/demisto-sdk",
+        destination_folder=f"{tmp_path}/git/demisto-sdk",
         sdk_git_branch=DEMISTO_GIT_PRIMARY_BRANCH,
     )
     from TestSuite.playbook import Playbook
     from TestSuite.repo import Repo
 
-    repo = Repo(tmpdir)
+    repo = Repo(tmp_path)
 
     unique_id = 456
     pack_name = "foo_" + str(unique_id)
@@ -43,21 +44,29 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     assert source_playbook_path.exists()
 
     logger.info(f"Trying to upload playbook from {source_playbook_path}")
-    Uploader(input=source_playbook_path, insecure=True).upload()
+    uploader = Uploader(input=source_playbook_path, insecure=True)
+    try:
+        uploader.upload()
+    except typer.Exit as e:
+        assert e.exit_code == 0
 
     # Preparing updated pack folder
-    e2e_tests_utils.cli(f"mkdir {tmpdir}/Packs/{pack_name}_testsuite")
+    e2e_tests_utils.cli(f"mkdir {tmp_path}/Packs/{pack_name}_testsuite")
 
     logger.info(
-        f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_testsuite/Playbooks"
+        f"Trying to download the updated playbook from {playbook_name} to {tmp_path}/Packs/{pack_name}_testsuite/Playbooks"
     )
-    Downloader(
-        output=f"{tmpdir}/Packs/{pack_name}_testsuite",
+    downloader = Downloader(
+        output=f"{tmp_path}/Packs/{pack_name}_testsuite",
         input=(playbook_name,),
         insecure=True,
-    ).download()
+    )
+    try:
+        downloader.download()
+    except typer.Exit as e:
+        assert e.exit_code == 0
     dest_playbook_path = Path(
-        f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
+        f"{tmp_path}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     )
     assert dest_playbook_path.exists()
 
@@ -69,21 +78,28 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
 
     logger.info(f"Formating playbook {dest_playbook_path}")
     with ChangeCWD(pack.repo_path):
-        format_manager(
-            input=str(dest_playbook_path),
-            assume_answer=True,
-        )
+        try:
+            format_manager(
+                input=str(dest_playbook_path),
+                assume_answer=True,
+            )
+        except typer.Exit as e:
+            assert e.exit_code == 0
         logger.info(f"Validating playbook {dest_playbook_path}")
         OldValidateManager(file_path=str(dest_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {dest_playbook_path}")
-        Uploader(
+        uploader = Uploader(
             input=dest_playbook_path,
             insecure=True,
-        ).upload()
+        )
+        try:
+            uploader.upload()
+        except typer.Exit as e:
+            assert e.exit_code == 0
 
 
-def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
+def test_e2e_demisto_sdk_flow_playbook_client(tmp_path, insecure: bool = True):
     """This flow checks:
     1. Creates a new playbook and uploading it to the machine using an http request.
     2. Downloads the playbook using demisto-sdk download command.
@@ -98,7 +114,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     pack_name = "foo_" + str(unique_id)
     playbook_name = "pb_" + str(unique_id)
     dest_playbook_path = Path(
-        f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
+        f"{tmp_path}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
 
     unique_id = 789
@@ -140,18 +156,22 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
         assert False
 
     # Preparing updated pack folder
-    e2e_tests_utils.cli(f"mkdir -p {tmpdir}/Packs/{pack_name}_client")
+    e2e_tests_utils.cli(f"mkdir -p {tmp_path}/Packs/{pack_name}_client")
 
     logger.info(
-        f"Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_client/Playbooks"
+        f"Trying to download the updated playbook from {playbook_name} to {tmp_path}/Packs/{pack_name}_client/Playbooks"
     )
-    Downloader(
-        output=f"{tmpdir}/Packs/{pack_name}_client",
+    downloader = Downloader(
+        output=f"{tmp_path}/Packs/{pack_name}_client",
         input=(playbook_name,),
         insecure=True,
-    ).download()
+    )
+    try:
+        downloader.download()
+    except typer.Exit as e:
+        assert e.exit_code == 0
     dest_playbook_path = Path(
-        f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
+        f"{tmp_path}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
     assert dest_playbook_path.exists()
 
@@ -160,21 +180,28 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     )
     generate_playbook_doc.generate_playbook_doc(input_path=str(dest_playbook_path))
     assert Path(
-        f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}_README.md"
+        f"{tmp_path}/Packs/{pack_name}_client/Playbooks/{playbook_name}_README.md"
     ).exists()
 
     logger.info(f"Formating playbook {dest_playbook_path}")
 
     with ChangeCWD(str(dest_playbook_path.parent)):
-        format_manager(
-            input=str(dest_playbook_path),
-            assume_answer=True,
-        )
+        try:
+            format_manager(
+                input=str(dest_playbook_path),
+                assume_answer=True,
+            )
+        except typer.Exit as e:
+            assert e.exit_code == 0
         logger.info(f"Validating playbook {dest_playbook_path}")
         OldValidateManager(file_path=str(dest_playbook_path)).run_validation()
 
         logger.info(f"Uploading updated playbook {dest_playbook_path}")
-        Uploader(
+        uploader = Uploader(
             input=dest_playbook_path,
             insecure=True,
-        ).upload()
+        )
+        try:
+            uploader.upload()
+        except typer.Exit as e:
+            assert e

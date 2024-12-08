@@ -1,0 +1,4 @@
+changes:
+- description: The Demisto-SDK CLI has been upgraded to use Typer for command-line interface (CLI) management.
+  type: feature
+pr_number: 4637

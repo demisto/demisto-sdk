@@ -21,7 +21,7 @@ class IsValidCategoriesValidator(BaseValidator[ContentTypes]):
         "See the list of allowed categories in the platform: "
         "https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
     )
-    error_message = "The pack metadata categories field doesn't match the standard,\nplease make sure the field contain only one category from the following options: {0}."
+    error_message = "The pack metadata categories field doesn't match the standard,\nplease make sure the field contain at least one category from the following options: {0}."
     related_field = "categories"
     is_auto_fixable = False
 
@@ -37,7 +37,7 @@ class IsValidCategoriesValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                len(content_item.categories) != 1
+                len(content_item.categories) < 1
                 or not validate_categories_approved(
                     content_item.pack_metadata_dict.get("categories", []),  # type: ignore[union-attr]
                     approved_list,

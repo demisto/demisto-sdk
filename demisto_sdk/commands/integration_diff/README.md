@@ -1,12 +1,12 @@
 ## integration-diff
+### Overview
 Check the differences between two versions of an integration and return a report of missing and changed elements in the new version.
 
-### Use-Cases
 This command is used to identify missing or modified details in a new integration version. This is useful when
 developing a new version of an integration, and you want to make sure that all old integration version commands/arguments/outputs
 exist in the new version. Running this command will give you a detailed report about all the missing or changed commands/arguments/outputs.
 
-### Arguments
+### Options
 * **-n, --new**
 
     The path to the new integration yml file.

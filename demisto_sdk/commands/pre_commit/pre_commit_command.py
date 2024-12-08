@@ -119,7 +119,6 @@ class PreCommitRunner:
         verbose: bool = False,
         stdout: Optional[int] = subprocess.PIPE,
         json_output_path: Optional[Path] = None,
-
     ) -> int:
         """This function runs the pre-commit process and waits until finished.
         We run this function in multithread.
@@ -141,7 +140,7 @@ class PreCommitRunner:
             verbose,
             stdout,
             command=["run", "-a", hook_id],
-            json_output_path=json_output_path
+            json_output_path=json_output_path,
         )
 
         if process.stdout:
@@ -176,7 +175,7 @@ class PreCommitRunner:
             command = ["run", "-a"]
 
         output = subprocess.PIPE if json_output_path else stdout
-        logger.debug(f'_run_pre_commit_process {json_output_path=}')
+        logger.debug(f"_run_pre_commit_process {json_output_path=}")
         return subprocess.run(
             list(
                 filter(
@@ -235,7 +234,7 @@ class PreCommitRunner:
             precommit_env,
             verbose,
             command=["install-hooks"],
-            json_output_path=json_output_path
+            json_output_path=json_output_path,
         )
 
         num_processes = cpu_count()
@@ -362,7 +361,11 @@ class PreCommitRunner:
             )
             return ret_val
         ret_val = PreCommitRunner.run(
-            pre_commit_context, precommit_env, verbose, show_diff_on_failure, json_output_path
+            pre_commit_context,
+            precommit_env,
+            verbose,
+            show_diff_on_failure,
+            json_output_path,
         )
         return ret_val
 
@@ -416,15 +419,18 @@ def group_by_language(
     for integration_script_paths in more_itertools.chunked_even(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
-
-        disable_multiprocessing = os.getenv('DEMISTO_SDK_DISABLE_MULTIPROCESSING', 'false').lower() in ['true', 'yes''1']
+        disable_multiprocessing = os.getenv(
+            "DEMISTO_SDK_DISABLE_MULTIPROCESSING", "false"
+        ).lower() in ["true", "yes", "1"]
         if disable_multiprocessing:
             # Run sequentially
             content_items = map(BaseContent.from_path, integration_script_paths)
         else:
             # Use multiprocessing
             with multiprocessing.Pool(processes=cpu_count()) as pool:
-                content_items = pool.map(BaseContent.from_path, integration_script_paths)
+                content_items = pool.map(
+                    BaseContent.from_path, integration_script_paths
+                )
 
         for content_item in content_items:
             if isinstance(content_item, IntegrationScript):
@@ -623,7 +629,7 @@ def pre_commit_manager(
         show_diff_on_failure,
         exclude_files,
         dry_run,
-        json_output_path
+        json_output_path,
     )
 
 

@@ -178,11 +178,11 @@ class BuildContext:
         self.servers = self.create_servers()
 
     @staticmethod
-    def prefix_with_packs(path_str: Union[str, Path]) -> Path:
+    def edit_prefix(path_str: Union[str, Path]) -> Path:
         path = Path(path_str)
-        if path.parts[0] == "Packs":
+        if path.parts[0] == "content/Packs":
             return path
-        return Path("Packs") / path
+        return Path("content/Packs") / path
 
     def create_servers(self):
         """
@@ -199,7 +199,7 @@ class BuildContext:
                     token=self.xsiam_token,  # type: ignore[arg-type]
                     collector_token=self.collector_token,
                     ui_url=get_ui_url(self.xsiam_url),
-                    tests=[BuildContext.prefix_with_packs(test) for test in self.inputs]
+                    tests=[BuildContext.edit_prefix(test) for test in self.inputs]
                     if self.inputs
                     else [],
                 )

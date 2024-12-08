@@ -4,8 +4,6 @@ import re
 import subprocess
 import sys
 from collections import defaultdict
-from functools import partial
-from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -254,8 +252,8 @@ class PreCommitRunner:
         num_processes = cpu_count()
         all_hooks_exit_codes = []
         hooks_to_run = PreCommitRunner.original_hook_id_to_generated_hook_ids.items()
-        logger.debug(f'run {hooks_to_run=}')
-        for (original_hook_id, generated_hooks) in hooks_to_run:
+        logger.debug(f"run {hooks_to_run=}")
+        for original_hook_id, generated_hooks in hooks_to_run:
             if generated_hooks:
                 logger.debug(f"Running hook {original_hook_id} with {generated_hooks}")
                 hook_ids = generated_hooks.hook_ids
@@ -269,16 +267,16 @@ class PreCommitRunner:
                         json_output_path.mkdir(exist_ok=True)
 
                     # with ThreadPool(num_processes) as pool:
-                        # current_hooks_exit_codes = pool.map(
-                        #     partial(
-                        #         PreCommitRunner.run_hook,
-                        #         precommit_env=precommit_env,
-                        #         verbose=verbose,
-                        #         stdout=subprocess.PIPE,
-                        #         json_output_path=json_output_path,
-                        #     ),
-                        #     hook_ids,
-                        # )
+                    # current_hooks_exit_codes = pool.map(
+                    #     partial(
+                    #         PreCommitRunner.run_hook,
+                    #         precommit_env=precommit_env,
+                    #         verbose=verbose,
+                    #         stdout=subprocess.PIPE,
+                    #         json_output_path=json_output_path,
+                    #     ),
+                    #     hook_ids,
+                    # )
 
                     current_hooks_exit_codes = []
                     for hook_id in hook_ids:
@@ -449,13 +447,23 @@ def group_by_language(
     for integration_script_paths in more_itertools.chunked_even(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
-        with multiprocessing.Pool(processes=cpu_count()) as pool:
-            content_items = pool.map(BaseContent.from_path, integration_script_paths)
+        disable_multiprocessing = os.getenv(
+            "DEMISTO_SDK_DISABLE_MULTIPROCESSING", "false"
+        ).lower() in ["true", "yes", "1"]
+        if disable_multiprocessing:
+            # Run sequentially
+            content_items = map(BaseContent.from_path, integration_script_paths)
+        else:
+            # Use multiprocessing (not supported when running within Content scripts/integrations.
+            with multiprocessing.Pool(processes=cpu_count()) as pool:
+                content_items = pool.map(
+                    BaseContent.from_path, integration_script_paths
+                )
+
         for content_item in content_items:
-            if not content_item or not isinstance(content_item, IntegrationScript):
-                continue
-            # content-item is a script/integration
-            integrations_scripts.add(content_item)
+            if isinstance(content_item, IntegrationScript):
+                integrations_scripts.add(content_item)
+
     logger.debug("Pre-Commit: Finished parsing all integrations and scripts")
     exclude_integration_script = set()
     for integration_script in integrations_scripts:

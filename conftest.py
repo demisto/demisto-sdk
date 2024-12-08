@@ -20,6 +20,7 @@ from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from TestSuite.yml import YAML
 
+
 # Helper Functions
 
 
@@ -39,7 +40,7 @@ def get_pack(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Pack
 
 
 def get_integration(
-    request: FixtureRequest, tmp_path_factory: TempPathFactory
+        request: FixtureRequest, tmp_path_factory: TempPathFactory
 ) -> Integration:
     """Mocking tmp_path"""
     integration = get_pack(request, tmp_path_factory).create_integration()
@@ -48,7 +49,7 @@ def get_integration(
 
 
 def get_playbook(
-    request: FixtureRequest, tmp_path_factory: TempPathFactory
+        request: FixtureRequest, tmp_path_factory: TempPathFactory
 ) -> Playbook:
     """Mocking tmp_path"""
     playbook = get_pack(request, tmp_path_factory).create_playbook()
@@ -78,7 +79,7 @@ def script(request: FixtureRequest, tmp_path_factory: TempPathFactory):
 
 @pytest.fixture
 def integration(
-    request: FixtureRequest, tmp_path_factory: TempPathFactory
+        request: FixtureRequest, tmp_path_factory: TempPathFactory
 ) -> Integration:
     """Mocking tmp_path"""
     return get_integration(request, tmp_path_factory)
@@ -162,7 +163,7 @@ def mock_update_id_set_cpu_count() -> Generator:
     all physical cpu's (36) it uses too many processes in the process pools.
     """
     with mock.patch(
-        "demisto_sdk.commands.common.update_id_set.cpu_count", return_value=2
+            "demisto_sdk.commands.common.update_id_set.cpu_count", return_value=2
     ) as _fixture:
         yield _fixture
 
@@ -175,3 +176,12 @@ def disable_log_colors():
 @pytest.fixture(autouse=True)
 def clear_cache():
     tools.get_file.cache_clear()
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--client_conf",
+        action="store",
+        default=None,
+        help="Custom client configuration"
+    )

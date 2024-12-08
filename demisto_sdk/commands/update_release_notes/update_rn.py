@@ -85,7 +85,9 @@ DEPRECATED_ARGUMENT = (
 )
 ARGUMENT_BC = "- Breaking Changes: Updated the **{command_name}** to not use the `{argument_name}` argument.\n"
 DEPRECATED_CONTENT_ITEM_RN = "- Deprecated. {replacement}.\n"
-GENERAL_UPDATE_RN = "- Updated the {name} {type} to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
+GENERAL_UPDATE_RN = (
+    "- Updated the {name} {type} to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
+)
 
 
 def get_deprecated_comment_from_desc(description: str) -> str:
@@ -372,7 +374,7 @@ def generate_deprecated_content_item_rn(
 
 
 def generate_rn_for_updated_content_items(
-    changed_content_object: Union[Integration, Script, Playbook]
+    changed_content_object: Union[Integration, Script, Playbook],
 ):
     """Generates a release note description for updated content items.
 
@@ -1135,10 +1137,10 @@ class UpdateRN:
             rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
         else:
             type = (
-                    RN_HEADER_BY_FILE_TYPE.get(_type, _type.value).rstrip("s").lower()
-                    if _type
-                    else ""
-                )
+                RN_HEADER_BY_FILE_TYPE.get(_type, _type.value).rstrip("s").lower()
+                if _type
+                else ""
+            )
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n\n"
                 rn_desc += NEW_RN_TEMPLATE.format(
@@ -1159,11 +1161,11 @@ class UpdateRN:
                         changed_content_object
                     )
                     rn_desc += text or GENERAL_UPDATE_RN.format(
-                                name=(name or "%%UPDATE_CONTENT_ITEM_NAME%%"),
-                                type=(type or "%%UPDATE_CONTENT_ITEM_TYPE%%"))
+                        name=(name or "%%UPDATE_CONTENT_ITEM_NAME%%"),
+                        type=(type or "%%UPDATE_CONTENT_ITEM_TYPE%%"),
+                    )
                 else:
-                    rn_desc += '- %%UPDATE_RN%%\n'
-
+                    rn_desc += "- %%UPDATE_RN%%\n"
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n\n"

@@ -1,9 +1,11 @@
 import logging  # noqa: TID251 # specific case, passed as argument to 3rd party
 import os
+import shutil
 
 from pathlib import Path
 from threading import Thread
 from typing import Any, List, Optional, Tuple, Union
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
 import demisto_client
 import pytest
@@ -180,9 +182,9 @@ class BuildContext:
     @staticmethod
     def edit_prefix(path_str: Union[str, Path]) -> Path:
         path = Path(path_str)
-        if path.parts[0] == "content/Packs":
+        if path.parts[0] == "Packs":
             return path
-        return Path("content/Packs") / path
+        return Path("Packs") / path
 
     def create_servers(self):
         """
@@ -340,6 +342,11 @@ class CloudServerContext:
             self.build_context.logging_module.execute_logs()
 
 # ============================================== Command logic ============================================ #
+def copy_conftest(test_dir):
+    source_conftest = Path(f"{CONTENT_PATH}/Tests/scripts/dev_envs/pytest/conftest.py")
+    dest_conftest = test_dir / "conftest.py"
+
+    shutil.copy(source_conftest, dest_conftest)
 
 def run_playbook_flow_test_pytest(
         playbook_flow_test_directory: Path,
@@ -358,6 +365,8 @@ def run_playbook_flow_test_pytest(
         "file_name", str(playbook_flow_test_directory)
     )
 
+    test_dir = playbook_flow_test_directory.parent
+    copy_conftest(test_dir)
     # # Configure pytest arguments
     # os.environ["CLIENT_CONF"] = (f"base_url={str(xsiam_client.base_url)},"
     #                              f"api_key={xsiam_client.api_key},"

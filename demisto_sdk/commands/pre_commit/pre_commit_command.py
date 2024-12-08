@@ -415,13 +415,18 @@ def group_by_language(
     for integration_script_paths in more_itertools.chunked_even(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
-        with multiprocessing.Pool(processes=cpu_count()) as pool:
-            content_items = pool.map(BaseContent.from_path, integration_script_paths)
-            for content_item in content_items:
-                if not content_item or not isinstance(content_item, IntegrationScript):
-                    continue
-                # content-item is a script/integration
-                integrations_scripts.add(content_item)
+        
+        # with multiprocessing.Pool(processes=cpu_count()) as pool:
+        #     content_items = pool.map(BaseContent.from_path, integration_script_paths)
+
+        content_items = [
+            BaseContent.from_path(path) for path in integration_script_paths
+        ]
+        for content_item in content_items:
+            if not content_item or not isinstance(content_item, IntegrationScript):
+                continue
+            # content-item is a script/integration
+            integrations_scripts.add(content_item)
     logger.debug("Pre-Commit: Finished parsing all integrations and scripts")
     exclude_integration_script = set()
     for integration_script in integrations_scripts:

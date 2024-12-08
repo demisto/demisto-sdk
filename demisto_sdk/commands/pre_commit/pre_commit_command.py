@@ -268,17 +268,28 @@ class PreCommitRunner:
                         )
                         json_output_path.mkdir(exist_ok=True)
 
-                    with ThreadPool(num_processes) as pool:
-                        current_hooks_exit_codes = pool.map(
-                            partial(
-                                PreCommitRunner.run_hook,
-                                precommit_env=precommit_env,
-                                verbose=verbose,
-                                stdout=subprocess.PIPE,
-                                json_output_path=json_output_path,
-                            ),
-                            hook_ids,
+                    # with ThreadPool(num_processes) as pool:
+                        # current_hooks_exit_codes = pool.map(
+                        #     partial(
+                        #         PreCommitRunner.run_hook,
+                        #         precommit_env=precommit_env,
+                        #         verbose=verbose,
+                        #         stdout=subprocess.PIPE,
+                        #         json_output_path=json_output_path,
+                        #     ),
+                        #     hook_ids,
+                        # )
+
+                    current_hooks_exit_codes = []
+                    for hook_id in hook_ids:
+                        exit_code = PreCommitRunner.run_hook(
+                            hook_id,
+                            precommit_env=precommit_env,
+                            verbose=verbose,
+                            stdout=subprocess.PIPE,
+                            json_output_path=json_output_path,
                         )
+                        current_hooks_exit_codes.append(exit_code)
                 else:
                     current_hooks_exit_codes = [
                         PreCommitRunner.run_hook(

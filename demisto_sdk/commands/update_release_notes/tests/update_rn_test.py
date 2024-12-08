@@ -82,8 +82,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = ('\n#### Classifiers\n\n##### Hello World Classifier\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% classifier to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Dashboards\n\n##### Hello World Dashboard\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% dashboard to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% incident field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Incident Types\n\n##### Hello World Incident Type\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% incident type to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Indicator Fields\n\n##### Hello World Indicator Field\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% indicator field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Indicator Types\n\n##### Hello World Indicator Type\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% indicator type to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Integrations\n\n##### Hello World Integration\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% integration to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Jobs\n\n##### Hello World Job #1\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% job to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n##### Hello World Job #2\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% job to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Layouts\n\n##### Hello World Layout\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% layout to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n##### Second Hello World Layout\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% layout to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Modules\n\n##### Hello World Generic Module\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% module to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Objects\n\n##### Hello World Generic Definition\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% object to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Playbooks\n\n##### Hello World Playbook\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% playbook to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Reports\n\n##### Hello World Report\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% report to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Scripts\n\n##### Hello World Script\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% script to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Widgets\n\n##### Hello World Widget\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% widget to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Wizards\n\n##### Hello World Wizard\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% wizard to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n'
-        )
+        expected_result = "\n#### Classifiers\n\n##### Hello World Classifier\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% classifier to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Dashboards\n\n##### Hello World Dashboard\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% dashboard to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% incident field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Incident Types\n\n##### Hello World Incident Type\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% incident type to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Indicator Fields\n\n##### Hello World Indicator Field\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% indicator field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Indicator Types\n\n##### Hello World Indicator Type\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% indicator type to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Integrations\n\n##### Hello World Integration\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% integration to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Jobs\n\n##### Hello World Job #1\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% job to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n##### Hello World Job #2\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% job to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Layouts\n\n##### Hello World Layout\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% layout to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n##### Second Hello World Layout\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% layout to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Modules\n\n##### Hello World Generic Module\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% module to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Objects\n\n##### Hello World Generic Definition\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% object to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Playbooks\n\n##### Hello World Playbook\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% playbook to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Reports\n\n##### Hello World Report\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% report to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Scripts\n\n##### Hello World Script\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% script to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Widgets\n\n##### Hello World Widget\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% widget to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Wizards\n\n##### Hello World Wizard\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% wizard to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
         mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
@@ -184,9 +183,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = (
-            '\n#### Object Fields\n\n##### Sample Generic Field\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% object field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Object Types\n\n##### Sample Generic Type\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% object type to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n'
-        )
+        expected_result = "\n#### Object Fields\n\n##### Sample Generic Field\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% object field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Object Types\n\n##### Sample Generic Type\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% object type to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
 
         pack_path = TestRNUpdate.FILES_PATH + "/generic_testing"
         mock_master.return_value = "1.0.0"
@@ -302,9 +299,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = (
-            '\n#### Playbooks\n\n##### Hello World Playbook\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% playbook to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n'
-        )
+        expected_result = "\n#### Playbooks\n\n##### Hello World Playbook\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% playbook to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
@@ -338,7 +333,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = ('\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% incident field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n')
+        expected_result = "\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% incident field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"

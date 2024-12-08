@@ -143,8 +143,8 @@ def create_content_item_object(
         return changed_content_item
     except Exception as e:
         logger.error(
-                    f"<red>Cannot create content object in path {path} with error {e}.</error>"
-                )
+            f"<red>Cannot create content object in path {path} with error {e}.</error>"
+        )
         return None
 
 
@@ -1170,7 +1170,7 @@ class UpdateRN:
                 rn_desc += text or GENERAL_UPDATE_RN.format(
                     name=(name or "%%UPDATE_CONTENT_ITEM_NAME%%"),
                     type=(type or "%%UPDATE_CONTENT_ITEM_TYPE%%"),
-                    )
+                )
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n\n"

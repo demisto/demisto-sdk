@@ -53,9 +53,11 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     - Ensure the release notes content is valid and as expected.
     """
 
-    expected_rn = ('\n#### Integrations\n\n##### New: Azure Feed\n\n- New: added a new i'
-                   'ntegration - Azure Feed which Azure.CloudIPs Feed Integration.\n<~XSO'
-                   'AR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>\n')
+    expected_rn = (
+        "\n#### Integrations\n\n##### New: Azure Feed\n\n- New: added a new i"
+        "ntegration - Azure Feed which Azure.CloudIPs Feed Integration.\n<~XSO"
+        "AR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>\n"
+    )
     added_files = {
         join(
             AZURE_FEED_PACK_PATH, "Integrations", "FeedAzureValid", "FeedAzureValid.yml"

@@ -310,7 +310,6 @@ class TestRNUpdate:
         )
         changed_items = {
             ("Hello World Integration", FileType.INTEGRATION): {
-                "description": "",
                 "is_new_file": True,
                 "name": "Hello World Integration",
                 "fromversion": "5.0.0",
@@ -323,7 +322,6 @@ class TestRNUpdate:
                 "fromversion": "5.5.0",
             },
             ("Hello World Script", FileType.SCRIPT): {
-                "description": "",
                 "is_new_file": True,
                 "name": "Hello World Integration",
                 "fromversion": "6.0.0",
@@ -2472,7 +2470,7 @@ class TestRNUpdateUnit:
             client.get_docker_image_if_changed(
                 integration, "Packs/Test/Integrations/Test.yml"
             )
-            == None
+            is None
         )
 
     def test_midified_integration_docker_is_updated(self, mocker):
@@ -2679,7 +2677,6 @@ def test_docker_image_is_added_for_every_integration(mocker, repo):
         "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/ReleaseNotes/1_19_1.md"
     ) as f:
         rn_text = f.read()
-    print("hi")
     assert (
         rn_text.count("Updated the Docker image to: *demisto/python3:3.9.5.124*.") == 0
     )

@@ -77,7 +77,7 @@ class content_type(Enum):
     ARGUMENT = "argument"
 
 
-NEW_RN_TEMPLATE = "- New: added a new {type} - {name} which {description}"
+NEW_RN_TEMPLATE = "- New: added a new {type} - {name} which {description}\n"
 GENERAL_DEPRECATED_RN = "- Deprecated ***{name}*** {type}. {replacement}.\n"
 GENERAL_BC = "- Breaking Changes: Deleted the **{name}** {value}.\n"
 DEPRECATED_ARGUMENT = (
@@ -85,7 +85,7 @@ DEPRECATED_ARGUMENT = (
 )
 ARGUMENT_BC = "- Breaking Changes: Updated the **{command_name}** to not use the `{argument_name}` argument.\n"
 DEPRECATED_CONTENT_ITEM_RN = "- Deprecated. {replacement}.\n"
-GENERAL_UPDATE_RN = "Updated the {name} {type} to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%."
+GENERAL_UPDATE_RN = "- Updated the {name} {type} to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
 
 
 def get_deprecated_comment_from_desc(description: str) -> str:
@@ -1150,7 +1150,6 @@ class UpdateRN:
                     _type, content_name, from_version
                 )
                 rn_desc += self.generate_rn_list_new_commands(changed_content_object)
-                rn_desc += "\n\n"
             else:
                 rn_desc = f"##### {content_name}\n\n"
                 if self.update_type == "documentation":
@@ -1159,9 +1158,11 @@ class UpdateRN:
                     rn_desc += generate_rn_for_updated_content_items(
                         changed_content_object
                     )
-                rn_desc += text or GENERAL_UPDATE_RN.format(
-                            name=(name or "%%UPDATE_CONTENT_ITEM_NAME%%"),
-                            type=(type or "%%UPDATE_CONTENT_ITEM_TYPE%%"))
+                    rn_desc += text or GENERAL_UPDATE_RN.format(
+                                name=(name or "%%UPDATE_CONTENT_ITEM_NAME%%"),
+                                type=(type or "%%UPDATE_CONTENT_ITEM_TYPE%%"))
+                else:
+                    rn_desc += '- %%UPDATE_RN%%\n'
 
 
         if docker_image:
@@ -1185,7 +1186,7 @@ class UpdateRN:
             rn_desc = "\n- Added the following commands:\n"
             new_commands = changed_content_object.commands
             for command in new_commands:
-                rn_desc += f"\t- ***{command.name_for_rn()}***\n"
+                rn_desc += f"\t- ***{command.name_for_rn()}***\n\n"
         return rn_desc
 
     def generate_rn_marketplaces_availability(self, _type, content_name, from_version):

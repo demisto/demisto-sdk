@@ -4,6 +4,9 @@ import platform
 import typer
 from dotenv import load_dotenv
 from pkg_resources import DistributionNotFound, get_distribution
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
 
 from demisto_sdk.commands.common.configuration import Configuration, DemistoSDK
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -251,6 +254,13 @@ def main(
     sdk.configuration = Configuration()  # Initialize the configuration
     ctx.obj = sdk  # Pass sdk instance to context
     load_dotenv(CONTENT_PATH / ".env", override=True)
+    if platform.python_version_tuple()[:2] == ("3", "9"):
+        message = typer.style(
+            "Warning: Demisto-SDK will soon stop supporting Python 3.9. Please update your python environment.",
+            fg=typer.colors.RED,
+        )
+        typer.echo(message)
+
     if platform.system() == "Windows":
         typer.echo(
             "Warning: Using Demisto-SDK on Windows is not supported. Use WSL2 or run in a container."
@@ -296,15 +306,31 @@ def show_version():
 
 
 def show_release_notes():
-    """Display release notes for the current version."""
+    """Display release notes for the currently installed demisto-sdk version."""
     current_version, _ = get_version_info()
     rn_entries = get_release_note_entries(current_version)
-
+    remote_changelog_referral = typer.style(
+        "See https://github.com/demisto/demisto-sdk/blob/master/CHANGELOG.md for the full demisto-sdk changelog",
+        fg=typer.colors.YELLOW,
+    )
     if rn_entries:
-        typer.echo("\nRelease notes for the current version:\n")
-        typer.echo(rn_entries)
+        # The Rich library centers Markdown headings by default.
+        # So the '###' prefix is removed temporary in this command so subtitles will be aligned to the left when printed.
+        rn_entries = rn_entries.replace("###", "")
+        md = Markdown(rn_entries, justify="left")
+        Console().print(
+            Panel(
+                md,
+                title_align="left",
+                subtitle_align="left",
+                subtitle=remote_changelog_referral,
+                title=f"Release notes of the currently installed demisto-sdk version: {current_version}.",
+            )
+        )
     else:
-        typer.echo("Could not retrieve release notes for this version.")
+        typer.echo(
+            f"Could not retrieve release notes for this version. {remote_changelog_referral}"
+        )
 
 
 if __name__ == "__main__":

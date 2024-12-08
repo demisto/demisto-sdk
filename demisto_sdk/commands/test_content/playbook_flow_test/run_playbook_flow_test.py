@@ -207,7 +207,7 @@ class BuildContext:
         servers_list = []
         for machine, assignment in self.machine_assignment_json.items():
             tests = [
-                Path(test)
+                BuildContext.edit_prefix(test)
                 for test in assignment.get("tests", {}).get(PLAYBOOKS_FLOW_TEST, [])
             ]
             if not tests:

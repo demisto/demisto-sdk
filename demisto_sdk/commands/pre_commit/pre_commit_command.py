@@ -235,6 +235,7 @@ class PreCommitRunner:
             precommit_env,
             verbose,
             command=["install-hooks"],
+            json_output_path=json_output_path
         )
 
         num_processes = cpu_count()

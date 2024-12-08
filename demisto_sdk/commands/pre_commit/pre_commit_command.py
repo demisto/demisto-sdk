@@ -362,7 +362,7 @@ class PreCommitRunner:
             )
             return ret_val
         ret_val = PreCommitRunner.run(
-            pre_commit_context, precommit_env, verbose, show_diff_on_failure
+            pre_commit_context, precommit_env, verbose, show_diff_on_failure, json_output_path
         )
         return ret_val
 
@@ -615,6 +615,7 @@ def pre_commit_manager(
         show_diff_on_failure,
         exclude_files,
         dry_run,
+        json_output_path
     )
 
 

@@ -126,19 +126,26 @@ def create_content_item_object(
             f'<yellow>Cannot get content item name: "{path}" file does not exist</yellow>'
         )
         return None
-    changed_content_item = BaseContent.from_path(path_object)
-    if changed_content_item and prev_ver and not is_new_file:
-        try:
-            old_obj = BaseContent.from_path(
-                path_object, git_sha=prev_ver, raise_on_exception=True
-            )
-            changed_content_item.old_base_content_object = old_obj
-        except Exception as e:
-            logger.error(
-                f"<red>Cannot create content object from origin/master with error {e}.</error>"
-            )
-            pass
-    return changed_content_item
+    changed_content_item = None
+    try:
+        changed_content_item = BaseContent.from_path(path_object)
+        if changed_content_item and prev_ver and not is_new_file:
+            try:
+                old_obj = BaseContent.from_path(
+                    path_object, git_sha=prev_ver, raise_on_exception=True
+                )
+                changed_content_item.old_base_content_object = old_obj
+            except Exception as e:
+                logger.error(
+                    f"<red>Cannot create old base content object from {prev_ver} with error {e}.</error>"
+                )
+                pass
+        return changed_content_item
+    except Exception as e:
+        logger.error(
+                    f"<red>Cannot create content object in path {path} with error {e}.</error>"
+                )
+        return None
 
 
 def rn_for_deleted_content(

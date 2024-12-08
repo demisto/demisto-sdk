@@ -188,12 +188,11 @@ class PackMetadata(BaseModel):
         collected_content_items: dict = {}
         content_displays: dict = {}
         for content_item in content_items:
-            if content_item.is_test:
+            if content_item.is_test or content_item.is_silent:
                 logger.debug(
-                    f"Skip loading the {content_item.name} test playbook/script into metadata.json"
+                    f"Skip loading the {content_item.name} test/silent playbook/script/trigger into metadata.json"
                 )
                 continue
-
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,

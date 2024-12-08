@@ -77,6 +77,10 @@ class YAMLContentItemParser(ContentItemParser):
         return get_value(self.yml_data, self.field_mapping.get("deprecated", ""), False)
 
     @property
+    def is_silent(self) -> bool:
+        return get_value(self.yml_data, 'isSilent', False)
+
+    @property
     def description(self) -> Optional[str]:
         description = get_value(
             self.yml_data, self.field_mapping.get("description", ""), ""

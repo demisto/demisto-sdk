@@ -1,0 +1,4 @@
+changes:
+- description: Determining logger setup via environment variable.
+  type: fix
+pr_number: 4695

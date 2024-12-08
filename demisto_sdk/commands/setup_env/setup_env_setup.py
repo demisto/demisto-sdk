@@ -3,6 +3,7 @@ from typing import Tuple
 
 import typer
 
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.setup_env.setup_environment import IDEType, setup_env
 
@@ -12,6 +13,7 @@ def setup_env_command(
     ctx: typer.Context,
     ide: str = typer.Option(
         "auto-detect",
+        "--ide",
         help="IDE type to configure the environment for. If not specified, "
         "the IDE will be auto-detected. Case-insensitive.",
     ),
@@ -23,29 +25,33 @@ def setup_env_command(
         "will configure the environment for the content repository.",
     ),
     create_virtualenv: bool = typer.Option(
-        False, help="Create a virtualenv for the environment."
+        False, "--create-virtualenv", help="Create a virtualenv for the environment."
     ),
     overwrite_virtualenv: bool = typer.Option(
         False,
+        "--overwrite-virtualenv",
         help="Overwrite existing virtualenvs. Relevant only if the 'create-virtualenv' flag is used.",
     ),
     secret_id: str = typer.Option(
         None,
+        "--secret-id",
         help="Secret ID to use for the Google Secret Manager instance. Requires the `DEMISTO_SDK_GCP_PROJECT_ID` "
         "environment variable to be set.",
     ),
     instance_name: str = typer.Option(
-        None, help="Instance name to configure in XSOAR / XSIAM."
+        None, "--instance-name", help="Instance name to configure in XSOAR / XSIAM."
     ),
     run_test_module: bool = typer.Option(
         False,
+        "--run-test-module",
         help="Whether to run test-module on the configured XSOAR / XSIAM instance.",
     ),
     clean: bool = typer.Option(
         False,
+        "--clean",
         help="Clean the repository of temporary files created by the 'lint' command.",
     ),
-    file_paths: Tuple[Path, ...] = typer.Argument(..., exists=True, resolve_path=True),
+    file_paths: Tuple[Path, ...] = typer.Argument(None, exists=True, resolve_path=True),
     console_log_threshold: str = typer.Option(
         None,
         "--console-log-threshold",
@@ -62,14 +68,13 @@ def setup_env_command(
     The setup-env command creates a content environment and integration/script environment.
     The command will configure VSCode and XSOAR/XSIAM instances for development and testing.
     """
-
     if ide.lower() == "auto-detect":
-        if (Path("CONTENT_PATH") / ".vscode").exists():
+        if (CONTENT_PATH / ".vscode").exists():
             typer.echo(
                 "Visual Studio Code IDEType has been detected and will be configured."
             )
             ide_type = IDEType.VSCODE
-        elif (Path("CONTENT_PATH") / ".idea").exists():
+        elif (CONTENT_PATH / ".idea").exists():
             typer.echo(
                 "PyCharm / IDEA IDEType has been detected and will be configured."
             )

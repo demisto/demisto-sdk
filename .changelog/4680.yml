@@ -1,4 +1,0 @@
-changes:
-- description: Added the deprecated merge-id-sets command to Typer app.
-  type: internal
-pr_number: 4680

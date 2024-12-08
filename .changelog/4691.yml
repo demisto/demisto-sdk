@@ -1,4 +1,0 @@
-changes:
-- description: fixed an issue where -t flag was missing from update-release-notes command setup
-  type: fix
-pr_number: 4691

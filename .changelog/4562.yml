@@ -1,0 +1,4 @@
+changes:
+- description: Updated the update-release-notes command to handle changes in scripts and integration (using the objects under content_graph).
+  type: feature
+pr_number: 4562

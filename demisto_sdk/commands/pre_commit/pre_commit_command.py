@@ -4,7 +4,6 @@ import re
 import subprocess
 import sys
 from collections import defaultdict
-from copy import deepcopy
 from functools import partial
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -56,6 +55,13 @@ SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 INTEGRATIONS_BATCH = 300
+
+
+def should_disable_multiprocessing():
+    disable_multiprocessing = os.getenv(
+        "DEMISTO_SDK_DISABLE_MULTIPROCESSING", "false"
+    ).lower() in ["true", "yes", "1"]
+    return disable_multiprocessing
 
 
 class PreCommitRunner:
@@ -256,11 +262,16 @@ class PreCommitRunner:
         all_hooks_exit_codes = []
         hooks_to_run = PreCommitRunner.original_hook_id_to_generated_hook_ids.items()
         logger.debug(f"run {hooks_to_run=}")
+
         for original_hook_id, generated_hooks in hooks_to_run:
             if generated_hooks:
                 logger.debug(f"Running hook {original_hook_id} with {generated_hooks}")
                 hook_ids = generated_hooks.hook_ids
-                if generated_hooks.parallel and len(hook_ids) > 1:
+                if (
+                    generated_hooks.parallel
+                    and len(hook_ids) > 1
+                    and not should_disable_multiprocessing()
+                ):
                     # We shall not write results to the same file if running hooks in parallel, therefore,
                     # writing the results to a parallel directory.
                     if json_output_path and not json_output_path.is_dir():
@@ -268,12 +279,11 @@ class PreCommitRunner:
                             json_output_path.parent / json_output_path.stem
                         )
                         json_output_path.mkdir(exist_ok=True)
-
                     with ThreadPool(num_processes) as pool:
                         current_hooks_exit_codes = pool.map(
                             partial(
                                 PreCommitRunner.run_hook,
-                                precommit_env=deepcopy(precommit_env),
+                                precommit_env=precommit_env,
                                 verbose=verbose,
                                 stdout=subprocess.PIPE,
                                 json_output_path=json_output_path,
@@ -439,10 +449,7 @@ def group_by_language(
     for integration_script_paths in more_itertools.chunked_even(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
-        disable_multiprocessing = os.getenv(
-            "DEMISTO_SDK_DISABLE_MULTIPROCESSING", "false"
-        ).lower() in ["true", "yes", "1"]
-        if disable_multiprocessing:
+        if should_disable_multiprocessing():
             # Run sequentially
             content_items = map(BaseContent.from_path, integration_script_paths)
         else:

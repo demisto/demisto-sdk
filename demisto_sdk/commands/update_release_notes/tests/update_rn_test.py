@@ -1587,7 +1587,7 @@ class TestRNUpdateUnit:
 
 ##### Sample IncidentField
 
-- %%UPDATE_RN%%
+- Updated the %%UPDATE_CONTENT_ITEM_NAME%% incident field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.
 
 ##### XDR Alerts
 
@@ -1609,11 +1609,11 @@ class TestRNUpdateUnit:
 
 ##### Cortex XDR - IR
 
-- %%UPDATE_RN%%
+- Updated the %%UPDATE_CONTENT_ITEM_NAME%% integration to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.
 
 ##### Sample
 
-- %%UPDATE_RN%%
+- Updated the %%UPDATE_CONTENT_ITEM_NAME%% integration to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.
 
 """
 

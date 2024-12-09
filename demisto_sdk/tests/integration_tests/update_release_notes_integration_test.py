@@ -127,7 +127,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     """
 
     expected_rn = (
-        "\n" + "#### Integrations\n\n" + "##### Azure Feed\n\n" + "- %%UPDATE_RN%%\n"
+        "\n" + "#### Integrations\n\n" + "##### Azure Feed\n\n" + "- Updated the Azure Feed integration to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
     )
 
     modified_files = {
@@ -200,7 +200,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     """
 
     expected_rn = (
-        "\n" + "#### Incident Fields\n\n" + "##### City\n\n" + "- %%UPDATE_RN%%\n"
+        "\n" + "#### Incident Fields\n\n" + "##### City\n\n" + "- Updated the City incident field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
     )
 
     runner = CliRunner(mix_stderr=False)
@@ -265,7 +265,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     """
 
     expected_rn = (
-        "\n" + "#### Integrations\n\n" + "##### VMware\n\n" + "- %%UPDATE_RN%%\n"
+        "\n" + "#### Integrations\n\n" + "##### VMware\n\n" + "- Updated the VMware integration to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
     )
 
     runner = CliRunner(mix_stderr=False)
@@ -371,7 +371,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
         + "\n"
         + "#### Incident Fields\n\n"
         + "##### City\n\n"
-        + "- %%UPDATE_RN%%\n"
+        + "- Updated the City incident field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
         + "\n"
     )
 

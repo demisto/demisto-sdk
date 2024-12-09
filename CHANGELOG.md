@@ -3,14 +3,14 @@
 ### Feature
 * Modified the ***demisto-sdk --release-notes*** command to print a markdown representation of the currently installed demisto-sdk changelog. [#4687](https://github.com/demisto/demisto-sdk/pull/4687)
 * Added support for a new pack version_config.json file. [#4699](https://github.com/demisto/demisto-sdk/pull/4699)
-* Modifying the `prepare-content` command to replace all occurrences of an incorrect marketplace reference in the content. [#4659](https://github.com/demisto/demisto-sdk/pull/4659)
+* Updated the `prepare-content` command to replace all occurrences of an incorrect marketplace reference in the content. [#4659](https://github.com/demisto/demisto-sdk/pull/4659)
 * The Demisto-SDK CLI has been upgraded to use Typer for command-line interface (CLI) management. [#4637](https://github.com/demisto/demisto-sdk/pull/4637)
-* Added isSilent key to the Playbook and Trigger schemas. [#4689](https://github.com/demisto/demisto-sdk/pull/4689)
-* The GR107 validation now fails once on each item and the message contains all deprecated item used, instead of failing multiple times. [#4667](https://github.com/demisto/demisto-sdk/pull/4667)
+* Added an isSilent key to the Playbook and Trigger schemas. [#4689](https://github.com/demisto/demisto-sdk/pull/4689)
+* Updated the GR107 validation to fail once on each item, and the message will contain all deprecated items in use instead of failing multiple times. [#4667](https://github.com/demisto/demisto-sdk/pull/4667)
 
 ### Fix
 * YmlSplitter fix. [#4695](https://github.com/demisto/demisto-sdk/pull/4695)
-* fixed an issue where -t flag was missing from update-release-notes command setup [#4691](https://github.com/demisto/demisto-sdk/pull/4691)
+* Fixed an issue where -t flag was missing from update-release-notes command setup [#4691](https://github.com/demisto/demisto-sdk/pull/4691)
 * Fixed an issue where RN108 validation raised an exception when executed on a new pack. [#4700](https://github.com/demisto/demisto-sdk/pull/4700)
 * Fixed an issue in the **validate** command where new files could not be parsed. [#4700](https://github.com/demisto/demisto-sdk/pull/4700)
 * Fixed an issue in the **validate** command where .pack-ignore files could not be parsed. [#4700](https://github.com/demisto/demisto-sdk/pull/4700)

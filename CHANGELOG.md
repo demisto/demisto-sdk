@@ -9,14 +9,14 @@
 * Updated the GR107 validation to fail once on each item, and the message will contain all deprecated items in use instead of failing multiple times. [#4667](https://github.com/demisto/demisto-sdk/pull/4667)
 
 ### Fix
-* YmlSplitter fix. [#4695](https://github.com/demisto/demisto-sdk/pull/4695)
+* Fixed an issue where YmlSplitter attributes were being unintentionally updated. [#4695](https://github.com/demisto/demisto-sdk/pull/4695)
 * Fixed an issue where -t flag was missing from update-release-notes command setup [#4691](https://github.com/demisto/demisto-sdk/pull/4691)
 * Fixed an issue where RN108 validation raised an exception when executed on a new pack. [#4700](https://github.com/demisto/demisto-sdk/pull/4700)
 * Fixed an issue in the **validate** command where new files could not be parsed. [#4700](https://github.com/demisto/demisto-sdk/pull/4700)
 * Fixed an issue in the **validate** command where .pack-ignore files could not be parsed. [#4700](https://github.com/demisto/demisto-sdk/pull/4700)
 * Fixed an issue where using the `-i` flag with **setup-env** would fail. [#4690](https://github.com/demisto/demisto-sdk/pull/4690)
 * Fixed an issue where the *generate-docs* command failed to ignore hidden parameters. [#4589](https://github.com/demisto/demisto-sdk/pull/4589)
-* Determining logger setup via environment variable. [#4695](https://github.com/demisto/demisto-sdk/pull/4695)
+* Fixed an issue where logger was not initialized properly. [#4695](https://github.com/demisto/demisto-sdk/pull/4695)
 * Fixed an issue where validate GR107 was failing on unrelated content-item when running on deprecated content-items. [#4667](https://github.com/demisto/demisto-sdk/pull/4667)
 
 ### Internal

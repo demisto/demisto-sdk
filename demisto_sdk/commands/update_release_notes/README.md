@@ -1,12 +1,14 @@
 ## Update Release Notes
 
+### Overview
+
 Automatically generates release notes for a given pack and updates the `pack_metadata.json` version for changed items.
 
 This command creates a new release notes file under the ReleaseNotes directory in the given pack in the form of X_Y_Z.md where X_Y_Z is the new pack version. The command automatically bumps the `currentVersion` found in the `pack_metadata.json` file. After running this command, add the newly created release notes file to GitHub and add your notes under their respective headlines.
 
 For a private repository and an unconfigured DEMISTO_SDK_GITHUB_TOKEN, remote files are fetched from the remote branch of the local repo.
 
-### Arguments
+### Options
 * **-i, --input**
 
     The path of the content pack you wish to generate release notes for.

@@ -49,8 +49,13 @@ def split(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
-    """Split the code, image and description files from a Demisto integration or script yaml file
-    to multiple files (To a package format - https://demisto.pan.dev/docs/package-dir).
+    """
+    Splits downloaded scripts, integrations and generic module files into multiple files.
+    Integrations and scripts are split into the package format.
+    Generic modules have their dashboards split into separate files and modify the module to the content repository standard.
+
+    Files are stored in the content repository in a directory format, which enables performing extensive code validations and maintaining a more stable code base.
+    For more details [see](https://xsoar.pan.dev/docs/integrations/package-dir).
     """
     sdk = ctx.obj
 

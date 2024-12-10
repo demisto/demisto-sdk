@@ -1,5 +1,7 @@
 ## Run playbook
 
+### Overview
+
 This command runs the given playbook in Cortex XSOAR or Cortex XSIAM.
 
 In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Cortex XSOAR/XSIAM instance URL,
@@ -21,7 +23,7 @@ In order to set Demisto SDK to work with Cortex XSOAR instance, you need to dele
 unset XSIAM_AUTH_ID
 ```
 
-**Arguments**:
+### Options
 * **-u, --url** URL to a XSOAR instance. If not provided, the url will be taken from DEMISTO_BASE_URL environment variable.
 * **-p, --playbook_id** The ID of the playbook to run.
 * **-t, --timeout** Timeout for the command in seconds.The playbook will continue to run in Cortex XSOAR/Cortex XSIAM. The default is 90 seconds.

@@ -4366,11 +4366,14 @@ def get_pack_latest_rn_version(pack_path: str, git_sha: Optional[str] = None) ->
     Return:
         (str): The lastest version of RN.
     """
+    rns_dir_path = f"{pack_path}/ReleaseNotes"
     if git_sha:
         git_util = GitUtil.from_content_path()
-        list_of_files = git_util.list_files_in_dir(f"{pack_path}/ReleaseNotes", git_sha)
+        if not git_util.is_file_exist_in_commit_or_branch(rns_dir_path, git_sha):
+            return ""
+        list_of_files = git_util.list_files_in_dir(rns_dir_path, git_sha)
     else:
-        list_of_files = glob.glob(f"{pack_path}/ReleaseNotes/*")
+        list_of_files = glob.glob(f"{rns_dir_path}/*")
     list_of_release_notes = [
         Path(file).name for file in list_of_files if Path(file).suffix == ".md"
     ]

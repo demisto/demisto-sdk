@@ -68,7 +68,12 @@ def openapi_codegen(
     ),
 ):
     """
-    Generates a Cortex XSOAR integration from an OpenAPI specification file. Creates a config file on first run; run again with modified config.
+    It is possible to generate a Cortex XSOAR integration package (YAML and Python files) with a dedicated tool in the Cortex XSOAR (demisto) SDK.
+    The integration will be usable right away after generation.
+
+    **Requirements**
+    * OpenAPI (Swagger) specification file (v2.0 is recommended) in JSON format.
+    * Cortex XSOAR (demisto) SDK
     """
     # Ensure output directory exists
     if not output_dir.exists():

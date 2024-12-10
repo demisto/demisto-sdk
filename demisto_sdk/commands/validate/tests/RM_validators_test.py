@@ -1166,6 +1166,7 @@ def test_ImagePathIntegrationValidator_content_assets():
             readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
             " ![Example Image](https://www.example.com/images/example_image.jpg)\n"
             "![Example Image](https://www.example.com/content_assets/example_image.jpg)\n"
+            "<img src='../../doc_files/58381182-d8408200-7fc2-11e9-8726-8056cab1feea.png'\n"
             "![Example Image](https://www.example.com/content_assets/example_image.gif)\n",
             description_content="valid description ![Example Image](../../content/image.jpg)",
         ),

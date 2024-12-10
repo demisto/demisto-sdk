@@ -368,7 +368,7 @@ def run_playbook_flow_test_pytest(
     test_dir = playbook_flow_test_directory.parent
     copy_conftest(test_dir)
 
-
+    logger.info(f'before sending pytest {str(xsiam_client.base_url)}')
     pytest_args = [
         f"--client_conf=base_url={str(xsiam_client.base_url)},api_key={xsiam_client.api_key},auth_id={xsiam_client.auth_id}",
         str(playbook_flow_test_directory),

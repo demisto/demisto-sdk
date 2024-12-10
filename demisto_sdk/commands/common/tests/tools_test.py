@@ -666,7 +666,7 @@ class TestGetRemoteFileLocally:
     FILE_NAME = "somefile.json"
     FILE_CONTENT = '{"id": "some_file"}'
 
-    git_util = Content.git_util()
+    git_util = GitUtil.from_content_path()
     main_branch = DEMISTO_GIT_PRIMARY_BRANCH
 
     def setup_method(self):

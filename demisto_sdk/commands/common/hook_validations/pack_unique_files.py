@@ -131,7 +131,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.metadata_content: Dict = dict()
 
         if not prev_ver:
-            git_util = Content.git_util()
+            git_util = GitUtil.from_content_path()
             main_branch = git_util.handle_prev_ver()[1]
             self.prev_ver = (
                 f"{DEMISTO_GIT_UPSTREAM}/{main_branch}"

@@ -7,6 +7,7 @@ from typing import Optional
 from packaging import version
 from packaging.version import Version
 
+from commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     ASSETS_MODELING_RULE,
@@ -306,7 +307,7 @@ class ContentEntityValidator(BaseValidator):
         Returns:
             (bool): is release branch
         """
-        git_util = Content.git_util()
+        git_util = GitUtil.from_content_path()
         main_branch = git_util.handle_prev_ver()[1]
         if not main_branch.startswith(DEMISTO_GIT_UPSTREAM):
             main_branch = f"{DEMISTO_GIT_UPSTREAM}/" + main_branch

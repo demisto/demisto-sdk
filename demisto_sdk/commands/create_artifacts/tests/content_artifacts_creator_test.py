@@ -6,6 +6,7 @@ from typing import List
 
 import pytest
 
+from commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
     TEST_PLAYBOOKS_DIR,
@@ -132,7 +133,7 @@ def mock_git(mocker):
 
     # Mock git working directory
     mocker.patch.object(Content, "git_util")
-    Content.git_util().repo.working_tree_dir = TEST_CONTENT_REPO
+    GitUtil.from_content_path().repo.working_tree_dir = TEST_CONTENT_REPO
     yield
 
 
@@ -401,7 +402,7 @@ def mock_single_pack_git(mocker):
 
     # Mock git working directory
     mocker.patch.object(Content, "git_util")
-    Content.git_util().repo.working_tree_dir = (
+    GitUtil.from_content_path().repo.working_tree_dir = (
         TEST_DATA / "content_repo_with_alternative_fields"
     )
     yield

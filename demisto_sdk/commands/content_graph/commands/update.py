@@ -98,7 +98,7 @@ def update_content_graph(
         logger.info("A path to import the graph from was not provided, using git")
         use_git = True
 
-    git_util = Content.git_util()
+    git_util = GitUtil.from_content_path()
     is_external_repo = is_external_repository()
 
     if is_external_repo:

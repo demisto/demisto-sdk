@@ -55,30 +55,9 @@ class Content:
             1. Add attribute which init only changed objects by git.
         """
         try:
-            return Content(str(cls.git_util().repo.working_tree_dir))
+            return Content(str(GitUtil.from_content_path().repo.working_tree_dir))
         except InvalidGitRepositoryError:
             return Content(Path.cwd())
-
-    @staticmethod
-    def git_util() -> GitUtil:
-        """Git Util object.
-
-        Returns:
-            Repo: Repo object of content repo if exists else retun None.
-
-        References:
-            1. GitPython - https://github.com/gitpython-developers/GitPython
-
-        Notes:
-            1. Should be called when cwd inside content repository.
-        """
-        if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
-            git_util = GitUtil(Path(content_path))
-            logger.debug(f"Using content path: {content_path}")
-        else:
-            git_util = GitUtil(search_parent_directories=True)
-
-        return git_util
 
     @property
     def path(self) -> Path:

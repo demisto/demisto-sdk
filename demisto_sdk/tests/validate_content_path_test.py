@@ -38,7 +38,6 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidSuffix,
     InvalidXDRCTemplatesFileName,
     InvalidXSIAMDashboardFileName,
-    InvalidXSIAMItemName,
     InvalidXSIAMParsingRuleFileName,
     InvalidXSIAMReportFileName,
     PathIsFolder,

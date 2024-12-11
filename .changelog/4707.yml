@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the created date would conflict with the system field with the same name.
+  type: fix
+pr_number: 4707

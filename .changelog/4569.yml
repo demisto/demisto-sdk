@@ -1,0 +1,4 @@
+changes:
+- description: Moved the CR101 validation to `validate_content_path`
+  type: feature
+pr_number: 4569

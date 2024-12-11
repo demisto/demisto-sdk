@@ -57,6 +57,7 @@ class Test(StrictBaseModel):
     marketplaces: Optional[MarketplaceVersions] = None
 
     @validator("fromversion", "toversion")
+    @classmethod
     def validate_version(cls, v):
         Version(v)
 

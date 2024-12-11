@@ -768,6 +768,9 @@ class ContentEntityValidator(BaseValidator):
         data = get_yaml(self.file_path)
         rule_id = data.get("id", "")
         rule_name = data.get("name", "")
+        id_suffix = name_suffix = invalid_suffix_function = (
+            ""  # avoid usage before assignment
+        )
 
         if rule_type == MODELING_RULE:
             id_suffix = MODELING_RULE_ID_SUFFIX

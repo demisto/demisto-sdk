@@ -544,12 +544,11 @@ class TestFormatting:
         user_input.side_effect = user_responses
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        with pytest.raises(typer.Exit):
-            res = format_manager(input=target, output=target)
-            Path(target).unlink()
-            os.rmdir(path)
-
-            assert res is answer
+        with pytest.raises(typer.Exit) as e:
+            format_manager(input=target, output=target)
+        assert e.value.exit_code == 0
+        Path(target).unlink()
+        os.rmdir(path)
 
     @pytest.mark.parametrize("source_path", [SOURCE_FORMAT_PLAYBOOK_COPY])
     def test_remove_unnecessary_keys_from_playbook(self, source_path):
@@ -694,19 +693,17 @@ class TestFormatting:
             SOURCE_FORMAT_INTEGRATION_VALID,
             DESTINATION_FORMAT_INTEGRATION,
             INTEGRATION_PATH,
-            0,
         ),
         (
             SOURCE_FORMAT_INTEGRATION_INVALID,
             DESTINATION_FORMAT_INTEGRATION,
             INTEGRATION_PATH,
-            0,
         ),
     ]
 
-    @pytest.mark.parametrize("source, target, path, answer", FORMAT_FILES_FETCH)
+    @pytest.mark.parametrize("source, target, path", FORMAT_FILES_FETCH)
     def test_set_fetch_params_in_config(
-        self, mocker, source, target, path, answer, monkeypatch
+        self, mocker, source, target, path, monkeypatch
     ):
         """
         Given
@@ -735,19 +732,19 @@ class TestFormatting:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         monkeypatch.setattr("builtins.input", lambda _: "N")
-        with pytest.raises(typer.Exit):
-            res = format_manager(input=target, assume_answer=True)
-            with open(target) as f:
-                yaml_content = yaml.load(f)
-            params = yaml_content["configuration"]
-            for param in params:
-                if "defaultvalue" in param and param["name"] != "feed":
-                    param.pop("defaultvalue")
-            for param in INCIDENT_FETCH_REQUIRED_PARAMS:
-                assert param in yaml_content["configuration"]
-            Path(target).unlink()
-            os.rmdir(path)
-            assert res is answer
+        with pytest.raises(typer.Exit) as e:
+            format_manager(input=target, assume_answer=True)
+        assert e.value.exit_code == 0
+        with open(target) as f:
+            yaml_content = yaml.load(f)
+        params = yaml_content["configuration"]
+        for param in params:
+            if "defaultvalue" in param and param["name"] != "feed":
+                param.pop("defaultvalue")
+        for param in INCIDENT_FETCH_REQUIRED_PARAMS:
+            assert param in yaml_content["configuration"]
+        Path(target).unlink()
+        os.rmdir(path)
 
     FORMAT_FILES_FEED = [
         (FEED_INTEGRATION_VALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0),
@@ -782,24 +779,25 @@ class TestFormatting:
         )
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        with pytest.raises(typer.Exit):
-            res = format_manager(input=target, clear_cache=True, assume_answer=True)
-            with open(target) as f:
-                yaml_content = yaml.load(f)
-                params = yaml_content["configuration"]
-                for counter, param in enumerate(params):
-                    if "defaultvalue" in param and param["name"] != "feed":
-                        params[counter].pop("defaultvalue")
-                    if "hidden" in param:
-                        param.pop("hidden")
-                for param_details in FEED_REQUIRED_PARAMS:
-                    param = {"name": param_details.get("name")}
-                    param.update(param_details.get("must_equal", dict()))
-                    param.update(param_details.get("must_contain", dict()))
-                    assert param in params
-            Path(target).unlink()
-            os.rmdir(path)
-            assert res is answer
+        with pytest.raises(typer.Exit) as e:
+            format_manager(input=target, clear_cache=True, assume_answer=True)
+        assert e.value.exit_code == answer
+
+        with open(target) as f:
+            yaml_content = yaml.load(f)
+            params = yaml_content["configuration"]
+            for counter, param in enumerate(params):
+                if "defaultvalue" in param and param["name"] != "feed":
+                    params[counter].pop("defaultvalue")
+                if "hidden" in param:
+                    param.pop("hidden")
+            for param_details in FEED_REQUIRED_PARAMS:
+                param = {"name": param_details.get("name")}
+                param.update(param_details.get("must_equal", dict()))
+                param.update(param_details.get("must_contain", dict()))
+                assert param in params
+        Path(target).unlink()
+        os.rmdir(path)
 
     def test_set_feed_params_in_config_with_default_value(self):
         """
@@ -999,8 +997,7 @@ class TestFormatting:
             "integration-VMware.yml",
         )
         formatter = IntegrationYMLFormat(input=integration_yml_path, output="")
-        res = formatter.update_tests()
-        assert res is None
+        formatter.update_tests()
         assert formatter.data.get("tests") == ["VMWare Test"]
 
     def test_format_beta_integration(self):

@@ -124,9 +124,9 @@ def create_automation_task(
         "task": {
             "id": str(_id),
             "version": -1,
-            "name": automation_name,
+            "name": automation_name,  # pylint: disable=E0606
             "description": "",
-            "script": script_name,
+            "script": script_name,  # pylint: disable=E0606
             "type": "regular",
             "iscommand": True,
             "brand": "",

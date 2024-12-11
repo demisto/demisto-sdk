@@ -24,6 +24,7 @@ class EventLog(BaseModel):
     expected_values: Optional[Dict[str, Any]] = {}
 
     @validator("test_data_event_id")
+    @classmethod
     def validate_test_data(cls, v):
         v = uuid4()
         return v
@@ -34,6 +35,7 @@ class TestData(BaseModel):
     ignored_validations: List[str] = []
 
     @validator("data", each_item=True)
+    @classmethod
     def validate_expected_values(cls, v):
         for k in v.expected_values.keys():
             if k == "_time":  # '_time' is a special field without the 'xdm.' prefix.
@@ -44,6 +46,7 @@ class TestData(BaseModel):
         return v
 
     @validator("ignored_validations")
+    @classmethod
     def validate_ignored_validations(cls, v):
         provided_ignored_validations = set(v)
         valid_ignored_validations = Validations.as_set()
@@ -59,6 +62,7 @@ class TestData(BaseModel):
 
 
 class CompletedTestData(TestData):
+    @classmethod
     @validator("data")
     def validate_expected_values(cls, v):
         for test_data_event in v:
@@ -75,6 +79,7 @@ class CompletedTestData(TestData):
         return v
 
     @validator("data")
+    @classmethod
     def validate_event_data(cls, v):
         for test_data_event in v:
             if not test_data_event.event_data:

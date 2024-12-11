@@ -168,7 +168,7 @@ class CustomContactSolver(ContractSolver):
                 directory_path=directory_path,
                 client_ast=client_ast,
                 example_dict=example_dict,
-                id=self.id,
+                id=self.id,  # pylint: disable=E1101
             )
 
             # Compose args mock
@@ -202,7 +202,7 @@ class CustomContactSolver(ContractSolver):
             test_case.decorators = decorator
             test_case.global_arg = global_args
 
-            self.id += 1
+            self.id += 1  # pylint: disable=E1101
             self.context.no_cache = False
             return test_case
 

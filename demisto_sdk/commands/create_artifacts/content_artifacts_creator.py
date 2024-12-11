@@ -69,8 +69,10 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import arg_to_list, open_id_set_file
-
-from .artifacts_report import ArtifactsReport, ObjectReport
+from demisto_sdk.commands.create_artifacts.artifacts_report import (
+    ArtifactsReport,
+    ObjectReport,
+)
 
 ####################
 # Global variables #

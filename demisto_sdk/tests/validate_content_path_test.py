@@ -40,6 +40,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidXSIAMDashboardFileName,
     InvalidXSIAMItemName,
     InvalidXSIAMParsingRuleFileName,
+    InvalidXSIAMReportFileName,
     PathIsFolder,
     PathIsTestData,
     PathIsUnified,
@@ -88,7 +89,7 @@ def test_xsiam_report_file_valid():
 def test_xsiam_report_file_invalid(file_prefix: str, suffix: str):
     pack_name = "myPack"
     pack_path = Path("content", "Packs", pack_name)
-    with pytest.raises(InvalidXSIAMItemName):
+    with pytest.raises(InvalidXSIAMReportFileName):
         _validate(pack_path / XSIAM_REPORTS_DIR / f"{file_prefix}_Report.{suffix}")
 
 

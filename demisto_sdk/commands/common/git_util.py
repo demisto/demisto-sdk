@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional, Sequence, Set, Tuple, Union
@@ -18,7 +19,7 @@ from git.remote import Remote
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
-    PACKS_FOLDER,
+    PACKS_FOLDER, ISO_TIMESTAMP_FORMAT,
 )
 from demisto_sdk.commands.common.logger import logger
 
@@ -1194,3 +1195,10 @@ class GitUtil:
             logger.debug(f"Staged file '{file_path}'")
         else:
             logger.error(f"File '{file_path}' doesn't exist. Not adding.")
+
+    def get_file_creation_date(self, file_path=None):
+        commits = list(self.repo.iter_commits(paths=file_path))
+        if commits:
+            first_commit = commits[-1]
+            return first_commit.authored_datetime.strftime(ISO_TIMESTAMP_FORMAT)
+        return datetime.now().strftime(ISO_TIMESTAMP_FORMAT)

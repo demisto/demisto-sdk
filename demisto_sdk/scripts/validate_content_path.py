@@ -182,19 +182,19 @@ class InvalidXSIAMItemName(InvalidPathException):
     )
 
 
-class InvalidXSIAMDashboardFileName(InvalidXSIAMItemName):
+class InvalidXSIAMDashboardFileName(InvalidPathException):
     message = "Only .json and .png file extension are supported for XSIAM dashboard. File must be named  <pack_name>_<dashboard_name>.json."
 
 
-class InvalidCorrelationRuleFileName(InvalidXSIAMItemName):
+class InvalidCorrelationRuleFileName(InvalidPathException):
     message = "Only .yml files are supported for Correlation Rules. File names must start with `<pack_name>_-`"
 
 
-class InvalidXSIAMParsingRuleFileName(InvalidXSIAMItemName):
+class InvalidXSIAMParsingRuleFileName(InvalidPathException):
     message = "Only .yml and .xif file extension are supported for XSIAM Parsing Rule. File must be named as the parent folder name."
 
 
-class InvalidXSIAMReportFileName(InvalidXSIAMItemName):
+class InvalidXSIAMReportFileName(InvalidPathException):
     message = "Only .json and .png file extension are supported for XSIAM report. File must be named  <pack_name>_<report_name>.json."
 
 

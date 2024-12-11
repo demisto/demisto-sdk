@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where Threat Intel layouts created in the UI would fail when uploaded using the SDK upload command.
-  type: fix
-pr_number: 4548

@@ -4,23 +4,18 @@ This is the modified version where a new command "akamai-update-network-list-ele
 
 ## Configure Akamai WAF on Cortex XSOAR
 
-1. Navigate to **Settings** > **Integrations** > **Servers & Services**.
-2. Search for Akamai WAF.
-3. Click **Add instance** to create and configure a new integration instance.
 
-    | **Parameter** | **Required** |
-    | --- | --- |
-    | Server URL (e.g., https://example.net) | True |
-    | Client token | False |
-    | Access token | False |
-    | Client secret | False |
-    | Client token | False |
-    | Access token | False |
-    | Client secret | False |
-    | Trust any certificate (not secure) | False |
-    | Use system proxy settings | False |
-
-4. Click **Test** to validate the URLs, token, and connection.
+| **Parameter** | **Required** |
+| --- | --- |
+| Server URL (e.g., https://example.net) | True |
+| Client token | False |
+| Access token | False |
+| Client secret | False |
+| Client token | False |
+| Access token | False |
+| Client secret | False |
+| Trust any certificate (not secure) | False |
+| Use system proxy settings | False |
 
 ## Commands
 

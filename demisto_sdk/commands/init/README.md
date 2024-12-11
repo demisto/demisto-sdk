@@ -1,34 +1,33 @@
 ## init
+### Overview
 Create a pack, integration or script template.
 
-**Use-Cases**
-* This command is used to ease the initial creation of a pack, integration or a script.
 
-**Arguments**:
+### Options
 * **-n, --name**
-The name given to the files and directories of new pack/integration/script being created
+The name given to the files and directories of new pack/integration/script being created.
 * **--id**
-The id used for the yml file of the integration/script
+The ID used for the integration/script YAML file.
 * **-o, --output**
-The output directory to which the created object will be saved
+The output directory to which the created object will be saved. The default one is the current working directory.
 * **--integration**
-Create an integration
+Create an integration.
 * **--script**
-Create a script
+Create a script.
 * **--pack**
-Create a pack
+Create a pack and its subdirectories.
 * **-t, --template**
 Create an Integration/Script based on a specific template.</br>
 Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.</br>
 Script template options: HelloWorldScript
-* **-a, --author_image** For pack only: The path of author image will be presented in marketplace
+* **-a, --author_image** The path of author image will be presented in marketplace
 under PUBLISHER section. File should be up to 4kb and in the dimensions of 120x50.
 * **--demisto_mock**
 Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.
 * **--common-server**
 Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.
 * **--xsiam**
-Create an Event Collector based on a template, and create matching sub directories.
+Create an Event Collector based on a template, and create matching subdirectories.
 
 **Notes**
 * If `integration` or `script` not set - the command will automatically create a pack, even if `pack` was not set.
@@ -55,29 +54,29 @@ The pack/integration/script will be created in your current working directory.
 
 `demisto-sdk init -n My_Pack`
 
-This will create a new pack named "My_Pack" under the "Packs" directory in content repo.
+Creates a new pack named "My_Pack" under the "Packs" directory in content repository.
 
 
 `demisto-sdk init --integration -n MyNewIntegration -o path/to/my/dir`
 
-This will create a new integration template named MyNewIntegration within "path/to/my/dir" directory.
+Creates a new integration template named MyNewIntegration within "path/to/my/dir" directory.
 
 
 `demisto-sdk init --script --id "My Script ID" -n MyScript`
 
-This will create a named "MyScript" under the "Scripts" directory and the yml file will have the id "My Script ID".
+Creates a named "MyScript" under the "Scripts" directory and the yml file will have the id "My Script ID".
 
 
 `demisto-sdk init --pack -n My_Pack -a path/yourAuthorImage.png`
 
-This will create a new pack named "My_Pack" under the "Packs" directory in content repo, and add an author image that
+Creates a new pack named "My_Pack" under the "Packs" directory in content repo, and add an author image that
 will be presented under PUBLISHER section in marketplace. Image file will be created under pack root directory.
 
 `demisto-sdk init --pack -n My_Pack --xsiam`
 
-This will create a new pack named "My_Pack" under the "Packs" directory in content repo, and add the relevant empty XSIAM directories under "My_Pack" directory.
+Creates a new pack named "My_Pack" under the "Packs" directory in content repo, and add the relevant empty XSIAM directories under "My_Pack" directory.
 
 `demisto-sdk init --integration -n MyNewIntegration -o path/Packs/My_Pack/Integration --xsiam`
 
-This will create a new integration named MyNewIntegrationEventCollector within "path/Packs/My_Pack/Integration" directory,
+Creates a new integration named MyNewIntegrationEventCollector within "path/Packs/My_Pack/Integration" directory,
 In addition, this will create the relevant folders and files for parsing rules and modeling rules under My_Pack.

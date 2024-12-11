@@ -5,6 +5,7 @@ from typing import Optional
 from unittest.mock import patch
 
 import pytest
+import typer
 
 from demisto_sdk.commands.format import (
     update_dashboard,
@@ -174,11 +175,12 @@ class TestFormattingJson:
     def test_format_file(self, source, target, path, answer):
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, output=target, use_graph=False)
-        shutil.rmtree(target, ignore_errors=True)
-        shutil.rmtree(path, ignore_errors=True)
+        with pytest.raises(typer.Exit):
+            res = format_manager(input=target, output=target, use_graph=False)
+            shutil.rmtree(target, ignore_errors=True)
+            shutil.rmtree(path, ignore_errors=True)
 
-        assert res is answer
+            assert res is answer
 
     @pytest.mark.parametrize(
         "source, target, path, answer", FORMAT_FILES_OLD_FROMVERSION
@@ -198,12 +200,12 @@ class TestFormattingJson:
         shutil.copyfile(source, target)
 
         monkeypatch.setattr("builtins.input", lambda: "N")
+        with pytest.raises(typer.Exit):
+            res = format_manager(input=target, output=target, use_graph=False)
+            shutil.rmtree(target, ignore_errors=True)
+            shutil.rmtree(path, ignore_errors=True)
 
-        res = format_manager(input=target, output=target, use_graph=False)
-        shutil.rmtree(target, ignore_errors=True)
-        shutil.rmtree(path, ignore_errors=True)
-
-        assert res is answer
+            assert res is answer
 
     @pytest.mark.parametrize("invalid_output", [INVALID_OUTPUT_PATH])
     def test_output_file(self, invalid_output):
@@ -981,16 +983,19 @@ class TestFormattingList:
 class TestFormattingClassifier:
     @pytest.fixture(autouse=True)
     def classifier_copy(self):
+        # Ensure the path exists
         os.makedirs(CLASSIFIER_PATH, exist_ok=True)
-        yield shutil.copyfile(SOURCE_FORMAT_CLASSIFIER, DESTINATION_FORMAT_CLASSIFIER)
-        Path(DESTINATION_FORMAT_CLASSIFIER).unlink()
-        os.rmdir(CLASSIFIER_PATH)
+        # Copy the file and yield the destination path as a string
+        shutil.copyfile(SOURCE_FORMAT_CLASSIFIER, DESTINATION_FORMAT_CLASSIFIER)
+        yield str(DESTINATION_FORMAT_CLASSIFIER)
+        # Cleanup all contents of the directory
+        shutil.rmtree(CLASSIFIER_PATH, ignore_errors=True)
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture
     def classifier_formatter(self, classifier_copy):
         yield ClassifierJSONFormat(
             input=classifier_copy,
-            output=DESTINATION_FORMAT_CLASSIFIER,
+            output=classifier_copy,
             clear_cache=True,
             path=CLASSIFIER_SCHEMA_PATH,
         )

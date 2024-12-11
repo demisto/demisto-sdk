@@ -19,7 +19,7 @@ NEO4J_DIR = PROJECT_DATA_DIR / "neo4j"
 
 LOG_FILE_NAME = "demisto_sdk_debug.log"
 
-NEO4J_DEFAULT_VERSION = "5.13.0"
+NEO4J_DEFAULT_VERSION = "5.22.0"
 
 # --- Environment Variables ---
 # General
@@ -31,6 +31,10 @@ DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
     "CI_PROJECT_ID", "1061"
 )  # Default value is the ID of the content repo on GitLab
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
+SDK_OFFLINE_ERROR_MESSAGE = (
+    "<red>An internet connection is required for this command. If connected to the "
+    "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.</red>"
+)
 
 DEFAULT_DOCKER_REGISTRY_URL = "docker.io"
 DOCKER_REGISTRY_URL = os.getenv(
@@ -933,6 +937,7 @@ PACKS_README_FILE_NAME = INTEGRATIONS_README_FILE_NAME = SCRIPTS_README_FILE_NAM
     "README.md"
 )
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
+PACKS_VERSION_CONFIG_FILE_NAME = "version_config.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
 GIT_IGNORE_FILE_NAME = ".gitignore"
@@ -1263,6 +1268,7 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "doc_files",
     "doc_imgs",
     ".secrets-ignore",
+    "version_config.json",  # TODO: remove and validate this file CIAC-12331
 )
 
 
@@ -1331,6 +1337,13 @@ CONTENT_RELEASE_TAG_REGEX = r"^\d{2}\.\d{1,2}\.\d"
 RELEASE_NOTES_REGEX = (
     re.escape(UNRELEASE_HEADER)
     + r"([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}"
+)
+CONTENT_TYPE_SECTION_REGEX = re.compile(
+    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)", re.M
+)
+CONTENT_ITEM_SECTION_REGEX = re.compile(
+    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$",
+    re.M,
 )
 
 # pack contributors template

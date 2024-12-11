@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.tools import get_all_content_objects_paths_in_dir
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -90,9 +90,10 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
     ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         file_paths_to_validate = (
-            get_all_content_objects_paths_in_dir(
-                str(content_item.path) for content_item in content_items
-            )
+            [
+                str(content_item.path.relative_to(CONTENT_PATH))
+                for content_item in content_items
+            ]
             if not validate_all_files
             else []
         )
@@ -101,22 +102,19 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
         )
 
         for content_item in uses_unknown_content:
-            if (
-                "GR103" not in content_item.ignored_errors
-            ):  # filter out content items that have GR103 ignored (the graph returns all usages)
-                names_of_unknown_items = [
-                    relationship.content_item_to.object_id
-                    or relationship.content_item_to.name
-                    for relationship in content_item.uses
-                ]
-                results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            content_item.name,
-                            ", ".join(f"'{name}'" for name in names_of_unknown_items),
-                        ),
-                        content_object=content_item,
-                    )
+            names_of_unknown_items = [
+                relationship.content_item_to.object_id
+                or relationship.content_item_to.name
+                for relationship in content_item.uses
+            ]
+            results.append(
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message.format(
+                        content_item.name,
+                        ", ".join(f"'{name}'" for name in names_of_unknown_items),
+                    ),
+                    content_object=content_item,
                 )
+            )
         return results

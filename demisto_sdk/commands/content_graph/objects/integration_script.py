@@ -75,6 +75,7 @@ class IntegrationScript(ContentItem):
     code: Optional[str] = Field(None, exclude=True)
     unified_data: dict = Field(None, exclude=True)
     version: Optional[int] = 0
+    tests: Any = ""
 
     @lazy_property
     def python_version(self) -> Optional[str]:

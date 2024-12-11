@@ -1,4 +1,0 @@
-changes:
-- description: Added 'ReleaseNotesConfig' and 'PackMetadata' to the `ST110` validation.
-  type: feature
-pr_number: 4541

@@ -374,7 +374,7 @@ XSIAM_DEPTH_1_CHECKS = {
         {".yml"}, InvalidCorrelationRuleFileName
     ),
     XSIAM_DASHBOARDS_DIR: XsiamStemConstraints(
-        {".json", ".jpg"}, InvalidXSIAMDashboardFileName
+        {".json", ".png"}, InvalidXSIAMDashboardFileName
     ),
     XSIAM_REPORTS_DIR: XsiamStemConstraints(
         {".json", ".jpg"}, InvalidXSIAMReportFileName

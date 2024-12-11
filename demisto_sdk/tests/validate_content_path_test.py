@@ -92,7 +92,8 @@ def test_xsiam_report_file_invalid(file_prefix: str, suffix: str):
         _validate(pack_path / XSIAM_REPORTS_DIR / f"{file_prefix}_Report.{suffix}")
 
 
-def test_xsiam_dashboard_file__valid():
+@pytest.mark.parametrize("suffix", (".png", ".json"))
+def test_xsiam_dashboard_file__valid(suffix: str):
     """
     Given:
             A valid XSIAM dashboard file
@@ -103,13 +104,18 @@ def test_xsiam_dashboard_file__valid():
     """
     pack_name = "myPack"
     pack_path = Path("content", "Packs", pack_name)
-    _validate(pack_path / XSIAM_DASHBOARDS_DIR / f"{pack_name}_dashboard.json")
+    _validate(
+        (pack_path / XSIAM_DASHBOARDS_DIR / f"{pack_name}_dashboard").with_suffix(
+            suffix
+        )
+    )
 
 
 @pytest.mark.parametrize(
     "file_prefix, suffix",
     (
         pytest.param("wrongPrefix", "json", id="bad name, good suffix"),
+        pytest.param("wrongPrefix", "png", id="bad name, good suffix"),
         pytest.param("myPack", "py", id="good name, bad suffix"),
     ),
 )

@@ -54,6 +54,20 @@ CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
 app = typer.Typer()
 
 
+def get_containing_pack(use_case_path: Path) -> str:
+    """Get pack object that contains the content entity.
+
+    Args:
+        content_entity: Content entity object.
+
+    Returns:
+        Pack: Pack object that contains the content entity.
+    """
+    while use_case_path.parent.name.casefold() != "packs":
+        use_case_path = use_case_path.parent
+    return str(use_case_path)
+
+
 # ============================================== Classes ============================================ #
 class TestResultCapture:
     """
@@ -362,9 +376,16 @@ def run_test_use_case_pytest(
     """
     # Creating an instance of your results collector
     test_use_case_suite = TestSuite(f"Test Use Case")
+    containing_pack = get_containing_pack(test_use_case_directory)
+
     test_use_case_suite.add_property(
         "file_name", str(test_use_case_directory)
     )
+    test_use_case_suite.add_property(
+        "pack_id", containing_pack
+    )
+    if CI_PIPELINE_ID:
+        test_use_case_suite.add_property("ci_pipeline_id", CI_PIPELINE_ID)
 
     test_dir = test_use_case_directory.parent
     copy_conftest(test_dir)

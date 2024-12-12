@@ -31,8 +31,8 @@ class TestRunPlaybookFlowTestPytest(unittest.TestCase):
     @patch("pytest.main")
     @patch("__main__.TestResultCapture")
     def test_run_playbook_flow_test_pytest_success(self, mock_result_capture, mock_pytest_main):
-        from demisto_sdk.commands.test_content.playbook_flow_test.run_playbook_flow_test import \
-            run_playbook_flow_test_pytest
+        from demisto_sdk.commands.test_content.test_use_case.test_use_case import \
+            run_test_use_case_pytest
 
         # Arrange
         playbook_flow_test_directory = Path("/path/to/test")
@@ -41,7 +41,7 @@ class TestRunPlaybookFlowTestPytest(unittest.TestCase):
         mock_result_capture.return_value = MagicMock()
 
         # Act
-        success, test_suite = run_playbook_flow_test_pytest(
+        success, test_suite = run_test_use_case_pytest(
             playbook_flow_test_directory, xsiam_client, durations=5
         )
 

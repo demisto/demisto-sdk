@@ -2218,4 +2218,4 @@ INVALID_IMAGE_PATH_REGEX = (
 # Test types:
 TEST_PLAYBOOKS = "TestPlaybooks"
 TEST_MODELING_RULES = "TestModelingRules"
-PLAYBOOKS_FLOW_TEST = "PlaybookFlowTest"
+Test_Use_Cases = "TestUseCases"

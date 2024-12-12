@@ -15,9 +15,8 @@ from google.cloud import storage  # type: ignore[attr-defined]
 from junitparser import Error, JUnitXml, TestCase, TestSuite
 from junitparser.junitparser import Failure, Result, Skipped
 
-
 from demisto_sdk.commands.common.constants import (
-    PLAYBOOKS_FLOW_TEST,
+    Test_Use_Cases,
     XSIAM_SERVER_TYPE,
 )
 
@@ -107,20 +106,20 @@ class TestResults:
           file_name: The desired filename for the uploaded JSON data.
           logging_module: Logging module to use for upload_result_json_to_bucket.
         """
-        logging_module.info("Start uploading playbook flow test results file to bucket")
+        logging_module.info("Start uploading test use case results file to bucket")
 
         storage_client = storage.Client.from_service_account_json(self.service_account)
         storage_bucket = storage_client.bucket(self.artifacts_bucket)
 
         blob = storage_bucket.blob(
-            f"content-playbook-flow-test/{repository_name}/{file_name}"
+            f"content-test-use-case/{repository_name}/{file_name}"
         )
         blob.upload_from_filename(
             original_file_path.as_posix(),
             content_type="application/xml",
         )
 
-        logging_module.info("Finished uploading playbook flow test results file to bucket")
+        logging_module.info("Finished uploading test use case results file to bucket")
 
 
 class BuildContext:
@@ -210,10 +209,10 @@ class BuildContext:
         for machine, assignment in self.machine_assignment_json.items():
             tests = [
                 BuildContext.edit_prefix(test)
-                for test in assignment.get("tests", {}).get(PLAYBOOKS_FLOW_TEST, [])
+                for test in assignment.get("tests", {}).get(Test_Use_Cases, [])
             ]
             if not tests:
-                logger.info(f"No playbook flow tests found for machine {machine}")
+                logger.info(f"No test use cases found for machine {machine}")
                 continue
             servers_list.append(
                 CloudServerContext(
@@ -298,32 +297,32 @@ class CloudServerContext:
             )
             xsiam_client = XsiamApiClient(xsiam_client_cfg)
 
-            for i, playbook_flow_test_directory in enumerate(self.tests, start=1):
+            for i, test_use_case_directory in enumerate(self.tests, start=1):
                 logger.info(
-                    f"<cyan>[{i}/{len(self.tests)}] playbook flow tests: {get_relative_path_to_content(playbook_flow_test_directory)}</cyan>",
+                    f"<cyan>[{i}/{len(self.tests)}] test use cases: {get_relative_path_to_content(test_use_case_directory)}</cyan>",
                 )
 
-                success, playbook_flow_test_test_suite = run_playbook_flow_test_pytest(
-                    playbook_flow_test_directory,
+                success, test_use_case_test_suite = run_test_use_case_pytest(
+                    test_use_case_directory,
                     xsiam_client=xsiam_client
                 )
 
                 if success:
                     logger.info(
-                        f"<green>Playbook flow test {get_relative_path_to_content(playbook_flow_test_directory)} passed</green>",
+                        f"<green>Test use case {get_relative_path_to_content(test_use_case_directory)} passed</green>",
                     )
                 else:
                     self.build_context.tests_data_keeper.errors = True
                     logger.error(
-                        f"<red>Playbook flow test {get_relative_path_to_content(playbook_flow_test_directory)} failed</red>",
+                        f"<red>Test use case {get_relative_path_to_content(test_use_case_directory)} failed</red>",
                     )
-                if playbook_flow_test_test_suite:
-                    playbook_flow_test_test_suite.add_property(
+                if test_use_case_test_suite:
+                    test_use_case_test_suite.add_property(
                         "start_time",
                         start_time,  # type:ignore[arg-type]
                     )
                     self.build_context.tests_data_keeper.test_results_xml_file.add_testsuite(
-                        playbook_flow_test_test_suite
+                        test_use_case_test_suite
                     )
 
                     self.build_context.logging_module.info(
@@ -341,6 +340,7 @@ class CloudServerContext:
         finally:
             self.build_context.logging_module.execute_logs()
 
+
 # ============================================== Command logic ============================================ #
 def copy_conftest(test_dir):
     source_conftest = Path(f"{CONTENT_PATH}/Tests/scripts/dev_envs/pytest/conftest.py")
@@ -348,48 +348,50 @@ def copy_conftest(test_dir):
 
     shutil.copy(source_conftest, dest_conftest)
 
-def run_playbook_flow_test_pytest(
-        playbook_flow_test_directory: Path,
+
+def run_test_use_case_pytest(
+        test_use_case_directory: Path,
         xsiam_client: XsiamApiClient,
         durations: int = 5) -> Tuple[bool, Union[TestSuite, None]]:
-    """Runs a playbook flow test
+    """Runs a test use case
 
         Args:
-            playbook_flow_test_directory (Path): Path to the playbook flow test directory.
+            test_use_case_directory (Path): Path to the test use case directory.
             durations (int): Number of slow tests to show durations for.
             xsiam_client (XsiamApiClient): The XSIAM client used to do API calls to the tenant.
     """
     # Creating an instance of your results collector
-    playbook_flow_test_suite = TestSuite(f"Playbook Flow Test")
-    playbook_flow_test_suite.add_property(
-        "file_name", str(playbook_flow_test_directory)
+    test_use_case_suite = TestSuite(f"Test Use Case")
+    test_use_case_suite.add_property(
+        "file_name", str(test_use_case_directory)
     )
 
-    test_dir = playbook_flow_test_directory.parent
-    copy_conftest(test_dir)
+    test_dir = test_use_case_directory.parent
+    # copy_conftest(test_dir)
 
     logger.info(f'before sending pytest {str(xsiam_client.base_url)}')
     pytest_args = [
         f"--client_conf=base_url={str(xsiam_client.base_url)},api_key={xsiam_client.api_key},auth_id={xsiam_client.auth_id}",
-        str(playbook_flow_test_directory),
+        str(test_use_case_directory),
         f"--durations={str(durations)}",
-        "--log-cli-level=CRITICAL"
+        "--log-cli-level=CRITICAL",
+        "--no-summary"
     ]
 
-    logger.info(f"Runnig pytest for file {playbook_flow_test_directory}")
+    logger.info(f"Runnig pytest for file {test_use_case_directory}")
 
     # Running pytest
-    result_capture = TestResultCapture(playbook_flow_test_suite)
+    result_capture = TestResultCapture(test_use_case_suite)
     status_code = pytest.main(pytest_args, plugins=[result_capture])
 
     if status_code == pytest.ExitCode.OK:
-        logger.info(f"<green>Pytest run tests in {playbook_flow_test_directory} successfully</green>")
-        return True, playbook_flow_test_suite
+        logger.info(f"<green>Pytest run tests in {test_use_case_directory} successfully</green>")
+        return True, test_use_case_suite
     else:
         logger.error(
             f"<red>Pytest failed with statsu {status_code}</red>",
         )
-        return False, playbook_flow_test_suite
+        return False, test_use_case_suite
 
 
 @app.command(
@@ -400,7 +402,7 @@ def run_playbook_flow_test_pytest(
         "help_option_names": ["-h", "--help"],
     },
 )
-def test_playbook_flow_test(
+def run_test_use_case(
         ctx: typer.Context,
         inputs: List[Path] = typer.Argument(
             None,
@@ -408,7 +410,7 @@ def test_playbook_flow_test(
             dir_okay=True,
             resolve_path=True,
             show_default=False,
-            help="The path to a directory of a playbook flow tests. May pass multiple paths to test multiple playbook flow tests.",
+            help="The path to a directory of a test use cases. May pass multiple paths to test multiple test use cases.",
         ),
         xsiam_url: Optional[str] = typer.Option(
             None,
@@ -541,10 +543,10 @@ def test_playbook_flow_test(
             "-lp",
             "--log-file-path",
             help="Path to save log files onto.",
-        ),
+        )
 ):
     """
-    Test a playbook flow test against an XSIAM tenant
+    Test a test use case against an XSIAM tenant
     """
     logging_setup(
         console_threshold=console_log_threshold,  # type: ignore[arg-type]
@@ -555,7 +557,7 @@ def test_playbook_flow_test(
     handle_deprecated_args(ctx.args)
 
     logging_module = ParallelLoggingManager(
-        "playbook_flow_test.log", real_time_logs_only=not nightly
+        "test_use_case.log", real_time_logs_only=not nightly
     )
 
     if machine_assignment:
@@ -594,14 +596,14 @@ def test_playbook_flow_test(
     )
 
     logging_module.info(
-        "playbook flow tests to test:",
+        "test use cases to test:",
     )
 
     for build_context_server in build_context.servers:
-        for playbook_flow_test_directory in build_context_server.tests:
+        for test_use_case_directory in build_context_server.tests:
             logging_module.info(
                 f"\tmachine:{build_context_server.base_url} - "
-                f"{get_relative_path_to_content(playbook_flow_test_directory)}"
+                f"{get_relative_path_to_content(test_use_case_directory)}"
             )
 
     threads_list = []
@@ -629,7 +631,7 @@ def test_playbook_flow_test(
             if service_account and artifacts_bucket:
                 build_context.tests_data_keeper.upload_result_json_to_bucket(
                     XSIAM_SERVER_TYPE,
-                    f"playbook_flow_test_{build_number}.xml",
+                    f"test_use_case_{build_number}.xml",
                     output_junit_file,
                     logging_module,
                 )
@@ -645,12 +647,12 @@ def test_playbook_flow_test(
     duration = duration_since_start_time(start_time)
     if build_context.tests_data_keeper.errors:
         logger.error(
-            f"Playbook flow test: Failed, took:{duration} seconds",
+            f"Test use case: Failed, took:{duration} seconds",
         )
         raise typer.Exit(1)
 
     logger.success(
-        f"Playbook flow test: Passed, took:{duration} seconds",
+        f"Test use case: Passed, took:{duration} seconds",
     )
 
 

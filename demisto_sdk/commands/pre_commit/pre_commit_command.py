@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
-    write_dict,
+    write_dict, should_disable_multiprocessing
 )
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -55,13 +55,6 @@ SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 INTEGRATIONS_BATCH = 300
-
-
-def should_disable_multiprocessing():
-    disable_multiprocessing = os.getenv(
-        "DEMISTO_SDK_DISABLE_MULTIPROCESSING", "false"
-    ).lower() in ["true", "yes", "1"]
-    return disable_multiprocessing
 
 
 class PreCommitRunner:

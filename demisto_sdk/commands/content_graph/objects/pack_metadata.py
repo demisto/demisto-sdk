@@ -170,19 +170,6 @@ class PackMetadata(BaseModel):
         integration_list.remove(integration_metadata_object[0])
         integration_list.insert(0, integration_metadata_object[0])
 
-    @staticmethod
-    def should_ignore_item_in_metadata(content_item):
-        """
-        Checks whether content item should be ignored from metadata
-        """
-        if content_item.is_test:
-            logger.debug(f'Skipping {content_item.name} in metadata creation: item is test playbook/script.')
-        elif content_item.is_silent:
-            logger.debug(f'Skipping {content_item.name} in metadata creation: item is silent playbook/trigger.')
-        else:
-            return False
-        return True
-
     def _get_content_items_and_displays_metadata(
         self, marketplace: MarketplaceVersions, content_items: PackContentItems
     ) -> Tuple[Dict, Dict]:
@@ -650,3 +637,16 @@ class PackMetadata(BaseModel):
             )  # to avoid duplicate modeling rules with different versions and ids
         ]
         return filtered_content_items[0] if filtered_content_items else None
+
+
+def should_ignore_item_in_metadata(content_item):
+    """
+    Checks whether content item should be ignored from metadata
+    """
+    if content_item.is_test:
+        logger.debug(f'Skipping {content_item.name} in metadata creation: item is test playbook/script.')
+    elif content_item.is_silent:
+        logger.debug(f'Skipping {content_item.name} in metadata creation: item is silent playbook/trigger.')
+    else:
+        return False
+    return True

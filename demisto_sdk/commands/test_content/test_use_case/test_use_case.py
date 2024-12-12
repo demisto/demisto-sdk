@@ -367,7 +367,7 @@ def run_test_use_case_pytest(
     )
 
     test_dir = test_use_case_directory.parent
-    # copy_conftest(test_dir)
+    copy_conftest(test_dir)
 
     logger.info(f'before sending pytest {str(xsiam_client.base_url)}')
     pytest_args = [

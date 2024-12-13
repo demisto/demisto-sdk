@@ -339,9 +339,6 @@ def create_pack_object(
         The pack_metadata object.
     """
     json_content = load_json("pack_metadata.json")
-    if paths:
-        # patch a wide misuse of "version" instead of "currentVersion"
-        paths = [k if k != "version" else "currentVersion" for k in paths]
     update_keys(json_content, paths, values)
     remove_fields_from_dict(json_content, fields_to_delete)
     pack = REPO.create_pack(name)

@@ -54,27 +54,27 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN116_first_level_he
         (
             [
                 create_pack_object(
-                    paths=["version"],
+                    paths=["currentVersion"],
                     values=["2.0.5"],
                     release_note_content="This is a valid rn.",
                 ),  # valid release_note
                 create_pack_object(
-                    paths=["version"],
+                    paths=["currentVersion"],
                     values=["2.0.5"],
                     release_note_content="",
                 ),  # empty release_note
                 create_pack_object(
-                    paths=["version"],
+                    paths=["currentVersion"],
                     values=["2.0.5"],
                     release_note_content="This is an invalid release note %%UPDATE_RN%%",
                 ),  # shouldn't pass as it has an invalid release note
                 create_pack_object(
-                    paths=["version"],
+                    paths=["currentVersion"],
                     values=["2.0.5"],
                     release_note_content="This is an invalid release note %%XSIAM_VERSION%%",
                 ),  # shouldn't pass as it has an invalid release note
                 create_pack_object(
-                    paths=["version"],
+                    paths=["currentVersion"],
                     values=["1.0.0"],
                 ),
             ],
@@ -139,7 +139,9 @@ def test_IsRNAddedToNewPackValidator_obtain_invalid_content_items():
     assert not validator.obtain_invalid_content_items(valid_content_items)
     invalid_content_items = [
         create_pack_object(
-            paths=["version"], values=["1.0.1"], release_note_content="should fail"
+            paths=["currentVersion"],
+            values=["1.0.1"],
+            release_note_content="should fail",
         )
     ]
     invalid_content_items[0].current_version = "1.0.0"
@@ -166,7 +168,7 @@ def test_release_note_header_validator_valid():
     - Make sure the validation passes.
     """
     pack = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content="#### Integrations\n"
         "##### TestIntegration\n"
@@ -196,7 +198,7 @@ def test_release_note_header_validator_edge_cases_valid():
     - Make sure the validation passes.
     """
     pack = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content="#### Triggers Recommendations\n"
         "##### NGFW Scanning Alerts\n"
@@ -227,7 +229,7 @@ def test_release_note_header_validator_invalid():
     """
     expected_error = "The following release note headers are invalid:\nContent types: InvalidHeader\n\nContent items: Integrations: Not exist content item\n\n"
     pack = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content="#### Integrations\n"
         "##### Not exist content item\n"
@@ -264,12 +266,12 @@ def test_MultipleRNsAddedValidator_obtain_invalid_content_items():
     """
     expected_error = "The pack contains more than one new release note, please make sure the pack contains at most one release note."
     pack = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content="The new RN",
     )
     old_pack = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.4"],
         release_note_content="The old RN",
     )
@@ -304,23 +306,23 @@ def test_IsBCRNExistValidator_obtain_invalid_content_items():
     """
     content_items = [
         create_pack_object(
-            paths=["version"],
+            paths=["currentVersion"],
             values=["2.0.5"],
             release_note_content="some change",
         ),
         create_pack_object(
-            paths=["version"],
+            paths=["currentVersion"],
             values=["2.0.5"],
             release_note_content="breaking change",
         ),
         create_pack_object(
-            paths=["version"],
+            paths=["currentVersion"],
             values=["2.0.5"],
             release_note_content="breaking change",
             bc_release_note_content=[{"test": "no breaking change content"}],
         ),
         create_pack_object(
-            paths=["version"],
+            paths=["currentVersion"],
             values=["2.0.5"],
             release_note_content="breaking change",
             bc_release_note_content=[
@@ -368,27 +370,27 @@ def test_FirstLevelHeaderMissingValidator_obtain_invalid_content_items():
     """
     content_items = [
         create_pack_object(
-            paths=["version"],
+            paths=["currentVersion"],
             values=["2.0.5"],
             release_note_content="#### Scripts\n##### script_name\n- Some description.",
         ),
         create_pack_object(
-            paths=["version"],
+            paths=["currentVersion"],
             values=["2.0.5"],
             release_note_content="#### Scripts\n- Some description.",
         ),
         create_pack_object(
-            paths=["version"],
+            paths=["currentVersion"],
             values=["2.0.5"],
             release_note_content="##### script_name\n- Some description.",
         ),
         create_pack_object(
-            paths=["version"],
+            paths=["currentVersion"],
             values=["2.0.5"],
             release_note_content="- Some description.",
         ),
         create_pack_object(
-            paths=["version"],
+            paths=["currentVersion"],
             values=["2.0.5"],
             release_note_content="## script_name\n- Some description.",
         ),
@@ -431,7 +433,7 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
         paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24070"]
     )
     pack_1 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content=f"#### Integration\n##### {integration_1.name}\n- Updated the Docker image to: *demisto/python3:3.9.7.24076*.",
     )
@@ -442,7 +444,7 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
         paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
     )
     pack_2 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content=f"#### Integration\n##### {integration_2.name}\n- entry not related to docker update.",
     )
@@ -453,7 +455,7 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
         paths=["dockerimage"], values=["demisto/python3:3.9.7.24071"]
     )
     pack_3 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content=f"#### Scripts\n##### {script_1.name}\n- Updated the Docker image to: *demisto/python3:3.9.7.24076*.",
     )
@@ -464,7 +466,7 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
         paths=["dockerimage"], values=["demisto/python3:3.9.7.24071"]
     )
     pack_4 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content=f"#### Scripts\n##### {script_2.name}\n- Entry not related to docker image update.",
     )
@@ -509,17 +511,17 @@ def test_IsValidContentTypeHeaderValidator_obtain_invalid_content_items():
         - Case 3: Shouldn't fail anything.
     """
     pack_1 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content="#### FakeContentType_1\n##### FakeContentItem_1\nFake comment.\n#### FakeContentType_2\n##### FakeContentItem_1\nFake comment.",
     )
     pack_2 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content="#### FakeContentType_1\n##### FakeContentItem_1\nFake comment.\n#### Integrations\n##### Test integration\ntest.",
     )
     pack_3 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content="#### Scripts\n##### Test script\ntest.\n#### Integrations\n##### Test integration\ntest.",
     )
@@ -579,7 +581,7 @@ def test_IsMissingReleaseNotes(mock_is_missing_rn_validator):
 
     """
     pack1 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.1"],
         release_note_content="this is a rn",
     )
@@ -587,28 +589,27 @@ def test_IsMissingReleaseNotes(mock_is_missing_rn_validator):
     integ.pack = pack1
 
     pack2 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.1"],
     )
     script = create_script_object()
     script.pack = pack2
 
     pack3 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.1"],
     )
     tpb = create_test_playbook_object()
     tpb.pack = pack3
 
     pack4 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.0"],
     )
     pack4.git_status = GitStatuses.ADDED
     script2 = create_script_object()
     script2.pack = pack4
 
-    # content_items = [pack1, integ, pack2, script, pack3, tpb]
     content_items = [pack1, integ, pack2, script, pack3, tpb, pack4, script2]
     validator = IsMissingReleaseNotes()
     results = validator.obtain_invalid_content_items(content_items)
@@ -635,7 +636,7 @@ def test_IsMissingReleaseNotes_for_api_module_dependents(
 
     """
     pack1 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.1"],
         release_note_content="this is a rn",
     )
@@ -643,14 +644,14 @@ def test_IsMissingReleaseNotes_for_api_module_dependents(
     integ1.pack = pack1
 
     pack2 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.1"],
     )
     integ2 = create_integration_object()
     integ2.pack = pack2
 
     pack3 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.1"],
     )
     integ3 = create_integration_object()
@@ -702,7 +703,7 @@ def test_IsMissingReleaseNoteEntries(mock_is_missing_rn_validator):
     """
     integ = create_integration_object()
     pack1 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.1"],
         release_note_content=f"#### Integrations\n##### {integ.display_name}\n- Added x y z",
     )
@@ -712,7 +713,7 @@ def test_IsMissingReleaseNoteEntries(mock_is_missing_rn_validator):
     playbook = create_playbook_object()
     tpb = create_test_playbook_object()
     pack2 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.1"],
         release_note_content=f"#### Scripts\n##### {script1.display_name}\n- Added x y z",
     )
@@ -721,7 +722,7 @@ def test_IsMissingReleaseNoteEntries(mock_is_missing_rn_validator):
     tpb.pack = pack2
 
     pack3 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.1"],
     )
     script2 = create_script_object()
@@ -753,7 +754,7 @@ def test_IsMissingReleaseNoteEntries_for_api_module_dependents(
     """
     integ1 = create_integration_object()
     pack1 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.1"],
         release_note_content=f"#### Integrations\n##### {integ1.display_name}\n- Added x y z",
     )
@@ -761,7 +762,7 @@ def test_IsMissingReleaseNoteEntries_for_api_module_dependents(
 
     integ2 = create_integration_object()
     pack2 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.1"],
         release_note_content="#### Scripts\n##### Dummy Script\n- Added x y z",
     )
@@ -769,7 +770,7 @@ def test_IsMissingReleaseNoteEntries_for_api_module_dependents(
 
     integ3 = create_integration_object()
     pack3 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.1"],
     )
     integ3.pack = pack3
@@ -824,27 +825,27 @@ def test_IsValidRnHeadersFormatValidator_obtain_invalid_content_items():
         - Case 5: Should fail.
     """
     pack_1 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content="#### Integrations\n##### integration-test\n- Added x y z",
     )
     pack_2 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content="#### FakeContentType\n##### Test\n- Added x y z",
     )
     pack_3 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content="#### Incident Fields\n    ##### Test\n    - Added x y z",
     )
     pack_4 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content="#### Integrations\n- **integration-test**\n- Added x y z",
     )
     pack_5 = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["2.0.5"],
         release_note_content="#### Incident Fields\n- **test**\n- Added x y z",
     )

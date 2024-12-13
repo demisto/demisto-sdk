@@ -1739,7 +1739,7 @@ def test_PackMetadataVersionShouldBeRaisedValidator_new_pack():
     Then: Ensure a validation error is not raised.
     """
     pack = create_pack_object(
-        paths=["version"],
+        paths=["currentVersion"],
         values=["1.0.0"],
     )
     pack.git_status = GitStatuses.ADDED

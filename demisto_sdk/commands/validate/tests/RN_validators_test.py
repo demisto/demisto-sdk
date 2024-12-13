@@ -1,6 +1,6 @@
 import pytest
 
-from demisto_sdk.commands.common.constants import API_MODULES_PACK
+from demisto_sdk.commands.common.constants import API_MODULES_PACK, GitStatuses
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.validate.tests.test_tools import (
@@ -571,6 +571,7 @@ def test_IsMissingReleaseNotes(mock_is_missing_rn_validator):
     - pack1 with a changed integration, a release notes file exists
     - pack2 with a changed script, a release notes file does not exist
     - pack3 with a changed test playbook, a release notes file exist does not exist
+    - pack4 - a new pack with a script, a RN file does not exist
     When:
     - Calling IsMissingReleaseNotes.obtain_invalid_content_items().
     Then:
@@ -599,7 +600,16 @@ def test_IsMissingReleaseNotes(mock_is_missing_rn_validator):
     tpb = create_test_playbook_object()
     tpb.pack = pack3
 
-    content_items = [pack1, integ, pack2, script, pack3, tpb]
+    pack4 = create_pack_object(
+        paths=["version"],
+        values=["1.0.0"],
+    )
+    pack4.git_status = GitStatuses.ADDED
+    script2 = create_script_object()
+    script2.pack = pack4
+
+    # content_items = [pack1, integ, pack2, script, pack3, tpb]
+    content_items = [pack1, integ, pack2, script, pack3, tpb, pack4, script2]
     validator = IsMissingReleaseNotes()
     results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == 1
@@ -698,15 +708,15 @@ def test_IsMissingReleaseNoteEntries(mock_is_missing_rn_validator):
     )
     integ.pack = pack1
 
-    script = create_script_object()
+    script1 = create_script_object()
     playbook = create_playbook_object()
     tpb = create_test_playbook_object()
     pack2 = create_pack_object(
         paths=["version"],
         values=["1.0.1"],
-        release_note_content=f"#### Scripts\n##### {script.display_name}\n- Added x y z",
+        release_note_content=f"#### Scripts\n##### {script1.display_name}\n- Added x y z",
     )
-    script.pack = pack2
+    script1.pack = pack2
     playbook.pack = pack2
     tpb.pack = pack2
 
@@ -714,10 +724,10 @@ def test_IsMissingReleaseNoteEntries(mock_is_missing_rn_validator):
         paths=["version"],
         values=["1.0.1"],
     )
-    script = create_script_object()
-    script.pack = pack3
+    script2 = create_script_object()
+    script2.pack = pack3
 
-    content_items = [pack1, integ, pack2, script, playbook, tpb, pack3, script]
+    content_items = [pack1, integ, pack2, script1, playbook, tpb, pack3, script2]
     validator = IsMissingReleaseNoteEntries()
     results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == 1

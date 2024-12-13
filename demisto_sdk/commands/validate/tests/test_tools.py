@@ -339,13 +339,16 @@ def create_pack_object(
         The pack_metadata object.
     """
     json_content = load_json("pack_metadata.json")
+    if paths:
+        # patch a wide misuse of "version" instead of "currentVersion"
+        paths = [k if k != "version" else "currentVersion" for k in paths]
     update_keys(json_content, paths, values)
     remove_fields_from_dict(json_content, fields_to_delete)
     pack = REPO.create_pack(name)
     pack_path = Path(pack.path)
 
     if release_note_content is not None:
-        if (version := Version(json_content.get("version", "1.0.0"))) == Version(
+        if (version := Version(json_content.get("currentVersion", "1.0.0"))) == Version(
             "1.0.0"
         ):
             raise ValueError(
@@ -357,7 +360,7 @@ def create_pack_object(
         ).write_text(release_note_content)
 
     if bc_release_note_content is not None:
-        if (version := Version(json_content.get("version", "1.0.0"))) == Version(
+        if (version := Version(json_content.get("currentVersion", "1.0.0"))) == Version(
             "1.0.0"
         ):
             raise ValueError(

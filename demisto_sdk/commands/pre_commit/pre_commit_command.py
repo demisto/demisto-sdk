@@ -24,9 +24,7 @@ from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import (
-    write_dict, should_disable_multiprocessing
-)
+from demisto_sdk.commands.common.tools import should_disable_multiprocessing, write_dict
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent

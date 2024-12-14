@@ -21,6 +21,7 @@ from demisto_sdk.commands.pre_commit.pre_commit_command import (
     PreCommitContext,
     PreCommitRunner,
     group_by_language,
+    pre_commit_manager,
     preprocess_files,
     subprocess,
 )
@@ -801,3 +802,38 @@ def test_system_hooks():
         system_hook["repo"]["hooks"][0]["entry"]
         == f"{Path(sys.executable).parent}/demisto-sdk"
     )
+
+
+def test_run_pre_commit_with_json_output_path(mocker, tmp_path):
+    """
+    Given: A pre-commit setup with a specified JSON output path.
+    When: Running the pre-commit manager with a specific hook.
+    Then:
+        - The exit code is non-zero
+        - A JSON output file is created at the specified path
+    """
+    mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(tmp_path))
+
+    test_integration_path = (
+        tmp_path
+        / "Packs"
+        / "TestPack"
+        / "Integrations"
+        / "TestIntegration"
+        / "TestIntegration.yml"
+    )
+    test_integration_path.parent.mkdir(parents=True, exist_ok=True)
+
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.pre_commit_command.preprocess_files",
+        return_value=[test_integration_path],
+    )
+
+    exit_code = pre_commit_manager(
+        input_files=[test_integration_path],
+        run_hook="check-ast",
+        json_output_path=tmp_path,
+    )
+    hook_output_path = tmp_path / "check-ast.json"
+    assert exit_code != 0
+    assert hook_output_path.exists()

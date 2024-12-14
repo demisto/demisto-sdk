@@ -442,7 +442,9 @@ def group_by_language(
     ):
         if should_disable_multiprocessing():
             # Run sequentially
-            content_items = map(BaseContent.from_path, integration_script_paths)
+            content_items: List[Optional[BaseContent]] = list(
+                map(BaseContent.from_path, integration_script_paths)
+            )
         else:
             # Use multiprocessing (not supported when running within Content scripts/integrations).
             with multiprocessing.Pool(processes=cpu_count()) as pool:

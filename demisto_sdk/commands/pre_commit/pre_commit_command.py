@@ -444,11 +444,11 @@ def group_by_language(
             # Run sequentially
             content_items = map(BaseContent.from_path, integration_script_paths)
         else:
-            # Use multiprocessing (not supported when running within Content scripts/integrations.
+            # Use multiprocessing (not supported when running within Content scripts/integrations).
             with multiprocessing.Pool(processes=cpu_count()) as pool:
-                content_items = pool.map(
+                content_items = list(pool.map(
                     BaseContent.from_path, integration_script_paths
-                )
+                ))
 
         for content_item in content_items:
             if isinstance(content_item, IntegrationScript):

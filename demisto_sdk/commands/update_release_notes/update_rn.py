@@ -361,14 +361,10 @@ def generate_deprecated_content_item_rn(
     """Checks if a content item of type integration/script/playbook is deprecated and generates a deprecation release note if applicable.
 
     Args:
-        path (str): The file path to the content item.
-        _type (str): The type of the content item.
+        changed_content_object: Content object of type integration/script/playbook.
 
     Returns:
-        tuple:
-            - str: A deprecation release note description, if applicable.
-            - dict: The YAML representation of the old content item (if it is integration/script/playbook).
-            - dict: The YAML representation of the new content item (if it is integration/script/playbook).
+        The deprecated content item rn.
     """
     deprecated_rn = ""
     if (

@@ -1399,7 +1399,14 @@ def test_MarketplaceKeysHaveDefaultValidator(
 def test_IsSilentPlaybookValidator(name, id, is_silent, result_len):
     """
     Given:
-    - All kinds of cases of a playbook that has the field isSilent and the prefix silent in the name/id and that doesn't.
+        case 1: isSilent = False, and name/id do not contain silent prefix.
+        case 2: isSilent = True, and name/id contain silent prefix.
+        case 3: isSilent = True, name contain and id do not contain silent prefix.
+        case 4: isSilent = True, id contain and name do not contain silent prefix.
+        case 5: isSilent = False, and name/id contain silent prefix.
+        case 6: isSilent = False, name contain and id do not contain silent prefix.
+        case 7: isSilent = False, id contain and name do not contain silent prefix.
+        case 8: isSilent = True, and name/id do not contain silent prefix.
 
     When:
     - calling IsSilentPlaybookValidator.obtain_invalid_content_items.

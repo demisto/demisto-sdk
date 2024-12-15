@@ -21,7 +21,6 @@ class IsSilentPlaybookValidator(BaseValidator[ContentTypes]):
     error_message = "Silent-Playbook should have silent as a prefix in the name and ID, as well as the field isSilent: true, one of them is missing."
     related_field = ""
     is_auto_fixable = False
-
     
     def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         return [

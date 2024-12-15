@@ -1732,6 +1732,25 @@ def test_PackMetadataVersionShouldBeRaisedValidator(
             )
 
 
+def test_PackMetadataVersionShouldBeRaisedValidator_new_pack():
+    """
+    Given: A new pack with a script.
+    When: Running PackMetadataVersionShouldBeRaisedValidator validator.
+    Then: Ensure a validation error is not raised.
+    """
+    pack = create_pack_object(
+        paths=["currentVersion"],
+        values=["1.0.0"],
+    )
+    pack.git_status = GitStatuses.ADDED
+    script = create_script_object()
+    script.pack = pack
+
+    validator = PackMetadataVersionShouldBeRaisedValidator()
+    results = validator.obtain_invalid_content_items([pack, script])
+    assert len(results) == 0
+
+
 def test_PackMetadataVersionShouldBeRaisedValidator_metadata_change(mocker):
     """
     Given: A previous pack version = current pack version with a price change within the pack metadata.

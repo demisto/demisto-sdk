@@ -1,5 +1,4 @@
 import itertools
-import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,6 +9,7 @@ import pytest
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 import demisto_sdk.commands.pre_commit.pre_commit_context as context
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.native_image import NativeImageConfig
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
@@ -839,6 +839,7 @@ def test_run_pre_commit_with_json_output_path(mocker, tmp_path):
     assert exit_code != 0
     assert hook_output_path.exists()
     with open(hook_output_path, "r") as f:
+        json = JSON_Handler()
         output = json.load(f)
         assert 1 == output.get("returncode")
         assert output.get("stdout").startswith(

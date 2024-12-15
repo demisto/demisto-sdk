@@ -644,9 +644,13 @@ def should_ignore_item_in_metadata(content_item):
     Checks whether content item should be ignored from metadata
     """
     if content_item.is_test:
-        logger.debug(f'Skipping {content_item.name} in metadata creation: item is test playbook/script.')
+        logger.debug(
+            f"Skipping {content_item.name} in metadata creation: item is test playbook/script."
+        )
     elif content_item.is_silent:
-        logger.debug(f'Skipping {content_item.name} in metadata creation: item is silent playbook/trigger.')
+        logger.debug(
+            f"Skipping {content_item.name} in metadata creation: item is silent playbook/trigger."
+        )
     else:
         return False
     return True

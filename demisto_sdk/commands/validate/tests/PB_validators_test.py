@@ -67,6 +67,7 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB130_is_silent_play
     IsSilentPlaybookValidator,
 )
 
+
 @pytest.mark.parametrize(
     "content_item, expected_result",
     [
@@ -1342,55 +1343,54 @@ def test_MarketplaceKeysHaveDefaultValidator(
         assert fixed_content_item.data == expected_playbook_obj.data
 
 
-
 @pytest.mark.parametrize(
     "name, id, is_silent, result_len",
     [
         (
-            'test',
-            'test',
+            "test",
+            "test",
             False,
             0,
         ),
         (
-            'silent-test',
-            'silent-test',
+            "silent-test",
+            "silent-test",
             True,
             0,
         ),
         (
-            'test',
-            'silent-test',
+            "test",
+            "silent-test",
             True,
             1,
         ),
         (
-            'silent-test',
-            'test',
+            "silent-test",
+            "test",
             True,
             1,
         ),
         (
-            'silent-test',
-            'silent-test',
+            "silent-test",
+            "silent-test",
             False,
             1,
         ),
         (
-            'test',
-            'silent-test',
+            "test",
+            "silent-test",
             False,
             1,
         ),
         (
-            'silent-test',
-            'test',
+            "silent-test",
+            "test",
             False,
             1,
         ),
         (
-            'test',
-            'test',
+            "test",
+            "test",
             True,
             1,
         ),
@@ -1415,9 +1415,11 @@ def test_IsSilentPlaybookValidator(name, id, is_silent, result_len):
     - Checks that it only fails in the right cases.
     """
     playbook = create_playbook_object()
-    playbook.data['id'] = id
-    playbook.data['name'] = name
-    playbook.data['isSilent'] = is_silent
+    playbook.data["id"] = id
+    playbook.data["name"] = name
+    playbook.data["isSilent"] = is_silent
 
-    invalid_content_items = IsSilentPlaybookValidator().obtain_invalid_content_items([playbook])
+    invalid_content_items = IsSilentPlaybookValidator().obtain_invalid_content_items(
+        [playbook]
+    )
     assert result_len == len(invalid_content_items)

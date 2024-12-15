@@ -1,14 +1,11 @@
-
-
-
 from __future__ import annotations
 
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = Union[Playbook]
@@ -21,8 +18,10 @@ class IsSilentPlaybookValidator(BaseValidator[ContentTypes]):
     error_message = "Silent-Playbook should have silent as a prefix in the name and ID, as well as the field isSilent: true, one of them is missing."
     related_field = ""
     is_auto_fixable = False
-    
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -30,14 +29,18 @@ class IsSilentPlaybookValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (content_item.data.get('isSilent')
-                or any(content_item.data.get(key, '').startswith('silent') for key in ['name', 'id'])
-               ) and not (
-                    content_item.data.get('isSilent')
-                    and all(content_item.data.get(key, '').startswith('silent') for key in ['name', 'id'])
+            if (
+                content_item.data.get("isSilent")
+                or any(
+                    content_item.data.get(key, "").startswith("silent")
+                    for key in ["name", "id"]
+                )
+            )
+            and not (
+                content_item.data.get("isSilent")
+                and all(
+                    content_item.data.get(key, "").startswith("silent")
+                    for key in ["name", "id"]
+                )
             )
         ]
-
-        
-
-    

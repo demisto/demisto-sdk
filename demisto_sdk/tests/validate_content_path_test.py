@@ -5,6 +5,7 @@ import pytest
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     CONTENT_ENTITIES_DIRS,
+    CORRELATION_RULES_DIR,
     DOC_FILES_DIR,
     DOCS_DIRECTORIES,
     INTEGRATIONS_DIR,
@@ -25,6 +26,7 @@ from demisto_sdk.scripts.validate_content_path import (
     XSIAM_REPORTS_DIR,
     ZERO_DEPTH_FILES,
     InvalidClassifier,
+    InvalidCorrelationRuleFileName,
     InvalidDepthOneFile,
     InvalidDepthOneFolder,
     InvalidDepthZeroFile,
@@ -90,7 +92,8 @@ def test_xsiam_report_file_invalid(file_prefix: str, suffix: str):
         _validate(pack_path / XSIAM_REPORTS_DIR / f"{file_prefix}_Report.{suffix}")
 
 
-def test_xsiam_dashboard_file__valid():
+@pytest.mark.parametrize("suffix", (".png", ".json"))
+def test_xsiam_dashboard_file__valid(suffix: str):
     """
     Given:
             A valid XSIAM dashboard file
@@ -101,13 +104,18 @@ def test_xsiam_dashboard_file__valid():
     """
     pack_name = "myPack"
     pack_path = Path("content", "Packs", pack_name)
-    _validate(pack_path / XSIAM_DASHBOARDS_DIR / f"{pack_name}_dashboard.json")
+    _validate(
+        (pack_path / XSIAM_DASHBOARDS_DIR / f"{pack_name}_dashboard").with_suffix(
+            suffix
+        )
+    )
 
 
 @pytest.mark.parametrize(
     "file_prefix, suffix",
     (
         pytest.param("wrongPrefix", "json", id="bad name, good suffix"),
+        pytest.param("wrongPrefix", "png", id="bad name, good suffix"),
         pytest.param("myPack", "py", id="good name, bad suffix"),
     ),
 )
@@ -128,6 +136,42 @@ def test_xsiam_dashboard_file__invalid(file_prefix: str, suffix: str):
         _validate(
             pack_path / XSIAM_DASHBOARDS_DIR / f"{file_prefix}_dashboard.{suffix}"
         )
+
+
+def test_correlation_rule_file__valid():
+    """
+    Given:
+            A valid XSIAM dashboard file
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation passes
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    _validate(pack_path / CORRELATION_RULES_DIR / f"{pack_name}_anything.yml")
+
+
+@pytest.mark.parametrize(
+    "stem, suffix",
+    (
+        pytest.param("wrongPrefix", "yml", id="bad name, good suffix"),
+        pytest.param("myPack", "py", id="good name, bad suffix"),
+    ),
+)
+def test_correlation_rule_file__invalid(stem: str, suffix: str):
+    """
+    Given:
+            An invalid XSIAM correlation rule name
+    When:
+            Running validate_path
+    Then:
+            Make sure the validation raises InvalidCorrelationRuleFileName
+    """
+    pack_name = "myPack"
+    pack_path = Path("content", "Packs", pack_name)
+    with pytest.raises(InvalidCorrelationRuleFileName):
+        _validate(pack_path / CORRELATION_RULES_DIR / f"{stem}.{suffix}")
 
 
 def test_xsiam_parsing_rule_file__valid():

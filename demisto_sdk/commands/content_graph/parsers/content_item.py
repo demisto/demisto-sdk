@@ -183,6 +183,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def marketplaces(self) -> List[MarketplaceVersions]:
         pass
 
+    @property
+    @abstractmethod
+    def is_silent(self) -> bool:
+        pass
+
     def get_marketplaces(self, data: dict) -> List[MarketplaceVersions]:
         if file_marketplaces := [
             MarketplaceVersions(mp) for mp in data.get("marketplaces", [])

@@ -1,5 +1,7 @@
 ## update-xsoar-config-file
 
+### Overview
+
 Handle your XSOAR Configuration File.
 
 **Use Cases**:
@@ -7,7 +9,7 @@ Handle your XSOAR Configuration File.
 - Add a Pack to the marketplace_packs section in the Configuration File.
 - Add a Pack to the custom_packs section in the Configuration File.
 
-**Arguments**:
+### Options:
 * **-pi, --pack-id**
   The Pack ID to add to XSOAR Configuration File.
 * **-pd, --pack-data**

@@ -573,7 +573,15 @@ def repo_for_test_gr_107(graph_repo: Repo):
                     "id": "1",
                     "script": "|||test-command",
                 },
-            }
+            },
+            "1": {
+                "id": "1",
+                "taskid": "1",
+                "task": {
+                    "id": "1",
+                    "script": "|||test-command",
+                },
+            },
         },
     }
     playbook_dict_using_deprecated_playbook = {
@@ -689,7 +697,7 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_invalid_script(
     assert len(validation_results) == 1
 
 
-def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid(
+def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid_script(
     repo_for_test_gr_107: Repo,
 ):
     """
@@ -710,6 +718,36 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid(
 
     pack_objects = [
         repo_for_test_gr_107.packs[1].scripts[2].get_graph_object(graph_interface),
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
+    assert len(validation_results) == 0
+
+
+def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid_playbook(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for a valid playbook.
+
+    Given:
+    - A repository with a deprecated playbook and an integration that uses the deprecated playbook.
+      The deprecated playbook does not use any deprecated content items.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific playbook.
+
+    Then:
+    - Verify that the validator correctly identifies that no deprecated content items are used.
+    - Assert that the validation results are empty.
+    """
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1].playbooks[1].get_graph_object(graph_interface),
     ]
     validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
         pack_objects

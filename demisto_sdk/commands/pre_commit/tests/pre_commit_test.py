@@ -1,4 +1,5 @@
 import itertools
+import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -837,3 +838,9 @@ def test_run_pre_commit_with_json_output_path(mocker, tmp_path):
     hook_output_path = tmp_path / "check-ast.json"
     assert exit_code != 0
     assert hook_output_path.exists()
+    with open(hook_output_path, "r") as f:
+        output = json.load(f)
+        assert 1 == output.get("returncode")
+        assert output.get("stdout").startswith(
+            "An error has occurred: FatalError: git failed. Is it installed, and are you in a Git repository directory?"
+        )

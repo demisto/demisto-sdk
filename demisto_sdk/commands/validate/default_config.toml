@@ -40,6 +40,9 @@ select = [
 ]
 warning = []
 
+[ui_validations]
+warning = []
+
 [use_git]
 select = [
   "BA101",
@@ -155,7 +158,6 @@ select = [
   "IF104",
   "IF105",
   "IF106",
-  "IM100",
   "IM101",
   "IM108",
   "RP101"
@@ -275,4 +277,3 @@ select = [
   "IM109",
   "RP101"
 ]
-warning = []

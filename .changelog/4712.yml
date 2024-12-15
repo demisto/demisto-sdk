@@ -1,0 +1,4 @@
+changes:
+- description: Removed support for DS107 validation - ensure no 'demist'o word in description file for both new & old validate.
+  type: breaking
+pr_number: 4712

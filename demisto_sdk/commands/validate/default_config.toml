@@ -40,8 +40,6 @@ select = [
 ]
 warning = []
 
-[ui_validations]
-warning = []
 
 [use_git]
 select = [
@@ -277,3 +275,4 @@ select = [
   "IM109",
   "RP101"
 ]
+warning = []

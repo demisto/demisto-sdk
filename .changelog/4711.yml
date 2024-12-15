@@ -1,4 +1,4 @@
 changes:
-- description: Fix an issue where *RN107* validation would fail on new content items.
+- description: Fixed an issue where *RN107* validation would fail on new content items.
   type: fix
 pr_number: 4711

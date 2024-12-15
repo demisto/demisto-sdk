@@ -694,6 +694,7 @@ def test_IsMissingReleaseNoteEntries(mock_is_missing_rn_validator):
     - pack1 with a modified integration, a RM entry exists
     - pack2 with modified script, playbook and TPB, a RN entry exists only for the script
     - pack3 with a modified script, a RN file does not exist
+    - pack4 with a new script, a RN exists
     When:
     - Calling IsMissingReleaseNotes.obtain_invalid_content_items().
     Then:
@@ -728,7 +729,26 @@ def test_IsMissingReleaseNoteEntries(mock_is_missing_rn_validator):
     script2 = create_script_object()
     script2.pack = pack3
 
-    content_items = [pack1, integ, pack2, script1, playbook, tpb, pack3, script2]
+    script3 = create_script_object()
+    pack4 = create_pack_object(
+        paths=["currentVersion"],
+        values=["1.0.1"],
+        release_note_content=f"#### Scripts\n##### New: {script3.display_name}\n- Added x y z",
+    )
+    script3.pack = pack4
+
+    content_items = [
+        pack1,
+        integ,
+        pack2,
+        script1,
+        playbook,
+        tpb,
+        pack3,
+        script2,
+        pack4,
+        script3,
+    ]
     validator = IsMissingReleaseNoteEntries()
     results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == 1

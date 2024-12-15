@@ -191,11 +191,15 @@ def is_indicator_pb(playbook: Playbook):
     )
 
 
-def extract_rn_headers(rn_content) -> Dict[str, List[str]]:
+def extract_rn_headers(
+    rn_content: str,
+    remove_prefixes: bool = False,
+) -> Dict[str, List[str]]:
     """
         Extracts the headers from the release notes file.
     Args:
-        None.
+        rn_content (str): The release notes file content.
+        remove_prefixes (bool, default: False): If true, removes prefixes from headers and keeps only the display names.
     Return:
         A dictionary representation of the release notes file that maps content types' headers to their corresponding content items' headers.
         i.e: {"Integrations": ["integration_1", "integration_2"], "Scripts: ["script_1]}
@@ -224,6 +228,8 @@ def extract_rn_headers(rn_content) -> Dict[str, List[str]]:
                     headers[content_type].append(header)
                 else:
                     headers[content_type] = [header]
+    if remove_prefixes:
+        filter_rn_headers_prefix(headers)
     return headers
 
 

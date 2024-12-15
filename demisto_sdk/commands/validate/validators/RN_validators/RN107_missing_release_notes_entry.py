@@ -60,7 +60,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(
                     file_type=c.content_type.value.lower(),
-                    entity_name=c.object_id,
+                    entity_name=c.display_name,
                     pack_name=c.pack_id,
                 ),
                 content_object=c,
@@ -75,7 +75,9 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
         content_items: Iterable[BaseContent],
     ) -> dict[str, dict[str, list]]:
         pack_to_rn_headers = {
-            p.object_id: extract_rn_headers(p.release_note.file_content)
+            p.object_id: extract_rn_headers(
+                p.release_note.file_content, remove_prefixes=True
+            )
             for p in content_items
             if isinstance(p, Pack) and was_rn_added(p)
         }
@@ -112,7 +114,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
                         validator=self,
                         message=self.error_message.format(
                             file_type=content_item.content_type.value.lower(),
-                            entity_name=content_item.object_id,
+                            entity_name=content_item.display_name,
                             pack_name=content_item.pack_id,
                         ),
                         content_object=content_item,

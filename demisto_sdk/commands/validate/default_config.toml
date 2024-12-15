@@ -40,7 +40,6 @@ select = [
 ]
 warning = []
 
-
 [use_git]
 select = [
   "BA101",

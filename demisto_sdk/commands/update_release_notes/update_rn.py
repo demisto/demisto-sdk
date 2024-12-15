@@ -115,7 +115,8 @@ def create_content_item_object(
     Generate yml files from master and from the current branch
     Args:
         path: The requested file path
-        git_util: the git util
+        prev_ver: the git sha from which to extract the previous version
+        is_new_file: is the update occurred on a new file
 
     Returns:
         Two YML objects, the first of the yml at master (old yml) and the second from the current branch (new yml)
@@ -161,7 +162,7 @@ def rn_for_deleted_content(
                                            where keys are item names and values are their details.
         new_content_dict (dict[str, Any]): A dictionary of content items after local updates,
                                            where keys are item names and values are their details.
-        _type (str): The type of the content item.
+        type (str): The type of the content item.
         parent_name (str, optional): The name of the parent content item, if applicable
                                      (used for arguments within commands).
 
@@ -251,13 +252,13 @@ def generate_required_rn(
     return ""
 
 
-def generate_addition_rn(
+def generate_new_content_rn(
     name: str,
     new_content: Union[Parameter, Argument, Command],
     content_type: content_type,
     parent: Union[str, None] = None,
 ) -> str:
-    """Generates release notes for newly added content items.
+    """Generates release notes for newly added content of content items.
 
     Args:
         item_name (str): The name of the new content item.
@@ -284,14 +285,14 @@ def rn_for_added_or_updated_content(
     type: content_type,
     parent_name: Union[str, None],
 ) -> str:
-    """Generates release notes for added or updated content items.
+    """Generates release notes for added or updated content in content items.
 
     Args:
         old_content_dict (dict[str, Any]): A dictionary of content items in the current version,
                                            where keys are item names and values are their details.
         new_content_dict (dict[str, Any]): A dictionary of content items after local updates,
                                            where keys are item names and values are their details.
-        _type (content_type): The type of the content item.
+        type (content_type): The type of the content item.
         parent_name (str | None): The name of the parent content item, if applicable
                                   (used for arguments within commands).
 
@@ -299,23 +300,23 @@ def rn_for_added_or_updated_content(
         str: A release note describing the added or updated content items.
     """
     rn = ""
-    new_keys = set(new_content_dict.keys()) - set(old_content_dict.keys())
-    old_keys_names = set(new_content_dict.keys()) - new_keys
-    for new_key in new_keys:
-        rn += generate_addition_rn(
+    new_keys_names = set(new_content_dict.keys()) - set(old_content_dict.keys())
+    old_keys_names = set(new_content_dict.keys()) - new_keys_names
+    for new_key in new_keys_names:
+        rn += generate_new_content_rn(
             new_key, new_content_dict[new_key], type, parent_name
         )
     for old_key_name in old_keys_names:
-        old_content = old_content_dict[old_key_name]
-        new_content = new_content_dict[old_key_name]
+        old_content_object = old_content_dict[old_key_name]
+        new_content_object = new_content_dict[old_key_name]
         rn += generate_deprecation_rn(
-            old_key_name, new_content, old_content, type, parent_name
+            old_key_name, new_content_object, old_content_object, type, parent_name
         )
-        rn += generate_required_rn(old_key_name, new_content, old_content, type)
-        if isinstance(new_content, Command) and isinstance(old_content, Command):
+        rn += generate_required_rn(old_key_name, new_content_object, old_content_object, type)
+        if isinstance(new_content_object, Command) and isinstance(old_content_object, Command):
             rn += compare_content_item_changes(
-                old_content.args,
-                new_content.args,
+                old_content_object.args,
+                new_content_object.args,
                 content_type.ARGUMENT,
                 old_key_name,
             )
@@ -329,12 +330,12 @@ def compare_content_item_changes(
     type,
     parent_name=None,
 ):
-    """Compares old and new versions of a content item to generate release notes.
+    """Compares old and new versions of a content in content item to generate release notes.
 
     Args:
         old_content_info (list[dict]): A list of dictionaries representing the old content item details.
         new_content_info (list[dict]): A list of dictionaries representing the new content item details.
-        _type (str): The type of the content item.
+        type (str): The type of the content item.
         parent_name (str, optional): The name of the parent content item, if applicable.
 
     Returns:

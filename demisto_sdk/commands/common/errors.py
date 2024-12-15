@@ -320,10 +320,6 @@ ERROR_CODE: Dict = {
         "code": "DS106",
         "related_field": "",
     },
-    "description_contains_demisto_word": {
-        "code": "DS107",
-        "related_field": "detaileddescription",
-    },
     "description_missing_dot_at_the_end": {
         "code": "DS108",
         "related_field": "description",
@@ -2878,11 +2874,6 @@ class Errors:
             "make sure the name looks like the following: <integration_name>_description.md "
             "and that the integration_name is the same as the folder containing it."
         )
-
-    @staticmethod
-    @error_code_decorator
-    def description_contains_demisto_word(line_nums, yml_or_file):
-        return f"Found the word 'Demisto' in the description content {yml_or_file} in lines: {line_nums}."
 
     @staticmethod
     @error_code_decorator

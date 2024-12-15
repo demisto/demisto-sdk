@@ -1164,16 +1164,19 @@ class UpdateRN:
                 rn_desc = f"##### {content_name}\n\n"
                 if self.update_type == "documentation":
                     rn_desc += "- Documentation and metadata improvements.\n"
-                elif changed_content_object:
-                    rn_desc += generate_rn_for_updated_content_items(
+                else:
+                    current_rn = ""
+                    if changed_content_object:
+                        current_rn = generate_rn_for_updated_content_items(
                         changed_content_object
                     )
-                    rn_desc += text
-                else:
-                    rn_desc += text or GENERAL_UPDATE_RN.format(
-                        name=(name or "%%UPDATE_CONTENT_ITEM_NAME%%"),
-                        type=(type or "%%UPDATE_CONTENT_ITEM_TYPE%%"),
-                    )
+                        rn_desc += current_rn
+                        rn_desc += text
+                    if not current_rn:
+                        rn_desc += text or GENERAL_UPDATE_RN.format(
+                            name=(name or "%%UPDATE_CONTENT_ITEM_NAME%%"),
+                            type=(type or "%%UPDATE_CONTENT_ITEM_TYPE%%"),
+                        )
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n\n"

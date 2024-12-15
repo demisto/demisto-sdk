@@ -1650,7 +1650,7 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
         pytest.param(
             [
                 create_pack_object(
-                    ["version"], ["1.0.1"], release_note_content="test-module"
+                    ["currentVersion"], ["1.0.1"], release_note_content="test-module"
                 )
             ],
             1,

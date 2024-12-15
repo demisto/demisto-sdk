@@ -243,10 +243,11 @@ def filter_rn_headers_prefix(headers: Dict) -> None:
 
 
 def was_rn_added(p: Pack) -> bool:
-    return (
-        p.release_note.git_status == GitStatuses.ADDED
-        and p.pack_version > parse("1.0.0")  # type: ignore
-    )
+    return p.release_note.git_status == GitStatuses.ADDED
+
+
+def is_new_pack(p: Pack) -> bool:
+    return p.git_status == GitStatuses.ADDED and p.pack_version == parse("1.0.0")
 
 
 def is_pack_move(content_item: ContentItem) -> bool:

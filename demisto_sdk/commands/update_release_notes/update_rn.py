@@ -1520,40 +1520,6 @@ def update_api_modules_dependents_rn(
         return total_updated_packs
 
 
-def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]:
-    """Checks whether the docker image was changed in master.
-
-    :param
-        main_branch: The git main branch
-        packfile: The added or modified yml path
-
-    :rtype: ``Optional[str]``
-    :return
-    The latest docker image
-    """
-    try:
-        diff = run_command(f"git diff {main_branch} -- {packfile}", exit_on_error=False)
-    except RuntimeError as e:
-        if any(["is outside repository" in exp for exp in e.args]):
-            return None
-        else:
-            logger.info(
-                f"<yellow>skipping docker image check, Encountered the following error:\n{e.args[0]}</yellow>"
-            )
-            return None
-    else:
-        diff_lines = diff.splitlines()
-        for diff_line in diff_lines:
-            if (
-                "dockerimage:" in diff_line
-            ):  # search whether exists a line that notes that the Docker image was
-                # changed.
-                split_line = diff_line.split()
-                if split_line[0].startswith("+"):
-                    return split_line[-1]
-        return None
-
-
 def get_from_version_at_update_rn(path: str) -> Optional[str]:
     """
     param:

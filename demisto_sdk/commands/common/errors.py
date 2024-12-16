@@ -1087,10 +1087,6 @@ ERROR_CODE: Dict = {
         "code": "RM105",
         "related_field": "readme",
     },
-    "readme_contains_demisto_word": {
-        "code": "RM106",
-        "related_field": "readme",
-    },
     "template_sentence_in_readme": {
         "code": "RM107",
         "related_field": "readme",

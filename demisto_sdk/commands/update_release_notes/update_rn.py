@@ -79,11 +79,11 @@ class content_type(Enum):
 
 NEW_RN_TEMPLATE = "- New: added a new {type} - {name} which {description}\n"
 GENERAL_DEPRECATED_RN = "- Deprecated ***{name}*** {type}. {replacement}.\n"
-GENERAL_BC = "- Breaking Changes: Deleted the **{name}** {value}.\n"
+GENERAL_BC = "- Deleted the **{name}** {value}.\n"
 DEPRECATED_ARGUMENT = (
     "- Deprecated the `{name}` {type} inside the **{command_name}** command.\n"
 )
-ARGUMENT_BC = "- Breaking Changes: Updated the **{command_name}** to not use the `{argument_name}` argument.\n"
+ARGUMENT_BC = "- Updated the **{command_name}** to not use the `{argument_name}` argument.\n"
 DEPRECATED_CONTENT_ITEM_RN = "- Deprecated. {replacement}.\n"
 GENERAL_UPDATE_RN = (
     "- Updated the {name} {type} to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
@@ -188,8 +188,8 @@ def rn_for_deleted_content(
 
 def generate_deprecation_rn(
     name: str,
-    old_content: Union[Parameter, Argument, Command],
     new_content: Union[Parameter, Argument, Command],
+    old_content: Union[Parameter, Argument, Command],
     content_type: content_type,
     parent: Union[str, None] = None,
 ) -> str:

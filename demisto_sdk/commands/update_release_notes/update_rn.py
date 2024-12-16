@@ -181,7 +181,7 @@ def rn_for_deleted_content(
         else:
             rn += GENERAL_BC.format(name=name, value=type.value)
         logger.info(
-            f"Please add a breaking changes json file for deleting the {name} {type.value}"
+            f"<yellow>Please add a breaking changes json file for deleting the {name} {type.value}</yellow>"
         )
     return rn
 
@@ -594,7 +594,6 @@ class UpdateRN:
                 f" is not versioned.</yellow>"
             )
             return False
-
         new_version, new_metadata = self.get_new_version_and_metadata()
         rn_path = self.get_release_notes_path(new_version)
         self.check_rn_dir(rn_path)

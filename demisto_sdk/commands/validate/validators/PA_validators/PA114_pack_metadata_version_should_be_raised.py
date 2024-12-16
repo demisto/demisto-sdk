@@ -48,7 +48,9 @@ from demisto_sdk.commands.content_graph.objects import (
     XSIAMDashboard,
     XSIAMReport,
 )
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.validate.tools import is_new_pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -124,6 +126,9 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
         if content_item.pack_name in IGNORED_PACK_NAMES:
             return False
 
+        if isinstance(content_item, ContentItem) and is_new_pack(content_item.pack):
+            return False
+
         if content_item.git_status is None and content_item.content_type.value in [
             Integration.content_type.value,
             Script.content_type.value,
@@ -140,7 +145,9 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
 
             return not all(related_files_unchanged)
 
-        if content_item.content_type.value == Pack.content_type.value:
+        if isinstance(content_item, Pack):
+            if is_new_pack(content_item):
+                return False
             # If it's a pack content type check for the fields that require RNs.
             old_dict = content_item.old_base_content_object.to_dict()  # type: ignore[union-attr]
             current_dict = content_item.to_dict()  # type: ignore[union-attr]

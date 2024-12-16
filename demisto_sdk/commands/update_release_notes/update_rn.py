@@ -83,7 +83,7 @@ GENERAL_BC = "- Deleted the **{name}** {value}.\n"
 DEPRECATED_ARGUMENT = (
     "- Deprecated the `{name}` {type} inside the **{command_name}** command.\n"
 )
-ARGUMENT_BC = "- Updated the **{command_name}** to not use the `{argument_name}` argument.\n"
+ARGUMENT_BC = "- Updated the **{command_name}** command to not use the `{argument_name}` argument.\n"
 DEPRECATED_CONTENT_ITEM_RN = "- Deprecated. {replacement}.\n"
 GENERAL_UPDATE_RN = (
     "- Updated the {name} {type} to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"

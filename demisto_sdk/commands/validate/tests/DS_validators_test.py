@@ -75,58 +75,6 @@ def test_DescriptionMissingInBetaIntegrationValidator_obtain_invalid_content_ite
     assert result_len == len(invalid_content_items)
 
 
-def test_IsDescriptionContainsDemistoWordValidator_obtain_invalid_content_items():
-    """
-    Given
-    - Integration with a valid description.
-    When
-    - Calling the IsContainDemistoWordValidator obtain_invalid_content_items function.
-    Then
-    - Should pass.
-
-    """
-    from demisto_sdk.commands.validate.validators.DS_validators.DS107_is_description_contains_demisto_word import (
-        IsDescriptionContainsDemistoWordValidator,
-    )
-
-    integration = create_integration_object()
-    integration.description_file.file_content_str = "valid description\n"
-    invalid_content_items = (
-        IsDescriptionContainsDemistoWordValidator().obtain_invalid_content_items(
-            [integration]
-        )
-    )
-    assert len(invalid_content_items) == 0
-
-
-def test_IsDescriptionContainsDemistoWordValidator_is_invalid():
-    """
-    Given
-    - Integration with invalid description that contains the word 'demisto'.
-    When
-    - Calling the IsContainDemistoWordValidator obtain_invalid_content_items function.
-    Then
-    - Make that the right error message is returned.
-    """
-    from demisto_sdk.commands.validate.validators.DS_validators.DS107_is_description_contains_demisto_word import (
-        IsDescriptionContainsDemistoWordValidator,
-    )
-
-    integration = create_integration_object()
-    integration.description_file.file_content_str = (
-        " demisto.\n demisto \n valid description\ndemisto"
-    )
-    invalid_content_items = (
-        IsDescriptionContainsDemistoWordValidator().obtain_invalid_content_items(
-            [integration]
-        )
-    )
-    assert (
-        invalid_content_items[0].message
-        == "Invalid keyword 'demisto' was found in lines: 1, 2, 4. For more information about the description file See: https://xsoar.pan.dev/docs/documentation/integration-description."
-    )
-
-
 @pytest.mark.parametrize(
     "is_beta_integration, description_file_content, result_len",
     [

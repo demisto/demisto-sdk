@@ -72,6 +72,7 @@ from demisto_sdk.commands.secrets.secrets import SecretsValidator
 ANALYTICS_AND_SIEM_CATEGORY = "Analytics & SIEM"
 NOW = datetime.now().strftime(ISO_TIMESTAMP_FORMAT)
 
+
 def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):
     """Recursively extracts values from a nested dictionary to a set.
 

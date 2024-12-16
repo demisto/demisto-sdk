@@ -19,7 +19,8 @@ from git.remote import Remote
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
-    PACKS_FOLDER, ISO_TIMESTAMP_FORMAT,
+    ISO_TIMESTAMP_FORMAT,
+    PACKS_FOLDER,
 )
 from demisto_sdk.commands.common.logger import logger
 

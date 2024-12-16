@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     PACK_DEFAULT_MARKETPLACES,
     PACK_NAME_DEPRECATED_REGEX,
-    MarketplaceVersions, ISO_TIMESTAMP_FORMAT,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
@@ -144,8 +144,8 @@ class PackMetadataParser:
         self.created = metadata.get("firstCreated")
         if not self.created:
             self.created = GitUtil().get_file_creation_date(file_path=path)
-            metadata['firstCreated'] = self.created
-            metadata['created'] = self.created
+            metadata["firstCreated"] = self.created
+            metadata["created"] = self.created
         self.updated: str = metadata.get("updated") or NOW
         self.legacy: bool = metadata.get(
             "legacy", metadata.get("partnerId") is None
@@ -191,7 +191,6 @@ class PackMetadataParser:
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
         logger.debug(f"Stop {metadata}")
-
 
     @property
     def url(self) -> str:
@@ -384,7 +383,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         return {
             "name": "name",
             "description": "description",
-            "created": "created",
+            "created": "firstCreated",
             "support": "support",
             "email": "email",
             "price": "price",

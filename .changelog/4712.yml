@@ -1,4 +1,6 @@
 changes:
 - description: Removed support for DS107 and RM106 validations - ensure no 'demist'o word in description and readme files for both new & old validate.
   type: breaking
+- description: Changed the code of RM116 - Validate that the readme file is not to short to RM117 due to error code duplication.
+  type: breaking
 pr_number: 4712

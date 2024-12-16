@@ -55,7 +55,7 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM115_no_default_sec
 from demisto_sdk.commands.validate.validators.RM_validators.RM116_missing_playbook_image import (
     MissingPlaybookImageValidator,
 )
-from demisto_sdk.commands.validate.validators.RM_validators.RM116_readme_not_to_short import (
+from demisto_sdk.commands.validate.validators.RM_validators.RM117_readme_not_to_short import (
     NotToShortReadmeValidator,
 )
 from TestSuite.repo import ChangeCWD

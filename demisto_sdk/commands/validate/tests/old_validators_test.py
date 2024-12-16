@@ -3206,13 +3206,6 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, c
     [
         (
             {"Packs/test/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109\n",
-            "[file:test.yml]\nignore=BA108,BA109\n",
-            "",
-            {"Packs/test/Integrations/test/test.yml"},
-        ),
-        (
-            {"Packs/test/.pack-ignore"},
             "[file:test.yml]\nignore=BA108,BA109,\n",
             "[file:test.yml]\nignore=BA108,BA109,\n",
             "",

@@ -83,11 +83,13 @@ GENERAL_BC = "- Deleted the **{name}** {value}.\n"
 DEPRECATED_ARGUMENT = (
     "- Deprecated the `{name}` {type} inside the **{command_name}** command.\n"
 )
-ARGUMENT_BC = "- Updated the **{command_name}** command to not use the `{argument_name}` argument.\n"
+ARGUMENT_BC = "- Updated the **{command_name}** command to not use the **{argument_name}** argument.\n"
 DEPRECATED_CONTENT_ITEM_RN = "- Deprecated. {replacement}.\n"
 GENERAL_UPDATE_RN = (
     "- Updated the {name} {type} to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
 )
+ADDED_ARGUMENT_RN = "- Added support for **{name}** argument in the **{parent}** command.\n"
+ADDED_CONTENT_RN = "- Added the **{name}** {content_type}{extra_description}\n"
 
 
 def get_deprecated_comment_from_desc(description: str) -> str:
@@ -272,10 +274,12 @@ def generate_new_content_rn(
     description = new_content.details_for_rn().replace("-", "").lower()
     display_name = new_content.name_for_rn()
     if isinstance(new_content, Argument) and parent:
-        return f"- Added support for `{name}` argument in the **{parent}** command.\n"
-    return (
-        f"- Added the **{display_name}** {content_type.value}"
-        f"{(' which ' + description.rstrip('.') + '.') if description else '.'}\n"
+        return ADDED_ARGUMENT_RN.format(name=name, parent=parent)
+    extra_description = f" which {description.rstrip('.')}." if description else "."
+    return ADDED_CONTENT_RN.format(
+        name=display_name,
+        content_type=content_type.value,
+        extra_description=extra_description
     )
 
 

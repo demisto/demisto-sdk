@@ -77,11 +77,11 @@ class content_type(Enum):
     ARGUMENT = "argument"
 
 
-NEW_RN_TEMPLATE = "- New: added a new {type} - {name} which {description}\n"
-GENERAL_DEPRECATED_RN = "- Deprecated ***{name}*** {type}. {replacement}.\n"
+NEW_RN_TEMPLATE = "- New: added a new {type}- {name} which {description}\n"
+GENERAL_DEPRECATED_RN = "- Deprecated the ***{name}*** {type}. {replacement}.\n"
 GENERAL_BC = "- Deleted the **{name}** {value}.\n"
 DEPRECATED_ARGUMENT = (
-    "- Deprecated the `{name}` {type} inside the **{command_name}** command.\n"
+    "- Deprecated the **{name}** {type} inside the **{command_name}** command.\n"
 )
 ARGUMENT_BC = "- Updated the **{command_name}** command to not use the **{argument_name}** argument.\n"
 DEPRECATED_CONTENT_ITEM_RN = "- Deprecated. {replacement}.\n"
@@ -89,7 +89,7 @@ GENERAL_UPDATE_RN = (
     "- Updated the {name} {type} to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
 )
 ADDED_ARGUMENT_RN = "- Added support for **{name}** argument in the **{parent}** command.\n"
-ADDED_CONTENT_RN = "- Added the **{name}** {content_type}{extra_description}\n"
+ADDED_CONTENT_RN = "- Added support for **{name}** {content_type}{extra_description}\n"
 
 
 def get_deprecated_comment_from_desc(description: str) -> str:

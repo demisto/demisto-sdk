@@ -131,9 +131,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         """
         try:
             return (
-                ContentType.convert_header_to_content_type(
-                    header
-                ).convert_content_type_to_rn_header
+                ContentType.convert_header_to_content_type(header).as_rn_header
                 == header
             )
         except Exception as exception:

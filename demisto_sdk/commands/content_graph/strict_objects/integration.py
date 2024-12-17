@@ -1,6 +1,7 @@
+from enum import Enum
 from typing import Any, List, Optional
 
-from pydantic import Field
+from pydantic import Field, conlist, validator
 
 from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
@@ -40,7 +41,7 @@ IS_FETCH_EVENTS_DYNAMIC_MODEL = create_dynamic_model(
 
 class _Configuration(BaseStrictModel):
     display: Optional[str] = None
-    section: Optional[str] = None
+    section: str
     advanced: Optional[str] = None
     default_value: Optional[Any] = Field(None, alias="defaultvalue")
     name: str
@@ -136,14 +137,19 @@ CommonFieldsIntegration = create_model(
     ),
 )
 
+class SectionOrderValues(str, Enum):
+    CONNECT = "connect",
+    COLLECT = "collect",
+    OPTIMIZE = "optimize"
+
 
 class _StrictIntegration(BaseStrictModel):
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")  # type:ignore[valid-type]
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order_pascal_case: Optional[List[str]] = Field(None, alias="sectionOrder")
-    section_order_lower_case: Optional[List[str]] = Field(None, alias="sectionorder")
+    section_order: conlist(SectionOrderValues, min_items=1, max_items=3) = Field(alias="sectionorder")
+    section_order_camel_case: conlist(SectionOrderValues, min_items=1, max_items=3) = Field(alias="sectionOrder")
     image: Optional[str] = None
     description: str
     default_mapper_in: Optional[str] = Field(None, alias="defaultmapperin")
@@ -160,6 +166,21 @@ class _StrictIntegration(BaseStrictModel):
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
     hybrid: Optional[bool] = None
+
+    def __init__(self, **data):
+        if 'section_order_camel_case' in data:
+            data['section_order'] = data.pop('section_order_camel_case')
+        super().__init__(**data)
+
+    @validator('configuration')
+    def validate_sections(cls, configuration, values):
+        section_order = values.get('section_order')
+        for field_config in configuration:
+            assert field_config.secion in section_order
+        return configuration
+
+
+
 
 
 StrictIntegration = create_model(

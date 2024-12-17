@@ -47,9 +47,4 @@ repos:
     language: system
 - repo: local
   hooks:
-    - id: generate-docs
-      name: Generate Documentation for Changed Commands
-      description: Generates documentation for commands when a _setup.py file is modified.
-      entry: python pre_commit_generate_docs.py
-      language: python
-      files: ^.*_setup\.py$
+    - id: generate-command-docs

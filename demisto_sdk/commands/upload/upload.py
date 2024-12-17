@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Iterable, List, Sequence
 from zipfile import ZipFile
 
+import typer
 from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import (
@@ -65,7 +66,7 @@ def upload_content_entity(**kwargs):
 
     if not inputs:
         logger.error("<red>No input provided for uploading</red>")
-        return ERROR_RETURN_CODE
+        raise typer.Exit(ERROR_RETURN_CODE)
 
     kwargs.pop("input")
     # Here the magic happens
@@ -86,7 +87,7 @@ def upload_content_entity(**kwargs):
     if not keep_zip:
         shutil.rmtree(destination_zip_path, ignore_errors=True)
 
-    return upload_result
+    raise typer.Exit(upload_result)
 
 
 def zip_multiple_packs(

@@ -29,7 +29,6 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
 )
 from demisto_sdk.commands.generate_docs.common import (
-    CONFIGURATION_SECTION_STEPS,
     DEFAULT_ARG_DESCRIPTION,
     HEADER_TYPE,
     add_lines,
@@ -205,6 +204,50 @@ class IntegrationDocUpdateManager:
         finally:
             return can_update
 
+    def find_table_bounds(self, doc_text_lines: list) -> tuple[Any, Any]:
+        """
+        Helper function that finds the bounds of the parameters table in the
+        provided README text lines.
+
+        This function looks for the first table that contains at least two columns
+        and checks if the first line of the table includes the keyword "parameter".
+        If such a table is found, the function returns the first and last lines of the table.
+        If no valid table is found, it returns None for both lines.
+
+        Parameters:
+            doc_text_lines (list of str): The lines of the README document.
+
+        Returns:
+           tuple: A tuple containing the first and last lines of the table, or
+           (None, None) if no valid table is found.
+        """
+        table_start_pattern = r"^\s*\|.*\|.*\|"
+        table_row_pattern = r"^\s*\|.*\|.*\|$"
+
+        first_line = None
+        last_line = None
+
+        inside_table = False
+
+        for i, line in enumerate(doc_text_lines):
+            if re.match(table_start_pattern, line):
+                if not inside_table:
+                    first_line = line
+                    if "parameter" not in first_line.lower():
+                        return None, None
+
+                    inside_table = True
+
+                last_line = line
+
+            elif inside_table and not re.match(table_row_pattern, line):
+                break
+
+        if inside_table:
+            return first_line, last_line
+
+        return None, None
+
     def _update_conf_section(self):
         """
         Helper function that replaces an integration configuration section in the
@@ -218,16 +261,20 @@ class IntegrationDocUpdateManager:
 
             doc_text_lines = self.output_doc.splitlines()
 
-            old_config_start_line = doc_text_lines.index(
-                CONFIGURATION_SECTION_STEPS.STEP_1.value
-            )
-            old_config_end_line = doc_text_lines.index(
-                CONFIGURATION_SECTION_STEPS.STEP_4.value
-            )
+            # Find the first and last line of the parameters table in the document
+            first_line, last_line = self.find_table_bounds(doc_text_lines)
 
-            doc_text_lines[old_config_start_line : old_config_end_line + 1] = (
-                new_configuration_section
-            )
+            if first_line and last_line:
+                old_config_start_line = doc_text_lines.index(first_line)
+                old_config_end_line = doc_text_lines.index(last_line)
+
+                doc_text_lines[old_config_start_line : old_config_end_line + 1] = (
+                    new_configuration_section
+                )
+            else:
+                raise ValueError(
+                    "Parameters table not found or incomplete in the README."
+                )
 
             self.output_doc = "\n".join(doc_text_lines)
         except ValueError as e:
@@ -571,7 +618,7 @@ def generate_integration_doc(
             # Setup integration to work with Demisto
             docs.extend(
                 generate_section(
-                    "Configure {} on Cortex XSOAR".format(yml_data["display"]), ""
+                    "Configure {} in Cortex".format(yml_data["display"]), ""
                 )
             )
             # Setup integration on Demisto
@@ -642,14 +689,12 @@ def generate_setup_section(yaml_data: dict) -> List[str]:
 
     default_additional_info: CaseInsensitiveDict = load_default_additional_info_dict()
 
-    section = [
-        CONFIGURATION_SECTION_STEPS.STEP_1.value,
-        CONFIGURATION_SECTION_STEPS.STEP_2_TEMPLATE.value.format(yaml_data["display"]),
-        CONFIGURATION_SECTION_STEPS.STEP_3.value,
-    ]
+    section = []
     access_data: List[Dict] = []
 
     for conf in yaml_data["configuration"]:
+        if conf.get("hidden") is True:
+            continue
         if conf["type"] == CREDENTIALS:
             add_access_data_of_type_credentials(access_data, conf)
         else:
@@ -675,11 +720,9 @@ def generate_setup_section(yaml_data: dict) -> List[str]:
 
     section.extend(
         generate_table_section(
-            access_data, "", horizontal_rule=False, numbered_section=True
+            access_data, "", horizontal_rule=False, numbered_section=False
         )
     )
-    section.append(CONFIGURATION_SECTION_STEPS.STEP_4.value)
-    section.append("")
 
     return section
 
@@ -832,7 +875,7 @@ def generate_commands_section(
     section = [
         "## Commands",
         "",
-        "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
+        "You can execute these commands from the CLI, as part of an automation, or in a playbook.",
         "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
         "",
     ]
@@ -920,6 +963,8 @@ def generate_single_command_section(
             ]
         )
         for arg in arguments:
+            if arg.get("hidden") and not any(key.startswith("hidden:") for key in arg):
+                continue
             description = arg.get("description", DEFAULT_ARG_DESCRIPTION)
             if not description:
                 errors.append(
@@ -1260,28 +1305,30 @@ def add_access_data_of_type_credentials(
     Returns:
         (None): Adds the data to 'access_data'.
     """
-    display_name = credentials_conf.get("display")
-    if display_name:
+    hidden_user_name = credentials_conf.get("hiddenusername")
+    if not hidden_user_name:
         access_data.append(
             {
-                "Parameter": display_name,
+                "Parameter": credentials_conf.get("display")
+                or credentials_conf["name"],
                 "Description": string_escape_md(
                     credentials_conf.get("additionalinfo", "")
                 ),
                 "Required": credentials_conf.get("required", ""),
             }
         )
-    access_data.append(
-        {
-            "Parameter": credentials_conf.get("displaypassword", "Password"),
-            "Description": (
-                ""
-                if display_name
-                else string_escape_md(credentials_conf.get("additionalinfo", ""))
-            ),
-            "Required": credentials_conf.get("required", ""),
-        }
-    )
+    if not credentials_conf.get("hiddenpassword"):
+        access_data.append(
+            {
+                "Parameter": credentials_conf.get("displaypassword", "Password"),
+                "Description": (
+                    ""
+                    if not hidden_user_name
+                    else string_escape_md(credentials_conf.get("additionalinfo", ""))
+                ),
+                "Required": credentials_conf.get("required", ""),
+            }
+        )
 
 
 def get_integration_commands(yaml_data: Dict[str, Any]) -> List[Dict[str, Any]]:

@@ -320,10 +320,6 @@ ERROR_CODE: Dict = {
         "code": "DS106",
         "related_field": "",
     },
-    "description_contains_demisto_word": {
-        "code": "DS107",
-        "related_field": "detaileddescription",
-    },
     "description_missing_dot_at_the_end": {
         "code": "DS108",
         "related_field": "description",
@@ -946,10 +942,6 @@ ERROR_CODE: Dict = {
         "code": "PA133",
         "related_field": "",
     },
-    "categories_field_does_not_match_standard": {
-        "code": "PA134",
-        "related_field": "",
-    },
     "pack_metadata_invalid_modules": {
         "code": "PA135",
         "related_field": "",
@@ -1093,10 +1085,6 @@ ERROR_CODE: Dict = {
     },
     "readme_equal_description_error": {
         "code": "RM105",
-        "related_field": "readme",
-    },
-    "readme_contains_demisto_word": {
-        "code": "RM106",
         "related_field": "readme",
     },
     "template_sentence_in_readme": {
@@ -2885,11 +2873,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def description_contains_demisto_word(line_nums, yml_or_file):
-        return f"Found the word 'Demisto' in the description content {yml_or_file} in lines: {line_nums}."
-
-    @staticmethod
-    @error_code_decorator
     def description_missing_dot_at_the_end(details: str):
         return (
             f'Description must end with a period ("."), fix the following:\n{details}'
@@ -4085,14 +4068,6 @@ class Errors:
             f"The description of the pack in the pack_metadata.json should be one of the following formats:\n"
             f'1. "Deprecated. Use <PACK_NAME> instead."\n'
             f'2. "Deprecated. <REASON> No available replacement."'
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def categories_field_does_not_match_standard(approved_list):
-        return (
-            f"The pack metadata categories field doesn't match the standard,\n"
-            f"please make sure the field contain only one category from the following options:\n{approved_list}"
         )
 
     @staticmethod

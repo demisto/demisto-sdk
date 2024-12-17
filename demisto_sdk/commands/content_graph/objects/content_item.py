@@ -34,6 +34,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
+    replace_incorrect_marketplace,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -55,6 +56,7 @@ class ContentItem(BaseContent):
     is_test: bool = False
     pack: Any = Field(None, exclude=True, repr=False)
     support: str = ""
+    is_silent: bool = False
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -272,6 +274,9 @@ class ContentItem(BaseContent):
             raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
         logger.debug(f"preparing {self.path}")
+
+        # Replace incorrect marketplace references
+        data = replace_incorrect_marketplace(data, current_marketplace, str(self.path))
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(

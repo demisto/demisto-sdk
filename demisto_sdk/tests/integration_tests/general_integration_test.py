@@ -2,10 +2,10 @@
 Integration tests for general demisto-sdk functionalities which are related to all SDK commands.
 """
 
-from click.testing import CliRunner
 from pytest import LogCaptureFixture
+from typer.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import DEMISTO_SDK_CONFIG_FILE
 from demisto_sdk.commands.common.content.content import Content
@@ -50,7 +50,7 @@ def test_conf_file_custom(mocker: LogCaptureFixture, repo):
         runner = CliRunner(mix_stderr=False)
         # pre-conf file - see validate fail on docker related issue
         result = runner.invoke(
-            main,
+            app,
             f"validate -i {integration.yml.path} --run-old-validate --skip-new-validate",
         )
         assert "================= Validating file " in result.output
@@ -60,7 +60,7 @@ def test_conf_file_custom(mocker: LogCaptureFixture, repo):
         runner = CliRunner(mix_stderr=False)
         # post-conf file - see validate not fail on docker related issue as we are skipping
         result = runner.invoke(
-            main,
+            app,
             f"validate -i {integration.yml.path} --run-old-validate --skip-new-validate",
         )
         assert "================= Validating file " in result.output

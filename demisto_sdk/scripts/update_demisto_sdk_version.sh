@@ -43,7 +43,7 @@ do
   new_sha=$(git rev-parse -q --verify refs/stash)
   git checkout master
   git pull
-  poetry install
+  uv pip install -r pyproject.toml --all-extras # TODO all extras?
   git checkout "$current_content_branch"
   if [ "$old_sha" != "$new_sha" ]; then
     git stash pop

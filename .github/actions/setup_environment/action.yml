@@ -12,35 +12,29 @@ inputs:
     type: string
     default: ${{ github.workspace }}
     description: "On which working directory to run the setup-env, for example it can be done in content"
-  poetry-install-arguments:
-    required: false
-    type: string
-    default: "-E generate-unit-tests"
-    description: "the arguments for the poetry install command"
 
 runs:
   using: 'composite'
   steps:
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v2
+      with:
+        enable-cache: true
+        version: "0.5.9"
 
-    - name: Setup Poetry
-      uses: Gr1N/setup-poetry@v9
-
-    - name: Check Poetry Consistency
-      run: |
-        cd ${{ inputs.working-dir }}
-        poetry --version
-        poetry check --lock
+    - name: Install the project
+      run: uv sync --all-extras --dev --python ${{ inputs.python-version }}
       shell: bash
 
-    - name: Set up Python ${{ inputs.python-version }}
-      uses: actions/setup-python@v5
+    - name: Restore uv cache
+      uses: actions/cache@v4
       with:
-        python-version: ${{ inputs.python-version }}
-        cache: poetry
-        cache-dependency-path: poetry.lock
+        path: /tmp/.uv-cache
+        key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+        restore-keys: |
+          uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          uv-${{ runner.os }}
 
-    - name: Install dependencies with poetry
-      run: |
-        cd ${{ inputs.working-dir }}
-        poetry install ${{ inputs.poetry-install-arguments }}
+    - name: Minimize uv cache
+      run: uv cache prune --ci
       shell: bash

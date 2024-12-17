@@ -3,7 +3,6 @@ version: -1
 name: sample pb
 description: Sample playbook for testing
 starttaskid: "0"
-isSilent: false
 tasks:
   "0":
     id: "0"

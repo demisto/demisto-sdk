@@ -77,7 +77,7 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
 
             except click.exceptions.BadParameter:
                 try:
-                    alternative_path = image_path[len("Packs/") :]
+                    alternative_path = image_path[len("Packs/"):]
                     path_validate.convert(alternative_path, param=None, ctx=None)
                 except click.exceptions.BadParameter:
                     invalid_image_paths.append(image_path)

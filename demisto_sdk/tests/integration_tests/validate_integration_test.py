@@ -5,11 +5,11 @@ from time import sleep
 
 import pytest
 import requests
-from click.testing import CliRunner
 from requests.adapters import HTTPAdapter
+from typer.testing import CliRunner
 from urllib3 import Retry
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_IMAGE_BASE64,
@@ -150,7 +150,7 @@ class TestGenericFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -185,7 +185,7 @@ class TestGenericFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -238,7 +238,7 @@ class TestGenericFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -283,7 +283,7 @@ class TestGenericTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -325,7 +325,7 @@ class TestGenericTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -370,7 +370,7 @@ class TestGenericTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -414,7 +414,7 @@ class TestGenericModuleValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -456,7 +456,7 @@ class TestGenericModuleValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -499,7 +499,7 @@ class TestGenericModuleValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -545,7 +545,7 @@ class TestGenericDefinitionValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -588,7 +588,7 @@ class TestGenericDefinitionValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -632,7 +632,7 @@ class TestGenericDefinitionValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -676,7 +676,7 @@ class TestIncidentFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -718,7 +718,7 @@ class TestIncidentFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -780,7 +780,7 @@ class TestIncidentFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -841,7 +841,7 @@ class TestIncidentFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -900,7 +900,7 @@ class TestDeprecatedIntegration:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -915,7 +915,7 @@ class TestDeprecatedIntegration:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{integration.yml.path} as integration",
+                    f"{integration.yml.rel_path} as integration",
                     "The files are valid",
                 ]
             ]
@@ -946,7 +946,7 @@ class TestDeprecatedIntegration:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -988,7 +988,7 @@ class TestDeprecatedIntegration:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -1035,7 +1035,7 @@ class TestDeprecatedIntegration:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1075,7 +1075,7 @@ class TestDeprecatedIntegration:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1086,7 +1086,7 @@ class TestDeprecatedIntegration:
                 ],
                 catch_exceptions=False,
             )
-        assert f"{integration.yml.path} as integration" in result.output
+        assert f"{integration.yml.rel_path} as integration" in result.output
         assert all(
             current_str in result.output
             for current_str in [
@@ -1126,7 +1126,7 @@ class TestDeprecatedIntegration:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1142,7 +1142,7 @@ class TestDeprecatedIntegration:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{integration.yml.path} as integration",
+                    f"{integration.yml.rel_path} as integration",
                     "The files are valid",
                 ]
             ]
@@ -1199,7 +1199,7 @@ class TestDeprecatedIntegration:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1249,7 +1249,7 @@ class TestDeprecatedIntegration:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1265,7 +1265,7 @@ class TestDeprecatedIntegration:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{integration.yml.path} as integration",
+                    f"{integration.yml.rel_path} as integration",
                     "The files are valid",
                 ]
             ]
@@ -1319,7 +1319,7 @@ class TestDeprecatedIntegration:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1370,7 +1370,7 @@ class TestIntegrationValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1385,7 +1385,7 @@ class TestIntegrationValidation:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{integration.yml.path} as integration",
+                    f"{integration.yml.rel_path} as integration",
                     "The files are valid",
                 ]
             ]
@@ -1444,7 +1444,7 @@ class TestIntegrationValidation:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1496,7 +1496,7 @@ class TestIntegrationValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1511,7 +1511,7 @@ class TestIntegrationValidation:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{integration.yml.path} as integration",
+                    f"{integration.yml.rel_path} as integration",
                     "IN119",
                 ]
             ]
@@ -1543,7 +1543,7 @@ class TestIntegrationValidation:
         with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1596,7 +1596,7 @@ class TestIntegrationValidation:
         )
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 VALIDATE_CMD,
                 "--run-old-validate",
@@ -1627,7 +1627,7 @@ class TestIntegrationValidation:
         )
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 VALIDATE_CMD,
                 "--run-old-validate",
@@ -1688,7 +1688,7 @@ class TestIntegrationValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1739,7 +1739,7 @@ class TestIntegrationValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1790,7 +1790,7 @@ class TestIntegrationValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -1838,10 +1838,6 @@ class TestPackValidation:
             return_value=[],
         )
         mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
-            return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
-        )
-        mocker.patch(
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
             return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
         )
@@ -1851,7 +1847,7 @@ class TestPackValidation:
         )
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 VALIDATE_CMD,
                 "--run-old-validate",
@@ -1906,7 +1902,7 @@ class TestPackValidation:
         )
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 VALIDATE_CMD,
                 "--run-old-validate",
@@ -1946,13 +1942,14 @@ class TestPackValidation:
         """
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 VALIDATE_CMD,
                 "--run-old-validate",
                 "--skip-new-validate",
                 "-i",
                 AZURE_FEED_INVALID_PACK_PATH,
+                "--no-conf-json",
             ],
         )
         assert "does not exist" in result.stderr
@@ -1978,7 +1975,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -2019,7 +2016,7 @@ class TestClassifierValidation:
         classifier = pack.create_classifier("new_classifier", new_classifier_copy)
         with ChangeCWD(pack.repo_path):
             result = CliRunner(mix_stderr=False).invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2060,7 +2057,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2098,7 +2095,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2135,7 +2132,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2176,7 +2173,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2216,7 +2213,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2253,7 +2250,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2294,7 +2291,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2336,7 +2333,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2377,7 +2374,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2418,7 +2415,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2462,7 +2459,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2503,7 +2500,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2546,7 +2543,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2582,7 +2579,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2624,7 +2621,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2661,7 +2658,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2697,7 +2694,7 @@ class TestDashboardValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2737,7 +2734,7 @@ class TestDashboardValidation:
         dashboard = pack.create_dashboard("dashboard", dashboard_copy)
         with ChangeCWD(pack.repo_path):
             result = CliRunner(mix_stderr=False).invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2775,7 +2772,7 @@ class TestIndicatorFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2817,7 +2814,7 @@ class TestIndicatorFieldValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2859,7 +2856,7 @@ class TestIncidentTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2900,7 +2897,7 @@ class TestIncidentTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -2966,7 +2963,7 @@ class TestIncidentTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3035,7 +3032,7 @@ class TestIncidentTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3105,7 +3102,7 @@ class TestIncidentTypeValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3203,7 +3200,7 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3246,7 +3243,7 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3290,7 +3287,7 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3332,7 +3329,7 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3375,7 +3372,7 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3417,7 +3414,7 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3462,7 +3459,7 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3502,7 +3499,7 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3560,7 +3557,7 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3631,7 +3628,7 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3699,7 +3696,7 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3765,7 +3762,7 @@ class TestLayoutValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3812,7 +3809,7 @@ class TestPlaybookValidation:
         )
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 VALIDATE_CMD,
                 "--run-old-validate",
@@ -3851,7 +3848,7 @@ class TestPlaybookValidation:
         with ChangeCWD(TEST_FILES_PATH):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3892,7 +3889,7 @@ class TestPlaybookValidateDeprecated:
         mocker.patch.object(PlaybookValidator, "is_script_id_valid", return_value=True)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 VALIDATE_CMD,
                 "--run-old-validate",
@@ -3931,7 +3928,7 @@ class TestPlaybookValidateDeprecated:
         with ChangeCWD(TEST_FILES_PATH):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3975,7 +3972,7 @@ class TestPlaybookValidateDeprecated:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -3990,7 +3987,7 @@ class TestPlaybookValidateDeprecated:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{playbook.yml.path} as playbook",
+                    f"{playbook.yml.rel_path} as playbook",
                     "The files are valid",
                 ]
             ]
@@ -4039,7 +4036,7 @@ class TestPlaybookValidateDeprecated:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4084,7 +4081,7 @@ class TestPlaybookValidateDeprecated:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4099,7 +4096,7 @@ class TestPlaybookValidateDeprecated:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{playbook.yml.path} as playbook",
+                    f"{playbook.yml.rel_path} as playbook",
                     "The files are valid",
                 ]
             ]
@@ -4149,7 +4146,7 @@ class TestPlaybookValidateDeprecated:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4191,7 +4188,7 @@ class TestReportValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4232,7 +4229,7 @@ class TestReportValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4268,7 +4265,7 @@ class TestReputationValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4311,7 +4308,7 @@ class TestReputationValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4352,7 +4349,7 @@ class TestScriptValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4367,7 +4364,7 @@ class TestScriptValidation:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{script.yml.path} as script",
+                    f"{script.yml.rel_path} as script",
                     "The files are valid",
                 ]
             ]
@@ -4395,7 +4392,7 @@ class TestScriptValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4412,7 +4409,7 @@ class TestScriptValidation:
                 for current_str in [
                     "SC100",
                     "The name of this v2 script is incorrect",
-                    f"{script.yml.path} as script",
+                    f"{script.yml.rel_path} as script",
                 ]
             ]
         )
@@ -4443,7 +4440,7 @@ class TestScriptDeprecatedValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4458,7 +4455,7 @@ class TestScriptDeprecatedValidation:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{script.yml.path} as script",
+                    f"{script.yml.rel_path} as script",
                     "The files are valid",
                 ]
             ]
@@ -4486,7 +4483,7 @@ class TestScriptDeprecatedValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -4499,7 +4496,11 @@ class TestScriptDeprecatedValidation:
             )
         assert all(
             current_str in result.output
-            for current_str in ["SC101", "Deprecated.", f"{script.yml.path} as script"]
+            for current_str in [
+                "SC101",
+                "Deprecated.",
+                f"{script.yml.rel_path} as script",
+            ]
         )
         assert result.exit_code == 1
 
@@ -4527,7 +4528,7 @@ class TestScriptDeprecatedValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4543,7 +4544,7 @@ class TestScriptDeprecatedValidation:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{script.yml.path} as script",
+                    f"{script.yml.rel_path} as script",
                     "The files are valid",
                 ]
             ]
@@ -4595,7 +4596,7 @@ class TestScriptDeprecatedValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4641,7 +4642,7 @@ class TestScriptDeprecatedValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4657,7 +4658,7 @@ class TestScriptDeprecatedValidation:
             [
                 current_str in result.output
                 for current_str in [
-                    f"{script.yml.path} as script",
+                    f"{script.yml.rel_path} as script",
                     "The files are valid",
                 ]
             ]
@@ -4706,7 +4707,7 @@ class TestScriptDeprecatedValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-g",
@@ -4749,7 +4750,7 @@ class TestWidgetValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -4790,7 +4791,7 @@ class TestWidgetValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4836,7 +4837,7 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4880,7 +4881,7 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4921,7 +4922,7 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -4957,7 +4958,7 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -5018,7 +5019,7 @@ class TestAuthorImageValidation:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -5068,7 +5069,7 @@ class TestAuthorImageValidation:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -5137,7 +5138,7 @@ class TestAllFilesValidator:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -5212,7 +5213,7 @@ class TestAllFilesValidator:
 
         with ChangeCWD(repo.path):
             result = CliRunner(mix_stderr=False).invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-a",
@@ -5315,7 +5316,7 @@ class TestValidationUsingGit:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -5406,7 +5407,7 @@ class TestValidationUsingGit:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -5491,7 +5492,7 @@ class TestValidationUsingGit:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -5567,7 +5568,7 @@ class TestValidationUsingGit:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -5592,7 +5593,7 @@ class TestValidationUsingGit:
     def test_validation_non_content_path(self):
         """
         Given
-        - non content pack path file, file not existing.
+        - non-content pack path file, file not existing.
 
         When
         - Running demisto-sdk validate command.
@@ -5602,7 +5603,7 @@ class TestValidationUsingGit:
         """
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [
                 VALIDATE_CMD,
                 "--run-old-validate",
@@ -5622,7 +5623,7 @@ class TestValidationUsingGit:
     def test_validation_non_content_path_mocked_repo(self, mocker, repo):
         """
         Given
-        - non content pack path file, file existing.
+        - non-content pack path file, file existing.
 
         When
         - Running demisto-sdk validate command.
@@ -5649,7 +5650,7 @@ class TestValidationUsingGit:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -5712,7 +5713,7 @@ class TestValidationUsingGit:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-g",
@@ -5726,7 +5727,6 @@ class TestValidationUsingGit:
                 ],
                 catch_exceptions=False,
             )
-
         assert all(
             [
                 current_str in result.output
@@ -5788,7 +5788,7 @@ class TestValidationUsingGit:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -5866,7 +5866,7 @@ class TestValidationUsingGit:
 
         with ChangeCWD(repo.path):
             result = CliRunner(mix_stderr=False).invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -5911,7 +5911,7 @@ class TestSpecificValidations:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -5956,7 +5956,7 @@ class TestSpecificValidations:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "-i",
@@ -6005,7 +6005,7 @@ class TestSpecificValidations:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",
@@ -6083,7 +6083,7 @@ class TestBasicValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [
                     VALIDATE_CMD,
                     "--run-old-validate",

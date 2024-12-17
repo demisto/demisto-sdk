@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "demisto-sdk"
-version = "1.32.2"
+version = "1.33.0"
 description = "\"A Python library for the Demisto SDK\""
 license = {file = "LICENSE"}
 authors = [{name = "Demisto"}]

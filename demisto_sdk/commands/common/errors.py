@@ -320,10 +320,6 @@ ERROR_CODE: Dict = {
         "code": "DS106",
         "related_field": "",
     },
-    "description_contains_demisto_word": {
-        "code": "DS107",
-        "related_field": "detaileddescription",
-    },
     "description_missing_dot_at_the_end": {
         "code": "DS108",
         "related_field": "description",
@@ -705,10 +701,6 @@ ERROR_CODE: Dict = {
         "code": "IN160",
         "related_field": "deprecated",
     },
-    "invalid_siem_marketplaces_entry": {
-        "code": "IN161",
-        "related_field": "display",
-    },
     "partner_collector_does_not_have_xsoar_support_level": {
         "code": "IN162",
         "related_field": "",
@@ -950,10 +942,6 @@ ERROR_CODE: Dict = {
         "code": "PA133",
         "related_field": "",
     },
-    "categories_field_does_not_match_standard": {
-        "code": "PA134",
-        "related_field": "",
-    },
     "pack_metadata_invalid_modules": {
         "code": "PA135",
         "related_field": "",
@@ -1097,10 +1085,6 @@ ERROR_CODE: Dict = {
     },
     "readme_equal_description_error": {
         "code": "RM105",
-        "related_field": "readme",
-    },
-    "readme_contains_demisto_word": {
-        "code": "RM106",
         "related_field": "readme",
     },
     "template_sentence_in_readme": {
@@ -2091,14 +2075,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_siem_marketplaces_entry():
-        return (
-            "The marketplaces field of this XSIAM integration is incorrect.\n"
-            'This field should have only the "marketplacev2" value.'
-        )
-
-    @staticmethod
-    @error_code_decorator
     def invalid_defaultvalue_for_checkbox_field(name: str):
         return (
             f"The defaultvalue checkbox of the {name} field is invalid. "
@@ -2894,11 +2870,6 @@ class Errors:
             "make sure the name looks like the following: <integration_name>_description.md "
             "and that the integration_name is the same as the folder containing it."
         )
-
-    @staticmethod
-    @error_code_decorator
-    def description_contains_demisto_word(line_nums, yml_or_file):
-        return f"Found the word 'Demisto' in the description content {yml_or_file} in lines: {line_nums}."
 
     @staticmethod
     @error_code_decorator
@@ -4097,14 +4068,6 @@ class Errors:
             f"The description of the pack in the pack_metadata.json should be one of the following formats:\n"
             f'1. "Deprecated. Use <PACK_NAME> instead."\n'
             f'2. "Deprecated. <REASON> No available replacement."'
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def categories_field_does_not_match_standard(approved_list):
-        return (
-            f"The pack metadata categories field doesn't match the standard,\n"
-            f"please make sure the field contain only one category from the following options:\n{approved_list}"
         )
 
     @staticmethod

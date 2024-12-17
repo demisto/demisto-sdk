@@ -346,16 +346,16 @@ jobs:
         timeout-minutes: 60
         run: |
           cd content
-          mkdir -p test-graph-commands
+          mkdir -p ./test-graph-commands/content_graph
           # create content graph from scratch
-          uv run --no-project demisto-sdk create-content-graph
+          uv run --no-project demisto-sdk graph create
           # clean import folder
           sudo rm -rf /var/lib/neo4j/import
           # Update content graph from the bucket
-          uv run --no-project demisto-sdk update-content-graph -g -o ./test-graph-commands/content_graph
+          uv run --no-project demisto-sdk graph update -g -o ./test-graph-commands/content_graph
 
           # Update content graph from the the previous content graph that was created/built
-          uv run --no-project demisto-sdk update-content-graph -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
+          uv run --no-project demisto-sdk graph update -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
 
       - name: Upload artifacts
         if: always()

@@ -42,7 +42,13 @@ class RelatedFileType(Enum):
 class RelatedFile(ABC):
     file_type: ClassVar[RelatedFileType]
 
-    def __init__(self, main_file_path: Path, git_sha: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        main_file_path: Path,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        self.prev_ver = prev_ver
         self.main_file_path: Path = main_file_path
         self.git_sha = git_sha
         self.exist: bool = False
@@ -50,13 +56,13 @@ class RelatedFile(ABC):
 
     @property
     def git_status(self) -> Union[GitStatuses, None]:
-        status = None
-        if self.git_sha:
-            git_util = GitUtil.from_content_path()
-            remote, branch = git_util.handle_prev_ver(
-                self.git_sha  # type: ignore[arg-type]
-            )
-            status = git_util._check_file_status(str(self.file_path), remote, branch)
+        git_util = GitUtil.from_content_path()
+        remote, branch = git_util.handle_prev_ver(
+            self.prev_ver  # type: ignore[arg-type]
+        )
+        status = git_util._check_file_status(
+            str(self.file_path), remote, branch, feature_branch_or_hash=self.git_sha
+        )
         return None if not status else GitStatuses(status)
 
     def find_the_right_path(self, file_paths: List[Path]) -> Path:
@@ -84,9 +90,14 @@ class RelatedFile(ABC):
 
 
 class TextFiles(RelatedFile):
-    def __init__(self, main_file_path: Path, git_sha: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        main_file_path: Path,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
         self.file_content_str = ""
-        super().__init__(main_file_path, git_sha)
+        super().__init__(main_file_path, git_sha, prev_ver)
 
     @property
     def file_content(self) -> str:
@@ -110,11 +121,15 @@ class RNRelatedFile(TextFiles):
     file_type = RelatedFileType.RELEASE_NOTE
 
     def __init__(
-        self, main_file_path: Path, latest_rn: str, git_sha: Optional[str] = None
+        self,
+        main_file_path: Path,
+        latest_rn: str,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
     ) -> None:
         self.latest_rn_version = latest_rn
         self.rns_list: List[str] = []
-        super().__init__(main_file_path, git_sha)
+        super().__init__(main_file_path, git_sha, prev_ver)
 
     def get_optional_paths(self) -> List[Path]:
         return [
@@ -126,12 +141,19 @@ class RNRelatedFile(TextFiles):
     @property
     def all_rns(self) -> List[str]:
         if not self.rns_list:
+            rns_dir_path = self.main_file_path / RELEASE_NOTES_DIR
             if self.git_sha:
-                self.rns_list = GitUtil.from_content_path().list_files_in_dir(
-                    self.main_file_path / RELEASE_NOTES_DIR, self.git_sha
-                )
+                git_util = GitUtil.from_content_path()
+                if not git_util.is_file_exist_in_commit_or_branch(
+                    rns_dir_path, self.git_sha
+                ):
+                    self.rns_list = []
+                else:
+                    self.rns_list = git_util.list_files_in_dir(
+                        rns_dir_path, self.git_sha
+                    )
             else:
-                self.rns_list = get_child_files(self.main_file_path / RELEASE_NOTES_DIR)
+                self.rns_list = get_child_files(rns_dir_path)
         return self.rns_list
 
 
@@ -278,16 +300,34 @@ class ImageRelatedFile(PNGFiles):
     file_type = RelatedFileType.IMAGE
 
     def get_optional_paths(self) -> List[Path]:
-        return [
+        """
+        Generate a list of optional paths for the content item's image.
+        The right path will be found later.
+        Returns:
+            List[Path]: the list of optional paths.
+        """
+        optional_paths_list = [
             self.main_file_path.parents[1]
             / "doc_files"
             / str(self.main_file_path.parts[-1])
             .replace(".yml", ".png")
-            .replace("playbook-", ""),
-            Path(str(self.main_file_path).replace(".yml", ".png")),
-            self.main_file_path.parent / f"{self.main_file_path.parts[-2]}_image.png",
-            Path(str(self.main_file_path).replace(".json", "_image.png")),
+            .replace(
+                "playbook-", ""
+            ),  # In case the playbook's image is located under doc_files folder with the same name as the playbook.
+            self.main_file_path.parent
+            / f"{self.main_file_path.parts[-2]}_image.png",  # In case of integration image where the image is located in the integration folder with the same name as the integration.
         ]
+        if (
+            self.main_file_path.suffix == ".json"
+        ):  # when editing .yml files, we don't want to end up with the yml file as part of the optional paths.
+            optional_paths_list.append(
+                Path(str(self.main_file_path).replace(".json", "_image.png"))
+            )
+        else:  # when editing .json files, we don't want to end up with the json file as part of the optional paths.
+            optional_paths_list.append(
+                Path(str(self.main_file_path).replace(".yml", ".png")),
+            )
+        return optional_paths_list
 
 
 class AuthorImageRelatedFile(PNGFiles):

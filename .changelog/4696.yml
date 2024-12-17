@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where YmlSplitter attributes were being unintentionally updated.
+  type: fix
+pr_number: 4696

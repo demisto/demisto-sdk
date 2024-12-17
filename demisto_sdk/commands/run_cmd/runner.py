@@ -3,6 +3,7 @@ import re
 import tempfile
 
 import demisto_client
+import typer
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -85,7 +86,7 @@ class Runner:
                 logger.info(
                     "<red>A prefix for the outputs is needed for this command. Please provide one</red>"
                 )
-                return 1
+                raise typer.Exit(1)
             else:
                 raw_output_json = self._return_context_dict_from_log(log_ids)
                 if raw_output_json:
@@ -102,7 +103,7 @@ class Runner:
                     logger.info(
                         "<red>Could not extract raw output as JSON from command</red>"
                     )
-                    return 1
+                    raise typer.Exit(1)
 
     def _get_playground_id(self):
         """Retrieves Playground ID from the remote Demisto instance."""

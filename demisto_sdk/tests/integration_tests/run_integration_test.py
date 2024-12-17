@@ -1,8 +1,8 @@
 import pytest
-from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
+from typer.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.run_cmd.runner import Runner
 
@@ -55,7 +55,7 @@ def test_integration_run_non_existing_command(
     result = CliRunner(
         mix_stderr=False,
     ).invoke(
-        main,
+        app,
         [
             "run",
             "-q",
@@ -90,7 +90,7 @@ def test_json_to_outputs_flag(mocker, set_environment_variables):
     command = "!kl-get-records"
     run_result = CliRunner(
         mix_stderr=False,
-    ).invoke(main, ["run", "-q", command, "--json-to-outputs", "-p", "Keylight", "-r"])
+    ).invoke(app, ["run", "-q", command, "--json-to-outputs", "-p", "Keylight", "-r"])
 
     assert run_result.exit_code == 0
     assert not run_result.stderr
@@ -123,7 +123,7 @@ def test_json_to_outputs_flag_fail_no_prefix(
     command = "!kl-get-records"
     run_result = CliRunner(
         mix_stderr=False,
-    ).invoke(main, ["run", "-q", command, "--json-to-outputs"])
+    ).invoke(app, ["run", "-q", command, "--json-to-outputs"])
     assert run_result.exit_code == 1
     assert (
         "A prefix for the outputs is needed for this command. Please provide one"
@@ -150,7 +150,7 @@ def test_incident_id_passed_to_run(mocker):
 
     command = "!kl-get-records"
     result = CliRunner(mix_stderr=False).invoke(
-        main,
+        app,
         [
             "run",
             "-q",

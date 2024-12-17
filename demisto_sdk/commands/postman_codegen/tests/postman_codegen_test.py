@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
 import demisto_sdk.commands.common.tools as tools
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -879,7 +879,7 @@ class TestPostmanCodeGen:
         try:
             runner = CliRunner()
             runner.invoke(
-                main,
+                app,
                 ["postman-codegen", "-i", collection_path, "-o", package_path, "-p"],
                 catch_exceptions=False,
             )

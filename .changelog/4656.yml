@@ -1,4 +1,0 @@
-changes:
-- description: Adds support for content_status.json to be used in the content pipeline
-  type: feature
-pr_number: 4656

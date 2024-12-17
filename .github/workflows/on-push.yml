@@ -357,16 +357,16 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
-          mkdir -p test-graph-commands
+          mkdir -p ./test-graph-commands/content_graph
           # create content graph from scratch
-          demisto-sdk create-content-graph
+          demisto-sdk graph create
           # clean import folder
           sudo rm -rf /var/lib/neo4j/import
           # Update content graph from the bucket
-          demisto-sdk update-content-graph -g -o ./test-graph-commands/content_graph
+          demisto-sdk graph update -g -o ./test-graph-commands/content_graph
 
           # Update content graph from the the previous content graph that was created/built
-          demisto-sdk update-content-graph -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
+          demisto-sdk graph update -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
 
       - name: Upload artifacts
         if: always()

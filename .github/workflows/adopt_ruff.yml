@@ -1,5 +1,5 @@
 name: Adopt Ruff
-on: workflow_dispatch
+on: push
 
 jobs:
   adopt-ruff:

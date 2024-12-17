@@ -1,0 +1,4 @@
+changes:
+- description: Removed the support for python 3.9 and upgraded the *werkzeug* and *mitmproxy* dependencies.
+  type: breaking
+pr_number: 4718

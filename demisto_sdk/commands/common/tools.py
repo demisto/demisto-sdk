@@ -4644,3 +4644,10 @@ def filter_out_falsy_values(ls: Union[List, Tuple]) -> List:
         List filtered from None values.
     """
     return list(filter(lambda x: x, ls))
+
+
+def should_disable_multiprocessing():
+    disable_multiprocessing = os.getenv(
+        "DEMISTO_SDK_DISABLE_MULTIPROCESSING", "false"
+    ).lower() in ["true", "yes", "1"]
+    return disable_multiprocessing

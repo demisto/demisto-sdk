@@ -157,7 +157,7 @@ exclude = [
   "demisto_sdk/commands/init/templates",
   "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py"
 ]
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 ignore = [

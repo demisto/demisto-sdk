@@ -256,10 +256,11 @@ def main(
     load_dotenv(CONTENT_PATH / ".env", override=True)
     if platform.python_version_tuple()[:2] == ("3", "9"):
         message = typer.style(
-            "Warning: Demisto-SDK will soon stop supporting Python 3.9. Please update your python environment.",
+            "Demisto-SDK supports Python 3.10 and above. Please update your python environment.",
             fg=typer.colors.RED,
         )
         typer.echo(message)
+        raise typer.Exit()
 
     if platform.system() == "Windows":
         typer.echo(

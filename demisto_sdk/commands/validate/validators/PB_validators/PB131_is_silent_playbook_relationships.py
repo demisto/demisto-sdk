@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -31,6 +31,7 @@ class IsSilentPlaybookRelationshipsValidator(BaseValidator[ContentTypes]):
             if isinstance(c, Trigger):
                 return ContentTypes.TRIGGER, ContentTypes.PLAYBOOK
             return ContentTypes.PLAYBOOK, ContentTypes.TRIGGER
+
         return [
             ValidationResult(
                 validator=self,

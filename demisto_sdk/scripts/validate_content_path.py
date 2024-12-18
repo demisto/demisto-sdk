@@ -295,7 +295,7 @@ def _validate(path: Path) -> None:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise InvalidDepthOneFile
 
-        if first_level_folder == LAYOUTS_DIR and not (
+        if first_level_folder in {LAYOUTS_DIR, CASE_LAYOUTS_DIR} and not (
             path.stem.startswith(("layout-", "layoutscontainer-"))
             and path.suffix == ".json"
         ):

@@ -5,6 +5,9 @@ import shutil
 from pathlib import Path
 from threading import Thread
 from typing import Any, List, Optional, Tuple, Union
+
+from demisto_sdk.commands.common.clients import get_client_from_server_type
+from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
 import demisto_client
@@ -36,17 +39,11 @@ from demisto_sdk.commands.test_content.tools import (
     get_ui_url,
     XSIAM_CLIENT_SLEEP_INTERVAL,
     XSIAM_CLIENT_RETRY_ATTEMPTS,
-    logs_token_cb,
     tenant_config_cb,
     create_retrying_caller,
     get_relative_path_to_content,
     duration_since_start_time,
     get_utc_now
-)
-
-from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
-    XsiamApiClient,
-    XsiamApiClientConfig,
 )
 
 CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
@@ -149,11 +146,9 @@ class BuildContext:
             cloud_servers_api_keys: str,
             service_account: Optional[str],
             artifacts_bucket: Optional[str],
-            xsiam_url: Optional[str],
-            xsiam_token: Optional[str],
+            cloud_url: Optional[str],
             api_key: Optional[str],
             auth_id: Optional[str],
-            collector_token: Optional[str],
             inputs: Optional[List[Path]],
             machine_assignment: str,
             ctx: typer.Context,
@@ -168,11 +163,9 @@ class BuildContext:
         self.build_name = branch_name
 
         # -------------------------- Manual run on a single instance --------------------------
-        self.xsiam_url = xsiam_url
-        self.xsiam_token = xsiam_token
+        self.cloud_url = cloud_url
         self.api_key = api_key
         self.auth_id = auth_id
-        self.collector_token = collector_token
         self.inputs = inputs
 
         # --------------------------- Machine preparation -------------------------------
@@ -203,17 +196,15 @@ class BuildContext:
         """
         Create servers object based on build type.
         """
-        # If xsiam_url is provided we assume it's a run on a single server.
-        if self.xsiam_url:
+        # If cloud_url is provided we assume it's a run on a single server.
+        if self.cloud_url:
             return [
                 CloudServerContext(
                     self,
-                    base_url=self.xsiam_url,
+                    base_url=self.cloud_url,
                     api_key=self.api_key,  # type: ignore[arg-type]
                     auth_id=self.auth_id,  # type: ignore[arg-type]
-                    token=self.xsiam_token,  # type: ignore[arg-type]
-                    collector_token=self.collector_token,
-                    ui_url=get_ui_url(self.xsiam_url),
+                    ui_url=get_ui_url(self.cloud_url),
                     tests=[BuildContext.edit_prefix(test) for test in self.inputs]
                     if self.inputs
                     else [],
@@ -244,9 +235,6 @@ class BuildContext:
                     auth_id=self.cloud_servers_api_keys_json.get(machine, {}).get(
                         "x-xdr-auth-id"
                     ),
-                    token=self.cloud_servers_api_keys_json.get(machine, {}).get(
-                        "token"
-                    ),
                 )
             )
         return servers_list
@@ -259,18 +247,14 @@ class CloudServerContext:
             base_url: str,
             api_key: str,
             auth_id: str,
-            token: str,
             ui_url: str,
             tests: List[Path],
-            collector_token: Optional[str] = None,
     ):
         self.build_context = build_context
         self.client = None
         self.base_url = base_url
         self.api_key = api_key
         self.auth_id = auth_id
-        self.token = token
-        self.collector_token = collector_token
         os.environ.pop(
             "DEMISTO_USERNAME", None
         )  # we use client without demisto username
@@ -302,14 +286,11 @@ class CloudServerContext:
                 real_time=True,
             )
 
-            xsiam_client_cfg = XsiamApiClientConfig(
-                base_url=self.base_url,  # type: ignore[arg-type]
-                api_key=self.api_key,  # type: ignore[arg-type]
-                auth_id=self.auth_id,  # type: ignore[arg-type]
-                token=self.token,  # type: ignore[arg-type]
-                collector_token=self.collector_token,  # type: ignore[arg-type]
+            cloud_client = get_client_from_server_type(
+                base_url=self.base_url,
+                api_key=self.api_key,
+                auth_id=self.auth_id
             )
-            xsiam_client = XsiamApiClient(xsiam_client_cfg)
 
             for i, test_use_case_directory in enumerate(self.tests, start=1):
                 logger.info(
@@ -318,7 +299,7 @@ class CloudServerContext:
 
                 success, test_use_case_test_suite = run_test_use_case_pytest(
                     test_use_case_directory,
-                    xsiam_client=xsiam_client
+                    cloud_client=cloud_client
                 )
 
                 if success:
@@ -365,14 +346,14 @@ def copy_conftest(test_dir):
 
 def run_test_use_case_pytest(
         test_use_case_directory: Path,
-        xsiam_client: XsiamApiClient,
+        cloud_client: XsoarClient,
         durations: int = 5) -> Tuple[bool, Union[TestSuite, None]]:
     """Runs a test use case
 
         Args:
             test_use_case_directory (Path): Path to the test use case directory.
             durations (int): Number of slow tests to show durations for.
-            xsiam_client (XsiamApiClient): The XSIAM client used to do API calls to the tenant.
+            cloud_client (XsoarClient): The XSIAM client used to do API calls to the tenant.
     """
     # Creating an instance of your results collector
     test_use_case_suite = TestSuite(f"Test Use Case")
@@ -390,9 +371,9 @@ def run_test_use_case_pytest(
     test_dir = test_use_case_directory.parent
     copy_conftest(test_dir)
 
-    logger.info(f'before sending pytest {str(xsiam_client.base_url)}')
+    logger.info(f'before sending pytest {str(cloud_client.base_url)}')
     pytest_args = [
-        f"--client_conf=base_url={str(xsiam_client.base_url)},api_key={xsiam_client.api_key},auth_id={xsiam_client.auth_id}",
+        f"--client_conf=base_url={str(cloud_client.server_config.base_url)},api_key={cloud_client.server_config.api_key},auth_id={cloud_client.server_config.auth_id}",
         str(test_use_case_directory),
         f"--durations={str(durations)}",
         "--log-cli-level=CRITICAL",
@@ -436,15 +417,15 @@ def run_test_use_case(
         xsiam_url: Optional[str] = typer.Option(
             None,
             envvar="DEMISTO_BASE_URL",
-            help="The base url to the xsiam tenant.",
-            rich_help_panel="XSIAM Tenant Configuration",
+            help="The base url to the cloud tenant.",
+            rich_help_panel="Cloud Tenant Configuration",
             show_default=False,
             callback=tenant_config_cb,
         ),
         api_key: Optional[str] = typer.Option(
             None,
             envvar="DEMISTO_API_KEY",
-            help="The api key for the xsiam tenant.",
+            help="The api key for the cloud tenant.",
             rich_help_panel="XSIAM Tenant Configuration",
             show_default=False,
             callback=tenant_config_cb,
@@ -452,25 +433,10 @@ def run_test_use_case(
         auth_id: Optional[str] = typer.Option(
             None,
             envvar="XSIAM_AUTH_ID",
-            help="The auth id associated with the xsiam api key being used.",
+            help="The auth id associated with the cloud api key being used.",
             rich_help_panel="XSIAM Tenant Configuration",
             show_default=False,
             callback=tenant_config_cb,
-        ),
-        xsiam_token: Optional[str] = typer.Option(
-            None,
-            envvar="XSIAM_TOKEN",
-            help="The token used to push event logs to XSIAM",
-            rich_help_panel="XSIAM Tenant Configuration",
-            show_default=False,
-        ),
-        collector_token: Optional[str] = typer.Option(
-            None,
-            envvar="XSIAM_COLLECTOR_TOKEN",
-            help="The token used to push event logs to a custom HTTP Collector",
-            rich_help_panel="XSIAM Tenant Configuration",
-            show_default=False,
-            callback=logs_token_cb,
         ),
         output_junit_file: Optional[Path] = typer.Option(
             None, "-jp", "--junit-path", help="Path to the output JUnit XML file."
@@ -608,11 +574,9 @@ def run_test_use_case(
         artifacts_bucket=artifacts_bucket,
         machine_assignment=machine_assignment,
         ctx=ctx,
-        xsiam_url=xsiam_url,
-        xsiam_token=xsiam_token,
+        cloud_url=xsiam_url,
         api_key=api_key,
         auth_id=auth_id,
-        collector_token=collector_token,
         inputs=inputs,
     )
 

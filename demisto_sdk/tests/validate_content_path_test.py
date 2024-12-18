@@ -185,7 +185,7 @@ def test_content_entities_dir_length():
                 CONTENT_ENTITIES_DIRS
             )
         )
-        == 25
+        == 27
     )
 
 

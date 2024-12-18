@@ -27,10 +27,10 @@ class IsSilentPlaybookRelationshipsValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        def get_types_for_err_msg(c: ContentItem) -> tuple[ContentTypes, ContentTypes]:
+        def get_types_for_err_msg(c: ContentItem) -> tuple[ContentType, ContentType]:
             if isinstance(c, Trigger):
-                return ContentTypes.TRIGGER, ContentTypes.PLAYBOOK
-            return ContentTypes.PLAYBOOK, ContentTypes.TRIGGER
+                return ContentType.TRIGGER, ContentType.PLAYBOOK
+            return ContentType.PLAYBOOK, ContentType.TRIGGER
 
         return [
             ValidationResult(

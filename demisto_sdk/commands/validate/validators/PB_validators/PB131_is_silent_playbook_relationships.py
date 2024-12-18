@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
@@ -15,21 +16,25 @@ ContentTypes = Union[Playbook, Trigger]
 
 class IsSilentPlaybookRelationshipsValidator(BaseValidator[ContentTypes]):
     error_code = "PB131"
-    description = "A silent-Playbook/Trigger must point to a silent-Playbook/Trigger"
-    rationale = "A silent-Playbook/Trigger must point to a silent-Playbook/Trigger"
+    description = "Every silent trigger must correspond to a silent playbook in the same pack, and vice versa."
+    rationale = "To ensure the effective operation of the silent playbook items."
     error_message = (
-        "Your silent-Playbook/Trigger does not point to a silent-Playbook/Trigger"
+        "The {} is silent, but does not correspond to a silent {} in the pack."
     )
-    related_field = ""
+    related_field = "isSilent"
     is_auto_fixable = False
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
+        def get_types_for_err_msg(c: ContentItem) -> tuple[ContentTypes, ContentTypes]:
+            if isinstance(c, Trigger):
+                return ContentTypes.TRIGGER, ContentTypes.PLAYBOOK
+            return ContentTypes.PLAYBOOK, ContentTypes.TRIGGER
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(*get_types_for_err_msg(content_item)),
                 content_object=content_item,
             )
             for content_item in content_items

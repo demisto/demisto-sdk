@@ -1481,11 +1481,11 @@ def test_IsSilentPlaybookRelationshipsValidator(
 ):
     """
     Given:
-    - case 1: faund a trigger that points on the playbook but the trigger is not silent.
-    - case 2: faund a trigger that points on the playbook and both are silent.
-    - case 3: not faund a trigger that points on the playbook.
-    - case 2: not faund a trigger that points on the playbook.
-    - case 1: the playbook is not silent.
+    - case 1: A silent trigger that points on a non-silent playbook.
+    - case 2: A silent trigger that points on a silent playbook.
+    - case 3: A silent trigger that points on a non-silent playbook that is not found.
+    - case 4: A silent trigger that points on a silent playbook that is not found.
+    - case 5: A non-silent trigger that points on a silent playbook.
     When:
     - Calling IsSilentPlaybookRelationshipsValidator for playbooks.
     Then:
@@ -1556,11 +1556,11 @@ def test_IsSilentTriggerRelationshipsValidator(
 ):
     """
     Given:
-    - case 1: faund the playbook that the trigger points on, but the playbook is not silent.
-    - case 2: faund the playbook that the trigger points on, and both are silent.
-    - case 3: not faund the playbook that the trigger points on.
-    - case 2: not faund the playbook that the trigger points on.
-    - case 1: but the trigger is not silent.
+    - case 1: A silent playbook that corresponds to a non-silent trigger.
+    - case 2: A silent playbook that corresponds to a silent trigger.
+    - case 3: A silent playbook that corresponds to a non-silent trigger that is not found.
+    - case 4: A silent playbook that corresponds to a silent trigger that is not found.
+    - case 5: A non-silent playbook that corresponds to a silent trigger.
     When:
     - Calling IsSilentPlaybookRelationshipsValidator for playbooks.
     Then:

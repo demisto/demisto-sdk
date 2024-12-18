@@ -373,7 +373,9 @@ def run_test_use_case_pytest(
 
     logger.info(f'before sending pytest {str(cloud_client.base_url)}')
     pytest_args = [
-        f"--client_conf=base_url={str(cloud_client.server_config.base_url)},api_key={cloud_client.server_config.api_key},auth_id={cloud_client.server_config.auth_id}",
+        f"--client_conf=base_url={str(cloud_client.server_config.base_api_url)},"
+        f"api_key={cloud_client.server_config.api_key.get_secret_value()},"
+        f"auth_id={cloud_client.server_config.auth_id}",
         str(test_use_case_directory),
         f"--durations={str(durations)}",
         "--log-cli-level=CRITICAL",

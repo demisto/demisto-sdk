@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.StrEnum import StrEnum
 # Note: Do NOT add imports of internal modules here, as it may cause circular imports.
 
 
-PROJECT_DATA_DIR = Path.home() / ".demisto-sdk"
+PROJECT_DATA_DIR = Path(os.getenv("PROJECT_DATA_DIR", Path.home() / ".demisto-sdk"))
 CACHE_DIR = PROJECT_DATA_DIR / "cache"
 LOGS_DIR = PROJECT_DATA_DIR / "logs"
 NEO4J_DIR = PROJECT_DATA_DIR / "neo4j"

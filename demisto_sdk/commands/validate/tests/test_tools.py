@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     RELEASE_NOTES_DIR,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
@@ -381,6 +382,7 @@ def create_pack_object(
         for _ in range(playbooks):
             pack.create_playbook()
 
+    GitUtil.get_file_creation_date = MagicMock(return_value="2024-12-19T11:49:45Z")
     return cast(Pack, BaseContent.from_path(pack_path))
 
 

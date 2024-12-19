@@ -1197,7 +1197,7 @@ class GitUtil:
         else:
             logger.error(f"File '{file_path}' doesn't exist. Not adding.")
 
-    def get_file_creation_date(self, file_path=None):
+    def get_file_creation_date(self, file_path: Path) -> str:
         commits = list(self.repo.iter_commits(paths=file_path))
         if commits:
             first_commit = commits[-1]

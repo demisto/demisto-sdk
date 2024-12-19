@@ -7,6 +7,7 @@ from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import SUPPORT_LEVEL_HEADER
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import get_file
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
@@ -122,6 +123,9 @@ class TestPrepareContentIntegration:
                 catch_exceptions=True,
             )
 
+        mocker.patch.object(
+            GitUtil, "get_file_creation_date", return_value="2024-12-19T11:49:45Z"
+        )
         unified_integration = get_file(Path(integration.path) / "integration-test.yml")
         assert result.exit_code == 0
         assert (

@@ -66,7 +66,7 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
         Returns:
             List[Path]: A list of invalid image files full paths.
         """
-        path_validate = click.Path(exists=True, dir_okay=False, allow_dash=True)
+        path_validate = click.Path(exists=True, dir_okay=False)
 
         invalid_image_paths = []
         for image_path in image_paths:

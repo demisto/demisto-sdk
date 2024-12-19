@@ -1331,7 +1331,6 @@ def test_unify_partner_contributed_pack(mocker, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
@@ -1495,7 +1494,6 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_URL)
@@ -1604,7 +1602,6 @@ def test_unify_community_contributed(mocker, repo):
     Then
         - Ensure unify create unified file with community detailed description.
     """
-
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_COMMUNITY)

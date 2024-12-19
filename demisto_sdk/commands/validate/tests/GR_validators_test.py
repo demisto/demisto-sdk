@@ -1,7 +1,10 @@
+from unittest.mock import MagicMock
+
 import pytest
 from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
@@ -87,6 +90,7 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_obtain_invalid_content
         "CONTENT_PATH",
         new=graph_repo.path,
     )
+    GitUtil.get_file_creation_date = MagicMock(return_value="2024-12-19T11:49:45Z")
     graph_repo.create_pack(name="pack1")
 
     graph_repo.create_pack(name="pack2")

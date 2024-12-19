@@ -29,7 +29,8 @@ class IsCommandStartsWithDigitValidator(BaseValidator[ContentTypes]):
             is_valid = True
 
             if isinstance(content_item, Integration) and any(
-                command.name[0].isdigit() for command in content_item.commands
+                (command.name and command.name[0].isdigit())
+                for command in content_item.commands
             ):
                 is_valid = False
 

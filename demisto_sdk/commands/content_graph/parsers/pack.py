@@ -135,13 +135,12 @@ class PackMetadataParser:
     """A pack metadata parser."""
 
     def __init__(self, path: Path, metadata: Dict[str, Any]) -> None:
-        logger.debug(f"Start {metadata}")
         self._metadata: Dict[str, Any] = metadata
         self.name: str = metadata.get("name", "")
         self.display_name: str = metadata.get("name", "")
         self.description: str = metadata.get("description", "")
         self.support: str = metadata.get("support", "")
-        self.created = metadata.get("firstCreated")
+        self.created = metadata.get("firstCreated") or metadata.get("created")
         if not self.created:
             self.created = GitUtil().get_file_creation_date(file_path=path)
             metadata["firstCreated"] = self.created
@@ -190,7 +189,6 @@ class PackMetadataParser:
         )
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
-        logger.debug(f"Stop {metadata}")
 
     @property
     def url(self) -> str:

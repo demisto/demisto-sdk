@@ -39,10 +39,11 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
             and content_item.docker_image != old_obj.docker_image  # type:ignore[attr-defined]
             and (
                 docker_entry := self.get_docker_image_entry(
-                    content_item.pack.release_note.file_content, content_item.name
+                    content_item.pack.release_note.file_content,
+                    content_item.display_name,
                 )
             )
-            and content_item.docker_image != docker_entry
+            and content_item.docker_image not in docker_entry
         ]
 
     def get_docker_image_entry(self, rn: str, content_item_name: str) -> str:
@@ -52,8 +53,11 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
             if item.startswith(content_item_name):
                 for entry in item.split("- "):
                     if entry.startswith("Updated the Docker image to: "):
-                        docker = entry.replace("Updated the Docker image to: ", "")[
-                            1:-2
+                        docker_entry = entry.replace(
+                            "Updated the Docker image to: ", ""
+                        )
+                        docker = docker_entry[
+                            docker_entry.find("*") + 1 : docker_entry.rfind("*")
                         ]
                         break
         return docker

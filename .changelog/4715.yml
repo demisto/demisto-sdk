@@ -1,0 +1,4 @@
+changes:
+- description: Updated validation rules to allow the deletion of silent Playbooks and silent Triggers.
+  type: feature
+pr_number: 4715

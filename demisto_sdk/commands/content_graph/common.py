@@ -279,7 +279,7 @@ class ContentType(StrEnum):
         raise ValueError(f"Could not find content type in path {path}")
 
     @property
-    def convert_content_type_to_rn_header(self) -> str:
+    def as_rn_header(self) -> str:
         """
         Convert ContentType to the Release note header.
         """

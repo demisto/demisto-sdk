@@ -1,0 +1,4 @@
+changes:
+- description: Exclude silent-Playbooks/Triggers from the metadata.
+  type: feature
+pr_number: 4692

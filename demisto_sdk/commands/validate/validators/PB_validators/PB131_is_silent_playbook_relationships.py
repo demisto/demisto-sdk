@@ -47,21 +47,21 @@ def is_valid_relationship(content_item: ContentTypes) -> bool:
     """
     Validates the relationship between a content item and its associated playbook/trigger.
     """
-    if not content_item.data.get("isSilent", False):
+    if not content_item.is_silent:
         # If the content item is not marked as silent, it's automatically valid
         return True
 
     if content_item.content_type == ContentType.PLAYBOOK:
         return any(
             trigger.data.get("playbook_id") == content_item.data.get("id")
-            and trigger.data.get("isSilent", False)
+            and trigger.is_silent
             for trigger in content_item.pack.content_items.trigger
         )
 
     if content_item.content_type == ContentType.TRIGGER:
         return any(
             playbook.data.get("id") == content_item.data.get("playbook_id")
-            and playbook.data.get("isSilent", False)
+            and playbook.is_silent
             for playbook in content_item.pack.content_items.playbook
         )
 

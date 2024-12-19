@@ -1,5 +1,6 @@
 from pathlib import PosixPath
 
+import click
 import more_itertools
 import pytest
 
@@ -59,6 +60,18 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM117_readme_not_to_
     NotToShortReadmeValidator,
 )
 from TestSuite.repo import ChangeCWD
+
+
+# Mocking click.Path for test purposes.
+class MockPath(click.Path):
+    def __init__(self, valid_paths):
+        super().__init__(exists=True, dir_okay=False, allow_dash=True)
+        self.valid_paths = valid_paths
+
+    def convert(self, value, param, ctx):
+        if value not in self.valid_paths:
+            raise click.exceptions.BadParameter(f"Invalid path: {value}")
+        return value
 
 
 @pytest.mark.parametrize(
@@ -321,6 +334,29 @@ def test_is_image_path_validator(content_items, expected_number_of_failures):
     ],
 )
 def test_IsImageExistsInReadmeValidator_obtain_invalid_content_items(
+    content_items,
+    doc_files_name,
+    expected_number_of_failures,
+    expected_msgs,
+):
+    with ChangeCWD(REPO.path):
+        for content_item, file_name in zip(content_items, doc_files_name):
+            if file_name:
+                create_doc_file_object(find_pack_folder(content_item.path), file_name)
+
+        results = IsImageExistsInReadmeValidator().obtain_invalid_content_items(
+            content_items
+        )
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            (result.message, expected_msg)
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_IsImageExistsInReadmeValidator_BadParameter(
     content_items,
     doc_files_name,
     expected_number_of_failures,

@@ -66,7 +66,7 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
         Returns:
             List[Path]: A list of invalid image files full paths.
         """
-        path_validate = click.Path(exists=True, dir_okay=False, allow_dash=True)
+        path_validate = click.Path(exists=True, dir_okay=False)
 
         invalid_image_paths = []
         for image_path in image_paths:
@@ -76,10 +76,6 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
                 path_validate.convert(image_path, param=None, ctx=None)
 
             except click.exceptions.BadParameter:
-                try:
-                    alternative_path = image_path.removeprefix("Packs/")
-                    path_validate.convert(alternative_path, param=None, ctx=None)
-                except click.exceptions.BadParameter:
-                    invalid_image_paths.append(image_path)
+                invalid_image_paths.append(image_path)
 
         return invalid_image_paths

@@ -2,6 +2,7 @@ import os
 import shutil
 from pathlib import Path
 from typing import List, Optional
+from unittest.mock import MagicMock
 
 from demisto_sdk.commands.common.constants import DEMISTO_GIT_PRIMARY_BRANCH
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -320,6 +321,7 @@ class Repo:
         return self.graph_interface
 
     def create_pack(self, name: Optional[str] = None):
+        GitUtil.get_file_creation_date = MagicMock(return_value="2024-12-19T11:49:45Z")  # type: ignore[assignment]
         if name is None:
             name = f"pack_{len(self.packs)}"
         pack = Pack(self._packs_path, name, repo=self)

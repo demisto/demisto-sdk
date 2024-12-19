@@ -6,7 +6,6 @@ import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List
-from unittest.mock import MagicMock
 
 import pytest
 import requests
@@ -17,7 +16,6 @@ from demisto_sdk.commands.common.constants import (
     GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -1333,7 +1331,6 @@ def test_unify_partner_contributed_pack(mocker, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-    GitUtil.get_file_creation_date = MagicMock(return_value="2024-12-19T11:49:45Z")
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
@@ -1390,7 +1387,6 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-    GitUtil.get_file_creation_date = MagicMock(return_value="2024-12-19T11:49:45Z")
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_EMAIL)
@@ -1453,7 +1449,6 @@ def test_unify_contributor_emails_list(mocker, repo, pack_metadata):
     Then
         - Ensure unify create a unified file with partner support email list.
     """
-    GitUtil.get_file_creation_date = MagicMock(return_value="2024-12-19T11:49:45Z")
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(pack_metadata)
@@ -1499,7 +1494,6 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-    GitUtil.get_file_creation_date = MagicMock(return_value="2024-12-19T11:49:45Z")
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_URL)
@@ -1557,7 +1551,6 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
     Then
         - Ensure unify create unified file without partner support notes.
     """
-    GitUtil.get_file_creation_date = MagicMock(return_value="2024-12-19T11:49:45Z")
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_XSOAR)
@@ -1609,7 +1602,6 @@ def test_unify_community_contributed(mocker, repo):
     Then
         - Ensure unify create unified file with community detailed description.
     """
-    GitUtil.get_file_creation_date = MagicMock(return_value="2024-12-19T11:49:45Z")
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_COMMUNITY)

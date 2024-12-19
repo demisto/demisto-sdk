@@ -12,11 +12,11 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[Integration, Script]
 
 
-class IsCommandStartsWithDigitValidator(BaseValidator[ContentTypes]):
+class IsCommandOrScriptNameStartsWithDigitValidator(BaseValidator[ContentTypes]):
     error_code = "BA128"
-    description = "Command name cannot start with a digit"
+    description = "Integration command names and script names cannot start with a digit"
     rationale = "Not supported by the platform"
-    error_message = "Command name cannot start with a digit"
+    error_message = "The following {0} names start with a digit: {1}"
     related_field = "name"
     is_auto_fixable = False
 
@@ -26,22 +26,31 @@ class IsCommandStartsWithDigitValidator(BaseValidator[ContentTypes]):
         validation_results = []
 
         for content_item in content_items:
-            is_valid = True
+            content_type = ""
+            invalid_command_names = []
 
-            if isinstance(content_item, Integration) and any(
-                (command.name and command.name[0].isdigit())
-                for command in content_item.commands
-            ):
-                is_valid = False
+            if isinstance(content_item, Integration):
+                content_type = "integration command"
+                invalid_command_names.extend(
+                    [
+                        command.name
+                        for command in content_item.commands
+                        if command.name and command.name[0].isdigit()
+                    ]
+                )
 
             elif isinstance(content_item, Script) and content_item.name[0].isdigit():
-                is_valid = False
+                content_type = "script"
+                invalid_command_names.append(content_item.name)
 
-            if not is_valid:
+            if invalid_command_names:
                 validation_results.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message,
+                        message=self.error_message.format(
+                            content_type,
+                            ", ".join(invalid_command_names),
+                        ),
                         content_object=content_item,
                     )
                 )

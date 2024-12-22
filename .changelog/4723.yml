@@ -1,4 +1,4 @@
 changes:
-- description: Added Validation that silent-Playbook do not have a README file.
+- description: Added the **PB132** validation to ensure that silent playbooks do not have a README file.
   type: feature
 pr_number: 4723

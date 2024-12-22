@@ -66,6 +66,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB127_marketplace_ke
 from demisto_sdk.commands.validate.validators.PB_validators.PB130_is_silent_playbook import (
     IsSilentPlaybookValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB132_no_readme_for_silent_playbook import (
+    NoReadmeForSilentPlaybook,
+)
 
 
 @pytest.mark.parametrize(
@@ -1423,3 +1426,24 @@ def test_IsSilentPlaybookValidator(name, id, is_silent, result_len):
         [playbook]
     )
     assert result_len == len(invalid_content_items)
+
+
+def test_NoReadmeForSilentPlaybook():
+    """
+    Given:
+    a silent playbook with a readme file.
+
+    When:
+    - calling NoReadmeForSilentPlaybook.obtain_invalid_content_items.
+
+    Then:
+    - Checks that it fails.
+    """
+    playbook = create_playbook_object()
+    playbook.is_silent = True
+    playbook.readme.exist = True
+
+    invalid_content_items = NoReadmeForSilentPlaybook().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(invalid_content_items) == 1

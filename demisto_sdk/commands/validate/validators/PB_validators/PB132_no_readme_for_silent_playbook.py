@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Union
+from typing import Iterable, List
 
-from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -16,10 +14,10 @@ ContentTypes = Playbook
 class NoReadmeForSilentPlaybook(BaseValidator[ContentTypes]):
     error_code = "PB132"
     description = "A silent playbook is not allowed to have a README file."
-    rationale = "To ensure that nothing about the playbook appears in the documentation.."
-    error_message = (
-        "A silent playbook is not allowed to have a README file.."
+    rationale = (
+        "To ensure that nothing about the playbook appears in the documentation.."
     )
+    error_message = "A silent playbook is not allowed to have a README file.."
     related_field = "isSilent"
     is_auto_fixable = False
 

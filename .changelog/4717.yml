@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where RM114 falsely failed when it concatenated "Packs/" twice to the file path.
+  type: fix
+pr_number: 4717

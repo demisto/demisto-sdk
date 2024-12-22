@@ -34,6 +34,7 @@ NEO4J_USERNAME = os.getenv(DEMISTO_SDK_NEO4J_USERNAME, "neo4j")
 NEO4J_PASSWORD = os.getenv(DEMISTO_SDK_NEO4J_PASSWORD, "contentgraph")
 
 PACK_METADATA_FILENAME = "pack_metadata.json"
+VERSION_CONFIG_FILENAME = "version_config.json"
 PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
 
@@ -278,7 +279,7 @@ class ContentType(StrEnum):
         raise ValueError(f"Could not find content type in path {path}")
 
     @property
-    def convert_content_type_to_rn_header(self) -> str:
+    def as_rn_header(self) -> str:
         """
         Convert ContentType to the Release note header.
         """

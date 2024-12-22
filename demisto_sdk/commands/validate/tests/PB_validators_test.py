@@ -2670,7 +2670,6 @@ def test_IsCorrectValueReferencesInterface_incorrect_pb():
     pb_object = create_playbook_object(paths=['tasks'], values=pb_content)
 
     results = IsCorrectValueReferencesInterface().obtain_invalid_content_items([pb_object])
-    # messages = [int(res.message.partition('${')[2].partition('}')[0].partition('.')[2]) for res in results]
     messages = ''.join(res.message for res in results)
     missing_alerts = [i for i in range(1, 35) if str(i) not in messages]
     assert not missing_alerts, f"Playbook has invalid value references, but the validator missed: {missing_alerts}"

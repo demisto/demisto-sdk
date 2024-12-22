@@ -17,7 +17,7 @@ class NoReadmeForSilentPlaybook(BaseValidator[ContentTypes]):
     rationale = (
         "To ensure that silent playbooks do not appears in the documentation."
     )
-    error_message = "A silent playbook is not allowed to have a README file.."
+    error_message = "A silent playbook is not allowed to have a README file."
     related_field = "isSilent"
     is_auto_fixable = False
 

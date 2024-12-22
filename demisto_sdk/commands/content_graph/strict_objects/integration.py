@@ -138,9 +138,9 @@ CommonFieldsIntegration = create_model(
 )
 
 class SectionOrderValues(str, Enum):
-    CONNECT = "connect",
-    COLLECT = "collect",
-    OPTIMIZE = "optimize"
+    CONNECT = "Connect",
+    COLLECT = "Collect",
+    OPTIMIZE = "Optimize"
 
 
 class _StrictIntegration(BaseStrictModel):
@@ -148,8 +148,8 @@ class _StrictIntegration(BaseStrictModel):
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order: conlist(SectionOrderValues, min_items=1, max_items=3) = Field(alias="sectionorder")
-    section_order_camel_case: conlist(SectionOrderValues, min_items=1, max_items=3) = Field(alias="sectionOrder")
+    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=3)] = Field(alias="sectionorder")
+    section_order_camel_case: Optional[conlist(SectionOrderValues, min_items=1, max_items=3)] = Field(alias="sectionOrder")
     image: Optional[str] = None
     description: str
     default_mapper_in: Optional[str] = Field(None, alias="defaultmapperin")
@@ -158,7 +158,8 @@ class _StrictIntegration(BaseStrictModel):
     detailed_description: Optional[str] = Field(None, alias="detaileddescription")
     auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")
     support_level_header: MarketplaceVersions = Field(None, alias="supportlevelheader")
-    configuration: List[Configuration]  # type:ignore[valid-type]
+    # configurations: List[Configuration]  = Field(..., alias="configuration") # type:ignore[valid-type]
+    configuration: List[Configuration] # type:ignore[valid-type]
     script: Script  # type:ignore[valid-type]
     hidden: Optional[bool] = None
     videos: Optional[List[str]] = None
@@ -168,15 +169,19 @@ class _StrictIntegration(BaseStrictModel):
     hybrid: Optional[bool] = None
 
     def __init__(self, **data):
-        if 'section_order_camel_case' in data:
+        if 'section_order_camel_case' in data and not 'section_order' in data:
             data['section_order'] = data.pop('section_order_camel_case')
+        elif 'section_order_camel_case' in data and 'section_order' in data:
+            data['section_order'] = list(set(data['section_order']) | set(data['section_order_camel_case']))
         super().__init__(**data)
 
     @validator('configuration')
     def validate_sections(cls, configuration, values):
         section_order = values.get('section_order')
-        for field_config in configuration:
-            assert field_config.secion in section_order
+        assert section_order, 'section_order may not be None or empty list'
+        for config in configuration:
+            assert config.section in section_order,\
+                f'section {config.section} of {config.display} is not present in section_order {config.section_order}'
         return configuration
 
 

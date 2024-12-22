@@ -96,3 +96,10 @@
   entry: prevent-mypy-global-ignore
   language: python
   files: .*Packs/.*/(?:Integrations|Scripts)/.*.py$
+
+- id: sort-yaml
+  name: sort-yaml
+  description: Sort YAML content files to ensure consistency.
+  entry: sort-yaml
+  language: python
+  files: ^Packs/\.*ya?ml$

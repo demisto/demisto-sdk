@@ -10,6 +10,8 @@ from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
+    CASE_FIELDS_DIR,
+    CASE_LAYOUTS_DIR,
     CLASSIFIERS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
@@ -93,6 +95,8 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         GENERIC_MODULES_DIR,
         GENERIC_DEFINITIONS_DIR,
         LAYOUTS_DIR,
+        CASE_LAYOUTS_DIR,
+        CASE_FIELDS_DIR,
         CLASSIFIERS_DIR,
         MAPPERS_DIR,
         RELEASE_NOTES_DIR,
@@ -304,7 +308,7 @@ def _validate(path: Path) -> None:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise InvalidDepthOneFile
 
-        if first_level_folder == LAYOUTS_DIR and not (
+        if first_level_folder in {LAYOUTS_DIR, CASE_LAYOUTS_DIR} and not (
             path.stem.startswith(("layout-", "layoutscontainer-"))
             and path.suffix == ".json"
         ):

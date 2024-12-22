@@ -270,6 +270,7 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
       - A modeling rule is considered modified if its XIF and schema files are modified
       - A movement between packs is considered a modification
     - Test content items shouldn't have RNs
+    - Silent content items shouldn't have RNs
 
     Args:
         content_item (ContentItem): A content item object
@@ -278,6 +279,8 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
         bool: True iff should run the RN validaion.
     """
     if isinstance(content_item, (TestPlaybook, TestScript)):
+        return True
+    if content_item.is_silent:
         return True
     if isinstance(content_item, Integration):
         return (

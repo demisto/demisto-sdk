@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where setup-env would fail when FILE_PATHS argument was missing.
-  type: internal
-pr_number: 4694

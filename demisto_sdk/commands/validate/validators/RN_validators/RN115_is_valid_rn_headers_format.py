@@ -5,10 +5,7 @@ from typing import Iterable, List
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
-from demisto_sdk.commands.validate.tools import (
-    extract_rn_headers,
-    filter_rn_headers_prefix,
-)
+from demisto_sdk.commands.validate.tools import extract_rn_headers
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -32,8 +29,9 @@ class IsValidRnHeadersFormatValidator(BaseValidator[ContentTypes]):
     ) -> List[ValidationResult]:
         results = []
         for content_item in content_items:
-            headers = extract_rn_headers(content_item.release_note.file_content)
-            filter_rn_headers_prefix(headers=headers)
+            headers = extract_rn_headers(
+                content_item.release_note.file_content, remove_prefixes=True
+            )
             if invalid_headers := [
                 content_type
                 for content_type, content_items in headers.items()

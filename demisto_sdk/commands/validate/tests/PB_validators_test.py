@@ -1571,10 +1571,10 @@ def test_IsSilentTriggerRelationshipsValidator(
     trigger_item.pack.content_items.playbook.extend([create_playbook_object()])
 
     trigger_item.data["playbook_id"] = trigger_playbook_id
-    trigger_item.data["isSilent"] = trigger_is_silent
+    trigger_item.is_silent = trigger_is_silent
 
     trigger_item.pack.content_items.playbook[0].data["id"] = playbook_id
-    trigger_item.pack.content_items.playbook[0].data["isSilent"] = playbook_is_silent
+    trigger_item.pack.content_items.playbook[0].is_silent = playbook_is_silent
 
     invalid_content_items = (
         IsSilentPlaybookRelationshipsValidator().obtain_invalid_content_items(

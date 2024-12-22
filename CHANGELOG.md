@@ -1,4 +1,32 @@
 # Changelog
+## 1.33.0 (2024-12-08)
+### Feature
+* Modified the ***demisto-sdk --release-notes*** command to print a markdown representation of the currently installed demisto-sdk changelog. [#4687](https://github.com/demisto/demisto-sdk/pull/4687)
+* Added support for a new pack version_config.json file. [#4699](https://github.com/demisto/demisto-sdk/pull/4699)
+* Updated the ***prepare-content*** command to replace all occurrences of an incorrect marketplace reference in the content. [#4659](https://github.com/demisto/demisto-sdk/pull/4659)
+* The Demisto-SDK CLI has been upgraded to use Typer for command-line interface (CLI) management. [#4637](https://github.com/demisto/demisto-sdk/pull/4637)
+* Added an isSilent key to the Playbook and Trigger schemas. [#4689](https://github.com/demisto/demisto-sdk/pull/4689)
+* Updated the GR107 validation to fail once on each item, and the message will contain all deprecated items in use instead of failing multiple times. [#4667](https://github.com/demisto/demisto-sdk/pull/4667)
+
+### Fix
+* Fixed an issue where YmlSplitter attributes were being unintentionally updated. [#4695](https://github.com/demisto/demisto-sdk/pull/4695)
+* Fixed an issue where *-t* flag was missing from ***update-release-notes*** command setup. [#4691](https://github.com/demisto/demisto-sdk/pull/4691)
+* Fixed an issue where RN108 validation raised an exception when executed on a new pack. [#4700](https://github.com/demisto/demisto-sdk/pull/4700)
+* Fixed an issue in the ***validate*** command where new files could not be parsed. [#4700](https://github.com/demisto/demisto-sdk/pull/4700)
+* Fixed an issue in the ***validate*** command where .pack-ignore files could not be parsed. [#4700](https://github.com/demisto/demisto-sdk/pull/4700)
+* Fixed an issue where using the *-i* flag with ***setup-env*** command would fail. [#4690](https://github.com/demisto/demisto-sdk/pull/4690)
+* Fixed an issue where the ***generate-docs*** command failed to ignore hidden parameters. [#4589](https://github.com/demisto/demisto-sdk/pull/4589)
+* Fixed an issue where logger was not initialized properly. [#4695](https://github.com/demisto/demisto-sdk/pull/4695)
+* Fixed an issue where validate GR107 was failing on unrelated content-item when running on deprecated content-items. [#4667](https://github.com/demisto/demisto-sdk/pull/4667)
+
+### Internal
+* Fixed the demisto-sdk nightly's `run-end-to-end-tests-xsoar` step, and updated the `test-content` missing flags. [#4686](https://github.com/demisto/demisto-sdk/pull/4686)
+* Added the deprecated ***merge-id-sets*** command to Typer app. [#4680](https://github.com/demisto/demisto-sdk/pull/4680)
+* Update demisto-sdk commands documentation. [#4685](https://github.com/demisto/demisto-sdk/pull/4685)
+* Fixed an issue where ***setup-env*** command would fail when `FILE_PATHS` argument was missing. [#4694](https://github.com/demisto/demisto-sdk/pull/4694)
+* ***NOTICE:*** Demisto-SDK will soon stop supporting Python 3.9 [#4698](https://github.com/demisto/demisto-sdk/pull/4698)
+
+
 ## 1.32.5 (2024-11-24)
 ### Breaking
 * Removed PA134 from the old validate. The validation ensures that the pack has exactly one category and that this category is valid. [#4673](https://github.com/demisto/demisto-sdk/pull/4673)

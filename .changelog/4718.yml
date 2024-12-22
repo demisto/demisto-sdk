@@ -1,0 +1,4 @@
+changes:
+- description: '**Breaking Change**: Removed the support for python 3.9, and upgraded the *mitmproxy* dependency version.'
+  type: breaking
+pr_number: 4718

@@ -4,6 +4,7 @@ import base64
 import os
 import re
 import shutil
+from copy import deepcopy
 from pathlib import Path
 from typing import Optional
 
@@ -129,7 +130,7 @@ class YmlSplitter:
         yaml_out = f"{output_path}/{base_name}.yml"
         logger.debug(f"Creating yml file: {yaml_out} ...")
         if self.yml_data:
-            yaml_obj = self.yml_data
+            yaml_obj = deepcopy(self.yml_data)
         else:
             yaml_obj = get_file(self.input, raise_on_error=True)
 

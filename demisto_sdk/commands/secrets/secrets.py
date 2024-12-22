@@ -235,7 +235,7 @@ class SecretsValidator:
         self, secrets_file_paths: list, ignore_entropy: bool = False
     ):
         """Returns potential secrets(sensitive data) found in committed and added files
-        :param secrets_file_paths: paths of files that are being commited to git repo
+        :param secrets_file_paths: paths of files that are being committed to git repo
         :param ignore_entropy: If True then will ignore running entropy algorithm for finding potential secrets
 
         :return: dictionary(filename: (list)secrets) of strings sorted by file name for secrets found in files
@@ -530,8 +530,8 @@ class SecretsValidator:
                 # Open each file, read its contents in UTF-8 encoding to avoid unicode characters
                 with open(
                     file_path, encoding="utf-8", errors="ignore"
-                ) as commited_file:
-                    file_contents = commited_file.read()
+                ) as committed_file:
+                    file_contents = committed_file.read()
             file_contents = self.ignore_base64(file_contents)
             return file_contents
         except Exception as ex:

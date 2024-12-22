@@ -15,7 +15,7 @@ Since content items are made to run in containers with different Python versions
 The paths to run pre-commit on. May pass multiple paths.
 * **--staged-only**
 Whether to run only on staged files.
-* **--commited-only**
+* **--committed-only**
 Whether to run on committed files only.
 * **-g, --git-diff**
 Whether to use git to determine which files to run on.

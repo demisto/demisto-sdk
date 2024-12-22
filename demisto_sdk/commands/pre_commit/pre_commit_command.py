@@ -541,7 +541,7 @@ def group_by_language(
 def pre_commit_manager(
     input_files: Optional[Iterable[Path]] = None,
     staged_only: bool = False,
-    commited_only: bool = False,
+    committed_only: bool = False,
     git_diff: bool = False,
     prev_version: Optional[str] = None,
     all_files: bool = False,
@@ -565,7 +565,7 @@ def pre_commit_manager(
     Args:
         input_files (Iterable[Path], optional): Input files to run pre-commit on. Defaults to None.
         staged_only (bool, optional): Whether to run on staged files only. Defaults to False.
-        commited_only (bool, optional): Whether to run on commited files only. Defaults to False.
+        committed_only (bool, optional): Whether to run on committed files only. Defaults to False.
         git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
         mode (str): The mode to run pre-commit in. Defaults to empty str.
@@ -595,7 +595,7 @@ def pre_commit_manager(
     files_to_run = preprocess_files(
         input_files=input_files,
         staged_only=staged_only,
-        commited_only=commited_only,
+        committed_only=committed_only,
         use_git=git_diff,
         all_files=all_files,
         prev_version=prev_version,
@@ -684,7 +684,7 @@ def add_related_files(file: Path) -> Set[Path]:
 def preprocess_files(
     input_files: Optional[Iterable[Path]] = None,
     staged_only: bool = False,
-    commited_only: bool = False,
+    committed_only: bool = False,
     use_git: bool = False,
     all_files: bool = False,
     prev_version: Optional[str] = None,
@@ -694,7 +694,7 @@ def preprocess_files(
     Args:
         input_files (Optional[Iterable[Path]], optional): List of specific files. Defaults to None.
         staged_only (bool, optional): Whether to run only on staged files. Defaults to False.
-        commited_only (bool, optional): Whether to run only on commited files. Defaults to False.
+        committed_only (bool, optional): Whether to run only on committed files. Defaults to False.
         use_git (bool, optional): Whether to only collect files using git. Defaults to False.
         all_files (bool, optional): Whether to collect all files. Defaults to False.
         prev_version (Optional[str], optional): The previous version to use as a delta when using git. Defaults to None.
@@ -715,7 +715,7 @@ def preprocess_files(
         raw_files = staged_files
     elif use_git:
         raw_files = git_util._get_all_changed_files(prev_version)
-        if not commited_only:
+        if not committed_only:
             raw_files = raw_files.union(staged_files)
         if contribution_flow:
             """

@@ -45,6 +45,3 @@ repos:
   - id: mypy
     exclude: tests/.*|demisto_sdk/commands/init/templates/.*
     language: system
-- repo: local
-  hooks:
-    - id: generate-command-docs

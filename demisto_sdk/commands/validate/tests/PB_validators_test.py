@@ -1,9 +1,13 @@
 import pytest
 
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
+from demisto_sdk.commands.content_graph.objects.pack_content_items import (
+    PackContentItems,
+)
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_playbook_object,
+    create_trigger_object,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename import (
     IsNoRolenameValidator,
@@ -65,6 +69,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB127_marketplace_ke
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB130_is_silent_playbook import (
     IsSilentPlaybookValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB131_is_silent_playbook_relationships import (
+    IsSilentPlaybookRelationshipsValidator,
 )
 
 
@@ -1421,5 +1428,157 @@ def test_IsSilentPlaybookValidator(name, id, is_silent, result_len):
 
     invalid_content_items = IsSilentPlaybookValidator().obtain_invalid_content_items(
         [playbook]
+    )
+    assert result_len == len(invalid_content_items)
+
+
+class Pack:
+    content_items = PackContentItems()
+
+
+@pytest.mark.parametrize(
+    "playbook_id, playbook_is_silent, trigger_playbook_id, trigger_is_silent, result_len",
+    [
+        (
+            "test",
+            True,
+            "test",
+            False,
+            1,
+        ),
+        (
+            "test",
+            True,
+            "test",
+            True,
+            0,
+        ),
+        (
+            "test1",
+            True,
+            "test2",
+            False,
+            1,
+        ),
+        (
+            "test1",
+            True,
+            "test2",
+            True,
+            1,
+        ),
+        (
+            "test1",
+            False,
+            "test1",
+            True,
+            0,
+        ),
+    ],
+)
+def test_IsSilentPlaybookRelationshipsValidator(
+    playbook_id, playbook_is_silent, trigger_playbook_id, trigger_is_silent, result_len
+):
+    """
+    Given:
+    - case 1: A silent trigger that points on a non-silent playbook.
+    - case 2: A silent trigger that points on a silent playbook.
+    - case 3: A silent trigger that points on a non-silent playbook that is not found.
+    - case 4: A silent trigger that points on a silent playbook that is not found.
+    - case 5: A non-silent trigger that points on a silent playbook.
+    When:
+    - Calling IsSilentPlaybookRelationshipsValidator for playbooks.
+    Then:
+    - Validate that only invalid items are returned.
+    """
+    playbook_item = create_playbook_object()
+    playbook_item.pack = Pack()
+    playbook_item.pack.content_items.trigger.extend([create_trigger_object()])
+
+    playbook_item.data["id"] = playbook_id
+    playbook_item.is_silent = playbook_is_silent
+
+    playbook_item.pack.content_items.trigger[0].data["playbook_id"] = (
+        trigger_playbook_id
+    )
+    playbook_item.pack.content_items.trigger[0].is_silent = trigger_is_silent
+
+    invalid_content_items = (
+        IsSilentPlaybookRelationshipsValidator().obtain_invalid_content_items(
+            [playbook_item]
+        )
+    )
+    assert result_len == len(invalid_content_items)
+
+
+@pytest.mark.parametrize(
+    "trigger_playbook_id, trigger_is_silent, playbook_id, playbook_is_silent, result_len",
+    [
+        (
+            "test",
+            True,
+            "test",
+            False,
+            1,
+        ),
+        (
+            "test",
+            True,
+            "test",
+            True,
+            0,
+        ),
+        (
+            "test1",
+            True,
+            "test2",
+            False,
+            1,
+        ),
+        (
+            "test1",
+            True,
+            "test2",
+            True,
+            1,
+        ),
+        (
+            "test1",
+            False,
+            "test1",
+            True,
+            0,
+        ),
+    ],
+)
+def test_IsSilentTriggerRelationshipsValidator(
+    trigger_playbook_id, trigger_is_silent, playbook_id, playbook_is_silent, result_len
+):
+    """
+    Given:
+    - case 1: A silent playbook that corresponds to a non-silent trigger.
+    - case 2: A silent playbook that corresponds to a silent trigger.
+    - case 3: A silent playbook that corresponds to a non-silent trigger that is not found.
+    - case 4: A silent playbook that corresponds to a silent trigger that is not found.
+    - case 5: A non-silent playbook that corresponds to a silent trigger.
+    When:
+    - Calling IsSilentPlaybookRelationshipsValidator for playbooks.
+    Then:
+    - Validate that only invalid items are returned.
+    """
+    trigger_item = create_trigger_object()
+    trigger_item.pack = Pack()
+    trigger_item.pack.content_items.playbook.extend([create_playbook_object()])
+
+    trigger_item.data["playbook_id"] = trigger_playbook_id
+    trigger_item.is_silent = trigger_is_silent
+
+    trigger_item.pack.content_items.playbook[0].data["id"] = playbook_id
+    trigger_item.pack.content_items.playbook[0].is_silent = playbook_is_silent
+
+    invalid_content_items = (
+        IsSilentPlaybookRelationshipsValidator().obtain_invalid_content_items(
+            [trigger_item]
+        )
     )
     assert result_len == len(invalid_content_items)

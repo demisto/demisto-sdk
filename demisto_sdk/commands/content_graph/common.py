@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
@@ -515,3 +516,41 @@ CONTENT_PRIVATE_ITEMS: dict = {
         "MITRE Layout",
     ],
 }
+
+
+def replace_incorrect_marketplace(
+    data: Any, marketplace: MarketplaceVersions, path: str = ""
+) -> Any:
+    """
+    Recursively replaces "Cortex XSOAR" with "Cortex" in the given data if the marketplace is MarketplaceV2 or XPANSE.
+    If the word following "Cortex XSOAR" contains a number, it will also be removed.
+
+    Args:
+        data (Any): The data to process, which can be a dictionary, list, or string.
+        marketplace (MarketplaceVersions): The marketplace version to check against.
+        path (str): The path of the item being processed.
+
+
+    Returns:
+        Any: The processed data with replacements made if applicable.
+    """
+    try:
+        if marketplace in {
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        }:
+            if isinstance(data, dict):
+                return {
+                    k: replace_incorrect_marketplace(v, marketplace)
+                    for k, v in data.items()
+                }
+            elif isinstance(data, list):
+                return [replace_incorrect_marketplace(v, marketplace) for v in data]
+            elif isinstance(data, str):
+                # Replace "Cortex XSOAR" and the following word if it contains a number
+                return re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", data)
+    except Exception as e:
+        logger.error(
+            f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"
+        )
+    return data

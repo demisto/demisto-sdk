@@ -113,6 +113,7 @@ def generate_docs(
     log_file_path: str = typer.Option(
         None, "--log-file-path", help="Path to save log files."
     ),
+    test_arg: str = typer.Option(None, "--test-arg", help="test-arg."),
 ):
     """Generates a `README` file for your integration, script or playbook. Used to create documentation files for Cortex XSOAR.
 

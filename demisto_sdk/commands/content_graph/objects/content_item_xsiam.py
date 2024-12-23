@@ -56,8 +56,6 @@ class ContentItemXSIAM(ContentItem, ABC):
         data = self.prepare_for_upload(
             marketplace,
         )
-        # Replace incorrect marketplace references
-        data = replace_incorrect_marketplace(data, marketplace, str(self.path))
 
         for file in output_paths:
             write_dict(file, data=data, handler=self.handler)

@@ -16,7 +16,7 @@ NODE_PROPERTY_EXISTENCE_TEMPLATE = (
 )
 REL_PROPERTY_EXISTENCE_TEMPLATE = (
     "CREATE CONSTRAINT IF NOT EXISTS FOR ()-[r:{label}]-() REQUIRE r.{prop} IS NOT NULL"
-)
+)     cccc
 
 
 def drop_constraints(tx: Transaction) -> None:

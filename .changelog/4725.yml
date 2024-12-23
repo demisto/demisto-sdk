@@ -1,0 +1,4 @@
+changes:
+- description: Updated ***setup-env*** command description.
+  type: fix
+pr_number: 4725

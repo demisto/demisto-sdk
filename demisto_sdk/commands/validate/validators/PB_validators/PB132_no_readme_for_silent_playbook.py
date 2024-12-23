@@ -11,12 +11,12 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Playbook
 
 
-class MissingPlaybookImageValidator(BaseValidator[ContentTypes]):
-    error_code = "RM116"
-    description = "Verifies that a playbook image exists in the doc_files folder"
-    rationale = "It is recommended to have an image for every playbook for better understanding and documentation"
-    error_message = "No playbook image found, please add playbook image"
-    related_field = ""
+class NoReadmeForSilentPlaybook(BaseValidator[ContentTypes]):
+    error_code = "PB132"
+    description = "A silent playbook is not allowed to have a README file."
+    rationale = "To ensure that silent playbooks do not appears in the documentation."
+    error_message = "A silent playbook is not allowed to have a README file."
+    related_field = "isSilent"
     is_auto_fixable = False
 
     def obtain_invalid_content_items(
@@ -29,11 +29,5 @@ class MissingPlaybookImageValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                (
-                    not content_item.image.exist
-                    or "doc_files" not in str(content_item.image.file_path)
-                )
-                and not content_item.is_silent
-            )
+            if content_item.is_silent and content_item.readme.exist
         ]

@@ -73,6 +73,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB130_is_silent_play
 from demisto_sdk.commands.validate.validators.PB_validators.PB131_is_silent_playbook_relationships import (
     IsSilentPlaybookRelationshipsValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB132_no_readme_for_silent_playbook import (
+    NoReadmeForSilentPlaybook,
+)
 
 
 @pytest.mark.parametrize(
@@ -1582,3 +1585,29 @@ def test_IsSilentTriggerRelationshipsValidator(
         )
     )
     assert result_len == len(invalid_content_items)
+
+
+def test_NoReadmeForSilentPlaybook():
+    """
+    Given:
+    a silent playbook with/without a readme file.
+
+    When:
+    - calling NoReadmeForSilentPlaybook.obtain_invalid_content_items.
+
+    Then:
+    - Checks that it fails only when there is a readme.
+    """
+    playbook = create_playbook_object()
+    playbook.is_silent = True
+    playbook.readme.exist = True
+    invalid_content_items = NoReadmeForSilentPlaybook().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(invalid_content_items) == 1
+
+    playbook.readme.exist = False
+    invalid_content_items = NoReadmeForSilentPlaybook().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(invalid_content_items) == 0

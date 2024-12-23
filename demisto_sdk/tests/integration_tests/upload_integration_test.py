@@ -142,18 +142,17 @@ def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, 
     )
     assert result.exit_code == 0
     assert (
-        "\n".join(
-            (
-                "SKIPPED UPLOADED DUE TO MARKETPLACE MISMATCH:",
-                "╒════════════════════════════════════════╤═════════════╤═══════════════╤═════════════════════╕",
-                "│ NAME                                   │ TYPE        │ MARKETPLACE   │ FILE_MARKETPLACES   │",
-                "╞════════════════════════════════════════╪═════════════╪═══════════════╪═════════════════════╡",
-                "│ integration-sample_event_collector.yml │ Integration │ xsoar         │ ['marketplacev2']   │",
-                "╘════════════════════════════════════════╧═════════════╧═══════════════╧═════════════════════╛",
-            )
-        )
-        in result.output
-    )
+        """
+SKIPPED UPLOADING DUE TO MARKETPLACE MISMATCH:
+╒════════════════════════════════════════╤═════════════╤══════════════════════════════════╤══════════════════════════╕
+│ Name                                   │ Type        │ Upload Destination Marketplace   │ Content Marketplace(s)   │
+╞════════════════════════════════════════╪═════════════╪══════════════════════════════════╪══════════════════════════╡
+│ integration-sample_event_collector.yml │ Integration │ xsoar                            │ marketplacev2            │
+╘════════════════════════════════════════╧═════════════╧══════════════════════════════════╧══════════════════════════╛
+
+Did you forget to specify the marketplace?"""
+    ) in result.output
+
     assert (
         "\n".join(
             (

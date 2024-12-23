@@ -452,16 +452,17 @@ class Uploader:
                     for item in self._skipped_upload_marketplace_mismatch
                 ),
                 headers=[
-                    "NAME",
-                    "TYPE",
-                    "MARKETPLACE",
-                    "FILE_MARKETPLACES",
+                    "Name",
+                    "Type",
+                    "Upload Destination Marketplace",
+                    "Content Marketplace(s)",
                 ],
                 tablefmt="fancy_grid",
             )
             logger.info(
-                f"<yellow>SKIPPED UPLOADED DUE TO MARKETPLACE MISMATCH:\n{marketplace_mismatch_str}\n</yellow>"
+                f"<yellow>SKIPPED UPLOADING DUE TO MARKETPLACE MISMATCH:\n{marketplace_mismatch_str}\n</yellow>"
             )
+            logger.info("Did you forget to specify the marketplace?")
 
         if self._failed_upload_version_mismatch:
             version_mismatch_str = tabulate(

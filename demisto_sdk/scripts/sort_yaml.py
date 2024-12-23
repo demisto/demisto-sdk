@@ -45,23 +45,17 @@ def sort_file(path: Path) -> None:
 
 
 def _main(
-    path: Annotated[
-        Path,
-        Argument(
-            help="The file to sort, or a directory containing files to sort.",
-            file_okay=True,
-            dir_okay=True,
-            exists=True,
-            readable=True,
-            writable=True,
-        ),
+    paths: Annotated[
+        list[Path],
+        Argument(help="The file to sort, or a directory containing files to sort."),
     ],
 ) -> None:
-    if path.is_file():
-        sort_file(path)
-    else:
-        for file in set(path.glob("*.yml")).union(path.glob("*.yaml")):
-            sort_file(file)
+    for path in paths:
+        if path.is_file():
+            sort_file(path)
+        else:
+            for file in set(path.glob("*.yml")).union(path.glob("*.yaml")):
+                sort_file(file)
 
 
 def main():

@@ -24,13 +24,13 @@ def util_load_json(path):
         return json.loads(f.read())
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def client_conf(request):
     # Manually parse command-line arguments
     return get_client_conf_from_pytest_request(request)
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def api_client(client_conf):
     if client_conf:  # Running from external pipeline
         client_obj = get_client_from_server_type(**client_conf)
@@ -44,21 +44,10 @@ class TestExample:
     @classmethod
     def setup_class(self):
         """Run once for the class before *all* tests"""
-        print("Testing out running in setup!")
         self.data = "test"
-
-    @pytest.fixture
-    def setup_method(self, client_conf=None):
-        if client_conf:
-            self.client = get_client_from_server_type(client_conf)
-        else:
-            self.client = get_client_from_server_type()
 
     def some_helper_function(self, method):
         pass
-
-    def teardown_method(self, method):
-        print("tearing down")
 
     @classmethod
     def teardown_class(self):

@@ -55,7 +55,7 @@ def get_containing_pack(use_case_path: Path) -> str:
     """Get pack object that contains the content entity.
 
     Args:
-        content_entity: Content entity object.
+        use_case_path: path to the use case
 
     Returns:
         Pack: Pack object that contains the content entity.
@@ -63,6 +63,13 @@ def get_containing_pack(use_case_path: Path) -> str:
     while use_case_path.parent.name.casefold() != "packs":
         use_case_path = use_case_path.parent
     return str(use_case_path)
+
+
+def copy_conftest(test_dir):
+    source_conftest = Path(f"{CONTENT_PATH}/Tests/scripts/dev_envs/pytest/conftest.py")
+    dest_conftest = test_dir / "conftest.py"
+
+    shutil.copy(source_conftest, dest_conftest)
 
 
 # ============================================== Classes ============================================ #
@@ -337,11 +344,6 @@ class CloudServerContext:
 
 
 # ============================================== Command logic ============================================ #
-def copy_conftest(test_dir):
-    source_conftest = Path(f"{CONTENT_PATH}/Tests/scripts/dev_envs/pytest/conftest.py")
-    dest_conftest = test_dir / "conftest.py"
-
-    shutil.copy(source_conftest, dest_conftest)
 
 
 def run_test_use_case_pytest(

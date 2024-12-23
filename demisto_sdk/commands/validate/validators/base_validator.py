@@ -298,6 +298,7 @@ class InvalidContentItemResult(BaseResult, BaseModel):
 
     @property
     def format_json_message(self):
+        logger.debug(f'format_json_message {CONTENT_PATH=}')
         return {
             "file path": str(self.path.relative_to(CONTENT_PATH)),
             "error code": self.error_code,

@@ -1,4 +1,4 @@
 changes:
-- description: Updated ***setup-env*** command description.
+- description: Updated the ***setup-env*** command *clean* flag description.
   type: fix
 pr_number: 4725

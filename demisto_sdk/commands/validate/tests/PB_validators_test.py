@@ -73,6 +73,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB130_is_silent_play
 from demisto_sdk.commands.validate.validators.PB_validators.PB131_is_silent_playbook_relationships import (
     IsSilentPlaybookRelationshipsValidator,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB132_no_readme_for_silent_playbook import (
+    NoReadmeForSilentPlaybook,
+)
 
 
 @pytest.mark.parametrize(
@@ -1406,14 +1409,14 @@ def test_MarketplaceKeysHaveDefaultValidator(
 def test_IsSilentPlaybookValidator(name, id, is_silent, result_len):
     """
     Given:
-        case 1: isSilent = False, and name/id do not contain silent prefix.
-        case 2: isSilent = True, and name/id contain silent prefix.
-        case 3: isSilent = True, name contain and id do not contain silent prefix.
-        case 4: isSilent = True, id contain and name do not contain silent prefix.
-        case 5: isSilent = False, and name/id contain silent prefix.
-        case 6: isSilent = False, name contain and id do not contain silent prefix.
-        case 7: isSilent = False, id contain and name do not contain silent prefix.
-        case 8: isSilent = True, and name/id do not contain silent prefix.
+        case 1: issilent = False, and name/id do not contain silent prefix.
+        case 2: issilent = True, and name/id contain silent prefix.
+        case 3: issilent = True, name contain and id do not contain silent prefix.
+        case 4: issilent = True, id contain and name do not contain silent prefix.
+        case 5: issilent = False, and name/id contain silent prefix.
+        case 6: issilent = False, name contain and id do not contain silent prefix.
+        case 7: issilent = False, id contain and name do not contain silent prefix.
+        case 8: issilent = True, and name/id do not contain silent prefix.
 
     When:
     - calling IsSilentPlaybookValidator.obtain_invalid_content_items.
@@ -1424,7 +1427,7 @@ def test_IsSilentPlaybookValidator(name, id, is_silent, result_len):
     playbook = create_playbook_object()
     playbook.data["id"] = id
     playbook.data["name"] = name
-    playbook.data["isSilent"] = is_silent
+    playbook.data["issilent"] = is_silent
 
     invalid_content_items = IsSilentPlaybookValidator().obtain_invalid_content_items(
         [playbook]
@@ -1582,3 +1585,29 @@ def test_IsSilentTriggerRelationshipsValidator(
         )
     )
     assert result_len == len(invalid_content_items)
+
+
+def test_NoReadmeForSilentPlaybook():
+    """
+    Given:
+    a silent playbook with/without a readme file.
+
+    When:
+    - calling NoReadmeForSilentPlaybook.obtain_invalid_content_items.
+
+    Then:
+    - Checks that it fails only when there is a readme.
+    """
+    playbook = create_playbook_object()
+    playbook.is_silent = True
+    playbook.readme.exist = True
+    invalid_content_items = NoReadmeForSilentPlaybook().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(invalid_content_items) == 1
+
+    playbook.readme.exist = False
+    invalid_content_items = NoReadmeForSilentPlaybook().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(invalid_content_items) == 0

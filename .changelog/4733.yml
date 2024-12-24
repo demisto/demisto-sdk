@@ -1,0 +1,4 @@
+changes:
+- description: fix the print color logger issue by wrap the placeholder {} with the color tag
+  type: fix
+pr_number: 4733

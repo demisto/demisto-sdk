@@ -49,7 +49,7 @@ def setup_env_command(
     clean: bool = typer.Option(
         False,
         "--clean",
-        help="Clean the repository of temporary files created by the 'lint' command.",
+        help="Clean the repository of temporary files created by the 'pre-commit' command.",
     ),
     file_paths: Tuple[Path, ...] = typer.Argument(None, exists=True, resolve_path=True),
     console_log_threshold: str = typer.Option(

@@ -1,0 +1,3 @@
+changes:
+- description: Fixed an issue where the "incident to alert" conversion was not applied to the metadata file during the execution of the **prepare-content** command.
+pr_number: 4736

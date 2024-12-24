@@ -534,7 +534,10 @@ def replace_incorrect_marketplace(
         Any: The same data object with replacements made if applicable.
     """
     try:
-        if marketplace in {MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}:
+        if marketplace in {
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        }:
             if isinstance(data, dict):
                 for k, v in data.items():
                     data[k] = replace_incorrect_marketplace(v, marketplace, path)

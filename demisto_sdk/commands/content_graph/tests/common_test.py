@@ -158,12 +158,7 @@ def test_replace_incorrect_marketplace_list():
             "description": "This is a Cortex XSOAR v2 example.",
             "details": "Cortex XSOAR should be replaced in details.",
         },
-        {
-            "nested_list": [
-                "Cortex XSOAR v3 example.",
-                "Another Cortex XSOAR example."
-            ]
-        }
+        {"nested_list": ["Cortex XSOAR v3 example.", "Another Cortex XSOAR example."]},
     ]
     expected = [
         "This is a Cortex example.",
@@ -172,12 +167,7 @@ def test_replace_incorrect_marketplace_list():
             "description": "This is a Cortex example.",
             "details": "Cortex should be replaced in details.",
         },
-        {
-            "nested_list": [
-                "Cortex example.",
-                "Another Cortex example."
-            ]
-        }
+        {"nested_list": ["Cortex example.", "Another Cortex example."]},
     ]
     result = replace_incorrect_marketplace(
         data, MarketplaceVersions.MarketplaceV2, path="example/path"

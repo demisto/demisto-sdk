@@ -1,0 +1,4 @@
+changes:
+- description: Added the **sort-yaml** pre-commit hook, helping maintain yaml readability.
+  type: feature
+pr_number: 4724

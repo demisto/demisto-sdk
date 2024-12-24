@@ -1,4 +1,7 @@
+#!/usr/bin/env python3
+
 import inspect
+import os
 import re
 import subprocess
 import sys
@@ -7,6 +10,8 @@ from typing import List, Optional, Union
 
 import typer
 from typer.main import get_command
+
+os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "True"
 
 from demisto_sdk.__main__ import app
 
@@ -30,7 +35,7 @@ def get_modified_files() -> List[Path]:
     If no files are modified, it returns an empty list.
     """
     result = subprocess.run(
-        ["git", "diff", "--name-only"], capture_output=True, text=True
+        ["git", "diff", "--cached", "--name-only"], capture_output=True, text=True
     )
     files = result.stdout.splitlines()
     return [Path(file) for file in files]
@@ -144,7 +149,7 @@ def generate_docs_for_command(command_name: str) -> None:
     update_readme(command_name, overview, options)
 
 
-@command_docs.command()
+# @command_docs.command()
 def generate_docs(modified_files: Optional[List[Path]] = typer.Argument(None)) -> None:
     """
     Generate documentation for the given list of modified files.
@@ -169,7 +174,7 @@ def generate_docs(modified_files: Optional[List[Path]] = typer.Argument(None)) -
     print("Documentation generation and Git commits completed.")  # noqa: T201
 
 
-@command_docs.command()
+@app.command()
 def pre_commit() -> None:
     """
     Pre-commit hook to generate docs for changed commands.
@@ -186,5 +191,9 @@ def pre_commit() -> None:
     generate_docs(modified_files)
 
 
+def main():
+    app()
+
+
 if __name__ == "__main__":
-    command_docs()
+    main()

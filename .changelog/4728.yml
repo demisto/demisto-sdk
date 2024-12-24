@@ -1,0 +1,4 @@
+changes:
+- description: Changed the isSilent key to be lower case.
+  type: fix
+pr_number: 4728

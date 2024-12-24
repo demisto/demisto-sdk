@@ -138,10 +138,10 @@ def test_replace_incorrect_marketplace_dict():
 
 def test_replace_incorrect_marketplace_list():
     """
-    Test the replace_incorrect_marketplace function with a list.
+    Test the replace_incorrect_marketplace function with a list containing strings and dictionaries.
 
     Given:
-        - A list data object.
+        - A list data object containing strings and dictionaries.
         - A marketplace version.
 
     When:
@@ -154,10 +154,30 @@ def test_replace_incorrect_marketplace_list():
     data = [
         "This is a Cortex XSOAR v1 example.",
         "Cortex XSOAR should be replaced.",
+        {
+            "description": "This is a Cortex XSOAR v2 example.",
+            "details": "Cortex XSOAR should be replaced in details.",
+        },
+        {
+            "nested_list": [
+                "Cortex XSOAR v3 example.",
+                "Another Cortex XSOAR example."
+            ]
+        }
     ]
     expected = [
         "This is a Cortex example.",
         "Cortex should be replaced.",
+        {
+            "description": "This is a Cortex example.",
+            "details": "Cortex should be replaced in details.",
+        },
+        {
+            "nested_list": [
+                "Cortex example.",
+                "Another Cortex example."
+            ]
+        }
     ]
     result = replace_incorrect_marketplace(
         data, MarketplaceVersions.MarketplaceV2, path="example/path"

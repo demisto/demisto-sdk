@@ -1188,6 +1188,7 @@ PACK_METADATA_PARTNER = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 PACK_METADATA_PARTNER_EMAIL_LIST = json.dumps(
@@ -1203,6 +1204,7 @@ PACK_METADATA_PARTNER_EMAIL_LIST = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 PACK_METADATA_STRINGS_EMAIL_LIST = json.dumps(
@@ -1218,6 +1220,7 @@ PACK_METADATA_STRINGS_EMAIL_LIST = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 PACK_METADATA_PARTNER_NO_EMAIL = json.dumps(
@@ -1233,6 +1236,7 @@ PACK_METADATA_PARTNER_NO_EMAIL = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 PACK_METADATA_PARTNER_NO_URL = json.dumps(
@@ -1248,6 +1252,7 @@ PACK_METADATA_PARTNER_NO_URL = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 PACK_METADATA_XSOAR = json.dumps(
@@ -1263,6 +1268,7 @@ PACK_METADATA_XSOAR = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 
@@ -1279,6 +1285,7 @@ PACK_METADATA_COMMUNITY = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 

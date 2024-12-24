@@ -1,0 +1,4 @@
+changes:
+- description: Added support for Silent-Playbooks in the old-validate.
+  type: feature
+pr_number: 4726

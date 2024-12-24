@@ -1,0 +1,4 @@
+changes:
+- description: Added support for CaseLayouts and CaseFields content items paths to the `validate-content-paths` **pre-commit** hook.
+  type: feature
+pr_number: 4706

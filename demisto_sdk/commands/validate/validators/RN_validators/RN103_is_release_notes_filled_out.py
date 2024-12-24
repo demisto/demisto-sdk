@@ -26,7 +26,6 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
     related_field = "release_note"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.RELEASE_NOTE]
-    expected_git_statuses = [GitStatuses.ADDED]
 
     @staticmethod
     def strip_exclusion_tag(release_notes_comments):
@@ -37,6 +36,7 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
             str. Cleaned notes with tags and contained notes removed.
         """
         return re.sub(r"<!--.*?-->", "", release_notes_comments, flags=re.DOTALL)
+        # return re.sub(r"<\!--.*?-->", "", release_notes_comments, flags=re.DOTALL)
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

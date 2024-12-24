@@ -45,3 +45,11 @@ repos:
   - id: mypy
     exclude: tests/.*|demisto_sdk/commands/init/templates/.*
     language: system
+- repo: local
+  hooks:
+    - id: generate-command-docs
+      name: Generate Documentation for Changed Commands  # Required when using local hooks
+      entry: generate-command-docs
+      language: python
+      files: ^.*_setup\.py$
+      pass_filenames: false

@@ -15,8 +15,8 @@ import pytest
 
 import typer
 from google.cloud import storage  # type: ignore[attr-defined]
-from junitparser import Error, JUnitXml, TestCase, TestSuite
-from junitparser.junitparser import Failure, Result, Skipped
+from junitparser import JUnitXml, TestCase, TestSuite
+from junitparser.junitparser import Failure, Skipped
 
 from demisto_sdk.commands.common.constants import (
     Test_Use_Cases,
@@ -381,7 +381,7 @@ def run_test_use_case_pytest(
         str(test_use_case_directory),
         f"--durations={str(durations)}",
         "--log-cli-level=CRITICAL",
-        "--no-summary"
+        # "--no-summary"
     ]
 
     logger.info(f"Runnig pytest for file {test_use_case_directory}")
@@ -393,11 +393,13 @@ def run_test_use_case_pytest(
     if status_code == pytest.ExitCode.OK:
         logger.info(f"<green>Pytest run tests in {test_use_case_directory} successfully</green>")
         return True, test_use_case_suite
-    else:
+    elif status_code == pytest.ExitCode.TESTS_FAILED:
         logger.error(
             f"<red>Pytest failed with statsu {status_code}</red>",
         )
         return False, test_use_case_suite
+    else:
+        raise Exception(f"Pytest failed with {status_code=}")
 
 
 @app.command(

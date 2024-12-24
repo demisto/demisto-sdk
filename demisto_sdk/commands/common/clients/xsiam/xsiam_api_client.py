@@ -259,18 +259,19 @@ class XsiamClient(XsoarSaasClient):
         alert_data = self._process_response(res.content, res.status_code, 200)
         return alert_data
 
-    def search_alerts(self, external_alert_id: str | list[str]) -> dict:
+    def search_alerts(self, filters: list, search_from: int, search_to: int, sort: dict) -> dict:
+        """
+            filters should be a list of dicts contains field, operator, value.
+            For example:
+            [{field: alert_id_list, operator: in, value: [1,2,3,4]}]
+            Allowed values for fields - alert_id_list, alert_source, severity, creation_time
+        """
         body = {
             "request_data": {
-                "filters": [
-                    {
-                        "field": "external_id_list",
-                        "operator": "in",
-                        "value": external_alert_id
-                        if isinstance(external_alert_id, list)
-                        else [external_alert_id],
-                    }
-                ]
+                "filters": filters,
+                "search_from": search_from,
+                "search_to": search_to,
+                "sort": sort
             }
         }
         endpoint = urljoin(

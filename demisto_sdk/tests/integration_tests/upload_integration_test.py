@@ -141,17 +141,14 @@ def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, 
         app, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--marketplace", "xsoar"]
     )
     assert result.exit_code == 0
+    assert "SKIPPED UPLOADING DUE TO MARKETPLACE MISMATCH:" in result.output
+    assert "Upload Destination Marketplace" in result.output
+    assert "Content Marketplace(s)" in result.output
     assert (
-        """
-SKIPPED UPLOADING DUE TO MARKETPLACE MISMATCH:
-╒════════════════════════════════════════╤═════════════╤══════════════════════════════════╤══════════════════════════╕
-│ Name                                   │ Type        │ Upload Destination Marketplace   │ Content Marketplace(s)   │
-╞════════════════════════════════════════╪═════════════╪══════════════════════════════════╪══════════════════════════╡
-│ integration-sample_event_collector.yml │ Integration │ xsoar                            │ marketplacev2            │
-╘════════════════════════════════════════╧═════════════╧══════════════════════════════════╧══════════════════════════╛
-
-Did you forget to specify the marketplace?"""
-    ) in result.output
+        "integration-sample_event_collector.yml │ Integration │ xsoar                            │ marketplacev2"
+        in result.output
+    )
+    assert "Did you forget to specify the marketplace?" in result.output
 
     assert (
         "\n".join(

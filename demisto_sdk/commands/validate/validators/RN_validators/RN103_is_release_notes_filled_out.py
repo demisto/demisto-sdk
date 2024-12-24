@@ -36,7 +36,6 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
             str. Cleaned notes with tags and contained notes removed.
         """
         return re.sub(r"<!--.*?-->", "", release_notes_comments, flags=re.DOTALL)
-        # return re.sub(r"<\!--.*?-->", "", release_notes_comments, flags=re.DOTALL)
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

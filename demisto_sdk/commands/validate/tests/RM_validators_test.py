@@ -2,6 +2,7 @@ from pathlib import PosixPath
 
 import more_itertools
 import pytest
+from click.exceptions import BadParameter
 
 from demisto_sdk.commands.common.tools import find_pack_folder
 from demisto_sdk.commands.validate.tests.test_tools import (
@@ -341,6 +342,41 @@ def test_IsImageExistsInReadmeValidator_obtain_invalid_content_items(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_IsImageExistsInReadmeValidator_invalid_image_paths(mocker):
+    """
+    Given:
+        - A pack name and a list of image paths, some with a missing prefix and others already valid.
+    When:
+        - Running the `get_invalid_image_paths` function to validate image paths.
+    Then:
+        - Ensure that initially invalid paths are identified.
+        - Ensure that removing the prefix allows paths to be validated successfully.
+    """
+    import click
+
+    pack_name = "MyPack"
+    image_paths = [
+        "../doc_files/valid_image.png",  # Will be valid after adding prefix
+    ]
+
+    # Mocking click.Path.convert to simulate file validation
+    def mock_first_convert(path, param, ctx):
+        # Simulate failed validation for all paths during second call
+        raise BadParameter
+
+    def mock_second_convert(path, param, ctx):
+        # Simulate successful validation for all paths during second call
+        pass
+
+    mocker.patch.object(
+        click.Path, "convert", side_effect=[mock_first_convert, mock_second_convert]
+    )
+    invalid_paths = IsImageExistsInReadmeValidator.get_invalid_image_paths(
+        pack_name, image_paths
+    )
+    assert not invalid_paths
 
 
 def test_IsPackReadmeNotEqualPackDescriptionValidator_not_valid():

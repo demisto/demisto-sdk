@@ -148,8 +148,7 @@ class _StrictIntegration(BaseStrictModel):
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=3)] = Field(alias="sectionorder")
-    section_order_camel_case: Optional[conlist(SectionOrderValues, min_items=1, max_items=3)] = Field(alias="sectionOrder")
+    section_order: conlist(SectionOrderValues, min_items=1, max_items=3) = Field(alias="sectionorder")
     image: Optional[str] = None
     description: str
     default_mapper_in: Optional[str] = Field(None, alias="defaultmapperin")
@@ -158,8 +157,7 @@ class _StrictIntegration(BaseStrictModel):
     detailed_description: Optional[str] = Field(None, alias="detaileddescription")
     auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")
     support_level_header: MarketplaceVersions = Field(None, alias="supportlevelheader")
-    # configurations: List[Configuration]  = Field(..., alias="configuration") # type:ignore[valid-type]
-    configuration: List[Configuration] # type:ignore[valid-type]
+    configurations: List[Configuration] = Field(..., alias="configuration")# type:ignore[valid-type]
     script: Script  # type:ignore[valid-type]
     hidden: Optional[bool] = None
     videos: Optional[List[str]] = None
@@ -169,20 +167,21 @@ class _StrictIntegration(BaseStrictModel):
     hybrid: Optional[bool] = None
 
     def __init__(self, **data):
-        if 'section_order_camel_case' in data and not 'section_order' in data:
-            data['section_order'] = data.pop('section_order_camel_case')
-        elif 'section_order_camel_case' in data and 'section_order' in data:
-            data['section_order'] = list(set(data['section_order']) | set(data['section_order_camel_case']))
+        if 'sectionOrder' in data and not 'sectionorder' in data:
+            data['sectionorder'] = data.pop('sectionOrder')
+        elif 'sectionOrder' in data and 'sectionorder' in data:
+            data['sectionorder'] = list(set(data['section_order']) | set(data['section_order_camel_case']))
         super().__init__(**data)
 
-    @validator('configuration')
-    def validate_sections(cls, configuration, values):
+    @validator('configurations')
+    def validate_sections(cls, configurations, values):
+        print(f'{configurations=}, {values=}')
         section_order = values.get('section_order')
         assert section_order, 'section_order may not be None or empty list'
-        for config in configuration:
+        for config in configurations:
             assert config.section in section_order,\
                 f'section {config.section} of {config.display} is not present in section_order {config.section_order}'
-        return configuration
+        return configurations
 
 
 

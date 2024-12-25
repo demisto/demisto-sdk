@@ -222,7 +222,7 @@ class ReleaseNotesValidator(BaseValidator):
                 ):
                     try:
                         _dict, file_type = get_dict_from_file(file)
-                        if _dict.get("isSilent"):
+                        if _dict.get("issilent"):
                             continue
                     except Exception:
                         pass

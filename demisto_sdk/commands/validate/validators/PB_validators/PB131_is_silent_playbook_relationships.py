@@ -21,7 +21,7 @@ class IsSilentPlaybookRelationshipsValidator(BaseValidator[ContentTypes]):
     error_message = (
         "The {} is silent, but does not correspond to a silent {} in the pack."
     )
-    related_field = "isSilent"
+    related_field = "issilent"
     is_auto_fixable = False
 
     def obtain_invalid_content_items(

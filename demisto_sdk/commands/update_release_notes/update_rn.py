@@ -77,7 +77,7 @@ class content_type(Enum):
     ARGUMENT = "argument"
 
 
-NEW_RN_TEMPLATE = "- New: added a new {type}- {name} which {description}\n"
+NEW_RN_TEMPLATE = "- New: added a new {type} - {name} which {description}\n"
 GENERAL_DEPRECATED_RN = "- Deprecated the ***{name}*** {type}. {replacement}.\n"
 GENERAL_BC = "- **Breaking Changes** :Deleted the **{name}** {value}.\n"
 DEPRECATED_ARGUMENT = (

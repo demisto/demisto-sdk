@@ -518,7 +518,7 @@ CONTENT_PRIVATE_ITEMS: dict = {
 }
 
 
-def replace_incorrect_marketplace(
+def replace_marketplace_references(
     data: Any, marketplace: MarketplaceVersions, path: str = ""
 ) -> Any:
     """
@@ -540,10 +540,10 @@ def replace_incorrect_marketplace(
         }:
             if isinstance(data, dict):
                 for k, v in data.items():
-                    data[k] = replace_incorrect_marketplace(v, marketplace, path)
+                    data[k] = replace_marketplace_references(v, marketplace, path)
             elif isinstance(data, list):
                 for i in range(len(data)):
-                    data[i] = replace_incorrect_marketplace(data[i], marketplace, path)
+                    data[i] = replace_marketplace_references(data[i], marketplace, path)
             elif isinstance(data, str):
                 # Replace "Cortex XSOAR" and the following word if it contains a number
                 data = re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", data)

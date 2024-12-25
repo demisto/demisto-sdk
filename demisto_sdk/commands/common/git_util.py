@@ -1125,7 +1125,7 @@ class GitUtil:
 
     def commit_files(self, commit_message: str, files: Union[List, str] = "."):
         self.repo.git.add(files)
-        self.repo.index.commit(commit_message)
+        return self.repo.index.commit(commit_message)
 
     def has_file_permissions_changed(
         self, file_path: str, ci: bool = False
@@ -1198,8 +1198,7 @@ class GitUtil:
             logger.error(f"File '{file_path}' doesn't exist. Not adding.")
 
     def get_file_creation_date(self, file_path: Path) -> str:
-        commits = list(self.repo.iter_commits(paths=file_path))
-        if commits:
+        if commits := list(self.repo.iter_commits(paths=file_path)):
             first_commit = commits[-1]
             return first_commit.authored_datetime.strftime(ISO_TIMESTAMP_FORMAT)
         return datetime.now().strftime(ISO_TIMESTAMP_FORMAT)

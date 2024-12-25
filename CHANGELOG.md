@@ -2,7 +2,7 @@
 ## 1.33.1 (2024-12-25)
 ### Feature
 * Moved the CR101 validation to the new validation format. Checks names if "Correlation Rule" files match standards to `validate_content_path`. [#4596](https://github.com/demisto/demisto-sdk/pull/4569)
-* Added *PB130* validation. Checks whether the silent playbook name id and the *isSilent* key are set correctly. [#4662](https://github.com/demisto/demisto-sdk/pull/4662) PB130
+* Added *PB130* validation. Checks whether the silent playbook name id and the *isSilent* key are set correctly. [#4662](https://github.com/demisto/demisto-sdk/pull/4662)
 * Added *PB131* validation. Ensures every silent trigger points to a silent playbook, and vice versa. [#4670](https://github.com/demisto/demisto-sdk/pull/4670)
 * Exclude silent-Playbooks/Triggers from the metadata. [#4692](https://github.com/demisto/demisto-sdk/pull/4692)
 * Added support for writing ***demisto-sdk pre-commit*** command results to files. [#4697](https://github.com/demisto/demisto-sdk/pull/4697)

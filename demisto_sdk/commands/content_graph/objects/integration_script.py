@@ -63,10 +63,12 @@ class Argument(BaseModel):
             dictified_arg["auto"] = dictified_arg["auto"].value
         return dictified_arg
 
-    def details_for_rn(self) -> str:
+    def get_description(self) -> str:
+        # In order to get the description in the same way in all content items (for update-release-note)
         return self.description
 
-    def name_for_rn(self):
+    def get_name(self):
+        # In order to get the name in the same way in all content items (for update-release-note)
         return self.name
 
 
@@ -155,5 +157,6 @@ class IntegrationScript(ContentItem):
     def readme(self) -> ReadmeRelatedFile:
         return ReadmeRelatedFile(self.path, is_pack_readme=False, git_sha=self.git_sha)
 
-    def details_for_rn(self) -> str:
+    def get_description(self) -> str:
+        # In order to get the description in the same way in all content items (for update-release-note)
         return self.description or ""

@@ -450,11 +450,10 @@ class ContentItem(BaseContent):
             raise IncompatibleUploadVersionException(self, target_demisto_version)
         self._upload(client, marketplace)
 
-    def details_for_rn(self) -> str:
+    def get_description(self) -> str:
+        # In order to get the description in the same way in all content items (for update-release-note)
         return self.description or ""
 
-    def name_for_rn(self) -> str:
-        try:
-            return self.display_name or ""
-        except Exception:
-            return self.name
+    def get_name(self) -> str:
+        # In order to get the name in the same way in all content items (for update-release-note)
+        return self.display_name or self.name or ""

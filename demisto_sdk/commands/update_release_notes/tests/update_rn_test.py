@@ -30,7 +30,7 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN,
     content_type,
-    generate_deprecation_rn,
+    generate_content_deprecation_rn,
     get_deprecated_comment_from_desc,
     get_deprecated_rn,
 )
@@ -2791,7 +2791,7 @@ def test_deprecated_commands():
     """
     old_command = Command(name="command_1", deprecated=False)
     new_command = Command(name="command_1", deprecated=True)
-    res = generate_deprecation_rn(
+    res = generate_content_deprecation_rn(
         name="command_1",
         old_content=old_command,
         new_content=new_command,

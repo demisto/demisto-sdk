@@ -331,7 +331,9 @@ class UpdateReleaseNotesManager:
                 is_bc=self.is_bc,
                 prev_ver=self.prev_ver,
             )
-            logger.info("Creating release notes is in progress... It may take about minute.")
+            logger.info(
+                "Creating release notes is in progress... It may take about minute."
+            )
             updated = update_pack_rn.execute_update()
             self.rn_path.append(update_pack_rn.rn_path)
 

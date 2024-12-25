@@ -79,17 +79,20 @@ class content_type(Enum):
 
 NEW_RN_TEMPLATE = "- New: added a new {type}- {name} which {description}\n"
 GENERAL_DEPRECATED_RN = "- Deprecated the ***{name}*** {type}. {replacement}.\n"
-GENERAL_BC = "- Deleted the **{name}** {value}.\n"
+GENERAL_BC = "- **Breaking Changes** :Deleted the **{name}** {value}.\n"
 DEPRECATED_ARGUMENT = (
     "- Deprecated the **{name}** {type} inside the **{command_name}** command.\n"
 )
-ARGUMENT_BC = "- Updated the **{command_name}** command to not use the **{argument_name}** argument.\n"
+ARGUMENT_BC = "- **Breaking Changes**: Updated the **{command_name}** command to not use the **{argument_name}** argument.\n"
 DEPRECATED_CONTENT_ITEM_RN = "- Deprecated. {replacement}.\n"
 GENERAL_UPDATE_RN = (
     "- Updated the {name} {type} to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
 )
-ADDED_ARGUMENT_RN = "- Added support for **{name}** argument in the **{parent}** command.\n"
+ADDED_ARGUMENT_RN = (
+    "- Added support for **{name}** argument in the **{parent}** command.\n"
+)
 ADDED_CONTENT_RN = "- Added support for **{name}** {content_type}{extra_description}\n"
+NEW_COMMANDS_RN = "\n- Added the following commands:\n"
 
 
 def get_deprecated_comment_from_desc(description: str) -> str:
@@ -151,9 +154,9 @@ def create_content_item_object(
         return None
 
 
-def rn_for_deleted_content(
-    old_content_dict: dict[str, Any],
-    new_content_dict: dict[str, Any],
+def create_rn_for_deleted_content(
+    old_content_dict: dict[str, Union[Parameter, Argument, Command]],
+    new_content_dict: dict[str, Union[Parameter, Argument, Command]],
     type,
     parent_name=None,
 ):
@@ -172,12 +175,9 @@ def rn_for_deleted_content(
         str: A release note describing the deleted content items.
     """
     rn = ""
-    deleted_objects_names = set(old_content_dict.keys()) - set(new_content_dict.keys())
-    for deleted_object_name in deleted_objects_names:
-        try:
-            name = old_content_dict[deleted_object_name].display
-        except Exception:
-            name = deleted_object_name
+    deleted_content_names = set(old_content_dict.keys()) - set(new_content_dict.keys())
+    for deleted_content_name in deleted_content_names:
+        name = old_content_dict[deleted_content_name].get_name()
         if type == content_type.ARGUMENT and parent_name:
             rn += ARGUMENT_BC.format(command_name=parent_name, argument_name=name)
         else:
@@ -188,14 +188,14 @@ def rn_for_deleted_content(
     return rn
 
 
-def generate_deprecation_rn(
+def generate_content_deprecation_rn(
     name: str,
     new_content: Union[Parameter, Argument, Command],
     old_content: Union[Parameter, Argument, Command],
     content_type: content_type,
     parent: Union[str, None] = None,
 ) -> str:
-    """Generates release notes for deprecated content items.
+    """Generates release notes for deprecated content in content items.
 
     Args:
         name (str): The name of the content item being deprecated.
@@ -217,14 +217,14 @@ def generate_deprecation_rn(
             name=name,
             type=content_type.value,
             replacement=(
-                get_deprecated_comment_from_desc(new_content.details_for_rn())
+                get_deprecated_comment_from_desc(new_content.get_description())
                 or "Use %%% instead"
             ),
         )
     return ""
 
 
-def generate_required_rn(
+def generate_required_content_rn(
     name: str,
     new_content: Union[Parameter, Argument, Command],
     old_content: Union[Parameter, Argument, Command],
@@ -271,19 +271,19 @@ def generate_new_content_rn(
     Returns:
         str: A formatted release note describing the addition of the content item.
     """
-    description = new_content.details_for_rn().replace("-", "").lower()
-    display_name = new_content.name_for_rn()
+    description = new_content.get_description().replace("-", "").lower()
+    display_name = new_content.get_name()
     if isinstance(new_content, Argument) and parent:
         return ADDED_ARGUMENT_RN.format(name=name, parent=parent)
     extra_description = f" which {description.rstrip('.')}." if description else "."
     return ADDED_CONTENT_RN.format(
         name=display_name,
         content_type=content_type.value,
-        extra_description=extra_description
+        extra_description=extra_description,
     )
 
 
-def rn_for_added_or_updated_content(
+def create_rn_for_added_or_updated_content(
     old_content_dict: dict[str, Union[Parameter, Argument, Command]],
     new_content_dict: dict[str, Union[Parameter, Argument, Command]],
     type: content_type,
@@ -292,10 +292,10 @@ def rn_for_added_or_updated_content(
     """Generates release notes for added or updated content in content items.
 
     Args:
-        old_content_dict (dict[str, Any]): A dictionary of content items in the current version,
+        old_content_dict (dict[str, Union[Parameter, Argument, Command]]): A dictionary of content items in the current version,
                                            where keys are item names and values are their details.
-        new_content_dict (dict[str, Any]): A dictionary of content items after local updates,
-                                           where keys are item names and values are their details.
+        new_content_dict (dict[str, Union[Parameter, Argument, Command]]): A dictionary of content items after local updates,
+                                           where keys are item names and values are basemodel objects.
         type (content_type): The type of the content item.
         parent_name (str | None): The name of the parent content item, if applicable
                                   (used for arguments within commands).
@@ -304,25 +304,33 @@ def rn_for_added_or_updated_content(
         str: A release note describing the added or updated content items.
     """
     rn = ""
-    new_keys_names = set(new_content_dict.keys()) - set(old_content_dict.keys())
-    old_keys_names = set(new_content_dict.keys()) - new_keys_names
-    for new_key in new_keys_names:
+    new_content_names = set(new_content_dict.keys()) - set(old_content_dict.keys())
+    old_existing_content_names = set(new_content_dict.keys()) - new_content_names
+    for new_content_name in new_content_names:
         rn += generate_new_content_rn(
-            new_key, new_content_dict[new_key], type, parent_name
+            new_content_name, new_content_dict[new_content_name], type, parent_name
         )
-    for old_key_name in old_keys_names:
-        old_content_object = old_content_dict[old_key_name]
-        new_content_object = new_content_dict[old_key_name]
-        rn += generate_deprecation_rn(
-            old_key_name, new_content_object, old_content_object, type, parent_name
+    for old_existing_content_name in old_existing_content_names:
+        old_content_object = old_content_dict[old_existing_content_name]
+        new_content_object = new_content_dict[old_existing_content_name]
+        rn += generate_content_deprecation_rn(
+            old_existing_content_name,
+            new_content_object,
+            old_content_object,
+            type,
+            parent_name,
         )
-        rn += generate_required_rn(old_key_name, new_content_object, old_content_object, type)
-        if isinstance(new_content_object, Command) and isinstance(old_content_object, Command):
+        rn += generate_required_content_rn(
+            old_existing_content_name, new_content_object, old_content_object, type
+        )
+        if isinstance(new_content_object, Command) and isinstance(
+            old_content_object, Command
+        ):
             rn += compare_content_item_changes(
                 old_content_object.args,
                 new_content_object.args,
                 content_type.ARGUMENT,
-                old_key_name,
+                old_existing_content_name,
             )
 
     return rn
@@ -352,8 +360,10 @@ def compare_content_item_changes(
     new_content_dict = {
         new_content.name: new_content for new_content in new_content_info
     }
-    rn += rn_for_deleted_content(old_content_dict, new_content_dict, type, parent_name)
-    rn += rn_for_added_or_updated_content(
+    rn += create_rn_for_deleted_content(
+        old_content_dict, new_content_dict, type, parent_name
+    )
+    rn += create_rn_for_added_or_updated_content(
         old_content_dict, new_content_dict, type, parent_name
     )
     return rn
@@ -467,7 +477,7 @@ def get_deprecated_rn(changed_object: Union[Integration, Script, Playbook]):
         and changed_object.deprecated
     ):
         rn_from_description = get_deprecated_comment_from_desc(
-            changed_object.details_for_rn()
+            changed_object.get_description()
         )
         return DEPRECATED_CONTENT_ITEM_RN.format(
             replacement=(rn_from_description or "Use %%% instead")
@@ -623,8 +633,8 @@ class UpdateRN:
             )
             name, description = (
                 (
-                    content_item_object.name_for_rn(),
-                    content_item_object.details_for_rn(),
+                    content_item_object.get_name(),
+                    content_item_object.get_description(),
                 )
                 if content_item_object and isinstance(content_item_object, ContentItem)
                 else (get_content_item_details(packfile, file_type))
@@ -1167,8 +1177,8 @@ class UpdateRN:
                     current_rn = ""
                     if changed_content_object:
                         current_rn = generate_rn_for_updated_content_items(
-                        changed_content_object
-                    )
+                            changed_content_object
+                        )
                         rn_desc += current_rn
                         rn_desc += text
                     if not current_rn:
@@ -1195,10 +1205,10 @@ class UpdateRN:
         """
         rn_desc = ""
         if changed_content_object and isinstance(changed_content_object, Integration):
-            rn_desc = "\n- Added the following commands:\n"
+            rn_desc = NEW_COMMANDS_RN
             new_commands = changed_content_object.commands
             for command in new_commands:
-                rn_desc += f"\t- ***{command.name_for_rn()}***\n\n"
+                rn_desc += f"\t- ***{command.get_name()}***\n"
         return rn_desc
 
     def generate_rn_marketplaces_availability(self, _type, content_name, from_version):

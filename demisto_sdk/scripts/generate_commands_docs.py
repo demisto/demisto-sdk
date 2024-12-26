@@ -16,7 +16,7 @@ os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "True"
 from demisto_sdk.__main__ import app
 
 # Initialize Typer app
-command_docs = typer.Typer()
+docs_app = typer.Typer()
 
 EXCLUDED_BRANCHES_REGEX = r"^(master|[0-9]+\.[0-9]+\.[0-9]+)$"
 
@@ -77,16 +77,14 @@ def get_command_options(command_name: str) -> str:
     if isinstance(command, str):
         return command
 
-    options_text = "### Options\n\n"
+    options_text = ""
     for param in command.params:  # type: ignore[attr-defined]
         param_name = (
             f"--{param.name.replace('_', '-')}"
             if param.param_type_name == "option"
             else param.name
         )
-        options_text += (
-            f"- **{param_name}**: {param.help or 'No description provided'}\n"
-        )
+        options_text += f"- **{param_name}**: {param.help or ''}\n"
         if param.default is not None:
             options_text += f"  - Default: `{param.default}`\n"
         options_text += "\n"
@@ -108,14 +106,14 @@ def update_readme(command_name: str, description: str, options: str) -> None:
         with command_doc_path.open("r") as f:
             readme_content = f.read()
     else:
-        readme_content = ""
+        readme_content = f"## {command_name}\n"
 
     # Function to update or insert a section in the README
     def update_section(header: str, content: str, readme: str) -> str:
         """Update or add a section to the README content."""
-        # Check if the section exists
         section_header = f"### {header}"
 
+        # Check if the section exists
         if section_header in readme:
             # Replace the content of the existing section
             start_index = readme.find(section_header) + len(section_header)
@@ -124,10 +122,12 @@ def update_readme(command_name: str, description: str, options: str) -> None:
                 if "###" in readme[start_index:]
                 else len(readme)
             )
-            readme = readme[:start_index] + "\n\n" + content + readme[end_index:]
+            readme = (
+                readme[:start_index] + f"\n\n{content.strip()}\n" + readme[end_index:]
+            )
         else:
-            # If the section doesn't exist, add it after the first header
-            readme = readme.replace("## ", f"## \n\n{section_header}\n\n{content}\n\n")
+            # Append the new section
+            readme = readme.strip() + f"\n\n{section_header}\n\n{content.strip()}"
 
         return readme
 
@@ -174,7 +174,7 @@ def generate_docs(modified_files: Optional[List[Path]] = typer.Argument(None)) -
     print("Documentation generation and Git commits completed.")  # noqa: T201
 
 
-@app.command()
+@docs_app.command()
 def pre_commit() -> None:
     """
     Pre-commit hook to generate docs for changed commands.
@@ -192,7 +192,7 @@ def pre_commit() -> None:
 
 
 def main():
-    app()
+    docs_app()
 
 
 if __name__ == "__main__":

@@ -108,6 +108,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_i
 from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_context_path_depth import (
     IsValidContextPathDepthValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_script_name_starts_with_digit import (
+    IsCommandOrScriptNameStartsWithDigitValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
@@ -2418,3 +2421,73 @@ def test_IsTestsSectionValidValidator_obtain_invalid_content_items():
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_is_command_or_script_name_starts_with_digit_invalid():
+    """
+    Given
+    - One invalid integration with one command starting with a digit character.
+    When
+    - Calling the IsCommandOrScriptNameStartsWithDigitValidator obtain_invalid_content_items function.
+    Then
+    - Make sure one failure is returned and the error message is correct.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "1system-get-users",
+                            "description": "Get users from 1System",
+                            "deprecated": False,
+                            "arguments": [],
+                            "outputs": [],
+                        },
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+        expected_msg = "The following integration command names start with a digit: 1system-get-users"
+        results = IsCommandOrScriptNameStartsWithDigitValidator().obtain_invalid_content_items(
+            content_items
+        )
+
+        assert len(results) == 1
+        assert results[0].message == expected_msg
+
+
+def test_is_command_or_script_name_starts_with_digit_valid():
+    """
+    Given
+    - One valid integration with one command starting with a letter character.
+    When
+    - Calling the IsCommandOrScriptNameStartsWithDigitValidator obtain_invalid_content_items function.
+    Then
+    - Make sure no failures are returned.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "one-system-get-users",
+                            "description": "Get users from 1System",
+                            "deprecated": False,
+                            "arguments": [],
+                            "outputs": [],
+                        },
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+        results = IsCommandOrScriptNameStartsWithDigitValidator().obtain_invalid_content_items(
+            content_items
+        )
+
+        assert len(results) == 0

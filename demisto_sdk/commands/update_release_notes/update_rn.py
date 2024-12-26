@@ -1151,5 +1151,5 @@ def format_playbook_description(desc: str) -> str:
         (6, "Containment:\n"),
     )
     for hdr, phrase in key_phrases:
-        desc = desc.replace(f'\n{phrase}', f'\n{'#' * hdr}{phrase}')
+        desc = desc.replace(f'\n{phrase}', f'\n{"#" * hdr} {phrase}')
     return desc.lstrip('\n')

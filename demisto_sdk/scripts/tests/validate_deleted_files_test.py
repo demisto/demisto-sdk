@@ -122,7 +122,7 @@ def test_get_forbidden_deleted_files_deleting_silent_playbook(git_repo: Repo):
     pack = git_repo.create_pack("Test")
     silent_playbook = pack.create_playbook("name")
 
-    silent_playbook.yml.update({"isSilent": "true"})
+    silent_playbook.yml.update({"issilent": "true"})
 
     git_repo.git_util.commit_files("create pack and silent playbook")
     git_repo.git_util.repo.git.checkout("-b", "delete_playbook")

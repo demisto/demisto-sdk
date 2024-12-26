@@ -216,9 +216,16 @@ class ReleaseNotesValidator(BaseValidator):
 
                 if find_type(file) in SKIP_RELEASE_NOTES_FOR_TYPES:
                     continue
+
                 elif (
                     checked_file_pack_name and checked_file_pack_name == self.pack_name
                 ):
+                    try:
+                        _dict, file_type = get_dict_from_file(file)
+                        if _dict.get("issilent"):
+                            continue
+                    except Exception:
+                        pass
                     # Refer image and description file paths to the corresponding yml files
                     file = UpdateRN.change_image_or_desc_file_path(file)
                     update_rn_util = UpdateRN(

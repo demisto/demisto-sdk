@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Callable
 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
@@ -43,14 +43,14 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
                     'condition': self.is_valid_condition_task,
                     'regular': self.is_valid_regular_task,
                     'collection': self.is_valid_data_collection,
-                }.get(task.type, lambda _: [])
+                }.get(task.type, lambda _: [])  # type: ignore
 
                 invalid_values = (
                     is_task_valid(task)
-                    + self.get_invalid_reference_values(task.task.description or '')
-                    + self.get_invalid_reference_values(task.task.name or '')
+                    + self.handle_value_obj(task.task.to_raw_dict, 'description')
+                    + self.handle_value_obj(task.task.to_raw_dict, 'name')
                 )
-
+                task.task.to_raw_dict
                 results += [
                     ValidationResult(
                         validator=self,
@@ -65,6 +65,8 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
                 ]
 
         return results
+    
+    def handle_playbook()
 
     def is_valid_condition_task(self, task: TaskConfig) -> list[str]:
         task.task.description
@@ -79,27 +81,27 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
         for message_key, message_value in (task.message or {}).items():
             invalid_values += self.get_invalid_message_values(message_key, message_value)
         for script_argument in (task.scriptarguments or {}).values():
-            invalid_values += self.handle_values(script_argument)
+            invalid_values += self.handle_input_obj(script_argument)
         return invalid_values
 
     def is_valid_regular_task(self, task: TaskConfig) -> list[str]:
         invalid_values = []
-        invalid_values += self.handle_values(task.defaultassigneecomplex)
+        invalid_values += self.handle_input_obj(task.defaultassigneecomplex)
         for script_argument in (task.scriptarguments or {}).values():
-            invalid_values += self.handle_values(script_argument)
+            invalid_values += self.handle_input_obj(script_argument)
         for incident_field in (task.fieldMapping or []):
-            invalid_values += self.handle_values(incident_field.get("output"))
+            invalid_values += self.handle_input_obj(incident_field.get("output"))
         return invalid_values
 
     def is_valid_data_collection(self, task: TaskConfig):
         invalid_values = []
         for script_argument in (task.scriptarguments or {}).values():
-            invalid_values += self.handle_values(script_argument)
+            invalid_values += self.handle_input_obj(script_argument)
         for message_key, message_value in (task.message or {}).items():
             invalid_values += self.get_invalid_message_values(message_key, message_value)
         for form_question in (task.form or {}).get("questions", []):
             if labelarg := form_question.get("labelarg", {}):
-                invalid_values += self.handle_values(labelarg)
+                invalid_values += self.handle_input_obj(labelarg)
         return invalid_values
 
     def handle_transformers_and_filters(self, field_output: dict) -> list[str]:
@@ -124,20 +126,25 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
 
     def get_invalid_message_values(self, message_key, message_value) -> list[str]:
         if message_key and message_value and isinstance(message_value, dict):
-            return self.handle_values(message_value)
+            return self.handle_input_obj(message_value)
         return []
     
     def handle_op_arg(self, value: Optional[dict] = {}, iscontext: bool = False, **_) -> list[str]:
-        return self.handle_values(value, iscontext)
+        return self.handle_input_obj(value, iscontext)
 
-    def handle_values(self, value_obj: Optional[dict], is_context: bool = False) -> list[str]:
+    def handle_input_obj(self, value_obj: Optional[dict], is_context: bool = False) -> list[str]:
         if not is_context:
             value_obj = value_obj or {}
-            if arg_value := value_obj.get("simple"):
-                return self.get_invalid_reference_values(arg_value)
+            if "simple" in value_obj:
+                return self.handle_value_obj(value_obj)
             elif arg_value := value_obj.get("complex", {}):
                 return self.handle_transformers_and_filters(arg_value)
         return []
+    
+    def handle_value_obj(self, value_obj: dict, key: str = 'simple'):
+        '''wrapper that is modified in fix()'''
+        return self.get_invalid_reference_values(value_obj.get(key, ''))
+        
         
     def fix(self, content_item: ContentTypes) -> FixResult:  # TODO
         """

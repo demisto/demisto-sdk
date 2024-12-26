@@ -1,4 +1,6 @@
 changes:
-- description: enter description about this PR
-  type: <breaking|feature|fix|internal>
+- description: |
+    The command "update-release-notes" will now add Markdown formatting to the release notes 
+    of new playbooks that follow the new playbook description template.
+  type: feature
 pr_number: 4735

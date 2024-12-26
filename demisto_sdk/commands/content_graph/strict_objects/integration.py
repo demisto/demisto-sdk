@@ -167,6 +167,10 @@ class _StrictIntegration(BaseStrictModel):
     hybrid: Optional[bool] = None
 
     def __init__(self, **data):
+        """
+        Initializes the _StrictIntegration object.
+        Using this custom init function to support two aliases for the section_order field.
+        """
         if 'sectionOrder' in data and not 'sectionorder' in data:
             data['sectionorder'] = data.pop('sectionOrder')
         elif 'sectionOrder' in data and 'sectionorder' in data:
@@ -175,6 +179,12 @@ class _StrictIntegration(BaseStrictModel):
 
     @validator('configurations')
     def validate_sections(cls, configurations, values):
+        """
+        Validates each configuration object has a valid section clause.
+        A valid section clause is a section which is included in the list of the integration's section_order.
+        Even if the section is an allowed value (currently Collect, Connect or Optimize),it could be invalid if the
+        specific value is not present in section_order.
+        """
         section_order_field = values.get('section_order')
         if not section_order_field:
             return None

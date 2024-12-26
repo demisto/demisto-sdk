@@ -154,6 +154,7 @@ def create_playbook_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
+    file_name: Optional[str] = None,
 ) -> Playbook:
     """Creating a playbook object with altered fields from a default playbook yml structure.
 
@@ -162,6 +163,7 @@ def create_playbook_object(
         values (Optional[List[Any]]): The values to update.
         pack_info (Optional[List[str]]): The playbook's pack name.
         readme_content (Optional[List[Any]]): The playbook's readme.
+        file_name (Optional[List[Any]]): The playbook's file name.
     Returns:
         The playbook object.
     """
@@ -171,7 +173,8 @@ def create_playbook_object(
     if pack_info:
         pack.set_data(**pack_info)
     additional_params = {}
-
+    if file_name:
+        additional_params["name"] = file_name
     if readme_content is not None:
         additional_params["readme"] = readme_content
 
@@ -636,13 +639,14 @@ def create_assets_modeling_rule_object(
 
 
 def create_trigger_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None, file_name: str = "trigger"
 ) -> Trigger:
     """Creating an trigger object with altered fields from a default trigger json structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
         values (Optional[List[Any]]): The values to update.
+        file_name (str): the file name.
 
     Returns:
         The trigger object.
@@ -650,7 +654,7 @@ def create_trigger_object(
     json_content = load_json("trigger.json")
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
-    pack.create_trigger(name="trigger", content=json_content)
+    pack.create_trigger(name=file_name, content=json_content)
     return cast(Trigger, BaseContent.from_path(Path(pack.triggers[0].path)))
 
 

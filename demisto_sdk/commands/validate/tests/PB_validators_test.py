@@ -1354,69 +1354,85 @@ def test_MarketplaceKeysHaveDefaultValidator(
 
 
 @pytest.mark.parametrize(
-    "name, id, is_silent, result_len",
+    "name, id, is_silent, result_len, file_name",
     [
         (
             "test",
             "test",
             False,
             0,
+            "test"
         ),
         (
             "silent-test",
             "silent-test",
             True,
             0,
+            "silent-test",
         ),
         (
             "test",
             "silent-test",
             True,
             1,
+            "silent-test",
         ),
         (
             "silent-test",
             "test",
             True,
             1,
+            "silent-test",
         ),
         (
             "silent-test",
             "silent-test",
             False,
             1,
+            "silent-test",
         ),
         (
             "test",
             "silent-test",
             False,
             1,
+            "test",
         ),
         (
             "silent-test",
             "test",
             False,
             1,
+            "test",
         ),
         (
             "test",
             "test",
             True,
             1,
+            "test",
+        ),
+        (
+            "test",
+            "test",
+            False,
+            1,
+            "silent-test",
         ),
     ],
 )
-def test_IsSilentPlaybookValidator(name, id, is_silent, result_len):
+def test_IsSilentPlaybookValidator(name, id, is_silent, result_len, file_name):
     """
     Given:
-        case 1: issilent = False, and name/id do not contain silent prefix.
-        case 2: issilent = True, and name/id contain silent prefix.
-        case 3: issilent = True, name contain and id do not contain silent prefix.
-        case 4: issilent = True, id contain and name do not contain silent prefix.
-        case 5: issilent = False, and name/id contain silent prefix.
-        case 6: issilent = False, name contain and id do not contain silent prefix.
-        case 7: issilent = False, id contain and name do not contain silent prefix.
-        case 8: issilent = True, and name/id do not contain silent prefix.
+        case 1: is_silent = False, and name/id/file_name do not contain silent prefix.
+        case 2: is_silent = True, and name/id/file_name contain silent prefix.
+        case 3: is_silent = True, name contain and id/file_name do not contain silent prefix.
+        case 4: is_silent = True, id contain and name/file_name do not contain silent prefix.
+        case 5: is_silent = False, and name/id/file_name contain silent prefix.
+        case 6: is_silent = False, name contain and id/file_name do not contain silent prefix.
+        case 7: is_silent = False, id contain and name/file_name do not contain silent prefix.
+        case 8: is_silent = True, and name/id/file_name do not contain silent prefix.
+        case 9: is_silent = False, and file_name contains silent prefix but name/id do not.
 
     When:
     - calling IsSilentPlaybookValidator.obtain_invalid_content_items.
@@ -1424,16 +1440,83 @@ def test_IsSilentPlaybookValidator(name, id, is_silent, result_len):
     Then:
     - Checks that it only fails in the right cases.
     """
-    playbook = create_playbook_object()
+    playbook = create_playbook_object(file_name=file_name)
     playbook.data["id"] = id
     playbook.data["name"] = name
-    playbook.data["issilent"] = is_silent
+    playbook.is_silent = is_silent
 
     invalid_content_items = IsSilentPlaybookValidator().obtain_invalid_content_items(
         [playbook]
     )
     assert result_len == len(invalid_content_items)
 
+
+@pytest.mark.parametrize(
+    "name, is_silent, result_len, file_name",
+    [
+        (
+                "test",
+                False,
+                0,
+                "test"
+        ),
+        (
+                "silent-test",
+                True,
+                0,
+                "silent-test",
+        ),
+        (
+                "test",
+                True,
+                1,
+                "silent-test",
+        ),
+        (
+                "silent-test",
+                False,
+                1,
+                "silent-test",
+        ),
+        (
+                "silent-test",
+                False,
+                1,
+                "test",
+        ),
+        (
+                "test",
+                True,
+                1,
+                "test",
+        )
+    ],
+)
+def test_IsSilentTriggerValidator(name, is_silent, result_len, file_name):
+    """
+    Given:
+        case 1: is_silent = False, and trigger_name/file_name do not contain silent prefix.
+        case 2: is_silent = True, and trigger_name/file_name contain silent prefix.
+        case 3: is_silent = True, trigger_name contain and file_name do not contain silent prefix.
+        case 4: is_silent = False, and trigger_name/file_name contain silent prefix.
+        case 5: is_silent = False, trigger_name contain and file_name do not contain silent prefix.
+        case 6: is_silent = True, and trigger_name/file_name do not contain silent prefix.
+
+    When:
+    - calling IsSilentPlaybookValidator.obtain_invalid_content_items.
+
+    Then:
+    - Checks that it only fails in the right cases.
+    """
+
+    trigger = create_trigger_object(file_name=file_name)
+    trigger.data["trigger_name"] = name
+    trigger.is_silent = is_silent
+
+    invalid_content_items = IsSilentPlaybookValidator().obtain_invalid_content_items(
+        [trigger]
+    )
+    assert result_len == len(invalid_content_items)
 
 class Pack:
     content_items = PackContentItems()

@@ -240,3 +240,104 @@ def test_pack_parser_errors_check(pack: Pack):
         "value is not a valid enumeration member; permitted: 'xsoar', 'partner', 'community', 'developer'",
     } == error_messages
     assert {"type_error.bool", "type_error.enum"} == error_types
+
+
+def test_invalid_section_order(pack: Pack):
+    """
+    Given:
+        - an integration which contains invalid section order
+    When:
+        - executing the IntegrationParser
+    Then:
+        - the integration is invalid and the correct error message is returned
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    integration.yml.update({'sectionorder': ["Connect", "Run"]})
+
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions)
+    )
+
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 1
+    assert (
+            results[0].message
+            == "Structure error (type_error.enum) in field sectionorder,1 of integration_0.yml: "
+               "value is not a valid enumeration member; permitted: 'Connect', 'Collect', 'Optimize'"
+    )
+
+def test_missing_section_order(pack: Pack):
+    """
+    Given:
+        - an integration with a missing section order
+    When:
+        - executing the IntegrationParser
+    Then:
+        - the integration is invalid and the correct error message is returned
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    integration.yml.delete_key("sectionorder")
+
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions)
+    )
+
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 1
+    assert (
+            results[0].message
+            == "Structure error (value_error.missing) in field sectionorder of integration_0.yml: "
+               "The field sectionorder is required but missing"
+    )
+
+def test_invalid_section(pack: Pack):
+    """
+    Given:
+        - an integration which contains invalid section clause in one of its configuration objects
+    When:
+        - executing the IntegrationParser
+    Then:
+        - the integration is invalid and the correct error message is returned
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    curr_config = integration.yml.read_dict()['configuration']
+    curr_config[0]['section'] = "Run"
+    integration.yml.update({'configuration': curr_config})
+
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions)
+    )
+
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 1
+    assert (
+            results[0].message
+            == "Structure error (assertion_error) in field configuration of integration_0.yml: "
+               "section Run of URL is not present in section_order ['Connect']"
+    )
+
+def test_missing_section(pack: Pack):
+    """
+    Given:
+        - an integration with a missing section clause in one of its configuration objects
+    When:
+        - executing the IntegrationParser
+    Then:
+        - the integration is invalid and the correct error message is returned
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    curr_config = integration.yml.read_dict()['configuration']
+    curr_config[0].pop("section")
+    integration.yml.update({'configuration': curr_config})
+
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions)
+    )
+
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 1
+    assert (
+            results[0].message
+            == "Structure error (value_error.missing) in field configuration,0,section of integration_0.yml: "
+               "The field configuration,0,section is required but missing"
+    )

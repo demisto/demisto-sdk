@@ -175,12 +175,13 @@ class _StrictIntegration(BaseStrictModel):
 
     @validator('configurations')
     def validate_sections(cls, configurations, values):
-        print(f'{configurations=}, {values=}')
-        section_order = values.get('section_order')
-        assert section_order, 'section_order may not be None or empty list'
+        section_order_field = values.get('section_order')
+        if not section_order_field:
+            return None
+        integration_sections = [section_name.value for section_name in section_order_field]
         for config in configurations:
-            assert config.section in section_order,\
-                f'section {config.section} of {config.display} is not present in section_order {config.section_order}'
+            assert config.section in integration_sections,\
+                f'section {config.section} of {config.display} is not present in section_order {integration_sections}'
         return configurations
 
 

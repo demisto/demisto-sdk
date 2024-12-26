@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Optional, Callable
+from typing import Iterable, Optional, Callable
 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
@@ -25,54 +25,57 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
     )
     related_field = "conditions"
     is_auto_fixable = True
+    fix_message = "Fixed the following inputs:\n"
+    handle_value_obj: Callable
 
-    def obtain_invalid_content_items(
-        self, content_items: Iterable[ContentTypes]
-    ) -> List[ValidationResult]:
+    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> list[ValidationResult]:
         """Check that references of context values, are valid, i.e. "iscontext: true" or surrounded by ${<condition>},
         Args:
             content_items (Iterable[ContentTypes]): The content items to check.
         Returns:
             List[ValidationResult]. List of ValidationResults objects.
         """
-        results: List[ValidationResult] = []
-        for playbook in content_items:
-            for task_id, task in playbook.tasks.items():
-                
-                is_task_valid = {
-                    'condition': self.is_valid_condition_task,
-                    'regular': self.is_valid_regular_task,
-                    'collection': self.is_valid_data_collection,
-                }.get(task.type, lambda _: [])  # type: ignore
+        self.handle_value_obj = self.get_invalid_value_obj
 
-                invalid_values = (
-                    is_task_valid(task)
-                    + self.handle_value_obj(task.task.to_raw_dict, 'description')
-                    + self.handle_value_obj(task.task.to_raw_dict, 'name')
-                )
-                task.task.to_raw_dict
-                results += [
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            task_id=task_id,
-                            task_name=task.task.name,
-                            path=value,
-                        ),
-                        content_object=playbook,
-                    )
-                    for value in invalid_values
-                ]
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    task_id=task.id,
+                    task_name=task.task.name,
+                    path=value,
+                ),
+                content_object=playbook,
+            )
+            for playbook in content_items
+            for task, value in self.obtain_invalid_playbook_inputs(playbook)
+        ]
+
+    def obtain_invalid_playbook_inputs(self, playbook: ContentTypes) -> list[tuple[TaskConfig, str]]:
+        results: list[tuple[TaskConfig, str]] = []
+
+        for task in playbook.tasks.values():
+            is_task_valid = {
+                'condition': self.is_valid_condition_task,
+                'regular': self.is_valid_regular_task,
+                'collection': self.is_valid_data_collection,
+            }.get(task.type, lambda _: [])  # type: ignore
+
+            invalid_values = (
+                is_task_valid(task)
+                + self.handle_value_obj(task.task.to_raw_dict, 'description')
+                + self.handle_value_obj(task.task.to_raw_dict, 'name')
+            )
+
+            results += [(task, val) for val in invalid_values]
 
         return results
-    
-    def handle_playbook()
 
     def is_valid_condition_task(self, task: TaskConfig) -> list[str]:
         task.task.description
         invalid_values = []
         for conditions in (task.conditions or []):
-            for condition in conditions.get("condition"):
+            for condition in conditions.get("condition", []):
                 for condition_info in condition:
                     invalid_values += (
                         self.handle_op_arg(**condition_info.get('left', {}))
@@ -128,7 +131,7 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
         if message_key and message_value and isinstance(message_value, dict):
             return self.handle_input_obj(message_value)
         return []
-    
+
     def handle_op_arg(self, value: Optional[dict] = {}, iscontext: bool = False, **_) -> list[str]:
         return self.handle_input_obj(value, iscontext)
 
@@ -140,13 +143,21 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
             elif arg_value := value_obj.get("complex", {}):
                 return self.handle_transformers_and_filters(arg_value)
         return []
-    
-    def handle_value_obj(self, value_obj: dict, key: str = 'simple'):
-        '''wrapper that is modified in fix()'''
+
+    def get_invalid_value_obj(self, value_obj: dict, key: str = 'simple') -> list[str]:
+        '''Alternate for handle_value_obj(), used in obtain_invalid_content_items()'''
         return self.get_invalid_reference_values(value_obj.get(key, ''))
-        
-        
-    def fix(self, content_item: ContentTypes) -> FixResult:  # TODO
+
+    def fix_value_obj(self, value_obj: dict, key: str = 'simple') -> list[str]:
+        '''Alternate for handle_value_obj(), used in fix()'''
+        if value := value_obj.get(key):
+            invalid_values = self.get_invalid_reference_values(value)
+            for inv in invalid_values:
+                value.replace(inv, f'${{inv}}')
+            value_obj[key] = value
+        return invalid_values
+
+    def fix(self, content_item: ContentTypes) -> FixResult:
         """
         Sets quietmode to 0 for all tasks with quietmode set to 2 in the given content item.
 
@@ -156,14 +167,16 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
         Returns:
             FixResult: The result of the fix operation.
         """
-        invalid_tasks = self.invalid_tasks_in_playbooks.get(content_item.name, [])
-        for task in invalid_tasks:
-            task.quietmode = 0
+
+        self.handle_value_obj = self.fix_value_obj
+
+        invalid_values = self.obtain_invalid_playbook_inputs(content_item)
+
         return FixResult(
             validator=self,
-            message=self.fix_message.format(
-                playbook_name=content_item.name,
-                tasks=", ".join([task.id for task in invalid_tasks]),
+            message=self.fix_message + '\n'.join(
+                f'{val!r} in task: {task.task.name!r}'
+                for task, val in invalid_values
             ),
             content_object=content_item,
         )

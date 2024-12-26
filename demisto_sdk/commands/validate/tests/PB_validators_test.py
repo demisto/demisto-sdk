@@ -1816,13 +1816,6 @@ def test_IsCorrectValueReferencesInterface_correct_pb():
             '8': {
                 'continueonerrortype': '',
                 'id': '8',
-                'ignoreworker': False,
-                'isautoswitchedtoquietmode': False,
-                'isoversize': False,
-                'note': False,
-                'quietmode': 0,
-                'separatecontext': False,
-                'skipunavailable': False,
                 'task': {
                     'brand': '',
                     'id': '4a775481-62cc-405c-8f5f-b01437eac66c',
@@ -2232,13 +2225,6 @@ def test_IsCorrectValueReferencesInterface_correct_pb():
             '8': {
                 'continueonerrortype': '',
                 'id': '8',
-                'ignoreworker': False,
-                'isautoswitchedtoquietmode': False,
-                'isoversize': False,
-                'note': False,
-                'quietmode': 0,
-                'separatecontext': False,
-                'skipunavailable': False,
                 'task': {
                     'brand': '',
                     'id': '4a775481-62cc-405c-8f5f-b01437eac66c',
@@ -2442,18 +2428,12 @@ def test_IsCorrectValueReferencesInterface_incorrect_pb():
                     'type': 'condition',
                     'version': -1},
                 'taskid': '91c388dd-6bdb-4a27-84bc-82770b7ae6ff',
-                'timertriggers': [],
                 'type': 'condition',
             },
             '5': {
                 'continueonerrortype': '',
                 'id': '5',
-                'ignoreworker': False,
-                'isautoswitchedtoquietmode': False,
-                'isoversize': False,
                 'nexttasks': {'#none#': ['6']},
-                'note': False,
-                'quietmode': 0,
                 'scriptarguments': {
                     'action': {
                         'complex': {
@@ -2646,13 +2626,6 @@ def test_IsCorrectValueReferencesInterface_incorrect_pb():
             '8': {
                 'continueonerrortype': '',
                 'id': '8',
-                'ignoreworker': False,
-                'isautoswitchedtoquietmode': False,
-                'isoversize': False,
-                'note': False,
-                'quietmode': 0,
-                'separatecontext': False,
-                'skipunavailable': False,
                 'task': {
                     'brand': '',
                     'id': '4a775481-62cc-405c-8f5f-b01437eac66c',
@@ -2661,7 +2634,6 @@ def test_IsCorrectValueReferencesInterface_incorrect_pb():
                     'type': 'title',
                     'version': -1},
                 'taskid': '4a775481-62cc-405c-8f5f-b01437eac66c',
-                'timertriggers': [],
                 'type': 'title',
             }
         },
@@ -2673,3 +2645,33 @@ def test_IsCorrectValueReferencesInterface_incorrect_pb():
     messages = ''.join(res.message for res in results)
     missing_alerts = [i for i in range(1, 35) if str(i) not in messages]
     assert not missing_alerts, f"Playbook has invalid value references, but the validator missed: {missing_alerts}"
+    
+
+def test_IsCorrectValueReferencesInterface_fix():
+    incorrect_pb_content = [
+        {
+            '0': {
+                'id': '0',
+                'task': {
+                    'brand': '',
+                    'description': 'incident.item1,${incident.item2},incident.item3',
+                    'id': '12345',
+                    'iscommand': False,
+                    'name': 'Task Name',
+                    'tags': ['a'],
+                    'type': 'condition',
+                    'version': -1},
+                'taskid': '12345',
+                'type': 'condition',
+            },
+        },
+    ]
+    correct_input = '${incident.item1},${incident.item2},${incident.item3}'
+    
+    incorrect_pb_object = create_playbook_object(paths=['tasks'], values=incorrect_pb_content)
+
+    results = IsCorrectValueReferencesInterface().fix(incorrect_pb_object)
+
+    assert results.message == ''
+    assert results.content_object.tasks[0].task.description == correct_input
+

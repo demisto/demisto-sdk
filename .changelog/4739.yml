@@ -1,0 +1,4 @@
+changes:
+- description: This PR adds to the ST-110 validation which will now validate the sectionOrder and individual sections.
+  type: feature
+pr_number: 4739

@@ -15,7 +15,7 @@ ContentTypes = Union[Integration, Script]
 class IsCommandOrScriptNameStartsWithDigitValidator(BaseValidator[ContentTypes]):
     error_code = "BA128"
     description = "Integration command names and script names cannot start with a digit"
-    rationale = "Not supported by the platform"
+    rationale = "Ensure we don't add commands which are not supported by the platform."
     error_message = "The following {0} names start with a digit: {1}"
     related_field = "name"
     is_auto_fixable = False

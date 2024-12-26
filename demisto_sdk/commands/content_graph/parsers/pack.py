@@ -143,8 +143,6 @@ class PackMetadataParser:
         self.created = metadata.get("firstCreated") or metadata.get("created")
         if not self.created:
             self.created = GitUtil().get_file_creation_date(file_path=path)
-            metadata["firstCreated"] = self.created
-            metadata["created"] = self.created
         self.updated: str = metadata.get("updated") or NOW
         self.legacy: bool = metadata.get(
             "legacy", metadata.get("partnerId") is None

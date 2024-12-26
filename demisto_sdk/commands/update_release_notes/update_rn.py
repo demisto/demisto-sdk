@@ -1135,12 +1135,12 @@ def format_playbook_description(desc: str) -> str:
 
     :param:
         desc (str): The description to format.
-    
+
     :rtype: ``str``
     :return:
         The formatted description.
     """
-    desc = f'\n{desc}'
+    desc = f"\n{desc}"
     key_phrases = (
         (4, "This playbook addresses the following alerts:\n"),
         (5, "Playbook Stages:\n"),
@@ -1151,5 +1151,5 @@ def format_playbook_description(desc: str) -> str:
         (6, "Containment:\n"),
     )
     for hdr, phrase in key_phrases:
-        desc = desc.replace(f'\n{phrase}', f'\n{"#" * hdr} {phrase}')
-    return desc.lstrip('\n')
+        desc = desc.replace(f"\n{phrase}", f'\n{"#" * hdr} {phrase}')
+    return desc.lstrip("\n")

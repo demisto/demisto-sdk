@@ -244,8 +244,7 @@ class TestRNUpdate:
             added_files=set(),
         )
         changed_items = {
-            (
-                "Hello World Playbook", FileType.PLAYBOOK): {
+            ("Hello World Playbook", FileType.PLAYBOOK): {
                 "description": (
                     "This playbook addresses the following alerts:\n"
                     "Playbook Stages:\nRequirements:\nTriage:\n"

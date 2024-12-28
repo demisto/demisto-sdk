@@ -77,19 +77,19 @@ class content_type(Enum):
     ARGUMENT = "argument"
 
 
-NEW_RN_TEMPLATE = "- New: added a new {type} - {name} which {description}\n"
-GENERAL_DEPRECATED_RN = "- Deprecated the ***{name}*** {type}. {replacement}.\n"
-GENERAL_BC = "- **Breaking Changes** :Deleted the **{name}** {value}.\n"
+NEW_RN_TEMPLATE = "- New: Added a new {type}- {name} that  {description}\n"
+GENERAL_DEPRECATED_RN = "- Deprecated the **{name}** {type}. {replacement}.\n"
+GENERAL_BC = "- Deleted the **{name}** {value}.\n"
 DEPRECATED_ARGUMENT = (
-    "- Deprecated the **{name}** {type} inside the **{command_name}** command.\n"
+    "- Deprecated the *{name}* {type} inside the **{command_name}** command.\n"
 )
-ARGUMENT_BC = "- **Breaking Changes**: Updated the **{command_name}** command to not use the **{argument_name}** argument.\n"
+ARGUMENT_BC = "- Updated the **{command_name}** command to not use the *{argument_name}* argument.\n"
 DEPRECATED_CONTENT_ITEM_RN = "- Deprecated. {replacement}.\n"
 GENERAL_UPDATE_RN = (
     "- Updated the {name} {type} to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
 )
 ADDED_ARGUMENT_RN = (
-    "- Added support for **{name}** argument in the **{parent}** command.\n"
+    "- Added support for *{name}* argument in the **{parent}** command.\n"
 )
 ADDED_CONTENT_RN = "- Added support for **{name}** {content_type}{extra_description}\n"
 NEW_COMMANDS_RN = "\n- Added the following commands:\n"

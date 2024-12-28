@@ -547,7 +547,7 @@ def mock_is_missing_rn_validator(mocker):
     ]:
         mocker.patch(
             f"demisto_sdk.commands.validate.validators.RN_validators.{rn_validator}.should_skip_rn_check",
-            side_effect=lambda c: isinstance(c, TestPlaybook),
+            side_effect=lambda c: isinstance(c, TestPlaybook) or c.is_silent,
         )
         mocker.patch(
             f"demisto_sdk.commands.validate.validators.RN_validators.{rn_validator}.was_rn_added",
@@ -691,9 +691,10 @@ def test_IsMissingReleaseNotes_for_api_module_dependents(
 def test_IsMissingReleaseNoteEntries(mock_is_missing_rn_validator):
     """
     Given:
-    - pack1 with a modified integration, a RM entry exists
+    - pack1 with a modified integration and silent playbook, a RN entry exists only for the integration
     - pack2 with modified script, playbook and TPB, a RN entry exists only for the script
     - pack3 with a modified script, a RN file does not exist
+    - pack4 with a new mapper, a RN exists
     When:
     - Calling IsMissingReleaseNotes.obtain_invalid_content_items().
     Then:
@@ -708,6 +709,9 @@ def test_IsMissingReleaseNoteEntries(mock_is_missing_rn_validator):
         release_note_content=f"#### Integrations\n##### {integ.display_name}\n- Added x y z",
     )
     integ.pack = pack1
+    silent_playbook = create_playbook_object()
+    silent_playbook.is_silent = True
+    silent_playbook.pack = pack1
 
     script1 = create_script_object()
     playbook = create_playbook_object()
@@ -728,7 +732,27 @@ def test_IsMissingReleaseNoteEntries(mock_is_missing_rn_validator):
     script2 = create_script_object()
     script2.pack = pack3
 
-    content_items = [pack1, integ, pack2, script1, playbook, tpb, pack3, script2]
+    mapper = create_incoming_mapper_object()
+    pack4 = create_pack_object(
+        paths=["currentVersion"],
+        values=["1.0.1"],
+        release_note_content=f"#### Mappers\n##### New: {mapper.display_name}\n- Added x y z",
+    )
+    mapper.pack = pack4
+
+    content_items = [
+        pack1,
+        integ,
+        silent_playbook,
+        pack2,
+        script1,
+        playbook,
+        tpb,
+        pack3,
+        script2,
+        pack4,
+        mapper,
+    ]
     validator = IsMissingReleaseNoteEntries()
     results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == 1

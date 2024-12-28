@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where ST110 would incorrectly fail when adding the isSilent field.
+  type: fix
+pr_number: 4716

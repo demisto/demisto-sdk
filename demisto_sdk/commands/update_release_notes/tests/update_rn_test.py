@@ -1317,7 +1317,7 @@ class TestRNUpdate:
         When:
             - Calling build_rn_desc function
         Then:
-            Ensure the function returns a valid rn when the command is deprecated compared to last yml and the
+            Ensure the function returns a valid rn when the command is deprecated compared to last content object and the
              text is added
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
@@ -1326,8 +1326,8 @@ class TestRNUpdate:
         changed_content_object.old_base_content_object = deepcopy(
             changed_content_object
         )
-        changed_content_object.old_base_content_object.commands[0].deprecated = True
-        changed_content_object.commands[0].deprecated = False
+        changed_content_object.old_base_content_object.commands[0].deprecated = False
+        changed_content_object.commands[0].deprecated = True
         update_rn = UpdateRN(
             pack_path="Packs/Test",
             update_type="minor",
@@ -2675,10 +2675,6 @@ def test_create_md_if_currentversion_is_higher(
         "script": {"type": "python", "dockerimage": "demisto/python3:3.9.5.123"},
     }
     pack = repo.create_pack("PackName")
-    mocker.patch(
-        "demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed",
-        return_value="demisto/python3:3.9.5.124",
-    )
     mocker.patch(
         "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
         return_value="",

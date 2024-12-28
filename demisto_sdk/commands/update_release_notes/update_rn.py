@@ -1180,12 +1180,13 @@ class UpdateRN:
                             changed_content_object
                         )
                         rn_desc += current_rn
-                        rn_desc += text
-                    if not current_rn:
-                        rn_desc += text or GENERAL_UPDATE_RN.format(
+                    if not current_rn and not text:
+                        rn_desc += GENERAL_UPDATE_RN.format(
                             name=(name or "%%UPDATE_CONTENT_ITEM_NAME%%"),
                             type=(type or "%%UPDATE_CONTENT_ITEM_TYPE%%"),
                         )
+                    else:
+                        rn_desc += text
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n\n"

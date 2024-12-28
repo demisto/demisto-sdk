@@ -77,7 +77,7 @@ class content_type(Enum):
     ARGUMENT = "argument"
 
 
-NEW_RN_TEMPLATE = "- New: Added a new {type}- {name} that  {description}\n"
+NEW_RN_TEMPLATE = "- New: Added a new {type}- {name} that {description}\n"
 GENERAL_DEPRECATED_RN = "- Deprecated the **{name}** {type}. {replacement}.\n"
 GENERAL_BC = "- Deleted the **{name}** {value}.\n"
 DEPRECATED_ARGUMENT = (
@@ -275,7 +275,7 @@ def generate_new_content_rn(
     display_name = new_content.get_name()
     if isinstance(new_content, Argument) and parent:
         return ADDED_ARGUMENT_RN.format(name=name, parent=parent)
-    extra_description = f" which {description.rstrip('.')}." if description else "."
+    extra_description = f" that {description.rstrip('.')}." if description else "."
     return ADDED_CONTENT_RN.format(
         name=display_name,
         content_type=content_type.value,

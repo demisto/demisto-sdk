@@ -4,12 +4,15 @@ from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
+
+NO_DOCKER_ENTRY_FOUND = "No docker entry found"
 
 ContentTypes = Union[Integration, Script]
 
@@ -23,6 +26,21 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
     related_file_type = [RelatedFileType.RELEASE_NOTE]
 
+    def release_notes_shouldbe_entry(self, content_item: IntegrationScript):
+        old_obj = content_item.old_base_content_object
+        if old_obj and old_obj.docker_image == content_item.docker_image:  # Wasn't set in this PR
+            return ""
+        return content_item.docker_image
+
+    def release_notes_mismatch(self,content_item:IntegrationScript):
+        should_be_entry = self.release_notes_shouldbe_entry(content_item)
+        image_entry = self.get_docker_image_entry(content_item.pack.release_note.file_content, content_item)
+        if should_be_entry:
+            return should_be_entry in image_entry
+        else:
+            return image_entry == NO_DOCKER_ENTRY_FOUND
+
+
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
@@ -35,20 +53,12 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (old_obj := content_item.old_base_content_object)
-            and content_item.docker_image != old_obj.docker_image  # type:ignore[attr-defined]
-            and (
-                docker_entry := self.get_docker_image_entry(
-                    content_item.pack.release_note.file_content,
-                    content_item.display_name,
-                )
-            )
-            and content_item.docker_image not in docker_entry
+            if self.release_notes_mismatch(content_item)
         ]
 
     def get_docker_image_entry(self, rn: str, content_item_name: str) -> str:
         rn_items = rn.split("##### ")
-        docker = "No docker entry found"
+        docker = NO_DOCKER_ENTRY_FOUND
         for item in rn_items:
             if item.startswith(content_item_name):
                 for entry in item.split("- "):

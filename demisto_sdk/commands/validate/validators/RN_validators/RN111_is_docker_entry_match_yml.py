@@ -21,7 +21,7 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
     error_code = "RN111"
     description = "Validate that the docker image version mentioned in the RN is indeed the one in the mentioned in the yml file."
     rationale = "We want to make sure we don't document wrong information."
-    error_message = "The docker entry in the release notes doesn't match what is in the yml.\n The docker image in rn: {0}, docker image in yml {1} - please make sure the dockers match."
+    error_message = "The docker entry in the release notes doesn't match what is in the yml, or they shouldn't have an update, as the update was not done in this PR. \n Docker image in yml {1} - please make sure the dockers match."
     related_field = "docker_image"
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
     related_file_type = [RelatedFileType.RELEASE_NOTE]
@@ -34,7 +34,7 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
 
     def release_notes_mismatch(self,content_item:IntegrationScript):
         should_be_entry = self.release_notes_shouldbe_entry(content_item)
-        image_entry = self.get_docker_image_entry(content_item.pack.release_note.file_content, content_item)
+        image_entry = self.get_docker_image_entry(content_item.pack.release_note.file_content, content_item.name)
         if should_be_entry:
             return should_be_entry in image_entry
         else:

@@ -21,7 +21,7 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
     error_code = "RN111"
     description = "Validate that the docker image version mentioned in the RN is indeed the one in the mentioned in the yml file."
     rationale = "We want to make sure we don't document wrong information."
-    error_message = "The docker entry in the release notes doesn't match what is in the yml, or they shouldn't have an update, as the update was not done in this PR. \n Docker image in yml {1} - please make sure the dockers match."
+    error_message = "The release notes regarding the docker image are not correct. {0}"
     related_field = "docker_image"
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
     related_file_type = [RelatedFileType.RELEASE_NOTE]
@@ -32,13 +32,13 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
             return ""
         return content_item.docker_image
 
-    def release_notes_mismatch(self,content_item:IntegrationScript):
+    def release_notes_mismatch_error(self, content_item:IntegrationScript):
         should_be_entry = self.release_notes_shouldbe_entry(content_item)
         image_entry = self.get_docker_image_entry(content_item.pack.release_note.file_content, content_item.name)
-        if should_be_entry:
-            return should_be_entry in image_entry
-        else:
-            return image_entry == NO_DOCKER_ENTRY_FOUND
+        if should_be_entry and (not (should_be_entry in image_entry) or image_entry == NO_DOCKER_ENTRY_FOUND):
+            return f"Docker version in release notes should be {should_be_entry}, found {image_entry}"
+        if not should_be_entry and image_entry:
+            return f"There should be no release notes docker update entry. Found {image_entry}"
 
 
     def obtain_invalid_content_items(
@@ -47,13 +47,11 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(
-                    docker_entry, content_item.docker_image
-                ),
+                message=self.error_message.format(error),
                 content_object=content_item,
             )
             for content_item in content_items
-            if self.release_notes_mismatch(content_item)
+            if (error := self.release_notes_mismatch_error(content_item))
         ]
 
     def get_docker_image_entry(self, rn: str, content_item_name: str) -> str:

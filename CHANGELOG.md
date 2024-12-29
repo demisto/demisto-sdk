@@ -30,7 +30,7 @@
 * Fixed an issue where *RN107* validation would fail on new content items and specific content types. [#4711](https://github.com/demisto/demisto-sdk/pull/4711)
 
 ### Internal
-* Added the `generate-command-docs` script and a pre-commit hook to generate commands documentation. [#4664](https://github.com/demisto/demisto-sdk/pull/4664)
+* Added the **generate-command-docs** script and a pre-commit hook to generate commands documentation. [#4664](https://github.com/demisto/demisto-sdk/pull/4664)
 
 
 ## 1.33.0 (2024-12-08)

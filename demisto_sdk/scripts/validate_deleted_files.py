@@ -57,7 +57,7 @@ def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
 
 def check_if_content_item_is_silent(file_dict):
     if isinstance(file_dict, dict):
-        if file_dict.get("isSilent"):
+        if file_dict.get("issilent"):
             return True
     return False
 

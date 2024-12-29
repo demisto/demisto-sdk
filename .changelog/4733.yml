@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue in the ***modeling-rules*** command where colored logs were not printed properly.
-  type: fix
-pr_number: 4733

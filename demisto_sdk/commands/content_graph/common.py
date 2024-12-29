@@ -518,7 +518,7 @@ CONTENT_PRIVATE_ITEMS: dict = {
 }
 
 
-def replace_incorrect_marketplace(
+def replace_marketplace_references(
     data: Any, marketplace: MarketplaceVersions, path: str = ""
 ) -> Any:
     """
@@ -530,9 +530,8 @@ def replace_incorrect_marketplace(
         marketplace (MarketplaceVersions): The marketplace version to check against.
         path (str): The path of the item being processed.
 
-
-    Returns:
-        Any: The processed data with replacements made if applicable.
+        Returns:
+        Any: The same data object with replacements made if applicable.
     """
     try:
         if marketplace in {
@@ -540,15 +539,14 @@ def replace_incorrect_marketplace(
             MarketplaceVersions.XPANSE,
         }:
             if isinstance(data, dict):
-                return {
-                    k: replace_incorrect_marketplace(v, marketplace)
-                    for k, v in data.items()
-                }
+                for k, v in data.items():
+                    data[k] = replace_marketplace_references(v, marketplace, path)
             elif isinstance(data, list):
-                return [replace_incorrect_marketplace(v, marketplace) for v in data]
+                for i in range(len(data)):
+                    data[i] = replace_marketplace_references(data[i], marketplace, path)
             elif isinstance(data, str):
                 # Replace "Cortex XSOAR" and the following word if it contains a number
-                return re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", data)
+                data = re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", data)
     except Exception as e:
         logger.error(
             f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"

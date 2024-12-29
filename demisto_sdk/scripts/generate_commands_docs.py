@@ -42,7 +42,11 @@ def get_modified_files() -> List[Path]:
 
 
 def extract_changed_commands(modified_files: List[Union[str, Path]]) -> List[str]:
-    """Extract command names from modified _setup.py files."""
+    """
+    Extract command names from modified _setup.py files.
+    Args:
+        modified_files (List): The list of the modified _setup.py files.
+    """
     return [
         Path(file).stem.replace("_setup", "").replace("_", "-")
         for file in modified_files
@@ -51,7 +55,11 @@ def extract_changed_commands(modified_files: List[Union[str, Path]]) -> List[str
 
 
 def get_sdk_command(command_name: str) -> Union[str, object]:
-    """Retrieve the command object from the Typer app."""
+    """
+    Retrieve the command object from the Typer app.
+    Args:
+        command_name (str): The command name e.g. upload.
+    """
     click_app = get_command(app)
     command = click_app.commands.get(command_name)  # type: ignore[attr-defined]
     if command is None:
@@ -60,7 +68,11 @@ def get_sdk_command(command_name: str) -> Union[str, object]:
 
 
 def get_command_overview(command_name: str) -> str:
-    """Retrieve the overview (docstring) for the command."""
+    """
+    Retrieve the overview (docstring) for the command.
+    Args:
+        command_name (str): The command name e.g. upload.
+    """
     command = get_sdk_command(command_name)
 
     if isinstance(command, str):
@@ -72,7 +84,11 @@ def get_command_overview(command_name: str) -> str:
 
 
 def get_command_options(command_name: str) -> str:
-    """Generate the options section for the command."""
+    """
+    Generate the options section for the command.
+    Args:
+        command_name (str): The command name e.g. upload.
+    """
     command = get_sdk_command(command_name)
     if isinstance(command, str):
         return command
@@ -91,8 +107,14 @@ def get_command_options(command_name: str) -> str:
     return options_text
 
 
-def update_readme(command_name: str, description: str, options: str) -> None:
-    """Update or create the README.md file for the command."""
+def update_readme(command_name: str, overview: str, options: str) -> None:
+    """
+    Update or create the README.md file for the command.
+    Args:
+        command_name (str): The name of the command for which to generate documentation e.g. upload.
+        overview (str): The command overview (docstring of the command).
+        options (str): Options for the command.
+    """
     # Normalize the command name to match the folder naming convention
     normalized_command_name = command_name.replace("-", "_")
 
@@ -110,7 +132,17 @@ def update_readme(command_name: str, description: str, options: str) -> None:
 
     # Function to update or insert a section in the README
     def update_section(header: str, content: str, readme: str) -> str:
-        """Update or add a section to the README content."""
+        """
+        Update or add a section to the README content.
+
+        Args:
+            header (str): The title of the section to update or add (e.g., "Overview" or "Options").
+            content (str): The content to insert or replace in the specified section.
+            readme (str): The current README content as a string.
+
+        Returns:
+            str: The updated README content with the specified section added or replaced.
+        """
         section_header = f"### {header}"
 
         # Check if the section exists
@@ -132,7 +164,7 @@ def update_readme(command_name: str, description: str, options: str) -> None:
         return readme
 
     # Update or add the Overview and Options sections
-    updated_readme = update_section("Overview", description, readme_content)
+    updated_readme = update_section("Overview", overview, readme_content)
     updated_readme = update_section("Options", options, updated_readme)
 
     # Write the updated or new README file
@@ -143,18 +175,22 @@ def update_readme(command_name: str, description: str, options: str) -> None:
 
 
 def generate_docs_for_command(command_name: str) -> None:
-    """Generate documentation for a specific command."""
+    """
+    Generate documentation for a specific command.
+    Args:
+        command_name (str): The name of the command for which to generate documentation e.g. upload.
+    """
     overview = get_command_overview(command_name)
     options = get_command_options(command_name)
     update_readme(command_name, overview, options)
 
 
-# @command_docs.command()
 def generate_docs(modified_files: Optional[List[Path]] = typer.Argument(None)) -> None:
     """
     Generate documentation for the given list of modified files.
-
     If no files are provided, the script will check Git for modified `_setup.py` files.
+    Args:
+        modified_files (Optional[List[Path]]): A list of file paths representing the modified files to process.
     """
     # Check if modified_files is None, and if so, get the modified files from git
     if not modified_files:

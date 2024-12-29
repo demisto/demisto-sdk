@@ -371,7 +371,6 @@ def run_test_use_case_pytest(
         str(test_use_case_directory),
         f"--durations={str(durations)}",
         "--log-cli-level=CRITICAL",
-        # "--no-summary"
     ]
 
     logger.info(f"Runnig pytest for file {test_use_case_directory}")

@@ -65,7 +65,6 @@ def test_run_test_use_case_pytest(
             str(mocker_test_use_case_directory),
             "--durations=5",
             "--log-cli-level=CRITICAL",
-            "--no-summary",
         ],
         plugins=[test_result_mocker],
     )

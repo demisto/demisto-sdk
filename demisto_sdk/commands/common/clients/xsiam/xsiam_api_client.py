@@ -294,13 +294,13 @@ class XsiamClient(XsoarSaasClient):
         res = self._xdr_client.post(endpoint, json=body)
         return self._process_response(res.content, res.status_code, 200)["reply"]
 
-    def search_alerts_by_uuid(self, alert_uuids=None, filters: list = None):
+    def search_alerts_by_uuid(self, alert_uuids: list = None, filters: list = None):
         if alert_uuids is None:
             alert_uuids = []
-        alert_ids = []
+        alert_ids: list = []
         res = self.search_alerts(filters=filters)
-        alerts = res.get("alerts")
-        count = res.get("result_count")
+        alerts: list = res.get("alerts")  # type: ignore
+        count: int = res.get("result_count")  # type: ignore
 
         while len(alerts) > 0 and len(alert_uuids) > len(alert_ids):
             for alert in alerts:
@@ -309,8 +309,8 @@ class XsiamClient(XsoarSaasClient):
                         alert_ids.append(alert.get("alert_id"))
 
             res = self.search_alerts(filters=filters, search_from=count)
-            alerts = res.get("alerts")
-            count = res.get("result_count")
+            alerts = res.get("alerts")  # type: ignore
+            count = res.get("result_count")  # type: ignore
 
         return alert_ids
 

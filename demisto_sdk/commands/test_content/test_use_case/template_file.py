@@ -7,8 +7,6 @@
 }
 """
 
-import json
-
 import pytest
 
 from demisto_sdk.commands.common.clients import (
@@ -18,11 +16,6 @@ from demisto_sdk.commands.common.clients import (
 )
 
 # Any additional imports your tests require
-
-
-def util_load_json(path):
-    with open(path, encoding="utf-8") as f:
-        return json.loads(f.read())
 
 
 @pytest.fixture(scope="class")
@@ -45,7 +38,7 @@ class TestExample:
     @classmethod
     def setup_class(self):
         """Run once for the class before *all* tests"""
-        self.data = "test"
+        pass
 
     def some_helper_function(self, method):
         pass

@@ -78,11 +78,11 @@ class XsiamClient(XsoarSaasClient):
     """
 
     def delete_incidents(
-        self,
-        incident_ids: Union[str, List[str]],
-        filters: Dict[str, Any] = None,
-        _all: bool = False,
-        response_type: str = "object",
+            self,
+            incident_ids: Union[str, List[str]],
+            filters: Dict[str, Any] = None,
+            _all: bool = False,
+            response_type: str = "object",
     ):
         # if in the future it will be possible to delete incidents in XSIAM, implement this method
         raise NotImplementedError("it is not possible to delete incidents in XSIAM")
@@ -94,11 +94,11 @@ class XsiamClient(XsoarSaasClient):
     """
 
     def push_to_dataset(
-        self,
-        data: List[Dict[str, Any]],
-        vendor: str,
-        product: str,
-        data_format: str = "json",
+            self,
+            data: List[Dict[str, Any]],
+            vendor: str,
+            product: str,
+            data_format: str = "json",
     ):
         if self.server_config.token:
             endpoint = urljoin(self.server_config.base_api_url, "logs/v1/xsiam")
@@ -197,8 +197,8 @@ class XsiamClient(XsoarSaasClient):
         logger.debug(pformat(data))
 
         if (
-            response.status_code in range(200, 300)
-            and data.get("reply", {}).get("status", "") == "SUCCESS"
+                response.status_code in range(200, 300)
+                and data.get("reply", {}).get("status", "") == "SUCCESS"
         ):
             return data.get("reply", {}).get("results", {}).get("data", [])
         response.raise_for_status()
@@ -215,8 +215,8 @@ class XsiamClient(XsoarSaasClient):
             "/ioc-rules", "GET", response_type="object"
         )
         if (
-            "text/html" in response_headers.get("Content-Type")
-            or status_code != requests.codes.ok
+                "text/html" in response_headers.get("Content-Type")
+                or status_code != requests.codes.ok
         ):
             raise ApiException(
                 status=404, reason=f'{self} does not have "/ioc-rules" endpoint'
@@ -240,7 +240,9 @@ class XsiamClient(XsoarSaasClient):
         return alert_data["reply"]
 
     def get_internal_alert_id(self, alert_external_id: str) -> int:
-        data = self.search_alerts(alert_external_id)
+        data = self.search_alerts(filters=[{"field": "external_id_list",
+                                            "operator": "in",
+                                            "value": [alert_external_id]}])
         return data["alerts"][0]["alert_id"]
 
     def update_alert(self, alert_id: Union[str, list[str]], updated_data: dict) -> dict:
@@ -259,7 +261,8 @@ class XsiamClient(XsoarSaasClient):
         alert_data = self._process_response(res.content, res.status_code, 200)
         return alert_data
 
-    def search_alerts(self, filters: list, search_from: int, search_to: int, sort: dict) -> dict:
+    def search_alerts(self, filters: list = None, search_from: int = None, search_to: int = None,
+                      sort: dict = None) -> dict:
         """
             filters should be a list of dicts contains field, operator, value.
             For example:
@@ -279,6 +282,27 @@ class XsiamClient(XsoarSaasClient):
         )
         res = self._xdr_client.post(endpoint, json=body)
         return self._process_response(res.content, res.status_code, 200)["reply"]
+
+    def search_alerts_by_alert_name(self, alert_names=None, filters: list = None):
+
+        if alert_names is None:
+            alert_names = []
+        alert_ids = []
+
+        res = self.search_alerts(filters=filters)
+        alerts = res.get('alerts')
+        count = res.get('result_count')
+
+        while len(alerts) > 0 and len(alert_names) > len(alert_ids):
+            for alert in alerts:
+                if alert.get('name') in alert_names:
+                    alert_ids.append(alert.get('alert_id'))
+
+            res = self.search_alerts(filters=filters, search_from=count)
+            alerts = res.get('alerts')
+            count = res.get('result_count')
+
+        return alert_ids
 
     """
     #############################

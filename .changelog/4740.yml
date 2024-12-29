@@ -1,0 +1,4 @@
+changes:
+- description: Added to the PB130 validation, to check the Silent prefix of a file name.
+  type: feature
+pr_number: 4740

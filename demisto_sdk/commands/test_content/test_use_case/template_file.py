@@ -6,6 +6,7 @@
     }
 }
 """
+
 import json
 
 import pytest
@@ -16,8 +17,8 @@ from demisto_sdk.commands.common.clients import (
     get_client_from_server_type,
 )
 
-
 # Any additional imports your tests require
+
 
 def util_load_json(path):
     with open(path, encoding="utf-8") as f:
@@ -64,7 +65,8 @@ class TestExample:
         """Test feature two"""
         # Test another aspect of your application
         api_client.run_cli_command(
-            investigation_id="INCIDENT-1", command='!Set key=test value=A')
+            investigation_id="INCIDENT-1", command="!Set key=test value=A"
+        )
         assert False  # replace with actual assertions for your application
 
 

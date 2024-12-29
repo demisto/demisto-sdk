@@ -6,8 +6,13 @@ from datetime import datetime
 from pathlib import Path
 from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, check_output
-from typing import Dict, Optional, Set, Any, List
+from typing import Any, Dict, List, Optional, Set
 from uuid import UUID
+
+import demisto_client
+import pytz
+import requests
+import typer
 from tenacity import (
     Retrying,
     before_sleep_log,
@@ -15,11 +20,6 @@ from tenacity import (
     stop_after_attempt,
     wait_fixed,
 )
-import pytz
-import requests
-import typer
-
-import demisto_client
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
@@ -29,6 +29,7 @@ from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import XsiamApiC
 
 XSIAM_CLIENT_SLEEP_INTERVAL = 60
 XSIAM_CLIENT_RETRY_ATTEMPTS = 5
+
 
 def update_server_configuration(
     client: demisto_client,
@@ -222,7 +223,7 @@ def xsiam_get_installed_packs(xsiam_client: XsiamApiClient) -> List[Dict[str, An
 
 
 def tenant_config_cb(
-        ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]
+    ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]
 ):
     if ctx.resilient_parsing:
         return
@@ -250,4 +251,3 @@ def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optiona
             )
             raise typer.BadParameter(err_str)
     return value
-

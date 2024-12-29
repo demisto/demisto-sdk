@@ -19,10 +19,6 @@ from packaging.version import Version
 from tabulate import tabulate
 from tenacity import (
     Retrying,
-    before_sleep_log,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_fixed,
 )
 from typer.main import get_command_from_info
 
@@ -34,7 +30,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
     ModelingRule,
     SingleModelingRule,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
@@ -45,7 +40,6 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     get_json_file,
     is_epoch_datetime,
-    parse_int_or_default,
     string_to_bool,
 )
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
@@ -60,18 +54,18 @@ from demisto_sdk.commands.test_content.test_modeling_rule.constants import (
     XQL_QUERY_ERROR_EXPLANATION,
 )
 from demisto_sdk.commands.test_content.tools import (
-    get_ui_url,
-    XSIAM_CLIENT_SLEEP_INTERVAL,
     XSIAM_CLIENT_RETRY_ATTEMPTS,
+    XSIAM_CLIENT_SLEEP_INTERVAL,
+    create_retrying_caller,
+    day_suffix,
+    duration_since_start_time,
+    get_relative_path_to_content,
+    get_type_pretty_name,
+    get_ui_url,
+    get_utc_now,
     logs_token_cb,
     tenant_config_cb,
     xsiam_get_installed_packs,
-    create_retrying_caller,
-    get_type_pretty_name,
-    day_suffix,
-    get_relative_path_to_content,
-    duration_since_start_time,
-    get_utc_now
 )
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
     TestData,
@@ -88,11 +82,6 @@ CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
 
 
 app = typer.Typer()
-
-
-
-
-
 
 
 def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
@@ -112,9 +101,6 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> str:
         headers=["Model Field", "Expected Value", "Received Value"],
         colalign=("left", "left", "left"),
     )
-
-
-
 
 
 def convert_epoch_time_to_string_time(
@@ -138,7 +124,6 @@ def convert_epoch_time_to_string_time(
         f"%b %-d{day_suffix(datetime_object.day)} %Y %H:%M:%S{'.%f' if with_ms else ''}"
     )
     return datetime_object.strftime(time_format)
-
 
 
 def sanitize_received_value_by_expected_type(
@@ -165,8 +150,6 @@ def sanitize_received_value_by_expected_type(
     return received_value_type, received_value
 
 
-
-
 def xsiam_execute_query(xsiam_client: XsiamApiClient, query: str) -> List[dict]:
     """Execute an XQL query and return the results.
     Wrapper for XsiamApiClient.execute_query() with retry logic.
@@ -182,7 +165,6 @@ def xsiam_push_to_dataset(
     Wrapper for XsiamApiClient.push_to_dataset() with retry logic.
     """
     return xsiam_client.push_to_dataset(events_test_data, rule.vendor, rule.product)
-
 
 
 def verify_results(
@@ -1284,6 +1266,7 @@ def add_result_to_test_case(
 
 
 # ====================== test-modeling-rule ====================== #
+
 
 class TestResults:
     def __init__(

@@ -1507,7 +1507,7 @@ def test_IsCorrectValueReferencesInterface_correct_pb():
                 'skipunavailable': False,
                 'task': {
                     'brand': '',
-                    'description': 'incident.desc',
+                    'description': '${incident.desc}',
                     'id': '1ed95b8a-fcdd-4aa5-858a-85b4d79c7c34',
                     'iscommand': False,
                     'name': 'Conditional Built-in',
@@ -1820,7 +1820,7 @@ def test_IsCorrectValueReferencesInterface_correct_pb():
                     'brand': '',
                     'id': '4a775481-62cc-405c-8f5f-b01437eac66c',
                     'iscommand': False,
-                    'name': 'incident.asn',
+                    'name': '${incident.asn}',
                     'type': 'title',
                     'version': -1},
                 'taskid': '4a775481-62cc-405c-8f5f-b01437eac66c',
@@ -1834,7 +1834,7 @@ def test_IsCorrectValueReferencesInterface_correct_pb():
 
     results = IsCorrectValueReferencesInterface().obtain_invalid_content_items([pb_object])
     
-    assert results == [], f"Playbook has valid value references, but the validator got: {results}"
+    assert results == [], f"Playbook has valid content references, but the validator got: {results}"
 
 
 def test_IsCorrectValueReferencesInterface_correct_pb():
@@ -1916,7 +1916,7 @@ def test_IsCorrectValueReferencesInterface_correct_pb():
                 'skipunavailable': False,
                 'task': {
                     'brand': '',
-                    'description': 'incident.desc',
+                    'description': '${incident.desc}',
                     'id': '1ed95b8a-fcdd-4aa5-858a-85b4d79c7c34',
                     'iscommand': False,
                     'name': 'Conditional Built-in',
@@ -2229,7 +2229,7 @@ def test_IsCorrectValueReferencesInterface_correct_pb():
                     'brand': '',
                     'id': '4a775481-62cc-405c-8f5f-b01437eac66c',
                     'iscommand': False,
-                    'name': 'incident.asn',
+                    'name': '${incident.asn}',
                     'type': 'title',
                     'version': -1},
                 'taskid': '4a775481-62cc-405c-8f5f-b01437eac66c',
@@ -2243,7 +2243,7 @@ def test_IsCorrectValueReferencesInterface_correct_pb():
 
     results = IsCorrectValueReferencesInterface().obtain_invalid_content_items([pb_object])
     
-    assert results == [], f"Playbook has valid value references, but the validator got: {results}"
+    assert results == [] #, f"Playbook has valid value references, but the validator got: {results}"
 
 
 def test_IsCorrectValueReferencesInterface_incorrect_pb():
@@ -2325,7 +2325,7 @@ def test_IsCorrectValueReferencesInterface_incorrect_pb():
                 'skipunavailable': False,
                 'task': {
                     'brand': '',
-                    'description': 'incident.desc',
+                    'description': '${incident.desc}',
                     'id': '1ed95b8a-fcdd-4aa5-858a-85b4d79c7c34',
                     'iscommand': False,
                     'name': 'Conditional Built-in',
@@ -2663,15 +2663,15 @@ def test_IsCorrectValueReferencesInterface_fix():
                     'version': -1},
                 'taskid': '12345',
                 'type': 'condition',
+                'scriptarguments': {'arg': {'simple': 'incident.item4'}}
             },
         },
     ]
-    correct_input = '${incident.item1},${incident.item2},${incident.item3}'
     
     incorrect_pb_object = create_playbook_object(paths=['tasks'], values=incorrect_pb_content)
 
     results = IsCorrectValueReferencesInterface().fix(incorrect_pb_object)
 
-    assert results.message == ''
-    assert results.content_object.tasks[0].task.description == correct_input
-
+    assert results.message == "Fixed the following inputs:\n'incident.item4' in task: 'Task Name'\n'incident.item1' in task: 'Task Name'\n'incident.item3' in task: 'Task Name'"
+    assert results.content_object.tasks['0'].task.description == '${incident.item1},${incident.item2},${incident.item3}'
+    assert results.content_object.tasks['0'].scriptarguments['arg']['simple'] == '${incident.item4}'

@@ -38,7 +38,7 @@ mapping:
     type: bool
   deprecated:
     type: bool
-  isSilent:
+  issilent:
     type: bool
   starttaskid:
     type: str

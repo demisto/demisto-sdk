@@ -699,6 +699,8 @@ class ContentEntityValidator(BaseValidator):
         path_split = file_path.split(os.sep)
         file_type = find_type(self.file_path, _dict=self.current_file, file_type="yml")
         if file_type == FileType.PLAYBOOK:
+            if self.current_file.get("issilent"):
+                return True
             to_replace = os.path.splitext(path_split[-1])[-1]
             readme_path = file_path.replace(to_replace, "_README.md")
         elif file_type in {FileType.SCRIPT, FileType.INTEGRATION}:

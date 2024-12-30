@@ -1,4 +1,0 @@
-changes:
-- description: Exclude silent items from release notes validation.
-  type: feature
-pr_number: 4720

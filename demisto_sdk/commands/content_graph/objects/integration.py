@@ -175,7 +175,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         **kwargs,
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
-        data = replace_marketplace_references(data, current_marketplace, str(self.path))
+        #data = replace_marketplace_references(data, current_marketplace, str(self.path))
         if current_marketplace != MarketplaceVersions.MarketplaceV2:
             script: dict = data.get("script", {})
             if script.get("isfetchevents"):

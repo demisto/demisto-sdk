@@ -1,6 +1,9 @@
 import pytest
 
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
+from demisto_sdk.commands.content_graph.objects.pack_content_items import (
+    PackContentItems,
+)
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_playbook_object,
@@ -1448,6 +1451,10 @@ def test_IsSilentPlaybookValidator(name, id, is_silent, result_len, file_name):
         [playbook]
     )
     assert result_len == len(invalid_content_items)
+
+
+class Pack:
+    content_items = PackContentItems()
 
 
 @pytest.mark.parametrize(

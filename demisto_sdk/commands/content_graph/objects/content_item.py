@@ -34,7 +34,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
-    replace_incorrect_marketplace,
+    replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -276,7 +276,7 @@ class ContentItem(BaseContent):
         logger.debug(f"preparing {self.path}")
 
         # Replace incorrect marketplace references
-        data = replace_incorrect_marketplace(data, current_marketplace, str(self.path))
+        data = replace_marketplace_references(data, current_marketplace, str(self.path))
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(

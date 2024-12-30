@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -26,7 +25,6 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
     related_field = "release_note"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.RELEASE_NOTE]
-    expected_git_statuses = [GitStatuses.ADDED]
 
     @staticmethod
     def strip_exclusion_tag(release_notes_comments):

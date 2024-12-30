@@ -78,7 +78,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def is_silent(self) -> bool:
-        return get_value(self.yml_data, "isSilent", False)
+        return get_value(self.yml_data, "issilent", False)
 
     @property
     def description(self) -> Optional[str]:

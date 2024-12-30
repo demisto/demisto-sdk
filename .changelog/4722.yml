@@ -1,0 +1,4 @@
+changes:
+- description: Added new BA128 validation which ensures script and integration command names don't start with a digit.
+  type: feature
+pr_number: 4722

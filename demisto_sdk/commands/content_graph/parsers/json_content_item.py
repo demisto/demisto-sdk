@@ -114,4 +114,4 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def is_silent(self) -> bool:
-        return get_value(self.json_data, "isSilent", False)
+        return get_value(self.json_data, "issilent", False)

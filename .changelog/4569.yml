@@ -1,4 +1,0 @@
-changes:
-- description: Moved the CR101 validation, checking names of Correlation Rule files match standards, to `validate_content_path`.
-  type: feature
-pr_number: 4569

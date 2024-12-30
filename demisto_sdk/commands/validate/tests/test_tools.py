@@ -639,7 +639,9 @@ def create_assets_modeling_rule_object(
 
 
 def create_trigger_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None, file_name: str = "trigger"
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    file_name: str = "trigger",
 ) -> Trigger:
     """Creating an trigger object with altered fields from a default trigger json structure.
 

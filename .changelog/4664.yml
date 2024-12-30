@@ -1,0 +1,4 @@
+changes:
+- description: Added new script and a pre-commit hook to generate commands documentation.
+  type: internal
+pr_number: 4664

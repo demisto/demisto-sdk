@@ -576,12 +576,12 @@ def check_dataset_exists(
         )
         test_case_results.append(Error(err))
         if print_errors:
-            logger.error("{}", f"<red>{err}</red>")  # noqa: PLE1205
+            logger.error("<red>{}</red>", err)  # noqa: PLE1205
     if not dataset_exist:
-        err = f"<red>Dataset {dataset} does not exist</red>"
+        err = f"Dataset {dataset} does not exist"
         test_case_results.append(Error(err))
         if print_errors:
-            logger.error("{}", f"<red>{err}</red>")  # noqa: PLE1205
+            logger.error("<red>{}</red>", err)  # noqa: PLE1205
 
     duration = duration_since_start_time(start_time)
     logger.info(f"Processing Dataset {dataset} finished after {duration:.2f} seconds")
@@ -762,7 +762,7 @@ def verify_event_id_does_not_exist_on_tenant(
     logger.info(
         "<cyan>Verifying that the event IDs does not exist on the tenant</cyan>"
     )
-    success_msg = "<green>The event IDs does not exists on the tenant</green>"
+    success_msg = "The event IDs does not exists on the tenant"
     error_msg = "The event id already exists in the tenant"
     validate_expected_values_test_cases = []
 
@@ -783,10 +783,10 @@ def verify_event_id_does_not_exist_on_tenant(
         try:
             result = retrying_caller(xsiam_execute_query, xsiam_client, query)
         except requests.exceptions.HTTPError:
-            logger.info("{}", success_msg)  # noqa: PLE1205
+            logger.info("<green>{}</green>", success_msg)  # noqa: PLE1205
         else:
             if not result:
-                logger.info("{}", success_msg)  # noqa: PLE1205
+                logger.info("<green>{}</green>", success_msg)  # noqa: PLE1205
             else:
                 logger.error("{}", error_msg)  # noqa: PLE1205
                 validate_event_id_does_not_exist_on_tenant_test_case.result += [

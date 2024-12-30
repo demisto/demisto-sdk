@@ -66,6 +66,7 @@ VALIDATION_CATEGORIES = {
     "XT": "XDRC Template",
     "XD": "XSIAM Dashboard",
     "GR": "Graph",
+    "TR": "Trigger"
 }
 
 

@@ -1,4 +1,38 @@
 # Changelog
+## 1.33.2 (2024-12-29)
+### Breaking
+* Removed support for *DS107* and *RM106* validations. Ensures no "demisto" word in description and readme files for both new & old validate formats. [#4712](https://github.com/demisto/demisto-sdk/pull/4712)
+* Changed the code of *RM116* - Validate that the readme file is not to short to *RM117* due to error code duplication. [#4712](https://github.com/demisto/demisto-sdk/pull/4712)
+
+### Feature
+* Excluded silent items from release notes validation. [#4720](https://github.com/demisto/demisto-sdk/pull/4720)
+* Added *PB131* validation. Ensures every silent trigger points to a silent playbook, and vice versa. [#4670](https://github.com/demisto/demisto-sdk/pull/4670)
+* Excluded silent-Playbooks/Triggers from the metadata. [#4692](https://github.com/demisto/demisto-sdk/pull/4692)
+* Added support for Silent-Playbooks in the old-validate. [#4726](https://github.com/demisto/demisto-sdk/pull/4726)
+* Added support for CaseLayouts and CaseFields content items paths to the `validate-content-paths` ***demisto-sdk pre-commit*** hook. [#4706](https://github.com/demisto/demisto-sdk/pull/4706)
+* Added *PB132* validation. Ensures that silent playbooks do not have a README file. [#4723](https://github.com/demisto/demisto-sdk/pull/4723)
+* Updated validation rules to allow the deletion of silent Playbooks and silent Triggers. [#4715](https://github.com/demisto/demisto-sdk/pull/4715)
+* Added support for writing ***demisto-sdk pre-commit*** command results to files. [#4697](https://github.com/demisto/demisto-sdk/pull/4697)
+* Moved the *CR101* validation to the new validation format. Checks if "Correlation Rule" files match standards to `validate_content_path`. [#4569](https://github.com/demisto/demisto-sdk/pull/4569)
+* Added *PB130* validation. Checks whether the silent playbook name id and the *isSilent* key are set correctly. [#4662](https://github.com/demisto/demisto-sdk/pull/4662)
+
+### Fix
+* Fixed an issue where YmlSplitter attributes were being unintentionally updated. [#4713](https://github.com/demisto/demisto-sdk/pull/4713)
+* Fixed an issue where *ST110* would incorrectly fail when adding the isSilent field. [#4716](https://github.com/demisto/demisto-sdk/pull/4716)
+* Fixed an issue where the error message wasn't clear when attempting to upload a content item to an unsupported marketplace. [#4727](https://github.com/demisto/demisto-sdk/pull/4727)
+* Changed the isSilent key to lower case. [#4728](https://github.com/demisto/demisto-sdk/pull/4728)
+* Fixed an issue in the ***demisto-sdk modeling-rules*** command where colored logs were not printed properly. [#4733](https://github.com/demisto/demisto-sdk/pull/4733)
+* Fixed an issue where *RM114* falsely failed when it concatenated "Packs/" twice to the file path. [#4717](https://github.com/demisto/demisto-sdk/pull/4717)
+* Fixed an issue where *RN106* and *PA114* validations would fail on new packs. [#4710](https://github.com/demisto/demisto-sdk/pull/4710)
+* Fixed an issue where YmlSplitter attributes were being unintentionally updated. [#4696](https://github.com/demisto/demisto-sdk/pull/4696)
+* Fixed an issue where *RN111* would fail when it should not when the docker entry message was missing. [#4714](https://github.com/demisto/demisto-sdk/pull/4714)
+* Fixed an issue where the "incident to alert" conversion was not applied to the metadata file during the execution of the **prepare-content** command. [#4736](https://github.com/demisto/demisto-sdk/pull/4736)
+* Fixed an issue where *RN107* validation would fail on new content items and specific content types. [#4711](https://github.com/demisto/demisto-sdk/pull/4711)
+
+### Internal
+* Added the **generate-command-docs** script and a pre-commit hook to generate commands documentation. [#4664](https://github.com/demisto/demisto-sdk/pull/4664)
+
+
 ## 1.33.0 (2024-12-08)
 ### Feature
 * Modified the ***demisto-sdk --release-notes*** command to print a markdown representation of the currently installed demisto-sdk changelog. [#4687](https://github.com/demisto/demisto-sdk/pull/4687)

@@ -10,9 +10,9 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_PASSWORD,
     DEMISTO_USERNAME,
     DEMISTO_VERIFY_SSL,
+    LCAS_ID,
     XSIAM_COLLECTOR_TOKEN,
     XSIAM_TOKEN,
-    LCAS_ID,
 )
 from demisto_sdk.commands.common.tools import string_to_bool
 

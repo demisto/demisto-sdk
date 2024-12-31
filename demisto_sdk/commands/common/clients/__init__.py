@@ -27,8 +27,8 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_PASSWORD,
     DEMISTO_USERNAME,
     DEMISTO_VERIFY_SSL,
+    LCAS_ID,
     MarketplaceVersions,
-    LCAS_ID
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import string_to_bool
@@ -36,7 +36,7 @@ from demisto_sdk.commands.common.tools import string_to_bool
 
 @lru_cache
 def get_client_from_config(
-        client_config: XsoarClientConfig, raise_if_server_not_healthy: bool = True
+    client_config: XsoarClientConfig, raise_if_server_not_healthy: bool = True
 ) -> XsoarClient:
     """
     Returns the correct Client (xsoar on prem, xsoar saas or xsiam) based on the clients config object
@@ -66,14 +66,14 @@ def get_client_from_config(
 
 
 def get_client_from_marketplace(
-        marketplace: MarketplaceVersions,
-        base_url: Optional[str] = None,
-        api_key: Optional[str] = None,
-        auth_id: Optional[str] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        verify_ssl: Optional[bool] = None,
-        raise_if_server_not_healthy: bool = True,
+    marketplace: MarketplaceVersions,
+    base_url: Optional[str] = None,
+    api_key: Optional[str] = None,
+    auth_id: Optional[str] = None,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+    verify_ssl: Optional[bool] = None,
+    raise_if_server_not_healthy: bool = True,
 ) -> XsoarClient:
     """
     Returns the client based on the marketplace.
@@ -128,14 +128,14 @@ def get_client_from_marketplace(
 
 @lru_cache
 def get_client_from_server_type(
-        base_url: Optional[str] = None,
-        api_key: Optional[str] = None,
-        auth_id: Optional[str] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        lcas_id: Optional[str] = None,
-        verify_ssl: Optional[bool] = None,
-        raise_if_server_not_healthy: bool = True,
+    base_url: Optional[str] = None,
+    api_key: Optional[str] = None,
+    auth_id: Optional[str] = None,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+    lcas_id: Optional[str] = None,
+    verify_ssl: Optional[bool] = None,
+    raise_if_server_not_healthy: bool = True,
 ) -> XsoarClient:
     """
     Returns the client based on the server type by doing api requests to determine which server it is
@@ -192,7 +192,7 @@ def get_client_from_server_type(
                 api_key=_api_key,
                 auth_id=_auth_id,
                 verify_ssl=_verify_ssl,
-                lcas_id=_lcas_id
+                lcas_id=_lcas_id,
             ),
             should_validate_server_type=should_validate_server_type,
             raise_if_server_not_healthy=raise_if_server_not_healthy,
@@ -207,7 +207,7 @@ def get_client_from_server_type(
                 api_key=_api_key,
                 auth_id=_auth_id,
                 verify_ssl=_verify_ssl,
-                lcas_id=_lcas_id
+                lcas_id=_lcas_id,
             ),
             should_validate_server_type=should_validate_server_type,
             raise_if_server_not_healthy=raise_if_server_not_healthy,

@@ -295,7 +295,9 @@ class CloudServerContext:
                 )
 
                 success, test_use_case_test_suite = run_test_use_case_pytest(
-                    test_use_case_directory, cloud_client=cloud_client, lcas_id=self.build_context.lcas_id
+                    test_use_case_directory,
+                    cloud_client=cloud_client,
+                    lcas_id=self.build_context.lcas_id,
                 )
 
                 if success:
@@ -336,7 +338,10 @@ class CloudServerContext:
 
 
 def run_test_use_case_pytest(
-    test_use_case_directory: Path, cloud_client: XsoarClient, durations: int = 5, lcas_id: str = None
+    test_use_case_directory: Path,
+    cloud_client: XsoarClient,
+    durations: int = 5,
+    lcas_id: str = None,
 ) -> Tuple[bool, Union[TestSuite, None]]:
     """Runs a test use case
 
@@ -551,7 +556,7 @@ def run_test_use_case(
         api_key=api_key,
         auth_id=auth_id,
         inputs=inputs,
-        lcas_id=lacs_id
+        lcas_id=lacs_id,
     )
 
     logging_module.info(

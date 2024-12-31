@@ -28,6 +28,7 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_USERNAME,
     DEMISTO_VERIFY_SSL,
     MarketplaceVersions,
+    LCAS_ID
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import string_to_bool
@@ -35,7 +36,7 @@ from demisto_sdk.commands.common.tools import string_to_bool
 
 @lru_cache
 def get_client_from_config(
-    client_config: XsoarClientConfig, raise_if_server_not_healthy: bool = True
+        client_config: XsoarClientConfig, raise_if_server_not_healthy: bool = True
 ) -> XsoarClient:
     """
     Returns the correct Client (xsoar on prem, xsoar saas or xsiam) based on the clients config object
@@ -65,14 +66,14 @@ def get_client_from_config(
 
 
 def get_client_from_marketplace(
-    marketplace: MarketplaceVersions,
-    base_url: Optional[str] = None,
-    api_key: Optional[str] = None,
-    auth_id: Optional[str] = None,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-    verify_ssl: Optional[bool] = None,
-    raise_if_server_not_healthy: bool = True,
+        marketplace: MarketplaceVersions,
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        auth_id: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        verify_ssl: Optional[bool] = None,
+        raise_if_server_not_healthy: bool = True,
 ) -> XsoarClient:
     """
     Returns the client based on the marketplace.
@@ -127,13 +128,14 @@ def get_client_from_marketplace(
 
 @lru_cache
 def get_client_from_server_type(
-    base_url: Optional[str] = None,
-    api_key: Optional[str] = None,
-    auth_id: Optional[str] = None,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-    verify_ssl: Optional[bool] = None,
-    raise_if_server_not_healthy: bool = True,
+        base_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        auth_id: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        lcas_id: Optional[str] = None,
+        verify_ssl: Optional[bool] = None,
+        raise_if_server_not_healthy: bool = True,
 ) -> XsoarClient:
     """
     Returns the client based on the server type by doing api requests to determine which server it is
@@ -144,6 +146,7 @@ def get_client_from_server_type(
         auth_id: the auth ID, if not provided will take from XSIAM_AUTH_ID env var
         username: the username to authenticate, relevant only for xsoar on prem
         password: the password to authenticate, relevant only for xsoar on prem
+        lcas_id: the lcas id of the current cloud machine.
         verify_ssl: whether in each request SSL should be verified, True if yes, False if not,
                     if verify_ssl = None, will take the SSL verification from DEMISTO_VERIFY_SSL env var
         raise_if_server_not_healthy: whether to raise an exception if the server is not healthy
@@ -156,6 +159,7 @@ def get_client_from_server_type(
     _auth_id = auth_id or os.getenv(AUTH_ID)
     _username = username or os.getenv(DEMISTO_USERNAME, "")
     _password = password or os.getenv(DEMISTO_PASSWORD, "")
+    _lcas_id = lcas_id or os.getenv(LCAS_ID, "")
     _verify_ssl = (
         verify_ssl
         if verify_ssl is not None
@@ -188,6 +192,7 @@ def get_client_from_server_type(
                 api_key=_api_key,
                 auth_id=_auth_id,
                 verify_ssl=_verify_ssl,
+                lcas_id=_lcas_id
             ),
             should_validate_server_type=should_validate_server_type,
             raise_if_server_not_healthy=raise_if_server_not_healthy,
@@ -202,6 +207,7 @@ def get_client_from_server_type(
                 api_key=_api_key,
                 auth_id=_auth_id,
                 verify_ssl=_verify_ssl,
+                lcas_id=_lcas_id
             ),
             should_validate_server_type=should_validate_server_type,
             raise_if_server_not_healthy=raise_if_server_not_healthy,
@@ -249,14 +255,6 @@ def parse_str_to_dict(input_str):
     x = dict(pair.split("=") for pair in input_str.split(",") if "=" in pair)
     logger.info(x.get("base_url", "no base url"))
     return dict(pair.split("=") for pair in input_str.split(",") if "=" in pair)
-
-
-# def get_client_conf_from_pytest_request():
-#     # Manually parse command-line argument
-#     client_conf = os.getenv("CLIENT_CONF")
-#     if client_conf:
-#         return parse_str_to_dict(client_conf)
-#     return None
 
 
 def get_client_conf_from_pytest_request(request):

@@ -32,9 +32,6 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import (
     ParallelLoggingManager,
 )
 from demisto_sdk.commands.test_content.tools import (
-    XSIAM_CLIENT_RETRY_ATTEMPTS,
-    XSIAM_CLIENT_SLEEP_INTERVAL,
-    create_retrying_caller,
     duration_since_start_time,
     get_relative_path_to_content,
     get_ui_url,
@@ -143,9 +140,6 @@ class BuildContext:
         self,
         nightly: bool,
         build_number: Optional[str],
-        branch_name: Optional[str],
-        retry_attempts: int,
-        sleep_interval: int,
         logging_module: ParallelLoggingManager,
         cloud_servers_path: str,
         cloud_servers_api_keys: str,
@@ -156,16 +150,16 @@ class BuildContext:
         auth_id: Optional[str],
         inputs: Optional[List[Path]],
         machine_assignment: str,
+        lcas_id: str,
         ctx: typer.Context,
     ):
         self.logging_module: ParallelLoggingManager = logging_module
-        self.retrying_caller = create_retrying_caller(retry_attempts, sleep_interval)
         self.ctx = ctx
 
         # --------------------------- overall build configuration -------------------------------
         self.is_nightly = nightly
         self.build_number = build_number
-        self.build_name = branch_name
+        self.lcas_id = lcas_id
 
         # -------------------------- Manual run on a single instance --------------------------
         self.cloud_url = cloud_url
@@ -301,7 +295,7 @@ class CloudServerContext:
                 )
 
                 success, test_use_case_test_suite = run_test_use_case_pytest(
-                    test_use_case_directory, cloud_client=cloud_client
+                    test_use_case_directory, cloud_client=cloud_client, lcas_id=self.build_context.lcas_id
                 )
 
                 if success:
@@ -342,7 +336,7 @@ class CloudServerContext:
 
 
 def run_test_use_case_pytest(
-    test_use_case_directory: Path, cloud_client: XsoarClient, durations: int = 5
+    test_use_case_directory: Path, cloud_client: XsoarClient, durations: int = 5, lcas_id: str = None
 ) -> Tuple[bool, Union[TestSuite, None]]:
     """Runs a test use case
 
@@ -367,13 +361,14 @@ def run_test_use_case_pytest(
     pytest_args = [
         f"--client_conf=base_url={str(cloud_client.server_config.base_api_url)},"
         f"api_key={cloud_client.server_config.api_key.get_secret_value()},"
-        f"auth_id={cloud_client.server_config.auth_id}",
+        f"auth_id={cloud_client.server_config.auth_id},"
+        f"lcas_id={lcas_id}",
         str(test_use_case_directory),
         f"--durations={str(durations)}",
         "--log-cli-level=CRITICAL",
     ]
 
-    logger.info(f"Runnig pytest for file {test_use_case_directory}")
+    logger.info(f"Running pytest for file {test_use_case_directory}")
 
     # Running pytest
     result_capture = TestResultCapture(test_use_case_suite)
@@ -438,22 +433,6 @@ def run_test_use_case(
     output_junit_file: Optional[Path] = typer.Option(
         None, "-jp", "--junit-path", help="Path to the output JUnit XML file."
     ),
-    sleep_interval: int = typer.Option(
-        XSIAM_CLIENT_SLEEP_INTERVAL,
-        "-si",
-        "--sleep_interval",
-        min=0,
-        show_default=True,
-        help="The number of seconds to wait between requests to the server.",
-    ),
-    retry_attempts: int = typer.Option(
-        XSIAM_CLIENT_RETRY_ATTEMPTS,
-        "-ra",
-        "--retry_attempts",
-        min=0,
-        show_default=True,
-        help="The number of times to retry the request against the server.",
-    ),
     service_account: Optional[str] = typer.Option(
         None,
         "-sa",
@@ -483,13 +462,6 @@ def run_test_use_case(
         help="the path to the machine assignment file.",
         show_default=False,
     ),
-    branch_name: str = typer.Option(
-        "master",
-        "-bn",
-        "--branch_name",
-        help="The current content branch name.",
-        show_default=True,
-    ),
     build_number: str = typer.Option(
         "",
         "-bn",
@@ -508,6 +480,13 @@ def run_test_use_case(
         "-ab",
         "--artifacts_bucket",
         help="The artifacts bucket name to upload the results to",
+        show_default=False,
+    ),
+    lacs_id: str = typer.Option(
+        None,
+        "-li",
+        "--lcas_id",
+        help="The machine LCAS ID",
         show_default=False,
     ),
     console_log_threshold: str = typer.Option(
@@ -561,9 +540,6 @@ def run_test_use_case(
     build_context = BuildContext(
         nightly=is_nightly,
         build_number=build_number,
-        branch_name=branch_name,
-        retry_attempts=retry_attempts,
-        sleep_interval=sleep_interval,
         logging_module=logging_module,
         cloud_servers_path=cloud_servers_path,
         cloud_servers_api_keys=cloud_servers_api_keys,
@@ -575,6 +551,7 @@ def run_test_use_case(
         api_key=api_key,
         auth_id=auth_id,
         inputs=inputs,
+        lcas_id=lacs_id
     )
 
     logging_module.info(

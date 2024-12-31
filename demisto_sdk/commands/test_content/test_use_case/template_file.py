@@ -52,6 +52,7 @@ class TestExample:
     def test_feature_one_manual_true(self, api_client: XsiamClient):
         """Test feature one"""
         a = api_client.list_indicators()
+
         assert a is not None
 
     def test_feature_two(self, api_client: XsiamClient):

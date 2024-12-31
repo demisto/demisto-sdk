@@ -42,6 +42,7 @@ class XsoarSaasClient(XsoarClient):
                 "Content-Type": "application/json",
             }
         )
+        self.lcas_id = config.lcas_id
         super().__init__(
             config,
             client=client,

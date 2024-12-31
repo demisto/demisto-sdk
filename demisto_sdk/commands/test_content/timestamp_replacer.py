@@ -221,9 +221,7 @@ class TimestampReplacer:
             updated_multipart_form_data = []
             for key, val in req.multipart_form.items(multi=True):
                 if key in self.form_keys:
-                    updated_multipart_form_data.append(
-                        (key, self.constant.encode("utf-8"))
-                    )
+                    updated_multipart_form_data.append((key, self.constant))
                 else:
                     updated_multipart_form_data.append((key, val))
             req._set_multipart_form(updated_multipart_form_data)

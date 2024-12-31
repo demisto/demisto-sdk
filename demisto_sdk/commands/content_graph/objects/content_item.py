@@ -34,6 +34,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
+    #TODO - remove this import
     replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
@@ -355,10 +356,9 @@ class ContentItem(BaseContent):
             return
         dir.mkdir(exist_ok=True, parents=True)
         try:
-            data=self.prepare_for_upload(current_marketplace=marketplace),
             write_dict(
                 dir / self.normalize_name,
-                data = replace_marketplace_references(data, marketplace, str(self.path)),
+                data=self.prepare_for_upload(current_marketplace=marketplace),
                 handler=self.handler,
             )
         except FileNotFoundError as e:

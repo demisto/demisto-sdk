@@ -79,7 +79,7 @@ class content_type(Enum):
 
 NEW_RN_TEMPLATE = "- New: Added a new {type}- {name} that {description}\n"
 GENERAL_DEPRECATED_RN = "- Deprecated the **{name}** {type}. {replacement}.\n"
-GENERAL_BC = "- Deleted the **{name}** {value}.\n"
+GENERAL_BC = "- Deleted the **{name}** {type}.\n"
 DEPRECATED_ARGUMENT = (
     "- Deprecated the *{name}* {type} inside the **{command_name}** command.\n"
 )
@@ -145,7 +145,7 @@ def create_content_item_object(
                 logger.error(
                     f"<red>Cannot create old base content object from {prev_ver} with error {e}.</error>"
                 )
-                pass
+                return None
         return changed_content_item
     except Exception as e:
         logger.error(
@@ -163,13 +163,12 @@ def create_rn_for_deleted_content(
     """Generates release notes for deleted content items.
 
     Args:
-        old_content_dict (dict[str, Any]): A dictionary of content items in the current version,
-                                           where keys are item names and values are their details.
-        new_content_dict (dict[str, Any]): A dictionary of content items after local updates,
-                                           where keys are item names and values are their details.
+        old_content_dict (dict[str, Any]): A dictionary of Parameter/Argument/Command in the current version,
+                                           where keys are item names and values are the objects.
+        new_content_dict (dict[str, Any]): A dictionary of Parameter/Argument/Command after local updates,
+                                           where keys are item names and values are the objects.
         type (str): The type of the content item.
-        parent_name (str, optional): The name of the parent content item, if applicable
-                                     (used for arguments within commands).
+        parent_name (str, optional): The name of the parent command (in cases type is an argument), else None.
 
     Returns:
         str: A release note describing the deleted content items.
@@ -181,7 +180,7 @@ def create_rn_for_deleted_content(
         if type == content_type.ARGUMENT and parent_name:
             rn += ARGUMENT_BC.format(command_name=parent_name, argument_name=name)
         else:
-            rn += GENERAL_BC.format(name=name, value=type.value)
+            rn += GENERAL_BC.format(name=name, type=type.value)
         logger.info(
             f"<yellow>Please add a breaking changes json file for deleting the {name} {type.value}</yellow>"
         )
@@ -195,7 +194,7 @@ def generate_content_deprecation_rn(
     content_type: content_type,
     parent: Union[str, None] = None,
 ) -> str:
-    """Generates release notes for deprecated content in content items.
+    """Generates release notes for deprecated content of an existing content item.
 
     Args:
         name (str): The name of the content item being deprecated.
@@ -206,7 +205,8 @@ def generate_content_deprecation_rn(
                                              (e.g., the command name for a deprecated argument). Defaults to None.
 
     Returns:
-        str: A formatted release note indicating the deprecation of the item. Returns an empty string if no deprecation is detected.
+        str: A formatted release note indicating the deprecation of content of an existing content item. 
+        Returns an empty string if no deprecation is detected.
     """
     if new_content.deprecated and not old_content.deprecated:
         if isinstance(new_content, Argument) and parent:
@@ -292,10 +292,10 @@ def create_rn_for_added_or_updated_content(
     """Generates release notes for added or updated content in content items.
 
     Args:
-        old_content_dict (dict[str, Union[Parameter, Argument, Command]]): A dictionary of content items in the current version,
-                                           where keys are item names and values are their details.
-        new_content_dict (dict[str, Union[Parameter, Argument, Command]]): A dictionary of content items after local updates,
-                                           where keys are item names and values are basemodel objects.
+        old_content_dict (dict[str, Union[Parameter, Argument, Command]]): A dictionary of Parameter/Argument/Command in the current version,
+                                           where keys are item names and values are the objects.
+        new_content_dict (dict[str, Union[Parameter, Argument, Command]]): A dictionary of Parameter/Argument/Command after local updates,
+                                           where keys are item names and values are the objects.
         type (content_type): The type of the content item.
         parent_name (str | None): The name of the parent content item, if applicable
                                   (used for arguments within commands).
@@ -306,10 +306,12 @@ def create_rn_for_added_or_updated_content(
     rn = ""
     new_content_names = set(new_content_dict.keys()) - set(old_content_dict.keys())
     old_existing_content_names = set(new_content_dict.keys()) - new_content_names
+    # loop new content of an existing content item
     for new_content_name in new_content_names:
         rn += generate_new_content_rn(
             new_content_name, new_content_dict[new_content_name], type, parent_name
         )
+    # loop Optional(updated) content of an existing content item
     for old_existing_content_name in old_existing_content_names:
         old_content_object = old_content_dict[old_existing_content_name]
         new_content_object = new_content_dict[old_existing_content_name]
@@ -326,6 +328,7 @@ def create_rn_for_added_or_updated_content(
         if isinstance(new_content_object, Command) and isinstance(
             old_content_object, Command
         ):
+            # loop over arguments list of a command
             rn += compare_content_item_changes(
                 old_content_object.args,
                 new_content_object.args,
@@ -337,32 +340,34 @@ def create_rn_for_added_or_updated_content(
 
 
 def compare_content_item_changes(
-    old_content_info: Union[list[Parameter], list[Argument], list[Command]],
-    new_content_info: list[Any],
+    old_content_item_data: Union[list[Parameter], list[Argument], list[Command]],
+    new_content_item_data: Union[list[Parameter], list[Argument], list[Command]],
     type,
     parent_name=None,
 ):
     """Compares old and new versions of a content in content item to generate release notes.
 
     Args:
-        old_content_info (list[dict]): A list of dictionaries representing the old content item details.
-        new_content_info (list[dict]): A list of dictionaries representing the new content item details.
+        old_content_item_data (Union[list[Parameter], list[Argument], list[Command]]): A list of ("BaseModel") representing the old content item data.
+        new_content_item_data (Union[list[Parameter], list[Argument], list[Command]]): A list of ("BaseModel") representing the new content item data.
         type (str): The type of the content item.
         parent_name (str, optional): The name of the parent content item, if applicable.
 
     Returns:
-        str: A release note describing changes, including deleted, added, or updated content.
+        str: A release note describing changes, including deleted, added, updated content.
     """
     rn = ""
     old_content_dict = {
-        old_content.name: old_content for old_content in old_content_info
+        old_data.name: old_data for old_data in old_content_item_data
     }
     new_content_dict = {
-        new_content.name: new_content for new_content in new_content_info
+        new_data.name: new_data for new_data in new_content_item_data
     }
+    # search for deleted content of an existing content item
     rn += create_rn_for_deleted_content(
         old_content_dict, new_content_dict, type, parent_name
     )
+    # search for added and updated content of an existing content item
     rn += create_rn_for_added_or_updated_content(
         old_content_dict, new_content_dict, type, parent_name
     )
@@ -397,15 +402,14 @@ def generate_rn_for_updated_content_items(
     """Generates a release note description for updated content items.
 
     Args:
-        path (str): The file path to the content item being updated.
-        _type (str): The type of the content item.
-        text (str): Text to add to the release notes files.
+        changed_content_object(Union[Integration, Script, Playbook]): The changed content item object.
 
     Returns:
         str: A release note description for the updated content item, including deprecation and enhancement details.
     """
     rn_desc = ""
     if changed_content_object:
+        # Is the content item deprecated.
         deprecate_rn = generate_deprecated_content_item_rn(changed_content_object)
         if deprecate_rn:
             rn_desc += deprecate_rn
@@ -420,36 +424,38 @@ def generate_rn_for_content_item_updates(
     """Generates release notes for updates to a specific content item.
 
     Args:
-        _type (str): The type of the content item.
-        path (str): The file path to the content item.
-        old_content_file (dict): The YAML representation of the content item before updates.
-        new_content_file (dict): The YAML representation of the content item after updates.
+        changed_content_object(Union[Integration, Script, Playbook]): The changed content item object.
 
     Returns:
         str: A release note describing the updates made to the content item,
              such as parameter changes, command updates.
     """
     rn_desc = ""
+    # if the content item is an integration
     if (
         isinstance(changed_content_object, Integration)
         and changed_content_object.old_base_content_object
         and isinstance(changed_content_object.old_base_content_object, Integration)
     ):
+        # searching changes in parameters
         rn_desc += compare_content_item_changes(
             changed_content_object.old_base_content_object.params,
             changed_content_object.params,
             content_type.PARAMETER,
         )
+        # searching changes in commands
         rn_desc += compare_content_item_changes(
             changed_content_object.old_base_content_object.commands,
             changed_content_object.commands,
             content_type.COMMAND,
         )
+    # if the content item is a script
     elif (
         isinstance(changed_content_object, Script)
         and changed_content_object.old_base_content_object
         and isinstance(changed_content_object.old_base_content_object, Script)
     ):
+        # searching changes in arguments
         rn_desc += compare_content_item_changes(
             changed_content_object.old_base_content_object.args,
             changed_content_object.args,
@@ -664,7 +670,7 @@ class UpdateRN:
             packfile (str): The path to the file being checked.
 
         Returns:
-            Optional[str]: The updated Docker image if it has changed, otherwise `None`.
+            Optional[str]: The updated Docker image tag if it has changed, otherwise `None`.
         """
         if (
             content_item_object
@@ -1160,6 +1166,7 @@ class UpdateRN:
                 else ""
             )
             if is_new_file:
+                # new content items
                 rn_desc = f"##### New: {content_name}\n\n"
                 rn_desc += NEW_RN_TEMPLATE.format(
                     type=type,
@@ -1171,6 +1178,7 @@ class UpdateRN:
                 )
                 rn_desc += self.generate_rn_list_new_commands(changed_content_object)
             else:
+                # Updated content items
                 rn_desc = f"##### {content_name}\n\n"
                 if self.update_type == "documentation":
                     rn_desc += "- Documentation and metadata improvements.\n"
@@ -1206,10 +1214,9 @@ class UpdateRN:
             str: A formatted release note listing the new commands, or an empty string if no commands are found.
         """
         rn_desc = ""
-        if changed_content_object and isinstance(changed_content_object, Integration):
+        if changed_content_object and isinstance(changed_content_object, Integration) and changed_content_object.commands:
             rn_desc = NEW_COMMANDS_RN
-            new_commands = changed_content_object.commands
-            for command in new_commands:
+            for command in changed_content_object.commands:
                 rn_desc += f"\t- ***{command.get_name()}***\n"
         return rn_desc
 

@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from typing import Iterable, Optional, Callable
+from typing import Callable, Iterable, Optional
 
+from demisto_sdk.commands.content_graph.objects.base_playbook import Task, TaskConfig
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
-from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig, Task
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    FixResult,
     ValidationResult,
-    FixResult
 )
 
 ContentTypes = Playbook
+
 
 class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
     error_code = "PB121"
@@ -18,14 +19,16 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
     rationale = "Context paths can be mistakenly used without the correct notation."
     error_message = (
         "In task: '{task_name}' with ID: '{task_id}', an input with the value: '{path}' was passed as a string not a reference."
-        " Change the reference to \"From previous tasks\" from \"As value\", or change the value to ${{{path}}}."
+        ' Change the reference to "From previous tasks" from "As value", or change the value to ${{{path}}}.'
     )
     related_field = "conditions"
     is_auto_fixable = True
     fix_message = "Fixed the following inputs:\n"
-    handle_value_obj: Callable = (lambda x: x)
+    handle_value_obj: Callable = lambda x: x
 
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> list[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> list[ValidationResult]:
         """Check that references of context values, are valid, i.e. "iscontext: true" or surrounded by ${<condition>},
         Args:
             content_items (Iterable[ContentTypes]): The content items to check.
@@ -48,20 +51,22 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
             for task, value in self.obtain_invalid_playbook_inputs(playbook)
         ]
 
-    def obtain_invalid_playbook_inputs(self, playbook: ContentTypes) -> list[tuple[TaskConfig, str]]:
+    def obtain_invalid_playbook_inputs(
+        self, playbook: ContentTypes
+    ) -> list[tuple[TaskConfig, str]]:
         results: list[tuple[TaskConfig, str]] = []
 
         for task in playbook.tasks.values():
             is_task_valid = {
-                'condition': self.is_valid_condition_task,
-                'regular': self.is_valid_regular_task,
-                'collection': self.is_valid_data_collection,
+                "condition": self.is_valid_condition_task,
+                "regular": self.is_valid_regular_task,
+                "collection": self.is_valid_data_collection,
             }.get(task.type, lambda _: [])  # type: ignore
 
             invalid_values = (
                 is_task_valid(task)
-                + self.handle_value_obj(task.task, 'description')
-                + self.handle_value_obj(task.task, 'name')
+                + self.handle_value_obj(task.task, "description")
+                + self.handle_value_obj(task.task, "name")
             )
 
             results += [(task, val) for val in invalid_values]
@@ -71,15 +76,16 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
     def is_valid_condition_task(self, task: TaskConfig) -> list[str]:
         task.task.description
         invalid_values = []
-        for conditions in (task.conditions or []):
+        for conditions in task.conditions or []:
             for condition in conditions.get("condition", []):
                 for condition_info in condition:
-                    invalid_values += (
-                        self.handle_op_arg(**condition_info.get('left', {}))
-                        + self.handle_op_arg(**condition_info.get('right', {}))
-                    )
+                    invalid_values += self.handle_op_arg(
+                        **condition_info.get("left", {})
+                    ) + self.handle_op_arg(**condition_info.get("right", {}))
         for message_key, message_value in (task.message or {}).items():
-            invalid_values += self.get_invalid_message_values(message_key, message_value)
+            invalid_values += self.get_invalid_message_values(
+                message_key, message_value
+            )
         for script_argument in (task.scriptarguments or {}).values():
             invalid_values += self.handle_input_obj(script_argument)
         return invalid_values
@@ -89,7 +95,7 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
         invalid_values += self.handle_input_obj(task.defaultassigneecomplex)
         for script_argument in (task.scriptarguments or {}).values():
             invalid_values += self.handle_input_obj(script_argument)
-        for incident_field in (task.fieldMapping or []):
+        for incident_field in task.fieldMapping or []:
             invalid_values += self.handle_input_obj(incident_field.get("output"))
         return invalid_values
 
@@ -98,7 +104,9 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
         for script_argument in (task.scriptarguments or {}).values():
             invalid_values += self.handle_input_obj(script_argument)
         for message_key, message_value in (task.message or {}).items():
-            invalid_values += self.get_invalid_message_values(message_key, message_value)
+            invalid_values += self.get_invalid_message_values(
+                message_key, message_value
+            )
         for form_question in (task.form or {}).get("questions", []):
             if labelarg := form_question.get("labelarg", {}):
                 invalid_values += self.handle_input_obj(labelarg)
@@ -108,10 +116,9 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
         invalid_values = []
         for incident_filter in field_output.get("filters", []):
             for filter_info in incident_filter:
-                invalid_values += (
-                    self.handle_op_arg(**filter_info.get('left', {}))
-                    + self.handle_op_arg(**filter_info.get('right', {}))
-                )
+                invalid_values += self.handle_op_arg(
+                    **filter_info.get("left", {})
+                ) + self.handle_op_arg(**filter_info.get("right", {}))
         for transformer in field_output.get("transformers", []):
             for arg_info in transformer.get("args", {}).values():
                 invalid_values += self.handle_op_arg(**(arg_info or {}))
@@ -120,7 +127,8 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
     @staticmethod
     def get_invalid_reference_values(values: Optional[str]) -> list[str]:
         return [
-            value for value in (values or '').split(",")
+            value
+            for value in (values or "").split(",")
             if value.startswith("incident.") or value.startswith("inputs.")
         ]
 
@@ -129,10 +137,14 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
             return self.handle_input_obj(message_value)
         return []
 
-    def handle_op_arg(self, value: Optional[dict] = {}, iscontext: bool = False, **_) -> list[str]:
+    def handle_op_arg(
+        self, value: Optional[dict] = {}, iscontext: bool = False, **_
+    ) -> list[str]:
         return self.handle_input_obj(value, iscontext)
 
-    def handle_input_obj(self, value_obj: Optional[dict], is_context: bool = False) -> list[str]:
+    def handle_input_obj(
+        self, value_obj: Optional[dict], is_context: bool = False
+    ) -> list[str]:
         if not is_context:
             value_obj = value_obj or {}
             if "simple" in value_obj:
@@ -141,23 +153,23 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
                 return self.handle_transformers_and_filters(arg_value)
         return []
 
-    def get_invalid_value_obj(self, value_obj: dict, key: str = 'simple') -> list[str]:
-        '''Alternate for handle_value_obj(), used in obtain_invalid_content_items()'''
+    def get_invalid_value_obj(self, value_obj: dict, key: str = "simple") -> list[str]:
+        """Alternate for handle_value_obj(), used in obtain_invalid_content_items()"""
         if isinstance(value_obj, dict):
             return self.get_invalid_reference_values(value_obj.get(key))
         return self.get_invalid_reference_values(getattr(value_obj, key, None))
 
-    def fix_value_obj(self, value_obj: dict | Task, key: str = 'simple') -> list[str]:
-        '''Alternate for handle_value_obj(), used in fix()'''
+    def fix_value_obj(self, value_obj: dict | Task, key: str = "simple") -> list[str]:
+        """Alternate for handle_value_obj(), used in fix()"""
         if isinstance(value_obj, dict) and (value := value_obj.get(key)):
             invalid_values = self.get_invalid_reference_values(value)
             for inv in invalid_values:
-                value = value.replace(inv, f'${{{inv}}}')
+                value = value.replace(inv, f"${{{inv}}}")
             value_obj[key] = value
         elif value := getattr(value_obj, key, None):
             invalid_values = self.get_invalid_reference_values(value)
             for inv in invalid_values:
-                value = value.replace(inv, f'${{{inv}}}')
+                value = value.replace(inv, f"${{{inv}}}")
             setattr(value_obj, key, value)
         return invalid_values
 
@@ -178,9 +190,9 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
 
         return FixResult(
             validator=self,
-            message=self.fix_message + '\n'.join(
-                f"'{val}' in task: '{task.task.name}'"
-                for task, val in invalid_values
+            message=self.fix_message
+            + "\n".join(
+                f"'{val}' in task: '{task.task.name}'" for task, val in invalid_values
             ),
             content_object=content_item,
         )

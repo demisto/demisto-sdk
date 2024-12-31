@@ -219,8 +219,8 @@ class TestRNUpdate:
             - return a markdown string
         """
         expected_result = (
-            "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n- New: added"
-            " a new playbook - test_playbook which Hello World Playbook description\n\n"
+            "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n- New: Added"
+            " a new playbook - test_playbook that Hello World Playbook description\n\n"
         )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -1347,7 +1347,7 @@ class TestRNUpdate:
 
         assert (
             desc
-            == "##### Integration test\n\n- Deprecated ***test-command*** command. Use %%% instead.\ntext for test"
+            == "##### Integration test\n\n- Deprecated the ***test-command*** command. Use %%% instead.\ntext for test"
         )
 
     def test_deprecated_rn_integration_command(self, mocker):
@@ -2717,7 +2717,7 @@ def test_deprecated_commands():
         new_content=new_command,
         content_type=content_type.COMMAND,
     )
-    assert res == "- Deprecated the ***command_1*** command. Use %%% instead.\n"
+    assert res == "- Deprecated the **command_1** command. Use %%% instead.\n"
 
 
 def test_get_deprecated_comment_from_desc():

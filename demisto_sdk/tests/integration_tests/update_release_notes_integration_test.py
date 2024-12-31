@@ -55,7 +55,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
 
     expected_rn = (
         "\n#### Integrations\n\n##### New: Azure Feed\n\n- New: Added a new i"
-        "ntegration - Azure Feed that Azure.CloudIPs Feed Integration.\n<~XSO"
+        "ntegration- Azure Feed that Azure.CloudIPs Feed Integration.\n<~XSO"
         "AR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>\n"
     )
     added_files = {

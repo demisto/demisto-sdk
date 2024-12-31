@@ -710,7 +710,8 @@ class UpdateRN:
                     logger.info(
                         f"\n<green>Next Steps:\n - Please review the "
                         f"created release notes found at {rn_path} and document any changes you "
-                        f"made by replacing '%%UPDATE_RN%%' or deleting it.\n - Commit "
+                        f"made by replacing '%%UPDATE_RN%%'/'%%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%'"
+                        f"/'%%UPDATE_CONTENT_ITEM_DESCRIPTION%%'/'%%UPDATE_CONTENT_ITEM_NAME%%'/'%%UPDATE_CONTENT_ITEM_TYPE%%' or deleting it.\n - Commit "
                         f"the new release notes to your branch.\nFor information regarding proper"
                         f" format of the release notes, please refer to "
                         f"https://xsoar.pan.dev/docs/integrations/changelog</green>"

@@ -15,10 +15,10 @@ ContentTypes = IncidentField
 
 class IsAliasInnerAliasValidator(BaseValidator[ContentTypes]):
     error_code = "IF118"
-    description = ""
-    rationale = ""
+    description = "Checks for aliases that are themselves aliases."
+    rationale = "An alias should not itself be an alias."
     error_message = "The following aliases have inner aliases: {aliases}"
-    related_field = ""
+    related_field = "Aliases"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
@@ -31,15 +31,15 @@ class IsAliasInnerAliasValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (aliases := self.has_inner_aliases(content_item.aliases))
+            if (aliases := get_inner_aliases(content_item.aliases))
         ]
     
-    def has_inner_aliases(aliases: list[dict]) -> list[str]:
-        return [
-            alias.get("cliname")
-            for alias in aliases
-            if "aliases" in alias
-        ]
+def get_inner_aliases(aliases: list[dict]) -> list[str]:
+    return [
+        str(alias.get("cliName") or alias.get("cliname"))
+        for alias in aliases
+        if "aliases" in alias
+    ]
 
         
 

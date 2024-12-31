@@ -19,6 +19,7 @@ ignorable_errors = [
   "IF113",
   "IF115",
   "IF116",
+  "IF118",
   "IN107",
   "IN109",
   "IN110",

@@ -45,6 +45,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF115_unsearchable_k
 from demisto_sdk.commands.validate.validators.IF_validators.IF116_select_values_cannot_contain_empty_values_in_multi_select_types import (
     SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF118_is_alias_inner_alias_valid import (
+    IsAliasInnerAliasValidator,
+)
 from demisto_sdk.commands.validate.validators.IF_validators.IF119_select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types import (
     SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator,
 )
@@ -714,3 +717,13 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
         == "Removed all redundant empty values in the selectValues field."
     )
     assert result.content_object.select_values == ["test", ""]
+
+
+def test_IsAliasInnerAliasValidator():
+    inc_field = create_incident_field_object(
+        ['Aliases'], [
+            {
+                
+            }
+        ]
+    )

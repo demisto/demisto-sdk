@@ -34,7 +34,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
-    #TODO - remove this import
     replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (

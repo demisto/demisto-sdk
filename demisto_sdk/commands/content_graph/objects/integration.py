@@ -23,11 +23,7 @@ from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import (
-    ContentType,
-    RelationshipType,
-    replace_marketplace_references,
-)
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     Argument,
     IntegrationScript,
@@ -175,7 +171,6 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         **kwargs,
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
-        #data = replace_marketplace_references(data, current_marketplace, str(self.path))
         if current_marketplace != MarketplaceVersions.MarketplaceV2:
             script: dict = data.get("script", {})
             if script.get("isfetchevents"):

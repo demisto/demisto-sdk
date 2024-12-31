@@ -14,7 +14,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
-    replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
@@ -75,7 +74,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
         data = self.prepare_for_upload(current_marketplace=marketplace)
-        #data = replace_marketplace_references(data, marketplace, str(self.path))
+
         for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(
             data, marketplace, self.is_incident_to_alert(marketplace)
         ):

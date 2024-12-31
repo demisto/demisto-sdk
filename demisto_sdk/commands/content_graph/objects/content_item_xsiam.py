@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
-    replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import (
     ContentItem,
@@ -56,7 +55,6 @@ class ContentItemXSIAM(ContentItem, ABC):
         data = self.prepare_for_upload(
             marketplace,
         )
-        #data = replace_marketplace_references(data, marketplace, str(self.path))
 
         for file in output_paths:
             write_dict(file, data=data, handler=self.handler)

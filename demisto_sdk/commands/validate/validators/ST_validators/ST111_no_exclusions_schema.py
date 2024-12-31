@@ -1,5 +1,6 @@
-from typing import Iterable, List, Union
-
+from typing import Union
+from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.validate.validators.ST_validators.ST110_is_valid_scheme import SchemaValidator
 from demisto_sdk.commands.content_graph.objects import (
     AssetsModelingRule,
     CaseField,
@@ -77,39 +78,11 @@ ContentTypes = Union[
     AssetsModelingRule,
 ]
 
-EXCLUDED_FIELDS = [
-    "section",
-    "sectionorder"
-]
-
-
-class SchemaValidator(BaseValidator[ContentTypes]):
-    error_code = "ST110"
-    description = "Validate that the scheme's structure is valid, while excluding certain fields."
+class StrictSchemaValidator(SchemaValidator):
+    error_code = "ST111"
+    description = "Validate that the scheme's structure is valid, no fields excluded."
     rationale = "Maintain valid structure for content items."
-
-    def obtain_invalid_content_items(
-        self,
-        content_items: Iterable[ContentTypes],
-    ) -> List[ValidationResult]:
-        return [
-            ValidationResult(
-                validator=self,
-                message="\n".join(
-                    str(error) for error in content_item.structure_errors
-                ),
-                content_object=content_item,
-            )
-            for content_item in content_items
-            if self.is_invalid_schema(content_item)
-        ]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
 
     def is_invalid_schema(self, content_item: ContentTypes) -> bool:
-        return bool(content_item.structure_errors) and not self.is_error_excluded(content_item.structure_errors)
-
-    def is_error_excluded(self, structure_errors: List[StructureError]) -> bool:
-        for error in structure_errors:
-            for field_name in error.field_name:
-                if field_name and field_name in EXCLUDED_FIELDS:
-                    return True
-        return False
+        return bool(content_item.structure_errors)

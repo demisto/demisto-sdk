@@ -148,6 +148,7 @@ class _StrictIntegration(BaseStrictModel):
     display: str
     beta: Optional[bool] = None
     category: str
+    configurations: List[Configuration] = Field(..., alias="configuration")# type:ignore[valid-type]
     section_order: conlist(SectionOrderValues, min_items=1, max_items=3) = Field(alias="sectionorder")
     image: Optional[str] = None
     description: str
@@ -157,7 +158,6 @@ class _StrictIntegration(BaseStrictModel):
     detailed_description: Optional[str] = Field(None, alias="detaileddescription")
     auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")
     support_level_header: MarketplaceVersions = Field(None, alias="supportlevelheader")
-    configurations: List[Configuration] = Field(..., alias="configuration")# type:ignore[valid-type]
     script: Script  # type:ignore[valid-type]
     hidden: Optional[bool] = None
     videos: Optional[List[str]] = None
@@ -177,23 +177,23 @@ class _StrictIntegration(BaseStrictModel):
             data['sectionorder'] = list(set(data['section_order']) | set(data['section_order_camel_case']))
         super().__init__(**data)
 
-    @validator('configurations')
-    def validate_sections(cls, configurations, values):
+
+    @validator('section_order')
+    def validate_sections(cls, section_order_field, values):
         """
         Validates each configuration object has a valid section clause.
         A valid section clause is a section which is included in the list of the integration's section_order.
         Even if the section is an allowed value (currently Collect, Connect or Optimize),it could be invalid if the
         specific value is not present in section_order.
         """
-        section_order_field = values.get('section_order')
+        configurations = values.get('configurations')
         if not section_order_field:
             return None
         integration_sections = [section_name.value for section_name in section_order_field]
         for config in configurations:
             assert config.section in integration_sections,\
                 f'section {config.section} of {config.display} is not present in section_order {integration_sections}'
-        return configurations
-
+        return section_order_field
 
 
 

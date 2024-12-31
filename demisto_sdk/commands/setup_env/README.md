@@ -27,7 +27,7 @@ The command will configure VSCode and XSOAR/XSIAM instances for development and 
 - **--clean**: Clean the repository of temporary files created by the 'lint' command.
   - Default: `False`
 
-- **file_paths**: 
+- **file_paths**:
   - Default: `<class 'list'>`
 
 - **--console-log-threshold**: Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.

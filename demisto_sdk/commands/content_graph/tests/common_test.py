@@ -127,11 +127,13 @@ def test_replace_marketplace_references__dict():
     data = {
         "description": "This is a Cortex XSOAR v1 example.",
         "details": "Cortex XSOAR should be replaced.",
+        "Cortex XSOAR": "Cortex XSOAR",
     }
     original_id = id(data)
     expected = {
         "description": "This is a Cortex example.",
         "details": "Cortex should be replaced.",
+        "Cortex": "Cortex",
     }
     result = replace_marketplace_references(
         data, MarketplaceVersions.MarketplaceV2, path="example/path"

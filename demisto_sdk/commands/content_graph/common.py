@@ -530,7 +530,7 @@ def replace_marketplace_references(
         marketplace (MarketplaceVersions): The marketplace version to check against.
         path (str): The path of the item being processed.
 
-        Returns:
+    Returns:
         Any: The same data object with replacements made if applicable.
     """
     try:
@@ -539,14 +539,26 @@ def replace_marketplace_references(
             MarketplaceVersions.XPANSE,
         }:
             if isinstance(data, dict):
-                for k, v in data.items():
-                    data[k] = replace_marketplace_references(v, marketplace, path)
+                keys_to_update = {}
+                for key, value in data.items():
+                    # Process the key
+                    new_key = (
+                        re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", key)
+                        if isinstance(key, str)
+                        else key
+                    )
+                    if new_key != key:
+                        keys_to_update[key] = new_key
+                    # Process the value
+                    data[key] = replace_marketplace_references(value, marketplace, path)
+                # Update the keys in the dictionary
+                for old_key, new_key in keys_to_update.items():
+                    data[new_key] = data.pop(old_key)
             elif isinstance(data, list):
                 for i in range(len(data)):
                     data[i] = replace_marketplace_references(data[i], marketplace, path)
             elif isinstance(data, str):
-                # Replace "Cortex XSOAR" and the following word if it contains a number
-                data = re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", data)
+                return re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", data)
     except Exception as e:
         logger.error(
             f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"

@@ -1,4 +1,6 @@
 changes:
-- description: Updated the update-release-notes command to handle changes in scripts and integration (using the objects under content_graph).
+- description: Updated the update-release-notes command to handle changes in scripts and integration (using the objects under content_graph). 
+                Updated the RN103 validation to validate the new fill in templates- "%%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%",
+                        "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%", "%%UPDATE_CONTENT_ITEM_NAME%%", "%%UPDATE_CONTENT_ITEM_TYPE%%"
   type: feature
 pr_number: 4562

@@ -1,4 +1,0 @@
-changes:
-- description: Fix an issue where *RN106* and *PA114* validations would fail on new packs.
-  type: fix
-pr_number: 4710

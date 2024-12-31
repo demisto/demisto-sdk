@@ -1,0 +1,4 @@
+changes:
+- description: The convert command has been deprecated and is no longer available for use.
+  type: breaking
+pr_number: 4743

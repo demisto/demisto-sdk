@@ -1,0 +1,4 @@
+changes:
+- description: Upgrading the pylint version to 3.3.2.
+  type: internal
+pr_number: 4709

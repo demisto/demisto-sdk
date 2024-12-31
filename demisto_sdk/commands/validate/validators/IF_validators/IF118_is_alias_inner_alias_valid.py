@@ -35,6 +35,14 @@ class IsAliasInnerAliasValidator(BaseValidator[ContentTypes]):
         ]
     
 def get_inner_aliases(aliases: list[dict]) -> list[str]:
+    """Checks if any alias of the incident field is itself an alias.
+
+    Args:
+        aliases (list[dict]): The list of alias objects.
+
+    Returns:
+        list[str]: A list of the names of aliases that have their own aliases.
+    """
     return [
         str(alias.get("cliName") or alias.get("cliname"))
         for alias in aliases

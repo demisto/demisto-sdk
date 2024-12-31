@@ -276,7 +276,7 @@ class ContentItem(BaseContent):
         logger.debug(f"preparing {self.path}")
 
         # Replace incorrect marketplace references
-        #data = replace_marketplace_references(data, current_marketplace, str(self.path))
+        data = replace_marketplace_references(data, current_marketplace, str(self.path))
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(

@@ -371,7 +371,7 @@ def run_test_use_case_pytest(
     test_use_case_suite = TestSuite("Test Use Case")
     containing_pack = get_containing_pack(test_use_case_directory)
 
-    test_use_case_suite.add_property("file_name", str(test_use_case_directory))
+    test_use_case_suite.add_property("file_name", str(test_use_case_directory.name))
     test_use_case_suite.add_property("pack_id", containing_pack)
     if CI_PIPELINE_ID:
         test_use_case_suite.add_property("ci_pipeline_id", CI_PIPELINE_ID)

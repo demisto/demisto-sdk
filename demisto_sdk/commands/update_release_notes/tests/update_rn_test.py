@@ -256,7 +256,7 @@ class TestRNUpdate:
         release_notes = update_rn.build_rn_template(changed_items)
         assert release_notes == (
             "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n"
-            "#### This playbook addresses the following alerts:\n"
+            "##### This playbook addresses the following alerts:\n"
             "##### Playbook Stages:\n##### Requirements:\n###### Triage:\n"
             "###### Early Containment:\n###### Investigation:\n###### Containment:\n\n"
         )

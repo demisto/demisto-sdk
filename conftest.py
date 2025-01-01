@@ -175,3 +175,12 @@ def disable_log_colors():
 @pytest.fixture(autouse=True)
 def clear_cache():
     tools.get_file.cache_clear()
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--client_conf",
+        action="store",
+        default=None,
+        help="Custom client configuration",
+    )

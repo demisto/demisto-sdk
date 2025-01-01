@@ -45,9 +45,9 @@ def release_notes_mismatch_error(content_item:IntegrationScript):
     should_be_entry = release_notes_shouldbe_entry(content_item)
     image_entry = get_docker_image_entry(content_item.pack.release_note.file_content, content_item.name)
     if should_be_entry and (not (should_be_entry in image_entry) or image_entry == NO_DOCKER_ENTRY_FOUND):
-        return f"Docker version in release notes should be {should_be_entry}, found {image_entry}"
-    if not should_be_entry and image_entry:
-        return f"There should be no release notes docker update entry. Found {image_entry}"
+        return f"Docker version in release notes should be {should_be_entry}, found: {image_entry}"
+    if not should_be_entry and image_entry and not image_entry == NO_DOCKER_ENTRY_FOUND:
+        return f"There should be no release notes docker update entry, found: {image_entry}"
 
 
 class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
@@ -83,14 +83,17 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
         for item in rn_items:
             if not item.startswith(content_item.name):
                 continue
-            update_line_exists = False
             for entry in item.split("- "):
                 if entry.startswith("Updated the Docker image to: "):
-                    update_line_exists = True
                     new_item = item.replace(entry, should_be_full_rn)
                     content_item.pack.release_note = content_item.pack.release_note.replace(item, new_item)
-                    break
-            if not update_line_exists and should_be_full_rn:
+                    return FixResult(
+                        validator=self,
+                        message=f'Added "Updated the Docker.... {should_be_rn_entry} to the release notes.',
+                        content_object=content_item,
+                    )
+
+            if should_be_full_rn:
                 new_item = item + f'\n{should_be_full_rn}'
                 content_item.pack.release_note = content_item.pack.release_note.replace(item, new_item)
                 return FixResult(

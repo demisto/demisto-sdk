@@ -1439,6 +1439,14 @@ def test_IsSilentPlaybookValidator(name, id, is_silent, result_len):
 
 
 def test_IsCorrectValueReferencesInterface_correct_pb():
+    """
+    Given:
+    - A playbook has valid references to the context.
+    When:
+    - Running validate on the playbook.
+    Then:
+    - Validate that playbook passes.
+    """
     pb_content = [
         {
             "0": {
@@ -1885,6 +1893,14 @@ def test_IsCorrectValueReferencesInterface_correct_pb():
 
 
 def test_IsCorrectValueReferencesInterface_incorrect_pb():
+    """
+    Given:
+    - A playbook has invalid references to the context.
+    When:
+    - Running validate on the playbook.
+    Then:
+    - Validate that the incorrect references are caught.
+    """
     pb_content = [
         {
             "0": {
@@ -2312,6 +2328,14 @@ def test_IsCorrectValueReferencesInterface_incorrect_pb():
 
 
 def test_IsCorrectValueReferencesInterface_fix():
+    """
+    Given:
+    - A playbook has invalid references to the context.
+    When:
+    - Running validate on a playbook with the fix flag.
+    Then:
+    - Validate that the references are fixed.
+    """
     incorrect_pb_content = [
         {
             "0": {

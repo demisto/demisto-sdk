@@ -1,4 +1,5 @@
 from time import time
+
 start = time()
 
 import os
@@ -21,6 +22,8 @@ from demisto_sdk.commands.common.tools import (
     is_sdk_defined_working_offline,
 )
 
+TESTS_PATH = "demisto_sdk/tests/"
+
 app = typer.Typer()
 
 
@@ -30,27 +33,27 @@ app = typer.Typer()
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 def main(
-    ctx: typer.Context,
-    version: bool = typer.Option(
-        False, "--version", "-v", help="Show the current version of demisto-sdk."
-    ),
-    release_notes: bool = typer.Option(
-        False,
-        "--release-notes",
-        "-rn",
-        help="Show the release notes for the current version.",
-    ),
-    console_log_threshold: str = typer.Option(
-        None,
-        "--console-log-threshold",
-        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
-    ),
-    file_log_threshold: str = typer.Option(
-        None, "--file-log-threshold", help="Minimum logging threshold for file output."
-    ),
-    log_file_path: str = typer.Option(
-        None, "--log-file-path", help="Path to save log files."
-    ),
+        ctx: typer.Context,
+        version: bool = typer.Option(
+            False, "--version", "-v", help="Show the current version of demisto-sdk."
+        ),
+        release_notes: bool = typer.Option(
+            False,
+            "--release-notes",
+            "-rn",
+            help="Show the release notes for the current version.",
+        ),
+        console_log_threshold: str = typer.Option(
+            None,
+            "--console-log-threshold",
+            help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+        ),
+        file_log_threshold: str = typer.Option(
+            None, "--file-log-threshold", help="Minimum logging threshold for file output."
+        ),
+        log_file_path: str = typer.Option(
+            None, "--log-file-path", help="Path to save log files."
+        ),
 ):
     sdk = DemistoSDK()  # Initialize your SDK class
     sdk.configuration = Configuration()  # Initialize the configuration
@@ -135,26 +138,28 @@ def show_release_notes():
         )
 
 
-def register_commands(args: list[str]):  # noqa: C901
+def register_commands(_args: list[str]):  # noqa: C901
     """
     Register relevant commands to Demisto-SDK app based on command-line arguments.
     Args:
-        args (list[str]): The list of command-line arguments.
+        _args (list[str]): The list of command-line arguments.
     """
 
     register_nothing = (
-        "-v" in args
-        or "--version" in args
-        or "-rn" in args
-        or "--release-notes" in args
+            "-v" in _args
+            or "--version" in _args
+            or "-rn" in _args
+            or "--release-notes" in _args
     )
     if register_nothing:
         return
+    is_test = len(_args) > 0 and TESTS_PATH in _args[0]
+    is_help = "-h" in _args or "--help" in _args
 
-    register_all = not args or "-h" in args or "--help" in args
-    
+    register_all = any([is_test, is_help])
+
     command_name: str = next(
-        (arg for arg in args if not arg.startswith("-")), ""
+        (arg for arg in _args if not arg.startswith("-")), ""
     )  # command name would be the first non-flag/option argument.
 
     if command_name == "export-api" or register_all:
@@ -294,7 +299,7 @@ def register_commands(args: list[str]):  # noqa: C901
         app.command(
             name="generate-yml-from-python",
             help="Generates a YAML file from Python code that includes "
-            "its special syntax.",
+                 "its special syntax.",
         )(generate_yml_from_python)
 
     if command_name == "init" or register_all:
@@ -483,11 +488,10 @@ def register_commands(args: list[str]):  # noqa: C901
             help="This command generates unit tests automatically from an integration's Python code.",
         )(generate_unit_tests)
 
+
 args = sys.argv[1:]
 register_commands(args)
-
+typer.echo(f"Start up time: {time() - start}s")  # TODO - Delete
 if __name__ == "__main__":
-    typer.echo(f"Start up time: {time()-start}s")
     typer.echo("Running Demisto-SDK CLI")
     app()  # Run the main app
-

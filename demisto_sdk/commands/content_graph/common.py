@@ -5,6 +5,9 @@ from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Optional, Se
 
 from neo4j import graph
 from pydantic import BaseModel
+from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
+    FoldedScalarString,
+)
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_NEO4J_DATABASE_HTTP,
@@ -557,8 +560,13 @@ def replace_marketplace_references(
             elif isinstance(data, list):
                 for i in range(len(data)):
                     data[i] = replace_marketplace_references(data[i], marketplace, path)
+            elif isinstance(data, FoldedScalarString):
+                # if data is a FoldedScalarString (yml unification), we need to convert it to a string and back
+                data = FoldedScalarString(
+                    re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", str(data))
+                )
             elif isinstance(data, str):
-                return re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", data)
+                data = re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", data)
     except Exception as e:
         logger.error(
             f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"

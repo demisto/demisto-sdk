@@ -15,9 +15,10 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.ST_validators.ST110_is_valid_scheme import (
     SchemaValidator,
 )
+from demisto_sdk.commands.validate.validators.ST_validators.ST111_no_exclusions_schema import (
+    StrictSchemaValidator,
+)
 from TestSuite.pack import Pack
-from demisto_sdk.commands.validate.validators.ST_validators.ST111_no_exclusions_schema import StrictSchemaValidator, \
-    ALLOWED_SECTIONS
 
 
 def test_sanity_SchemaValidator():
@@ -254,7 +255,7 @@ def test_invalid_section_order(pack: Pack):
         - the integration is invalid and the correct error message is returned
     """
     integration = pack.create_integration(yml=load_yaml("integration.yml"))
-    integration.yml.update({'sectionorder': ["Connect", "Run"]})
+    integration.yml.update({"sectionorder": ["Connect", "Run"]})
 
     integration_parser = IntegrationParser(
         Path(integration.path), list(MarketplaceVersions)
@@ -294,9 +295,9 @@ def test_invalid_section(pack: Pack):
         - the integration is invalid and the correct error message is returned
     """
     integration = pack.create_integration(yml=load_yaml("integration.yml"))
-    curr_config = integration.yml.read_dict()['configuration']
-    curr_config[0]['section'] = "Run"
-    integration.yml.update({'configuration': curr_config})
+    curr_config = integration.yml.read_dict()["configuration"]
+    curr_config[0]["section"] = "Run"
+    integration.yml.update({"configuration": curr_config})
 
     integration_parser = IntegrationParser(
         Path(integration.path), list(MarketplaceVersions)
@@ -316,9 +317,9 @@ def test_missing_section(pack: Pack):
         - the integration is invalid and the correct error message is returned
     """
     integration = pack.create_integration(yml=load_yaml("integration.yml"))
-    curr_config = integration.yml.read_dict()['configuration']
+    curr_config = integration.yml.read_dict()["configuration"]
     curr_config[0].pop("section")
-    integration.yml.update({'configuration': curr_config})
+    integration.yml.update({"configuration": curr_config})
 
     integration_parser = IntegrationParser(
         Path(integration.path), list(MarketplaceVersions)
@@ -338,7 +339,9 @@ class TestST111:
         Then:
             - the integration is invalid and the correct error message is returned
         """
-        integration = create_integration_object(paths=['sectionorder'], values=[["Connect", "Run"]])
+        integration = create_integration_object(
+            paths=["sectionorder"], values=[["Connect", "Run"]]
+        )
         results = StrictSchemaValidator().obtain_invalid_content_items([integration])
 
         assert len(results) == 0
@@ -357,7 +360,7 @@ class TestST111:
         results = StrictSchemaValidator().obtain_invalid_content_items([integration])
 
         assert len(results) == 1
-        assert results[0].message == 'Missing section order'
+        assert results[0].message == "Missing section order"
 
     def test_invalid_section(self):
         """
@@ -369,14 +372,12 @@ class TestST111:
             - the integration is invalid and the correct error message is returned
         """
         integration = create_integration_object()
-        curr_config = integration.data['configuration']
-        curr_config[0]['section'] = "Run"
-        integration.data['configuration'] = curr_config
-
+        curr_config = integration.data["configuration"]
+        curr_config[0]["section"] = "Run"
+        integration.data["configuration"] = curr_config
 
         results = StrictSchemaValidator().obtain_invalid_content_items([integration])
         assert len(results) == 0
-
 
     def test_missing_section(self, pack: Pack):
         """
@@ -388,10 +389,13 @@ class TestST111:
             - the integration is invalid and the correct error message is returned
         """
         integration = create_integration_object()
-        curr_config = integration.data['configuration']
+        curr_config = integration.data["configuration"]
         curr_config[0].pop("section")
-        integration.data['configuration'] = curr_config
+        integration.data["configuration"] = curr_config
 
         results = StrictSchemaValidator().obtain_invalid_content_items([integration])
         assert len(results) == 1
-        assert results[0].message == f'Missing section for configuration {curr_config[0].get("name")}'
+        assert (
+            results[0].message
+            == f'Missing section for configuration {curr_config[0].get("name")}'
+        )

@@ -71,7 +71,9 @@ class BaseStrictModel(BaseModel, ABC):
             "breaking_changes_notes",  # release-notes-config
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
-            assert value is not None, f"The field {field.name} is not required, but should not be None if it exists"
+            assert (
+                value is not None
+            ), f"The field {field.name} is not required, but should not be None if it exists"
         return value
 
 

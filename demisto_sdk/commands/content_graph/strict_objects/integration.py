@@ -137,9 +137,10 @@ CommonFieldsIntegration = create_model(
     ),
 )
 
+
 class SectionOrderValues(str, Enum):
-    CONNECT = "Connect",
-    COLLECT = "Collect",
+    CONNECT = ("Connect",)
+    COLLECT = ("Collect",)
     OPTIMIZE = "Optimize"
 
 
@@ -148,8 +149,10 @@ class _StrictIntegration(BaseStrictModel):
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=3)] = Field(alias="sectionorder")
-    configurations: List[Configuration] = Field(..., alias="configuration")# type:ignore[valid-type]
+    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=3)] = (
+        Field(alias="sectionorder")
+    )
+    configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]
     image: Optional[str] = None
     description: str
     default_mapper_in: Optional[str] = Field(None, alias="defaultmapperin")
@@ -171,14 +174,15 @@ class _StrictIntegration(BaseStrictModel):
         Initializes the _StrictIntegration object.
         Using this custom init function to support two aliases for the section_order field.
         """
-        if 'sectionOrder' in data and not 'sectionorder' in data:
-            data['sectionorder'] = data.pop('sectionOrder')
-        elif 'sectionOrder' in data and 'sectionorder' in data:
-            data['sectionorder'] = list(set(data['section_order']) | set(data['section_order_camel_case']))
+        if "sectionOrder" in data and "sectionorder" not in data:
+            data["sectionorder"] = data.pop("sectionOrder")
+        elif "sectionOrder" in data and "sectionorder" in data:
+            data["sectionorder"] = list(
+                set(data["section_order"]) | set(data["section_order_camel_case"])
+            )
         super().__init__(**data)
 
-
-    @validator('configurations')
+    @validator("configurations")
     def validate_sections(cls, configurations, values):
         """
         Validates each configuration object has a valid section clause.
@@ -186,18 +190,19 @@ class _StrictIntegration(BaseStrictModel):
         Even if the section is an allowed value (currently Collect, Connect or Optimize),it could be invalid if the
         specific value is not present in section_order.
         """
-        section_order_field = values.get('section_order')
+        section_order_field = values.get("section_order")
         if not section_order_field:
             return configurations
-        integration_sections = [section_name.value for section_name in section_order_field]
+        integration_sections = [
+            section_name.value for section_name in section_order_field
+        ]
         for config in configurations:
             if not config.section:
                 return configurations
-            assert config.section in integration_sections,\
-                f'section {config.section} of {config.display} is not present in section_order {integration_sections}'
+            assert (
+                config.section in integration_sections
+            ), f"section {config.section} of {config.display} is not present in section_order {integration_sections}"
         return configurations
-
-
 
 
 StrictIntegration = create_model(

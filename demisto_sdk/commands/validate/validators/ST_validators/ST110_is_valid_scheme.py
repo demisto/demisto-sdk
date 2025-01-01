@@ -35,7 +35,6 @@ from demisto_sdk.commands.content_graph.objects import (
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import StructureError
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -77,9 +76,12 @@ ContentTypes = Union[
     AssetsModelingRule,
 ]
 
+
 class SchemaValidator(BaseValidator[ContentTypes]):
     error_code = "ST110"
-    description = "Validate that the scheme's structure is valid, while excluding certain fields."
+    description = (
+        "Validate that the scheme's structure is valid, while excluding certain fields."
+    )
     rationale = "Maintain valid structure for content items."
 
     def obtain_invalid_content_items(

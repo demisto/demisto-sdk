@@ -220,7 +220,7 @@ class TestRNUpdate:
         """
         expected_result = (
             "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n- New: Added"
-            " a new playbook - test_playbook that Hello World Playbook description\n\n"
+            " a new playbook- test_playbook that Hello World Playbook description\n\n"
         )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -1347,7 +1347,7 @@ class TestRNUpdate:
 
         assert (
             desc
-            == "##### Integration test\n\n- Deprecated the ***test-command*** command. Use %%% instead.\ntext for test"
+            == "##### Integration test\n\n- Deprecated the **test-command** command. Use %%% instead.\ntext for test"
         )
 
     def test_deprecated_rn_integration_command(self, mocker):

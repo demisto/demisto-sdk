@@ -8,7 +8,7 @@ import os
 import re
 from enum import Enum
 from pathlib import Path
-from typing import Any, Iterable, Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple, Union
 
 from packaging.version import Version
 
@@ -205,7 +205,7 @@ def generate_content_deprecation_rn(
                                              (e.g., the command name for a deprecated argument). Defaults to None.
 
     Returns:
-        str: A formatted release note indicating the deprecation of content of an existing content item. 
+        str: A formatted release note indicating the deprecation of content of an existing content item.
         Returns an empty string if no deprecation is detected.
     """
     if new_content.deprecated and not old_content.deprecated:
@@ -357,12 +357,8 @@ def compare_content_item_changes(
         str: A release note describing changes, including deleted, added, updated content.
     """
     rn = ""
-    old_content_dict = {
-        old_data.name: old_data for old_data in old_content_item_data
-    }
-    new_content_dict = {
-        new_data.name: new_data for new_data in new_content_item_data
-    }
+    old_content_dict = {old_data.name: old_data for old_data in old_content_item_data}
+    new_content_dict = {new_data.name: new_data for new_data in new_content_item_data}
     # search for deleted content of an existing content item
     rn += create_rn_for_deleted_content(
         old_content_dict, new_content_dict, type, parent_name
@@ -1214,7 +1210,11 @@ class UpdateRN:
             str: A formatted release note listing the new commands, or an empty string if no commands are found.
         """
         rn_desc = ""
-        if changed_content_object and isinstance(changed_content_object, Integration) and changed_content_object.commands:
+        if (
+            changed_content_object
+            and isinstance(changed_content_object, Integration)
+            and changed_content_object.commands
+        ):
             rn_desc = NEW_COMMANDS_RN
             for command in changed_content_object.commands:
                 rn_desc += f"\t- ***{command.get_name()}***\n"

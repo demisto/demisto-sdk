@@ -1,5 +1,6 @@
 import logging  # noqa: TID251 # specific case, passed as argument to 3rd party
 import os
+import re
 import shutil
 from pathlib import Path
 from threading import Thread
@@ -82,15 +83,31 @@ class TestResultCapture:
             if report.outcome == "passed":
                 self.junit_testsuite.add_testcase(test_case)
             elif report.outcome == "failed":
-                failure = Failure(
-                    report.longreprtext if report.longrepr else "Test failed"
-                )
+                error_text = self._sanitize_sensitive_data(report.longreprtext if report.longrepr else "Test failed")
+                failure = Failure(error_text)
                 test_case.result = failure
                 self.junit_testsuite.add_testcase(test_case)
             elif report.outcome == "skipped":
                 skipped = Skipped("Test skipped")
                 test_case.result = skipped
                 self.junit_testsuite.add_testcase(test_case)
+
+    def _sanitize_sensitive_data(self, text):
+        """
+        Remove or redact sensitive data from the given text.
+
+        Args:
+            text (str): The text to sanitize.
+
+        Returns:
+            str: The sanitized text with sensitive data removed or redacted.
+        """
+
+        pattern = r"('Authorization':\s*')([^']+)(')"
+        # Replace the sensitive part with '[REDACTED]'
+        sanitized_text = re.sub(pattern, r"\1[REDACTED]\3", text)
+
+        return sanitized_text
 
 
 class TestResults:

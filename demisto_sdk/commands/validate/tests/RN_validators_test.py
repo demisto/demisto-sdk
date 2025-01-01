@@ -143,7 +143,6 @@ def test_release_note_filled_out_validator(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
-    pass
 
 
 def test_IsRNAddedToNewPackValidator_obtain_invalid_content_items():

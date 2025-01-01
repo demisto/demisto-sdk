@@ -1142,7 +1142,7 @@ def format_playbook_description(desc: str) -> str:
     """
     desc = f"\n{desc}"
     key_phrases = (
-        (4, "This playbook addresses the following alerts:\n"),
+        (5, "This playbook addresses the following alerts:\n"),
         (5, "Playbook Stages:\n"),
         (5, "Requirements:\n"),
         (6, "Triage:\n"),

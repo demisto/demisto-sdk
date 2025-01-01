@@ -178,7 +178,7 @@ def clear_cache():
     tools.get_file.cache_clear()
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def register_commands_for_all_tests():
     """
     Ensure that commands are registered before each test runs.

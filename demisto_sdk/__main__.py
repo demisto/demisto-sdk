@@ -26,9 +26,6 @@ TESTS_PATH = "demisto_sdk/tests/"
 
 app = typer.Typer()
 
-# Create a flag to track whether commands are registered
-_commands_registered = False
-
 
 @logging_setup_decorator
 @app.callback(
@@ -156,16 +153,13 @@ def register_commands(_args: list[str]):  # noqa: C901
     )
     if register_nothing:
         return
-    is_test = not _args
+    is_test = not _args or "/tests/" in _args[0]    # TODO - Verify args length
     is_help = "-h" in _args or "--help" in _args
+    
+    command_name: str = next((arg for arg in _args if not arg.startswith("-")), "") # command name would be the first non-flag/option argument.
+    is_pre_commit = "pre-commit" == command_name   # Pre-commit requires mostly all commands to be registered
+    register_all = any([is_test, is_help, is_pre_commit])
 
-    register_all = any([is_test, is_help])
-
-    command_name: str = (
-        ""
-        if register_all
-        else next((arg for arg in _args if not arg.startswith("-")), "")
-    )  # command name would be the first non-flag/option argument.
 
     if command_name == "export-api" or register_all:
         from demisto_sdk.commands.dump_api.dump_api_setup import dump_api
@@ -246,7 +240,7 @@ def register_commands(_args: list[str]):  # noqa: C901
             help="This command formats new or modified files to align with the Cortex standard.",
         )(format)
 
-    if command_name == "coverage-analyze" or register_all:
+    if command_name == "coverage-analyze" or is_pre_commit or register_all:
         from demisto_sdk.commands.coverage_analyze.coverage_analyze_setup import (
             coverage_analyze,
         )
@@ -314,7 +308,7 @@ def register_commands(_args: list[str]):  # noqa: C901
             name="init", help="Creates a new pack, integration, or script template."
         )(init)
 
-    if command_name == "secrets" or register_all:
+    if command_name == "secrets" or is_pre_commit or register_all:
         from demisto_sdk.commands.secrets.secrets_setup import secrets
 
         app.command(
@@ -386,7 +380,7 @@ def register_commands(_args: list[str]):  # noqa: C901
             prepare_content
         )
 
-    if command_name == "xsoar-lint" or register_all:
+    if command_name == "xsoar-lint" or is_pre_commit or register_all:
         from demisto_sdk.commands.xsoar_linter.xsoar_linter_setup import xsoar_linter
 
         app.command(name="xsoar-lint", help="Runs the xsoar lint on the given paths.")(
@@ -493,10 +487,10 @@ def register_commands(_args: list[str]):  # noqa: C901
             help="This command generates unit tests automatically from an integration's Python code.",
         )(generate_unit_tests)
 
+args = sys.argv[1:]
+register_commands(args)
+typer.echo(f"Start up time: {time() - start}s")  # TODO - Delete
 
 if __name__ == "__main__":
     typer.echo("Running Demisto-SDK CLI")
-    args = sys.argv[1:]
-    register_commands(args)
-    typer.echo(f"Start up time: {time() - start}s")  # TODO - Delete
     app()  # Run the main app

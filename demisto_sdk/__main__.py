@@ -1,3 +1,6 @@
+from time import time
+start = time()
+
 import os
 import platform
 import sys
@@ -148,7 +151,8 @@ def register_commands(args: list[str]):  # noqa: C901
     if register_nothing:
         return
 
-    register_all = "-h" in args or "--help" in args
+    register_all = not args or "-h" in args or "--help" in args
+    
     command_name: str = next(
         (arg for arg in args if not arg.startswith("-")), ""
     )  # command name would be the first non-flag/option argument.
@@ -479,9 +483,11 @@ def register_commands(args: list[str]):  # noqa: C901
             help="This command generates unit tests automatically from an integration's Python code.",
         )(generate_unit_tests)
 
+args = sys.argv[1:]
+register_commands(args)
 
 if __name__ == "__main__":
+    typer.echo(f"Start up time: {time()-start}s")
     typer.echo("Running Demisto-SDK CLI")
-    args = sys.argv[1:]
-    register_commands(args)
     app()  # Run the main app
+

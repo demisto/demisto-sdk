@@ -737,5 +737,6 @@ def test_IsAliasInnerAliasValidator():
     )
 
     result = IsAliasInnerAliasValidator().obtain_invalid_content_items([inc_field])
+
     assert inc_field.aliases == 1
     assert result[0].message == 'The following aliases have inner aliases: alias_1, alias_2'

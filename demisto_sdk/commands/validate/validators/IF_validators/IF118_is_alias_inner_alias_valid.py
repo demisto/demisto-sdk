@@ -48,7 +48,3 @@ def get_inner_aliases(aliases: list[dict]) -> list[str]:
         for alias in aliases
         if "aliases" in alias
     ]
-
-        
-
-    

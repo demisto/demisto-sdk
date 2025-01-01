@@ -1,4 +1,4 @@
 changes:
-- description: Added the validation `PB121` to the new validation format.
+- description: Added the validation `PB121` to the new validation format. The validation checks if the inputs of a playbook that are intended to be fetched from the context are in the correct format.
   type: internal
 pr_number: 4702

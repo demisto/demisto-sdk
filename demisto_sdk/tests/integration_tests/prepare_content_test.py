@@ -192,6 +192,9 @@ def test_replace_marketplace_references__end_to_end(git_repo, monkeypatch):
 
     pack: Pack = git_repo.create_pack("PackName")
 
+    # Update the pack readme
+    pack.readme.write_text("Cortex XSOAR in readme")
+
     # Create a script
     script = pack.create_script("MyScript2")
     script.create_default_script()
@@ -224,6 +227,11 @@ def test_replace_marketplace_references__end_to_end(git_repo, monkeypatch):
     # Unzip the pack
     pack_zip = Path(pack.path) / f"{pack.name}.zip"
     shutil.unpack_archive(pack_zip, Path(pack.path) / "unzipped_pack")
+
+    # Check the readme
+    readme_path = Path(pack.path) / "unzipped_pack" / "README.md"
+    readme_content = readme_path.read_text()
+    assert "Cortex in readme" in readme_content
 
     # Check script
     script_path = Path(pack.path) / "unzipped_pack" / "Scripts"

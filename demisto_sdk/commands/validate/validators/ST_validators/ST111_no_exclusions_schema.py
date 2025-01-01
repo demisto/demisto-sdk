@@ -46,7 +46,7 @@ class StrictSchemaValidator(BaseValidator[ContentTypes]):
         if not section_order:
             return "Missing section order"
         configurations = content_item.data.get("configuration")
-        for configuration in configurations:
+        for configuration in configurations:  # type:ignore[union-attr]
             section = configuration.get("section")
             if not section:
                 return f'Missing section for configuration {configuration.get("name")}'

@@ -1,5 +1,9 @@
 from unittest.mock import patch
 
+from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
+    FoldedScalarString,
+)
+
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     MarketplaceVersions,
@@ -122,24 +126,31 @@ def test_replace_marketplace_references__dict():
     Then:
         - The function should return the data with the replacements made if applicable.
         - The function should modify the data in place and not create a copy.
-        - The identity of the data object should remain unchanged.
+        - The type of FoldedScalarString values should be preserved.
     """
     data = {
         "description": "This is a Cortex XSOAR v1 example.",
         "details": "Cortex XSOAR should be replaced.",
         "Cortex XSOAR": "Cortex XSOAR",
+        "folded": FoldedScalarString(
+            "Cortex XSOAR should be replaced in FoldedScalarString."
+        ),
     }
     original_id = id(data)
     expected = {
         "description": "This is a Cortex example.",
         "details": "Cortex should be replaced.",
         "Cortex": "Cortex",
+        "folded": FoldedScalarString(
+            "Cortex should be replaced in FoldedScalarString."
+        ),
     }
     result = replace_marketplace_references(
         data, MarketplaceVersions.MarketplaceV2, path="example/path"
     )
     assert id(result) == original_id
     assert result == expected
+    assert isinstance(result["folded"], FoldedScalarString)
 
 
 def test_replace_marketplace_references__list():
@@ -157,7 +168,6 @@ def test_replace_marketplace_references__list():
     Then:
         - The function should return the data with the replacements made if applicable.
         - The function should modify the data in place and not create a copy.
-        - The identity of the data object should remain unchanged.
     """
     data = [
         "This is a Cortex XSOAR v1 example.",

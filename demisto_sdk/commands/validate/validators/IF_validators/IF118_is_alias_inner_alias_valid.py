@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable
@@ -6,8 +5,8 @@ from typing import Iterable
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = IncidentField
@@ -22,8 +21,9 @@ class IsAliasInnerAliasValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
-    
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> list[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> list[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -31,9 +31,10 @@ class IsAliasInnerAliasValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (aliases := get_inner_aliases(content_item.data.get('Aliases', [])))
+            if (aliases := get_inner_aliases(content_item.data.get("Aliases", [])))
         ]
-    
+
+
 def get_inner_aliases(aliases: list[dict]) -> list[str]:
     """Checks if any alias of the incident field is itself an alias.
 

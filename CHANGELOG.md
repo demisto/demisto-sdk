@@ -1,4 +1,16 @@
 # Changelog
+## 1.33.3 (2025-01-01)
+### Breaking
+* The convert command has been deprecated and is no longer available for use. [#4743](https://github.com/demisto/demisto-sdk/pull/4743)
+
+### Feature
+* Added validations TR100 PB130 to ensure that all silent Playbooks/Triggers have is_silent = True, and name/trigger_name, ID and file_name start with the silent- prefix. [#4740](https://github.com/demisto/demisto-sdk/pull/4740)
+* Added new BA128 validation which ensures script and integration command names don't start with a digit. [#4722](https://github.com/demisto/demisto-sdk/pull/4722)
+
+### Internal
+* Upgrading the pylint version to 3.3.2. [#4709](https://github.com/demisto/demisto-sdk/pull/4709)
+
+
 ## 1.33.2 (2024-12-29)
 ### Breaking
 * Removed support for *DS107* and *RM106* validations. Ensures no "demisto" word in description and readme files for both new & old validate formats. [#4712](https://github.com/demisto/demisto-sdk/pull/4712)

@@ -78,26 +78,27 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
     ) -> FixResult:
 
         should_be_rn_entry = release_notes_shouldbe_entry(content_item)
-        should_be_full_rn = f'\n - here is my full thing {should_be_rn_entry}' if should_be_rn_entry else ''
-        rn_items = content_item.pack.release_note.split("##### ")
+        should_be_full_rn = f'\n- Updated the Docker image to: *{should_be_rn_entry}*.' if should_be_rn_entry else ''
+        rn_items = content_item.pack.release_note.file_content.split("##### ")
         for item in rn_items:
             if not item.startswith(content_item.name):
                 continue
-            for entry in item.split("- "):
-                if entry.startswith("Updated the Docker image to: "):
-                    new_item = item.replace(entry, should_be_full_rn)
-                    content_item.pack.release_note = content_item.pack.release_note.replace(item, new_item)
+            for entry in item.split("\n"):
+                if entry.startswith("- Updated the Docker image to: "):
+                    new_item = item.replace(f'\n{entry}', should_be_full_rn)
+                    content_item.pack.release_note.file_content = content_item.pack.release_note.file_content.replace(f'{item}', new_item)
+                    message = f'Changed docker update entry line in the release notes to match the yml: {should_be_rn_entry}.' if should_be_full_rn else 'Removed docker updated entry as it was not changed in the yml.'
                     return FixResult(
                         validator=self,
-                        message=f'Added "Updated the Docker.... {should_be_rn_entry} to the release notes.',
+                        message=message,
                         content_object=content_item,
                     )
 
             if should_be_full_rn:
-                new_item = item + f'\n{should_be_full_rn}'
-                content_item.pack.release_note = content_item.pack.release_note.replace(item, new_item)
+                new_item = item + should_be_full_rn
+                content_item.pack.release_note.file_content = content_item.pack.release_note.file_content.replace(item, new_item)
                 return FixResult(
                     validator=self,
-                    message=f'Added "Updated the Docker.... {should_be_rn_entry} to the release notes.',
+                    message=f'Added docker updated entry -{should_be_rn_entry}- in release notes.',
                     content_object=content_item,
                 )

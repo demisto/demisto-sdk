@@ -116,6 +116,11 @@ class TextFiles(RelatedFile):
                 logger.debug(f"Failed to get related text file, error: {e}")
         return self.file_content_str
 
+    @file_content.setter
+    def file_content(self, content: str):
+        """Setter for the file_content property. Updates the file content."""
+        self.file_content_str = content #TODO handle writing to disk
+
 
 class RNRelatedFile(TextFiles):
     file_type = RelatedFileType.RELEASE_NOTE

@@ -205,6 +205,9 @@ def validate(
     try:
         # Run old validation flow
         if run_old_validate:
+            logger.warning(
+                    f"Old validate is being used. This flow will be deprecated and removed in the near future. Please use the new validate flow."
+                )
             exit_code += run_old_validation(
                 file_path, is_external_repo, run_with_mp, **ctx.params
             )

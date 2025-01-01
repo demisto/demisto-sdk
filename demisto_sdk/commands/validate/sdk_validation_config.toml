@@ -53,6 +53,7 @@ ignorable_errors = [
   "PB116",
   "PB118",
   "PB119",
+  "PB121",
   "RM100",
   "RM102",
   "RM104",

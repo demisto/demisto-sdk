@@ -16,7 +16,8 @@ from demisto_sdk.commands.validate.validators.ST_validators.ST110_is_valid_schem
     SchemaValidator,
 )
 from TestSuite.pack import Pack
-from demisto_sdk.commands.validate.validators.ST_validators.ST111_no_exclusions_schema import StrictSchemaValidator
+from demisto_sdk.commands.validate.validators.ST_validators.ST111_no_exclusions_schema import StrictSchemaValidator, \
+    ALLOWED_SECTIONS
 
 
 def test_sanity_SchemaValidator():
@@ -260,7 +261,7 @@ def test_invalid_section_order(pack: Pack):
     )
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
-    assert len(results) == 0
+    assert len(results) == 1
 
 
 def test_missing_section_order(pack: Pack):
@@ -302,7 +303,7 @@ def test_invalid_section(pack: Pack):
     )
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
-    assert len(results) == 0
+    assert len(results) == 1
 
 
 def test_missing_section(pack: Pack):
@@ -328,7 +329,7 @@ def test_missing_section(pack: Pack):
 
 
 class TestST111:
-    def test_invalid_section_order(self, pack: Pack):
+    def test_invalid_section_order(self):
         """
         Given:
             - an integration which contains invalid section order
@@ -337,22 +338,12 @@ class TestST111:
         Then:
             - the integration is invalid and the correct error message is returned
         """
-        integration = pack.create_integration(yml=load_yaml("integration.yml"))
-        integration.yml.update({'sectionorder': ["Connect", "Run"]})
+        integration = create_integration_object(paths=['sectionorder'], values=[["Connect", "Run"]])
+        results = StrictSchemaValidator().obtain_invalid_content_items([integration])
 
-        integration_parser = IntegrationParser(
-            Path(integration.path), list(MarketplaceVersions)
-        )
+        assert len(results) == 0
 
-        results = StrictSchemaValidator().obtain_invalid_content_items([integration_parser])
-        assert len(results) == 1
-        assert (
-                results[0].message
-                == "Structure error (type_error.enum) in field sectionorder,1 of integration_0.yml: "
-                   "value is not a valid enumeration member; permitted: 'Connect', 'Collect', 'Optimize'"
-        )
-
-    def test_missing_section_order(self, pack: Pack):
+    def test_missing_section_order(self):
         """
         Given:
             - an integration with a missing section order
@@ -361,22 +352,14 @@ class TestST111:
         Then:
             - the integration is invalid and the correct error message is returned
         """
-        integration = pack.create_integration(yml=load_yaml("integration.yml"))
-        integration.yml.delete_key("sectionorder")
+        integration = create_integration_object()
+        integration.data.pop("sectionorder")
+        results = StrictSchemaValidator().obtain_invalid_content_items([integration])
 
-        integration_parser = IntegrationParser(
-            Path(integration.path), list(MarketplaceVersions)
-        )
-
-        results = StrictSchemaValidator().obtain_invalid_content_items([integration_parser])
         assert len(results) == 1
-        assert (
-                results[0].message
-                == "Structure error (value_error.missing) in field sectionorder of integration_0.yml: "
-                   "The field sectionorder is required but missing"
-        )
+        assert results[0].message == 'Missing section order'
 
-    def test_invalid_section(self, pack: Pack):
+    def test_invalid_section(self):
         """
         Given:
             - an integration which contains invalid section clause in one of its configuration objects
@@ -385,22 +368,14 @@ class TestST111:
         Then:
             - the integration is invalid and the correct error message is returned
         """
-        integration = pack.create_integration(yml=load_yaml("integration.yml"))
-        curr_config = integration.yml.read_dict()['configuration']
+        integration = create_integration_object()
+        curr_config = integration.data['configuration']
         curr_config[0]['section'] = "Run"
-        integration.yml.update({'configuration': curr_config})
+        integration.data['configuration'] = curr_config
 
-        integration_parser = IntegrationParser(
-            Path(integration.path), list(MarketplaceVersions)
-        )
 
-        results = StrictSchemaValidator().obtain_invalid_content_items([integration_parser])
-        assert len(results) == 1
-        assert (
-                results[0].message
-                == "Structure error (assertion_error) in field sectionorder of integration_0.yml: "
-                   "section Run of URL is not present in section_order ['Connect']"
-        )
+        results = StrictSchemaValidator().obtain_invalid_content_items([integration])
+        assert len(results) == 0
 
 
     def test_missing_section(self, pack: Pack):
@@ -412,19 +387,11 @@ class TestST111:
         Then:
             - the integration is invalid and the correct error message is returned
         """
-        integration = pack.create_integration(yml=load_yaml("integration.yml"))
-        curr_config = integration.yml.read_dict()['configuration']
+        integration = create_integration_object()
+        curr_config = integration.data['configuration']
         curr_config[0].pop("section")
-        integration.yml.update({'configuration': curr_config})
+        integration.data['configuration'] = curr_config
 
-        integration_parser = IntegrationParser(
-            Path(integration.path), list(MarketplaceVersions)
-        )
-
-        results = StrictSchemaValidator().obtain_invalid_content_items([integration_parser])
+        results = StrictSchemaValidator().obtain_invalid_content_items([integration])
         assert len(results) == 1
-        assert (
-                results[0].message
-                == "Structure error (value_error.missing) in field configuration,0,section of integration_0.yml: "
-                   "The field configuration,0,section is required but missing"
-        )
+        assert results[0].message == f'Missing section for configuration {curr_config[0].get("name")}'

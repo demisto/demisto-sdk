@@ -77,12 +77,6 @@ ContentTypes = Union[
     AssetsModelingRule,
 ]
 
-EXCLUDED_FIELDS = [
-    "section",
-    "sectionorder"
-]
-
-
 class SchemaValidator(BaseValidator[ContentTypes]):
     error_code = "ST110"
     description = "Validate that the scheme's structure is valid, while excluding certain fields."
@@ -105,11 +99,4 @@ class SchemaValidator(BaseValidator[ContentTypes]):
         ]
 
     def is_invalid_schema(self, content_item: ContentTypes) -> bool:
-        return bool(content_item.structure_errors) and not self.is_error_excluded(content_item.structure_errors)
-
-    def is_error_excluded(self, structure_errors: List[StructureError]) -> bool:
-        for error in structure_errors:
-            for field_name in error.field_name:
-                if field_name and field_name in EXCLUDED_FIELDS:
-                    return True
-        return False
+        return bool(content_item.structure_errors)

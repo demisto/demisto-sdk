@@ -720,6 +720,14 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
 
 
 def test_IsAliasInnerAliasValidator():
+    """
+    Given:
+    - An incident field has an alias with an inner alias.
+    When:
+    - Running validate on an incident field.
+    Then:
+    - Validate that the correct aliases are caught.
+    """
     inc_field = create_incident_field_object(
         ["Aliases"],
         [

@@ -26,7 +26,6 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-
         types_items = []
         fields_items = []
         for item in content_items:
@@ -46,9 +45,10 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
             for content_item in fields_items
             if (error_res := self.is_invalid_required_field(content_item, types_items))
         ]
-    @staticmethod
-    def is_invalid_required_field(content_item, added_types):
 
+    @staticmethod
+    def is_invalid_required_field(content_item: Union[IncidentField, IndicatorField],
+                                  added_types: Union[IncidentType, IndicatorType]):
         # Required fields should not be associated to all
         if content_item.required and content_item.associated_to_all:
             return "Required field should not be associated to all types."
@@ -65,7 +65,7 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
 
             # An already existing Incident/Indicator Type cannot be added to Incident/Indicator Field with required value true
             if content_item.required and len(content_item.associated_types) > len(
-                    old_file.associated_types
+                old_file.associated_types
             ):
                 new_types = list(
                     filter(
@@ -88,7 +88,7 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
             # An already existing Incident/Indicator Type cannot be added to Incident/Indicator Field with required value true
             for associated_type in associated_types:
                 if associated_type not in added_types:
-                    return(
+                    return (
                         f"An already existing Type like {associated_type} cannot be added to an "
                         f"{'Incident' if isinstance(content_item, IncidentField) else 'Indicator'} "
                         f"Field with required value equals true."

@@ -1,6 +1,5 @@
 from typing import Iterable
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -20,7 +19,6 @@ class StrictSchemaValidator(BaseValidator[ContentTypes]):
     error_code = "ST111"
     description = "Validate that the scheme's structure is valid, no fields excluded."
     rationale = "Maintain valid structure for content items."
-    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
 
     def obtain_invalid_content_items(
         self,

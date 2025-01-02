@@ -263,6 +263,9 @@ def test_invalid_section_order(pack: Pack):
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
     assert len(results) == 1
+    assert results[0].message == ("Structure error (type_error.enum) in field sectionorder,1 of integration_0.yml: "
+                                  "value is not a valid enumeration member; permitted: "
+                                  "'Connect', 'Collect', 'Optimize'")
 
 
 def test_missing_section_order(pack: Pack):
@@ -272,7 +275,7 @@ def test_missing_section_order(pack: Pack):
     When:
         - executing the IntegrationParser
     Then:
-        - the integration is invalid and the correct error message is returned
+        - the validation does not fail as it is only addressed in ST111
     """
     integration = pack.create_integration(yml=load_yaml("integration.yml"))
     integration.yml.delete_key("sectionorder")
@@ -305,6 +308,8 @@ def test_invalid_section(pack: Pack):
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
     assert len(results) == 1
+    assert results[0].message == ("Structure error (assertion_error) in field configuration of integration_0.yml: "
+                                  "section Run of URL is not present in section_order ['Connect']")
 
 
 def test_missing_section(pack: Pack):
@@ -314,7 +319,7 @@ def test_missing_section(pack: Pack):
     When:
         - executing the IntegrationParser
     Then:
-        - the integration is invalid and the correct error message is returned
+        - the validation does not fail as it is only addressed in ST111
     """
     integration = pack.create_integration(yml=load_yaml("integration.yml"))
     curr_config = integration.yml.read_dict()["configuration"]
@@ -337,7 +342,7 @@ class TestST111:
         When:
             - executing the IntegrationParser
         Then:
-            - the integration is invalid and the correct error message is returned
+            - the validation does not fail as it is only addressed in ST110
         """
         integration = create_integration_object(
             paths=["sectionorder"], values=[["Connect", "Run"]]
@@ -369,7 +374,7 @@ class TestST111:
         When:
             - executing the IntegrationParser
         Then:
-            - the integration is invalid and the correct error message is returned
+            - the validation does not fail as it is only addressed in ST110
         """
         integration = create_integration_object()
         curr_config = integration.data["configuration"]

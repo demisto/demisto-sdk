@@ -55,7 +55,14 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
                 )
                 or any(
                     note in rn_stripped_content
-                    for note in ["%%UPDATE_RN%%", "%%XSIAM_VERSION%%"]
+                    for note in [
+                        "%%UPDATE_RN%%",
+                        "%%XSIAM_VERSION%%",
+                        "%%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%",
+                        "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%",
+                        "%%UPDATE_CONTENT_ITEM_NAME%%",
+                        "%%UPDATE_CONTENT_ITEM_TYPE%%",
+                    ]
                 )
             )
         ]

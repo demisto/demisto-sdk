@@ -176,11 +176,12 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
     def fix_value_obj(self, value_obj: dict | Task, key: str = "simple") -> list[str]:
         """Alternate for handle_value_obj(), used in fix()"""
         invalid_values = []
-        if isinstance(value_obj, dict) and (value := value_obj.get(key)):
-            invalid_values = self.get_invalid_reference_values(value)
-            for inv in invalid_values:
-                value = value.replace(inv, f"${{{inv}}}")
-            value_obj[key] = value
+        if isinstance(value_obj, dict):
+            if value := value_obj.get(key):
+                invalid_values = self.get_invalid_reference_values(value)
+                for inv in invalid_values:
+                    value = value.replace(inv, f"${{{inv}}}")
+                value_obj[key] = value
         elif value := getattr(value_obj, key, None):
             invalid_values = self.get_invalid_reference_values(value)
             for inv in invalid_values:

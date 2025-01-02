@@ -106,6 +106,8 @@ werkzeug = "^2.2.0" # Added as mitmproxy8 -> flask<2.1
 loguru = "^0.7.2"
 pygithub = "^2.2.0"
 setuptools = "^75.5.0"
+pyxdr = "^1.0"
+
 
 [tool.poetry.extras]
 build = ["gsutil"]

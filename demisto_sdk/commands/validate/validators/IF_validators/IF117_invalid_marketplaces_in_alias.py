@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-from typing import Iterable, Union
+from typing import Iterable
+from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions, OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
-from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
+from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.common.logger import logger
 
-ContentTypes = Union[IncidentField, IndicatorField]
+ContentTypes = IncidentField
 
-class IsAliasInnerAliasValidator(BaseValidator[ContentTypes]):
+class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
     error_code = "IF117"
     description = "Checks if marketplace value in aliases is valid."
     rationale = "marketplace in aliases should be ['xsoar']."
@@ -21,7 +23,7 @@ class IsAliasInnerAliasValidator(BaseValidator[ContentTypes]):
         'the value of the "marketplaces" key in these fields should be ["xsoar"].'
     )
     related_field = "Aliases"
-    is_auto_fixable = False
+    is_auto_fixable = True
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
@@ -34,23 +36,55 @@ class IsAliasInnerAliasValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                aliases := invalid_aliases_marketplace(
-                    content_item.data.get("Aliases", [])
-                )
+                aliases := self.invalid_aliases_marketplace(content_item)
             )
         ]
 
+    def invalid_aliases_marketplace(self, content_item) -> list:
+        """Checks if the marketplace of the aliases is valid.
+        Args:
+            content_item : The content item.
+        Returns:
+            list[str]: A list of the names of aliases that have invalid marketplace.
+        """
+        invalid_aliases = []
+        aliases = content_item.data.get("Aliases", [])
+        if aliases:
+            if not self.graph:
+                logger.info(
+                    f"Skipping formatting of marketplaces field of aliases for {content_item.name} as the "
+                    f"no-graph argument was given."
+                )
+                return []
+        incident_fields = self._get_incident_fields_by_aliases(aliases)
+        for item in incident_fields:
+            alias_marketplaces = item.marketplaces
+            alias_toversion = Version(item.toversion)
 
-def invalid_aliases_marketplace(aliases: list[dict]) -> list[str]:
-    """Checks if the marketplace of the aliases is valid.
-    Args:
-        aliases (list[dict]): The list of alias objects.
-    Returns:
-        list[str]: A list of the names of aliases that have invalid marketplace.
-    """
+            if alias_toversion > Version(
+                    OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION
+            ) and (
+                    len(alias_marketplaces) != 1
+                    or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
+            ):
+               invalid_aliases.append(item.cli_name)
 
-    return [
-        str(alias.get("cliName") or alias.get("cliname"))
-        for alias in aliases
-        if alias.get("marketplaces") != [MarketplaceVersions.XSOAR.value]
-    ]
+    def _get_incident_fields_by_aliases(self, aliases: list[dict]) -> list:
+        """
+        Get from the graph the actual fields for the given aliases
+
+        Args:
+            aliases (list): The alias list.
+
+        Returns:
+            list: A list of dictionaries, each dictionary represent an incident field.
+        """
+        alias_ids: set = {f'{alias.get("cliName")}' for alias in aliases}
+        return (
+            self.graph.search(
+                cli_name=alias_ids,
+                content_type=ContentType.INCIDENT_FIELD,
+            )
+            if self.graph
+            else []
+        )

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,

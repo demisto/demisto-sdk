@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Iterable, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
+from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = IncidentField
+ContentTypes = Union[IncidentField, IndicatorField]
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 class IsAliasInnerAliasValidator(BaseValidator[ContentTypes]):

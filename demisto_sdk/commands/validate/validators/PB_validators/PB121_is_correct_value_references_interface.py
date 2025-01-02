@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Iterable, Optional, Any
+from typing import Any, Callable, Iterable, Optional
 
 from demisto_sdk.commands.content_graph.objects.base_playbook import Task, TaskConfig
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -133,11 +133,15 @@ class IsCorrectValueReferencesInterface(BaseValidator[ContentTypes]):
     @staticmethod
     def get_invalid_reference_values(values: Any) -> list[str]:
         """Get the invalid inputs in an input string."""
-        return [
-            value
-            for value in values.split(",")
-            if value.startswith("incident.") or value.startswith("inputs.")
-        ] if isinstance(values, str) else []
+        return (
+            [
+                value
+                for value in values.split(",")
+                if value.startswith("incident.") or value.startswith("inputs.")
+            ]
+            if isinstance(values, str)
+            else []
+        )
 
     def get_invalid_message_values(self, message_key, message_value) -> list[str]:
         """Get the invalid inputs from message values."""

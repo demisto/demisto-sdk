@@ -101,11 +101,13 @@ def get_description(content_item):
     # in cases content item is instance of argument, command, integration, script
     return content_item.description or ""
 
+
 def get_name(content_item):
     if isinstance(content_item, Parameter):
         return content_item.display or content_item.displaypassword
     # in cases content item is instance of argument, command, integration, script
     return content_item.name
+
 
 def get_deprecated_comment_from_desc(description: str) -> str:
     """
@@ -220,7 +222,9 @@ def generate_content_deprecation_rn(
         str: A formatted release note indicating the deprecation of content of an existing content item.
         Returns an empty string if no deprecation is detected.
     """
-    if not isinstance(new_content, Parameter) and not isinstance(old_content, Parameter):
+    if not isinstance(new_content, Parameter) and not isinstance(
+        old_content, Parameter
+    ):
         if new_content.deprecated and not old_content.deprecated:
             if isinstance(new_content, Argument) and parent:
                 return DEPRECATED_ARGUMENT.format(
@@ -492,7 +496,7 @@ def get_deprecated_rn(changed_object: Union[Integration, Script, Playbook]):
         and changed_object.deprecated
     ):
         rn_from_description = get_deprecated_comment_from_desc(
-            changed_object.get_description()
+            get_description(changed_object)
         )
         return DEPRECATED_CONTENT_ITEM_RN.format(
             replacement=(rn_from_description or "Use %%% instead")

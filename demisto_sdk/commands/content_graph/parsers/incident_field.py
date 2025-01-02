@@ -52,8 +52,6 @@ class IncidentFieldParser(
     @property
     def object_id(self) -> Optional[str]:
         id = get_value(self.json_data, self.field_mapping.get("object_id", ""))
-        if id is None:
-            return ""
         return (id.lower().replace("_", "").replace("-", ""))[len("incident") :]
 
     @property

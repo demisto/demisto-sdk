@@ -179,9 +179,8 @@ def clear_cache():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def register_commands_for_all_tests():
+def register_sdk_commands():
     """
-    Ensure that commands are registered before each test runs.
-    This will run automatically for all tests.
+    Ensure that demisto-sdk Typer app commands are registered before each test session.
     """
-    register_commands([])
+    register_commands()

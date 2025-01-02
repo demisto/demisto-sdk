@@ -138,7 +138,7 @@ def show_release_notes():
         )
 
 
-def register_commands(_args: list[str]):  # noqa: C901
+def register_commands(_args: list[str] = []):  # noqa: C901
     """
     Register relevant commands to Demisto-SDK app based on command-line arguments.
     Args:

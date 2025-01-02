@@ -263,9 +263,11 @@ def test_invalid_section_order(pack: Pack):
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
     assert len(results) == 1
-    assert results[0].message == ("Structure error (type_error.enum) in field sectionorder,1 of integration_0.yml: "
-                                  "value is not a valid enumeration member; permitted: "
-                                  "'Connect', 'Collect', 'Optimize'")
+    assert results[0].message == (
+        "Structure error (type_error.enum) in field sectionorder,1 of integration_0.yml: "
+        "value is not a valid enumeration member; permitted: "
+        "'Connect', 'Collect', 'Optimize'"
+    )
 
 
 def test_missing_section_order(pack: Pack):
@@ -308,8 +310,10 @@ def test_invalid_section(pack: Pack):
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
     assert len(results) == 1
-    assert results[0].message == ("Structure error (assertion_error) in field configuration of integration_0.yml: "
-                                  "section Run of URL is not present in section_order ['Connect']")
+    assert results[0].message == (
+        "Structure error (assertion_error) in field configuration of integration_0.yml: "
+        "section Run of URL is not present in section_order ['Connect']"
+    )
 
 
 def test_missing_section(pack: Pack):

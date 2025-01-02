@@ -41,7 +41,7 @@ IS_FETCH_EVENTS_DYNAMIC_MODEL = create_dynamic_model(
 
 class _Configuration(BaseStrictModel):
     display: Optional[str] = None
-    section: Optional[str]
+    section: Optional[str] = None
     advanced: Optional[str] = None
     default_value: Optional[Any] = Field(None, alias="defaultvalue")
     name: str

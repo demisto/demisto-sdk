@@ -26,8 +26,7 @@ class StrictSchemaValidator(BaseValidator[ContentTypes]):
     ) -> list[ValidationResult]:
         invalid_content_items = []
         for content_item in content_items:
-            error_message = self.get_error_message(content_item)
-            if error_message:
+            if error_message := self.is_missing_section_fields(content_item):
                 invalid_content_items.append(
                     ValidationResult(
                         validator=self,
@@ -37,7 +36,7 @@ class StrictSchemaValidator(BaseValidator[ContentTypes]):
                 )
         return invalid_content_items
 
-    def get_error_message(self, content_item: ContentTypes) -> str:
+    def is_missing_section_fields(self, content_item: ContentTypes) -> str:
         section_order = content_item.data.get("sectionorder") or content_item.data.get(
             "sectionOrder"
         )

@@ -19,7 +19,6 @@ class IsAliasInnerAliasValidator(BaseValidator[ContentTypes]):
     error_message = "The following aliases have inner aliases: {aliases}"
     related_field = "Aliases"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

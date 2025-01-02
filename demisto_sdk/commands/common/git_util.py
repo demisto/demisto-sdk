@@ -1125,7 +1125,7 @@ class GitUtil:
 
     def commit_files(self, commit_message: str, files: Union[List, str] = "."):
         self.repo.git.add(files)
-        return self.repo.index.commit(commit_message)
+        self.repo.index.commit(commit_message)
 
     def has_file_permissions_changed(
         self, file_path: str, ci: bool = False

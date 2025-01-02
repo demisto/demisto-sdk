@@ -48,14 +48,6 @@ class Parameter(BaseModel):
     fromlicense: Optional[str] = None
     deprecated: Optional[bool] = None
 
-    def get_description(self) -> str:
-        # In order to get the description in the same way in all content items (for update-release-note)
-        return self.additionalinfo or ""
-
-    def get_name(self) -> str:
-        # In order to get the name in the same way in all content items (for update-release-note)
-        return self.display or self.displaypassword or ""
-
 
 class IntegrationOutput(Output):
     important: Optional[bool] = False
@@ -104,12 +96,6 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
         }
         remove_nulls_from_dictionary(command)
         return command
-
-    def get_description(self) -> str:
-        return self.description or ""
-
-    def get_name(self):
-        return self.name
 
 
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]

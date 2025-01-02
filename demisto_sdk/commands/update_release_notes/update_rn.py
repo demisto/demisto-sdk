@@ -95,6 +95,18 @@ ADDED_CONTENT_RN = "- Added support for **{name}** {content_type}{extra_descript
 NEW_COMMANDS_RN = "\n- Added the following commands:\n"
 
 
+def get_description(content_item):
+    if isinstance(content_item, Parameter):
+        return content_item.additionalinfo or ""
+    # in cases content item is instance of argument, command, integration, script
+    return content_item.description or ""
+
+def get_name(content_item):
+    if isinstance(content_item, Parameter):
+        return content_item.display or content_item.displaypassword
+    # in cases content item is instance of argument, command, integration, script
+    return content_item.name
+
 def get_deprecated_comment_from_desc(description: str) -> str:
     """
     find deprecated comment from description
@@ -176,7 +188,7 @@ def create_rn_for_deleted_content(
     rn = ""
     deleted_content_names = set(old_content_dict.keys()) - set(new_content_dict.keys())
     for deleted_content_name in deleted_content_names:
-        name = old_content_dict[deleted_content_name].get_name()
+        name = get_name(old_content_dict[deleted_content_name])
         if type == content_type.ARGUMENT and parent_name:
             rn += ARGUMENT_BC.format(command_name=parent_name, argument_name=name)
         else:
@@ -217,7 +229,7 @@ def generate_content_deprecation_rn(
             name=name,
             type=content_type.value,
             replacement=(
-                get_deprecated_comment_from_desc(new_content.get_description())
+                get_deprecated_comment_from_desc(get_description(new_content))
                 or "Use %%% instead"
             ),
         )
@@ -271,8 +283,8 @@ def generate_new_content_rn(
     Returns:
         str: A formatted release note describing the addition of the content item.
     """
-    description = new_content.get_description().replace("-", "").lower()
-    display_name = new_content.get_name()
+    description = get_description(new_content).replace("-", "").lower()
+    display_name = get_name(new_content)
     if isinstance(new_content, Argument) and parent:
         return ADDED_ARGUMENT_RN.format(name=name, parent=parent)
     extra_description = f" that {description.rstrip('.')}." if description else "."
@@ -635,8 +647,8 @@ class UpdateRN:
             )
             name, description = (
                 (
-                    content_item_object.get_name(),
-                    content_item_object.get_description(),
+                    get_name(content_item_object),
+                    get_description(content_item_object),
                 )
                 if content_item_object and isinstance(content_item_object, ContentItem)
                 else (get_content_item_details(packfile, file_type))

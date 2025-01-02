@@ -65,7 +65,7 @@ def update_release_notes(
         None,
         "-t",
         "--text",
-        help="Text to add to all of the release notes files.",
+        help="Text to add to all of the release notes files, supporting special characters like \t, \n, etc.",
         metavar="TEXT",
     ),
     prev_ver: str = typer.Option(

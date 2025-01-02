@@ -1,0 +1,4 @@
+changes:
+- description: Resolved an issue with handling special characters in the update-release-notes --text parameter.
+  type: fix
+pr_number: 4751

@@ -22,8 +22,6 @@ from demisto_sdk.commands.common.tools import (
     is_sdk_defined_working_offline,
 )
 
-TESTS_PATH = "demisto_sdk/tests/"
-
 app = typer.Typer()
 
 
@@ -153,16 +151,15 @@ def register_commands(_args: list[str] = []):  # noqa: C901
     )
     if register_nothing:
         return
-    is_test = not _args or "/tests/" in _args[0]  # TODO - Verify args length
-    is_help = "-h" in _args or "--help" in _args
 
-    command_name: str = next(
-        (arg for arg in _args if not arg.startswith("-")), ""
-    )  # command name would be the first non-flag/option argument.
-    is_pre_commit = (
-        "pre-commit" == command_name
-    )  # Pre-commit requires mostly all commands to be registered
-    register_all = any([is_test, is_help, is_pre_commit])
+    is_test = not _args
+    is_help = "-h" in _args or "--help" in _args
+    register_all = any([is_test, is_help])
+
+    # Command name would be the first non-flag/option argument.
+    command_name: str = next((arg for arg in _args if not arg.startswith("-")), "")
+    # Pre-commit runs a few commands as hooks.
+    is_pre_commit = "pre-commit" == command_name
 
     if command_name == "export-api" or register_all:
         from demisto_sdk.commands.dump_api.dump_api_setup import dump_api
@@ -493,7 +490,6 @@ def register_commands(_args: list[str] = []):  # noqa: C901
 
 args = sys.argv[1:]
 register_commands(args)
-typer.echo(f"Start up time: {time() - start}s")  # TODO - Delete
 
 if __name__ == "__main__":
     typer.echo("Running Demisto-SDK CLI")

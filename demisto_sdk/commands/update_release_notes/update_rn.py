@@ -220,19 +220,20 @@ def generate_content_deprecation_rn(
         str: A formatted release note indicating the deprecation of content of an existing content item.
         Returns an empty string if no deprecation is detected.
     """
-    if new_content.deprecated and not old_content.deprecated:
-        if isinstance(new_content, Argument) and parent:
-            return DEPRECATED_ARGUMENT.format(
-                name=name, type=content_type.value, command_name=parent
+    if not isinstance(new_content, Parameter) and not isinstance(old_content, Parameter):
+        if new_content.deprecated and not old_content.deprecated:
+            if isinstance(new_content, Argument) and parent:
+                return DEPRECATED_ARGUMENT.format(
+                    name=name, type=content_type.value, command_name=parent
+                )
+            return GENERAL_DEPRECATED_RN.format(
+                name=name,
+                type=content_type.value,
+                replacement=(
+                    get_deprecated_comment_from_desc(get_description(new_content))
+                    or "Use %%% instead"
+                ),
             )
-        return GENERAL_DEPRECATED_RN.format(
-            name=name,
-            type=content_type.value,
-            replacement=(
-                get_deprecated_comment_from_desc(get_description(new_content))
-                or "Use %%% instead"
-            ),
-        )
     return ""
 
 

@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Any, List, Optional
 
 from pydantic import Field, conlist, validator
@@ -8,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON3,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     Argument,
     BaseIntegrationScript,
@@ -138,9 +138,9 @@ CommonFieldsIntegration = create_model(
 )
 
 
-class SectionOrderValues(str, Enum):
-    CONNECT = ("Connect",)
-    COLLECT = ("Collect",)
+class SectionOrderValues(StrEnum):
+    CONNECT = "Connect"
+    COLLECT = "Collect"
     OPTIMIZE = "Optimize"
 
 

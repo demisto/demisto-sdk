@@ -46,7 +46,6 @@ class Parameter(BaseModel):
     hiddenusername: Optional[bool] = None
     hiddenpassword: Optional[bool] = None
     fromlicense: Optional[str] = None
-    deprecated: Optional[bool] = None
 
 
 class IntegrationOutput(Output):

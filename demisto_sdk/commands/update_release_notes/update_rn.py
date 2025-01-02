@@ -1177,11 +1177,14 @@ class UpdateRN:
             if is_new_file:
                 # new content items
                 rn_desc = f"##### New: {content_name}\n\n"
-                rn_desc += NEW_RN_TEMPLATE.format(
-                    type=type,
-                    name=name,
-                    description=desc or "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.",
-                )
+                if desc and _type == FileType.PLAYBOOK:
+                    rn_desc += format_playbook_description(desc)
+                else:
+                    rn_desc += NEW_RN_TEMPLATE.format(
+                        type=type,
+                        name=name,
+                        description=desc or "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.",
+                    )
                 rn_desc += self.generate_rn_marketplaces_availability(
                     _type, content_name, from_version
                 )
@@ -1571,3 +1574,28 @@ def get_from_version_at_update_rn(path: str) -> Optional[str]:
         )
         return None
     return get_from_version(path)
+
+
+def format_playbook_description(desc: str) -> str:
+    """Format a playbook description for RN.
+
+    :param:
+        desc (str): The description to format.
+
+    :rtype: ``str``
+    :return:
+        The formatted description.
+    """
+    desc = f"\n{desc}"
+    key_phrases = (
+        (5, "This playbook addresses the following alerts:\n"),
+        (5, "Playbook Stages:\n"),
+        (5, "Requirements:\n"),
+        (6, "Triage:\n"),
+        (6, "Early Containment:\n"),
+        (6, "Investigation:\n"),
+        (6, "Containment:\n"),
+    )
+    for hdr, phrase in key_phrases:
+        desc = desc.replace(f"\n{phrase}", f'\n{"#" * hdr} {phrase}')
+    return desc.lstrip("\n")

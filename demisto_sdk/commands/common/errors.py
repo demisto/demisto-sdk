@@ -1532,6 +1532,7 @@ ALLOWED_IGNORE_ERRORS = (
         "GR107",  # temporary see CIAC-11781
         "IN150",
         "IN161",
+        "RM116",
     ]
 )
 

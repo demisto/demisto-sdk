@@ -29,6 +29,8 @@ class IncidentFieldParser(
         self.content = self.json_data.get("content")
         self.system = self.json_data.get("system")
         self.group = self.json_data.get("group")
+        self.required = self.json_data.get("required")
+        self.associated_types = self.json_data.get("associatedTypes")
 
         self.connect_to_dependencies()
 
@@ -50,6 +52,8 @@ class IncidentFieldParser(
     @property
     def object_id(self) -> Optional[str]:
         id = get_value(self.json_data, self.field_mapping.get("object_id", ""))
+        if id is None:
+            return ""
         return (id.lower().replace("_", "").replace("-", ""))[len("incident") :]
 
     @property

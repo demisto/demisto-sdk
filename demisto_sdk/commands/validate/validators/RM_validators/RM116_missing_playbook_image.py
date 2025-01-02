@@ -15,7 +15,7 @@ class MissingPlaybookImageValidator(BaseValidator[ContentTypes]):
     error_code = "RM116"
     description = "Verifies that a playbook image exists in the doc_files folder"
     rationale = "It is recommended to have an image for every playbook for better understanding and documentation"
-    error_message = "No playbook image found, please add playbook image"
+    error_message = "Couldn't find a playbook image in the doc_files folder for the playbook file {playbook_file_name}, The image should be a png file with the playbook's file name without the playbook prefix."
     related_field = ""
     is_auto_fixable = False
 
@@ -25,7 +25,7 @@ class MissingPlaybookImageValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(playbook_file_name=content_item.path.stem),
                 content_object=content_item,
             )
             for content_item in content_items

@@ -1237,7 +1237,7 @@ class UpdateRN:
         ):
             rn_desc = NEW_COMMANDS_RN
             for command in changed_content_object.commands:
-                rn_desc += f"\t- ***{command.get_name()}***\n"
+                rn_desc += f"\t- ***{get_name(command)}***\n"
         return rn_desc
 
     def generate_rn_marketplaces_availability(self, _type, content_name, from_version):

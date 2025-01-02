@@ -4,19 +4,37 @@
 
 The setup-env command creates a content environment and integration/script environment.
 The command will configure VSCode and XSOAR/XSIAM instances for development and testing.
-
 ### Options
 
-| Flag | Description |
-| --- | --- |
-| `-i`, `--input` | Paths to content integrations or script to setup the environment. If not provided, will configure the environment for the content repository. |
-| `--create-virtualenv` | Create a virtualenv for the environment. |
-| `--overwrite-virtualenv` | Overwrite existing virtualenvs. Relevant only if the 'create-virtualenv' flag is used.. |
-| `-secret-id` | Secret ID, to use with Google Secret Manager instance. Requires the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable to be set. |
-| `--instance-name` | Instance name to configure in XSOAR/XSIAM. |
-| `--run-test-module` | Whether to run test-module on the configured XSOAR / XSIAM integration instance. |
-| `--clean` | Clean the repo out of the temp `CommonServerPython.py` files, `demistomock.py` and other files that were created by `lint`. |
+- **--ide**: IDE type to configure the environment for. If not specified, the IDE will be auto-detected. Case-insensitive.
+  - Default: `auto-detect`
 
+- **--input**: Paths to content integrations or script to setup the environment. If not provided, will configure the environment for the content repository.
+
+- **--create-virtualenv**: Create a virtualenv for the environment.
+  - Default: `False`
+
+- **--overwrite-virtualenv**: Overwrite existing virtualenvs. Relevant only if the 'create-virtualenv' flag is used.
+  - Default: `False`
+
+- **--secret-id**: Secret ID to use for the Google Secret Manager instance. Requires the `DEMISTO_SDK_GCP_PROJECT_ID` environment variable to be set.
+
+- **--instance-name**: Instance name to configure in XSOAR / XSIAM.
+
+- **--run-test-module**: Whether to run test-module on the configured XSOAR / XSIAM instance.
+  - Default: `False`
+
+- **--clean**: Clean the repository of temporary files created by the 'lint' command.
+  - Default: `False`
+
+- **file_paths**:
+  - Default: `<class 'list'>`
+
+- **--console-log-threshold**: Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.
+
+- **--file-log-threshold**: Minimum logging threshold for file output.
+
+- **--log-file-path**: Path to save log files.
 ### Notes
 
 - The setup-env command downloads integration parameters from Google Secret Manager, if the environment variable DEMISTO_SDK_GCP_PROJECT_ID is set to the GCP project ID.

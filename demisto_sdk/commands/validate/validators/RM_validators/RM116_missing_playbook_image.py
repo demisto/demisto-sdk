@@ -25,7 +25,9 @@ class MissingPlaybookImageValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(playbook_file_name=content_item.path.stem),
+                message=self.error_message.format(
+                    playbook_file_name=content_item.path.stem
+                ),
                 content_object=content_item,
             )
             for content_item in content_items

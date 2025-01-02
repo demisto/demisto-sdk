@@ -1,0 +1,4 @@
+changes:
+- description: Refactored validation IF109, Check whether an incident or indicator field has a valid required field value.
+  type: feature
+pr_number: 4753

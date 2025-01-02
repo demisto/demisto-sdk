@@ -18,7 +18,8 @@ class IsAliasInnerAliasValidator(BaseValidator[ContentTypes]):
     rationale = "marketplace in aliases should be ['xsoar']."
     error_message = (
         'The following fields exist as aliases and have invalid "marketplaces" key value: \n{0}\n '
-        'the value of the "marketplaces" key in these fields should be ["xsoar"].')
+        'the value of the "marketplaces" key in these fields should be ["xsoar"].'
+    )
     related_field = "Aliases"
     is_auto_fixable = False
 

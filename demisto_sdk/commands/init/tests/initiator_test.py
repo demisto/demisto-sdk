@@ -29,7 +29,11 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.tools import get_file
-from demisto_sdk.commands.init.initiator import ANALYTICS_AND_SIEM_CATEGORY, Initiator
+from demisto_sdk.commands.init.initiator import (
+    ANALYTICS_AND_SIEM_CATEGORY,
+    NOW,
+    Initiator,
+)
 from TestSuite.test_tools import ChangeCWD
 
 DIR_NAME = "DirName"
@@ -129,6 +133,7 @@ class TestCreateMetadata:
             "useCases": [],
             "keywords": [],
             "marketplaces": MARKETPLACES,
+            "firstCreated": NOW,
         }
 
     def test_create_metadata_non_filled_manually_with_data(self, initiator):
@@ -162,6 +167,7 @@ class TestCreateMetadata:
             "useCases": [],
             "keywords": [],
             "marketplaces": MARKETPLACES,
+            "firstCreated": NOW,
         }
 
     def test_create_metadata_partner(self, monkeypatch, initiator):
@@ -214,6 +220,7 @@ class TestCreateMetadata:
             "useCases": [],
             "githubUser": [],
             "marketplaces": MARKETPLACES,
+            "firstCreated": NOW,
         }
 
     def test_create_metadata_partner_wrong_url(self, monkeypatch, initiator):
@@ -267,6 +274,7 @@ class TestCreateMetadata:
             "useCases": [],
             "githubUser": [],
             "marketplaces": ["xsoar"],
+            "firstCreated": NOW,
         }
 
     def test_create_metadata_community(self, monkeypatch, initiator):
@@ -317,6 +325,7 @@ class TestCreateMetadata:
             "useCases": [],
             "githubUser": [],
             "marketplaces": ["marketplacev2"],
+            "firstCreated": NOW,
         }
 
 

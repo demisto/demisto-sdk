@@ -640,7 +640,7 @@ def check_dataset_exists(
     results_exist = False
     dataset_exist = False
     logger.info(
-        f'<cyan>Checking if dataset "{dataset}" exists on the tenant...</cyan>',
+        "<cyan>{}</cyan>", f'Checking if dataset "{dataset}" exists on the tenant...'
     )
     query = f"config timeframe = 10y | dataset = {dataset}"
     try:
@@ -648,9 +648,7 @@ def check_dataset_exists(
 
         dataset_exist = True
         if results:
-            logger.info(
-                f"<green>Dataset {dataset} exists</green>",
-            )
+            logger.info("<green>{}</green>", f"Dataset {dataset} exists")  # noqa: PLE1205
             results_exist = True
     except requests.exceptions.RequestException:
         results = []

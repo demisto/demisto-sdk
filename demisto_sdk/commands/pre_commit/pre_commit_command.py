@@ -234,6 +234,9 @@ class PreCommitRunner:
             logger.info(f"<yellow>Running hook {pre_commit_context.run_hook}</yellow>")
 
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
+        write_dict(
+            CONTENT_PATH / ".pre_commit_sk.yaml", pre_commit_context.precommit_template
+        )
         # we don't need the context anymore, we can clear it to free up memory for the pre-commit checks
         del pre_commit_context
 

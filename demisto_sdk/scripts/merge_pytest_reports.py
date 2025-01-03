@@ -93,7 +93,7 @@ def merge_junit_reports():
         report = reports[0]
         for rep in reports[1:]:
             report += rep
-        report.write(str(CONTENT_PATH / ".report_pytest.xml"))
+        report.write(str(CONTENT_PATH / "report_pytest.xml"))
         for file in report_files:
             Path(file).unlink(missing_ok=True)
     logger.info("Junit report was successfully merged.")

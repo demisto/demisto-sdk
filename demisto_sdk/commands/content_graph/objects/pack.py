@@ -300,14 +300,16 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             try:
                 text = f.read()
                 # Replace incorrect marketplace references
-                text = replace_marketplace_references(text, marketplace)
+                updated_text = replace_marketplace_references(
+                    text, marketplace, str(self.path / "README.md")
+                )
 
                 if (
                     marketplace == MarketplaceVersions.XSOAR
                     and MarketplaceVersions.XSOAR_ON_PREM in self.marketplaces
                 ):
                     marketplace = MarketplaceVersions.XSOAR_ON_PREM
-                parsed_text = MarketplaceTagParser(marketplace).parse_text(text)
+                parsed_text = MarketplaceTagParser(marketplace).parse_text(updated_text)
                 if len(text) != len(parsed_text):
                     f.seek(0)
                     f.write(parsed_text)

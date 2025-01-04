@@ -234,10 +234,6 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = (
-            "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n"
-            "- New: Hello World Playbook description\n"
-        )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"
@@ -249,12 +245,21 @@ class TestRNUpdate:
         )
         changed_items = {
             ("Hello World Playbook", FileType.PLAYBOOK): {
-                "description": "Hello World Playbook description",
+                "description": (
+                    "This playbook addresses the following alerts:\n"
+                    "Playbook Stages:\nRequirements:\nTriage:\n"
+                    "Early Containment:\nInvestigation:\nContainment:\n"
+                ),
                 "is_new_file": True,
             },
         }
         release_notes = update_rn.build_rn_template(changed_items)
-        assert expected_result == release_notes
+        assert release_notes == (
+            "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n"
+            "##### This playbook addresses the following alerts:\n"
+            "##### Playbook Stages:\n##### Requirements:\n###### Triage:\n"
+            "###### Early Containment:\n###### Investigation:\n###### Containment:\n\n"
+        )
 
     @mock.patch.object(UpdateRN, "get_master_version")
     def test_build_rn_template_markdown_valid(self, mock_master, mocker):

@@ -1,4 +1,0 @@
-changes:
-- description: Added validations TR100 PB130 to ensure that all silent Playbooks/Triggers have is_silent = True, and name/trigger_name, ID and file_name start with the silent- prefix.
-  type: feature
-pr_number: 4740

@@ -490,6 +490,7 @@ def register_commands(_args: list[str] = []):  # noqa: C901
 
 args = sys.argv[1:]
 register_commands(args)
+typer.echo(f'Start up time {time() - start}s')
 
 if __name__ == "__main__":
     typer.echo("Running Demisto-SDK CLI")

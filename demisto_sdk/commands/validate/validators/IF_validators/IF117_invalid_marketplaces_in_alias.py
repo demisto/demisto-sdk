@@ -3,14 +3,17 @@ from __future__ import annotations
 from typing import Iterable
 from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions, OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION
+from demisto_sdk.commands.common.constants import (
+    OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION,
+    MarketplaceVersions,
+)
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
-from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.common.logger import logger
 
 ContentTypes = IncidentField
 
@@ -35,9 +38,7 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                aliases := self.invalid_aliases_marketplace(content_item)
-            )
+            if (aliases := self.invalid_aliases_marketplace(content_item))
         ]
 
     def invalid_aliases_marketplace(self, content_item) -> list:
@@ -61,13 +62,11 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
             alias_marketplaces = item.marketplaces
             alias_toversion = Version(item.toversion)
 
-            if alias_toversion > Version(
-                    OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION
-            ) and (
-                    len(alias_marketplaces) != 1
-                    or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
+            if alias_toversion > Version(OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION) and (
+                len(alias_marketplaces) != 1
+                or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
             ):
-               invalid_aliases.append(item.cli_name)
+                invalid_aliases.append(item.cli_name)
 
     def _get_incident_fields_by_aliases(self, aliases: list[dict]) -> list:
         """

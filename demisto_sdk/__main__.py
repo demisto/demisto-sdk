@@ -483,6 +483,7 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             help="This command generates unit tests automatically from an integration's Python code.",
         )(generate_unit_tests)
 
+
 # Register relevant commands to Demisto-SDK app based on command-line arguments.
 args = sys.argv[1:]
 register_commands(args)

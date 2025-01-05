@@ -18,7 +18,7 @@ ContentTypes = Union[Integration, Script]
 
 
 def release_notes_shouldbe_entry(content_item: IntegrationScript):
-    old_obj = content_item.old_base_content_object
+    old_obj: IntegrationScript = content_item.old_base_content_object
     if old_obj and old_obj.docker_image == content_item.docker_image:  # Wasn't set in this PR
         return ""
     return content_item.docker_image
@@ -44,7 +44,7 @@ def get_docker_image_entry(rn: str, content_item_name: str) -> str:
 def release_notes_mismatch_error(content_item:IntegrationScript):
     should_be_entry = release_notes_shouldbe_entry(content_item)
     image_entry = get_docker_image_entry(content_item.pack.release_note.file_content, content_item.name)
-    if should_be_entry and (not (should_be_entry in image_entry) or image_entry == NO_DOCKER_ENTRY_FOUND):
+    if should_be_entry and (should_be_entry not in image_entry or image_entry == NO_DOCKER_ENTRY_FOUND):
         return f"Docker version in release notes should be {should_be_entry}, found: {image_entry}"
     if not should_be_entry and image_entry and not image_entry == NO_DOCKER_ENTRY_FOUND:
         return f"There should be no release notes docker update entry, found: {image_entry}"

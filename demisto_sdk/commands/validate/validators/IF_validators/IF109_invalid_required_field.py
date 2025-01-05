@@ -26,7 +26,7 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        types_items = []
+        types_items: list[str] = []
         fields_items = []
         for item in content_items:
             if (
@@ -47,8 +47,10 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
         ]
 
     @staticmethod
-    def is_invalid_required_field(content_item: Union[IncidentField, IndicatorField],
-                                  added_types: Union[IncidentType, IndicatorType]):
+    def is_invalid_required_field(
+            content_item: Union[IncidentField, IndicatorField],
+            added_types: list[str]
+    ):
         # Required fields should not be associated to all
         if content_item.required and content_item.associated_to_all:
             return "Required field should not be associated to all types."
@@ -94,4 +96,3 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
                         f"Field with required value equals true."
                     )
         return
-

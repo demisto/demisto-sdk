@@ -951,6 +951,30 @@ class TestRNUpdate:
         )
         assert expected_result in desc
 
+    def test_build_rn_desc_unicode_escape_handling(self):
+        """
+        Given
+            - An input string containing escaped unicode sequences such as '\\n' and '\\t'.
+        When
+            - Running the command build_rn_desc to generate the release notes description.
+        Then
+            - Validate that the escaped sequences are correctly interpreted and included
+              in the release notes description as their respective characters.
+        """
+        input_text = "Line with \\n newline and \\t tab characters"
+        expected_output = "##### \n\n- Line with \n newline and \t tab characters\n"
+
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorld",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorld"},
+            added_files=set(),
+        )
+
+        output = update_rn.build_rn_desc(text=input_text)
+
+        assert output == expected_output, f"Expected {expected_output}, got {output}"
+
     @pytest.mark.parametrize(
         "file_type, marketplaces, expected_result, not_expected",
         [

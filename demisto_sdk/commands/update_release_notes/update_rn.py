@@ -746,7 +746,7 @@ class UpdateRN:
         :return
         The release notes description
         """
-        text = bytes(text, "utf-8").decode("unicode_escape")
+        text = text.encode("utf-8").decode("unicode_escape")
         if self.is_force:
             rn_desc = f"## {content_name}\n\n"
             rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'

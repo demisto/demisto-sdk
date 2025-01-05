@@ -119,7 +119,8 @@ class TextFiles(RelatedFile):
     @file_content.setter
     def file_content(self, content: str):
         """Setter for the file_content property. Updates the file content."""
-        self.file_content_str = content #TODO handle writing to disk
+        self.file_content_str = content
+        TextFile.write(content,self.file_path)
 
 
 class RNRelatedFile(TextFiles):

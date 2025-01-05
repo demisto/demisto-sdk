@@ -196,7 +196,7 @@ def test_release_note_header_validator_valid():
         values=["2.0.5"],
         release_note_content="#### Integrations\n"
         "##### TestIntegration\n"
-        "This is an exemple\n",
+        "This is an example\n",
     )
     integrations = [
         create_integration_object(["name"], ["TestIntegration"]),

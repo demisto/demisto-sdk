@@ -699,11 +699,11 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
     create_old_file_pointers(content_items, old_content_items)
     validator = IsDockerEntryMatchYmlValidator()
     results = validator.obtain_invalid_content_items(content_items)
-    assert len(results) == 2
+    assert len(results) == 3
     expected_msgs = [
         "The release notes regarding the docker image are not correct. Docker version in release notes should be demisto/python3:3.9.7.24071, found: demisto/python3:3.9.7.24076",
         "The release notes regarding the docker image are not correct. Docker version in release notes should be demisto/python3:3.9.7.24076, found: No docker entry found",
-        "'The release notes regarding the docker image are not correct. There should be no release notes docker update entry, found: demisto/python3:3.9.7.24076'",
+        "The release notes regarding the docker image are not correct. There should be no release notes docker update entry, found: demisto/python3:3.9.7.24076",
     ]
     assert all(
         [res_msg in expected_msgs for res_msg in [result.message for result in results]]

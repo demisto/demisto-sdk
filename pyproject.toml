@@ -125,7 +125,6 @@ ruff = "^0.6.6"
 pytest-github-actions-annotate-failures = "^0.2.0"
 pytest-sugar = "^1.0.0"
 pytest-loguru = "^0.4.0"
-pyxdr = "^1.0"
 
 
 [tool.poetry.group.types.dependencies]

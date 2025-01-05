@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 from threading import Thread
 from typing import Any, List, Optional, Tuple, Union
+import subprocess
 
 import demisto_client
 import pytest
@@ -66,6 +67,17 @@ def copy_conftest(test_dir):
     shutil.copy(source_conftest, dest_conftest)
 
 
+def run_command(command):
+    """Run a shell command and capture the output."""
+    try:
+        result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return result.stdout.decode('utf-8').strip()
+    except subprocess.CalledProcessError as e:
+        logging.error(
+            f"Error executing command: {e}\nCommand: {command}\nOutput: {e.output.decode('utf-8')}\nError: {e.stderr.decode('utf-8')}")
+        return None
+
+
 # ============================================== Classes ============================================ #
 class TestResultCapture:
     """
@@ -112,9 +124,9 @@ class TestResultCapture:
 
 class TestResults:
     def __init__(
-        self,
-        service_account: str = None,
-        artifacts_bucket: str = None,
+            self,
+            service_account: str = None,
+            artifacts_bucket: str = None,
     ):
         self.test_results_xml_file = JUnitXml()
         self.errors = False
@@ -122,11 +134,11 @@ class TestResults:
         self.artifacts_bucket = artifacts_bucket
 
     def upload_result_json_to_bucket(
-        self,
-        repository_name: str,
-        file_name,
-        original_file_path: Path,
-        logging_module: Union[Any, ParallelLoggingManager] = logging,
+            self,
+            repository_name: str,
+            file_name,
+            original_file_path: Path,
+            logging_module: Union[Any, ParallelLoggingManager] = logging,
     ):
         """Uploads a JSON object to a specified path in the GCP bucket.
 
@@ -154,21 +166,21 @@ class TestResults:
 
 class BuildContext:
     def __init__(
-        self,
-        nightly: bool,
-        build_number: Optional[str],
-        logging_module: ParallelLoggingManager,
-        cloud_servers_path: str,
-        cloud_servers_api_keys: str,
-        service_account: Optional[str],
-        artifacts_bucket: Optional[str],
-        cloud_url: Optional[str],
-        api_key: Optional[str],
-        auth_id: Optional[str],
-        inputs: Optional[List[Path]],
-        machine_assignment: str,
-        lcas_id: str,
-        ctx: typer.Context,
+            self,
+            nightly: bool,
+            build_number: Optional[str],
+            logging_module: ParallelLoggingManager,
+            cloud_servers_path: str,
+            cloud_servers_api_keys: str,
+            service_account: Optional[str],
+            artifacts_bucket: Optional[str],
+            cloud_url: Optional[str],
+            api_key: Optional[str],
+            auth_id: Optional[str],
+            inputs: Optional[List[Path]],
+            machine_assignment: str,
+            lcas_id: str,
+            ctx: typer.Context,
     ):
         self.logging_module: ParallelLoggingManager = logging_module
         self.ctx = ctx
@@ -200,6 +212,14 @@ class BuildContext:
         # --------------------------- Machine preparation logic -------------------------------
 
         self.servers = self.create_servers()
+
+        # --------------------------- Env Setup -------------------------------
+
+        logger.info("installing pyxdr...")
+
+        run_command(
+            f"pip install pyxdr --index-url https://__token__:{os.environ.get('PYXDR_TOKEN')}@gitlab.xdr.pan.local/"
+            f"api/v4/projects/213/packages/pypi/simple --trusted-host gitlab.xdr.pan.local")
 
     @staticmethod
     def edit_prefix(path_str: Union[str, Path]) -> Path:
@@ -258,13 +278,13 @@ class BuildContext:
 
 class CloudServerContext:
     def __init__(
-        self,
-        build_context: BuildContext,
-        base_url: str,
-        api_key: str,
-        auth_id: str,
-        ui_url: str,
-        tests: List[Path],
+            self,
+            build_context: BuildContext,
+            base_url: str,
+            api_key: str,
+            auth_id: str,
+            ui_url: str,
+            tests: List[Path],
     ):
         self.build_context = build_context
         self.client = None
@@ -355,10 +375,10 @@ class CloudServerContext:
 
 
 def run_test_use_case_pytest(
-    test_use_case_directory: Path,
-    cloud_client: XsoarClient,
-    durations: int = 5,
-    lcas_id: str = None,
+        test_use_case_directory: Path,
+        cloud_client: XsoarClient,
+        durations: int = 5,
+        lcas_id: str = None,
 ) -> Tuple[bool, Union[TestSuite, None]]:
     """Runs a test use case
 
@@ -419,116 +439,116 @@ def run_test_use_case_pytest(
     },
 )
 def run_test_use_case(
-    ctx: typer.Context,
-    inputs: List[Path] = typer.Argument(
-        None,
-        exists=True,
-        dir_okay=True,
-        resolve_path=True,
-        show_default=False,
-        help="The path to a directory of a test use cases. May pass multiple paths to test multiple test use cases.",
-    ),
-    xsiam_url: Optional[str] = typer.Option(
-        None,
-        envvar="DEMISTO_BASE_URL",
-        help="The base url to the cloud tenant.",
-        rich_help_panel="Cloud Tenant Configuration",
-        show_default=False,
-        callback=tenant_config_cb,
-    ),
-    api_key: Optional[str] = typer.Option(
-        None,
-        envvar="DEMISTO_API_KEY",
-        help="The api key for the cloud tenant.",
-        rich_help_panel="XSIAM Tenant Configuration",
-        show_default=False,
-        callback=tenant_config_cb,
-    ),
-    auth_id: Optional[str] = typer.Option(
-        None,
-        envvar="XSIAM_AUTH_ID",
-        help="The auth id associated with the cloud api key being used.",
-        rich_help_panel="XSIAM Tenant Configuration",
-        show_default=False,
-        callback=tenant_config_cb,
-    ),
-    output_junit_file: Optional[Path] = typer.Option(
-        None, "-jp", "--junit-path", help="Path to the output JUnit XML file."
-    ),
-    service_account: Optional[str] = typer.Option(
-        None,
-        "-sa",
-        "--service_account",
-        envvar="GCP_SERVICE_ACCOUNT",
-        help="GCP service account.",
-        show_default=False,
-    ),
-    cloud_servers_path: str = typer.Option(
-        "",
-        "-csp",
-        "--cloud_servers_path",
-        help="Path to secret cloud server metadata file.",
-        show_default=False,
-    ),
-    cloud_servers_api_keys: str = typer.Option(
-        "",
-        "-csak",
-        "--cloud_servers_api_keys",
-        help="Path to file with cloud Servers api keys.",
-        show_default=False,
-    ),
-    machine_assignment: str = typer.Option(
-        "",
-        "-ma",
-        "--machine_assignment",
-        help="the path to the machine assignment file.",
-        show_default=False,
-    ),
-    build_number: str = typer.Option(
-        "",
-        "-bn",
-        "--build_number",
-        help="The build number.",
-        show_default=True,
-    ),
-    nightly: str = typer.Option(
-        "false",
-        "--nightly",
-        "-n",
-        help="Whether the command is being run in nightly mode.",
-    ),
-    artifacts_bucket: str = typer.Option(
-        None,
-        "-ab",
-        "--artifacts_bucket",
-        help="The artifacts bucket name to upload the results to",
-        show_default=False,
-    ),
-    lacs_id: str = typer.Option(
-        None,
-        "-li",
-        "--lcas_id",
-        help="The machine LCAS ID",
-        show_default=False,
-    ),
-    console_log_threshold: str = typer.Option(
-        "INFO",
-        "-clt",
-        "--console-log-threshold",
-        help="Minimum logging threshold for the console logger.",
-    ),
-    file_log_threshold: str = typer.Option(
-        "DEBUG",
-        "-flt",
-        "--file-log-threshold",
-        help="Minimum logging threshold for the file logger.",
-    ),
-    log_file_path: Optional[str] = typer.Option(
-        None,
-        "-lp",
-        "--log-file-path",
-        help="Path to save log files onto.",
-    ),
+        ctx: typer.Context,
+        inputs: List[Path] = typer.Argument(
+            None,
+            exists=True,
+            dir_okay=True,
+            resolve_path=True,
+            show_default=False,
+            help="The path to a directory of a test use cases. May pass multiple paths to test multiple test use cases.",
+        ),
+        xsiam_url: Optional[str] = typer.Option(
+            None,
+            envvar="DEMISTO_BASE_URL",
+            help="The base url to the cloud tenant.",
+            rich_help_panel="Cloud Tenant Configuration",
+            show_default=False,
+            callback=tenant_config_cb,
+        ),
+        api_key: Optional[str] = typer.Option(
+            None,
+            envvar="DEMISTO_API_KEY",
+            help="The api key for the cloud tenant.",
+            rich_help_panel="XSIAM Tenant Configuration",
+            show_default=False,
+            callback=tenant_config_cb,
+        ),
+        auth_id: Optional[str] = typer.Option(
+            None,
+            envvar="XSIAM_AUTH_ID",
+            help="The auth id associated with the cloud api key being used.",
+            rich_help_panel="XSIAM Tenant Configuration",
+            show_default=False,
+            callback=tenant_config_cb,
+        ),
+        output_junit_file: Optional[Path] = typer.Option(
+            None, "-jp", "--junit-path", help="Path to the output JUnit XML file."
+        ),
+        service_account: Optional[str] = typer.Option(
+            None,
+            "-sa",
+            "--service_account",
+            envvar="GCP_SERVICE_ACCOUNT",
+            help="GCP service account.",
+            show_default=False,
+        ),
+        cloud_servers_path: str = typer.Option(
+            "",
+            "-csp",
+            "--cloud_servers_path",
+            help="Path to secret cloud server metadata file.",
+            show_default=False,
+        ),
+        cloud_servers_api_keys: str = typer.Option(
+            "",
+            "-csak",
+            "--cloud_servers_api_keys",
+            help="Path to file with cloud Servers api keys.",
+            show_default=False,
+        ),
+        machine_assignment: str = typer.Option(
+            "",
+            "-ma",
+            "--machine_assignment",
+            help="the path to the machine assignment file.",
+            show_default=False,
+        ),
+        build_number: str = typer.Option(
+            "",
+            "-bn",
+            "--build_number",
+            help="The build number.",
+            show_default=True,
+        ),
+        nightly: str = typer.Option(
+            "false",
+            "--nightly",
+            "-n",
+            help="Whether the command is being run in nightly mode.",
+        ),
+        artifacts_bucket: str = typer.Option(
+            None,
+            "-ab",
+            "--artifacts_bucket",
+            help="The artifacts bucket name to upload the results to",
+            show_default=False,
+        ),
+        lacs_id: str = typer.Option(
+            None,
+            "-li",
+            "--lcas_id",
+            help="The machine LCAS ID",
+            show_default=False,
+        ),
+        console_log_threshold: str = typer.Option(
+            "INFO",
+            "-clt",
+            "--console-log-threshold",
+            help="Minimum logging threshold for the console logger.",
+        ),
+        file_log_threshold: str = typer.Option(
+            "DEBUG",
+            "-flt",
+            "--file-log-threshold",
+            help="Minimum logging threshold for the file logger.",
+        ),
+        log_file_path: Optional[str] = typer.Option(
+            None,
+            "-lp",
+            "--log-file-path",
+            help="Path to save log files onto.",
+        ),
 ):
     """
     Test a test use case against an XSIAM tenant

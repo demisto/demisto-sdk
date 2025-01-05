@@ -3924,20 +3924,6 @@ files = [
 ]
 
 [[package]]
-name = "pyxdr"
-version = "1.0.0"
-description = "F.A.C.C.T. XDR REST API Python Bindings"
-optional = false
-python-versions = "*"
-files = [
-    {file = "pyxdr-1.0.0-py3-none-any.whl", hash = "sha256:6ead7378aef7dee2c9699721e28fbc374e3be98244071848f7575a809a418305"},
-    {file = "pyxdr-1.0.0.tar.gz", hash = "sha256:b4f230513dc1325ee1a301babcee9288f4bc589c12ab9031b5a95353436604b3"},
-]
-
-[package.dependencies]
-requests = "*"
-
-[[package]]
 name = "pyyaml"
 version = "6.0.2"
 description = "YAML parser and emitter for Python"
@@ -5560,4 +5546,4 @@ generate-unit-tests = ["klara"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "63d2d10834d998f630e040cbd74e84b5fa11ffb52164edb60d2a09c2c352721d"
+content-hash = "daabfeea7cb561d816da9c41866ce10d183fd5d44232ef4bfa40208ed5a17e91"

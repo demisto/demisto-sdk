@@ -1,4 +1,4 @@
 changes:
-- description: Reduced commands startup delay.
+- description: Reduced commands startup time.
   type: feature
 pr_number: 4752

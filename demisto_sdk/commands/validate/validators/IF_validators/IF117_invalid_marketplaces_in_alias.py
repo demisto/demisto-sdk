@@ -17,6 +17,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = IncidentField
 
+
 class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
     error_code = "IF117"
     description = "Checks if marketplace value in aliases is valid."

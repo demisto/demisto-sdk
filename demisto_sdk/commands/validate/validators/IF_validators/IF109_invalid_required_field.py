@@ -48,8 +48,7 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
 
     @staticmethod
     def is_invalid_required_field(
-            content_item: Union[IncidentField, IndicatorField],
-            added_types: list[str]
+            content_item: Union[IncidentField, IndicatorField], added_types: list[str]
     ):
         # Required fields should not be associated to all
         if content_item.required and content_item.associated_to_all:
@@ -96,3 +95,4 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
                         f"Field with required value equals true."
                     )
         return
+

@@ -145,10 +145,11 @@ class ValidateManager:
             [
                 InvalidContentItemResult(
                     path=invalid_path,
-                    message="The given file is not supported in the validate command, see the error above.\n"
+                    message="The given file is not supported in the validate command, please refer to the error above.\n"
                     "The validate command supports: Integrations, Scripts, Playbooks, "
                     "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types,"
-                    " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules.",
+                    " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules.\n"
+                    "To fix this issue, please try to run `demisto-sdk format` on the file.",
                     error_code="BA102",
                 )
                 for invalid_path in self.invalid_items

@@ -16,6 +16,8 @@ mapping:
   description:
     type: str
     required: true
+  issilent:
+    type: bool
   suggestion_reason:
     type: str
     required: true

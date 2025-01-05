@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
+    PACKS_VERSION_CONFIG_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
     PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
@@ -26,6 +27,7 @@ from demisto_sdk.commands.common.constants import (
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
@@ -451,7 +453,7 @@ class Initializer:
             invalid_content_items,
             non_content_items,
         ) = self.git_paths_to_basecontent_set(
-            statuses_dict_with_renamed_files_tuple, git_sha=self.prev_ver
+            statuses_dict_with_renamed_files_tuple, prev_ver=self.prev_ver
         )
         return basecontent_with_path_set, invalid_content_items, non_content_items
 
@@ -491,7 +493,7 @@ class Initializer:
     def git_paths_to_basecontent_set(
         self,
         statuses_dict: Dict[Union[Path, Tuple[Path, Path]], Union[GitStatuses, None]],
-        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
     ) -> Tuple[Set[BaseContent], Set[Path], Set[Path]]:
         """Attempting to convert the given paths to a set of BaseContent based on their git statuses.
 
@@ -504,6 +506,8 @@ class Initializer:
         basecontent_with_path_set: Set[BaseContent] = set()
         invalid_content_items: Set[Path] = set()
         non_content_items: Set[Path] = set()
+        git_util = GitUtil.from_content_path()
+        current_git_sha = git_util.get_current_git_branch_or_hash()
         for file_path, git_status in statuses_dict.items():
             if git_status == GitStatuses.DELETED:
                 continue
@@ -511,8 +515,11 @@ class Initializer:
                 old_path = file_path
                 if isinstance(file_path, tuple):
                     file_path, old_path = file_path
-                obj = BaseContent.from_path(file_path, raise_on_exception=True)
+                obj = BaseContent.from_path(
+                    file_path, git_sha=current_git_sha, raise_on_exception=True
+                )
                 if obj:
+                    obj.git_sha = current_git_sha
                     obj.git_status = git_status
                     # Check if the file exists
                     if (
@@ -524,7 +531,7 @@ class Initializer:
                     ):
                         try:
                             obj.old_base_content_object = BaseContent.from_path(
-                                old_path, git_sha=git_sha, raise_on_exception=True
+                                old_path, git_sha=prev_ver, raise_on_exception=True
                             )
                         except (NotAContentItemException, InvalidContentItemException):
                             logger.debug(
@@ -534,7 +541,7 @@ class Initializer:
                     else:
                         obj.old_base_content_object = obj.copy(deep=True)
                     if obj.old_base_content_object:
-                        obj.old_base_content_object.git_sha = git_sha
+                        obj.old_base_content_object.git_sha = prev_ver
                     basecontent_with_path_set.add(obj)
                 elif obj is None:
                     invalid_content_items.add(file_path)
@@ -742,6 +749,7 @@ class Initializer:
                 AUTHOR_IMAGE_FILE_NAME,
                 PACKS_CONTRIBUTORS_FILE_NAME,
                 DOC_FILES_DIR,
+                PACKS_VERSION_CONFIG_FILE_NAME,
             )
         )
 

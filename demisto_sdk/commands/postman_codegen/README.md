@@ -1,3 +1,5 @@
+## postman-codegen
+### Overview
 Use the `demisto sdk postman-codegen` command to generate an XSOAR integration (yml file) from a Postman Collection v2.1. Note the generated integration is in the yml format. Use the `demisto-sdk split` [command](package-dir#split-a-yml-file-to-directory-structure) to split the integration into the recommended [Directory Structure](package-dir) for further development.
 
 You can generate the integration either as a two-step process or a single step.
@@ -6,14 +8,7 @@ You can generate the integration either as a two-step process or a single step.
     1. Generate an integration config file.
     2. Update the config file as needed. Then generate the integration from the config file using the `demisto-sdk generate-integration` command.
 
-## Tutorial Video:
-<video controls>
-    <source src="https://github.com/demisto/content-assets/raw/master/Assets/PostmanCodegen/postman-codegen-tutorial.mp4"
-            type="video/mp4"/>
-    Sorry, your browser doesn't support embedded videos. You can download the video at: https://github.com/demisto/content-assets/raw/master/Assets/PostmanCodegen/postman-codegen-tutorial.mp4
-</video>
-
-## Options
+### Options
 *  **-h, --help**
 *  **-i, --input**  
     Postman collection 2.1 JSON file
@@ -74,6 +69,12 @@ You can generate the integration either as a two-step process or a single step.
     - Generates `config-VirusTotal.json` file under `/output/path` directory.
     - Sets the name of the integration `Virus Total`.
 
+## Tutorial Video:
+<video controls>
+    <source src="https://github.com/demisto/content-assets/raw/master/Assets/PostmanCodegen/postman-codegen-tutorial.mp4"
+            type="video/mp4"/>
+    Sorry, your browser doesn't support embedded videos. You can download the video at: https://github.com/demisto/content-assets/raw/master/Assets/PostmanCodegen/postman-codegen-tutorial.mp4
+</video>
 
 ## Example files:
 * [URLScan Postman Collection v2.1](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/postman_codegen/resources/urlscan.io.postman_collection.json)

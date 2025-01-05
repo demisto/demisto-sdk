@@ -4359,14 +4359,21 @@ def check_timestamp_format(timestamp: str) -> bool:
         return False
 
 
-def get_pack_latest_rn_version(pack_path: str) -> str:
+def get_pack_latest_rn_version(pack_path: str, git_sha: Optional[str] = None) -> str:
     """
     Extract all the Release notes from the pack and return the highest version of release note in the Pack.
 
     Return:
         (str): The lastest version of RN.
     """
-    list_of_files = glob.glob(pack_path + "/ReleaseNotes/*")
+    rns_dir_path = f"{pack_path}/ReleaseNotes"
+    if git_sha:
+        git_util = GitUtil.from_content_path()
+        if not git_util.is_file_exist_in_commit_or_branch(rns_dir_path, git_sha):
+            return ""
+        list_of_files = git_util.list_files_in_dir(rns_dir_path, git_sha)
+    else:
+        list_of_files = glob.glob(f"{rns_dir_path}/*")
     list_of_release_notes = [
         Path(file).name for file in list_of_files if Path(file).suffix == ".md"
     ]
@@ -4637,3 +4644,10 @@ def filter_out_falsy_values(ls: Union[List, Tuple]) -> List:
         List filtered from None values.
     """
     return list(filter(lambda x: x, ls))
+
+
+def should_disable_multiprocessing():
+    disable_multiprocessing = os.getenv(
+        "DEMISTO_SDK_DISABLE_MULTIPROCESSING", "false"
+    ).lower() in ["true", "yes", "1"]
+    return disable_multiprocessing

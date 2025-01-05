@@ -1,11 +1,13 @@
 ## Find Dependencies
 
+### Overview
+
 Find pack dependencies and update pack metadata.
 
 **Use Cases**:
 This command is used in order to find the dependencies between packs and to update the dependencies section in the pack metadata.
 
-**Arguments**:
+### Options
 * **-i, --input**
   Pack path to find dependencies. For example: Pack/HelloWorld. When using the `--get-dependent-on` flag, this argument can be used multiple times.
 * **-idp, --id-set-path**

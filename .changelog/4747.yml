@@ -1,0 +1,4 @@
+changes:
+- description: Resolved an issue where the build-Devcontainer failed due to file_path being None in setup-environment command.
+  type: fix
+pr_number: 4747

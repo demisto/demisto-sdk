@@ -13,6 +13,7 @@ from typing import DefaultDict, Dict
 
 import demisto_client.demisto_api
 import mergedeep
+import typer
 from demisto_client.demisto_api.rest import ApiException
 from dictor import dictor
 from flatten_dict import unflatten
@@ -158,7 +159,7 @@ class Downloader:
         **kwargs,
     ):
         self.output_pack_path = output
-        self.input_files = [input] if isinstance(input, str) else list(input)
+        self.input_files = list(input) if input else []
         self.regex = regex
         self.force = force
         self.download_system_items = system
@@ -185,21 +186,19 @@ class Downloader:
             int: Exit code. 1 if failed, 0 if succeeded
         """
         input_files_missing = False  # Used for returning an exit code of 1 if one of the inputs is missing.
-
         try:
             if self.should_list_files:
                 # No flag validations are needed, since only the '-lf' flag is used.
                 self.list_all_custom_content()
-                return 0
-
+                raise typer.Exit(0)
             if not self.output_pack_path:
                 logger.error("Error: Missing required parameter '-o' / '--output'.")
-                return 1
+                raise typer.Exit(1)
 
             output_path = Path(self.output_pack_path)
 
             if not self.verify_output_path(output_path=output_path):
-                return 1
+                raise typer.Exit(1)
 
             if self.should_init_new_pack:
                 output_path = self.initialize_output_path(root_folder=output_path)
@@ -209,13 +208,13 @@ class Downloader:
                     logger.error(
                         "Error: Missing required parameter for downloading system items: '-i' / '--input'."
                     )
-                    return 1
+                    raise typer.Exit(1)
 
                 if not self.system_item_type:
                     logger.error(
                         "Error: Missing required parameter for downloading system items: '-it' / '--item-type'."
                     )
-                    return 1
+                    raise typer.Exit(1)
 
                 content_item_type = self.system_item_type
                 downloaded_content_objects = self.fetch_system_content(
@@ -231,7 +230,7 @@ class Downloader:
                         "Error: No input parameter has been provided "
                         "('-i' / '--input', '-r' / '--regex', '-a' / '--all)."
                     )
-                    return 1
+                    raise typer.Exit(1)
 
                 elif self.regex:
                     # Assure regex is valid
@@ -242,7 +241,7 @@ class Downloader:
                         logger.error(
                             f"Error: Invalid regex pattern provided: '{self.regex}'."
                         )
-                        return 1
+                        raise typer.Exit(1)
 
                 all_custom_content_data = self.download_custom_content()
                 all_custom_content_objects = self.parse_custom_content_data(
@@ -273,7 +272,7 @@ class Downloader:
                     logger.info(
                         "No custom content matching the provided input filters was found."
                     )
-                    return 1 if input_files_missing else 0
+                    raise typer.Exit(1) if input_files_missing else typer.Exit(0)
 
                 if self.auto_replace_uuids:
                     # Replace UUID IDs with names in filtered content (only content we download)
@@ -298,16 +297,20 @@ class Downloader:
 
             if not result:
                 logger.error("Download failed.")
-                return 1
+                raise typer.Exit(1)
 
-            return 1 if input_files_missing else 0
+            raise typer.Exit(1) if input_files_missing else typer.Exit(0)
+
+        except typer.Exit:
+            # Re-raise typer.Exit without handling it as an error
+            raise
 
         except Exception as e:
             if not isinstance(e, HandledError):
                 logger.error(f"Error: {e}")
 
             logger.debug("Traceback:\n" + traceback.format_exc())
-            return 1
+            raise typer.Exit(1)
 
     def list_all_custom_content(self):
         """

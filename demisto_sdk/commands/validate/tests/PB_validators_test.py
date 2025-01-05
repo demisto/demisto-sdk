@@ -1,9 +1,13 @@
 import pytest
 
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
+from demisto_sdk.commands.content_graph.objects.pack_content_items import (
+    PackContentItems,
+)
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_playbook_object,
+    create_trigger_object,
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename import (
     IsNoRolenameValidator,
@@ -62,6 +66,15 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB126_is_default_not
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB127_marketplace_keys_have_default_value import (
     MarketplaceKeysHaveDefaultValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB130_is_silent_playbook import (
+    IsSilentPlaybookValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB131_is_silent_playbook_relationships import (
+    IsSilentPlaybookRelationshipsValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB132_no_readme_for_silent_playbook import (
+    NoReadmeForSilentPlaybook,
 )
 
 
@@ -1338,3 +1351,281 @@ def test_MarketplaceKeysHaveDefaultValidator(
             assert expected_bad_key in fix_message
 
         assert fixed_content_item.data == expected_playbook_obj.data
+
+
+@pytest.mark.parametrize(
+    "name, id, is_silent, result_len, file_name",
+    [
+        ("test", "test", False, 0, "test"),
+        (
+            "silent-test",
+            "silent-test",
+            True,
+            0,
+            "silent-test",
+        ),
+        (
+            "test",
+            "silent-test",
+            True,
+            1,
+            "silent-test",
+        ),
+        (
+            "silent-test",
+            "test",
+            True,
+            1,
+            "silent-test",
+        ),
+        (
+            "silent-test",
+            "silent-test",
+            False,
+            1,
+            "silent-test",
+        ),
+        (
+            "test",
+            "silent-test",
+            False,
+            1,
+            "test",
+        ),
+        (
+            "silent-test",
+            "test",
+            False,
+            1,
+            "test",
+        ),
+        (
+            "test",
+            "test",
+            True,
+            1,
+            "test",
+        ),
+        (
+            "test",
+            "test",
+            False,
+            1,
+            "silent-test",
+        ),
+    ],
+)
+def test_IsSilentPlaybookValidator(name, id, is_silent, result_len, file_name):
+    """
+    Given:
+        case 1: is_silent = False, and name/id/file_name do not contain silent prefix.
+        case 2: is_silent = True, and name/id/file_name contain silent prefix.
+        case 3: is_silent = True, name contain and id/file_name do not contain silent prefix.
+        case 4: is_silent = True, id contain and name/file_name do not contain silent prefix.
+        case 5: is_silent = False, and name/id/file_name contain silent prefix.
+        case 6: is_silent = False, name contain and id/file_name do not contain silent prefix.
+        case 7: is_silent = False, id contain and name/file_name do not contain silent prefix.
+        case 8: is_silent = True, and name/id/file_name do not contain silent prefix.
+        case 9: is_silent = False, and file_name contains silent prefix but name/id do not.
+
+    When:
+    - calling IsSilentPlaybookValidator.obtain_invalid_content_items.
+
+    Then:
+    - case 1: Passes. Non-silent playbook with no "silent-" prefix.
+    - case 2: Passes. Silent playbook correctly configured with "silent-" in all fields.
+    - case 3: Fails. Silent playbook must have "silent-" in id and file_name if it appears in name.
+    - case 4: Fails. Silent playbook must have "silent-" in name and file_name if it appears in id.
+    - case 5: Fails. Non-silent playbook should not have "silent-" in any field.
+    - case 6: Fails. Non-silent playbook should not have "silent-" in name without matching id and file_name.
+    - case 7: Fails. Non-silent playbook should not have "silent-" in id without matching name and file_name.
+    - case 8: Fails. Silent playbook must have "silent-" in name, id, and file_name.
+    - case 9: Fails. Non-silent playbook should not have "silent-" in file_name without matching name and id.
+    """
+    playbook = create_playbook_object(file_name=file_name)
+    playbook.data["id"] = id
+    playbook.data["name"] = name
+    playbook.is_silent = is_silent
+
+    invalid_content_items = IsSilentPlaybookValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert result_len == len(invalid_content_items)
+
+
+class Pack:
+    content_items = PackContentItems()
+
+
+@pytest.mark.parametrize(
+    "playbook_id, playbook_is_silent, trigger_playbook_id, trigger_is_silent, result_len",
+    [
+        (
+            "test",
+            True,
+            "test",
+            False,
+            1,
+        ),
+        (
+            "test",
+            True,
+            "test",
+            True,
+            0,
+        ),
+        (
+            "test1",
+            True,
+            "test2",
+            False,
+            1,
+        ),
+        (
+            "test1",
+            True,
+            "test2",
+            True,
+            1,
+        ),
+        (
+            "test1",
+            False,
+            "test1",
+            True,
+            0,
+        ),
+    ],
+)
+def test_IsSilentPlaybookRelationshipsValidator(
+    playbook_id, playbook_is_silent, trigger_playbook_id, trigger_is_silent, result_len
+):
+    """
+    Given:
+    - case 1: A silent trigger that points on a non-silent playbook.
+    - case 2: A silent trigger that points on a silent playbook.
+    - case 3: A silent trigger that points on a non-silent playbook that is not found.
+    - case 4: A silent trigger that points on a silent playbook that is not found.
+    - case 5: A non-silent trigger that points on a silent playbook.
+    When:
+    - Calling IsSilentPlaybookRelationshipsValidator for playbooks.
+    Then:
+    - Validate that only invalid items are returned.
+    """
+    playbook_item = create_playbook_object()
+    playbook_item.pack = Pack()
+    playbook_item.pack.content_items.trigger.extend([create_trigger_object()])
+
+    playbook_item.data["id"] = playbook_id
+    playbook_item.is_silent = playbook_is_silent
+
+    playbook_item.pack.content_items.trigger[0].data["playbook_id"] = (
+        trigger_playbook_id
+    )
+    playbook_item.pack.content_items.trigger[0].is_silent = trigger_is_silent
+
+    invalid_content_items = (
+        IsSilentPlaybookRelationshipsValidator().obtain_invalid_content_items(
+            [playbook_item]
+        )
+    )
+    assert result_len == len(invalid_content_items)
+
+
+@pytest.mark.parametrize(
+    "trigger_playbook_id, trigger_is_silent, playbook_id, playbook_is_silent, result_len",
+    [
+        (
+            "test",
+            True,
+            "test",
+            False,
+            1,
+        ),
+        (
+            "test",
+            True,
+            "test",
+            True,
+            0,
+        ),
+        (
+            "test1",
+            True,
+            "test2",
+            False,
+            1,
+        ),
+        (
+            "test1",
+            True,
+            "test2",
+            True,
+            1,
+        ),
+        (
+            "test1",
+            False,
+            "test1",
+            True,
+            0,
+        ),
+    ],
+)
+def test_IsSilentTriggerRelationshipsValidator(
+    trigger_playbook_id, trigger_is_silent, playbook_id, playbook_is_silent, result_len
+):
+    """
+    Given:
+    - case 1: A silent playbook that corresponds to a non-silent trigger.
+    - case 2: A silent playbook that corresponds to a silent trigger.
+    - case 3: A silent playbook that corresponds to a non-silent trigger that is not found.
+    - case 4: A silent playbook that corresponds to a silent trigger that is not found.
+    - case 5: A non-silent playbook that corresponds to a silent trigger.
+    When:
+    - Calling IsSilentPlaybookRelationshipsValidator for playbooks.
+    Then:
+    - Validate that only invalid items are returned.
+    """
+    trigger_item = create_trigger_object()
+    trigger_item.pack = Pack()
+    trigger_item.pack.content_items.playbook.extend([create_playbook_object()])
+
+    trigger_item.data["playbook_id"] = trigger_playbook_id
+    trigger_item.is_silent = trigger_is_silent
+
+    trigger_item.pack.content_items.playbook[0].data["id"] = playbook_id
+    trigger_item.pack.content_items.playbook[0].is_silent = playbook_is_silent
+
+    invalid_content_items = (
+        IsSilentPlaybookRelationshipsValidator().obtain_invalid_content_items(
+            [trigger_item]
+        )
+    )
+    assert result_len == len(invalid_content_items)
+
+
+def test_NoReadmeForSilentPlaybook():
+    """
+    Given:
+    a silent playbook with/without a readme file.
+
+    When:
+    - calling NoReadmeForSilentPlaybook.obtain_invalid_content_items.
+
+    Then:
+    - Checks that it fails only when there is a readme.
+    """
+    playbook = create_playbook_object()
+    playbook.is_silent = True
+    playbook.readme.exist = True
+    invalid_content_items = NoReadmeForSilentPlaybook().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(invalid_content_items) == 1
+
+    playbook.readme.exist = False
+    invalid_content_items = NoReadmeForSilentPlaybook().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(invalid_content_items) == 0

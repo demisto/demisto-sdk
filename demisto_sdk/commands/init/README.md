@@ -1,8 +1,9 @@
 ## init
+### Overview
 Create a pack, integration or script template.
 
 
-**Arguments**:
+### Options
 * **-n, --name**
 The name given to the files and directories of new pack/integration/script being created.
 * **--id**

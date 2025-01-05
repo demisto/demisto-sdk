@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 import demisto_client
+import typer
 from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common.logger import logger
@@ -54,7 +55,7 @@ class TestPlaybookRunner:
         test_playbooks: list = []
 
         if not self.validate_tpb_path():
-            return ERROR_RETURN_CODE
+            raise typer.Exit(ERROR_RETURN_CODE)
 
         test_playbooks.extend(self.collect_all_tpb_files_paths())
         return_code = SUCCESS_RETURN_CODE
@@ -65,7 +66,7 @@ class TestPlaybookRunner:
             if self.run_test_playbook_by_id(test_playbook_id) == ERROR_RETURN_CODE:
                 return_code = ERROR_RETURN_CODE
 
-        return return_code
+        raise typer.Exit(return_code)
 
     def collect_all_tpb_files_paths(self):
         test_playbooks: list = []
@@ -158,7 +159,7 @@ class TestPlaybookRunner:
         else:
             logger.info(f"To see results please go to : {work_plan_link}")
 
-        return status_code
+        raise typer.Exit(status_code)
 
     def run_and_check_tpb_status(self, test_playbook_id, work_plan_link, incident_id):
         status_code = SUCCESS_RETURN_CODE
@@ -196,7 +197,7 @@ class TestPlaybookRunner:
                     "<green>The test playbook has completed its run successfully</green>"
                 )
 
-        return status_code
+        raise typer.Exit(code=status_code)
 
     def create_incident_with_test_playbook(
         self, incident_name: str, test_playbook_id: str

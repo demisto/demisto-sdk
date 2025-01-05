@@ -58,7 +58,6 @@ from demisto_sdk.commands.common.tools import (
     check_timestamp_format,
     extract_error_codes_from_file,
     get_core_pack_list,
-    get_current_categories,
     get_current_usecases,
     get_json,
     get_local_remote_file,
@@ -71,7 +70,6 @@ from demisto_sdk.commands.find_dependencies.find_dependencies import PackDepende
 from demisto_sdk.commands.validate.tools import (
     extract_non_approved_tags,
     filter_by_marketplace,
-    validate_categories_approved,
 )
 
 ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
@@ -395,7 +393,6 @@ class PackUniqueFilesValidator(BaseValidator):
                 self._is_price_changed(),
                 self._is_valid_support_type(),
                 self.is_right_usage_of_usecase_tag(),
-                self.is_categories_field_match_standard(),
                 not self.should_pack_be_deprecated(),
             ]
         ):
@@ -1076,25 +1073,3 @@ class PackUniqueFilesValidator(BaseValidator):
                 ),
             )
         return False
-
-    @error_codes("PA134")
-    def is_categories_field_match_standard(self) -> bool:
-        """
-        Check that the pack category is in the schema.
-
-        Returns:
-            bool: True if pack contain only one category and the category is from the approved list. Otherwise, return False.
-        """
-        if is_external_repository():
-            return True
-        categories = self._read_metadata_content().get("categories", [])
-        approved_list = get_current_categories()
-        if not len(categories) == 1 or not validate_categories_approved(
-            categories, approved_list
-        ):
-            if self._add_error(
-                Errors.categories_field_does_not_match_standard(approved_list),
-                self.pack_meta_file,
-            ):
-                return False
-        return True

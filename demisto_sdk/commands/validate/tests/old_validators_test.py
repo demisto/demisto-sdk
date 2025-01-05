@@ -782,14 +782,6 @@ class TestValidators:
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
         )
         mocker.patch.object(Pack, "should_be_deprecated", return_value=False)
-        mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
-            return_value=["Analytics & SIEM"],
-        )
-        mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
-            return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
-        )
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file content from get_dict_from_file function.
         validate_manager = OldValidateManager(skip_conf_json=True)
@@ -846,14 +838,6 @@ class TestValidators:
                 "id_set",
                 "id_set.json",
             )
-        )
-        mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
-            return_value=["Analytics & SIEM"],
-        )
-        mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
-            return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
         )
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
@@ -3035,11 +3019,6 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     pack.pack_metadata.write_json(pack_metadata_info)
     mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
     mocker.patch.object(
-        PackUniqueFilesValidator,
-        "is_categories_field_match_standard",
-        return_value=True,
-    )
-    mocker.patch.object(
         OldValidateManager,
         "get_unfiltered_changed_files_from_git",
         return_value=(
@@ -3227,22 +3206,15 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, c
     [
         (
             {"Packs/test/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109\n",
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
-            "",
-            {"Packs/test/Integrations/test/test.yml"},
-        ),
-        (
-            {"Packs/test/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n",
             "",
             set(),
         ),
         (
             {"Packs/test1/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
-            "[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n",
+            "[file:test2.yml]\nignore=BA108,BA109,\n",
             "",
             {
                 "Packs/test1/Integrations/test/test.yml",
@@ -3260,9 +3232,9 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, c
         ),
         (
             {"Packs/test1/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n[file:test2.yml]\nignore=BA108,BA109,\n",
             {},
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n",
             {"Packs/test1/Integrations/test2/test2.yml"},
         ),
         (
@@ -3395,7 +3367,7 @@ def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker, caplog):
 
     validate_manager = OldValidateManager()
     config = ConfigParser(allow_no_value=True)
-    config.read_string("[file:test.yml]\nignore=BA108,BA109,DS107")
+    config.read_string("[file:test.yml]\nignore=BA108,BA109")
 
     mocker.patch(
         "demisto_sdk.commands.validate.old_validate_manager.get_pack_ignore_content",

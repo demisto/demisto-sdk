@@ -18,13 +18,15 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseNode,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
+)
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 
 class DeprecatedItemUsage(NamedTuple):
     deprecated_item_id: str
-    deprecated_item_type: str
     content_items_using_deprecated: List[BaseNode]
 
 
@@ -308,6 +310,10 @@ class ContentGraphInterface(ABC):
     def find_packs_with_invalid_dependencies(
         self, pack_ids: List[str]
     ) -> List[BaseNode]:
+        pass
+
+    @abstractmethod
+    def get_api_module_imports(self, api_module: str) -> List[IntegrationScript]:
         pass
 
     @abstractmethod

@@ -1,11 +1,12 @@
-# Generate YML from Python
+## Generate YML from Python
+### Overview
 Generate YML file from Python code that includes special syntax.
 The output file name will be the same as the Python code with the `.yml` extension instead of `.py`.
 The generation currently supports integrations only.
 
 The feature is supported from content Base pack version 1.20.0 and on.
 
-**Arguments**
+### Options
 * **-i, --input**
    (Required) The path to the python code to generate from.
 * **-f, --force**

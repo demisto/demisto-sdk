@@ -79,7 +79,9 @@ ContentTypes = Union[
 
 class SchemaValidator(BaseValidator[ContentTypes]):
     error_code = "ST110"
-    description = "Validate that the scheme's structure is valid."
+    description = (
+        "Validate that the scheme's structure is valid, while excluding certain fields."
+    )
     rationale = "Maintain valid structure for content items."
 
     def obtain_invalid_content_items(

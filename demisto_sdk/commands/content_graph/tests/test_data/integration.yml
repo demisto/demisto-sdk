@@ -7,17 +7,21 @@ fromversion: 5.0.0
 category: Forensics & Malware Analysis
 description: Analyze files using the malwr sandbox
 detaileddescription: This integration uses the Marlwr sandbox API to submit, analyze and detonate files.
+sectionorder:
+  - Connect
 configuration:
   - display: URL
     name: server
     defaultvalue: https://malwr.com
     type: 0
     required: true
+    section: Connect
   - display: Credentials
     name: credentials
     defaultvalue: ""
     type: 9
     required: true
+    section: Connect
 script:
   type: python
   subtype: python3

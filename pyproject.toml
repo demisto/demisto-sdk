@@ -106,8 +106,6 @@ werkzeug = "^2.2.0" # Added as mitmproxy8 -> flask<2.1
 loguru = "^0.7.2"
 pygithub = "^2.2.0"
 setuptools = "^75.5.0"
-pyxdr = "^1.0"
-
 
 [tool.poetry.extras]
 build = ["gsutil"]
@@ -127,6 +125,8 @@ ruff = "^0.6.6"
 pytest-github-actions-annotate-failures = "^0.2.0"
 pytest-sugar = "^1.0.0"
 pytest-loguru = "^0.4.0"
+pyxdr = "^1.0"
+
 
 [tool.poetry.group.types.dependencies]
 types-requests = "^2.31.0.20240311"

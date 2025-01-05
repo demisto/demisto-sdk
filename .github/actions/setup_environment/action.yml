@@ -24,6 +24,8 @@ runs:
 
     - name: Setup Poetry
       uses: Gr1N/setup-poetry@v9
+      with:
+        poetry-version: '1.8.5' # TODO - Support v2.0.0 of poetry
 
     - name: Check Poetry Consistency
       run: |

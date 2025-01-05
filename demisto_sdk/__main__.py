@@ -1,7 +1,3 @@
-from time import time
-
-start = time()
-
 import os
 import platform
 import sys
@@ -487,10 +483,9 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             help="This command generates unit tests automatically from an integration's Python code.",
         )(generate_unit_tests)
 
-
+# Register relevant commands to Demisto-SDK app based on command-line arguments.
 args = sys.argv[1:]
 register_commands(args)
-typer.echo(f'Start up time {time() - start}s')
 
 if __name__ == "__main__":
     typer.echo("Running Demisto-SDK CLI")

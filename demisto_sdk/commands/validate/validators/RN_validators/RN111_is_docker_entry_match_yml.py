@@ -4,12 +4,15 @@ from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
+)
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    ValidationResult, FixResult,
+    FixResult,
+    ValidationResult,
 )
 
 NO_DOCKER_ENTRY_FOUND = "No docker entry found"
@@ -18,8 +21,10 @@ ContentTypes = Union[Integration, Script]
 
 
 def release_notes_shouldbe_entry(content_item: IntegrationScript):
-    old_obj: IntegrationScript = content_item.old_base_content_object
-    if old_obj and old_obj.docker_image == content_item.docker_image:  # Wasn't set in this PR
+    old_obj: IntegrationScript = content_item.old_base_content_object  # type: ignore
+    if (
+        old_obj and old_obj.docker_image == content_item.docker_image
+    ):  # Wasn't set in this PR
         return ""
     return content_item.docker_image
 
@@ -31,9 +36,7 @@ def get_docker_image_entry(rn: str, content_item_name: str) -> str:
         if item.startswith(content_item_name):
             for entry in item.split("- "):
                 if entry.startswith("Updated the Docker image to: "):
-                    docker_entry = entry.replace(
-                        "Updated the Docker image to: ", ""
-                    )
+                    docker_entry = entry.replace("Updated the Docker image to: ", "")
                     docker = docker_entry[
                         docker_entry.find("*") + 1 : docker_entry.rfind("*")
                     ]
@@ -41,10 +44,14 @@ def get_docker_image_entry(rn: str, content_item_name: str) -> str:
     return docker
 
 
-def release_notes_mismatch_error(content_item:IntegrationScript):
+def release_notes_mismatch_error(content_item: IntegrationScript):
     should_be_entry = release_notes_shouldbe_entry(content_item)
-    image_entry = get_docker_image_entry(content_item.pack.release_note.file_content, content_item.name)
-    if should_be_entry and (should_be_entry not in image_entry or image_entry == NO_DOCKER_ENTRY_FOUND):
+    image_entry = get_docker_image_entry(
+        content_item.pack.release_note.file_content, content_item.name
+    )
+    if should_be_entry and (
+        should_be_entry not in image_entry or image_entry == NO_DOCKER_ENTRY_FOUND
+    ):
         return f"Docker version in release notes should be {should_be_entry}, found: {image_entry}"
     if not should_be_entry and image_entry and not image_entry == NO_DOCKER_ENTRY_FOUND:
         return f"There should be no release notes docker update entry, found: {image_entry}"
@@ -77,18 +84,32 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
         self,
         content_item: ContentTypes,
     ) -> FixResult:
-
         should_be_rn_entry = release_notes_shouldbe_entry(content_item)
-        should_be_full_rn = f'- Updated the Docker image to: *{should_be_rn_entry}*.' if should_be_rn_entry else ''
+        should_be_full_rn = (
+            f"- Updated the Docker image to: *{should_be_rn_entry}*."
+            if should_be_rn_entry
+            else ""
+        )
         rn_items = content_item.pack.release_note.file_content.split("##### ")
         for item in rn_items:
             if not item.startswith(content_item.name):
                 continue
             for entry in item.split("\n"):
                 if entry.startswith("- Updated the Docker image to: "):
-                    new_item = item.replace(f'\n{entry}', f'\n{should_be_full_rn}' if should_be_full_rn else '')
-                    content_item.pack.release_note.file_content = content_item.pack.release_note.file_content.replace(f'{item}', new_item)
-                    message = f'Changed docker update entry line in the release notes to match the yml: {should_be_rn_entry}.' if should_be_full_rn else 'Removed docker updated entry as it was not changed in the yml.'
+                    new_item = item.replace(
+                        f"\n{entry}",
+                        f"\n{should_be_full_rn}" if should_be_full_rn else "",
+                    )
+                    content_item.pack.release_note.file_content = (
+                        content_item.pack.release_note.file_content.replace(
+                            f"{item}", new_item
+                        )
+                    )
+                    message = (
+                        f"Changed docker update entry line in the release notes to match the yml: {should_be_rn_entry}."
+                        if should_be_full_rn
+                        else "Removed docker updated entry as it was not changed in the yml."
+                    )
                     return FixResult(
                         validator=self,
                         message=message,
@@ -98,10 +119,12 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
             if should_be_full_rn:
                 if item.endswith("\n\n"):
                     item = item[:-2]
-                new_item = item + f'\n{should_be_full_rn}'
-                content_item.pack.release_note.file_content = content_item.pack.release_note.file_content.replace(item, new_item)
-                return FixResult(
-                    validator=self,
-                    message=f'Added docker updated entry -{should_be_rn_entry}- in release notes.',
-                    content_object=content_item,
+                new_item = item + f"\n{should_be_full_rn}"
+                content_item.pack.release_note.file_content = (
+                    content_item.pack.release_note.file_content.replace(item, new_item)
                 )
+        return FixResult(
+            validator=self,
+            message=f"Added docker updated entry -{should_be_rn_entry}- in release notes.",
+            content_object=content_item,
+        )

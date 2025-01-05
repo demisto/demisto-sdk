@@ -120,7 +120,7 @@ class TextFiles(RelatedFile):
     def file_content(self, content: str):
         """Setter for the file_content property. Updates the file content."""
         self.file_content_str = content
-        TextFile.write(content,self.file_path)
+        TextFile.write(content, self.file_path)
 
 
 class RNRelatedFile(TextFiles):

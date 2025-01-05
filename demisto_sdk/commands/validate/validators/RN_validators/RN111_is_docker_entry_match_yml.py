@@ -58,6 +58,7 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
     related_field = "docker_image"
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
     related_file_type = [RelatedFileType.RELEASE_NOTE]
+    is_auto_fixable = True
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

@@ -6,8 +6,7 @@
 ### Feature
 * Added support for validating CaseLayout content items in the *RN114* validation. [#4755](https://github.com/demisto/demisto-sdk/pull/4755)
 * Updated the *ST110* validation to validate the "sectionOrder" and individual sections. Added new validation *ST111* which validates the existence of the same fields. [#4739](https://github.com/demisto/demisto-sdk/pull/4739)
-* Updated the ***update-release-notes*** command to add Markdown formatting to the release notes
-of new playbooks that follow the new playbook description template.
+* Updated the ***update-release-notes*** command to add Markdown formatting to the release notes of new playbooks that follow the new playbook description template.
  [#4735](https://github.com/demisto/demisto-sdk/pull/4735)
 
 ### Fix

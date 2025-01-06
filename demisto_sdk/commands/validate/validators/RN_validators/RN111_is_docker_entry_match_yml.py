@@ -20,6 +20,7 @@ NO_DOCKER_ENTRY_FOUND = "No docker entry found"
 
 ContentTypes = Union[Integration, Script]
 
+
 @cache
 def release_notes_shouldbe_entry(content_item: IntegrationScript):
     """

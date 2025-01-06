@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import cache
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
@@ -19,8 +20,16 @@ NO_DOCKER_ENTRY_FOUND = "No docker entry found"
 
 ContentTypes = Union[Integration, Script]
 
-
+@cache
 def release_notes_shouldbe_entry(content_item: IntegrationScript):
+    """
+    Get what image should be in the release notes
+    Args:
+        content_item: the content item to return the image for
+
+    Returns: the image that should be in the rn, an empty string if none should be present
+
+    """
     old_obj: IntegrationScript = content_item.old_base_content_object  # type: ignore
     if (
         old_obj and old_obj.docker_image == content_item.docker_image
@@ -30,6 +39,14 @@ def release_notes_shouldbe_entry(content_item: IntegrationScript):
 
 
 def get_docker_image_entry(rn: str, content_item_name: str) -> str:
+    """
+    Get the docker image entry for a given content item
+    Args:
+        rn: the full release notes
+        content_item_name: the content item to find the docker entry for
+
+    Returns: the docker image in the rn or "NO_DOCKER_ENTRY_FOUND" constant if none found
+    """
     rn_items = rn.split("##### ")
     docker = NO_DOCKER_ENTRY_FOUND
     for item in rn_items:
@@ -45,6 +62,12 @@ def get_docker_image_entry(rn: str, content_item_name: str) -> str:
 
 
 def release_notes_mismatch_error(content_item: IntegrationScript):
+    """
+    Raises an error if:
+    1: the image in the rn doesnt match what was bumped
+    2: if an image was bumped but no release notes exist
+    3: or if release notes exist but the image wasnt bumped
+    """
     should_be_entry = release_notes_shouldbe_entry(content_item)
     image_entry = get_docker_image_entry(
         content_item.pack.release_note.file_content, content_item.name
@@ -84,6 +107,15 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
         self,
         content_item: ContentTypes,
     ) -> FixResult:
+        """
+        Update the release notes to contain the proper image entry, adds one if none exists.
+        Deletes it if it shouldnt be there
+
+        Args:
+            content_item: the content item to fix the RN for
+        Returns: a fix result
+
+        """
         should_be_rn_entry = release_notes_shouldbe_entry(content_item)
         should_be_full_rn = (
             f"- Updated the Docker image to: *{should_be_rn_entry}*."

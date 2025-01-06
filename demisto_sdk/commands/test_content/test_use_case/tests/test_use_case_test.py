@@ -71,23 +71,6 @@ def test_run_test_use_case_pytest(
     mocker_cloud_client.server_config.api_key.get_secret_value.assert_called_once()
 
 
-def test_get_containing_pack():
-    """
-    Given: path to use case file
-    When: running the test_use_case command.
-    Then: validate the correct path to the pack dir is returned.
-    """
-    # Test case 1: Use case path is directly inside the "packs" directory
-    use_case_path = Path("/path/to/packs/pack1/use_case.py")
-    expected_result = "/path/to/packs/pack1"
-    assert get_containing_pack(use_case_path) == expected_result
-
-    # Test case 2: Use case path is multiple levels deep inside the "packs" directory
-    use_case_path = Path("/path/to/packs/pack1/subdir1/subdir2/use_case.py")
-    expected_result = "/path/to/packs/pack1"
-    assert get_containing_pack(use_case_path) == expected_result
-
-
 def test_pytest_runtest_logreport_passed(mocker):
     """
     When: pytest_runtest_logreport is called with a passing test,

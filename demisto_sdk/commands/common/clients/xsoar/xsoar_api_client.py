@@ -59,11 +59,11 @@ class XsoarClient:
     _ENTRY_TYPE_ERROR: int = 4
 
     def __init__(
-        self,
-        config: XsoarClientConfig,
-        client: Optional[DefaultApi] = None,
-        raise_if_server_not_healthy: bool = True,
-        should_validate_server_type: bool = False,
+            self,
+            config: XsoarClientConfig,
+            client: Optional[DefaultApi] = None,
+            raise_if_server_not_healthy: bool = True,
+            should_validate_server_type: bool = False,
     ):
         self.server_config = config
         self._xsoar_client = client or demisto_client.configure(
@@ -110,8 +110,8 @@ class XsoarClient:
         """
         about = self.about
         is_xsoar_on_prem = (
-            about.product_mode == "xsoar" and about.deployment_mode == "opp"
-        ) or bool((self.version and self.version < Version(MINIMUM_XSOAR_SAAS_VERSION)))
+                                   about.product_mode == "xsoar" and about.deployment_mode == "opp"
+                           ) or bool((self.version and self.version < Version(MINIMUM_XSOAR_SAAS_VERSION)))
         if not is_xsoar_on_prem:
             logger.debug(f"{self} is not {self.server_type} server")
             return False
@@ -205,6 +205,31 @@ class XsoarClient:
     def external_base_url(self) -> str:
         # url that its purpose is to expose apis of integrations outside from xsoar/xsiam
         return self.server_config.config.base_api_url
+
+    """
+    #############################
+    Helper methods
+    #############################
+    """
+
+    def _process_response(self, response, status_code, expected_status=200):
+        """Process the HTTP response coming from the XSOAR client."""
+        if status_code == expected_status:
+            if response:
+                try:
+                    return json.loads(response)
+                except json.JSONDecodeError:
+                    api_response = (
+                        response.replace("'", '"')
+                        .replace("False", "false")
+                        .replace("True", "true")
+                        .replace("None", "null")
+                    )
+                    return json.loads(api_response)
+            return {}
+        else:
+            error_message = f"Expected status {expected_status}, but got {status_code}. Response: {response}"
+            raise Exception(error_message)
 
     """
     #############################
@@ -305,7 +330,7 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def upload_marketplace_packs(
-        self, zipped_packs_path: Union[Path, str], skip_validation: bool = True
+            self, zipped_packs_path: Union[Path, str], skip_validation: bool = True
     ):
         """
         Uploads packs to the marketplace.
@@ -325,7 +350,7 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def install_marketplace_packs(
-        self, packs: List[Dict[str, Any]], ignore_warnings: bool = True
+            self, packs: List[Dict[str, Any]], ignore_warnings: bool = True
     ):
         """
         Installs packs from the marketplace.
@@ -365,15 +390,15 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def create_integration_instance(
-        self,
-        _id: str,
-        instance_name: str,
-        integration_instance_config: Dict,
-        integration_log_level: Optional[str] = None,
-        is_long_running: bool = False,
-        should_enable: str = "true",
-        response_type: str = "object",
-        should_test: bool = False,
+            self,
+            _id: str,
+            instance_name: str,
+            integration_instance_config: Dict,
+            integration_log_level: Optional[str] = None,
+            is_long_running: bool = False,
+            should_enable: str = "true",
+            response_type: str = "object",
+            should_test: bool = False,
     ):
         """
         Creates an integration instance.
@@ -443,8 +468,8 @@ class XsoarClient:
             default_value = param_conf["defaultValue"]
 
             if (
-                display in integration_instance_config
-                or name in integration_instance_config
+                    display in integration_instance_config
+                    or name in integration_instance_config
             ):
                 key = display if display in integration_instance_config else name
                 if key in {"credentials", "creds_apikey"}:
@@ -527,7 +552,7 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def delete_integration_instance(
-        self, instance_id: str, response_type: str = "object"
+            self, instance_id: str, response_type: str = "object"
     ):
         """
         Deletes integration instance.
@@ -549,9 +574,9 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def get_integrations_module_configuration(
-        self,
-        _id: Optional[str] = None,
-        response_type: str = "object",
+            self,
+            _id: Optional[str] = None,
+            response_type: str = "object",
     ):
         """
         Get the integration(s) module configuration(s)
@@ -604,10 +629,10 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def create_incident(
-        self,
-        name: str,
-        should_create_investigation: bool = True,
-        attached_playbook_id: Optional[str] = None,
+            self,
+            name: str,
+            should_create_investigation: bool = True,
+            attached_playbook_id: Optional[str] = None,
     ):
         """
         Args:
@@ -636,14 +661,14 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def search_incidents(
-        self,
-        incident_ids: Optional[Union[List, str]] = None,
-        from_date: Optional[str] = None,
-        incident_types: Optional[Union[List, str]] = None,
-        source_instance_name: Optional[str] = None,
-        page: int = 0,
-        size: int = 50,
-        response_type: str = "object",
+            self,
+            incident_ids: Optional[Union[List, str]] = None,
+            from_date: Optional[str] = None,
+            incident_types: Optional[Union[List, str]] = None,
+            source_instance_name: Optional[str] = None,
+            page: int = 0,
+            size: int = 50,
+            response_type: str = "object",
     ):
         """
         Args:
@@ -693,10 +718,10 @@ class XsoarClient:
         return raw_response
 
     def poll_incident_state(
-        self,
-        incident_id: str,
-        expected_states: Tuple[IncidentState, ...] = (IncidentState.CLOSED,),
-        timeout: int = 120,
+            self,
+            incident_id: str,
+            expected_states: Tuple[IncidentState, ...] = (IncidentState.CLOSED,),
+            timeout: int = 120,
     ):
         """
         Polls for an incident state
@@ -745,11 +770,11 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def delete_incidents(
-        self,
-        incident_ids: Union[str, List[str]],
-        filters: Dict[str, Any] = None,
-        _all: bool = False,
-        response_type: str = "object",
+            self,
+            incident_ids: Union[str, List[str]],
+            filters: Dict[str, Any] = None,
+            _all: bool = False,
+            response_type: str = "object",
     ):
         """
         Args:
@@ -791,11 +816,11 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def create_indicator(
-        self,
-        value: str,
-        indicator_type: str,
-        score: int = 0,
-        response_type: str = "object",
+            self,
+            value: str,
+            indicator_type: str,
+            score: int = 0,
+            response_type: str = "object",
     ):
         """
         Args:
@@ -814,7 +839,7 @@ class XsoarClient:
                 raise ApiException(
                     status=400,
                     reason=f"Cannot create the indicator={value} type={indicator_type} "
-                    f"because it is in the exclusion list",
+                           f"because it is in the exclusion list",
                 )
 
         # if raw_response = None and status_code = 200, it means the indicator is in the exclusion list
@@ -836,12 +861,12 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def delete_indicators(
-        self,
-        indicator_ids: Union[str, List[str]],
-        filters: Dict[str, Any] = None,
-        _all: bool = False,
-        should_exclude: bool = False,
-        response_type: str = "object",
+            self,
+            indicator_ids: Union[str, List[str]],
+            filters: Dict[str, Any] = None,
+            _all: bool = False,
+            should_exclude: bool = False,
+            response_type: str = "object",
     ):
         """
         Deletes indicators from xsoar/xsiam
@@ -886,11 +911,11 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def list_indicators(
-        self,
-        page: int = 0,
-        size: int = 50,
-        query: str = "",
-        response_type: str = "object",
+            self,
+            page: int = 0,
+            size: int = 50,
+            query: str = "",
+            response_type: str = "object",
     ):
         """
         Args:
@@ -930,7 +955,7 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def delete_indicators_from_whitelist(
-        self, indicator_ids: List[str], response_type: str = "object"
+            self, indicator_ids: List[str], response_type: str = "object"
     ):
         """
         Args:
@@ -963,12 +988,12 @@ class XsoarClient:
 
     @retry(times=20, exceptions=RequestException)
     def do_long_running_instance_request(
-        self,
-        instance_name: str,
-        url_suffix: str = "",
-        headers: Optional[Dict[str, Any]] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+            self,
+            instance_name: str,
+            url_suffix: str = "",
+            headers: Optional[Dict[str, Any]] = None,
+            username: Optional[str] = None,
+            password: Optional[str] = None,
     ) -> requests.Response:
         """
 
@@ -999,11 +1024,11 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def run_cli_command(
-        self,
-        command: str,
-        investigation_id: Optional[str] = None,
-        should_delete_context: bool = True,
-        response_type: str = "object",
+            self,
+            command: str,
+            investigation_id: Optional[str] = None,
+            should_delete_context: bool = True,
+            response_type: str = "object",
     ) -> Tuple[List[Entry], Dict[str, Any]]:
         """
         Args:
@@ -1127,7 +1152,7 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def get_investigation_context(
-        self, investigation_id: str, response_type: str = "object"
+            self, investigation_id: str, response_type: str = "object"
     ):
         """
         Args:
@@ -1166,7 +1191,7 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def start_incident_investigation(
-        self, incident_id: str, response_type: str = "object"
+            self, incident_id: str, response_type: str = "object"
     ):
         """
         Args:
@@ -1254,12 +1279,12 @@ class XsoarClient:
         return raw_response
 
     def poll_playbook_state(
-        self,
-        incident_id: str,
-        expected_states: Tuple[InvestigationPlaybookState, ...] = (
-            InvestigationPlaybookState.COMPLETED,
-        ),
-        timeout: int = 120,
+            self,
+            incident_id: str,
+            expected_states: Tuple[InvestigationPlaybookState, ...] = (
+                    InvestigationPlaybookState.COMPLETED,
+            ),
+            timeout: int = 120,
     ):
         """
         Polls for a playbook state until it reaches into an expected state.
@@ -1306,3 +1331,18 @@ class XsoarClient:
                 else None
             ),
         )
+
+    def get_playbook_data(self, playbook_id: int) -> dict:
+        playbook_endpoint = f"/playbook/{playbook_id}"
+
+        response, status_code, _ = self._xsoar_client.generic_request(
+            playbook_endpoint, method="GET", accept="application/json"
+        )
+        return self._process_response(response, status_code, 200)
+
+    def update_playbook_input(self, playbook_id: str, new_inputs: dict):
+        saving_inputs_path = f"/playbook/inputs/{playbook_id}"
+        response, status_code, _ = self._xsoar_client.generic_request(
+            saving_inputs_path, method="POST", body={"inputs": new_inputs}
+        )
+        return self._process_response(response, status_code, 200)

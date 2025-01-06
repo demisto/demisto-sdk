@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_PASSWORD,
     DEMISTO_USERNAME,
     DEMISTO_VERIFY_SSL,
-    LCAS_ID,
+    PROJECT_ID,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.logger import logger
@@ -133,7 +133,7 @@ def get_client_from_server_type(
     auth_id: Optional[str] = None,
     username: Optional[str] = None,
     password: Optional[str] = None,
-    lcas_id: Optional[str] = None,
+    project_id: Optional[str] = None,
     verify_ssl: Optional[bool] = None,
     raise_if_server_not_healthy: bool = True,
 ) -> XsoarClient:
@@ -146,7 +146,7 @@ def get_client_from_server_type(
         auth_id: the auth ID, if not provided will take from XSIAM_AUTH_ID env var
         username: the username to authenticate, relevant only for xsoar on prem
         password: the password to authenticate, relevant only for xsoar on prem
-        lcas_id: the lcas id of the current cloud machine.
+        project_id: the project id of the current cloud machine.
         verify_ssl: whether in each request SSL should be verified, True if yes, False if not,
                     if verify_ssl = None, will take the SSL verification from DEMISTO_VERIFY_SSL env var
         raise_if_server_not_healthy: whether to raise an exception if the server is not healthy
@@ -159,7 +159,7 @@ def get_client_from_server_type(
     _auth_id = auth_id or os.getenv(AUTH_ID)
     _username = username or os.getenv(DEMISTO_USERNAME, "")
     _password = password or os.getenv(DEMISTO_PASSWORD, "")
-    _lcas_id = lcas_id or os.getenv(LCAS_ID, "")
+    _project_id = project_id or os.getenv(PROJECT_ID, "")
     _verify_ssl = (
         verify_ssl
         if verify_ssl is not None
@@ -192,7 +192,7 @@ def get_client_from_server_type(
                 api_key=_api_key,
                 auth_id=_auth_id,
                 verify_ssl=_verify_ssl,
-                lcas_id=_lcas_id,
+                project_id=_project_id,
             ),
             should_validate_server_type=should_validate_server_type,
             raise_if_server_not_healthy=raise_if_server_not_healthy,
@@ -207,7 +207,7 @@ def get_client_from_server_type(
                 api_key=_api_key,
                 auth_id=_auth_id,
                 verify_ssl=_verify_ssl,
-                lcas_id=_lcas_id,
+                project_id=_project_id,
             ),
             should_validate_server_type=should_validate_server_type,
             raise_if_server_not_healthy=raise_if_server_not_healthy,

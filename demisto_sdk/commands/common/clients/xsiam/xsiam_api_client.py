@@ -48,31 +48,6 @@ class XsiamClient(XsoarSaasClient):
 
     """
     #############################
-    Helper methods
-    #############################
-    """
-
-    def _process_response(self, response, status_code, expected_status=200):
-        """Process the HTTP response coming from the XSOAR client."""
-        if status_code == expected_status:
-            if response:
-                try:
-                    return json.loads(response)
-                except json.JSONDecodeError:
-                    api_response = (
-                        response.replace("'", '"')
-                        .replace("False", "false")
-                        .replace("True", "true")
-                        .replace("None", "null")
-                    )
-                    return json.loads(api_response)
-            return {}
-        else:
-            error_message = f"Expected status {expected_status}, but got {status_code}. Response: {response}"
-            raise Exception(error_message)
-
-    """
-    #############################
     xsoar related methods
     #############################
     """
@@ -314,23 +289,4 @@ class XsiamClient(XsoarSaasClient):
 
         return alert_ids
 
-    """
-    #############################
-    Playbooks related methods
-    #############################
-    """
 
-    def get_playbook_data(self, playbook_id: int) -> dict:
-        playbook_endpoint = f"/playbook/{playbook_id}"
-
-        response, status_code, _ = self._xsoar_client.generic_request(
-            playbook_endpoint, method="GET", accept="application/json"
-        )
-        return self._process_response(response, status_code, 200)
-
-    def update_playbook_input(self, playbook_id: str, new_inputs: dict):
-        saving_inputs_path = f"/playbook/inputs/{playbook_id}"
-        response, status_code, _ = self._xsoar_client.generic_request(
-            saving_inputs_path, method="POST", body={"inputs": new_inputs}
-        )
-        return self._process_response(response, status_code, 200)

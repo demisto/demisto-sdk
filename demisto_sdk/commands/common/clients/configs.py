@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_PASSWORD,
     DEMISTO_USERNAME,
     DEMISTO_VERIFY_SSL,
-    LCAS_ID,
+    PROJECT_ID,
     XSIAM_COLLECTOR_TOKEN,
     XSIAM_TOKEN,
 )
@@ -73,7 +73,7 @@ class XsoarClientConfig(BaseModel):
 
 class XsoarSaasClientConfig(XsoarClientConfig):
     auth_id: str = Field(default=os.getenv(AUTH_ID), description="XSOAR/XSIAM Auth ID")
-    lcas_id: str = Field(default=os.getenv(LCAS_ID), description="XSOAR/XSIAM LCAS ID")
+    project_id: str = Field(default=os.getenv(PROJECT_ID), description="XSOAR/XSIAM Project ID")
 
     @root_validator()
     def validate_auth_params(cls, values: Dict[str, Any]):

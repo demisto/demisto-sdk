@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.clients import get_client_from_server_type
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
 from demisto_sdk.commands.common.constants import (
     XSIAM_SERVER_TYPE,
-    Test_Use_Cases,
+    TEST_USE_CASES,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import (
@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.logger import (
 )
 from demisto_sdk.commands.common.tools import (
     get_json_file,
-    string_to_bool,
+    string_to_bool, get_pack_name,
 )
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
     ParallelLoggingManager,
@@ -46,21 +46,11 @@ CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
 app = typer.Typer()
 
 
-def get_containing_pack(use_case_path: Path) -> str:
-    """Get pack object that contains the content entity.
-
-    Args:
-        use_case_path: path to the use case
-
-    Returns:
-        Pack: Pack object that contains the content entity.
-    """
-    while use_case_path.parent.name.casefold() != "packs":
-        use_case_path = use_case_path.parent
-    return str(use_case_path)
-
-
 def copy_conftest(test_dir):
+    """
+        copy content's conftest.py file into the use case directory in order to be able to pass new custom
+         pytest argument (client_conf)
+    """
     source_conftest = Path(f"{CONTENT_PATH}/Tests/scripts/dev_envs/pytest/conftest.py")
     dest_conftest = test_dir / "conftest.py"
 
@@ -148,7 +138,7 @@ class TestResults:
           file_name: The desired filename for the uploaded JSON data.
           logging_module: Logging module to use for upload_result_json_to_bucket.
         """
-        logging_module.info("Start uploading test use case results file to bucket")
+        logging_module.debug("Start uploading test use case results file to bucket")
 
         storage_client = storage.Client.from_service_account_json(self.service_account)
         storage_bucket = storage_client.bucket(self.artifacts_bucket)
@@ -161,7 +151,7 @@ class TestResults:
             content_type="application/xml",
         )
 
-        logging_module.info("Finished uploading test use case results file to bucket")
+        logging_module.debug("Finished uploading test use case results file to bucket")
 
 
 class BuildContext:
@@ -179,7 +169,7 @@ class BuildContext:
             auth_id: Optional[str],
             inputs: Optional[List[Path]],
             machine_assignment: str,
-            lcas_id: str,
+            project_id: str,
             ctx: typer.Context,
     ):
         self.logging_module: ParallelLoggingManager = logging_module
@@ -188,7 +178,7 @@ class BuildContext:
         # --------------------------- overall build configuration -------------------------------
         self.is_nightly = nightly
         self.build_number = build_number
-        self.lcas_id = lcas_id
+        self.project_id = project_id
 
         # -------------------------- Manual run on a single instance --------------------------
         self.cloud_url = cloud_url
@@ -215,18 +205,21 @@ class BuildContext:
 
         # --------------------------- Env Setup -------------------------------
 
-        logger.info("installing pyxdr...")
+        logger.debug("installing pyxdr...")
 
         run_command(
             f"pip install pyxdr --index-url https://__token__:{os.environ.get('PYXDR_TOKEN')}@gitlab.xdr.pan.local/"
             f"api/v4/projects/213/packages/pypi/simple --trusted-host gitlab.xdr.pan.local")
 
-    @staticmethod
-    def edit_prefix(path_str: Union[str, Path]) -> Path:
-        path = Path(path_str)
-        if path.parts[0] == "Packs":
-            return path
-        return Path("Packs") / path
+    # @staticmethod
+    # def edit_prefix(path_str: Union[str, Path]) -> Path:
+    #     """
+    #         Remove
+    #     """
+    #     path = Path(path_str)
+    #     if path.parts[0] == "Packs":
+    #         return path
+    #     return Path("Packs") / path
 
     def create_servers(self):
         """
@@ -241,7 +234,7 @@ class BuildContext:
                     api_key=self.api_key,  # type: ignore[arg-type]
                     auth_id=self.auth_id,  # type: ignore[arg-type]
                     ui_url=get_ui_url(self.cloud_url),
-                    tests=[BuildContext.edit_prefix(test) for test in self.inputs]
+                    tests=[test for test in self.inputs]
                     if self.inputs
                     else [],
                 )
@@ -249,8 +242,8 @@ class BuildContext:
         servers_list = []
         for machine, assignment in self.machine_assignment_json.items():
             tests = [
-                BuildContext.edit_prefix(test)
-                for test in assignment.get("tests", {}).get(Test_Use_Cases, [])
+                test
+                for test in assignment.get("tests", {}).get(TEST_USE_CASES, [])
             ]
             if not tests:
                 logger.info(f"No test use cases found for machine {machine}")
@@ -334,7 +327,7 @@ class CloudServerContext:
                 success, test_use_case_test_suite = run_test_use_case_pytest(
                     test_use_case_directory,
                     cloud_client=cloud_client,
-                    lcas_id=self.build_context.lcas_id,
+                    project_id=self.build_context.project_id,
                 )
 
                 if success:
@@ -378,7 +371,7 @@ def run_test_use_case_pytest(
         test_use_case_directory: Path,
         cloud_client: XsoarClient,
         durations: int = 5,
-        lcas_id: str = None,
+        project_id: str = None,
 ) -> Tuple[bool, Union[TestSuite, None]]:
     """Runs a test use case
 
@@ -389,7 +382,7 @@ def run_test_use_case_pytest(
     """
     # Creating an instance of your results collector
     test_use_case_suite = TestSuite("Test Use Case")
-    containing_pack = get_containing_pack(test_use_case_directory)
+    containing_pack = get_pack_name(test_use_case_directory)
 
     test_use_case_suite.add_property("file_name", str(test_use_case_directory.name))
     test_use_case_suite.add_property("pack_id", containing_pack)
@@ -399,12 +392,12 @@ def run_test_use_case_pytest(
     test_dir = test_use_case_directory.parent
     copy_conftest(test_dir)
 
-    logger.info(f"before sending pytest {str(cloud_client.base_url)}")
+    logger.debug(f"before sending pytest {str(cloud_client.base_url)}")
     pytest_args = [
         f"--client_conf=base_url={str(cloud_client.server_config.base_api_url)},"
         f"api_key={cloud_client.server_config.api_key.get_secret_value()},"
         f"auth_id={cloud_client.server_config.auth_id},"
-        f"lcas_id={lcas_id}",
+        f"project_id={project_id}",
         str(test_use_case_directory),
         f"--durations={str(durations)}",
         "--log-cli-level=CRITICAL",
@@ -430,125 +423,25 @@ def run_test_use_case_pytest(
         raise Exception(f"Pytest failed with {status_code=}")
 
 
-@app.command(
-    no_args_is_help=True,
-    context_settings={
-        "allow_extra_args": True,
-        "ignore_unknown_options": True,
-        "help_option_names": ["-h", "--help"],
-    },
-)
 def run_test_use_case(
         ctx: typer.Context,
-        inputs: List[Path] = typer.Argument(
-            None,
-            exists=True,
-            dir_okay=True,
-            resolve_path=True,
-            show_default=False,
-            help="The path to a directory of a test use cases. May pass multiple paths to test multiple test use cases.",
-        ),
-        xsiam_url: Optional[str] = typer.Option(
-            None,
-            envvar="DEMISTO_BASE_URL",
-            help="The base url to the cloud tenant.",
-            rich_help_panel="Cloud Tenant Configuration",
-            show_default=False,
-            callback=tenant_config_cb,
-        ),
-        api_key: Optional[str] = typer.Option(
-            None,
-            envvar="DEMISTO_API_KEY",
-            help="The api key for the cloud tenant.",
-            rich_help_panel="XSIAM Tenant Configuration",
-            show_default=False,
-            callback=tenant_config_cb,
-        ),
-        auth_id: Optional[str] = typer.Option(
-            None,
-            envvar="XSIAM_AUTH_ID",
-            help="The auth id associated with the cloud api key being used.",
-            rich_help_panel="XSIAM Tenant Configuration",
-            show_default=False,
-            callback=tenant_config_cb,
-        ),
-        output_junit_file: Optional[Path] = typer.Option(
-            None, "-jp", "--junit-path", help="Path to the output JUnit XML file."
-        ),
-        service_account: Optional[str] = typer.Option(
-            None,
-            "-sa",
-            "--service_account",
-            envvar="GCP_SERVICE_ACCOUNT",
-            help="GCP service account.",
-            show_default=False,
-        ),
-        cloud_servers_path: str = typer.Option(
-            "",
-            "-csp",
-            "--cloud_servers_path",
-            help="Path to secret cloud server metadata file.",
-            show_default=False,
-        ),
-        cloud_servers_api_keys: str = typer.Option(
-            "",
-            "-csak",
-            "--cloud_servers_api_keys",
-            help="Path to file with cloud Servers api keys.",
-            show_default=False,
-        ),
-        machine_assignment: str = typer.Option(
-            "",
-            "-ma",
-            "--machine_assignment",
-            help="the path to the machine assignment file.",
-            show_default=False,
-        ),
-        build_number: str = typer.Option(
-            "",
-            "-bn",
-            "--build_number",
-            help="The build number.",
-            show_default=True,
-        ),
-        nightly: str = typer.Option(
-            "false",
-            "--nightly",
-            "-n",
-            help="Whether the command is being run in nightly mode.",
-        ),
-        artifacts_bucket: str = typer.Option(
-            None,
-            "-ab",
-            "--artifacts_bucket",
-            help="The artifacts bucket name to upload the results to",
-            show_default=False,
-        ),
-        lacs_id: str = typer.Option(
-            None,
-            "-li",
-            "--lcas_id",
-            help="The machine LCAS ID",
-            show_default=False,
-        ),
-        console_log_threshold: str = typer.Option(
-            "INFO",
-            "-clt",
-            "--console-log-threshold",
-            help="Minimum logging threshold for the console logger.",
-        ),
-        file_log_threshold: str = typer.Option(
-            "DEBUG",
-            "-flt",
-            "--file-log-threshold",
-            help="Minimum logging threshold for the file logger.",
-        ),
-        log_file_path: Optional[str] = typer.Option(
-            None,
-            "-lp",
-            "--log-file-path",
-            help="Path to save log files onto.",
-        ),
+        inputs: List[Path],
+        xsiam_url: Optional[str],
+        api_key: Optional[str],
+        auth_id: Optional[str],
+        output_junit_file: Optional[Path],
+        service_account: Optional[str],
+        cloud_servers_path: str,
+        cloud_servers_api_keys: str,
+        machine_assignment: str,
+        build_number: str,
+        nightly: str,
+        artifacts_bucket: str,
+        project_id: str,
+        console_log_threshold: str,
+        file_log_threshold: str,
+        log_file_path: Optional[str],
+        **kwargs
 ):
     """
     Test a test use case against an XSIAM tenant
@@ -593,10 +486,10 @@ def run_test_use_case(
         api_key=api_key,
         auth_id=auth_id,
         inputs=inputs,
-        lcas_id=lacs_id,
+        project_id=project_id,
     )
 
-    logging_module.info(
+    logging_module.debug(
         "test use cases to test:",
     )
 
@@ -657,5 +550,4 @@ def run_test_use_case(
     )
 
 
-if __name__ == "__main__":
-    app()
+

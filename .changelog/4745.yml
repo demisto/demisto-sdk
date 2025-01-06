@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where an incorrect marketplace reference was not properly removed from the code.
-  type: fix
-pr_number: 4745

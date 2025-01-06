@@ -1,4 +1,19 @@
 # Changelog
+## 1.33.4 (2025-01-06)
+### Breaking
+* Started deprecation process for old validate. This flow will be deprecated and removed in the near future. Please use the new validate flow. [#4750](https://github.com/demisto/demisto-sdk/pull/4750)
+
+### Feature
+* Added support for validating CaseLayout content items in the *RN114* validation. [#4755](https://github.com/demisto/demisto-sdk/pull/4755)
+* Updated the *ST110* validation to validate the "sectionOrder" and individual sections. Added new validation *ST111* which validates the existence of the same fields. [#4739](https://github.com/demisto/demisto-sdk/pull/4739)
+* Updated the ***update-release-notes*** command to add Markdown formatting to the release notes of new playbooks that follow the new playbook description template.
+ [#4735](https://github.com/demisto/demisto-sdk/pull/4735)
+
+### Fix
+* Fixed an issue where the `build-Devcontainer` Github action failed due to `file_path` being None in ***setup-environment*** command. [#4747](https://github.com/demisto/demisto-sdk/pull/4747)
+* Fixed an issue where an incorrect marketplace reference was not properly removed from the code. [#4745](https://github.com/demisto/demisto-sdk/pull/4745)
+
+
 ## 1.33.3 (2025-01-01)
 ### Breaking
 * The ***demisto-sdk convert*** command has been deprecated and is no longer available for use. [#4743](https://github.com/demisto/demisto-sdk/pull/4743)

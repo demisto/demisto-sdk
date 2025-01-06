@@ -234,7 +234,7 @@ class BuildContext:
                     api_key=self.api_key,  # type: ignore[arg-type]
                     auth_id=self.auth_id,  # type: ignore[arg-type]
                     ui_url=get_ui_url(self.cloud_url),
-                    tests=[test for test in self.inputs]
+                    tests=[Path(test) for test in self.inputs]
                     if self.inputs
                     else [],
                 )
@@ -242,7 +242,7 @@ class BuildContext:
         servers_list = []
         for machine, assignment in self.machine_assignment_json.items():
             tests = [
-                test
+                Path(test)
                 for test in assignment.get("tests", {}).get(TEST_USE_CASES, [])
             ]
             if not tests:

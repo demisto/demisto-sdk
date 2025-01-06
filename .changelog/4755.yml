@@ -1,0 +1,4 @@
+changes:
+- description: Added support for validating CaseLayout content items in the RN114 validation.
+  type: feature
+pr_number: 4755

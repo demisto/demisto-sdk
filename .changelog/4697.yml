@@ -1,4 +1,0 @@
-changes:
-- description: Added support for writing pre-commit results to files.
-  type: feature
-pr_number: 4697

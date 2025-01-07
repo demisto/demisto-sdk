@@ -1376,7 +1376,7 @@ class TestRNUpdate:
 
         assert (
             desc
-            == "##### Integration test\n\n- Deprecated the **test-command** command. Use %%% instead.\ntext for test"
+            == "##### Integration test\n\n- Deprecated the **test-command** command. Use %%% instead.\n- text for test\n"
         )
 
     def test_deprecated_rn_integration_command(self, mocker):

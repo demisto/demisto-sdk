@@ -407,7 +407,7 @@ def test_FirstLevelHeaderMissingValidator_obtain_invalid_content_items():
     )
 
 
-def test_IsDockerEntryMatchYmlValidator_fix_same_pack():
+def test_IsDockerEntryMatchYmlValidator_fix_same_pack(mocker):
     """
     Given:
     - RN notes with many changes needed to be made in the same pack
@@ -480,6 +480,13 @@ def test_IsDockerEntryMatchYmlValidator_fix_same_pack():
         old_script_1,
     ]
     create_old_file_pointers(content_items, old_content_items)
+
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.parsers.related_files.RNRelatedFile.git_status",
+        new_callable=mocker.PropertyMock,
+        return_value=GitStatuses.ADDED,
+    )
+
     validator = IsDockerEntryMatchYmlValidator()
     fixed_messages = [validator.fix(content_item) for content_item in content_items]
     assert len(fixed_messages) == 3
@@ -517,7 +524,7 @@ def test_IsDockerEntryMatchYmlValidator_fix_same_pack():
     assert pack.release_note.file_content == expected_rn
 
 
-def test_IsDockerEntryMatchYmlValidator_fix():
+def test_IsDockerEntryMatchYmlValidator_fix(mocker):
     """
     Given:
     - content_items list with 5 packs, each with RN with different content.
@@ -578,6 +585,11 @@ def test_IsDockerEntryMatchYmlValidator_fix():
         old_integration_2,
         old_script_1,
     ]
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.parsers.related_files.RNRelatedFile.git_status",
+        new_callable=mocker.PropertyMock,
+        return_value=GitStatuses.ADDED,
+    )
     create_old_file_pointers(content_items, old_content_items)
     validator = IsDockerEntryMatchYmlValidator()
     fixed_messages = [validator.fix(content_item) for content_item in content_items]

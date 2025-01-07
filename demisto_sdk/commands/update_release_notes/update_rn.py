@@ -1211,7 +1211,7 @@ class UpdateRN:
                             type=(type or "%%UPDATE_CONTENT_ITEM_TYPE%%"),
                         )
                     else:
-                        rn_desc += text
+                        rn_desc += f"- {text}\n"
 
         if docker_image:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n\n"

@@ -42,7 +42,7 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
             if (aliases := self.invalid_aliases_marketplace(content_item))
         ]
 
-    def invalid_aliases_marketplace(self, content_item) -> list:
+    def invalid_aliases_marketplace(self, content_item):
         """Checks if the marketplace of the aliases is valid.
         Args:
             content_item : The content item.

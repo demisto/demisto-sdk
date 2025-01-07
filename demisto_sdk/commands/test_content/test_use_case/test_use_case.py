@@ -211,6 +211,12 @@ class BuildContext:
             f"pip install pyxdr --index-url https://__token__:{os.environ.get('PYXDR_TOKEN')}@gitlab.xdr.pan.local/"
             f"api/v4/projects/213/packages/pypi/simple --trusted-host gitlab.xdr.pan.local")
 
+        logger.info("Runnign gcloud config")
+        run_command("gcloud auth list")
+
+        logger.info("Running project ID")
+        run_command("gcloud projects list --format json --filter projectId~qa2-test-9999640926782")
+
     # @staticmethod
     # def edit_prefix(path_str: Union[str, Path]) -> Path:
     #     """

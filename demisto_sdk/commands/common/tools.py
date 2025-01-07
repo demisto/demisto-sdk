@@ -454,7 +454,7 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
             if mp in marketplaces:
                 result.update(core_packs)
     except NoInternetConnectionException:
-        logger.debug("SDK running in offline mode, returning core_packs=[]")
+        logger.info("SDK running in offline mode, returning core_packs=[]")
         return []
     return list(result)
 
@@ -540,7 +540,7 @@ def get_remote_file_from_api(
         )
         err_msg = err_msg.replace(gitlab_token, "XXX") if gitlab_token else err_msg
         if is_external_repository():
-            logger.debug(
+            logger.info(
                 f'<yellow>You are working in a private repository: "{git_content_config.current_repository}".\n'
                 f"The github/gitlab token in your environment is undefined.\n"
                 f"Getting file from local repository instead. \n"
@@ -549,7 +549,7 @@ def get_remote_file_from_api(
                 f"`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=\\<TOKEN> or`\n"
                 f"export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=\\<TOKEN></yellow>"
             )
-        logger.debug(
+        logger.info(
             f'<yellow>Could not find the old entity file under "{git_path}".\n'
             "please make sure that you did not break backward compatibility.\n"
             f"Reason: {err_msg}</yellow>"
@@ -621,7 +621,7 @@ def get_remote_file(
                 )
             return local_origin_content
         except Exception as e:
-            logger.debug(
+            logger.info(
                 f"Could not get local remote file because of: {str(e)}\n"
                 f"Searching the remote file content with the API.",
                 exc_info=True,
@@ -811,7 +811,7 @@ def safe_read_unicode(bytes_data: bytes) -> str:
 
     except UnicodeDecodeError:
         try:
-            logger.debug(
+            logger.info(
                 "Could not read data using UTF-8 encoding. Trying to auto-detect encoding..."
             )
             return UnicodeDammit(bytes_data).unicode_markup
@@ -843,11 +843,11 @@ def safe_write_unicode(
             )
             raise  # already a unicode file, the following code cannot fix it.
 
-        logger.debug(
+        logger.info(
             f"deleting {path} - it will be rewritten as unicode (was {encoding})"
         )
         path.unlink()  # deletes the file
-        logger.debug(f"rewriting {path} as")
+        logger.info(f"rewriting {path} as")
         _write()  # recreates the file
 
 
@@ -886,7 +886,7 @@ def get_file(
             return file_content
     except IOError as e:
         logger.error(f"Could not read file '{file_path}': {e}")
-        logger.debug("Traceback:\n" + traceback.format_exc())
+        logger.info("Traceback:\n" + traceback.format_exc())
         return {}
     try:
         if type_of_file.lstrip(".") in {"yml", "yaml"}:
@@ -919,7 +919,7 @@ def get_file_or_remote(file_path: Path, clear_cache=False):
         try:
             relative_file_path = file_path.relative_to(content_path)
         except ValueError:
-            logger.debug(
+            logger.info(
                 f"{file_path} is not a subpath of {content_path}. If the file does not exists locally, it could not be fetched."
             )
     else:
@@ -1875,7 +1875,7 @@ def find_type(
     except ValueError as err:
         if ignore_invalid_schema_file:
             # invalid file schema
-            logger.debug(str(err))
+            logger.info(str(err))
             return None
         raise err
 
@@ -2073,7 +2073,7 @@ def is_external_repo() -> bool:
             )
         )
     except Exception as e:
-        logger.debug(f"failed to get repo information, {str(e)}")
+        logger.info(f"failed to get repo information, {str(e)}")
         return True
 
 
@@ -2129,7 +2129,7 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
     try:
         if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
             git_repo = GitUtil(Path(content_path), search_parent_directories=False).repo
-            logger.debug(f"Using content path: {content_path}")
+            logger.info(f"Using content path: {content_path}")
         else:
             git_repo = GitUtil().repo
 
@@ -2638,10 +2638,11 @@ def get_demisto_version(client: demisto_client) -> Version:
         about_data = json.loads(resp[0].replace("'", '"'))
         return Version(Version(about_data.get("demistoVersion")).base_version)
     except Exception as e:
-        logger.debug(f"Failed to fetch server version. Error: {e}")
+        logger.info(f"Failed to fetch server version. Error: {e}")
         logger.warning(
             "Could not parse server version, please make sure the environment is properly configured."
         )
+        logger.info(str(e))
         return Version("0")
 
 
@@ -3417,7 +3418,7 @@ def get_api_module_dependencies(pkgs, id_set_path):
         script_name = script_info.get("name")
         script_api_modules = script_info.get("api_modules", [])
         if intersection := changed_api_modules & set(script_api_modules):
-            logger.debug(f"found script {script_name} dependent on {intersection}")
+            logger.info(f"found script {script_name} dependent on {intersection}")
             using_scripts.extend(list(script.values()))
 
     for integration in integrations:
@@ -3425,7 +3426,7 @@ def get_api_module_dependencies(pkgs, id_set_path):
         integration_name = integration_info.get("name")
         script_api_modules = integration_info.get("api_modules", [])
         if intersection := changed_api_modules & set(script_api_modules):
-            logger.debug(
+            logger.info(
                 f"found integration {integration_name} dependent on {intersection}"
             )
             using_integrations.extend(list(integration.values()))
@@ -3502,12 +3503,12 @@ def get_url_with_retries(url: str, retries: int, backoff_factor: int = 1, **kwar
     session = requests.Session()
     exception = Exception()
     for i in range(retries):
-        logger.debug(f"attempting to get {url}")
+        logger.info(f"attempting to get {url}")
         response = session.get(url, **kwargs)
         try:
             response.raise_for_status()
         except HTTPError as error:
-            logger.debug(
+            logger.info(
                 f"Got error while trying to fetch {url}. {retries - i - 1} retries left.",
                 exc_info=True,
             )
@@ -3838,7 +3839,7 @@ def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
     if marketplace:
         return MarketplaceVersions(marketplace)
 
-    logger.debug(
+    logger.info(
         "neither marketplace nor is_xsiam provided, using default marketplace=XSOAR"
     )
     return MarketplaceVersions.XSOAR  # default
@@ -4276,11 +4277,11 @@ def retry(
         @wraps(func)
         def wrapper(*args, **kwargs):
             for i in range(1, times + 1):
-                logger.debug(f"trying to run func {func_name} for the {i} time")
+                logger.info(f"trying to run func {func_name} for the {i} time")
                 try:
                     return func(*args, **kwargs)
                 except exceptions as error:
-                    logger.debug(
+                    logger.info(
                         f"error when executing func {func_name}, error: {error}, time {i}"
                     )
                     if i == times:
@@ -4574,7 +4575,7 @@ def run_sync(
                 fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 break
             except BlockingIOError:
-                logger.debug("Resource is busy, waiting...")
+                logger.info("Resource is busy, waiting...")
                 time.sleep(0.1)  # Wait for 0.1 seconds before retrying
 
         # If lock is acquired, call the exclusive function
@@ -4603,13 +4604,13 @@ def get_json_file(path):
             with open(path, "r") as json_file:
                 file_content = json.load(json_file)
         except FileNotFoundError:
-            logger.debug(f"Error: The file at path '{path}' was not found.")
+            logger.info(f"Error: The file at path '{path}' was not found.")
         except json.JSONDecodeError:
-            logger.debug(
+            logger.info(
                 f"Error: The file at path '{path}' does not contain valid JSON."
             )
         except Exception as e:
-            logger.debug(f"An unexpected error occurred: {e}")
+            logger.info(f"An unexpected error occurred: {e}")
     return file_content
 
 

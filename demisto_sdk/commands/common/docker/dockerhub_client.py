@@ -579,6 +579,7 @@ def get_registry_api_url(registry: str, default_registry: str) -> str:
             if parsed_dockerhub_proxy_api_url := get_dockerhub_artifact_registry_url(
                 DOCKER_IO
             ):
+                logger.info(f"Successfully parsed {parsed_dockerhub_proxy_api_url=}")
                 return parsed_dockerhub_proxy_api_url
             else:
                 logger.info(

@@ -55,7 +55,10 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
             return "Required field should not be associated to all types."
 
         if content_item.git_status == GitStatuses.MODIFIED:
-            old_file = cast(Union[IncidentField, IndicatorField], content_item.old_base_content_object)
+            old_file = cast(
+                Union[IncidentField, IndicatorField],
+                content_item.old_base_content_object
+            )
 
             # Required value for an already existing field cannot be changed
             if content_item.required != old_file.required:

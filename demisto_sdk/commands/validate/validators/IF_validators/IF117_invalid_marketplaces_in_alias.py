@@ -64,7 +64,7 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
             alias_toversion = Version(item.toversion)
 
             if alias_toversion > Version(OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION) and (
-                len(alias_marketplaces) > 2 # marketplaces are xsoar and xsoar.saas
+                len(alias_marketplaces) > 2  # marketplaces are xsoar and xsoar.saas
                 or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
             ):
                 invalid_aliases.append(

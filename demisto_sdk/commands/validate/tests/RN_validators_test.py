@@ -1,5 +1,3 @@
-from unittest.mock import PropertyMock
-
 import pytest
 
 from demisto_sdk.commands.common.constants import API_MODULES_PACK, GitStatuses
@@ -484,9 +482,9 @@ def test_IsDockerEntryMatchYmlValidator_fix_same_pack(mocker):
     create_old_file_pointers(content_items, old_content_items)
 
     mocker.patch(
-        'demisto_sdk.commands.content_graph.parsers.related_files.RNRelatedFile.git_status',
+        "demisto_sdk.commands.content_graph.parsers.related_files.RNRelatedFile.git_status",
         new_callable=mocker.PropertyMock,
-        return_value=GitStatuses.ADDED
+        return_value=GitStatuses.ADDED,
     )
 
     validator = IsDockerEntryMatchYmlValidator()
@@ -588,9 +586,9 @@ def test_IsDockerEntryMatchYmlValidator_fix(mocker):
         old_script_1,
     ]
     mocker.patch(
-        'demisto_sdk.commands.content_graph.parsers.related_files.RNRelatedFile.git_status',
+        "demisto_sdk.commands.content_graph.parsers.related_files.RNRelatedFile.git_status",
         new_callable=mocker.PropertyMock,
-        return_value=GitStatuses.ADDED
+        return_value=GitStatuses.ADDED,
     )
     create_old_file_pointers(content_items, old_content_items)
     validator = IsDockerEntryMatchYmlValidator()

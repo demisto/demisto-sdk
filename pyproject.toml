@@ -1,11 +1,11 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.0.0,<2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.mypy]
 check_untyped_defs = true
 ignore_missing_imports = true
-python_version = "3.10"
+python_version = "3.9"
 show_error_codes = true
 follow_imports = "silent"
 pretty = true
@@ -14,7 +14,7 @@ exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
 
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.33.0"
+version = "1.33.4"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -23,6 +23,7 @@ classifiers = [
   'Intended Audience :: Developers',
   'Natural Language :: English',
   'License :: OSI Approved :: MIT License',
+  'Programming Language :: Python :: 3.9',
   'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
@@ -38,11 +39,11 @@ exclude = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.9,<3.13"
 autopep8 = "^2.0.4"
 bandit = "^1.7.4"
 mypy = "^0.982"
-pylint = "^3.3.1"
+pylint = "^3.3.2"
 vulture = "^2.3"
 beautifulsoup4 = "^4.11.1"
 chardet = ">=4,<6"
@@ -101,6 +102,7 @@ pre-commit = "^3.5.0"
 lxml = "^5.0.0"
 uv = "^0.1.5"
 toml = "^0.10.2"
+werkzeug = "^2.2.0" # Added as mitmproxy8 -> flask<2.1
 loguru = "^0.7.2"
 pygithub = "^2.2.0"
 setuptools = "^75.5.0"
@@ -110,7 +112,7 @@ build = ["gsutil"]
 generate-unit-tests = ["klara"]
 
 [tool.poetry.group.dev.dependencies]
-mitmproxy = "^10.0.0" # if installing zstandard fails, make sure you have python3.x-dev installed.
+mitmproxy = "^8.0.0" # if installing zstandard fails, make sure you have python3.x-dev installed.
 mock = "^4.0.3"
 pytest = "^7.1.1"
 pytest-cov = "^4.0.0"
@@ -147,6 +149,7 @@ init-validation = "demisto_sdk.scripts.init_validation_script:main"
 validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
 validate-file-permission-changes = "demisto_sdk.scripts.validate_file_permission_changes:main"
 prevent-mypy-global-ignore = "demisto_sdk.scripts.prevent_mypy_global_ignore:main"
+generate-command-docs = "demisto_sdk.scripts.generate_commands_docs:main"
 
 [tool.ruff]
 exclude = [
@@ -156,7 +159,7 @@ exclude = [
   "demisto_sdk/commands/init/templates",
   "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py"
 ]
-target-version = "py310"
+target-version = "py39"
 
 [tool.ruff.lint]
 ignore = [

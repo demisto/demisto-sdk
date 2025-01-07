@@ -1,9 +1,13 @@
 from unittest.mock import patch
 
+from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
+    FoldedScalarString,
+)
+
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     MarketplaceVersions,
-    replace_incorrect_marketplace,
+    replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     to_node_pattern,
@@ -40,9 +44,9 @@ def test_to_neo4j_pattern():
     )
 
 
-def test_replace_incorrect_marketplace_string_with_number():
+def test_replace_marketplace_references_string_with_number():
     """
-    Test the replace_incorrect_marketplace function with a string containing a number.
+    Test the replace_marketplace_references function with a string containing a number.
 
     Given:
         - A string data object.
@@ -57,15 +61,15 @@ def test_replace_incorrect_marketplace_string_with_number():
     """
     data = "This is a Cortex XSOAR v1 example."
     expected = "This is a Cortex example."
-    result = replace_incorrect_marketplace(
+    result = replace_marketplace_references(
         data, MarketplaceVersions.MarketplaceV2, path="example/path"
     )
     assert result == expected
 
 
-def test_replace_incorrect_marketplace_string_without_number():
+def test_replace_marketplace_references__string_without_number():
     """
-    Test the replace_incorrect_marketplace function with a string not containing a number.
+    Test the replace_marketplace_references function with a string not containing a number.
 
     Given:
         - A string data object.
@@ -79,15 +83,15 @@ def test_replace_incorrect_marketplace_string_without_number():
     """
     data = "This is a Cortex XSOAR example."
     expected = "This is a Cortex example."
-    result = replace_incorrect_marketplace(
+    result = replace_marketplace_references(
         data, MarketplaceVersions.MarketplaceV2, path="example/path"
     )
     assert result == expected
 
 
-def test_replace_incorrect_marketplace_string_no_replacement():
+def test_replace_marketplace_references__string_no_replacement():
     """
-    Test the replace_incorrect_marketplace function with a string where no replacement should occur in the specific marketplace..
+    Test the replace_marketplace_references function with a string where no replacement should occur in the specific marketplace..
 
     Given:
         - A string data object.
@@ -101,73 +105,99 @@ def test_replace_incorrect_marketplace_string_no_replacement():
     """
     data = "This is a Cortex XSOAR v1 example."
     expected = "This is a Cortex XSOAR v1 example."
-    result = replace_incorrect_marketplace(
+    result = replace_marketplace_references(
         data, MarketplaceVersions.XSOAR, path="example/path"
     )
     assert result == expected
 
 
-def test_replace_incorrect_marketplace_dict():
+def test_replace_marketplace_references__dict():
     """
-    Test the replace_incorrect_marketplace function with a dictionary.
+    Test the replace_marketplace_references function with a dictionary.
 
     Given:
         - A dictionary data object.
-        - A marketplace version.
+        - A marketplace version (MarketplaceV2 or XPANSE).
 
     When:
-        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex" if the marketplace is MarketplaceV2 or XPANSE.
+        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex".
         - If the word following "Cortex XSOAR" contains a number, it will also be removed.
 
     Then:
         - The function should return the data with the replacements made if applicable.
+        - The function should modify the data in place and not create a copy.
+        - The type of FoldedScalarString values should be preserved.
     """
     data = {
         "description": "This is a Cortex XSOAR v1 example.",
         "details": "Cortex XSOAR should be replaced.",
+        "Cortex XSOAR": "Cortex XSOAR",
+        "folded": FoldedScalarString(
+            "Cortex XSOAR should be replaced in FoldedScalarString."
+        ),
     }
+    original_id = id(data)
     expected = {
         "description": "This is a Cortex example.",
         "details": "Cortex should be replaced.",
+        "Cortex": "Cortex",
+        "folded": FoldedScalarString(
+            "Cortex should be replaced in FoldedScalarString."
+        ),
     }
-    result = replace_incorrect_marketplace(
+    result = replace_marketplace_references(
         data, MarketplaceVersions.MarketplaceV2, path="example/path"
     )
+    assert id(result) == original_id
     assert result == expected
+    assert isinstance(result["folded"], FoldedScalarString)
 
 
-def test_replace_incorrect_marketplace_list():
+def test_replace_marketplace_references__list():
     """
-    Test the replace_incorrect_marketplace function with a list.
+    Test the replace_marketplace_references function with a list containing strings and dictionaries.
 
     Given:
-        - A list data object.
-        - A marketplace version.
+        - A list data object containing strings and dictionaries.
+        - A marketplace version (MarketplaceV2 or XPANSE).
 
     When:
-        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex" if the marketplace is MarketplaceV2 or XPANSE.
+        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex".
         - If the word following "Cortex XSOAR" contains a number, it will also be removed.
 
     Then:
         - The function should return the data with the replacements made if applicable.
+        - The function should modify the data in place and not create a copy.
     """
     data = [
         "This is a Cortex XSOAR v1 example.",
         "Cortex XSOAR should be replaced.",
+        {
+            "description": "This is a Cortex XSOAR v2 example.",
+            "details": "Cortex XSOAR should be replaced in details.",
+        },
+        {"nested_list": ["Cortex XSOAR v3 example.", "Another Cortex XSOAR example."]},
     ]
+    original_id = id(data)
     expected = [
         "This is a Cortex example.",
         "Cortex should be replaced.",
+        {
+            "description": "This is a Cortex example.",
+            "details": "Cortex should be replaced in details.",
+        },
+        {"nested_list": ["Cortex example.", "Another Cortex example."]},
     ]
-    result = replace_incorrect_marketplace(
+    result = replace_marketplace_references(
         data, MarketplaceVersions.MarketplaceV2, path="example/path"
     )
+    assert id(result) == original_id
     assert result == expected
 
 
-def test_replace_incorrect_marketplace_error_handling():
+def test_replace_marketplace_references__error_handling():
     """
-    Test the error handling of the replace_incorrect_marketplace function.
+    Test the error handling of the replace_marketplace_references function.
 
     Given:
         - A data object that causes an exception.
@@ -184,11 +214,11 @@ def test_replace_incorrect_marketplace_error_handling():
     marketplace = MarketplaceVersions.MarketplaceV2
 
     with patch(
-        "demisto_sdk.commands.content_graph.common.replace_incorrect_marketplace",
+        "demisto_sdk.commands.content_graph.common.replace_marketplace_references",
         side_effect=Exception("Test exception"),
     ):
         with patch("demisto_sdk.commands.content_graph.common.logger") as mock_logger:
-            result = replace_incorrect_marketplace(
+            result = replace_marketplace_references(
                 data, marketplace, path="example/path"
             )
 

@@ -4,12 +4,14 @@ from functools import cache
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.validate.tools import was_rn_added
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -117,6 +119,9 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
         Returns: a fix result
 
         """
+        if not was_rn_added(content_item.pack):
+            logger.debug(f'not fixing for {content_item.name} since rn was not added')
+            raise ValueError('Release notes were not added, cannot fix.')
         should_be_rn_entry = release_notes_shouldbe_entry(content_item)
         should_be_full_rn = (
             f"- Updated the Docker image to: *{should_be_rn_entry}*."

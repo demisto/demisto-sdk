@@ -23,8 +23,8 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
     description = "Checks if marketplace value in aliases is valid."
     rationale = "marketplace in aliases should be ['xsoar']."
     error_message = (
-        'The following fields exist as aliases and have invalid "marketplaces" key value: \n{0}\n '
-        'the value of the "marketplaces" key in these fields should be ["xsoar"].'
+        "The following fields exist as aliases and have invalid 'marketplaces' key value: \n{aliases}\n "
+        "the value of the 'marketplaces' key in these fields should be ['xsoar']."
     )
     related_field = "Aliases"
     is_auto_fixable = True
@@ -54,7 +54,7 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
         if aliases:
             if not self.graph:
                 logger.info(
-                    f"Skipping formatting of marketplaces field of aliases for {content_item.name} as the "
+                    f"Skipping validating of marketplaces field of aliases for {content_item.name} as the "
                     f"no-graph argument was given."
                 )
                 return []
@@ -68,6 +68,7 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
                 or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
             ):
                 invalid_aliases.append(item.cli_name)
+        return invalid_aliases
 
     def _get_incident_fields_by_aliases(self, aliases: list[dict]) -> list:
         """

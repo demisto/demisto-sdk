@@ -2,6 +2,8 @@ from typing import List, Optional, Union
 
 import pytest
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
@@ -44,6 +46,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF115_unsearchable_k
 )
 from demisto_sdk.commands.validate.validators.IF_validators.IF116_select_values_cannot_contain_empty_values_in_multi_select_types import (
     SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator,
+)
+from demisto_sdk.commands.validate.validators.IF_validators.IF117_invalid_marketplaces_in_alias import (
+    IsValidAliasMarketplaceValidator,
 )
 from demisto_sdk.commands.validate.validators.IF_validators.IF118_is_alias_inner_alias_valid import (
     IsAliasInnerAliasValidator,
@@ -745,3 +750,66 @@ def test_IsAliasInnerAliasValidator():
         result[0].message
         == "The following aliases have inner aliases: alias_1, alias_2"
     )
+
+def test_IsValidAliasMarketplaceValidator(mocker):
+    """
+    Given:
+    - An incident field with aliases, one of them with invalid marketplaces field.
+    When:
+    - Running validate on an incident field.
+    Then:
+    - Validate that the incorrect alias is caught.
+    """
+    aliases_names = [{"cliName": "alias_1", "type": "shortText", "marketplaces": [MarketplaceVersions.XSOAR]},
+               {"cliName": "alias_2", "type": "shortText", "marketplaces": [MarketplaceVersions.MarketplaceV2]}]
+    inc_field = create_incident_field_object(
+        ["Aliases"],
+        [aliases_names],
+    )
+    aliases = []
+    for item in aliases_names:
+        alias = create_incident_field_object(paths=["cliName"], values=[item.get("cliName")])
+        alias.marketplaces = item.get("marketplaces")
+        aliases.append(alias)
+
+    mocker.patch.object(IsValidAliasMarketplaceValidator, "graph", return_value="graph")
+    mocker.patch.object(IsValidAliasMarketplaceValidator, "_get_incident_fields_by_aliases", return_value=aliases)
+    result = IsValidAliasMarketplaceValidator().obtain_invalid_content_items([inc_field])
+
+    assert (
+        result[0].message
+        == "The following fields exist as aliases and have invalid 'marketplaces' key value: \nalias_2\n "
+           "the value of the 'marketplaces' key in these fields should be ['xsoar']."
+    )
+
+# @pytest.mark.parametrize("cli_name_value", ["foo1234", "foo", "1234"])
+# def test_IsValidRequiredFieldValidator(mocker):
+#     """
+#     Given:
+#     - Incident fields.
+#     When:
+#     - Running validate on an incident fields.
+#     Then:
+#     - Validate that the field has a valid required value.
+#     """
+#     aliases_names = [{"cliName": "alias_1", "type": "shortText", "marketplaces": [MarketplaceVersions.XSOAR]},
+#                {"cliName": "alias_2", "type": "shortText", "marketplaces": [MarketplaceVersions.MarketplaceV2]}]
+#     inc_field = create_incident_field_object(
+#         ["Aliases"],
+#         [aliases_names],
+#     )
+#     aliases = []
+#     for item in aliases_names:
+#         alias = create_incident_field_object(paths=["cliName"], values=[item.get("cliName")])
+#         alias.marketplaces = item.get("marketplaces")
+#         aliases.append(alias)
+#
+#     mocker.patch.object(IsValidAliasMarketplaceValidator, "graph", return_value="graph")
+#     mocker.patch.object(IsValidAliasMarketplaceValidator, "_get_incident_fields_by_aliases", return_value=aliases)
+#     result = IsValidAliasMarketplaceValidator().obtain_invalid_content_items([inc_field])
+#
+#     assert (
+#         result[0].message
+#         == "The following fields exist as aliases and have invalid 'marketplaces' key value: \nalias_2\n "
+#            "the value of the 'marketplaces' key in these fields should be ['xsoar']."
+#     )

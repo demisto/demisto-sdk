@@ -120,8 +120,8 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
 
         """
         if not was_rn_added(content_item.pack):
-            logger.debug(f'not fixing for {content_item.name} since rn was not added')
-            raise ValueError('Release notes were not added, cannot fix.')
+            logger.debug(f"not fixing for {content_item.name} since rn was not added")
+            raise ValueError("Release notes were not added, cannot fix.")
         should_be_rn_entry = release_notes_shouldbe_entry(content_item)
         should_be_full_rn = (
             f"- Updated the Docker image to: *{should_be_rn_entry}*."

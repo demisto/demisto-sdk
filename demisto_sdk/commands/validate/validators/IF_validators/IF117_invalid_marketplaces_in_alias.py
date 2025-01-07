@@ -67,9 +67,7 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
                 len(alias_marketplaces) > 2  # marketplaces are xsoar and xsoar.saas
                 or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
             ):
-                invalid_aliases.append(
-                    f"{item.cli_name} with {alias_marketplaces} and {alias_toversion}"
-                )
+                invalid_aliases.append(item.cli_name)
         return invalid_aliases
 
     def _get_incident_fields_by_aliases(self, aliases: list[dict]) -> list:

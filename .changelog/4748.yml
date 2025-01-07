@@ -1,0 +1,4 @@
+changes:
+- description: Added the validation `IF118` to the new validation format. The validation checks if an alias of an incident field has it's own alias.
+  type: internal
+pr_number: 4748

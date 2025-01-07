@@ -45,6 +45,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF115_unsearchable_k
 from demisto_sdk.commands.validate.validators.IF_validators.IF116_select_values_cannot_contain_empty_values_in_multi_select_types import (
     SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF118_is_alias_inner_alias_valid import (
+    IsAliasInnerAliasValidator,
+)
 from demisto_sdk.commands.validate.validators.IF_validators.IF119_select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types import (
     SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator,
 )
@@ -714,3 +717,31 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
         == "Removed all redundant empty values in the selectValues field."
     )
     assert result.content_object.select_values == ["test", ""]
+
+
+def test_IsAliasInnerAliasValidator():
+    """
+    Given:
+    - An incident field has an alias with an inner alias.
+    When:
+    - Running validate on an incident field.
+    Then:
+    - Validate that the correct aliases are caught.
+    """
+    inc_field = create_incident_field_object(
+        ["Aliases"],
+        [
+            [
+                {"cliName": "alias_1", "aliases": []},
+                {"cliname": "alias_2", "aliases": []},
+                {"cliName": "alias_3"},
+            ]
+        ],
+    )
+
+    result = IsAliasInnerAliasValidator().obtain_invalid_content_items([inc_field])
+
+    assert (
+        result[0].message
+        == "The following aliases have inner aliases: alias_1, alias_2"
+    )

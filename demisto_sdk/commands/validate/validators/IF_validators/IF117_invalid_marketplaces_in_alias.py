@@ -18,6 +18,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = IncidentField
 
+
 class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
     error_code = "IF117"
     description = "Checks if marketplace value in aliases is valid."
@@ -27,7 +28,6 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
         "the value of the 'marketplaces' key in these fields should be ['xsoar']."
     )
     related_field = "Aliases"
-    is_auto_fixable = True
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
@@ -67,7 +67,7 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
                 len(alias_marketplaces) != 1
                 or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
             ):
-                invalid_aliases.append(item.cli_name)
+                invalid_aliases.append(f"{item.cli_name} with {alias_marketplaces} and {alias_toversion}")
         return invalid_aliases
 
     def _get_incident_fields_by_aliases(self, aliases: list[dict]) -> list:

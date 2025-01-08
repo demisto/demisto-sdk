@@ -619,16 +619,22 @@ class TestPlaybook:
         create_incident_request.playbook_id = self.configuration.playbook_id
         create_incident_request.name = incident_name
 
+        self.build_context.logging_module.info(
+            f"create_incident | {incident_name=}, {create_incident_request.create_investigation=}, {create_incident_request.playbook_id=}, {create_incident_request.name=}"
+        )
+
         inc_id = "incCreateErr"
         try:
             response = client.create_incident(
                 create_incident_request=create_incident_request
             )
+            self.build_context.logging_module.info(f"{response=}")
             inc_id = response.id
-        except ApiException:
+        except ApiException as e:
             self.log_exception(
                 f"Failed to create incident with name {incident_name} for playbook {self}"
             )
+            self.build_context.logging_module.info(str(e))
 
         if inc_id == "incCreateErr":
             self.log_error(

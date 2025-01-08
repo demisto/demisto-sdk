@@ -838,7 +838,7 @@ def test_IsValidAliasMarketplaceValidator(mocker):
             },
             1,
             [
-                "An already existing Type like Old Type cannot be added to an Incident Field with required value equals true."
+                "An already existing Types like Old Type cannot be added to an Incident Field with required value equals true."
             ],
         ),
     ],

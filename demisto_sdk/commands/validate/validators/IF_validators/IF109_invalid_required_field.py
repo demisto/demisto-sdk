@@ -19,7 +19,6 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IF109"
     description = "Checks if the incident field required field is valid."
     rationale = "In case an incident field is required, newly added associated incident types should be new."
-    # error_message = "{0}"
     related_field = "required"
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
 
@@ -50,9 +49,20 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
     def is_invalid_required_field(
         content_item: Union[IncidentField, IndicatorField], added_types: list[str]
     ):
+        """
+        Get from the graph the actual fields for the given aliases
+
+        Args:
+            content_item (Union[IncidentField, IndicatorField]): The incident field or indicator field to check its required field.
+            added_types (list): incident or indicator types that were created/added in the same pull request.
+
+        Returns:
+            str or None: return none in case it's valid, the error message in case it's not.
+        """
         # Required fields should not be associated to all
         if content_item.required and content_item.associated_to_all:
-            return "Required field should not be associated to all types."
+            return (f"A required {'Incident' if isinstance(content_item, IncidentField) else 'Indicator'} Field"
+                    f" should not be associated with all types.")
 
         if content_item.git_status == GitStatuses.MODIFIED:
             old_file = cast(
@@ -88,13 +98,15 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
         # new field
         elif content_item.required:
             associated_types = content_item.associated_types
-
+            invalid_associated_types = []
             # An already existing Incident/Indicator Type cannot be added to Incident/Indicator Field with required value true
             for associated_type in associated_types:
                 if associated_type not in added_types:
-                    return (
-                        f"An already existing Type like {associated_type} cannot be added to an "
-                        f"{'Incident' if isinstance(content_item, IncidentField) else 'Indicator'} "
-                        f"Field with required value equals true."
-                    )
+                    invalid_associated_types.append(associated_type)
+            if invalid_associated_types:
+                return (
+                    f"An already existing Types like {', '.join(invalid_associated_types)} cannot be added to an "
+                    f"{'Incident' if isinstance(content_item, IncidentField) else 'Indicator'} "
+                    f"Field with required value equals true."
+                )
         return

@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.constants import (
     OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -52,7 +51,9 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
         invalid_aliases = []
         aliases = content_item.data.get("Aliases", [])
 
-        incident_fields = self._get_incident_fields_by_aliases(aliases) if aliases else []
+        incident_fields = (
+            self._get_incident_fields_by_aliases(aliases) if aliases else []
+        )
         for item in incident_fields:
             alias_marketplaces = item.marketplaces
             alias_toversion = Version(item.toversion)

@@ -308,7 +308,7 @@ class PreCommitRunner:
                 stdout=subprocess.PIPE,
                 universal_newlines=True,
             )
-            logger.info("{}", git_diff.stdout) # noqa: RM106
+            logger.info(git_diff.stdout)
         return return_code
 
     @staticmethod

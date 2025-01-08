@@ -61,8 +61,10 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
         """
         # Required fields should not be associated to all
         if content_item.required and content_item.associated_to_all:
-            return (f"A required {'Incident' if isinstance(content_item, IncidentField) else 'Indicator'} Field"
-                    f" should not be associated with all types.")
+            return (
+                f"A required {'Incident' if isinstance(content_item, IncidentField) else 'Indicator'} Field"
+                f" should not be associated with all types."
+            )
 
         if content_item.git_status == GitStatuses.MODIFIED:
             old_file = cast(

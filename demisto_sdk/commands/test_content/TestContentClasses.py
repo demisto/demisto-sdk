@@ -1106,6 +1106,8 @@ class ServerContext:
             self.client.api_client.pool.close()
             self.client.api_client.pool.terminate()
             del self.client
+        ################################
+        self.build_context.logging_module.info(f"configure_new_client | {self.server_url=}, {self.api_key=}, {self.auth_id=}")
         self.client = demisto_client.configure(
             base_url=self.server_url,
             api_key=self.api_key,

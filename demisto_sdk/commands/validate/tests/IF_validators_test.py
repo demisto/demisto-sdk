@@ -824,7 +824,7 @@ def test_IsValidAliasMarketplaceValidator(mocker):
                 ): GitStatuses.ADDED
             },
             1,
-            ["Required field should not be associated to all types."],
+            ["A required Incident Field should not be associated with all types."],
         ),
         (
             {

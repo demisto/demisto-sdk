@@ -2,10 +2,10 @@ from os.path import join
 from pathlib import Path
 
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 from urllib3.response import HTTPResponse
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.download.tests.downloader_test import Environment
 
@@ -34,7 +34,7 @@ def match_request_text(client, url, method, *args, **kwargs):
 def demisto_client(mocker):
     mocker.patch(
         "demisto_sdk.commands.download.downloader.demisto_client",
-        return_valure="object",
+        return_value="object",
     )
 
     mocker.patch(
@@ -60,7 +60,7 @@ def test_integration_download_no_force(demisto_client, tmp_path):
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        main,
+        app,
         ["download", "-o", pack_path, "-i", "TestScript", "-i", "DummyPlaybook"],
     )
     assert "Filtering process completed, 2/13 items remain." in result.output
@@ -84,7 +84,7 @@ def test_integration_download_with_force(demisto_client, tmp_path, mocker):
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        main,
+        app,
         [
             "download",
             "-o",
@@ -101,7 +101,7 @@ def test_integration_download_with_force(demisto_client, tmp_path, mocker):
     assert result.exit_code == 0
 
 
-def test_integration_download_list_files(demisto_client, mocker):
+def test_integration_download_list_files(demisto_client, mocker, capsys):
     """
     Given
     - lf flag to list all available content items.
@@ -114,7 +114,7 @@ def test_integration_download_list_files(demisto_client, mocker):
     """
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, ["download", "-lf"])
+    result = runner.invoke(app, ["download", "-lf"])
 
     expected_table_str = """Content Name                          Content Type
 ------------------------------------  ---------------
@@ -152,7 +152,7 @@ def test_integration_download_fail(demisto_client, tmp_path):
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        main,
+        app,
         [
             "download",
             "-o",

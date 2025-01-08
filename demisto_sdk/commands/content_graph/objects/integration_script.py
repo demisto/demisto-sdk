@@ -18,7 +18,10 @@ from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
 )
-from demisto_sdk.commands.content_graph.common import lazy_property
+from demisto_sdk.commands.content_graph.common import (
+    lazy_property,
+    replace_marketplace_references,
+)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     CodeRelatedFile,
@@ -75,6 +78,7 @@ class IntegrationScript(ContentItem):
     code: Optional[str] = Field(None, exclude=True)
     unified_data: dict = Field(None, exclude=True)
     version: Optional[int] = 0
+    tests: Any = ""
 
     @lazy_property
     def python_version(self) -> Optional[str]:
@@ -113,6 +117,8 @@ class IntegrationScript(ContentItem):
         data = IntegrationScriptUnifier.unify(
             self.path, data, current_marketplace, **kwargs
         )
+        # Replace marketplace references if needed
+        data = replace_marketplace_references(data, current_marketplace, str(self.path))
         self.unified_data = data
         return data
 

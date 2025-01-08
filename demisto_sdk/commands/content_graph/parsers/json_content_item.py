@@ -111,3 +111,7 @@ class JSONContentItemParser(ContentItemParser):
     @property
     def version(self) -> int:
         return get_value(self.json_data, self.field_mapping.get("version", ""), 0)
+
+    @property
+    def is_silent(self) -> bool:
+        return get_value(self.json_data, "issilent", False)

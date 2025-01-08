@@ -1,9 +1,10 @@
 ## generate-outputs
+### Overview
 Generates outputs for an integration.
 This command generates context paths automatically from an example file directly into an integration YAML file.
 Also supports converting JSON format to Cortex XSOAR entry context YAML format.
 
-**Arguments**:
+### Options
 * *-c, --command*
   לCommand name (e.g. xdr-get-incidents)
 * *-j, --json*

@@ -106,6 +106,35 @@ def test_get_forbidden_deleted_files_deleting_test_playbook(git_repo: Repo):
         assert not get_forbidden_deleted_files({PACKS_DIR})
 
 
+def test_get_forbidden_deleted_files_deleting_silent_playbook(git_repo: Repo):
+    """
+    Given:
+        - a silent playbook which was deleted
+
+    When:
+        - running the get_forbidden_deleted_files function
+
+    Then:
+        - make sure the script does not find any forbidden deleted files as silent-playbook can be deleted
+    """
+    from demisto_sdk.scripts.validate_deleted_files import get_forbidden_deleted_files
+
+    pack = git_repo.create_pack("Test")
+    silent_playbook = pack.create_playbook("name")
+
+    silent_playbook.yml.update({"issilent": "true"})
+
+    git_repo.git_util.commit_files("create pack and silent playbook")
+    git_repo.git_util.repo.git.checkout("-b", "delete_playbook")
+
+    Path.unlink(Path(silent_playbook.path))
+
+    git_repo.git_util.commit_files("delete silent-playbook")
+
+    with ChangeCWD(git_repo.path):
+        assert not get_forbidden_deleted_files({PACKS_DIR})
+
+
 def test_get_forbidden_deleted_files_renaming_test_playbook(git_repo: Repo):
     """
     Given:

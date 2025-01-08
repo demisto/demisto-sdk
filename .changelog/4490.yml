@@ -1,4 +1,0 @@
-changes:
-- description: Added BA127 new validation. The validation checks that the level of depth of the context output path in the yml is lower or equal to 5 in XSOAR supported content items.
-  type: feature
-pr_number: 4490

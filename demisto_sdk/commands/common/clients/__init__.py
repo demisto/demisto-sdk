@@ -261,7 +261,7 @@ def get_client_conf_from_pytest_request(request):
     # Manually parse command-line argument
     for arg in request.config.invocation_params.args:
         if isinstance(arg, str) and arg.startswith("--client_conf="):
-            logger.info("there is --client_conf recognized")
+            logger.debug("Parsing --client_conf argument")
             client_conf = arg.replace("--client_conf=", "")
             return parse_str_to_dict(client_conf)
     # If a client data was not provided, we proceed to use default.

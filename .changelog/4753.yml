@@ -1,4 +1,6 @@
 changes:
-- description: Refactored validation IF109, Check whether an incident or indicator field has a valid required field value.
+- description: "Added IF109 to the new validation format. The validation Checks whether an incident or indicator field
+ has a valid required field value. Added IF117 to the new validation format. The validation Checks whether an incident
+ or indicator field aliases have a valid marketplaces field value."
   type: feature
 pr_number: 4753

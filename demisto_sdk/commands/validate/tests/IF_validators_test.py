@@ -824,7 +824,7 @@ def test_IsValidAliasMarketplaceValidator(mocker):
                 ): GitStatuses.ADDED
             },
             1,
-            ["A required Incident Field should not be associated with all types."],
+            ["A required IncidentField should not be associated with all types."],
         ),
         (
             {
@@ -838,7 +838,7 @@ def test_IsValidAliasMarketplaceValidator(mocker):
             },
             1,
             [
-                "An already existing Types like Old Type cannot be added to an Incident Field with required value equals true."
+                "An already existing Types like Old Type cannot be added to an IncidentField with required value equals true."
             ],
         ),
     ],

@@ -19,14 +19,39 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IF109"
     description = "Checks if the incident field required field is valid."
     rationale = "In case an incident field is required, newly added associated incident types should be new."
+    error_message = "{0}"
     related_field = "required"
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
+
+        fields_items, types_items = self.sort_content_items(content_items)
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(error_res),
+                content_object=content_item,
+            )
+            for content_item in fields_items
+            if (error_res := self.is_invalid_required_field(content_item, types_items))
+        ]
+
+    @staticmethod
+    def sort_content_items(content_items: Iterable[ContentTypes]):
+        """
+        Sort Content Items into two lists of Incident/Indicator fields and Incident/Indicator types.
+
+        Args:
+            content_items (Iterable[ContentTypes]): The content items list
+
+        Returns:
+            fields_items: items of type Incident/Indicator fields.
+            types_items: items of type Incident/Indicator types.
+        """
         types_items: list[str] = []
-        fields_items = []
+        fields_items: list[Union[IncidentField, IndicatorField]] = []
         for item in content_items:
             if (
                 isinstance(item, IncidentType) or isinstance(item, IndicatorType)
@@ -35,15 +60,7 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
             elif isinstance(item, IncidentField) or isinstance(item, IndicatorField):
                 fields_items.append(item)
 
-        return [
-            ValidationResult(
-                validator=self,
-                message=error_res,
-                content_object=content_item,
-            )
-            for content_item in fields_items
-            if (error_res := self.is_invalid_required_field(content_item, types_items))
-        ]
+        return fields_items, types_items
 
     @staticmethod
     def is_invalid_required_field(
@@ -62,7 +79,7 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
         # Required fields should not be associated to all
         if content_item.required and content_item.associated_to_all:
             return (
-                f"A required {'Incident' if isinstance(content_item, IncidentField) else 'Indicator'} Field"
+                f"A required {content_item.content_type.value}"
                 f" should not be associated with all types."
             )
 
@@ -76,7 +93,7 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
             if content_item.required != old_file.required:
                 return (
                     f"Required value should not be changed for an already existing"
-                    f" {'Incident' if isinstance(content_item, IncidentField) else 'Indicator'} Field."
+                    f" {content_item.content_type.value}."
                 )
 
             # An already existing Incident/Indicator Type cannot be added to Incident/Indicator Field with required value true
@@ -89,13 +106,16 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
                         content_item.associated_types,
                     )
                 )
+                invalid_new_types = []
                 for new_type in new_types:
                     if new_type not in added_types:
-                        return (
-                            f"An already existing Type like {new_type} cannot be added to an "
-                            f"{'Incident' if isinstance(content_item, IncidentField) else 'Indicator'} "
-                            f"Field with required value equals true."
-                        )
+                        invalid_new_types.append(new_type)
+                if invalid_new_types:
+                    return (
+                        f"An already existing Type like {', '.join(invalid_new_types)} cannot be added to an "
+                        f"{content_item.content_type.value} "
+                        f"with required value equals true."
+                    )
 
         # new field
         elif content_item.required:
@@ -108,7 +128,7 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
             if invalid_associated_types:
                 return (
                     f"An already existing Types like {', '.join(invalid_associated_types)} cannot be added to an "
-                    f"{'Incident' if isinstance(content_item, IncidentField) else 'Indicator'} "
-                    f"Field with required value equals true."
+                    f"{content_item.content_type.value} "
+                    f"with required value equals true."
                 )
         return

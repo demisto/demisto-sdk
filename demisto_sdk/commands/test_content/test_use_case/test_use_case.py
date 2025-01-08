@@ -212,10 +212,12 @@ class BuildContext:
             f"api/v4/projects/213/packages/pypi/simple --trusted-host gitlab.xdr.pan.local")
 
         logger.info("Runnign gcloud config")
-        run_command("gcloud auth list")
+        res = run_command("gcloud auth list")
+        logger.info(res)
 
         logger.info("Running project ID")
-        run_command("gcloud projects list --format json --filter projectId~qa2-test-9999640926782")
+        res = run_command("gcloud projects list --format json --filter projectId~qa2-test-9999640926782")
+        logger.info(res)
 
     # @staticmethod
     # def edit_prefix(path_str: Union[str, Path]) -> Path:

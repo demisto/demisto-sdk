@@ -51,14 +51,8 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
         """
         invalid_aliases = []
         aliases = content_item.data.get("Aliases", [])
-        if aliases:
-            if not self.graph:
-                logger.info(
-                    f"Skipping validating of marketplaces field of aliases for {content_item.name} as the "
-                    f"no-graph argument was given."
-                )
-                return []
-        incident_fields = self._get_incident_fields_by_aliases(aliases)
+
+        incident_fields = self._get_incident_fields_by_aliases(aliases) if aliases else []
         for item in incident_fields:
             alias_marketplaces = item.marketplaces
             alias_toversion = Version(item.toversion)

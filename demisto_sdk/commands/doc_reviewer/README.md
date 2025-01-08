@@ -1,11 +1,13 @@
 ## doc-review
+
+### Overview
 Check the spelling in .md and .yml files as well as review release notes.
 
 **Use-Cases**
  - Used to check for misspelled words in .md files such as README and integration descriptions also in .yml file such as integrations, scripts and playbooks.
  - Performs a basic documentation review on release notes.
 
-**Arguments**:
+### Options
 * **-i, --input**
 Path to the file to check.
 * **-g**, **--use-git**

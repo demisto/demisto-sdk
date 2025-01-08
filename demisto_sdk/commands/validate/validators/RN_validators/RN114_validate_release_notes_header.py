@@ -131,9 +131,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         """
         try:
             return (
-                ContentType.convert_header_to_content_type(
-                    header
-                ).convert_content_type_to_rn_header
+                ContentType.convert_header_to_content_type(header).as_rn_header
                 == header
             )
         except Exception as exception:
@@ -185,6 +183,11 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         """
         headers = self.extract_rn_headers(pack.release_note.file_content)
         pack_items_by_types = pack.content_items.items_by_type()
+        if case_layout_items := pack_items_by_types.get(ContentType.CASE_LAYOUT, []):
+            # case layout using the same header as layout
+            pack_items_by_types.setdefault(ContentType.LAYOUT, []).extend(
+                case_layout_items
+            )
         if not pack_items_by_types:
             return [], []
         invalid_content_type: List[str] = [

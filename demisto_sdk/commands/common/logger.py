@@ -1,10 +1,13 @@
+import functools
+import logging  # noqa: TID251 # Required for propagation handling.
 import os
 import platform
 import sys
 from pathlib import Path
-from typing import Iterable, Optional, Union
+from typing import Callable, Iterable, Optional, Union
 
 import loguru  # noqa: TID251 # This is the only place where we allow it
+import typer
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_LOG_FILE_PATH,
@@ -30,9 +33,15 @@ DEFAULT_CONSOLE_THRESHOLD = "INFO"
 DEFAULT_FILE_SIZE = 1 * (1024**2)  # 1 MB
 DEFAULT_FILE_COUNT = 10
 
-global logger
+LOGURU_DIAGNOSE = "LOGURU_DIAGNOSE"
+
 logger = loguru.logger  # all SDK modules should import from this file, not from loguru
 logger.disable(None)  # enabled at setup_logging()
+
+
+class PropagateHandler(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:
+        logging.getLogger(record.name).handle(record)
 
 
 def _setup_neo4j_logger():
@@ -93,36 +102,60 @@ def logging_setup(
     file_threshold: str = DEFAULT_FILE_THRESHOLD,
     path: Optional[Union[Path, str]] = None,
     initial: bool = False,
+    propagate: bool = False,
 ):
     """
     The initial set up is required since we have code (e.g. get_content_path) that runs in __main__ before the typer/click commands set up the logger.
-    In the initial set up there is NO file logging (only console)
+    In the initial set up there is NO file logging (only console).
+
+    Parameters:
+    - calling_function (str): The name of the function invoking the logger setup, included in all logs.
+    - console_threshold (str): Log level for console output.
+    - file_threshold (str): Log level for file output.
+    - path (Union[Path, str], optional): Path for file logs. If None, defaults to the calculated log directory.
+    - initial (bool): Indicates if the setup is for the initial configuration (console-only if True).
+    - propagate (bool): If True, propagates logs to Python's logging system.
+
     """
     global logger
     _setup_neo4j_logger()
 
-    logger.remove(None)  # Removes all pre-existing handlers
+    logger.remove()  # Removes all pre-existing handlers
 
-    diagnose = string_to_bool(os.getenv("LOGURU_DIAGNOSE", False))
-    colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS), False)
+    diagnose = string_to_bool(os.getenv(LOGURU_DIAGNOSE, "False"))
+    colorize = not string_to_bool(os.getenv(DEMISTO_SDK_LOG_NO_COLORS, "False"))
 
-    logger = logger.opt(
-        colors=colorize
-    )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
-    _add_console_logger(
-        colorize=colorize, threshold=console_threshold, diagnose=diagnose
-    )
-
-    if not initial:
-        _add_file_logger(
-            log_path=calculate_log_dir(path) / LOG_FILE_NAME,
-            threshold=file_threshold,
-            diagnose=diagnose,
+    if propagate:
+        _propagate_logger(console_threshold)
+    else:
+        logger = logger.opt(
+            colors=colorize
+        )  # allows using color tags in logs (e.g. logger.info("<blue>foo</blue>"))
+        _add_console_logger(
+            colorize=colorize, threshold=console_threshold, diagnose=diagnose
         )
+        if not initial:
+            _add_file_logger(
+                log_path=calculate_log_dir(path) / LOG_FILE_NAME,
+                threshold=file_threshold,
+                diagnose=diagnose,
+            )
         os.environ[DEMISTO_SDK_LOGGING_SET] = "true"
-
     logger.debug(
         f"logger setup: {calling_function=},{console_threshold=},{file_threshold=},{path=},{initial=}"
+    )
+
+
+def _propagate_logger(
+    threshold: Optional[str],
+):
+    """
+    Adds a PropagateHandler to Loguru's logger to forward logs to Python's logging system.
+    """
+    logger.add(
+        PropagateHandler(),
+        format=CONSOLE_FORMAT,
+        level=(threshold or DEFAULT_CONSOLE_THRESHOLD),
     )
 
 
@@ -180,3 +213,40 @@ def handle_deprecated_args(input_args: Iterable[str]):
             f"Argument {argument} is deprecated,"
             f"Use {DEPRECATED_PARAMETERS[argument]} instead."
         )
+
+
+def logging_setup_decorator(func: Callable):
+    @functools.wraps(func)
+    def wrapper(ctx: typer.Context, *args, **kwargs):
+        # Fetch the parameters directly from context to apply default values if they are None
+        console_threshold = ctx.params.get("console_log_threshold") or "INFO"
+        file_threshold = ctx.params.get("file_log_threshold") or "DEBUG"
+
+        # Validate the logging levels
+        valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        if console_threshold not in valid_levels:
+            console_threshold = "INFO"
+        if file_threshold not in valid_levels:
+            file_threshold = "DEBUG"
+
+        # Set back the validated and default values in both `ctx.params` and `kwargs`
+        ctx.params["console_log_threshold"] = console_threshold
+        ctx.params["file_log_threshold"] = file_threshold
+        kwargs["console_log_threshold"] = console_threshold
+        kwargs["file_log_threshold"] = file_threshold
+
+        # Initialize logging with the validated thresholds
+        logging_setup(
+            console_threshold=console_threshold,
+            file_threshold=file_threshold,
+            path=kwargs.get("log_file_path", None),
+            calling_function=func.__name__,
+        )
+
+        # Handle deprecated arguments directly from context args if needed
+        handle_deprecated_args(ctx.args if ctx else [])
+
+        # Run the wrapped function
+        return func(ctx, *args, **kwargs)
+
+    return wrapper

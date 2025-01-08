@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import List
 
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
@@ -312,7 +312,6 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
     Then
     -  Ensure that the unknown field was removed from the mapper.
     """
-
     with ContentGraphInterface() as interface:
         create_content_graph(interface)
 
@@ -330,7 +329,7 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
     with ChangeCWD(repo.path):
         runner = CliRunner()
         result = runner.invoke(
-            main,
+            app,
             [
                 FORMAT_CMD,
                 "-i",
@@ -349,8 +348,6 @@ def test_format_mapper_with_graph_remove_unknown_content(mocker, repository, rep
         f"Removing the fields {fields} from the mapper {mapper_path} because they aren't in the content repo."
     ) in result.output
 
-    # get_dict_from_file returns a tuple of 2 object. The first is the content of the file,
-    # the second is the type of the file.
     file_content = get_dict_from_file(mapper_path)[0]
     assert (
         file_content.get("mapping", {}).get("Mapper Finding", {}).get("internalMapping")
@@ -384,9 +381,7 @@ def test_format_layout_with_graph_remove_unknown_content(mocker, repository, rep
     )
     with ChangeCWD(repo.path):
         runner = CliRunner()
-        result = runner.invoke(
-            main, [FORMAT_CMD, "-i", layout_path, "-at", "-y", "-nv"]
-        )
+        result = runner.invoke(app, [FORMAT_CMD, "-i", layout_path, "-at", "-y", "-nv"])
     assert result.exit_code == 0
     assert not result.exception
     assert (
@@ -454,7 +449,7 @@ def test_format_incident_field_graph_fix_aliases_marketplace(
     with ChangeCWD(repo.path):
         runner = CliRunner()
         result = runner.invoke(
-            main, [FORMAT_CMD, "-i", original_incident_field_path, "-at", "-y", "-nv"]
+            app, [FORMAT_CMD, "-i", original_incident_field_path, "-at", "-y", "-nv"]
         )
 
     assert result.exit_code == 0

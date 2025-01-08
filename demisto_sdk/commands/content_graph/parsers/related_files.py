@@ -42,7 +42,13 @@ class RelatedFileType(Enum):
 class RelatedFile(ABC):
     file_type: ClassVar[RelatedFileType]
 
-    def __init__(self, main_file_path: Path, git_sha: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        main_file_path: Path,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        self.prev_ver = prev_ver
         self.main_file_path: Path = main_file_path
         self.git_sha = git_sha
         self.exist: bool = False
@@ -50,13 +56,13 @@ class RelatedFile(ABC):
 
     @property
     def git_status(self) -> Union[GitStatuses, None]:
-        status = None
-        if self.git_sha:
-            git_util = GitUtil.from_content_path()
-            remote, branch = git_util.handle_prev_ver(
-                self.git_sha  # type: ignore[arg-type]
-            )
-            status = git_util._check_file_status(str(self.file_path), remote, branch)
+        git_util = GitUtil.from_content_path()
+        remote, branch = git_util.handle_prev_ver(
+            self.prev_ver  # type: ignore[arg-type]
+        )
+        status = git_util._check_file_status(
+            str(self.file_path), remote, branch, feature_branch_or_hash=self.git_sha
+        )
         return None if not status else GitStatuses(status)
 
     def find_the_right_path(self, file_paths: List[Path]) -> Path:
@@ -84,9 +90,14 @@ class RelatedFile(ABC):
 
 
 class TextFiles(RelatedFile):
-    def __init__(self, main_file_path: Path, git_sha: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        main_file_path: Path,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
         self.file_content_str = ""
-        super().__init__(main_file_path, git_sha)
+        super().__init__(main_file_path, git_sha, prev_ver)
 
     @property
     def file_content(self) -> str:
@@ -105,16 +116,26 @@ class TextFiles(RelatedFile):
                 logger.debug(f"Failed to get related text file, error: {e}")
         return self.file_content_str
 
+    @file_content.setter
+    def file_content(self, content: str):
+        """Setter for the file_content property. Updates the file content."""
+        self.file_content_str = content
+        TextFile.write(content, self.file_path)
+
 
 class RNRelatedFile(TextFiles):
     file_type = RelatedFileType.RELEASE_NOTE
 
     def __init__(
-        self, main_file_path: Path, latest_rn: str, git_sha: Optional[str] = None
+        self,
+        main_file_path: Path,
+        latest_rn: str,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
     ) -> None:
         self.latest_rn_version = latest_rn
         self.rns_list: List[str] = []
-        super().__init__(main_file_path, git_sha)
+        super().__init__(main_file_path, git_sha, prev_ver)
 
     def get_optional_paths(self) -> List[Path]:
         return [
@@ -126,12 +147,19 @@ class RNRelatedFile(TextFiles):
     @property
     def all_rns(self) -> List[str]:
         if not self.rns_list:
+            rns_dir_path = self.main_file_path / RELEASE_NOTES_DIR
             if self.git_sha:
-                self.rns_list = GitUtil.from_content_path().list_files_in_dir(
-                    self.main_file_path / RELEASE_NOTES_DIR, self.git_sha
-                )
+                git_util = GitUtil.from_content_path()
+                if not git_util.is_file_exist_in_commit_or_branch(
+                    rns_dir_path, self.git_sha
+                ):
+                    self.rns_list = []
+                else:
+                    self.rns_list = git_util.list_files_in_dir(
+                        rns_dir_path, self.git_sha
+                    )
             else:
-                self.rns_list = get_child_files(self.main_file_path / RELEASE_NOTES_DIR)
+                self.rns_list = get_child_files(rns_dir_path)
         return self.rns_list
 
 

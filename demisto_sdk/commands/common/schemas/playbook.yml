@@ -38,6 +38,8 @@ mapping:
     type: bool
   deprecated:
     type: bool
+  issilent:
+    type: bool
   starttaskid:
     type: str
     required: true

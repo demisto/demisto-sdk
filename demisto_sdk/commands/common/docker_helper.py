@@ -378,7 +378,9 @@ class DockerBase:
                 reason=f"Installation script failed to run on container '{container.id}', {container_logs=}",
                 build_log=container_logs,
             )
-        repository, tag = image.split(":")
+        repository, tag = image.rsplit(
+            ":", 1
+        )  # rsplit is used to support non-default docker ports which require extra colon. i.e: `image.registry:5000/repo/some-image:main`
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )
@@ -476,7 +478,9 @@ class DockerBase:
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
-                logger.critical(f"{log_prompt} - Build errors occurred: {errors}")
+                logger.critical(  # noqa: PLE1205
+                    "{}", f"<red>{log_prompt} - Build errors occurred: {errors}</red>"
+                )
         return test_docker_image, errors
 
 

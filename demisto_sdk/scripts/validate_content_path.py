@@ -129,7 +129,7 @@ ALLOWED_SUFFIXES = frozenset(
         ".js",
         ".xif",
         ".ps1",
-        ".gif"
+        ".gif",
         "",
     )
 )

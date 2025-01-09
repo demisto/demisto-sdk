@@ -4602,6 +4602,7 @@ def get_json_file(path):
     if path:
         try:
             with open(path, "r") as json_file:
+                logger.info(f"########### 3 cloud_machines_details.json: {path=}, {json_file.read()=}")
                 file_content = json.load(json_file)
         except FileNotFoundError:
             logger.info(f"Error: The file at path '{path}' was not found.")

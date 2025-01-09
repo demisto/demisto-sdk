@@ -83,12 +83,12 @@ class DockerHubClient:
         """
         if IS_CONTENT_GITLAB_CI:
             # If running in a Gitlab CI environment, try using the Google Cloud access token
-            logger.info(
+            logger.debug(
                 "Attempting to use Google Cloud access token for Docker Hub proxy authentication"
             )
             try:
                 if gcloud_access_token := get_gcloud_access_token():
-                    logger.info("returning gcloud_access_token")
+                    logger.debug("returning gcloud_access_token")
                     return gcloud_access_token
             except Exception as e:
                 logger.error(f"Failed to get gcloud access token: {e}")
@@ -116,7 +116,7 @@ class DockerHubClient:
         try:
             response.raise_for_status()
         except RequestException as _error:
-            logger.info(f"Error when trying to get dockerhub token, error\n:{_error}")
+            logger.debug(f"Error when trying to get dockerhub token, error\n:{_error}")
             if (
                 _error.response is not None
                 and (
@@ -126,7 +126,7 @@ class DockerHubClient:
                 and self.auth
             ):
                 # in case of rate-limits with a username:password, retrieve the token without username:password
-                logger.info("Trying to get dockerhub token without username:password")
+                logger.debug("Trying to get dockerhub token without username:password")
                 try:
                     response = self._session.get(
                         self.TOKEN_URL,
@@ -210,7 +210,7 @@ class DockerHubClient:
             params: query parameters
             results_key: the key to retrieve the results in case its a list
         """
-        logger.info("dockerhub_client | do_docker_hub_get_request")
+        logger.debug("dockerhub_client | do_docker_hub_get_request")
         if url_suffix:
             if not url_suffix.startswith("/"):
                 url_suffix = f"/{url_suffix}"
@@ -237,7 +237,7 @@ class DockerHubClient:
             # received only a single record
             return raw_json_response
 
-        logger.info(f'Received {raw_json_response.get("count")} objects from {url=}')
+        logger.debug(f'Received {raw_json_response.get("count")} objects from {url=}')
         results = raw_json_response.get(results_key) or []
         # do pagination if needed
         if next_page_url := raw_json_response.get("next"):
@@ -271,7 +271,7 @@ class DockerHubClient:
             headers: any custom headers
             params: query parameters
         """
-        logger.info("dockerhub_client | do_registry_get_request")
+        logger.debug("dockerhub_client | do_registry_get_request")
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
 
@@ -416,11 +416,11 @@ class DockerHubClient:
                 error.exception.response
                 and error.exception.response.status_code == requests.codes.not_found
             ):
-                logger.info(
+                logger.debug(
                     f"docker-image {docker_image}:{tag} does not exist in dockerhub"
                 )
                 return False
-            logger.info(
+            logger.debug(
                 f"Error when trying to fetch {docker_image}:{tag} metadata: {error}"
             )
             return tag in self.get_image_tags(docker_image)
@@ -465,7 +465,7 @@ class DockerHubClient:
                 if max_version_tag.release[-1] < version_tag.release[-1]:
                     max_version_tag = version_tag
             except InvalidVersion:
-                logger.info(
+                logger.debug(
                     f"The tag {tag} has invalid version for docker-image {docker_image}, skipping it"
                 )
 
@@ -534,7 +534,7 @@ def get_dockerhub_artifact_registry_url(base_path: str) -> str:
     Raises:
         ValueError: If the input base_path is not in the expected format.
     """
-    logger.info(
+    logger.debug(
         f"Trying to parse a DockerHub Google Artifact Registry internal base path {base_path=}"
     )
     # Split base path into region-domain, project, and repository
@@ -549,7 +549,7 @@ def get_dockerhub_artifact_registry_url(base_path: str) -> str:
     parsed_dockerhub_proxy_api_url = (
         f"https://{region_domain}/v2/{project}/{repository}"
     )
-    logger.info(
+    logger.debug(
         f"Returning parsed DockerHub Google Artifact Registry API: {parsed_dockerhub_proxy_api_url=}"
     )
     return parsed_dockerhub_proxy_api_url
@@ -570,27 +570,27 @@ def get_registry_api_url(registry: str, default_registry: str) -> str:
     Returns:
         str: The determined registry API URL to use for Docker operations.
     """
-    logger.info(f"dockerhub_client | {IS_CONTENT_GITLAB_CI=}, {DOCKER_IO=}")
+    logger.debug(f"dockerhub_client | {IS_CONTENT_GITLAB_CI=}, {DOCKER_IO=}")
     if IS_CONTENT_GITLAB_CI and DOCKER_IO:
         try:
-            logger.info(
+            logger.debug(
                 "Running in a GitLab CI environment with custom DOCKER_IO environment variable, Trying to prase a DockerHub Google Artifact Registry from DOCKER_IO environment variable."
             )
             if parsed_dockerhub_proxy_api_url := get_dockerhub_artifact_registry_url(
                 DOCKER_IO
             ):
-                logger.info(f"Successfully parsed {parsed_dockerhub_proxy_api_url=}")
+                logger.debug(f"Successfully parsed {parsed_dockerhub_proxy_api_url=}")
                 return parsed_dockerhub_proxy_api_url
             else:
-                logger.info(
+                logger.debug(
                     "Could not parse a valid API URL from the DOCKER_IO environment variable."
                 )
         except Exception as e:
-            logger.info(
+            logger.debug(
                 f"Could not parse a valid API URL from the DOCKER_IO environment variable, Error: {str(e)} "
             )
 
-    logger.info(f"using provided or default registry, {default_registry=}")
+    logger.debug(f"using provided or default registry, {default_registry=}")
     return registry or default_registry
 
 
@@ -610,7 +610,7 @@ def get_gcloud_access_token() -> Optional[str]:
                    is caught and logged, but not re-raised.
     """
     try:
-        logger.info("Trying to retrieve a Google Cloud access token.")
+        logger.debug("Trying to retrieve a Google Cloud access token.")
         # Automatically obtain credentials from the environment
         credentials, project_id = google.auth.default()
 
@@ -619,13 +619,13 @@ def get_gcloud_access_token() -> Optional[str]:
         # Extract the access token
         access_token = credentials.token
         if access_token:
-            logger.info(
+            logger.debug(
                 f"Successfully obtained Google Cloud access token, {project_id=}."
             )
             return access_token
         else:
-            logger.info("Failed to obtain Google Cloud access token.")
+            logger.debug("Failed to obtain Google Cloud access token.")
             return None
     except Exception as e:
-        logger.info(f"Failed to get access token: {str(e)}")
+        logger.debug(f"Failed to get access token: {str(e)}")
         return None

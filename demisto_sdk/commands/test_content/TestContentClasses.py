@@ -214,7 +214,7 @@ class TestPlaybook:
         self.populate_test_suite()
 
     def log_debug(self, message: str, real_time: bool = False):
-        self.build_context.logging_module.info(message, real_time)
+        self.build_context.logging_module.debug(message, real_time)
         self.test_suite_system_out.append(message)
 
     def log_info(self, message: str, real_time: bool = False):
@@ -619,22 +619,16 @@ class TestPlaybook:
         create_incident_request.playbook_id = self.configuration.playbook_id
         create_incident_request.name = incident_name
 
-        self.build_context.logging_module.info(
-            f"create_incident | {incident_name=}, {create_incident_request.create_investigation=}, {create_incident_request.playbook_id=}, {create_incident_request.name=}"
-        )
-
         inc_id = "incCreateErr"
         try:
             response = client.create_incident(
                 create_incident_request=create_incident_request
             )
-            self.build_context.logging_module.info(f"{response=}")
             inc_id = response.id
-        except ApiException as e:
+        except ApiException:
             self.log_exception(
                 f"Failed to create incident with name {incident_name} for playbook {self}"
             )
-            self.build_context.logging_module.info(str(e))
 
         if inc_id == "incCreateErr":
             self.log_error(
@@ -1106,8 +1100,6 @@ class ServerContext:
             self.client.api_client.pool.close()
             self.client.api_client.pool.terminate()
             del self.client
-        ################################
-        self.build_context.logging_module.info(f"configure_new_client | {self.server_url=}, {self.api_key=}, {self.auth_id=}")
         self.client = demisto_client.configure(
             base_url=self.server_url,
             api_key=self.api_key,
@@ -1148,19 +1140,13 @@ class ServerContext:
         Returns:
             A dict containing the configuration for the integration if found else empty list
         """
-        self.build_context.logging_module.info(
-            f"##### get_all_installed_integrations_configurations called with arg = {server_url=}"
-        )
-        self.build_context.logging_module.info(
-            f"##### {self.auth_id=}, {self.api_key=}"
-        )
         tmp_client = demisto_client.configure(
             base_url=server_url,
             auth_id=self.auth_id,
             api_key=self.api_key,
             verify_ssl=False,
         )
-        self.build_context.logging_module.info("Getting all integrations instances")
+        self.build_context.logging_module.debug("Getting all integrations instances")
 
         end_time = time.time() + timeout
         while True:
@@ -1293,7 +1279,7 @@ class CloudServerContext(ServerContext):
         unmockable_tests = all_tests
         self.unmockable_test_ids = {test.playbook_id for test in all_tests}
 
-        self.build_context.logging_module.info(
+        self.build_context.logging_module.debug(
             f"Unmockable tests selected: {pformat(self.unmockable_test_ids)}"
         )
 
@@ -1414,7 +1400,7 @@ class CloudServerContext(ServerContext):
                 real_time=True,
             )
 
-            self.build_context.logging_module.info(
+            self.build_context.logging_module.debug(
                 f"Tests executed on server {self.server_ip}:\n"
                 f"{pformat(self.executed_tests)}"
             )
@@ -1502,7 +1488,7 @@ class OnPremServerContext(ServerContext):
             self.unmockable_test_ids = {
                 test.playbook_id for test in self.build_context.conf_unmockable_tests
             }
-        self.build_context.logging_module.info(
+        self.build_context.logging_module.debug(
             f"Unmockable tests selected: {pformat(self.unmockable_test_ids)}"
         )
         mockable_tests = [
@@ -1510,7 +1496,7 @@ class OnPremServerContext(ServerContext):
             for test in all_tests
             if test.playbook_id not in self.unmockable_test_ids
         ]
-        self.build_context.logging_module.info(
+        self.build_context.logging_module.debug(
             f"Mockable tests selected: {pformat([test.playbook_id for test in mockable_tests])}"
         )
         mockable_tests_queue = self._generate_tests_queue(mockable_tests)
@@ -1551,7 +1537,7 @@ class OnPremServerContext(ServerContext):
                 and self.proxy.should_update_mock_repo
             ):
                 self.proxy.push_mock_files()
-            self.build_context.logging_module.info(
+            self.build_context.logging_module.debug(
                 f"Tests executed on server {self.server_ip}:\n"
                 f"{pformat(self.executed_tests)}"
             )

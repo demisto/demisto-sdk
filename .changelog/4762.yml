@@ -1,0 +1,4 @@
+changes:
+- description: Added .gif as alooew file suffix.
+  type: feature
+pr_number: 4762

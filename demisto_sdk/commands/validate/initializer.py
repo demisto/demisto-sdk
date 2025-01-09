@@ -614,7 +614,7 @@ class Initializer:
                 else:
                     # Otherwise obtain the yml path independently.
                     path = self.obtain_playbook_path(path)
-                    if path not in statuses_dict:
+                    if path not in statuses_dict and path.suffix == ".yml":
                         statuses_dict[path] = None
             elif MODELING_RULES_DIR in path_str or PARSING_RULES_DIR in path_str:
                 # If it's a modeling rule or a parsing rule obtain the yml.

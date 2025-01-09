@@ -87,12 +87,12 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
         if log_prompt:
-            logger.debug(f"{log_prompt} - init and login the docker client")
+            logger.info(f"{log_prompt} - init and login the docker client")
         else:
-            logger.debug("init and login the docker client")
+            logger.info("init and login the docker client")
         if ssh_client := os.getenv("DOCKER_SSH_CLIENT") is not None:
-            logger.debug(f"{log_prompt} - Using ssh client setting: {ssh_client}")
-        logger.debug(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
+            logger.info(f"{log_prompt} - Using ssh client setting: {ssh_client}")
+        logger.info(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
         try:
             if IS_CONTENT_GITLAB_CI:
                 """In the case of running in Gitlab CI environment, try to init a docker client from the
@@ -127,16 +127,16 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         docker_pass = os.getenv(
             "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
         )
-        logger.debug(f"init_global_docker_client | {docker_user=}, {docker_pass=}")
+        logger.info(f"init_global_docker_client | {docker_user=}, {docker_pass=}")
         if docker_user and docker_pass:
-            logger.debug(f"{log_prompt} - logging in to docker registry")
+            logger.info(f"{log_prompt} - logging in to docker registry")
             try:
                 docker_login(DOCKER_CLIENT)
             except Exception:
                 logger.exception(f"{log_prompt} - failed to login to docker registry")
     else:
         msg = "docker client already available, using current DOCKER_CLIENT"
-        logger.debug(f"{log_prompt} - {msg}" if log_prompt else msg)
+        logger.info(f"{log_prompt} - {msg}" if log_prompt else msg)
     return DOCKER_CLIENT
 
 
@@ -156,7 +156,7 @@ def docker_login(docker_client) -> bool:
     Returns:
         bool: True if logged in successfully.
     """
-    logger.debug("docker_helper | docker_login")
+    logger.info("docker_helper | docker_login")
     docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
     docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD"))
     if docker_user and docker_pass:
@@ -168,7 +168,7 @@ def docker_login(docker_client) -> bool:
                     registry="https://index.docker.io/v1",
                 )
                 ping = docker_client.ping()
-                logger.debug(f"Successfully connected to dockerhub, login {ping=}")
+                logger.info(f"Successfully connected to dockerhub, login {ping=}")
                 return ping
             else:
                 # login to custom docker registry
@@ -178,7 +178,7 @@ def docker_login(docker_client) -> bool:
                     registry=DOCKER_REGISTRY_URL,
                 )
                 ping = docker_client.ping()
-                logger.debug(
+                logger.info(
                     f"Successfully connected to {DOCKER_REGISTRY_URL}, login {ping=}"
                 )
                 return ping
@@ -186,7 +186,7 @@ def docker_login(docker_client) -> bool:
             logger.info(f"Did not successfully log in to {DOCKER_REGISTRY_URL}")
             return False
 
-    logger.debug(f"Did not log in to {DOCKER_REGISTRY_URL}")
+    logger.info(f"Did not log in to {DOCKER_REGISTRY_URL}")
     return False
 
 
@@ -280,15 +280,15 @@ class DockerBase:
         """
         Get a local docker image, or pull it when unavailable.
         """
-        logger.debug(f"version is called with image={image}")
+        logger.info(f"version is called with image={image}")
         docker_client = init_global_docker_client(log_prompt="pull_image")
         try:
             return docker_client.images.get(image)
 
         except docker.errors.ImageNotFound:
-            logger.debug(f"docker {image=} not found locally, pulling")
+            logger.info(f"docker {image=} not found locally, pulling")
             ret = docker_client.images.pull(image)
-            logger.debug(f"pulled docker {image=} successfully")
+            logger.info(f"pulled docker {image=} successfully")
             return ret
 
     @staticmethod
@@ -312,7 +312,7 @@ class DockerBase:
                     if _get_image_digest(repo, tag, token):
                         return True
                 except RuntimeError as e:
-                    logger.debug(f"Error getting image data {image}: {e}")
+                    logger.info(f"Error getting image data {image}: {e}")
                     return False
         return False
 
@@ -332,7 +332,7 @@ class DockerBase:
                         try:
                             tar_file.add(src, arcname=dst)
                         except Exception as error:
-                            logger.debug(error)
+                            logger.info(error)
                 with open(tar_file_path.name, "rb") as byte_file:
                     container.put_archive("/", byte_file.read())
 
@@ -399,7 +399,7 @@ class DockerBase:
                 logger.success(
                     f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
                 )
-                logger.debug(
+                logger.info(
                     f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
                 )
                 break
@@ -436,13 +436,13 @@ class DockerBase:
             2. running the installation scripts
             3. committing the docker changes (installed packages) to a new local image
         """
-        logger.debug(
+        logger.info(
             f"create_image is called with base_image={base_image}, image={image}"
         )
         self.requirements.write_text(
             "\n".join(install_packages) if install_packages else ""
         )
-        logger.debug(f"Trying to pull image {base_image}")
+        logger.info(f"Trying to pull image {base_image}")
         self.pull_image(base_image)
         container = self.create_container(
             image=base_image,
@@ -475,11 +475,11 @@ class DockerBase:
     @staticmethod
     def get_image_registry(image: str) -> str:
         if DOCKER_REGISTRY_URL not in image:
-            logger.debug(
+            logger.info(
                 f"get_image_registry | returned: {DOCKER_REGISTRY_URL}/{image}"
             )
             return f"{DOCKER_REGISTRY_URL}/{image}"
-        logger.debug(f"get_image_registry | returned: {image}")
+        logger.info(f"get_image_registry | returned: {image}")
         return image
 
     def get_or_create_test_image(
@@ -538,7 +538,7 @@ class DockerBase:
         test_docker_image = self.get_image_registry(test_docker_image)
 
         try:
-            logger.debug(
+            logger.info(
                 f"{log_prompt} - Trying to pull existing image {test_docker_image}"
             )
             self.pull_image(test_docker_image)
@@ -590,7 +590,7 @@ class MountableDocker(DockerBase):
                 if src.exists():
                     mounts.append(Mount(target, str(src.absolute()), "bind"))
             except Exception:
-                logger.debug(f"Failed to mount {src} to {target}")
+                logger.info(f"Failed to mount {src} to {target}")
         return mounts
 
     def create_container(
@@ -630,7 +630,7 @@ def get_docker():
 
 
 def _get_python_version_from_tag_by_regex(image: str) -> Optional[Version]:
-    logger.debug("docker_helper | _get_python_version_from_tag_by_regex")
+    logger.info("docker_helper | _get_python_version_from_tag_by_regex")
     if match := DEMISTO_PYTHON_BASE_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))
 
@@ -644,7 +644,7 @@ def _get_docker_hub_token(repo: str) -> str:
     if (docker_user := os.getenv("DOCKERHUB_USER")) and (
         docker_pass := os.getenv("DOCKERHUB_PASSWORD")
     ):
-        logger.debug("Using docker hub credentials to get token")
+        logger.info("Using docker hub credentials to get token")
         auth = (docker_user, docker_pass)
 
     response = requests.get(
@@ -714,47 +714,47 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
     Returns:
         Version: Python version X.Y (3.7, 3.6, ..)
     """
-    logger.debug(f"Get python version from image {image=}")
+    logger.info(f"Get python version from image {image=}")
 
     if not image:
         # When no docker_image is specified, we use the default python version which is Python 2.7.18
-        logger.debug(
+        logger.info(
             f"No docker image specified or a powershell image, using default python version: {DEFAULT_PYTHON2_VERSION}"
         )
         return Version(DEFAULT_PYTHON2_VERSION)
 
     if "pwsh" in image or "powershell" in image:
-        logger.debug(
+        logger.info(
             f"The {image=} is a powershell image, does not have python version"
         )
         return None
 
     if python_version := DockerImagesMetadata.get_instance().python_version(image):
         return python_version
-    logger.debug(
+    logger.info(
         f"Could not get python version for {image=} from {DOCKERFILES_INFO_REPO} repo"
     )
 
     if python_version := _get_python_version_from_tag_by_regex(image):
         return python_version
-    logger.debug(f"Could not get python version for {image=} from regex")
+    logger.info(f"Could not get python version for {image=} from regex")
 
     if IS_CONTENT_GITLAB_CI:
         try:
-            logger.debug(
+            logger.info(
                 f"get python version for {image=} from available docker client"
             )
             return _get_python_version_from_image_client(image)
         except Exception:
-            logger.debug(
+            logger.info(
                 f"Could not get python version for {image=} from available docker client"
             )
 
     try:
-        logger.debug(f"get python version for {image=} from dockerhub api")
+        logger.info(f"get python version for {image=} from dockerhub api")
         return _get_python_version_from_dockerhub_api(image)
     except Exception:
-        logger.debug(
+        logger.info(
             f"Getting python version from {image=} by pulling its image and query its env"
         )
         return _get_python_version_from_image_client(image)
@@ -773,7 +773,7 @@ def _get_python_version_from_image_client(image: str) -> Version:
         image = DockerBase.get_image_registry(image)
         image_model = DockerBase.pull_image(image)
         image_env = image_model.attrs["Config"]["Env"]
-        logger.debug(f"Got {image_env=} from {image=}")
+        logger.info(f"Got {image_env=} from {image=}")
         return _get_python_version_from_env(image_env)
     except Exception:
         logger.exception(f"Failed detecting Python version for {image=}")

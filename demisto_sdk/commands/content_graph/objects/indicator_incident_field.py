@@ -21,7 +21,7 @@ class IndicatorIncidentField(ContentItem):
     version: Optional[int] = 0
     required: bool = Field(None, alias="required")
     associated_types: list = Field(None, alias="associatedTypes")
-    # aliases: list = Field(None, alias="Aliases")
+    aliases: list = Field(None, alias="aliases")
 
     def _upload(
         self,

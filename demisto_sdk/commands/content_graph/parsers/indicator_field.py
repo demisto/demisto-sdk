@@ -27,7 +27,7 @@ class IndicatorFieldParser(
         self.select_values = self.json_data.get("selectValues")
         self.required = self.json_data.get("required")
         self.associated_types = self.json_data.get("associatedTypes")
-        # self.aliases = self.json_data.get("Aliases")
+        self.aliases = self.json_data.get("aliases")
 
         self.connect_to_dependencies()
 

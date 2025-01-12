@@ -57,9 +57,11 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
                 alias_marketplaces = item.marketplaces
                 alias_toversion = Version(item.toversion)
 
-                if alias_toversion > Version(OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION) and (
-                        len(alias_marketplaces) > 2  # marketplaces are xsoar and xsoar.saas
-                        or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
+                if alias_toversion > Version(
+                    OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION
+                ) and (
+                    len(alias_marketplaces) > 2  # marketplaces are xsoar and xsoar.saas
+                    or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
                 ):
                     invalid_aliases.append(item.cli_name)
         return invalid_aliases
@@ -76,6 +78,6 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
         """
         alias_ids: set = {f'{alias.get("cliName")}' for alias in aliases}
         return self.graph.search(
-                cli_name=alias_ids,
-                content_type=ContentType.INCIDENT_FIELD,
+            cli_name=alias_ids,
+            content_type=ContentType.INCIDENT_FIELD,
         )

@@ -52,6 +52,9 @@ SKIPPED_HOOKS = {"format", "validate", "secrets"}
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 INTEGRATIONS_BATCH = 300
 
+PY_TEST_FILE_SUFFIX = "_test.py"
+PS1_TEST_FILE_SUFFIX = ".Tests.ps1"
+
 
 class PreCommitRunner:
     original_hook_id_to_generated_hook_ids: Dict[str, GeneratedHooks] = {}
@@ -671,13 +674,22 @@ def add_related_files(file: Path) -> Set[Path]:
         py_file_path = file.with_suffix(".py")
         if py_file_path.exists():
             files_to_run.add(py_file_path)
+
+    # Identifying test files by their suffix.
     if {".py", ".ps1"}.intersection({file.suffix for file in files_to_run}):
-        if ".py" in (file.suffix for file in files_to_run):
-            test_file = file.with_name(f"{file.stem}_test.py")
-        else:
-            test_file = file.with_name(f"{file.stem}.Tests.ps1")
-        if test_file.exists():
-            files_to_run.add(test_file)
+        test_files = []
+        test_file_suffix = (
+            PY_TEST_FILE_SUFFIX
+            if ".py" in (file.suffix for file in files_to_run)
+            else PS1_TEST_FILE_SUFFIX
+        )
+
+        test_files = [
+            _file
+            for _file in file.parent.iterdir()
+            if _file.name.endswith(test_file_suffix)
+        ]
+        files_to_run.update(test_files)
     return files_to_run
 
 

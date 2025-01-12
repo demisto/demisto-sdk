@@ -29,7 +29,7 @@ class IsAliasInnerAliasValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (aliases := get_inner_aliases(content_item.data.get("Aliases", [])))
+            if (aliases := get_inner_aliases(content_item.aliases))
         ]
 
 

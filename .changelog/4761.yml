@@ -1,0 +1,4 @@
+changes:
+- description: Modified the pre-commit tests collections flow to collect all tests files in the same directory as a changed script for improved robustness.
+  type: feature
+pr_number: 4761

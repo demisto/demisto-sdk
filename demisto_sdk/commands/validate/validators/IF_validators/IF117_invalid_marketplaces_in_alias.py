@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Iterable, Union
 
 from packaging.version import Version
 
@@ -10,12 +10,13 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
+from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = IncidentField
+ContentTypes = Union[IncidentField, IndicatorField]
 
 
 class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
@@ -49,7 +50,7 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
             list[str]: A list of the names of aliases that have invalid marketplace.
         """
         invalid_aliases = []
-        aliases = content_item.data.get("Aliases", [])
+        aliases = content_item.aliases
 
         if aliases:
             incident_fields = self._get_incident_fields_by_aliases(aliases)

@@ -51,18 +51,17 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
         invalid_aliases = []
         aliases = content_item.data.get("Aliases", [])
 
-        incident_fields = (
-            self._get_incident_fields_by_aliases(aliases) if aliases else []
-        )
-        for item in incident_fields:
-            alias_marketplaces = item.marketplaces
-            alias_toversion = Version(item.toversion)
+        if aliases:
+            incident_fields = self._get_incident_fields_by_aliases(aliases)
+            for item in incident_fields:
+                alias_marketplaces = item.marketplaces
+                alias_toversion = Version(item.toversion)
 
-            if alias_toversion > Version(OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION) and (
-                len(alias_marketplaces) > 2  # marketplaces are xsoar and xsoar.saas
-                or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
-            ):
-                invalid_aliases.append(item.cli_name)
+                if alias_toversion > Version(OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION) and (
+                        len(alias_marketplaces) > 2  # marketplaces are xsoar and xsoar.saas
+                        or alias_marketplaces[0] != MarketplaceVersions.XSOAR.value
+                ):
+                    invalid_aliases.append(item.cli_name)
         return invalid_aliases
 
     def _get_incident_fields_by_aliases(self, aliases: list[dict]) -> list:
@@ -76,11 +75,7 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
             list: A list of dictionaries, each dictionary represent an incident field.
         """
         alias_ids: set = {f'{alias.get("cliName")}' for alias in aliases}
-        return (
-            self.graph.search(
+        return self.graph.search(
                 cli_name=alias_ids,
                 content_type=ContentType.INCIDENT_FIELD,
-            )
-            if self.graph
-            else []
         )

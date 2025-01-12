@@ -848,11 +848,15 @@ def test_IsValidRequiredFieldValidator(
 ):
     """
     Given:
-    - Incident fields.
+    - Incident field not required.
+    - Incident field which is required and associated to all
+    - Incident field that is required, and an already existing incident type was added to it
     When:
     - Running validate on an incident fields.
     Then:
-    - Validate that the field has a valid required value.
+    - Validate that the field is valid.
+    - Validate that the field is not valid, since required fields cannot be associated to all types
+    - Validate that the field is not valid, since an already existing type cannot be added to a required field.
     """
     content_items = []
     for item, status in items.items():

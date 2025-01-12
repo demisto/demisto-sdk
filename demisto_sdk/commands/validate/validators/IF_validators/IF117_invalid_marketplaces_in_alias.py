@@ -50,7 +50,7 @@ class IsValidAliasMarketplaceValidator(BaseValidator[ContentTypes]):
             list[str]: A list of the names of aliases that have invalid marketplace.
         """
         invalid_aliases = []
-        aliases = content_item.aliases
+        aliases = content_item.data.get("Aliases", [])
 
         if aliases:
             incident_fields = self._get_incident_fields_by_aliases(aliases)

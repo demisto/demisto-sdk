@@ -20,8 +20,8 @@ class IndicatorIncidentField(ContentItem):
     unsearchable: Optional[bool] = Field(None, exclude=True)
     version: Optional[int] = 0
     required: bool = Field(None, alias="required")
-    associated_types: list = Field(None, alias="associatedTypes")
-    aliases: list = Field(None, alias="Aliases")
+    associated_types: list = Field([], alias="associatedTypes")
+    aliases: list = Field([], alias="Aliases")
 
     def _upload(
         self,

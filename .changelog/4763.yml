@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the **ST110** validation failed when adding the marketplaces key to the CaseLayout content item.
+  type: fix
+pr_number: 4763

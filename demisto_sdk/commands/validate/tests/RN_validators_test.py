@@ -431,6 +431,218 @@ def test_FirstLevelHeaderMissingValidator_obtain_invalid_content_items():
     )
 
 
+def test_IsDockerEntryMatchYmlValidator_fix_same_pack(mocker):
+    """
+    Given:
+    - RN notes with many changes needed to be made in the same pack
+
+    When:
+    - Calling the IsDockerEntryMatchYmlValidator fix function.
+
+    Then:
+    - All the changes are made and dont conflict with each other
+    """
+
+    not_changed_integration = create_integration_object(
+        paths=["script.dockerimage", "name"],
+        values=["demisto/python3:3.9.7.24070", "NotChanged"],
+    )
+    old_integration_1 = create_integration_object(
+        paths=["script.dockerimage", "name"],
+        values=["demisto/python3:3.9.7.24070", "NotChanged"],
+    )
+
+    bumped_integration = create_integration_object(
+        paths=["script.dockerimage", "name"],
+        values=["demisto/python3:3.9.7.24071", "BumpedIntegration"],
+    )
+    old_integration_2 = create_integration_object(
+        paths=["script.dockerimage", "name"],
+        values=["demisto/python3:3.9.7.24070", "BumpedIntegration"],
+    )
+
+    wrong_bump = create_script_object(
+        paths=["dockerimage", "name"],
+        values=["demisto/python3:3.9.7.24076", "WrongBump"],
+    )
+    old_script_1 = create_script_object(
+        paths=["dockerimage", "name"],
+        values=["demisto/python3:3.9.7.24071", "WrongBump"],
+    )
+    release_notes = """#### Integration
+##### NotChanged
+- The next line should be removed
+- Updated the Docker image to: *demisto/python3:3.9.7.24071*.
+- Something else not related
+
+##### NotBeingFixedDuplicateDocker
+- There isnt an object for this, next line shouldnt be changed
+- Updated the Docker image to: *demisto/python3:3.9.7.24071*.
+
+##### BumpedIntegration
+- Gonna be added below this
+
+##### Another unrelated thing
+- Something not related
+
+##### WrongBump
+- Updated the Docker image to: *demisto/python3:3.9.7.24075*.
+- The above line should be changed to 24076"""
+    pack = create_pack_object(
+        paths=["currentVersion"],
+        values=["2.0.5"],
+        release_note_content=release_notes,
+    )
+    not_changed_integration.pack = pack
+    bumped_integration.pack = pack
+    wrong_bump.pack = pack
+
+    content_items = [not_changed_integration, bumped_integration, wrong_bump]
+    old_content_items = [
+        old_integration_1,
+        old_integration_2,
+        old_script_1,
+    ]
+    create_old_file_pointers(content_items, old_content_items)
+
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.parsers.related_files.RNRelatedFile.git_status",
+        new_callable=mocker.PropertyMock,
+        return_value=GitStatuses.ADDED,
+    )
+
+    validator = IsDockerEntryMatchYmlValidator()
+    fixed_messages = [validator.fix(content_item) for content_item in content_items]
+    assert len(fixed_messages) == 3
+    expected_msgs = [
+        "Removed docker updated entry as it was not changed in the yml.",
+        "Added docker updated entry -demisto/python3:3.9.7.24071- in release notes.",
+        "Changed docker update entry line in the release notes to match the yml: demisto/python3:3.9.7.24076.",
+    ]
+    assert all(
+        [
+            res_msg in expected_msgs
+            for res_msg in [result.message for result in fixed_messages]
+        ]
+    )
+
+    expected_rn = """#### Integration
+##### NotChanged
+- The next line should be removed
+- Something else not related
+
+##### NotBeingFixedDuplicateDocker
+- There isnt an object for this, next line shouldnt be changed
+- Updated the Docker image to: *demisto/python3:3.9.7.24071*.
+
+##### BumpedIntegration
+- Gonna be added below this
+- Updated the Docker image to: *demisto/python3:3.9.7.24071*.
+
+##### Another unrelated thing
+- Something not related
+
+##### WrongBump
+- Updated the Docker image to: *demisto/python3:3.9.7.24076*.
+- The above line should be changed to 24076"""
+    assert pack.release_note.file_content == expected_rn
+
+
+def test_IsDockerEntryMatchYmlValidator_fix(mocker):
+    """
+    Given:
+    - content_items list with 5 packs, each with RN with different content.
+        - Case 1: A script that modified with wrong image in rn.
+        - Case 2: A script that said didnt modified with rn
+        - Case 3: A script that modified without adding rn.
+
+    When:
+    - Calling the IsDockerEntryMatchYmlValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure the right amount of pack metadata failed, and that the right error message is returned.
+        - Case 1: Switch the image.
+        - Case 2: Remove the line.
+        - Case 3: Add the line.
+    """
+    integration_1 = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    old_integration_1 = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24070"]
+    )
+    pack_1 = create_pack_object(
+        paths=["currentVersion"],
+        values=["2.0.5"],
+        release_note_content=f"#### Integration\n##### {integration_1.name}\n- Updated the Docker image to: *demisto/python3:3.9.7.24076*.",
+    )
+    integration_2 = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    old_integration_2 = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    pack_2 = create_pack_object(
+        paths=["currentVersion"],
+        values=["2.0.5"],
+        release_note_content=f"#### Integration\n##### {integration_2.name}\n- Updated the Docker image to: *demisto/python3:3.9.7.24071*.\n- Something not related.",
+    )
+    script_1 = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24076"]
+    )
+    old_script_1 = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    pack_3 = create_pack_object(
+        paths=["currentVersion"],
+        values=["2.0.5"],
+        release_note_content=f"#### Scripts\n##### {script_1.name}\n- Something not related.",
+    )
+
+    integration_1.pack = pack_1
+    integration_2.pack = pack_2
+    script_1.pack = pack_3
+
+    content_items = [integration_1, integration_2, script_1]
+    old_content_items = [
+        old_integration_1,
+        old_integration_2,
+        old_script_1,
+    ]
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.parsers.related_files.RNRelatedFile.git_status",
+        new_callable=mocker.PropertyMock,
+        return_value=GitStatuses.ADDED,
+    )
+    create_old_file_pointers(content_items, old_content_items)
+    validator = IsDockerEntryMatchYmlValidator()
+    fixed_messages = [validator.fix(content_item) for content_item in content_items]
+    assert len(fixed_messages) == 3
+    expected_msgs = [
+        "Changed docker update entry line in the release notes to match the yml: demisto/python3:3.9.7.24071.",
+        "Removed docker updated entry as it was not changed in the yml.",
+        "Added docker updated entry -demisto/python3:3.9.7.24076- in release notes.",
+    ]
+    assert all(
+        [
+            res_msg in expected_msgs
+            for res_msg in [result.message for result in fixed_messages]
+        ]
+    )
+    assert (
+        pack_1.release_note.file_content
+        == "#### Integration\n##### TestIntegration\n- Updated the Docker image to: *demisto/python3:3.9.7.24071*."
+    )
+    assert (
+        pack_2.release_note.file_content
+        == "#### Integration\n##### TestIntegration\n- Something not related."
+    )
+    assert (
+        pack_3.release_note.file_content
+        == "#### Scripts\n##### myScript\n- Something not related.\n- Updated the Docker image to: *demisto/python3:3.9.7.24076*."
+    )
+
+
 def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
     """
     Given:
@@ -439,6 +651,7 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
         - Case 2: An integration without docker modification.
         - Case 3: A script with modified docker where the docker image entry in the rn match the on in the yml.
         - Case 4: A script with modified docker where no docker image entry appear in the rn.
+        - Case 5: A script that didnt modify the docker an RN that says it did
 
     When:
     - Calling the IsDockerEntryMatchYmlValidator obtain_invalid_content_items function.
@@ -449,6 +662,7 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
         - Case 2: Shouldn't fail anything.
         - Case 3: Shouldn't fail anything.
         - Case 4: Should fail.
+        - Case 5: Should fail
     """
     integration_1 = create_integration_object(
         paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
@@ -494,24 +708,38 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
         values=["2.0.5"],
         release_note_content=f"#### Scripts\n##### {script_2.name}\n- Entry not related to docker image update.",
     )
+    script_3 = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24076"]
+    )
+    old_script_3 = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24076"]
+    )
+    pack_5 = create_pack_object(
+        paths=["currentVersion"],
+        values=["2.0.5"],
+        release_note_content=f"#### Scripts\n##### {script_2.name}\n- Updated the Docker image to: *demisto/python3:3.9.7.24076*.",
+    )
     integration_1.pack = pack_1
     integration_2.pack = pack_2
     script_1.pack = pack_3
     script_2.pack = pack_4
-    content_items = [integration_1, integration_2, script_1, script_2]
+    script_3.pack = pack_5
+    content_items = [integration_1, integration_2, script_1, script_2, script_3]
     old_content_items = [
         old_integration_1,
         old_integration_2,
         old_script_1,
         old_script_2,
+        old_script_3,
     ]
     create_old_file_pointers(content_items, old_content_items)
     validator = IsDockerEntryMatchYmlValidator()
     results = validator.obtain_invalid_content_items(content_items)
-    assert len(results) == 2
+    assert len(results) == 3
     expected_msgs = [
-        "The docker entry in the release notes doesn't match what is in the yml.\n The docker image in rn: demisto/python3:3.9.7.24076, docker image in yml demisto/python3:3.9.7.24071 - please make sure the dockers match.",
-        "The docker entry in the release notes doesn't match what is in the yml.\n The docker image in rn: No docker entry found, docker image in yml demisto/python3:3.9.7.24076 - please make sure the dockers match.",
+        "The release notes regarding the docker image are not correct. Docker version in release notes should be demisto/python3:3.9.7.24071, found: demisto/python3:3.9.7.24076",
+        "The release notes regarding the docker image are not correct. Docker version in release notes should be demisto/python3:3.9.7.24076, found: No docker entry found",
+        "The release notes regarding the docker image are not correct. There should be no release notes docker update entry, found: demisto/python3:3.9.7.24076",
     ]
     assert all(
         [res_msg in expected_msgs for res_msg in [result.message for result in results]]

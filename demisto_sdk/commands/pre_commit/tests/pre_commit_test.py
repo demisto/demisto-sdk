@@ -289,7 +289,7 @@ def test_ruff_hook(github_actions, mocker):
         assert hook["name"] == f"ruff-py{python_version}"
         assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
         if github_actions:
-            assert hook["args"][2] == "--format=github"
+            assert hook["args"][2] == "--output-format=github"
 
 
 def test_ruff_hook_nightly_mode(mocker):

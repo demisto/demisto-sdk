@@ -1,4 +1,25 @@
 # Changelog
+## 1.33.5 (2025-01-14)
+### Feature
+* Modified the pre-commit tests collections flow to collect all tests files in the same directory as a changed script for improved robustness. [#4761](https://github.com/demisto/demisto-sdk/pull/4761)
+* Reduced commands startup time. [#4752](https://github.com/demisto/demisto-sdk/pull/4752)
+* RN111 will now fail when "Updated the docker image..." was added when it should not have been. Added a fix method to this validation. [#4741](https://github.com/demisto/demisto-sdk/pull/4741)
+* Added IF109 to the new validation format. The validation Checks whether an incident or indicator field has a valid required field value. [#4753](https://github.com/demisto/demisto-sdk/pull/4753)
+* Added IF117 to the new validation format. The validation Checks whether an incident or indicator field aliases have a valid marketplaces field value. [#4753](https://github.com/demisto/demisto-sdk/pull/4753)
+
+### Fix
+* Resolved an issue with handling special characters in the update-release-notes --text parameter. [#4751](https://github.com/demisto/demisto-sdk/pull/4751)
+* Fixed an issue where in some cases, parsing playbook related files would fail due to naming discrepancy. [#4758](https://github.com/demisto/demisto-sdk/pull/4758)
+* Fixed an issue where the update-release-notes command would delete the version from the pack metadata when using the -u flag with an invalid value. [#4765](https://github.com/demisto/demisto-sdk/pull/4765)
+* Locked poetry v1.8.5 version. [#4756](https://github.com/demisto/demisto-sdk/pull/4756)
+* Fixed an issue where the **ST110** validation failed when adding the marketplaces key to the CaseLayout content item. [#4763](https://github.com/demisto/demisto-sdk/pull/4763)
+* Update Ruff Hook to use the argument output-format [#4767](https://github.com/demisto/demisto-sdk/pull/4767)
+
+### Internal
+* Added the validation `IF118` to the new validation format. The validation checks if an alias of an incident field has it's own alias. [#4748](https://github.com/demisto/demisto-sdk/pull/4748)
+* Added the validation `PB121` to the new validation format. The validation checks if the inputs of a playbook that are intended to be fetched from the context are in the correct format. [#4702](https://github.com/demisto/demisto-sdk/pull/4702)
+
+
 ## 1.33.4 (2025-01-06)
 ### Breaking
 * Started deprecation process for old validate. This flow will be deprecated and removed in the near future. Please use the new validate flow. [#4750](https://github.com/demisto/demisto-sdk/pull/4750)

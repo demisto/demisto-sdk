@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where in some cases, parsing playbook related files would fail due to naming discrepancy.
-  type: fix
-pr_number: 4758

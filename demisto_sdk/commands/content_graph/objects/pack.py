@@ -57,6 +57,7 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     ReadmeRelatedFile,
     RNRelatedFile,
     SecretsIgnoreRelatedFile,
+    VersionConfigRelatedFile,
 )
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
     update_markdown_images_with_urls_and_rel_paths,
@@ -600,6 +601,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     @cached_property
     def secrets_ignore(self) -> SecretsIgnoreRelatedFile:
         return SecretsIgnoreRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def version_config(self) -> VersionConfigRelatedFile:
+        return VersionConfigRelatedFile(self.path, git_sha=self.git_sha)
 
     @cached_property
     def release_note(self) -> RNRelatedFile:

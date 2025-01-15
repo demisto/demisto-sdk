@@ -77,8 +77,13 @@ class RelativeImagePathValidator(BaseValidator[ContentTypes], ABC):
                 # Extract the correct link and filter out unwanted assets in one step
                 (absolute_link[1] if absolute_link[0] else absolute_link[2])
                 for absolute_link in absolute_links
-                if not ('content-assets' in (absolute_link[1] if absolute_link[0] else absolute_link[2]) and (
-                    absolute_link[1] if absolute_link[0] else absolute_link[2]).endswith(".gif"))
+                if not (
+                    "content-assets"
+                    in (absolute_link[1] if absolute_link[0] else absolute_link[2])
+                    and (
+                        absolute_link[1] if absolute_link[0] else absolute_link[2]
+                    ).endswith(".gif")
+                )
             ]
 
             if absolute_links_without_assets:

@@ -1164,4 +1164,3 @@ def test_ImagePathIntegrationValidator_content_assets():
         content_items
     )
     assert result[0].message == expected
-

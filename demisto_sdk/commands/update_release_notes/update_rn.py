@@ -1173,7 +1173,7 @@ class UpdateRN:
             rn_desc = f"## {content_name}\n\n"
             rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
         else:
-            type = (
+            type_value = (
                 RN_HEADER_BY_FILE_TYPE.get(_type, _type.value).rstrip("s").lower()
                 if _type
                 else ""
@@ -1185,7 +1185,7 @@ class UpdateRN:
                     rn_desc += format_playbook_description(desc)
                 else:
                     rn_desc += NEW_RN_TEMPLATE.format(
-                        type=type,
+                        type=type_value,
                         name=name,
                         description=desc or "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%.",
                     )
@@ -1208,7 +1208,7 @@ class UpdateRN:
                     if not current_rn and not text:
                         rn_desc += GENERAL_UPDATE_RN.format(
                             name=(name or "%%UPDATE_CONTENT_ITEM_NAME%%"),
-                            type=(type or "%%UPDATE_CONTENT_ITEM_TYPE%%"),
+                            type=(type_value or "%%UPDATE_CONTENT_ITEM_TYPE%%"),
                         )
                     elif text:
                         rn_desc += f"- {text}\n"

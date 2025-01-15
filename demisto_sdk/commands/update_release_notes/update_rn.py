@@ -1210,7 +1210,7 @@ class UpdateRN:
                             name=(name or "%%UPDATE_CONTENT_ITEM_NAME%%"),
                             type=(type or "%%UPDATE_CONTENT_ITEM_TYPE%%"),
                         )
-                    else:
+                    elif text:
                         rn_desc += f"- {text}\n"
 
         if docker_image:

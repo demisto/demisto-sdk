@@ -1,8 +1,10 @@
 ## zip-packs
 
+### Overview
+
 Creates a zip file that can be uploaded to Cortex XSOAR via the Upload pack button in the Cortex XSOAR Marketplace or directly with the -u flag in this command.
 
-**Arguments**:
+### Options
 * **-i, --input**
   The packs to create artifacts for. Optional values are: `all` or csv list of pack names.
 * **-o, --output**

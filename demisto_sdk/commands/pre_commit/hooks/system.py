@@ -20,6 +20,8 @@ class SystemHook(Hook):
         if "entry" in self.base_hook:
             entry = self.base_hook["entry"]
             bin_path = Path(sys.executable).parent
-            self.base_hook["entry"] = f"{bin_path}/{entry}"
+            self.base_hook["entry"] = (
+                f"{bin_path}/{entry}" if str(bin_path) not in entry else entry
+            )
         self.hooks.insert(self.hook_index, self.base_hook)
         return GeneratedHooks(hook_ids=[self.base_hook["id"]], parallel=self.parallel)

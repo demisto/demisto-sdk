@@ -5,6 +5,9 @@ from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Optional, Se
 
 from neo4j import graph
 from pydantic import BaseModel
+from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
+    FoldedScalarString,
+)
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_NEO4J_DATABASE_HTTP,
@@ -15,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
@@ -33,6 +37,7 @@ NEO4J_USERNAME = os.getenv(DEMISTO_SDK_NEO4J_USERNAME, "neo4j")
 NEO4J_PASSWORD = os.getenv(DEMISTO_SDK_NEO4J_PASSWORD, "contentgraph")
 
 PACK_METADATA_FILENAME = "pack_metadata.json"
+VERSION_CONFIG_FILENAME = "version_config.json"
 PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
 
@@ -277,7 +282,7 @@ class ContentType(StrEnum):
         raise ValueError(f"Could not find content type in path {path}")
 
     @property
-    def convert_content_type_to_rn_header(self) -> str:
+    def as_rn_header(self) -> str:
         """
         Convert ContentType to the Release note header.
         """
@@ -514,3 +519,56 @@ CONTENT_PRIVATE_ITEMS: dict = {
         "MITRE Layout",
     ],
 }
+
+
+def replace_marketplace_references(
+    data: Any, marketplace: MarketplaceVersions, path: str = ""
+) -> Any:
+    """
+    Recursively replaces "Cortex XSOAR" with "Cortex" in the given data if the marketplace is MarketplaceV2 or XPANSE.
+    If the word following "Cortex XSOAR" contains a number, it will also be removed.
+
+    Args:
+        data (Any): The data to process, which can be a dictionary, list, or string.
+        marketplace (MarketplaceVersions): The marketplace version to check against.
+        path (str): The path of the item being processed.
+
+    Returns:
+        Any: The same data object with replacements made if applicable.
+    """
+    try:
+        if marketplace in {
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        }:
+            if isinstance(data, dict):
+                keys_to_update = {}
+                for key, value in data.items():
+                    # Process the key
+                    new_key = (
+                        re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", key)
+                        if isinstance(key, str)
+                        else key
+                    )
+                    if new_key != key:
+                        keys_to_update[key] = new_key
+                    # Process the value
+                    data[key] = replace_marketplace_references(value, marketplace, path)
+                # Update the keys in the dictionary
+                for old_key, new_key in keys_to_update.items():
+                    data[new_key] = data.pop(old_key)
+            elif isinstance(data, list):
+                for i in range(len(data)):
+                    data[i] = replace_marketplace_references(data[i], marketplace, path)
+            elif isinstance(data, FoldedScalarString):
+                # if data is a FoldedScalarString (yml unification), we need to convert it to a string and back
+                data = FoldedScalarString(
+                    re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", str(data))
+                )
+            elif isinstance(data, str):
+                data = re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", data)
+    except Exception as e:
+        logger.error(
+            f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"
+        )
+    return data

@@ -1,3 +1,4 @@
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
@@ -26,6 +27,13 @@ def validate_version(value: Optional[str]) -> Optional[str]:
     raise typer.Exit(1)
 
 
+class UpdateType(str, Enum):
+    major = "major"
+    minor = "minor"
+    revision = "revision"
+    documentation = "documentation"
+
+
 @logging_setup_decorator
 def update_release_notes(
     ctx: typer.Context,
@@ -35,7 +43,7 @@ def update_release_notes(
         "--input",
         help="The relative path of the content pack. For example Packs/Pack_Name",
     ),
-    update_type: str = typer.Option(
+    update_type: UpdateType = typer.Option(
         None,
         "-u",
         "--update-type",
@@ -62,7 +70,11 @@ def update_release_notes(
         help="Force update release notes for a pack (even if not required).",
     ),
     text: str = typer.Option(
-        None, help="Text to add to all of the release notes files."
+        None,
+        "-t",
+        "--text",
+        help="Text to add to all of the release notes files, supporting special characters like \t, \n, etc.",
+        metavar="TEXT",
     ),
     prev_ver: str = typer.Option(
         None, help="Previous branch or SHA1 commit to run checks against."
@@ -92,7 +104,15 @@ def update_release_notes(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
-    """Auto-increment pack version and generate release notes template."""
+    """
+    Automatically generates release notes for a given pack and updates the `pack_metadata.json` version for changed items.
+
+    This command creates a new release notes file under the ReleaseNotes directory in the given pack in the form of X_Y_Z.md where X_Y_Z is the new pack version.
+    The command automatically bumps the `currentVersion` found in the `pack_metadata.json` file. After running this command, add the newly created release notes file to GitHub and add your notes under their respective headlines.
+
+    For a private repository and an unconfigured DEMISTO_SDK_GITHUB_TOKEN, remote files are fetched from the remote branch of the local repo.
+
+    """
     from demisto_sdk.commands.update_release_notes.update_rn_manager import (
         UpdateReleaseNotesManager,
     )

@@ -33,6 +33,10 @@ def generate_integration(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
+    """
+    Use the generate-integration command to generate a Cortex XSIAM/Cortex XSOAR integration from an integration config JSON file.
+    The JSON config file can be generated from a Postman collection via the postman-codegen command.
+    """
     # Open and load the JSON config file
     with input.open("r") as file:
         config_dict = json.load(file)

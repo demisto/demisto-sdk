@@ -191,11 +191,15 @@ def is_indicator_pb(playbook: Playbook):
     )
 
 
-def extract_rn_headers(rn_content) -> Dict[str, List[str]]:
+def extract_rn_headers(
+    rn_content: str,
+    remove_prefixes: bool = False,
+) -> Dict[str, List[str]]:
     """
         Extracts the headers from the release notes file.
     Args:
-        None.
+        rn_content (str): The release notes file content.
+        remove_prefixes (bool, default: False): If true, removes prefixes from headers and keeps only the display names.
     Return:
         A dictionary representation of the release notes file that maps content types' headers to their corresponding content items' headers.
         i.e: {"Integrations": ["integration_1", "integration_2"], "Scripts: ["script_1]}
@@ -224,6 +228,8 @@ def extract_rn_headers(rn_content) -> Dict[str, List[str]]:
                     headers[content_type].append(header)
                 else:
                     headers[content_type] = [header]
+    if remove_prefixes:
+        filter_rn_headers_prefix(headers)
     return headers
 
 
@@ -243,10 +249,11 @@ def filter_rn_headers_prefix(headers: Dict) -> None:
 
 
 def was_rn_added(p: Pack) -> bool:
-    return (
-        p.release_note.git_status == GitStatuses.ADDED
-        and p.pack_version > parse("1.0.0")  # type: ignore
-    )
+    return p.release_note.git_status == GitStatuses.ADDED
+
+
+def is_new_pack(p: Pack) -> bool:
+    return p.git_status == GitStatuses.ADDED and p.pack_version == parse("1.0.0")
 
 
 def is_pack_move(content_item: ContentItem) -> bool:
@@ -263,6 +270,7 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
       - A modeling rule is considered modified if its XIF and schema files are modified
       - A movement between packs is considered a modification
     - Test content items shouldn't have RNs
+    - Silent content items shouldn't have RNs
 
     Args:
         content_item (ContentItem): A content item object
@@ -271,6 +279,8 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
         bool: True iff should run the RN validaion.
     """
     if isinstance(content_item, (TestPlaybook, TestScript)):
+        return True
+    if content_item.is_silent:
         return True
     if isinstance(content_item, Integration):
         return (

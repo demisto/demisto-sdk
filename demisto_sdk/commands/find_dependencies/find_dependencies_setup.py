@@ -68,7 +68,12 @@ def find_dependencies(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
-    """Find pack dependencies and update pack metadata."""
+    """
+    Find pack dependencies and update pack metadata.
+
+    **Use Cases**:
+    This command is used in order to find the dependencies between packs and to update the dependencies section in the pack metadata.
+    """
     # Convert input to tuple to match the expected input type in the PackDependencies function.
     input_paths = tuple(input) if input else ()
 

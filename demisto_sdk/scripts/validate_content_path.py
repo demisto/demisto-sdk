@@ -1,7 +1,7 @@
 import re
 from abc import ABC
 from pathlib import Path
-from typing import ClassVar, List, Sequence
+from typing import ClassVar, List, NamedTuple, Sequence, Set, Type
 
 import typer
 from more_itertools import split_at
@@ -10,6 +10,8 @@ from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
+    CASE_FIELDS_DIR,
+    CASE_LAYOUTS_DIR,
     CLASSIFIERS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
@@ -33,6 +35,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
+    PACKS_VERSION_CONFIG_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
     PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
@@ -60,6 +63,7 @@ ZERO_DEPTH_FILES = frozenset(
         PACKS_CONTRIBUTORS_FILE_NAME,
         PACKS_README_FILE_NAME,
         PACKS_PACK_META_FILE_NAME,
+        PACKS_VERSION_CONFIG_FILE_NAME,
     )
 )
 
@@ -91,6 +95,8 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         GENERIC_MODULES_DIR,
         GENERIC_DEFINITIONS_DIR,
         LAYOUTS_DIR,
+        CASE_LAYOUTS_DIR,
+        CASE_FIELDS_DIR,
         CLASSIFIERS_DIR,
         MAPPERS_DIR,
         RELEASE_NOTES_DIR,
@@ -174,16 +180,26 @@ class InvalidIntegrationScriptMarkdownFileName(InvalidPathException):
     )
 
 
-class InvalidXSIAMReportFileName(InvalidPathException):
-    message = "Name of XSIAM report files must start with the pack's name, e.g. `myPack_report1.json`"
+class InvalidXSIAMItemName(InvalidPathException):
+    message = (
+        "This item's name must start with the pack's name, e.g. `myPack_foobar.json`"
+    )
 
 
 class InvalidXSIAMDashboardFileName(InvalidPathException):
     message = "Only .json and .png file extension are supported for XSIAM dashboard. File must be named  <pack_name>_<dashboard_name>.json."
 
 
+class InvalidCorrelationRuleFileName(InvalidPathException):
+    message = "Only .yml files are supported for Correlation Rules. File names must start with `<pack_name>_-`"
+
+
 class InvalidXSIAMParsingRuleFileName(InvalidPathException):
     message = "Only .yml and .xif file extension are supported for XSIAM Parsing Rule. File must be named as the parent folder name."
+
+
+class InvalidXSIAMReportFileName(InvalidPathException):
+    message = "Only .json and .png file extension are supported for XSIAM report. File must be named  <pack_name>_<report_name>.json."
 
 
 class InvalidImageFileName(InvalidPathException):
@@ -250,7 +266,10 @@ def _validate(path: Path) -> None:
         split_at(path.parts, lambda v: v == PACKS_FOLDER, maxsplit=1)
     )
 
-    if parts_after_packs[0] in {"DeprecatedContent", "D2"}:  # Pack name
+    if (pack_folder_name := parts_after_packs[0]) in {
+        "DeprecatedContent",
+        "D2",
+    }:  # Pack name
         """
         This set neither does nor should contain all names of deprecated packs.
         D2 is unique with the files it has, so it is explicitly mentioned here.
@@ -289,7 +308,7 @@ def _validate(path: Path) -> None:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise InvalidDepthOneFile
 
-        if first_level_folder == LAYOUTS_DIR and not (
+        if first_level_folder in {LAYOUTS_DIR, CASE_LAYOUTS_DIR} and not (
             path.stem.startswith(("layout-", "layoutscontainer-"))
             and path.suffix == ".json"
         ):
@@ -301,16 +320,14 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidClassifier
 
-        if first_level_folder == XSIAM_REPORTS_DIR and not (
-            path.stem.startswith(f"{parts_after_packs[0]}_") and path.suffix == ".json"
-        ):
-            raise InvalidXSIAMReportFileName
-
-        if first_level_folder == XSIAM_DASHBOARDS_DIR and not (
-            path.stem.startswith(f"{parts_after_packs[0]}_")
-            and path.suffix in (".json", ".png")
-        ):
-            raise InvalidXSIAMDashboardFileName
+        if xsiam_constraints := XSIAM_DEPTH_1_CHECKS.get(
+            first_level_folder
+        ):  # items whose name must start with `{pack_folder}_`
+            if not (
+                path.stem.startswith(f"{pack_folder_name}_")
+                and path.suffix in xsiam_constraints.allowed_suffixes
+            ):
+                raise xsiam_constraints.exception
 
         if (
             first_level_folder == DOC_FILES_DIR
@@ -348,6 +365,25 @@ def _validate(path: Path) -> None:
 def _validate_image_file_name(image_name: str):
     if INVALID_CHARS_IN_IMAGES_REGEX.findall(image_name):
         raise InvalidImageFileName
+
+
+class XsiamStemConstraints(NamedTuple):
+    allowed_suffixes: Set[str]
+    exception: Type[InvalidPathException]
+
+
+XSIAM_DEPTH_1_CHECKS = {
+    # Useful for depth-1 items, to avoid rewriting the same checks over and over again
+    CORRELATION_RULES_DIR: XsiamStemConstraints(
+        {".yml"}, InvalidCorrelationRuleFileName
+    ),
+    XSIAM_DASHBOARDS_DIR: XsiamStemConstraints(
+        {".json", ".png"}, InvalidXSIAMDashboardFileName
+    ),
+    XSIAM_REPORTS_DIR: XsiamStemConstraints(
+        {".json", ".jpg"}, InvalidXSIAMReportFileName
+    ),
+}
 
 
 def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[str]):

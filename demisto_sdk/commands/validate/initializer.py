@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME,
+    PACKS_VERSION_CONFIG_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
     PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
@@ -506,7 +507,7 @@ class Initializer:
         invalid_content_items: Set[Path] = set()
         non_content_items: Set[Path] = set()
         git_util = GitUtil.from_content_path()
-        current_git_sha = git_util.get_current_commit_hash()
+        current_git_sha = git_util.get_current_git_branch_or_hash()
         for file_path, git_status in statuses_dict.items():
             if git_status == GitStatuses.DELETED:
                 continue
@@ -613,7 +614,7 @@ class Initializer:
                 else:
                     # Otherwise obtain the yml path independently.
                     path = self.obtain_playbook_path(path)
-                    if path not in statuses_dict:
+                    if path not in statuses_dict and path.suffix == ".yml":
                         statuses_dict[path] = None
             elif MODELING_RULES_DIR in path_str or PARSING_RULES_DIR in path_str:
                 # If it's a modeling rule or a parsing rule obtain the yml.
@@ -748,6 +749,7 @@ class Initializer:
                 AUTHOR_IMAGE_FILE_NAME,
                 PACKS_CONTRIBUTORS_FILE_NAME,
                 DOC_FILES_DIR,
+                PACKS_VERSION_CONFIG_FILE_NAME,
             )
         )
 

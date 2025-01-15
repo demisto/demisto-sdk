@@ -3017,7 +3017,7 @@ def test_convert_content_type_to_rn_header_and_from_release_note_header():
     Given:
         - A ContentType enum value, such as ContentType.MAPPER, ContentType.PREPROCESS_RULE, or ContentType.TRIGGER.
     When:
-        - Calling convert_content_type_to_rn_header(content_type) with the ContentType enum value.
+        - Calling as_rn_header(content_type) with the ContentType enum value.
         - Calling from_release_note_header(header) with the generated header string.
     Then:
         - Assert that the ContentType enum value returned by from_release_note_header(header) matches the original ContentType enum value.
@@ -3034,7 +3034,7 @@ def test_convert_content_type_to_rn_header_and_from_release_note_header():
         ):
             continue
         assert content_type == ContentType.convert_header_to_content_type(
-            content_type.convert_content_type_to_rn_header
+            content_type.as_rn_header
         )
 
 

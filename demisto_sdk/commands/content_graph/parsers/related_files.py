@@ -116,6 +116,12 @@ class TextFiles(RelatedFile):
                 logger.debug(f"Failed to get related text file, error: {e}")
         return self.file_content_str
 
+    @file_content.setter
+    def file_content(self, content: str):
+        """Setter for the file_content property. Updates the file content."""
+        self.file_content_str = content
+        TextFile.write(content, self.file_path)
+
 
 class RNRelatedFile(TextFiles):
     file_type = RelatedFileType.RELEASE_NOTE
@@ -141,12 +147,19 @@ class RNRelatedFile(TextFiles):
     @property
     def all_rns(self) -> List[str]:
         if not self.rns_list:
+            rns_dir_path = self.main_file_path / RELEASE_NOTES_DIR
             if self.git_sha:
-                self.rns_list = GitUtil.from_content_path().list_files_in_dir(
-                    self.main_file_path / RELEASE_NOTES_DIR, self.git_sha
-                )
+                git_util = GitUtil.from_content_path()
+                if not git_util.is_file_exist_in_commit_or_branch(
+                    rns_dir_path, self.git_sha
+                ):
+                    self.rns_list = []
+                else:
+                    self.rns_list = git_util.list_files_in_dir(
+                        rns_dir_path, self.git_sha
+                    )
             else:
-                self.rns_list = get_child_files(self.main_file_path / RELEASE_NOTES_DIR)
+                self.rns_list = get_child_files(rns_dir_path)
         return self.rns_list
 
 

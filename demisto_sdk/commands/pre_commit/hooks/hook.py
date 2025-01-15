@@ -225,7 +225,7 @@ def safe_update_hook_args(hook: Dict, value: Any) -> None:
         None
     """
     args_key = "args"
-    if args_key in hook:
+    if args_key in hook and value not in hook[args_key]:
         hook[args_key].append(value)
     else:
         hook[args_key] = [value]

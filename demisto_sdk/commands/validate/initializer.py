@@ -115,7 +115,7 @@ class Initializer:
             prev_ver (Optional[str]): Previous branch or SHA1 commit to run checks against.
         """
         if self.prev_ver and not self.prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
-            self.prev_ver = f"{DEMISTO_GIT_UPSTREAM}/" + self.prev_ver
+            self.prev_ver = self.setup_prev_ver(f"{DEMISTO_GIT_UPSTREAM}/" + self.prev_ver)
         self.prev_ver = self.setup_prev_ver(self.prev_ver)
 
     def collect_files_to_run(self, file_path: str) -> Tuple[Set, Set, Set, Set]:

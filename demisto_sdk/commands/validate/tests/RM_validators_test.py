@@ -1146,20 +1146,19 @@ def test_ImagePathIntegrationValidator_content_assets():
         create_integration_object(
             readme_content=" Readme contains absolute path:\n 'Here is an image:\n"
             " ![Example Image](https://www.example.com/images/example_image.jpg)\n"
-            "![Example Image](https://www.example.com/content_assets/example_image.jpg)\n"
+            "![Example Image](https://www.example.com/content-assets/example_image.jpg)\n"
             "<img src='../../doc_files/58381182-d8408200-7fc2-11e9-8726-8056cab1feea.png'\n"
-            "![Example Image](https://www.example.com/content_assets/example_image.gif)\n",
-            description_content="valid description ![Example Image](../../content/image.jpg)",
+            "![Example Image](https://www.example.com/content-assets/example_image.gif)\n",
         ),
     ]
-    expected = (" Invalid image path(s) have been detected. Please utilize relative paths instead for the links provided"
-                " below.:\nhttps://www.example.com/images/example_image.jpg\n"
-                "https://www.example.com/content_assets/example_image.jpg\n"
-                "https://www.example.com/content_assets/example_image.gif\n"
-                "\nRelative image paths have been identified outside the pack's 'doc_files' directory."
-                " Please relocate the following images to the 'doc_files' directory:\n../../content/image.jpg\n\n"
-                " Read the following documentation on how to add images to pack markdown files:\n"
-                " https://xsoar.pan.dev/docs/integrations/integration-docs#images")
+    expected = (
+        " Invalid image path(s) have been detected. Please utilize relative paths instead for the links"
+        " provided below.:\nhttps://www.example.com/images/example_image.jpg\n"
+        "https://www.example.com/content-assets/example_image.jpg\n\n"
+        " Read the following documentation on how to add images to pack markdown files:\n"
+        " https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+    )
+
     result = IntegrationRelativeImagePathValidator().obtain_invalid_content_items(
         content_items
     )

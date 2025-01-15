@@ -1,4 +1,0 @@
-changes:
-- description: Update Ruff Hook to use the argument output-format
-  type: fix
-pr_number: 4767

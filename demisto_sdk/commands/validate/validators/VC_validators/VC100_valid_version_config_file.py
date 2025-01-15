@@ -20,7 +20,7 @@ class ValidVersionConfigFileValidator(BaseValidator[ContentTypes]):
     description = "Verify valid json"
     rationale = "Verify the file is valid to prevent packs showing in non compatible server versions."
     error_message = "version config file is not a valid json"
-    related_field = ""
+    related_field = "version_config"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.VERSION_CONFIG]
@@ -36,13 +36,5 @@ class ValidVersionConfigFileValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if content_item.version_config.exist
-            and invalidate_version_config(content_item.version_config)
+            and content_item.version_config.file_content
         ]
-
-
-def invalidate_version_config(version_config):
-    try:
-        json.loads(version_config)
-        return False
-    except Exception:
-        return True

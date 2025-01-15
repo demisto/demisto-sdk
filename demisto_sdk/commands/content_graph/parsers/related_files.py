@@ -187,6 +187,8 @@ class XifRelatedFile(TextFiles):
 
 
 class JsonFiles(RelatedFile):
+    file_type = RelatedFileType.JSON
+
     @cached_property
     def file_content(self) -> Optional[Dict[str, Any]]:
         """

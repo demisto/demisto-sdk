@@ -208,6 +208,14 @@ class JsonFiles(RelatedFile):
 
 
 class VersionConfigRelatedFile(JsonFiles):
+    def __init__(
+        self,
+        main_file_path: Path,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        super().__init__(main_file_path, git_sha, prev_ver)
+
     file_type = RelatedFileType.VERSION_CONFIG
 
     def get_optional_paths(self) -> List[Path]:

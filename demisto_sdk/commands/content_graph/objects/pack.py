@@ -604,7 +604,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     @cached_property
     def version_config(self) -> VersionConfigRelatedFile:
-        return VersionConfigRelatedFile(self.path, git_sha=self.git_sha)
+        return VersionConfigRelatedFile(
+            self.path,
+            git_sha=self.git_sha,
+            prev_ver=self.old_base_content_object.git_sha
+            if self.old_base_content_object
+            else None,
+        )
 
     @cached_property
     def release_note(self) -> RNRelatedFile:

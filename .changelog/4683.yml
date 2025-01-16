@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where content-assets absolute paths raised an error from RM108 validation.
+- description: Fixed RM108 validation to allow absolute paths if the files are a part of content-assets.
   type: internal
 pr_number: 4683

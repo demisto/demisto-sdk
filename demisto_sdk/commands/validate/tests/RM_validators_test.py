@@ -1160,15 +1160,14 @@ def test_ImagePathIntegrationValidator_content_assets():
             "![Example Image](https://www.example.com/example_image.gif)\n",
         ),
     ]
-    expected = (
-        " Invalid image path(s) have been detected."
-        " Please utilize relative paths instead for the links provided below:"
-        "\nhttps://www.example.com/images/example_image.jpg\n"
-        "https://www.example.com/content-assets/example_image.jpg\n"
-        "https://www.example.com/example_image.gif\n\n"
-        " Read the following documentation on how to add images to pack markdown files:\n"
-        " https://xsoar.pan.dev/docs/integrations/integration-docs#images"
-    )
+    expected = (' Invalid image path(s) have been detected. Please utilize relative paths instead for the links'
+                ' provided below: \nhttps://www.example.com/images/example_image.jpg\n'
+                'https://www.example.com/content-assets/example_image.jpg\n'
+                'https://www.example.com/example_image.gif\n\n '
+                'Read the following documentation on how to add images to pack markdown files:\n '
+                'https://xsoar.pan.dev/docs/integrations/integration-docs#images'
+                )
+
     result = IntegrationRelativeImagePathValidator().obtain_invalid_content_items(
         content_items
     )

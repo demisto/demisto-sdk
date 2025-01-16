@@ -184,12 +184,3 @@ def register_sdk_commands():
     Ensure that demisto-sdk Typer app commands are registered before each test session.
     """
     register_commands()
-
-
-def pytest_addoption(parser):
-    parser.addoption(
-        "--client_conf",
-        action="store",
-        default=None,
-        help="Custom client configuration",
-    )

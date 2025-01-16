@@ -234,10 +234,6 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = (
-            "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n"
-            "- New: Hello World Playbook description\n"
-        )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"
@@ -249,12 +245,21 @@ class TestRNUpdate:
         )
         changed_items = {
             ("Hello World Playbook", FileType.PLAYBOOK): {
-                "description": "Hello World Playbook description",
+                "description": (
+                    "This playbook addresses the following alerts:\n"
+                    "Playbook Stages:\nRequirements:\nTriage:\n"
+                    "Early Containment:\nInvestigation:\nContainment:\n"
+                ),
                 "is_new_file": True,
             },
         }
         release_notes = update_rn.build_rn_template(changed_items)
-        assert expected_result == release_notes
+        assert release_notes == (
+            "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n"
+            "##### This playbook addresses the following alerts:\n"
+            "##### Playbook Stages:\n##### Requirements:\n###### Triage:\n"
+            "###### Early Containment:\n###### Investigation:\n###### Containment:\n\n"
+        )
 
     @mock.patch.object(UpdateRN, "get_master_version")
     def test_build_rn_template_markdown_valid(self, mock_master, mocker):
@@ -950,6 +955,30 @@ class TestRNUpdate:
             docker_image=None,
         )
         assert expected_result in desc
+
+    def test_build_rn_desc_unicode_escape_handling(self):
+        """
+        Given
+            - An input string containing escaped unicode sequences such as '\\n' and '\\t'.
+        When
+            - Running the command build_rn_desc to generate the release notes description.
+        Then
+            - Validate that the escaped sequences are correctly interpreted and included
+              in the release notes description as their respective characters.
+        """
+        input_text = "Line with \\n newline and \\t tab characters"
+        expected_output = "##### \n\n- Line with \n newline and \t tab characters\n"
+
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorld",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorld"},
+            added_files=set(),
+        )
+
+        output = update_rn.build_rn_desc(text=input_text)
+
+        assert output == expected_output, f"Expected {expected_output}, got {output}"
 
     @pytest.mark.parametrize(
         "file_type, marketplaces, expected_result, not_expected",

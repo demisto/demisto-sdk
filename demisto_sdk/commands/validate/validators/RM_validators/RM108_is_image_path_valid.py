@@ -89,7 +89,7 @@ class RelativeImagePathValidator(BaseValidator[ContentTypes], ABC):
             if absolute_links_without_assets:
                 return (
                     " Invalid image path(s) have been detected."
-                    " Please utilize relative paths instead for the links provided below.:\n"
+                    " Please utilize relative paths instead for the links provided below:\n"
                     + "\n".join(absolute_links_without_assets)
                     + "\n\n"
                 )

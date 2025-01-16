@@ -1130,17 +1130,24 @@ def test_invalid_short_file():
 
 def test_ImagePathIntegrationValidator_content_assets():
     """
-        Given
-        content_items.
-        - Pack with:
-            1. invalid readme that contains absolute path.
-            2. description contains relative path that saved not under dec_files.
-    demisto_sdk/commands/validate/sdk_validation_config.toml
+    Given
+    content_items.
+    - Pack with:
+        1. invalid readme that contains absolute path. For example:
+            - https://www.example.com/content-assets/example_image.jpg
+        2. invalid description contains relative path that saved not under doc_files. For example:
+            - img_docs/58381182-d8408200-7fc2-11e9-8726-8056cab1feea.png
+        3. invalid description contains absolute path of gif not under content-assets. For example:
+            - https://www.example.com/example_image.gif
+        4. valid description contains absolute path of gif under content-assets. For example:
+            - https://www.example.com/example_image.gif
+        4. valid description contains relative path that saved under doc_files. For example:. For example:
+            - ../../doc_files/58381182-d8408200-7fc2-11e9-8726-8056cab1feea.png
 
-        When
-        - Calling the ImagePathIntegrationValidator obtain_invalid_content_items function.
-        Then
-        - Make sure that the pack is failing.
+    When
+    - Calling the ImagePathIntegrationValidator obtain_invalid_content_items function.
+    Then
+    - Make sure that the pack is failing.
     """
     content_items = [
         create_integration_object(
@@ -1148,17 +1155,20 @@ def test_ImagePathIntegrationValidator_content_assets():
             " ![Example Image](https://www.example.com/images/example_image.jpg)\n"
             "![Example Image](https://www.example.com/content-assets/example_image.jpg)\n"
             "<img src='../../doc_files/58381182-d8408200-7fc2-11e9-8726-8056cab1feea.png'\n"
-            "![Example Image](https://www.example.com/content-assets/example_image.gif)\n",
+            "<img src='../Playbooks/58381182-d8408200-7fc2-11e9-8726-8056cab1feea.png'\n"
+            "![Example Image](https://www.example.com/content-assets/example_image.gif)\n"
+            "![Example Image](https://www.example.com/example_image.gif)\n",
         ),
     ]
     expected = (
-        " Invalid image path(s) have been detected. Please utilize relative paths instead for the links"
-        " provided below.:\nhttps://www.example.com/images/example_image.jpg\n"
-        "https://www.example.com/content-assets/example_image.jpg\n\n"
+        " Invalid image path(s) have been detected."
+        " Please utilize relative paths instead for the links provided below:"
+        "\nhttps://www.example.com/images/example_image.jpg\n"
+        "https://www.example.com/content-assets/example_image.jpg\n"
+        "https://www.example.com/example_image.gif\n\n"
         " Read the following documentation on how to add images to pack markdown files:\n"
         " https://xsoar.pan.dev/docs/integrations/integration-docs#images"
     )
-
     result = IntegrationRelativeImagePathValidator().obtain_invalid_content_items(
         content_items
     )

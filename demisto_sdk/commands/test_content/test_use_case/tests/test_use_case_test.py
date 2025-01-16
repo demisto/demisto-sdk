@@ -35,7 +35,7 @@ def test_run_test_use_case_pytest(
     """
     test_result_mocker = mocker.Mock()
     mocker.patch.object(
-        test_use_case, "get_containing_pack", return_value="/path/to/pack"
+        test_use_case, "get_pack_name", return_value="/path/to/pack"
     )
     mocker.patch.object(test_use_case, "copy_conftest")
     mocker.patch.object(test_use_case, "logger")
@@ -58,7 +58,8 @@ def test_run_test_use_case_pytest(
         [
             "--client_conf=base_url=https://example.com,"
             "api_key=API_KEY,"
-            "auth_id=AUTH_ID",
+            "auth_id=AUTH_ID,"
+            "project_id=None",
             str(mocker_test_use_case_directory),
             "--durations=5",
             "--log-cli-level=CRITICAL",

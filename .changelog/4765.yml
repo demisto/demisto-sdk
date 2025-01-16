@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the update-release-notes command would delete the version from the pack metadata when using the -u flag with an invalid value.
-  type: fix
-pr_number: 4765

@@ -288,5 +288,3 @@ class XsiamClient(XsoarSaasClient):
             count = res.get("result_count")  # type: ignore
 
         return alert_ids
-
-

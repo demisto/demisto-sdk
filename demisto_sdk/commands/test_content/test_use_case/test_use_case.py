@@ -2,10 +2,10 @@ import logging  # noqa: TID251 # specific case, passed as argument to 3rd party
 import os
 import re
 import shutil
+import subprocess
 from pathlib import Path
 from threading import Thread
 from typing import Any, List, Optional, Tuple, Union
-import subprocess
 
 import demisto_client
 import pytest
@@ -17,8 +17,8 @@ from junitparser.junitparser import Failure, Skipped
 from demisto_sdk.commands.common.clients import get_client_from_server_type
 from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import XsoarClient
 from demisto_sdk.commands.common.constants import (
-    XSIAM_SERVER_TYPE,
     TEST_USE_CASES,
+    XSIAM_SERVER_TYPE,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import (
@@ -28,7 +28,8 @@ from demisto_sdk.commands.common.logger import (
 )
 from demisto_sdk.commands.common.tools import (
     get_json_file,
-    string_to_bool, get_pack_name,
+    get_pack_name,
+    string_to_bool,
 )
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
     ParallelLoggingManager,
@@ -38,7 +39,6 @@ from demisto_sdk.commands.test_content.tools import (
     get_relative_path_to_content,
     get_ui_url,
     get_utc_now,
-    tenant_config_cb,
 )
 
 CI_PIPELINE_ID = os.environ.get("CI_PIPELINE_ID")
@@ -48,8 +48,8 @@ app = typer.Typer()
 
 def copy_conftest(test_dir):
     """
-        copy content's conftest.py file into the use case directory in order to be able to pass new custom
-         pytest argument (client_conf)
+    copy content's conftest.py file into the use case directory in order to be able to pass new custom
+     pytest argument (client_conf)
     """
     source_conftest = Path(f"{CONTENT_PATH}/Tests/scripts/dev_envs/pytest/conftest.py")
     dest_conftest = test_dir / "conftest.py"
@@ -60,11 +60,18 @@ def copy_conftest(test_dir):
 def run_command(command):
     """Run a shell command and capture the output."""
     try:
-        result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return result.stdout.decode('utf-8').strip()
+        result = subprocess.run(
+            command,
+            shell=True,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        return result.stdout.decode("utf-8").strip()
     except subprocess.CalledProcessError as e:
         logging.error(
-            f"Error executing command: {e}\nCommand: {command}\nOutput: {e.output.decode('utf-8')}\nError: {e.stderr.decode('utf-8')}")
+            f"Error executing command: {e}\nCommand: {command}\nOutput: {e.output.decode('utf-8')}\nError: {e.stderr.decode('utf-8')}"
+        )
         return None
 
 
@@ -85,7 +92,9 @@ class TestResultCapture:
             if report.outcome == "passed":
                 self.junit_testsuite.add_testcase(test_case)
             elif report.outcome == "failed":
-                error_text = self._sanitize_sensitive_data(report.longreprtext if report.longrepr else "Test failed")
+                error_text = self._sanitize_sensitive_data(
+                    report.longreprtext if report.longrepr else "Test failed"
+                )
                 failure = Failure(error_text)
                 test_case.result = failure
                 self.junit_testsuite.add_testcase(test_case)
@@ -114,9 +123,9 @@ class TestResultCapture:
 
 class TestResults:
     def __init__(
-            self,
-            service_account: str = None,
-            artifacts_bucket: str = None,
+        self,
+        service_account: str = None,
+        artifacts_bucket: str = None,
     ):
         self.test_results_xml_file = JUnitXml()
         self.errors = False
@@ -124,11 +133,11 @@ class TestResults:
         self.artifacts_bucket = artifacts_bucket
 
     def upload_result_json_to_bucket(
-            self,
-            repository_name: str,
-            file_name,
-            original_file_path: Path,
-            logging_module: Union[Any, ParallelLoggingManager] = logging,
+        self,
+        repository_name: str,
+        file_name,
+        original_file_path: Path,
+        logging_module: Union[Any, ParallelLoggingManager] = logging,
     ):
         """Uploads a JSON object to a specified path in the GCP bucket.
 
@@ -156,21 +165,21 @@ class TestResults:
 
 class BuildContext:
     def __init__(
-            self,
-            nightly: bool,
-            build_number: Optional[str],
-            logging_module: ParallelLoggingManager,
-            cloud_servers_path: str,
-            cloud_servers_api_keys: str,
-            service_account: Optional[str],
-            artifacts_bucket: Optional[str],
-            cloud_url: Optional[str],
-            api_key: Optional[str],
-            auth_id: Optional[str],
-            inputs: Optional[List[Path]],
-            machine_assignment: str,
-            project_id: str,
-            ctx: typer.Context,
+        self,
+        nightly: bool,
+        build_number: Optional[str],
+        logging_module: ParallelLoggingManager,
+        cloud_servers_path: str,
+        cloud_servers_api_keys: str,
+        service_account: Optional[str],
+        artifacts_bucket: Optional[str],
+        cloud_url: Optional[str],
+        api_key: Optional[str],
+        auth_id: Optional[str],
+        inputs: Optional[List[Path]],
+        machine_assignment: str,
+        project_id: str,
+        ctx: typer.Context,
     ):
         self.logging_module: ParallelLoggingManager = logging_module
         self.ctx = ctx
@@ -216,9 +225,7 @@ class BuildContext:
                     api_key=self.api_key,  # type: ignore[arg-type]
                     auth_id=self.auth_id,  # type: ignore[arg-type]
                     ui_url=get_ui_url(self.cloud_url),
-                    tests=[Path(test) for test in self.inputs]
-                    if self.inputs
-                    else [],
+                    tests=[Path(test) for test in self.inputs] if self.inputs else [],
                 )
             ]
         servers_list = []
@@ -253,13 +260,13 @@ class BuildContext:
 
 class CloudServerContext:
     def __init__(
-            self,
-            build_context: BuildContext,
-            base_url: str,
-            api_key: str,
-            auth_id: str,
-            ui_url: str,
-            tests: List[Path],
+        self,
+        build_context: BuildContext,
+        base_url: str,
+        api_key: str,
+        auth_id: str,
+        ui_url: str,
+        tests: List[Path],
     ):
         self.build_context = build_context
         self.client = None
@@ -350,10 +357,10 @@ class CloudServerContext:
 
 
 def run_test_use_case_pytest(
-        test_use_case_directory: Path,
-        cloud_client: XsoarClient,
-        durations: int = 5,
-        project_id: str = None,
+    test_use_case_directory: Path,
+    cloud_client: XsoarClient,
+    durations: int = 5,
+    project_id: str = None,
 ) -> Tuple[bool, Union[TestSuite, None]]:
     """Runs a test use case
 
@@ -406,24 +413,24 @@ def run_test_use_case_pytest(
 
 
 def run_test_use_case(
-        ctx: typer.Context,
-        inputs: List[Path],
-        xsiam_url: Optional[str],
-        api_key: Optional[str],
-        auth_id: Optional[str],
-        output_junit_file: Optional[Path],
-        service_account: Optional[str],
-        cloud_servers_path: str,
-        cloud_servers_api_keys: str,
-        machine_assignment: str,
-        build_number: str,
-        nightly: str,
-        artifacts_bucket: str,
-        project_id: str,
-        console_log_threshold: str,
-        file_log_threshold: str,
-        log_file_path: Optional[str],
-        **kwargs
+    ctx: typer.Context,
+    inputs: List[Path],
+    xsiam_url: Optional[str],
+    api_key: Optional[str],
+    auth_id: Optional[str],
+    output_junit_file: Optional[Path],
+    service_account: Optional[str],
+    cloud_servers_path: str,
+    cloud_servers_api_keys: str,
+    machine_assignment: str,
+    build_number: str,
+    nightly: str,
+    artifacts_bucket: str,
+    project_id: str,
+    console_log_threshold: str,
+    file_log_threshold: str,
+    log_file_path: Optional[str],
+    **kwargs,
 ):
     """
     Test a test use case against an XSIAM tenant
@@ -530,6 +537,3 @@ def run_test_use_case(
     logger.success(
         f"Test use case: Passed, took:{duration} seconds",
     )
-
-
-

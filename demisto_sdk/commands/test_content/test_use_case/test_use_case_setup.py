@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import typer
+
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.test_content.tools import tenant_config_cb
 
@@ -119,7 +120,9 @@ def test_use_case(
         help="Path to save log files onto.",
     ),
 ):
-    from demisto_sdk.commands.test_content.test_use_case.test_use_case import run_test_use_case
+    from demisto_sdk.commands.test_content.test_use_case.test_use_case import (
+        run_test_use_case,
+    )
 
     kwargs = locals()
     run_test_use_case(**kwargs)

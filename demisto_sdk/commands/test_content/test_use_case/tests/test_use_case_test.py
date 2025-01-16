@@ -1,12 +1,9 @@
-from pathlib import Path
-
 import pytest
 from junitparser import TestSuite
 from pytest import ExitCode
 
 import demisto_sdk.commands.test_content.test_use_case.test_use_case as test_use_case
 from demisto_sdk.commands.test_content.test_use_case.test_use_case import (
-    get_containing_pack,
     run_test_use_case_pytest,
 )
 

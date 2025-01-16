@@ -483,6 +483,16 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             help="This command generates unit tests automatically from an integration's Python code.",
         )(generate_unit_tests)
 
+    if command_name == "generate-test-playbook" or register_all:
+        from demisto_sdk.commands.generate_test_playbook.generate_test_playbook_setup import (
+            generate_test_playbook,
+        )
+
+        app.command(
+            name="generate-test-playbook",
+            help="This command generates a test playbook from integration/script YAML arguments.",
+        )(generate_test_playbook)
+
     if command_name == "test-use-case" or register_all:
         from demisto_sdk.commands.test_content.test_use_case.test_use_case_setup import (
             test_use_case,

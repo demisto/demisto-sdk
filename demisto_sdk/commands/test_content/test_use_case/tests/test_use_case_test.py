@@ -34,9 +34,7 @@ def test_run_test_use_case_pytest(
     Then: validate the correct params are used when running the pytest method.
     """
     test_result_mocker = mocker.Mock()
-    mocker.patch.object(
-        test_use_case, "get_pack_name", return_value="/path/to/pack"
-    )
+    mocker.patch.object(test_use_case, "get_pack_name", return_value="/path/to/pack")
     mocker.patch.object(test_use_case, "copy_conftest")
     mocker.patch.object(test_use_case, "logger")
     mocker.patch.object(

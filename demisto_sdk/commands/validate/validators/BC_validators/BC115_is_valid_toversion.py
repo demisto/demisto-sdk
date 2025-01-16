@@ -16,7 +16,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[ModelingRule, ParsingRule, CorrelationRule]
 
 
-class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
+class IsValidToversionValidator(BaseValidator[ContentTypes]):
     error_code = "BC115"
     description = (
         "Check that the toversion property is valid."

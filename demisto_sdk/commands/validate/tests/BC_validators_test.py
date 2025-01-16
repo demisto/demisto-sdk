@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
+from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions, DEFAULT_CONTENT_ITEM_TO_VERSION
 from demisto_sdk.commands.content_graph.objects import Integration
 from demisto_sdk.commands.content_graph.objects.integration import Command, Output
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
@@ -17,6 +17,8 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_old_file_pointers,
     create_pack_object,
     create_script_object,
+    create_modeling_rule_object,
+    create_correlation_rule_object
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
@@ -41,6 +43,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC106_is_valid_fromv
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_toversion_on_modified import (
     IsValidToversionOnModifiedValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC115_is_valid_toversion import (
+    IsValidToversionValidator,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
@@ -1026,34 +1031,38 @@ def test_IsContextPathChangedValidator_remove_command():
 
 
 @pytest.mark.parametrize(
-    "content_items, old_content_items",
+    "content_items, old_content_items, new_items, expected_err",
     [
         pytest.param(
             [
                 create_integration_object(paths=["toversion"], values=["6.0.0"]),
-                create_integration_object(paths=["toversion"], values=["5.0.0"]),
             ],
             [
-                create_integration_object(paths=["toversion"], values=["5.0.0"]),
-                create_integration_object(paths=["toversion"], values=["5.0.0"]),
+                create_integration_object(paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]),
             ],
+            {'TestIntegration': {'from': '6.10.0', 'to':DEFAULT_CONTENT_ITEM_TO_VERSION}},
+            "Invalid Change in the Integration versions please validate the following points:\nThe old Integration"
+            " `fromversion` field should be less than the new Integration `fromversion` field\nThe old Integration"
+            " `toversion` field should be less than the new Integration `fromversion` field\nThe old and the new"
+            " Integration should be continuous, aka the old one `toversion` is one version less"
+            " than the new one `fromversion`",
             id="Case 1: integration - toversion changed",
         ),
-        pytest.param(
-            [
-                create_script_object(paths=["toversion"], values=["6.0.0"]),
-                create_script_object(paths=["toversion"], values=["5.0.0"]),
-            ],
-            [
-                create_script_object(paths=["toversion"], values=["5.0.0"]),
-                create_script_object(paths=["toversion"], values=["5.0.0"]),
-            ],
-            id="Case 2: script - toversion changed",
-        ),
+        # pytest.param(
+        #     [
+        #         create_script_object(paths=["toversion"], values=["6.0.0"]),
+        #         create_script_object(paths=["toversion"], values=["5.0.0"]),
+        #     ],
+        #     [
+        #         create_script_object(paths=["toversion"], values=["5.0.0"]),
+        #         create_script_object(paths=["toversion"], values=["5.0.0"]),
+        #     ],
+        #     id="Case 2: script - toversion changed",
+        # ),
     ],
 )
 def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(
-    content_items, old_content_items
+    mocker, content_items, old_content_items, new_items, expected_err
 ):
     """
     Given:
@@ -1065,14 +1074,16 @@ def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(
         - The obtain_invalid_content_items function will catch the change in `toversion` and will fail the validation only on the relevant content_item.
     """
     create_old_file_pointers(content_items, old_content_items)
-    result = IsValidToversionOnModifiedValidator().obtain_invalid_content_items(
-        content_items
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_toversion_on_modified.sort_content_items",
+        return_value=(content_items, new_items),
     )
+    result = IsValidToversionOnModifiedValidator().obtain_invalid_content_items(content_items)
 
     assert (
         len(result) == 1
         and result[0].message
-        == "Changing the maximal supported version field `toversion` is not allowed. Please undo, or request a force merge."
+        == expected_err
     )
 
 

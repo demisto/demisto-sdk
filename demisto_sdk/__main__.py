@@ -495,7 +495,7 @@ def register_commands(_args: list[str] = []):  # noqa: C901
 
     if command_name == "test-use-case" or register_all:
         from demisto_sdk.commands.test_content.test_use_case.test_use_case_setup import (
-            test_use_case,
+            run_test_use_case,
         )
 
         app.command(
@@ -503,7 +503,7 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             hidden=True,
             no_args_is_help=True,
             help="Test Use Cases.",
-        )(test_use_case)
+        )(run_test_use_case)
 
 
 # Register relevant commands to Demisto-SDK app based on command-line arguments.

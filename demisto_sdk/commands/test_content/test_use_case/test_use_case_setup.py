@@ -8,7 +8,7 @@ from demisto_sdk.commands.test_content.tools import tenant_config_cb
 
 
 @logging_setup_decorator
-def test_use_case(
+def run_test_use_case(
     ctx: typer.Context,
     inputs: List[Path] = typer.Argument(
         None,

@@ -525,9 +525,9 @@ def test_summarize_ignorable_and_forcemergeable_errors(
     Then
         - Make sure the error logger was called the correct message.
         - Case 1: The error log should be called with 1 ignorable error, 3 forcemergeable errors and 1 error that must be handled.
-        - Case 1: The error log should be omit the ignorable error section, post 2 forcemergeable errors and 2 error that must be handled.
-        - Case 1: The error log should be called with 2 ignorable errors, 4 forcemergeable errors and no errors that must be handled.
-        - Case 1: The error log should be called with 1 ignorable error, no forcemergeable errors section and 4 error that must be handled.
+        - Case 2: The error log should omit the ignorable error section, post 2 forcemergeable errors and 2 error that must be handled.
+        - Case 3: The error log should be called with 2 ignorable errors, 4 forcemergeable errors and no errors that must be handled.
+        - Case 4: The error log should be called with 1 ignorable error, no forcemergeable errors section and 3 error that must be handled.
     """
     mock = mocker.patch.object(logger, "error")
     validation_results = ResultWriter()

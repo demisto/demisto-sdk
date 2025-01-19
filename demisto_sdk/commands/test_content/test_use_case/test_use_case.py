@@ -51,7 +51,7 @@ def copy_conftest(test_dir):
     copy content's conftest.py file into the use case directory in order to be able to pass new custom
      pytest argument (client_conf)
     """
-    source_conftest =  Path(CONTENT_PATH) / "Tests/scripts/dev_envs/pytest/conftest.py"
+    source_conftest = Path(CONTENT_PATH) / "Tests/scripts/dev_envs/pytest/conftest.py"
     dest_conftest = test_dir / "conftest.py"
 
     shutil.copy(source_conftest, dest_conftest)

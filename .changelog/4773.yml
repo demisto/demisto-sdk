@@ -1,0 +1,4 @@
+changes:
+- description: Added a summary to new validate that tells the user for each validation error whether it's forcemergeable, ignorable, or must be handled.
+  type: feature
+pr_number: 4773

@@ -415,8 +415,8 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
         if path.stem not in {"README", f"{parent}_description"}:
             raise InvalidIntegrationScriptMarkdownFileName
 
-    elif path.suffix == ".txt" and path.stem != "command_examples":
-        # `command example`, `commands examples` and other single/plural, delimiters permutations
+    if ((path.suffix == ".txt" and "command" in path.stem or "example" in path.stem and path.stem != "command_examples")
+            or not path.suffix and path.stem != "command_examples"):
         raise InvalidCommandExampleFile
 
     elif not path.suffix:

@@ -1,0 +1,4 @@
+changes:
+- description: Added support for command_examples paths to the `validate-content-paths` **pre-commit** hook.
+  type: feature
+pr_number: 4775

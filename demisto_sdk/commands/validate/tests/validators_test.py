@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -477,6 +478,47 @@ def test_post_results(
     assert len(errors) == expected_error_call_count
     for code in expected_error_code_in_errors:
         assert code in " ".join({log.message for log in errors})
+
+
+@pytest.mark.parametrize(
+    "failing_error_codes, config_file_content, expected_msg",
+    [
+        (
+            ["BA100", "CR102", "CL101", "TE111"],
+            ConfiguredValidations(
+                ignorable_errors=["BA100"], path_based_section=["CR102"]
+            ),
+            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors doesn't run as part of the nightly flow and therefore can be force merged: BA100, CL101, TE111.\n######################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: CR102.\n######################################################################################################\n</red>",
+        ),
+        (
+            ["BA100", "CR102", "CL101", "TE111"],
+            ConfiguredValidations(path_based_section=["CR102", "BA100"]),
+            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors doesn't run as part of the nightly flow and therefore can be force merged: CL101, TE111.\n#############################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: BA100, CR102.\n#############################################################################################################\n</red>",
+        ),
+        (
+            ["BA100", "CR102", "CL101", "TE111"],
+            ConfiguredValidations(ignorable_errors=["BA100", "TE111"]),
+            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors doesn't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n</red>",
+        ),
+        (
+            ["BA100", "CR102", "CL101", "TE111"],
+            ConfiguredValidations(
+                ignorable_errors=["BA100"],
+                path_based_section=["BA100", "CR102", "CL101", "TE111"],
+            ),
+            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\n####################################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: CR102, CL101, TE111.\n####################################################################################################################\n</red>",
+        ),
+    ],
+)
+def test_summarize_ignorable_and_forcemergeable_errors(
+    mocker, failing_error_codes, config_file_content, expected_msg
+):
+    mock = mocker.patch.object(logger, "error")
+    validation_results = ResultWriter()
+    validation_results.summarize_ignorable_and_forcemergeable_errors(
+        failing_error_codes, config_file_content
+    )
+    assert expected_msg == mock.call_args[0][0]
 
 
 @pytest.mark.parametrize(

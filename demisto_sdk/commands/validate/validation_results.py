@@ -109,9 +109,7 @@ class ResultWriter:
         return exit_code
 
     def summarize_ignorable_and_forcemergeable_errors(
-        self,
-        failing_error_codes: Set[str],
-        config_file_content: ConfiguredValidations
+        self, failing_error_codes: Set[str], config_file_content: ConfiguredValidations
     ):
         """Divide the failing error codes into three groups: forcemergeable, ignorable, and must-be-handled and post this summary at the end of the execution.
 
@@ -135,11 +133,11 @@ class ResultWriter:
                 f"The following errors can be ignored: {', '.join(ignorable_errors)}.\n"
             )
         if forcemergeable_errors:
-            msg += f"The following errors can be force merged: {', '.join(forcemergeable_errors)}.\n"
+            msg += f"The following errors doesn't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
         if must_be_handled_errors:
-            msg += f"################################################################################################{'#####' * len(must_be_handled_errors)}\n"
+            msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
             msg += f"Note that the following errors cannot be ignored or force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"
-            msg += f"################################################################################################{'#####' * len(must_be_handled_errors)}\n"
+            msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
         logger.error(f"<red>{msg}</red>")
 
     def write_results_to_json_file(self):

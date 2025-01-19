@@ -32,7 +32,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import string_to_bool
-
+from _pytest.fixtures import SubRequest
 
 @lru_cache
 def get_client_from_config(
@@ -243,7 +243,7 @@ def get_client_from_server_type(
 # =================== Playbook Flow Tests =================
 
 
-def parse_str_to_dict(input_str):
+def parse_str_to_dict(input_str: str):
     """Internal function to convert a string representing a dictionary into an actual dictionary.
 
     Args:
@@ -257,7 +257,7 @@ def parse_str_to_dict(input_str):
     return dict(pair.split("=") for pair in input_str.split(",") if "=" in pair)
 
 
-def get_client_conf_from_pytest_request(request):
+def get_client_conf_from_pytest_request(request: SubRequest):
     # Manually parse command-line argument
     for arg in request.config.invocation_params.args:
         if isinstance(arg, str) and arg.startswith("--client_conf="):

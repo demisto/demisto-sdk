@@ -25,13 +25,13 @@ def client_conf(request):
 
 
 @pytest.fixture(scope="class")
-def api_client(client_conf):
+def api_client(client_conf: dict):
     if client_conf:  # Running from external pipeline
         client_obj = get_client_from_server_type(**client_conf)
 
     else:  # Running manually using pytest.
         client_obj = get_client_from_server_type()
-    yield client_obj
+    return client_obj
 
 
 class TestExample:
@@ -53,10 +53,14 @@ class TestExample:
         """Test feature one"""
         a = api_client.list_indicators()
 
-        assert a is not None
+        assert a is not None, "list_indicators should not be None"
 
     def test_feature_two(self, api_client: XsiamClient):
-        """Test feature two"""
+        """
+        Given: Describe the given inputs or the given situation prior the use case.
+        When: Describe the use case
+        Then: Describe the desired outcome of the use case.
+        """
         # Test another aspect of your application
         api_client.run_cli_command(
             investigation_id="INCIDENT-1", command="!Set key=test value=A"

@@ -217,16 +217,13 @@ class XsoarClient:
         if status_code == expected_status:
             if response:
                 try:
-                    return json.loads(response)
+                    return response.json()
                 except json.JSONDecodeError:
-                    api_response = (
-                        response.replace("'", '"')
-                        .replace("False", "false")
-                        .replace("True", "true")
-                        .replace("None", "null")
-                    )
-                    return json.loads(api_response)
-            return {}
+                    error = response.text
+                    err_msg = f"Failed to parse json response - with status code {response.status_code}"
+                    err_msg += f"\n{error}" if error else ""
+                    logger.error(err_msg)
+                    response.raise_for_status()
         else:
             error_message = f"Expected status {expected_status}, but got {status_code}. Response: {response}"
             raise Exception(error_message)

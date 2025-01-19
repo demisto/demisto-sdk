@@ -107,8 +107,7 @@ class XsiamClient(XsoarSaasClient):
         )
         try:
             data = response.json()
-        # type: ignore[attr-defined]
-        except requests.exceptions.JSONDecodeError:
+        except requests.exceptions.JSONDecodeError: # type: ignore[attr-defined]
             error = response.text
             err_msg = f"Failed to push using {token_type} - with status code {response.status_code}"
             err_msg += f"\n{error}" if error else ""
@@ -211,7 +210,7 @@ class XsiamClient(XsoarSaasClient):
             self.server_config.base_api_url, "/public_api/v1/alerts/create_alert"
         )
         res = self._xdr_client.post(endpoint, json=alert_payload)
-        alert_data = self._process_response(res.content, res.status_code, 200)
+        alert_data = self._process_response(res, res.status_code, 200)
         return alert_data["reply"]
 
     def get_internal_alert_id(self, alert_external_id: str) -> int:
@@ -239,7 +238,7 @@ class XsiamClient(XsoarSaasClient):
             self.server_config.base_api_url, "/public_api/v1/alerts/update_alerts"
         )
         res = self._xdr_client.post(endpoint, json=alert_payload)
-        alert_data = self._process_response(res.content, res.status_code, 200)
+        alert_data = self._process_response(res, res.status_code, 200)
         return alert_data
 
     def search_alerts(
@@ -267,11 +266,10 @@ class XsiamClient(XsoarSaasClient):
             self.server_config.base_api_url, "/public_api/v1/alerts/get_alerts/"
         )
         res = self._xdr_client.post(endpoint, json=body)
-        return self._process_response(res.content, res.status_code, 200)["reply"]
+        return self._process_response(res, res.status_code, 200)["reply"]
 
     def search_alerts_by_uuid(self, alert_uuids: list = None, filters: list = None):
-        if alert_uuids is None:
-            alert_uuids = []
+        alert_uuids = alert_uuids or []
         alert_ids: list = []
         res = self.search_alerts(filters=filters)
         alerts: list = res.get("alerts")  # type: ignore

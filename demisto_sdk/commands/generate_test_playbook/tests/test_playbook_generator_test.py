@@ -254,7 +254,7 @@ def test_generate_test_playbook_with_command_examples(
     "command_examples, excepted_result",
     [
         (
-            "command_examples",
+            "command_examples.xt",
             {
                 "zoom-create-meeting": {
                     "topic": "Meeting",

@@ -437,7 +437,6 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
     ],
 )
 def test_post_results(
-    mocker,
     only_throw_warnings,
     results,
     expected_exit_code,
@@ -463,7 +462,9 @@ def test_post_results(
     """
     validation_results = ResultWriter()
     validation_results.validation_results = results
-    exit_code = validation_results.post_results(only_throw_warning=only_throw_warnings)
+    exit_code = validation_results.post_results(
+        ConfiguredValidations(warning=only_throw_warnings)
+    )
     assert exit_code == expected_exit_code
 
     log_by_level = map_reduce(caplog.records, lambda log: log.levelno)

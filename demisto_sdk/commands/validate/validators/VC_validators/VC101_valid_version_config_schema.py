@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from packaging.version import Version
+
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -15,7 +17,7 @@ ContentTypes = Pack
 json = JSON_Handler()
 
 
-class ValidVersionConfigFileValidator(BaseValidator[ContentTypes]):
+class ValidVersionConfigSchema(BaseValidator[ContentTypes]):
     error_code = "VC101"
     description = "Verify valid version config schema using permitted fields."
     rationale = "Prevent cases where dictionary fields and values are not relevant or legal to version config"
@@ -30,6 +32,10 @@ class ValidVersionConfigFileValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
+        file_content = {
+            "8.9.0": {"to": "not_a_version"},
+            "8.10": {"from": "1.5.1", "to": "2.0.0"},
+        }
         return [
             ValidationResult(
                 validator=self,
@@ -37,5 +43,19 @@ class ValidVersionConfigFileValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if content_item.version_config and content_item.version_config.file_content
+            # if content_item.version_config and self.is_valid_version_config_schema(content_item.version_config.file_content)
+            if content_item.version_config
+            and self.is_valid_version_config_schema(file_content)
         ]
+
+    def is_valid_version_config_schema(self, file_content) -> bool:
+        for server_key, content_values in file_content.items():
+            try:
+                Version(server_key)
+                for content_key, content_versions in content_values.items():
+                    if content_key not in ["to", "from"]:
+                        return False
+                Version(content_versions)
+            except Exception:
+                return False
+        return True

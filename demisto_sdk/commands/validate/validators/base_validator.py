@@ -222,18 +222,22 @@ class BaseResult(BaseModel):
     validator: BaseValidator
     message: str
     content_object: BaseContent
+    path: Optional[Path] = None
+    
+    @property
+    def rel_path(self):
+        path: Path = self.path if self.path else self.content_object.path
+        if path.is_absolute():
+            path = path.relative_to(CONTENT_PATH)
 
     @property
     def format_readable_message(self):
-        path: Path = self.content_object.path
-        if path.is_absolute():
-            path = path.relative_to(CONTENT_PATH)
-        return f"{str(path)}: [{self.validator.error_code}] - {self.message}"
+        return f"{self.rel_path}: [{self.validator.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):
         return {
-            "file path": str(self.content_object.path.relative_to(CONTENT_PATH)),
+            "file path": str(self.rel_path),
             "error code": self.validator.error_code,
             "message": self.message,
         }
@@ -288,19 +292,15 @@ class InvalidContentItemResult(BaseResult, BaseModel):
     message: str
     content_object: Optional[BaseContent] = None  # type: ignore[assignment]
     error_code: str
-    path: Path
 
     @property
     def format_readable_message(self):
-        path: Path = self.path
-        if path.is_absolute():
-            path = path.relative_to(CONTENT_PATH)
-        return f"{path}: [{self.error_code}] - {self.message}"
+        return f"{self.rel_path}: [{self.error_code}] - {self.message}"
 
     @property
     def format_json_message(self):
         return {
-            "file path": str(self.path.relative_to(CONTENT_PATH)),
+            "file path": str(self.rel_path),
             "error code": self.error_code,
             "message": self.message,
         }

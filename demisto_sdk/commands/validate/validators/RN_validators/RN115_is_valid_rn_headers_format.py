@@ -44,6 +44,7 @@ class IsValidRnHeadersFormatValidator(BaseValidator[ContentTypes]):
                             ", ".join(invalid_headers), content_item.path.parts[-1]
                         ),
                         content_object=content_item,
+                        path=content_item.release_note.file_path
                     )
                 )
         return results

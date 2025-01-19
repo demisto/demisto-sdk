@@ -41,6 +41,7 @@ class IsValidContentTypeHeaderValidator(BaseValidator[ContentTypes]):
                     ", ".join(invalid_headers), content_item.name
                 ),
                 content_object=content_item,
+                path=content_item.release_note.file_path
             )
             for content_item in content_items
             if (

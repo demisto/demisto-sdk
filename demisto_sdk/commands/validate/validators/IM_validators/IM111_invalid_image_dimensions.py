@@ -41,6 +41,7 @@ class InvalidImageDimensionsValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message,
                 content_object=content_item,
+                path=content_item.image.file_path
             )
             for content_item in content_items
             if not is_image_dimensions_valid(content_item)

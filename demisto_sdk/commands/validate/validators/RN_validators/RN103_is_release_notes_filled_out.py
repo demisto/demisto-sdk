@@ -44,6 +44,7 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message,
                 content_object=content_item,
+                path=content_item.release_note.file_path
             )
             for content_item in content_items
             if content_item.release_note.exist

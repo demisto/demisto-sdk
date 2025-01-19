@@ -40,6 +40,7 @@ class IsBCRNExistValidator(BaseValidator[ContentTypes]):
                             validator=self,
                             message=self.error_message.format(json_path),
                             content_object=content_item,
+                            path=content_item.release_note.file_path
                         )
                     )
             else:

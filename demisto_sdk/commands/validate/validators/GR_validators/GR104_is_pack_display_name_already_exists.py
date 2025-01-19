@@ -25,7 +25,6 @@ class IsPackDisplayNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC):
     )
     related_field = ""
     is_auto_fixable = False
-    related_file_type = [RelatedFileType.JSON]
 
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool

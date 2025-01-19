@@ -16,10 +16,12 @@ json = JSON_Handler()
 
 
 class ValidVersionConfigFileValidator(BaseValidator[ContentTypes]):
-    error_code = "VC100"
-    description = "Verify valid json"
-    rationale = "Verify the file is valid to prevent packs showing in non compatible server versions."
-    error_message = "version config file is not a valid json"
+    error_code = "VC101"
+    description = "Verify valid version config schema using permitted fields."
+    rationale = "Prevent cases where dictionary fields and values are not relevant or legal to version config"
+    error_message = (
+        "version config does not adhere to schema, does not use valid keys and values."
+    )
     related_field = "version_config"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]

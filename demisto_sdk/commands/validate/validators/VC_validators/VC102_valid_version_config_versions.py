@@ -15,11 +15,13 @@ ContentTypes = Pack
 json = JSON_Handler()
 
 
-class ValidVersionConfigFileValidator(BaseValidator[ContentTypes]):
-    error_code = "VC100"
-    description = "Verify valid json"
-    rationale = "Verify the file is valid to prevent packs showing in non compatible server versions."
-    error_message = "version config file is not a valid json"
+class ValidVersionConfigVersionsValidator(BaseValidator[ContentTypes]):
+    error_code = "VC102"
+    description = (
+        "Verify content versions are continuos according to platform versions."
+    )
+    rationale = "Prevent situations where platform version has an earlier content version than the previous platform version"
+    error_message = "version config file does not adhere to platform content versions."
     related_field = "version_config"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]

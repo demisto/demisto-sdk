@@ -330,7 +330,8 @@ def create_pack_object(
     playbooks: int = 0,
     name: Optional[str] = None,
     release_note_content: Optional[str] = None,
-    bc_release_note_content: Optional[List[Dict[str, str]]] = None,
+    bc_release_note_content: Optional[dict] = None,
+    version_config: str = "",
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -372,6 +373,11 @@ def create_pack_object(
             pack_path / RELEASE_NOTES_DIR / (str(version).replace(".", "_") + ".json"),
             "w",
         ) as outfile:
+            outfile.write(json_object)
+
+    if version_config:
+        json_object = json.dumps(version_config, indent=4)
+        with open(pack_path / "version_config.json", "w") as outfile:
             outfile.write(json_object)
 
     PackParser.parse_ignored_errors = MagicMock(return_value={})
@@ -883,6 +889,10 @@ def create_old_file_pointers(content_items, old_content_items) -> None:
     """
     for content_item, old_content_item in zip(content_items, old_content_items):
         content_item.old_base_content_object = old_content_item
+
+
+def create_version_config_file():
+    pass
 
 
 def update_keys(dict_obj, paths, values):

@@ -29,7 +29,7 @@ class FirstLevelHeaderMissingValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(content_item.path.parts[-1]),
                 content_object=content_item,
-                path=content_item.release_note.file_path
+                path=content_item.release_note.file_path,
             )
             for content_item in content_items
             if not re.search(r"\s#{4}\s", f"\n{content_item.release_note.file_content}")

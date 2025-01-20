@@ -223,7 +223,7 @@ class BaseResult(BaseModel):
     message: str
     content_object: BaseContent
     path: Optional[Path] = None
-    
+
     @property
     def rel_path(self):
         path: Path = self.path if self.path else self.content_object.path

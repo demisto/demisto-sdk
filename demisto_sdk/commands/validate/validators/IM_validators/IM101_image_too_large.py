@@ -32,7 +32,7 @@ class ImageTooLargeValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(content_item.path),
                 content_object=content_item,
-                path=content_item.image.file_path
+                path=content_item.image.file_path,
             )
             for content_item in content_items
             if content_item.image.exist and not self.is_image_valid(content_item)

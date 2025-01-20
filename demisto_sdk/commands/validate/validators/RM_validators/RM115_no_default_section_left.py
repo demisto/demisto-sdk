@@ -82,7 +82,7 @@ class NoDefaultSectionsLeftReadmeValidator(BaseValidator[ContentTypes]):
                     ", ".join([f'"{section}"' for section in sections])
                 ),
                 content_object=content_item,
-                path=content_item.readme.file_path
+                path=content_item.readme.file_path,
             )
             for content_item in content_items
             if (sections := (self.verify_no_default_sections_left(content_item)))

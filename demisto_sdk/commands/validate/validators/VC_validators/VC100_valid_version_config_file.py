@@ -36,5 +36,6 @@ class ValidVersionConfigFileValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if content_item.version_config.exist
-            and not content_item.version_config.file_content
+            and content_item.version_config.file_content is not None
+            and len(content_item.version_config.file_content) == 0
         ]

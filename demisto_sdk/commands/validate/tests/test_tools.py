@@ -889,10 +889,6 @@ def create_old_file_pointers(content_items, old_content_items) -> None:
         content_item.old_base_content_object = old_content_item
 
 
-def create_version_config_file():
-    pass
-
-
 def update_keys(dict_obj, paths, values):
     if paths and values:
         for path, value in zip(paths, values):

@@ -64,22 +64,27 @@ class ValidVersionConfigVersions(BaseValidator[ContentTypes]):
         return True
 
     def validate_content_version(self, versions) -> bool:
-        for i in range(len(versions) - 1):
-            if "to" and "from" in versions[i].keys():
-                continue
+        MAX_VERSION = "99.99.99"
+        MIN_VERSION = "0.0.0"
+        for i in range(len(versions)):
+            if "to" in versions[i].keys() and "from" in versions[i]:
+                to_version = version.parse(versions[i].get("to", MIN_VERSION))
+                from_version = version.parse(versions[i].get("from", MAX_VERSION))
+                if to_version < from_version:
+                    return False
             elif "to" in versions[i].keys():
                 if not self.validated_platform_versions(
                     [
-                        version.parse(versions[i].get("to")),
-                        version.parse(versions[i + 1].get("from")),
+                        version.parse(versions[i].get("to", MIN_VERSION)),
+                        version.parse(versions[i + 1].get("from", MAX_VERSION)),
                     ]
                 ):
                     return False
             else:
                 if not self.validated_platform_versions(
                     [
-                        version.parse(versions[i - 1].get("to")),
-                        version.parse(versions[i].get("from")),
+                        version.parse(versions[i - 1].get("to", MIN_VERSION)),
+                        version.parse(versions[i].get("from", MAX_VERSION)),
                     ]
                 ):
                     return False

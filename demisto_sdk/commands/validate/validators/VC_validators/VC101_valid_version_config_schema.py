@@ -52,7 +52,7 @@ class ValidVersionConfigSchema(BaseValidator[ContentTypes]):
                 for content_key, content_versions in content_values.items():
                     if content_key not in ["to", "from"]:
                         return False
-                Version(content_versions)
+                    Version(content_versions)
             except Exception:
                 return False
         return True

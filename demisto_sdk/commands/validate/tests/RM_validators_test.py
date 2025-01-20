@@ -246,7 +246,7 @@ def test_is_image_path_validator(content_items, expected_number_of_failures):
     assert all(
         [
             result.message.endswith(
-                "detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
+                "Detected the following images URLs which are not raw links: https://github.com/demisto/content/blob/path/to/image.jpg suggested URL https://github.com/demisto/content/raw/path/to/image.jpg"
             )
             for result in results
         ]
@@ -514,7 +514,7 @@ def test_ImagePathIntegrationValidator_obtain_invalid_content_items_invalid_case
         When
         - Calling the ImagePathIntegrationValidator obtain_invalid_content_items function.
         Then
-        - Make sure that the pack is failing.
+        - Make sure that two different errors are thrown, one for each related file and that the error message is as expected.
     """
     content_items = [
         create_integration_object(
@@ -523,17 +523,20 @@ def test_ImagePathIntegrationValidator_obtain_invalid_content_items_invalid_case
             description_content="valid description ![Example Image](../../content/image.jpg)",
         ),
     ]
-    expected = (
-        " Invalid image path(s) have been detected. Please utilize relative paths instead for the links "
-        "provided below.:\nhttps://www.example.com/images/example_image.jpg\n\nRelative image paths have been"
-        " identified outside the pack's 'doc_files' directory. Please relocate the following images to the"
-        " 'doc_files' directory:\n../../content/image.jpg\n\n Read the following documentation on how to add"
-        " images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images"
+    expected_msgs = (
+        " Invalid image path(s) have been detected. Please utilize relative paths instead for the links provided below.:\nhttps://www.example.com/images/example_image.jpg\n\n Read the following documentation on how to add images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images",
+        "Relative image paths have been identified outside the pack's 'doc_files' directory. Please relocate the following images to the 'doc_files' directory:\n../../content/image.jpg\n\n Read the following documentation on how to add images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images",
     )
-    result = IntegrationRelativeImagePathValidator().obtain_invalid_content_items(
+    results = IntegrationRelativeImagePathValidator().obtain_invalid_content_items(
         content_items
     )
-    assert result[0].message == expected
+    assert len(results) == 2
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
 
 
 def test_ImagePathOnlyReadMeValidator_obtain_invalid_content_items_valid_case():

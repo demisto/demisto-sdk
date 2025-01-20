@@ -40,14 +40,15 @@ class RelativeImagePathValidator(BaseValidator[ContentTypes], ABC):
         for content_item in content_items:
             if invalid_md_files := self.validate_content_items(content_item):
                 for file_path, error_message in invalid_md_files.items():
-                    validation_results.append(
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message.format(error_message),
-                            content_object=content_item,
-                            path=file_path,
+                    if error_message:
+                        validation_results.append(
+                            ValidationResult(
+                                validator=self,
+                                message=self.error_message.format(error_message),
+                                content_object=content_item,
+                                path=file_path,
+                            )
                         )
-                    )
         return validation_results
 
     def validate_content_items(self, content_item):

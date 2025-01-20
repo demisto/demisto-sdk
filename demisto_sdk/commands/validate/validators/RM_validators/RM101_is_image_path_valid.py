@@ -21,9 +21,7 @@ class IsImagePathValidValidator(BaseValidator[ContentTypes]):
     error_code = "RM101"
     description = "Validate images absolute paths, and prints the suggested path if it's not valid."
     rationale = "In official marketplace content, ensures that the images can be used in the upload flow properly."
-    error_message = (
-        "Detected the following images URLs which are not raw links: {params}"
-    )
+    error_message = "Detected the following images URLs which are not raw links: {0}"
     related_field = "readme"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
@@ -35,7 +33,7 @@ class IsImagePathValidValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(filename=invalid_urls),
+                message=self.error_message.format(invalid_urls),
                 content_object=content_item,
                 path=content_item.readme.file_path,
             )

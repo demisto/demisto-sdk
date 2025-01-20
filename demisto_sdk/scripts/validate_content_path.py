@@ -434,7 +434,6 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
             return
         if path.stem == "command_examples":
             raise InvalidCommandExampleFile
-        raise InvalidCommandExampleFile
 
         raise InvalidIntegrationScriptFileName
 

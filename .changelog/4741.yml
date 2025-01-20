@@ -1,4 +1,0 @@
-changes:
-- description: RN111 will now fail when "Updated the docker image..." was added when it should not have been. Added a fix method to this validation.
-  type: feature
-pr_number: 4741

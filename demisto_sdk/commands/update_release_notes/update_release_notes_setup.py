@@ -1,3 +1,4 @@
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
@@ -26,6 +27,13 @@ def validate_version(value: Optional[str]) -> Optional[str]:
     raise typer.Exit(1)
 
 
+class UpdateType(str, Enum):
+    major = "major"
+    minor = "minor"
+    revision = "revision"
+    documentation = "documentation"
+
+
 @logging_setup_decorator
 def update_release_notes(
     ctx: typer.Context,
@@ -35,7 +43,7 @@ def update_release_notes(
         "--input",
         help="The relative path of the content pack. For example Packs/Pack_Name",
     ),
-    update_type: str = typer.Option(
+    update_type: UpdateType = typer.Option(
         None,
         "-u",
         "--update-type",

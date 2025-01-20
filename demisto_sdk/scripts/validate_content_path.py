@@ -68,7 +68,7 @@ ZERO_DEPTH_FILES = frozenset(
 )
 
 DEPTH_ONE_FOLDERS = (
-    set(ContentType.folders()) | set(TESTS_AND_DOC_DIRECTORIES) | {RELEASE_NOTES_DIR}
+        set(ContentType.folders()) | set(TESTS_AND_DOC_DIRECTORIES) | {RELEASE_NOTES_DIR}
 ).difference(
     (
         "Packs",
@@ -258,7 +258,7 @@ def _validate(path: Path) -> None:
         raise PathOutsidePacks
 
     if "Tests" in path.parts and (path.parts).index("Tests") < (path.parts).index(
-        PACKS_FOLDER
+            PACKS_FOLDER
     ):  # if Tests comes before Packs, it's not a real content path
         raise PathOutsidePacks
 
@@ -292,7 +292,7 @@ def _validate(path: Path) -> None:
         raise InvalidDepthOneFolder
 
     if " " in path.stem and set(parts_after_packs).isdisjoint(
-        DIRS_ALLOWING_SPACE_IN_FILENAMES
+            DIRS_ALLOWING_SPACE_IN_FILENAMES
     ):
         raise SpacesInFileName
 
@@ -309,29 +309,29 @@ def _validate(path: Path) -> None:
             raise InvalidDepthOneFile
 
         if first_level_folder in {LAYOUTS_DIR, CASE_LAYOUTS_DIR} and not (
-            path.stem.startswith(("layout-", "layoutscontainer-"))
-            and path.suffix == ".json"
+                path.stem.startswith(("layout-", "layoutscontainer-"))
+                and path.suffix == ".json"
         ):
             raise InvalidLayoutFileName
 
         if first_level_folder == CLASSIFIERS_DIR and not (
-            path.suffix == ".json"
-            and (path.stem.startswith("classifier-") or path.stem.startswith("mapper-"))
+                path.suffix == ".json"
+                and (path.stem.startswith("classifier-") or path.stem.startswith("mapper-"))
         ):
             raise InvalidClassifier
 
         if xsiam_constraints := XSIAM_DEPTH_1_CHECKS.get(
-            first_level_folder
+                first_level_folder
         ):  # items whose name must start with `{pack_folder}_`
             if not (
-                path.stem.startswith(f"{pack_folder_name}_")
-                and path.suffix in xsiam_constraints.allowed_suffixes
+                    path.stem.startswith(f"{pack_folder_name}_")
+                    and path.suffix in xsiam_constraints.allowed_suffixes
             ):
                 raise xsiam_constraints.exception
 
         if (
-            first_level_folder == DOC_FILES_DIR
-            and path.suffix in SUPPORTED_IMAGE_FORMATS
+                first_level_folder == DOC_FILES_DIR
+                and path.suffix in SUPPORTED_IMAGE_FORMATS
         ):
             _validate_image_file_name(path.stem)
 
@@ -342,22 +342,22 @@ def _validate(path: Path) -> None:
         }:
             _validate_integration_script_file(path, parts_after_packs)
         elif first_level_folder == ContentType.XDRC_TEMPLATE.as_folder and not (
-            path.stem == path.parent.name and path.suffix in {".json", ".yml"}
+                path.stem == path.parent.name and path.suffix in {".json", ".yml"}
         ):
             raise InvalidXDRCTemplatesFileName
 
         elif first_level_folder == ContentType.MODELING_RULE.as_folder and not (
-            (path.stem == path.parent.name and path.suffix in {".yml", ".xif"})
-            or (
-                path.stem.startswith(path.parent.name)
-                and path.stem.endswith(("_schema", "_testdata"))
-                and path.suffix == ".json"
-            )
+                (path.stem == path.parent.name and path.suffix in {".yml", ".xif"})
+                or (
+                        path.stem.startswith(path.parent.name)
+                        and path.stem.endswith(("_schema", "_testdata"))
+                        and path.suffix == ".json"
+                )
         ):
             raise InvalidModelingRuleFileName
 
         elif first_level_folder == PARSING_RULES_DIR and not (
-            path.stem == path.parent.name and path.suffix in {".yml", ".xif"}
+                path.stem == path.parent.name and path.suffix in {".yml", ".xif"}
         ):
             raise InvalidXSIAMParsingRuleFileName
 
@@ -415,28 +415,36 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
         if path.stem not in {"README", f"{parent}_description"}:
             raise InvalidIntegrationScriptMarkdownFileName
 
-    if ((path.suffix == ".txt" and "command" in path.stem or "example" in path.stem and path.stem != "command_examples")
-            or not path.suffix and path.stem != "command_examples"):
+    elif (
+            path.suffix == ".txt"
+            and ("command" in path.stem
+                 or "example" in path.stem)
+            and path.stem != "command_examples"
+    ):
         raise InvalidCommandExampleFile
 
     elif not path.suffix:
-        if path.stem in {".pylintrc"}:
+        if path.stem == ".pylintrc":
             return
         if (
-            path.stem == "LICENSE"
-            and parts_after_packs[0] == "FireEye-Detection-on-Demand"
+                path.stem == "LICENSE"
+                and parts_after_packs[0] == "FireEye-Detection-on-Demand"
         ):
             # Decided to exempt this pack only from using LICENSE files.
             return
+        if path.stem == "command_examples":
+            raise InvalidCommandExampleFile
+        raise InvalidCommandExampleFile
+
         raise InvalidIntegrationScriptFileName
 
     elif (
-        path.suffix
-        not in {  # remaining supported suffixes in integration/script folders
-            ".png",
-            ".svg",
-            ".txt",
-        }
+            path.suffix
+            not in {  # remaining supported suffixes in integration/script folders
+                ".png",
+                ".svg",
+                ".txt",
+            }
     ):
         raise InvalidIntegrationScriptFileType
 
@@ -444,28 +452,28 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
 def _exempt_unified_files(path: Path, first_level_folder: str):
     """Raises PathIsUnified when necessary. Only use from _validate"""
     for prefix, folder in (
-        ("script", ContentType.SCRIPT),
-        ("integration", ContentType.INTEGRATION),
+            ("script", ContentType.SCRIPT),
+            ("integration", ContentType.INTEGRATION),
     ):
         if (
-            first_level_folder == folder.as_folder
-            and path.name.startswith(f"{prefix}-")
-            and (path.suffix in {".md", ".yml"})  # these fail validate-all
+                first_level_folder == folder.as_folder
+                and path.name.startswith(f"{prefix}-")
+                and (path.suffix in {".md", ".yml"})  # these fail validate-all
         ):
             # old, unified format, e.g. Packs/myPack/Scripts/script-foo.yml
             raise PathIsUnified
 
 
 def validate(
-    path: Path,
-    github_action: bool,
-    skip_depth_one_file: bool = False,
-    skip_depth_one_folder: bool = False,
-    skip_depth_zero_file: bool = False,
-    skip_integration_script_file_name: bool = False,
-    skip_integration_script_file_type: bool = False,
-    skip_markdown: bool = False,
-    skip_suffix: bool = False,
+        path: Path,
+        github_action: bool,
+        skip_depth_one_file: bool = False,
+        skip_depth_one_folder: bool = False,
+        skip_depth_zero_file: bool = False,
+        skip_integration_script_file_name: bool = False,
+        skip_integration_script_file_type: bool = False,
+        skip_markdown: bool = False,
+        skip_suffix: bool = False,
 ) -> bool:
     """Validate a path, returning a boolean answer after handling skip/error exceptions"""
     try:
@@ -507,34 +515,34 @@ def validate(
 
 @app.command(name="validate", context_settings={"help_option_names": ["-h", "--help"]})
 def validate_paths(
-    paths: Annotated[
-        List[Path], typer.Argument(exists=True, file_okay=True, dir_okay=True)
-    ],
-    github_action: Annotated[bool, typer.Option(envvar="GITHUB_ACTIONS")] = False,
-    skip_depth_one_file: bool = False,
-    skip_depth_one_folder: bool = False,
-    skip_depth_zero_file: bool = False,
-    skip_integration_script_file_name: bool = False,
-    skip_integration_script_file_type: bool = False,
-    skip_markdown: bool = False,
-    skip_suffix: bool = False,
+        paths: Annotated[
+            List[Path], typer.Argument(exists=True, file_okay=True, dir_okay=True)
+        ],
+        github_action: Annotated[bool, typer.Option(envvar="GITHUB_ACTIONS")] = False,
+        skip_depth_one_file: bool = False,
+        skip_depth_one_folder: bool = False,
+        skip_depth_zero_file: bool = False,
+        skip_integration_script_file_name: bool = False,
+        skip_integration_script_file_type: bool = False,
+        skip_markdown: bool = False,
+        skip_suffix: bool = False,
 ) -> None:
     """Validate given paths"""
     if not all(
-        (
-            validate(
-                path,
-                github_action,
-                skip_depth_one_file=skip_depth_one_file,
-                skip_depth_one_folder=skip_depth_one_folder,
-                skip_depth_zero_file=skip_depth_zero_file,
-                skip_integration_script_file_name=skip_integration_script_file_name,
-                skip_integration_script_file_type=skip_integration_script_file_type,
-                skip_markdown=skip_markdown,
-                skip_suffix=skip_suffix,
+            (
+                    validate(
+                        path,
+                        github_action,
+                        skip_depth_one_file=skip_depth_one_file,
+                        skip_depth_one_folder=skip_depth_one_folder,
+                        skip_depth_zero_file=skip_depth_zero_file,
+                        skip_integration_script_file_name=skip_integration_script_file_name,
+                        skip_integration_script_file_type=skip_integration_script_file_type,
+                        skip_markdown=skip_markdown,
+                        skip_suffix=skip_suffix,
+                    )
+                    for path in paths
             )
-            for path in paths
-        )
     ):
         raise typer.Exit(1)
 
@@ -543,14 +551,14 @@ def validate_paths(
     name="validate-all", context_settings={"help_option_names": ["-h", "--help"]}
 )
 def validate_all(
-    content_path: Annotated[Path, typer.Argument(dir_okay=True, file_okay=False)],
-    skip_depth_one_file: bool = False,
-    skip_depth_one_folder: bool = False,
-    skip_depth_zero_file: bool = False,
-    skip_integration_script_file_name: bool = False,
-    skip_integration_script_file_type: bool = False,
-    skip_markdown: bool = False,
-    skip_suffix: bool = False,
+        content_path: Annotated[Path, typer.Argument(dir_okay=True, file_okay=False)],
+        skip_depth_one_file: bool = False,
+        skip_depth_one_folder: bool = False,
+        skip_depth_zero_file: bool = False,
+        skip_integration_script_file_name: bool = False,
+        skip_integration_script_file_type: bool = False,
+        skip_markdown: bool = False,
+        skip_suffix: bool = False,
 ):
     """
     Used in the SDK CI for testing compatibility with content.
@@ -563,17 +571,17 @@ def validate_all(
             path
             for path in tqdm(paths)
             if path.is_file()
-            and not validate(
-                path,
-                github_action=False,
-                skip_depth_one_file=skip_depth_one_file,
-                skip_depth_one_folder=skip_depth_one_folder,
-                skip_depth_zero_file=skip_depth_zero_file,
-                skip_integration_script_file_name=skip_integration_script_file_name,
-                skip_integration_script_file_type=skip_integration_script_file_type,
-                skip_markdown=skip_markdown,
-                skip_suffix=skip_suffix,
-            )
+               and not validate(
+            path,
+            github_action=False,
+            skip_depth_one_file=skip_depth_one_file,
+            skip_depth_one_folder=skip_depth_one_folder,
+            skip_depth_zero_file=skip_depth_zero_file,
+            skip_integration_script_file_name=skip_integration_script_file_name,
+            skip_integration_script_file_type=skip_integration_script_file_type,
+            skip_markdown=skip_markdown,
+            skip_suffix=skip_suffix,
+        )
         ]
     )
     valid = (total := len(paths)) - invalid

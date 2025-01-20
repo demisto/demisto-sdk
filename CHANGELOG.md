@@ -6,7 +6,7 @@
 * Added a summary to the ***validate*** command that informs the user for each validation error whether it’s forcemergeable, ignorable, or must be handled. [#4773](https://github.com/demisto/demisto-sdk/pull/4773)
 
 ### Fix
-* Fixed an issue where some demisto-sdk command exception stack-traces were excessively long. [#4776 (https://github.com/demisto/demisto-sdk/pull/4776)
+* Fixed an issue where some demisto-sdk command exception stack-traces were excessively long. [#4776](https://github.com/demisto/demisto-sdk/pull/4776)
 
 
 ## 1.33.5 (2025-01-14)

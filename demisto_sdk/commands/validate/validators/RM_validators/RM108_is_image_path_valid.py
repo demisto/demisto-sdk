@@ -122,7 +122,7 @@ class RelativeImagePathValidator(BaseValidator[ContentTypes], ABC):
         invalid_links = [
             rel_img
             for rel_img in relative_images
-            if not re.search(DOC_FILE_IMAGE_REGEX, rel_img)
+            if not re.match(DOC_FILE_IMAGE_REGEX, rel_img)
         ]
         if invalid_links:
             return (

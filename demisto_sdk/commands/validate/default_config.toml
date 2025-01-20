@@ -17,7 +17,7 @@ ignorable_errors = [
 ]
 
 [Custom_Categories]
-select = ["DS108"]
+select = ["RM108"]
 warning = []
 
 [path_based_validations]

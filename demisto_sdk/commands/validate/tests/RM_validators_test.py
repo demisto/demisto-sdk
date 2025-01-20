@@ -1135,15 +1135,15 @@ def test_ImagePathIntegrationValidator_content_assets():
     Given
     content_items.
     - Pack with:
-        1. invalid readme that contains absolute path. For example:
+        1. An invalid readme contains absolute path. For example:
             - https://www.example.com/content-assets/example_image.jpg
-        2. invalid description contains relative path that saved not under doc_files. For example:
+         2. An invalid readme contains a relative path not saved under doc_files. For example:
             - img_docs/58381182-d8408200-7fc2-11e9-8726-8056cab1feea.png
-        3. invalid description contains absolute path of gif not under content-assets. For example:
+        3. An invalid readme contains absolute gif path not under content-assets. For example:
             - https://www.example.com/example_image.gif
-        4. valid description contains absolute path of gif under content-assets. For example:
+        4. A valid readme contains absolute gif path under content-assets. For example:
             - https://www.example.com/example_image.gif
-        4. valid description contains relative path that saved under doc_files. For example:. For example:
+        4. A valid readme contains relative path saved under doc_files. For example:
             - ../../doc_files/58381182-d8408200-7fc2-11e9-8726-8056cab1feea.png
 
     When

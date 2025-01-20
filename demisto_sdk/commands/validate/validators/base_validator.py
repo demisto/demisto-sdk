@@ -229,6 +229,7 @@ class BaseResult(BaseModel):
         path: Path = self.path if self.path else self.content_object.path
         if path.is_absolute():
             path = path.relative_to(CONTENT_PATH)
+        return path
 
     @property
     def format_readable_message(self):

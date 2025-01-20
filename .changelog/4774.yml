@@ -3,4 +3,6 @@ changes:
   type: fix
 - description: Fixed an issue where some validations would fail with the wrong file path in the error message.
   type: fix
+- description: Removed DS106 "is valid description name" since it was duplicated by DS104 "no description file" from the new validate.
+  type: Breaking
 pr_number: 4774

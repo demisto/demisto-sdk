@@ -35,7 +35,9 @@ class IsPyFileContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
                     validation_results.append(
                         ValidationResult(
                             validator=self,
-                            message=self.error_message.format(', '.join(malformed_lines)),
+                            message=self.error_message.format(
+                                ", ".join(malformed_lines)
+                            ),
                             content_object=content_item,
                             path=content_item.code_file.file_path
                             if malformed_file == "code file"

@@ -124,12 +124,12 @@ class Initiator:
 
     TEMPLATE_INTEGRATION_NAME = "%%TEMPLATE_NAME%%"
     TEMPLATE_INTEGRATION_FILES = {
+        "README.md",
         f"{TEMPLATE_INTEGRATION_NAME}.py",
         f"{TEMPLATE_INTEGRATION_NAME}.yml",
         f"{TEMPLATE_INTEGRATION_NAME}_description.md",
         f"{TEMPLATE_INTEGRATION_NAME}_image.png",
         f"{TEMPLATE_INTEGRATION_NAME}_test.py",
-        "README.md",
         "command_examples.txt",
     }
 

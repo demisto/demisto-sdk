@@ -17,10 +17,6 @@ ContentTypes = Pack
 json = JSON_Handler()
 
 
-# def natural_keys(text):
-#     return [int(c) for c in re.split(r'(\d+)', text)]
-
-
 def version_key(version):
     return tuple(map(int, version.split(".")))
 
@@ -40,25 +36,14 @@ class ValidVersionConfigVersions(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        file_content = {
-            "8.9": {"to": "1.5.0"},
-            "8.10": {"from": "1.5.1", "to": "2.0.0"},
-            "9.0": {"from": "2.0.1"},
-        }
-        for content_item in content_items:
-            if content_item.version_config:
-                if not self.is_continuous_version(file_content):
-                    return [
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message,
-                            content_object=content_item,
-                        )
-                    ]
-        return []
-        # for content_item in content_items
-        # if content_item.version_config and content_item.version_config.file_content
-        # ]
+        return [
+            ValidationResult(
+                validator=self, message=self.error_message, content_object=content_item
+            )
+            for content_item in content_items
+            if content_item.version_config.exist
+            and not self.is_continuous_version(content_item.version_config.file_content)
+        ]
 
     def is_continuous_version(self, file_content) -> bool:
         platform_versions = []
@@ -81,8 +66,6 @@ class ValidVersionConfigVersions(BaseValidator[ContentTypes]):
     def validate_content_version(self, versions) -> bool:
         for i in range(len(versions) - 1):
             if "to" and "from" in versions[i].keys():
-                # if not self.validated_platform_versions([version.parse(versions[i].get('to')), version.parse(versions[i].get('from'))]):
-                #     return False
                 continue
             elif "to" in versions[i].keys():
                 if not self.validated_platform_versions(

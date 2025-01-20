@@ -11,12 +11,11 @@ from demisto_sdk.commands.validate.validators.VC_validators.VC102_valid_version_
     ValidVersionConfigVersions,
 )
 
-TEMP_MY_DICT = '{"8.9": {"to": "1.5.0"}, "8.10": {"from": "1.5.1"}}'
+TEMP_MY_DICT = {"8.9": {"to": "1.5.0"}, "8.10": {"from": "1.5.1"}}
 
 
 def test_isValidVersionConfigFile():
     pack = [create_pack_object(version_config=TEMP_MY_DICT)]
-    pack[0].version_config.file_content = TEMP_MY_DICT
     invalid_content_items = (
         ValidVersionConfigFileValidator().obtain_invalid_content_items(pack)
     )

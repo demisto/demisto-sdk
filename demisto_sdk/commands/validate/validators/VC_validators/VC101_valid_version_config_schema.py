@@ -32,10 +32,6 @@ class ValidVersionConfigSchema(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        file_content = {
-            "8.9.0": {"to": "not_a_version"},
-            "8.10": {"from": "1.5.1", "to": "2.0.0"},
-        }
         return [
             ValidationResult(
                 validator=self,
@@ -43,9 +39,10 @@ class ValidVersionConfigSchema(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            # if content_item.version_config and self.is_valid_version_config_schema(content_item.version_config.file_content)
-            if content_item.version_config
-            and self.is_valid_version_config_schema(file_content)
+            if content_item.version_config.exist
+            and not self.is_valid_version_config_schema(
+                content_item.version_config.file_content
+            )
         ]
 
     def is_valid_version_config_schema(self, file_content) -> bool:

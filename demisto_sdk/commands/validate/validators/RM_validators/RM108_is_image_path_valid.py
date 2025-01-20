@@ -36,15 +36,18 @@ class RelativeImagePathValidator(BaseValidator[ContentTypes], ABC):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        return [
-            ValidationResult(
-                validator=self,
-                message=self.error_message.format(error_message),
-                content_object=content_item,
-            )
-            for content_item in content_items
-            if (error_message := self.validate_content_items(content_item))
-        ]
+        validation_results: List[ValidationResult] = []
+        for content_item in content_items:
+            if invalid_md_files := self.validate_content_items(content_item):
+                for file_path, error_message in invalid_md_files.items():
+                    validation_results.append(
+                        ValidationResult(
+                            validator=self,
+                            message=self.error_message.format(error_message),
+                            content_object=content_item,
+                        )
+                    )
+        return validation_results
 
     def validate_content_items(self, content_item):
         """Check if the content items are valid by passing verify_absolute_images_not_exist and verify_relative_saved_in_doc_files.
@@ -53,7 +56,7 @@ class RelativeImagePathValidator(BaseValidator[ContentTypes], ABC):
             content_item {ContentTypes} -- The content item to check.
 
         Returns:
-            str -- The error message if the content item isn't valid.
+            dict -- The error message for each related file mapped by related file path.
         """
         raise NotImplementedError("Subclasses must implement this method.")
 

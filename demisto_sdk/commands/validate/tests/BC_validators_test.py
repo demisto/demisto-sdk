@@ -1033,32 +1033,58 @@ def test_IsContextPathChangedValidator_remove_command():
 @pytest.mark.parametrize(
     "content_items, old_content_items, new_items, expected_err",
     [
-        pytest.param(
-            [
-                create_integration_object(paths=["toversion"], values=["6.0.0"]),
-            ],
-            [
-                create_integration_object(paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]),
-            ],
-            {'TestIntegration': {'from': '6.10.0', 'to':DEFAULT_CONTENT_ITEM_TO_VERSION}},
-            "Invalid Change in the Integration versions please validate the following points:\nThe old Integration"
-            " `fromversion` field should be less than the new Integration `fromversion` field\nThe old Integration"
-            " `toversion` field should be less than the new Integration `fromversion` field\nThe old and the new"
-            " Integration should be continuous, aka the old one `toversion` is one version less"
-            " than the new one `fromversion`",
-            id="Case 1: integration - toversion changed",
-        ),
         # pytest.param(
         #     [
-        #         create_script_object(paths=["toversion"], values=["6.0.0"]),
-        #         create_script_object(paths=["toversion"], values=["5.0.0"]),
+        #         create_integration_object(paths=["toversion"], values=["6.0.0"]),
         #     ],
         #     [
-        #         create_script_object(paths=["toversion"], values=["5.0.0"]),
-        #         create_script_object(paths=["toversion"], values=["5.0.0"]),
+        #         create_integration_object(paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]),
         #     ],
-        #     id="Case 2: script - toversion changed",
+        #     {'TestIntegration': {'from': '6.10.0', 'to':DEFAULT_CONTENT_ITEM_TO_VERSION}},
+        #     "Invalid Change in the Integration versions please validate the following points:\nThe old Integration"
+        #     " `fromversion` field should be less than the new Integration `fromversion` field\nThe old Integration"
+        #     " `toversion` field should be less than the new Integration `fromversion` field\nThe old and the new"
+        #     " Integration should be continuous, aka the old one `toversion` is one version less"
+        #     " than the new one `fromversion`",
+        #     id="Case 1: integration - toversion changed to 6.0.0 and the new fromversion is 6.10.0 which are more than one release apart",
         # ),
+        # pytest.param(
+        #     [
+        #         create_modeling_rule_object(paths=["toversion"], values=["6.0.0"]),
+        #     ],
+        #     [
+        #         create_modeling_rule_object(paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]),
+        #     ],
+        #     {'duo_modeling_rule': {'from': '6.0.0', 'to': DEFAULT_CONTENT_ITEM_TO_VERSION}},
+        #     "Invalid Change in the ModelingRule versions please validate the following points:\nThe old ModelingRule"
+        #     " `fromversion` field should be less than the new ModelingRule `fromversion` field\nThe old ModelingRule"
+        #     " `toversion` field should be less than the new ModelingRule `fromversion` field\nThe old and the new"
+        #     " ModelingRule should be continuous, aka the old one `toversion` is one version less"
+        #     " than the new one `fromversion`",
+        #     id="Case 2: Modeling Rule - toversion changed to 6.0.0 and the new fromversion is 6.0.0, two items with the same id ,cannot exist in the same version",
+        # ),
+        # pytest.param(
+        #     [
+        #         create_modeling_rule_object(paths=["toversion"], values=["6.9.0"]),
+        #     ],
+        #     [
+        #         create_modeling_rule_object(paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]),
+        #     ],
+        #     {},
+        #     "Changing the maximal supported version field `toversion` is not allowed without adding a new content item to replace it.",
+        #     id="Case 2: Modeling Rule - toversion changed to 6.9.0 and no new item to replace it was found",
+        # ),
+        pytest.param(
+            [
+                create_modeling_rule_object(paths=["toversion"], values=["8.9.0"]),
+            ],
+            [
+                create_modeling_rule_object(paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]),
+            ],
+            {'duo_modeling_rule': {'from': '8.10.0', 'to': DEFAULT_CONTENT_ITEM_TO_VERSION}},
+            None,
+            id="Case 2: Modeling Rule - toversion changed to 6.9.0 and the new fromversion is 6.10.0 which is a valid case",
+        )
     ],
 )
 def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(

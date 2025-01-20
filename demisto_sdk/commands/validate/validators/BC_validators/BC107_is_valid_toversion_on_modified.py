@@ -24,7 +24,7 @@ class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
         GitStatuses.MODIFIED,
         GitStatuses.RENAMED,
         GitStatuses.ADDED,
-    ]  # todo: do we need renamed?
+    ]
     valid_cases = (
         "The old {0} `fromversion` field should be less than the new {0} `fromversion` field\n"
         "The old {0} `toversion` field should be less than the new {0} `fromversion` field\n"

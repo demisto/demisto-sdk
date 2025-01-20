@@ -77,20 +77,24 @@ class RelativeImagePathValidator(BaseValidator[ContentTypes], ABC):
             re.IGNORECASE | re.MULTILINE,
         )
         if absolute_links:
-            # Extract the actual link from the found absolute links,
-            absolute_links = [
-                # extracts the URL from the matched link tuple, choosing between absolute_link[1] or absolute_link[2]
-                # based on whether the link matches the URL or HTML pattern.
-                absolute_link[1] if absolute_link[0] else absolute_link[2]
-                for absolute_link in absolute_links
-            ]
+            # Extract and filter links in a single pass
+            absolute_links_without_assets = []
 
-            return (
-                " Invalid image path(s) have been detected."
-                " Please utilize relative paths instead for the links provided below.:\n"
-                + "\n".join(absolute_links)
-                + "\n\n"
-            )
+            for absolute_link in absolute_links:
+                # Choose the appropriate link
+                link = absolute_link[1] if absolute_link[0] else absolute_link[2]
+
+                # Skip links that contain "content-assets" and end with ".gif"
+                if link and not ("content-assets" in link and link.endswith(".gif")):
+                    absolute_links_without_assets.append(link)
+
+            if absolute_links_without_assets:
+                return (
+                    " Invalid image path(s) have been detected."
+                    " Please utilize relative paths instead for the links provided below:\n"
+                    + "\n".join(absolute_links_without_assets)
+                    + "\n\n"
+                )
         return ""
 
     def verify_relative_saved_in_doc_files(self, content_item) -> str:
@@ -120,7 +124,7 @@ class RelativeImagePathValidator(BaseValidator[ContentTypes], ABC):
         invalid_links = [
             rel_img
             for rel_img in relative_images
-            if not re.match(DOC_FILE_IMAGE_REGEX, rel_img)
+            if not re.search(DOC_FILE_IMAGE_REGEX, rel_img)
         ]
         if invalid_links:
             return (

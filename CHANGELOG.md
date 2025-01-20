@@ -1,4 +1,14 @@
 # Changelog
+## 1.33.6 (2025-01-20)
+### Feature
+* Updated the ***update-release-notes*** command to handle changes in scripts and integration (using the objects under `content_graph`). [#4562](https://github.com/demisto/demisto-sdk/pull/4562)
+* Updated the *RN103* validation to validate the new fill in templates- "%%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%", "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%", "%%UPDATE_CONTENT_ITEM_NAME%%", "%%UPDATE_CONTENT_ITEM_TYPE%%". [#4562](https://github.com/demisto/demisto-sdk/pull/4562)
+* Added a summary to new validate that tells the user for each validation error whether it's forcemergeable, ignorable, or must be handled. [#4773](https://github.com/demisto/demisto-sdk/pull/4773)
+
+### Fix
+* Pretty exceptions were disabled because they were sometimes too long. [#4776](https://github.com/demisto/demisto-sdk/pull/4776)
+
+
 ## 1.33.5 (2025-01-14)
 ### Feature
 * Modified the ***pre-commit*** command tests collections flow to collect all tests files in the same directory as a changed script for improved robustness. [#4761](https://github.com/demisto/demisto-sdk/pull/4761)

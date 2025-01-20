@@ -45,6 +45,7 @@ class RelativeImagePathValidator(BaseValidator[ContentTypes], ABC):
                             validator=self,
                             message=self.error_message.format(error_message),
                             content_object=content_item,
+                            path=file_path,
                         )
                     )
         return validation_results

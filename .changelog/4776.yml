@@ -1,0 +1,4 @@
+changes:
+- description: Pretty exceptions were disabled because they were sometimes too long.
+  type: fix
+pr_number: 4776

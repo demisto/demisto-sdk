@@ -524,7 +524,7 @@ def test_ImagePathIntegrationValidator_obtain_invalid_content_items_invalid_case
         ),
     ]
     expected_msgs = (
-        " Invalid image path(s) have been detected. Please utilize relative paths instead for the links provided below.:\nhttps://www.example.com/images/example_image.jpg\n\n Read the following documentation on how to add images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images",
+        ' Invalid image path(s) have been detected. Please utilize relative paths instead for the links provided below:\nhttps://www.example.com/images/example_image.jpg\n\n Read the following documentation on how to add images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images',
         "Relative image paths have been identified outside the pack's 'doc_files' directory. Please relocate the following images to the 'doc_files' directory:\n../../content/image.jpg\n\n Read the following documentation on how to add images to pack markdown files:\n https://xsoar.pan.dev/docs/integrations/integration-docs#images",
     )
     results = IntegrationRelativeImagePathValidator().obtain_invalid_content_items(content_items)

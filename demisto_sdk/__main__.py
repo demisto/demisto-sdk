@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.tools import (
     is_sdk_defined_working_offline,
 )
 
-app = typer.Typer()
+app = typer.Typer(pretty_exceptions_enable=False)
 
 
 @logging_setup_decorator
@@ -488,6 +488,16 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             name="generate-unit-tests",
             help="This command generates unit tests automatically from an integration's Python code.",
         )(generate_unit_tests)
+
+    if command_name == "generate-test-playbook" or register_all:
+        from demisto_sdk.commands.generate_test_playbook.generate_test_playbook_setup import (
+            generate_test_playbook,
+        )
+
+        app.command(
+            name="generate-test-playbook",
+            help="This command generates a test playbook from integration/script YAML arguments.",
+        )(generate_test_playbook)
 
 
 # Register relevant commands to Demisto-SDK app based on command-line arguments.

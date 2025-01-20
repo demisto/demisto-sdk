@@ -3,7 +3,11 @@ from typing import List
 
 import pytest
 
-from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions, DEFAULT_CONTENT_ITEM_TO_VERSION
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_TO_VERSION,
+    GitStatuses,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.content_graph.objects import Integration
 from demisto_sdk.commands.content_graph.objects.integration import Command, Output
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
@@ -14,11 +18,10 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_incident_type_object,
     create_incoming_mapper_object,
     create_integration_object,
+    create_modeling_rule_object,
     create_old_file_pointers,
     create_pack_object,
     create_script_object,
-    create_modeling_rule_object,
-    create_correlation_rule_object
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
     BreakingBackwardsSubtypeValidator,
@@ -43,9 +46,6 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC106_is_valid_fromv
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_toversion_on_modified import (
     IsValidToversionOnModifiedValidator,
-)
-from demisto_sdk.commands.validate.validators.BC_validators.BC115_is_valid_toversion import (
-    IsValidToversionValidator,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC108_was_marketplace_modified import (
     WasMarketplaceModifiedValidator,
@@ -1038,14 +1038,23 @@ def test_IsContextPathChangedValidator_remove_command():
                 create_integration_object(paths=["toversion"], values=["6.0.0"]),
             ],
             [
-                create_integration_object(paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]),
+                create_integration_object(
+                    paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]
+                ),
             ],
-            {'TestIntegration': {'from': '6.10.0', 'to':DEFAULT_CONTENT_ITEM_TO_VERSION}},
-            ["Invalid Change in the Integration versions please validate the following points:\nThe old Integration"
-            " `fromversion` field should be less than the new Integration `fromversion` field\nThe old Integration"
-            " `toversion` field should be less than the new Integration `fromversion` field\nThe old and the new"
-            " Integration should be continuous, aka the old one `toversion` is one version less"
-            " than the new one `fromversion`"],
+            {
+                "TestIntegration": {
+                    "from": "6.10.0",
+                    "to": DEFAULT_CONTENT_ITEM_TO_VERSION,
+                }
+            },
+            [
+                "Invalid Change in the Integration versions please validate the following points:\nThe old Integration"
+                " `fromversion` field should be less than the new Integration `fromversion` field\nThe old Integration"
+                " `toversion` field should be less than the new Integration `fromversion` field\nThe old and the new"
+                " Integration should be continuous, aka the old one `toversion` is one version less"
+                " than the new one `fromversion`"
+            ],
             id="Case 1: integration - toversion changed to 6.0.0 and the new fromversion is 6.10.0 which are more than one release apart",
         ),
         pytest.param(
@@ -1053,14 +1062,23 @@ def test_IsContextPathChangedValidator_remove_command():
                 create_modeling_rule_object(paths=["toversion"], values=["6.0.0"]),
             ],
             [
-                create_modeling_rule_object(paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]),
+                create_modeling_rule_object(
+                    paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]
+                ),
             ],
-            {'duo_modeling_rule': {'from': '6.0.0', 'to': DEFAULT_CONTENT_ITEM_TO_VERSION}},
-            ["Invalid Change in the ModelingRule versions please validate the following points:\nThe old ModelingRule"
-            " `fromversion` field should be less than the new ModelingRule `fromversion` field\nThe old ModelingRule"
-            " `toversion` field should be less than the new ModelingRule `fromversion` field\nThe old and the new"
-            " ModelingRule should be continuous, aka the old one `toversion` is one version less"
-            " than the new one `fromversion`"],
+            {
+                "duo_modeling_rule": {
+                    "from": "6.0.0",
+                    "to": DEFAULT_CONTENT_ITEM_TO_VERSION,
+                }
+            },
+            [
+                "Invalid Change in the ModelingRule versions please validate the following points:\nThe old ModelingRule"
+                " `fromversion` field should be less than the new ModelingRule `fromversion` field\nThe old ModelingRule"
+                " `toversion` field should be less than the new ModelingRule `fromversion` field\nThe old and the new"
+                " ModelingRule should be continuous, aka the old one `toversion` is one version less"
+                " than the new one `fromversion`"
+            ],
             id="Case 2: Modeling Rule - toversion changed to 6.0.0 and the new fromversion is 6.0.0, two items with the same id ,cannot exist in the same version",
         ),
         pytest.param(
@@ -1068,10 +1086,14 @@ def test_IsContextPathChangedValidator_remove_command():
                 create_modeling_rule_object(paths=["toversion"], values=["6.9.0"]),
             ],
             [
-                create_modeling_rule_object(paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]),
+                create_modeling_rule_object(
+                    paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]
+                ),
             ],
             {},
-            ["Changing the maximal supported version field `toversion` is not allowed without adding a new content item to replace it."],
+            [
+                "Changing the maximal supported version field `toversion` is not allowed without adding a new content item to replace it."
+            ],
             id="Case 2: Modeling Rule - toversion changed to 6.9.0 and no new item to replace it was found",
         ),
         pytest.param(
@@ -1079,12 +1101,19 @@ def test_IsContextPathChangedValidator_remove_command():
                 create_modeling_rule_object(paths=["toversion"], values=["8.9.0"]),
             ],
             [
-                create_modeling_rule_object(paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]),
+                create_modeling_rule_object(
+                    paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]
+                ),
             ],
-            {'duo_modeling_rule': {'from': '8.10.0', 'to': DEFAULT_CONTENT_ITEM_TO_VERSION}},
+            {
+                "duo_modeling_rule": {
+                    "from": "8.10.0",
+                    "to": DEFAULT_CONTENT_ITEM_TO_VERSION,
+                }
+            },
             [],
             id="Case 2: Modeling Rule - toversion changed to 6.9.0 and the new fromversion is 6.10.0 which is a valid case",
-        )
+        ),
     ],
 )
 def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(
@@ -1104,11 +1133,13 @@ def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(
         "demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_toversion_on_modified.sort_content_items",
         return_value=(content_items, new_items),
     )
-    result = IsValidToversionOnModifiedValidator().obtain_invalid_content_items(content_items)
+    result = IsValidToversionOnModifiedValidator().obtain_invalid_content_items(
+        content_items
+    )
 
     assert (
-        len(result) == len(expected_errs)
-        and result[i].message == i for i in expected_errs
+        len(result) == len(expected_errs) and result[i].message == i
+        for i in expected_errs
     )
 
 

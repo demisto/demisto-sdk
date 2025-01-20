@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Iterable, List, cast
+
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import GitStatuses
@@ -15,17 +16,21 @@ ContentTypes = ContentItem
 
 class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
     error_code = "BC107"
-    description = (
-        "Check that the toversion property is valid."
-    )
+    description = "Check that the toversion property is valid."
     rationale = "Changing the `toversion` field for a content item should include adding a new item to replace it."
     error_message = "{0}"
     related_field = "toversion"
-    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED, GitStatuses.ADDED]  # todo: do we need renamed?
-    valid_cases = ("The old {0} `fromversion` field should be less than the new {0} `fromversion` field\n"
-                   "The old {0} `toversion` field should be less than the new {0} `fromversion` field\n"
-                   "The old and the new {0} should be continuous, aka the old one `toversion` is one version"
-                   " less than the new one `fromversion`")
+    expected_git_statuses = [
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+        GitStatuses.ADDED,
+    ]  # todo: do we need renamed?
+    valid_cases = (
+        "The old {0} `fromversion` field should be less than the new {0} `fromversion` field\n"
+        "The old {0} `toversion` field should be less than the new {0} `fromversion` field\n"
+        "The old and the new {0} should be continuous, aka the old one `toversion` is one version"
+        " less than the new one `fromversion`"
+    )
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
@@ -42,19 +47,24 @@ class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
         ]
 
     def invalid_toversion(self, modified_item: ContentTypes, new_items: dict):
-
         old_file = cast(ContentTypes, modified_item.old_base_content_object)
         if modified_item.toversion != old_file.toversion:  # file toversion was updated
             if modified_item.object_id in new_items:
                 new_item = new_items[modified_item.object_id]
-                if not is_valid_versions(Version(modified_item.fromversion),
-                                             Version(modified_item.toversion),
-                                             Version(new_item.get('from'))):
-                    return (f"Invalid Change in the {modified_item.content_type.value} versions please validate the"
-                            f" following points:\n{self.valid_cases.format(modified_item.content_type.value)}")
+                if not is_valid_versions(
+                    Version(modified_item.fromversion),
+                    Version(modified_item.toversion),
+                    Version(new_item.get("from")),
+                ):
+                    return (
+                        f"Invalid Change in the {modified_item.content_type.value} versions please validate the"
+                        f" following points:\n{self.valid_cases.format(modified_item.content_type.value)}"
+                    )
             else:
-                return ("Changing the maximal supported version field `toversion` is not allowed without adding"
-                        " a new content item to replace it.")
+                return (
+                    "Changing the maximal supported version field `toversion` is not allowed without adding"
+                    " a new content item to replace it."
+                )
 
         return
 
@@ -76,7 +86,7 @@ def sort_content_items(content_items: Iterable[ContentTypes]):
         if item.git_status == GitStatuses.MODIFIED:
             modified_items.append(item)
         elif item.git_status == GitStatuses.ADDED:
-            new_items[item.object_id] = {'from': item.fromversion, 'to': item.toversion}
+            new_items[item.object_id] = {"from": item.fromversion, "to": item.toversion}
 
     return modified_items, new_items
 
@@ -94,9 +104,21 @@ def is_valid_versions(old_from: Version, old_to: Version, new_from: Version) -> 
         whether the versions are valid or not.
     """
     res = [
-        (old_to.major + 1 == new_from.major and new_from.minor == 0 and new_from.micro == 0),
-        (old_to.major == new_from.major and old_to.minor + 1 == new_from.minor and new_from.micro == 0),
-        (old_to.major == new_from.major and old_from.minor == new_from.minor and old_to.micro + 1 == new_from.micro)
+        (
+            old_to.major + 1 == new_from.major
+            and new_from.minor == 0
+            and new_from.micro == 0
+        ),
+        (
+            old_to.major == new_from.major
+            and old_to.minor + 1 == new_from.minor
+            and new_from.micro == 0
+        ),
+        (
+            old_to.major == new_from.major
+            and old_from.minor == new_from.minor
+            and old_to.micro + 1 == new_from.micro
+        ),
     ]
     is_continuous = any(res)
     return all(

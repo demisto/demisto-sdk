@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from typing import Iterable, List, cast, Union
+from typing import Iterable, List, Union, cast
+
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
+
 # from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
-from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -18,18 +20,23 @@ ContentTypes = Union[ModelingRule, ParsingRule, CorrelationRule]
 
 class IsValidToversionValidator(BaseValidator[ContentTypes]):
     error_code = "BC115"
-    description = (
-        "Check that the toversion property is valid."
-    )
+    description = "Check that the toversion property is valid."
     rationale = "Changing the `toversion` field for a content item should include adding a new item to replace it."
     # error_message = "Changing the maximal supported version field `toversion` is not valid. No new item to replace it."
     error_message = "{0}"
     related_field = "toversion"
-    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED, GitStatuses.ADDED]  # todo: do we need renamed?
-    valid_cases = ("The old {0} `fromversion` field should be less than the new {0} `fromversion` field\n"
-                   "The old {0} `toversion` field should be less than the new {0} `fromversion` field\n"
-                   "The old and the new {0} should be continuous, aka the old one `toversion` is one version"
-                   " less than the new one `fromversion`")
+    expected_git_statuses = [
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+        GitStatuses.ADDED,
+    ]  # todo: do we need renamed?
+    valid_cases = (
+        "The old {0} `fromversion` field should be less than the new {0} `fromversion` field\n"
+        "The old {0} `toversion` field should be less than the new {0} `fromversion` field\n"
+        "The old and the new {0} should be continuous, aka the old one `toversion` is one version"
+        " less than the new one `fromversion`"
+    )
+
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
@@ -45,14 +52,17 @@ class IsValidToversionValidator(BaseValidator[ContentTypes]):
         ]
 
     def toversion_invalid(self, modified_item: ContentTypes, new_items: dict):
-
         old_file = cast(ContentTypes, modified_item.old_base_content_object)
         if modified_item.toversion != old_file.toversion:  # file toversion was updated
-            if modified_item.content_type.value in ['ModelingRule', 'ParsingRule']:
-                return self.is_valid_item(modified_item.pack_name, modified_item, new_items)
+            if modified_item.content_type.value in ["ModelingRule", "ParsingRule"]:
+                return self.is_valid_item(
+                    modified_item.pack_name, modified_item, new_items
+                )
 
-            elif modified_item.content_type.value in ['CorrelationRule']:
-                return self.is_valid_item(modified_item.object_id, modified_item, new_items)
+            elif modified_item.content_type.value in ["CorrelationRule"]:
+                return self.is_valid_item(
+                    modified_item.object_id, modified_item, new_items
+                )
 
             return
         return
@@ -70,17 +80,25 @@ class IsValidToversionValidator(BaseValidator[ContentTypes]):
            an error message if the modification is not valid, or none in  case it is.
         """
         # Found a new content item that's replacing it
-        if item_key in new_items and modified_item.content_type.value == new_items[item_key].get('type'):
+        if item_key in new_items and modified_item.content_type.value == new_items[
+            item_key
+        ].get("type"):
             new_item = new_items[item_key]
-            is_valid = is_valid_versions(Version(modified_item.fromversion),
-                                                 Version(modified_item.toversion),
-                                                 Version(new_item.get('from')))
+            is_valid = is_valid_versions(
+                Version(modified_item.fromversion),
+                Version(modified_item.toversion),
+                Version(new_item.get("from")),
+            )
             if not is_valid:
-                return (f"Invalid Change in the {modified_item.content_type.value} versions please validate the"
-                        f" following points:\n{self.valid_cases.format(modified_item.content_type.value)}")
+                return (
+                    f"Invalid Change in the {modified_item.content_type.value} versions please validate the"
+                    f" following points:\n{self.valid_cases.format(modified_item.content_type.value)}"
+                )
         else:
-            return ("Changing the maximal supported version field `toversion` is not allowed without adding"
-                    " a new content item to replace it.")
+            return (
+                "Changing the maximal supported version field `toversion` is not allowed without adding"
+                " a new content item to replace it."
+            )
 
 
 def sort_content_items(content_items: Iterable[ContentTypes]):
@@ -100,10 +118,18 @@ def sort_content_items(content_items: Iterable[ContentTypes]):
         if item.git_status == GitStatuses.MODIFIED:
             modified_items.append(item)
         elif item.git_status == GitStatuses.ADDED:
-            if item.content_type.value in ['ModelingRule', 'ParsingRule']:
-                new_items[item.pack_name] = {'from': item.fromversion, 'to': item.toversion, 'type': item.content_type.value}
-            if item.content_type.value in ['CorrelationRule']:
-                new_items[item.object_id] = {'from': item.fromversion, 'to': item.toversion, 'type': item.content_type.value}
+            if item.content_type.value in ["ModelingRule", "ParsingRule"]:
+                new_items[item.pack_name] = {
+                    "from": item.fromversion,
+                    "to": item.toversion,
+                    "type": item.content_type.value,
+                }
+            if item.content_type.value in ["CorrelationRule"]:
+                new_items[item.object_id] = {
+                    "from": item.fromversion,
+                    "to": item.toversion,
+                    "type": item.content_type.value,
+                }
 
     return modified_items, new_items
 
@@ -121,9 +147,21 @@ def is_valid_versions(old_from: Version, old_to: Version, new_from: Version) -> 
         whether the versions are valid or not.
     """
     res = [
-        (old_to.major + 1 == new_from.major and new_from.minor == 0 and new_from.micro == 0),
-        (old_to.major == new_from.major and old_to.minor + 1 == new_from.minor and new_from.micro == 0),
-        (old_to.major == new_from.major and old_from.minor == new_from.minor and old_to.micro + 1 == new_from.micro)
+        (
+            old_to.major + 1 == new_from.major
+            and new_from.minor == 0
+            and new_from.micro == 0
+        ),
+        (
+            old_to.major == new_from.major
+            and old_to.minor + 1 == new_from.minor
+            and new_from.micro == 0
+        ),
+        (
+            old_to.major == new_from.major
+            and old_from.minor == new_from.minor
+            and old_to.micro + 1 == new_from.micro
+        ),
     ]
     is_continuous = any(res)
     return all(

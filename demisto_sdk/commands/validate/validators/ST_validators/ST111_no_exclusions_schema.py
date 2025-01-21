@@ -41,10 +41,12 @@ class StrictSchemaValidator(BaseValidator[ContentTypes]):
             "sectionOrder"
         )
         if not section_order:
-            return "Missing section order"
+            return ("Missing sectionorder key. Add sectionorder to the top of your YAML file and specify the order"
+                    " of the Collect, Connect, and Optimize sections (at least one is required).")
         configurations = content_item.data.get("configuration")
         for configuration in configurations:  # type:ignore[union-attr]
             section = configuration.get("section")
             if not section:
-                return f'Missing section for configuration {configuration.get("name")}'
+                return (f'Missing section key for {configuration.get("name")} configuration. Please specify the section '
+                        'for this configuration.')
         return ""

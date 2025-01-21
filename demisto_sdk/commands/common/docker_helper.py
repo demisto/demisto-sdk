@@ -183,7 +183,7 @@ def docker_login(docker_client) -> bool:
                 )
                 return ping
         except docker.errors.APIError:
-            logger.debug(f"Did not successfully log in to {DOCKER_REGISTRY_URL}")
+            logger.info(f"Did not successfully log in to {DOCKER_REGISTRY_URL}")
             return False
 
     logger.debug(f"Did not log in to {DOCKER_REGISTRY_URL}")
@@ -388,7 +388,7 @@ class DockerBase:
         """
         test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "")
 
-        logger.debug(
+        logger.info(
             f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository."
         )
         for attempt in range(2):
@@ -543,7 +543,7 @@ class DockerBase:
             )
             self.pull_image(test_docker_image)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
-            logger.debug(
+            logger.info(
                 f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
             )
             try:

@@ -1,4 +1,4 @@
 changes:
 - description: Added VC validation to support valdations of version_config file.
   type: internal
-pr_number: 4766
+pr_number: 4769

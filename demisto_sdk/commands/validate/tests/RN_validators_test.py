@@ -643,26 +643,43 @@ def test_IsDockerEntryMatchYmlValidator_fix(mocker):
     )
 
 
-def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
+@pytest.mark.parametrize(
+    "git_status, expected_msgs, expected_number_of_failures",
+    [
+        (
+            GitStatuses.ADDED,
+            [
+                "The release notes regarding the docker image are not correct. Docker version in release notes should be demisto/python3:3.9.7.24071, found: demisto/python3:3.9.7.24076",
+                "The release notes regarding the docker image are not correct. Docker version in release notes should be demisto/python3:3.9.7.24076, found: No docker entry found",
+                "The release notes regarding the docker image are not correct. There should be no release notes docker update entry, found: demisto/python3:3.9.7.24076",
+            ],
+            3,
+        ),
+        (None, [], 0),
+    ],
+)
+def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items(
+    mocker, git_status, expected_msgs, expected_number_of_failures
+):
     """
     Given:
     - content_items list with 5 packs, each with RN with different content.
-        - Case 1: An integration with modified docker where the docker image entry doesn't match the version in the rn.
-        - Case 2: An integration without docker modification.
-        - Case 3: A script with modified docker where the docker image entry in the rn match the on in the yml.
-        - Case 4: A script with modified docker where no docker image entry appear in the rn.
-        - Case 5: A script that didnt modify the docker an RN that says it did
+        - pack 1: An integration with modified docker where the docker image entry doesn't match the version in the rn.
+        - pack 2: An integration without docker modification.
+        - pack 3: A script with modified docker where the docker image entry in the rn match the on in the yml.
+        - pack 4: A script with modified docker where no docker image entry appear in the rn.
+        - pack 5: A script that didn't modify the docker an RN that says it did
+        Split into two cases:
+        - Case 1: The RNs were Added.
+        - Case 2: The RNs git status is None (i.e no new rn).
 
     When:
     - Calling the IsDockerEntryMatchYmlValidator obtain_invalid_content_items function.
 
     Then:
     - Make sure the right amount of pack metadata failed, and that the right error message is returned.
-        - Case 1: Should fail.
-        - Case 2: Shouldn't fail anything.
-        - Case 3: Shouldn't fail anything.
-        - Case 4: Should fail.
-        - Case 5: Should fail
+        - Case 1: packs 1, 4, and 5 should fail.
+        - Case 2: No failures.
     """
     integration_1 = create_integration_object(
         paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
@@ -719,6 +736,11 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
         values=["2.0.5"],
         release_note_content=f"#### Scripts\n##### {script_2.name}\n- Updated the Docker image to: *demisto/python3:3.9.7.24076*.",
     )
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.parsers.related_files.RNRelatedFile.git_status",
+        new_callable=mocker.PropertyMock,
+        return_value=git_status,
+    )
     integration_1.pack = pack_1
     integration_2.pack = pack_2
     script_1.pack = pack_3
@@ -735,12 +757,7 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items():
     create_old_file_pointers(content_items, old_content_items)
     validator = IsDockerEntryMatchYmlValidator()
     results = validator.obtain_invalid_content_items(content_items)
-    assert len(results) == 3
-    expected_msgs = [
-        "The release notes regarding the docker image are not correct. Docker version in release notes should be demisto/python3:3.9.7.24071, found: demisto/python3:3.9.7.24076",
-        "The release notes regarding the docker image are not correct. Docker version in release notes should be demisto/python3:3.9.7.24076, found: No docker entry found",
-        "The release notes regarding the docker image are not correct. There should be no release notes docker update entry, found: demisto/python3:3.9.7.24076",
-    ]
+    assert len(results) == expected_number_of_failures
     assert all(
         [res_msg in expected_msgs for res_msg in [result.message for result in results]]
     )

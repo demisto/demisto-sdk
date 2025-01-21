@@ -103,7 +103,9 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (error := release_notes_mismatch_error(content_item))
+            if content_item.pack.release_note.exist
+            and content_item.pack.release_note.git_status == GitStatuses.ADDED
+            and (error := release_notes_mismatch_error(content_item))
         ]
 
     def fix(

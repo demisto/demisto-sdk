@@ -1,4 +1,4 @@
 changes:
-- description: Fixed implementation of `BC107` validation to allow adding `toversion` field to a content item as long as a new content item is added to replace it in the next version.
+- description: Enhanced implementation of `BC107` validation to allow adding `toversion` field to a content item as long as a new content item is added to replace it in the next version.
   type: fix
 pr_number: 4766

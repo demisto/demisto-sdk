@@ -1031,7 +1031,7 @@ def test_IsContextPathChangedValidator_remove_command():
 
 
 @pytest.mark.parametrize(
-    "content_items, old_content_items, new_items, expected_errs",
+    "content_items, old_content_items, new_items, errors",
     [
         pytest.param(
             [
@@ -1048,13 +1048,7 @@ def test_IsContextPathChangedValidator_remove_command():
                     "to": DEFAULT_CONTENT_ITEM_TO_VERSION,
                 }
             },
-            [
-                "Invalid Change in the Integration versions please validate the following points:\nThe old Integration"
-                " `fromversion` field should be less than the new Integration `fromversion` field\nThe old Integration"
-                " `toversion` field should be less than the new Integration `fromversion` field\nThe old and the new"
-                " Integration should be continuous, aka the old one `toversion` is one version less"
-                " than the new one `fromversion`"
-            ],
+            1,
             id="Case 1: integration - toversion changed to 6.0.0 and the new fromversion is 6.10.0 which are more than one release apart",
         ),
         pytest.param(
@@ -1072,13 +1066,7 @@ def test_IsContextPathChangedValidator_remove_command():
                     "to": DEFAULT_CONTENT_ITEM_TO_VERSION,
                 }
             },
-            [
-                "Invalid Change in the ModelingRule versions please validate the following points:\nThe old ModelingRule"
-                " `fromversion` field should be less than the new ModelingRule `fromversion` field\nThe old ModelingRule"
-                " `toversion` field should be less than the new ModelingRule `fromversion` field\nThe old and the new"
-                " ModelingRule should be continuous, aka the old one `toversion` is one version less"
-                " than the new one `fromversion`"
-            ],
+            1,
             id="Case 2: Modeling Rule - toversion changed to 6.0.0 and the new fromversion is 6.0.0, two items with the same id ,cannot exist in the same version",
         ),
         pytest.param(
@@ -1091,10 +1079,8 @@ def test_IsContextPathChangedValidator_remove_command():
                 ),
             ],
             {},
-            [
-                "Changing the maximal supported version field `toversion` is not allowed without adding a new content item to replace it."
-            ],
-            id="Case 2: Modeling Rule - toversion changed to 6.9.0 and no new item to replace it was found",
+            1,
+            id="Case 3: Modeling Rule - toversion changed to 6.9.0 and no new item to replace it was found",
         ),
         pytest.param(
             [
@@ -1111,22 +1097,27 @@ def test_IsContextPathChangedValidator_remove_command():
                     "to": DEFAULT_CONTENT_ITEM_TO_VERSION,
                 }
             },
-            [],
-            id="Case 2: Modeling Rule - toversion changed to 6.9.0 and the new fromversion is 6.10.0 which is a valid case",
+            0,
+            id="Case 4: Modeling Rule - toversion changed to 6.9.0 and the new fromversion is 6.10.0 which is a valid case",
         ),
     ],
 )
 def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(
-    mocker, content_items, old_content_items, new_items, expected_errs
+    mocker, content_items, old_content_items, new_items, errors
 ):
     """
     Given:
-        - Case 1: two content item of type 'Integration', one with modified `toversion`.
-        - Case 2: two content item of type 'Script', one with modified `toversion`.
+        - Case 1: two content item of type 'Integration', `toversion` changed to 6.0.0 and the new `fromversion` is 6.10.0.
+        - Case 2: two content item of type 'ModelingRule', `toversion` changed to 6.0.0 and the new `fromversion` is 6.0.0.
+        - Case 3: two content items of type 'ModelingRule', toversion changed to 6.9.0 and no new item to replace it was found
+        - Case 4: two content items of type 'ModelingRule', toversion changed to 6.9.0 and the new fromversion is 6.10.0 which is a valid case
     When:
         - Calling the `IsValidToversionOnModifiedValidator` validator.
     Then:
-        - The obtain_invalid_content_items function will catch the change in `toversion` and will fail the validation only on the relevant content_item.
+        - Case 1: The obtain_invalid_content_items function will catch the change in `toversion` and will fail the validation since they are more than one release apart.
+        - Case 2: The obtain_invalid_content_items function will catch the change in `toversion` and will fail the validation since two items with the same id ,cannot exist in the same version.
+        - Case 3: The obtain_invalid_content_items function will catch the change in `toversion` and will fail the validation since no new item to replace it was found.
+        - Case 4: Valid case.
     """
     create_old_file_pointers(content_items, old_content_items)
     mocker.patch(
@@ -1138,9 +1129,7 @@ def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(
     )
 
     assert (
-        len(result) == len(expected_errs) and result[i].message == i
-        for i in expected_errs
-    )
+            len(result) == errors)
 
 
 def test_args_name_change_validator__fails():

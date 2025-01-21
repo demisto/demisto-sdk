@@ -1,4 +1,10 @@
 # Changelog
+## 1.34.0 (2025-01-21)
+### Internal
+* Reintroduce support for GAR DockerHub proxy when running in a Gitlab CI environment. [#4655](https://github.com/demisto/demisto-sdk/pull/4655)
+* Fixed RM108 validation to allow absolute paths if the files are a part of content-assets. [#4683](https://github.com/demisto/demisto-sdk/pull/4683)
+
+
 ## 1.33.6 (2025-01-20)
 ### Feature
 * Updated the ***update-release-notes*** command to handle changes in scripts and integration (using the objects under `content_graph`). [#4562](https://github.com/demisto/demisto-sdk/pull/4562)

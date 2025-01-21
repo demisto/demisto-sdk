@@ -64,7 +64,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
                     pack_name=c.pack_id,
                 ),
                 content_object=c,
-                path=c.pack.release_note.path,
+                path=c.pack.release_note.file_path,
             )
             for c in dependent_items
             if c.pack_id in self.pack_to_rn_headers and self.is_missing_rn(c)
@@ -119,7 +119,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
                             pack_name=content_item.pack_id,
                         ),
                         content_object=content_item,
-                        path=content_item.pack.release_note.path,
+                        path=content_item.pack.release_note.file_path,
                     )
 
         return list((results | api_module_results).values())

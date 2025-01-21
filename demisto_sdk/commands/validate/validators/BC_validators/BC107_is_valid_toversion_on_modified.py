@@ -39,7 +39,9 @@ class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.object_id, self.valid_cases),
+                message=self.error_message.format(
+                    content_item.object_id, self.valid_cases
+                ),
                 content_object=content_item,
             )
             for content_item in modified_items
@@ -117,7 +119,7 @@ def is_valid_versions(old_from: Version, old_to: Version, new_from: Version) -> 
     is_continuous = any(res)
     return all(
         [
-            old_from < new_from,    # old_from 6.0.0, new_from 8.9.0
+            old_from < new_from,  # old_from 6.0.0, new_from 8.9.0
             old_to < new_from,  # old_to 8.9.0, new_from 8.10.0
             is_continuous,
         ]

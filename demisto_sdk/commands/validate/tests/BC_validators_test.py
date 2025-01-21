@@ -1128,8 +1128,7 @@ def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(
         content_items
     )
 
-    assert (
-            len(result) == errors)
+    assert len(result) == errors
 
 
 def test_args_name_change_validator__fails():

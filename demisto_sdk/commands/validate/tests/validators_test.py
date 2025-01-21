@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -410,7 +411,7 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
             ],
             1,
             0,
-            1,
+            2,
             [],
             ["BA101"],
         ),
@@ -430,14 +431,13 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
             ],
             1,
             1,
-            1,
+            2,
             ["BC100"],
             ["BA101"],
         ),
     ],
 )
 def test_post_results(
-    mocker,
     only_throw_warnings,
     results,
     expected_exit_code,
@@ -463,7 +463,9 @@ def test_post_results(
     """
     validation_results = ResultWriter()
     validation_results.validation_results = results
-    exit_code = validation_results.post_results(only_throw_warning=only_throw_warnings)
+    exit_code = validation_results.post_results(
+        ConfiguredValidations(warning=only_throw_warnings)
+    )
     assert exit_code == expected_exit_code
 
     log_by_level = map_reduce(caplog.records, lambda log: log.levelno)
@@ -476,6 +478,63 @@ def test_post_results(
     assert len(errors) == expected_error_call_count
     for code in expected_error_code_in_errors:
         assert code in " ".join({log.message for log in errors})
+
+
+@pytest.mark.parametrize(
+    "failing_error_codes, config_file_content, expected_msg",
+    [
+        (
+            ["BA100", "CR102", "CL101", "TE111"],
+            ConfiguredValidations(
+                ignorable_errors=["BA100"], path_based_section=["CR102"]
+            ),
+            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors doesn't run as part of the nightly flow and therefore can be force merged: BA100, CL101, TE111.\n######################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: CR102.\n######################################################################################################\n</red>",
+        ),
+        (
+            ["BA100", "CR102", "CL101", "TE111"],
+            ConfiguredValidations(path_based_section=["CR102", "BA100"]),
+            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors doesn't run as part of the nightly flow and therefore can be force merged: CL101, TE111.\n#############################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: BA100, CR102.\n#############################################################################################################\n</red>",
+        ),
+        (
+            ["BA100", "CR102", "CL101", "TE111"],
+            ConfiguredValidations(ignorable_errors=["BA100", "TE111"]),
+            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors doesn't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n</red>",
+        ),
+        (
+            ["BA100", "CR102", "CL101", "TE111"],
+            ConfiguredValidations(
+                ignorable_errors=["BA100"],
+                path_based_section=["BA100", "CR102", "CL101", "TE111"],
+            ),
+            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\n####################################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: CR102, CL101, TE111.\n####################################################################################################################\n</red>",
+        ),
+    ],
+)
+def test_summarize_ignorable_and_forcemergeable_errors(
+    mocker, failing_error_codes, config_file_content, expected_msg
+):
+    """
+    Given
+    set of failing error codes and a ConfiguredValidations object with specified ignorable_errors and path_based_section.
+        - Case 1: 4 failed errors, 1 ignorable, and 1 path based.
+        - Case 2: 4 failed errors, none are ignorable, and 2 are path based.
+        - Case 3: 4 failed errors, 2 ignorable, and none are path based.
+        - Case 4: 4 failed errors, 1 ignorable, and all are path based.
+    When
+    - Calling the summarize_ignorable_and_forcemergeable_errors function.
+    Then
+        - Make sure the error logger was called the correct message.
+        - Case 1: The error log should be called with 1 ignorable error, 3 forcemergeable errors and 1 error that must be handled.
+        - Case 2: The error log should omit the ignorable error section, post 2 forcemergeable errors and 2 error that must be handled.
+        - Case 3: The error log should be called with 2 ignorable errors, 4 forcemergeable errors and no errors that must be handled.
+        - Case 4: The error log should be called with 1 ignorable error, no forcemergeable errors section and 3 error that must be handled.
+    """
+    mock = mocker.patch.object(logger, "error")
+    validation_results = ResultWriter()
+    validation_results.summarize_ignorable_and_forcemergeable_errors(
+        failing_error_codes, config_file_content
+    )
+    assert expected_msg == mock.call_args[0][0]
 
 
 @pytest.mark.parametrize(

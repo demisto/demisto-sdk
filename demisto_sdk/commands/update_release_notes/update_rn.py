@@ -18,11 +18,11 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     EVENT_COLLECTOR,
     IGNORED_PACK_NAMES,
+    PB_RELEASE_NOTES_FORMAT,
     RN_HEADER_BY_FILE_TYPE,
     SIEM_ONLY_ENTITIES,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
-    PB_RELEASE_NOTES_FORMAT,
     FileType,
     MarketplaceVersions,
 )

@@ -119,7 +119,9 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                         if ("New: " not in content_type_section[0])
                         else content_type_section[0].removeprefix("New: ")
                     )
-                    if header not in PB_RELEASE_NOTES_FORMAT:  # remove PB custom headers
+                    if (
+                        header not in PB_RELEASE_NOTES_FORMAT
+                    ):  # remove PB custom headers
                         headers.setdefault(content_type, []).append(header)
         return headers
 
@@ -203,7 +205,6 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             for key, value in headers.items()
             if key not in invalid_content_type and value
         }
-        
 
         invalid_content_item: List[str] = [
             f"{header_type}: {', '.join(header_content_item)}"

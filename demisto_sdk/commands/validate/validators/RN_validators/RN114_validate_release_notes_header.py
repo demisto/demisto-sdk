@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Dict, Iterable, List, Set, Tuple
 
+from demisto_sdk.commands.common.constants import PB_RELEASE_NOTES_FORMAT
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -116,9 +117,10 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                     header = (
                         content_type_section[0].rstrip()
                         if ("New: " not in content_type_section[0])
-                        else content_type_section[0][len("New: ") :]
+                        else content_type_section[0].removeprefix("New: ")
                     )
-                    headers.setdefault(content_type, []).append(header)
+                    if header not in PB_RELEASE_NOTES_FORMAT:  # remove PB custom headers
+                        headers.setdefault(content_type, []).append(header)
         return headers
 
     def validate_content_type_header(self, header: str) -> bool:
@@ -201,6 +203,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             for key, value in headers.items()
             if key not in invalid_content_type and value
         }
+        
 
         invalid_content_item: List[str] = [
             f"{header_type}: {', '.join(header_content_item)}"

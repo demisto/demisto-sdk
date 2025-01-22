@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.constants import (
     SIEM_ONLY_ENTITIES,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
+    PB_RELEASE_NOTES_FORMAT,
     FileType,
     MarketplaceVersions,
 )
@@ -1591,15 +1592,6 @@ def format_playbook_description(desc: str) -> str:
         The formatted description.
     """
     desc = f"\n{desc}"
-    key_phrases = (
-        (5, "This playbook addresses the following alerts:\n"),
-        (5, "Playbook Stages:\n"),
-        (5, "Requirements:\n"),
-        (6, "Triage:\n"),
-        (6, "Early Containment:\n"),
-        (6, "Investigation:\n"),
-        (6, "Containment:\n"),
-    )
-    for hdr, phrase in key_phrases:
-        desc = desc.replace(f"\n{phrase}", f'\n{"#" * hdr} {phrase}')
+    for phrase, hdr in PB_RELEASE_NOTES_FORMAT.items():
+        desc = desc.replace(f"\n{phrase}\n", f'\n{"#" * hdr} {phrase}\n')
     return desc.lstrip("\n")

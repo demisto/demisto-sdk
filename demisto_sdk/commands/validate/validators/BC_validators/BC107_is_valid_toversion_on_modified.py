@@ -18,7 +18,7 @@ class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
     error_code = "BC107"
     description = "Check that the toversion property was not changed on existing Content files. unless there's a new file with the same id and continues from_version."
     rationale = "Changing the `toversion` field for a content item can break backward compatibility."
-    error_message = "Changing the maximal supported version field `toversion` is not allowed. unless you're adding new content_item with the same id {0} and their from/to version fulfills the following: {1}"
+    error_message = "Changing the maximal supported version field `toversion` is not allowed. unless you're adding new content_item with the same id {0} and their from/to version fulfills the following:\n{1}"
     related_field = "toversion"
     expected_git_statuses = [
         GitStatuses.MODIFIED,

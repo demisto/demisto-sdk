@@ -106,19 +106,22 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
         ):
             if duplicates:
                 if invalid_duplicates([*duplicates, content_item]):
-                    results.extend([
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message.format(
-                                content_item.object_id,
-                                Path(duplicate.path).relative_to(CONTENT_PATH),  # type: ignore[attr-defined]
-                            ),
-                            content_object=content_item,  # type: ignore[arg-type]
-                        )
-                        for duplicate in duplicates
-                    ])
+                    results.extend(
+                        [
+                            ValidationResult(
+                                validator=self,
+                                message=self.error_message.format(
+                                    content_item.object_id,
+                                    Path(duplicate.path).relative_to(CONTENT_PATH),  # type: ignore[attr-defined]
+                                ),
+                                content_object=content_item,  # type: ignore[arg-type]
+                            )
+                            for duplicate in duplicates
+                        ]
+                    )
 
         return results
+
 
 def invalid_duplicates(items: list):
     """

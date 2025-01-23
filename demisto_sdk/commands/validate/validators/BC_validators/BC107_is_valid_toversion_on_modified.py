@@ -99,7 +99,7 @@ def is_continuous_versions(
         new_from: the newly added file `fromversion` field.
 
     Returns:
-        whether the versions are valid or not.
+        whether the versions are valid or invalid.
     """
     res = [
         (

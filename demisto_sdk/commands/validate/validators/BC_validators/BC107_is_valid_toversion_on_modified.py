@@ -87,7 +87,9 @@ def sort_content_items(content_items: Iterable[ContentTypes]):
     return modified_items, new_items
 
 
-def is_continuous_versions(old_from: Version, old_to: Version, new_from: Version) -> bool:
+def is_continuous_versions(
+    old_from: Version, old_to: Version, new_from: Version
+) -> bool:
     """
     Check if two content items which one is replacing the other have valid continues from/to version.
 

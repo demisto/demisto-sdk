@@ -418,7 +418,7 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
     elif (
         path.suffix == ".txt"
         and ("command" in path.stem or "example" in path.stem)
-        and path.stem != "command_examples"
+        and (path.stem != "command_examples" or path.stem != "command_permissions")
     ):
         raise InvalidCommandExampleFile
 

@@ -131,7 +131,7 @@ def invalid_duplicates(items: list):
         items: content items with the same id.
 
     Returns:
-        whether the versions are valid or invalid.
+        whether the versions are valid or not.
     """
     items.sort(key=lambda item: Version(item.fromversion).release)
     for i in range(len(items[:-1])):

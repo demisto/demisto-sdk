@@ -53,7 +53,7 @@ class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
         if modified_item.toversion != old_file.toversion:  # file toversion was updated
             if modified_item.object_id in new_items:
                 new_item = new_items[modified_item.object_id]
-                if not is_valid_versions(
+                if not is_continuous_versions(
                     Version(modified_item.fromversion),
                     Version(modified_item.toversion),
                     Version(new_item.get("from")),
@@ -87,7 +87,7 @@ def sort_content_items(content_items: Iterable[ContentTypes]):
     return modified_items, new_items
 
 
-def is_valid_versions(old_from: Version, old_to: Version, new_from: Version) -> bool:
+def is_continuous_versions(old_from: Version, old_to: Version, new_from: Version) -> bool:
     """
     Check if two content items which one is replacing the other have valid continues from/to version.
 

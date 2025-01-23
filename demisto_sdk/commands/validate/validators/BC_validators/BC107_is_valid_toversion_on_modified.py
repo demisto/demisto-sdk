@@ -26,7 +26,6 @@ class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
         GitStatuses.ADDED,
     ]
     valid_cases = (
-        "The old item `fromversion` field should be less than the new item `fromversion` field\n"
         "The old item `toversion` field should be less than the new item `fromversion` field\n"
         "The old and the new item should be continuous, aka the old one `toversion` is one version"
         " less than the new one `fromversion`"

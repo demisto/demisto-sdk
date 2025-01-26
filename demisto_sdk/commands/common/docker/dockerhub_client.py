@@ -442,7 +442,7 @@ class DockerHubClient:
             except ValueError as e:
                 # Normalize 'created' ISO 8601 string from nanoseconds to microsecond precision for datetime compatibility
                 logger.debug(
-                    f'The following {creation_date=} value failed conversion to datetime, try to normalize nanosecond precision to microsecond and retry.')
+                    f'The following {creation_date=} value failed conversion to datetime, try to normalize nanosecond precision to microsecond and retry. {str(e)}')
                 return datetime.strptime(iso8601_nanoseconds_to_microseconds(creation_date), "%Y-%m-%dT%H:%M:%S.%fZ")
         else:
             return datetime.strptime(response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ")

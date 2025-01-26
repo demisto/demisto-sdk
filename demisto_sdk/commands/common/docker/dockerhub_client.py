@@ -237,7 +237,7 @@ class DockerHubClient:
             # received only a single record
             return raw_json_response
 
-        logger.debug(f'Received {raw_json_response.get("count")} objects from {url=}')
+        logger.debug(f"Received {raw_json_response.get('count')} objects from {url=}")
         results = raw_json_response.get(results_key) or []
         # do pagination if needed
         if next_page_url := raw_json_response.get("next"):
@@ -442,10 +442,16 @@ class DockerHubClient:
             except ValueError as e:
                 # Normalize 'created' ISO 8601 string from nanoseconds to microsecond precision for datetime compatibility
                 logger.debug(
-                    f'The following {creation_date=} value failed conversion to datetime, try to normalize nanosecond precision to microsecond and retry. {str(e)}')
-                return datetime.strptime(iso8601_nanoseconds_to_microseconds(creation_date), "%Y-%m-%dT%H:%M:%S.%fZ")
+                    f"The following {creation_date=} value failed conversion to datetime, try to normalize nanosecond precision to microsecond and retry. {str(e)}"
+                )
+                return datetime.strptime(
+                    iso8601_nanoseconds_to_microseconds(creation_date),
+                    "%Y-%m-%dT%H:%M:%S.%fZ",
+                )
         else:
-            return datetime.strptime(response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ")
+            return datetime.strptime(
+                response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
 
     def get_latest_docker_image_tag(self, docker_image: str) -> Version:
         """
@@ -650,8 +656,8 @@ def iso8601_nanoseconds_to_microseconds(iso8601_datetime_str: str) -> str:
     While iso8601 can support up to nanoseconds precision (nine decimal places in the seconds fraction (e.g., 0.123456789 seconds)).
     """
 
-    datetime_until_decimal_point, nanoseconds_with_z = iso8601_datetime_str.split('.')
-    nanoseconds_with_z = nanoseconds_with_z.rstrip('Z')  # Remove the 'Z' at the end
+    datetime_until_decimal_point, nanoseconds_with_z = iso8601_datetime_str.split(".")
+    nanoseconds_with_z = nanoseconds_with_z.rstrip("Z")  # Remove the 'Z' at the end
 
     microseconds = nanoseconds_with_z[:6]
 

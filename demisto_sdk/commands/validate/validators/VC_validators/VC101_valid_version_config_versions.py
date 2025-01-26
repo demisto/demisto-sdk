@@ -22,7 +22,7 @@ def version_key(version):
 
 
 class ValidVersionConfigVersions(BaseValidator[ContentTypes]):
-    error_code = "VC102"
+    error_code = "VC101"
     description = (
         "Verify content versions are continuos according to platform versions."
     )

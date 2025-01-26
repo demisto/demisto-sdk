@@ -81,8 +81,7 @@ ignorable_errors = [
   "GR107",
   "RM117",
   "VC100",
-  "VC101",
-  "VC102"
+  "VC101"
 ]
 
 [Custom_Categories]
@@ -249,8 +248,7 @@ select = [
   "ST110",
   "TR100",
   "VC100",
-  "VC101",
-  "VC102"
+  "VC101"
 ]
 warning = [
   "IN101",

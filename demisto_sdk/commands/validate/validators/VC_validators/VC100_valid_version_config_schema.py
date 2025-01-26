@@ -18,7 +18,7 @@ json = JSON_Handler()
 
 
 class ValidVersionConfigSchema(BaseValidator[ContentTypes]):
-    error_code = "VC101"
+    error_code = "VC100"
     description = "Verify valid version config schema using permitted fields."
     rationale = "Prevent cases where dictionary fields and values are not relevant or legal to version config"
     error_message = (

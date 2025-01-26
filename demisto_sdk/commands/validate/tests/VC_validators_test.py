@@ -3,55 +3,12 @@ import pytest
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_pack_object,
 )
-from demisto_sdk.commands.validate.validators.VC_validators.VC100_valid_version_config_file import (
-    ValidVersionConfigFileValidator,
-)
-from demisto_sdk.commands.validate.validators.VC_validators.VC101_valid_version_config_schema import (
+from demisto_sdk.commands.validate.validators.VC_validators.VC100_valid_version_config_schema import (
     ValidVersionConfigSchema,
 )
-from demisto_sdk.commands.validate.validators.VC_validators.VC102_valid_version_config_versions import (
+from demisto_sdk.commands.validate.validators.VC_validators.VC101_valid_version_config_versions import (
     ValidVersionConfigVersions,
 )
-
-
-@pytest.mark.parametrize(
-    "expected_number_of_failures, content_items",
-    [
-        (1, [create_pack_object(version_config={})]),
-        (1, [create_pack_object(version_config=None)]),
-        (
-            0,
-            [
-                create_pack_object(
-                    version_config={
-                        "8.9": {"to": "1.5.0"},
-                        "8.10": {"from": "1.5.1", "to": "2.0.0"},
-                        "9.0": {"from": "2.0.1"},
-                    }
-                )
-            ],
-        ),
-    ],
-    ids=["empty", "vc_is_None", "valid_config_version"],
-)
-def test_isValidVersionConfigFile(expected_number_of_failures, content_items):
-    """
-    Given:
-        case 1: empty = version_config file is empty.
-        case 2: vc_is_None = version_config is None.
-        case 3: valid_config_version = A valid version config file.
-    When:
-        - calling ValidVersionConfigFileValidator.obtain_invalid_content_items.
-
-    Then:
-        - case 1: Fails. version control file exists but empty. Either remove the file or add versions.
-        - case 2: Fails. version control file exists but empty. Either remove the file or add versions.
-        - case 3: Passes.
-    """
-    invalid_content_items = (
-        ValidVersionConfigFileValidator().obtain_invalid_content_items(content_items)
-    )
-    assert len(invalid_content_items) == expected_number_of_failures
 
 
 @pytest.mark.parametrize(

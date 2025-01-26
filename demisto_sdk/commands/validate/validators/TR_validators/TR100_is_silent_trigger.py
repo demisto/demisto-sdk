@@ -2,21 +2,20 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = Union[Playbook, Trigger]
+ContentTypes = Union[Trigger]
 
 
-class IsSilentPlaybookValidator(BaseValidator[ContentTypes]):
-    error_code = "PB130"
-    description = "Validate that the 'name', 'ID', and file name of a silent playbook contain the 'silent-' prefix and include the field issilent: true."
-    rationale = "A silent playbook must have the 'silent-' prefix in its name, ID, and file name, and the field issilent: true."
-    error_message = "Silent playbooks must have 'silent-' as a prefix in the name, ID, and file name, and include the field issilent: true. One or more of these is missing."
+class IsSilentTriggerValidator(BaseValidator[ContentTypes]):
+    error_code = "TR100"
+    description = "Validate that the 'trigger_name', and file name of a silent trigger contain the 'silent-' prefix and include the field issilent: true."
+    rationale = "A silent trigger must have the 'silent-' prefix in its trigger_name, and file name, and the field issilent: true."
+    error_message = "Silent triggers must have 'silent-' as a prefix in the trigger_name and file name, and include the field issilent: true. One or more of these is missing."
     related_field = ""
     is_auto_fixable = False
 
@@ -38,15 +37,13 @@ def is_invalid_silent(content_item: ContentTypes) -> bool:
     return any(
         [
             content_item.is_silent,
-            content_item.data.get("name", "").startswith("silent-"),
-            content_item.data.get("id", "").startswith("silent-"),
+            content_item.data.get("trigger_name", "").startswith("silent-"),
             content_item.path.name.startswith("silent-"),
         ]
     ) and not all(
         [
             content_item.is_silent,
-            content_item.data.get("name", "").startswith("silent-"),
-            content_item.data.get("id", "").startswith("silent-"),
+            content_item.data.get("trigger_name", "").startswith("silent-"),
             content_item.path.name.startswith("silent-"),
         ]
     )

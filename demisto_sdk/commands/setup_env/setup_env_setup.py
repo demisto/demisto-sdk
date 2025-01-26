@@ -51,7 +51,11 @@ def setup_env_command(
         "--clean",
         help="Clean the repository of temporary files created by the 'lint' command.",
     ),
-    file_paths: Tuple[Path, ...] = typer.Argument(None, exists=True, resolve_path=True),
+    file_paths: Tuple[Path, ...] = typer.Argument(
+        default_factory=list,
+        resolve_path=True,
+        show_default=False,
+    ),
     console_log_threshold: str = typer.Option(
         None,
         "--console-log-threshold",
@@ -86,11 +90,16 @@ def setup_env_command(
     else:
         ide_type = IDEType(ide)
 
+    # Resolve input paths if provided
     if input:
-        file_paths = tuple(input)
+        resolved_input = [path.resolve() for path in input]
+    else:
+        resolved_input = []
+
+    resolved_file_paths = resolved_input or file_paths
 
     setup_env(
-        file_paths=file_paths,
+        file_paths=resolved_file_paths,
         ide_type=ide_type,
         create_virtualenv=create_virtualenv,
         overwrite_virtualenv=overwrite_virtualenv,

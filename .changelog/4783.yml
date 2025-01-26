@@ -1,4 +1,4 @@
 changes:
-  - description: Fixed and issue in the Docker proxy mechanism where ISO 8601 timestamps with nanosecond precision were not properly parsed.
+  - description: Fixed an issue in the Docker proxy mechanism where ISO 8601 timestamps with nanosecond precision were not properly parsed.
 type: internal
 pr_number: 4783

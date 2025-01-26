@@ -2219,3 +2219,13 @@ INVALID_IMAGE_PATH_REGEX = (
 # Test types:
 TEST_PLAYBOOKS = "TestPlaybooks"
 TEST_MODELING_RULES = "TestModelingRules"
+
+PB_RELEASE_NOTES_FORMAT = {
+    "This playbook addresses the following alerts:": 5,
+    "Playbook Stages:": 5,
+    "Requirements:": 5,
+    "Triage:": 6,
+    "Early Containment:": 6,
+    "Investigation:": 6,
+    "Containment:": 6,
+}

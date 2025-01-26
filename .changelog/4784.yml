@@ -1,0 +1,4 @@
+changes:
+- description: Improved help message for the *--input* flag in the **update-release-notes** command.
+  type: feature
+pr_number: 4784

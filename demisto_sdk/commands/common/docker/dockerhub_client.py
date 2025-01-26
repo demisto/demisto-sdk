@@ -437,11 +437,15 @@ class DockerHubClient:
         """
         response = self.get_image_tag_metadata(docker_image, tag=tag)
         if creation_date := response.get("created"):
-            return datetime.strptime(creation_date, "%Y-%m-%dT%H:%M:%S.%fZ")
+            try:
+                return datetime.strptime(creation_date, "%Y-%m-%dT%H:%M:%S.%fZ")
+            except ValueError as e:
+                # Normalize 'created' ISO 8601 string from nanoseconds to microsecond precision for datetime compatibility
+                logger.debug(
+                    f'The following {creation_date=} value failed conversion to datetime, try to normalize nanosecond precision to microsecond and retry.')
+                return datetime.strptime(iso8601_nanoseconds_to_microseconds(creation_date), "%Y-%m-%dT%H:%M:%S.%fZ")
         else:
-            return datetime.strptime(
-                response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
-            )
+            return datetime.strptime(response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ")
 
     def get_latest_docker_image_tag(self, docker_image: str) -> Version:
         """
@@ -629,3 +633,26 @@ def get_gcloud_access_token() -> Optional[str]:
     except Exception as e:
         logger.debug(f"Failed to get access token: {str(e)}")
         return None
+
+
+def iso8601_nanoseconds_to_microseconds(iso8601_datetime_str: str) -> str:
+    """
+    Converts an ISO 8601 datetime string with nanoseconds precision to a string with microseconds precision.
+
+    Args:
+        iso8601_datetime_str (str): An ISO 8601 datetime string in the format %Y-%m-%dT%H:%M:%S.%fZ with nanoseconds precision.
+
+    Returns:
+        str: A ISO 8601 datetime string in the format %Y-%m-%dT%H:%M:%S.%fZ with microseconds precision.
+
+    Details:
+    Python's datetime module supports up to microseconds precision (six decimal places in the seconds fraction (e.g., 0.123456 seconds).
+    While iso8601 can support up to nanoseconds precision (nine decimal places in the seconds fraction (e.g., 0.123456789 seconds)).
+    """
+
+    datetime_until_decimal_point, nanoseconds_with_z = iso8601_datetime_str.split('.')
+    nanoseconds_with_z = nanoseconds_with_z.rstrip('Z')  # Remove the 'Z' at the end
+
+    microseconds = nanoseconds_with_z[:6]
+
+    return f"{datetime_until_decimal_point}.{microseconds}Z"

@@ -130,7 +130,7 @@ class Initiator:
         f"{TEMPLATE_INTEGRATION_NAME}_image.png",
         f"{TEMPLATE_INTEGRATION_NAME}_test.py",
         "README.md",
-        "command_examples",
+        "command_examples.txt",
     }
 
     DEFAULT_INTEGRATION_TEST_DATA_FILES = {

@@ -438,8 +438,8 @@ class DockerHubClient:
         response = self.get_image_tag_metadata(docker_image, tag=tag)
         if creation_date := response.get("created"):
             return datetime.strptime(
-                    iso8601_to_datetime_str(creation_date), "%Y-%m-%dT%H:%M:%S.%fZ"
-                )
+                iso8601_to_datetime_str(creation_date), "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
         else:
             return datetime.strptime(
                 response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ"

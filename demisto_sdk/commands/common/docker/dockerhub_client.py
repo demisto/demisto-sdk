@@ -437,14 +437,7 @@ class DockerHubClient:
         """
         response = self.get_image_tag_metadata(docker_image, tag=tag)
         if creation_date := response.get("created"):
-            try:
-                return datetime.strptime(creation_date, "%Y-%m-%dT%H:%M:%S.%fZ")
-            except ValueError as e:
-                logger.debug(
-                    f"Failed initial parsing attempt for '{creation_date=}', docker image {docker_image}:{tag}. Exception: {e}"
-                )
-                logger.debug("Attempting to normalize timestamp and retry parsing.")
-                return datetime.strptime(
+            return datetime.strptime(
                     iso8601_to_datetime_str(creation_date), "%Y-%m-%dT%H:%M:%S.%fZ"
                 )
         else:

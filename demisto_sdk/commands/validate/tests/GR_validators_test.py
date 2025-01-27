@@ -500,6 +500,22 @@ def repo_for_test(graph_repo):
     return graph_repo
 
 
+@pytest.fixture
+def repo_for_test_SearchAlerts(graph_repo):
+    # A repository with 3 packs:
+    pack_1 = graph_repo.create_pack("Pack1")
+    pack_1.pack_metadata.update({"marketplaces": [MarketplaceVersions.MarketplaceV2.value]})
+    pack_1.create_script(
+        "SearchIncidents", code='search_incidents()'
+    )
+    pack_1.create_script(
+        "MyScript2", code='demisto.execute_command("SearchAlerts", dArgs)'
+    )
+    return graph_repo
+
+
+
+
 def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
     repo_for_test: Repo,
 ):
@@ -523,6 +539,18 @@ def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
         content_items=[]
     )
     assert len(results) == 3
+
+
+
+def test_IsUsingUnknownContentValidator_verify_alert_to_incident(
+    repo_for_test_SearchAlerts: Repo,
+):
+    graph_interface = repo_for_test_SearchAlerts.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+        content_items=[]
+    )
+    assert not results
 
 
 @pytest.mark.parametrize(

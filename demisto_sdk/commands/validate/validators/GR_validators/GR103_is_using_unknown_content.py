@@ -3,7 +3,9 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -107,14 +109,25 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
                 or relationship.content_item_to.name
                 for relationship in content_item.uses
             ]
-            results.append(
-                ValidationResult(
-                    validator=self,
-                    message=self.error_message.format(
-                        content_item.name,
-                        ", ".join(f"'{name}'" for name in names_of_unknown_items),
-                    ),
-                    content_object=content_item,
+                    
+            
+            if names_of_unknown_items and content_item.marketplaces == [MarketplaceVersions.MarketplaceV2.value]:
+                names_of_unknown_items_to_search = names_of_unknown_items.copy()
+                for content_item in names_of_unknown_items_to_search:
+                    content_item_to_search = replace_alert_to_incident(content_item)
+                    if self.graph.search(object_id=content_item_to_search):
+                        names_of_unknown_items.remove(content_item)
+            
+            
+            if names_of_unknown_items:
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
+                            content_item.name,
+                            ", ".join(f"'{name}'" for name in names_of_unknown_items),
+                        ),
+                        content_object=content_item,
+                    )
                 )
-            )
         return results

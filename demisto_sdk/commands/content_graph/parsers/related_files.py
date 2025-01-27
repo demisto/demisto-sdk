@@ -88,7 +88,7 @@ class RelatedFile(ABC):
                 ) or git_util.is_file_exist_in_commit_or_branch(file_path, git_sha, False)
             except Exception:
                 logger.debug(
-                    f"Could not read {file_path=} from remote remote, defaulting to local branch"
+                    f"Could not read {file_path=} from remote branch, defaulting to local branch"
                 )
                 return file_path.exists()
         else:

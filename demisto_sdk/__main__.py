@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.tools import (
     is_sdk_defined_working_offline,
 )
 
-app = typer.Typer()
+app = typer.Typer(pretty_exceptions_enable=False)
 
 
 @logging_setup_decorator

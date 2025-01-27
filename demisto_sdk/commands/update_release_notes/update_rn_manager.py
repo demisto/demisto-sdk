@@ -172,6 +172,7 @@ class UpdateReleaseNotesManager:
             if not validate_manager.git_util:  # in case git utils can't be initialized.
                 raise git.InvalidGitRepositoryError("unable to connect to git.")
             validate_manager.setup_git_params()
+            self.prev_ver = validate_manager.prev_ver
             if self.given_pack:
                 with suppress_stdout():
                     # The Validator prints errors which are related to all changed files that
@@ -328,6 +329,10 @@ class UpdateReleaseNotesManager:
                 is_force=self.is_force,
                 existing_rn_version_path=existing_rn_version,
                 is_bc=self.is_bc,
+                prev_ver=self.prev_ver,
+            )
+            logger.info(
+                "Creating release notes is in progress... It may take about minute."
             )
             updated = update_pack_rn.execute_update()
             self.rn_path.append(update_pack_rn.rn_path)

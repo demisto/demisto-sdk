@@ -1851,7 +1851,7 @@ class TestValidators:
             "Packs/pack_id/test_data/file.json",
             "Packs/pack_id/Scripts/script_id/test_data/file.json",
             "Packs/pack_id/TestPlaybooks/test_data/file.json",
-            "Packs/pack_id/Integrations/integration_id/command_examples",
+            "Packs/pack_id/Integrations/integration_id/command_examples.txt",
             "Packs/pack_id/Integrations/integration_id/test.txt",
             "Packs/pack_id/.secrets-ignore",
         ],
@@ -2348,7 +2348,7 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
         "Packs/pack_id/test_data/file.json",
         "Packs/pack_id/Scripts/script_id/test_data/file.json",
         "Packs/pack_id/TestPlaybooks/test_data/file.json",
-        "Packs/pack_id/Integrations/integration_id/command_examples",
+        "Packs/pack_id/Integrations/integration_id/command_examples.txt",
         "Packs/pack_id/Integrations/integration_id/.vulture_whitelist.py",
     ],
 )

@@ -1259,7 +1259,7 @@ TESTS_AND_DOC_DIRECTORIES = TESTS_DIRECTORIES + DOCS_DIRECTORIES
 VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "Pipfile",
     "Pipfile.lock",
-    "command_examples",
+    "command_examples.txt",
     "pack_metadata.json",
     "testdata",
     "test_data",

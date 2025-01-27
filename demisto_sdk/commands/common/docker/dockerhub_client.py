@@ -440,7 +440,13 @@ class DockerHubClient:
             try:
                 return datetime.strptime(creation_date, "%Y-%m-%dT%H:%M:%S.%fZ")
             except ValueError as e:
-                return handle_datetime_conversion_error(creation_date, e)
+                logger.debug(
+                    f"Failed initial parsing attempt for '{creation_date=}', docker image {docker_image}:{tag}. Exception: {e}"
+                )
+                logger.debug("Attempting to normalize timestamp and retry parsing.")
+                return datetime.strptime(
+                    iso8601_to_datetime_str(creation_date), "%Y-%m-%dT%H:%M:%S.%fZ"
+                )
         else:
             return datetime.strptime(
                 response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -634,13 +640,12 @@ def get_gcloud_access_token() -> Optional[str]:
         return None
 
 
-def iso8601_nanoseconds_to_microseconds(iso8601_datetime_str: str) -> str:
+def iso8601_to_datetime_str(iso8601_time: str) -> str:
     """
-    Converts an ISO 8601 datetime string with nanoseconds precision to a string with microseconds precision.
-    Note: This function assumes the DockerHub datetime responses format being in ISO 8601 format.
+    Normalizes ISO 8601 datetime string to expected format.
 
     Args:
-        iso8601_datetime_str (str): An ISO 8601 datetime string in the format %Y-%m-%dT%H:%M:%S.%fZ with nanoseconds precision.
+        iso8601_datetime_str (str): An ISO 8601 datetime string in the format %Y-%m-%dT%H:%M:%S.%fZ.
 
     Returns:
         str: A ISO 8601 datetime string in the format %Y-%m-%dT%H:%M:%S.%fZ with microseconds precision.
@@ -649,46 +654,11 @@ def iso8601_nanoseconds_to_microseconds(iso8601_datetime_str: str) -> str:
     Python's datetime module supports up to microseconds precision (six decimal places in the seconds fraction (e.g., 0.123456 seconds).
     While iso8601 can support up to nanoseconds precision (nine decimal places in the seconds fraction (e.g., 0.123456789 seconds)).
     """
-    datetime_until_decimal_point, nanoseconds_with_z = iso8601_datetime_str.split(".")
-    nanoseconds_without_z = nanoseconds_with_z.rstrip("Z")  # Remove the 'Z' at the end
-    microseconds = nanoseconds_without_z[:6]
-
-    return f"{datetime_until_decimal_point}.{microseconds}Z"
-
-
-def handle_datetime_conversion_error(datetime_str: str, e: Exception) -> datetime:
-    """
-    Handle datetime conversion errors by attempting alternative parsing methods.
-
-    This function is called when the initial datetime parsing fails. It logs the error,
-    then attempts to parse the datetime string using different formats based on the
-    presence or absence of a decimal point in the string.
-    Note: This function assumes the DockerHub datetime responses format being in ISO 8601 format.
-
-    Args:
-        datetime_str (str): The datetime string that failed to parse initially.
-        e (Exception): The exception raised during the initial parsing attempt.
-
-    Returns:
-        datetime: A successfully parsed datetime object.
-
-    Raises:
-        ValueError: If all parsing attempts fail.
-    """
-    logger.debug(
-        f"The following {datetime_str=} value failed parsing to datetime object. Error: {str(e)}"
-    )
-    if "." in datetime_str:
-        logger.debug(
-            "Try to normalize nanosecond precision to microsecond and retry parsing."
+    # In case the time format is ISO 8601 - ISO supports 9 digits while datetime in python supports only 6,
+    if "." in iso8601_time:
+        timestamp_without_nanoseconds, nanoseconds = iso8601_time.rsplit(
+            ".", maxsplit=1
         )
-        return datetime.strptime(
-            iso8601_nanoseconds_to_microseconds(datetime_str),
-            "%Y-%m-%dT%H:%M:%S.%fZ",
-        )
-    else:
-        logger.debug("Try to parse timestamp without decimal point.")
-        return datetime.strptime(
-            datetime_str,
-            "%Y-%m-%dT%H:%M:%SZ",
-        )
+        fractional = nanoseconds.rstrip("Z")[:6]  # Keep only the first 6 digits.
+        iso8601_time = f"{timestamp_without_nanoseconds}.{fractional}Z"
+    return iso8601_time

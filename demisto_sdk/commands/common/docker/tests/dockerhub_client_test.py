@@ -8,8 +8,7 @@ from requests import Response, Session
 
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubClient,
-    handle_datetime_conversion_error,
-    iso8601_nanoseconds_to_microseconds,
+    iso8601_to_datetime_str,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 
@@ -298,78 +297,13 @@ def test_do_docker_hub_get_request_single_object(
         ("2024-11-19T12:41:58.591749Z", "2024-11-19T12:41:58.591749Z"),
     ],
 )
-def test_iso8601_nanoseconds_to_microseconds(datetime_str, response):
+def test_iso8601_to_datetime_str(datetime_str, response):
     """
     Given:
         - Datetime string with nanoseconds
     When:
-        - Calling iso8601_nanoseconds_to_microseconds
+        - Calling iso8601_to_datetime_str
     Then:
         - Ensure the datetime string is converted to microseconds
     """
-    assert iso8601_nanoseconds_to_microseconds(datetime_str) == response
-
-
-@pytest.mark.parametrize(
-    "datetime_str, exception, valid_iso8601",
-    [
-        (
-            "2024-11-19T12:41:58.591749197Z",
-            ValueError("Invalid datetime string: XYZ:T12:00:00.000000Z"),
-            "2024-11-19 12:41:58.591749",
-        ),
-        (
-            "2022-05-20T00:54:18Z",
-            ValueError("Invalid datetime string: XYZ:T12:00:00.000000Z"),
-            "2022-05-20 00:54:18",
-        ),
-    ],
-)
-def test_handle_datetime_conversion_error(datetime_str, exception, valid_iso8601):
-    """
-    Given:
-        - A datetime string that can be converted to a valid ISO8601 format
-        - An exception that would be raised by the initial conversion attempt
-
-    When:
-        - Calling handle_datetime_conversion_error with the datetime string and exception
-
-    Then:
-        - The function should return a correctly formatted ISO8601 datetime string
-        - The returned string should match the expected valid_iso8601 format
-    """
-    assert (
-        str(handle_datetime_conversion_error(datetime_str, exception)) == valid_iso8601
-    )
-
-
-@pytest.mark.parametrize(
-    "datetime_str, exception",
-    [
-        ("invalid_datetime", ValueError("Invalid datetime string: invalid_datetime")),
-        (
-            "2024-01-01T00:00:00.123.456Z",
-            ValueError("Invalid datetime string: 2024-01-01T00:00:00.123.456Z"),
-        ),
-        (
-            "2024-01-01T00:00:00",
-            ValueError("Invalid datetime string: 2024-01-01T00:00:00"),
-        ),
-    ],
-)
-def test_handle_datetime_conversion_error_fail(datetime_str, exception):
-    """
-    Given:
-        - An invalid datetime string
-        - An expected exception corresponding to the invalid input
-
-    When:
-        - Calling handle_datetime_conversion_error with the invalid datetime string and exception
-
-    Then:
-        - The function should raise a ValueError
-        - The raised exception should match the expected exception in both type and message
-    """
-    with pytest.raises(ValueError) as exc_info:
-        handle_datetime_conversion_error(datetime_str, exception)
-        assert str(exc_info.value) == str(exception)
+    assert iso8601_to_datetime_str(datetime_str) == response

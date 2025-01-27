@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.constants import (
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
@@ -505,6 +506,8 @@ class Initializer:
         basecontent_with_path_set: Set[BaseContent] = set()
         invalid_content_items: Set[Path] = set()
         non_content_items: Set[Path] = set()
+        git_util = GitUtil.from_content_path()
+        current_git_sha = git_util.get_current_git_branch_or_hash()
         for file_path, git_status in statuses_dict.items():
             if git_status == GitStatuses.DELETED:
                 continue
@@ -515,6 +518,7 @@ class Initializer:
                 obj = BaseContent.from_path(file_path, raise_on_exception=True)
                 if obj:
                     obj.git_status = git_status
+                    obj.git_sha = current_git_sha
                     # Check if the file exists
                     if (
                         git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED)

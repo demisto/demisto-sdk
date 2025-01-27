@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     EVENT_COLLECTOR,
     IGNORED_PACK_NAMES,
+    PB_RELEASE_NOTES_FORMAT,
     RN_HEADER_BY_FILE_TYPE,
     SIEM_ONLY_ENTITIES,
     XSIAM_DASHBOARDS_DIR,
@@ -1591,15 +1592,6 @@ def format_playbook_description(desc: str) -> str:
         The formatted description.
     """
     desc = f"\n{desc}"
-    key_phrases = (
-        (5, "This playbook addresses the following alerts:\n"),
-        (5, "Playbook Stages:\n"),
-        (5, "Requirements:\n"),
-        (6, "Triage:\n"),
-        (6, "Early Containment:\n"),
-        (6, "Investigation:\n"),
-        (6, "Containment:\n"),
-    )
-    for hdr, phrase in key_phrases:
-        desc = desc.replace(f"\n{phrase}", f'\n{"#" * hdr} {phrase}')
+    for phrase, hdr in PB_RELEASE_NOTES_FORMAT.items():
+        desc = desc.replace(f"\n{phrase}\n", f'\n{"#" * hdr} {phrase}\n')
     return desc.lstrip("\n")

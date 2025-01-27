@@ -1,0 +1,4 @@
+changes:
+- description: Added shorter flags ***-i*** for the ***--input*** option and ***-o*** for the ***--output*** option in the **split** command to enhance usability.
+  type: feature
+pr_number: 4785

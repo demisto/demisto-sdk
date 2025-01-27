@@ -517,8 +517,8 @@ class Initializer:
                     file_path, old_path = file_path
                 obj = BaseContent.from_path(file_path, raise_on_exception=True)
                 if obj:
-                    obj.git_status = git_status
                     obj.git_sha = current_git_sha
+                    obj.git_status = git_status
                     # Check if the file exists
                     if (
                         git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED)

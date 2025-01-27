@@ -295,6 +295,7 @@ def test_do_docker_hub_get_request_single_object(
     [
         ("2024-11-19T12:41:58.591749197Z", "2024-11-19T12:41:58.591749Z"),
         ("2024-11-19T12:41:58.591749Z", "2024-11-19T12:41:58.591749Z"),
+        ("2024-11-19T12:41:58Z", "2024-11-19T12:41:58Z"),
     ],
 )
 def test_iso8601_to_datetime_str(datetime_str, response):
@@ -302,8 +303,8 @@ def test_iso8601_to_datetime_str(datetime_str, response):
     Given:
         - Datetime string with nanoseconds
     When:
-        - Calling iso8601_to_datetime_str
+        - Fetching datetime string from docker image response
     Then:
-        - Ensure the datetime string is converted to microseconds
+        - Ensure the datetime string is normalized converted to microseconds
     """
     assert iso8601_to_datetime_str(datetime_str) == response

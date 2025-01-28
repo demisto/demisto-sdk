@@ -504,28 +504,26 @@ def repo_for_test(graph_repo):
 def repo_for_test_SearchAlerts_MarketplaceV2(graph_repo):
     # A repository with 3 packs:
     pack_1 = graph_repo.create_pack("Pack1")
-    pack_1.pack_metadata.update({"marketplaces": [MarketplaceVersions.MarketplaceV2.value]})
-    pack_1.create_script(
-        "SearchIncidents", code='search_incidents()'
+    pack_1.pack_metadata.update(
+        {"marketplaces": [MarketplaceVersions.MarketplaceV2.value]}
     )
+    pack_1.create_script("SearchIncidents", code="search_incidents()")
     pack_1.create_script(
         "MyScript2", code='demisto.execute_command("SearchAlerts", dArgs)'
     )
     return graph_repo
+
 
 @pytest.fixture
 def repo_for_test_SearchAlerts_XSOAR(graph_repo):
     # A repository with 3 packs:
     pack_1 = graph_repo.create_pack("Pack1")
     pack_1.pack_metadata.update({"marketplaces": [MarketplaceVersions.XSOAR.value]})
-    pack_1.create_script(
-        "SearchIncidents", code='search_incidents()'
-    )
+    pack_1.create_script("SearchIncidents", code="search_incidents()")
     pack_1.create_script(
         "MyScript2", code='demisto.execute_command("SearchAlerts", dArgs)'
     )
     return graph_repo
-
 
 
 def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
@@ -553,7 +551,6 @@ def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
     assert len(results) == 3
 
 
-
 def test_IsUsingUnknownContentValidator_verify_alert_to_incident_MarketplaceV2(
     repo_for_test_SearchAlerts_MarketplaceV2: Repo,
 ):
@@ -574,6 +571,7 @@ def test_IsUsingUnknownContentValidator_verify_alert_to_incident_MarketplaceV2(
     )
     assert not results
 
+
 def test_IsUsingUnknownContentValidator_verify_alert_to_incident_XSOAR(
     repo_for_test_SearchAlerts_XSOAR: Repo,
 ):
@@ -593,6 +591,7 @@ def test_IsUsingUnknownContentValidator_verify_alert_to_incident_XSOAR(
         content_items=[]
     )
     assert len(results) == 1
+
 
 @pytest.mark.parametrize(
     "item_index, expected_len_results", [(0, 1), (1, 0), (2, 1), (3, 1), (4, 0)]

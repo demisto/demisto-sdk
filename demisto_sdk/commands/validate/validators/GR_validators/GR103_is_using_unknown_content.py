@@ -110,7 +110,9 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
                 for relationship in content_item.uses
             ]
 
-            if names_of_unknown_items and content_item.marketplaces == [MarketplaceVersions.MarketplaceV2.value]:
+            if names_of_unknown_items and content_item.marketplaces == [
+                MarketplaceVersions.MarketplaceV2.value
+            ]:
                 # in MarketplaceV2 content items that includes the word 'incident' in its name replaced with 'alert'
                 names_of_unknown_items_to_search = names_of_unknown_items.copy()
                 for content_item in names_of_unknown_items_to_search:

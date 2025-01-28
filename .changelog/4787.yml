@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where *GR103* falsely failed when content items contains the word 'alert' in XSIAM.
+  type: fix
+pr_number: 4785

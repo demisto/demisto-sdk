@@ -1,17 +1,17 @@
 # Changelog
 ## 1.34.1 (2025-01-28)
 ### Feature
-* Added support for command_examples paths to the `validate-content-paths` **pre-commit** hook. [#4775](https://github.com/demisto/demisto-sdk/pull/4775)
-* Added shorter flags ***-i*** for the ***--input*** option and ***-o*** for the ***--output*** option in the **split** command to enhance usability. [#4785](https://github.com/demisto/demisto-sdk/pull/4785)
+* Added support for `command_examples` paths to the `validate-content-paths` in the ***demisto-sdk pre-commit*** hook. [#4775](https://github.com/demisto/demisto-sdk/pull/4775)
+* Added shorter flags *-i* for the *--input* option and *-o* for the *--output* option in the ***demisto-sdk split*** command to enhance usability. [#4785](https://github.com/demisto/demisto-sdk/pull/4785)
 
 ### Fix
-* Fix ST111 error message [#4779](https://github.com/demisto/demisto-sdk/pull/4779)
-* The validate code error `RN114` will no longer be raised when the latest playbook release notes format is used. [#4782](https://github.com/demisto/demisto-sdk/pull/4782)
-* Fixed an issue where RN111 would fail when it should not when the docker entry message was missing. [#4781](https://github.com/demisto/demisto-sdk/pull/4781)
+* Fixed *ST111* validation error message. [#4779](https://github.com/demisto/demisto-sdk/pull/4779)
+* Fixed an issue in *RN114* validation where the validation's error will no longer be raised when the latest playbook release notes format is used. [#4782](https://github.com/demisto/demisto-sdk/pull/4782)
+* Fixed an issue where *RN111* validation would fail when a docker entry message was missing. [#4781](https://github.com/demisto/demisto-sdk/pull/4781)
 
 ### Internal
 * Fixed an issue in the Docker proxy mechanism where ISO 8601 timestamps with nanosecond precision were not properly parsed. [#4783](https://github.com/demisto/demisto-sdk/pull/4783)
-* The mocking mechanism in the ***test-content*** command will be removed in the next version of the Demisto SDK. [#4772](https://github.com/demisto/demisto-sdk/pull/4772)
+* The mocking mechanism in the ***demisto-sdk test-content*** command will be removed in upcoming versions of the demisto-sdk. [#4772](https://github.com/demisto/demisto-sdk/pull/4772)
 
 
 ## 1.34.0 (2025-01-21)

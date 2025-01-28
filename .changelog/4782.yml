@@ -1,0 +1,4 @@
+changes:
+- description: The validate code error `RN114` will no longer be raised when the latest playbook release notes format is used.
+  type: fix
+pr_number: 4782

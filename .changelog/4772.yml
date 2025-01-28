@@ -1,0 +1,4 @@
+changes:
+- description: The mocking mechanism in the ***test-content*** command will be removed in the next version of the Demisto SDK.
+  type: internal
+pr_number: 4772

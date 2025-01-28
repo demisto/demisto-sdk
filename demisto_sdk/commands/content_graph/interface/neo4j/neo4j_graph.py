@@ -724,7 +724,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if output_path:
             output_path = output_path / marketplace.value
             logger.info(f"Saving content graph in {output_path}.zip")
-            self.zip_import_dir(output_path)
+            self.zip_import_dir(output_path)  # type:ignore[arg-type]
 
     def clean_graph(self):
         with self.driver.session() as session:

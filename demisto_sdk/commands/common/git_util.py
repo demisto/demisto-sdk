@@ -206,7 +206,7 @@ class GitUtil:
         try:
             commit = self.get_commit(commit_or_branch, from_remote=from_remote)
         except CommitOrBranchNotFoundError:
-            logger.exception(f"Could not get commit {commit_or_branch}")
+            logger.debug(f"Could not get commit {commit_or_branch}")
             return False
 
         path = str(self.path_from_git_root(path))

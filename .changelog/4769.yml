@@ -1,4 +1,6 @@
 changes:
-- description: Added VC validation to support valdations of version_config file.
-  type: internal
+- description: Added new *VC100* validation. Validates that version_config file schema is valid.
+  type: Internal
+- description: Added new *VC100* validation. Validates that versions in version_config file are continuous.
+  type: Internal
 pr_number: 4769

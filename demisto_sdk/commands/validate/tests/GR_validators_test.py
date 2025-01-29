@@ -502,7 +502,6 @@ def repo_for_test(graph_repo):
 
 @pytest.fixture
 def repo_for_test_SearchAlerts_MarketplaceV2(graph_repo):
-    # A repository with 3 packs:
     pack_1 = graph_repo.create_pack("Pack1")
     pack_1.pack_metadata.update(
         {"marketplaces": [MarketplaceVersions.MarketplaceV2.value]}
@@ -516,7 +515,6 @@ def repo_for_test_SearchAlerts_MarketplaceV2(graph_repo):
 
 @pytest.fixture
 def repo_for_test_SearchAlerts_XSOAR(graph_repo):
-    # A repository with 3 packs:
     pack_1 = graph_repo.create_pack("Pack1")
     pack_1.pack_metadata.update({"marketplaces": [MarketplaceVersions.XSOAR.value]})
     pack_1.create_script("SearchIncidents", code="search_incidents()")

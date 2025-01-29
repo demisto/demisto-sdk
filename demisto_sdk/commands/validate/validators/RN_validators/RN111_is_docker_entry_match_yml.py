@@ -131,7 +131,7 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
         )
         rn_items = content_item.pack.release_note.file_content.split("##### ")
         for item in rn_items:
-            if not item.startswith(content_item.name):
+            if not item.startswith(content_item.display_name or content_item.name):
                 continue
             for entry in item.split("\n"):
                 if entry.startswith("- Updated the Docker image to: "):

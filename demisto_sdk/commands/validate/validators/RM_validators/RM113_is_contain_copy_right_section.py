@@ -30,6 +30,7 @@ class IsContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(", ".join(invalid_lines)),
                 content_object=content_item,
+                path=content_item.readme.file_path,
             )
             for content_item in content_items
             if (

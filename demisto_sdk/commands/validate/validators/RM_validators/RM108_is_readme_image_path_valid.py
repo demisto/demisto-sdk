@@ -16,16 +16,18 @@ ContentTypes = Union[Script, Playbook, Pack]
 class ReadmeRelativeImagePathValidator(RelativeImagePathValidator[ContentTypes]):
     related_file_type = [RelatedFileType.README]
 
-    def validate_content_items(self, content_item: ContentTypes) -> str:
+    def validate_content_items(self, content_item: ContentTypes) -> dict:
         """Check if the content items are valid.
 
         Arguments:
             content_item {ContentTypes} -- The content item to check.
 
         Returns:
-            str -- The error message if the content item isn't valid.
+            dict -- The error message for each related file mapped by related file path.
         """
-        error_message = self.detect_absolute_image_paths(
-            content_item.readme.file_content
-        ) + self.verify_relative_saved_in_doc_files(content_item.readme.file_content)
-        return error_message
+        return {
+            str(content_item.readme.file_path): self.detect_absolute_image_paths(
+                content_item.readme.file_content
+            )
+            + self.verify_relative_saved_in_doc_files(content_item.readme.file_content)
+        }

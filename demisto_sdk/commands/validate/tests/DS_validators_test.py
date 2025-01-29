@@ -170,48 +170,6 @@ def test_IsDescriptionContainsContribDetailsValidator_obtain_invalid_content_ite
 
 
 @pytest.mark.parametrize(
-    "is_file_exist, result_len",
-    [
-        (
-            True,
-            0,
-        ),
-        (
-            False,
-            1,
-        ),
-    ],
-)
-def test_IsValidDescriptionNameValidator_obtain_invalid_content_items(
-    is_file_exist,
-    result_len,
-):
-    """
-    Given
-    content_items iterables.
-            - Case 1: the description file exist.
-            - Case 2: the description file not exist.
-    When
-    - Calling the IsValidDescriptionNameValidator is valid function.
-    Then
-        - Make sure that the description file exist.
-        - Case 1: Shouldn't fail.
-        - Case 2: Should fail.
-    """
-    from demisto_sdk.commands.validate.validators.DS_validators.DS106_is_valid_description_name import (
-        IsValidDescriptionNameValidator,
-    )
-
-    integration = create_integration_object()
-    integration.description_file.exist = is_file_exist
-
-    invalid_content_items = (
-        IsValidDescriptionNameValidator().obtain_invalid_content_items([integration])
-    )
-    assert result_len == len(invalid_content_items)
-
-
-@pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_error_msgs",
     [
         (

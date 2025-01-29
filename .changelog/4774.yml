@@ -1,0 +1,8 @@
+changes:
+- description: Fixed an issue where BA102 (Invalid content items) would mistakenly fail for integration and script nested folders.
+  type: fix
+- description: Fixed an issue where some validations would fail with the wrong file path in the error message.
+  type: fix
+- description: Removed DS106 "is valid description name" since it was duplicated by DS104 "no description file" from the new validate.
+  type: breaking
+pr_number: 4774

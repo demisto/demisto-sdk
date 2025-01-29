@@ -72,6 +72,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                             content_item_message=content_item_message,
                         ),
                         content_object=content_item,
+                        path=content_item.release_note.file_path,
                     )
                 )
         return validator_results

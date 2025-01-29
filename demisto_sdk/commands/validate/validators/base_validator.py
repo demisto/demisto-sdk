@@ -67,6 +67,7 @@ VALIDATION_CATEGORIES = {
     "XD": "XSIAM Dashboard",
     "GR": "Graph",
     "TR": "Trigger",
+    "VC": "Version Config",
 }
 
 

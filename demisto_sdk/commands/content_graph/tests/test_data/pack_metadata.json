@@ -24,6 +24,11 @@
         "CommonPlaybooks": {
             "mandatory": true,
             "display_name": "Common Playbooks"
+        },
+        "TestDependencyPack": {
+            "mandatory": true,
+            "display_name": "Common Playbooks",
+            "minVersion": "1.2.3"
         }
     },
     "marketplaces": [

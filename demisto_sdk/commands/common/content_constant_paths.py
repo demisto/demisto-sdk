@@ -2,9 +2,9 @@ from pathlib import Path
 
 from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME, TESTS_DIR
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_content_path
+import os
 
-CONTENT_PATH: Path = Path(get_content_path())
+CONTENT_PATH: Path = Path(os.getenv('DEMISTO_SDK_CONTENT_PATH', '.'))
 
 ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = CONTENT_PATH / "all_packs_dependencies.json"
 

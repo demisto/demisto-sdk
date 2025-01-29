@@ -131,7 +131,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
-from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.git_util import GitRepoManager, GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
@@ -363,7 +363,7 @@ def src_root() -> Path:
     Returns:
         Path: src root path.
     """
-    git_dir = GitUtil().repo.working_tree_dir
+    git_dir = GitRepoManager.get_repo().working_tree_dir
 
     return Path(git_dir) / "demisto_sdk"  # type: ignore
 
@@ -494,6 +494,7 @@ def get_remote_file_from_api(
     Returns:
         bytes | Dict | List: raw response of the file or as a python object (list, dict)
     """
+    logger.debug(f'get_remote_file_from_api {full_file_path=}')
     if not git_content_config:
         git_content_config = GitContentConfig()
     if git_content_config.git_provider == GitProvider.GitLab:
@@ -867,9 +868,10 @@ def get_file(
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
+    content_path = get_content_path()
     if git_sha:
         if file_path.is_absolute():
-            file_path = file_path.relative_to(get_content_path())
+            file_path = file_path.relative_to(content_path)
         return get_remote_file(
             str(file_path), tag=git_sha, return_content=return_content
         )
@@ -877,7 +879,7 @@ def get_file(
     type_of_file = file_path.suffix.lower()
 
     if not file_path.exists():
-        file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
+        file_path = Path(content_path) / file_path  # type: ignore[arg-type]
     if not file_path.exists():
         raise FileNotFoundError(file_path)
     try:
@@ -2047,7 +2049,7 @@ def is_external_repository() -> bool:
 
     """
     try:
-        git_repo = GitUtil().repo
+        git_repo = GitRepoManager.get_repo()
     except git.InvalidGitRepositoryError:
         return True
     return Path(git_repo.working_dir, ".private-repo-settings").exists()
@@ -2059,7 +2061,7 @@ def is_external_repo() -> bool:
 
     """
     try:
-        remote = GitUtil().repo.remote()
+        remote = GitRepoManager.get_repo().remote()
         return (
             not remote
             or (not (parsed_url := giturlparse.parse(remote.url)))
@@ -2121,39 +2123,55 @@ def get_content_path(relative_path: Optional[Path] = None) -> Path:
                 relative_path.absolute().parent
                 if relative_path.name == "Packs"
                 else find_pack_folder(relative_path.absolute()).parent.parent
-            )
-    try:
-        if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
-            git_repo = GitUtil(Path(content_path), search_parent_directories=False).repo
-            logger.debug(f"Using content path: {content_path}")
-        else:
-            git_repo = GitUtil().repo
 
-        try:
-            remote_url = git_repo.remote(name=DEMISTO_GIT_UPSTREAM).urls.__next__()
-        except ValueError:
-            if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
-                logger.warning(
-                    f"Could not find remote with name {DEMISTO_GIT_UPSTREAM} for repo {git_repo.working_dir}"
-                )
-            remote_url = ""
-        is_fork_repo = "content" in remote_url
-        is_external_repo = is_external_repository()
+            )
+    content_path = os.getenv("DEMISTO_SDK_CONTENT_PATH") or "."
+    # try:
+    #     git_repo = GitRepoManager.get_repo(Path(content_path) if content_path else None)
 
-        if not is_fork_repo and not is_external_repo:
-            raise git.InvalidGitRepositoryError
-        if not git_repo.working_dir:
-            return Path.cwd()
-        return Path(git_repo.working_dir)
-    except (git.InvalidGitRepositoryError, git.NoSuchPathError):
-        if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
-            logger.info(
-                "Please run demisto-sdk in a content repository. <d>Set the DEMISTO_SDK_IGNORE_CONTENT_WARNING environment variable to suppress this warning.</d>"
-            )
-            os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = (
-                "true"  # temporary: variables set in runtime are automatically removed
-            )
-    return Path(".")
+    #     try:
+
+
+    #         remote = git_repo.remote(name=DEMISTO_GIT_UPSTREAM)
+    #         urls = list(remote.urls)
+
+    #         if not urls:
+    #             git_repo.git.status()
+    #             raise ValueError(f"Remote '{DEMISTO_GIT_UPSTREAM}' has no URLs configured.")
+    #         else:
+    #             # git_repo.git.show(f'{str(urls)}', '--oneline')
+    #             remote_url = urls[0]
+
+
+    #         # remote_url = git_repo.remote(name=DEMISTO_GIT_UPSTREAM).urls.__next__()
+    #     except (ValueError, git.GitCommandError, Exception):
+    #         if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
+    #             logger.warning(
+    #                 f"Could not find remote with name {DEMISTO_GIT_UPSTREAM} for repo {git_repo.working_dir}"
+    #             )
+    #         remote_url = ""
+
+    #     is_fork_repo = "content" in remote_url
+    #     # is_external_repo = is_external_repository()
+
+    #     # if not is_fork_repo and not is_external_repo:
+    #         # raise git.InvalidGitRepositoryError
+
+    #     # if not git_repo.working_dir:
+    #         # return Path.cwd()
+
+    #     # return Path(git_repo.working_dir)
+
+    # except (git.InvalidGitRepositoryError, git.NoSuchPathError):
+        # if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
+        #     logger.info(
+        #         "Please run demisto-sdk in a content repository. <d>Set the DEMISTO_SDK_IGNORE_CONTENT_WARNING environment variable to suppress this warning.</d>"
+        #     )
+        #     os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = (
+        #         "true"  # temporary: variables set in runtime are automatically removed
+        #     )
+    # return Path(".")
+    return Path(content_path)
 
 
 def run_command_os(
@@ -2240,7 +2258,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         str: relative path of file in content repo.
     """
     try:
-        git_repo = GitUtil().repo
+        git_repo = GitRepoManager.get_repo()
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
@@ -3255,7 +3273,7 @@ def extract_docker_image_from_text(text: str, with_no_tag: bool = False):
 
 def get_current_repo() -> Tuple[str, str, str]:
     try:
-        git_repo = GitUtil().repo
+        git_repo = GitRepoManager.get_repo()
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
         host = parsed_git.host
         if "@" in host:

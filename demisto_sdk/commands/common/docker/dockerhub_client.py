@@ -237,7 +237,7 @@ class DockerHubClient:
             # received only a single record
             return raw_json_response
 
-        logger.debug(f'Received {raw_json_response.get("count")} objects from {url=}')
+        logger.debug(f"Received {raw_json_response.get('count')} objects from {url=}")
         results = raw_json_response.get(results_key) or []
         # do pagination if needed
         if next_page_url := raw_json_response.get("next"):
@@ -437,7 +437,9 @@ class DockerHubClient:
         """
         response = self.get_image_tag_metadata(docker_image, tag=tag)
         if creation_date := response.get("created"):
-            return datetime.strptime(creation_date, "%Y-%m-%dT%H:%M:%S.%fZ")
+            return datetime.strptime(
+                iso8601_to_datetime_str(creation_date), "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
         else:
             return datetime.strptime(
                 response.get("last_updated", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -629,3 +631,27 @@ def get_gcloud_access_token() -> Optional[str]:
     except Exception as e:
         logger.debug(f"Failed to get access token: {str(e)}")
         return None
+
+
+def iso8601_to_datetime_str(iso8601_time: str) -> str:
+    """
+    Normalizes ISO 8601 datetime string to expected format.
+
+    Args:
+        iso8601_datetime_str (str): An ISO 8601 datetime string in the format %Y-%m-%dT%H:%M:%S.%fZ.
+
+    Returns:
+        str: A ISO 8601 datetime string in the format %Y-%m-%dT%H:%M:%S.%fZ with microseconds precision.
+
+    Details:
+    Python's datetime module supports up to microseconds precision (six decimal places in the seconds fraction (e.g., 0.123456 seconds).
+    While iso8601 can support up to nanoseconds precision (nine decimal places in the seconds fraction (e.g., 0.123456789 seconds)).
+    """
+    # In case the time format is ISO 8601 - ISO supports 9 digits while datetime in python supports only 6,
+    if "." in iso8601_time:
+        timestamp_without_nanoseconds, nanoseconds = iso8601_time.rsplit(
+            ".", maxsplit=1
+        )
+        fractional = nanoseconds.rstrip("Z")[:6]  # Keep only the first 6 digits.
+        iso8601_time = f"{timestamp_without_nanoseconds}.{fractional}Z"
+    return iso8601_time

@@ -294,7 +294,9 @@ def test_pack_metadata_marketplacev2(
     assert metadata_modeling_rule.get("name") == "My Modeling Rule"
 
 
-def test_pack_metadata_dependencies(git_repo: Repo, tmp_path: Path, mocker, monkeypatch):
+def test_pack_metadata_dependencies(
+    git_repo: Repo, tmp_path: Path, mocker, monkeypatch
+):
     """
     Given:
         - A repository with two packs, TestPack and TestDependencyPack.
@@ -322,7 +324,9 @@ def test_pack_metadata_dependencies(git_repo: Repo, tmp_path: Path, mocker, monk
             content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
 
     assert (tmp_path / "TestPack" / "metadata.json").exists()
-    metadata_dependencies = get_json(tmp_path / "TestPack" / "metadata.json").get("dependencies") or {}
+    metadata_dependencies = (
+        get_json(tmp_path / "TestPack" / "metadata.json").get("dependencies") or {}
+    )
 
     assert metadata_dependencies.get("TestDependencyPack")
     assert metadata_dependencies.get("TestDependencyPack", {})["mandatory"]

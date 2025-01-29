@@ -499,6 +499,18 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             help="This command generates a test playbook from integration/script YAML arguments.",
         )(generate_test_playbook)
 
+    if command_name == "test-use-case" or register_all:
+        from demisto_sdk.commands.test_content.test_use_case.test_use_case_setup import (
+            run_test_use_case,
+        )
+
+        app.command(
+            name="test-use-case",
+            hidden=True,
+            no_args_is_help=True,
+            help="Test Use Cases.",
+        )(run_test_use_case)
+
 
 # Register relevant commands to Demisto-SDK app based on command-line arguments.
 args = sys.argv[1:]

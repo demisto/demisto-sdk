@@ -242,7 +242,7 @@ class PackMetadata(BaseModel):
         return {
             r.content_item_to.object_id: {
                 "mandatory": r.mandatorily,
-                # Get the minVersion either from the pack_metadata or from graph calculation
+                # Get the minVersion either from the pack_metadata if exists, or from graph calculation
                 "minVersion": r.target_version or r.content_item_to.current_version,  # type:ignore[attr-defined]
                 "author": self._get_author(
                     r.content_item_to.author,  # type:ignore[attr-defined]

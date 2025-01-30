@@ -294,14 +294,15 @@ def test_pack_metadata_marketplacev2(
     assert metadata_modeling_rule.get("name") == "My Modeling Rule"
 
 
-def test_pack_metadata_dependencies(
+def test_pack_metadata_dependencies_min_version(
     git_repo: Repo, tmp_path: Path, mocker, monkeypatch
 ):
     """
     Given:
         - A repository with two packs, TestPack and TestDependencyPack.
     When:
-        - In TestPack's pack_metadata is mentioned that it is dependent mandatorily on TestDependencyPack with version 1.2.3 .
+        - TestDependencyPack has current version 2.0.0.
+        - TestPack's pack_metadata has TestDependencyPack as a dependency with minVersion 1.2.3.
     Then:
         - Make sure that the dependency pack exists in the metadata.
         - Make sure that the metadata contains the dependency with mandatory=True.
@@ -313,8 +314,21 @@ def test_pack_metadata_dependencies(
     mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", return_value=set())
 
     pack = git_repo.create_pack("TestPack")
-    git_repo.create_pack("TestDependencyPack")
-    pack.pack_metadata.write_json(load_json("pack_metadata.json"))
+    dependency_pack = git_repo.create_pack("TestDependencyPack")
+
+    # Sets the currentVersion of the dependency pack to 2.0.0
+    dependency_pack.pack_metadata.update({"currentVersion": "2.0.0"})
+
+    # Sets the dependency minVersion of TestDependencyPack to 1.2.3
+    pack.pack_metadata.update({
+        "dependencies": {
+            "TestDependencyPack": {
+                "mandatory": True,
+                "display_name": "Test dependency pack",
+                "minVersion": "1.2.3"
+            }
+        }
+    })
 
     with ChangeCWD(git_repo.path):
         with ContentGraphInterface() as interface:

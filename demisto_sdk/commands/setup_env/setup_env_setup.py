@@ -96,12 +96,8 @@ def setup_env_command(
     )
 
     # If no input key was found, try to resolve arg
-    if not resolved_file_paths:
-        file_paths = (
-            tuple(Path(path).resolve() for path in file_paths)
-            if file_paths
-            else tuple()
-        )
+    if not resolved_file_paths and file_paths:
+        file_paths = tuple(Path(path).resolve() for path in file_paths)
         resolved_file_paths = file_paths
 
     setup_env(

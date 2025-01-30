@@ -320,15 +320,17 @@ def test_pack_metadata_dependencies_min_version(
     dependency_pack.pack_metadata.update({"currentVersion": "2.0.0"})
 
     # Sets the dependency minVersion of TestDependencyPack to 1.2.3
-    pack.pack_metadata.update({
-        "dependencies": {
-            "TestDependencyPack": {
-                "mandatory": True,
-                "display_name": "Test dependency pack",
-                "minVersion": "1.2.3"
+    pack.pack_metadata.update(
+        {
+            "dependencies": {
+                "TestDependencyPack": {
+                    "mandatory": True,
+                    "display_name": "Test dependency pack",
+                    "minVersion": "1.2.3",
+                }
             }
         }
-    })
+    )
 
     with ChangeCWD(git_repo.path):
         with ContentGraphInterface() as interface:

@@ -77,8 +77,28 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN116_first_level_he
                     paths=["currentVersion"],
                     values=["1.0.0"],
                 ),
+                create_pack_object(
+                    paths=["currentVersion"],
+                    values=["2.0.5"],
+                    release_note_content="This is an invalid release note %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%",
+                ),  # shouldn't pass as it has an invalid release note
+                create_pack_object(
+                    paths=["currentVersion"],
+                    values=["2.0.5"],
+                    release_note_content="This is an invalid release note %%UPDATE_CONTENT_ITEM_DESCRIPTION%%",
+                ),  # shouldn't pass as it has an invalid release note
+                create_pack_object(
+                    paths=["currentVersion"],
+                    values=["2.0.5"],
+                    release_note_content="This is an invalid release note %%UPDATE_CONTENT_ITEM_NAME%%",
+                ),  # shouldn't pass as it has an invalid release note
+                create_pack_object(
+                    paths=["currentVersion"],
+                    values=["2.0.5"],
+                    release_note_content="This is an invalid release note %%UPDATE_CONTENT_ITEM_TYPE%%",
+                ),  # shouldn't pass as it has an invalid release note
             ],
-            3,
+            7,
             [
                 "Please complete the release notes and ensure all placeholders are filled in."
                 "For common troubleshooting steps, please review the documentation found here: "
@@ -95,12 +115,16 @@ def test_release_note_filled_out_validator(
     """
     Given:
     - content_items.
-        - Case 1: Five pack_metadatas:
+        - Case 1: nine pack_metadatas:
             - 1 pack with valid release note.
             - 1 pack with an invalid empty release note.
             - 1 pack with invalid release note.
             - 1 pack with invalid release note.
             - 1 pack without any release notes.
+            - 1 pack with invalid release note.
+            - 1 pack with invalid release note.
+            - 1 pack with invalid release note.
+            - 1 pack with invalid release note.
 
     When:
     - Calling the IsReleaseNotesFilledOutValidator obtain_invalid_content_items function.
@@ -1065,16 +1089,18 @@ def test_IsValidRnHeadersFormatValidator_obtain_invalid_content_items():
         - Case 3: RN with invalid second level header "Test" starting with 5 #'s followed by several spaces.
         - Case 4: RN with invalid second level header "integration-test" surrounded by '**'.
         - Case 5: RN with invalid second level header "test" surrounded by '**'.
+        - Case 6: RN with headers in the playbook RN format.
     When:
     - Calling the IsValidRnHeadersFormatValidator obtain_invalid_content_items function.
 
     Then:
     - Make sure the right amount of pack metadata failed, and that the right error message is returned.
-        - Case 1: Shouldn't fail anything.
-        - Case 2: Shouldn't fail anything.
+        - Case 1: Should pass.
+        - Case 2: Should pass.
         - Case 3: Should fail.
         - Case 4: Should fail.
         - Case 5: Should fail.
+        - Case 6: Should pass.
     """
     pack_1 = create_pack_object(
         paths=["currentVersion"],
@@ -1101,7 +1127,12 @@ def test_IsValidRnHeadersFormatValidator_obtain_invalid_content_items():
         values=["2.0.5"],
         release_note_content="#### Incident Fields\n- **test**\n- Added x y z",
     )
-    content_items = [pack_1, pack_2, pack_3, pack_4, pack_5]
+    pack_6 = create_pack_object(
+        paths=["currentVersion"],
+        values=["2.0.5"],
+        release_note_content="#### Playbooks\n##### New: name\n##### Playbook Stages:\n- Added x y z",
+    )
+    content_items = [pack_1, pack_2, pack_3, pack_4, pack_5, pack_6]
     validator = IsValidRnHeadersFormatValidator()
     results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == 3

@@ -18,6 +18,7 @@ class ConfiguredValidations(NamedTuple):
     warning: List[str] = []
     ignorable_errors: List[str] = []
     support_level_dict: Dict[str, Dict[str, List[str]]] = {}
+    path_based_section: List[str] = []
 
 
 class ConfigReader:
@@ -63,6 +64,9 @@ class ConfigReader:
         select = explicitly_selected or sorted(section.get("select", []))
         warning = sorted(section.get("warning", []))
         ignorable = sorted(self.config_file_content.get("ignorable_errors", []))
+        path_based_section = sorted(
+            self.config_file_content.get(PATH_BASED_VALIDATIONS, {}).get("select", [])
+        )
         support_level_dict = (
             self.config_file_content.get("support_level", {})
             if not ignore_support_level
@@ -98,4 +102,5 @@ class ConfigReader:
             warning=warning,
             ignorable_errors=ignorable,
             support_level_dict=support_level_dict,
+            path_based_section=path_based_section,
         )

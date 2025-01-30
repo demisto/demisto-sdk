@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.tools import (
     is_sdk_defined_working_offline,
 )
 
-app = typer.Typer()
+app = typer.Typer(pretty_exceptions_enable=False)
 
 
 @logging_setup_decorator
@@ -411,6 +411,12 @@ def register_commands(_args: list[str] = []):  # noqa: C901
         )(error_code)
 
     if command_name == "test-content" or register_all:
+        message = typer.style(
+            "Warning: The mocking mechanism will be removed in the next release of the Demisto SDK.",
+            fg=typer.colors.RED,
+        )
+        typer.echo(message)
+
         from demisto_sdk.commands.test_content.content_test_setup import test_content
 
         app.command(
@@ -482,6 +488,28 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             name="generate-unit-tests",
             help="This command generates unit tests automatically from an integration's Python code.",
         )(generate_unit_tests)
+
+    if command_name == "generate-test-playbook" or register_all:
+        from demisto_sdk.commands.generate_test_playbook.generate_test_playbook_setup import (
+            generate_test_playbook,
+        )
+
+        app.command(
+            name="generate-test-playbook",
+            help="This command generates a test playbook from integration/script YAML arguments.",
+        )(generate_test_playbook)
+
+    if command_name == "test-use-case" or register_all:
+        from demisto_sdk.commands.test_content.test_use_case.test_use_case_setup import (
+            run_test_use_case,
+        )
+
+        app.command(
+            name="test-use-case",
+            hidden=True,
+            no_args_is_help=True,
+            help="Test Use Cases.",
+        )(run_test_use_case)
 
 
 # Register relevant commands to Demisto-SDK app based on command-line arguments.

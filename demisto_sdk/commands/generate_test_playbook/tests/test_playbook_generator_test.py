@@ -217,7 +217,7 @@ def test_generate_test_playbook_with_command_examples(
         Ensure that the only tasks which be created are the given commands in the examples file or in the commands argument.
         Ensure that the given arguments in the examples file was generate into the test playbook tasks
     """
-    command_examples = tmp_path / "command_examples"
+    command_examples = tmp_path / "command_examples.txt"
     output_tpb = tmp_path / "TestPlaybook"
     output_tpb.mkdir()
 
@@ -254,7 +254,7 @@ def test_generate_test_playbook_with_command_examples(
     "command_examples, excepted_result",
     [
         (
-            "command_examples",
+            "command_examples.txt",
             {
                 "zoom-create-meeting": {
                     "topic": "Meeting",
@@ -284,7 +284,7 @@ def test_get_command_examples(tmp_path, command_examples, excepted_result):
         Ensure the result as expected.
     """
 
-    if command_examples == "command_examples":
+    if command_examples == "command_examples.txt":
         command_examples_arg = tmp_path / command_examples
         entity_type = "integration"
         with open(command_examples_arg, "w+") as ce:

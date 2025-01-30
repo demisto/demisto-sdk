@@ -52,6 +52,7 @@ AUTH_ID = "XSIAM_AUTH_ID"
 XSIAM_TOKEN = "XSIAM_TOKEN"
 XSIAM_COLLECTOR_TOKEN = "XSIAM_COLLECTOR_TOKEN"
 DEMISTO_VERIFY_SSL = "DEMISTO_VERIFY_SSL"
+PROJECT_ID = "PROJECT_ID"
 
 # Logging
 DEMISTO_SDK_LOG_FILE_PATH = "DEMISTO_SDK_LOG_FILE_PATH"
@@ -943,6 +944,7 @@ PACKS_FOLDER = "Packs"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
 CONF_JSON_FILE_NAME = "conf.json"
+VERSION_CONFIG_FILE_NAME = "version_config.json"
 
 PYTHON_TEST_REGEXES = [PACKS_SCRIPT_TEST_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX]
 
@@ -1259,7 +1261,7 @@ TESTS_AND_DOC_DIRECTORIES = TESTS_DIRECTORIES + DOCS_DIRECTORIES
 VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "Pipfile",
     "Pipfile.lock",
-    "command_examples",
+    "command_examples.txt",
     "pack_metadata.json",
     "testdata",
     "test_data",
@@ -2218,3 +2220,14 @@ INVALID_IMAGE_PATH_REGEX = (
 # Test types:
 TEST_PLAYBOOKS = "TestPlaybooks"
 TEST_MODELING_RULES = "TestModelingRules"
+TEST_USE_CASES = "TestUseCases"
+
+PB_RELEASE_NOTES_FORMAT = {
+    "This playbook addresses the following alerts:": 5,
+    "Playbook Stages:": 5,
+    "Requirements:": 5,
+    "Triage:": 6,
+    "Early Containment:": 6,
+    "Investigation:": 6,
+    "Containment:": 6,
+}

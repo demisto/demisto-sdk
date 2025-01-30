@@ -665,17 +665,24 @@ def create_trigger_object(
 
 
 def create_layout_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None, file_path: Optional[str] = None
 ) -> Layout:
     """Creating an layout object with altered fields from a default layout json structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
         values (Optional[List[Any]]): The values to update.
+        file_path: Optional[str]: For creating layout object from specific json file.
 
     Returns:
         The layout object.
     """
+    if file_path:
+        json_content = load_json(file_path)
+        pack = REPO.create_pack()
+        pack.create_layout(name="layout", content=json_content)
+        return cast(Layout, BaseContent.from_path(Path(pack.layouts[0].path)))
+
     json_content = load_json("layoutscontainer.json")
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()

@@ -450,7 +450,7 @@ def test_integration_script_file_invalid(file_name: str):
         ".vulture_whitelist.py",
         "README.md",
         f"{DUMMY_INTEGRATION_NAME}_description.md",
-        "command_examples",
+        "command_examples.txt",
         ".pylintrc",
     ],
 )

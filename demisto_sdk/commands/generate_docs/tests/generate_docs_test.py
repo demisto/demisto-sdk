@@ -1298,7 +1298,7 @@ class TestGetCommandExamples:
         Then
             - Verify that the returned commands from the examples are only the specific commands.
         """
-        command_examples = tmp_path / "command_examples"
+        command_examples = tmp_path / "command_examples.txt"
 
         with open(command_examples, "w+") as ce:
             ce.write(
@@ -1328,7 +1328,7 @@ class TestGetCommandExamples:
         Then
             - Verify that the returned commands from the examples are only the specific commands.
         """
-        command_examples = tmp_path / "command_examples"
+        command_examples = tmp_path / "command_examples.txt"
 
         with open(command_examples, "w+") as ce:
             ce.write(
@@ -1357,7 +1357,7 @@ class TestGetCommandExamples:
         Then
             - Verify that the returned commands from the examples are only the specific commands
         """
-        command_examples = tmp_path / "command_examples"
+        command_examples = tmp_path / "command_examples.txt"
 
         with open(command_examples, "w+") as ce:
             ce.write(

@@ -330,7 +330,8 @@ def create_pack_object(
     playbooks: int = 0,
     name: Optional[str] = None,
     release_note_content: Optional[str] = None,
-    bc_release_note_content: Optional[List[Dict[str, str]]] = None,
+    bc_release_note_content: Optional[dict] = None,
+    version_config: Optional[dict] = None,
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -373,6 +374,9 @@ def create_pack_object(
             "w",
         ) as outfile:
             outfile.write(json_object)
+
+    if version_config:
+        pack.version_config.write_json(version_config)
 
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)

@@ -369,7 +369,10 @@ class TestST111:
         results = StrictSchemaValidator().obtain_invalid_content_items([integration])
 
         assert len(results) == 1
-        assert results[0].message == "Missing section order"
+        assert results[0].message == (
+            "Missing sectionorder key. Add sectionorder to the top of your YAML file and specify the order of the "
+            "Collect, Connect, and Optimize sections (at least one is required)."
+        )
 
     def test_invalid_section(self):
         """
@@ -404,7 +407,7 @@ class TestST111:
 
         results = StrictSchemaValidator().obtain_invalid_content_items([integration])
         assert len(results) == 1
-        assert (
-            results[0].message
-            == f'Missing section for configuration {curr_config[0].get("name")}'
+        assert results[0].message == (
+            f"Missing section for the following parameters: ['{curr_config[0].get('name')}'] "
+            "Please specify the section for these parameters."
         )

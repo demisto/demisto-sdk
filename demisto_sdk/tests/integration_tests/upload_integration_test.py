@@ -302,6 +302,7 @@ def test_zipped_pack_upload_positive(
                 "Wizards/wizard-test-pack_wizard.json",
                 "metadata.json",
                 "pack_metadata.json",
+                "version_config.json",
             }
 
             with pack_zip.open(

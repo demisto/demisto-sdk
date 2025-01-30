@@ -208,6 +208,28 @@ class XsoarClient:
 
     """
     #############################
+    Helper methods
+    #############################
+    """
+
+    def _process_response(self, response, status_code, expected_status=200):
+        """Process the HTTP response coming from the XSOAR client."""
+        if status_code == expected_status:
+            if response:
+                try:
+                    return response.json()
+                except json.JSONDecodeError:
+                    error = response.text
+                    err_msg = f"Failed to parse json response - with status code {response.status_code}"
+                    err_msg += f"\n{error}" if error else ""
+                    logger.error(err_msg)
+                    response.raise_for_status()
+        else:
+            error_message = f"Expected status {expected_status}, but got {status_code}. Response: {response}"
+            raise Exception(error_message)
+
+    """
+    #############################
     marketplace related methods
     #############################
     """
@@ -1306,3 +1328,18 @@ class XsoarClient:
                 else None
             ),
         )
+
+    def get_playbook_data(self, playbook_id: int) -> dict:
+        playbook_endpoint = f"/playbook/{playbook_id}"
+
+        response, status_code, _ = self._xsoar_client.generic_request(
+            playbook_endpoint, method="GET", accept="application/json"
+        )
+        return self._process_response(response, status_code, 200)
+
+    def update_playbook_input(self, playbook_id: str, new_inputs: dict):
+        saving_inputs_path = f"/playbook/inputs/{playbook_id}"
+        response, status_code, _ = self._xsoar_client.generic_request(
+            saving_inputs_path, method="POST", body={"inputs": new_inputs}
+        )
+        return self._process_response(response, status_code, 200)

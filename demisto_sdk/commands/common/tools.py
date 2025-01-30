@@ -1781,11 +1781,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix.lower() == ".pem":
         return FileType.PEM
 
-    elif (
-        path.name.lower()
-        in ("commands_example", "commands_examples", "command_examples")
-        or path.suffix.lower() == ".txt"
-    ):
+    elif path.suffix.lower() == ".txt":
         return FileType.TXT
 
     elif path.name == ".pylintrc":

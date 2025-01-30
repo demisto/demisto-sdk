@@ -1,13 +1,34 @@
 import ast
+import logging  # noqa: TID251 # specific case, passed as argument to 3rd party
+import os
 from copy import deepcopy
+from datetime import datetime
+from pathlib import Path
 from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, check_output
-from typing import Dict, Optional, Set
+from typing import Any, Dict, List, Optional, Set
+from uuid import UUID
 
 import demisto_client
+import pytz
+import requests
+import typer
+from tenacity import (
+    Retrying,
+    before_sleep_log,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import parse_int_or_default
 from demisto_sdk.commands.test_content.constants import SSH_USER
+from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import XsiamApiClient
+
+XSIAM_CLIENT_SLEEP_INTERVAL = 60
+XSIAM_CLIENT_RETRY_ATTEMPTS = 5
 
 
 def update_server_configuration(
@@ -101,3 +122,132 @@ def get_ui_url(client_host):
 
     """
     return client_host.replace("https://api-", "https://")
+
+
+# ================= Methods and Classes used in modeling rules and playbook flow commands ================= #
+
+
+def get_utc_now() -> datetime:
+    """Get the current time in UTC, with timezone aware."""
+    return datetime.now(tz=pytz.UTC)
+
+
+def duration_since_start_time(start_time: datetime) -> float:
+    """Get the duration since the given start time, in seconds.
+
+    Args:
+        start_time (datetime): Start time.
+
+    Returns:
+        float: Duration since the given start time, in seconds.
+    """
+    return (get_utc_now() - start_time).total_seconds()
+
+
+def day_suffix(day: int) -> str:
+    """
+    Returns a suffix string base on the day of the month.
+        for 1, 21, 31 => st
+        for 2, 22 => nd
+        for 3, 23 => rd
+        for to all the others => th
+
+        see here for more details: https://en.wikipedia.org/wiki/English_numerals#Ordinal_numbers
+
+    Args:
+        day: The day of the month represented by a number.
+
+    Returns:
+        suffix string (st, nd, rd, th).
+    """
+    return "th" if 11 <= day <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+
+
+def get_relative_path_to_content(path: Path) -> str:
+    """Get the relative path to the content directory.
+
+    Args:
+        path: The path to the content item.
+
+    Returns:
+        Path: The relative path to the content directory.
+    """
+    if path.is_absolute() and path.as_posix().startswith(CONTENT_PATH.as_posix()):
+        return path.as_posix().replace(f"{CONTENT_PATH.as_posix()}{os.path.sep}", "")
+    return path.as_posix()
+
+
+def get_type_pretty_name(obj: Any) -> str:
+    """Get the pretty name of the type of the given object.
+
+    Args:
+        obj (Any): The object to get the type name for.
+
+    Returns:
+        str: The pretty name of the type of the given object.
+    """
+    return {
+        type(None): "null",
+        list: "list",
+        dict: "dict",
+        tuple: "tuple",
+        set: "set",
+        UUID: "UUID",
+        str: "string",
+        int: "int",
+        float: "float",
+        bool: "boolean",
+        datetime: "datetime",
+    }.get(type(obj), str(type(obj)))
+
+
+def create_retrying_caller(retry_attempts: int, sleep_interval: int) -> Retrying:
+    """Create a Retrying object with the given retry_attempts and sleep_interval."""
+    sleep_interval = parse_int_or_default(sleep_interval, XSIAM_CLIENT_SLEEP_INTERVAL)
+    retry_attempts = parse_int_or_default(retry_attempts, XSIAM_CLIENT_RETRY_ATTEMPTS)
+    retry_params: Dict[str, Any] = {
+        "reraise": True,
+        "before_sleep": before_sleep_log(logging.getLogger(), logging.DEBUG),
+        "retry": retry_if_exception_type(requests.exceptions.RequestException),
+        "stop": stop_after_attempt(retry_attempts),
+        "wait": wait_fixed(sleep_interval),
+    }
+    return Retrying(**retry_params)
+
+
+def xsiam_get_installed_packs(xsiam_client: XsiamApiClient) -> List[Dict[str, Any]]:
+    """Get the list of installed packs from the XSIAM tenant.
+    Wrapper for XsiamApiClient.get_installed_packs() with retry logic.
+    """
+    return xsiam_client.installed_packs
+
+
+def tenant_config_cb(
+    ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]
+):
+    if ctx.resilient_parsing:
+        return
+    # Only check the params if the machine_assignment is not set.
+    if param.value_is_missing(value) and not ctx.params.get("machine_assignment"):
+        err_str = (
+            f"{param.name} must be set either via the environment variable "
+            f'"{param.envvar}" or passed explicitly when running the command'
+        )
+        raise typer.BadParameter(err_str)
+    return value
+
+
+def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]):
+    if ctx.resilient_parsing:
+        return
+    # Only check the params if the machine_assignment is not set.
+    if param.value_is_missing(value) and not ctx.params.get("machine_assignment"):
+        parameter_to_check = "xsiam_token"
+        other_token = ctx.params.get(parameter_to_check)
+        if not other_token:
+            err_str = (
+                f"One of {param.name} or {parameter_to_check} must be set either via it's associated"
+                " environment variable or passed explicitly when running the command"
+            )
+            raise typer.BadParameter(err_str)
+    return value

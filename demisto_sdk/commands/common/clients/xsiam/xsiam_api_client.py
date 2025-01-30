@@ -89,11 +89,9 @@ class XsiamClient(XsoarSaasClient):
             endpoint = urljoin(self.server_config.base_api_url, "logs/v1/event")
             additional_headers = {
                 "authorization": self.server_config.collector_token,
-                "content-type": (
-                    "application/json"
-                    if data_format.casefold == "json"
-                    else "text/plain"
-                ),
+                "content-type": "application/json"
+                if data_format.casefold == "json"
+                else "text/plain",
                 "content-encoding": "gzip",
             }
             token_type = "collector_token"
@@ -199,3 +197,92 @@ class XsiamClient(XsoarSaasClient):
             )
 
         return response
+
+    """
+    #############################
+    Alerts related methods
+    #############################
+    """
+
+    def create_alert_from_json(self, json_content: dict) -> int:
+        alert_payload = {"request_data": {"alert": json_content}}
+        endpoint = urljoin(
+            self.server_config.base_api_url, "/public_api/v1/alerts/create_alert"
+        )
+        res = self._xdr_client.post(endpoint, json=alert_payload)
+        alert_data = self._process_response(res, res.status_code, 200)
+        return alert_data["reply"]
+
+    def get_internal_alert_id(self, alert_external_id: str) -> int:
+        data = self.search_alerts(
+            filters=[
+                {
+                    "field": "external_id_list",
+                    "operator": "in",
+                    "value": [alert_external_id],
+                }
+            ]
+        )
+        return data["alerts"][0]["alert_id"]
+
+    def update_alert(self, alert_id: Union[str, list[str]], updated_data: dict) -> dict:
+        """
+        Args:
+            alert_id (str | list[str]): alert ids to edit.
+            updated_data (dict): The data to update the alerts with. https://cortex-panw.stoplight.io/docs/cortex-xsiam-1/rpt3p1ne2bwfe-update-alerts
+        """
+        alert_payload = {
+            "request_data": {"update_data": updated_data, "alert_id_list": alert_id}
+        }
+        endpoint = urljoin(
+            self.server_config.base_api_url, "/public_api/v1/alerts/update_alerts"
+        )
+        res = self._xdr_client.post(endpoint, json=alert_payload)
+        alert_data = self._process_response(res, res.status_code, 200)
+        return alert_data
+
+    def search_alerts(
+        self,
+        filters: list = None,
+        search_from: int = None,
+        search_to: int = None,
+        sort: dict = None,
+    ) -> dict:
+        """
+        filters should be a list of dicts contains field, operator, value.
+        For example:
+        [{field: alert_id_list, operator: in, value: [1,2,3,4]}]
+        Allowed values for fields - alert_id_list, alert_source, severity, creation_time
+        """
+        body = {
+            "request_data": {
+                "filters": filters,
+                "search_from": search_from,
+                "search_to": search_to,
+                "sort": sort,
+            }
+        }
+        endpoint = urljoin(
+            self.server_config.base_api_url, "/public_api/v1/alerts/get_alerts/"
+        )
+        res = self._xdr_client.post(endpoint, json=body)
+        return self._process_response(res, res.status_code, 200)["reply"]
+
+    def search_alerts_by_uuid(self, alert_uuids: list = None, filters: list = None):
+        alert_uuids = alert_uuids or []
+        alert_ids: list = []
+        res = self.search_alerts(filters=filters)
+        alerts: list = res.get("alerts")  # type: ignore
+        count: int = res.get("result_count")  # type: ignore
+
+        while len(alerts) > 0 and len(alert_uuids) > len(alert_ids):
+            for alert in alerts:
+                for uuid in alert_uuids:
+                    if alert.get("description").endswith(uuid):
+                        alert_ids.append(alert.get("alert_id"))
+
+            res = self.search_alerts(filters=filters, search_from=count)
+            alerts = res.get("alerts")  # type: ignore
+            count = res.get("result_count")  # type: ignore
+
+        return alert_ids

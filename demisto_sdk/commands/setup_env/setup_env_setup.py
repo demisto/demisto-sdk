@@ -52,7 +52,7 @@ def setup_env_command(
         help="Clean the repository of temporary files created by the 'lint' command.",
     ),
     file_paths: Tuple[Path, ...] = typer.Argument(
-        default_factory=list,
+        None,
         resolve_path=True,
         show_default=False,
     ),
@@ -91,12 +91,14 @@ def setup_env_command(
         ide_type = IDEType(ide)
 
     # Resolve input paths if provided
-    if input:
-        resolved_input = [path.resolve() for path in input]
-    else:
-        resolved_input = []
+    resolved_file_paths = (
+        tuple(Path(path).resolve() for path in input) if input else tuple()
+    )
 
-    resolved_file_paths = resolved_input or file_paths
+    # If no input key was found, try to resolve arg
+    if not resolved_file_paths and file_paths:
+        file_paths = tuple(Path(path).resolve() for path in file_paths)
+        resolved_file_paths = file_paths
 
     setup_env(
         file_paths=resolved_file_paths,

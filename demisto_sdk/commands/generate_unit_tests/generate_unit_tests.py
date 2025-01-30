@@ -286,7 +286,7 @@ def run_generate_unit_tests(
         output_dir = Path(input_path).parent
 
     if not examples:
-        examples = str(input_path_obj.parent / "command_examples")
+        examples = str(input_path_obj.parent / "command_examples.txt")
 
     # Check the directory exists and if not, try to create it
     output_dir_path_obj = Path(output_dir)

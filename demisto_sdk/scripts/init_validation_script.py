@@ -26,6 +26,7 @@ RELATED_FILES_DICT = {
     "11": "RelatedFileType.SECRETS_IGNORE",
     "12": "RelatedFileType.AUTHOR_IMAGE",
     "13": "RelatedFileType.RELEASE_NOTE",
+    "14": "RelatedFileType.VERSION_CONFIG",
 }
 
 CONTENT_TYPES_DICT = {

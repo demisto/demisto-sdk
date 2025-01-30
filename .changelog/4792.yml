@@ -1,0 +1,4 @@
+changes:
+- description: Added LO108 new validation. The validation verify of script names when used in the dynamic section of the layout.
+  type: feature
+pr_number: 4792

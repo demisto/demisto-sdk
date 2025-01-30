@@ -665,7 +665,9 @@ def create_trigger_object(
 
 
 def create_layout_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None, file_path: Optional[str] = None
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    file_path: Optional[str] = None,
 ) -> Layout:
     """Creating an layout object with altered fields from a default layout json structure.
 

@@ -134,10 +134,23 @@ def repo_for_test_layout(graph_repo):
 
     return graph_repo
 
-def test_IsValidDynamicSectionValidator_script_not_found(repo_for_test_layout: Repo,):
+
+def test_IsValidDynamicSectionValidator_script_not_found(
+    repo_for_test_layout: Repo,
+):
     graph_interface = repo_for_test_layout.create_graph()
     BaseValidator.graph_interface = graph_interface
-    layout_object = cast(Layout, BaseContent.from_path(Path(repo_for_test_layout.packs[0].layouts[0].path)))
-    results = IsValidDynamicSectionValidator().obtain_invalid_scripts_items( content_items=[layout_object])
-    assert results[0].message == 'The tab XDR Device Control Violations contains the following script that not exists in the repo: TestScript2.'
-    results[1].message == 'The tab XDR Device Control Violations contains UUID value: 612ad420-04a9-11eb-ba3b-5h42d710bdf4 in the query field, please change it to valid script name.'
+    layout_object = cast(
+        Layout,
+        BaseContent.from_path(Path(repo_for_test_layout.packs[0].layouts[0].path)),
+    )
+    results = IsValidDynamicSectionValidator().obtain_invalid_scripts_items(
+        content_items=[layout_object]
+    )
+    assert (
+        results[0].message
+        == "The tab XDR Device Control Violations contains the following script that not exists in the repo: TestScript2."
+    )
+    results[
+        1
+    ].message == "The tab XDR Device Control Violations contains UUID value: 612ad420-04a9-11eb-ba3b-5h42d710bdf4 in the query field, please change it to valid script name."

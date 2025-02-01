@@ -339,7 +339,7 @@ class Relationship(BaseModel):
     source_marketplaces: Optional[List[MarketplaceVersions]]
     target: Optional[str] = None
     target_type: Optional[ContentType] = None
-    target_version: Optional[str] = None
+    target_min_version: Optional[str] = None
     mandatorily: Optional[bool] = None
     description: Optional[str] = None
     deprecated: Optional[bool] = None

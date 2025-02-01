@@ -306,7 +306,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
                     source=self.object_id,
                     target=pack_id,
                     mandatorily=dependency.get("mandatory"),
-                    target_version=dependency.get("minVersion"),
+                    target_min_version=dependency.get("minVersion"),
                 )
         except AttributeError as error:
             raise AttributeError(

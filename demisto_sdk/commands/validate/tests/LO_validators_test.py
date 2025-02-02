@@ -138,13 +138,21 @@ def repo_for_test_layout(graph_repo):
 def test_IsValidDynamicSectionValidator_script_not_found(
     repo_for_test_layout: Repo,
 ):
+    """
+    Given
+        Invalid layout object with 2 invalid sections - one contains query with UUID and the other contains query with unknown script name.
+    When
+        the IsValidDynamicSectionValidator's obtain_invalid_content_items method is called with the layout object,
+    Then
+        the obtain_invalid_content_items method should return  2 failures, one for invalid query with UUID and the other for unknown script name.
+    """
     graph_interface = repo_for_test_layout.create_graph()
     BaseValidator.graph_interface = graph_interface
     layout_object = cast(
         Layout,
         BaseContent.from_path(Path(repo_for_test_layout.packs[0].layouts[0].path)),
     )
-    results = IsValidDynamicSectionValidator().obtain_invalid_scripts_items(
+    results = IsValidDynamicSectionValidator().obtain_invalid_content_items(
         content_items=[layout_object]
     )
     assert (

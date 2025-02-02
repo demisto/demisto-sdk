@@ -26,7 +26,7 @@ class IsValidDynamicSectionValidator(BaseValidator[ContentTypes]):
     )
     related_field = "tabs.sections.query"
 
-    def obtain_invalid_scripts_items(
+    def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         validation_results = []
@@ -36,7 +36,9 @@ class IsValidDynamicSectionValidator(BaseValidator[ContentTypes]):
                     for tab in layout_data.get("tabs", []):
                         for section in tab.get("sections", []):
                             if section.get("query"):
+                                # get the query value
                                 query = section["query"]
+                                # check if the query value is UUID
                                 if is_string_uuid(query):
                                     validation_results.append(
                                         ValidationResult(
@@ -48,7 +50,7 @@ class IsValidDynamicSectionValidator(BaseValidator[ContentTypes]):
                                         )
                                     )
                                     continue
-
+                                # check if the query value is valid script name
                                 script_found = self.graph.search(
                                     object_id=query,
                                     content_type=ContentType.SCRIPT,

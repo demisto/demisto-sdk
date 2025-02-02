@@ -10,7 +10,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
-
+from demisto_sdk.commands.common.logger import logger
 ContentTypes = Union[Layout, CaseLayout]
 
 
@@ -39,6 +39,8 @@ class IsValidDynamicSectionValidator(BaseValidator[ContentTypes]):
                                 # get the query value
                                 query = section["query"]
                                 # check if the query value is UUID
+                                logger.info('===============================')
+                                logger.info(query)
                                 if is_string_uuid(query):
                                     validation_results.append(
                                         ValidationResult(

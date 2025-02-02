@@ -116,9 +116,11 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
             ):  # in MarketplaceV2 content items that includes the word 'incident' in its name replaced with 'alert'
                 names_of_unknown_items_to_search = names_of_unknown_items.copy()
                 for unknown_content_item in names_of_unknown_items_to_search:
-                    if 'alert' in unknown_content_item.lower():
+                    if "alert" in unknown_content_item.lower():
                         # change the content item name (replace the word alert with incident)
-                        content_item_to_search = replace_alert_to_incident(unknown_content_item)
+                        content_item_to_search = replace_alert_to_incident(
+                            unknown_content_item
+                        )
                         # search for this item, if exists - remove it from names_of_unknown_items, GR103 should not failed on this item
                         if self.graph.search(object_id=content_item_to_search):
                             names_of_unknown_items.remove(unknown_content_item)

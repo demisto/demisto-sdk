@@ -270,6 +270,7 @@ class FileType(StrEnum):
     CASE_LAYOUT_RULE = "caselayoutrule"
     CASE_FIELD = "casefield"
     CASE_LAYOUT = "caselayout"
+    VERSION_CONFIG = "version_config"
 
 
 RN_HEADER_BY_FILE_TYPE = {

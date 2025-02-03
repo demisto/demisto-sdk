@@ -13,7 +13,7 @@ from demisto_sdk.commands.validate.validators.base_validator import BaseValidato
 from demisto_sdk.commands.validate.validators.LO_validators.LO107_is_valid_type import (
     IsValidTypeValidator,
 )
-from demisto_sdk.commands.validate.validators.LO_validators.LO108_validate_dynamic_section import (
+from demisto_sdk.commands.validate.validators.LO_validators.LO100_validate_dynamic_section import (
     IsValidDynamicSectionValidator,
 )
 from TestSuite.repo import Repo

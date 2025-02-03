@@ -10,12 +10,12 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
-from demisto_sdk.commands.common.logger import logger
+
 ContentTypes = Union[Layout, CaseLayout]
 
 
 class IsValidDynamicSectionValidator(BaseValidator[ContentTypes]):
-    error_code = "LO108"
+    error_code = "LO100"
     description = (
         "Ensures that dynamic sections in the layout contains existing scripts."
     )
@@ -38,35 +38,34 @@ class IsValidDynamicSectionValidator(BaseValidator[ContentTypes]):
                             if section.get("query"):
                                 # get the query value
                                 query = section["query"]
-                                # check if the query value is UUID
-                                logger.info('===============================')
-                                logger.info(query)
-                                if is_string_uuid(query):
-                                    validation_results.append(
-                                        ValidationResult(
-                                            validator=self,
-                                            message=self.error_message_uuid.format(
-                                                tab.get("name", ""), query
-                                            ),
-                                            content_object=content_item,
+                                if isinstance(query, str):
+                                    # check if the query value is UUID
+                                    if is_string_uuid(query):
+                                        validation_results.append(
+                                            ValidationResult(
+                                                validator=self,
+                                                message=self.error_message_uuid.format(
+                                                    tab.get("name", ""), query
+                                                ),
+                                                content_object=content_item,
+                                            )
                                         )
+                                        continue
+                                    # check if the query value is valid script name
+                                    script_found = self.graph.search(
+                                        object_id=query,
+                                        content_type=ContentType.SCRIPT,
                                     )
-                                    continue
-                                # check if the query value is valid script name
-                                script_found = self.graph.search(
-                                    object_id=query,
-                                    content_type=ContentType.SCRIPT,
-                                )
 
-                                if not script_found:
-                                    validation_results.append(
-                                        ValidationResult(
-                                            validator=self,
-                                            message=self.error_message_unknown_script.format(
-                                                tab.get("name", ""), query
-                                            ),
-                                            content_object=content_item,
+                                    if not script_found:
+                                        validation_results.append(
+                                            ValidationResult(
+                                                validator=self,
+                                                message=self.error_message_unknown_script.format(
+                                                    tab.get("name", ""), query
+                                                ),
+                                                content_object=content_item,
+                                            )
                                         )
-                                    )
 
         return validation_results

@@ -91,6 +91,7 @@ warning = []
 [path_based_validations]
 select = [
   "IN100",
+  "IN101",
   "IN102",
   "IN104",
   "IN106",
@@ -251,8 +252,7 @@ select = [
   "VC101"
 ]
 warning = [
-  "IN101",
-  "RM108"
+
 ]
 
 [support_level]

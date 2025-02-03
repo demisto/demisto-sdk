@@ -16,15 +16,15 @@ if sys.version_info >= (3, 11):
         """
 
         @overload
-        def __new__(cls, object: object = ...) -> Self: ...  # type:ignore[valid-type, misc]
+        def __new__(cls, object: object = ...) -> Self: ...
 
         @overload
-        def __new__(  # type:ignore[misc]
+        def __new__(
             cls, object: object, encoding: str = ..., errors: str = ...
-        ) -> Self: ...  # type:ignore[valid-type]
+        ) -> Self: ...
 
         def __new__(cls, *values):
-            return _StrEnum._new_member_(cls, *values)  # type:ignore[attr-defined]
+            return _StrEnum._new_member_(cls, *values)
 
 else:
     from enum import Enum

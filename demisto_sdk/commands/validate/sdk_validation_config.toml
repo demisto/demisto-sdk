@@ -253,7 +253,6 @@ select = [
   "VC101"
 ]
 warning = [
-
 ]
 
 [support_level]

@@ -1,0 +1,4 @@
+changes:
+- description: Added the **test-use-case** command to test use-case flows on cloud machines.
+  type: internal
+pr_number: 4658

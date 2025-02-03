@@ -1106,16 +1106,18 @@ def test_IsValidRnHeadersFormatValidator_obtain_invalid_content_items():
         - Case 3: RN with invalid second level header "Test" starting with 5 #'s followed by several spaces.
         - Case 4: RN with invalid second level header "integration-test" surrounded by '**'.
         - Case 5: RN with invalid second level header "test" surrounded by '**'.
+        - Case 6: RN with headers in the playbook RN format.
     When:
     - Calling the IsValidRnHeadersFormatValidator obtain_invalid_content_items function.
 
     Then:
     - Make sure the right amount of pack metadata failed, and that the right error message is returned.
-        - Case 1: Shouldn't fail anything.
-        - Case 2: Shouldn't fail anything.
+        - Case 1: Should pass.
+        - Case 2: Should pass.
         - Case 3: Should fail.
         - Case 4: Should fail.
         - Case 5: Should fail.
+        - Case 6: Should pass.
     """
     pack_1 = create_pack_object(
         paths=["currentVersion"],
@@ -1142,7 +1144,12 @@ def test_IsValidRnHeadersFormatValidator_obtain_invalid_content_items():
         values=["2.0.5"],
         release_note_content="#### Incident Fields\n- **test**\n- Added x y z",
     )
-    content_items = [pack_1, pack_2, pack_3, pack_4, pack_5]
+    pack_6 = create_pack_object(
+        paths=["currentVersion"],
+        values=["2.0.5"],
+        release_note_content="#### Playbooks\n##### New: name\n##### Playbook Stages:\n- Added x y z",
+    )
+    content_items = [pack_1, pack_2, pack_3, pack_4, pack_5, pack_6]
     validator = IsValidRnHeadersFormatValidator()
     results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == 3

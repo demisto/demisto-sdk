@@ -1604,7 +1604,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.CASE_LAYOUT: "8.7.0",
 }
 
-DEFAULT_PYTHON_VERSION = "3.11"
+DEFAULT_PYTHON_VERSION = "3.10"
 DEFAULT_PYTHON2_VERSION = "2.7"
 
 # This constant below should always be two versions before the latest server version

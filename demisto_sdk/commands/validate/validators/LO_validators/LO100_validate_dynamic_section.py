@@ -38,7 +38,7 @@ class IsValidDynamicSectionValidator(BaseValidator[ContentTypes]):
                             if section.get("query"):
                                 # get the query value
                                 query = section["query"]
-                                if isinstance(query, str) and "type:" not in query:
+                                if isinstance(query, str) and ":" not in query:
                                     # check if the query value is UUID
                                     if is_string_uuid(query):
                                         validation_results.append(

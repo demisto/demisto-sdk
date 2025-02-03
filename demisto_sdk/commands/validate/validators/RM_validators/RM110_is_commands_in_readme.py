@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import (
+    INCIDENT_COMMANDS,
+    MIRRORING_COMMANDS,
+    GitStatuses,
+)
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -11,15 +15,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Integration
-COMMANDS_EXCLUDED_FROM_README_DOCUMENTATION = [
-    "get-mapping-fields",
-    "xsoar-search-incidents",
-    "xsoar-get-incident",
-    "get-remote-data",
-    "update-remote-data",
-    "get-modified-remote-data",
-    "update-remote-system",
-]
+COMMANDS_EXCLUDED_FROM_README_DOCUMENTATION = MIRRORING_COMMANDS + INCIDENT_COMMANDS
 
 
 class IsCommandsInReadmeValidator(BaseValidator[ContentTypes]):

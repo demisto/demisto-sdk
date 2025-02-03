@@ -2232,3 +2232,15 @@ PB_RELEASE_NOTES_FORMAT = {
     "Investigation:": 6,
     "Containment:": 6,
 }
+
+INCIDENT_COMMANDS: list[str] = [
+    "xsoar-search-incidents",
+    "xsoar-get-incident",
+]
+
+MIRRORING_COMMANDS: list[str] = [
+    "get-mapping-fields",
+    "get-remote-data",
+    "get-modified-remote-data",
+    "update-remote-system",
+]

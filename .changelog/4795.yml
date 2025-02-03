@@ -1,0 +1,4 @@
+changes:
+- description: Improve handling of unsupported mirroring feature when uploading integrations to the Cortex XSIAM marketplace.
+  type: fix
+pr_number: 4795

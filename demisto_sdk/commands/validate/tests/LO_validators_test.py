@@ -10,11 +10,11 @@ from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from demisto_sdk.commands.validate.tests.test_tools import create_layout_object
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
-from demisto_sdk.commands.validate.validators.LO_validators.LO107_is_valid_type import (
-    IsValidTypeValidator,
-)
 from demisto_sdk.commands.validate.validators.LO_validators.LO100_validate_dynamic_section import (
     IsValidDynamicSectionValidator,
+)
+from demisto_sdk.commands.validate.validators.LO_validators.LO107_is_valid_type import (
+    IsValidTypeValidator,
 )
 from TestSuite.repo import Repo
 

@@ -53,7 +53,6 @@ def main(
     sdk.configuration = Configuration()  # Initialize the configuration
     ctx.obj = sdk  # Pass sdk instance to context
     load_dotenv(CONTENT_PATH / ".env", override=True)
-    print("DANNY")
     if platform.python_version_tuple()[:2] == ("3", "9"):
         message = typer.style(
             "Warning: Demisto-SDK will soon stop supporting Python 3.9. Please update your python environment.",

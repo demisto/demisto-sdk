@@ -153,6 +153,7 @@ MATCH (p1:{ContentType.PACK}{{object_id: rel_data.source}}),
 // Create the relationship, and mark as "from_metadata"
 CREATE (p1)-[r:{RelationshipType.DEPENDS_ON}{{
     mandatorily: rel_data.mandatorily,
+    target_min_version: rel_data.target_min_version,
     from_metadata: true,
     is_test: false
 }}]->(p2)

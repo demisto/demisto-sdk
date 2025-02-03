@@ -227,6 +227,7 @@ class Pack(TestSuiteBase):
                 "keywords": [],
             }
         )
+        self.version_config = JSONBased(self._pack_path, "version_config", "")
         self.author_image = File(
             tmp_path=self._pack_path / "Author_image.png", repo_path=repo.path
         )

@@ -5,7 +5,7 @@
 * Fixed an issue where the ***demisto-sdk validate*** command ran on the remote branch instead of the local current branch by default. [#4778](https://github.com/demisto/demisto-sdk/pull/4778)
 
 ### Internal
-* Allow setting the dependency min version in the pack metadata. [#4786](https://github.com/demisto/demisto-sdk/pull/4786)
+* Added support for setting the dependency minimum version in the pack metadata. [#4786](https://github.com/demisto/demisto-sdk/pull/4786)
 * Added new *VC100* validation. Validates that version_config file schema is valid. [#4769](https://github.com/demisto/demisto-sdk/pull/4769)
 * Added new *VC101* validation. Validates that versions in version_config file are continuous. [#4769](https://github.com/demisto/demisto-sdk/pull/4769)
 * Added the **VERSION_CONFIG** field type. [#4794](https://github.com/demisto/demisto-sdk/pull/4794)

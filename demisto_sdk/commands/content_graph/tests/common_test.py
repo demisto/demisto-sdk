@@ -59,8 +59,8 @@ def test_replace_marketplace_references_string_with_number():
     Then:
         - The function should return the data with the replacements made if applicable.
     """
-    data = "This is a Cortex XSOAR v1 example."
-    expected = "This is a Cortex example."
+    data = "This is for Cortex XSOAR 8.7 On-prem."
+    expected = "This is for Cortex On-prem."
     result = replace_marketplace_references(
         data, MarketplaceVersions.MarketplaceV2, path="example/path"
     )

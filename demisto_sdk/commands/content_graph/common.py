@@ -546,7 +546,7 @@ def replace_marketplace_references(
                 for key, value in data.items():
                     # Process the key
                     new_key = (
-                        re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", key)
+                        re.sub(r"Cortex XSOAR(?: [\w.]*\d[\w.]*)?", "Cortex", key)
                         if isinstance(key, str)
                         else key
                     )
@@ -563,10 +563,10 @@ def replace_marketplace_references(
             elif isinstance(data, FoldedScalarString):
                 # if data is a FoldedScalarString (yml unification), we need to convert it to a string and back
                 data = FoldedScalarString(
-                    re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", str(data))
+                    re.sub(r"Cortex XSOAR(?: [\w.]*\d[\w.]*)?", "Cortex", str(data))
                 )
             elif isinstance(data, str):
-                data = re.sub(r"Cortex XSOAR(?: \w*\d\w*)?", "Cortex", data)
+                data = re.sub(r"Cortex XSOAR(?: [\w.]*\d[\w.]*)?", "Cortex", data)
     except Exception as e:
         logger.error(
             f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"

@@ -1042,12 +1042,15 @@ def test_IsContextPathChangedValidator_remove_command():
                     paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]
                 ),
             ],
-            {
-                "TestIntegration": {
-                    "from": "6.10.0",
-                    "to": DEFAULT_CONTENT_ITEM_TO_VERSION,
-                }
-            },
+            [
+                create_integration_object(paths=["fromversion", "toversion"], values=["6.10.0", DEFAULT_CONTENT_ITEM_TO_VERSION])
+            ],
+            # {
+            #     "TestIntegration": {
+            #         "from": "6.10.0",
+            #         "to": DEFAULT_CONTENT_ITEM_TO_VERSION,
+            #     }
+            # },
             1,
             id="Case 1: integration - toversion changed to 6.0.0 and the new fromversion is 6.10.0 which are more than one release apart",
         ),
@@ -1060,12 +1063,9 @@ def test_IsContextPathChangedValidator_remove_command():
                     paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]
                 ),
             ],
-            {
-                "duo_modeling_rule": {
-                    "from": "6.0.0",
-                    "to": DEFAULT_CONTENT_ITEM_TO_VERSION,
-                }
-            },
+            [
+                create_modeling_rule_object(paths=["fromversion", "toversion"], values=["6.0.0", DEFAULT_CONTENT_ITEM_TO_VERSION])
+            ],
             1,
             id="Case 2: Modeling Rule - toversion changed to 6.0.0 and the new fromversion is 6.0.0, two items with the same id ,cannot exist in the same version",
         ),
@@ -1091,12 +1091,9 @@ def test_IsContextPathChangedValidator_remove_command():
                     paths=["toversion"], values=[DEFAULT_CONTENT_ITEM_TO_VERSION]
                 ),
             ],
-            {
-                "duo_modeling_rule": {
-                    "from": "8.10.0",
-                    "to": DEFAULT_CONTENT_ITEM_TO_VERSION,
-                }
-            },
+            [
+                create_modeling_rule_object(paths=["fromversion", "toversion"], values=["8.10.0", DEFAULT_CONTENT_ITEM_TO_VERSION])
+            ],
             0,
             id="Case 4: Modeling Rule - toversion changed to 6.9.0 and the new fromversion is 6.10.0 which is a valid case",
         ),
@@ -1120,16 +1117,20 @@ def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(
         - Case 4: Valid case.
     """
     create_old_file_pointers(content_items, old_content_items)
-    mocker.patch(
-        "demisto_sdk.commands.validate.validators.BC_validators.BC107_is_valid_toversion_on_modified.sort_content_items",
-        return_value=(content_items, new_items),
-    )
+    for item in content_items:
+        item.git_status = GitStatuses.MODIFIED
+    for item in new_items:
+        item.git_status = GitStatuses.ADDED
+    content_items.extend(new_items)
+
     result = IsValidToversionOnModifiedValidator().obtain_invalid_content_items(
         content_items
     )
 
     assert len(result) == errors
-
+    if result:
+        for res in result:
+            assert "Changing the maximal supported version field `toversion` is not allowed" in res.message
 
 def test_args_name_change_validator__fails():
     """

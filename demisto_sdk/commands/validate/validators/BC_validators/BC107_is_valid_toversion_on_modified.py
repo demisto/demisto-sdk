@@ -18,18 +18,13 @@ class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
     error_code = "BC107"
     description = "Checks that the `toversion` property was not changed on existing content, unless it is replaced by a new file with the same ID and a continuous fromversion."
     rationale = "Changing the `toversion` field for a content item can break backward compatibility."
-    error_message = "Changing the maximal supported version field `toversion` is not allowed. unless you're adding new content_item with the same id {0} and their from/to version fulfills the following:\n{1}"
+    error_message = "Changing the maximal supported version field `toversion` is not allowed. unless you're adding new content_item with the same id {0} and their from/to version fulfills the following:\nThe old item `toversion` field should be less than the new item `fromversion` field\nThe old and the new item should be continuous, aka the old one `toversion` is one version less than the new one `fromversion`"
     related_field = "toversion"
     expected_git_statuses = [
         GitStatuses.MODIFIED,
         GitStatuses.RENAMED,
         GitStatuses.ADDED,
     ]
-    valid_cases = (
-        "The old item `toversion` field should be less than the new item `fromversion` field\n"
-        "The old and the new item should be continuous, aka the old one `toversion` is one version"
-        " less than the new one `fromversion`"
-    )
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
@@ -39,15 +34,24 @@ class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.object_id, self.valid_cases
-                ),
+                    content_item.object_id),
                 content_object=content_item,
             )
             for content_item in modified_items
-            if self.invalid_toversion(content_item, new_items)
+            if self.invalid_toversion_modification(content_item, new_items)
         ]
 
-    def invalid_toversion(self, modified_item: ContentTypes, new_items: dict):
+    def invalid_toversion_modification(self, modified_item: ContentTypes, new_items: dict):
+        """
+        Check if toversion field of a content item modification is valid.
+
+        Args:
+            modified_item (Iterable[ContentTypes]): The modified content item
+            new_items (dict): the newly added content items
+
+        Returns:
+            weather it's valid or not.
+        """
         old_file = cast(ContentTypes, modified_item.old_base_content_object)
         if modified_item.toversion != old_file.toversion:  # file toversion was updated
             if modified_item.object_id in new_items:

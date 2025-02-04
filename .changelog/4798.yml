@@ -1,0 +1,4 @@
+changes:
+- description: Updated regex in prepare_content to remove XSOAR versions, except in unique documentation references.
+  type: fix
+pr_number: 4798

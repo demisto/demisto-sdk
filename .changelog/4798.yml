@@ -1,4 +1,4 @@
 changes:
-- description: Updated regex in prepare_content to remove XSOAR versions, except in unique documentation references.
+- description: Updated regex in **demisto-sdk prepare-content** command to remove XSOAR unrelated version references, except in unique documentation cases.
   type: fix
 pr_number: 4798

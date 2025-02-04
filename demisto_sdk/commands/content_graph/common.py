@@ -528,6 +528,7 @@ def replace_marketplace_references(
     """
     Recursively replaces "Cortex XSOAR" with "Cortex" in the given data if the marketplace is MarketplaceV2 or XPANSE.
     If the word following "Cortex XSOAR" contains a number, it will also be removed.
+    The replacement will be skipped if "https" appears within 20 characters after "Cortex XSOAR." This ensures that documentation with distinct links for different products or versions remains unchanged. see CIAC-12049 for details.
 
     Args:
         data (Any): The data to process, which can be a dictionary, list, or string.
@@ -537,6 +538,7 @@ def replace_marketplace_references(
     Returns:
         Any: The same data object with replacements made if applicable.
     """
+    pattern = r"Cortex XSOAR(?: \w*\d\w*)?(?!.{0,20}https)"
     try:
         if marketplace in {
             MarketplaceVersions.MarketplaceV2,
@@ -547,7 +549,8 @@ def replace_marketplace_references(
                 for key, value in data.items():
                     # Process the key
                     new_key = (
-                        re.sub(r"Cortex XSOAR(?: [\w.]*\d[\w.]*)?", "Cortex", key)
+                        re.sub(pattern, "Cortex", key)
+
                         if isinstance(key, str)
                         else key
                     )
@@ -564,10 +567,11 @@ def replace_marketplace_references(
             elif isinstance(data, FoldedScalarString):
                 # if data is a FoldedScalarString (yml unification), we need to convert it to a string and back
                 data = FoldedScalarString(
-                    re.sub(r"Cortex XSOAR(?: [\w.]*\d[\w.]*)?", "Cortex", str(data))
+                    re.sub(pattern, "Cortex", str(data))
+
                 )
             elif isinstance(data, str):
-                data = re.sub(r"Cortex XSOAR(?: [\w.]*\d[\w.]*)?", "Cortex", data)
+                data = re.sub(pattern, "Cortex", data)
     except Exception as e:
         logger.error(
             f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"

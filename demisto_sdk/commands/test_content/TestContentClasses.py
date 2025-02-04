@@ -509,7 +509,6 @@ class TestPlaybook:
             instance_created = integration.create_integration_instance(
                 client,
                 self.configuration.playbook_id,
-                self.is_mockable,
                 instance_configuration,
             )
             if not instance_created:
@@ -1658,7 +1657,7 @@ class Integration:
         return config_item
 
     def _set_integration_params(
-        self, server_url: str, playbook_id: str, is_mockable: bool
+        self, server_url: str, playbook_id: str
     ) -> bool:
         """
         Finds the matching configuration for the integration in content-test-data conf.json file
@@ -1666,7 +1665,6 @@ class Integration:
         Args:
             server_url: The url of the demisto server to configure the integration in
             playbook_id: The ID of the playbook for which the integration should be configured
-            is_mockable: Should the proxy parameter be set to True or not
 
         Returns:
             True if found a matching configuration else False if found more than one configuration candidate returns False
@@ -1724,10 +1722,6 @@ class Integration:
             else:
                 self.configuration = integration_params[0]
 
-        if is_mockable:
-            self.playbook.log_debug(f"Configuring {self} with proxy params")
-            for param in ("proxy", "useProxy", "useproxy", "insecure", "unsecure"):
-                self.configuration.params[param] = True  # type: ignore
         return True
 
     def _get_integration_config(self, server_url: str) -> Optional[dict]:
@@ -1889,7 +1883,6 @@ class Integration:
         self,
         client: DefaultApi,
         playbook_id: str,
-        is_mockable: bool,
         instance_configuration: dict,
     ) -> bool:
         """
@@ -1898,13 +1891,12 @@ class Integration:
             instance_configuration: The configuration of the instance to create.
             client: The demisto_client instance to use.
             playbook_id: The playbook id for which the instance should be created.
-            is_mockable: Indicates whether the integration should be configured with proxy=True or not.
 
         Returns:
             The integration configuration as it exists on the server after it was configured
         """
         server_url = client.api_client.configuration.host
-        self._set_integration_params(server_url, playbook_id, is_mockable)
+        self._set_integration_params(server_url, playbook_id)
         configuration = self._get_integration_config(
             client.api_client.configuration.host
         )

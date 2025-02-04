@@ -46,9 +46,6 @@
     "nightly_packs": [
         "CommonScripts"
     ],
-    "unmockable_integrations": {
-        "NetscoutArborSightline": "Uses timestamp"
-    },
     "parallel_integrations": [
         "AWS - ACM"
     ],

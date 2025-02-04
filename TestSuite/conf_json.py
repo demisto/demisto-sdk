@@ -35,7 +35,6 @@ class ConfJSON:
                     "tests": tests,
                     "skipped_tests": skipped_tests,
                     "skipped_integrations": skipped_integrations,
-                    "integrations": integrations,
                     "docker_thresholds": docker_thresholds,
                     # the next fields are not modified in tests (hence lack of args), but are structurally required.
                     "available_tests_fields": [],

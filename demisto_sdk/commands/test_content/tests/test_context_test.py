@@ -745,7 +745,7 @@ def test_replacing_placeholders(mocker, playbook, tmp_path):
         mocker.MagicMock(),
     )
     integration._set_integration_params(
-        server_url="1.1.1.1", playbook_id="playbook_integration", is_mockable=False
+        server_url="1.1.1.1", playbook_id="playbook_integration"
     )
     integration = Integration(
         build_context,
@@ -755,7 +755,7 @@ def test_replacing_placeholders(mocker, playbook, tmp_path):
         mocker.MagicMock(),
     )
     integration._set_integration_params(
-        server_url="1.2.3.4", playbook_id="playbook_integration", is_mockable=False
+        server_url="1.2.3.4", playbook_id="playbook_integration"
     )
     assert "%%SERVER_HOST%%" in build_context.secret_conf.integrations[0].params.get(
         "url"

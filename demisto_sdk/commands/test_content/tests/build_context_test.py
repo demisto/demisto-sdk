@@ -2,7 +2,6 @@ from typing import Union
 
 from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from demisto_sdk.commands.test_content.mock_server import MITMProxy
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
     ParallelLoggingManager,
 )
@@ -20,7 +19,6 @@ def generate_test_configuration(
     timeout: int = None,
     memory_threshold: int = None,
     pid_threshold: int = None,
-    is_mockable: bool = None,
     runnable_on_docker_only: bool = None,
     marketplaces: Union[list, str] = None,
 ) -> dict:
@@ -45,8 +43,6 @@ def generate_test_configuration(
         playbook_config["pid_threshold"] = pid_threshold
     if runnable_on_docker_only is not None:
         playbook_config["runnable_on_docker_only"] = runnable_on_docker_only
-    if is_mockable is not None:
-        playbook_config["is_mockable"] = is_mockable
     if marketplaces:
         playbook_config["marketplaces"] = marketplaces
     return playbook_config
@@ -56,7 +52,6 @@ def generate_content_conf_json(
     tests: list = None,
     skipped_tests: dict = None,
     skipped_integrations: dict = None,
-    unmockable_integrations: dict = None,
     parallel_integrations: list = None,
     docker_thresholds_images: dict = None,
 ) -> dict:
@@ -66,7 +61,6 @@ def generate_content_conf_json(
         tests: A dict with a test playbook configuration
         skipped_tests: A dict containing playbook IDs as keys and the reason why it was skipped as value
         skipped_integrations: A list containing integration IDs
-        unmockable_integrations: A dict containing integration IDs as keys and the reason why it's unmockable as value
         parallel_integrations: A list containing integration IDs
         docker_thresholds_images: A dict containing image name as key and a dict containing docker limitations as value
     Returns:
@@ -78,7 +72,6 @@ def generate_content_conf_json(
         "tests": tests or [],
         "skipped_tests": skipped_tests or {},
         "skipped_integrations": skipped_integrations or {},
-        "unmockable_integrations": unmockable_integrations or {},
         "parallel_integrations": parallel_integrations or [],
         "docker_thresholds": {"images": docker_thresholds_images or {}},
     }
@@ -622,80 +615,6 @@ def test_playbook_with_marketplaces(mocker, tmp_path):
     assert (
         "xsoar_playbook_with_marketplaces_mismatch"
         in xsiam_build_context.tests_data_keeper.skipped_tests
-    )
-
-
-def test_unmockable_playbook_configuration(mocker, tmp_path):
-    """
-    Given:
-        - A build context that has a playbook configured with 'is_mockable=False'
-    When:
-        - Initializing the BuildContext instance
-    Then:
-        - Ensure that the unmockable test configuration is in the unmockable_test_ids
-    """
-    machine_assignment_content = {
-        "xsoar-machine": {
-            "packs_to_install": ["TEST"],
-            "tests": {TEST_PLAYBOOKS: ["unmockable_playbook"]},
-        }
-    }
-
-    tests = [
-        generate_test_configuration(
-            playbook_id="unmockable_playbook", is_mockable=False
-        )
-    ]
-    content_conf_json = generate_content_conf_json(tests=tests)
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
-        return_value=False,
-    )
-    build_context = get_mocked_build_context(
-        mocker,
-        tmp_path,
-        content_conf_json=content_conf_json,
-        machine_assignment_content=machine_assignment_content,
-    )
-    assert (
-        "unmockable_playbook" in next(iter(build_context.servers)).unmockable_test_ids
-    )
-
-
-def test_mockable_playbook_configuration(mocker, tmp_path):
-    """
-    Given:
-        - A build context that has a playbook configured with 'is_mockable' not set
-    When:
-        - Initializing the BuildContext instance
-    Then:
-        - Ensure that the mockable test configuration is not in the unmockable_test_ids
-    """
-    machine_assignment_content = {
-        "xsoar-machine": {
-            "packs_to_install": ["TEST"],
-            "tests": {TEST_PLAYBOOKS: ["mockable_playbook"]},
-        }
-    }
-
-    tests = [
-        generate_test_configuration(
-            playbook_id="mockable_playbook", integrations=["some_mockable_integration"]
-        )
-    ]
-    content_conf_json = generate_content_conf_json(tests=tests)
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
-        return_value=False,
-    )
-    build_context = get_mocked_build_context(
-        mocker,
-        tmp_path,
-        content_conf_json=content_conf_json,
-        machine_assignment_content=machine_assignment_content,
-    )
-    assert (
-        "mockable_playbook" not in next(iter(build_context.servers)).unmockable_test_ids
     )
 
 

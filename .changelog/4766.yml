@@ -1,6 +1,4 @@
 changes:
 - description: Enhanced implementation of `BC107` validation to allow adding `toversion` field to a content item as long as a new content item is added to replace it in the next version.
   type: feature
-- description: Enhanced implementation of `GR105` validation to allow  duplicates as long as they have continuous versions.
-  type: feature
 pr_number: 4766

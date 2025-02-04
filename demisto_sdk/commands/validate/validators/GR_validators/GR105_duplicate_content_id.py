@@ -4,8 +4,6 @@ from abc import ABC
 from pathlib import Path
 from typing import Iterable, List, Union
 
-from packaging.version import Version
-
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
@@ -99,43 +97,17 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
                 for content_item in content_items
             ]
         )
-        results = []
-
-        for content_item, duplicates in self.graph.validate_duplicate_ids(
-            paths_of_content_items_to_validate
-        ):
-            if duplicates:
-                if invalid_duplicates([*duplicates, content_item]):
-                    results.extend(
-                        [
-                            ValidationResult(
-                                validator=self,
-                                message=self.error_message.format(
-                                    content_item.object_id,
-                                    Path(duplicate.path).relative_to(CONTENT_PATH),  # type: ignore[attr-defined]
-                                ),
-                                content_object=content_item,  # type: ignore[arg-type]
-                            )
-                            for duplicate in duplicates
-                        ]
-                    )
-
-        return results
-
-
-def invalid_duplicates(items: list):
-    """
-    Check if the duplicated content items are have continuous from/to versions.
-
-    Args:
-        items: content items with the same id.
-
-    Returns:
-        whether the versions are valid or not.
-    """
-    items.sort(key=lambda item: Version(item.fromversion).release)
-    for i in range(len(items[:-1])):
-        old_toversion = items[i].toversion
-        new_fromversion = items[i + 1].fromversion
-        if Version(old_toversion) >= Version(new_fromversion):
-            return True
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    content_item.object_id,
+                    Path(duplicate.path).relative_to(CONTENT_PATH),  # type: ignore[attr-defined]
+                ),
+                content_object=content_item,  # type: ignore[arg-type]
+            )
+            for content_item, duplicates in self.graph.validate_duplicate_ids(
+                paths_of_content_items_to_validate
+            )
+            for duplicate in duplicates
+        ]

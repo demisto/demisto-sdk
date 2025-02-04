@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME,
     RELEASE_NOTES_DIR,
+    VERSION_CONFIG_FILE_NAME,
     GitStatuses,
 )
 from demisto_sdk.commands.common.files import TextFile
@@ -37,6 +38,7 @@ class RelatedFileType(Enum):
     SECRETS_IGNORE = "secrets_ignore"
     AUTHOR_IMAGE = "author_image_file"
     RELEASE_NOTE = "release_note"
+    VERSION_CONFIG = "version_config"
 
 
 class RelatedFile(ABC):
@@ -190,11 +192,8 @@ class XifRelatedFile(TextFiles):
         return set()
 
 
-class SchemaRelatedFile(RelatedFile):
-    file_type = RelatedFileType.SCHEMA
-
-    def get_optional_paths(self) -> List[Path]:
-        return [Path(str(self.main_file_path).replace(".yml", "_schema.json"))]
+class JsonFiles(RelatedFile):
+    file_type = RelatedFileType.JSON
 
     @cached_property
     def file_content(self) -> Optional[Dict[str, Any]]:
@@ -212,6 +211,28 @@ class SchemaRelatedFile(RelatedFile):
         except Exception as e:
             logger.debug(f"Failed to get related text file, error: {e}")
         return None
+
+
+class VersionConfigRelatedFile(JsonFiles):
+    def __init__(
+        self,
+        main_file_path: Path,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        super().__init__(main_file_path, git_sha, prev_ver)
+
+    file_type = RelatedFileType.VERSION_CONFIG
+
+    def get_optional_paths(self) -> List[Path]:
+        return [self.main_file_path / VERSION_CONFIG_FILE_NAME]
+
+
+class SchemaRelatedFile(JsonFiles):
+    file_type = RelatedFileType.SCHEMA
+
+    def get_optional_paths(self) -> List[Path]:
+        return [Path(str(self.main_file_path).replace(".yml", "_schema.json"))]
 
 
 class ReadmeRelatedFile(TextFiles):

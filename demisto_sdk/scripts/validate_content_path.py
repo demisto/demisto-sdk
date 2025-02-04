@@ -211,7 +211,7 @@ class InvalidSuffix(InvalidPathException):
 
 
 class InvalidCommandExampleFile(InvalidPathException):
-    message = "This file's name must be command_examples"
+    message = "This file's name must be command_examples.txt"
 
 
 class InvalidModelingRuleFileName(InvalidPathException):
@@ -415,8 +415,15 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
         if path.stem not in {"README", f"{parent}_description"}:
             raise InvalidIntegrationScriptMarkdownFileName
 
+    elif (
+        path.suffix == ".txt"
+        and ("command" in path.stem or "example" in path.stem)
+        and (path.stem != "command_examples" and path.stem != "command_permissions")
+    ):
+        raise InvalidCommandExampleFile
+
     elif not path.suffix:
-        if path.stem in {"command_examples", ".pylintrc"}:
+        if path.stem == ".pylintrc":
             return
         if (
             path.stem == "LICENSE"
@@ -424,9 +431,9 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
         ):
             # Decided to exempt this pack only from using LICENSE files.
             return
-        if "command" in path.stem and "example" in path.stem:
-            # `command example`, `commands examples` and other single/plural, delimiters permutations
+        if path.stem == "command_examples":
             raise InvalidCommandExampleFile
+
         raise InvalidIntegrationScriptFileName
 
     elif (

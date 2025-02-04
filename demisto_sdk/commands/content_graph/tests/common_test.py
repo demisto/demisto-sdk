@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import pytest
 from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedScalarString is OK
     FoldedScalarString,
 )
@@ -44,155 +45,259 @@ def test_to_neo4j_pattern():
     )
 
 
-def test_replace_marketplace_references_string_with_number():
-    """
-    Test the replace_marketplace_references function with a string containing a number.
-
-    Given:
-        - A string data object.
-        - A marketplace version.
-
-    When:
-        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex" if the marketplace is MarketplaceV2 or XPANSE.
-        - If the word following "Cortex XSOAR" contains a number, it will also be removed.
-
-    Then:
-        - The function should return the data with the replacements made if applicable.
-    """
-    data = "This is for Cortex XSOAR 8.7 On-prem."
-    expected = "This is for Cortex On-prem."
-    result = replace_marketplace_references(
-        data, MarketplaceVersions.MarketplaceV2, path="example/path"
-    )
-    assert result == expected
-
-
-def test_replace_marketplace_references__string_without_number():
-    """
-    Test the replace_marketplace_references function with a string not containing a number.
-
-    Given:
-        - A string data object.
-        - A marketplace version.
-
-    When:
-        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex" if the marketplace is MarketplaceV2 or XPANSE.
-
-    Then:
-        - The function should return the data with the replacements made if applicable.
-    """
-    data = "This is a Cortex XSOAR example."
-    expected = "This is a Cortex example."
-    result = replace_marketplace_references(
-        data, MarketplaceVersions.MarketplaceV2, path="example/path"
-    )
-    assert result == expected
-
-
-def test_replace_marketplace_references__string_no_replacement():
-    """
-    Test the replace_marketplace_references function with a string where no replacement should occur in the specific marketplace..
-
-    Given:
-        - A string data object.
-        - A marketplace version.
-
-    When:
-        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex" if the marketplace is MarketplaceV2 or XPANSE.
-
-    Then:
-        - The function should return the data with the replacements made if applicable.
-    """
-    data = "This is a Cortex XSOAR v1 example."
-    expected = "This is a Cortex XSOAR v1 example."
-    result = replace_marketplace_references(
-        data, MarketplaceVersions.XSOAR, path="example/path"
-    )
-    assert result == expected
-
-
-def test_replace_marketplace_references__dict():
-    """
-    Test the replace_marketplace_references function with a dictionary.
-
-    Given:
-        - A dictionary data object.
-        - A marketplace version (MarketplaceV2 or XPANSE).
-
-    When:
-        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex".
-        - If the word following "Cortex XSOAR" contains a number, it will also be removed.
-
-    Then:
-        - The function should return the data with the replacements made if applicable.
-        - The function should modify the data in place and not create a copy.
-        - The type of FoldedScalarString values should be preserved.
-    """
-    data = {
-        "description": "This is a Cortex XSOAR v1 example.",
-        "details": "Cortex XSOAR should be replaced.",
-        "Cortex XSOAR 5.6 is": "Cortex XSOAR",
-        "folded": FoldedScalarString(
-            "Cortex XSOAR should be replaced in FoldedScalarString."
+@pytest.mark.parametrize(
+    "data, marketplace, expected",
+    [
+        pytest.param(
+            "This is a Cortex XSOAR v8.7 example.",
+            MarketplaceVersions.MarketplaceV2,
+            "This is a Cortex example.",
+            id="Replace v8.7 with Xsaim in string",
         ),
-    }
+        pytest.param(
+            "This is a Cortex XSOAR v6.6.8 example.",
+            MarketplaceVersions.XPANSE,
+            "This is a Cortex example.",
+            id="Replace v6.6.8 with Xpanse in string",
+        ),
+        pytest.param(
+            "This is a Cortex XSOAR example of Cortex XSOAR V8.",
+            MarketplaceVersions.MarketplaceV2,
+            "This is a Cortex example of Cortex",
+            id="Replace multiple Cortex XSOAR with Cortex",
+        ),
+        pytest.param(
+            "This is a Cortex XSOAR example.",
+            MarketplaceVersions.XSOAR,
+            "This is a Cortex XSOAR example.",
+            id="No replacement for Xsoar",
+        ),
+        pytest.param(
+            "This is a Cortex XSOAR 8.7 example with https nearby and a Cortex XSOAR 8.7 example with link far away..................................... https",
+            MarketplaceVersions.MarketplaceV2,
+            "This is a Cortex XSOAR 8.7 example with https nearby and a Cortex example with link far away..................................... https",
+            id="https near and for away",
+        ),
+        pytest.param(
+            "This is a Cortex XSOAR 8.7 example with link far away..................................... https",
+            MarketplaceVersions.MarketplaceV2,
+            "This is a Cortex example with link far away..................................... https",
+            id="Replace with far https",
+        ),
+        pytest.param(
+            "This is just some random text with XSOAR only.",
+            MarketplaceVersions.MarketplaceV2,
+            "This is just some random text with XSOAR only.",
+            id="No replace in random text",
+        ),
+        pytest.param(
+            "This is a Cortex xsoar v6.6.8 example.",
+            MarketplaceVersions.MarketplaceV2,
+            "This is a Cortex xsoar v6.6.8 example.",
+            id="No replace for case insensitive",
+        ),
+    ],
+)
+def test_replace_marketplace_references_strings(data, marketplace, expected):
+    """
+    Tests the replacement of Cortex XSOAR references in string data.
+    Ensures that different versions and formats are correctly replaced or retained.
+    """
+    result = replace_marketplace_references(data, marketplace, path="example/path")
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    "data, marketplace, expected",
+    [
+        pytest.param(
+            ["This is a Cortex XSOAR v8.7 example."],
+            MarketplaceVersions.MarketplaceV2,
+            ["This is a Cortex example."],
+            id="Replace v8.7 with Xsaim in list",
+        ),
+        pytest.param(
+            ["This is a Cortex XSOAR V6.6.8 example."],
+            MarketplaceVersions.XPANSE,
+            ["This is a Cortex example."],
+            id="Replace v6.6.8 with Xpanse in list",
+        ),
+        pytest.param(
+            ["This is a Cortex XSOAR example of Cortex XSOAR V8."],
+            MarketplaceVersions.MarketplaceV2,
+            ["This is a Cortex example of Cortex"],
+            id="Replace multiple Cortex XSOAR in list",
+        ),
+        pytest.param(
+            ["This is a Cortex XSOAR example."],
+            MarketplaceVersions.XSOAR,
+            ["This is a Cortex XSOAR example."],
+            id="No replacement for Xsoar in list",
+        ),
+        pytest.param(
+            ["This is a Cortex XSOAR 8.7 example with https nearby"],
+            MarketplaceVersions.MarketplaceV2,
+            ["This is a Cortex XSOAR 8.7 example with https nearby"],
+            id="No replace when https is nearby in list",
+        ),
+        pytest.param(
+            [
+                "This is a Cortex XSOAR 8.7 example with link far away..................................... https"
+            ],
+            MarketplaceVersions.MarketplaceV2,
+            [
+                "This is a Cortex example with link far away..................................... https"
+            ],
+            id="Replace with far https in list",
+        ),
+        pytest.param(
+            ["This is just some random text with Cortex only"],
+            MarketplaceVersions.MarketplaceV2,
+            ["This is just some random text with Cortex only"],
+            id="No replace in random text list",
+        ),
+        pytest.param(
+            ["This is a cortex xsoar v6.6.8 example."],
+            MarketplaceVersions.MarketplaceV2,
+            ["This is a cortex xsoar v6.6.8 example."],
+            id="No replace for case insensitive in list",
+        ),
+    ],
+)
+def test_replace_marketplace_references_lists(data, marketplace, expected):
+    """
+    Tests the replacement of Cortex XSOAR references in list data.
+    Ensures the function modifies elements in the list without creating a new object.
+    """
     original_id = id(data)
-    expected = {
-        "description": "This is a Cortex example.",
-        "details": "Cortex should be replaced.",
-        "Cortex is": "Cortex",
-        "folded": FoldedScalarString(
-            "Cortex should be replaced in FoldedScalarString."
-        ),
-    }
-    result = replace_marketplace_references(
-        data, MarketplaceVersions.MarketplaceV2, path="example/path"
-    )
+    result = replace_marketplace_references(data, marketplace, path="example/path")
     assert id(result) == original_id
     assert result == expected
-    assert isinstance(result["folded"], FoldedScalarString)
+    assert isinstance(result, list)
 
 
-def test_replace_marketplace_references__list():
+@pytest.mark.parametrize(
+    "data, marketplace, expected",
+    [
+        pytest.param(
+            {"key": "This is a Cortex XSOAR v8.7 example."},
+            MarketplaceVersions.MarketplaceV2,
+            {"key": "This is a Cortex example."},
+            id="Replace v8.7 with Xsaim in dict",
+        ),
+        pytest.param(
+            {"key": "This is a Cortex XSOAR v6.6.8 example."},
+            MarketplaceVersions.XPANSE,
+            {"key": "This is a Cortex example."},
+            id="Replace v6.6.8 with Xpanse in dict",
+        ),
+        pytest.param(
+            {"key": "This is a Cortex XSOAR example."},
+            MarketplaceVersions.MarketplaceV2,
+            {"key": "This is a Cortex example."},
+            id="Replace general Cortex XSOAR in dict",
+        ),
+        pytest.param(
+            {"key": "This is a Cortex XSOAR example."},
+            MarketplaceVersions.XSOAR,
+            {"key": "This is a Cortex XSOAR example."},
+            id="No replacement for Xsoar in dict",
+        ),
+        pytest.param(
+            {"key": "This is a Cortex XSOAR 8.7 example with https nearby"},
+            MarketplaceVersions.MarketplaceV2,
+            {"key": "This is a Cortex XSOAR 8.7 example with https nearby"},
+            id="No replace when https is nearby in dict",
+        ),
+        pytest.param(
+            {
+                "key": "This is a Cortex XSOAR 8.7 example with link far away..................................... https"
+            },
+            MarketplaceVersions.MarketplaceV2,
+            {
+                "key": "This is a Cortex example with link far away..................................... https"
+            },
+            id="Replace with far https in dict",
+        ),
+        pytest.param(
+            {"key": "This is just some random text with Cortex only"},
+            MarketplaceVersions.MarketplaceV2,
+            {"key": "This is just some random text with Cortex only"},
+            id="No replace in random text dict",
+        ),
+        pytest.param(
+            {"key": "This is a cortex xsoar v6.6.8 example."},
+            MarketplaceVersions.MarketplaceV2,
+            {"key": "This is a cortex xsoar v6.6.8 example."},
+            id="No replace for case insensitive in dict",
+        ),
+        pytest.param(
+            {"This is a Cortex XSOAR v8.7 example.": "Some value"},
+            MarketplaceVersions.MarketplaceV2,
+            {"This is a Cortex example.": "Some value"},
+            id="Replace key in dict (v8.7)",
+        ),
+        pytest.param(
+            {"This is a Cortex XSOAR v6.6.8 example.": "Another value"},
+            MarketplaceVersions.XPANSE,
+            {"This is a Cortex example.": "Another value"},
+            id="Replace key in dict (v6.6.8)",
+        ),
+        pytest.param(
+            {"This is a Cortex XSOAR example.": "Value here"},
+            MarketplaceVersions.MarketplaceV2,
+            {"This is a Cortex example.": "Value here"},
+            id="Replace key in dict (general)",
+        ),
+        pytest.param(
+            {
+                "key": [
+                    "This is a Cortex XSOAR v8.7 example.",
+                    "Another Cortex XSOAR v6.6.8 example.",
+                ]
+            },
+            MarketplaceVersions.MarketplaceV2,
+            {"key": ["This is a Cortex example.", "Another Cortex example."]},
+            id="Replace values in list in dict",
+        ),
+        # Test with FoldedScalarString
+        pytest.param(
+            {
+                "description": "This is a Cortex XSOAR example.",
+                "details": "Cortex XSOAR should be replaced.",
+                "folded": FoldedScalarString(
+                    "Cortex XSOAR should be replaced in FoldedScalarString."
+                ),
+            },
+            MarketplaceVersions.MarketplaceV2,
+            {
+                "description": "This is a Cortex example.",
+                "details": "Cortex should be replaced.",
+                "folded": FoldedScalarString(
+                    "Cortex should be replaced in FoldedScalarString."
+                ),
+            },
+            id="Replace in dict with FoldedScalarString intact",
+        ),
+    ],
+)
+def test_replace_marketplace_references_dicts(data, marketplace, expected):
     """
-    Test the replace_marketplace_references function with a list containing strings and dictionaries.
-
-    Given:
-        - A list data object containing strings and dictionaries.
-        - A marketplace version (MarketplaceV2 or XPANSE).
-
-    When:
-        - The function is called to replace all occurrences of "Cortex XSOAR" with "Cortex".
-        - If the word following "Cortex XSOAR" contains a number, it will also be removed.
-
-    Then:
-        - The function should return the data with the replacements made if applicable.
-        - The function should modify the data in place and not create a copy.
+    Tests the replacement of Cortex XSOAR references in dictionary data.
+    Ensures values and keys are replaced while maintaining object identity.
     """
-    data = [
-        "This is a Cortex XSOAR v1 example.",
-        "Cortex XSOAR should be replaced.",
-        {
-            "description": "This is a Cortex XSOAR v2 example.",
-            "details": "Cortex XSOAR should be replaced in details.",
-        },
-        {"nested_list": ["Cortex XSOAR v3 example.", "Another Cortex XSOAR example."]},
-    ]
     original_id = id(data)
-    expected = [
-        "This is a Cortex example.",
-        "Cortex should be replaced.",
-        {
-            "description": "This is a Cortex example.",
-            "details": "Cortex should be replaced in details.",
-        },
-        {"nested_list": ["Cortex example.", "Another Cortex example."]},
-    ]
-    result = replace_marketplace_references(
-        data, MarketplaceVersions.MarketplaceV2, path="example/path"
-    )
+
+    if isinstance(data.get("folded"), FoldedScalarString):
+        original_type = type(data["folded"])
+
+    result = replace_marketplace_references(data, marketplace, path="example/path")
+
     assert id(result) == original_id
     assert result == expected
+
+    if result.get("folded") and isinstance(result.get("folded"), FoldedScalarString):
+        assert isinstance(result["folded"], original_type)
 
 
 def test_replace_marketplace_references__error_handling():

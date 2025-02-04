@@ -117,6 +117,7 @@ from demisto_sdk.commands.common.constants import (
     UNRELEASE_HEADER,
     URL_REGEX,
     UUID_REGEX,
+    VERSION_CONFIG_FILE_NAME,
     WIDGETS_DIR,
     XDRC_TEMPLATE_DIR,
     XSIAM_DASHBOARDS_DIR,
@@ -1673,6 +1674,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.TRIGGER
         elif path.name == PACKS_PACK_META_FILE_NAME:
             return FileType.METADATA
+        elif path.name == VERSION_CONFIG_FILE_NAME:
+            return FileType.VERSION_CONFIG
         elif path.name.endswith(XSOAR_CONFIG_FILE):
             return FileType.XSOAR_CONFIG
         elif "CONTRIBUTORS" in path.name:

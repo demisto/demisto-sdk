@@ -8,7 +8,7 @@
 * Added support for setting the dependency minimum version in the pack metadata. [#4786](https://github.com/demisto/demisto-sdk/pull/4786)
 * Added new *VC100* validation. Validates that version_config file schema is valid. [#4769](https://github.com/demisto/demisto-sdk/pull/4769)
 * Added new *VC101* validation. Validates that versions in version_config file are continuous. [#4769](https://github.com/demisto/demisto-sdk/pull/4769)
-* Added the **VERSION_CONFIG** field type. [#4794](https://github.com/demisto/demisto-sdk/pull/4794)
+* Added the **VERSION_CONFIG** file type. [#4794](https://github.com/demisto/demisto-sdk/pull/4794)
 * Added the **test-use-case** command to test use-case flows on cloud machines. [#4658](https://github.com/demisto/demisto-sdk/pull/4658)
 
 

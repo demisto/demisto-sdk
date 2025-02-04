@@ -33,15 +33,16 @@ class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(
-                    content_item.object_id),
+                message=self.error_message.format(content_item.object_id),
                 content_object=content_item,
             )
             for content_item in modified_items
             if self.invalid_toversion_modification(content_item, new_items)
         ]
 
-    def invalid_toversion_modification(self, modified_item: ContentTypes, new_items: dict):
+    def invalid_toversion_modification(
+        self, modified_item: ContentTypes, new_items: dict
+    ):
         """
         Check if toversion field of a content item modification is valid.
 

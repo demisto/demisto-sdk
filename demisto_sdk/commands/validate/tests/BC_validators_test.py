@@ -1043,7 +1043,10 @@ def test_IsContextPathChangedValidator_remove_command():
                 ),
             ],
             [
-                create_integration_object(paths=["fromversion", "toversion"], values=["6.10.0", DEFAULT_CONTENT_ITEM_TO_VERSION])
+                create_integration_object(
+                    paths=["fromversion", "toversion"],
+                    values=["6.10.0", DEFAULT_CONTENT_ITEM_TO_VERSION],
+                )
             ],
             # {
             #     "TestIntegration": {
@@ -1064,7 +1067,10 @@ def test_IsContextPathChangedValidator_remove_command():
                 ),
             ],
             [
-                create_modeling_rule_object(paths=["fromversion", "toversion"], values=["6.0.0", DEFAULT_CONTENT_ITEM_TO_VERSION])
+                create_modeling_rule_object(
+                    paths=["fromversion", "toversion"],
+                    values=["6.0.0", DEFAULT_CONTENT_ITEM_TO_VERSION],
+                )
             ],
             1,
             id="Case 2: Modeling Rule - toversion changed to 6.0.0 and the new fromversion is 6.0.0, two items with the same id ,cannot exist in the same version",
@@ -1092,7 +1098,10 @@ def test_IsContextPathChangedValidator_remove_command():
                 ),
             ],
             [
-                create_modeling_rule_object(paths=["fromversion", "toversion"], values=["8.10.0", DEFAULT_CONTENT_ITEM_TO_VERSION])
+                create_modeling_rule_object(
+                    paths=["fromversion", "toversion"],
+                    values=["8.10.0", DEFAULT_CONTENT_ITEM_TO_VERSION],
+                )
             ],
             0,
             id="Case 4: Modeling Rule - toversion changed to 6.9.0 and the new fromversion is 6.10.0 which is a valid case",
@@ -1130,7 +1139,11 @@ def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(
     assert len(result) == errors
     if result:
         for res in result:
-            assert "Changing the maximal supported version field `toversion` is not allowed" in res.message
+            assert (
+                "Changing the maximal supported version field `toversion` is not allowed"
+                in res.message
+            )
+
 
 def test_args_name_change_validator__fails():
     """

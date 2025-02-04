@@ -131,7 +131,7 @@ def test_replace_marketplace_references__dict():
     data = {
         "description": "This is a Cortex XSOAR v1 example.",
         "details": "Cortex XSOAR should be replaced.",
-        "Cortex XSOAR": "Cortex XSOAR",
+        "Cortex XSOAR 5.6 is": "Cortex XSOAR",
         "folded": FoldedScalarString(
             "Cortex XSOAR should be replaced in FoldedScalarString."
         ),
@@ -140,7 +140,7 @@ def test_replace_marketplace_references__dict():
     expected = {
         "description": "This is a Cortex example.",
         "details": "Cortex should be replaced.",
-        "Cortex": "Cortex",
+        "Cortex is": "Cortex",
         "folded": FoldedScalarString(
             "Cortex should be replaced in FoldedScalarString."
         ),

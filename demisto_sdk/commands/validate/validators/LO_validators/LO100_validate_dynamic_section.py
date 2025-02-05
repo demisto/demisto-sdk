@@ -30,42 +30,46 @@ class IsValidDynamicSectionValidator(BaseValidator[ContentTypes]):
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         validation_results = []
-        for content_item in content_items:
-            for layout_data in content_item.data.values():
-                if isinstance(layout_data, dict):
-                    for tab in layout_data.get("tabs", []):
-                        for section in tab.get("sections", []):
-                            if section.get("query"):
-                                # get the query value
-                                query = section["query"]
-                                if isinstance(query, str) and ":" not in query:
-                                    # check if the query value is UUID
-                                    if is_string_uuid(query):
-                                        validation_results.append(
-                                            ValidationResult(
-                                                validator=self,
-                                                message=self.error_message_uuid.format(
-                                                    tab.get("name", ""), query
-                                                ),
-                                                content_object=content_item,
-                                            )
-                                        )
-                                        continue
-                                    # check if the query value is valid script name
-                                    script_found = self.graph.search(
-                                        object_id=query,
-                                        content_type=ContentType.SCRIPT,
-                                    )
+        
+        for content_item, tab, section in (
+            (content_item,tab, section)
+            for content_item in content_items
+            for layout_data in content_item.data.values()
+            if isinstance(layout_data, dict)
+            for tab in layout_data.get("tabs", [])
+            for section in tab.get("sections", [])
+            if section.get("query")
+        ):
+            # get the query value
+            query = section["query"]
+            if isinstance(query, str) and ":" not in query:
+                # check if the query value is UUID
+                if is_string_uuid(query):
+                    validation_results.append(
+                        ValidationResult(
+                            validator=self,
+                            message=self.error_message_uuid.format(
+                                tab.get("name", ""), query
+                            ),
+                            content_object=content_item,
+                        )
+                    )
+                    continue
+                # check if the query value is valid script name
+                script_found = self.graph.search(
+                    object_id=query,
+                    content_type=ContentType.SCRIPT,
+                )
 
-                                    if not script_found:
-                                        validation_results.append(
-                                            ValidationResult(
-                                                validator=self,
-                                                message=self.error_message_unknown_script.format(
-                                                    tab.get("name", ""), query
-                                                ),
-                                                content_object=content_item,
-                                            )
-                                        )
+                if not script_found:
+                    validation_results.append(
+                        ValidationResult(
+                            validator=self,
+                            message=self.error_message_unknown_script.format(
+                                tab.get("name", ""), query
+                            ),
+                            content_object=content_item,
+                        )
+                    )
 
         return validation_results

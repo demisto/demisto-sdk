@@ -12,6 +12,7 @@ ALLOWED_SECTIONS = [
     "Connect",
     "Collect",
     "Optimize",
+    "Mirroring"
 ]
 
 

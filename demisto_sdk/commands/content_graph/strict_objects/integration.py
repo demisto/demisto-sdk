@@ -142,6 +142,7 @@ class SectionOrderValues(StrEnum):
     CONNECT = "Connect"
     COLLECT = "Collect"
     OPTIMIZE = "Optimize"
+    MIRRORING = "Mirroring"
 
 
 class _StrictIntegration(BaseStrictModel):

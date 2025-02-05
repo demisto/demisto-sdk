@@ -98,16 +98,6 @@ def execute_test_content(**kwargs):
         t.join()
 
     logging_manager.info("Finished running tests.")
-    for server in build_context.servers:
-        if (
-            not server.unmockable_tests_to_run.empty()
-            or not server.mockable_tests_to_run.empty()
-        ):
-            logging_manager.critical(
-                "Not all tests have been executed. Not destroying instances. Exiting",
-                real_time=True,
-            )
-            sys.exit(1)
     if (
         build_context.tests_data_keeper.playbook_skipped_integration
         and build_context.build_name != "master"
@@ -118,9 +108,7 @@ def execute_test_content(**kwargs):
         )
         comment = f"{SKIPPED_CONTENT_COMMENT}:\n- {skipped_integrations}"
         _add_pr_comment(comment, logging_manager)
-    build_context.tests_data_keeper.print_test_summary(
-        build_context.isAMI, logging_manager
-    )
+    build_context.tests_data_keeper.print_test_summary(logging_manager)
     build_context.tests_data_keeper.create_result_files()
 
     if kwargs["nightly"]:

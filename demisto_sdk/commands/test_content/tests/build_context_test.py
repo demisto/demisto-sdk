@@ -174,7 +174,6 @@ def get_mocked_build_context(
         nightly: Indicates whether this build is a nightly build
         server_version: The server version to run the instance on
     """
-    mocker.patch.object(MITMProxy, "__init__", lambda *args, **kwargs: None)
     logging_manager = ParallelLoggingManager(tmp_file / "log_file.log")
     mocked_demisto_client = DemistoClientMock()
     mocker.patch(

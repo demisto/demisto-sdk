@@ -1033,9 +1033,7 @@ class ServerContext:
                 f"Running the following tests: {self.filtered_tests}",
                 real_time=True,
             )
-            self.build_context.logging_module.info(
-                "Running tests", real_time=True
-            )
+            self.build_context.logging_module.info("Running tests", real_time=True)
             self.configure_new_client()
             self._execute_tests(self.tests_to_run)
             if self.use_retries_mechanism:
@@ -1609,9 +1607,7 @@ class Integration:
         config_item.params = json.loads(item_as_string)
         return config_item
 
-    def _set_integration_params(
-        self, server_url: str, playbook_id: str
-    ) -> bool:
+    def _set_integration_params(self, server_url: str, playbook_id: str) -> bool:
         """
         Finds the matching configuration for the integration in content-test-data conf.json file
         in accordance with the configured instance name if exist and configures the proxy parameter if needed
@@ -2602,9 +2598,7 @@ class TestContext:
         )
 
     @staticmethod
-    def _get_failed_stage(
-        status: Optional[str]
-    ) -> str:
+    def _get_failed_stage(status: Optional[str]) -> str:
         """
         Gets the test failed stage.
 
@@ -2617,9 +2611,7 @@ class TestContext:
             return "Configuration"
         return "Execution"
 
-    def _add_to_failed_playbooks(
-        self, status: Optional[str] = None
-    ):
+    def _add_to_failed_playbooks(self, status: Optional[str] = None):
         """
         Adds the playbook to the failed playbooks list
 
@@ -2703,9 +2695,7 @@ class TestContext:
             return PB_Status.COMPLETED
 
         if use_retries_mechanism:
-            return self._update_status_based_on_retries_mechanism(
-                number_of_executions
-            )
+            return self._update_status_based_on_retries_mechanism(number_of_executions)
 
         return PB_Status.COMPLETED
 
@@ -2729,16 +2719,12 @@ class TestContext:
         # in case of using the retries mechanism, the function should determine whether the test-playbook is considered
         # a failure or give it another try.
         if use_retries_mechanism:
-            return self._update_status_based_on_retries_mechanism(
-                number_of_executions
-            )
+            return self._update_status_based_on_retries_mechanism(number_of_executions)
 
         # the test-playbook is considered a failed playbook.
         return PB_Status.FAILED
 
-    def _update_status_based_on_retries_mechanism(
-        self, number_of_executions
-    ):
+    def _update_status_based_on_retries_mechanism(self, number_of_executions):
         """
         Updates the status of a test-playbook when using the retries' mechanism.
         Args:

@@ -373,9 +373,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME
             )
             try:
-                shutil.copy(
-                    self.path / VERSION_CONFIG_FILENAME, path / VERSION_CONFIG_FILENAME
-                )
+                if marketplace != MarketplaceVersions.XSOAR_ON_PREM:
+                    logger.debug(f"Upload version_config to: {marketplace}")
+                    shutil.copy(
+                        self.path / VERSION_CONFIG_FILENAME,
+                        path / VERSION_CONFIG_FILENAME,
+                    )
+                else:
+                    logger.debug(f"Will not upload version_config to {marketplace}")
             except FileNotFoundError:
                 logger.debug(f"No such file {self.path / VERSION_CONFIG_FILENAME}")
 

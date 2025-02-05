@@ -373,7 +373,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME
             )
             try:
-                if marketplace != MarketplaceVersions.XSOAR_ON_PREM:
+                if marketplace in [
+                    MarketplaceVersions.MarketplaceV2,
+                    MarketplaceVersions.XSOAR_SAAS,
+                ]:
                     logger.debug(f"Upload version_config to: {marketplace}")
                     shutil.copy(
                         self.path / VERSION_CONFIG_FILENAME,

@@ -9,8 +9,14 @@ from urllib.parse import urljoin
 
 import requests
 from packaging.version import Version
-from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
-from pydantic.fields import ModelField
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    SecretStr,
+    ValidationInfo,
+    field_validator,
+)
 from requests.exceptions import ConnectionError, Timeout
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -22,13 +28,19 @@ json = JSON_Handler()
 
 class XsiamApiClientConfig(BaseModel):
     base_url: HttpUrl = Field(
-        default=os.getenv("DEMISTO_BASE_URL"), description="XSIAM Tenant Base URL"
+        default=HttpUrl(os.getenv("DEMISTO_BASE_URL", "")),
+        description="XSIAM Tenant Base URL",
+        validate_default=True,
     )
     api_key: SecretStr = Field(
-        default=SecretStr(os.getenv("DEMISTO_API_KEY", "")), description="XSIAM API Key"
+        default=SecretStr(os.getenv("DEMISTO_API_KEY", "")),
+        description="XSIAM API Key",
+        validate_default=True,
     )
     auth_id: str = Field(
-        default=os.getenv("XSIAM_AUTH_ID"), description="XSIAM Auth ID"
+        default=os.getenv("XSIAM_AUTH_ID", ""),
+        description="XSIAM Auth ID",
+        validate_default=True,
     )
     token: Optional[SecretStr] = Field(
         default=SecretStr(os.getenv("XSIAM_TOKEN", "")), description="XSIAM Token"
@@ -36,27 +48,28 @@ class XsiamApiClientConfig(BaseModel):
     collector_token: Optional[SecretStr] = Field(
         default=SecretStr(os.getenv("XSIAM_COLLECTOR_TOKEN", "")),
         description="XSIAM HTTP Collector Token",
+        validate_default=True,
     )
 
-    @validator("base_url", "api_key", "auth_id", always=True)
-    def validate_client_config(cls, v, field: ModelField):
+    @field_validator("base_url", "api_key", "auth_id")
+    @classmethod
+    def validate_client_config(cls, v, info: ValidationInfo):
         if not v:
             raise ValueError(
-                f"XSIAM client configuration is not complete: value was not passed for {field.name} and"
-                f" the associated environment variable for {field.name} is not set"
+                f"XSIAM client configuration is not complete: value was not passed for {info.field_name} and"
+                f" the associated environment variable for {info.field_name} is not set"
             )
         return v
 
-    @validator("collector_token", always=True)
-    def validate_client_config_token(cls, v, values, field: ModelField):
-        if not v:
-            other_token_name = "token"
-            if not values.get(other_token_name):
-                raise ValueError(
-                    f'XSIAM client configuration is not complete: you must set one of "{field.name}" or '
-                    f'"{other_token_name}" either explicitly on the command line or via their associated '
-                    "environment variables"
-                )
+    @field_validator("collector_token", mode="after")
+    @classmethod
+    def validate_client_config_token(cls, v, values):
+        if not v and not values.get("token"):
+            raise ValueError(
+                'XSIAM client configuration is not complete: you must set one of "collector_token" or '
+                '"token" either explicitly on the command line or via their associated '
+                "environment variables"
+            )
         return v
 
 
@@ -94,7 +107,7 @@ class XsiamApiInterface(ABC):
 
 class XsiamApiClient(XsiamApiInterface):
     def __init__(self, config: XsiamApiClientConfig):
-        self.base_url = config.base_url
+        self.base_url: HttpUrl = config.base_url
         self.api_key = (
             config.api_key.get_secret_value()
             if isinstance(config.api_key, SecretStr)
@@ -133,7 +146,7 @@ class XsiamApiClient(XsiamApiInterface):
     @lru_cache
     @retry(times=5, exceptions=(RuntimeError, ConnectionError, Timeout))
     def get_demisto_version(self) -> Version:
-        endpoint = urljoin(self.base_url, "xsoar/about")
+        endpoint = urljoin(str(self.base_url), "xsoar/about")
         response = self._session.get(endpoint)
         response.raise_for_status()
         data = response.json()
@@ -147,25 +160,27 @@ class XsiamApiClient(XsiamApiInterface):
 
     @property
     def installed_packs(self) -> List[Dict[str, Any]]:
-        endpoint = urljoin(self.base_url, "xsoar/contentpacks/metadata/installed")
+        endpoint = urljoin(str(self.base_url), "xsoar/contentpacks/metadata/installed")
         response = self._session.get(endpoint)
         response.raise_for_status()
         return response.json()
 
     def search_marketplace(self, filter_json: dict):
-        endpoint = urljoin(self.base_url, "xsoar/contentpacks/marketplace/search")
+        endpoint = urljoin(str(self.base_url), "xsoar/contentpacks/marketplace/search")
         response = self._session.post(endpoint, json=filter_json)
         response.raise_for_status()
         return response.json()
 
     def search_data_sources(self, filter_json: dict):
-        endpoint = urljoin(self.base_url, "xsoar/settings/datasourcepack/search")
+        endpoint = urljoin(str(self.base_url), "xsoar/settings/datasourcepack/search")
         response = self._session.post(endpoint, json=filter_json)
         response.raise_for_status()
         return response.json()
 
     def search_pack(self, pack_id):
-        endpoint = urljoin(self.base_url, f"xsoar/contentpacks/marketplace/{pack_id}")
+        endpoint = urljoin(
+            str(self.base_url), f"xsoar/contentpacks/marketplace/{pack_id}"
+        )
         response = self._session.get(endpoint)
         response.raise_for_status()
         logger.debug(f'Found pack "{pack_id}" in bucket!')
@@ -174,13 +189,13 @@ class XsiamApiClient(XsiamApiInterface):
         return pack_data
 
     def uninstall_packs(self, pack_ids: List[str]):
-        endpoint = urljoin(self.base_url, "xsoar/contentpacks/installed/delete")
+        endpoint = urljoin(str(self.base_url), "xsoar/contentpacks/installed/delete")
         body = {"IDs": pack_ids}
         response = self._session.post(endpoint, json=body)
         response.raise_for_status()
 
     def upload_packs(self, zip_path: Path):
-        endpoint = urljoin(self.base_url, "xsoar/contentpacks/installed/upload")
+        endpoint = urljoin(str(self.base_url), "xsoar/contentpacks/installed/upload")
         header_params = {"Content-Type": "multipart/form-data"}
         file_path = os.path.abspath(zip_path)
         files = {"file": file_path}
@@ -191,7 +206,7 @@ class XsiamApiClient(XsiamApiInterface):
         )
 
     def install_packs(self, packs: List[Dict[str, Any]]):
-        endpoint = urljoin(self.base_url, "xsoar/contentpacks/marketplace/install")
+        endpoint = urljoin(str(self.base_url), "xsoar/contentpacks/marketplace/install")
         response = self._session.post(
             url=endpoint, json={"packs": packs, "ignoreWarnings": True}
         )
@@ -212,7 +227,7 @@ class XsiamApiClient(XsiamApiInterface):
             )
 
     def sync_marketplace(self):
-        endpoint = urljoin(self.base_url, "xsoar/contentpacks/marketplace/sync")
+        endpoint = urljoin(str(self.base_url), "xsoar/contentpacks/marketplace/sync")
         response = self._session.post(endpoint)
         response.raise_for_status()
         logger.info(f"Marketplace was successfully synced on server {self.base_url}")
@@ -225,7 +240,7 @@ class XsiamApiClient(XsiamApiInterface):
         data_format: str = "json",
     ):
         if self.token:
-            endpoint = urljoin(self.base_url, "logs/v1/xsiam")
+            endpoint = urljoin(str(self.base_url), "logs/v1/xsiam")
             additional_headers = {
                 "authorization": self.token,
                 "format": data_format,
@@ -235,7 +250,7 @@ class XsiamApiClient(XsiamApiInterface):
             }
             token_type = "xsiam_token"
         elif self.collector_token:
-            endpoint = urljoin(self.base_url, "logs/v1/event")
+            endpoint = urljoin(str(self.base_url), "logs/v1/event")
             additional_headers = {
                 "authorization": self.collector_token,
                 "content-type": (
@@ -270,7 +285,7 @@ class XsiamApiClient(XsiamApiInterface):
 
     def start_xql_query(self, query: str):
         body = {"request_data": {"query": query}}
-        endpoint = urljoin(self.base_url, "public_api/v1/xql/start_xql_query/")
+        endpoint = urljoin(str(self.base_url), "public_api/v1/xql/start_xql_query/")
         logger.info("{}", f"Starting xql query:\nendpoint={endpoint}\n{query=}")  # noqa: PLE1205
         response = self._session.post(endpoint, json=body)
         logger.debug("Request completed to start xql query")
@@ -292,7 +307,7 @@ class XsiamApiClient(XsiamApiInterface):
                 }
             }
         )
-        endpoint = urljoin(self.base_url, "public_api/v1/xql/get_query_results/")
+        endpoint = urljoin(str(self.base_url), "public_api/v1/xql/get_query_results/")
         logger.info("{}", f"Getting xql query results: endpoint={endpoint}")  # noqa: PLE1205
         response = self._session.post(endpoint, data=payload, timeout=timeout)
         logger.debug("Request completed to get xql query results")
@@ -307,7 +322,7 @@ class XsiamApiClient(XsiamApiInterface):
         response.raise_for_status()
 
     def delete_dataset(self, dataset_id: str):
-        endpoint = urljoin(self.base_url, "public_api/v1/xql/delete_dataset")
+        endpoint = urljoin(str(self.base_url), "public_api/v1/xql/delete_dataset")
         body = {"dataset_name": dataset_id}
         response = self._session.post(endpoint, json=body)
         response.raise_for_status()

@@ -1,7 +1,7 @@
 from typing import List, Optional, Union
 
 from packaging.version import Version
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
@@ -18,7 +18,8 @@ class PackSupportOption(StrEnum):
 
 
 class StrictPackMetadata(BaseStrictModel):
-    @validator("current_version")
+    @field_validator("current_version")
+    @classmethod
     def is_valid_current_version(cls, value: str) -> str:
         """
         Validator ensures current_version field is valid.
@@ -42,31 +43,31 @@ class StrictPackMetadata(BaseStrictModel):
     certification: Optional[str] = None
     price: Optional[int] = None
     hidden: Optional[bool] = None
-    server_min_version: Optional[str] = Field(alias="serverMinVersion")
-    current_version: Optional[str] = Field(alias="currentVersion")
+    server_min_version: Optional[str] = Field(None, alias="serverMinVersion")
+    current_version: Optional[str] = Field(None, alias="currentVersion")
     version_info: str = Field("", alias="versionInfo")
     commit: Optional[str] = None
     downloads: Optional[int] = None
-    tags: List[str] = Field(default_factory=list)
-    categories: List[str] = Field(default_factory=list)
-    use_cases: List[str] = Field(default_factory=list, alias="useCases")
-    keywords: Optional[List[str]] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=lambda: [])
+    categories: List[str] = Field(default_factory=lambda: [])
+    use_cases: List[str] = Field(default_factory=lambda: [], alias="useCases")
+    keywords: Optional[List[str]] = Field(default_factory=lambda: [])
     search_rank: Optional[int] = Field(None, alias="searchRank")
     excluded_dependencies: List[str] = Field(
-        default_factory=list, alias="excludedDependencies"
+        default_factory=lambda: [], alias="excludedDependencies"
     )
-    videos: List[str] = Field(default_factory=list)
-    modules: List[str] = Field(default_factory=list)
-    integrations: Optional[List[str]] = Field(default_factory=list)
+    videos: List[str] = Field(default_factory=lambda: [])
+    modules: List[str] = Field(default_factory=lambda: [])
+    integrations: Optional[List[str]] = Field(default_factory=lambda: [])
     hybrid: bool = Field(False, alias="hybrid")
     default_data_source_id: Optional[str] = Field(None, alias="defaultDataSource")
     default_data_source_name: Optional[str] = Field(None, exclude=True)
     beta: Optional[bool] = None
-    dependencies: Optional[dict] = Field(default_factory=dict)
+    dependencies: Optional[dict] = Field(default_factory=lambda: {})
     deprecated: Optional[bool] = None
     marketplaces: Optional[List[MarketplaceVersions]] = None
     github_user: Optional[Union[str, List[str]]] = Field(
-        alias="githubUser", default_factory=list
+        alias="githubUser", default_factory=lambda: []
     )
     dev_email: Optional[Union[str, List[str]]] = Field(None, alias="devEmail")
     displayed_images: Optional[List[str]] = Field(None, alias="displayedImages")

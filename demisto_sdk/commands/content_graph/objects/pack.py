@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING, List, Optional, Union
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version, parse
-from pydantic import DirectoryPath, Field, validator
+from pydantic import DirectoryPath, Field, field_validator
+from pydantic._internal._model_construction import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
@@ -38,6 +39,7 @@ from demisto_sdk.commands.content_graph.common import (
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
+    BaseContentMetaclass,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
@@ -122,7 +124,13 @@ def upload_zip(
     return True
 
 
-class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
+class PackMetaclass(BaseContentMetaclass, ModelMetaclass):
+    pass
+
+
+class Pack(
+    BaseContent, PackMetadata, metaclass=PackMetaclass, content_type=ContentType.PACK
+):
     path: Path
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
@@ -131,7 +139,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     pack_readme: str = Field("", exclude=True)
     latest_rn_version: str = Field("", exclude=True)
     content_items: PackContentItems = Field(
-        PackContentItems(), alias="contentItems", exclude=True
+        PackContentItems(),  # type: ignore[call-arg]
+        alias="contentItems",
+        exclude=True,
     )
     pack_metadata_dict: Optional[dict] = Field({}, exclude=True)
 
@@ -142,7 +152,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             content_item.pack = pack
         return pack
 
-    @validator("path", always=True)
+    @field_validator("path")
+    @classmethod
     def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
             return v
@@ -248,7 +259,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 )
             )
         self.server_min_version = self.server_min_version or min_content_items_version
-        self.content_items = PackContentItems(**content_item_dct)
+        self.content_items = PackContentItems(**content_item_dct)  # type: ignore[arg-type]
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         """Dumps the pack metadata file.

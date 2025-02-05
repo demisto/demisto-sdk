@@ -69,14 +69,14 @@ class Argument(BaseModel):
 
 class IntegrationScript(ContentItem):
     type: str
-    subtype: Optional[str]
+    subtype: Optional[str] = None
     docker_image: DockerImage = DockerImage("")
     alt_docker_images: List[str] = []
     auto_update_docker_image: bool = True
     description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
-    unified_data: dict = Field(None, exclude=True)
+    unified_data: Optional[dict] = Field(None, exclude=True)
     version: Optional[int] = 0
     tests: Any = ""
 

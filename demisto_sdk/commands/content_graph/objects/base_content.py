@@ -18,8 +18,8 @@ from typing import (
 
 import demisto_client
 from packaging.version import Version
-from pydantic import BaseModel, DirectoryPath, Field
-from pydantic.main import ModelMetaclass
+from pydantic import BaseModel, ConfigDict, DirectoryPath, Field
+from pydantic._internal._model_construction import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
@@ -57,7 +57,12 @@ json = JSON_Handler()
 
 class BaseContentMetaclass(ModelMetaclass):
     def __new__(
-        cls, name, bases, namespace, content_type: ContentType = None, **kwargs
+        cls,
+        name,
+        bases,
+        namespace,
+        content_type: Optional[ContentType] = None,
+        **kwargs,
     ):
         """This method is called before every creation of a ContentItem *class* (NOT class instances!).
         If `content_type` is passed as an argument of the class, we add a mapping between the content type
@@ -78,7 +83,7 @@ class BaseContentMetaclass(ModelMetaclass):
         Returns:
             BaseNode: The model class.
         """
-        super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
+        super_cls: Type["BaseModel"] = super().__new__(cls, name, bases, namespace)
         # for type checking
         model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
         if content_type:
@@ -98,7 +103,7 @@ class BaseContentMetaclass(ModelMetaclass):
 class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
     database_id: Optional[str] = Field(None, exclude=True)  # used for the database
     object_id: str = Field(alias="id")
-    content_type: ClassVar[ContentType] = Field(include=True)
+    content_type: ClassVar[ContentType] = Field(exclude=False)
     source_repo: str = "content"
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
@@ -106,14 +111,14 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
     relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False
     )
-
-    class Config:
-        arbitrary_types_allowed = (
+    model_config = ConfigDict(
+        arbitrary_types_allowed=(
             True  # allows having custom classes for properties in model
-        )
-        orm_mode = True  # allows using from_orm() method
-        allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
-        keep_untouched = (cached_property,)
+        ),
+        from_attributes=True,
+        populate_by_name=True,
+        ignored_types=(cached_property,),
+    )
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
@@ -199,8 +204,8 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
 class BaseContent(BaseNode):
     field_mapping: dict = Field({}, exclude=True)
     path: Path
-    git_status: Optional[GitStatuses]
-    git_sha: Optional[str]
+    git_status: Optional[GitStatuses] = None
+    git_sha: Optional[str] = None
     old_base_content_object: Optional["BaseContent"] = None
     related_content_dict: dict = Field({}, exclude=True)
     structure_errors: List[StructureError] = Field(default_factory=list, exclude=True)
@@ -326,11 +331,11 @@ class BaseContent(BaseNode):
             logger.exception(
                 f"Could not parse content item from path {path} using {content_item_parser}"
             )
-            return None
+        return None
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        pass
+        raise NotImplementedError
 
 
 class UnknownContent(BaseNode):

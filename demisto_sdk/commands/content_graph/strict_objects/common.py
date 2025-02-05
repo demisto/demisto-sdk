@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Any, Dict, Optional, Sequence
 
 import pydantic
-from pydantic import BaseModel, Extra, validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from pydantic.fields import FieldInfo
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -11,14 +11,10 @@ marketplace_suffixes = tuple((marketplace.value for marketplace in MarketplaceVe
 
 
 class BaseStrictModel(BaseModel, ABC):
-    class Config:
-        """
-        This is the definition of not allowing extra fields except those defined by the schema.
-        """
+    model_config = ConfigDict(extra="forbid")
 
-        extra = Extra.forbid
-
-    @validator("*", pre=True)
+    @field_validator("*", mode="before")
+    @classmethod
     def prevent_none(cls, value, field):
         """
         Validator ensures no None value is entered in a field.
@@ -107,12 +103,15 @@ def create_dynamic_model(
     fields = {
         f"{field_name}_{suffix}": (
             type_,
-            FieldInfo(default, alias=f"{alias or field_name}:{suffix}"),
+            FieldInfo(default=default, alias=f"{alias or field_name}:{suffix}"),
         )
         for suffix in suffixes
     }
     if include_without_suffix:
-        fields[field_name] = (type_, FieldInfo(default, alias=alias or field_name))
+        fields[field_name] = (
+            type_,
+            FieldInfo(default=default, alias=alias or field_name),
+        )
 
     return create_model(
         model_name=f"Dynamic{field_name.title()}Model",
@@ -206,7 +205,9 @@ IS_CONTEXT_DYNAMIC_MODEL = create_dynamic_model(
 
 
 class _LeftOrRight(BaseStrictModel):
-    value: Any  # VALUE_DYNAMIC_MODEL doesn't have the raw 'value', only its variations
+    value: Any = (
+        None  # VALUE_DYNAMIC_MODEL doesn't have the raw 'value', only its variations
+    )
 
 
 LeftOrRight = create_model(

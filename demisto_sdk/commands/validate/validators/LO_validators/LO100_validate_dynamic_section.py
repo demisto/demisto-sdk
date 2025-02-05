@@ -30,9 +30,9 @@ class IsValidDynamicSectionValidator(BaseValidator[ContentTypes]):
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         validation_results = []
-        
+
         for content_item, tab, section in (
-            (content_item,tab, section)
+            (content_item, tab, section)
             for content_item in content_items
             for layout_data in content_item.data.values()
             if isinstance(layout_data, dict)

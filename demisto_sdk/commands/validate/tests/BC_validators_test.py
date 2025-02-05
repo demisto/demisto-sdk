@@ -1133,8 +1133,10 @@ def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(
     assert len(result) == errors
     if result:
         for res in result:
-            assert res.message == f"Changing the maximal supported version field `toversion` is not allowed. unless you're adding new content_item with the same id {res.content_object.object_id} and their from/to version fulfills the following:\nThe old item `toversion` field should be less than the new item `fromversion` field\nThe old and the new item should be continuous, aka the old one `toversion` is one version less than the new one `fromversion`"
-
+            assert (
+                res.message
+                == f"Changing the maximal supported version field `toversion` is not allowed. unless you're adding new content_item with the same id {res.content_object.object_id} and their from/to version fulfills the following:\nThe old item `toversion` field should be less than the new item `fromversion` field\nThe old and the new item should be continuous, aka the old one `toversion` is one version less than the new one `fromversion`"
+            )
 
 
 def test_args_name_change_validator__fails():

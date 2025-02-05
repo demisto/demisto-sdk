@@ -1069,6 +1069,56 @@ class XsoarClient:
             investigation_id, response_type
         )
 
+    @retry(exceptions=ApiException)
+    def run_slash_command(
+        self,
+        command: str,
+        investigation_id: Optional[str] = None,
+        should_delete_context: bool = True,
+        response_type: str = "object",
+    ) -> Tuple[List[Entry], Dict[str, Any]]:
+        """
+        Args:
+            command: the command to run
+            investigation_id: investigation ID of a specific incident / playground
+            should_delete_context: whether context should be deleted before executing the command
+            response_type: the response type of the raw response
+
+        Returns:
+            the context after running the command
+        """
+        if not investigation_id:
+            if self.server_config.server_type == ServerType.XSOAR:
+                investigation_id = self.get_playground_id()
+            else:
+                # it is not possible to auto-detect playground-id in xsoar-8, see CIAC-8766,
+                # once its resolved this should be implemented
+                raise ValueError(
+                    "Investigation_id must be provided for xsoar-saas/xsiam"
+                )
+        if not command.startswith("/"):
+            command = f"/{command}"
+
+        if should_delete_context:
+            update_entry = {
+                "investigationId": investigation_id,
+                "data": "!DeleteContext all=yes",
+            }
+
+            self._xsoar_client.investigation_add_entries_sync(update_entry=update_entry)
+
+        update_entry = {"investigationId": investigation_id, "data": command}
+        war_room_entries: List[Entry] = (
+            self._xsoar_client.investigation_add_entries_sync(update_entry=update_entry)
+        )
+        logger.debug(
+            f"Successfully run the command {command} in investigation {investigation_id}"
+        )
+
+        return war_room_entries, self.get_investigation_context(
+            investigation_id, response_type
+        )
+
     def get_formatted_error_entries(self, entries: List[Entry]) -> Set[str]:
         """
         Get formatted error entries from an executed command / playbook tasks

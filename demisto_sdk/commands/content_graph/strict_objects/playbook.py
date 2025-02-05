@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import Field, StringConstraints
+from pydantic import Field, RootModel, StringConstraints
 from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -125,8 +125,8 @@ ArgFilter = create_model(
 )
 
 
-class ArgFilters(BaseStrictModel):
-    __root__: List[ArgFilter]  # type:ignore[valid-type]
+class ArgFilters(RootModel[List[ArgFilter]]):  # type: ignore[valid-type]
+    pass
 
 
 class Condition(BaseStrictModel):

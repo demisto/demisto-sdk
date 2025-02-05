@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, Dict, Optional, Sequence, cast
+from typing import Any, Dict, Optional, Sequence
 
 import pydantic
 from pydantic import BaseModel, ConfigDict, field_validator
@@ -73,13 +73,11 @@ class BaseStrictModel(BaseModel, ABC):
         return value
 
 
-def create_model(model_name: str, base_models: tuple, **kwargs) -> BaseModel:
+def create_model(model_name: str, base_models: tuple, **kwargs) -> type[BaseModel]:
     """
     Wrapper for pydantic.create_model.
     """
-    return cast(
-        BaseModel, pydantic.create_model(model_name, __base__=base_models, **kwargs)
-    )
+    return pydantic.create_model(model_name, __base__=base_models, **kwargs)
 
 
 def create_dynamic_model(
@@ -89,7 +87,7 @@ def create_dynamic_model(
     suffixes: Sequence[str] = marketplace_suffixes,
     alias: Optional[str] = None,
     include_without_suffix: bool = False,
-) -> BaseModel:
+) -> type[BaseModel]:
     """
     This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
     (we have fields that are almost identical, except for the suffix.

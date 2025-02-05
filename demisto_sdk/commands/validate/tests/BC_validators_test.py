@@ -1048,12 +1048,6 @@ def test_IsContextPathChangedValidator_remove_command():
                     values=["6.10.0", DEFAULT_CONTENT_ITEM_TO_VERSION],
                 )
             ],
-            # {
-            #     "TestIntegration": {
-            #         "from": "6.10.0",
-            #         "to": DEFAULT_CONTENT_ITEM_TO_VERSION,
-            #     }
-            # },
             1,
             id="Case 1: integration - toversion changed to 6.0.0 and the new fromversion is 6.10.0 which are more than one release apart",
         ),
@@ -1139,10 +1133,8 @@ def test_IsValidToversionOnModifiedValidator_obtain_invalid_content_items(
     assert len(result) == errors
     if result:
         for res in result:
-            assert (
-                "Changing the maximal supported version field `toversion` is not allowed"
-                in res.message
-            )
+            assert res.message == f"Changing the maximal supported version field `toversion` is not allowed. unless you're adding new content_item with the same id {res.content_object.object_id} and their from/to version fulfills the following:\nThe old item `toversion` field should be less than the new item `fromversion` field\nThe old and the new item should be continuous, aka the old one `toversion` is one version less than the new one `fromversion`"
+
 
 
 def test_args_name_change_validator__fails():

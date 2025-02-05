@@ -1,0 +1,4 @@
+changes:
+- description: Removed mocking mechanism in test-content command.
+  type: breaking
+pr_number: 4764

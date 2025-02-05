@@ -16,8 +16,8 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 class ArgFilter(BaseStrictModel):
     operator: str
     ignore_case: Optional[bool] = Field(None, alias="ignorecase")
-    left: dict = Field(examples=[{"value": Any, "isContext": bool}])
-    right: Optional[dict] = Field(None, examples=[{"value": Any, "isContext": bool}])
+    left: dict = Field(examples=[{"value": {}, "isContext": False}])
+    right: Optional[dict] = Field(None, examples=[{"value": {}, "isContext": False}])
     type_: Optional[str] = Field(None, alias="type")
 
 

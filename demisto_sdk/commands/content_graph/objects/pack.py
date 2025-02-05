@@ -3,7 +3,7 @@ from collections import defaultdict
 from functools import cached_property
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import List, Optional, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -53,6 +53,7 @@ from demisto_sdk.commands.content_graph.objects.pack_content_items import (
     PackContentItems,
 )
 from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadata
+from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     AuthorImageRelatedFile,
     PackIgnoreRelatedFile,
@@ -74,10 +75,6 @@ from demisto_sdk.commands.upload.tools import (
     parse_error_response,
     parse_upload_response,
 )
-
-if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
-
 
 MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
 MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")

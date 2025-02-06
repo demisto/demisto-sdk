@@ -755,6 +755,7 @@ class BuildContext:
         self.slack_client = SlackClient(kwargs["slack"])
         self.build_number = kwargs["build_number"]
         self.build_name = kwargs["branch_name"]
+        self.isAMI = False if self.is_saas_server_type else kwargs["is_ami"]
         self.memCheck = kwargs["mem_check"]
         self.server_version = kwargs["server_version"]  # AMI Role
         self.server = kwargs["server"]
@@ -947,11 +948,11 @@ class ServerContext:
         # --------------------------- Testing preparation -------------------------------
 
         self.use_retries_mechanism: bool = use_retries_mechanism
-        self.test_retries_queue: Queue = Queue()
-        self.test_ids_to_run: Set[str] = set()
-        self.tests_to_run: Queue = self._get_tests_to_run()
+        self.test_ids: Set[str] = set()
         self.filtered_tests: List[str] = []
+        self.test_retries_queue: Queue = Queue()
         self.all_integrations_configurations: Optional[List] = []
+        self.tests_to_run: Queue = Queue()
 
     def _execute_tests(self, queue: Queue):
         """

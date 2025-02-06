@@ -1331,6 +1331,7 @@ class PB_Status:
     IN_PROGRESS = "inprogress"
     FAILED_DOCKER_TEST = "failed_docker_test"
     CONFIGURATION_FAILED = "failed_configuration"
+    SECOND_RUN_REQUIRED = "second_run_required"
 
 
 # change log regexes

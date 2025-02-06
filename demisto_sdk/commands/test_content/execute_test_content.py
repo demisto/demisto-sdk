@@ -116,7 +116,7 @@ def execute_test_content(**kwargs):
         comment = f"{SKIPPED_CONTENT_COMMENT}:\n- {skipped_integrations}"
         _add_pr_comment(comment, logging_manager)
     build_context.tests_data_keeper.print_test_summary(
-        build_context.isAMI, logging_manager
+        logging_manager
     )
     build_context.tests_data_keeper.create_result_files()
 

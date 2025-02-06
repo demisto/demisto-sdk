@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     CONTRIBUTORS_LIST,
     DEFAULT_IMAGE_PREFIX,
     DEVELOPER_SUPPORT,
+    MIRRORING_COMMANDS,
     PARTNER_SUPPORT,
     SUPPORT_LEVEL_HEADER,
     TYPE_TO_EXTENSION,
@@ -83,9 +84,11 @@ class IntegrationScriptUnifier(Unifier):
         script_obj = data
 
         if not is_script_package:  # integration
-            IntegrationScriptUnifier.update_hidden_parameters_value(
+            # Change data in place
+            IntegrationScriptUnifier.update_hidden_parameters_value(data, marketplace)
+            IntegrationScriptUnifier.remove_mirroring_commands_and_settings(
                 data, marketplace
-            )  # changes data
+            )
             script_obj = data["script"]
         script_type = TYPE_TO_EXTENSION[script_obj["type"]]
         try:
@@ -169,6 +172,35 @@ class IntegrationScriptUnifier(Unifier):
                     data["configuration"][i].pop("hidden")
                 else:  # type-4 param
                     data["configuration"][i]["hidden"] = marketplace in hidden
+
+    @staticmethod
+    def remove_mirroring_commands_and_settings(
+        data: dict,
+        marketplace: Optional[MarketplaceVersions],
+    ):
+        """
+        Removes mirroring commands, such as `get-mapping-fields` and `update-remote-system`, and disables mirroring
+        settings if data is being prepared for MarketplaceV2 or XPANSE.
+
+        Args:
+            data (dict): The content item data.
+            marketplace (MarketplaceVersions | None): The marketplace version to check against.
+        """
+        if marketplace not in (
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        ):
+            return
+
+        data["script"]["commands"] = [
+            command
+            for command in data["script"]["commands"]
+            if command["name"] not in MIRRORING_COMMANDS
+        ]
+
+        data["script"]["ismappable"] = False
+        data["script"]["isremotesyncin"] = False
+        data["script"]["isremotesyncout"] = False
 
     @staticmethod
     def add_custom_section(

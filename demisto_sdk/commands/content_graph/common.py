@@ -14,7 +14,6 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_NEO4J_DATABASE_URL,
     DEMISTO_SDK_NEO4J_PASSWORD,
     DEMISTO_SDK_NEO4J_USERNAME,
-    MIRRORING_COMMANDS,
     PACKS_FOLDER,
     MarketplaceVersions,
 )
@@ -573,34 +572,4 @@ def replace_marketplace_references(
         logger.error(
             f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"
         )
-    return data
-
-
-def remove_mirroring_commands_and_settings(
-    data: dict[str, Any], marketplace: MarketplaceVersions
-) -> dict[str, Any]:
-    """
-    Removes mirroring commands, such as `get-mapping-fields` and `update-remote-system`, and disables mirroring
-    settings if data is being prepared for MarketplaceV2 or XPANSE.
-
-    Args:
-        data (dict): The content item data.
-        marketplace (MarketplaceVersions): The marketplace version to check against.
-    """
-    if marketplace not in (
-        MarketplaceVersions.MarketplaceV2,
-        MarketplaceVersions.XPANSE,
-    ):
-        return data
-
-    data["script"]["commands"] = [
-        command
-        for command in data["script"]["commands"]
-        if command["name"] not in MIRRORING_COMMANDS
-    ]
-
-    data["script"]["ismappable"] = False
-    data["script"]["isremotesyncin"] = False
-    data["script"]["isremotesyncout"] = False
-
     return data

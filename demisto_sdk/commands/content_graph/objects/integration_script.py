@@ -20,7 +20,6 @@ from demisto_sdk.commands.common.native_image import (
 )
 from demisto_sdk.commands.content_graph.common import (
     lazy_property,
-    remove_mirroring_commands_and_settings,
     replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -120,7 +119,6 @@ class IntegrationScript(ContentItem):
         )
         # Replace marketplace references if needed
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
-        data = remove_mirroring_commands_and_settings(data, current_marketplace)
         self.unified_data = data
         return data
 

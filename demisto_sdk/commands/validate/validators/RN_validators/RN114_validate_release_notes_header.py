@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Dict, Iterable, List, Set, Tuple
 
-from demisto_sdk.commands.common.constants import PB_RELEASE_NOTES_FORMAT
+from demisto_sdk.commands.common.constants import PB_RELEASE_NOTES_FORMAT, GitStatuses
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -38,6 +38,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     related_field = "release_note"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.RELEASE_NOTE]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

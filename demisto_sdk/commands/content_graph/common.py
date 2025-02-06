@@ -538,7 +538,7 @@ def replace_marketplace_references(
     Returns:
         Any: The same data object with replacements made if applicable.
     """
-    pattern = r"Cortex XSOAR(?: [\w.]*\d[\w.]*)?(?!(?:.{0,20})https)"
+    pattern = r"\bCortex XSOAR\b(?![\S]*\/)(?:\s+[\w.]*\d[\w.]*)?(?!(?:.{0,20})https)"
     try:
         if marketplace in {
             MarketplaceVersions.MarketplaceV2,

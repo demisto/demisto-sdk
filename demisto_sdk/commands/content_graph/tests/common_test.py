@@ -162,6 +162,12 @@ def test_replace_marketplace_references_strings(data, marketplace, expected):
             ["This is a cortex xsoar v6.6.8 example."],
             id="No replace for case insensitive in list",
         ),
+        pytest.param(
+            ["This is a Cortex XSOAR/8."],
+            MarketplaceVersions.MarketplaceV2,
+            ["This is a Cortex XSOAR/8."],
+            id="No replace within word in list ",
+        ),
     ],
 )
 def test_replace_marketplace_references_lists(data, marketplace, expected):

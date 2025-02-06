@@ -133,7 +133,7 @@ class ResultWriter:
                 f"The following errors can be ignored: {', '.join(ignorable_errors)}.\n"
             )
         if forcemergeable_errors:
-            msg += f"The following errors doesn't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
+            msg += f"The following errors don't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
         if must_be_handled_errors:
             msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
             msg += f"Note that the following errors cannot be ignored or force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"

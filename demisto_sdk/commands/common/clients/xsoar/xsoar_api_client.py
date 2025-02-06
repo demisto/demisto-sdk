@@ -37,6 +37,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
+from demisto_sdk.commands.test_content.test_use_case.test_use_case import run_command
 
 
 class ServerType(StrEnum):
@@ -1037,37 +1038,7 @@ class XsoarClient:
         Returns:
             the context after running the command
         """
-        if not investigation_id:
-            if self.server_config.server_type == ServerType.XSOAR:
-                investigation_id = self.get_playground_id()
-            else:
-                # it is not possible to auto-detect playground-id in xsoar-8, see CIAC-8766,
-                # once its resolved this should be implemented
-                raise ValueError(
-                    "Investigation_id must be provided for xsoar-saas/xsiam"
-                )
-        if not command.startswith("!"):
-            command = f"!{command}"
-
-        if should_delete_context:
-            update_entry = {
-                "investigationId": investigation_id,
-                "data": "!DeleteContext all=yes",
-            }
-
-            self._xsoar_client.investigation_add_entries_sync(update_entry=update_entry)
-
-        update_entry = {"investigationId": investigation_id, "data": command}
-        war_room_entries: List[Entry] = (
-            self._xsoar_client.investigation_add_entries_sync(update_entry=update_entry)
-        )
-        logger.debug(
-            f"Successfully run the command {command} in investigation {investigation_id}"
-        )
-
-        return war_room_entries, self.get_investigation_context(
-            investigation_id, response_type
-        )
+        return self._run_command('!', command, investigation_id, should_delete_context, response_type)
 
     @retry(exceptions=ApiException)
     def run_slash_command(
@@ -1087,6 +1058,26 @@ class XsoarClient:
         Returns:
             the context after running the command
         """
+        return self._run_command('/', command, investigation_id, should_delete_context, response_type)
+
+    def _run_command(self,
+                    command_type: str,
+                    command: str,
+                    investigation_id: Optional[str] = None,
+                    should_delete_context: bool = True,
+                    response_type: str = "object",
+                    )-> Tuple[List[Entry], Dict[str, Any]]:
+        """
+        Args:
+            command_type: command type, slash or cli command.
+            command: the command to run
+            investigation_id: investigation ID of a specific incident / playground
+            should_delete_context: whether context should be deleted before executing the command
+            response_type: the response type of the raw response
+
+        Returns:
+            the context after running the command
+        """
         if not investigation_id:
             if self.server_config.server_type == ServerType.XSOAR:
                 investigation_id = self.get_playground_id()
@@ -1096,8 +1087,8 @@ class XsoarClient:
                 raise ValueError(
                     "Investigation_id must be provided for xsoar-saas/xsiam"
                 )
-        if not command.startswith("/"):
-            command = f"/{command}"
+        if not command.startswith(command_type):
+            command = f"{command_type}{command}"
 
         if should_delete_context:
             update_entry = {

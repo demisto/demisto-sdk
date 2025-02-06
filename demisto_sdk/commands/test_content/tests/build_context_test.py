@@ -333,7 +333,7 @@ def test_non_filtered_tests_are_skipped(mocker, tmp_path):
         - Initializing the BuildContext instance
     Then:
         - Ensure that all tests that are not in filtered tests are skipped
-        - Ensure that the test that was in  filtered tests is not skipped
+        - Ensure that the test that was in filtered tests is not skipped
     """
     machine_assignment_content = {
         "xsoar-machine": {

@@ -8,12 +8,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Integration
 
-ALLOWED_SECTIONS = [
-    "Connect",
-    "Collect",
-    "Optimize",
-    "Mirroring"
-]
+ALLOWED_SECTIONS = ["Connect", "Collect", "Optimize", "Mirroring"]
 
 
 class StrictSchemaValidator(BaseValidator[ContentTypes]):

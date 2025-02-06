@@ -179,12 +179,13 @@ class IntegrationScriptUnifier(Unifier):
         marketplace: Optional[MarketplaceVersions],
     ):
         """
-        Removes mirroring commands, such as `get-mapping-fields` and `update-remote-system`, and disables mirroring
-        settings if data is being prepared for MarketplaceV2 or XPANSE.
+        Modifies data in place to remove mirroring commands, such as `get-mapping-fields` and `update-remote-system`,
+        and disable mirroring settings, such as `isremotesyncin` and `isremotesyncout` if the integration script is being
+        prepared for MarketplaceV2 or XPANSE.
 
         Args:
-            data (dict): The content item data.
-            marketplace (MarketplaceVersions | None): The marketplace version to check against.
+            data (dict): The integration data.
+            marketplace (MarketplaceVersions | None): The optional marketplace version to check against.
         """
         if marketplace not in (
             MarketplaceVersions.MarketplaceV2,
@@ -192,15 +193,25 @@ class IntegrationScriptUnifier(Unifier):
         ):
             return
 
+        display_name = data["display"]
+        logger.debug(
+            f"Removing mirroring commands from the integration: {display_name} for marketplace: {marketplace.value}"
+        )
         data["script"]["commands"] = [
             command
             for command in data["script"]["commands"]
             if command["name"] not in MIRRORING_COMMANDS
         ]
 
+        logger.debug(
+            f"Disabling mirroring settings in the integration: {display_name} for marketplace: {marketplace.value}"
+        )
         data["script"]["ismappable"] = False
         data["script"]["isremotesyncin"] = False
         data["script"]["isremotesyncout"] = False
+
+        data.pop("defaultmapperin", None)
+        data.pop("defaultmapperout", None)
 
     @staticmethod
     def add_custom_section(

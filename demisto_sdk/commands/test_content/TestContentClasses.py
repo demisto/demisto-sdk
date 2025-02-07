@@ -1190,6 +1190,7 @@ class CloudServerContext(ServerContext):
             .get("tests", {})
             .get(TEST_PLAYBOOKS, [])
         )
+        self.tests_to_run = self._get_tests_to_run()
         self.all_integrations_configurations = self._get_all_integration_config()
 
     def reset_containers(self):
@@ -1319,6 +1320,7 @@ class OnPremServerContext(ServerContext):
             .get("tests", {})
             .get(TEST_PLAYBOOKS, [])
         )
+        self.tests_to_run = self._get_tests_to_run()
         self.all_integrations_configurations = self._get_all_integration_config()
 
     def reset_containers(self):
@@ -2705,6 +2707,7 @@ class TestContext:
         if is_first_execution:
             return PB_Status.COMPLETED
 
+        self.playbook.configuration.number_of_successful_runs += 1
         if use_retries_mechanism:
             return self._update_status_based_on_retries_mechanism(number_of_executions)
 

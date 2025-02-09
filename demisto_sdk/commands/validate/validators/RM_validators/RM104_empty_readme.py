@@ -34,6 +34,7 @@ class EmptyReadmeValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(content_item.name),
                 content_object=content_item,
+                path=content_item.readme.file_path,
             )
             for content_item in content_items
             if

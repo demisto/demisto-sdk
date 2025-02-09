@@ -519,5 +519,5 @@ select = [
 ]
 warning = [
   "PB130",
-  "PB131",
+  "PB131"
 ]

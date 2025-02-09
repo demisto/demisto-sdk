@@ -79,7 +79,9 @@ ignorable_errors = [
   "DB100",
   "GR103",
   "GR107",
-  "RM117"
+  "RM117",
+  "VC100",
+  "VC101"
 ]
 
 [Custom_Categories]
@@ -128,6 +130,7 @@ select = [
   "IN162",
   "IN163",
   "LO107",
+  "LO100",
   "PB100",
   "PB101",
   "PB103",
@@ -244,7 +247,9 @@ select = [
   "MR107",
   "MR108",
   "ST110",
-  "TR100"
+  "TR100",
+  "VC100",
+  "VC101"
 ]
 warning = [
   "IN101",
@@ -511,6 +516,7 @@ select = [
   "RN114",
   "RN115",
   "RN116",
-  "TR100"
+  "TR100",
+  "LO100"
 ]
 warning = []

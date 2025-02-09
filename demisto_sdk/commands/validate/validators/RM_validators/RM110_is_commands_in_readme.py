@@ -51,6 +51,7 @@ class IsCommandsInReadmeValidator(BaseValidator[ContentTypes]):
                             ", ".join(undocumented_commands)
                         ),
                         content_object=content_item,
+                        path=content_item.readme.file_path,
                     )
                 )
         return results

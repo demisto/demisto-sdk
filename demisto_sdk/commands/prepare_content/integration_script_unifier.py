@@ -185,7 +185,7 @@ class IntegrationScriptUnifier(Unifier):
 
         Args:
             data (dict): The integration data.
-            marketplace (MarketplaceVersions | None): The optional marketplace version to check against.
+            marketplace (Optional[MarketplaceVersions]): The optional marketplace version to check against.
         """
         if marketplace not in (
             MarketplaceVersions.MarketplaceV2,
@@ -209,9 +209,6 @@ class IntegrationScriptUnifier(Unifier):
         data["script"]["ismappable"] = False
         data["script"]["isremotesyncin"] = False
         data["script"]["isremotesyncout"] = False
-
-        data.pop("defaultmapperin", None)
-        data.pop("defaultmapperout", None)
 
     @staticmethod
     def add_custom_section(

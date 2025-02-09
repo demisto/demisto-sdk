@@ -1322,6 +1322,16 @@ PARTNER_DETAILEDDESCRIPTION_NO_URL = (
 )
 
 
+PREPARE_CONTENT_MARKETPLACE_MIRRORING = (
+    # marketplace, expected_commands_count, expected_mirroring_enabled
+    pytest.param(MarketplaceVersions.XSOAR, 2, True, id="XSOAR"),
+    pytest.param(MarketplaceVersions.XSOAR_SAAS, 2, True, id="XSOAR SAAS"),
+    pytest.param(MarketplaceVersions.XSOAR_ON_PREM, 2, True, id="XSOAR ON-PREM"),
+    pytest.param(MarketplaceVersions.MarketplaceV2, 1, False, id="XSIAM"),
+    pytest.param(MarketplaceVersions.XPANSE, 1, False, id="XPANSE"),
+)
+
+
 def test_unify_partner_contributed_pack(mocker, repo):
     """
     Given
@@ -1741,3 +1751,56 @@ def test_update_hidden_parameters_value():
     assert yml_data["configuration"][0]["hidden"] is True
     assert yml_data["configuration"][1]["hidden"] is True
     assert yml_data["configuration"][2]["hidden"] is False
+
+
+@pytest.mark.parametrize(
+    argnames="marketplace, expected_commands_count, expected_mirroring_enabled",
+    argvalues=PREPARE_CONTENT_MARKETPLACE_MIRRORING,
+)
+def test_remove_mirroring_commands_and_settings(
+    marketplace: MarketplaceVersions,
+    expected_commands_count: int,
+    expected_mirroring_enabled: bool,
+):
+    """
+    Given:
+        - An marketplace and an integration yml dict data.
+
+    When:
+        - Calling IntegrationScriptUnifier.remove_mirroring_commands_and_settings.
+
+    Then:
+        - Validate mirroring commands are removed on unsupported platforms.
+        - Validate mirroring settings are disabled on unsupported platforms.
+    """
+    yml_data = {
+        "display": "Vendor System",
+        "script": {
+            "commands": [
+                {
+                    "name": "get-mapping-fields",
+                    "description": "Returns the fields to map.",
+                },
+                {
+                    "name": "vendor-get-files",
+                    "description": "Get a list of files from vendor system.",
+                },
+            ],
+            "ismappable": True,
+            "isremotesyncin": True,
+            "isremotesyncout": True,
+        },
+    }
+    IntegrationScriptUnifier.remove_mirroring_commands_and_settings(
+        yml_data, marketplace
+    )
+
+    # Validate commands
+    assert len(yml_data["script"]["commands"]) == expected_commands_count
+    # vendor command should remain
+    assert yml_data["script"]["commands"][-1]["name"] == "vendor-get-files"
+
+    # Validate mirroring settings
+    assert yml_data["script"]["ismappable"] is expected_mirroring_enabled
+    assert yml_data["script"]["isremotesyncin"] is expected_mirroring_enabled
+    assert yml_data["script"]["isremotesyncout"] is expected_mirroring_enabled

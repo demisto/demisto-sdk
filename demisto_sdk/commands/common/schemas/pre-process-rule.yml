@@ -59,6 +59,9 @@ mapping:
   scriptName:
     type: str
     required: true
+  scriptID:
+    type: str
+    required: false
   searchClosed:
     type: bool
     required: true

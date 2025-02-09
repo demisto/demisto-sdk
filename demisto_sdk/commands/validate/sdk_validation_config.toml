@@ -253,7 +253,7 @@ warning = [
   "IN101",
   "RM108",
   "PB130",
-  "PB131",
+  "PB131"
 ]
 
 [support_level]

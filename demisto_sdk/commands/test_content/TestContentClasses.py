@@ -790,7 +790,7 @@ class BuildContext:
 
         self.tests_data_keeper = TestResults(
             kwargs["artifacts_path"],
-            kwargs.get("service_account", ""),
+            kwargs.get("service_account"),
             kwargs.get("artifacts_bucket"),
         )
         self.machine_assignment_json = get_json_file(kwargs["machine_assignment"])
@@ -1411,7 +1411,6 @@ class Conf:
 class TestResults:
     def __init__(
         self,
-        integrations,
         artifacts_path: str,
         service_account: str = None,
         artifacts_bucket: str = None,
@@ -1424,7 +1423,6 @@ class TestResults:
         self.rerecorded_tests: List[str] = []
         self.empty_files: List[str] = []
         self.test_results_xml_file = JUnitXml()
-        self.integrations = integrations
         self.playbook_skipped_integration: Set[str] = set()
         self.artifacts_path = Path(artifacts_path)
         self.service_account = service_account
@@ -1467,7 +1465,6 @@ class TestResults:
         succeed_playbooks = self.succeeded_playbooks
         failed_playbooks = self.failed_playbooks
         skipped_tests = self.skipped_tests
-        integrations = self.integrations
         skipped_integration = self.skipped_integrations
 
         succeed_count = len(succeed_playbooks)
@@ -1498,13 +1495,6 @@ class TestResults:
 
         if skipped_tests:
             self.print_table("Skipped Tests", skipped_tests, logging_module.debug)
-
-        if integrations:
-            self.print_table(
-                "Integrations",
-                integrations,
-                logging_module.debug,
-            )
 
         if failed_count:
             logging_module.error(f"Number of failed tests - {failed_count}:")

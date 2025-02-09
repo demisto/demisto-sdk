@@ -110,9 +110,7 @@ def init_server_context(mocker, tmp_path):
         generate_integration_configuration(integrations_type)
     ]
     secret_test_conf = generate_secret_conf_json(integrations_configurations)
-    content_conf_json = generate_content_conf_json(
-        tests=tests
-    )
+    content_conf_json = generate_content_conf_json(tests=tests)
     mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.BuildContext.create_servers",
         return_value=set(),
@@ -178,10 +176,7 @@ def test_playbook_fails_every_time(mocker, tmp_path):
     server_context.execute_tests()
 
     assert incident_test_mock.call_count == 2
-    assert (
-        "playbook"
-        in build_context.tests_data_keeper.failed_playbooks
-    )
+    assert "playbook" in build_context.tests_data_keeper.failed_playbooks
     assert not build_context.tests_data_keeper.succeeded_playbooks
     assert any(
         "Test-Playbook was executed 2 times, and passed only 0 times. Adding to failed playbooks."
@@ -241,10 +236,7 @@ def test_playbook_fails_most_of_the_times(mocker, tmp_path):
     server_context.execute_tests()
 
     assert incident_test_mock.call_count == 3
-    assert (
-        "playbook"
-        in build_context.tests_data_keeper.failed_playbooks
-    )
+    assert "playbook" in build_context.tests_data_keeper.failed_playbooks
     assert not build_context.tests_data_keeper.succeeded_playbooks
     assert any(
         "Test-Playbook was executed 3 times, and passed only 1 times. Adding to failed playbooks."

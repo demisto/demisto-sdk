@@ -2748,7 +2748,10 @@ class TestContext:
             PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
             PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
         """
-        if number_of_executions == 2 and self.playbook.configuration.number_of_successful_runs == 0:
+        if (
+            number_of_executions == 2
+            and self.playbook.configuration.number_of_successful_runs == 0
+        ):
             self.playbook.log_info(
                 "Test-Playbook was executed 2 times, and passed only 0 times. Adding to failed playbooks."
             )

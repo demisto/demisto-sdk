@@ -148,8 +148,6 @@ select = [
   "PB125",
   "PB126",
   "PB127",
-  "PB130",
-  "PB131",
   "PB132",
   "PB114",
   "BA100",
@@ -253,7 +251,9 @@ select = [
 ]
 warning = [
   "IN101",
-  "RM108"
+  "RM108",
+  "PB130",
+  "PB131",
 ]
 
 [support_level]
@@ -347,8 +347,6 @@ select = [
   "PB119",
   "PB121",
   "PB127",
-  "PB130",
-  "PB131",
   "PB132",
   "BC100",
   "BC101",
@@ -519,4 +517,7 @@ select = [
   "TR100",
   "LO100"
 ]
-warning = []
+warning = [
+  "PB130",
+  "PB131",
+]

@@ -56,12 +56,12 @@ mapping:
     type: seq
     sequence:
     - include: readyNewEventFilters_schema
-  scriptName:
-    type: str
-    required: true
   scriptID:
     type: str
     required: false
+  scriptName:
+    type: str
+    required: true
   searchClosed:
     type: bool
     required: true

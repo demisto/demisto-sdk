@@ -37,7 +37,6 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
-from demisto_sdk.commands.test_content.test_use_case.test_use_case import run_command
 
 
 class ServerType(StrEnum):
@@ -58,6 +57,7 @@ class XsoarClient:
     """
 
     _ENTRY_TYPE_ERROR: int = 4
+    PLAYBOOK_TASKS_STATES = ['New', 'InProgress', 'Completed', 'Waiting', 'Error', 'Skipped', 'Blocked']
 
     def __init__(
         self,
@@ -618,6 +618,40 @@ class XsoarClient:
                 return instance
 
         raise ValueError(f"Could not find instance for instance name '{instance_name}'")
+
+    @retry(exceptions=ApiException)
+    def disable_integration_instance(self, instance_name, integration_id, response_type: str = 'str'):
+
+        # it will throw an error if the instance does not exist
+        instance = self.get_integration_instance(instance_name)
+
+        integrations_metadata: Dict[str, Any] = (
+            self.get_integrations_module_configuration(integration_id)
+        )
+
+        integration_instance_body_request = {
+            "id": instance.get("id"),
+            "brand": integrations_metadata["name"],
+            "name": instance_name,
+            "data": instance.get("data"),
+            "isIntegrationScript": "true",
+            "enable": "false",
+            "version": -1
+        }
+        logger.info(
+            f"Disabling integration instance {instance_name} for integration {integration_id}"
+        )
+
+        raw_response, _, _ = demisto_client.generic_request_func(
+            self=self._xsoar_client,
+            method="PUT",
+            path="/settings/integration",
+            body=integration_instance_body_request,
+            response_type=response_type,
+        )
+        logger.info(
+            f"Successfully disabled integration instance {instance_name} for Integration {integration_id}"
+        )
 
     """
     #############################
@@ -1384,3 +1418,95 @@ class XsoarClient:
             saving_inputs_path, method="POST", body={"inputs": new_inputs}
         )
         return self._process_response(response, status_code, 200)
+
+    def pull_playbook_tasks_by_state(self, incident_id: str,
+                                     task_states: list,
+                                     task_name: str = None,
+                                     complete_option: str = None,
+                                     max_timeout: str = '60',
+                                     interval_between_tries: str = '3',
+                                     complete_task: bool = False,
+                                     task_input: str = None):
+
+        if not all(state in self.PLAYBOOK_TASKS_STATES for state in task_states):
+            raise ValueError(f'task_states are bad. Possible values: {self.PLAYBOOK_TASKS_STATES}')
+
+        tasks_states_endpoint = f"/investigation/{incident_id}/workplan/tasks"
+        completed_tasks = []
+        found_tasks = []
+        start_time = time.time()
+
+        while True:
+
+            response, status_code, _ = self._xsoar_client.generic_request(
+                tasks_states_endpoint, method="POST",
+                body={"states": task_states,
+                      "types": ["regular", "condition", "collection"]}
+            )
+            tasks_by_states = self._process_response(response, status_code, 200)
+            requested_task = None
+
+            # find task to complete if was given task name
+            if task_name:
+                for task in tasks_by_states:
+                    if task.get("task").get("name") == task_name:
+                        requested_task = task
+                        break
+
+            if requested_task and complete_task:
+                # complete the requested task
+                self.complete_playbook_task(incident_id, requested_task.get("id"), task_input)
+
+                completed_tasks.append(requested_task.get("task").get('name'))
+                break
+
+            elif requested_task:
+                # just validate that task was found and not complete it
+                found_tasks.append(requested_task.get("task").get('name'))
+                break
+
+            elif not task_name and tasks_by_states and complete_task:
+                # complete all tasks, which state is task_states
+                for task in tasks_by_states:
+                    self.complete_playbook_task(incident_id, task.get("id"), task_input)
+                    completed_tasks.append(task.get("task").get('name'))
+
+                break
+
+            elif not task_name and tasks_by_states:
+                # just validate that task was found and not complete it
+                found_tasks.extend(task.get("task").get('name') for task in tasks_by_states)
+                break
+
+            if time.time() - start_time > max_timeout:  # type: ignore[operator]
+                break
+
+            sleep(float(interval_between_tries))  # type: ignore[arg-type]
+
+        if not completed_tasks and not found_tasks:
+            if task_name and task_states:
+                raise Exception(f'The task "{task_name}" did not reach the {" or ".join(task_states)} state.')
+            elif task_name:
+                raise Exception(f'The task "{task_name}" was not found by script.')
+            elif task_states:
+                raise Exception(f'None of the tasks reached the {" or ".join(task_states)} state.')
+            else:
+                raise Exception('No tasks were found.')
+
+        outputs = {'CompletedTask': completed_tasks,
+                    'FoundTask': found_tasks}
+
+    def complete_playbook_task(self, investigation_id, task_id: str, task_input: str):
+
+        response, status_code, _ = self._xsoar_client.generic_request(
+            "/inv-playbook/task/complete", method="POST",
+            body={"investigationId": investigation_id, "taskId": task_id, "taskInput": task_input}
+        )
+        self._process_response(response, status_code, 200)
+
+        logger.info(f"The playbook task with id {task_id} was completed with input {task_input}")
+
+
+
+
+

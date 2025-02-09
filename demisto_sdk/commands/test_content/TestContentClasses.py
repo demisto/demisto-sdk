@@ -451,13 +451,15 @@ class TestPlaybook:
                 )
 
             if not test_server_types:
+                self.log_debug(f"Running {self} _1_")
                 return True  # test doesn't have a marketplace value, so it runs on all machines
 
-            instance_names_log_message = (
-                f" for instance names: {', '.join(self.configuration.test_instance_names)}"
-                if self.configuration.test_instance_names
-                else ""
-            )
+            if self.configuration.test_instance_names:
+                self.log_debug(f"Running {self} _2_")
+                instance_names_log_message = f" for instance names: {', '.join(self.configuration.test_instance_names)}"
+            else:
+                self.log_debug(f"Running {self} _3_")
+                instance_names_log_message = ""
 
             if self.build_context.server_type in test_server_types:
                 self.log_debug(
@@ -472,8 +474,10 @@ class TestPlaybook:
             )
             self.close_test_suite([Skipped(log_message)])
             if self.configuration.playbook_id in self.server_context.filtered_tests:
+                self.log_debug(f"Running {self} _4_")
                 self.log_warning(log_message)
             else:
+                self.log_debug(f"Running {self} _5_")
                 self.log_debug(log_message)
             skipped_tests_collected[self.configuration.playbook_id] = (
                 f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"

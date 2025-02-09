@@ -790,7 +790,7 @@ class BuildContext:
 
         self.tests_data_keeper = TestResults(
             kwargs["artifacts_path"],
-            kwargs.get("service_account"),
+            kwargs.get("service_account", ""),
             kwargs.get("artifacts_bucket"),
         )
         self.machine_assignment_json = get_json_file(kwargs["machine_assignment"])

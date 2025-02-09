@@ -220,6 +220,13 @@ def get_all_validators_specific_validation(
 
 
 class BaseResult(BaseModel):
+    """
+    validator: BaseValidator - The validator that generated the result.
+    message: str - the message.
+    content_object: BaseContent - The main content object the validation was executed for.
+    path: Optional[Path] - The path to note in the error message, usually used for related files.
+    """
+
     validator: BaseValidator
     message: str
     content_object: BaseContent

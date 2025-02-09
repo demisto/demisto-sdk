@@ -91,12 +91,12 @@ class ResultWriter:
             fixed_objects_set.add(fixing_result.content_object)
             if fixing_result.validator.error_code not in config_file_content.warning:
                 exit_code = 1
-            logger.warning(f"<yellow>{fixing_result.format_readable_message}</yellow>")
+            logger.warning(f"{fixing_result.format_readable_message}")
         for result in self.invalid_content_item_results:
-            logger.error(f"<red>{result.format_readable_message}</red>")
+            logger.error(f"{result.format_readable_message}")
             exit_code = 1
         for result in self.validation_caught_exception_results:
-            logger.error(f"<red>{result.format_readable_message}</red>")
+            logger.error(f"{result.format_readable_message}")
             exit_code = 1
         if not exit_code:
             logger.info("<green>All validations passed.</green>")

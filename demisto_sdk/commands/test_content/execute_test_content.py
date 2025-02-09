@@ -81,6 +81,9 @@ def execute_test_content(**kwargs):
         "Run_Tests.log", real_time_logs_only=not kwargs["nightly"]
     )
     logging_manager.info(
+        'custom branch for testing number 1'
+    )
+    logging_manager.info(
         f'Starting to run tests on Server version:{kwargs["server_version"]} Server Type:{kwargs["server_type"]}'
     )
     build_context = BuildContext(kwargs, logging_manager)

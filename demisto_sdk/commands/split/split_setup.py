@@ -12,9 +12,13 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 @logging_setup_decorator
 def split(
     ctx: typer.Context,
-    input: Path = typer.Option(..., help="The yml/json file to extract from"),
+    input: Path = typer.Option(
+        ..., "-i", "--input", help="The yml/json file to extract from"
+    ),
     output: Path = typer.Option(
         None,
+        "-o",
+        "--output",
         help="The output dir to write the extracted code/description/image/json to.",
     ),
     no_demisto_mock: bool = typer.Option(

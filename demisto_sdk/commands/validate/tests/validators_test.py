@@ -488,17 +488,17 @@ def test_post_results(
             ConfiguredValidations(
                 ignorable_errors=["BA100"], path_based_section=["CR102"]
             ),
-            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors doesn't run as part of the nightly flow and therefore can be force merged: BA100, CL101, TE111.\n######################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: CR102.\n######################################################################################################\n</red>",
+            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CL101, TE111.\n######################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: CR102.\n######################################################################################################\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],
             ConfiguredValidations(path_based_section=["CR102", "BA100"]),
-            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors doesn't run as part of the nightly flow and therefore can be force merged: CL101, TE111.\n#############################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: BA100, CR102.\n#############################################################################################################\n</red>",
+            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: CL101, TE111.\n#############################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: BA100, CR102.\n#############################################################################################################\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],
             ConfiguredValidations(ignorable_errors=["BA100", "TE111"]),
-            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors doesn't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n</red>",
+            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],
@@ -766,6 +766,25 @@ def test_all_error_codes_configured():
     )
     non_configured_existing_error_codes = existing_error_codes - configured_errors_set
     assert not non_configured_existing_error_codes, f"The following error codes are not configured in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml': {non_configured_existing_error_codes}."
+
+
+def test_all_configured_error_codes_exist():
+    """
+    test that the set of configured validation errors in sdk_validation_config.toml is equal to the set of all existing validation to ensure we don't misconfigure non-existing validations.
+    """
+    config_file_path = "demisto_sdk/commands/validate/sdk_validation_config.toml"
+    config_file_content: dict = toml.load(config_file_path)
+    configured_errors_set: Set[str] = set()
+    for section in ("use_git", "path_based_validations"):
+        for key in ("select", "warning"):
+            configured_errors_set = configured_errors_set.union(
+                set(config_file_content[section][key])
+            )
+    existing_error_codes: Set[str] = set(
+        [validator.error_code for validator in get_all_validators()]
+    )
+    configured_non_existing_error_codes = configured_errors_set - existing_error_codes
+    assert not configured_non_existing_error_codes, f"The following error codes are configured in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml' but cannot be found in the repo: {configured_non_existing_error_codes}."
 
 
 def test_validation_prefix():

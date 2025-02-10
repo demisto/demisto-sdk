@@ -73,7 +73,8 @@ def release_notes_mismatch_error(content_item: IntegrationScript):
     """
     should_be_entry = release_notes_shouldbe_entry(content_item)
     image_entry = get_docker_image_entry(
-        content_item.pack.release_note.file_content, content_item.name
+        content_item.pack.release_note.file_content,
+        content_item.display_name or content_item.name,
     )
     if should_be_entry and (
         should_be_entry not in image_entry or image_entry == NO_DOCKER_ENTRY_FOUND
@@ -103,7 +104,9 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (error := release_notes_mismatch_error(content_item))
+            if content_item.pack.release_note.exist
+            and content_item.pack.release_note.git_status == GitStatuses.ADDED
+            and (error := release_notes_mismatch_error(content_item))
         ]
 
     def fix(

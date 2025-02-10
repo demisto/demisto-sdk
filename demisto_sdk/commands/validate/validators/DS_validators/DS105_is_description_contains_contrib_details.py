@@ -38,6 +38,7 @@ class IsDescriptionContainsContribDetailsValidator(BaseValidator[ContentTypes]):
                     content_item.description_file.file_path.name
                 ),
                 content_object=content_item,
+                path=content_item.description_file.file_path,
             )
             for content_item in content_items
             if re.findall(

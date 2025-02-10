@@ -423,8 +423,8 @@ def test_FirstLevelHeaderMissingValidator_obtain_invalid_content_items():
     results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == 2
     expected_msgs = [
-        f'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/{content_items[2].path.parts[-1]}."\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
-        f'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/{content_items[3].path.parts[-1]}."\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
+        f'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/{content_items[2].path.parts[-1]}"\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
+        f'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/{content_items[3].path.parts[-1]}"\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes',
     ]
     assert all(
         [res_msg in expected_msgs for res_msg in [result.message for result in results]]

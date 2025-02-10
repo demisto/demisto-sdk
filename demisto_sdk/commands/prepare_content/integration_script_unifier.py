@@ -187,24 +187,27 @@ class IntegrationScriptUnifier(Unifier):
             data (dict): The integration data.
             marketplace (Optional[MarketplaceVersions]): The optional marketplace version to check against.
         """
-        if marketplace not in (
+        marketplaces_without_mirroring = (
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XPANSE,
-        ):
+        )
+        if marketplace not in marketplaces_without_mirroring:
+            # Only change data if marketplace platform does not support mirroring
             return
 
-        display_name = data["display"]
-        logger.debug(
-            f"Removing mirroring commands from the integration: {display_name} for marketplace: {marketplace.value}"
-        )
-        data["script"]["commands"] = [
-            command
-            for command in data["script"]["commands"]
-            if command["name"] not in MIRRORING_COMMANDS
-        ]
+        name = data["name"]
+        if script_commands := data["script"].get("commands"):
+            logger.debug(
+                f"Removing mirroring commands from {name} for marketplace: {marketplace.value}"
+            )
+            data["script"]["commands"] = [
+                command
+                for command in script_commands
+                if command["name"] not in MIRRORING_COMMANDS
+            ]
 
         logger.debug(
-            f"Disabling mirroring settings in the integration: {display_name} for marketplace: {marketplace.value}"
+            f"Disabling mirroring settings in {name} for marketplace: {marketplace.value}"
         )
         data["script"]["ismappable"] = False
         data["script"]["isremotesyncin"] = False

@@ -1774,7 +1774,7 @@ def test_remove_mirroring_commands_and_settings(
         - Validate mirroring settings are disabled on unsupported platforms.
     """
     yml_data = {
-        "display": "Vendor System",
+        "name": "VendorSystem",
         "script": {
             "commands": [
                 {
@@ -1783,7 +1783,7 @@ def test_remove_mirroring_commands_and_settings(
                 },
                 {
                     "name": "vendor-get-files",
-                    "description": "Get a list of files from vendor system.",
+                    "description": "Get a list of files from Vendor system.",
                 },
             ],
             "ismappable": True,

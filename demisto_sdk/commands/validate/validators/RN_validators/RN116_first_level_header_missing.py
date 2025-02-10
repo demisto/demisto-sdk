@@ -18,7 +18,7 @@ class FirstLevelHeaderMissingValidator(BaseValidator[ContentTypes]):
     error_code = "RN116"
     description = "Validate that the release note has either a valid first level header or a valid force header."
     rationale = "We want to enforce proper release notes structure to ensure the documentation is readable."
-    error_message = 'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/{0}."\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+    error_message = 'The following RN is missing a first level header.\nTo ensure a proper RN structure, please use "demisto-sdk update-release-notes -i Packs/{0}"\nFor more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
     related_field = "Release notes"
     related_file_type = [RelatedFileType.RELEASE_NOTE]
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]

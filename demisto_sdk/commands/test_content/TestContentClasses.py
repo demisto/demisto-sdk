@@ -1489,15 +1489,11 @@ class TestResults:
             )
 
         if skipped_integration:
-            logging_module.info("Skipped Integrations:")
-            logging_module.info(f"{skipped_integration=}")
             self.print_table(
                 "Skipped Integrations", skipped_integration, logging_module.debug
             )
 
         if skipped_tests:
-            logging_module.info("Skipped Tests:")
-            logging_module.info(f"{skipped_tests=}")
             self.print_table("Skipped Tests", skipped_tests, logging_module.debug)
 
         if failed_count:

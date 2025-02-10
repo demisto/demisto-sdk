@@ -620,37 +620,43 @@ class XsoarClient:
         raise ValueError(f"Could not find instance for instance name '{instance_name}'")
 
     @retry(exceptions=ApiException)
-    def disable_integration_instance(self, instance_name, integration_id, response_type: str = 'str'):
+    def disable_integration_instance(self, instance_name):
+        # it will throw an error if the instance does not exist
+        self.update_integration_instance_state(False, instance_name)
+
+    @retry(exceptions=ApiException)
+    def enable_integration_instance(self, instance_name):
+        # it will throw an error if the instance does not exist
+        self.update_integration_instance_state(True, instance_name)
+
+    @retry(exceptions=ApiException)
+    def update_integration_instance_state(self, enable: bool, instance_name: str):
 
         # it will throw an error if the instance does not exist
         instance = self.get_integration_instance(instance_name)
 
-        integrations_metadata: Dict[str, Any] = (
-            self.get_integrations_module_configuration(integration_id)
-        )
 
         integration_instance_body_request = {
             "id": instance.get("id"),
-            "brand": integrations_metadata["name"],
+            "brand": instance.get("brand"),
             "name": instance_name,
             "data": instance.get("data"),
-            "isIntegrationScript": "true",
-            "enable": "false",
+            "isIntegrationScript": instance.get("isIntegrationScript"),
+            "enabled": "true" if enable else "false",
             "version": -1
         }
         logger.info(
-            f"Disabling integration instance {instance_name} for integration {integration_id}"
+            f"{'Enabling' if enable else 'Disabling'} integration instance {instance_name} for integration {instance.get('brand')}"
         )
 
-        raw_response, _, _ = demisto_client.generic_request_func(
+        raw_response, _, _ = self.xsoar_client.generic_request(
             self=self._xsoar_client,
             method="PUT",
             path="/settings/integration",
-            body=integration_instance_body_request,
-            response_type=response_type,
+            body=integration_instance_body_request
         )
         logger.info(
-            f"Successfully disabled integration instance {instance_name} for Integration {integration_id}"
+            f"Successfully {'enabled' if enable else 'disabled'} integration instance {instance_name} for Integration {instance.get('brand')}"
         )
 
     """

@@ -1024,6 +1024,10 @@ class ServerContext:
             verify_ssl=False,
         )
 
+    @abstractmethod
+    def reset_containers(self):
+        pass
+
     def execute_tests(self):
         try:
             self.build_context.logging_module.info(
@@ -1056,10 +1060,6 @@ class ServerContext:
             raise
         finally:
             self.build_context.logging_module.execute_logs()
-
-    @abstractmethod
-    def reset_containers(self):
-        pass
 
     @abstractmethod
     def _get_all_integration_config(self) -> Optional[list]:

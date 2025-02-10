@@ -1,6 +1,7 @@
 import ast
 import re
 import tempfile
+from enum import Enum
 
 import demisto_client
 import typer
@@ -16,6 +17,12 @@ class DemistoRunTimeError(RuntimeError):
     """Demisto run time error"""
 
     pass
+
+
+class IncidentStatus(Enum):
+    OPEN = "open"
+    CLOSE = "close"
+    REMOVE = "remove"
 
 
 class Runner:
@@ -41,6 +48,7 @@ class Runner:
         self,
         query: str,
         incident_id: str = None,
+        status_incident_after_run: IncidentStatus = IncidentStatus.REMOVE,
         insecure: bool = False,
         debug: str = None,
         debug_path: str = None,
@@ -50,19 +58,26 @@ class Runner:
         **kwargs,
     ):
         self.query = query if query.startswith("!") else f"!{query}"
-        self.incident_id = incident_id
         self.debug = debug
         self.debug_path = debug_path
         verify = (
             (not insecure) if insecure else None
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         self.client = demisto_client.configure(verify_ssl=verify)
+        self.status_incident_after_run = status_incident_after_run
+        self.incident_id = incident_id or self.create_incident_for_query()
         self.json2outputs = json_to_outputs
         self.prefix = prefix
         self.raw_response = raw_response
 
         if self.debug or self.json2outputs:
             self.query += ' debug-mode="true"'
+
+    def __enter__(self) -> "Runner":
+        return self
+
+    def __exit__(self, *_):
+        self.delete_incident_if_needed()
 
     def run(self):
         """Runs an integration command on Demisto and prints the result."""
@@ -312,3 +327,56 @@ class Runner:
         context = ast.literal_eval(context)
 
         return res, context
+
+    def create_incident_for_query(self):
+        if not self.client.api_client.configuration.host.startswith("https://api-"):
+            return
+        incident, status_code, _ = self.client.generic_request(
+            path="/incident",
+            method="POST",
+            content_type="application/json",
+            body={
+                "createInvestigation": True,
+                "name": "Demisto-sdk Run",
+                "owner": "",
+                "severity": 0,
+                "type": "Unclassified",
+                "playbook": ""
+            },
+            response_type=object,
+        )
+
+        if status_code != 201:
+            logger.critical("Failed to create a new incident for executing the command.")
+            raise RuntimeError("Failed to create a new incident for executing the command.")
+        logger.info(f"Incident was successfully created for executing the command - ID: {incident['id']}.")
+        self.is_incident_runtime_created = True
+        return incident["id"]
+
+    def delete_incident_if_needed(self):
+        if not self.is_incident_runtime_created:
+            return
+        match self.status_incident_after_run:
+            case IncidentStatus.OPEN:
+                logger.info(f"The incident {self.incident_id} remains open.")
+                return
+            case IncidentStatus.CLOSE:
+                path = "close"
+                body = {"CustomFields": {}, "id": self.incident_id}
+            case IncidentStatus.REMOVE:
+                path = "/incident/batchDelete"
+                body={"ids": [self.incident_id], "all": False, "filter": {}}
+            case _:
+                ...
+
+        _, status_code, _ = self.client.generic_request(
+            path=path,
+            method="POST",
+            content_type="application/json",
+            body=body,
+            response_type=object,
+        )
+
+        if status_code != 200:
+            logger.info(f"Failed {self.status_incident_after_run.value}d the incident {self.incident_id}")
+        logger.info(f"Incident {self.incident_id} {self.status_incident_after_run.value}d successfully")

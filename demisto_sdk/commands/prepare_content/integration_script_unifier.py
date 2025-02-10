@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     CONTRIBUTORS_LIST,
     DEFAULT_IMAGE_PREFIX,
     DEVELOPER_SUPPORT,
+    MIRRORING_COMMANDS,
     PARTNER_SUPPORT,
     SUPPORT_LEVEL_HEADER,
     TYPE_TO_EXTENSION,
@@ -83,9 +84,11 @@ class IntegrationScriptUnifier(Unifier):
         script_obj = data
 
         if not is_script_package:  # integration
-            IntegrationScriptUnifier.update_hidden_parameters_value(
+            # Change data in place
+            IntegrationScriptUnifier.update_hidden_parameters_value(data, marketplace)
+            IntegrationScriptUnifier.remove_mirroring_commands_and_settings(
                 data, marketplace
-            )  # changes data
+            )
             script_obj = data["script"]
         script_type = TYPE_TO_EXTENSION[script_obj["type"]]
         try:

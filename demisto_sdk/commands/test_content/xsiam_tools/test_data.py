@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, field_validator
-from typing_extensions import Annotated
 
 
 class Validations(str, Enum):
@@ -31,25 +30,27 @@ class EventLog(BaseModel):
         return v
 
 
-def validate_expected_values(v: EventLog) -> EventLog:
-    """A validator for a single EventLog item in TestData.data"""
-    if v.expected_values:
-        for k in v.expected_values.keys():
-            if k == "_time":  # '_time' is a special field without the 'xdm.' prefix.
-                continue
-            if not k.casefold().startswith("xdm."):
-                err = "The expected values mapping keys are expected to start with 'xdm.' (case insensitive)"
-                raise ValueError(err)
-    return v
-
-
 class TestData(BaseModel):
-    data: List[
-        Annotated[EventLog, field_validator(validate_expected_values, mode="after")]
-    ] = Field(
+    data: List[EventLog] = Field(
         default_factory=lambda: [EventLog(expected_values={"xdm.example": "value"})]
     )
     ignored_validations: List[str] = []
+
+    @field_validator("data", mode="after")
+    @classmethod
+    def validate_expected_values(cls, values: list[EventLog]) -> list[EventLog]:
+        """A validator for a single EventLog item in TestData.data"""
+        for v in values:
+            if v.expected_values:
+                for k in v.expected_values.keys():
+                    if (
+                        k == "_time"
+                    ):  # '_time' is a special field without the 'xdm.' prefix.
+                        continue
+                    if not k.casefold().startswith("xdm."):
+                        err = "The expected values mapping keys are expected to start with 'xdm.' (case insensitive)"
+                        raise ValueError(err)
+        return values
 
     @field_validator("ignored_validations")
     @classmethod

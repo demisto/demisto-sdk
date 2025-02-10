@@ -58,6 +58,7 @@ class XsoarClient:
 
     _ENTRY_TYPE_ERROR: int = 4
     PLAYBOOK_TASKS_STATES = ['New', 'InProgress', 'Completed', 'Waiting', 'Error', 'Skipped', 'Blocked']
+    PLAYBOOK_TASKS_TYPES = ["regular", "condition", "collection"]
 
     def __init__(
         self,
@@ -621,12 +622,10 @@ class XsoarClient:
 
     @retry(exceptions=ApiException)
     def disable_integration_instance(self, instance_name):
-        # it will throw an error if the instance does not exist
         self.update_integration_instance_state(False, instance_name)
 
     @retry(exceptions=ApiException)
     def enable_integration_instance(self, instance_name):
-        # it will throw an error if the instance does not exist
         self.update_integration_instance_state(True, instance_name)
 
     @retry(exceptions=ApiException)
@@ -1425,29 +1424,42 @@ class XsoarClient:
         )
         return self._process_response(response, status_code, 200)
 
+    def get_playbook_task_in_investigation(self, task_name, investigation_id):
+        response, status_code, _ = self._xsoar_client.generic_request(
+            f"/investigation/{investigation_id}/workplan/tasks", method="POST",
+            body={"states": self.PLAYBOOK_TASKS_STATES,
+                  "types": self.PLAYBOOK_TASKS_TYPES}
+        )
+        tasks = self._process_response(response, status_code, 200)
+
+        for task in tasks:
+            if task_name == task.get('task').get('name'):
+                return task
+        return ValueError(f'{task_name} task was not found in {investigation_id} investigation.')
+
     def pull_playbook_tasks_by_state(self, incident_id: str,
-                                     task_states: list,
+                                     task_input: str,
+                                     task_states: list = None,
                                      task_name: str = None,
-                                     complete_option: str = None,
-                                     max_timeout: str = '60',
+                                     max_timeout: int = 60,
                                      interval_between_tries: str = '3',
                                      complete_task: bool = False,
-                                     task_input: str = None):
+                                     ):
 
         if not all(state in self.PLAYBOOK_TASKS_STATES for state in task_states):
             raise ValueError(f'task_states are bad. Possible values: {self.PLAYBOOK_TASKS_STATES}')
-
-        tasks_states_endpoint = f"/investigation/{incident_id}/workplan/tasks"
+        if not task_states:
+            task_states = self.PLAYBOOK_TASKS_STATES
         completed_tasks = []
         found_tasks = []
         start_time = time.time()
 
         while True:
-
+            # Get all tasks with one state of the states in task_states list
             response, status_code, _ = self._xsoar_client.generic_request(
-                tasks_states_endpoint, method="POST",
+                f"/investigation/{incident_id}/workplan/tasks", method="POST",
                 body={"states": task_states,
-                      "types": ["regular", "condition", "collection"]}
+                      "types": self.PLAYBOOK_TASKS_TYPES}
             )
             tasks_by_states = self._process_response(response, status_code, 200)
             requested_task = None
@@ -1466,9 +1478,11 @@ class XsoarClient:
                 completed_tasks.append(requested_task.get("task").get('name'))
                 break
 
+            # Do not complete the task
             elif requested_task:
                 # just validate that task was found and not complete it
-                found_tasks.append(requested_task.get("task").get('name'))
+                found_tasks.append({"task name": requested_task.get("task").get('name'),
+                                    "task state": requested_task.get("state")})
                 break
 
             elif not task_name and tasks_by_states and complete_task:
@@ -1481,7 +1495,8 @@ class XsoarClient:
 
             elif not task_name and tasks_by_states:
                 # just validate that task was found and not complete it
-                found_tasks.extend(task.get("task").get('name') for task in tasks_by_states)
+                found_tasks.extend({"task name": task.get("task").get('name'),
+                                    "task state": task.get("state")} for task in tasks_by_states)
                 break
 
             if time.time() - start_time > max_timeout:  # type: ignore[operator]
@@ -1491,16 +1506,14 @@ class XsoarClient:
 
         if not completed_tasks and not found_tasks:
             if task_name and task_states:
-                raise Exception(f'The task "{task_name}" did not reach the {" or ".join(task_states)} state.')
-            elif task_name:
-                raise Exception(f'The task "{task_name}" was not found by script.')
+                task_data = self.get_playbook_task_in_investigation(task_name, incident_id)
+                raise RuntimeError(f'The task "{task_name}" was not found by the script or it did not reach the {" or ".join(task_states)} state. Its current state is {task_data.get('state')}')
             elif task_states:
-                raise Exception(f'None of the tasks reached the {" or ".join(task_states)} state.')
+                raise RuntimeError(f'None of the tasks reached the {" or ".join(task_states)} state.')
             else:
-                raise Exception('No tasks were found.')
+                raise RuntimeError('No tasks were found.')
 
-        outputs = {'CompletedTask': completed_tasks,
-                    'FoundTask': found_tasks}
+        return {'CompletedTask': completed_tasks, 'FoundTask': found_tasks}
 
     def complete_playbook_task(self, investigation_id, task_id: str, task_input: str):
 

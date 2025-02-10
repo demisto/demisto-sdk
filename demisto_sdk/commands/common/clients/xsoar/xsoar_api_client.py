@@ -1526,6 +1526,17 @@ class XsoarClient:
         logger.info(f"The playbook task with id {task_id} was completed with input {task_input}")
 
 
+    def upload_file_to_war_room(self, file_path):
+
+        # Open the file in binary mode
+        with open(file_path, 'rb') as file:
+            file_content = file.read()
+
+        response, status_code, _ = self._xsoar_client.generic_request(
+            "/entry/upload", method="POST",
+            body={"file": file_content}
+        )
+        self._process_response(response, status_code, 200)
 
 
 

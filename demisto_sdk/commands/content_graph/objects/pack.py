@@ -80,6 +80,9 @@ MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
 MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
 
 
+PackContentItems.model_rebuild()  # resolves class-not-fully-defined with RelationshipData
+
+
 def upload_zip(
     path: Path,
     client: demisto_client,

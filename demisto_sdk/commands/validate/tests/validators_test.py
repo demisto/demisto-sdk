@@ -793,9 +793,13 @@ def test_all_validations_run_on_git_mode():
     """
     config_file_path = "demisto_sdk/commands/validate/sdk_validation_config.toml"
     config_file_content: dict = toml.load(config_file_path)
-    path_based_section = (set(config_file_content["path_based_validations"]["select"])).union(set(config_file_content["path_based_validations"]["warning"]))
-    use_git_section = (set(config_file_content["use_git"]["select"])).union(set(config_file_content["use_git"]["warning"]))
-    
+    path_based_section = (
+        set(config_file_content["path_based_validations"]["select"])
+    ).union(set(config_file_content["path_based_validations"]["warning"]))
+    use_git_section = (set(config_file_content["use_git"]["select"])).union(
+        set(config_file_content["use_git"]["warning"])
+    )
+
     non_configured_use_git_error_codes = path_based_section - use_git_section
     assert not non_configured_use_git_error_codes, f"The following error codes are not configured as use_git validations in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml': {non_configured_use_git_error_codes}.\n"
 

@@ -21,7 +21,10 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MIRRORING_COMMANDS,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -177,6 +180,27 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 data["script"]["isfetchevents"] = False
             if script.get("isfetchassets"):
                 data["script"]["isfetchassets"] = False
+
+        elif current_marketplace in (
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        ):
+            display_name = data["display"]
+            logger.debug(
+                f"Removing mirroring commands from the integration: {display_name} for marketplace: {current_marketplace.value}"
+            )
+            data["script"]["commands"] = [
+                command
+                for command in data["script"]["commands"]
+                if command["name"] not in MIRRORING_COMMANDS
+            ]
+
+            logger.debug(
+                f"Disabling mirroring settings in the integration: {display_name} for marketplace: {current_marketplace.value}"
+            )
+            data["script"]["ismappable"] = False
+            data["script"]["isremotesyncin"] = False
+            data["script"]["isremotesyncout"] = False
 
         if supported_native_images := self.get_supported_native_images(
             ignore_native_image=kwargs.get("ignore_native_image") or False,

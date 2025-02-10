@@ -86,9 +86,9 @@ class IntegrationScriptUnifier(Unifier):
         if not is_script_package:  # integration
             # Change data in place
             IntegrationScriptUnifier.update_hidden_parameters_value(data, marketplace)
-            IntegrationScriptUnifier.remove_mirroring_commands_and_settings(
-                data, marketplace
-            )
+            # IntegrationScriptUnifier.remove_mirroring_commands_and_settings(
+            #     data, marketplace
+            # )
             script_obj = data["script"]
         script_type = TYPE_TO_EXTENSION[script_obj["type"]]
         try:

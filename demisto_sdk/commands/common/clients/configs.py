@@ -1,7 +1,14 @@
 import os
 from typing import Any, Dict, Optional
 
-from pydantic import AnyUrl, BaseModel, Field, SecretStr, model_validator
+from pydantic import (
+    AnyUrl,
+    BaseModel,
+    Field,
+    SecretStr,
+    field_validator,
+    model_validator,
+)
 
 from demisto_sdk.commands.common.constants import (
     AUTH_ID,
@@ -22,10 +29,7 @@ class XsoarClientConfig(BaseModel):
     api client config for xsoar-on-prem
     """
 
-    base_api_url: AnyUrl = Field(
-        default=AnyUrl(os.getenv(DEMISTO_BASE_URL, "")),
-        description="XSOAR Tenant Base API URL",
-    )
+    base_api_url: AnyUrl = Field(..., description="XSOAR Tenant Base API URL")
     api_key: SecretStr = Field(
         default=SecretStr(os.getenv(DEMISTO_KEY, "")), description="XSOAR API Key"
     )
@@ -36,6 +40,18 @@ class XsoarClientConfig(BaseModel):
         default=SecretStr(os.getenv(DEMISTO_PASSWORD, "")), description="XSOAR Password"
     )
     verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False))
+
+    @field_validator("base_api_url", mode="before")
+    @classmethod
+    def validate_base_url(cls, value):
+        if not value:
+            env_url = os.getenv(DEMISTO_BASE_URL, "").strip()
+            if not env_url:
+                raise ValueError(
+                    f"Environment variable {DEMISTO_BASE_URL} is not set or is empty."
+                )
+            return env_url
+        return value
 
     @model_validator(mode="before")
     @classmethod

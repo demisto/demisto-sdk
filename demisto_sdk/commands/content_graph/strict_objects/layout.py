@@ -1,6 +1,7 @@
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import Field
+from pydantic import Field, RootModel
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.common import (
@@ -15,13 +16,13 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 class ArgFilter(BaseStrictModel):
     operator: str
     ignore_case: Optional[bool] = Field(None, alias="ignorecase")
-    left: dict = Field(..., example={"value": Any, "isContext": bool})
-    right: Optional[dict] = Field(None, example={"value": Any, "isContext": bool})
+    left: dict = Field(examples=[{"value": {}, "isContext": False}])
+    right: Optional[dict] = Field(None, examples=[{"value": {}, "isContext": False}])
     type_: Optional[str] = Field(None, alias="type")
 
 
-class ArgFilters(BaseStrictModel):
-    __root__: List[ArgFilter]
+class ArgFilters(RootModel[List[ArgFilter]]):
+    pass
 
 
 class _SectionField(BaseStrictModel):
@@ -85,6 +86,12 @@ class Mapping(BaseStrictModel):
     sections: Optional[List[Section]] = None  # type:ignore[valid-type]
 
 
+class StrictLayoutGroup(str, Enum):
+    Incident = "incident"
+    Indicator = "indicator"
+    Case = "case"
+
+
 class _StrictLayout(BaseStrictModel):
     """
     This is the layout-container item in Content repo.
@@ -92,11 +99,11 @@ class _StrictLayout(BaseStrictModel):
     """
 
     id: str
-    group: str = Field(..., enum=["incident", "indicator", "case"])
+    group: StrictLayoutGroup
     definition_id: Optional[str] = Field(None, alias="definitionId")
     version: float
     name: str
-    from_version: str = Field(..., alias="fromVersion")
+    from_version: str = Field(alias="fromVersion")
     to_version: Optional[str] = Field(None, alias="toVersion")
     description: Optional[str] = None
     system: Optional[bool] = None

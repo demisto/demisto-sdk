@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
     from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
-from pydantic import DirectoryPath, Field, fields, validator
+from pydantic import DirectoryPath, Field, field_validator, fields
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -54,11 +54,12 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str] = ""
     is_test: bool = False
-    pack: Any = Field(None, exclude=True, repr=False)
-    support: str = ""
+    pack: Any = Field(None, exclude=True, repr=False, validate_default=True)
+    support: str = Field("", validate_default=True)
     is_silent: bool = False
 
-    @validator("path", always=True)
+    @field_validator("path")
+    @classmethod
     def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
             return v
@@ -78,7 +79,8 @@ class ContentItem(BaseContent):
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""
 
-    @validator("pack", always=True)
+    @field_validator("pack")
+    @classmethod
     def validate_pack(cls, v: Any, values) -> Optional["Pack"]:
         # Validate that we have the pack containing the content item.
         # The pack is either provided directly or needs to be located.
@@ -87,7 +89,8 @@ class ContentItem(BaseContent):
             return v
         return cls.get_pack(values.get("relationships_data"), values.get("path"))
 
-    @validator("support", always=True)
+    @field_validator("support")
+    @classmethod
     def validate_support(cls, v: str, values) -> str:
         # Ensure the 'support' field is present.
         # If not directly provided, the support level from the associated pack will be used.

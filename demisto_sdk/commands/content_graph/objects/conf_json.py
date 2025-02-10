@@ -10,7 +10,7 @@ from typing import DefaultDict, Dict, List, Optional, Set, Union
 
 from more_itertools import always_iterable
 from packaging.version import Version
-from pydantic import BaseModel, Extra, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
@@ -19,8 +19,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 
 
 class StrictBaseModel(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
 
 class DictWithSingleSimpleString(StrictBaseModel):
@@ -50,13 +49,14 @@ class Test(StrictBaseModel):
     toversion: Optional[str] = None
     nightly: Optional[bool] = None
     context_print_dt: Optional[str] = None
-    scripts: Optional[Union[str, List[str]]]
+    scripts: Optional[Union[str, List[str]]] = None
     runnable_on_docker_only: Optional[bool] = None
     external_playbook_config: Optional[ExternalPlaybookConfig] = None
     instance_configuration: Optional[InstanceConfiguration] = None
     marketplaces: Optional[MarketplaceVersions] = None
 
-    @validator("fromversion", "toversion")
+    @field_validator("fromversion", "toversion")
+    @classmethod
     def validate_version(cls, v):
         Version(v)
 
@@ -67,7 +67,7 @@ class ImageConfig(StrictBaseModel):
 
 
 class DockerThresholds(StrictBaseModel):
-    field_comment: str = Field(..., alias="_comment")
+    field_comment: str = Field(alias="_comment")
     images: Dict[str, ImageConfig]
 
 
@@ -78,7 +78,7 @@ class ConfJSON(StrictBaseModel):
     tests: List[Test]
     skipped_tests: Dict[str, str]
     skipped_integrations: Dict[str, str]
-    native_nightly_packs: Optional[List[str]]
+    native_nightly_packs: Optional[List[str]] = None
     nightly_packs: List[str]
     unmockable_integrations: Dict[str, str]
     parallel_integrations: List[str]

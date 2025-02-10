@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, Optional
 
 from pydantic import Field
@@ -13,6 +14,11 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 )
 
 
+class StrictCorrelationRuleExecutionMode(str, Enum):
+    REAL_TIME = "REAL_TIME"
+    SCHEDULED = "SCHEDULED"
+
+
 class _StrictCorrelationRule(BaseStrictModel):
     global_rule_id: str
     name: str  # not included in NAME_DYNAMIC_MODEL
@@ -24,7 +30,7 @@ class _StrictCorrelationRule(BaseStrictModel):
     cron_tab: Optional[str] = Field(None, alias="crontab")
     dataset: str
     drill_down_query_timeframe: str = Field(..., alias="drilldown_query_timeframe")
-    execution_mode: str = Field(..., enum=["REAL_TIME", "SCHEDULED"])
+    execution_mode: StrictCorrelationRuleExecutionMode
     mitre_defs: Optional[Any] = None
     search_window: Optional[str] = None
     severity: str

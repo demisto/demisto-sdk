@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from pydantic import Field
@@ -15,6 +16,12 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 )
 
 
+class StrictWidgetMarketplaces(str, Enum):
+    XSOAR = MarketplaceVersions.XSOAR.value
+    XSOAR_SAAS = MarketplaceVersions.XSOAR_SAAS.value
+    XSOAR_ON_PREM = MarketplaceVersions.XSOAR_ON_PREM.value
+
+
 class _StrictWidget(BaseStrictModel):
     id_: str = Field(alias="id")
     version: int
@@ -30,14 +37,7 @@ class _StrictWidget(BaseStrictModel):
     sort: Optional[List[Any]] = None
     category: Optional[str] = None
     modified: Optional[str] = None
-    marketplaces: Optional[List[MarketplaceVersions]] = Field(
-        None,
-        enum=[
-            MarketplaceVersions.XSOAR,
-            MarketplaceVersions.XSOAR_SAAS,
-            MarketplaceVersions.XSOAR_ON_PREM,
-        ],
-    )
+    marketplaces: Optional[List[StrictWidgetMarketplaces]] = None
 
 
 StrictWidget = create_model(

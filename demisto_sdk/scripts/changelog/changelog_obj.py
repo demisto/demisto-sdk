@@ -1,6 +1,6 @@
 from typing import Dict, List, Union
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from demisto_sdk.commands.common.StrEnum import StrEnum
 
@@ -41,13 +41,10 @@ class LogLine:
 class LogEntry(BaseModel):
     description: str
     type: LogType
+    model_config = ConfigDict(use_enum_values=True)
 
-    class Config:
-        """Pydantic config class"""
-
-        use_enum_values = True
-
-    @validator("type", pre=True)
+    @field_validator("type", mode="before")
+    @classmethod
     def validate_type(cls, value):
         if value == INITIAL_TYPE:
             raise ValueError(
@@ -60,7 +57,8 @@ class LogEntry(BaseModel):
 
         return value
 
-    @validator("description", pre=True)
+    @field_validator("description", mode="before")
+    @classmethod
     def validate_description(cls, value):
         if value == INITIAL_DESCRIPTION:
             raise ValueError(

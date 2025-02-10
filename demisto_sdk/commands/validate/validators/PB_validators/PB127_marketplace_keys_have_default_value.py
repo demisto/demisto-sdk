@@ -29,8 +29,8 @@ class MarketplaceKeysHaveDefaultValidator(BaseValidator[ContentTypes]):
         "Please remove these keys or add another default option to each key."
     )
     fix_message = "Added default value to the following playbook keys:\n{0}"
-    marketplace_suffixes = [
-        marketplace for marketplace in MarketplaceVersions.__members__.values()
+    marketplace_suffixes: list[str] = [
+        marketplace.value for marketplace in MarketplaceVersions
     ]
     bad_paths_dict: dict = dict()
     is_auto_fixable = True

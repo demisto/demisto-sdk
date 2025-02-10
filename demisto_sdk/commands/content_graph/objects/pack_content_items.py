@@ -1,7 +1,7 @@
 from typing import Any, Dict, Generator, List
 
 from more_itertools import map_reduce
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
@@ -48,60 +48,94 @@ from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 
 class PackContentItems(BaseModel):
     # The alias is for marshalling purposes
-    case_field: List[CaseField] = Field([], alias=ContentType.CASE_FIELD.value)
-    case_layout: List[CaseLayout] = Field([], alias=ContentType.CASE_LAYOUT.value)
-    case_layout_rule: List[CaseLayoutRule] = Field(
-        [], alias=ContentType.CASE_LAYOUT_RULE.value
+    case_field: List[CaseField] = Field([], alias=ContentType.CASE_FIELD.value)  # type: ignore[literal-required]
+    case_layout: List[CaseLayout] = Field([], alias=ContentType.CASE_LAYOUT.value)  # type: ignore[literal-required]
+    case_layout_rule: List[CaseLayoutRule] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.CASE_LAYOUT_RULE.value,
     )
-    classifier: List[Classifier] = Field([], alias=ContentType.CLASSIFIER.value)
-    correlation_rule: List[CorrelationRule] = Field(
-        [], alias=ContentType.CORRELATION_RULE.value
+    classifier: List[Classifier] = Field([], alias=ContentType.CLASSIFIER.value)  # type: ignore[literal-required]
+    correlation_rule: List[CorrelationRule] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.CORRELATION_RULE.value,
     )
-    dashboard: List[Dashboard] = Field([], alias=ContentType.DASHBOARD.value)
-    generic_definition: List[GenericDefinition] = Field(
-        [], alias=ContentType.GENERIC_DEFINITION.value
+    dashboard: List[Dashboard] = Field([], alias=ContentType.DASHBOARD.value)  # type: ignore[literal-required]
+    generic_definition: List[GenericDefinition] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.GENERIC_DEFINITION.value,
     )
-    generic_field: List[GenericField] = Field([], alias=ContentType.GENERIC_FIELD.value)
-    generic_module: List[GenericModule] = Field(
-        [], alias=ContentType.GENERIC_MODULE.value
+    generic_field: List[GenericField] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.GENERIC_FIELD.value,
     )
-    generic_type: List[GenericType] = Field([], alias=ContentType.GENERIC_TYPE.value)
-    incident_field: List[IncidentField] = Field(
-        [], alias=ContentType.INCIDENT_FIELD.value
+    generic_module: List[GenericModule] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.GENERIC_MODULE.value,
     )
-    incident_type: List[IncidentType] = Field([], alias=ContentType.INCIDENT_TYPE.value)
-    indicator_field: List[IndicatorField] = Field(
-        [], alias=ContentType.INDICATOR_FIELD.value
+    generic_type: List[GenericType] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.GENERIC_TYPE.value,
     )
-    indicator_type: List[IndicatorType] = Field(
-        [], alias=ContentType.INDICATOR_TYPE.value
+    incident_field: List[IncidentField] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.INCIDENT_FIELD.value,
     )
-    integration: List[Integration] = Field([], alias=ContentType.INTEGRATION.value)
-    job: List[Job] = Field([], alias=ContentType.JOB.value)
-    layout: List[Layout] = Field([], alias=ContentType.LAYOUT.value)
-    list: List[ListObject] = Field([], alias=ContentType.LIST.value)
-    mapper: List[Mapper] = Field([], alias=ContentType.MAPPER.value)
-    modeling_rule: List[ModelingRule] = Field([], alias=ContentType.MODELING_RULE.value)
-    parsing_rule: List[ParsingRule] = Field([], alias=ContentType.PARSING_RULE.value)
-    playbook: List[Playbook] = Field([], alias=ContentType.PLAYBOOK.value)
-    report: List[Report] = Field([], alias=ContentType.REPORT.value)
-    script: List[Script] = Field([], alias=ContentType.SCRIPT.value)
-    test_playbook: List[TestPlaybook] = Field([], alias=ContentType.TEST_PLAYBOOK.value)
-    trigger: List[Trigger] = Field([], alias=ContentType.TRIGGER.value)
-    widget: List[Widget] = Field([], alias=ContentType.WIDGET.value)
-    wizard: List[Wizard] = Field([], alias=ContentType.WIZARD.value)
-    xsiam_dashboard: List[XSIAMDashboard] = Field(
-        [], alias=ContentType.XSIAM_DASHBOARD.value
+    incident_type: List[IncidentType] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.INCIDENT_TYPE.value,
     )
-    xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
-    xdrc_template: List[XDRCTemplate] = Field([], alias=ContentType.XDRC_TEMPLATE.value)
-    layout_rule: List[LayoutRule] = Field([], alias=ContentType.LAYOUT_RULE.value)
-    preprocess_rule: List[PreProcessRule] = Field(
-        [], alias=ContentType.PREPROCESS_RULE.value
+    indicator_field: List[IndicatorField] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.INDICATOR_FIELD.value,
     )
-    test_script: List[TestScript] = Field([], alias=ContentType.TEST_SCRIPT.value)
-    assets_modeling_rule: List[AssetsModelingRule] = Field(
-        [], alias=ContentType.ASSETS_MODELING_RULE.value
+    indicator_type: List[IndicatorType] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.INDICATOR_TYPE.value,
+    )
+    integration: List[Integration] = Field([], alias=ContentType.INTEGRATION.value)  # type: ignore[literal-required]
+    job: List[Job] = Field([], alias=ContentType.JOB.value)  # type: ignore[literal-required]
+    layout: List[Layout] = Field([], alias=ContentType.LAYOUT.value)  # type: ignore[literal-required]
+    list: List[ListObject] = Field([], alias=ContentType.LIST.value)  # type: ignore[literal-required]
+    mapper: List[Mapper] = Field([], alias=ContentType.MAPPER.value)  # type: ignore[literal-required]
+    modeling_rule: List[ModelingRule] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.MODELING_RULE.value,
+    )
+    parsing_rule: List[ParsingRule] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.PARSING_RULE.value,
+    )
+    playbook: List[Playbook] = Field([], alias=ContentType.PLAYBOOK.value)  # type: ignore[literal-required]
+    report: List[Report] = Field([], alias=ContentType.REPORT.value)  # type: ignore[literal-required]
+    script: List[Script] = Field([], alias=ContentType.SCRIPT.value)  # type: ignore[literal-required]
+    test_playbook: List[TestPlaybook] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.TEST_PLAYBOOK.value,
+    )
+    trigger: List[Trigger] = Field([], alias=ContentType.TRIGGER.value)  # type: ignore[literal-required]
+    widget: List[Widget] = Field([], alias=ContentType.WIDGET.value)  # type: ignore[literal-required]
+    wizard: List[Wizard] = Field([], alias=ContentType.WIZARD.value)  # type: ignore[literal-required]
+    xsiam_dashboard: List[XSIAMDashboard] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.XSIAM_DASHBOARD.value,
+    )
+    xsiam_report: List[XSIAMReport] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.XSIAM_REPORT.value,
+    )
+    xdrc_template: List[XDRCTemplate] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.XDRC_TEMPLATE.value,
+    )
+    layout_rule: List[LayoutRule] = Field([], alias=ContentType.LAYOUT_RULE.value)  # type: ignore[literal-required]
+    preprocess_rule: List[PreProcessRule] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.PREPROCESS_RULE.value,
+    )
+    test_script: List[TestScript] = Field([], alias=ContentType.TEST_SCRIPT.value)  # type: ignore[literal-required]
+    assets_modeling_rule: List[AssetsModelingRule] = Field(  # type: ignore[literal-required]
+        [],
+        alias=ContentType.ASSETS_MODELING_RULE.value,
     )
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
@@ -116,7 +150,6 @@ class PackContentItems(BaseModel):
         """Used for easier determination of content items existence in a pack."""
         return bool(list(self))
 
-    class Config:
-        arbitrary_types_allowed = True
-        orm_mode = True
-        allow_population_by_field_name = True
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True, from_attributes=True, populate_by_name=True
+    )

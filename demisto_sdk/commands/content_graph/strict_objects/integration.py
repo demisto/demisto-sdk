@@ -1,6 +1,8 @@
+from enum import Enum
 from typing import Any, List, Optional
 
-from pydantic import Field, conlist, validator
+from pydantic import Field, model_validator
+from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
@@ -97,10 +99,15 @@ Command = create_model(
 )
 
 
+class SubTypes(str, Enum):
+    PYTHON_2 = TYPE_PYTHON2
+    PYTHON_3 = TYPE_PYTHON3
+
+
 class _Script(BaseStrictModel):
     script: str
-    type_: ScriptType = Field(..., alias="type")
-    docker_image: str = Field(None, alias="dockerimage")
+    type_: ScriptType = Field(alias="type")
+    docker_image: Optional[str] = Field(None, alias="dockerimage")
     alt_docker_images: Optional[List[str]] = Field(None, alias="alt_dockerimages")
     native_image: Optional[List[str]] = Field(None, alias="nativeImage")
     is_fetch: Optional[bool] = Field(None, alias="isfetch")
@@ -113,7 +120,7 @@ class _Script(BaseStrictModel):
     is_remote_sync_out: Optional[bool] = Field(None, alias="isremotesyncout")
     commands: Optional[List[Command]] = None  # type:ignore[valid-type]
     run_once: Optional[bool] = Field(None, alias="runonce")
-    sub_type: Optional[str] = Field([TYPE_PYTHON2, TYPE_PYTHON3], alias="subtype")
+    sub_type: Optional[SubTypes] = Field(None, alias="subtype")
     feed: Optional[bool] = None
     is_fetch_samples: Optional[bool] = Field(None, alias="isFetchSamples")
     reset_context: Optional[bool] = Field(None, alias="resetContext")
@@ -145,14 +152,16 @@ class SectionOrderValues(StrEnum):
 
 
 class _StrictIntegration(BaseStrictModel):
-    common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")  # type:ignore[valid-type]
+    common_fields: CommonFieldsIntegration = Field(alias="commonfields")  # type:ignore[valid-type]
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=3)] = (  # type:ignore[valid-type]
+    section_order: Optional[
+        Annotated[List[SectionOrderValues], Field(min_length=1, max_length=3)]
+    ] = (  # type:ignore[valid-type]
         Field(alias="sectionorder")
     )
-    configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]
+    configurations: List[Configuration] = Field(alias="configuration")  # type:ignore[valid-type]
     image: Optional[str] = None
     description: str
     default_mapper_in: Optional[str] = Field(None, alias="defaultmapperin")
@@ -160,11 +169,13 @@ class _StrictIntegration(BaseStrictModel):
     default_classifier: Optional[str] = Field(None, alias="defaultclassifier")
     detailed_description: Optional[str] = Field(None, alias="detaileddescription")
     auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")
-    support_level_header: MarketplaceVersions = Field(None, alias="supportlevelheader")
+    support_level_header: Optional[MarketplaceVersions] = Field(
+        None, alias="supportlevelheader"
+    )
     script: Script  # type:ignore[valid-type]
     hidden: Optional[bool] = None
     videos: Optional[List[str]] = None
-    versioned_fields: dict = Field(None, alias="versionedfields")
+    versioned_fields: Optional[dict] = Field(None, alias="versionedfields")
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
     hybrid: Optional[bool] = None
@@ -182,27 +193,29 @@ class _StrictIntegration(BaseStrictModel):
             )
         super().__init__(**data)
 
-    @validator("configurations")
-    def validate_sections(cls, configurations, values):
+    @model_validator(mode="before")
+    @classmethod
+    def validate_sections(cls, values: dict) -> dict:
         """
         Validates each configuration object has a valid section clause.
         A valid section clause is a section which is included in the list of the integration's section_order.
         Even if the section is an allowed value (currently Collect, Connect or Optimize),it could be invalid if the
         specific value is not present in section_order.
         """
-        section_order_field = values.get("section_order")
+        configurations: list = values.get("configurations", [])
+        section_order_field: list = values.get("section_order", [])
         if not section_order_field:
-            return configurations
+            return values
         integration_sections = [
             section_name.value for section_name in section_order_field
         ]
         for config in configurations:
             if not config.section:
-                return configurations
+                continue
             assert (
                 config.section in integration_sections
             ), f"section {config.section} of {config.display} is not present in section_order {integration_sections}"
-        return configurations
+        return values
 
 
 StrictIntegration = create_model(

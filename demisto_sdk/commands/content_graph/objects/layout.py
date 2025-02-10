@@ -10,9 +10,9 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call-arg]
-    kind: Optional[str]
-    tabs: Optional[List[str]]
-    definition_id: Optional[str] = Field(alias="definitionId")
+    kind: Optional[str] = None
+    tabs: Optional[List[str]] = None
+    definition_id: Optional[str] = Field(None, alias="definitionId")
     group: str
     edit: bool
     indicators_details: bool

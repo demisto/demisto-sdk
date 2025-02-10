@@ -1,7 +1,14 @@
 import os
 from typing import Any, Dict, Optional
 
-from pydantic import AnyUrl, BaseModel, Field, SecretStr, root_validator
+from pydantic import (
+    AnyUrl,
+    BaseModel,
+    Field,
+    SecretStr,
+    field_validator,
+    model_validator,
+)
 
 from demisto_sdk.commands.common.constants import (
     AUTH_ID,
@@ -22,9 +29,7 @@ class XsoarClientConfig(BaseModel):
     api client config for xsoar-on-prem
     """
 
-    base_api_url: AnyUrl = Field(
-        default=os.getenv(DEMISTO_BASE_URL), description="XSOAR Tenant Base API URL"
-    )
+    base_api_url: AnyUrl = Field(..., description="XSOAR Tenant Base API URL")
     api_key: SecretStr = Field(
         default=SecretStr(os.getenv(DEMISTO_KEY, "")), description="XSOAR API Key"
     )
@@ -36,7 +41,20 @@ class XsoarClientConfig(BaseModel):
     )
     verify_ssl: bool = string_to_bool(os.getenv(DEMISTO_VERIFY_SSL, False))
 
-    @root_validator()
+    @field_validator("base_api_url", mode="before")
+    @classmethod
+    def validate_base_url(cls, value):
+        if not value:
+            env_url = os.getenv(DEMISTO_BASE_URL, "").strip()
+            if not env_url:
+                raise ValueError(
+                    f"Environment variable {DEMISTO_BASE_URL} is not set or is empty."
+                )
+            return env_url
+        return value
+
+    @model_validator(mode="before")
+    @classmethod
     def validate_auth_params(cls, values: Dict[str, Any]):
         if not values.get("api_key") and not (
             values.get("user") and values.get("password")
@@ -72,12 +90,15 @@ class XsoarClientConfig(BaseModel):
 
 
 class XsoarSaasClientConfig(XsoarClientConfig):
-    auth_id: str = Field(default=os.getenv(AUTH_ID), description="XSOAR/XSIAM Auth ID")
+    auth_id: str = Field(
+        default=os.getenv(AUTH_ID, ""), description="XSOAR/XSIAM Auth ID"
+    )
     project_id: str = Field(
-        default=os.getenv(PROJECT_ID), description="XSOAR/XSIAM Project ID"
+        default=os.getenv(PROJECT_ID, ""), description="XSOAR/XSIAM Project ID"
     )
 
-    @root_validator()
+    @model_validator(mode="before")
+    @classmethod
     def validate_auth_params(cls, values: Dict[str, Any]):
         if not values.get("api_key"):
             raise ValueError("api_key is required for xsoar-saas/xsiam")

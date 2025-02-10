@@ -1,41 +1,40 @@
 import typing
 from abc import ABC
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class StrictBaseModel(BaseModel, ABC):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
 
 class BasePack(StrictBaseModel, ABC):
-    id_: str = Field(..., alias="id", description="ID of the pack to install")
+    id_: str = Field(alias="id", description="ID of the pack to install")
 
 
 class CustomPack(BasePack):
-    url: str = Field(..., description="URL of the pack to install")
+    url: str = Field(description="URL of the pack to install")
 
 
 class MarketplacePack(BasePack):
-    version: str = Field(..., description="version of the pack to install")
+    version: str = Field(description="version of the pack to install")
 
 
 class List(StrictBaseModel):
-    name: str = Field(..., description="Name of the list to configure")
-    value: str = Field(..., description="Value of the list to configure")
+    name: str = Field(description="Name of the list to configure")
+    value: str = Field(description="Value of the list to configure")
 
 
 class Job(BaseModel):  # Not strict, unlike the others
-    type_: str = Field(..., alias="type", description="Type of incident to be created")
-    name: str = Field(..., description="Name of the job to configure")
+    type_: str = Field(alias="type", description="Type of incident to be created")
+    name: str = Field(description="Name of the job to configure")
     playbook_id: str = Field(
         ...,
         alias="playbookId",
         description="ID of the playbook to be configured in the job",
     )
-    scheduled: bool = Field(..., description="Whether to configure as a scheduled job")
-    recurrent: bool = Field(..., description="Whether to configure as a recurrent job")
+    scheduled: bool = Field(description="Whether to configure as a scheduled job")
+    recurrent: bool = Field(description="Whether to configure as a recurrent job")
     cron_view: bool = Field(
         ...,
         alias="cronView",

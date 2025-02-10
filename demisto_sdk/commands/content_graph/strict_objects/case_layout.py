@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, List, Literal, Optional
 
 from pydantic import Field
@@ -7,7 +8,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictM
 
 
 class LeftRight(BaseStrictModel):
-    value: Any
+    value: Any = None
     is_context: Optional[bool] = Field(None, alias="isContext")
 
 
@@ -49,9 +50,13 @@ class TabsAndSections(BaseStrictModel):
     sections: Optional[List[Section]] = None
 
 
+class StrictCaseLayoutGroup(str, Enum):
+    Case = "case"
+
+
 class StrictCaseLayout(BaseStrictModel):
     id_: str = Field(alias="id")
-    group: str = Field(..., enum=["case"])
+    group: StrictCaseLayoutGroup
     definition_id: Optional[str] = Field(None, alias="definitionId")
     version: int
     name: str

@@ -20,7 +20,7 @@ DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"
 
 
 class DockerImageTagMetadata(BaseModel):
-    python_version: Optional[str]
+    python_version: Optional[str] = None
 
 
 class DockerImagesMetadata(PydanticSingleton, BaseModel):

@@ -1973,7 +1973,7 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR_ON_PREM: "Config/core_packs_list.json",
     MarketplaceVersions.MarketplaceV2: "Config/core_packs_mpv2_list.json",
     MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
-    MarketplaceVersions.XPANSE: "Config/core_packs_platform_list.json",
+    MarketplaceVersions.PLATFORM: "Config/core_packs_platform_list.json",
 }
 
 

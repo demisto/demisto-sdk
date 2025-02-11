@@ -137,11 +137,20 @@ class ValidateManager:
         ]
 
     def run_general_validations(self):
-        self.add_invalid_content_items()
-        self.validate_all_configured_error_codes_exist()
-        self.validate_all_validations_run_on_git_mode()
+        for general_validations_results in (
+            self.add_invalid_content_items(),
+            self.validate_all_configured_error_codes_exist(),
+            self.validate_all_validations_run_on_git_mode(),
+            self.validate_error_code_not_configured_twice(),
+        ):
+            if general_validations_results:
+                self.validation_results.extend_general_validations_results(
+                    general_validations_results
+                )
 
-    def validate_all_configured_error_codes_exist(self):
+    def validate_all_configured_error_codes_exist(
+        self,
+    ) -> List[GeneralValidationResult]:
         """
         test that the set of configured validation errors in sdk_validation_config.toml is equal to the set of all existing validation to ensure we don't misconfigure non-existing validations.
         """
@@ -161,54 +170,69 @@ class ValidateManager:
             configured_non_existing_error_codes := configured_errors_set
             - existing_error_codes
         ):
-            self.validation_results.extend_general_validations_results(
-                [
-                    GeneralValidationResult(
-                        path=self.config_reader.path,
-                        message=f"The following error codes are configured in the config file but a validation co-oping with the error code cannot be found: {','.join(configured_non_existing_error_codes)}.",
-                        error_code="VA100",
-                    )
-                ]
-            )
+            return [
+                GeneralValidationResult(
+                    path=self.config_reader.path,
+                    message=f"The following error codes are configured in the config file but a validation co-oping with the error code cannot be found: {','.join(configured_non_existing_error_codes)}.",
+                    error_code="VA100",
+                )
+            ]
+        return []
 
-    def validate_all_validations_run_on_git_mode(self):
+    def validate_all_validations_run_on_git_mode(self) -> List[GeneralValidationResult]:
         """
         Validate that all validations configured in the path_based section are also configured in the use_git section.
         """
-        path_based_section = (
-            set(self.configured_validations.selected_path_based_section)
-        ).union(set(self.configured_validations.warning_path_based_section))
-        use_git_section = (
-            set(self.configured_validations.selected_use_git_section)
-        ).union(set(self.configured_validations.warning_use_git_section))
 
-        if non_configured_use_git_error_codes := path_based_section - use_git_section:
-            self.validation_results.extend_general_validations_results(
-                [
-                    GeneralValidationResult(
-                        path=self.config_reader.path,
-                        message=f"The following error codes are configured to run on path-based inputs but are not configured to run on git mode: {','.join(non_configured_use_git_error_codes)}.",
-                        error_code="VA101",
-                    )
-                ]
+        if non_configured_use_git_error_codes := set(
+            self.configured_validations.selected_path_based_section
+        ) - set(self.configured_validations.selected_use_git_section):
+            return [
+                GeneralValidationResult(
+                    path=self.config_reader.path,
+                    message=f"The following error codes are configured to run on path-based inputs but are not configured to run on git mode: {','.join(non_configured_use_git_error_codes)}.",
+                    error_code="VA101",
+                )
+            ]
+        return []
+
+    def validate_error_code_not_configured_twice(self) -> List[GeneralValidationResult]:
+        """
+        validate that no error code is configured both for warning and select in the same section in the config file.
+        """
+        intersected_use_git_error_codes = set(
+            self.configured_validations.selected_use_git_section
+        ) & set(self.configured_validations.warning_use_git_section)
+        intersected_path_based_error_codes = set(
+            self.configured_validations.selected_path_based_section
+        ) & set(self.configured_validations.warning_path_based_section)
+        return [
+            GeneralValidationResult(
+                path=self.config_reader.path,
+                message=f"The following error codes are configured twice in the {section} both under select & warning: {', '.join(intersected_error_codes)}.",
+                error_code="VA102",
             )
+            for intersected_error_codes, section in [
+                (intersected_use_git_error_codes, "use_git"),
+                (intersected_path_based_error_codes, "path_based"),
+            ]
+            if intersected_error_codes
+        ]
 
-    def add_invalid_content_items(self):
+    def add_invalid_content_items(self) -> List[GeneralValidationResult]:
         """Create results for all the invalid_content_items.
 
         Args:
         """
-        self.validation_results.extend_general_validations_results(
-            [
-                GeneralValidationResult(
-                    path=invalid_path,
-                    message="The given file is not supported in the validate command, please refer to the error above.\n"
-                    "The validate command supports: Integrations, Scripts, Playbooks, "
-                    "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types,"
-                    " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules.\n"
-                    "To fix this issue, please try to run `demisto-sdk format` on the file.",
-                    error_code="BA102",
-                )
-                for invalid_path in self.invalid_items
-            ]
-        )
+        return [
+            GeneralValidationResult(
+                path=invalid_path,
+                message="The given file is not supported in the validate command, please refer to the error above.\n"
+                "The validate command supports: Integrations, Scripts, Playbooks, "
+                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types,"
+                " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules.\n"
+                "To fix this issue, please try to run `demisto-sdk format` on the file.",
+                error_code="BA102",
+            )
+            for invalid_path in self.invalid_items
+        ]

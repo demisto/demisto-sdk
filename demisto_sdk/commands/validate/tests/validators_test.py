@@ -305,7 +305,7 @@ def test_gather_validations_from_conf(
                     }
                 ],
                 "fixed validations": [],
-                "invalid content items": [],
+                "general validations": [],
                 "Validations that caught exceptions": [],
             },
         ),
@@ -315,7 +315,7 @@ def test_gather_validations_from_conf(
             {
                 "validations": [],
                 "fixed validations": [],
-                "invalid content items": [],
+                "general validations": [],
                 "Validations that caught exceptions": [],
             },
         ),
@@ -349,7 +349,7 @@ def test_gather_validations_from_conf(
                         "message": "Fixed this issue",
                     }
                 ],
-                "invalid content items": [],
+                "general validations": [],
                 "Validations that caught exceptions": [],
             },
         ),
@@ -486,13 +486,13 @@ def test_post_results(
         (
             ["BA100", "CR102", "CL101", "TE111"],
             ConfiguredValidations(
-                ignorable_errors=["BA100"], path_based_section=["CR102"]
+                ignorable_errors=["BA100"], selected_path_based_section=["CR102"]
             ),
             "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CL101, TE111.\n######################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: CR102.\n######################################################################################################\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],
-            ConfiguredValidations(path_based_section=["CR102", "BA100"]),
+            ConfiguredValidations(selected_path_based_section=["CR102", "BA100"]),
             "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: CL101, TE111.\n#############################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: BA100, CR102.\n#############################################################################################################\n</red>",
         ),
         (
@@ -504,7 +504,7 @@ def test_post_results(
             ["BA100", "CR102", "CL101", "TE111"],
             ConfiguredValidations(
                 ignorable_errors=["BA100"],
-                path_based_section=["BA100", "CR102", "CL101", "TE111"],
+                selected_path_based_section=["BA100", "CR102", "CL101", "TE111"],
             ),
             "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\n####################################################################################################################\nNote that the following errors cannot be ignored or force merged and therefore must be handled: CR102, CL101, TE111.\n####################################################################################################################\n</red>",
         ),
@@ -515,7 +515,7 @@ def test_summarize_ignorable_and_forcemergeable_errors(
 ):
     """
     Given
-    set of failing error codes and a ConfiguredValidations object with specified ignorable_errors and path_based_section.
+    set of failing error codes and a ConfiguredValidations object with specified ignorable_errors and selected_path_based_section.
         - Case 1: 4 failed errors, 1 ignorable, and 1 path based.
         - Case 2: 4 failed errors, none are ignorable, and 2 are path based.
         - Case 3: 4 failed errors, 2 ignorable, and none are path based.
@@ -993,3 +993,191 @@ def test_check_metadata_version_bump_on_content_changes(mocker, repo):
 
     # Assert the PA114 validation will run
     assert version_bump_validator
+
+
+@pytest.mark.parametrize(
+    "selected_path_based_section, selected_use_git_section, warning_path_based_section, warning_use_git_section, ignorable_errors, expected_results_length",
+    [
+        (
+            ["PA100", "PA101"],
+            ["GR100", "GR101"],
+            ["WA100", "WA101"],
+            ["GR102", "GR103"],
+            ["GR100", "GR102"],
+            1,
+        ),
+        (
+            ["PA100", "PA101"],
+            ["GR100", "GR101"],
+            ["BA100", "BA101"],
+            ["GR102", "GR103"],
+            ["GR100", "GR102"],
+            0,
+        ),
+    ],
+)
+def test_validate_all_configured_error_codes_exist(
+    mocker,
+    selected_path_based_section,
+    selected_use_git_section,
+    warning_path_based_section,
+    warning_use_git_section,
+    ignorable_errors,
+    expected_results_length,
+):
+    """
+    Given: ConfiguredValidations mock
+    - case 1: ConfiguredValidations contains invalid error codes.
+    - case 2: ConfiguredValidations contains only valid error codes.
+    When: Running validate_all_configured_error_codes_exist.
+    Then: Ensure the length of the results is as expected
+    - Case 1: should throw an error.
+    - Case 2: should pass the validation.
+    """
+    validate_manager = get_validate_manager(mocker)
+    mocker.patch.object(
+        ConfiguredValidations,
+        "selected_path_based_section",
+        selected_path_based_section,
+    )
+    mocker.patch.object(
+        ConfiguredValidations, "selected_use_git_section", selected_use_git_section
+    )
+    mocker.patch.object(
+        ConfiguredValidations, "warning_path_based_section", warning_path_based_section
+    )
+    mocker.patch.object(
+        ConfiguredValidations, "warning_use_git_section", warning_use_git_section
+    )
+    mocker.patch.object(ConfiguredValidations, "ignorable_errors", ignorable_errors)
+    results = validate_manager.validate_all_configured_error_codes_exist()
+    assert len(results) == expected_results_length
+
+
+@pytest.mark.parametrize(
+    "selected_path_based_section, selected_use_git_section, expected_results_length",
+    [
+        (["PA100", "PA101"], ["GR100", "GR101"], 1),
+        (["PA100", "PA101"], ["PA100", "PA101", "GR100", "GR101"], 0),
+        (["PA100", "PA101"], ["PA101", "GR100", "GR101"], 1),
+    ],
+)
+def test_validate_all_validations_run_on_git_mode(
+    mocker,
+    selected_path_based_section,
+    selected_use_git_section,
+    expected_results_length,
+):
+    """
+    Given: ConfiguredValidations mock
+    - case 1: No correlation between use_git and path_based sections.
+    - case 2: use_git contains path_based section.
+    - case 3: Some path_based error codes appears in use_git, but not all.
+    When: Running validate_all_validations_run_on_git_mode.
+    Then: Ensure the length of the results is as expected
+    - Case 1: should throw an error.
+    - Case 2: should pass the validation.
+    - Case 3: should throw an error.
+    """
+    validate_manager = get_validate_manager(mocker)
+    mocker.patch.object(
+        ConfiguredValidations,
+        "selected_path_based_section",
+        selected_path_based_section,
+    )
+    mocker.patch.object(
+        ConfiguredValidations, "selected_use_git_section", selected_use_git_section
+    )
+    results = validate_manager.validate_all_validations_run_on_git_mode()
+    assert len(results) == expected_results_length
+
+
+@pytest.mark.parametrize(
+    "selected_path_based_section, selected_use_git_section, warning_path_based_section, warning_use_git_section, expected_results_length, expected_msgs",
+    [
+        (
+            ["PA100", "PA101"],
+            ["GR100", "GR101"],
+            ["PA100", "PA101"],
+            ["GR100", "GR101"],
+            2,
+            [
+                "The following error codes are configured twice in the use_git both under select & warning: GR100, GR101.",
+                "The following error codes are configured twice in the path_based both under select & warning: PA101, PA100.",
+            ],
+        ),
+        (
+            ["PA102", "PA103"],
+            ["PA100", "PA101", "GR100", "GR101"],
+            ["PA100", "PA101"],
+            ["GR100", "GR101"],
+            1,
+            [
+                "The following error codes are configured twice in the use_git both under select & warning: GR100, GR101.",
+            ],
+        ),
+        (
+            ["PA100", "PA101"],
+            ["PA101", "GR100", "GR101"],
+            ["PA100", "PA101"],
+            ["GR108", "GR107"],
+            1,
+            [
+                "The following error codes are configured twice in the path_based both under select & warning: PA101, PA100."
+            ],
+        ),
+        (
+            ["PA100", "PA101"],
+            ["PA101", "GR100", "GR101"],
+            ["PA105", "PA106"],
+            ["GR108", "GR107"],
+            0,
+            [],
+        ),
+    ],
+)
+def test_validate_error_code_not_configured_twice(
+    mocker,
+    selected_path_based_section,
+    selected_use_git_section,
+    warning_path_based_section,
+    warning_use_git_section,
+    expected_results_length,
+    expected_msgs,
+):
+    """
+    Given: ConfiguredValidations mock
+    - case 1: correlation between the use_git sections and the path_based sections.
+    - case 2: correlation only between the use_git sections.
+    - case 3: correlation only between the path_based sections.
+    - case 4: No correlation for both sections.
+    When: Running validate_error_code_not_configured_twice.
+    Then: Ensure the length of the results and the error msgs are as expected
+    - Case 1: should fail both sections.
+    - Case 2: should fail only path_based section.
+    - Case 3: should fail only use_git section.
+    - Case 4: should pass.
+    """
+    validate_manager = get_validate_manager(mocker)
+    mocker.patch.object(
+        ConfiguredValidations,
+        "selected_path_based_section",
+        selected_path_based_section,
+    )
+    mocker.patch.object(
+        ConfiguredValidations, "selected_use_git_section", selected_use_git_section
+    )
+    mocker.patch.object(
+        ConfiguredValidations, "warning_path_based_section", warning_path_based_section
+    )
+    mocker.patch.object(
+        ConfiguredValidations, "warning_use_git_section", warning_use_git_section
+    )
+    results = validate_manager.validate_error_code_not_configured_twice()
+    assert len(results) == expected_results_length
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

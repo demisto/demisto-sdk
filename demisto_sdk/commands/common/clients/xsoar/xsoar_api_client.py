@@ -620,15 +620,12 @@ class XsoarClient:
 
         raise ValueError(f"Could not find instance for instance name '{instance_name}'")
 
-    @retry(exceptions=ApiException)
     def disable_integration_instance(self, instance_name):
-        self.update_integration_instance_state(False, instance_name)
+        return self.update_integration_instance_state(False, instance_name)
 
-    @retry(exceptions=ApiException)
     def enable_integration_instance(self, instance_name):
-        self.update_integration_instance_state(True, instance_name)
+        return self.update_integration_instance_state(True, instance_name)
 
-    @retry(exceptions=ApiException)
     def update_integration_instance_state(self, enable: bool, instance_name: str):
 
         # it will throw an error if the instance does not exist
@@ -649,14 +646,15 @@ class XsoarClient:
         )
 
         raw_response, _, _ = self.xsoar_client.generic_request(
-            self=self._xsoar_client,
             method="PUT",
             path="/settings/integration",
-            body=integration_instance_body_request
+            body=integration_instance_body_request,
+            response_type="object",
         )
         logger.info(
             f"Successfully {'enabled' if enable else 'disabled'} integration instance {instance_name} for Integration {instance.get('brand')}"
         )
+        return raw_response
 
     """
     #############################
@@ -1445,7 +1443,6 @@ class XsoarClient:
                                      interval_between_tries: str = '3',
                                      complete_task: bool = False,
                                      ):
-
         if not all(state in self.PLAYBOOK_TASKS_STATES for state in task_states):
             raise ValueError(f'task_states are bad. Possible values: {self.PLAYBOOK_TASKS_STATES}')
         if not task_states:
@@ -1456,12 +1453,12 @@ class XsoarClient:
 
         while True:
             # Get all tasks with one state of the states in task_states list
-            response, status_code, _ = self._xsoar_client.generic_request(
+            tasks_by_states, status_code, _ = self._xsoar_client.generic_request(
                 f"/investigation/{incident_id}/workplan/tasks", method="POST",
                 body={"states": task_states,
-                      "types": self.PLAYBOOK_TASKS_TYPES}
+                      "types": self.PLAYBOOK_TASKS_TYPES}, response_type= 'object'
             )
-            tasks_by_states = self._process_response(response, status_code, 200)
+            # tasks_by_states = self._process_response(response, status_code, 200)
             requested_task = None
 
             # find task to complete if was given task name
@@ -1502,12 +1499,12 @@ class XsoarClient:
             if time.time() - start_time > max_timeout:  # type: ignore[operator]
                 break
 
-            sleep(float(interval_between_tries))  # type: ignore[arg-type]
+            time.sleep(float(interval_between_tries))  # type: ignore[arg-type]
 
         if not completed_tasks and not found_tasks:
             if task_name and task_states:
                 task_data = self.get_playbook_task_in_investigation(task_name, incident_id)
-                raise RuntimeError(f'The task "{task_name}" was not found by the script or it did not reach the {" or ".join(task_states)} state. Its current state is {task_data.get('state')}')
+                raise RuntimeError(f'The task "{task_name}" was not found by the script or it did not reach the {" or ".join(task_states)} state. Its current state is {task_data.get("state")}')
             elif task_states:
                 raise RuntimeError(f'None of the tasks reached the {" or ".join(task_states)} state.')
             else:
@@ -1516,15 +1513,17 @@ class XsoarClient:
         return {'CompletedTask': completed_tasks, 'FoundTask': found_tasks}
 
     def complete_playbook_task(self, investigation_id, task_id: str, task_input: str):
-
-        response, status_code, _ = self._xsoar_client.generic_request(
-            "/inv-playbook/task/complete", method="POST",
-            body={"investigationId": investigation_id, "taskId": task_id, "taskInput": task_input}
-        )
-        self._process_response(response, status_code, 200)
+        try:
+            response, status_code, _ = self._xsoar_client.generic_request(
+                "/inv-playbook/task/complete", method="POST", response_type= 'object', content_type = "multipart/form-data", form_params = [("investigationId", investigation_id), ("taskId", task_id), ("taskInput", task_input)]
+            )
+        except ApiException as e:
+            if e.status == 400:
+                logger.info(f"task with id {task_id} is already completed")
+            else:
+                raise RuntimeError(f"Failed Completing task {task_id}. Error: {e}")
 
         logger.info(f"The playbook task with id {task_id} was completed with input {task_input}")
-
 
     def upload_file_to_war_room(self, file_path):
 

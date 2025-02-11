@@ -49,23 +49,44 @@ class TestExample:
         pass
 
     # PLAYBOOK X CHECKING VALID alert
-    def test_feature_one_manual_true(self, api_client: XsiamClient):
+    def test_wait_complete_playbook_tasks(self, api_client: XsiamClient):
         """Test feature one"""
-        a = api_client.list_indicators()
+        # search tasks without completing what's not completed
+        res = api_client.pull_playbook_tasks_by_state("91818",task_states=["Error", "Waiting", "InProgress"], task_input="Yes")
+        assert res == {'CompletedTask': [], 'FoundTask': [{'task name': 'Test Manual', 'task state': 'Waiting'}]}
 
-        assert a is not None, "list_indicators should not be None"
+        # search task and completing it if it's not completed
+        res = api_client.pull_playbook_tasks_by_state("91818", task_states=["Error", "Waiting", "InProgress", "Completed"],
+                                                    task_input="Yes", complete_task=True)
+        assert res == {'CompletedTask': ['Test Manual', 'Yes'], 'FoundTask': []}
 
-    def test_feature_two(self, api_client: XsiamClient):
+    def test_updating_integration_instance_state(self, api_client: XsiamClient):
+        """Test feature one"""
+        # disable integration instance
+        disabled_instance = api_client.disable_integration_instance("okta_test")
+        assert disabled_instance.get("enabled") == "false"
+
+        # Enable integration instance
+        enabled_instance = api_client.enable_integration_instance("okta_test")
+        assert enabled_instance.get("enabled") == "true"
+
+        # search task and completing it if it's not completed
+        res = api_client.pull_playbook_tasks_by_state("91818", task_states=["Error", "Waiting", "InProgress", "Completed"],
+                                                    task_input="Yes", complete_task=True)
+        assert res == {'CompletedTask': ['Test Manual', 'Yes'], 'FoundTask': []}
+
+
+    def test_run_slash_command(self, api_client: XsiamClient):
         """
-        Given: Describe the given inputs or the given situation prior the use case.
-        When: Describe the use case
-        Then: Describe the desired outcome of the use case.
+        Given: Incident ID and a slash command to run.
+        When: run slash command
+        Then: the slash command gets executed.
         """
-        # Test another aspect of your application
-        api_client.run_cli_command(
-            investigation_id="INCIDENT-1", command="!Set key=test value=A"
+        # TODO: API does not support running slash command, it just prints it as an entry in the war room
+        # Test slash command
+        api_client.run_slash_command(
+            investigation_id="91818", command="incident_set accountid='test 2'"
         )
-        assert False  # replace with actual assertions for your application
 
 
 if __name__ == "__main__":

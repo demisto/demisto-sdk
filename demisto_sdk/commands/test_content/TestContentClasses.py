@@ -484,17 +484,13 @@ class TestPlaybook:
             )
             return False  # test has a marketplace value that doesn't match the build server marketplace
 
-        result_marketplaces_match_server_type = marketplaces_match_server_type()
-        self.log_debug(
-            f"result_marketplaces_match_server_type {result_marketplaces_match_server_type}"
-        )
         return (
             in_filtered_tests()
             and not nightly_test_in_non_nightly_build()
             and not skipped_test()
             and not version_mismatch()
             and not test_has_skipped_integration()
-            and result_marketplaces_match_server_type
+            and marketplaces_match_server_type()
         )
 
     def run_test_module_on_integrations(self, client: DefaultApi) -> bool:

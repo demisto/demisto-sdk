@@ -14,7 +14,7 @@ from demisto_sdk.commands.validate.validation_results import (
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    InvalidContentItemResult,
+    GeneralValidationResult,
     ValidationCaughtExceptionResult,
     ValidationResult,
     get_all_validators,
@@ -117,7 +117,7 @@ class ValidateManager:
         if BaseValidator.graph_interface:
             logger.info("Closing graph.")
             BaseValidator.graph_interface.close()
-        self.add_invalid_content_items()
+        self.run_general_validations()
         return self.validation_results.post_results(
             config_file_content=self.configured_validations
         )
@@ -135,15 +135,70 @@ class ValidateManager:
             for validator in get_all_validators()
             if validator.error_code in self.configured_validations.select
         ]
+        
+    def run_general_validations(self):    
+        self.add_invalid_content_items()
+        self.validate_all_configured_error_codes_exist()
+        self.validate_all_validations_run_on_git_mode()
+        
+    def validate_all_configured_error_codes_exist(self):
+        """
+        test that the set of configured validation errors in sdk_validation_config.toml is equal to the set of all existing validation to ensure we don't misconfigure non-existing validations.
+        """
+        configured_errors_set: Set[str] = set()
+        for section in (self.configured_validations.selected_path_based_section,
+        self.configured_validations.selected_use_git_section,
+        self.configured_validations.warning_path_based_section,
+        self.configured_validations.warning_use_git_section,
+        self.configured_validations.ignorable_errors):
+            configured_errors_set = configured_errors_set.union(
+                    set(section)
+                )
+        existing_error_codes: Set[str] = set(
+            [validator.error_code for validator in get_all_validators()]
+        )
+        if (configured_non_existing_error_codes := configured_errors_set - existing_error_codes):
+            self.validation_results.extend_general_validations_results(
+                [
+                    GeneralValidationResult(
+                        path=self.config_reader.path,
+                        message=f"The following error codes are configured in the config file but a validation co-oping with the error code cannot be found: {','.join(configured_non_existing_error_codes)}.",
+                        error_code="VA100",
+                    )
+                ]
+            )
+
+
+    def validate_all_validations_run_on_git_mode(self):
+        """
+            Validate that all validations configured in the path_based section are also configured in the use_git section.
+        """
+        path_based_section = (
+            set(self.configured_validations.selected_path_based_section)
+        ).union(set(self.configured_validations.warning_path_based_section))
+        use_git_section = (set(self.configured_validations.selected_use_git_section)).union(
+            set(self.configured_validations.warning_use_git_section)
+        )
+
+        if (non_configured_use_git_error_codes := path_based_section - use_git_section):
+            self.validation_results.extend_general_validations_results(
+                [
+                    GeneralValidationResult(
+                        path=self.config_reader.path,
+                        message=f"The following error codes are configured to run on path-based inputs but are not configured to run on git mode: {','.join(non_configured_use_git_error_codes)}.",
+                        error_code="VA101",
+                    )
+                ]
+            )
 
     def add_invalid_content_items(self):
         """Create results for all the invalid_content_items.
 
         Args:
         """
-        self.validation_results.extend_invalid_content_item_results(
+        self.validation_results.extend_general_validations_results(
             [
-                InvalidContentItemResult(
+                GeneralValidationResult(
                     path=invalid_path,
                     message="The given file is not supported in the validate command, please refer to the error above.\n"
                     "The validate command supports: Integrations, Scripts, Playbooks, "

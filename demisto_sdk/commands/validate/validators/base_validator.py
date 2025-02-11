@@ -270,6 +270,7 @@ def is_error_ignored(
         bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
     """
     if err_code not in ignorable_errors:
+        logger.warning(f"The error code {err_code} cannot be ignored.")
         return False
     if related_file_type:
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
@@ -296,7 +297,7 @@ class FixResult(BaseResult, BaseModel):
     """This is a class for fix results."""
 
 
-class InvalidContentItemResult(BaseResult, BaseModel):
+class GeneralValidationResult(BaseResult, BaseModel):
     validator: Optional[BaseValidator] = None  # type: ignore[assignment]
     message: str
     content_object: Optional[BaseContent] = None  # type: ignore[assignment]

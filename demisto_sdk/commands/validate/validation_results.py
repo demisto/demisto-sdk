@@ -7,7 +7,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import ConfiguredValidations
 from demisto_sdk.commands.validate.validators.base_validator import (
     FixResult,
-    InvalidContentItemResult,
+    GeneralValidationsResult,
     ValidationCaughtExceptionResult,
     ValidationResult,
 )
@@ -31,7 +31,7 @@ class ResultWriter:
         """
         self.validation_results: List[ValidationResult] = []
         self.fixing_results: List[FixResult] = []
-        self.invalid_content_item_results: List[InvalidContentItemResult] = []
+        self.general_validations_results: List[GeneralValidationsResult] = []
         self.validation_caught_exception_results: List[
             ValidationCaughtExceptionResult
         ] = []
@@ -92,7 +92,7 @@ class ResultWriter:
             if fixing_result.validator.error_code not in config_file_content.warning:
                 exit_code = 1
             logger.warning(f"{fixing_result.format_readable_message}")
-        for result in self.invalid_content_item_results:
+        for result in self.general_validations_results:
             logger.error(f"{result.format_readable_message}")
             exit_code = 1
         for result in self.validation_caught_exception_results:
@@ -123,7 +123,7 @@ class ResultWriter:
         for failing_error_code in failing_error_codes:
             if failing_error_code in config_file_content.ignorable_errors:
                 ignorable_errors.append(failing_error_code)
-            if failing_error_code not in config_file_content.path_based_section:
+            if failing_error_code not in config_file_content.selected_path_based_section:
                 forcemergeable_errors.append(failing_error_code)
             elif failing_error_code not in ignorable_errors:
                 must_be_handled_errors.append(failing_error_code)
@@ -151,8 +151,8 @@ class ResultWriter:
         json_fixing_list = [
             fixing_result.format_json_message for fixing_result in self.fixing_results
         ]
-        json_invalid_content_item_list = [
-            result.format_json_message for result in self.invalid_content_item_results
+        json_general_validations_list = [
+            result.format_json_message for result in self.general_validations_results
         ]
         json_validation_caught_exception_list = [
             result.format_json_message
@@ -161,7 +161,7 @@ class ResultWriter:
         results = {
             "validations": json_validations_list,
             "fixed validations": json_fixing_list,
-            "invalid content items": json_invalid_content_item_list,
+            "general validations": json_general_validations_list,
             "Validations that caught exceptions": json_validation_caught_exception_list,
         }
 
@@ -215,15 +215,15 @@ class ResultWriter:
         """
         self.fixing_results.extend(fixing_results)
 
-    def extend_invalid_content_item_results(
-        self, invalid_content_item_results: List[InvalidContentItemResult]
+    def extend_general_validations_results(
+        self, general_validations_results: List[GeneralValidationsResult]
     ):
-        """Extending the list of InvalidContentItemResult objects with a given list of InvalidContentItemResult objects.
+        """Extending the list of GeneralValidationsResult objects with a given list of GeneralValidationsResult objects.
 
         Args:
-            non_content_item_results (List[InvalidContentItemResult]): The List of InvalidContentItemResult objects to add to the existing list.
+            non_content_item_results (List[GeneralValidationsResult]): The List of GeneralValidationsResult objects to add to the existing list.
         """
-        self.invalid_content_item_results.extend(invalid_content_item_results)
+        self.general_validations_results.extend(general_validations_results)
 
     def extend_validation_caught_exception_results(
         self, validation_caught_exception_results: List[ValidationCaughtExceptionResult]

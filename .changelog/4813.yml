@@ -1,0 +1,6 @@
+changes:
+- description: Added a validation to ensure all validation run on -g mode also run on -a mode.
+  type: feature
+- description: Added a validation to ensure all validation configured in the config file are existing validations.
+  type: feature
+pr_number: 4813

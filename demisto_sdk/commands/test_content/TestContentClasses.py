@@ -483,7 +483,7 @@ class TestPlaybook:
                 f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
             )
             return False  # test has a marketplace value that doesn't match the build server marketplace
-
+        self.log_debug(f"result_marketplaces_match_server_type {result_marketplaces_match_server_type}")
         result_marketplaces_match_server_type = marketplaces_match_server_type()
         return (
             in_filtered_tests()

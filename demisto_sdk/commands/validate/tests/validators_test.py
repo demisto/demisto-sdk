@@ -1098,12 +1098,12 @@ def test_validate_all_validations_run_on_git_mode(
         (
             ["PA100", "PA101"],
             ["GR100", "GR101"],
-            ["PA100", "PA101"],
+            ["PA100", "PA102"],
             ["GR100", "GR101"],
             2,
             [
                 "The following error codes are configured twice in the use_git both under select & warning: GR100, GR101.",
-                "The following error codes are configured twice in the path_based both under select & warning: PA101, PA100.",
+                'The following error codes are configured twice in the path_based both under select & warning: PA100.',
             ],
         ),
         (
@@ -1119,11 +1119,11 @@ def test_validate_all_validations_run_on_git_mode(
         (
             ["PA100", "PA101"],
             ["PA101", "GR100", "GR101"],
-            ["PA100", "PA101"],
+            ["PA100", "PA102"],
             ["GR108", "GR107"],
             1,
             [
-                "The following error codes are configured twice in the path_based both under select & warning: PA101, PA100."
+                'The following error codes are configured twice in the path_based both under select & warning: PA100.'
             ],
         ),
         (

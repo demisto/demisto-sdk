@@ -304,6 +304,8 @@ class ContentType(StrEnum):
             return "Objects"
         elif self == ContentType.GENERIC_MODULE:
             return "Modules"
+        elif self == ContentType.LAYOUT:
+            return "Case Layouts"
         separated_str = pascalToSpace(self)
         return f"{separated_str}s"
 

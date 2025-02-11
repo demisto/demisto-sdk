@@ -23,6 +23,7 @@ class ConfiguredValidations(NamedTuple):
     selected_use_git_section: List[str] = []
     warning_use_git_section: List[str] = []
 
+
 class ConfigReader:
     def __init__(
         self,

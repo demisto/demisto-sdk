@@ -7,7 +7,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import ConfiguredValidations
 from demisto_sdk.commands.validate.validators.base_validator import (
     FixResult,
-    GeneralValidationsResult,
+    GeneralValidationResult,
     ValidationCaughtExceptionResult,
     ValidationResult,
 )
@@ -31,7 +31,7 @@ class ResultWriter:
         """
         self.validation_results: List[ValidationResult] = []
         self.fixing_results: List[FixResult] = []
-        self.general_validations_results: List[GeneralValidationsResult] = []
+        self.general_validations_results: List[GeneralValidationResult] = []
         self.validation_caught_exception_results: List[
             ValidationCaughtExceptionResult
         ] = []
@@ -123,7 +123,10 @@ class ResultWriter:
         for failing_error_code in failing_error_codes:
             if failing_error_code in config_file_content.ignorable_errors:
                 ignorable_errors.append(failing_error_code)
-            if failing_error_code not in config_file_content.selected_path_based_section:
+            if (
+                failing_error_code
+                not in config_file_content.selected_path_based_section
+            ):
                 forcemergeable_errors.append(failing_error_code)
             elif failing_error_code not in ignorable_errors:
                 must_be_handled_errors.append(failing_error_code)
@@ -216,12 +219,12 @@ class ResultWriter:
         self.fixing_results.extend(fixing_results)
 
     def extend_general_validations_results(
-        self, general_validations_results: List[GeneralValidationsResult]
+        self, general_validations_results: List[GeneralValidationResult]
     ):
-        """Extending the list of GeneralValidationsResult objects with a given list of GeneralValidationsResult objects.
+        """Extending the list of GeneralValidationResult objects with a given list of GeneralValidationResult objects.
 
         Args:
-            non_content_item_results (List[GeneralValidationsResult]): The List of GeneralValidationsResult objects to add to the existing list.
+            non_content_item_results (List[GeneralValidationResult]): The List of GeneralValidationResult objects to add to the existing list.
         """
         self.general_validations_results.extend(general_validations_results)
 

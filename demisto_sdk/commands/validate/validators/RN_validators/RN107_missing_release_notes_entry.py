@@ -85,6 +85,11 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
         return pack_to_rn_headers
 
     def is_missing_rn(self, c: ContentItem) -> bool:
+        print("HERE")
+        print(c.display_name)
+        print(self.pack_to_rn_headers[c.pack_id].get(
+            c.content_type.as_rn_header, []
+        ))
         return c.display_name not in self.pack_to_rn_headers[c.pack_id].get(
             c.content_type.as_rn_header, []
         )

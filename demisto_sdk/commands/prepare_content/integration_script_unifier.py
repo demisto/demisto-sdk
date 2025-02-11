@@ -195,7 +195,7 @@ class IntegrationScriptUnifier(Unifier):
             # Only change data if marketplace platform does not support mirroring
             return
 
-        name = data["name"]
+        name = data.get("name")
         if script_commands := data["script"].get("commands"):
             logger.debug(
                 f"Removing mirroring commands from {name} for marketplace: {marketplace.value}"
@@ -222,7 +222,7 @@ class IntegrationScriptUnifier(Unifier):
             unified_yml - The unified_yml
         Returns:
              the unified yml with the id/name/display appended with the custom label
-             if the fields exsits.
+             if the fields exists.
         """
         to_append = custom if is_script_package else f" - {custom}"
         if unified_yml.get("name"):

@@ -483,9 +483,11 @@ class TestPlaybook:
                 f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
             )
             return False  # test has a marketplace value that doesn't match the build server marketplace
-        
+
         result_marketplaces_match_server_type = marketplaces_match_server_type()
-        self.log_debug(f"result_marketplaces_match_server_type {result_marketplaces_match_server_type}")
+        self.log_debug(
+            f"result_marketplaces_match_server_type {result_marketplaces_match_server_type}"
+        )
         return (
             in_filtered_tests()
             and not nightly_test_in_non_nightly_build()
@@ -2130,6 +2132,14 @@ class Integration:
             )
         else:
             instance_name = f'{self.configuration.instance_name.replace(" ", "_")}_test_{uuid.uuid4()}'  # type: ignore
+
+        if "discovery_service" in self.configuration.params:  # type: ignore
+            self.playbook.log_info("discovery_service in the configuration params")
+            if discovery_service := self.configuration.params.get("discovery_service"):  # type: ignore
+                if "%%SERVER_HOST%%" in discovery_service:
+                    self.playbook.log_info("%%SERVER_HOST%% found")
+                else:
+                    self.playbook.log_info("%%SERVER_HOST%% not found")
 
         self.playbook.log_info(
             f"Configuring instance for {self} (instance name: {instance_name}, "  # type: ignore

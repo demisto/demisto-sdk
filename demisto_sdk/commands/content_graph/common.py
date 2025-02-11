@@ -549,7 +549,7 @@ def replace_marketplace_references(
                 for key, value in data.items():
                     # Process the key
                     new_key = (
-                        re.sub(pattern, "Kamal", key) if isinstance(key, str) else key
+                        re.sub(pattern, "Cortex", key) if isinstance(key, str) else key
                     )
                     if new_key != key:
                         keys_to_update[key] = new_key
@@ -563,9 +563,9 @@ def replace_marketplace_references(
                     data[i] = replace_marketplace_references(data[i], marketplace, path)
             elif isinstance(data, FoldedScalarString):
                 # if data is a FoldedScalarString (yml unification), we need to convert it to a string and back
-                data = FoldedScalarString(re.sub(pattern, "Kamal", str(data)))
+                data = FoldedScalarString(re.sub(pattern, "Cortex", str(data)))
             elif isinstance(data, str):
-                data = re.sub(pattern, "Kamal", data)
+                data = re.sub(pattern, "Cortex", data)
     except Exception as e:
         logger.error(
             f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"

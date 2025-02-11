@@ -88,6 +88,9 @@ class TestExample:
             investigation_id="91818", command="incident_set accountid='test 2'"
         )
 
+    def test_upload_file_to_incident(self, api_client: XsiamClient):
+        api_client.upload_file_to_war_room(file_path="/Users/mmaayta/Downloads/testApi.doc", file_name="testMeritApi2", incident_id="91818")
+
 
 if __name__ == "__main__":
     pytest.main()

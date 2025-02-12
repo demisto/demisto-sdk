@@ -32,7 +32,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
         'No release note entry was found for the {file_type} "{entity_name}" in the '
         "{pack_name} pack. Please rerun the update-release-notes command without -u to "
         "generate an updated template. If you are trying to exclude an item from the release "
-        "notes, please refer to the documentation found here - TODELETEEEEEE!!!!!!!!!!!!!!!"
+        "notes, please refer to the documentation found here - "
         "https://xsoar.pan.dev/docs/integrations/changelog#excluding-items"
     )
     related_field = "release notes"

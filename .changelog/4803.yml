@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue when setting the marketplace entry to xsoar_on_prem in the conf, the test was also executed on xsoar_sass.
+  type: fix
+pr_number: 4803

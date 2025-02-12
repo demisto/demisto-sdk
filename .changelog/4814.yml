@@ -1,0 +1,4 @@
+changes:
+- description: Fixed RN107 implementation for CaseLayout content type.
+  type: fix
+pr_number: 4814

@@ -5,7 +5,6 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -25,7 +24,6 @@ class IsPackDisplayNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC):
     )
     related_field = ""
     is_auto_fixable = False
-    related_file_type = [RelatedFileType.JSON]
 
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool

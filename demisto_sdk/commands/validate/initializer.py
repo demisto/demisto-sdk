@@ -599,6 +599,19 @@ class Initializer:
                     path = Path(path_str.replace(f"_{PACKS_README_FILE_NAME}", ".yml"))
                     if path not in statuses_dict:
                         statuses_dict[path] = None
+                elif path.parts[-2] not in [{INTEGRATIONS_DIR}, {SCRIPTS_DIR}]:
+                    # some nested folder, not related to the main content item.
+                    integration_script_index = (
+                        path.parts.index(INTEGRATIONS_DIR)
+                        if INTEGRATIONS_DIR in path.parts
+                        else path.parts.index(SCRIPTS_DIR)
+                    )
+                    path = Path(
+                        os.path.join(*path.parts[: integration_script_index + 2])
+                    )
+                    path = path / f"{path.parts[-1]}.yml"
+                    if path not in statuses_dict:
+                        statuses_dict[path] = None
                 else:
                     # Otherwise, assume the yml name is the name of the parent directory.
                     path = Path(path.parent / f"{path.parts[-2]}.yml")

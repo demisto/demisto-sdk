@@ -82,7 +82,6 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
             for p in content_items
             if isinstance(p, Pack) and was_rn_added(p)
         }
-        logger.info(pack_to_rn_headers)
         return pack_to_rn_headers
 
     def is_missing_rn(self, c: ContentItem) -> bool:

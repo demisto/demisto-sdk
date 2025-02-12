@@ -64,7 +64,6 @@ from demisto_sdk.commands.prepare_content.markdown_images_handler import (
 )
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
-    CONTENT_TYPES_EXCLUDED_FROM_UPLOAD_FOR_MARKETPLACE,
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
     MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
@@ -331,9 +330,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         try:
             path.mkdir(exist_ok=True, parents=True)
 
-            content_types_excluded_from_upload = (
-                CONTENT_TYPES_EXCLUDED_FROM_UPLOAD_FOR_MARKETPLACE.get(marketplace, CONTENT_TYPES_EXCLUDED_FROM_UPLOAD).copy()
-            )
+            content_types_excluded_from_upload = CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
+        
             if tpb:
                 content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
 
@@ -498,7 +496,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         uploaded_successfully: List[ContentItem] = []
         incompatible_content_items = []
 
-        content_types_excluded_from_upload = CONTENT_TYPES_EXCLUDED_FROM_UPLOAD_FOR_MARKETPLACE.get(marketplace, CONTENT_TYPES_EXCLUDED_FROM_UPLOAD).copy()
+        content_types_excluded_from_upload = CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
         if tpb:
             content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
 

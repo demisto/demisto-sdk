@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Union
+from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (

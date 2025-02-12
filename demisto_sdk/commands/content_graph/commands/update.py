@@ -73,6 +73,7 @@ def update_content_graph(
     dependencies: bool = True,
     output_path: Optional[Path] = None,
 ) -> None:
+    logger.info("TESTTESTTEST######")
     """This function updates a new content graph database in neo4j from the content path
     Args:
         content_graph_interface (ContentGraphInterface): The content graph interface.

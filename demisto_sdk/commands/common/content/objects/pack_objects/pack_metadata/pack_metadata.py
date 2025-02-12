@@ -27,7 +27,7 @@ XSOAR_CERTIFIED = "certified"
 XSOAR_EULA_URL = "https://github.com/demisto/content/blob/master/LICENSE"
 
 CORE_PACKS_LIST = get_core_pack_list()
-
+DEFAULT_PLATFORM_MODULES = ["x1", "x2"]
 
 class PackMetaData(JSONObject):
     def __init__(self, path: Union[Path, str]):
@@ -59,7 +59,9 @@ class PackMetaData(JSONObject):
         self._useCases: List[str] = []
         self._keywords: List[str] = []
         self._dependencies: Dict[str, Dict] = {}
-
+        self._supported_modules: List[str] = DEFAULT_PLATFORM_MODULES
+        logger.info(f"supported_modules {self._supported_modules}")
+    
     @property
     def name(self) -> str:
         """Object name attribute.
@@ -493,6 +495,13 @@ class PackMetaData(JSONObject):
         """Setter for the dependencies attribute"""
         self._dependencies = new_pack_dependencies
 
+    @property
+    def supported_modules(self):
+        """
+        TODO - _summary_
+        """
+        return self._supported_modules
+
     def dump_metadata_file(self, dest_dir: Union[Path, str] = "") -> List[Path]:
         file_content = {
             "name": self.name,
@@ -577,7 +586,7 @@ class PackMetaData(JSONObject):
             self.categories = user_metadata.get("categories", [])
             self.use_cases = user_metadata.get("useCases", [])
             self.dependencies = user_metadata.get("dependencies", {})
-
+            self.supportedModules = user_metadata.get("supportedModules", DEFAULT_PLATFORM_MODULES)
             if self.price > 0:
                 self.premium = True
                 self.vendor_id = user_metadata.get("vendorId", "")

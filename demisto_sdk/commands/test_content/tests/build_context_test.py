@@ -744,7 +744,7 @@ def test_playbook_with_marketplaces(mocker, tmp_path):
     )
     assert (
         "xsoar_playbook_with_marketplaces_mismatch"
-        in xsoar_saas_build_context.tests_data_keeper.skipped_tests
+        not in xsoar_saas_build_context.tests_data_keeper.skipped_tests
     )
 
 

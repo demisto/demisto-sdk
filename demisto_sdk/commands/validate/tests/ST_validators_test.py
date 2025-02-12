@@ -371,7 +371,7 @@ class TestST111:
         assert len(results) == 1
         assert results[0].message == (
             "Missing sectionorder key. Add sectionorder to the top of your YAML file and specify the order of the "
-            "Collect, Connect, and Optimize sections (at least one is required)."
+            "Collect, Connect, Optimize, Mirroring sections (at least one is required)."
         )
 
     def test_invalid_section(self):

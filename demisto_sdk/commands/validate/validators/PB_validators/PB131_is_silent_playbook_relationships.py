@@ -51,16 +51,16 @@ class IsSilentPlaybookRelationshipsValidator(BaseValidator[ContentTypes]):
             return True
 
         if content_item.content_type == ContentType.PLAYBOOK:
-            return any(
-                trigger.data.get("playbook_id") == content_item.data.get("id")
-                for trigger in self.graph.search(content_type=ContentType.TRIGGER, is_silent=True)
-            )
+            for trigger in self.graph.search(content_type=ContentType.TRIGGER, is_silent=True):
+                if trigger.data.get("playbook_id") == content_item.data.get("id"):
+                    return True
+            return False
 
         if content_item.content_type == ContentType.TRIGGER:
-            return any(
-                playbook.data.get("id") == content_item.data.get("playbook_id")
-                for playbook in self.graph.search(content_type=ContentType.PLAYBOOK, is_silent=True)
-            )
+            for playbook in self.graph.search(content_type=ContentType.PLAYBOOK, is_silent=True):
+                if playbook.data.get("id") == content_item.data.get("playbook_id"):
+                    return True
+            return False
 
         # Default case if content type is not PLAYBOOK or TRIGGER
         return True

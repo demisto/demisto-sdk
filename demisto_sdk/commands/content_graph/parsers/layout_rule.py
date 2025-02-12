@@ -42,6 +42,7 @@ class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RU
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {
             MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM
         }
 
     def connect_to_dependencies(self) -> None:

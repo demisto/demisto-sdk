@@ -43,6 +43,7 @@ class CaseFieldParser(JSONContentItemParser, content_type=ContentType.CASE_FIELD
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {
             MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM
         }
 
     @property

@@ -31,7 +31,10 @@ class XDRCTemplateParser(JSONContentItemParser, content_type=ContentType.XDRC_TE
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.MarketplaceV2}
+        return {
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XSOAR_ON_PREM,
+        }
 
     @property
     def strict_object(self):

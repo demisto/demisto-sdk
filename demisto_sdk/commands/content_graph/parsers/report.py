@@ -26,6 +26,7 @@ class ReportParser(JSONContentItemParser, content_type=ContentType.REPORT):
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.PLATFORM,
         }
 
     def connect_to_dependencies(self) -> None:

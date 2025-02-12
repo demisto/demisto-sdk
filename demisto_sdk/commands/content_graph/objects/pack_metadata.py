@@ -497,6 +497,8 @@ class PackMetadata(BaseModel):
             return author
         elif marketplace == MarketplaceVersions.MarketplaceV2:
             return author.replace("Cortex XSOAR", "Cortex XSIAM")
+        elif marketplace == MarketplaceVersions.PLATFORM:
+            return author.replace("Cortex XSOAR", "Cortex")
         raise ValueError(f"Unknown marketplace version for author: {marketplace}")
 
     def _add_item_to_metadata_list(

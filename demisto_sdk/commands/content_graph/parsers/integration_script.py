@@ -64,13 +64,7 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {
-            MarketplaceVersions.XSOAR,
-            MarketplaceVersions.MarketplaceV2,
-            MarketplaceVersions.XPANSE,
-            MarketplaceVersions.XSOAR_SAAS,
-            MarketplaceVersions.XSOAR_ON_PREM,
-        }
+        return set(MarketplaceVersions)
 
     def connect_to_api_modules(self) -> None:
         """Creates IMPORTS relationships with the API modules used in the integration."""

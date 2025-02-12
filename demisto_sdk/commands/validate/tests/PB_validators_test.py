@@ -7,8 +7,8 @@ from demisto_sdk.commands.content_graph.objects.pack_content_items import (
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_playbook_object,
-    create_trigger_object,
 )
+from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename import (
     IsNoRolenameValidator,
 )
@@ -80,7 +80,6 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB132_no_readme_for_
     NoReadmeForSilentPlaybook,
 )
 from TestSuite.repo import Repo
-from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 
 
 @pytest.mark.parametrize(
@@ -2442,7 +2441,13 @@ class Pack:
     ],
 )
 def test_IsSilentPlaybookRelationshipsValidator(
-    playbook_id, playbook_is_silent, trigger_playbook_id, trigger_is_silent, result_len, mocker, graph_repo: Repo
+    playbook_id,
+    playbook_is_silent,
+    trigger_playbook_id,
+    trigger_is_silent,
+    result_len,
+    mocker,
+    graph_repo: Repo,
 ):
     """
     Given:
@@ -2458,21 +2463,28 @@ def test_IsSilentPlaybookRelationshipsValidator(
     """
     pack = graph_repo.create_pack("Pack-silent")
 
-    pack.create_playbook(name="silent-test1", yml={'id': playbook_id, "issilent": playbook_is_silent,
-                                                   'name': playbook_id})
+    pack.create_playbook(
+        name="silent-test1",
+        yml={"id": playbook_id, "issilent": playbook_is_silent, "name": playbook_id},
+    )
 
-    pack.create_trigger('silent-trigger', content={"trigger_id": "silent-trigger", "playbook_id": trigger_playbook_id,
-                                                   "issilent": trigger_is_silent, "trigger_name": "silent-trigger"})
+    pack.create_trigger(
+        "silent-trigger",
+        content={
+            "trigger_id": "silent-trigger",
+            "playbook_id": trigger_playbook_id,
+            "issilent": trigger_is_silent,
+            "trigger_name": "silent-trigger",
+        },
+    )
     graph_path = graph_repo.path
 
     BaseValidator.graph_interface = graph_repo.create_graph()
     mocker.patch(
         "demisto_sdk.commands.common.tools.get_content_path", return_value=graph_path
     )
-    results = (
-        IsSilentPlaybookRelationshipsValidator().obtain_invalid_content_items(
-            [graph_repo.packs[0].playbooks[0].object]
-        )
+    results = IsSilentPlaybookRelationshipsValidator().obtain_invalid_content_items(
+        [graph_repo.packs[0].playbooks[0].object]
     )
     assert result_len == len(results)
 
@@ -2518,7 +2530,13 @@ def test_IsSilentPlaybookRelationshipsValidator(
     ],
 )
 def test_IsSilentTriggerRelationshipsValidator(
-    trigger_playbook_id, trigger_is_silent, playbook_id, playbook_is_silent, result_len, mocker, graph_repo: Repo
+    trigger_playbook_id,
+    trigger_is_silent,
+    playbook_id,
+    playbook_is_silent,
+    result_len,
+    mocker,
+    graph_repo: Repo,
 ):
     """
     Given:
@@ -2535,21 +2553,28 @@ def test_IsSilentTriggerRelationshipsValidator(
 
     pack = graph_repo.create_pack("Pack-silent")
 
-    pack.create_trigger('silent-trigger', content={"trigger_id": "silent-trigger", "playbook_id": trigger_playbook_id,
-                                                   "issilent": trigger_is_silent, "trigger_name": "silent-trigger"})
+    pack.create_trigger(
+        "silent-trigger",
+        content={
+            "trigger_id": "silent-trigger",
+            "playbook_id": trigger_playbook_id,
+            "issilent": trigger_is_silent,
+            "trigger_name": "silent-trigger",
+        },
+    )
 
-    pack.create_playbook(name="silent-test1", yml={'id': playbook_id, "issilent": playbook_is_silent,
-                                                   'name': playbook_id})
+    pack.create_playbook(
+        name="silent-test1",
+        yml={"id": playbook_id, "issilent": playbook_is_silent, "name": playbook_id},
+    )
 
     BaseValidator.graph_interface = graph_repo.create_graph()
     graph_path = graph_repo.path
     mocker.patch(
         "demisto_sdk.commands.common.tools.get_content_path", return_value=graph_path
     )
-    results = (
-        IsSilentPlaybookRelationshipsValidator().obtain_invalid_content_items(
-            [graph_repo.packs[0].triggers[0].object]
-        )
+    results = IsSilentPlaybookRelationshipsValidator().obtain_invalid_content_items(
+        [graph_repo.packs[0].triggers[0].object]
     )
     assert result_len == len(results)
 

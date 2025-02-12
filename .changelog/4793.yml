@@ -1,5 +1,5 @@
 changes:
-- description: Fixed an issue where PB130 was running on unnecessary files, and PB131 was not validating correctly in certain cases.
+- description: Fixed an issue where PB130 was running on unnecessary files.
   type: fix
 - description: Fixed an issue where PB131 was not validating correctly in certain cases.
   type: fix

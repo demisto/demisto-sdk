@@ -8,7 +8,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Playbook]
+ContentTypes = Playbook
 
 
 class IsSilentPlaybookValidator(BaseValidator[ContentTypes]):

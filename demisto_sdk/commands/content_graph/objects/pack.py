@@ -372,7 +372,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             shutil.copy(
                 self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME
             )
-
             try:
                 shutil.copy(
                     self.path / VERSION_CONFIG_FILENAME, path / VERSION_CONFIG_FILENAME

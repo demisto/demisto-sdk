@@ -1,0 +1,4 @@
+changes:
+- description: Improved handling of mirroring when preparing content for marketplaces where the feature is unsupported by the platform.
+  type: fix
+pr_number: 4795

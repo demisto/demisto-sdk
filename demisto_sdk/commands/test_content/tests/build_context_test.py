@@ -674,7 +674,10 @@ def test_playbook_with_marketplaces(mocker, tmp_path):
         "qa2-test-111111": {
             "packs_to_install": ["TEST"],
             "tests": {
-                TEST_PLAYBOOKS: ["xsoar_saas_playbook_with_marketplaces_mismatch"]
+                TEST_PLAYBOOKS: [
+                    "xsoar_saas_playbook_with_marketplaces_mismatch",
+                    "xsoar_playbook_with_marketplaces_mismatch",
+                ]
             },
         }
     }

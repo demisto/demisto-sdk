@@ -11,7 +11,7 @@ For a private repository and an unconfigured DEMISTO_SDK_GITHUB_TOKEN, remote fi
 ### Options
 * **-i, --input**
 
-    The pack name or relative path of the content pack. For example, 'Packs/Pack_Name'.
+    The pack name or relative path of the content pack you wish to generate release notes for. For example, 'Packs/Pack_Name'.
 
 * **-u, --update-type**
 

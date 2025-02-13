@@ -10,7 +10,11 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
-from demisto_sdk.commands.validate.tools import should_skip_rn_check, was_rn_added
+from demisto_sdk.commands.validate.tools import (
+    is_new_pack,
+    should_skip_rn_check,
+    was_rn_added,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -32,8 +36,9 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
     related_field = "release notes"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.RELEASE_NOTE]
-    packs_with_added_rn: list[str] = []
+    valid_packs: list[str] = []
     checked_packs: set[str] = set()
+    run_on_deprecated = True
 
     def get_missing_rns_for_api_module_dependents(
         self, api_module: ContentItem
@@ -46,16 +51,16 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
                 content_object=c.pack,
             )
             for c in dependent_items
-            if c.pack_id not in self.packs_with_added_rn
+            if c.pack_id not in self.valid_packs
         }
         return result
 
     @staticmethod
-    def get_packs_with_added_rns(content_objects: Iterable[BaseContent]) -> list[str]:
+    def get_valid_packs(content_objects: Iterable[BaseContent]) -> list[str]:
         return [
             p.object_id
             for p in content_objects
-            if isinstance(p, Pack) and was_rn_added(p)
+            if isinstance(p, Pack) and (was_rn_added(p) or is_new_pack(p))
         ]
 
     def obtain_invalid_content_items(
@@ -64,7 +69,7 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
         results: dict[str, ValidationResult] = {}
         api_module_results: dict[str, ValidationResult] = {}
 
-        self.packs_with_added_rn = self.get_packs_with_added_rns(content_items)
+        self.valid_packs = self.get_valid_packs(content_items)
 
         for content_item in content_items:
             if isinstance(content_item, ContentItem):
@@ -83,7 +88,7 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
                     )
                     self.checked_packs.update(api_module_results.keys())
 
-                elif content_item.pack_id not in self.packs_with_added_rn:
+                elif content_item.pack_id not in self.valid_packs:
                     results[content_item.pack_id] = ValidationResult(
                         validator=self,
                         message=self.error_message.format(content_item.pack_id),

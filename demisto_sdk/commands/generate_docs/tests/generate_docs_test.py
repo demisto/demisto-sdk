@@ -1179,7 +1179,7 @@ class TestGenerateIntegrationDoc:
         assert "#### Command example" in actual_doc
         assert "#### Context Example" in actual_doc
         assert (
-            actual_doc[1074]
+            actual_doc[1071]
             == "| allowed_input_type_param | Enum Found as the last part of Change.allowedInput[].update hypermedia URL.supported values include:change-management-ack,lets-encrypt-challenges-completed,post-verification-warnings-ack,pre-verification-warnings-ack. Possible values are: change-management-ack, lets-encrypt-challenges-completed, post-verification-warnings-ack, pre-verification-warnings-ack. Default is post-verification-warnings-ack. | Optional | "
         )
 
@@ -1298,7 +1298,7 @@ class TestGetCommandExamples:
         Then
             - Verify that the returned commands from the examples are only the specific commands.
         """
-        command_examples = tmp_path / "command_examples"
+        command_examples = tmp_path / "command_examples.txt"
 
         with open(command_examples, "w+") as ce:
             ce.write(
@@ -1328,7 +1328,7 @@ class TestGetCommandExamples:
         Then
             - Verify that the returned commands from the examples are only the specific commands.
         """
-        command_examples = tmp_path / "command_examples"
+        command_examples = tmp_path / "command_examples.txt"
 
         with open(command_examples, "w+") as ce:
             ce.write(
@@ -1357,7 +1357,7 @@ class TestGetCommandExamples:
         Then
             - Verify that the returned commands from the examples are only the specific commands
         """
-        command_examples = tmp_path / "command_examples"
+        command_examples = tmp_path / "command_examples.txt"
 
         with open(command_examples, "w+") as ce:
             ce.write(
@@ -1403,7 +1403,7 @@ def test_generate_table_section_numbered_section():
 
 
 yml_data_cases = [
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1423,7 +1423,7 @@ yml_data_cases = [
                     "type": 8,
                 },
             ],
-        },  # case no param with additional info field
+        },
         [
             "",
             "| **Parameter** | **Required** |",
@@ -1432,8 +1432,9 @@ yml_data_cases = [
             "| test2 | True |",
             "",
         ],  # expected
+        id="case no param with additional info field",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1447,7 +1448,7 @@ yml_data_cases = [
                 },
                 {"display": "test2", "name": "test2", "required": True, "type": 8},
             ],
-        },  # case some params with additional info field
+        },
         [
             "",
             "| **Parameter** | **Description** | **Required** |",
@@ -1456,8 +1457,9 @@ yml_data_cases = [
             "| test2 |  | True |",
             "",
         ],  # expected
+        id="case some params with additional info field",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1477,7 +1479,7 @@ yml_data_cases = [
                     "type": 8,
                 },
             ],
-        },  # case all params with additional info field
+        },
         [
             "",
             "| **Parameter** | **Description** | **Required** |",
@@ -1486,8 +1488,9 @@ yml_data_cases = [
             "| test2 | Some more data | True |",
             "",
         ],  # expected
+        id="case all params with additional info field",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1501,7 +1504,7 @@ yml_data_cases = [
                     "type": 9,
                 },
             ],
-        },  # case credentials parameter have displaypassword
+        },
         [
             "",
             "| **Parameter** | **Description** | **Required** |",
@@ -1510,8 +1513,9 @@ yml_data_cases = [
             "| password |  | True |",
             "",
         ],  # expected
+        id="case credentials parameter have displaypassword",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1524,7 +1528,7 @@ yml_data_cases = [
                     "type": 9,
                 },
             ],
-        },  # case credentials parameter have no displaypassword
+        },
         [
             "",
             "| **Parameter** | **Description** | **Required** |",
@@ -1533,8 +1537,142 @@ yml_data_cases = [
             "| Password |  | True |",
             "",
         ],  # expected
+        id="case credentials parameter have no displaypassword",
     ),
-    (
+    pytest.param(
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "name": "user_name",
+                    "additionalinfo": "Credentials",
+                    "required": True,
+                    "type": 9,
+                },
+            ],
+        },
+        [
+            "",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| user_name | Credentials | True |",
+            "| Password |  | True |",
+            "",
+        ],  # expected
+        id="case credentials parameter have no display",
+    ),
+    pytest.param(
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "name": "user_name",
+                    "displaypassword": "Password",
+                    "additionalinfo": "Credentials",
+                    "hiddenusername": True,
+                    "required": True,
+                    "type": 9,
+                },
+            ],
+        },
+        [
+            "",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| Password | Credentials | True |",
+            "",
+        ],  # expected
+        id="case credentials parameter have hiddenusername",
+    ),
+    pytest.param(
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "name": "user_name",
+                    "display": "User Name",
+                    "additionalinfo": "Credentials",
+                    "hiddenpassword": True,
+                    "required": True,
+                    "type": 9,
+                },
+            ],
+        },
+        [
+            "",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| User Name | Credentials | True |",
+            "",
+        ],  # expected
+        id="case credentials parameter have hiddenpassword",
+    ),
+    pytest.param(
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "display": "User Name",
+                    "name": "user_anme",
+                    "additionalinfo": "The User Name",
+                    "required": True,
+                    "type": 0,
+                },
+                {
+                    "name": "user_name",
+                    "display": "UserName",
+                    "additionalinfo": "Credentials",
+                    "hiddenusername": True,
+                    "hiddenpassword": True,
+                    "type": 9,
+                },
+            ],
+        },
+        [
+            "",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| User Name | The User Name | True |",
+            "",
+        ],  # expected
+        id="case credentials parameter have hiddenusername and hiddenpassword",
+    ),
+    pytest.param(
+        {
+            "name": "test",
+            "display": "test",
+            "displaypassword": "password",
+            "configuration": [
+                {
+                    "display": "User Name",
+                    "name": "user_anme",
+                    "additionalinfo": "The User Name",
+                    "required": True,
+                    "type": 0,
+                },
+                {
+                    "display": "Password",
+                    "name": "password",
+                    "additionalinfo": "The Password",
+                    "hidden": True,
+                    "type": 4,
+                },
+            ],
+        },
+        [
+            "",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| User Name | The User Name | True |",
+            "",
+        ],  # expected
+        id="case of hidden parameter",
+    ),
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1561,7 +1699,7 @@ yml_data_cases = [
                     "type": 8,
                 },
             ],
-        },  # case some param with additional information, one that should take default, and one overriding default
+        },
         [
             "",
             "| **Parameter** | **Description** | **Required** |",
@@ -1571,6 +1709,7 @@ yml_data_cases = [
             "| Proxy | non-default info. | True |",
             "",
         ],  # expected
+        id="case some param with additional information, one that should take default, and one overriding default",
     ),
 ]
 
@@ -1684,21 +1823,6 @@ TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS: List[
         [
             {"Parameter": "username", "Description": "Username", "Required": True},
             {"Description": "", "Parameter": "Password", "Required": True},
-        ],
-    ),
-    (
-        [],
-        {
-            "displaypassword": "specialPassword",
-            "additionalinfo": "Enter your password",
-            "required": False,
-        },
-        [
-            {
-                "Description": "Enter your password",
-                "Parameter": "specialPassword",
-                "Required": False,
-            }
         ],
     ),
     (
@@ -2301,14 +2425,14 @@ class TestIntegrationDocUpdate:
         generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
 
         actual = git_repo.packs[0].integrations[0].readme.read().splitlines()
-        assert actual[62] == "| Debug logging enabled |  | False |"
+        assert actual[61] == "| Debug logging enabled |  | False |"
         assert (
-            actual[807]
+            actual[806]
             == "| limit | Maximum number of records to return. Default is 100. | Optional | "
         )
-        assert actual[808] == "| new_arg | New argument for testing. | Optional | "
-        assert actual[815] == "| Splunk.Test | String | Test output for Splunk | "
-        assert actual[1082:1103] == [
+        assert actual[807] == "| new_arg | New argument for testing. | Optional | "
+        assert actual[814] == "| Splunk.Test | String | Test output for Splunk | "
+        assert actual[1081:1102] == [
             "### splunk-test-cmd",
             "",
             "***",

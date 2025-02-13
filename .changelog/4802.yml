@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where info-logging in **run** command failed.
+  type: fix
+pr_number: 4802

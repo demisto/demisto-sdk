@@ -165,7 +165,8 @@ def validate(
     ),
 ):
     """
-    Validate content files. If no additional flags are given, only committed files are validated.
+    This command ensures that the content repository files are valid and are able to be processed by the platform.
+    This is used in our validation process both locally and in Gitlab.
     """
     if is_sdk_defined_working_offline():
         typer.echo(SDK_OFFLINE_ERROR_MESSAGE, err=True)
@@ -204,6 +205,9 @@ def validate(
     try:
         # Run old validation flow
         if run_old_validate:
+            logger.warning(
+                "<yellow>Old validate is being used. This flow will be deprecated and removed in the near future. Please use the new validate flow.</yellow>"
+            )
             exit_code += run_old_validation(
                 file_path, is_external_repo, run_with_mp, **ctx.params
             )

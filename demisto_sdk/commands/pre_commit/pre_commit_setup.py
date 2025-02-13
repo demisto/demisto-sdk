@@ -91,6 +91,17 @@ def pre_commit(
         help="A custom path for pre-defined pre-commit template, if not provided will use the default template.",
     ),
 ):
+    """
+    This command enhances the content development experience, by running a variety of checks and linters.
+    It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) framework.
+    A `.pre-commit-config-template.yaml` file is used to configure the hooks (if found in the content repo.
+    Otherwise, a [default](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/.pre-commit-config_template.yaml) is used)
+
+    Since content items are made to run in containers with different Python versions and dependencies,
+    this command matches content items with suitable configurations, before passing the generated (temporary) `.pre-commit-config.yaml` file.
+
+    **Note**: An internet connection is required for this command.
+    """
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
     return_code = pre_commit_manager(

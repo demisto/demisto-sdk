@@ -60,10 +60,11 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(
                     file_type=c.content_type.value.lower(),
-                    entity_name=c.object_id,
+                    entity_name=c.display_name,
                     pack_name=c.pack_id,
                 ),
                 content_object=c,
+                path=c.pack.release_note.file_path,
             )
             for c in dependent_items
             if c.pack_id in self.pack_to_rn_headers and self.is_missing_rn(c)
@@ -75,7 +76,9 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
         content_items: Iterable[BaseContent],
     ) -> dict[str, dict[str, list]]:
         pack_to_rn_headers = {
-            p.object_id: extract_rn_headers(p.release_note.file_content)
+            p.object_id: extract_rn_headers(
+                p.release_note.file_content, remove_prefixes=True
+            )
             for p in content_items
             if isinstance(p, Pack) and was_rn_added(p)
         }
@@ -83,7 +86,7 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
 
     def is_missing_rn(self, c: ContentItem) -> bool:
         return c.display_name not in self.pack_to_rn_headers[c.pack_id].get(
-            c.content_type.as_folder, []
+            c.content_type.as_rn_header, []
         )
 
     def obtain_invalid_content_items(
@@ -112,10 +115,11 @@ class IsMissingReleaseNoteEntries(BaseValidator[ContentTypes]):
                         validator=self,
                         message=self.error_message.format(
                             file_type=content_item.content_type.value.lower(),
-                            entity_name=content_item.object_id,
+                            entity_name=content_item.display_name,
                             pack_name=content_item.pack_id,
                         ),
                         content_object=content_item,
+                        path=content_item.pack.release_note.file_path,
                     )
 
         return list((results | api_module_results).values())

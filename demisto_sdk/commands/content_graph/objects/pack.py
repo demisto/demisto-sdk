@@ -29,10 +29,12 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.content_graph.common import (
     PACK_METADATA_FILENAME,
+    VERSION_CONFIG_FILENAME,
     ContentType,
     Nodes,
     Relationships,
     RelationshipType,
+    replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -55,6 +57,7 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     ReadmeRelatedFile,
     RNRelatedFile,
     SecretsIgnoreRelatedFile,
+    VersionConfigRelatedFile,
 )
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
     update_markdown_images_with_urls_and_rel_paths,
@@ -279,6 +282,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         metadata.update(
             self._format_metadata(marketplace, self.content_items, self.depends_on)
         )
+        # Replace incorrect marketplace references
+        metadata = replace_marketplace_references(metadata, marketplace, str(self.path))
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
@@ -295,13 +300,17 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         with open(path, "r+") as f:
             try:
                 text = f.read()
+                # Replace incorrect marketplace references
+                updated_text = replace_marketplace_references(
+                    text, marketplace, str(self.path / "README.md")
+                )
 
                 if (
                     marketplace == MarketplaceVersions.XSOAR
                     and MarketplaceVersions.XSOAR_ON_PREM in self.marketplaces
                 ):
                     marketplace = MarketplaceVersions.XSOAR_ON_PREM
-                parsed_text = MarketplaceTagParser(marketplace).parse_text(text)
+                parsed_text = MarketplaceTagParser(marketplace).parse_text(updated_text)
                 if len(text) != len(parsed_text):
                     f.seek(0)
                     f.write(parsed_text)
@@ -363,6 +372,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             shutil.copy(
                 self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME
             )
+            try:
+                shutil.copy(
+                    self.path / VERSION_CONFIG_FILENAME, path / VERSION_CONFIG_FILENAME
+                )
+            except FileNotFoundError:
+                logger.debug(f"No such file {self.path / VERSION_CONFIG_FILENAME}")
+
             try:
                 shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
             except FileNotFoundError:
@@ -587,6 +603,16 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     @cached_property
     def secrets_ignore(self) -> SecretsIgnoreRelatedFile:
         return SecretsIgnoreRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def version_config(self) -> VersionConfigRelatedFile:
+        return VersionConfigRelatedFile(
+            self.path,
+            git_sha=self.git_sha,
+            prev_ver=self.old_base_content_object.git_sha
+            if self.old_base_content_object
+            else None,
+        )
 
     @cached_property
     def release_note(self) -> RNRelatedFile:

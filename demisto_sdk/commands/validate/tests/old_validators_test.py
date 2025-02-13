@@ -1851,7 +1851,7 @@ class TestValidators:
             "Packs/pack_id/test_data/file.json",
             "Packs/pack_id/Scripts/script_id/test_data/file.json",
             "Packs/pack_id/TestPlaybooks/test_data/file.json",
-            "Packs/pack_id/Integrations/integration_id/command_examples",
+            "Packs/pack_id/Integrations/integration_id/command_examples.txt",
             "Packs/pack_id/Integrations/integration_id/test.txt",
             "Packs/pack_id/.secrets-ignore",
         ],
@@ -2348,7 +2348,7 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
         "Packs/pack_id/test_data/file.json",
         "Packs/pack_id/Scripts/script_id/test_data/file.json",
         "Packs/pack_id/TestPlaybooks/test_data/file.json",
-        "Packs/pack_id/Integrations/integration_id/command_examples",
+        "Packs/pack_id/Integrations/integration_id/command_examples.txt",
         "Packs/pack_id/Integrations/integration_id/.vulture_whitelist.py",
     ],
 )
@@ -3206,22 +3206,15 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, c
     [
         (
             {"Packs/test/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109\n",
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
-            "",
-            {"Packs/test/Integrations/test/test.yml"},
-        ),
-        (
-            {"Packs/test/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n",
             "",
             set(),
         ),
         (
             {"Packs/test1/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
-            "[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n",
+            "[file:test2.yml]\nignore=BA108,BA109,\n",
             "",
             {
                 "Packs/test1/Integrations/test/test.yml",
@@ -3239,9 +3232,9 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, c
         ),
         (
             {"Packs/test1/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n[file:test2.yml]\nignore=BA108,BA109,\n",
             {},
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n",
             {"Packs/test1/Integrations/test2/test2.yml"},
         ),
         (
@@ -3374,7 +3367,7 @@ def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker, caplog):
 
     validate_manager = OldValidateManager()
     config = ConfigParser(allow_no_value=True)
-    config.read_string("[file:test.yml]\nignore=BA108,BA109,DS107")
+    config.read_string("[file:test.yml]\nignore=BA108,BA109")
 
     mocker.patch(
         "demisto_sdk.commands.validate.old_validate_manager.get_pack_ignore_content",

@@ -2,10 +2,12 @@ from typing import List, Optional, Union
 
 import pytest
 
+from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_incident_field_object,
+    create_incident_type_object,
     create_old_file_pointers,
 )
 from demisto_sdk.commands.validate.validators.IF_validators.IF100_is_valid_name_and_cli_name import (
@@ -32,6 +34,9 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF106_is_cli_name_re
     INCIDENT_PROHIBITED_CLI_NAMES,
     IsCliNameReservedWordValidator,
 )
+from demisto_sdk.commands.validate.validators.IF_validators.IF109_invalid_required_field import (
+    IsValidRequiredFieldValidator,
+)
 from demisto_sdk.commands.validate.validators.IF_validators.IF111_is_field_type_changed import (
     IsFieldTypeChangedValidator,
 )
@@ -44,6 +49,12 @@ from demisto_sdk.commands.validate.validators.IF_validators.IF115_unsearchable_k
 )
 from demisto_sdk.commands.validate.validators.IF_validators.IF116_select_values_cannot_contain_empty_values_in_multi_select_types import (
     SelectValuesCannotContainEmptyValuesInMultiSelectTypesValidator,
+)
+from demisto_sdk.commands.validate.validators.IF_validators.IF117_invalid_marketplaces_in_alias import (
+    IsValidAliasMarketplaceValidator,
+)
+from demisto_sdk.commands.validate.validators.IF_validators.IF118_is_alias_inner_alias_valid import (
+    IsAliasInnerAliasValidator,
 )
 from demisto_sdk.commands.validate.validators.IF_validators.IF119_select_values_cannot_contain_multiple_or_only_empty_values_in_single_select_types import (
     SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValidator,
@@ -714,3 +725,150 @@ def test_SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesVa
         == "Removed all redundant empty values in the selectValues field."
     )
     assert result.content_object.select_values == ["test", ""]
+
+
+def test_IsAliasInnerAliasValidator():
+    """
+    Given:
+    - An incident field has an alias with an inner alias.
+    When:
+    - Running validate on an incident field.
+    Then:
+    - Validate that the correct aliases are caught.
+    """
+    inc_field = create_incident_field_object(
+        ["Aliases"],
+        [
+            [
+                {"cliName": "alias_1", "aliases": []},
+                {"cliname": "alias_2", "aliases": []},
+                {"cliName": "alias_3"},
+            ]
+        ],
+    )
+
+    result = IsAliasInnerAliasValidator().obtain_invalid_content_items([inc_field])
+
+    assert (
+        result[0].message
+        == "The following aliases have inner aliases: alias_1, alias_2"
+    )
+
+
+def test_IsValidAliasMarketplaceValidator(mocker):
+    """
+    Given:
+    - An incident field with aliases, one of them with invalid marketplaces field.
+    When:
+    - Running validate on an incident field.
+    Then:
+    - Validate that the incorrect alias is caught.
+    """
+    aliases_names = [
+        {
+            "cliName": "alias_1",
+            "type": "shortText",
+            "marketplaces": [MarketplaceVersions.XSOAR],
+        },
+        {
+            "cliName": "alias_2",
+            "type": "shortText",
+            "marketplaces": [MarketplaceVersions.MarketplaceV2],
+        },
+    ]
+    inc_field = create_incident_field_object(
+        ["Aliases"],
+        [aliases_names],
+    )
+    aliases = []
+    for item in aliases_names:
+        alias = create_incident_field_object(
+            paths=["cliName"], values=[item.get("cliName")]
+        )
+        alias.marketplaces = item.get("marketplaces")
+        aliases.append(alias)
+
+    mocker.patch.object(IsValidAliasMarketplaceValidator, "graph", return_value="graph")
+    mocker.patch.object(
+        IsValidAliasMarketplaceValidator,
+        "_get_incident_fields_by_aliases",
+        return_value=aliases,
+    )
+    result = IsValidAliasMarketplaceValidator().obtain_invalid_content_items(
+        [inc_field]
+    )
+
+    assert (
+        result[0].message
+        == "The following fields exist as aliases and have invalid 'marketplaces' key value: \nalias_2\n "
+        "the value of the 'marketplaces' key in these fields should be ['xsoar']."
+    )
+
+
+@pytest.mark.parametrize(
+    "items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            {
+                create_incident_field_object(
+                    paths=["required", "associatedToAll"], values=["false", "true"]
+                ): GitStatuses.MODIFIED
+            },
+            0,
+            [],
+        ),  # inc field not required -> okay
+        (
+            {
+                create_incident_field_object(
+                    paths=["required", "associatedToAll"], values=["true", "true"]
+                ): GitStatuses.ADDED
+            },
+            1,
+            ["A required IncidentField should not be associated with all types."],
+        ),
+        (
+            {
+                create_incident_field_object(
+                    paths=["required", "associatedToAll", "associatedTypes"],
+                    values=["true", "false", ["New Type", "Old Type"]],
+                ): GitStatuses.ADDED,
+                create_incident_type_object(
+                    paths=["id"], values=["New Type"]
+                ): GitStatuses.ADDED,
+            },
+            1,
+            [
+                "An already existing Types like Old Type cannot be added to an IncidentField with required value equals true."
+            ],
+        ),
+    ],
+)
+def test_IsValidRequiredFieldValidator(
+    items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given:
+    - Incident field not required.
+    - Incident field which is required and associated to all
+    - Incident field that is required, and an already existing incident type was added to it
+    When:
+    - Running validate on an incident fields.
+    Then:
+    - Validate that the field is valid.
+    - Validate that the field is not valid, since required fields cannot be associated to all types
+    - Validate that the field is not valid, since an already existing type cannot be added to a required field.
+    """
+    content_items = []
+    for item, status in items.items():
+        item.git_status = status
+        item.old_base_content_object = item.copy(deep=True)
+        content_items.append(item)
+
+    result = IsValidRequiredFieldValidator().obtain_invalid_content_items(content_items)
+    assert len(result) == len(expected_msgs)
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(result, expected_msgs)
+        ]
+    )

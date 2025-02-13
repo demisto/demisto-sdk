@@ -1,19 +1,22 @@
-This file contains information about our new validate flow. For more information about the old validate flow, refer to [old_validate_readme](demisto_sdk/commands/validate/old_validate_readme.md).
-
 ## Validate
+
+### Overview
 
 This command ensures that the content repository files are valid and are able to be processed by the platform.
 This is used in our validation process both locally and in Gitlab.
 
-**Arguments**:
+### Options
 * **-g, --use-git**
 Validate changes using Git - this will check the current branch's changes against origin/master.
 If the **--post-commit** flag is supplied: validation will run only on the current branch's changed files that have been committed.
 If the **--post-commit** flag is not supplied: validation will run on all changed files in the current branch, both committed and not committed.
+Note that the validations being executed might differ according to the [validations configured for this execution mode](#Validation-Config-file).
 * **-a, --validate-all**
 Whether to run all validation on all files or not.
+Note that the validations being executed might differ according to the [validations configured for this execution mode](#Validation-Config-file).
 * **-i, --input**
 The path of the content pack/file to validate specifically.
+Note that the validations being executed might differ according to the [validations configured for this execution mode](#Validation-Config-file).
 * **-pc, --post-commit**
 Whether the validation should run only on the current branch's committed changed files. This applies only when the **-g** flag is supplied.
 * **-st, --staged**
@@ -40,28 +43,6 @@ Whether to skip the new validate flow or not. Alternatively, you can configure t
 A comma separated list of validations to run stated the error codes.
 * **--ignore**
 An error code to not run. To ignore more than one error, repeat this option (e.g. `--ignore AA123 --ignore BC321`)
-**Examples**:
-
-`demisto-sdk validate --prev-ver SHA1-HASH`
-Validates only changed files from the branch (for SHA1 hash files).
-
-`demisto-sdk validate --post-commit`
-Runs a post commit.
-
-`demisto-sdk validate -i Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml`
-validates only the Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml file.
-
-`demisto-sdk validate -a`
-Validates all files under the `Packs` directory.
-
-`demisto-sdk validate -i Packs/HelloWorld`
-Validates all files under the `HelloWorld` content pack.
-
-`demisto-sdk validate --run-old-validate --skip-new-validate -a`
-This will validate all files in the repo using the old validate method.
-
-`demisto-sdk validate --config-path {config_file_path} -a`
-TValidates all files in the repository using the settings configured in the config file in the given path.
 
 ### Validation Error Codes
 Each error found by validate has an error code attached to it. The code can be found in brackets preceding the error itself.  
@@ -103,3 +84,26 @@ select = ["BA100", "BA101", "BA102"]
 ignore = ["BA102"]
 ```
 Validate will run all the validations with error codes "BA100", "BA101", "BA102" except for BA102 in case of community supported files.
+
+### Examples:
+
+`demisto-sdk validate --prev-ver SHA1-HASH`
+Validates only changed files from the branch (for SHA1 hash files).
+
+`demisto-sdk validate --post-commit`
+Runs a post commit.
+
+`demisto-sdk validate -i Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml`
+validates only the Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml file.
+
+`demisto-sdk validate -a`
+Validates all files under the `Packs` directory.
+
+`demisto-sdk validate -i Packs/HelloWorld`
+Validates all files under the `HelloWorld` content pack.
+
+`demisto-sdk validate --run-old-validate --skip-new-validate -a`
+This will validate all files in the repo using the old validate method.
+
+`demisto-sdk validate --config-path {config_file_path} -a`
+TValidates all files in the repository using the settings configured in the config file in the given path.

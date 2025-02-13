@@ -73,6 +73,7 @@ class EmptySectionsValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(", ".join(empty_sections)),
                 content_object=content_item,
+                path=content_item.readme.file_path,
             )
             for content_item in content_items
             if (empty_sections := self.verify_no_empty_sections(content_item))

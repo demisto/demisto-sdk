@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Dict, Iterable, List, Set, Tuple
 
+from demisto_sdk.commands.common.constants import PB_RELEASE_NOTES_FORMAT, GitStatuses
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -37,6 +38,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
     related_field = "release_note"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.RELEASE_NOTE]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
@@ -71,6 +73,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                             content_item_message=content_item_message,
                         ),
                         content_object=content_item,
+                        path=content_item.release_note.file_path,
                     )
                 )
         return validator_results
@@ -116,7 +119,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
                     header = (
                         content_type_section[0].rstrip()
                         if ("New: " not in content_type_section[0])
-                        else content_type_section[0][len("New: ") :]
+                        else content_type_section[0].removeprefix("New: ")
                     )
                     headers.setdefault(content_type, []).append(header)
         return headers
@@ -131,9 +134,7 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
         """
         try:
             return (
-                ContentType.convert_header_to_content_type(
-                    header
-                ).convert_content_type_to_rn_header
+                ContentType.convert_header_to_content_type(header).as_rn_header
                 == header
             )
         except Exception as exception:
@@ -184,7 +185,13 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             - List of invalid header content items (str or None).
         """
         headers = self.extract_rn_headers(pack.release_note.file_content)
+        remove_pb_headers(headers)
         pack_items_by_types = pack.content_items.items_by_type()
+        if case_layout_items := pack_items_by_types.get(ContentType.CASE_LAYOUT, []):
+            # case layout using the same header as layout
+            pack_items_by_types.setdefault(ContentType.LAYOUT, []).extend(
+                case_layout_items
+            )
         if not pack_items_by_types:
             return [], []
         invalid_content_type: List[str] = [
@@ -206,3 +213,10 @@ class ReleaseNoteHeaderValidator(BaseValidator[ContentTypes]):
             ).items()
         ]
         return invalid_content_type, invalid_content_item
+
+
+def remove_pb_headers(headers: dict[str, list]):
+    if "Playbooks" in headers:
+        headers["Playbooks"] = [
+            h for h in headers["Playbooks"] if h not in PB_RELEASE_NOTES_FORMAT
+        ]

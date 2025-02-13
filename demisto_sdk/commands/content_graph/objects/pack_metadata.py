@@ -188,12 +188,8 @@ class PackMetadata(BaseModel):
         collected_content_items: dict = {}
         content_displays: dict = {}
         for content_item in content_items:
-            if content_item.is_test:
-                logger.debug(
-                    f"Skip loading the {content_item.name} test playbook/script into metadata.json"
-                )
+            if should_ignore_item_in_metadata(content_item):
                 continue
-
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,
@@ -246,7 +242,8 @@ class PackMetadata(BaseModel):
         return {
             r.content_item_to.object_id: {
                 "mandatory": r.mandatorily,
-                "minVersion": r.content_item_to.current_version,  # type:ignore[attr-defined]
+                # Get the minVersion either from the pack_metadata if exists, or from graph calculation
+                "minVersion": r.target_min_version or r.content_item_to.current_version,  # type:ignore[attr-defined]
                 "author": self._get_author(
                     r.content_item_to.author,  # type:ignore[attr-defined]
                     marketplace,
@@ -641,3 +638,20 @@ class PackMetadata(BaseModel):
             )  # to avoid duplicate modeling rules with different versions and ids
         ]
         return filtered_content_items[0] if filtered_content_items else None
+
+
+def should_ignore_item_in_metadata(content_item):
+    """
+    Checks whether content item should be ignored from metadata
+    """
+    if content_item.is_test:
+        logger.debug(
+            f"Skipping {content_item.name} in metadata creation: item is test playbook/script."
+        )
+    elif content_item.is_silent:
+        logger.debug(
+            f"Skipping {content_item.name} in metadata creation: item is silent playbook/trigger."
+        )
+    else:
+        return False
+    return True

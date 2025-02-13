@@ -117,6 +117,7 @@ from demisto_sdk.commands.common.constants import (
     UNRELEASE_HEADER,
     URL_REGEX,
     UUID_REGEX,
+    VERSION_CONFIG_FILE_NAME,
     WIDGETS_DIR,
     XDRC_TEMPLATE_DIR,
     XSIAM_DASHBOARDS_DIR,
@@ -1673,6 +1674,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.TRIGGER
         elif path.name == PACKS_PACK_META_FILE_NAME:
             return FileType.METADATA
+        elif path.name == VERSION_CONFIG_FILE_NAME:
+            return FileType.VERSION_CONFIG
         elif path.name.endswith(XSOAR_CONFIG_FILE):
             return FileType.XSOAR_CONFIG
         elif "CONTRIBUTORS" in path.name:
@@ -1781,11 +1784,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix.lower() == ".pem":
         return FileType.PEM
 
-    elif (
-        path.name.lower()
-        in ("commands_example", "commands_examples", "command_examples")
-        or path.suffix.lower() == ".txt"
-    ):
+    elif path.suffix.lower() == ".txt":
         return FileType.TXT
 
     elif path.name == ".pylintrc":
@@ -4366,11 +4365,14 @@ def get_pack_latest_rn_version(pack_path: str, git_sha: Optional[str] = None) ->
     Return:
         (str): The lastest version of RN.
     """
+    rns_dir_path = f"{pack_path}/ReleaseNotes"
     if git_sha:
         git_util = GitUtil.from_content_path()
-        list_of_files = git_util.list_files_in_dir(f"{pack_path}/ReleaseNotes", git_sha)
+        if not git_util.is_file_exist_in_commit_or_branch(rns_dir_path, git_sha):
+            return ""
+        list_of_files = git_util.list_files_in_dir(rns_dir_path, git_sha)
     else:
-        list_of_files = glob.glob(f"{pack_path}/ReleaseNotes/*")
+        list_of_files = glob.glob(f"{rns_dir_path}/*")
     list_of_release_notes = [
         Path(file).name for file in list_of_files if Path(file).suffix == ".md"
     ]
@@ -4641,3 +4643,10 @@ def filter_out_falsy_values(ls: Union[List, Tuple]) -> List:
         List filtered from None values.
     """
     return list(filter(lambda x: x, ls))
+
+
+def should_disable_multiprocessing():
+    disable_multiprocessing = os.getenv(
+        "DEMISTO_SDK_DISABLE_MULTIPROCESSING", "false"
+    ).lower() in ["true", "yes", "1"]
+    return disable_multiprocessing

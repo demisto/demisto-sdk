@@ -1,5 +1,5 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.0.0,<2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.mypy]
@@ -14,7 +14,7 @@ exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
 
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.32.5"
+version = "1.35.0"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -43,11 +43,10 @@ python = ">=3.9,<3.13"
 autopep8 = "^2.0.4"
 bandit = "^1.7.4"
 mypy = "^0.982"
-pylint = "^3.3.1"
+pylint = "^3.3.2"
 vulture = "^2.3"
 beautifulsoup4 = "^4.11.1"
 chardet = ">=4,<6"
-click = "^8.0.0"
 coloredlogs = "^15.0.1"
 configparser = "^5.2.0"
 coverage = "^7.2.1,<7.4" # in 7.4 we get empty results
@@ -150,6 +149,7 @@ init-validation = "demisto_sdk.scripts.init_validation_script:main"
 validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
 validate-file-permission-changes = "demisto_sdk.scripts.validate_file_permission_changes:main"
 prevent-mypy-global-ignore = "demisto_sdk.scripts.prevent_mypy_global_ignore:main"
+generate-command-docs = "demisto_sdk.scripts.generate_commands_docs:main"
 
 [tool.ruff]
 exclude = [

@@ -515,9 +515,7 @@ class Initializer:
                 old_path = file_path
                 if isinstance(file_path, tuple):
                     file_path, old_path = file_path
-                obj = BaseContent.from_path(
-                    file_path, git_sha=current_git_sha, raise_on_exception=True
-                )
+                obj = BaseContent.from_path(file_path, raise_on_exception=True)
                 if obj:
                     obj.git_sha = current_git_sha
                     obj.git_status = git_status
@@ -599,6 +597,19 @@ class Initializer:
                 elif f"_{PACKS_README_FILE_NAME}" in path_str:
                     # File is the readme file.
                     path = Path(path_str.replace(f"_{PACKS_README_FILE_NAME}", ".yml"))
+                    if path not in statuses_dict:
+                        statuses_dict[path] = None
+                elif path.parts[-2] not in [{INTEGRATIONS_DIR}, {SCRIPTS_DIR}]:
+                    # some nested folder, not related to the main content item.
+                    integration_script_index = (
+                        path.parts.index(INTEGRATIONS_DIR)
+                        if INTEGRATIONS_DIR in path.parts
+                        else path.parts.index(SCRIPTS_DIR)
+                    )
+                    path = Path(
+                        os.path.join(*path.parts[: integration_script_index + 2])
+                    )
+                    path = path / f"{path.parts[-1]}.yml"
                     if path not in statuses_dict:
                         statuses_dict[path] = None
                 else:

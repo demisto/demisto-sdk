@@ -52,6 +52,7 @@ AUTH_ID = "XSIAM_AUTH_ID"
 XSIAM_TOKEN = "XSIAM_TOKEN"
 XSIAM_COLLECTOR_TOKEN = "XSIAM_COLLECTOR_TOKEN"
 DEMISTO_VERIFY_SSL = "DEMISTO_VERIFY_SSL"
+PROJECT_ID = "PROJECT_ID"
 
 # Logging
 DEMISTO_SDK_LOG_FILE_PATH = "DEMISTO_SDK_LOG_FILE_PATH"
@@ -269,6 +270,7 @@ class FileType(StrEnum):
     CASE_LAYOUT_RULE = "caselayoutrule"
     CASE_FIELD = "casefield"
     CASE_LAYOUT = "caselayout"
+    VERSION_CONFIG = "version_config"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -943,6 +945,7 @@ PACKS_FOLDER = "Packs"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
 CONF_JSON_FILE_NAME = "conf.json"
+VERSION_CONFIG_FILE_NAME = "version_config.json"
 
 PYTHON_TEST_REGEXES = [PACKS_SCRIPT_TEST_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX]
 
@@ -2218,6 +2221,7 @@ INVALID_IMAGE_PATH_REGEX = (
 # Test types:
 TEST_PLAYBOOKS = "TestPlaybooks"
 TEST_MODELING_RULES = "TestModelingRules"
+TEST_USE_CASES = "TestUseCases"
 
 PB_RELEASE_NOTES_FORMAT = {
     "This playbook addresses the following alerts:": 5,

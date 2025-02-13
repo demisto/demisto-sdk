@@ -1,4 +1,32 @@
 # Changelog
+## 1.35.0 (2025-02-03)
+### Fix
+* Fixed an issue where the ***demisto-sdk setup-env*** command failed when no *file_paths* argument was provided. [#4791](https://github.com/demisto/demisto-sdk/pull/4791)
+* Fixed an issue where the ***demisto-sdk validate*** command ran on the remote branch instead of the local current branch by default. [#4778](https://github.com/demisto/demisto-sdk/pull/4778)
+
+### Internal
+* Added support for setting the dependency minimum version in the pack metadata. [#4786](https://github.com/demisto/demisto-sdk/pull/4786)
+* Added new *VC100* validation. Validates that version_config file schema is valid. [#4769](https://github.com/demisto/demisto-sdk/pull/4769)
+* Added new *VC101* validation. Validates that versions in version_config file are continuous. [#4769](https://github.com/demisto/demisto-sdk/pull/4769)
+* Added the **VERSION_CONFIG** file type. [#4794](https://github.com/demisto/demisto-sdk/pull/4794)
+* Added the **test-use-case** command to test use-case flows on cloud machines. [#4658](https://github.com/demisto/demisto-sdk/pull/4658)
+
+
+## 1.34.1 (2025-01-28)
+### Feature
+* Added support for `command_examples` paths to the `validate-content-paths` in the ***demisto-sdk pre-commit*** hook. [#4775](https://github.com/demisto/demisto-sdk/pull/4775)
+* Added shorter flags *-i* for the *--input* option and *-o* for the *--output* option in the ***demisto-sdk split*** command to enhance usability. [#4785](https://github.com/demisto/demisto-sdk/pull/4785)
+
+### Fix
+* Fixed *ST111* validation error message. [#4779](https://github.com/demisto/demisto-sdk/pull/4779)
+* Fixed an issue in *RN114* validation where the validation's error will no longer be raised when the latest playbook release notes format is used. [#4782](https://github.com/demisto/demisto-sdk/pull/4782)
+* Fixed an issue where *RN111* validation would fail when a docker entry message was missing. [#4781](https://github.com/demisto/demisto-sdk/pull/4781)
+
+### Internal
+* Fixed an issue in the Docker proxy mechanism where ISO 8601 timestamps with nanosecond precision were not properly parsed. [#4783](https://github.com/demisto/demisto-sdk/pull/4783)
+* The mocking mechanism in the ***demisto-sdk test-content*** command will be removed in upcoming versions of the demisto-sdk. [#4772](https://github.com/demisto/demisto-sdk/pull/4772)
+
+
 ## 1.34.0 (2025-01-21)
 ### Internal
 * Reintroduce support for GAR DockerHub proxy when running in a Gitlab CI environment. [#4655](https://github.com/demisto/demisto-sdk/pull/4655)

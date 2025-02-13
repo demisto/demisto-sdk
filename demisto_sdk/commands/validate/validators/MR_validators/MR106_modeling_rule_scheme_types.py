@@ -62,6 +62,7 @@ class ModelingRuleSchemaTypesValidator(BaseValidator[ContentTypes]):
                     invalid_types=", ".join(invalid_types)
                 ),
                 content_object=content_item,
+                path=content_item.schema_file.file_path,
             )
             for content_item in content_items
             if (invalid_types := self.invalid_schema_types(content_item))

@@ -51,14 +51,30 @@ class TestExample:
     # PLAYBOOK X CHECKING VALID alert
     def test_wait_complete_playbook_tasks(self, api_client: XsiamClient):
         """Test feature one"""
+
         # search tasks without completing what's not completed
-        res = api_client.pull_playbook_tasks_by_state("91818",task_states=["Error", "Waiting", "InProgress"], task_input="Yes")
+        res = api_client.pull_playbook_tasks_by_state("91818",task_states=["Waiting", "InProgress"], task_input="Yes")
         assert res == {'CompletedTask': [], 'FoundTask': [{'task name': 'Test Manual', 'task state': 'Waiting'}]}
 
         # search task and completing it if it's not completed
         res = api_client.pull_playbook_tasks_by_state("91818", task_states=["Error", "Waiting", "InProgress", "Completed"],
                                                     task_input="Yes", complete_task=True)
-        assert res == {'CompletedTask': ['Test Manual', 'Yes'], 'FoundTask': []}
+        assert res == {'CompletedTask': ['Test Manual'], 'FoundTask': []}
+
+        # search non-existent task
+        with pytest.raises(RuntimeError):
+            api_client.pull_playbook_tasks_by_state("91818",
+                                                    task_states=["Error", "Waiting", "InProgress", "Completed"],
+                                                    task_input="Yes", complete_task=True, task_name="no task")
+
+    def test_complete_task_with_input(self, api_client: XsiamClient):
+
+        # complete a task with input Yes
+        api_client.complete_playbook_task("91818", "1", "Yes")
+
+        # try to complete a task in a non-existent investigation
+        with pytest.raises(ValueError):
+            api_client.complete_playbook_task("918181", "1", "Yes")
 
     def test_updating_integration_instance_state(self, api_client: XsiamClient):
         """Test feature one"""
@@ -70,11 +86,9 @@ class TestExample:
         enabled_instance = api_client.enable_integration_instance("okta_test")
         assert enabled_instance.get("enabled") == "true"
 
-        # search task and completing it if it's not completed
-        res = api_client.pull_playbook_tasks_by_state("91818", task_states=["Error", "Waiting", "InProgress", "Completed"],
-                                                    task_input="Yes", complete_task=True)
-        assert res == {'CompletedTask': ['Test Manual', 'Yes'], 'FoundTask': []}
-
+        # try to disable non-existent instance
+        with pytest.raises(ValueError):
+            api_client.disable_integration_instance("okta_tests")
 
     def test_run_slash_command(self, api_client: XsiamClient):
         """
@@ -89,7 +103,8 @@ class TestExample:
         )
 
     def test_upload_file_to_incident(self, api_client: XsiamClient):
-        api_client.upload_file_to_war_room(file_path="/Users/mmaayta/Downloads/testApi.doc", file_name="testMeritApi2", incident_id="91818")
+        # api_client.upload_file_to_war_room(file_path="/Users/mmaayta/Downloads/testApi.doc", file_name="testMeritApi2", incident_id="91818")
+        api_client.upload_file_to_war_room(file_path="/Users/mmaayta/Downloads/testApi.doc", file_name="testMeritApi2", incident_id="2927")
 
 
 if __name__ == "__main__":

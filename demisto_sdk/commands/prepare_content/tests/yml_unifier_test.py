@@ -1797,7 +1797,7 @@ def test_remove_mirroring_commands_and_settings(
 
     # Validate commands
     assert len(yml_data["script"]["commands"]) == expected_commands_count
-    # vendor command should remain
+    # vendor command should always remain
     assert yml_data["script"]["commands"][-1]["name"] == "vendor-get-files"
 
     # Validate mirroring settings

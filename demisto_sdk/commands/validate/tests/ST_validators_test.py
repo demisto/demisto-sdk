@@ -425,7 +425,7 @@ class TestST111:
         integration_info = integration.yml.read_dict()
         curr_config = integration_info["configuration"]
         curr_config[0]["section"] = "Mirroring"
-        integration.yml.update({"sectionorder": ['Connect',  'Mirroring']})
+        integration.yml.update({"sectionorder": ["Connect", "Mirroring"]})
         integration.yml.update({"configuration": curr_config})
 
         integration_parser = IntegrationParser(

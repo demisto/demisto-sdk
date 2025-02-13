@@ -322,6 +322,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             path, marketplace, self.object_id, file_type=ImagesFolderNames.README_IMAGES
         )
 
+    def dump_release_notes(self, path: Path, marketplace: MarketplaceVersions) -> None:
+        # TODO - Update this to dump the release notes for the platform marketplace
+        # starting from platform supported version only. 
+        try:
+            shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
+        except FileNotFoundError:
+            logger.debug(f'No such file {self.path / "ReleaseNotes"}')
+
     def dump(self, path: Path, marketplace: MarketplaceVersions, tpb: bool = False):
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
@@ -378,11 +386,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             except FileNotFoundError:
                 logger.debug(f"No such file {self.path / VERSION_CONFIG_FILENAME}")
 
-            try:
-                shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
-            except FileNotFoundError:
-                logger.debug(f'No such file {self.path / "ReleaseNotes"}')
 
+            self.dump_release_notes(path / "ReleaseNotes", marketplace)
+ 
             try:
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:

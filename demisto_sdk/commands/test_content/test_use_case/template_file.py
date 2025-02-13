@@ -69,12 +69,17 @@ class TestExample:
 
     def test_complete_task_with_input(self, api_client: XsiamClient):
 
-        # complete a task with input Yes
-        api_client.complete_playbook_task("91818", "1", "Yes")
+        # complete a task with id with input Yes
+        api_client.complete_playbook_task("91818", task_id="1", task_input="Yes")
+
+        # complete a task with name and input Yes
+        api_client.complete_playbook_task("91818", task_name="Test 2", task_input="Label 2")
 
         # try to complete a task in a non-existent investigation
         with pytest.raises(ValueError):
             api_client.complete_playbook_task("918181", "1", "Yes")
+
+        # api_client.complete_playbook_task("26526", task_id="1", task_input="Yes")
 
     def test_updating_integration_instance_state(self, api_client: XsiamClient):
         """Test feature one"""
@@ -104,7 +109,8 @@ class TestExample:
 
     def test_upload_file_to_incident(self, api_client: XsiamClient):
         # api_client.upload_file_to_war_room(file_path="/Users/mmaayta/Downloads/testApi.doc", file_name="testMeritApi2", incident_id="91818")
-        api_client.upload_file_to_war_room(file_path="/Users/mmaayta/Downloads/testApi.doc", file_name="testMeritApi2", incident_id="2927")
+
+        api_client.upload_file_to_war_room(file_path="/Users/mmaayta/Downloads/testApi.doc", file_name="testMeritApi3", incident_id="2927")
 
 
 if __name__ == "__main__":

@@ -1435,7 +1435,7 @@ class XsoarClient:
         raise ValueError(f'{task_name} task was not found in {investigation_id} investigation.')
 
     def pull_playbook_tasks_by_state(self, incident_id: str,
-                                     task_input: str,
+                                     task_input: str = None,
                                      task_states: list = None,
                                      task_name: str = None,
                                      max_timeout: int = 60,
@@ -1457,7 +1457,6 @@ class XsoarClient:
                 body={"states": task_states,
                       "types": self.PLAYBOOK_TASKS_TYPES}, response_type= 'object'
             )
-            # tasks_by_states = self._process_response(response, status_code, 200)
             requested_task = None
 
             # find task to complete if was given task name
@@ -1510,7 +1509,12 @@ class XsoarClient:
 
         return {'CompletedTask': completed_tasks, 'FoundTask': found_tasks}
 
-    def complete_playbook_task(self, investigation_id, task_id: str, task_input: str):
+    def complete_playbook_task(self, investigation_id, task_input: str, task_id: str = None, task_name: str = None):
+        if not (task_name or task_id):
+            return RuntimeError("Task id or task name should be provided.")
+        elif not task_id:
+            task = self.get_playbook_task_in_investigation(task_name, investigation_id)
+            task_id = task.get("id")
         try:
             response, status_code, _ = self._xsoar_client.generic_request(
                 "/inv-playbook/task/complete", method="POST", response_type= 'object', content_type = "multipart/form-data", form_params = [("investigationId", investigation_id), ("taskId", task_id), ("taskInput", task_input)]
@@ -1525,8 +1529,24 @@ class XsoarClient:
 
         logger.info(f"The playbook task with id {task_id} was completed with input {task_input}")
 
-    def upload_file_to_war_room(self,file_path, incident_id, **kwargs):
-        return self._xsoar_client.incident_file_upload(id=incident_id, file=file_path, **kwargs)
+    def upload_file_to_war_room(self, file_path, incident_id, file_name: str = None, file_comment: str =None, field: str =None, show_media_file:str = None, last:str = None):
+        # return self._xsoar_client.incident_file_upload(id=incident_id, file=file_path, **kwargs)
+        form_params = []
+        if file_name:
+            form_params.append(('fileName', file_name))  # noqa: E501
+        if file_comment:
+            form_params.append(('fileComment', file_comment))  # noqa: E501
+        if field:
+            form_params.append(('field', field))  # noqa: E501
+        if show_media_file:
+            form_params.append(('showMediaFile', show_media_file))  # noqa: E501
+        if last:
+            form_params.append(('last', last))  # noqa: E501
+
+        self._xsoar_client.generic_request(
+            f"/entry/upload/{incident_id}", method="POST",
+            form_params = form_params, response_type="object", content_type= "multipart/form-data",
+            files={'file': file_path})
 
 
 

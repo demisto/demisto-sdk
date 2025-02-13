@@ -24,6 +24,7 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 RED = "\033[91m"
 NO_COLOR = "\033[0m"
 
+
 @logging_setup_decorator
 def generate_docs(
     ctx: typer.Context,
@@ -128,9 +129,7 @@ def generate_docs(
             raise Exception(f"Input {input_path_str} does not exist.")
 
         if (output_path := ctx.params.get("output")) and not Path(output_path).is_dir():
-            raise Exception(
-                f"Output directory {output_path} is not a directory."
-            )
+            raise Exception(f"Output directory {output_path} is not a directory.")
 
         if input_path.is_file():
             if input_path.suffix.lower() not in {".yml", ".md"}:
@@ -180,9 +179,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
         FileType.PLAYBOOK,
         FileType.README,
     }:
-        raise Exception(
-            "File is not an Integration, Script, Playbook, or README."
-        )
+        raise Exception("File is not an Integration, Script, Playbook, or README.")
 
     if file_type == FileType.INTEGRATION:
         typer.echo(f"Generating {file_type.value.lower()} documentation")
@@ -230,4 +227,3 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
 
     else:
         raise Exception(f"File type {file_type.value} is not supported.")
-

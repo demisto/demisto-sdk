@@ -9,7 +9,8 @@ from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import is_sdk_defined_working_offline
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-
+RED = "\033[91m"
+NO_COLOR = "\033[0m"
 def validate_version(value: Optional[str]) -> Optional[str]:
     """Validate that the version is in the format x.y.z where x, y, z are digits."""
     if value is None:
@@ -125,7 +126,7 @@ def update_release_notes(
 
     if force and input is None:
         typer.echo(
-            "<red>Please add a specific pack in order to force a release notes update.</red>"
+            f"{RED}Please add a specific pack in order to force a release notes update.{NO_COLOR}"
         )
         raise typer.Exit(0)
 

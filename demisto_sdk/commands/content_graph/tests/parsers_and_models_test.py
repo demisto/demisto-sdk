@@ -3033,6 +3033,13 @@ def test_convert_content_type_to_rn_header_and_from_release_note_header():
             ContentType.COMMAND,
         ):
             continue
+
+        if content_type == ContentType.CASE_LAYOUT:
+            assert ContentType.LAYOUT == ContentType.convert_header_to_content_type(
+                content_type.as_rn_header
+            )
+            continue
+
         assert content_type == ContentType.convert_header_to_content_type(
             content_type.as_rn_header
         )

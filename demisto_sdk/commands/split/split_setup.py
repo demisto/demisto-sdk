@@ -2,7 +2,7 @@ from pathlib import Path
 
 import typer
 
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import FileType, RED, NO_COLOR
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
@@ -74,7 +74,7 @@ def split(
         FileType.ASSETS_MODELING_RULE,
     ]:
         typer.echo(
-            "<red>File is not an Integration, Script, List, Generic Module, Modeling Rule or Parsing Rule.</red>"
+            f"{RED}File is not an Integration, Script, List, Generic Module, Modeling Rule or Parsing Rule.{NO_COLOR}"
         )
         raise typer.Exit(code=1)
 

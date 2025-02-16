@@ -1,0 +1,4 @@
+changes:
+- description: Improved the visibility and formatting of error messages for the **generate-docs**, **split** and the **update-release-notes** commands.
+  type: fix
+pr_number: 4817

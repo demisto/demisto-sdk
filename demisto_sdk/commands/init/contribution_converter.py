@@ -125,6 +125,7 @@ class ContributionConverter:
         contribution: str,
         name: str = "",
         description: str = "",
+        pack_readme: str = "",
         author: str = "",
         gh_user: str = "",
         create_new: bool = True,
@@ -134,7 +135,6 @@ class ContributionConverter:
         detected_content_items: list = [],
         base_dir: Optional[str] = None,
         working_dir_path: str = "",
-        pack_readme: str = "",
     ):
         """Initializes a ContributionConverter instance
 

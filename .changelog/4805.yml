@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where running "Format" on a pre-processing rule would delete the script ID field, it is now retained.
+  type: fix
+pr_number: 4805

@@ -21,6 +21,10 @@ LOG_FILE_NAME = "demisto_sdk_debug.log"
 
 NEO4J_DEFAULT_VERSION = "5.22.0"
 
+# Colors
+RED = "\033[91m"
+NO_COLOR = "\033[0m"
+
 # --- Environment Variables ---
 # General
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"

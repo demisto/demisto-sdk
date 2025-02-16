@@ -120,23 +120,28 @@ class ResultWriter:
         forcemergeable_errors = []
         ignorable_errors = []
         must_be_handled_errors = []
+        non_ignorable_errors = []
         for failing_error_code in failing_error_codes:
             if failing_error_code in config_file_content.ignorable_errors:
                 ignorable_errors.append(failing_error_code)
+            else:
+                non_ignorable_errors.append(failing_error_code)
             if failing_error_code not in config_file_content.path_based_section:
                 forcemergeable_errors.append(failing_error_code)
-            elif failing_error_code not in ignorable_errors:
+            else:
                 must_be_handled_errors.append(failing_error_code)
         msg = f"The following errors were thrown as a part of this pr: {', '.join(failing_error_codes)}.\n"
         if ignorable_errors:
             msg += (
                 f"The following errors can be ignored: {', '.join(ignorable_errors)}.\n"
             )
+        if non_ignorable_errors:
+            msg += f"The following errors cannot be ignored: {', '.join(non_ignorable_errors)}.\n"
         if forcemergeable_errors:
             msg += f"The following errors don't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
         if must_be_handled_errors:
             msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
-            msg += f"Note that the following errors cannot be ignored or force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"
+            msg += f"Note that the following errors cannot be force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"
             msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
         logger.error(f"<red>{msg}</red>")
 

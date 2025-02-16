@@ -5,6 +5,7 @@ from typing import Iterable, List
 from demisto_sdk.commands.common.constants import (
     INCIDENT_COMMANDS,
     MIRRORING_COMMANDS,
+    GitStatuses,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -27,6 +28,7 @@ class IsCommandsInReadmeValidator(BaseValidator[ContentTypes]):
     related_field = "commands"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

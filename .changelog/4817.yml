@@ -1,4 +1,4 @@
 changes:
-- description: Fixed error messages for *generate-docs* and *update-release-notes* commands.
+- description: Improved the visibility and formatting of error messages for the **generate-docs** and the **update-release-notes** commands.
   type: fix
 pr_number: 4817

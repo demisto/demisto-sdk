@@ -44,7 +44,7 @@ def update_release_notes(
         None,
         "-i",
         "--input",
-        help="The relative path of the content pack. For example Packs/Pack_Name",
+        help="The pack name or relative path of the content pack. For example, 'Packs/Pack_Name'.",
     ),
     update_type: UpdateType = typer.Option(
         None,

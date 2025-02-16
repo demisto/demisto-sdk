@@ -162,11 +162,8 @@ class TestConfiguration:
             MarketplaceVersions(marketplace) for marketplace in marketplaces_conf
         ]
 
-        # if MarketplaceVersions.XSOAR in marketplaces_conf:
-        #     marketplaces_conf.append(MarketplaceVersions.XSOAR_SAAS)
-
-        # if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_conf:
-        #     marketplaces_conf.append(MarketplaceVersions.XSOAR)
+        # The marketplace parsing to server version
+        # happens in the marketplaces_match_server_type method.
 
         return marketplaces_conf
 
@@ -451,15 +448,13 @@ class TestPlaybook:
                 )
 
             if not test_server_types:
-                self.log_debug(f"Running {self} _1_")
                 return True  # test doesn't have a marketplace value, so it runs on all machines
 
-            if self.configuration.test_instance_names:
-                self.log_debug(f"Running {self} _2_")
-                instance_names_log_message = f" for instance names: {', '.join(self.configuration.test_instance_names)}"
-            else:
-                self.log_debug(f"Running {self} _3_")
-                instance_names_log_message = ""
+            instance_names_log_message = (
+                f" for instance names: {', '.join(self.configuration.test_instance_names)}"
+                if self.configuration.test_instance_names
+                else ""
+            )
 
             if self.build_context.server_type in test_server_types:
                 self.log_debug(
@@ -474,10 +469,8 @@ class TestPlaybook:
             )
             self.close_test_suite([Skipped(log_message)])
             if self.configuration.playbook_id in self.server_context.filtered_tests:
-                self.log_debug(f"Running {self} _4_")
                 self.log_warning(log_message)
             else:
-                self.log_debug(f"Running {self} _5_")
                 self.log_debug(log_message)
             skipped_tests_collected[self.configuration.playbook_id] = (
                 f"test marketplaces are: {', '.join(self.configuration.marketplaces)}{instance_names_log_message}"
@@ -2128,14 +2121,6 @@ class Integration:
             )
         else:
             instance_name = f'{self.configuration.instance_name.replace(" ", "_")}_test_{uuid.uuid4()}'  # type: ignore
-
-        if "discovery_service" in self.configuration.params:  # type: ignore
-            self.playbook.log_info("discovery_service in the configuration params")
-            if discovery_service := self.configuration.params.get("discovery_service"):  # type: ignore
-                if "%%SERVER_HOST%%" in discovery_service:
-                    self.playbook.log_info("%%SERVER_HOST%% found")
-                else:
-                    self.playbook.log_info("%%SERVER_HOST%% not found")
 
         self.playbook.log_info(
             f"Configuring instance for {self} (instance name: {instance_name}, "  # type: ignore

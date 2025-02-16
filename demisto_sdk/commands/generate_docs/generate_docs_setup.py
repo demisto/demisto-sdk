@@ -21,9 +21,6 @@ from demisto_sdk.commands.generate_docs.generate_script_doc import (
 )
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
-RED = "\033[91m"
-NO_COLOR = "\033[0m"
-
 
 @logging_setup_decorator
 def generate_docs(

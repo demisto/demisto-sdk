@@ -8,11 +8,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Integration
 
-ALLOWED_SECTIONS = [
-    "Connect",
-    "Collect",
-    "Optimize",
-]
+ALLOWED_SECTIONS = ["Connect", "Collect", "Optimize", "Mirroring"]
 
 
 class StrictSchemaValidator(BaseValidator[ContentTypes]):
@@ -43,7 +39,7 @@ class StrictSchemaValidator(BaseValidator[ContentTypes]):
         if not section_order:
             return (
                 "Missing sectionorder key. Add sectionorder to the top of your YAML file and specify the order"
-                " of the Collect, Connect, and Optimize sections (at least one is required)."
+                f" of the {', '.join(ALLOWED_SECTIONS)} sections (at least one is required)."
             )
         configuration_parameters = content_item.data.get("configuration")
         parameters_missing_sections = []

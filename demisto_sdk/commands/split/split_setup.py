@@ -2,7 +2,7 @@ from pathlib import Path
 
 import typer
 
-from demisto_sdk.commands.common.constants import FileType, RED, NO_COLOR
+from demisto_sdk.commands.common.constants import NO_COLOR, RED, FileType
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.split.jsonsplitter import JsonSplitter

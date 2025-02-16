@@ -149,6 +149,7 @@ def generate_docs(
                 f"Input {input_path} is neither a valid yml file, a 'Playbooks' folder, nor a readme file."
             )
 
+
         return 0
 
     except Exception as e:

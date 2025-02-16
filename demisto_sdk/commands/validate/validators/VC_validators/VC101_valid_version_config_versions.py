@@ -4,7 +4,6 @@ from typing import Iterable, List
 
 from packaging import version
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType

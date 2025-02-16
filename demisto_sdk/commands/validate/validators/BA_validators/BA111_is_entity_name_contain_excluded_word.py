@@ -4,7 +4,6 @@ from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import (
     EXCLUDED_DISPLAY_NAME_WORDS,
-    GitStatuses,
 )
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule

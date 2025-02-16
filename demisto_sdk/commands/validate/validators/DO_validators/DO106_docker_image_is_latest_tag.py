@@ -6,7 +6,6 @@ from typing import Iterable, List, Union
 import requests
 from dateparser import parse
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubRequestException,

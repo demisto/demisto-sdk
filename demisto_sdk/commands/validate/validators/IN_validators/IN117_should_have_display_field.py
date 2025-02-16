@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import ClassVar, Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses, ParameterType
+from demisto_sdk.commands.common.constants import ParameterType
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
     Parameter,

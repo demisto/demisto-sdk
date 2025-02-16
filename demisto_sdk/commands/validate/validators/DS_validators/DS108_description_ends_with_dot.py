@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import ClassVar, Dict, Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import VALID_SENTENCE_SUFFIX, GitStatuses
+from demisto_sdk.commands.common.constants import VALID_SENTENCE_SUFFIX
 from demisto_sdk.commands.common.tools import is_string_ends_with_url
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.content_graph.objects.script import Script

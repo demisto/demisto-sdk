@@ -193,7 +193,11 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
             # Check if their old version >= current version
             old_version = pack.old_base_content_object.current_version  # type: ignore[union-attr]
             current_version = pack.current_version  # type: ignore[union-attr]
-            if current_version and Version(old_version) >= Version(current_version) and not pack.git_status == GitStatuses.ADDED:
+            if (
+                current_version
+                and Version(old_version) >= Version(current_version)
+                and not pack.git_status == GitStatuses.ADDED
+            ):
                 validation_results.append(
                     ValidationResult(
                         validator=self,

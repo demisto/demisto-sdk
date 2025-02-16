@@ -28,7 +28,6 @@ class IsCommandsInReadmeValidator(BaseValidator[ContentTypes]):
     related_field = "commands"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.README]
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

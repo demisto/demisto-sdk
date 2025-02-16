@@ -27,7 +27,6 @@ class ShouldHaveDisplayFieldValidator(BaseValidator[ContentTypes]):
     related_field = "display, type"
     is_auto_fixable = True
     invalid_params: ClassVar[dict] = {}
-    expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.MODIFIED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

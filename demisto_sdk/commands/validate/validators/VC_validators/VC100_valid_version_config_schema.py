@@ -26,7 +26,6 @@ class ValidVersionConfigSchema(BaseValidator[ContentTypes]):
     )
     related_field = "version_config"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.VERSION_CONFIG]
 
     def obtain_invalid_content_items(

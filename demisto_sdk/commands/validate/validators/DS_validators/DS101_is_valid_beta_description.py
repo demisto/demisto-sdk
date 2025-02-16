@@ -28,7 +28,6 @@ class IsValidBetaDescriptionValidator(BaseValidator[ContentTypes]):
     )
     related_field = "beta"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.DESCRIPTION_File]
 
     def obtain_invalid_content_items(

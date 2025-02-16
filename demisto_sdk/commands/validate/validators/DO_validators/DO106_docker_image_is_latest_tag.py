@@ -32,11 +32,6 @@ class DockerImageTagIsNotOutdated(DockerValidator[ContentTypes]):
     error_message = "docker image {0}'s tag {1} is outdated. The latest tag is {2}"
     fix_message = "docker image {0} has been updated to {1}"
     related_field = "Docker image"
-    expected_git_statuses = [
-        GitStatuses.RENAMED,
-        GitStatuses.MODIFIED,
-        GitStatuses.ADDED,
-    ]
     is_auto_fixable = True
 
     @staticmethod

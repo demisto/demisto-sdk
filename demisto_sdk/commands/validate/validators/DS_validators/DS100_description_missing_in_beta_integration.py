@@ -21,11 +21,6 @@ class DescriptionMissingInBetaIntegrationValidator(BaseValidator[ContentTypes]):
     error_message = "Beta integration needs a description."
     related_field = "beta"
     is_auto_fixable = False
-    expected_git_statuses = [
-        GitStatuses.RENAMED,
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

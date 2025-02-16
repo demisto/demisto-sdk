@@ -20,11 +20,6 @@ class IsTestsSectionValidValidator(BaseValidator[ContentTypes]):
     error_message = 'The tests section of the following {0} is malformed. It should either be a non empty list for tests or "No tests" in case there are no tests.'
     related_field = "tests"
     is_auto_fixable = False
-    expected_git_statuses = [
-        GitStatuses.MODIFIED,
-        GitStatuses.ADDED,
-        GitStatuses.RENAMED,
-    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

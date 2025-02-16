@@ -22,7 +22,6 @@ class IsMissingDisplayFieldValidator(BaseValidator[ContentTypes]):
     error_message = "The following params doesn't have a display field, please make sure to add one: {0}."
     related_field = "display, displaypassowrd"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.MODIFIED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

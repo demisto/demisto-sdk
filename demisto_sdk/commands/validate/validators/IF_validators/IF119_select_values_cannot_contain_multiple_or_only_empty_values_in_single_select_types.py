@@ -37,12 +37,11 @@ class SelectValuesCannotContainMultipleOrOnlyEmptyValuesInSingleSelectTypesValid
     BaseValidator[ContentTypes]
 ):
     error_code = "IF119"
-    description = "We do not allow for incidentFields with singleSelect types to have in the selectValues more than one or only emtpy option"
+    description = "Ensure incidentFields singleSelect field does not contain more than empty option"
     rationale = "Due to UI issues, we cannot allow more than one or only empty values for selectValues field"
     fix_message = "Removed all redundant empty values in the selectValues field."
     related_field = "singleSelect, selectValues"
     is_auto_fixable = True
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

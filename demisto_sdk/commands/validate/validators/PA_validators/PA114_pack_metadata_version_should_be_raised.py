@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_PACK_NAMES,
     PACK_METADATA_REQUIRE_RN_FIELDS,
     SKIP_RELEASE_NOTES_FOR_TYPES,
+    GitStatuses,
 )
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.content_graph.objects import (
@@ -192,7 +193,7 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
             # Check if their old version >= current version
             old_version = pack.old_base_content_object.current_version  # type: ignore[union-attr]
             current_version = pack.current_version  # type: ignore[union-attr]
-            if current_version and Version(old_version) >= Version(current_version):
+            if current_version and Version(old_version) >= Version(current_version) and not pack.git_status == GitStatuses.ADDED:
                 validation_results.append(
                     ValidationResult(
                         validator=self,

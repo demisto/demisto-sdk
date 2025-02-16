@@ -23,7 +23,6 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
     fix_message = "Added dots ('.') at the end of the following description fields:{0}"
     related_field = "description, comment"
     is_auto_fixable = True
-    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
     lines_without_dots: ClassVar[Dict[str, dict]] = {}
 
     def obtain_invalid_content_items(

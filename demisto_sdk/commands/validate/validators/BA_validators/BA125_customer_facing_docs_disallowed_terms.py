@@ -36,7 +36,6 @@ class CustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
         RelatedFileType.DESCRIPTION_File,
         RelatedFileType.RELEASE_NOTE,
     ]
-    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

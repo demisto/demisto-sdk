@@ -24,7 +24,6 @@ class IsImagePathValidValidator(BaseValidator[ContentTypes]):
     error_message = "Detected the following images URLs which are not raw links: {0}"
     related_field = "readme"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.README]
 
     def obtain_invalid_content_items(

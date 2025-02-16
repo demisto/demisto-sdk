@@ -24,11 +24,6 @@ class NoDescriptionFileValidator(BaseValidator[ContentTypes]):
     related_field = "description file"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.DESCRIPTION_File]
-    expected_git_statuses = [
-        GitStatuses.RENAMED,
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

@@ -83,11 +83,6 @@ class IsEntityNameContainExcludedWordValidator(BaseValidator[ContentTypes]):
     related_field = ""
     rationale = "Increases clarity by keeping content names simple"
     is_auto_fixable = False
-    expected_git_statuses = [
-        GitStatuses.RENAMED,
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

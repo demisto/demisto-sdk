@@ -4,7 +4,11 @@ from typing import Optional
 
 import typer
 
-from demisto_sdk.commands.common.constants import SDK_OFFLINE_ERROR_MESSAGE
+from demisto_sdk.commands.common.constants import (
+    NO_COLOR,
+    RED,
+    SDK_OFFLINE_ERROR_MESSAGE,
+)
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import is_sdk_defined_working_offline
 from demisto_sdk.utils.utils import update_command_args_from_config_file
@@ -125,7 +129,7 @@ def update_release_notes(
 
     if force and input is None:
         typer.echo(
-            "<red>Please add a specific pack in order to force a release notes update.</red>"
+            f"{RED}Please add a specific pack in order to force a release notes update.{NO_COLOR}"
         )
         raise typer.Exit(0)
 

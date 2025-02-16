@@ -143,6 +143,10 @@ class ResultWriter:
             msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
             msg += f"Note that the following errors cannot be force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"
             msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
+        else:
+            msg += "##############################################################\n"
+            msg += "Note that the PR can be force merged from validate perspective.\n"
+            msg += "##############################################################\n"
         logger.error(f"<red>{msg}</red>")
 
     def write_results_to_json_file(self):

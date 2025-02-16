@@ -498,7 +498,7 @@ def test_post_results(
         (
             ["BA100", "CR102", "CL101", "TE111"],
             ConfiguredValidations(ignorable_errors=["BA100", "TE111"]),
-            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors cannot be ignored: CR102, CL101.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n</red>",
+            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors cannot be ignored: CR102, CL101.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n##############################################################\nNote that the PR can be force merged from validate perspective.\n##############################################################\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],
@@ -526,7 +526,7 @@ def test_summarize_ignorable_and_forcemergeable_errors(
         - Make sure the error logger was called the correct message.
         - Case 1: The error log should be called with 1 ignorable error, 3 forcemergeable errors, 3 non ignorable errors, and 1 error that must be handled.
         - Case 2: The error log should omit the ignorable error section, post 2 forcemergeable errors, 4 non ignorable errors, and 2 error that must be handled.
-        - Case 3: The error log should be called with 2 ignorable errors, 4 forcemergeable errors, 2 non ignorable errors, and no errors that must be handled.
+        - Case 3: The error log should be called with 2 ignorable errors, 4 forcemergeable errors, 2 non ignorable errors, no errors that must be handled, and a summary that says the PR is forcemergeable.
         - Case 4: The error log should be called with 1 ignorable error, no forcemergeable errors, 3 non ignorable errors, section and 4 error that must be handled.
     """
     mock = mocker.patch.object(logger, "error")

@@ -4,11 +4,15 @@ from typing import Optional
 
 import typer
 
-from demisto_sdk.commands.common.constants import SDK_OFFLINE_ERROR_MESSAGE
+from demisto_sdk.commands.common.constants import (
+    NO_COLOR,
+    RED,
+    SDK_OFFLINE_ERROR_MESSAGE,
+)
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import is_sdk_defined_working_offline
 from demisto_sdk.utils.utils import update_command_args_from_config_file
-from demisto_sdk.commands.common.constants import RED, NO_COLOR
+
 
 def validate_version(value: Optional[str]) -> Optional[str]:
     """Validate that the version is in the format x.y.z where x, y, z are digits."""

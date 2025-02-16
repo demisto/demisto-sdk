@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 import typer
 
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import NO_COLOR, RED, FileType
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
@@ -20,7 +20,7 @@ from demisto_sdk.commands.generate_docs.generate_script_doc import (
     generate_script_doc,
 )
 from demisto_sdk.utils.utils import update_command_args_from_config_file
-from demisto_sdk.commands.common.constants import RED, NO_COLOR
+
 
 @logging_setup_decorator
 def generate_docs(

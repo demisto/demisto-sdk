@@ -17,9 +17,9 @@ from demisto_sdk.commands.test_content.tests.DemistoClientMock import DemistoCli
 def test_execute_tests(mocker, tmp_path):
     """
     Given:
-        - A ServerContext instance that should execute three tests:
+        - A ServerContext instance that should execute two tests:
             1) A test with no integrations
-            3) A test with integration
+            2) A test with integration
 
     When:
         - Running execute_tests.

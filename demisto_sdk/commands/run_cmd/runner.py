@@ -197,7 +197,7 @@ class Runner:
                 if entry.type == self.ERROR_ENTRY_TYPE:
                     logger.info(f"<red>{entry.contents}</red>\n")
                 else:
-                    logger.info(f"{entry.contents}\n")
+                    logger.info("{}", f"{entry.contents}\n")
 
             # and entries with `file_id`s defined, that is the fileID of the debug log file
             if entry.type == self.DEBUG_FILE_ENTRY_TYPE:
@@ -361,7 +361,7 @@ class Runner:
                 logger.info(f"The incident {self.incident_id} remains open.")
                 return
             case IncidentStatus.CLOSE:
-                path = "close"
+                path = "/incident/close"
                 body = {"CustomFields": {}, "id": self.incident_id}
             case IncidentStatus.REMOVE:
                 path = "/incident/batchDelete"

@@ -21,7 +21,7 @@ class IsFieldTypeChangedValidator(BaseValidator[ContentTypes]):
     fix_message = "Changed the `type` field back to `{old_type}`."
     related_field = "type"
     is_auto_fixable = True
-    expected_git_statuses = [GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

@@ -1,0 +1,8 @@
+changes:
+- description: Fixed an issue where PA114 falsely failed on new packs.
+  type: fix
+- description: Fixed an issue where several validations git statuses were incorrect.
+  type: fix
+- description: Improved the msg of the new validate failures summary.
+  type: feature
+pr_number: 4818

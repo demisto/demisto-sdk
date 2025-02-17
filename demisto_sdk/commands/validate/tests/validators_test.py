@@ -501,7 +501,7 @@ def test_post_results(
             ["BA100", "CR102", "CL101", "TE111"],
             ["BC111"],
             ConfiguredValidations(ignorable_errors=["BA100", "TE111"]),
-            "<red>The following errors were reported as warnings: BC111.\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors cannot be ignored: CR102, CL101.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n##############################################################\nNote that the PR can be force merged from validate perspective.\n##############################################################\n</red>",
+            "<red>The following errors were reported as warnings: BC111.\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors cannot be ignored: CR102, CL101.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n##############################################################\nPlease note that the PR can be force merged from the validation perspective.\n##############################################################\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],

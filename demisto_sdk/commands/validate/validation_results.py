@@ -154,7 +154,7 @@ class ResultWriter:
             msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
         else:
             msg += "##############################################################\n"
-            msg += "Note that the PR can be force merged from validate perspective.\n"
+            msg += "Please note that the PR can be force merged from the validation perspective.\n"
             msg += "##############################################################\n"
         logger.error(f"<red>{msg}</red>")
 

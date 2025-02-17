@@ -633,7 +633,7 @@ def pre_commit_manager(
         return 1
 
     logger.info(f"Running pre-commit using template {pre_commit_template_path}")
-    run_hook = "ruff"
+
     pre_commit_context = PreCommitContext(
         list(input_files) if input_files else None,
         all_files,

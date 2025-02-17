@@ -1960,6 +1960,7 @@ class MarketplaceVersions(StrEnum):
     XPANSE = "xpanse"
     XSOAR_SAAS = "xsoar_saas"
     XSOAR_ON_PREM = "xsoar_on_prem"
+    PLATFORM = "platform"
 
 
 MarketplaceVersionToMarketplaceName = {

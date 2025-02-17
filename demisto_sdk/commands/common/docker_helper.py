@@ -386,7 +386,7 @@ class DockerBase:
             image (str): The image to push
             log_prompt (str, optional): The log prompt to print. Defaults to "".
         """
-        test_image_name_to_push = image  # image.replace(f"{DOCKER_REGISTRY_URL}/", "")
+        test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "") if not is_custom_registry() else image
 
         logger.info(
             f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository."

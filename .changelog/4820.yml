@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where when using a custom registry for Docker and pushing a new Docker image, it was not pushed to the correct location.
+  type: fix
+pr_number: 4820

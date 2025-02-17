@@ -21,7 +21,6 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
     rationale = "In case an incident field is required, newly added associated incident types should be new."
     error_message = "{0}"
     related_field = "required"
-    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

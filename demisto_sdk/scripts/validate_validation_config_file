@@ -1,23 +1,11 @@
-#!/usr/bin/env python3
-
-import os
 from pathlib import Path
 from typing import List
 
 import typer
-from typer.main import get_command
 
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 
-os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "True"
-
-from demisto_sdk.__main__ import app
-
-# Initialize Typer app
 main = typer.Typer()
-
-EXCLUDED_BRANCHES_REGEX = r"^(master|[0-9]+\.[0-9]+\.[0-9]+)$"
-
 
 @main.command()
 def validate_config_file(

@@ -46,7 +46,7 @@ def validate_all_configured_error_codes_exist(
         - existing_error_codes
     ):
         logger.error(
-            f"[VA100] The following error codes are configured in the config file but a validation co-oping with the error code cannot be found: {','.join(configured_non_existing_error_codes)}."
+            f"[VA100] The following error codes are configured in the config file but a validation co-oping with the error code cannot be found: {', '.join(configured_non_existing_error_codes)}."
         )
         exit_code = 1
     return exit_code
@@ -69,7 +69,7 @@ def validate_all_validations_run_on_git_mode(
         configured_validations.selected_path_based_section
     ) - set(configured_validations.selected_use_git_section):
         logger.error(
-            f"[VA101] The following error codes are configured to run on path-based inputs but are not configured to run on git mode: {','.join(non_configured_use_git_error_codes)}."
+            f"[VA101] The following error codes are configured to run on path-based inputs but are not configured to run on git mode: {', '.join(non_configured_use_git_error_codes)}."
         )
         exit_code = 1
     return exit_code

@@ -3,7 +3,10 @@ from typing import Optional
 
 import typer
 
+from demisto_sdk.commands.common.logger import logging_setup_decorator
 
+
+@logging_setup_decorator
 def pre_commit(
     ctx: typer.Context,
     input_files: Optional[list[Path]] = typer.Option(

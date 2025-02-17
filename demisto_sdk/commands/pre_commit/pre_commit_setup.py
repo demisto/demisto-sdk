@@ -3,10 +3,9 @@ from typing import Optional
 
 import typer
 
-from demisto_sdk.commands.common.logger import logging_setup_decorator
+from demisto_sdk.commands.common.logger import logging_setup
 
 
-@logging_setup_decorator
 def pre_commit(
     ctx: typer.Context,
     input_files: Optional[list[Path]] = typer.Option(
@@ -93,6 +92,24 @@ def pre_commit(
         envvar="PRE_COMMIT_TEMPLATE_PATH",
         help="A custom path for pre-defined pre-commit template, if not provided will use the default template.",
     ),
+    console_log_threshold: str = typer.Option(
+        "INFO",
+        "-clt",
+        "--console-log-threshold",
+        help="Minimum logging threshold for the console logger.",
+    ),
+    file_log_threshold: str = typer.Option(
+        "DEBUG",
+        "-flt",
+        "--file-log-threshold",
+        help="Minimum logging threshold for the file logger.",
+    ),
+    log_file_path: Optional[str] = typer.Option(
+        None,
+        "-lp",
+        "--log-file-path",
+        help="Path to save log files onto.",
+    ),
 ):
     """
     This command enhances the content development experience, by running a variety of checks and linters.
@@ -105,6 +122,13 @@ def pre_commit(
 
     **Note**: An internet connection is required for this command.
     """
+    logging_setup(
+        console_threshold=console_log_threshold,
+        file_threshold=file_log_threshold,
+        path=log_file_path,
+        calling_function="pre-commit",
+    )
+
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
     return_code = pre_commit_manager(

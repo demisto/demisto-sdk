@@ -77,3 +77,10 @@ repos:
     pass_filenames: false
     needs:
     - pytest-in-docker
+
+  - id: validate-validation-config-file
+    name: Validation for validate_config file
+    entry: validate-validation-config-file
+    language: python
+    args: 
+    - --config-path=sdk_validation_config.toml

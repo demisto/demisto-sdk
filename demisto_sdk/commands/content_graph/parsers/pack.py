@@ -365,9 +365,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
             self.ignored_errors_dict = (
                 dict(get_pack_ignore_content(self.path.name) or {})  # type:ignore[var-annotated]
             )
-        except Exception:
+        except Exception as e:
             logger.warning(
-                f"Failed to extract ignored errors list for {self.path.name} for {self.object_id}"
+                f"Failed to extract ignored errors list for {self.path.name} for {self.object_id}, reason: {e}"
             )
 
     def get_rn_info(self, git_sha: Optional[str] = None):

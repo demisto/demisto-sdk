@@ -53,3 +53,9 @@ repos:
       language: python
       files: ^.*_setup\.py$
       pass_filenames: false
+    - id: validate-validation-config-file
+      name: Validation for validate_config file  # Required when using local hooks
+      entry: validate-validation-config-file
+      language: python
+      args: 
+      - --config-path=sdk_validation_config.toml

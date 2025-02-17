@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+
+import os
+from pathlib import Path
+from typing import List
+
+import typer
+from typer.main import get_command
+
+from demisto_sdk.commands.validate.config_reader import ConfigReader
+
+os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "True"
+
+from demisto_sdk.__main__ import app
+
+# Initialize Typer app
+validate_config_file_app = typer.Typer()
+
+EXCLUDED_BRANCHES_REGEX = r"^(master|[0-9]+\.[0-9]+\.[0-9]+)$"
+
+
+@validate_config_file_app.command()
+def validate_config_file(
+    config_path: Path = typer.Option(None, help="Path for a config file to run."),
+    validation_to_run: List[str] = typer.Option([], help="A list of specific error codes to run on the config file."),
+    ) -> None:
+    """
+    Pre-commit hook to generate docs for changed commands.
+    """
+    print("here")
+    config_reader = ConfigReader(
+        path=config_path
+    )
+    exit_code = 0
+    for validation in ():
+        # main function to validate the validation config file.
+        pass
+
+
+def main():
+    validate_config_file_app()
+
+
+if __name__ == "__main__":
+    main()

@@ -82,5 +82,5 @@ repos:
     name: Validation for validate_config file
     entry: validate-validation-config-file
     language: python
-    args: 
+    args:
     - --config-path=sdk_validation_config.toml

@@ -109,5 +109,5 @@
   description: Validate the validation config file
   entry: validate-validation-config-file
   language: python
-  args: 
+  args:
   - --config-path=sdk_validation_config.toml

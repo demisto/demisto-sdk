@@ -14,12 +14,12 @@ os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "True"
 from demisto_sdk.__main__ import app
 
 # Initialize Typer app
-validate_config_file_app = typer.Typer()
+main = typer.Typer()
 
 EXCLUDED_BRANCHES_REGEX = r"^(master|[0-9]+\.[0-9]+\.[0-9]+)$"
 
 
-@validate_config_file_app.command()
+@main.command()
 def validate_config_file(
     config_path: Path = typer.Option(None, help="Path for a config file to run."),
     validation_to_run: List[str] = typer.Option([], help="A list of specific error codes to run on the config file."),
@@ -35,11 +35,3 @@ def validate_config_file(
     for validation in ():
         # main function to validate the validation config file.
         pass
-
-
-def main():
-    validate_config_file_app()
-
-
-if __name__ == "__main__":
-    main()

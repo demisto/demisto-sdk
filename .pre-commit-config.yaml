@@ -57,5 +57,6 @@ repos:
       name: Validation for validate_config file  # Required when using local hooks
       entry: validate-validation-config-file
       language: python
+      pass_filenames: false
       args:
-      - --config-path=sdk_validation_config.toml
+      - --config-path=demisto_sdk/commands/validate/sdk_validation_config.toml

@@ -1,0 +1,4 @@
+changes:
+- description: Added schema support for a new marketplace "platform".
+  type: internal
+pr_number: 4821

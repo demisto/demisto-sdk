@@ -266,7 +266,7 @@ def test_invalid_section_order(pack: Pack):
     assert results[0].message == (
         "Structure error (type_error.enum) in field sectionorder,1 of integration_0.yml: "
         "value is not a valid enumeration member; permitted: "
-        "'Connect', 'Collect', 'Optimize'"
+        "'Connect', 'Collect', 'Optimize', 'Mirroring'"
     )
 
 
@@ -371,7 +371,7 @@ class TestST111:
         assert len(results) == 1
         assert results[0].message == (
             "Missing sectionorder key. Add sectionorder to the top of your YAML file and specify the order of the "
-            "Collect, Connect, and Optimize sections (at least one is required)."
+            "Connect, Collect, Optimize, Mirroring sections (at least one is required)."
         )
 
     def test_invalid_section(self):
@@ -411,3 +411,26 @@ class TestST111:
             f"Missing section for the following parameters: ['{curr_config[0].get('name')}'] "
             "Please specify the section for these parameters."
         )
+
+    def test_valid_section_mirroring(self, pack: Pack):
+        """
+        Given:
+            - an integration which contains the mirroring section
+        When:
+            - executing the IntegrationParser
+        Then:
+            - the integration is valid and no structure error is being raised
+        """
+        integration = pack.create_integration(yml=load_yaml("integration.yml"))
+        integration_info = integration.yml.read_dict()
+        curr_config = integration_info["configuration"]
+        curr_config[0]["section"] = "Mirroring"
+        integration.yml.update({"sectionorder": ["Connect", "Mirroring"]})
+        integration.yml.update({"configuration": curr_config})
+
+        integration_parser = IntegrationParser(
+            Path(integration.path), list(MarketplaceVersions)
+        )
+
+        results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+        assert len(results) == 0

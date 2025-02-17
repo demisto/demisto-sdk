@@ -1,0 +1,4 @@
+changes:
+- description: Added support for version_config in find_type_by_path.
+  type: internal
+pr_number: 4816

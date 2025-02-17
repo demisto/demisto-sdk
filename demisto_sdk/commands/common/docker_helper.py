@@ -399,7 +399,7 @@ class DockerBase:
                 logger.success(
                     f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
                 )
-                logger.debug(
+                logger.info(
                     f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
                 )
                 break

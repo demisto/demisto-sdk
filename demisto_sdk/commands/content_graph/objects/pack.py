@@ -324,9 +324,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     def dump_release_notes(self, path: Path, marketplace: MarketplaceVersions) -> None:
         # TODO - Update this to dump the release notes for the platform marketplace
-        # starting from platform supported version only. 
+        # starting from platform supported version only.
         try:
-            shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
+            shutil.copytree(self.path / "ReleaseNotes", path)
         except FileNotFoundError:
             logger.debug(f'No such file {self.path / "ReleaseNotes"}')
 
@@ -338,8 +338,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         try:
             path.mkdir(exist_ok=True, parents=True)
 
-            content_types_excluded_from_upload = CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
-        
+            content_types_excluded_from_upload = (
+                CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
+            )
+
             if tpb:
                 content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
 
@@ -386,9 +388,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             except FileNotFoundError:
                 logger.debug(f"No such file {self.path / VERSION_CONFIG_FILENAME}")
 
-
             self.dump_release_notes(path / "ReleaseNotes", marketplace)
- 
+
             try:
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:

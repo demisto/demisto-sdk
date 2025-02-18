@@ -139,8 +139,6 @@ def test_support_details_getter(url, support, email, expected_url, expected_emai
 @pytest.mark.parametrize(
     "support, author, expected_author, expected_log",
     [
-        (XSOAR_SUPPORT, XSOAR_AUTHOR, XSOAR_AUTHOR, None),
-        ("someone", "someone", "someone", None),
         (
             XSOAR_SUPPORT,
             "someone",

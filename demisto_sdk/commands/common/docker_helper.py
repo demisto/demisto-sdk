@@ -157,8 +157,8 @@ def docker_login(docker_client) -> bool:
         bool: True if logged in successfully.
     """
     logger.debug("docker_helper | docker_login")
-    docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER_TEST"))
-    docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD_TEST"))
+    docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
+    docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD"))
     if docker_user and docker_pass:
         try:
             if not is_custom_registry():
@@ -396,10 +396,10 @@ class DockerBase:
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )
-                outputs_lines = docker_push_output.strip().split("\r\n")
                 logger.debug(
                     f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
                 )
+                outputs_lines = docker_push_output.strip().split("\r\n")
                 error_dict = next(filter(lambda line: "errorDetail" in line, outputs_lines), None)
                 if error_dict:
                     logger.error(f"{log_prompt} - Error pushing image {test_image_name_to_push}: {error_dict}")

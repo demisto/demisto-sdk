@@ -13,10 +13,7 @@ from demisto_sdk.commands.content_graph.strict_objects.case_layout import (
 class CaseLayoutParser(LayoutParser, content_type=ContentType.CASE_LAYOUT):
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {
-            MarketplaceVersions.MarketplaceV2,
-            MarketplaceVersions.PLATFORM
-        }
+        return {MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM}
 
     @property
     def strict_object(self):

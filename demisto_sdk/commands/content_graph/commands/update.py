@@ -1,4 +1,5 @@
 import os
+import subprocess
 from pathlib import Path
 from typing import List, Optional
 
@@ -62,11 +63,15 @@ def should_update_graph(
         )
     )
 
-import subprocess
 
 def log_git_branch():
-    current_branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).decode('utf-8').strip()
+    current_branch = (
+        subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+        .decode("utf-8")
+        .strip()
+    )
     logger.info(f"On branch {current_branch}")
+
 
 @recover_if_fails
 def update_content_graph(
@@ -78,9 +83,8 @@ def update_content_graph(
     dependencies: bool = True,
     output_path: Optional[Path] = None,
 ) -> None:
-    
     log_git_branch()
-    
+
     """This function updates a new content graph database in neo4j from the content path
     Args:
         content_graph_interface (ContentGraphInterface): The content graph interface.

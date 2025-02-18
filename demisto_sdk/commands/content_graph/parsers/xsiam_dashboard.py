@@ -48,7 +48,6 @@ class XSIAMDashboardParser(
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.PLATFORM,
         }
-        
 
     @property
     def strict_object(self):

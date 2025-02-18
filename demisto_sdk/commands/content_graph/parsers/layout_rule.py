@@ -40,10 +40,7 @@ class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RU
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {
-            MarketplaceVersions.MarketplaceV2,
-            MarketplaceVersions.PLATFORM
-        }
+        return {MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM}
 
     def connect_to_dependencies(self) -> None:
         """Collects t he playbook used in the trigger as a mandatory dependency."""

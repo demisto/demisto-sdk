@@ -51,7 +51,7 @@ class CorrelationRuleParser(
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {
             MarketplaceVersions.MarketplaceV2,
-            MarketplaceVersions.PLATFORM,        
+            MarketplaceVersions.PLATFORM,
         }
 
     @property

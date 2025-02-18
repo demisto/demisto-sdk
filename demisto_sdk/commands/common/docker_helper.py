@@ -161,8 +161,8 @@ def docker_login(docker_client) -> bool:
         bool: True if logged in successfully.
     """
     logger.debug("docker_helper | docker_login")
-    docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
-    docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD"))
+    docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER_TEST"))
+    docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD_TEST"))
     if docker_user and docker_pass:
         try:
             if not is_custom_registry():

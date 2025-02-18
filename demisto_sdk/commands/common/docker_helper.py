@@ -106,6 +106,10 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
                     logger.debug(
                         "Successfully initialized docker client from Gitlab CI job environment."
                     )
+                    try:
+                        docker_login(DOCKER_CLIENT)
+                    except Exception:
+                        logger.exception(f"{log_prompt} - failed to login to docker registry")
                     return DOCKER_CLIENT
                 else:
                     logger.warning(

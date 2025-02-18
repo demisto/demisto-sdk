@@ -561,7 +561,7 @@ class DockerBase:
                     push=push,
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
-                logger.debug(f"Failed to create image {test_docker_image} based on {base_image}\n{e.with_traceback}")
+                logger.exception(f"Failed to create image {test_docker_image} based on {base_image}. Error: {e}")
                 errors = str(e)
                 logger.critical(  # noqa: PLE1205
                     "{}", f"<red>{log_prompt} - Build errors occurred: {errors}</red>"

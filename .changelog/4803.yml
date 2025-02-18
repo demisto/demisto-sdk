@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue when setting the marketplace entry to xsoar_on_prem in the conf, the test was also executed on xsoar_sass.
+- description: Fixed an issue where setting the marketplace entry to xsoar_on_prem in the configuration also caused the test to run on xsoar_saas.
   type: fix
 pr_number: 4803

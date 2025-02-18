@@ -363,6 +363,7 @@ schema;argument_schema:
     prettyname:
       type: str
     prettypredefined:
+      allowempty: true
       type: map
       mapping:
         ".*":

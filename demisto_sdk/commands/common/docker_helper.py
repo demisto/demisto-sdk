@@ -400,10 +400,16 @@ class DockerBase:
                     f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
                 )
                 outputs_lines = docker_push_output.strip().split("\r\n")
-                error_dict = next(filter(lambda line: "errorDetail" in line, outputs_lines), None)
+                error_dict = next(
+                    filter(lambda line: "errorDetail" in line, outputs_lines), None
+                )
                 if error_dict:
-                    logger.error(f"{log_prompt} - Error pushing image {test_image_name_to_push}: {error_dict}")
-                    raise Exception(f"Failed to push image {test_image_name_to_push} to repository.")
+                    logger.error(
+                        f"{log_prompt} - Error pushing image {test_image_name_to_push}: {error_dict}"
+                    )
+                    raise Exception(
+                        f"Failed to push image {test_image_name_to_push} to repository."
+                    )
                 else:
                     logger.success(
                         f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
@@ -561,7 +567,9 @@ class DockerBase:
                     push=push,
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
-                logger.exception(f"Failed to create image {test_docker_image} based on {base_image}. Error: {e}")
+                logger.exception(
+                    f"Failed to create image {test_docker_image} based on {base_image}. Error: {e}"
+                )
                 errors = str(e)
                 logger.critical(  # noqa: PLE1205
                     "{}", f"<red>{log_prompt} - Build errors occurred: {errors}</red>"

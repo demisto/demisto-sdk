@@ -683,13 +683,15 @@ def add_related_files(file: Path) -> Set[Path]:
             if ".py" in (file.suffix for file in files_to_run)
             else PS1_TEST_FILE_SUFFIX
         )
-
-        test_files = [
-            _file
-            for _file in file.parent.iterdir()
-            if _file.name.endswith(test_file_suffix)
-        ]
-        files_to_run.update(test_files)
+        try:
+            test_files = [
+                _file
+                for _file in file.parent.iterdir()
+                if _file.name.endswith(test_file_suffix)
+            ]
+            files_to_run.update(test_files)
+        except Exception as e:
+            print(e)
     return files_to_run
 
 

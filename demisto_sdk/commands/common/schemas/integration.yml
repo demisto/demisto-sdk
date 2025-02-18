@@ -181,7 +181,7 @@ mapping:
       enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
   hybrid:
     type: bool
-  
+
 
 # integration->configuration
   name:xsoar:

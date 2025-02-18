@@ -400,12 +400,17 @@ class DockerBase:
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )
-                logger.success(
-                    f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
-                )
-                logger.debug(
-                    f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
-                )
+                outputs_lines = docker_push_output.strip().split("\r\n")
+                last_line = outputs_lines[-1]
+                if "errorDetail" in last_line:
+                    logger.error(f"{log_prompt} - Error pushing image {test_image_name_to_push}: {last_line}")
+                else:
+                    logger.success(
+                        f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
+                    )
+                    logger.debug(
+                        f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
+                    )
                 break
             except (
                 requests.exceptions.ConnectionError,

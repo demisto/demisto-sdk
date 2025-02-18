@@ -408,9 +408,9 @@ class DockerBase:
                     logger.success(
                         f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
                     )
-                    logger.debug(
-                        f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
-                    )
+                logger.debug(
+                    f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
+                )
                 break
             except (
                 requests.exceptions.ConnectionError,

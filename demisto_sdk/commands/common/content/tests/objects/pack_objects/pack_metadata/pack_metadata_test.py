@@ -4,7 +4,6 @@ from pathlib import Path
 from shutil import rmtree
 
 import pytest
-from more_itertools import one
 from packaging.version import parse
 from pytest import MonkeyPatch
 
@@ -155,7 +154,8 @@ def test_author_getter(caplog, mocker, support, author, expected_author, expecte
     assert obj.author == expected_author
 
     if expected_log:
-        record = one(caplog.records)
+        assert len(caplog.records) == 2
+        record = caplog.records[1]
         assert record.levelname == "WARNING"
         assert (
             record.message

@@ -40,6 +40,8 @@ CommonFields = create_model(
 
 class _Argument(BaseStrictModel):
     name: str
+    prettyname: Optional[str] = None
+    pretty_predefined: Optional[dict] = Field(None, alias="prettyPredefined")
     required: Optional[bool] = None
     default: Optional[bool] = None
     description: str

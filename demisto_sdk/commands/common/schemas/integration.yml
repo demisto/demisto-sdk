@@ -362,10 +362,11 @@ schema;argument_schema:
       required: true
     prettyname:
       type: str
-    prettyPredefined:
-      type: seq
-      sequence:
-      - type: map
+    prettypredefined:
+      type: map
+      mapping:
+        ".*":
+          type: str
     required:
       type: bool
     default:

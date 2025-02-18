@@ -2,7 +2,7 @@ import os
 
 os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "True"
 from pathlib import Path
-from typing import List, Set
+from typing import Set
 
 import typer
 
@@ -145,8 +145,9 @@ def validate_all_error_codes_configured(
 @main.command()
 def validate_config_file(
     config_path: Path = typer.Option(None, help="Path for a config file to run."),
-    validations_to_run: List[str] = typer.Option(
-        [], help="A list of specific error codes to run on the config file."
+    validations_to_run: str = typer.Option(
+        [],
+        help="A comma separated list of specific error codes to run on the config file.",
     ),
 ) -> None:
     """
@@ -164,11 +165,12 @@ def validate_config_file(
     exit_code = 0
     filtered_validators = []
     if validations_to_run:
-        for validation_to_run in validations_to_run:
+        for validation_to_run in validations_to_run.split(","):
             if validation_to_run in validators:
                 filtered_validators.append(validators[validation_to_run])
     else:
         filtered_validators = list(validators.values())
-    if any(validation(configured_validations) for validation in filtered_validators):
-        exit_code = 1
+    for validation in filtered_validators:
+        if validation(configured_validations):
+            exit_code = 1
     raise typer.Exit(code=exit_code)

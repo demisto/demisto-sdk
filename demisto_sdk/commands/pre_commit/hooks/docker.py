@@ -185,6 +185,7 @@ def devtest_image(
     mypy_requirements = None
     if should_install_mypy_additional_dependencies:
         mypy_requirements = get_mypy_requirements()
+        logger.info(f"Additional dependencies for mypy: {mypy_requirements}")
     image, errors = docker_base.get_or_create_test_image(
         base_image=image_tag,
         container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,

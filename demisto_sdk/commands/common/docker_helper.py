@@ -530,6 +530,7 @@ class DockerBase:
             )
 
         if additional_requirements:
+            logger.info(f"pip_requirements befor extend: {pip_requirements}")
             pip_requirements.extend(additional_requirements)
         identifier = hashlib.md5(
             "\n".join(sorted(set(pip_requirements))).encode("utf-8")

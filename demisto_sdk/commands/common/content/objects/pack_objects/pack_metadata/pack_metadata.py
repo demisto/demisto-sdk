@@ -27,7 +27,7 @@ XSOAR_CERTIFIED = "certified"
 XSOAR_EULA_URL = "https://github.com/demisto/content/blob/master/LICENSE"
 
 CORE_PACKS_LIST = get_core_pack_list()
-DEFAULT_PLATFORM_MODULES = ["x1", "x2"]
+DEFAULT_PLATFORM_MODULES = []
 
 
 class PackMetaData(JSONObject):

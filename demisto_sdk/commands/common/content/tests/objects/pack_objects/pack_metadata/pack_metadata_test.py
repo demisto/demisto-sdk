@@ -153,9 +153,7 @@ def test_author_getter(caplog, mocker, support, author, expected_author, expecte
     obj = PackMetaData(PACK_METADATA)
     obj.support = support
     obj.author = author
-    
     assert obj.author == expected_author
-    
     if expected_log:
         record = one(caplog.records)
         assert record.levelname == "WARNING"

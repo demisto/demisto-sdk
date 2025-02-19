@@ -38,7 +38,7 @@ class XSIAMReportParser(JSONContentItemParser, content_type=ContentType.XSIAM_RE
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.MarketplaceV2}
+        return {MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM}
 
     @property
     def strict_object(self):

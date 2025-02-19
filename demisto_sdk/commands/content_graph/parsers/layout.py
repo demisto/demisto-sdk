@@ -52,6 +52,7 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.PLATFORM,
         }
 
     def connect_to_dependencies(self) -> None:

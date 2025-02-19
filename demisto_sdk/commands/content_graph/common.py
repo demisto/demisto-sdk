@@ -545,6 +545,7 @@ def replace_marketplace_references(
         if marketplace in {
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XPANSE,
+            MarketplaceVersions.PLATFORM,
         }:
             if isinstance(data, dict):
                 keys_to_update = {}

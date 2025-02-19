@@ -2828,6 +2828,13 @@ def test_get_core_packs(mocker):
             MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.XPANSE] in full_file_path
         ):
             return ["Base", "CommonScripts", "Core"]
+        elif (
+            MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.PLATFORM]
+            in full_file_path
+        ):
+            return {
+                "core_packs_list": ["Base", "CommonPlaybooks", "CommonScripts", "Core"]
+            }
         return None
 
     mocker.patch.object(tools, "get_remote_file", side_effect=mock_get_remote_file)

@@ -146,7 +146,7 @@ def validate_all_error_codes_configured(
 def validate_config_file(
     config_path: Path = typer.Option(None, help="Path for a config file to run."),
     validations_to_run: str = typer.Option(
-        [],
+        "",
         help="A comma separated list of specific error codes to run on the config file.",
     ),
 ) -> None:

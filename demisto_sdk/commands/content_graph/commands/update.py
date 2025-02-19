@@ -62,6 +62,7 @@ def should_update_graph(
         )
     )
 
+
 @recover_if_fails
 def update_content_graph(
     content_graph_interface: ContentGraphInterface,

@@ -2250,3 +2250,5 @@ MIRRORING_COMMANDS: list[str] = [
     "get-modified-remote-data",
     "update-remote-system",
 ]
+
+DEFAULT_PLATFORM_MODULES: list[str] = []

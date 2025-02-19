@@ -182,17 +182,15 @@ def devtest_image(
 
     """
     docker_base = get_docker()
-    mypy_requirements = None
-    if should_install_mypy_additional_dependencies:
-        mypy_requirements = get_mypy_requirements()
-        logger.info(f"Additional dependencies for mypy: {mypy_requirements}")
     image, errors = docker_base.get_or_create_test_image(
         base_image=image_tag,
         container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
         push=docker_login(docker_client=init_global_docker_client()),
         should_pull=False,
         log_prompt="DockerHook",
-        additional_requirements=mypy_requirements,
+        additional_requirements=get_mypy_requirements()
+        if should_install_mypy_additional_dependencies
+        else None,
     )
     if not errors:
         if not should_pull:
@@ -316,10 +314,6 @@ class DockerHook(Hook):
         ).startswith(  # see CIAC-11832
             "mypy-in-docker"
         )
-        if mypy_additional_dependencies:
-            logger.info(f"{devtest_image.cache_info()=}")
-            logger.info(f"{devtest_image.cache_parameters()=}")
-            logger.info(f"{get_mypy_requirements()=}")
         dev_image = devtest_image(
             image,
             is_image_powershell,

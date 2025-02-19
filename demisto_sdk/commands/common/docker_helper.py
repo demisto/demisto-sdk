@@ -100,7 +100,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
                 logger.debug(
                     "Gitlab CI use case detected, trying to create docker client from Gitlab CI job environment."
                 )
-                DOCKER_CLIENT = docker.from_env(timeout=120)
+                DOCKER_CLIENT = docker.from_env()
                 if DOCKER_CLIENT.ping():
                     # see https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient.ping for more information about ping().
                     logger.debug(
@@ -400,12 +400,12 @@ class DockerBase:
                     f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
                 )
                 outputs_lines = docker_push_output.strip().split("\r\n")
-                error_dict = next(
+                error_line = next(
                     filter(lambda line: "errorDetail" in line, outputs_lines), None
                 )
-                if error_dict:
+                if error_line:
                     logger.error(
-                        f"{log_prompt} - Error pushing image {test_image_name_to_push}: {error_dict}"
+                        f"{log_prompt} - Error pushing image {test_image_name_to_push}: {error_line}"
                     )
                     raise Exception(
                         f"Failed to push image {test_image_name_to_push} to repository."
@@ -531,9 +531,9 @@ class DockerBase:
 
         if additional_requirements:
             logger.info(f"pip_requirements befor extend: {pip_requirements}")
-            pip_requirements.extend(additional_requirements)
+            pip_requirements = pip_requirements + additional_requirements
         identifier = hashlib.md5(
-            "\n".join(sorted(set(pip_requirements))).encode("utf-8")
+            "\n".join(sorted(pip_requirements)).encode("utf-8")
         ).hexdigest()
 
         test_docker_image = (
@@ -556,8 +556,6 @@ class DockerBase:
             logger.info(
                 f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
             )
-            test = "\n".join(sorted(set(pip_requirements))).encode("utf-8")
-            logger.info(f"======TEST======\n{pip_requirements}\n=====\n{test}\n===================")
             try:
                 self.create_image(
                     base_image,

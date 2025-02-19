@@ -532,7 +532,7 @@ class DockerBase:
         if additional_requirements:
             pip_requirements.extend(additional_requirements)
         identifier = hashlib.md5(
-            "\n".join(sorted(pip_requirements)).encode("utf-8")
+            "\n".join(sorted(set(pip_requirements))).encode("utf-8")
         ).hexdigest()
 
         test_docker_image = (
@@ -555,7 +555,7 @@ class DockerBase:
             logger.info(
                 f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
             )
-            test = "\n".join(sorted(pip_requirements)).encode("utf-8")
+            test = "\n".join(sorted(set(pip_requirements))).encode("utf-8")
             logger.info(f"======TEST======pip_requirements=====\n{test}\n===================")
             try:
                 self.create_image(

@@ -61,7 +61,6 @@ class PackMetaData(JSONObject):
         self._keywords: List[str] = []
         self._dependencies: Dict[str, Dict] = {}
         self._supported_modules: List[str] = DEFAULT_PLATFORM_MODULES
-        logger.info(f"supported_modules {self._supported_modules}")
 
     @property
     def name(self) -> str:
@@ -499,7 +498,7 @@ class PackMetaData(JSONObject):
     @property
     def supported_modules(self):
         """
-        TODO - _summary_
+        List of supported platform products & add-ons.
         """
         return self._supported_modules
 

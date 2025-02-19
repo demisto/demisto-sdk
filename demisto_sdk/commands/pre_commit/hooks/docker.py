@@ -315,6 +315,10 @@ class DockerHook(Hook):
         ).startswith(  # see CIAC-11832
             "mypy-in-docker"
         )
+        if mypy_additional_dependencies:
+            logger.info(f"{devtest_image.cache_info()=}")
+            logger.info(f"{devtest_image.cache_parameters()=}")
+            logger.info(f"{get_mypy_requirements()=}")
         dev_image = devtest_image(
             image,
             is_image_powershell,

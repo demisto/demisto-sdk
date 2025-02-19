@@ -6,6 +6,7 @@ from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
+    DEFAULT_PLATFORM_MODULES,
     PACKS_PACK_META_FILE_NAME,
     PARTNER_SUPPORT,
     XSOAR_AUTHOR,
@@ -21,12 +22,13 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
-from demisto_sdk.commands.common.constants import DEFAULT_PLATFORM_MODULES
+
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 XSOAR_CERTIFIED = "certified"
 XSOAR_EULA_URL = "https://github.com/demisto/content/blob/master/LICENSE"
 
 CORE_PACKS_LIST = get_core_pack_list()
+
 
 class PackMetaData(JSONObject):
     def __init__(self, path: Union[Path, str]):

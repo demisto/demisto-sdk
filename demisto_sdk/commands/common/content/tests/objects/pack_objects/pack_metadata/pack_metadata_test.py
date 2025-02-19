@@ -139,6 +139,8 @@ def test_support_details_getter(url, support, email, expected_url, expected_emai
 @pytest.mark.parametrize(
     "support, author, expected_author, expected_log",
     [
+        (XSOAR_SUPPORT, XSOAR_AUTHOR, XSOAR_AUTHOR, None),
+        ("someone", "someone", "someone", None),
         (
             XSOAR_SUPPORT,
             "someone",
@@ -151,9 +153,7 @@ def test_author_getter(caplog, mocker, support, author, expected_author, expecte
     obj = PackMetaData(PACK_METADATA)
     obj.support = support
     obj.author = author
-
     assert obj.author == expected_author
-
     if expected_log:
         record = one(caplog.records)
         assert record.levelname == "WARNING"

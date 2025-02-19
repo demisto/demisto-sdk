@@ -222,11 +222,7 @@ INVALID_HIDDEN_PARAM_INTEGRATIONS = [
                     "display": "test param",
                     "required": False,
                     "hidden": [
-                        "xsoar",
-                        "marketplacev2",
-                        "xpanse",
-                        "xsoar_saas",
-                        "xsoar_on_prem",
+                        mp.value for mp in MarketplaceVersions
                     ],
                 },
                 {

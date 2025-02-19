@@ -221,9 +221,7 @@ INVALID_HIDDEN_PARAM_INTEGRATIONS = [
                     "type": 8,
                     "display": "test param",
                     "required": False,
-                    "hidden": [
-                        mp.value for mp in MarketplaceVersions
-                    ],
+                    "hidden": [mp.value for mp in MarketplaceVersions],
                 },
                 {
                     "type": 4,

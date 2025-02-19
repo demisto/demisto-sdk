@@ -63,16 +63,6 @@ def should_update_graph(
         )
     )
 
-
-def log_git_branch():
-    current_branch = (
-        subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"])
-        .decode("utf-8")
-        .strip()
-    )
-    logger.info(f"On branch {current_branch}")
-
-
 @recover_if_fails
 def update_content_graph(
     content_graph_interface: ContentGraphInterface,
@@ -82,9 +72,7 @@ def update_content_graph(
     packs_to_update: Optional[List[str]] = None,
     dependencies: bool = True,
     output_path: Optional[Path] = None,
-) -> None:
-    log_git_branch()
-
+) -> None:    
     """This function updates a new content graph database in neo4j from the content path
     Args:
         content_graph_interface (ContentGraphInterface): The content graph interface.

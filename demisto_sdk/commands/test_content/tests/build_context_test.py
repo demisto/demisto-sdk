@@ -152,6 +152,25 @@ def generate_xsiam_servers_data():
     }
 
 
+def generate_xsoar_sass_servers_data():
+    return {
+        "qa2-test-111111": {
+            "ui_url": "https://xsoar1.paloaltonetworks.com/",
+            "instance_name": "qa2-test-111111",
+            "base_url": "https://api1.paloaltonetworks.com/",
+            "xsoar_version": "8.2.0",
+            "demisto_version": "99.99.98",
+        },
+        "qa2-test-222222": {
+            "ui_url": "https://xsoar-content-2.xdr-qa2-uat.us.paloaltonetworks.com/",
+            "instance_name": "qa2-test-222222",
+            "base_url": "https://api-xsoar-content-2.xdr-qa2-uat.us.paloaltonetworks.com",
+            "xsoar_version": "8.2.0",
+            "demisto_version": "99.99.98",
+        },
+    }
+
+
 def get_mocked_build_context(
     mocker,
     tmp_file,
@@ -291,6 +310,79 @@ def create_xsiam_build(
         "server_version": "XSIAM Master",
         "mem_check": False,
         "server_type": "XSIAM",
+        "cloud_servers_path": cloud_servers_path,
+        "cloud_machine_ids": "qa2-test-111111",
+        "cloud_servers_api_keys": xsiam_api_keys_path,
+        "artifacts_path": tmp_file,
+        "product_type": "xsoar",
+        "service_account": "test",
+        "artifacts_bucket": "test",
+        "machine_assignment": machine_assignment_path,
+    }
+    return BuildContext(kwargs, logging_manager)
+
+
+def create_xsoar_saas_build(
+    mocker,
+    tmp_file,
+    content_conf_json: dict = None,
+    machine_assignment_content: dict = None,
+):
+    mocked_demisto_client = DemistoClientMock()
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.demisto_client",
+        mocked_demisto_client,
+    )
+    logging_manager = ParallelLoggingManager(tmp_file / "log_file.log")
+    conf_path = tmp_file / "conf_path"
+    conf_path.write_text(json.dumps(content_conf_json or generate_content_conf_json()))
+
+    secret_conf_path = tmp_file / "secret_conf_path"
+    secret_conf_path.write_text(json.dumps(generate_secret_conf_json()))
+
+    cloud_servers_path = tmp_file / "xsoar_saas_servers_path.json"
+    cloud_servers_path.write_text(json.dumps(generate_xsoar_sass_servers_data()))
+
+    xsiam_api_keys_path = tmp_file / "xsoar_saas_api_keys_path.json"
+    xsiam_api_keys_path.write_text(
+        json.dumps(
+            {
+                "qa2-test-111111": {"api-key": "api_key", "x-xdr-auth-id": 1},
+                "qa2-test-222222": {"api-key": "api_key", "x-xdr-auth-id": 1},
+            }
+        )
+    )
+
+    env_results_path = tmp_file / "env_results_path"
+    env_results_path.write_text(json.dumps(generate_env_results_content()))
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.ENV_RESULTS_PATH",
+        str(env_results_path),
+    )
+
+    machine_assignment_path = tmp_file / "machine_assignment.json"
+    machine_assignment_path.write_text(
+        json.dumps(machine_assignment_content or {}) or "{}"
+    )
+
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.ServerContext._get_all_integration_config",
+        return_value=[],
+    )
+    kwargs = {
+        "api_key": "api_key",
+        "server": None,
+        "conf": conf_path,
+        "secret": secret_conf_path,
+        "slack": "slack_token",
+        "nightly": False,
+        "is_ami": True,
+        "circleci": "circle_token",
+        "build_number": "11111",
+        "branch_name": "branch",
+        "server_version": "XSOAR SAAS Master",
+        "mem_check": False,
+        "server_type": "XSOAR SAAS",
         "cloud_servers_path": cloud_servers_path,
         "cloud_machine_ids": "qa2-test-111111",
         "cloud_servers_api_keys": xsiam_api_keys_path,
@@ -570,6 +662,17 @@ def test_playbook_with_marketplaces(mocker, tmp_path):
             "tests": {TEST_PLAYBOOKS: ["xsoar_playbook_with_marketplaces_mismatch"]},
         }
     }
+    machine_assignment_content_xsoar_saas = {
+        "qa2-test-111111": {
+            "packs_to_install": ["TEST"],
+            "tests": {
+                TEST_PLAYBOOKS: [
+                    "xsoar_saas_playbook_with_marketplaces_mismatch",
+                    "xsoar_playbook_with_marketplaces_mismatch",
+                ]
+            },
+        }
+    }
 
     tests = [
         generate_test_configuration(
@@ -579,6 +682,10 @@ def test_playbook_with_marketplaces(mocker, tmp_path):
         generate_test_configuration(
             playbook_id="xsoar_playbook_with_marketplaces_mismatch",
             marketplaces="xsoar",
+        ),
+        generate_test_configuration(
+            playbook_id="xsoar_saas_playbook_with_marketplaces_mismatch",
+            marketplaces="xsoar_on_prem",
         ),
     ]
     content_conf_json = generate_content_conf_json(tests=tests)
@@ -614,6 +721,25 @@ def test_playbook_with_marketplaces(mocker, tmp_path):
     assert (
         "xsoar_playbook_with_marketplaces_mismatch"
         in xsiam_build_context.tests_data_keeper.skipped_tests
+    )
+
+    xsoar_saas_build_context = create_xsoar_saas_build(
+        mocker,
+        tmp_path,
+        content_conf_json=content_conf_json,
+        machine_assignment_content=machine_assignment_content_xsoar_saas,
+    )
+    assert (
+        "xsoar_saas_playbook_with_marketplaces_mismatch"
+        in xsoar_saas_build_context.tests_data_keeper.skipped_tests
+    )
+    assert (
+        "xsiam_playbook_with_marketplaces_mismatch"
+        in xsoar_saas_build_context.tests_data_keeper.skipped_tests
+    )
+    assert (
+        "xsoar_playbook_with_marketplaces_mismatch"
+        not in xsoar_saas_build_context.tests_data_keeper.skipped_tests
     )
 
 

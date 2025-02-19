@@ -1,5 +1,4 @@
 import os
-import subprocess
 from pathlib import Path
 from typing import List, Optional
 
@@ -72,7 +71,7 @@ def update_content_graph(
     packs_to_update: Optional[List[str]] = None,
     dependencies: bool = True,
     output_path: Optional[Path] = None,
-) -> None:    
+) -> None:
     """This function updates a new content graph database in neo4j from the content path
     Args:
         content_graph_interface (ContentGraphInterface): The content graph interface.

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -20,11 +19,6 @@ class IsTestsSectionValidValidator(BaseValidator[ContentTypes]):
     error_message = 'The tests section of the following {0} is malformed. It should either be a non empty list for tests or "No tests" in case there are no tests.'
     related_field = "tests"
     is_auto_fixable = False
-    expected_git_statuses = [
-        GitStatuses.MODIFIED,
-        GitStatuses.ADDED,
-        GitStatuses.RENAMED,
-    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

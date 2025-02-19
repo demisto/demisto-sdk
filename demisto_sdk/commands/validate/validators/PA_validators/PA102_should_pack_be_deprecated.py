@@ -35,7 +35,7 @@ class ShouldPackBeDeprecatedValidator(BaseValidator[ContentTypes]):
     )
     related_field = "deprecated"
     is_auto_fixable = True
-    expected_git_statuses = [GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

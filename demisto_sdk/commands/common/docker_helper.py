@@ -471,14 +471,15 @@ class DockerBase:
         repository, tag = image.rsplit(
             ":", 1
         )  # rsplit is used to support non-default docker ports which require extra colon. i.e: `image.registry:5000/repo/some-image:main`
-        container.commit(
-            repository=repository, tag=tag, changes=self.changes[container_type]
-        )
         if IS_CONTENT_GITLAB_CI:
             container.commit(
                 repository=repository.replace(f"{DOCKER_REGISTRY_URL}/", ""),
                 tag=tag,
                 changes=self.changes[container_type],
+            )
+        else:
+            container.commit(
+                repository=repository, tag=tag, changes=self.changes[container_type]
             )
         if push and IS_CONTENT_GITLAB_CI:
             self.push_image(image, log_prompt=log_prompt)

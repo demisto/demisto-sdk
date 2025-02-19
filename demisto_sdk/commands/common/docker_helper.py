@@ -100,7 +100,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
                 logger.debug(
                     "Gitlab CI use case detected, trying to create docker client from Gitlab CI job environment."
                 )
-                DOCKER_CLIENT = docker.from_env()
+                DOCKER_CLIENT = docker.from_env(timeout=120)
                 if DOCKER_CLIENT.ping():
                     # see https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient.ping for more information about ping().
                     logger.debug(
@@ -555,6 +555,8 @@ class DockerBase:
             logger.info(
                 f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
             )
+            test = "\n".join(sorted(pip_requirements)).encode("utf-8")
+            logger.info(f"======TEST======pip_requirements=====\n{test}\n===================")
             try:
                 self.create_image(
                     base_image,

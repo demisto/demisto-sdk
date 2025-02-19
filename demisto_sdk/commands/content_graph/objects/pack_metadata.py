@@ -492,7 +492,6 @@ class PackMetadata(BaseModel):
             MarketplaceVersions.XPANSE,
             MarketplaceVersions.XSOAR_ON_PREM,
             MarketplaceVersions.XSOAR_SAAS,
-            MarketplaceVersions.PLATFORM,
         ]:
             return author
         elif marketplace == MarketplaceVersions.MarketplaceV2:

@@ -4514,7 +4514,7 @@ def test_IsHiddenableParamValidator_fix():
             ],
             1,
             [
-                f"The following params contain invalid hidden field values:\nThe param test_param_1 contains the following invalid hidden value: [False]\nThe param test_param_2 contains the following invalid hidden value: ['some comment']\nThe param test_param_3 contains the following invalid hidden value: flase\nThe param test_param_4 contains the following invalid hidden value: yes\nThe param test_param_5 contains the following invalid hidden value: 1\nThe valid values must be either a boolean, or a list of marketplace values.\n(Possible marketplace values: {MARKETPLACE_VALUES}). Note that this param is not required, and may be omitted."
+                f"The following params contain invalid hidden field values:\nThe param test_param_1 contains the following invalid hidden value: [False]\nThe param test_param_2 contains the following invalid hidden value: ['some comment']\nThe param test_param_3 contains the following invalid hidden value: flase\nThe param test_param_4 contains the following invalid hidden value: yes\nThe param test_param_5 contains the following invalid hidden value: 1\nThe valid values must be either a boolean, or a list of marketplace values.\n(Possible marketplace values: {(', '.join(MARKETPLACE_VALUES))}). Note that this param is not required, and may be omitted."
             ],
         ),
     ],

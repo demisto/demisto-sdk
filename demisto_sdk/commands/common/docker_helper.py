@@ -556,7 +556,7 @@ class DockerBase:
                 f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
             )
             test = "\n".join(sorted(set(pip_requirements))).encode("utf-8")
-            logger.info(f"======TEST======pip_requirements=====\n{test}\n===================")
+            logger.info(f"======TEST======\n{pip_requirements}\n=====\n{test}\n===================")
             try:
                 self.create_image(
                     base_image,

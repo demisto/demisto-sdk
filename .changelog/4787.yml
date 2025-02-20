@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where *GR103* falsely failed when content items contains the word 'alert' in XSIAM.
+- description: Fixed an issue in graph creation where the content items in XSIAM replaced the word 'alert' with 'incident' on upload.
   type: fix
 pr_number: 4785

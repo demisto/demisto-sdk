@@ -19,7 +19,7 @@ class NoRemovedIntegrationParametersValidator(BaseValidator[ContentTypes]):
     error_message = "Parameters have been removed from the integration, the removed parameters are: {}."
     related_field = "configuration"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the *RN107* validation failed when releasing an update on case layouts.
+  type: fix
+pr_number: 4814

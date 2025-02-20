@@ -30,10 +30,4 @@ class PlaybookParser(BasePlaybookParser, content_type=ContentType.PLAYBOOK):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {
-            MarketplaceVersions.XSOAR,
-            MarketplaceVersions.MarketplaceV2,
-            MarketplaceVersions.XPANSE,
-            MarketplaceVersions.XSOAR_SAAS,
-            MarketplaceVersions.XSOAR_ON_PREM,
-        }
+        return set(MarketplaceVersions)

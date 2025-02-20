@@ -4,7 +4,6 @@ from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import (
     EXCLUDED_DISPLAY_NAME_WORDS,
-    GitStatuses,
 )
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
@@ -83,11 +82,6 @@ class IsEntityNameContainExcludedWordValidator(BaseValidator[ContentTypes]):
     related_field = ""
     rationale = "Increases clarity by keeping content names simple"
     is_auto_fixable = False
-    expected_git_statuses = [
-        GitStatuses.RENAMED,
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

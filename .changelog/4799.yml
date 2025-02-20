@@ -1,0 +1,4 @@
+changes:
+- description: Add the 'Mirroring' section to SectionOrderValues in order to support the new golden standard effort.
+  type: feature
+pr_number: 4799

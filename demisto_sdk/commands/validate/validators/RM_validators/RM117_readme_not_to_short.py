@@ -30,6 +30,7 @@ class NotToShortReadmeValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(readme_size),
                 content_object=content_item,
+                path=content_item.readme.file_path,
             )
             for content_item in content_items
             if (readme_size := len(content_item.readme.file_content))

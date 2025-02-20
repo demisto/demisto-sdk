@@ -108,6 +108,7 @@ ON MATCH
 
 RETURN count(r) AS relationships_merged"""
 
+
 def update_alert_to_incident_relationships():
     return f"""
 // Updated USES relationships between nodes when the source contains "alert" in the id,
@@ -220,8 +221,6 @@ def create_relationships(
         create_relationships_by_type(tx, relationship, data)
 
     run_query(tx, update_alert_to_incident_relationships())
-
-
 
 
 def create_relationships_by_type(

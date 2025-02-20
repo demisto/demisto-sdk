@@ -71,6 +71,7 @@ class PackMetadata(BaseModel):
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
     disable_monthly: Optional[bool] = Field(None, alias="disableMonthly")
     content_commit_hash: Optional[str] = Field(None, alias="contentCommitHash")
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
     def _enhance_pack_properties(
         self,
@@ -188,7 +189,7 @@ class PackMetadata(BaseModel):
         collected_content_items: dict = {}
         content_displays: dict = {}
         for content_item in content_items:
-            if should_ignore_item_in_metadata(content_item):
+            if should_ignore_item_in_metadata(content_item, marketplace):
                 continue
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
@@ -495,6 +496,8 @@ class PackMetadata(BaseModel):
             return author
         elif marketplace == MarketplaceVersions.MarketplaceV2:
             return author.replace("Cortex XSOAR", "Cortex XSIAM")
+        elif marketplace == MarketplaceVersions.PLATFORM:
+            return author.replace("Cortex XSOAR", "Cortex")
         raise ValueError(f"Unknown marketplace version for author: {marketplace}")
 
     def _add_item_to_metadata_list(
@@ -640,7 +643,7 @@ class PackMetadata(BaseModel):
         return filtered_content_items[0] if filtered_content_items else None
 
 
-def should_ignore_item_in_metadata(content_item):
+def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersions):
     """
     Checks whether content item should be ignored from metadata
     """
@@ -651,6 +654,10 @@ def should_ignore_item_in_metadata(content_item):
     elif content_item.is_silent:
         logger.debug(
             f"Skipping {content_item.name} in metadata creation: item is silent playbook/trigger."
+        )
+    elif marketplace not in content_item.marketplaces:
+        logger.debug(
+            f"Skipping {content_item.name} in metadata creation: item is not supported in {marketplace=}."
         )
     else:
         return False

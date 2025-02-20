@@ -1960,6 +1960,7 @@ class MarketplaceVersions(StrEnum):
     XPANSE = "xpanse"
     XSOAR_SAAS = "xsoar_saas"
     XSOAR_ON_PREM = "xsoar_on_prem"
+    PLATFORM = "platform"
 
 
 MarketplaceVersionToMarketplaceName = {
@@ -1975,6 +1976,7 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR_ON_PREM: "Config/core_packs_list.json",
     MarketplaceVersions.MarketplaceV2: "Config/core_packs_mpv2_list.json",
     MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
+    MarketplaceVersions.PLATFORM: "Config/core_packs_platform_list.json",
 }
 
 
@@ -2248,3 +2250,5 @@ MIRRORING_COMMANDS: list[str] = [
     "get-modified-remote-data",
     "update-remote-system",
 ]
+
+DEFAULT_PLATFORM_MODULES: list[str] = []

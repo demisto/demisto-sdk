@@ -396,12 +396,24 @@ class DockerBase:
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )
-                logger.success(
-                    f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
-                )
                 logger.debug(
                     f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
                 )
+                outputs_lines = docker_push_output.strip().split("\r\n")
+                error_line = next(
+                    filter(lambda line: "errorDetail" in line, outputs_lines), None
+                )
+                if error_line:
+                    logger.error(
+                        f"{log_prompt} - Error pushing image {test_image_name_to_push}: {error_line}"
+                    )
+                    raise Exception(
+                        f"Failed to push image {test_image_name_to_push} to repository."
+                    )
+                else:
+                    logger.success(
+                        f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
+                    )
                 break
             except (
                 requests.exceptions.ConnectionError,
@@ -459,15 +471,12 @@ class DockerBase:
         repository, tag = image.rsplit(
             ":", 1
         )  # rsplit is used to support non-default docker ports which require extra colon. i.e: `image.registry:5000/repo/some-image:main`
+        if IS_CONTENT_GITLAB_CI:
+            repository = repository.replace(f"{DOCKER_REGISTRY_URL}/", "")
+
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )
-        if IS_CONTENT_GITLAB_CI:
-            container.commit(
-                repository=repository.replace(f"{DOCKER_REGISTRY_URL}/", ""),
-                tag=tag,
-                changes=self.changes[container_type],
-            )
         if push and IS_CONTENT_GITLAB_CI:
             self.push_image(image, log_prompt=log_prompt)
         return image
@@ -521,9 +530,9 @@ class DockerBase:
             )
 
         if additional_requirements:
-            pip_requirements.extend(additional_requirements)
+            pip_requirements = pip_requirements + additional_requirements
         identifier = hashlib.md5(
-            "\n".join(sorted(pip_requirements)).encode("utf-8")
+            "\n".join(sorted(set(pip_requirements))).encode("utf-8")
         ).hexdigest()
 
         test_docker_image = (
@@ -556,7 +565,7 @@ class DockerBase:
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
-                logger.critical(  # noqa: PLE1205
+                logger.exception(  # noqa: PLE1205
                     "{}", f"<red>{log_prompt} - Build errors occurred: {errors}</red>"
                 )
         return test_docker_image, errors

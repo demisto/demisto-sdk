@@ -108,6 +108,35 @@ ON MATCH
 
 RETURN count(r) AS relationships_merged"""
 
+def alert_to_incident_update_relationship():
+    return f"""
+
+// get USES relationship when target node contains "alert"
+MATCH (source)-[r:{RelationshipType.USES}]->(target)
+WHERE toLower(target.object_id) CONTAINS 'alert' AND target.not_in_repository
+   AND 'marketplacev2' IN source.marketplaces
+   AND NOT 'xsoar' IN source.marketplaces
+WITH target, source, r
+
+// get nodes with "incident" instead "alert" in the object_id
+MATCH (target_incident)
+WHERE toLower(target_incident.object_id) = REPLACE(toLower(target.object_id), 'alert', 'incident')
+    AND NOT target_incident.not_in_repository
+    AND target.content_type in labels(target_incident)
+    AND 'marketplacev2' IN target_incident.marketplaces
+    AND 'xsoar' IN target_incident.marketplaces
+WITH target_incident,target, source, r
+
+
+// create a relationship with the incident node
+MERGE (source)-[r_new:{RelationshipType.USES}]->(target_incident)
+ON CREATE SET r_new.mandatorily = r.mandatorily
+
+// delete the old target node and old relationship
+DELETE r
+DELETE target
+"""
+
 
 def build_in_pack_relationships_query() -> str:
     return f"""// Creates IN_PACK relationships between content items and their packs.
@@ -184,6 +213,10 @@ def create_relationships(
 
     for relationship, data in relationships.items():
         create_relationships_by_type(tx, relationship, data)
+
+    run_query(tx, alert_to_incident_update_relationship())
+
+
 
 
 def create_relationships_by_type(

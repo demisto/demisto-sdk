@@ -108,17 +108,22 @@ ON MATCH
 
 RETURN count(r) AS relationships_merged"""
 
-def alert_to_incident_update_relationship():
+def update_alert_to_incident_relationships():
     return f"""
+// Updated USES relationships between nodes when the source contains "alert" in the id,
+// This query changed the target node to content item that is in repository and its name is similar
+// to the old target with "incident" instead "alert" in the name.
 
-// get USES relationship when target node contains "alert"
+// Get USES relationship when target node contains "alert" and target node not in repository
+// and source not is in marketplacev2 and not xsoar
 MATCH (source)-[r:{RelationshipType.USES}]->(target)
 WHERE toLower(target.object_id) CONTAINS 'alert' AND target.not_in_repository
    AND 'marketplacev2' IN source.marketplaces
    AND NOT 'xsoar' IN source.marketplaces
 WITH target, source, r
 
-// get nodes with "incident" instead "alert" in the object_id
+// get nodes with "incident" instead "alert" in the object_id that is in repository with the same
+// content type and its in marketplacev2 and xsoar
 MATCH (target_incident)
 WHERE toLower(target_incident.object_id) = REPLACE(toLower(target.object_id), 'alert', 'incident')
     AND NOT target_incident.not_in_repository
@@ -128,9 +133,9 @@ WHERE toLower(target_incident.object_id) = REPLACE(toLower(target.object_id), 'a
 WITH target_incident,target, source, r
 
 
-// create a relationship with the incident node
-MERGE (source)-[r_new:{RelationshipType.USES}]->(target_incident)
-ON CREATE SET r_new.mandatorily = r.mandatorily
+// create a relationship with the new incident node
+CREATE (source)-[r_new:{RelationshipType.USES}{{mandatorily: r.mandatorily}}]->(target_incident)
+
 
 // delete the old target node and old relationship
 DELETE r
@@ -214,7 +219,7 @@ def create_relationships(
     for relationship, data in relationships.items():
         create_relationships_by_type(tx, relationship, data)
 
-    run_query(tx, alert_to_incident_update_relationship())
+    run_query(tx, update_alert_to_incident_relationships())
 
 
 

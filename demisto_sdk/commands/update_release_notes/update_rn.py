@@ -4,6 +4,7 @@ This script is used to create a release notes template
 
 import copy
 import errno
+import logging
 import os
 import re
 from enum import Enum
@@ -1171,6 +1172,7 @@ class UpdateRN:
         """
         text = text.encode("utf-8").decode("unicode_escape")
         if self.is_force:
+            logging.error(f'is force set to {self.is_force}')
             rn_desc = f"## {content_name}\n\n"
             rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
         else:

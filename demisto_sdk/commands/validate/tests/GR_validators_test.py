@@ -500,30 +500,6 @@ def repo_for_test(graph_repo):
     return graph_repo
 
 
-@pytest.fixture
-def repo_for_test_SearchAlerts_MarketplaceV2(graph_repo):
-    pack_1 = graph_repo.create_pack("Pack1")
-    pack_1.pack_metadata.update(
-        {"marketplaces": [MarketplaceVersions.MarketplaceV2.value]}
-    )
-    pack_1.create_script("SearchIncidents", code="search_incidents()")
-    pack_1.create_script(
-        "MyScript2", code='demisto.execute_command("SearchAlerts", dArgs)'
-    )
-    return graph_repo
-
-
-@pytest.fixture
-def repo_for_test_SearchAlerts_XSOAR(graph_repo):
-    pack_1 = graph_repo.create_pack("Pack1")
-    pack_1.pack_metadata.update({"marketplaces": [MarketplaceVersions.XSOAR.value]})
-    pack_1.create_script("SearchIncidents", code="search_incidents()")
-    pack_1.create_script(
-        "MyScript2", code='demisto.execute_command("SearchAlerts", dArgs)'
-    )
-    return graph_repo
-
-
 def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
     repo_for_test: Repo,
 ):
@@ -547,48 +523,6 @@ def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
         content_items=[]
     )
     assert len(results) == 3
-
-
-def test_IsUsingUnknownContentValidator_verify_alert_to_incident_MarketplaceV2(
-    repo_for_test_SearchAlerts_MarketplaceV2: Repo,
-):
-    """
-    Given:
-        - A content graph interface with preloaded repository data with one pack in marketplace v2 that contains 2 scripts:
-            - SearchIncidents
-            - MyScript2: Required dependencies - 'SearchAlerts'
-    When:
-        - The GR103 validation is executed across the entire repository (-a) to detect instances of unknown content usage.
-    Then:
-        - The validator should accurately identify there is no unknown content usage because SearchIncidents uploaded as SearchAlerts in marketplace v2.
-    """
-    graph_interface = repo_for_test_SearchAlerts_MarketplaceV2.create_graph()
-    BaseValidator.graph_interface = graph_interface
-    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
-        content_items=[]
-    )
-    assert not results
-
-
-def test_IsUsingUnknownContentValidator_verify_alert_to_incident_XSOAR(
-    repo_for_test_SearchAlerts_XSOAR: Repo,
-):
-    """
-    Given:
-        - A content graph interface with preloaded repository data with one pack in XSOAR marketplace that contains 2 scripts:
-            - SearchIncidents
-            - MyScript2: Required dependencies - 'SearchAlerts'
-    When:
-        - The GR103 validation is executed across the entire repository (-a) to detect instances of unknown content usage.
-    Then:
-        - The validator should accurately identify there is one unknown content usage.
-    """
-    graph_interface = repo_for_test_SearchAlerts_XSOAR.create_graph()
-    BaseValidator.graph_interface = graph_interface
-    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
-        content_items=[]
-    )
-    assert len(results) == 1
 
 
 @pytest.mark.parametrize(

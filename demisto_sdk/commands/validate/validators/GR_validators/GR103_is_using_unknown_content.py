@@ -3,9 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -109,31 +107,14 @@ class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
                 or relationship.content_item_to.name
                 for relationship in content_item.uses
             ]
-
-            if (
-                names_of_unknown_items
-                and MarketplaceVersions.MarketplaceV2.value in content_item.marketplaces
-            ):  # in MarketplaceV2 content items that includes the word 'incident' in its name replaced with 'alert'
-                names_of_unknown_items_to_search = names_of_unknown_items.copy()
-                for unknown_content_item in names_of_unknown_items_to_search:
-                    if "alert" in unknown_content_item.lower():
-                        # change the content item name (replace the word alert with incident)
-                        content_item_to_search = replace_alert_to_incident(
-                            unknown_content_item
-                        )
-                        # search for this item, if exists - remove it from names_of_unknown_items, GR103 should not failed on this item
-                        if self.graph.search(object_id=content_item_to_search):
-                            names_of_unknown_items.remove(unknown_content_item)
-
-            if names_of_unknown_items:
-                results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            content_item.name,
-                            ", ".join(f"'{name}'" for name in names_of_unknown_items),
-                        ),
-                        content_object=content_item,
-                    )
+            results.append(
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message.format(
+                        content_item.name,
+                        ", ".join(f"'{name}'" for name in names_of_unknown_items),
+                    ),
+                    content_object=content_item,
                 )
+            )
         return results

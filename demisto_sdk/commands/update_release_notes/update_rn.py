@@ -1206,7 +1206,7 @@ class UpdateRN:
                             changed_content_object
                         )
                         rn_desc += current_rn
-                    if not current_rn and not text:
+                    if not any([current_rn, text, docker_image]):
                         rn_desc += GENERAL_UPDATE_RN.format(
                             name=(name or "%%UPDATE_CONTENT_ITEM_NAME%%"),
                             type=(type_value or "%%UPDATE_CONTENT_ITEM_TYPE%%"),

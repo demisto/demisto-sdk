@@ -532,7 +532,7 @@ class DockerBase:
         if additional_requirements:
             pip_requirements = pip_requirements + additional_requirements
         identifier = hashlib.md5(
-            "\n".join(sorted(pip_requirements)).encode("utf-8")
+            "\n".join(sorted(set(pip_requirements))).encode("utf-8")
         ).hexdigest()
 
         test_docker_image = (

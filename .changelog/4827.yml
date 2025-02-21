@@ -1,0 +1,4 @@
+changes:
+- description: Added playbook tags into pack's "metadata.json".
+  type: <feature>
+pr_number: 4827

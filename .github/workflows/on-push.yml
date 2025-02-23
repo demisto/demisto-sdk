@@ -417,7 +417,7 @@ jobs:
           LATEST_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           echo "Commenting validate summary for PR: $PR_NUMBER"
-          poetry run python ./Utils/github_workflow_scripts/changelog_comment_scripts/comment_on_pr.py -n "$PR_NUMBER" -lt "$LATEST_COMMIT_SHA" -ght ${{ secrets.GITHUB_TOKEN }}
+          poetry run python ./Utils/github_workflow_scripts/changelog_comment_scripts/comment_on_pr.py -n "$PR_NUMBER" -lt "$LATEST_COMMIT_SHA" -ght ${{ secrets.GITHUB_TOKEN }} --validate_summary
 
   slack-notify-master-failure:
     needs:

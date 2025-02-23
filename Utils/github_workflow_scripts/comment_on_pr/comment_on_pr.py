@@ -80,7 +80,7 @@ def arguments_handler():
         "-lt",
         "--latest_commit",
         help="The commit number that triggered the workflow.",
-        required=True,
+        required=False,
     )
     parser.add_argument(
         "-ght", "--github_token", help="The token for Github-Api", required=True

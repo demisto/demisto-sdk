@@ -410,14 +410,6 @@ jobs:
           artifacts-path-dir: test-new-validate-command
           artifact-name: test-new-validate-command-artifacts
           validate-arguments: "-a --prev-ver origin/master --config-path sdk_validation_config.toml"
-      - name: Comment validate summary In PR Description
-        continue-on-error: true
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          LATEST_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          echo "Commenting validate summary for PR: $PR_NUMBER"
-          poetry run python ./Utils/github_workflow_scripts/changelog_comment_scripts/comment_on_pr.py -n "$PR_NUMBER" -lt "$LATEST_COMMIT_SHA" -ght ${{ secrets.GITHUB_TOKEN }} --validate_summary
 
   slack-notify-master-failure:
     needs:

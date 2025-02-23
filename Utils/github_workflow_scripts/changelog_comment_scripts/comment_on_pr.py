@@ -1,13 +1,16 @@
 import argparse
+import os
+from pathlib import Path
 import sys
 
+from demisto_sdk.commands.common.constants import CONTENT_REPO
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.scripts.changelog.changelog import Changelog
 
 
 def comment_changelog_on_pr(pr_num: int, latest_commit: str, github_token: str):
     try:
-        comment_validate_summary(latest_commit, github_token, pr_num)
+        Changelog(pr_num).comment(latest_commit, github_token)
         sys.exit(0)
     except Exception:
         logger.exception("Couldn't comment on the changelog.")
@@ -15,7 +18,7 @@ def comment_changelog_on_pr(pr_num: int, latest_commit: str, github_token: str):
         
 
 
-def comment_validate_summary(self, latest_commit: str, github_token: str, pr_num: int) -> None:
+def comment_validate_summary(github_token: str, pr_num: int) -> None:
     """
     Comment on the PR
 
@@ -24,37 +27,38 @@ def comment_validate_summary(self, latest_commit: str, github_token: str, pr_num
             modified between the last two commits.
 
     """
-    changelog_path = CHANGELOG_FOLDER / f"{self.pr_number}.yml"
+    validate_summary_msg = obtain_validate_summary_msg()
+    
+    from github import Github
 
-    previous_commit = GIT_UTIL.get_previous_commit(latest_commit).hexsha
-    if GIT_UTIL.has_file_changed(
-        changelog_path, latest_commit, previous_commit
-    ) or GIT_UTIL.has_file_added(changelog_path, latest_commit, previous_commit):
-        logger.info(f"Changelog {changelog_path} has been added/modified")
+    github_client = Github(login_or_token=github_token)
 
-        current_changelogs = LogFileObject(
-            **YmlFile.read_from_local_path(changelog_path)
-        ).get_log_entries()
+    pr = github_client.get_repo(CONTENT_REPO).get_pull(int(pr_num))
+    pr.create_issue_comment(validate_summary_msg)
 
-        github_client = Github(login_or_token=github_token)
+    logger.info(f"Successfully commented on PR {pr_num} the validate summary.")
 
-        pr = github_client.get_repo(DEMISTO_SDK_REPO).get_pull(int(self.pr_number))
-        markdown = "Changelog(s) in markdown:\n"
-        markdown += "\n".join(
-            [changelog.to_string() for changelog in current_changelogs]
-        )
-        pr.create_issue_comment(markdown)
 
-        logger.info(f"Successfully commented on PR {self.pr_number} the changelog")
+def obtain_validate_summary_msg() -> str:
+    validate_summary_msg = ""
+    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+            artifacts_folder
+        ).exists():
+            artifacts_validate_summary_path = Path(
+                f"{artifacts_folder}/validate_summary.txt"
+            )
+            logger.info(f"reading from the validate summary results to a txt file at {artifacts_validate_summary_path}.")
+            with open(artifacts_validate_summary_path, "ר") as f:
+                validate_summary_msg = f.read()
     else:
-        logger.info(
-            f"{changelog_path} has not been changed, not commenting on PR {self.pr_number}"
-        )
-        
+        raise Exception(f"could not find validate summary file.")
+    
+    if not validate_summary_msg:
+        raise Exception("validate_summary_msg is empty.")
 
-def comment_validate_summary_on_pr(pr_num: int, latest_commit: str, github_token: str):
+def comment_validate_summary_on_pr(pr_num: int, github_token: str):
     try:
-        Changelog(pr_num).comment(latest_commit, github_token)
+        comment_validate_summary(github_token, pr_num)
         sys.exit(0)
     except Exception:
         logger.exception("Couldn't comment validate summary on the PR.")

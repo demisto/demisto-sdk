@@ -172,6 +172,7 @@ class ResultWriter:
             artifacts_validate_summary_path = Path(
                 f"{artifacts_folder}/validate_summary.txt"
             )
+            logger.info(f"Writing the validate summary results to a txt file at {artifacts_validate_summary_path}.")
             with open(artifacts_validate_summary_path, "w") as f:
                 f.write(validate_summary)
 

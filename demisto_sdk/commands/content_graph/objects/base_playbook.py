@@ -223,12 +223,4 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
         return ImageRelatedFile(self.path, git_sha=self.git_sha)
 
     def metadata_fields(self) -> Set[str]:
-        return (
-            super()
-            .metadata_fields()
-            .union(
-                {
-                    "tags"
-                }
-            )
-        )
+        return super().metadata_fields().union({"tags"})

@@ -292,3 +292,5 @@ class StrictPlaybook(BaseStrictModel):
     role_name: Optional[List[str]] = Field(None, alias="rolename")
     marketplaces: Optional[List[MarketplaceVersions]] = None
     is_silent: Optional[bool] = Field(alias="issilent")
+    tags: Optional[List[str]] = None
+

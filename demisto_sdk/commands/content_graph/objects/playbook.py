@@ -15,6 +15,3 @@ class Playbook(BasePlaybook, content_type=ContentType.PLAYBOOK):  # type: ignore
             if TEST_PLAYBOOKS_DIR not in path.parts and path.suffix == ".yml":
                 return True
         return False
-
-    def metadata_fields(self) -> Set[str]:
-        return super().metadata_fields().union({"tags"})

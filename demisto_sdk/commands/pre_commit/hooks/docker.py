@@ -439,7 +439,7 @@ class DockerHook(Hook):
         new_hook["name"] = f"{new_hook.get('name')}-{image}"
         new_hook["language"] = "docker_image"
         env = new_hook.pop("env", {})
-        docker_version = DockerBase.version()
+        docker_version = DockerBase().version()
         quiet = True
         # quiet mode silently pulls the image, and it is supported only above 19.03
         if docker_version < Version("19.03"):

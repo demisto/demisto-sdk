@@ -26,7 +26,7 @@ def validate_all_configured_error_codes_exist(
     - configured_validations (ConfiguredValidations): The ConfiguredValidations object
 
     Returns:
-    - 0 if the validation pass, otherwise return False.
+    - 0 if the validation pass, otherwise return error code.
     """
     exit_code = 0
     configured_errors_set: Set[str] = set()
@@ -62,7 +62,7 @@ def validate_all_validations_run_on_git_mode(
     - configured_validations (ConfiguredValidations): The ConfiguredValidations object
 
     Returns:
-    - 0 if the validation pass, otherwise return False.
+    - 0 if the validation pass, otherwise return error code.
     """
     exit_code = 0
     if non_configured_use_git_error_codes := set(
@@ -85,7 +85,7 @@ def validate_error_code_not_configured_twice(
     - configured_validations (ConfiguredValidations): The ConfiguredValidations object
 
     Returns:
-    - 0 if the validation pass, otherwise return False.
+    - 0 if the validation pass, otherwise return error code.
     """
     exit_code = 0
     intersected_use_git_error_codes = set(
@@ -116,7 +116,7 @@ def validate_all_error_codes_configured(
     - configured_validations (ConfiguredValidations): The ConfiguredValidations object
 
     Returns:
-    - 0 if the validation pass, otherwise return False.
+    - 0 if the validation pass, otherwise return error code.
     """
     exit_code = 0
     configured_errors_set: Set[str] = set()
@@ -144,7 +144,7 @@ def validate_all_error_codes_configured(
 
 @main.command()
 def validate_config_file(
-    config_path: Path = typer.Option(None, help="Path for a config file to run."),
+    config_path: Path = typer.Option(..., help="Path for a config file to run."),
     validations_to_run: str = typer.Option(
         "",
         help="A comma separated list of specific error codes to run on the config file.",

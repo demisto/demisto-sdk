@@ -60,7 +60,7 @@ class PackMetaData(JSONObject):
         self._useCases: List[str] = []
         self._keywords: List[str] = []
         self._dependencies: Dict[str, Dict] = {}
-        self._supported_modules: List[str] = DEFAULT_PLATFORM_MODULES
+        self._supported_modules: List[str] = []
 
     @property
     def name(self) -> str:
@@ -586,7 +586,7 @@ class PackMetaData(JSONObject):
             self.categories = user_metadata.get("categories", [])
             self.use_cases = user_metadata.get("useCases", [])
             self.dependencies = user_metadata.get("dependencies", {})
-            self.supportedModules = user_metadata.get(
+            self.supported_modules = user_metadata.get(
                 "supportedModules", DEFAULT_PLATFORM_MODULES
             )
             if self.price > 0:

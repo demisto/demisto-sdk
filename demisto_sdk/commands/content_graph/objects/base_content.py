@@ -204,7 +204,8 @@ class BaseContent(BaseNode):
     old_base_content_object: Optional["BaseContent"] = None
     related_content_dict: dict = Field({}, exclude=True)
     structure_errors: List[StructureError] = Field(default_factory=list, exclude=True)
-
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    
     def _save(
         self,
         path: Path,

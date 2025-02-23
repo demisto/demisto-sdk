@@ -173,6 +173,9 @@ CASE_LAYOUT = "caselayout"
 
 # Marketplaces
 
+TEMP_PLATFORM_PROD_BUCKET = "marketplace-cortex-content-dev" # TODO - Replace with actually PROD bucket
+
+DEMISTO_SDK_MARKETPLACE_PLATFORM_DIST = TEMP_PLATFORM_PROD_BUCKET  # TODO - Replace with actually PROD bucket
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST = "marketplace-dist"
 DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
 DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
@@ -184,11 +187,13 @@ XSOAR_SERVER_TYPE = "XSOAR"
 XSIAM_SERVER_TYPE = "XSIAM"
 XPANSE_SERVER_TYPE = "XPANSE"
 XSOAR_SAAS_SERVER_TYPE = "XSOAR SAAS"
+PLATFORM_SERVER_TYPE = "PLATFORM"
 
 # Product Types
 XSOAR_PRODUCT_TYPE = "XSOAR"
 XSIAM_PRODUCT_TYPE = "XSIAM"
 XPANSE_PRODUCT_TYPE = "XPANSE"
+PLATFORM_PRODUCT_TYPE = "PLATFORM"
 
 
 class FileType(StrEnum):
@@ -1968,6 +1973,7 @@ MarketplaceVersionToMarketplaceName = {
     MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
     MarketplaceVersions.XPANSE.value: DEMISTO_SDK_MARKETPLACE_XPANSE_DIST,
     MarketplaceVersions.XSOAR_SAAS.value: DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST,
+    MarketplaceVersions.PLATFORM.value: DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST,
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {

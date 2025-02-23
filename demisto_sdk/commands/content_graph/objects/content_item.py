@@ -315,14 +315,17 @@ class ContentItem(BaseContent):
         return summary_res
 
     def metadata_fields(self) -> Set[str]:
-        return {
+        metadata_fields = {
             "object_id",
             "name",
             "description",
             "fromversion",
             "toversion",
-            "deprecated",
+            "deprecated"
         }
+        if self.supportedModules:
+            metadata_fields.update({"supportedModules"})
+        return metadata_fields
 
     @property
     def normalize_name(self) -> str:

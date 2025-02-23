@@ -64,7 +64,8 @@ ON MATCH
 // Create the relationship
 MERGE (integration)-[r:{RelationshipType.HAS_COMMAND}{{
     deprecated: rel_data.deprecated,
-    description: rel_data.description
+    description: rel_data.description,
+    quickaction: rel_data.quickaction 
 }}]->(cmd)
 
 RETURN count(r) AS relationships_merged"""

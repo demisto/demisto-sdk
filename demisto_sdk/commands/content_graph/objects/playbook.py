@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Set
 
 from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -15,3 +14,4 @@ class Playbook(BasePlaybook, content_type=ContentType.PLAYBOOK):  # type: ignore
             if TEST_PLAYBOOKS_DIR not in path.parts and path.suffix == ".yml":
                 return True
         return False
+    

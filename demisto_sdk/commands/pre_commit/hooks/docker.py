@@ -2,6 +2,7 @@ import functools
 import os
 import shutil
 import subprocess
+import threading
 import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
@@ -392,14 +393,14 @@ class DockerHook(Hook):
                 # process images in batches to avoid memory issues
                 results.extend(
                     executor.map(
-                        lambda item_index: self.process_image(
-                            item_index[1][0],
-                            item_index[1][1],
+                        lambda item: self.process_image(
+                            item[0],
+                            item[1],
                             config_arg,
                             run_isolated,
-                            item_index[0],
+                            threading.get_ident(),
                         ),
-                        enumerate(chunk),  # Pass index along with item
+                        chunk,
                     )
                 )
         for hooks in results:

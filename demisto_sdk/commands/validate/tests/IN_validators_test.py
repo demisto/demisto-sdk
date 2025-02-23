@@ -165,6 +165,8 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN163_is_valid_feed_
 )
 from TestSuite.repo import ChangeCWD
 
+MARKETPLACE_VALUES = [mp.value for mp in MarketplaceVersions]
+
 INVALID_HIDDEN_PARAM_INTEGRATIONS = [
     create_integration_object(
         paths=["configuration"],
@@ -221,13 +223,7 @@ INVALID_HIDDEN_PARAM_INTEGRATIONS = [
                     "type": 8,
                     "display": "test param",
                     "required": False,
-                    "hidden": [
-                        "xsoar",
-                        "marketplacev2",
-                        "xpanse",
-                        "xsoar_saas",
-                        "xsoar_on_prem",
-                    ],
+                    "hidden": MARKETPLACE_VALUES,
                 },
                 {
                     "type": 4,
@@ -4463,13 +4459,7 @@ def test_IsHiddenableParamValidator_fix():
                                 "type": 8,
                                 "display": "test param",
                                 "required": False,
-                                "hidden": [
-                                    "xsoar",
-                                    "marketplacev2",
-                                    "xpanse",
-                                    "xsoar_saas",
-                                    "xsoar_on_prem",
-                                ],
+                                "hidden": MARKETPLACE_VALUES,
                             }
                         ]
                     ],
@@ -4524,7 +4514,7 @@ def test_IsHiddenableParamValidator_fix():
             ],
             1,
             [
-                "The following params contain invalid hidden field values:\nThe param test_param_1 contains the following invalid hidden value: [False]\nThe param test_param_2 contains the following invalid hidden value: ['some comment']\nThe param test_param_3 contains the following invalid hidden value: flase\nThe param test_param_4 contains the following invalid hidden value: yes\nThe param test_param_5 contains the following invalid hidden value: 1\nThe valid values must be either a boolean, or a list of marketplace values.\n(Possible marketplace values: xsoar, marketplacev2, xpanse, xsoar_saas, xsoar_on_prem). Note that this param is not required, and may be omitted."
+                f"The following params contain invalid hidden field values:\nThe param test_param_1 contains the following invalid hidden value: [False]\nThe param test_param_2 contains the following invalid hidden value: ['some comment']\nThe param test_param_3 contains the following invalid hidden value: flase\nThe param test_param_4 contains the following invalid hidden value: yes\nThe param test_param_5 contains the following invalid hidden value: 1\nThe valid values must be either a boolean, or a list of marketplace values.\n(Possible marketplace values: {(', '.join(MARKETPLACE_VALUES))}). Note that this param is not required, and may be omitted."
             ],
         ),
     ],

@@ -162,11 +162,8 @@ class TestConfiguration:
             MarketplaceVersions(marketplace) for marketplace in marketplaces_conf
         ]
 
-        if MarketplaceVersions.XSOAR in marketplaces_conf:
-            marketplaces_conf.append(MarketplaceVersions.XSOAR_SAAS)
-
-        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_conf:
-            marketplaces_conf.append(MarketplaceVersions.XSOAR)
+        # The marketplace parsing to server version
+        # happens in the marketplaces_match_server_type method.
 
         return marketplaces_conf
 

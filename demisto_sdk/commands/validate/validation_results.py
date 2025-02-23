@@ -159,7 +159,7 @@ class ResultWriter:
             msg += "##############################################################\n"
         logger.error(f"<red>{msg}</red>")
         self.save_validate_summary_to_artifacts(msg)
-    
+
     def save_validate_summary_to_artifacts(self, validate_summary: str):
         """Initialize a txt file at with the validate summary.
 
@@ -172,7 +172,9 @@ class ResultWriter:
             artifacts_validate_summary_path = Path(
                 f"{artifacts_folder}/validate_summary.txt"
             )
-            logger.info(f"Writing the validate summary results to a txt file at {artifacts_validate_summary_path}.")
+            logger.info(
+                f"Writing the validate summary results to a txt file at {artifacts_validate_summary_path}."
+            )
             with open(artifacts_validate_summary_path, "w") as f:
                 f.write(validate_summary)
 

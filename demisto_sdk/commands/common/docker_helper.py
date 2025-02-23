@@ -50,12 +50,14 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
 
+DEFAULT_TIMEOUT = 60
+
 
 class DockerException(Exception):
     pass
 
 
-def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
+def init_global_docker_client(timeout: int = DEFAULT_TIMEOUT, log_prompt: str = ""):
     """
     Initialize and return a global Docker client to access and use a local Docker Daemon.
 
@@ -87,12 +89,12 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
         if log_prompt:
-            logger.debug(f"{log_prompt} - init and login the docker client")
+            logger.debug(f"{log_prompt}init and login the docker client")
         else:
             logger.debug("init and login the docker client")
         if ssh_client := os.getenv("DOCKER_SSH_CLIENT") is not None:
-            logger.debug(f"{log_prompt} - Using ssh client setting: {ssh_client}")
-        logger.debug(f"{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}")
+            logger.debug(f"{log_prompt}Using ssh client setting: {ssh_client}")
+        logger.debug(f"{log_prompt}Using docker mounting: {CAN_MOUNT_FILES}")
         try:
             if IS_CONTENT_GITLAB_CI:
                 """In the case of running in Gitlab CI environment, try to init a docker client from the
@@ -100,7 +102,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
                 logger.debug(
                     "Gitlab CI use case detected, trying to create docker client from Gitlab CI job environment."
                 )
-                DOCKER_CLIENT = docker.from_env()
+                DOCKER_CLIENT = docker.from_env(timeout=timeout)
                 if DOCKER_CLIENT.ping():
                     # see https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient.ping for more information about ping().
                     logger.debug(
@@ -109,17 +111,17 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
                     return DOCKER_CLIENT
                 else:
                     logger.warning(
-                        f"{log_prompt} - Failed to init docker client in Gitlab CI use case."
+                        f"{log_prompt}Failed to init docker client in Gitlab CI use case."
                     )
         except docker.errors.DockerException:
             logger.warning(
-                f"{log_prompt} - Failed to init docker client in CONTENT_GITLAB_CI use case. "
+                f"{log_prompt}Failed to init docker client in CONTENT_GITLAB_CI use case. "
             )
         try:
             DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)  # type: ignore
         except docker.errors.DockerException:
             logger.warning(
-                f"{log_prompt} - Failed to init docker client. "
+                f"{log_prompt}Failed to init docker client. "
                 "This might indicate that your docker daemon is not running."
             )
             raise
@@ -127,16 +129,18 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         docker_pass = os.getenv(
             "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
         )
-        logger.debug(f"init_global_docker_client | {docker_user=}, {docker_pass=}")
+        logger.debug(
+            f"{log_prompt}init_global_docker_client | {docker_user=}, {docker_pass=}"
+        )
         if docker_user and docker_pass:
-            logger.debug(f"{log_prompt} - logging in to docker registry")
+            logger.debug(f"{log_prompt}logging in to docker registry")
             try:
-                docker_login(DOCKER_CLIENT)
+                docker_login(DOCKER_CLIENT, log_prompt)
             except Exception:
-                logger.exception(f"{log_prompt} - failed to login to docker registry")
+                logger.exception(f"{log_prompt}failed to login to docker registry")
     else:
         msg = "docker client already available, using current DOCKER_CLIENT"
-        logger.debug(f"{log_prompt} - {msg}" if log_prompt else msg)
+        logger.debug(f"{log_prompt}{msg}")
     return DOCKER_CLIENT
 
 
@@ -147,7 +151,7 @@ def is_custom_registry():
 
 
 @functools.lru_cache
-def docker_login(docker_client) -> bool:
+def docker_login(docker_client, log_prompt: str = "") -> bool:
     """Login to docker-hub using environment variables:
             1. DOCKERHUB_USER - User for docker hub.
             2. DOCKERHUB_PASSWORD - Password for docker-hub.
@@ -156,7 +160,7 @@ def docker_login(docker_client) -> bool:
     Returns:
         bool: True if logged in successfully.
     """
-    logger.debug("docker_helper | docker_login")
+    logger.debug(f"{log_prompt}docker_helper | docker_login")
     docker_user = os.getenv("DEMISTO_SDK_CR_USER", os.getenv("DOCKERHUB_USER"))
     docker_pass = os.getenv("DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD"))
     if docker_user and docker_pass:
@@ -168,7 +172,9 @@ def docker_login(docker_client) -> bool:
                     registry="https://index.docker.io/v1",
                 )
                 ping = docker_client.ping()
-                logger.debug(f"Successfully connected to dockerhub, login {ping=}")
+                logger.debug(
+                    f"{log_prompt}Successfully connected to dockerhub, login {ping=}"
+                )
                 return ping
             else:
                 # login to custom docker registry
@@ -179,14 +185,16 @@ def docker_login(docker_client) -> bool:
                 )
                 ping = docker_client.ping()
                 logger.debug(
-                    f"Successfully connected to {DOCKER_REGISTRY_URL}, login {ping=}"
+                    f"{log_prompt}Successfully connected to {DOCKER_REGISTRY_URL}, login {ping=}"
                 )
                 return ping
         except docker.errors.APIError:
-            logger.info(f"Did not successfully log in to {DOCKER_REGISTRY_URL}")
+            logger.info(
+                f"{log_prompt}Did not successfully log in to {DOCKER_REGISTRY_URL}"
+            )
             return False
 
-    logger.debug(f"Did not log in to {DOCKER_REGISTRY_URL}")
+    logger.debug(f"{log_prompt}Did not log in to {DOCKER_REGISTRY_URL}")
     return False
 
 
@@ -228,10 +236,12 @@ class DockerBase:
         push_image(image, log_prompt): Push a Docker image to the repository.
         create_image(base_image, image, container_type, install_packages, push, log_prompt): Create a new Docker image.
         get_image_registry(image): Get the full image name with registry.
-        get_or_create_test_image(base_image, container_type, python_version, additional_requirements, push, should_pull, log_prompt): Get or create a test Docker image.
+        get_or_create_test_image(base_image, container_type, python_version, additional_requirements, push, should_pull): Get or create a test Docker image.
     """
 
-    def __init__(self):
+    def __init__(self, timeout=DEFAULT_TIMEOUT, log_prompt: str = ""):
+        self.log_prompt = log_prompt
+        self.timeout = timeout
         self.tmp_dir_name = tempfile.TemporaryDirectory(
             prefix=os.path.join(os.getcwd(), "tmp")
         )
@@ -260,10 +270,11 @@ class DockerBase:
     def __del__(self):
         del self.tmp_dir_name
 
-    @staticmethod
     @functools.lru_cache
-    def version() -> Version:
-        version = init_global_docker_client().version()["Version"]
+    def version(self) -> Version:
+        version = init_global_docker_client(
+            log_prompt=f"{self.log_prompt}version - "
+        ).version()["Version"]
         try:
             return Version(version)
         except InvalidVersion:
@@ -275,27 +286,30 @@ class DockerBase:
         files.append((self.installation_scripts[container_type], "/install.sh"))
         return files
 
-    @staticmethod
-    def pull_image(image: str) -> docker.models.images.Image:
+    def pull_image(self, image: str) -> docker.models.images.Image:
         """
         Get a local docker image, or pull it when unavailable.
         """
-        logger.debug(f"version is called with image={image}")
-        docker_client = init_global_docker_client(log_prompt="pull_image")
+        logger.debug(f"{self.log_prompt}version is called with image={image}")
+        docker_client = init_global_docker_client(
+            timeout=self.timeout, log_prompt=f"{self.log_prompt}pull_image - "
+        )
         try:
             return docker_client.images.get(image)
 
         except docker.errors.ImageNotFound:
-            logger.debug(f"docker {image=} not found locally, pulling")
+            logger.debug(f"{self.log_prompt}docker {image=} not found locally, pulling")
             ret = docker_client.images.pull(image)
-            logger.debug(f"pulled docker {image=} successfully")
+            logger.debug(f"{self.log_prompt}pulled docker {image=} successfully")
             return ret
 
-    @staticmethod
     def is_image_available(
+        self,
         image: str,
     ) -> bool:
-        docker_client = init_global_docker_client(log_prompt="get_image")
+        docker_client = init_global_docker_client(
+            timeout=self.timeout, log_prompt=f"{self.log_prompt}get_image - "
+        )
         try:
             docker_client.images.get(image)
             return True
@@ -304,7 +318,9 @@ class DockerBase:
                 repo = image
                 tag = "latest"
             elif image.count(":") > 1:
-                raise ValueError(f"Invalid docker image: {image}") from e
+                raise ValueError(
+                    f"{self.log_prompt}Invalid docker image: {image}"
+                ) from e
             else:
                 try:
                     repo, tag = image.split(":")
@@ -312,7 +328,9 @@ class DockerBase:
                     if _get_image_digest(repo, tag, token):
                         return True
                 except RuntimeError as e:
-                    logger.debug(f"Error getting image data {image}: {e}")
+                    logger.debug(
+                        f"{self.log_prompt}Error getting image data {image}: {e}"
+                    )
                     return False
         return False
 
@@ -355,7 +373,9 @@ class DockerBase:
         """
         Creates a container and pushing requested files to the container.
         """
-        docker_client = init_global_docker_client()
+        docker_client = init_global_docker_client(
+            timeout=self.timeout, log_prompt=f"{self.log_prompt}create_container - "
+        )
 
         try:
             container: docker.models.containers.Container = (
@@ -380,7 +400,7 @@ class DockerBase:
 
         return container
 
-    def push_image(self, image: str, log_prompt: str = "") -> None:
+    def push_image(self, image: str) -> None:
         """This pushes the test image to dockerhub if the DOCKERHUB env variables are set
         Args:
             image (str): The image to push
@@ -389,15 +409,15 @@ class DockerBase:
         test_image_name_to_push = image.replace(f"{DOCKER_REGISTRY_URL}/", "")
 
         logger.info(
-            f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository."
+            f"{self.log_prompt}Trying to push Image {test_image_name_to_push} to repository."
         )
         for attempt in range(2):
             try:
-                docker_push_output = init_global_docker_client().images.push(
-                    test_image_name_to_push
-                )
+                docker_push_output = init_global_docker_client(
+                    timeout=self.timeout, log_prompt=f"{self.log_prompt}push image - "
+                ).images.push(test_image_name_to_push)
                 logger.debug(
-                    f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
+                    f"{self.log_prompt}Push details for image {test_image_name_to_push}: {docker_push_output}"
                 )
                 outputs_lines = docker_push_output.strip().split("\r\n")
                 error_line = next(
@@ -405,14 +425,14 @@ class DockerBase:
                 )
                 if error_line:
                     logger.error(
-                        f"{log_prompt} - Error pushing image {test_image_name_to_push}: {error_line}"
+                        f"{self.log_prompt} - Error pushing image {test_image_name_to_push}: {error_line}"
                     )
                     raise Exception(
                         f"Failed to push image {test_image_name_to_push} to repository."
                     )
                 else:
                     logger.success(
-                        f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
+                        f"{self.log_prompt}Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
                     )
                 break
             except (
@@ -421,7 +441,7 @@ class DockerBase:
                 requests.exceptions.ReadTimeout,
             ) as e:
                 logger.warning(
-                    f"{log_prompt} - Attempt {attempt + 1}: Failed to push image {test_image_name_to_push} to repository due to {type(e).__name__}",
+                    f"{self.log_prompt}Attempt {attempt + 1}: Failed to push image {test_image_name_to_push} to repository due to {type(e).__name__}",
                     exc_info=True,
                 )
 
@@ -449,12 +469,12 @@ class DockerBase:
             3. committing the docker changes (installed packages) to a new local image
         """
         logger.debug(
-            f"create_image is called with base_image={base_image}, image={image}"
+            f"{self.log_prompt}create_image is called with base_image={base_image}, image={image}"
         )
         self.requirements.write_text(
             "\n".join(install_packages) if install_packages else ""
         )
-        logger.debug(f"Trying to pull image {base_image}")
+        logger.debug(f"{self.log_prompt}Trying to pull image {base_image}")
         self.pull_image(base_image)
         container = self.create_container(
             image=base_image,
@@ -478,7 +498,7 @@ class DockerBase:
             repository=repository, tag=tag, changes=self.changes[container_type]
         )
         if push and IS_CONTENT_GITLAB_CI:
-            self.push_image(image, log_prompt=log_prompt)
+            self.push_image(image)
         return image
 
     @staticmethod
@@ -499,7 +519,6 @@ class DockerBase:
         additional_requirements: Optional[List[str]] = None,
         push: bool = False,
         should_pull: bool = True,
-        log_prompt: str = "",
     ) -> Tuple[str, str]:
         """This will generate the test image for the given base image.
 
@@ -548,12 +567,12 @@ class DockerBase:
 
         try:
             logger.debug(
-                f"{log_prompt} - Trying to pull existing image {test_docker_image}"
+                f"{self.log_prompt}Trying to pull existing image {test_docker_image}"
             )
             self.pull_image(test_docker_image)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(
-                f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
+                f"{self.log_prompt}Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
             )
             try:
                 self.create_image(
@@ -566,7 +585,8 @@ class DockerBase:
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
                 logger.exception(  # noqa: PLE1205
-                    "{}", f"<red>{log_prompt} - Build errors occurred: {errors}</red>"
+                    "{}",
+                    f"<red>{self.log_prompt} Build errors occurred: {errors}</red>",
                 )
         return test_docker_image, errors
 
@@ -713,7 +733,9 @@ def _get_python_version_from_env(env: List[str]) -> Version:
 
 
 @functools.lru_cache
-def get_python_version(image: Optional[str]) -> Optional[Version]:
+def get_python_version(
+    image: Optional[str], log_prompt: Optional[str] = None
+) -> Optional[Version]:
     """
     Get the python version of a docker image if exist.
 
@@ -780,7 +802,7 @@ def _get_python_version_from_image_client(image: str) -> Version:
     """
     try:
         image = DockerBase.get_image_registry(image)
-        image_model = DockerBase.pull_image(image)
+        image_model = DockerBase().pull_image(image)
         image_env = image_model.attrs["Config"]["Env"]
         logger.debug(f"Got {image_env=} from {image=}")
         return _get_python_version_from_env(image_env)

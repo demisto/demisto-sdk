@@ -931,8 +931,8 @@ class Linter:
         Returns:
             str, str. image name to use and errors string.
         """
-        log_prompt = f"{self._pack_name} - Image create"
         docker_base = get_docker()
+        docker_base.log_prompt = f"{self._pack_name} - Image create - "
         # Get requirements file for image
         py_ver = None
         if docker_base_image[1] != -1:
@@ -941,7 +941,6 @@ class Linter:
             docker_base_image[0],
             additional_requirements=self._facts["additional_requirements"],
             container_type=self._pkg_lint_status["pack_type"],
-            log_prompt=log_prompt,
             python_version=py_ver,
             push=self._docker_hub_login,
         )

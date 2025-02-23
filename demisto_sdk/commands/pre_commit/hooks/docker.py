@@ -44,6 +44,7 @@ from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
 NO_SPLIT = None
 
 IMAGES_BATCH = int(os.getenv("IMAGES_BATCH") or 40)
+DOCKER_TIMEOUT = 300  # in seconds
 
 
 def get_mypy_requirements():
@@ -169,6 +170,7 @@ def devtest_image(
     is_powershell: bool,
     should_pull: bool,
     should_install_mypy_additional_dependencies: Optional[bool],
+    thread_index: Optional[int] = None,
 ) -> str:
     """
     We need to add test dependencies on the image. In the future we could add "additional_dependencies" as a template
@@ -182,12 +184,16 @@ def devtest_image(
 
     """
     docker_base = get_docker()
+    log_prompt = f"[{thread_index}] DockerHook - " if thread_index else "DockerHook - "
+    docker_base.log_prompt = log_prompt
+    docker_base.timeout = DOCKER_TIMEOUT
     image, errors = docker_base.get_or_create_test_image(
         base_image=image_tag,
         container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,
-        push=docker_login(docker_client=init_global_docker_client()),
+        push=docker_login(
+            docker_client=init_global_docker_client(log_prompt=log_prompt)
+        ),
         should_pull=False,
-        log_prompt="DockerHook",
         additional_requirements=get_mypy_requirements()
         if should_install_mypy_additional_dependencies
         else None,
@@ -290,6 +296,7 @@ class DockerHook(Hook):
         files_with_objects: List[Tuple[Path, IntegrationScript]],
         config_arg: Optional[Tuple[str, str]],
         run_isolated: bool,
+        thread_index: Optional[int] = None,
     ) -> List[Dict]:
         """
         Process the image and files to run on it, and returns the generated hooks
@@ -319,6 +326,7 @@ class DockerHook(Hook):
             is_image_powershell,
             self.context.dry_run,
             mypy_additional_dependencies,
+            thread_index,
         )
         hooks = self.generate_hooks(dev_image, image, object_to_files, config_arg)
         logger.debug(f"Generated {len(hooks)} hooks for image {image}")
@@ -384,10 +392,14 @@ class DockerHook(Hook):
                 # process images in batches to avoid memory issues
                 results.extend(
                     executor.map(
-                        lambda item: self.process_image(
-                            item[0], item[1], config_arg, run_isolated
+                        lambda item_index: self.process_image(
+                            item_index[1][0],
+                            item_index[1][1],
+                            config_arg,
+                            run_isolated,
+                            item_index[0],
                         ),
-                        chunk,
+                        enumerate(chunk),  # Pass index along with item
                     )
                 )
         for hooks in results:

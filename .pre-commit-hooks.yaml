@@ -103,3 +103,12 @@
   entry: generate-command-docs
   language: python
   files: ^.*_setup\.py$
+
+- id: validate-validation-config-file
+  name: Validation for validate_config file
+  description: Validate the validation config file
+  entry: validate-validation-config-file
+  language: python
+  pass_filenames: false
+  args:
+  - --config-path=demisto_sdk/commands/validate/sdk_validation_config.toml

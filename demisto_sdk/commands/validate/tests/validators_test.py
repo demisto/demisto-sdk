@@ -1,7 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 from unittest.mock import patch
 
 import pytest
@@ -487,14 +487,14 @@ def test_post_results(
             ["BA100", "CR102", "CL101", "TE111"],
             [],
             ConfiguredValidations(
-                ignorable_errors=["BA100"], path_based_section=["CR102"]
+                ignorable_errors=["BA100"], selected_path_based_section=["CR102"]
             ),
             "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors cannot be ignored: CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CL101, TE111.\n######################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: CR102.\n######################################################################################################\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],
             [],
-            ConfiguredValidations(path_based_section=["CR102", "BA100"]),
+            ConfiguredValidations(selected_path_based_section=["CR102", "BA100"]),
             "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors cannot be ignored: BA100, CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: CL101, TE111.\n#############################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: BA100, CR102.\n#############################################################################################################\n</red>",
         ),
         (
@@ -508,7 +508,7 @@ def test_post_results(
             [],
             ConfiguredValidations(
                 ignorable_errors=["BA100"],
-                path_based_section=["BA100", "CR102", "CL101", "TE111"],
+                selected_path_based_section=["BA100", "CR102", "CL101", "TE111"],
             ),
             "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors cannot be ignored: CR102, CL101, TE111.\n###########################################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: BA100, CR102, CL101, TE111.\n###########################################################################################################################\n</red>",
         ),
@@ -519,7 +519,7 @@ def test_summarize_validation_results(
 ):
     """
     Given
-    set of failing error codes and a ConfiguredValidations object with specified ignorable_errors and path_based_section.
+    set of failing error codes and a ConfiguredValidations object with specified ignorable_errors and selected_path_based_section.
         - Case 1: 4 failed errors, 1 ignorable, and 1 path based.
         - Case 2: 4 failed errors, none are ignorable, and 2 are path based.
         - Case 3: 4 failed errors, 2 ignorable, and none are path based.
@@ -751,61 +751,6 @@ def test_get_items_status(repo):
         expected_results[item_path] == git_status
         for item_path, git_status in results.items()
     )
-
-
-def test_all_error_codes_configured():
-    """
-    test that the set of all validation errors that exist in the new format and the set of all the validation errors configured in the sdk_validation_config are equal to ensure all new validations are being tested.
-    """
-    config_file_path = "demisto_sdk/commands/validate/sdk_validation_config.toml"
-    config_file_content: dict = toml.load(config_file_path)
-    configured_errors_set: Set[str] = set()
-    for section in ("use_git", "path_based_validations"):
-        for key in ("select", "warning"):
-            configured_errors_set = configured_errors_set.union(
-                set(config_file_content[section][key])
-            )
-    existing_error_codes: Set[str] = set(
-        [validator.error_code for validator in get_all_validators()]
-    )
-    non_configured_existing_error_codes = existing_error_codes - configured_errors_set
-    assert not non_configured_existing_error_codes, f"The following error codes are not configured in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml': {non_configured_existing_error_codes}."
-
-
-def test_all_configured_error_codes_exist():
-    """
-    test that the set of configured validation errors in sdk_validation_config.toml is equal to the set of all existing validation to ensure we don't misconfigure non-existing validations.
-    """
-    config_file_path = "demisto_sdk/commands/validate/sdk_validation_config.toml"
-    config_file_content: dict = toml.load(config_file_path)
-    configured_errors_set: Set[str] = set()
-    for section in ("use_git", "path_based_validations"):
-        for key in ("select", "warning"):
-            configured_errors_set = configured_errors_set.union(
-                set(config_file_content[section][key])
-            )
-    existing_error_codes: Set[str] = set(
-        [validator.error_code for validator in get_all_validators()]
-    )
-    configured_non_existing_error_codes = configured_errors_set - existing_error_codes
-    assert not configured_non_existing_error_codes, f"The following error codes are configured in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml' but cannot be found in the repo: {configured_non_existing_error_codes}."
-
-
-def test_all_validations_run_on_git_mode():
-    """
-    test that the set of all validation errors that exist in the new format and and runs on path_based inputs are also executed in the git mode.
-    """
-    config_file_path = "demisto_sdk/commands/validate/sdk_validation_config.toml"
-    config_file_content: dict = toml.load(config_file_path)
-    path_based_section = (
-        set(config_file_content["path_based_validations"]["select"])
-    ).union(set(config_file_content["path_based_validations"]["warning"]))
-    use_git_section = (set(config_file_content["use_git"]["select"])).union(
-        set(config_file_content["use_git"]["warning"])
-    )
-
-    non_configured_use_git_error_codes = path_based_section - use_git_section
-    assert not non_configured_use_git_error_codes, f"The following error codes are not configured as use_git validations in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml': {non_configured_use_git_error_codes}.\n"
 
 
 def test_validation_prefix():

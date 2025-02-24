@@ -322,7 +322,7 @@ class ContentItem(BaseContent):
             "fromversion",
             "toversion",
             "deprecated",
-            "supportedModules"
+            "supportedModules",
         }
 
     @property

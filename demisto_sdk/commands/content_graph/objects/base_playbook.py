@@ -222,7 +222,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     @cached_property
     def image(self) -> ImageRelatedFile:
         return ImageRelatedFile(self.path, git_sha=self.git_sha)
-    
+
     def metadata_fields(self) -> Set[str]:
         return (
             super()

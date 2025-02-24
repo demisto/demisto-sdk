@@ -22,12 +22,12 @@ from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import (
+    DEFAULT_SUPPORTED_MODULES,
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
     PACKS_PACK_META_FILE_NAME,
     GitStatuses,
     MarketplaceVersions,
-    DEFAULT_SUPPORTED_MODULES
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler

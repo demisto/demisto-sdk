@@ -6,9 +6,9 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEFAULT_SUPPORTED_MODULES,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
-    DEFAULT_SUPPORTED_MODULES
 )
 from demisto_sdk.commands.common.tools import get_value, get_yaml
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -34,8 +34,10 @@ class YAMLContentItemParser(ContentItemParser):
             if not self.path.suffix == ".yml"
             else self.path
         )  # If git_sha is given then we know we're running on the old_content_object copy and we can assume that the file_path is either the actual item path or the path to the item's dir.
-        
-        self.supportedModules: List[str] = self.yml_data.get("supportedModules", DEFAULT_SUPPORTED_MODULES)
+
+        self.supportedModules: List[str] = self.yml_data.get(
+            "supportedModules", DEFAULT_SUPPORTED_MODULES
+        )
         self.structure_errors = self.validate_structure()
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(

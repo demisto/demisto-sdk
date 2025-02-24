@@ -1,0 +1,4 @@
+changes:
+- description: Update Graph objects to support the new marketplace properties.
+  type: internal
+pr_number: 4830

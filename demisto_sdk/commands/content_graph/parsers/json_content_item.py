@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
+    DEFAULT_SUPPORTED_MODULES
 )
 from demisto_sdk.commands.common.tools import get_json, get_value
 from demisto_sdk.commands.content_graph.parsers.content_item import (
@@ -27,6 +28,8 @@ class JSONContentItemParser(ContentItemParser):
         self.path = self.get_path_with_suffix(".json") if not git_sha else self.path
         self.original_json_data: Dict[str, Any] = self.json_data
         self.structure_errors = self.validate_structure()
+        self.supportedModules: List[str] = self.json_data.get("supportedModules", DEFAULT_SUPPORTED_MODULES)
+        
         if not isinstance(self.json_data, dict):
             raise InvalidContentItemException(
                 f"The content of {self.path} must be in a JSON dictionary format"

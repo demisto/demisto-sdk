@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Set
 
 import demisto_client
 from pydantic import BaseModel, Field
@@ -176,6 +176,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     version: Optional[int] = 0
     tasks: Dict[str, TaskConfig] = Field([], exclude=True)
     quiet: bool = Field(False)
+    tags: List[str]
 
     def summary(
         self,
@@ -221,3 +222,14 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     @cached_property
     def image(self) -> ImageRelatedFile:
         return ImageRelatedFile(self.path, git_sha=self.git_sha)
+    
+    def metadata_fields(self) -> Set[str]:
+        return (
+            super()
+            .metadata_fields()
+            .union(
+                {
+                    "tags",
+                }
+            )
+        )

@@ -1980,6 +1980,17 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
 }
 
 
+class PlatformSupportedModules(StrEnum):
+    C1 = "C1"
+    C3 = "C3"
+    XO = "X0"
+    X1 = "X1"
+    X3 = "X3",
+    X5 = "X5",
+    ENT_PLUS = "ENT_PLUS"
+    
+DEFAULT_SUPPORTED_MODULES: list[str] = [str(sku.value) for sku in PlatformSupportedModules]
+
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
     "html": Version("6.1.0"),
     "grid": Version("5.5.0"),
@@ -2251,4 +2262,3 @@ MIRRORING_COMMANDS: list[str] = [
     "update-remote-system",
 ]
 
-DEFAULT_PLATFORM_MODULES: list[str] = []

@@ -263,7 +263,7 @@ class Initializer:
                 "\n<cyan>CONTRIB_BRANCH environment variable found, running validate in contribution flow "
                 "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)</cyan>"
             )
-            logger.info("\n<cyan>ITAMAR TEST 1</cyan>")
+            logger.info(f"\n{modified_files=} {added_files=} {renamed_files=}")
             # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra) and read file paths
             relative_untracked_files_paths: Set[Path] = set()
             with open(

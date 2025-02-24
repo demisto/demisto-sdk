@@ -327,6 +327,7 @@ class ContentItem(BaseContent):
         }
         
         if self.supportedModules:
+            logger.info(f"[BY] - in metadata_fields() - {self.__dict__}")
             metadata_fields.update({"supportedModules"})
 
         return metadata_fields

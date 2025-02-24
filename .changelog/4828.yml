@@ -1,4 +1,4 @@
 changes:
-- description: Added validate summary GitHub annotations.
-  type: feature
+- description: Added validate summary text file to the logs.
+  type: internal
 pr_number: 4828

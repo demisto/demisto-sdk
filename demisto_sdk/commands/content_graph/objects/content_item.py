@@ -324,12 +324,9 @@ class ContentItem(BaseContent):
             "fromversion",
             "toversion",
             "deprecated",
+            "supportedModules"
         }
         
-        if self.supportedModules:
-            logger.info(f"[BY] - in metadata_fields() - {self}")
-            metadata_fields.update({"supportedModules"})
-
         return metadata_fields
     @property
     def normalize_name(self) -> str:

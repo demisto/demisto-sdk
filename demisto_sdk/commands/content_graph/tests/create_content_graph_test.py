@@ -410,7 +410,7 @@ def build_in_pack_relationship(
                     ContentType.COMMAND,
                     description="",
                     deprecated=False,
-                    quickaction=False
+                    quickaction=False,
                 ),
             )
 

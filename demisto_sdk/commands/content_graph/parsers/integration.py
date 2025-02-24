@@ -49,7 +49,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch_samples = self.script_info.get("isFetchSamples", False)
         self.is_feed = self.script_info.get("feed", False)
         self.long_running = self.script_info.get("longRunning", False)
-        self.is_supports_quick_actions = self.script_info.get("supportsquickactions", False)
+        self.is_supports_quick_actions = self.script_info.get(
+            "supportsquickactions", False
+        )
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()

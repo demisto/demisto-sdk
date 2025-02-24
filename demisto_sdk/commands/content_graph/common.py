@@ -348,6 +348,7 @@ class Relationship(BaseModel):
     name: Optional[str] = None
     quickaction: Optional[bool] = None
 
+
 class Relationships(dict):
     def add(self, relationship: RelationshipType, **kwargs):
         if relationship not in self.keys():

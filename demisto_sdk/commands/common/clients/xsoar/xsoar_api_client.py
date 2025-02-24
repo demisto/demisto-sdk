@@ -1446,6 +1446,8 @@ class XsoarClient:
             raise ValueError(f'task_states are bad. Possible values: {self.PLAYBOOK_TASKS_STATES}')
         if not task_states:
             task_states = self.PLAYBOOK_TASKS_STATES
+        if complete_task and not task_input:
+            raise RuntimeError("Task input argument is missing to complete tasks.")
         completed_tasks = []
         found_tasks = []
         start_time = time.time()
@@ -1468,7 +1470,7 @@ class XsoarClient:
 
             if requested_task and complete_task:
                 # complete the requested task
-                self.complete_playbook_task(incident_id, requested_task.get("id"), task_input)
+                self.complete_playbook_task(investigation_id=incident_id, task_id=requested_task.get("id"), task_input=task_input)
 
                 completed_tasks.append(requested_task.get("task").get('name'))
                 break
@@ -1483,7 +1485,7 @@ class XsoarClient:
             elif not task_name and tasks_by_states and complete_task:
                 # complete all tasks, which state is task_states
                 for task in tasks_by_states:
-                    self.complete_playbook_task(incident_id, task.get("id"), task_input)
+                    self.complete_playbook_task(investigation_id=incident_id, task_id=task.get("id"), task_input=task_input)
                     completed_tasks.append(task.get("task").get('name'))
 
                 break

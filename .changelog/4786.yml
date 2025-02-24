@@ -1,4 +1,0 @@
-changes:
-- description: Allow setting the dependency min version in the pack metadata.
-  type: internal
-pr_number: 4786

@@ -4,7 +4,6 @@ from typing import Iterable, List
 
 from packaging import version
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -30,7 +29,6 @@ class ValidVersionConfigVersions(BaseValidator[ContentTypes]):
     error_message = "version config file does not adhere to platform content versions."
     related_field = "version_config"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.VERSION_CONFIG]
 
     def obtain_invalid_content_items(

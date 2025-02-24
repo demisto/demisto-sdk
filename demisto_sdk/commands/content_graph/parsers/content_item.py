@@ -185,6 +185,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @property
     @abstractmethod
+    def supportedModules(self) -> List[str]:
+        pass
+
+    @property
+    @abstractmethod
     def is_silent(self) -> bool:
         pass
 

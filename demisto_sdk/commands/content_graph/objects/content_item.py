@@ -57,6 +57,7 @@ class ContentItem(BaseContent):
     pack: Any = Field(None, exclude=True, repr=False)
     support: str = ""
     is_silent: bool = False
+    supportedModules: List[str] = []
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -262,6 +263,7 @@ class ContentItem(BaseContent):
     def ordered_data(self) -> dict:
         return get_file(self.path, keep_order=True)
 
+        
     def save(self, fields_to_exclude: List[str] = []):
         super()._save(self.path, self.ordered_data, fields_to_exclude=fields_to_exclude)
 
@@ -315,7 +317,7 @@ class ContentItem(BaseContent):
         return summary_res
 
     def metadata_fields(self) -> Set[str]:
-        return {
+        metadata_fields = {
             "object_id",
             "name",
             "description",
@@ -323,6 +325,8 @@ class ContentItem(BaseContent):
             "toversion",
             "deprecated",
         }
+        if self.supportedModules:
+            metadata_fields.update({"supportedModules"})
 
     @property
     def normalize_name(self) -> str:

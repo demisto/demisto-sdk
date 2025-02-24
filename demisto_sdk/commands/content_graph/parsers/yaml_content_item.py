@@ -117,6 +117,11 @@ class YAMLContentItemParser(ContentItemParser):
         return self.get_marketplaces(self.yml_data)
 
     @property
+    def supportedModules(self) -> List[str]:
+        return get_value(self.yml_data, "supportedModules") or []
+
+    
+    @property
     def support(self) -> str:
         return self.get_support(self.yml_data)
 

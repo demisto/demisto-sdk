@@ -325,9 +325,11 @@ class ContentItem(BaseContent):
             "toversion",
             "deprecated",
         }
+        
         if self.supportedModules:
             metadata_fields.update({"supportedModules"})
 
+        return metadata_fields
     @property
     def normalize_name(self) -> str:
         """

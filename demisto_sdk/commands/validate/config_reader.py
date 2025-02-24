@@ -19,9 +19,7 @@ class ConfiguredValidations(NamedTuple):
     ignorable_errors: List[str] = []
     support_level_dict: Dict[str, Dict[str, List[str]]] = {}
     selected_path_based_section: List[str] = []
-    warning_path_based_section: List[str] = []
     selected_use_git_section: List[str] = []
-    warning_use_git_section: List[str] = []
 
 
 class ConfigReader:
@@ -71,14 +69,8 @@ class ConfigReader:
         selected_path_based_section = sorted(
             self.config_file_content.get(PATH_BASED_VALIDATIONS, {}).get("select", [])
         )
-        warning_path_based_section = sorted(
-            self.config_file_content.get(PATH_BASED_VALIDATIONS, {}).get("warning", [])
-        )
         selected_use_git_section = sorted(
             self.config_file_content.get(USE_GIT, {}).get("select", [])
-        )
-        warning_use_git_section = sorted(
-            self.config_file_content.get(USE_GIT, {}).get("warning", [])
         )
         support_level_dict = (
             self.config_file_content.get("support_level", {})
@@ -116,7 +108,5 @@ class ConfigReader:
             ignorable_errors=ignorable,
             support_level_dict=support_level_dict,
             selected_path_based_section=selected_path_based_section,
-            warning_path_based_section=warning_path_based_section,
             selected_use_git_section=selected_use_git_section,
-            warning_use_git_section=warning_use_git_section,
         )

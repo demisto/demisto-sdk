@@ -129,7 +129,6 @@ def test_create_module(mocker, playbook, incident_configuration, expected, reque
         "demisto_sdk.commands.test_content.TestContentClasses.get_json_file",
         return_value={},
     )
-    mocker.patch.object(BuildContext, "_get_unmockable_tests_from_conf")
     mocker.patch.object(ServerContext, "_get_tests_to_run", return_value=("", ""))
     mocker.patch.object(ServerContext, "_get_all_integration_config")
 

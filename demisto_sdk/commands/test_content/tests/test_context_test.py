@@ -89,15 +89,10 @@ class RunIncidentTestMock:
         return res
 
 
-# Unmockable
-
-
-def init_server_context(mocker, tmp_path, mockable=False):
-    playbook_type = "mocked_playbook" if mockable else "unmocked_playbook"
-    playbook_id_type = "mocked_playbook" if mockable else "unmocked_playbook"
-    integrations_type = "mocked_integration" if mockable else "unmocked_integration"
-    mock_func = "_execute_unmockable_tests" if mockable else "_execute_mockable_tests"
-    unmockable_integration = {integrations_type: "reason"} if not mockable else {}
+def init_server_context(mocker, tmp_path):
+    playbook_type = "playbook"
+    playbook_id_type = "playbook"
+    integrations_type = "integration"
 
     filtered_tests = [playbook_type]
     machine_assignment_content = {
@@ -115,9 +110,7 @@ def init_server_context(mocker, tmp_path, mockable=False):
         generate_integration_configuration(integrations_type)
     ]
     secret_test_conf = generate_secret_conf_json(integrations_configurations)
-    content_conf_json = generate_content_conf_json(
-        tests=tests, unmockable_integrations=unmockable_integration
-    )
+    content_conf_json = generate_content_conf_json(tests=tests)
     mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.BuildContext.create_servers",
         return_value=set(),
@@ -134,17 +127,17 @@ def init_server_context(mocker, tmp_path, mockable=False):
         build_context, mocked_demisto_client, mocker
     )
     build_context.servers = {server_context}
-    mocker.patch.object(server_context, mock_func, return_value=None)
+    # mocker.patch.object(server_context, mock_func, return_value=None)
 
     return build_context, server_context
 
 
-def test_unmockable_playbook_passes_on_first_run(mocker, tmp_path):
+def test_playbook_passes_on_first_run(mocker, tmp_path):
     """
     Given:
-        - An unmockable test
+        - A test
     When:
-        - The unmockable test passes on the first run
+        - The test passes on the first run
     Then:
         - Ensure that it exists in the succeeded_playbooks set
         - Ensure that it does not exist in the failed_playbook set
@@ -159,15 +152,45 @@ def test_unmockable_playbook_passes_on_first_run(mocker, tmp_path):
     server_context.execute_tests()
     assert incident_test_mock.call_count == 1
     assert not build_context.tests_data_keeper.failed_playbooks  # empty set
-    assert "unmocked_playbook" in build_context.tests_data_keeper.succeeded_playbooks
+    assert "playbook" in build_context.tests_data_keeper.succeeded_playbooks
 
 
-def test_unmockable_playbook_passes_most_of_the_time(mocker, tmp_path):
+def test_playbook_fails_every_time(mocker, tmp_path):
     """
     Given:
-        - An unmockable test
+        - A test
     When:
-        - The unmockable test passes on the second and third run
+        - The test fails in all the runs
+    Then:
+        - Ensure that it does not exist in the succeeded_playbooks set
+        - Ensure that it exists in the failed_playbook set
+    """
+    execution_results = [PB_Status.FAILED, PB_Status.FAILED]
+    build_context, server_context = init_server_context(mocker, tmp_path)
+    incident_test_mock = RunIncidentTestMock(execution_results)
+    logs = build_context.logging_module = mocker.MagicMock()
+    mocker.patch(
+        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._run_incident_test",
+        incident_test_mock.run_incident_test,
+    )
+    server_context.execute_tests()
+
+    assert incident_test_mock.call_count == 2
+    assert "playbook" in build_context.tests_data_keeper.failed_playbooks
+    assert not build_context.tests_data_keeper.succeeded_playbooks
+    assert any(
+        "Test-Playbook was executed 2 times, and passed only 0 times. Adding to failed playbooks."
+        in log_item[0][0]
+        for log_item in logs.info.call_args_list
+    )
+
+
+def test_playbook_passes_most_of_the_time(mocker, tmp_path):
+    """
+    Given:
+        - A test
+    When:
+        - The test passes on the second and third run
     Then:
         - Ensure that it exists in the succeeded_playbooks set
         - Ensure that it does not exist in the failed_playbook set
@@ -184,7 +207,7 @@ def test_unmockable_playbook_passes_most_of_the_time(mocker, tmp_path):
 
     assert incident_test_mock.call_count == 3
     assert not build_context.tests_data_keeper.failed_playbooks
-    assert "unmocked_playbook" in build_context.tests_data_keeper.succeeded_playbooks
+    assert "playbook" in build_context.tests_data_keeper.succeeded_playbooks
     assert any(
         "Test-Playbook was executed 3 times, and passed 2 times. Adding to succeeded playbooks."
         in log_item[0][0]
@@ -192,45 +215,12 @@ def test_unmockable_playbook_passes_most_of_the_time(mocker, tmp_path):
     )
 
 
-def test_unmockable_playbook_fails_every_time(mocker, tmp_path):
+def test_playbook_fails_most_of_the_times(mocker, tmp_path):
     """
     Given:
-        - An unmockable test
+        - A test
     When:
-        - The unmockable test fails in all the runs
-    Then:
-        - Ensure that it does not exist in the succeeded_playbooks set
-        - Ensure that it exists in the failed_playbook set
-    """
-    execution_results = [PB_Status.FAILED, PB_Status.FAILED, PB_Status.FAILED]
-    build_context, server_context = init_server_context(mocker, tmp_path)
-    incident_test_mock = RunIncidentTestMock(execution_results)
-    logs = build_context.logging_module = mocker.MagicMock()
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._run_incident_test",
-        incident_test_mock.run_incident_test,
-    )
-    server_context.execute_tests()
-
-    assert incident_test_mock.call_count == 3
-    assert (
-        "unmocked_playbook (Mock Disabled)"
-        in build_context.tests_data_keeper.failed_playbooks
-    )
-    assert not build_context.tests_data_keeper.succeeded_playbooks
-    assert any(
-        "Test-Playbook was executed 3 times, and passed only 0 times. Adding to failed playbooks."
-        in log_item[0][0]
-        for log_item in logs.info.call_args_list
-    )
-
-
-def test_unmockable_playbook_fails_most_of_the_times(mocker, tmp_path):
-    """
-    Given:
-        - An unmockable test
-    When:
-        - The unmockable test fails in most of the runs
+        - The test fails in most of the runs
     Then:
         - Ensure that it does not exist in the succeeded_playbooks set
         - Ensure that it exists in the failed_playbook set
@@ -246,262 +236,12 @@ def test_unmockable_playbook_fails_most_of_the_times(mocker, tmp_path):
     server_context.execute_tests()
 
     assert incident_test_mock.call_count == 3
-    assert (
-        "unmocked_playbook (Mock Disabled)"
-        in build_context.tests_data_keeper.failed_playbooks
-    )
+    assert "playbook" in build_context.tests_data_keeper.failed_playbooks
     assert not build_context.tests_data_keeper.succeeded_playbooks
     assert any(
         "Test-Playbook was executed 3 times, and passed only 1 times. Adding to failed playbooks."
         in [log_item][0][0]
         for log_item in logs.info.call_args_list
-    )
-
-
-# Mockable
-
-
-def test_mockable_playbook_first_playback_passes(mocker, tmp_path):
-    """
-    Given:
-        - A mockable test
-    When:
-        - The mockable test passes on the first playback run
-    Then:
-        - Ensure that it exists in the succeeded_playbooks set
-        - Ensure that it does not exist in the failed_playbook set
-    """
-    execution_results = [PB_Status.COMPLETED]
-    build_context, server_context = init_server_context(mocker, tmp_path, mockable=True)
-    incident_test_mock = RunIncidentTestMock(execution_results)
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._run_incident_test",
-        incident_test_mock.run_incident_test,
-    )
-    server_context.execute_tests()
-
-    assert incident_test_mock.call_count == 1
-    assert "mocked_playbook" in build_context.tests_data_keeper.succeeded_playbooks
-    assert not build_context.tests_data_keeper.failed_playbooks
-
-
-def test_mockable_playbook_second_playback_passes(mocker, tmp_path):
-    """
-    Given:
-        - A mockable test
-    When:
-        - The mockable test that fails on the first playback but then passes the recording and second playback
-    Then:
-        - Ensure that it exists in the succeeded_playbooks set
-        - Ensure that it does not exist in the failed_playbook set
-    """
-    execution_results = [PB_Status.FAILED, PB_Status.COMPLETED, PB_Status.COMPLETED]
-    build_context, server_context = init_server_context(mocker, tmp_path, mockable=True)
-    incident_test_mock = RunIncidentTestMock(execution_results)
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._run_incident_test",
-        incident_test_mock.run_incident_test,
-    )
-    server_context.execute_tests()
-
-    assert incident_test_mock.call_count == 3
-    assert "mocked_playbook" in build_context.tests_data_keeper.succeeded_playbooks
-    assert not build_context.tests_data_keeper.failed_playbooks
-
-
-def test_mockable_playbook_recording_passes_most_of_the_time_playback_pass(
-    mocker, tmp_path
-):
-    """
-    Given:
-        - A mockable test
-    When:
-        - The mockable test that fails on the first playback, then passes most of the recordings and second playback.
-    Then:
-        - Ensure that it exists in the succeeded_playbooks set
-        - Ensure that it does not exist in the failed_playbook set
-    """
-    execution_results = [
-        PB_Status.FAILED,
-        PB_Status.FAILED,
-        PB_Status.COMPLETED,
-        PB_Status.COMPLETED,
-        PB_Status.COMPLETED,
-    ]
-    build_context, server_context = init_server_context(mocker, tmp_path, mockable=True)
-    incident_test_mock = RunIncidentTestMock(execution_results)
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._run_incident_test",
-        incident_test_mock.run_incident_test,
-    )
-    server_context.execute_tests()
-
-    data_keeper = build_context.tests_data_keeper
-    assert incident_test_mock.call_count == 5
-    assert "mocked_playbook" in data_keeper.succeeded_playbooks
-    assert not data_keeper.failed_playbooks
-
-
-def test_mockable_playbook_recording_passes_most_of_the_time_playback_fails(
-    mocker, tmp_path
-):
-    """
-    Given:
-        - A mockable test
-    When:
-        - The mockable test that fails on the first playback, then passes most of the recordings but the second playback fails.
-    Then:
-        - Ensure that it does not exist in the succeeded_playbooks set
-        - Ensure that it exists in the failed_playbook set
-    """
-    execution_results = [
-        PB_Status.FAILED,
-        PB_Status.FAILED,
-        PB_Status.COMPLETED,
-        PB_Status.COMPLETED,
-        PB_Status.FAILED,
-    ]
-    build_context, server_context = init_server_context(mocker, tmp_path, mockable=True)
-    incident_test_mock = RunIncidentTestMock(execution_results)
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._run_incident_test",
-        incident_test_mock.run_incident_test,
-    )
-    server_context.execute_tests()
-
-    data_keeper = build_context.tests_data_keeper
-    assert incident_test_mock.call_count == 5
-    assert not data_keeper.succeeded_playbooks
-    assert "mocked_playbook (Second Playback)" in data_keeper.failed_playbooks
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_executions"] == 3
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_successful_runs"]
-        == 2
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["failed_stage"]
-        == "Second playback"
-    )
-
-
-def test_mockable_playbook_recording_fails_most_of_the_time(mocker, tmp_path):
-    """
-    Given:
-        - A mockable test
-    When:
-        - The mockable test that fails on the first playback, then fails most of the recordings.
-    Then:
-        - Ensure that it does not exist in the succeeded_playbooks set
-        - Ensure that it exists in the failed_playbook set
-        - no second playback is needed
-    """
-    execution_results = [
-        PB_Status.FAILED,
-        PB_Status.FAILED,
-        PB_Status.COMPLETED,
-        PB_Status.FAILED,
-    ]
-    incident_test_mock = RunIncidentTestMock(execution_results)
-    build_context, server_context = init_server_context(mocker, tmp_path, mockable=True)
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._run_incident_test",
-        incident_test_mock.run_incident_test,
-    )
-    server_context.execute_tests()
-
-    data_keeper = build_context.tests_data_keeper
-    assert incident_test_mock.call_count == 4
-    assert not data_keeper.succeeded_playbooks
-    assert "mocked_playbook" in data_keeper.failed_playbooks
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_executions"] == 3
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_successful_runs"]
-        == 1
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["failed_stage"] == "Execution"
-    )
-
-
-def test_mockable_playbook_recording_fails_every_time(mocker, tmp_path):
-    """
-    Given:
-        - A mockable test
-    When:
-        - The mockable test that fails on the first playback, then fails on every record run.
-    Then:
-        - Ensure that it does not exist in the succeeded_playbooks set
-        - Ensure that it exists in the failed_playbook set
-        - no second playback is needed
-    """
-    execution_results = [
-        PB_Status.FAILED,
-        PB_Status.FAILED,
-        PB_Status.FAILED,
-        PB_Status.FAILED,
-    ]
-    incident_test_mock = RunIncidentTestMock(execution_results)
-    build_context, server_context = init_server_context(mocker, tmp_path, mockable=True)
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._run_incident_test",
-        incident_test_mock.run_incident_test,
-    )
-    server_context.execute_tests()
-
-    data_keeper = build_context.tests_data_keeper
-    assert incident_test_mock.call_count == 4
-    assert not data_keeper.succeeded_playbooks
-    assert "mocked_playbook" in data_keeper.failed_playbooks
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_executions"] == 3
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_successful_runs"]
-        == 0
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["failed_stage"] == "Execution"
-    )
-
-
-def test_mockable_playbook_second_playback_fails(mocker, tmp_path):
-    """
-    Given:
-        - A mockable test
-    When:
-        - The mockable test fails on the second playback
-    Then:
-        - Ensure that it exists in the failed_playbooks set
-        - Ensure that it does not exist in the succeeded_playbooks list
-    """
-
-    execution_results = [PB_Status.FAILED, PB_Status.COMPLETED, PB_Status.FAILED]
-    incident_test_mock = RunIncidentTestMock(execution_results)
-    build_context, server_context = init_server_context(mocker, tmp_path, mockable=True)
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._run_incident_test",
-        incident_test_mock.run_incident_test,
-    )
-    server_context.execute_tests()
-
-    data_keeper = build_context.tests_data_keeper
-    assert incident_test_mock.call_count == 3
-    assert not data_keeper.succeeded_playbooks
-    assert "mocked_playbook (Second Playback)" in data_keeper.failed_playbooks
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_executions"] == 1
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_successful_runs"]
-        == 1
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["failed_stage"]
-        == "Second playback"
     )
 
 
@@ -701,7 +441,6 @@ def test_replacing_placeholders(mocker, playbook, tmp_path):
     ]
     content_conf_json = generate_content_conf_json(
         tests=tests,
-        unmockable_integrations={"FirstIntegration": "reason"},
         skipped_tests={},
     )
     # Setting up the content-test-conf conf.json
@@ -745,7 +484,7 @@ def test_replacing_placeholders(mocker, playbook, tmp_path):
         mocker.MagicMock(),
     )
     integration._set_integration_params(
-        server_url="1.1.1.1", playbook_id="playbook_integration", is_mockable=False
+        server_url="1.1.1.1", playbook_id="playbook_integration"
     )
     integration = Integration(
         build_context,
@@ -755,7 +494,7 @@ def test_replacing_placeholders(mocker, playbook, tmp_path):
         mocker.MagicMock(),
     )
     integration._set_integration_params(
-        server_url="1.2.3.4", playbook_id="playbook_integration", is_mockable=False
+        server_url="1.2.3.4", playbook_id="playbook_integration"
     )
     assert "%%SERVER_HOST%%" in build_context.secret_conf.integrations[0].params.get(
         "url"

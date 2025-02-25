@@ -411,12 +411,6 @@ def register_commands(_args: list[str] = []):  # noqa: C901
         )(error_code)
 
     if command_name == "test-content" or register_all:
-        message = typer.style(
-            "Warning: The mocking mechanism will be removed in the next release of the Demisto SDK.",
-            fg=typer.colors.RED,
-        )
-        typer.echo(message)
-
         from demisto_sdk.commands.test_content.content_test_setup import test_content
 
         app.command(

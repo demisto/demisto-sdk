@@ -29,7 +29,7 @@ jobs:
       - name: Python ${{ matrix.python-version }} - Setup Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.12"
+          python-version: "3.10"
 
       - name: Validate Changelog
         env:
@@ -57,7 +57,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.12"
+          python-version: "3.10"
 
       - name: Cache pre-commit
         uses: actions/cache@v4
@@ -200,10 +200,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.12
+      - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.10"
       - name: Download all artifacts
         uses: actions/download-artifact@v4
       - name: Run coverage
@@ -326,7 +326,7 @@ jobs:
         if: steps.files-changed.outputs.any_changed == 'true'
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.12"
+          python-version: "3.10"
 
       - name: Validate content master paths
         if: steps.files-changed.outputs.any_changed == 'true'
@@ -344,7 +344,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.12"
+          python-version: "3.10"
 
       - name: Checkout content
         uses: actions/checkout@v4
@@ -432,7 +432,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.12"
+          python-version: "3.10"
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -451,7 +451,7 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.12"
+          python-version: "3.10"
 
       - name: Generate Docs
         run: poetry run python demisto_sdk/commands/validate/generate_validate_docs.py validation_docs.md
@@ -477,7 +477,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.10"
           cache: "pip"
 
       - name: pip intsall current project

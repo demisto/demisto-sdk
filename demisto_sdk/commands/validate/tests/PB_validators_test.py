@@ -277,14 +277,14 @@ def test_is_no_rolename(content_item, expected_result):
         (
             create_playbook_object(
                 paths=["deprecated", "description"],
-                values=[True, "Deprecated. Use <PLAYBOOK_NAME> instead."],
+                values=[True, "Deprecated. Use PLAYBOOK_NAME instead."],
             ),
             [],
         ),
         (
             create_playbook_object(
                 paths=["deprecated", "description"],
-                values=[True, "Deprecated. <REASON> No available replacement."],
+                values=[True, "Deprecated. REASON No available replacement."],
             ),
             [],
         ),
@@ -294,8 +294,8 @@ def test_is_no_rolename(content_item, expected_result):
                 values=[True, "Not a valid description"],
             ),
             "The deprecated playbook 'Detonate File - JoeSecurity V2' has invalid description.\nThe description of "
-            'all deprecated playbooks should follow one of the formats:\n1. "Deprecated. Use <PLAYBOOK_NAME> '
-            'instead."\n2. "Deprecated. <REASON> No available replacement."',
+            'all deprecated playbooks should follow one of the formats:\n1. "Deprecated. Use PLAYBOOK_NAME '
+            'instead."\n2. "Deprecated. REASON No available replacement."',
         ),
     ],
 )

@@ -49,6 +49,7 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 )
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
+DOCKER_CONTAINER_TIMEOUT = 300
 
 
 class DockerException(Exception):
@@ -100,7 +101,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
                 logger.debug(
                     "Gitlab CI use case detected, trying to create docker client from Gitlab CI job environment."
                 )
-                DOCKER_CLIENT = docker.from_env()
+                DOCKER_CLIENT = docker.from_env(timeout=timeout)
                 if DOCKER_CLIENT.ping():
                     # see https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient.ping for more information about ping().
                     logger.debug(
@@ -355,7 +356,7 @@ class DockerBase:
         """
         Creates a container and pushing requested files to the container.
         """
-        docker_client = init_global_docker_client()
+        docker_client = init_global_docker_client(timeout=DOCKER_CONTAINER_TIMEOUT)
 
         try:
             container: docker.models.containers.Container = (

@@ -1,7 +1,7 @@
 # Changelog
 ## 1.35.1 (2025-02-24)
 ### Breaking
-* Removed *DS106* (is valid description name) since it was duplicated by DS104 (no description file) from the new validate. [#4774](https://github.com/demisto/demisto-sdk/pull/4774)
+* Removed *DS106* (is valid description name) since it was duplicated by *DS104* (no description file) from the new validate. [#4774](https://github.com/demisto/demisto-sdk/pull/4774)
 
 ### Feature
 * Locked the MyPy version to 1.14.1 in the *mypy-in-docker* ***pre-commit*** hook to ensure consistent type checking. [#4812](https://github.com/demisto/demisto-sdk/pull/4812)

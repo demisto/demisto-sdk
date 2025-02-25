@@ -61,6 +61,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
     outputs: List[IntegrationOutput] = Field([], exclude=True)
 
     deprecated: bool = Field(False)
+    hidden: bool = Field(False)
     description: Optional[str] = Field("")
 
     # missing attributes in DB

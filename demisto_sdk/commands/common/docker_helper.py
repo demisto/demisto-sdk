@@ -49,7 +49,7 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 )
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
-DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT")) or 300
+DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT") or 300)
 
 
 class DockerException(Exception):

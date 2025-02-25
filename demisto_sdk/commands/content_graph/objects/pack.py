@@ -11,6 +11,7 @@ from packaging.version import Version, parse
 from pydantic import DirectoryPath, Field, validator
 
 from demisto_sdk.commands.common.constants import (
+    DEFAULT_SUPPORTED_MODULES,
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -124,6 +125,7 @@ def upload_zip(
 
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     path: Path
+    supportedModules: List[str] = DEFAULT_SUPPORTED_MODULES
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
@@ -134,7 +136,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         PackContentItems(), alias="contentItems", exclude=True
     )
     pack_metadata_dict: Optional[dict] = Field({}, exclude=True)
-
     @classmethod
     def from_orm(cls, obj) -> "Pack":
         pack = super().from_orm(obj)

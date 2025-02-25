@@ -7,6 +7,7 @@ from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_SUPPORTED_MODULES,
+    PlatformSupportedModules,
     PACKS_PACK_META_FILE_NAME,
     PARTNER_SUPPORT,
     XSOAR_AUTHOR,
@@ -587,7 +588,7 @@ class PackMetaData(JSONObject):
             self.use_cases = user_metadata.get("useCases", [])
             self.dependencies = user_metadata.get("dependencies", {})
             self.supportedModules = user_metadata.get(
-                "supportedModules", DEFAULT_SUPPORTED_MODULES
+                "supportedModules", [DEFAULT_SUPPORTED_MODULES]
             )
             if self.price > 0:
                 self.premium = True

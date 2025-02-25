@@ -37,6 +37,7 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: List[str],
         is_test_playbook: bool = False,
         git_sha: Optional[str] = None,
     ) -> None:
@@ -46,7 +47,7 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
             path (Path): The playbook path.
             is_test_playbook (bool, optional): Whether this is a test playbook or not. Defaults to False.
         """
-        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        super().__init__(path, pack_marketplaces, pack_supported_modules, git_sha=git_sha)
         self.tags: List[str] = self.yml_data.get("tags", [])
         self.is_test: bool = is_test_playbook
         self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)

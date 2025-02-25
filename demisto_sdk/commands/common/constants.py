@@ -1987,11 +1987,11 @@ class PlatformSupportedModules(StrEnum):
     C3 = "C3"
     XO = "X0"
     X1 = "X1"
-    X3 = ("X3",)
-    X5 = ("X5",)
+    X3 = "X3"
+    X5 = "X5"
     ENT_PLUS = "ENT_PLUS"
 
-
+# TODO - Make into an empty list - no default should be used.
 DEFAULT_SUPPORTED_MODULES: list[str] = [
     str(sku.value) for sku in PlatformSupportedModules
 ]

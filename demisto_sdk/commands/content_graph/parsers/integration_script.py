@@ -20,10 +20,11 @@ class IntegrationScriptParser(YAMLContentItemParser):
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules,
         git_sha: Optional[str] = None,
     ) -> None:
         self.is_unified = YAMLContentItemParser.is_unified_file(path)
-        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        super().__init__(path, pack_marketplaces, pack_supported_modules, git_sha=git_sha)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.connect_to_api_modules()
 

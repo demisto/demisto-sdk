@@ -89,6 +89,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     skip_prepare: Optional[List[SkipPrepare]] = Field(None, alias="skipprepare")
     prettyname: Optional[str] = None
 
+
 StrictScript = create_model(
     model_name="StrictScript",
     base_models=(

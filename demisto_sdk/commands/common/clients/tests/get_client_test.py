@@ -308,9 +308,7 @@ def test_get_client_from_server_type_base_url_is_not_api_url(mocker, requests_mo
     )
 
     with pytest.raises(ValueError):
-        get_client_from_server_type(
-            base_url=base_url, api_key="test", auth_id="1"
-        )
+        get_client_from_server_type(base_url=base_url, api_key="test", auth_id="1")
 
 
 @pytest.mark.parametrize(

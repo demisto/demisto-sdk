@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where pushing a Docker image to a Docker registry incorrectly returned a success message despite the operation failing.
-  type: fix
-pr_number: 4825

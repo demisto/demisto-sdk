@@ -1,4 +1,0 @@
-changes:
-- description: Update Graph parsers to support the new marketplace properties.
-  type: feature
-pr_number: 4823

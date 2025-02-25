@@ -150,6 +150,7 @@ validate-deleted-files = "demisto_sdk.scripts.validate_deleted_files:main"
 validate-file-permission-changes = "demisto_sdk.scripts.validate_file_permission_changes:main"
 prevent-mypy-global-ignore = "demisto_sdk.scripts.prevent_mypy_global_ignore:main"
 generate-command-docs = "demisto_sdk.scripts.generate_commands_docs:main"
+validate-validation-config-file = "demisto_sdk.scripts.validate_validation_config_file:main"
 
 [tool.ruff]
 exclude = [

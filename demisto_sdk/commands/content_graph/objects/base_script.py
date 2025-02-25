@@ -32,7 +32,6 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
     tags: List[str]
     skip_prepare: List[str]
     runas: str = ""
-    quickaction: bool = False
     args: List[Argument] = Field([], exclude=True)
     outputs: List[Output] = Field([], exclude=True)
 

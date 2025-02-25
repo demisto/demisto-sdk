@@ -41,7 +41,6 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
                 "description": "comment",
                 "type": "type",
                 "subtype": "subtype",
-                "quickaction": "quickaction",
                 "alt_docker_images": "alt_dockerimages",
                 "outputs": "outputs",
             }
@@ -69,10 +68,6 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
     @property
     def runas(self) -> str:
         return self.yml_data.get("runas") or ""
-
-    @property
-    def quickaction(self) -> bool:
-        return self.yml_data.get("quickaction", False)
 
     @property
     def code(self) -> Optional[str]:

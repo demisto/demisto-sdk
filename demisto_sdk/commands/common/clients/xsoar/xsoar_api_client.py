@@ -1442,6 +1442,22 @@ class XsoarClient:
                                      interval_between_tries: str = '3',
                                      complete_task: bool = False,
                                      ):
+        """
+        Wait and complete playbook tasks by given status. Same implementation as WaitAndCompleteTask script in content.
+
+        Args:
+            incident_id: incident ID that the playbook is running on
+            task_input: Outcome for a conditional task. For example, "Yes"
+            task_states: list of states. Possible values: New, InProgress, Completed, Waiting, Error, Skipped, Blocked (leave empty to get all tasks)
+            task_name: The name of the task that should be completed. If no task name is provided, will complete all tasks with the state `task_state`
+            max_timeout: Timeout in seconds for the script to complete tasks.
+            interval_between_tries: Time (seconds) to wait between each check iteration.
+            complete_task: Whether to complete the task in addition to checking if it is completed.
+
+
+        Returns:
+            a list of completed task if completed, and found tasks if not completed.
+        """
         if not all(state in self.PLAYBOOK_TASKS_STATES for state in task_states):
             raise ValueError(f'task_states are bad. Possible values: {self.PLAYBOOK_TASKS_STATES}')
         if not task_states:
@@ -1452,7 +1468,7 @@ class XsoarClient:
         found_tasks = []
         start_time = time.time()
 
-        while True:
+        while time.time() - start_time > max_timeout:   # type: ignore[operator]
             # Get all tasks with one state of the states in task_states list
             tasks_by_states, status_code, _ = self._xsoar_client.generic_request(
                 f"/investigation/{incident_id}/workplan/tasks", method="POST",
@@ -1496,8 +1512,6 @@ class XsoarClient:
                                     "task state": task.get("state")} for task in tasks_by_states)
                 break
 
-            if time.time() - start_time > max_timeout:  # type: ignore[operator]
-                break
 
             time.sleep(float(interval_between_tries))  # type: ignore[arg-type]
 

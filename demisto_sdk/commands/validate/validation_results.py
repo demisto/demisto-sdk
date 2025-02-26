@@ -48,26 +48,28 @@ class ResultWriter:
         self,
         config_file_content: ConfiguredValidations,
         validation_results: List[ValidationResult],
-    ) -> Tuple[int, Set[str]]:
-        """Summarize the validation results and return the overall exit code and set of failing error codes.
+    ) -> Tuple[int, Set[str], Set[str]]:
+        """Summarize the validation results and return the overall exit code and set of failing and warning error codes.
 
         Args:
             config_file_content (ConfiguredValidations): The ConfiguredValidations object containing the warning level validations.
             validation_results (List[ValidationResult]): The list of ValidationResult objects to summarize.
 
         Returns:
-            Tuple[int, Set[str]]: The exit code and set of failing error codes.
+            Tuple[int, Set[str], Set[str]]: The exit code and sets of failing and warning error codes.
         """
         exit_code = 0
         failing_error_codes: Set[str] = set()
+        warning_error_codes: Set[str] = set()
         for result in validation_results:
             if result.validator.error_code in config_file_content.warning:
+                warning_error_codes.add(result.validator.error_code)
                 logger.warning(f"<yellow>{result.format_readable_message}</yellow>")
             else:
                 failing_error_codes.add(result.validator.error_code)
                 logger.error(f"<red>{result.format_readable_message}</red>")
                 exit_code = 1
-        return exit_code, failing_error_codes
+        return exit_code, failing_error_codes, warning_error_codes
 
     def post_results(
         self,
@@ -84,8 +86,8 @@ class ResultWriter:
         fixed_objects_set: Set[BaseContent] = set()
         if self.json_file_path:
             self.write_results_to_json_file()
-        exit_code, failing_error_codes = self.post_validation_results(
-            config_file_content, self.validation_results
+        exit_code, failing_error_codes, warning_error_codes = (
+            self.post_validation_results(config_file_content, self.validation_results)
         )
         for fixing_result in self.fixing_results:
             fixed_objects_set.add(fixing_result.content_object)
@@ -100,44 +102,63 @@ class ResultWriter:
             exit_code = 1
         if not exit_code:
             logger.info("<green>All validations passed.</green>")
-        elif failing_error_codes:
-            self.summarize_ignorable_and_forcemergeable_errors(
-                failing_error_codes, config_file_content
+        elif failing_error_codes or warning_error_codes:
+            self.summarize_validation_results(
+                failing_error_codes, warning_error_codes, config_file_content
             )
         for fixed_object in fixed_objects_set:
             fixed_object.save()
         return exit_code
 
-    def summarize_ignorable_and_forcemergeable_errors(
-        self, failing_error_codes: Set[str], config_file_content: ConfiguredValidations
+    def summarize_validation_results(
+        self,
+        failing_error_codes: Set[str],
+        warning_error_codes: Set[str],
+        config_file_content: ConfiguredValidations,
     ):
-        """Divide the failing error codes into three groups: forcemergeable, ignorable, and must-be-handled and post this summary at the end of the execution.
+        """Divide the error codes into groups: warnings, forcemergeable, ignorable, non ignorable, and must-be-handled and post this summary at the end of the execution.
 
         Args:
             failing_error_codes (Set[str]): The set of failing errors.
+            warning_error_codes (Set[str]): The set of warning errors.
             config_file_content (ConfiguredValidations): The ConfiguredValidations object containing the ignorable errors, and path-based sections.
         """
         forcemergeable_errors = []
         ignorable_errors = []
         must_be_handled_errors = []
+        non_ignorable_errors = []
+        msg: str = ""
         for failing_error_code in failing_error_codes:
             if failing_error_code in config_file_content.ignorable_errors:
                 ignorable_errors.append(failing_error_code)
-            if failing_error_code not in config_file_content.path_based_section:
+            else:
+                non_ignorable_errors.append(failing_error_code)
+            if (
+                failing_error_code
+                not in config_file_content.selected_path_based_section
+            ):
                 forcemergeable_errors.append(failing_error_code)
-            elif failing_error_code not in ignorable_errors:
+            else:
                 must_be_handled_errors.append(failing_error_code)
-        msg = f"The following errors were thrown as a part of this pr: {', '.join(failing_error_codes)}.\n"
+        if warning_error_codes:
+            msg += f"The following errors were reported as warnings: {', '.join(warning_error_codes)}.\n"
+        msg += f"The following errors were thrown as a part of this pr: {', '.join(failing_error_codes)}.\n"
         if ignorable_errors:
             msg += (
                 f"The following errors can be ignored: {', '.join(ignorable_errors)}.\n"
             )
+        if non_ignorable_errors:
+            msg += f"The following errors cannot be ignored: {', '.join(non_ignorable_errors)}.\n"
         if forcemergeable_errors:
             msg += f"The following errors don't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
         if must_be_handled_errors:
             msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
-            msg += f"Note that the following errors cannot be ignored or force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"
+            msg += f"Note that the following errors cannot be force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"
             msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
+        else:
+            msg += "##############################################################\n"
+            msg += "Please note that the PR can be force merged from the validation perspective.\n"
+            msg += "##############################################################\n"
         logger.error(f"<red>{msg}</red>")
 
     def write_results_to_json_file(self):

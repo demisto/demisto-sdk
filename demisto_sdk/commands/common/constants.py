@@ -21,6 +21,10 @@ LOG_FILE_NAME = "demisto_sdk_debug.log"
 
 NEO4J_DEFAULT_VERSION = "5.22.0"
 
+# Colors
+RED = "\033[91m"
+NO_COLOR = "\033[0m"
+
 # --- Environment Variables ---
 # General
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
@@ -1956,6 +1960,7 @@ class MarketplaceVersions(StrEnum):
     XPANSE = "xpanse"
     XSOAR_SAAS = "xsoar_saas"
     XSOAR_ON_PREM = "xsoar_on_prem"
+    PLATFORM = "platform"
 
 
 MarketplaceVersionToMarketplaceName = {
@@ -1971,6 +1976,7 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR_ON_PREM: "Config/core_packs_list.json",
     MarketplaceVersions.MarketplaceV2: "Config/core_packs_mpv2_list.json",
     MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
+    MarketplaceVersions.PLATFORM: "Config/core_packs_platform_list.json",
 }
 
 
@@ -2232,3 +2238,17 @@ PB_RELEASE_NOTES_FORMAT = {
     "Investigation:": 6,
     "Containment:": 6,
 }
+
+INCIDENT_COMMANDS: list[str] = [
+    "xsoar-search-incidents",
+    "xsoar-get-incident",
+]
+
+MIRRORING_COMMANDS: list[str] = [
+    "get-mapping-fields",
+    "get-remote-data",
+    "get-modified-remote-data",
+    "update-remote-system",
+]
+
+DEFAULT_PLATFORM_MODULES: list[str] = []

@@ -304,6 +304,8 @@ class ContentType(StrEnum):
             return "Objects"
         elif self == ContentType.GENERIC_MODULE:
             return "Modules"
+        elif self == ContentType.CASE_LAYOUT:
+            return "Layouts"
         separated_str = pascalToSpace(self)
         return f"{separated_str}s"
 
@@ -543,6 +545,7 @@ def replace_marketplace_references(
         if marketplace in {
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XPANSE,
+            MarketplaceVersions.PLATFORM,
         }:
             if isinstance(data, dict):
                 keys_to_update = {}

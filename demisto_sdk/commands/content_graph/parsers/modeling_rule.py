@@ -47,7 +47,10 @@ class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELIN
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.MarketplaceV2}
+        return {
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        }
 
     @property
     def strict_object(self):

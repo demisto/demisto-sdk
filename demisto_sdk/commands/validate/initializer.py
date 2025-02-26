@@ -275,8 +275,8 @@ class Initializer:
             logger.info(
                 f"\n######## - Added untracked:\n{relative_untracked_files_paths}"
             )
-            modified_files = modified_files.union(relative_untracked_files_paths)
-            # added_files = set(added_files).union(relative_untracked_files_paths)
+            # modified_files = modified_files.union(relative_untracked_files_paths)
+            added_files = set(added_files).union(relative_untracked_files_paths)
             logger.info(f"<cyan>\n{modified_files=} {added_files=} {renamed_files=}</cyan>")  # TODO: remove line
 
         return modified_files, added_files, renamed_files

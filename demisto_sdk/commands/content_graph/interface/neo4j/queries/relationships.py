@@ -111,9 +111,14 @@ RETURN count(r) AS relationships_merged"""
 
 def update_alert_to_incident_relationships():
     return f"""
-// Updated USES relationships between nodes when the source contains "alert" in the id,
-// This query changed the target node to content item that is in repository and its name is similar
-// to the old target with "incident" instead "alert" in the name.
+// Update USES relationships when the source node contains "alert" in its ID.
+// This query addresses a scenario where relationships are created in our repository
+// to items that do not yet exist with the expected names. Since we know the item names
+// will be adjusted during upload (e.g., "incident" might be declared as "alert" in the marketplace),
+// we initially use the "expected" name (e.g., "alert"). This discrepancy causes a false "not_in_repository" flag.
+// The query ensures that the target node is updated to the correct item in the repository,
+// replacing "alert" with "incident" to align with the correct naming convention,
+// resolving the false flag and maintaining accurate relationships.
 
 // Get USES relationship when target node contains "alert" and target node not in repository
 // and source not is in marketplacev2 and not xsoar

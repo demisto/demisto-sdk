@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue in graph creation where the content items in XSIAM replaced the word 'alert' with 'incident' on upload.
+- description: Fixed an issue where, when creating relationships between nodes, if the target is not in the repository due to a naming convention (e.g., "incident" to "alert"), the incorrect relationship is deleted and a correct one is created.
   type: fix
 pr_number: 4785

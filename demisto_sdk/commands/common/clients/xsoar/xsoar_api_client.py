@@ -1423,6 +1423,15 @@ class XsoarClient:
         return self._process_response(response, status_code, 200)
 
     def get_playbook_task_in_investigation(self, task_name, investigation_id):
+        """
+        Get playbook task in an incident.
+
+        Args:
+            investigation_id: incident ID that the playbook is running on
+            task_name: The name of the task to retrieve data on it.
+        Returns:
+            a dict of the task details.
+        """
         tasks, status_code, _ = self._xsoar_client.generic_request(
             f"/investigation/{investigation_id}/workplan/tasks", method="POST",
             body={"states": self.PLAYBOOK_TASKS_STATES,
@@ -1526,6 +1535,15 @@ class XsoarClient:
         return {'CompletedTask': completed_tasks, 'FoundTask': found_tasks}
 
     def complete_playbook_task(self, investigation_id, task_input: str, task_id: str = None, task_name: str = None):
+        """
+        Complete a playbook task in an investigation.
+
+        Args:
+            investigation_id: Investigation ID that the playbook is running on
+            task_input: The input to complete the task with.
+            task_id: the task id to complete.
+            task_name: the name of the task to complete.
+        """
         if not (task_name or task_id):
             return RuntimeError("Task id or task name should be provided.")
         elif not task_id:
@@ -1546,7 +1564,20 @@ class XsoarClient:
         logger.info(f"The playbook task with id {task_id} was completed with input {task_input}")
 
     def upload_file_to_war_room(self, file_path, incident_id, file_name: str = None, file_comment: str =None, field: str =None, show_media_file:str = None, last:str = None):
-        # return self._xsoar_client.incident_file_upload(id=incident_id, file=file_path, **kwargs)
+        """
+        Upload a file attachment to an investigation .
+
+        Args:
+            file_path: path of the file to upload to the incident.
+            incident_id: incident ID to upload to
+            file_name: the name of the file to upload
+            file_comment: comment on the file
+            file_name: The name of the task to retrieve data on it.
+            field: field name to hold the attachment details. If not specified, `attachment` will be used.
+            show_media_file: show media file
+            last: If set to true will create an investigation. Used for uploading after creating incident.
+        """
+        self._xsoar_client.incident_file_upload(id=incident_id, file=file_path, **kwargs)
         form_params = []
         if file_name:
             form_params.append(('fileName', file_name))  # noqa: E501

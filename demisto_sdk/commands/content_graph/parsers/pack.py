@@ -187,7 +187,6 @@ class PackMetadataParser:
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
         self.supportedModules: List[str] = metadata.get("supportedModules", DEFAULT_SUPPORTED_MODULES)
-        logger.info(f"Parsed pack metadata for {self.name} | \n {json.dumps(self.pack_metadata_dict, indent=4)}")
     @property
     def url(self) -> str:
         if "url" in self.pack_metadata_dict and self.pack_metadata_dict["url"]:

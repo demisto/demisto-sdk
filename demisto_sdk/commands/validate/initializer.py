@@ -269,7 +269,6 @@ class Initializer:
             with open(
                 "contribution_files_relative_paths.txt", "r"
             ) as contribution_file:
-                logger.info(f"\n{contribution_file=}")  # TODO: remove line
                 for single_line in contribution_file:
                     clean_line: str = single_line.rstrip("\n")
                     relative_untracked_files_paths.add(Path(clean_line))
@@ -278,6 +277,10 @@ class Initializer:
             )
             # modified_files = modified_files.union(relative_untracked_files_paths)
             added_files = set(added_files).union(relative_untracked_files_paths)
+            logger.info(f"\n<cyan>first: {added_files=}</cyan>")  # TODO: remove line
+            added_files = added_files.intersection(relative_untracked_files_paths)  # TODO: remove
+            logger.info(f"\n<cyan>second: {added_files=}</cyan>")  # TODO: remove line
+
 
         return modified_files, added_files, renamed_files
 

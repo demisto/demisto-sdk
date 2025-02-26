@@ -4,7 +4,6 @@ from functools import cached_property
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, List, Optional, Union
-import json
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version, parse

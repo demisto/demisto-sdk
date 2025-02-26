@@ -2,12 +2,13 @@ from datetime import datetime
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Set
-
+import json
 import pydantic
 import regex
 from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
+    DEFAULT_SUPPORTED_MODULES,
     BASE_PACK,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
@@ -185,7 +186,7 @@ class PackMetadataParser:
         )
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
-
+        self.supportedModules: List[str] = metadata.get("supportedModules", DEFAULT_SUPPORTED_MODULES)
     @property
     def url(self) -> str:
         if "url" in self.pack_metadata_dict and self.pack_metadata_dict["url"]:
@@ -339,7 +340,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         try:
             content_item = ContentItemParser.from_path(
-                content_item_path, self.marketplaces
+                content_item_path, self.marketplaces, self.supportedModules
             )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)

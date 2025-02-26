@@ -18,6 +18,7 @@ class TestPlaybookParser(BasePlaybookParser, content_type=ContentType.TEST_PLAYB
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
         """Parses the test playbook.
@@ -33,7 +34,7 @@ class TestPlaybookParser(BasePlaybookParser, content_type=ContentType.TEST_PLAYB
             raise NotAContentItemException
 
         super().__init__(
-            path, pack_marketplaces, is_test_playbook=True, git_sha=git_sha
+            path, pack_marketplaces, pack_supported_modules, is_test_playbook=True, git_sha=git_sha
         )
 
         if self.yml_data.get("script"):

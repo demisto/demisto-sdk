@@ -7,7 +7,6 @@ from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_SUPPORTED_MODULES,
-    PlatformSupportedModules,
     PACKS_PACK_META_FILE_NAME,
     PARTNER_SUPPORT,
     XSOAR_AUTHOR,

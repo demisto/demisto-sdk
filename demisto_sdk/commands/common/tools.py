@@ -3540,7 +3540,11 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
     """
     commands_ls = []
     for command in yml_data.get("script", {}).get("commands", {}):
-        if command.get("name") and not command.get("deprecated"):
+        if (
+            command.get("name")
+            and not command.get("deprecated")
+            and not command.get("hidden")
+        ):
             commands_ls.append(command.get("name"))
     return commands_ls
 

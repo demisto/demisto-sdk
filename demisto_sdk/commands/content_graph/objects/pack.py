@@ -285,9 +285,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         )
         # Replace incorrect marketplace references
         metadata = replace_marketplace_references(metadata, marketplace, str(self.path))
-        logger.info(f"Dumped metadata file to {path} | {json.dumps(metadata, indent=4)=}")
+        metadata_str = json.dumps(metadata, indent=4).replace("<", r"\<").replace(">", r"\>")
+        logger.info(f"Dumped metadata file to {path} | {metadata_str}")
         write_dict(path, data=metadata, indent=4, sort_keys=True)
-
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
         shutil.copyfile(self.path / "README.md", path)
         if self.contributors:

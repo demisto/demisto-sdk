@@ -4,7 +4,7 @@ from functools import cached_property
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, List, Optional, Union
-
+import json
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version, parse
@@ -285,6 +285,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         )
         # Replace incorrect marketplace references
         metadata = replace_marketplace_references(metadata, marketplace, str(self.path))
+        logger.info(f"Dumped metadata file to {path} | {json.dumps(metadata, indent=4)=}")
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:

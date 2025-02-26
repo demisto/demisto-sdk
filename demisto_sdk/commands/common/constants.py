@@ -1990,6 +1990,7 @@ class PlatformSupportedModules(StrEnum):
     X3 = "X3"
     X5 = "X5"
     ENT_PLUS = "ENT_PLUS"
+    # TODO - add 'addon' IDs.
 
 # TODO - Make into an empty list - no default should be used.
 DEFAULT_SUPPORTED_MODULES: list[str] = [

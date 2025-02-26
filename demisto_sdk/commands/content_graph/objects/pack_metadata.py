@@ -145,7 +145,7 @@ class PackMetadata(BaseModel):
                 "contentDisplays": content_displays,
                 "dependencies": self._enhance_dependencies(marketplace, dependencies),
                 "supportDetails": self._get_support_details(),
-                "defaultDataSource": default_data_source_value,
+                "defaultDataSource": default_data_source_value                
             }
         )
 

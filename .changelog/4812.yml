@@ -1,4 +1,0 @@
-changes:
-- description: Locked the MyPy version to 1.14.1 in the ***mypy-in-docker*** **pre-commit** hook to ensure consistent type checking.
-  type: feature
-pr_number: 4812

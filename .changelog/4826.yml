@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the update-release-notes command would add redundant message when updating docker image versions.
-  type: internal
-pr_number: 4826

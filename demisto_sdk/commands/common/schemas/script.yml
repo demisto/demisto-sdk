@@ -126,8 +126,6 @@ mapping:
     sequence:
     - type: str
       enum: ['script-name-incident-to-alert']
-  quickaction:
-      type: bool
   prettyname:
       type: str
 

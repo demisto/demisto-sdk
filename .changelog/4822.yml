@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue with the pre-commit command where debug level logs were not appearing in the log file.
-  type: fix
-pr_number: 4822

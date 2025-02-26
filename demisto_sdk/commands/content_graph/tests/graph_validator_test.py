@@ -104,6 +104,7 @@ def repository(mocker) -> ContentDTO:
                 name="test-command",
                 description="",
                 deprecated=False,
+                quickaction=False,
             ),
             mock_relationship(
                 "SampleIntegration",
@@ -117,6 +118,7 @@ def repository(mocker) -> ContentDTO:
                 name="deprecated-command",
                 description="",
                 deprecated=True,
+                quickaction=False,
             ),
         ],
         RelationshipType.IMPORTS: [

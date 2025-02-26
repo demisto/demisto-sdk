@@ -3,6 +3,7 @@ from typing import Optional, TypedDict
 import typer
 
 from demisto_sdk.commands.common.logger import logging_setup_decorator
+from demisto_sdk.commands.run_cmd.runner import IncidentStatus
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
@@ -10,6 +11,7 @@ class RunnerArgs(TypedDict):
     query: str
     insecure: bool
     incident_id: Optional[str]
+    status_incident_after_run: IncidentStatus
     debug: Optional[str]
     debug_path: Optional[str]
     json_to_outputs: bool
@@ -27,6 +29,12 @@ def run(
         "-id",
         "--incident-id",
         help="The incident to run the query on, if not specified the playground will be used.",
+    ),
+    status_incident_after_run: IncidentStatus = typer.Option(
+        IncidentStatus.REMOVE.value,
+        "-sar",
+        "--status-incident-after-run",
+        help="",
     ),
     debug: bool = typer.Option(
         False,
@@ -102,6 +110,7 @@ def run(
         "query": query,
         "insecure": insecure,
         "incident_id": incident_id,
+        "status_incident_after_run": status_incident_after_run,
         "debug": "-" if debug else None,  # Convert debug to str or None
         "debug_path": debug_path,
         "json_to_outputs": json_to_outputs,
@@ -110,5 +119,5 @@ def run(
     }
 
     update_command_args_from_config_file("run", kwargs)
-    runner = Runner(**kwargs)
-    return runner.run()
+    with Runner(**kwargs) as runner:
+        return runner.run()

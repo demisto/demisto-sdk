@@ -1992,7 +1992,6 @@ class PlatformSupportedModules(StrEnum):
     ENT_PLUS = "ENT_PLUS"
     # TODO - add 'addon' IDs.
 
-# TODO - Make into an empty list - no default should be used.
 DEFAULT_SUPPORTED_MODULES: list[str] = []
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {

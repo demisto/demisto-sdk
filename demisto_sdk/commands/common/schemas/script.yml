@@ -126,6 +126,10 @@ mapping:
     sequence:
     - type: str
       enum: ['script-name-incident-to-alert']
+  quickaction:
+      type: bool
+  prettyname:
+      type: str
 
 # script->args
   name:xsoar:
@@ -184,6 +188,14 @@ schema;argument_schema:
       type: str
     hidden:
       type: bool
+    prettyname:
+      type: str
+    prettypredefined:
+      allowempty: true
+      type: map
+      mapping:
+        ".*":
+          type: str
 
 # script->outputs
     name:xsoar:

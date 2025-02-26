@@ -84,6 +84,8 @@ class _Command(BaseStrictModel):
     timeout: Optional[int] = None
     hidden: Optional[bool] = None
     polling: Optional[bool] = None
+    prettyname: Optional[str] = None
+    quickaction: Optional[bool] = None
 
 
 Command = create_model(
@@ -111,6 +113,7 @@ class _Script(BaseStrictModel):
     is_mappable: Optional[bool] = Field(None, alias="ismappable")
     is_remote_sync_in: Optional[bool] = Field(None, alias="isremotesyncin")
     is_remote_sync_out: Optional[bool] = Field(None, alias="isremotesyncout")
+    supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
     commands: Optional[List[Command]] = None  # type:ignore[valid-type]
     run_once: Optional[bool] = Field(None, alias="runonce")
     sub_type: Optional[str] = Field([TYPE_PYTHON2, TYPE_PYTHON3], alias="subtype")

@@ -21,7 +21,7 @@ class IsValidBetaDescriptionValidator(BaseValidator[ContentTypes]):
     rationale = "Need a disclaimer for beta integrations."
     error_message = (
         f"No beta disclaimer note was found. "
-        f"Please make sure the description file (<integration_name>_description.md)"
+        f"Please make sure the description file (integration_name_description.md)"
         f" includes the beta disclaimer note. "
         f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
     )

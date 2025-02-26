@@ -1,0 +1,4 @@
+changes:
+- description: Added validate summary text file to the logs.
+  type: internal
+pr_number: 4828

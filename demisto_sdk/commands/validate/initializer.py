@@ -263,6 +263,7 @@ class Initializer:
                 "\n<cyan>CONTRIB_BRANCH environment variable found, running validate in contribution flow "
                 "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)</cyan>"
             )
+            logger.info(f"\n{modified_files=} {added_files=} {renamed_files=}")  # TODO: remove line
             # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra) and read file paths
             relative_untracked_files_paths: Set[Path] = set()
             with open(
@@ -276,6 +277,7 @@ class Initializer:
             )
             # modified_files = modified_files.union(relative_untracked_files_paths)
             added_files = set(added_files).union(relative_untracked_files_paths)
+            logger.info(f"<cyan>\n{modified_files=} {added_files=} {renamed_files=}</cyan>")  # TODO: remove line
 
         return modified_files, added_files, renamed_files
 

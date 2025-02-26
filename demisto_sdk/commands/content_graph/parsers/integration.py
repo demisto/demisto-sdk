@@ -24,6 +24,7 @@ class CommandParser:
     description: str
     args: List[dict]
     outputs: List[dict]
+    quickaction: bool
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
@@ -48,6 +49,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch_samples = self.script_info.get("isFetchSamples", False)
         self.is_feed = self.script_info.get("feed", False)
         self.long_running = self.script_info.get("longRunning", False)
+        self.supports_quick_actions = self.script_info.get(
+            "supportsquickactions", False
+        )
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
@@ -90,6 +94,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             description = command_data.get("description")
             args = command_data.get("arguments") or []
             outputs = command_data.get("outputs") or []
+            quickaction = command_data.get("quickaction", False)
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
                 target=name,
@@ -97,6 +102,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 name=name,
                 deprecated=deprecated,
                 description=description,
+                quickaction=quickaction,
             )
             self.commands.append(
                 CommandParser(
@@ -105,6 +111,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                     deprecated=deprecated,
                     args=args,
                     outputs=outputs,
+                    quickaction=quickaction,
                 )
             )
 

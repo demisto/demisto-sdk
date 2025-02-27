@@ -5,7 +5,7 @@ import pytest
 from demisto_client.demisto_api import DefaultApi
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.run_cmd.runner import Runner
+from demisto_sdk.commands.run_cmd.runner import IncidentStatus, Runner, ServerType
 
 INPUT_OUTPUTS = [
     # Debug output with Context Output part
@@ -47,6 +47,15 @@ INPUT_OUTPUTS = [
         ],
     ),
 ]
+
+
+@pytest.fixture
+def set_environment_variables_saas_machine(monkeypatch):
+    # Set environment variables required by runner
+    monkeypatch.setenv("DEMISTO_BASE_URL", "https://api-demisto.instance.com/")
+    monkeypatch.setenv("DEMISTO_API_KEY", "API_KEY")
+    monkeypatch.delenv("DEMISTO_USERNAME", raising=False)
+    monkeypatch.delenv("DEMISTO_PASSWORD", raising=False)
 
 
 @pytest.fixture
@@ -184,3 +193,92 @@ def test_multiple_existing_playgrounds(mocker, set_environment_variables, userna
     assert runner._get_playground_id() == int(username)
     assert generic_request_mock.call_count == 1
     assert len(responses) == 0
+
+
+@pytest.mark.parametrize(
+    "product_mode, expected_server_type",
+    [("xsoar", ServerType.XSOAR_SAAS), ("xsiam", ServerType.XSIAM)],
+)
+def test_get_server_type(
+    mocker, set_environment_variables_saas_machine, product_mode, expected_server_type
+):
+    """ """
+
+    mocker.patch.object(
+        DefaultApi,
+        "generic_request",
+        return_value=(
+            {"productMode": product_mode, "deploymentMode": "saas"},
+            200,
+            {"Content-Type": "test"},
+        ),
+    )
+    mocker.patch.object(Runner, "create_incident_for_query")
+    runner = Runner("Query", json_to_outputs=True)
+    assert runner.server_type is expected_server_type
+
+
+def test_get_server_type_xsoar_6(mocker, set_environment_variables):
+    """ """
+    mocker.patch.object(Runner, "create_incident_for_query")
+    runner = Runner("Query", json_to_outputs=True)
+    assert runner.server_type is ServerType.XSOAR
+
+
+@pytest.mark.parametrize(
+    "server_type, expected_call",
+    [(ServerType.XSIAM, 0), (ServerType.XSOAR, 0), (ServerType.XSOAR_SAAS, 1)],
+)
+def test_create_incident_for_query(
+    mocker, set_environment_variables, server_type, expected_call
+):
+
+    mock_generic_request = mocker.patch.object(
+        DefaultApi,
+        "generic_request",
+        return_value=({"id": "1"}, 201, None),
+    )
+    mocker.patch.object(Runner, "get_server_type", return_value=server_type)
+    Runner("Query", json_to_outputs=True)
+    assert mock_generic_request.call_count == expected_call
+
+
+@pytest.mark.parametrize(
+    "server_type, status_incident_after_run, is_incident_runtime_created, expected_call, expected_args",
+    [
+        (ServerType.XSIAM, IncidentStatus.REMOVE, False, 0, None),
+        (ServerType.XSOAR, IncidentStatus.REMOVE, False, 0, None),
+        (ServerType.XSOAR_SAAS, IncidentStatus.OPEN, True, 0, None),
+        (ServerType.XSOAR_SAAS, IncidentStatus.CLOSE, True, 1, "/incident/close"),
+        (ServerType.XSOAR_SAAS, IncidentStatus.REMOVE, True, 1, "/incident/batchDelete"),
+    ],
+)
+def test_delete_incident_if_needed(
+    mocker,
+    set_environment_variables,
+    server_type,
+    status_incident_after_run,
+    is_incident_runtime_created,
+    expected_call,
+    expected_args,
+):
+    mock_generic_request = mocker.patch.object(
+        DefaultApi,
+        "generic_request",
+        return_value=(None, 200, None),
+    )
+    mocker.patch.object(Runner, "get_server_type", return_value=server_type)
+    mocker.patch.object(Runner, "create_incident_for_query", return_value="1")
+    runner = Runner(
+        "Query",
+        json_to_outputs=True,
+        status_incident_after_run=status_incident_after_run,
+    )
+    runner.is_incident_runtime_created = is_incident_runtime_created
+    runner.delete_incident_if_needed()
+    assert mock_generic_request.call_count == expected_call
+    assert (
+        expected_args == mock_generic_request.call_args.kwargs["path"]
+        if expected_call
+        else True
+    )

@@ -549,9 +549,9 @@ class IntegrationScriptUnifier(Unifier):
             )
         elif script_type == ".py":
             existing_pack_info_debug_log_re = (
-                r"demisto\.debug\('pack name = .*?, pack version = .*?'\)"
+                r"demisto\.debug\([\"']pack name = .*?, pack version = .*?[\"']\)"
             )
-            pack_info_debug_statement = f"demisto.debug('pack name = {pack_name}, pack version = {pack_version}')"
+            pack_info_debug_statement = f"demisto.debug(\"pack name = {pack_name}, pack version = {pack_version}\")"
 
             if re.search(existing_pack_info_debug_log_re, script_code):
                 script_code = re.sub(

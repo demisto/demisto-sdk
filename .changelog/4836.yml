@@ -1,0 +1,4 @@
+changes:
+- description: Added support for hidden commands.
+  type: internal
+pr_number: 4836

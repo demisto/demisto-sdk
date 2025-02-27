@@ -2,6 +2,7 @@ import ast
 import re
 import tempfile
 from enum import Enum
+from typing import Any
 
 import demisto_client
 import typer
@@ -208,7 +209,7 @@ class Runner:
                 if entry.type == self.ERROR_ENTRY_TYPE:
                     logger.info("{}", f"<red>{entry.contents}</red>\n")  # noqa: PLE1205
                 else:
-                    logger.info("{}", f"{entry.contents}\n")
+                    logger.info("{}", f"{entry.contents}\n")  # noqa: PLE1205
 
             # and entries with `file_id`s defined, that is the fileID of the debug log file
             if entry.type == self.DEBUG_FILE_ENTRY_TYPE:
@@ -380,21 +381,29 @@ class Runner:
                 "owner": "",
                 "severity": 0,
                 "type": "Unclassified",
-                "playbook": ""
+                "playbook": "",
             },
             response_type=object,
         )
 
         if status_code != 201:
-            logger.critical("Failed to create a new incident for executing the command.")
-            raise RuntimeError("Failed to create a new incident for executing the command.")
-        logger.info(f"Incident was successfully created for executing the command - ID: {incident['id']}.")
+            logger.critical(
+                "Failed to create a new incident for executing the command."
+            )
+            raise RuntimeError(
+                "Failed to create a new incident for executing the command."
+            )
+        logger.info(
+            f"Incident was successfully created for executing the command - ID: {incident['id']}."
+        )
         self.is_incident_runtime_created = True
         return incident["id"]
 
     def delete_incident_if_needed(self):
         if not self.is_incident_runtime_created:
             return
+
+        body: dict[str, Any] = {}
         if self.status_incident_after_run == IncidentStatus.OPEN:
             logger.info(f"The incident {self.incident_id} remains open.")
             return
@@ -403,7 +412,7 @@ class Runner:
             body = {"CustomFields": {}, "id": self.incident_id}
         elif self.status_incident_after_run == IncidentStatus.REMOVE:
             path = "/incident/batchDelete"
-            body={"ids": [self.incident_id], "all": False, "filter": {}}
+            body = {"ids": [self.incident_id], "all": False, "filter": {}}
         else:
             raise DemistoRunTimeError(
                 "The argument `status_incident_after_run` was not set correctly.\n"
@@ -419,5 +428,9 @@ class Runner:
         )
 
         if status_code != 200:
-            logger.info(f"Failed {self.status_incident_after_run.value}d the incident {self.incident_id}")
-        logger.info(f"Incident {self.incident_id} {self.status_incident_after_run.value}d successfully")
+            logger.info(
+                f"Failed {self.status_incident_after_run.value}d the incident {self.incident_id}"
+            )
+        logger.info(
+            f"Incident {self.incident_id} {self.status_incident_after_run.value}d successfully"
+        )

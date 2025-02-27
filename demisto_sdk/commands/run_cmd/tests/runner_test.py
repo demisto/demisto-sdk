@@ -232,7 +232,6 @@ def test_get_server_type_xsoar_6(mocker, set_environment_variables):
 def test_create_incident_for_query(
     mocker, set_environment_variables, server_type, expected_call
 ):
-
     mock_generic_request = mocker.patch.object(
         DefaultApi,
         "generic_request",
@@ -250,7 +249,13 @@ def test_create_incident_for_query(
         (ServerType.XSOAR, IncidentStatus.REMOVE, False, 0, None),
         (ServerType.XSOAR_SAAS, IncidentStatus.OPEN, True, 0, None),
         (ServerType.XSOAR_SAAS, IncidentStatus.CLOSE, True, 1, "/incident/close"),
-        (ServerType.XSOAR_SAAS, IncidentStatus.REMOVE, True, 1, "/incident/batchDelete"),
+        (
+            ServerType.XSOAR_SAAS,
+            IncidentStatus.REMOVE,
+            True,
+            1,
+            "/incident/batchDelete",
+        ),
     ],
 )
 def test_delete_incident_if_needed(

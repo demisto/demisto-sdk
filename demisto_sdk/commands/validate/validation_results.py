@@ -128,6 +128,7 @@ class ResultWriter:
         must_be_handled_errors = []
         non_ignorable_errors = []
         msg: str = ""
+        warning_msg: str = ""
         for failing_error_code in failing_error_codes:
             if failing_error_code in config_file_content.ignorable_errors:
                 ignorable_errors.append(failing_error_code)
@@ -141,8 +142,7 @@ class ResultWriter:
             else:
                 must_be_handled_errors.append(failing_error_code)
         if warning_error_codes:
-            msg += f"The following errors were reported as warnings: {', '.join(warning_error_codes)}.\n"
-        msg += f"The following errors were thrown as a part of this pr: {', '.join(failing_error_codes)}.\n"
+            warning_msg = f"The following errors were reported as warnings: {', '.join(warning_error_codes)}.\n"
         if ignorable_errors:
             msg += (
                 f"The following errors can be ignored: {', '.join(ignorable_errors)}.\n"
@@ -152,6 +152,7 @@ class ResultWriter:
         if forcemergeable_errors:
             msg += f"The following errors don't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
         if msg:
+            msg = f"{warning_msg}The following errors were thrown as a part of this pr: {', '.join(failing_error_codes)}.\n{msg}"
             logger.error(f"<red>{msg}</red>")
         if must_be_handled_errors:
             verdict_msg = ""

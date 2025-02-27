@@ -103,8 +103,7 @@ class ResultWriter:
             exit_code = 1
         if not exit_code:
             logger.info("<green>All validations passed.</green>")
-        elif failing_error_codes or warning_error_codes:
-            self.summarize_validation_results(
+        self.summarize_validation_results(
                 failing_error_codes, warning_error_codes, config_file_content
             )
         for fixed_object in fixed_objects_set:
@@ -152,15 +151,22 @@ class ResultWriter:
             msg += f"The following errors cannot be ignored: {', '.join(non_ignorable_errors)}.\n"
         if forcemergeable_errors:
             msg += f"The following errors don't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
+        if msg:
+            logger.error(f"<red>{msg}</red>")
         if must_be_handled_errors:
-            msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
-            msg += f"Note that the following errors cannot be force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"
-            msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
+            verdict_msg = ""
+            verdict_msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
+            verdict_msg += f"Note that the following errors cannot be force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"
+            verdict_msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
+            logger.error(f"<red>{verdict_msg}</red>")
+            msg += verdict_msg
         else:
-            msg += "##############################################################\n"
-            msg += "Please note that the PR can be force merged from the validation perspective.\n"
-            msg += "##############################################################\n"
-        logger.error(f"<red>{msg}</red>")
+            verdict_msg = ""
+            verdict_msg += "##############################################################\n"
+            verdict_msg += "Please note that the PR can be force merged from the validation perspective.\n"
+            verdict_msg += "##############################################################\n"
+            logger.info(f"<green>{verdict_msg}</green>")
+            msg += verdict_msg
         self.save_validate_summary_to_artifacts(msg)
 
     def save_validate_summary_to_artifacts(self, validate_summary: str):

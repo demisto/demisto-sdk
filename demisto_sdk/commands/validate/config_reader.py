@@ -18,6 +18,8 @@ class ConfiguredValidations(NamedTuple):
     warning: List[str] = []
     ignorable_errors: List[str] = []
     support_level_dict: Dict[str, Dict[str, List[str]]] = {}
+    selected_path_based_section: List[str] = []
+    selected_use_git_section: List[str] = []
 
 
 class ConfigReader:
@@ -40,10 +42,11 @@ class ConfigReader:
             exit(1)
 
         self.config_file_content: dict = toml.load(path)
+        self.path = path
 
     def read(
         self,
-        mode: Optional[ExecutionMode],
+        mode: Optional[ExecutionMode] = ExecutionMode.USE_GIT,
         ignore_support_level: Optional[bool] = False,
         codes_to_ignore: Optional[List[str]] = None,
     ) -> ConfiguredValidations:
@@ -63,6 +66,12 @@ class ConfigReader:
         select = explicitly_selected or sorted(section.get("select", []))
         warning = sorted(section.get("warning", []))
         ignorable = sorted(self.config_file_content.get("ignorable_errors", []))
+        selected_path_based_section = sorted(
+            self.config_file_content.get(PATH_BASED_VALIDATIONS, {}).get("select", [])
+        )
+        selected_use_git_section = sorted(
+            self.config_file_content.get(USE_GIT, {}).get("select", [])
+        )
         support_level_dict = (
             self.config_file_content.get("support_level", {})
             if not ignore_support_level
@@ -98,4 +107,6 @@ class ConfigReader:
             warning=warning,
             ignorable_errors=ignorable,
             support_level_dict=support_level_dict,
+            selected_path_based_section=selected_path_based_section,
+            selected_use_git_section=selected_use_git_section,
         )

@@ -166,47 +166,6 @@ def test_convert_epoch_time_to_string_time(epoc_time, with_ms, human_readable_ti
 
 
 @pytest.mark.parametrize(
-    "day, suffix",
-    [
-        (1, "st"),
-        (2, "nd"),
-        (3, "rd"),
-        (4, "th"),
-        (10, "th"),
-        (11, "th"),
-        (12, "th"),
-        (21, "st"),
-        (31, "st"),
-    ],
-)
-def test_day_suffix(day, suffix):
-    """
-    Given:
-        - A day of a month.
-            case-1: 1 => st.
-            case-2: 2 => nd.
-            case-3: 3 => rd.
-            case-4: 4 => th.
-            case-5: 10 => th.
-            case-6: 11 => th.
-            case-7: 12 => th.
-            case-8: 21 => st.
-            case-9: 31 => st.
-
-    When:
-        - The day_suffix function is running.
-
-    Then:
-        - Verify we get the expected results.
-    """
-    from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
-        day_suffix,
-    )
-
-    assert day_suffix(day) == suffix
-
-
-@pytest.mark.parametrize(
     "mr_text, expected_result",
     [
         ("historically", False),

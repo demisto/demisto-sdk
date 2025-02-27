@@ -540,7 +540,7 @@ def test_integration_init(monkeypatch, initiator, tmpdir):
     res = initiator.integration_init()
     integration_dir_files = {file for file in listdir(integration_path)}
     expected_files = {
-        "command_examples",
+        "command_examples.txt",
         "test_data",
         "README.md",
         f"{INTEGRATION_NAME}.py",
@@ -608,7 +608,7 @@ def test_template_integration_init(initiator, tmpdir, monkeypatch, mocker, templ
         f"{INTEGRATION_NAME}_test.py",
         f"{INTEGRATION_NAME}_image.png",
         "test_data",
-        "command_examples",
+        "command_examples.txt",
     }
 
     assert res
@@ -670,7 +670,7 @@ def test_integration_init_with_ignore_secrets(
         f"{INTEGRATION_NAME}_test.py",
         f"{INTEGRATION_NAME}_image.png",
         "test_data",
-        "command_examples",
+        "command_examples.txt",
     }
 
     assert res
@@ -868,7 +868,7 @@ def test_integration_init_xsiam_files_content(mocker, monkeypatch, initiator, tm
     yml_path = integration_path.joinpath(f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.yml")
     res = initiator.integration_init()
     expected_files = {
-        "command_examples",
+        "command_examples.txt",
         "README.md",
         f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.py",
         f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.yml",
@@ -932,7 +932,7 @@ def test_integration_init_xsiam_files_existence(mocker, monkeypatch, initiator, 
     res = initiator.integration_init()
     integration_dir_files = set(listdir(integration_path))
     expected_files = {
-        "command_examples",
+        "command_examples.txt",
         "README.md",
         f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.py",
         f"{INTEGRATION_NAME}{EVENT_COLLECTOR}.yml",

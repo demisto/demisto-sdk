@@ -21,6 +21,10 @@ LOG_FILE_NAME = "demisto_sdk_debug.log"
 
 NEO4J_DEFAULT_VERSION = "5.22.0"
 
+# Colors
+RED = "\033[91m"
+NO_COLOR = "\033[0m"
+
 # --- Environment Variables ---
 # General
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
@@ -52,6 +56,7 @@ AUTH_ID = "XSIAM_AUTH_ID"
 XSIAM_TOKEN = "XSIAM_TOKEN"
 XSIAM_COLLECTOR_TOKEN = "XSIAM_COLLECTOR_TOKEN"
 DEMISTO_VERIFY_SSL = "DEMISTO_VERIFY_SSL"
+PROJECT_ID = "PROJECT_ID"
 
 # Logging
 DEMISTO_SDK_LOG_FILE_PATH = "DEMISTO_SDK_LOG_FILE_PATH"
@@ -269,6 +274,7 @@ class FileType(StrEnum):
     CASE_LAYOUT_RULE = "caselayoutrule"
     CASE_FIELD = "casefield"
     CASE_LAYOUT = "caselayout"
+    VERSION_CONFIG = "version_config"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -943,6 +949,7 @@ PACKS_FOLDER = "Packs"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
 CONF_JSON_FILE_NAME = "conf.json"
+VERSION_CONFIG_FILE_NAME = "version_config.json"
 
 PYTHON_TEST_REGEXES = [PACKS_SCRIPT_TEST_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX]
 
@@ -1259,7 +1266,7 @@ TESTS_AND_DOC_DIRECTORIES = TESTS_DIRECTORIES + DOCS_DIRECTORIES
 VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "Pipfile",
     "Pipfile.lock",
-    "command_examples",
+    "command_examples.txt",
     "pack_metadata.json",
     "testdata",
     "test_data",
@@ -1953,6 +1960,7 @@ class MarketplaceVersions(StrEnum):
     XPANSE = "xpanse"
     XSOAR_SAAS = "xsoar_saas"
     XSOAR_ON_PREM = "xsoar_on_prem"
+    PLATFORM = "platform"
 
 
 MarketplaceVersionToMarketplaceName = {
@@ -1968,6 +1976,7 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR_ON_PREM: "Config/core_packs_list.json",
     MarketplaceVersions.MarketplaceV2: "Config/core_packs_mpv2_list.json",
     MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
+    MarketplaceVersions.PLATFORM: "Config/core_packs_platform_list.json",
 }
 
 
@@ -2218,3 +2227,28 @@ INVALID_IMAGE_PATH_REGEX = (
 # Test types:
 TEST_PLAYBOOKS = "TestPlaybooks"
 TEST_MODELING_RULES = "TestModelingRules"
+TEST_USE_CASES = "TestUseCases"
+
+PB_RELEASE_NOTES_FORMAT = {
+    "This playbook addresses the following alerts:": 5,
+    "Playbook Stages:": 5,
+    "Requirements:": 5,
+    "Triage:": 6,
+    "Early Containment:": 6,
+    "Investigation:": 6,
+    "Containment:": 6,
+}
+
+INCIDENT_COMMANDS: list[str] = [
+    "xsoar-search-incidents",
+    "xsoar-get-incident",
+]
+
+MIRRORING_COMMANDS: list[str] = [
+    "get-mapping-fields",
+    "get-remote-data",
+    "get-modified-remote-data",
+    "update-remote-system",
+]
+
+DEFAULT_PLATFORM_MODULES: list[str] = []

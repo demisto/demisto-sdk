@@ -44,6 +44,7 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message,
                 content_object=content_item,
+                path=content_item.release_note.file_path,
             )
             for content_item in content_items
             if content_item.release_note.exist
@@ -55,7 +56,14 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
                 )
                 or any(
                     note in rn_stripped_content
-                    for note in ["%%UPDATE_RN%%", "%%XSIAM_VERSION%%"]
+                    for note in [
+                        "%%UPDATE_RN%%",
+                        "%%XSIAM_VERSION%%",
+                        "%%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%",
+                        "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%",
+                        "%%UPDATE_CONTENT_ITEM_NAME%%",
+                        "%%UPDATE_CONTENT_ITEM_TYPE%%",
+                    ]
                 )
             )
         ]

@@ -40,6 +40,8 @@ CommonFields = create_model(
 
 class _Argument(BaseStrictModel):
     name: str
+    prettyname: Optional[str] = None
+    pretty_predefined: Optional[dict] = Field(None, alias="prettypredefined")
     required: Optional[bool] = None
     default: Optional[bool] = None
     description: str
@@ -119,7 +121,10 @@ class StructureError(BaseStrictModel):
     def __str__(self):
         field_name = ",".join(more_itertools.always_iterable(self.field_name))
         if self.error_type == "assertion_error":
-            error_message = f"The field {field_name} is not required, but should not be None if it exists"
+            error_message = (
+                self.error_message
+                or f"An assertion error occurred for field {field_name}"
+            )
         elif self.error_type == "value_error.extra":
             error_message = f"The field {field_name} is extra and {self.error_message}"
         elif self.error_type == "value_error.missing":

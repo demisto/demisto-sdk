@@ -57,6 +57,7 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     ReadmeRelatedFile,
     RNRelatedFile,
     SecretsIgnoreRelatedFile,
+    VersionConfigRelatedFile,
 )
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
     update_markdown_images_with_urls_and_rel_paths,
@@ -300,14 +301,16 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             try:
                 text = f.read()
                 # Replace incorrect marketplace references
-                text = replace_marketplace_references(text, marketplace)
+                updated_text = replace_marketplace_references(
+                    text, marketplace, str(self.path / "README.md")
+                )
 
                 if (
                     marketplace == MarketplaceVersions.XSOAR
                     and MarketplaceVersions.XSOAR_ON_PREM in self.marketplaces
                 ):
                     marketplace = MarketplaceVersions.XSOAR_ON_PREM
-                parsed_text = MarketplaceTagParser(marketplace).parse_text(text)
+                parsed_text = MarketplaceTagParser(marketplace).parse_text(updated_text)
                 if len(text) != len(parsed_text):
                     f.seek(0)
                     f.write(parsed_text)
@@ -318,6 +321,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         update_markdown_images_with_urls_and_rel_paths(
             path, marketplace, self.object_id, file_type=ImagesFolderNames.README_IMAGES
         )
+
+    def dump_release_notes(self, path: Path, marketplace: MarketplaceVersions) -> None:
+        # TODO - Update this to dump the release notes for the platform marketplace
+        # starting from platform supported version only.
+        try:
+            shutil.copytree(self.path / "ReleaseNotes", path)
+        except FileNotFoundError:
+            logger.debug(f'No such file {self.path / "ReleaseNotes"}')
 
     def dump(self, path: Path, marketplace: MarketplaceVersions, tpb: bool = False):
         if not self.path.exists():
@@ -330,6 +341,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             content_types_excluded_from_upload = (
                 CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
             )
+
             if tpb:
                 content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
 
@@ -376,10 +388,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             except FileNotFoundError:
                 logger.debug(f"No such file {self.path / VERSION_CONFIG_FILENAME}")
 
-            try:
-                shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
-            except FileNotFoundError:
-                logger.debug(f'No such file {self.path / "ReleaseNotes"}')
+            self.dump_release_notes(path / "ReleaseNotes", marketplace)
 
             try:
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
@@ -600,6 +609,16 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     @cached_property
     def secrets_ignore(self) -> SecretsIgnoreRelatedFile:
         return SecretsIgnoreRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def version_config(self) -> VersionConfigRelatedFile:
+        return VersionConfigRelatedFile(
+            self.path,
+            git_sha=self.git_sha,
+            prev_ver=self.old_base_content_object.git_sha
+            if self.old_base_content_object
+            else None,
+        )
 
     @cached_property
     def release_note(self) -> RNRelatedFile:

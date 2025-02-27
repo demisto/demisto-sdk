@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import List, Optional, Set, Tuple
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -160,6 +161,25 @@ class ResultWriter:
             msg += "Please note that the PR can be force merged from the validation perspective.\n"
             msg += "##############################################################\n"
         logger.error(f"<red>{msg}</red>")
+        self.save_validate_summary_to_artifacts(msg)
+
+    def save_validate_summary_to_artifacts(self, validate_summary: str):
+        """Initialize a txt file at with the validate summary.
+
+        Args:
+            validate_summary (str): The file name to create.
+        """
+        if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+            artifacts_folder
+        ).exists():
+            artifacts_validate_summary_path = Path(
+                f"{artifacts_folder}/validate_summary.txt"
+            )
+            logger.info(
+                f"Writing the validate summary results to a txt file at {artifacts_validate_summary_path}."
+            )
+            with open(artifacts_validate_summary_path, "w") as f:
+                f.write(validate_summary)
 
     def write_results_to_json_file(self):
         """

@@ -105,10 +105,10 @@ class TextFiles(RelatedFile):
     def file_content(self) -> str:
         if not self.file_content_str:
             try:
-                if self.prev_ver:
+                if self.git_sha:
                     self.file_content_str = TextFile.read_from_git_path(
                         path=self.file_path,
-                        tag=self.prev_ver,
+                        tag=self.git_sha,
                     )
                 else:
                     self.file_content_str = TextFile.read_from_local_path(

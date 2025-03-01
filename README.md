@@ -10,7 +10,7 @@ The Demisto SDK is a Python library designed to aid the development process, bot
 
 Requirements:
 
-- Python 3.9, 3.10 or 3.11.
+- Python 3.10 or 3.11 or 3.12.
 - git installed.
 - A linux, mac or WSL2 machine.
 

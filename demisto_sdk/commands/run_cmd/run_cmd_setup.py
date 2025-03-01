@@ -34,7 +34,7 @@ def run(
         IncidentStatus.REMOVE.value,
         "-sar",
         "--status-incident-after-run",
-        help="",
+        help="Used only with Cortex XSOAR 8.x. Defines the status of the incident created after executing the command.",
     ),
     debug: bool = typer.Option(
         False,

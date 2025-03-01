@@ -1486,7 +1486,7 @@ class XsoarClient:
         Returns:
             a list of completed task if completed, and found tasks if not completed.
         """
-        if not all(state in self.PLAYBOOK_TASKS_STATES for state in task_states):
+        if not all(state in self.PLAYBOOK_TASKS_STATES for state in task_states):  # type: ignore
             raise ValueError(
                 f"task_states are bad. Possible values: {self.PLAYBOOK_TASKS_STATES}"
             )
@@ -1520,7 +1520,7 @@ class XsoarClient:
                 self.complete_playbook_task(
                     investigation_id=incident_id,
                     task_id=requested_task.get("id"),
-                    task_input=task_input,
+                    task_input=task_input,  # type: ignore
                 )
 
                 completed_tasks.append(requested_task.get("task").get("name"))
@@ -1543,7 +1543,7 @@ class XsoarClient:
                     self.complete_playbook_task(
                         investigation_id=incident_id,
                         task_id=task.get("id"),
-                        task_input=task_input,
+                        task_input=task_input,  # type: ignore
                     )
                     completed_tasks.append(task.get("task").get("name"))
 
@@ -1648,9 +1648,6 @@ class XsoarClient:
             show_media_file: show media file
             last: If set to true will create an investigation. Used for uploading after creating incident.
         """
-        self._xsoar_client.incident_file_upload(
-            id=incident_id, file=file_path, **kwargs
-        )
         form_params = []
         if file_name:
             form_params.append(("fileName", file_name))

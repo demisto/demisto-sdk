@@ -104,8 +104,8 @@ class ResultWriter:
         if not exit_code:
             logger.info("<green>All validations passed.</green>")
         self.summarize_validation_results(
-                failing_error_codes, warning_error_codes, config_file_content
-            )
+            failing_error_codes, warning_error_codes, config_file_content, exit_code
+        )
         for fixed_object in fixed_objects_set:
             fixed_object.save()
         return exit_code
@@ -115,6 +115,7 @@ class ResultWriter:
         failing_error_codes: Set[str],
         warning_error_codes: Set[str],
         config_file_content: ConfiguredValidations,
+        exit_code: int,
     ):
         """Divide the error codes into groups: warnings, forcemergeable, ignorable, non ignorable, and must-be-handled and post this summary at the end of the execution.
 
@@ -122,13 +123,15 @@ class ResultWriter:
             failing_error_codes (Set[str]): The set of failing errors.
             warning_error_codes (Set[str]): The set of warning errors.
             config_file_content (ConfiguredValidations): The ConfiguredValidations object containing the ignorable errors, and path-based sections.
+            exit_code (int): The expected exit_code
         """
         forcemergeable_errors = []
         ignorable_errors = []
         must_be_handled_errors = []
         non_ignorable_errors = []
-        msg: str = ""
+        error_msg: str = ""
         warning_msg: str = ""
+        msg: str = "Validate summary\n"
         for failing_error_code in failing_error_codes:
             if failing_error_code in config_file_content.ignorable_errors:
                 ignorable_errors.append(failing_error_code)
@@ -143,30 +146,34 @@ class ResultWriter:
                 must_be_handled_errors.append(failing_error_code)
         if warning_error_codes:
             warning_msg = f"The following errors were reported as warnings: {', '.join(warning_error_codes)}.\n"
+            msg = f"{msg}{warning_msg}"
         if ignorable_errors:
-            msg += (
+            error_msg += (
                 f"The following errors can be ignored: {', '.join(ignorable_errors)}.\n"
             )
         if non_ignorable_errors:
-            msg += f"The following errors cannot be ignored: {', '.join(non_ignorable_errors)}.\n"
+            error_msg += f"The following errors cannot be ignored: {', '.join(non_ignorable_errors)}.\n"
         if forcemergeable_errors:
-            msg += f"The following errors don't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
-        if msg:
-            msg = f"{warning_msg}The following errors were thrown as a part of this pr: {', '.join(failing_error_codes)}.\n{msg}"
-            logger.error(f"<red>{msg}</red>")
+            error_msg += f"The following errors don't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
+        if error_msg:
+            msg = f"{msg}The following errors were thrown as a part of this pr: {', '.join(failing_error_codes)}.\n{error_msg}"
+        logger.error(f"<red>{msg}</red>")
         if must_be_handled_errors:
             verdict_msg = ""
             verdict_msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
             verdict_msg += f"Note that the following errors cannot be force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"
             verdict_msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
             logger.error(f"<red>{verdict_msg}</red>")
-            msg += "\nPR can be force merged from validate perspective? ❌"
+            msg += "\nnVerdict: PR can be force merged from validate perspective? ❌"
         else:
-            verdict_msg = "############################################################################\n"
+            verdict_msg = "#############################################################################\n"
             verdict_msg += "Please note that the PR can be force merged from the validation perspective.\n"
             verdict_msg += "############################################################################\n"
-            logger.info(f"<green>{verdict_msg}</green>")
-            msg += "\nPR can be force merged from validate perspective? ✅"
+            if exit_code:
+                logger.warning(f"<green>{verdict_msg}</green>")
+            else:
+                logger.info(f"<green>{verdict_msg}</green>")
+            msg += "\nVerdict: PR can be force merged from validate perspective? ✅"
         self.save_validate_summary_to_artifacts(msg)
 
     def save_validate_summary_to_artifacts(self, validate_summary: str):

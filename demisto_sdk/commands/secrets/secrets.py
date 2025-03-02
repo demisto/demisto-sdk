@@ -128,8 +128,10 @@ class SecretsValidator:
     def get_secrets(self, commit, is_circle):
         secret_to_location_mapping = {}
         if self.input_paths:
+            logger.info("self.input_paths is true")
             secrets_file_paths = self.input_paths
         else:
+            logger.info("We are getting all the text files")
             secrets_file_paths = self.get_all_diff_text_files(commit, is_circle)
         # If a input path supplied, should not run on git. If not supplied make sure not in middle of merge.
         if not run_command("git rev-parse -q --verify MERGE_HEAD") or self.input_paths:

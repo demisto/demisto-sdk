@@ -21,6 +21,7 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 class CommandParser:
     name: str
     deprecated: bool
+    hidden: bool
     description: str
     args: List[dict]
     outputs: List[dict]
@@ -94,6 +95,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         for command_data in self.script_info.get("commands", []):
             name = command_data.get("name")
             deprecated = command_data.get("deprecated", False) or self.deprecated
+            hidden = command_data.get("hidden", False)
             description = command_data.get("description")
             args = command_data.get("arguments") or []
             outputs = command_data.get("outputs") or []
@@ -112,6 +114,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                     name=name,
                     description=description,
                     deprecated=deprecated,
+                    hidden=hidden,
                     args=args,
                     outputs=outputs,
                     quickaction=quickaction,

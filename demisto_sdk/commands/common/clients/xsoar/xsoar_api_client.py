@@ -57,6 +57,16 @@ class XsoarClient:
     """
 
     _ENTRY_TYPE_ERROR: int = 4
+    PLAYBOOK_TASKS_STATES = [
+        "New",
+        "InProgress",
+        "Completed",
+        "Waiting",
+        "Error",
+        "Skipped",
+        "Blocked",
+    ]
+    PLAYBOOK_TASKS_TYPES = ["regular", "condition", "collection"]
 
     def __init__(
         self,
@@ -618,6 +628,40 @@ class XsoarClient:
 
         raise ValueError(f"Could not find instance for instance name '{instance_name}'")
 
+    def disable_integration_instance(self, instance_name):
+        return self.update_integration_instance_state(False, instance_name)
+
+    def enable_integration_instance(self, instance_name):
+        return self.update_integration_instance_state(True, instance_name)
+
+    def update_integration_instance_state(self, enable: bool, instance_name: str):
+        # it will throw an error if the instance does not exist
+        instance = self.get_integration_instance(instance_name)
+
+        integration_instance_body_request = {
+            "id": instance.get("id"),
+            "brand": instance.get("brand"),
+            "name": instance_name,
+            "data": instance.get("data"),
+            "isIntegrationScript": instance.get("isIntegrationScript"),
+            "enabled": "true" if enable else "false",
+            "version": -1,
+        }
+        logger.info(
+            f"{'Enabling' if enable else 'Disabling'} integration instance {instance_name} for integration {instance.get('brand')}"
+        )
+
+        raw_response, _, _ = self.xsoar_client.generic_request(
+            method="PUT",
+            path="/settings/integration",
+            body=integration_instance_body_request,
+            response_type="object",
+        )
+        logger.info(
+            f"Successfully {'enabled' if enable else 'disabled'} integration instance {instance_name} for Integration {instance.get('brand')}"
+        )
+        return raw_response
+
     """
     #############################
     incidents related methods
@@ -1037,6 +1081,51 @@ class XsoarClient:
         Returns:
             the context after running the command
         """
+        return self._run_command(
+            "!", command, investigation_id, should_delete_context, response_type
+        )
+
+    @retry(exceptions=ApiException)
+    def run_slash_command(
+        self,
+        command: str,
+        investigation_id: Optional[str] = None,
+        should_delete_context: bool = True,
+        response_type: str = "object",
+    ) -> Tuple[List[Entry], Dict[str, Any]]:
+        """
+        Args:
+            command: the command to run
+            investigation_id: investigation ID of a specific incident / playground
+            should_delete_context: whether context should be deleted before executing the command
+            response_type: the response type of the raw response
+
+        Returns:
+            the context after running the command
+        """
+        return self._run_command(
+            "/", command, investigation_id, should_delete_context, response_type
+        )
+
+    def _run_command(
+        self,
+        command_type: str,
+        command: str,
+        investigation_id: Optional[str] = None,
+        should_delete_context: bool = True,
+        response_type: str = "object",
+    ) -> Tuple[List[Entry], Dict[str, Any]]:
+        """
+        Args:
+            command_type: command type, slash or cli command.
+            command: the command to run
+            investigation_id: investigation ID of a specific incident / playground
+            should_delete_context: whether context should be deleted before executing the command
+            response_type: the response type of the raw response
+
+        Returns:
+            the context after running the command
+        """
         if not investigation_id:
             if self.server_config.server_type == ServerType.XSOAR:
                 investigation_id = self.get_playground_id()
@@ -1046,8 +1135,8 @@ class XsoarClient:
                 raise ValueError(
                     "Investigation_id must be provided for xsoar-saas/xsiam"
                 )
-        if not command.startswith("!"):
-            command = f"!{command}"
+        if not command.startswith(command_type):
+            command = f"{command_type}{command}"
 
         if should_delete_context:
             update_entry = {
@@ -1343,3 +1432,239 @@ class XsoarClient:
             saving_inputs_path, method="POST", body={"inputs": new_inputs}
         )
         return self._process_response(response, status_code, 200)
+
+    def get_playbook_task_in_investigation(self, task_name, investigation_id):
+        """
+        Get playbook task in an incident.
+
+        Args:
+            investigation_id: incident ID that the playbook is running on
+            task_name: The name of the task to retrieve data on it.
+        Returns:
+            a dict of the task details.
+        """
+        tasks, status_code, _ = self._xsoar_client.generic_request(
+            f"/investigation/{investigation_id}/workplan/tasks",
+            method="POST",
+            body={
+                "states": self.PLAYBOOK_TASKS_STATES,
+                "types": self.PLAYBOOK_TASKS_TYPES,
+            },
+            response_type="object",
+        )
+
+        for task in tasks:
+            if task_name == task.get("task").get("name"):
+                return task
+        raise ValueError(
+            f"{task_name} task was not found in {investigation_id} investigation."
+        )
+
+    def pull_playbook_tasks_by_state(
+        self,
+        incident_id: str,
+        task_input: str = None,
+        task_states: list = None,
+        task_name: str = None,
+        max_timeout: int = 60,
+        interval_between_tries: str = "3",
+        complete_task: bool = False,
+    ):
+        """
+        Wait and complete playbook tasks by given status. Same implementation as WaitAndCompleteTask script in content.
+
+        Args:
+            incident_id: incident ID that the playbook is running on
+            task_input: Outcome for a conditional task. For example, "Yes"
+            task_states: list of states. Possible values: New, InProgress, Completed, Waiting, Error, Skipped, Blocked (leave empty to get all tasks)
+            task_name: The name of the task that should be completed. If no task name is provided, will complete all tasks with the state `task_state`
+            max_timeout: Timeout in seconds for the script to complete tasks.
+            interval_between_tries: Time (seconds) to wait between each check iteration.
+            complete_task: Whether to complete the task in addition to checking if it is completed.
+
+
+        Returns:
+            a list of completed task if completed, and found tasks if not completed.
+        """
+        if not all(state in self.PLAYBOOK_TASKS_STATES for state in task_states):  # type: ignore
+            raise ValueError(
+                f"task_states are bad. Possible values: {self.PLAYBOOK_TASKS_STATES}"
+            )
+        if not task_states:
+            task_states = self.PLAYBOOK_TASKS_STATES
+        if complete_task and not task_input:
+            raise RuntimeError("Task input argument is missing to complete tasks.")
+        completed_tasks = []
+        found_tasks = []
+        start_time = time.time()
+
+        while time.time() - start_time > max_timeout:  # type: ignore[operator]
+            # Get all tasks with one state of the states in task_states list
+            tasks_by_states, status_code, _ = self._xsoar_client.generic_request(
+                f"/investigation/{incident_id}/workplan/tasks",
+                method="POST",
+                body={"states": task_states, "types": self.PLAYBOOK_TASKS_TYPES},
+                response_type="object",
+            )
+            requested_task = None
+
+            # find task to complete if was given task name
+            if task_name:
+                for task in tasks_by_states:
+                    if task.get("task").get("name") == task_name:
+                        requested_task = task
+                        break
+
+            if requested_task and complete_task:
+                # complete the requested task
+                self.complete_playbook_task(
+                    investigation_id=incident_id,
+                    task_id=requested_task.get("id"),
+                    task_input=task_input,  # type: ignore
+                )
+
+                completed_tasks.append(requested_task.get("task").get("name"))
+                break
+
+            # Do not complete the task
+            elif requested_task:
+                # just validate that task was found and not complete it
+                found_tasks.append(
+                    {
+                        "task name": requested_task.get("task").get("name"),
+                        "task state": requested_task.get("state"),
+                    }
+                )
+                break
+
+            elif not task_name and tasks_by_states and complete_task:
+                # complete all tasks, which state is task_states
+                for task in tasks_by_states:
+                    self.complete_playbook_task(
+                        investigation_id=incident_id,
+                        task_id=task.get("id"),
+                        task_input=task_input,  # type: ignore
+                    )
+                    completed_tasks.append(task.get("task").get("name"))
+
+                break
+
+            elif not task_name and tasks_by_states:
+                # just validate that task was found and not complete it
+                found_tasks.extend(
+                    {
+                        "task name": task.get("task").get("name"),
+                        "task state": task.get("state"),
+                    }
+                    for task in tasks_by_states
+                )
+                break
+
+            time.sleep(float(interval_between_tries))  # type: ignore[arg-type]
+
+        if not completed_tasks and not found_tasks:
+            if task_name and task_states:
+                raise RuntimeError(
+                    f'The task "{task_name}" was not found by the script or it did not reach the {" or ".join(task_states)} state.'
+                )
+            elif task_states:
+                raise RuntimeError(
+                    f'None of the tasks reached the {" or ".join(task_states)} state.'
+                )
+            else:
+                raise RuntimeError("No tasks were found.")
+
+        return {"CompletedTask": completed_tasks, "FoundTask": found_tasks}
+
+    def complete_playbook_task(
+        self,
+        investigation_id,
+        task_input: str,
+        task_id: str = None,
+        task_name: str = None,
+    ):
+        """
+        Complete a playbook task in an investigation.
+
+        Args:
+            investigation_id: Investigation ID that the playbook is running on
+            task_input: The input to complete the task with.
+            task_id: the task id to complete.
+            task_name: the name of the task to complete.
+        """
+        if not (task_name or task_id):
+            return RuntimeError("Task id or task name should be provided.")
+        elif not task_id:
+            task = self.get_playbook_task_in_investigation(task_name, investigation_id)
+            task_id = task.get("id")
+        try:
+            response, status_code, _ = self._xsoar_client.generic_request(
+                "/inv-playbook/task/complete",
+                method="POST",
+                response_type="object",
+                content_type="multipart/form-data",
+                form_params=[
+                    ("investigationId", investigation_id),
+                    ("taskId", task_id),
+                    ("taskInput", task_input),
+                ],
+            )
+        except ApiException as e:
+            if e.status == 400 and "Task is completed already" in e.body:
+                logger.info(
+                    f"task with id {task_id} is already completed, or it does not exist."
+                )
+            elif "Could not find investigations" in e.body:
+                raise ValueError(
+                    f"Could not find investigation with id: {investigation_id}"
+                )
+            else:
+                raise RuntimeError(f"Failed Completing task {task_id}. Error: {e}")
+
+        logger.info(
+            f"The playbook task with id {task_id} was completed with input {task_input}"
+        )
+
+    def upload_file_to_war_room(
+        self,
+        file_path,
+        incident_id,
+        file_name: str = None,
+        file_comment: str = None,
+        field: str = None,
+        show_media_file: str = None,
+        last: str = None,
+    ):
+        """
+        Upload a file attachment to an investigation .
+
+        Args:
+            file_path: path of the file to upload to the incident.
+            incident_id: incident ID to upload to
+            file_name: the name of the file to upload
+            file_comment: comment on the file
+            file_name: The name of the task to retrieve data on it.
+            field: field name to hold the attachment details. If not specified, `attachment` will be used.
+            show_media_file: show media file
+            last: If set to true will create an investigation. Used for uploading after creating incident.
+        """
+        form_params = []
+        if file_name:
+            form_params.append(("fileName", file_name))
+        if file_comment:
+            form_params.append(("fileComment", file_comment))
+        if field:
+            form_params.append(("field", field))
+        if show_media_file:
+            form_params.append(("showMediaFile", show_media_file))
+        if last:
+            form_params.append(("last", last))
+
+        self._xsoar_client.generic_request(
+            f"/entry/upload/{incident_id}",
+            method="POST",
+            form_params=form_params,
+            response_type="object",
+            content_type="multipart/form-data",
+            files={"file": file_path},
+        )

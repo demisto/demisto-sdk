@@ -17,7 +17,9 @@ class ListParser(JSONContentItemParser, content_type=ContentType.LIST):
         pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces, pack_supported_modules, git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
+        )
         self.type = self.json_data.get("type")
 
     @property

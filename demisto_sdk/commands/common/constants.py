@@ -1992,6 +1992,7 @@ class PlatformSupportedModules(StrEnum):
     ENT_PLUS = "ENT_PLUS"
     # TODO - add 'addon' IDs.
 
+
 DEFAULT_SUPPORTED_MODULES: list[str] = [
     sku.value for sku in list(PlatformSupportedModules)
 ]

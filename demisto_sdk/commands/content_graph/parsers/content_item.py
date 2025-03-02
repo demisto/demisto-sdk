@@ -127,7 +127,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 )
             except IncorrectParserException as e:
                 return ContentItemParser.parse(
-                    e.correct_parser, path, pack_marketplaces, pack_supported_modules, git_sha, **e.kwargs
+                    e.correct_parser,
+                    path,
+                    pack_marketplaces,
+                    pack_supported_modules,
+                    git_sha,
+                    **e.kwargs,
                 )
             except NotAContentItemException:
                 logger.debug(f"{path} is not a content item, skipping")
@@ -147,7 +152,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         git_sha: Optional[str] = None,
         **kwargs,
     ) -> "ContentItemParser":
-        parser = parser_cls(path, pack_marketplaces, pack_supported_modules, git_sha=git_sha, **kwargs)
+        parser = parser_cls(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha, **kwargs
+        )
         logger.debug(f"Parsed {parser.node_id}")
         return parser
 

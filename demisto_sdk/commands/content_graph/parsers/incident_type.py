@@ -17,10 +17,14 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
-        pack_supported_modules: List[str],  # Ignored as content type not supported in platform marketplace.
+        pack_supported_modules: List[
+            str
+        ],  # Ignored as content type not supported in platform marketplace.
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces, pack_supported_modules=[], git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, pack_supported_modules=[], git_sha=git_sha
+        )
         self.playbook = self.json_data.get("playbookId") or ""
         self.hours = self.json_data.get("hours")
         self.days = self.json_data.get("days")

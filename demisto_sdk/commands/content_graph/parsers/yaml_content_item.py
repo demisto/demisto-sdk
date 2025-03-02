@@ -6,7 +6,6 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DEFAULT_SUPPORTED_MODULES,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
@@ -27,7 +26,12 @@ class YAMLContentItemParser(ContentItemParser):
         pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces, pack_supported_modules=pack_supported_modules, git_sha=git_sha)
+        super().__init__(
+            path,
+            pack_marketplaces,
+            pack_supported_modules=pack_supported_modules,
+            git_sha=git_sha,
+        )
         self.path = (
             self.get_path_with_suffix(".yml")
             if not git_sha

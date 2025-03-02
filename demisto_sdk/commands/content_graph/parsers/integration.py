@@ -35,7 +35,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces, pack_supported_modules, git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
+        )
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
         self.is_beta = self.yml_data.get("beta", False)

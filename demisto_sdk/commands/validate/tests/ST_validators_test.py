@@ -371,7 +371,7 @@ class TestST111:
         assert len(results) == 1
         assert results[0].message == (
             "Missing sectionorder key. Add sectionorder to the top of your YAML file and specify the order of the "
-            "Connect, Collect, Optimize, Mirroring sections (at least one is required)."
+            "Connect, Collect, Optimize, Mirroring, Collect Advanced, Collect Basic sections (at least one is required)."
         )
 
     def test_invalid_section(self):
@@ -434,3 +434,50 @@ class TestST111:
 
         results = SchemaValidator().obtain_invalid_content_items([integration_parser])
         assert len(results) == 0
+    
+    def test_valid_section_collect_basic(self, pack: Pack):
+        """
+        Given:
+            - an integration which contains the Collect Basic section
+        When:
+            - executing the IntegrationParser
+        Then:
+            - the integration is valid and no structure error is being raised
+        """
+        integration = pack.create_integration(yml=load_yaml("integration.yml"))
+        integration_info = integration.yml.read_dict()
+        curr_config = integration_info["configuration"]
+        curr_config[0]["section"] = "Collect Basic"
+        integration.yml.update({"sectionorder": ["Connect", "Collect Basic"]})
+        integration.yml.update({"configuration": curr_config})
+
+        integration_parser = IntegrationParser(
+            Path(integration.path), list(MarketplaceVersions)
+        )
+
+        results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+        assert len(results) == 0
+
+    def test_valid_section_collect_advanced(self, pack: Pack):
+        """
+        Given:
+            - an integration which contains the Collect Advanced section
+        When:
+            - executing the IntegrationParser
+        Then:
+            - the integration is valid and no structure error is being raised
+        """
+        integration = pack.create_integration(yml=load_yaml("integration.yml"))
+        integration_info = integration.yml.read_dict()
+        curr_config = integration_info["configuration"]
+        curr_config[0]["section"] = "Collect Advanced"
+        integration.yml.update({"sectionorder": ["Connect", "Collect Advanced"]})
+        integration.yml.update({"configuration": curr_config})
+
+        integration_parser = IntegrationParser(
+            Path(integration.path), list(MarketplaceVersions)
+        )
+
+        results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+        assert len(results) == 0
+    

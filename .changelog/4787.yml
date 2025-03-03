@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where, when creating relationships between nodes, if the target is not in the repository due to a naming convention (e.g., "incident" to "alert"), the incorrect relationship is deleted and a correct one is created.
+- description: Fixed an issue where content items recognized in the graph with the word "incident" and referenced in XSIAM content items using the word "alert" (e.g., `SearchAlertsV2` instead of `SearchIncidentsV2`) resulted in incorrect relationship creation.
   type: fix
 pr_number: 4785

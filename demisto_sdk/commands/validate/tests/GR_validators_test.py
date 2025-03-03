@@ -500,6 +500,30 @@ def repo_for_test(graph_repo):
     return graph_repo
 
 
+@pytest.fixture
+def repo_for_test_SearchAlerts_MarketplaceV2(graph_repo):
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {"marketplaces": [MarketplaceVersions.MarketplaceV2.value]}
+    )
+    pack_a.create_script("Script1", code='demisto.executeCommand("SearchAlerts", {})')
+
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.XSOAR.value,
+            ]
+        }
+    )
+    pack_b.create_script(
+        "SearchIncidents", code='demisto.executeCommand("SearchIncidents", {})'
+    )
+
+    return graph_repo
+
+
 def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
     repo_for_test: Repo,
 ):
@@ -523,6 +547,27 @@ def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
         content_items=[]
     )
     assert len(results) == 3
+
+
+def test_IsUsingUnknownContentValidator_verify_alert_to_incident_MarketplaceV2(
+    repo_for_test_SearchAlerts_MarketplaceV2: Repo,
+):
+    """
+    Given:
+        - A content graph interface with preloaded repository data that contains 2 packs:
+            - Pack A in XSIAM marketplace with the script Script1 that using the script SearchAlerts.
+            - Pack B in marketplaces XSOAR and XSIAM with the script SearchIncidents.
+    When:
+        - The GR103 validation is executed across the entire repository (-a) to detect instances of unknown content usage.
+    Then:
+        - The validator should accurately identify there is no unknown content usage because SearchIncidents uploaded as SearchAlerts in marketplace v2.
+    """
+    graph_interface = repo_for_test_SearchAlerts_MarketplaceV2.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+        content_items=[]
+    )
+    assert not results
 
 
 @pytest.mark.parametrize(

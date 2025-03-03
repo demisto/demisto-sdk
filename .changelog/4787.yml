@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where content items recognized in the graph with the word "incident" and referenced in XSIAM content items using the word "alert" (e.g., `SearchAlertsV2` instead of `SearchIncidentsV2`) resulted in incorrect relationship creation.
+  type: fix
+pr_number: 4785

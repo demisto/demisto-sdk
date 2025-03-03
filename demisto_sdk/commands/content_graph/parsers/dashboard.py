@@ -15,13 +15,11 @@ class DashboardParser(JSONContentItemParser, content_type=ContentType.DASHBOARD)
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
-        pack_supported_modules: List[
-            str
-        ],  # Ignored as content type not supported in platform marketplace.
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(
-            path, pack_marketplaces, pack_supported_modules=[], git_sha=git_sha
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
 
         self.connect_to_dependencies()

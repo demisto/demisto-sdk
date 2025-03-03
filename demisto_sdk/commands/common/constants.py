@@ -1993,9 +1993,7 @@ class PlatformSupportedModules(StrEnum):
     ENT_PLUS = "ENT_PLUS"
 
 
-DEFAULT_SUPPORTED_MODULES: list[str] = [
-    sku.value for sku in list(PlatformSupportedModules)
-]
+DEFAULT_SUPPORTED_MODULES: list[str] = []
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
     "html": Version("6.1.0"),

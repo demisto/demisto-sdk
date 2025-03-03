@@ -24,7 +24,7 @@ class CorrelationRuleParser(
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(
-            path, pack_marketplaces, pack_supported_modules=[], git_sha=git_sha
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
 
     @cached_property

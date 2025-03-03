@@ -65,6 +65,7 @@ class IncidentFieldParser(
             MarketplaceVersions.XPANSE,
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.PLATFORM,
         }
 
     @property

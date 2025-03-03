@@ -39,6 +39,7 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
             MarketplaceVersions.XPANSE,
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.PLATFORM,
         }
 
     def connect_to_dependencies(self) -> None:

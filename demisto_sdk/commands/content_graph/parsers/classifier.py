@@ -93,6 +93,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.PLATFORM,
         }
 
     @property

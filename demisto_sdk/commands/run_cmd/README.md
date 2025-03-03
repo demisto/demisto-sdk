@@ -1,17 +1,21 @@
 ## Run
 
 ### Overview
-**Run commands in the playground of a remote Cortex XSOAR instance, and pretty print the output.**
+**Run commands on a remote Cortex XSOAR instance and pretty print the output.**
+
+- For Cortex XSOAR 6.x, the command runs in the playground of the remote instance.
+- For Cortex XSOAR 8.x, the command will create an incident, and the command will run in the War Room of that incident.
 
 This command is used in order to run integration or script commands of a remote Cortex XSOAR instance. This is useful especially when developing new commands or fixing bugs, so that while working on the code the developer can debug it directly from the CLI and optimize the development process flow.
 
-In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Cortex XSOAR/XSIAM instance URL,
-and `DEMISTO_API_KEY` environment variable should contain a valid Cortex XSOAR/XSIAM API Key.
+In order to run the command, the DEMISTO_BASE_URL environment variable should contain the Cortex XSOAR 6.x/8.x instance URL, and the DEMISTO_API_KEY environment variable should contain a valid Cortex XSOAR 6.x/8.x API Key.
 
-**Notes for Cortex XSIAM or Cortex XSOAR 8.x:**
-- Cortex XSIAM Base URL should be retrieved from XSIAM instance -> Settings -> Configurations -> API Keys -> `Copy URL` button in the top right corner, and not the browser URL.
+**Notes for Cortex XSOAR 8.x:**
+- Cortex XSOAR 8.x Base URL should be retrieved from XSOAR 8.x instance -> Settings -> Configurations -> API Keys -> `Copy URL` button in the top right corner, and not the browser URL.
 - API key should be of a `standard` security level, and have the `Instance Administrator` role.
 - To use the command the `XSIAM_AUTH_ID` environment variable should also be set.
+
+**Note: This command is not supported in Cortex XSIAM.**
 
 
 To set the environment variables, run the following shell commands:
@@ -19,12 +23,12 @@ To set the environment variables, run the following shell commands:
 export DEMISTO_BASE_URL=<YOUR_DESMISTO_BASE_URL>
 export DEMISTO_API_KEY=<YOUR_DEMISTO_API_KEY>
 ```
-and for Cortex XSIAM or Cortex XSOAR 8.x
+and for Cortex Cortex XSOAR 8.x
 ```
 export XSIAM_AUTH_ID=<THE_XSIAM_AUTH_ID>
 ```
 Note!
-As long as `XSIAM_AUTH_ID` environment variable is set, SDK commands will be configured to work with an XSIAM instance.
+As long as `XSIAM_AUTH_ID` environment variable is set, SDK commands will be configured to work with an XSOAR 8.x instance.
 In order to set Demisto SDK to work with Cortex XSOAR instance, you need to delete the XSIAM_AUTH_ID parameter from your environment.
 ```bash
 unset XSIAM_AUTH_ID
@@ -33,7 +37,8 @@ unset XSIAM_AUTH_ID
 ### Options
 * **-q --query** The query to run.
 * **--insecure** Skip certificate validation.
-* **-id --incident-id** The incident to run the query on, if not specified the playground will be used.
+* **-id --incident-id** The incident on which to run the query. If not specified, the playground will be used in Cortex XSOAR 6.x, while in Cortex XSOAR 8.x, a new incident will be created.
+* **-sar ----status-incident-after-run** Used only with Cortex XSOAR 8.x. Defines the status of the incident created after executing the command. Allowed values: `close`, `open`, `remove`, default is `remove`.
 * **--json-to-outputs** Whether to run json_to_outputs command on the context output of the query. If the context output does not exist or the `-r` flag is used, will use the raw response of the query.
 * **-p, --prefix** Used with `json-to-outputs` flag. Output prefix e.g. Jira.Ticket, VirusTotal.IP, the base path for the outputs that the script generates.
 * **-r, --raw-response** Used with `json-to-outputs` flag. Use the raw response of the query for `json-to-outputs`.

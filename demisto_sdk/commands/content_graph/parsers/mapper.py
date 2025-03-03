@@ -18,7 +18,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
-       pack_supported_modules: List[str],
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(

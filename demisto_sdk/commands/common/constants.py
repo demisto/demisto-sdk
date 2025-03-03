@@ -178,6 +178,8 @@ DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
 DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
+DEMISTO_SDK_MARKETPLACE_PLATFORM_PROD = "marketplace-cortex-content-prod-us"
+DEMISTO_SDK_MARKETPLACE_PLATFORM_DEV = "marketplace-cortex-content-dev"
 
 # Server Types
 XSOAR_SERVER_TYPE = "XSOAR"
@@ -1967,6 +1969,7 @@ MarketplaceVersionToMarketplaceName = {
     MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
     MarketplaceVersions.XPANSE.value: DEMISTO_SDK_MARKETPLACE_XPANSE_DIST,
     MarketplaceVersions.XSOAR_SAAS.value: DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST,
+    MarketplaceVersions.PLATFORM.value: DEMISTO_SDK_MARKETPLACE_PLATFORM_PROD,
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
@@ -1978,6 +1981,18 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.PLATFORM: "Config/core_packs_platform_list.json",
 }
 
+
+class PlatformSupportedModules(StrEnum):
+    C1 = "C1"
+    C3 = "C3"
+    XO = "X0"
+    X1 = "X1"
+    X3 = "X3"
+    X5 = "X5"
+    ENT_PLUS = "ENT_PLUS"
+
+
+DEFAULT_SUPPORTED_MODULES: list[str] = []
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
     "html": Version("6.1.0"),
@@ -2249,5 +2264,3 @@ MIRRORING_COMMANDS: list[str] = [
     "get-modified-remote-data",
     "update-remote-system",
 ]
-
-DEFAULT_PLATFORM_MODULES: list[str] = []

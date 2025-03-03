@@ -133,7 +133,10 @@ class ResultWriter:
                 ignorable_errors.append(failing_error_code)
             else:
                 non_ignorable_errors.append(failing_error_code)
-            if failing_error_code not in config_file_content.path_based_section:
+            if (
+                failing_error_code
+                not in config_file_content.selected_path_based_section
+            ):
                 forcemergeable_errors.append(failing_error_code)
             else:
                 must_be_handled_errors.append(failing_error_code)

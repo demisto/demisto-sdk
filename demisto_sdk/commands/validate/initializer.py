@@ -252,6 +252,7 @@ class Initializer:
             debug=True,
             get_only_current_file_names=False,
         )
+        logger.info(f"\n{modified_files=} {added_files=} {renamed_files=}")  # TODO: remove line
         # if os.getenv("CONTRIB_BRANCH"):
         #     """
         #     If this command runs on a build triggered by an external contribution PR,

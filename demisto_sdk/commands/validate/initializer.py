@@ -252,32 +252,32 @@ class Initializer:
             debug=True,
             get_only_current_file_names=False,
         )
-        if os.getenv("CONTRIB_BRANCH"):
-            """
-            If this command runs on a build triggered by an external contribution PR,
-            the relevant modified files would have an "untracked" status in git.
-            The following code segment retrieves all relevant untracked files that were changed in the external contribution PR
-            See CIAC-10968 for more info.
-            """
-            logger.info(
-                "\n<cyan>CONTRIB_BRANCH environment variable found, running validate in contribution flow "
-                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)</cyan>"
-            )
-            logger.info(f"\n{modified_files=} {added_files=} {renamed_files=}")  # TODO: remove line
-            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra) and read file paths
-            relative_untracked_files_paths: Set[Path] = set()
-            with open(
-                "contribution_files_relative_paths.txt", "r"
-            ) as contribution_file:
-                for single_line in contribution_file:
-                    clean_line: str = single_line.rstrip("\n")
-                    relative_untracked_files_paths.add(Path(clean_line))
-            logger.info(
-                f"\n######## - Added untracked:\n{relative_untracked_files_paths}"
-            )
-            # modified_files = modified_files.union(relative_untracked_files_paths)
-            added_files = set(added_files).union(relative_untracked_files_paths)
-            logger.info(f"<cyan>\n{modified_files=} {added_files=} {renamed_files=}</cyan>")  # TODO: remove line
+        # if os.getenv("CONTRIB_BRANCH"):
+        #     """
+        #     If this command runs on a build triggered by an external contribution PR,
+        #     the relevant modified files would have an "untracked" status in git.
+        #     The following code segment retrieves all relevant untracked files that were changed in the external contribution PR
+        #     See CIAC-10968 for more info.
+        #     """
+        #     logger.info(
+        #         "\n<cyan>CONTRIB_BRANCH environment variable found, running validate in contribution flow "
+        #         "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)</cyan>"
+        #     )
+        #     logger.info(f"\n{modified_files=} {added_files=} {renamed_files=}")  # TODO: remove line
+        #     # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra) and read file paths
+        #     relative_untracked_files_paths: Set[Path] = set()
+        #     with open(
+        #         "contribution_files_relative_paths.txt", "r"
+        #     ) as contribution_file:
+        #         for single_line in contribution_file:
+        #             clean_line: str = single_line.rstrip("\n")
+        #             relative_untracked_files_paths.add(Path(clean_line))
+        #     logger.info(
+        #         f"\n######## - Added untracked:\n{relative_untracked_files_paths}"
+        #     )
+        #     # modified_files = modified_files.union(relative_untracked_files_paths)
+        #     added_files = set(added_files).union(relative_untracked_files_paths)
+        #     logger.info(f"<cyan>\n{modified_files=} {added_files=} {renamed_files=}</cyan>")  # TODO: remove line
 
         return modified_files, added_files, renamed_files
 

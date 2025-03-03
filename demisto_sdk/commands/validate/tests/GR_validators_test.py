@@ -503,13 +503,20 @@ def repo_for_test(graph_repo):
 @pytest.fixture
 def repo_for_test_SearchAlerts_MarketplaceV2(graph_repo):
     pack_a = graph_repo.create_pack("Pack A")
-    pack_a.pack_metadata.update({"marketplaces": [MarketplaceVersions.MarketplaceV2.value]})
-    pack_a.create_script(
-        "Script1", code='demisto.executeCommand("SearchAlerts", {})'
+    pack_a.pack_metadata.update(
+        {"marketplaces": [MarketplaceVersions.MarketplaceV2.value]}
     )
+    pack_a.create_script("Script1", code='demisto.executeCommand("SearchAlerts", {})')
 
     pack_b = graph_repo.create_pack("Pack B")
-    pack_b.pack_metadata.update({"marketplaces": [MarketplaceVersions.MarketplaceV2.value, MarketplaceVersions.XSOAR.value]})
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.XSOAR.value,
+            ]
+        }
+    )
     pack_b.create_script(
         "SearchIncidents", code='demisto.executeCommand("SearchIncidents", {})'
     )
@@ -540,7 +547,6 @@ def test_IsUsingUnknownContentValidator__varied_dependency_types__all_files(
         content_items=[]
     )
     assert len(results) == 3
-
 
 
 def test_IsUsingUnknownContentValidator_verify_alert_to_incident_MarketplaceV2(

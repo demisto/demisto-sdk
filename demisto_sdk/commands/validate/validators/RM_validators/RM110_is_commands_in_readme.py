@@ -41,6 +41,7 @@ class IsCommandsInReadmeValidator(BaseValidator[ContentTypes]):
                 if command.name not in content_item.readme.file_content
                 and command.name not in COMMANDS_EXCLUDED_FROM_README_DOCUMENTATION
                 and not command.deprecated
+                and not command.hidden
                 and not command.name.endswith("get-indicators")
             ]
             if undocumented_commands:

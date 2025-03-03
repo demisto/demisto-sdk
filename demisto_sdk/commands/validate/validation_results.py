@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import List, Optional, Set, Tuple
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -102,10 +103,9 @@ class ResultWriter:
             exit_code = 1
         if not exit_code:
             logger.info("<green>All validations passed.</green>")
-        elif failing_error_codes or warning_error_codes:
-            self.summarize_validation_results(
-                failing_error_codes, warning_error_codes, config_file_content
-            )
+        self.summarize_validation_results(
+            failing_error_codes, warning_error_codes, config_file_content, exit_code
+        )
         for fixed_object in fixed_objects_set:
             fixed_object.save()
         return exit_code
@@ -115,6 +115,7 @@ class ResultWriter:
         failing_error_codes: Set[str],
         warning_error_codes: Set[str],
         config_file_content: ConfiguredValidations,
+        exit_code: int,
     ):
         """Divide the error codes into groups: warnings, forcemergeable, ignorable, non ignorable, and must-be-handled and post this summary at the end of the execution.
 
@@ -122,12 +123,15 @@ class ResultWriter:
             failing_error_codes (Set[str]): The set of failing errors.
             warning_error_codes (Set[str]): The set of warning errors.
             config_file_content (ConfiguredValidations): The ConfiguredValidations object containing the ignorable errors, and path-based sections.
+            exit_code (int): The expected exit_code
         """
         forcemergeable_errors = []
         ignorable_errors = []
         must_be_handled_errors = []
         non_ignorable_errors = []
-        msg: str = ""
+        error_msg: str = ""
+        warning_msg: str = ""
+        msg: str = "Validate summary\n"
         for failing_error_code in failing_error_codes:
             if failing_error_code in config_file_content.ignorable_errors:
                 ignorable_errors.append(failing_error_code)
@@ -141,25 +145,54 @@ class ResultWriter:
             else:
                 must_be_handled_errors.append(failing_error_code)
         if warning_error_codes:
-            msg += f"The following errors were reported as warnings: {', '.join(warning_error_codes)}.\n"
-        msg += f"The following errors were thrown as a part of this pr: {', '.join(failing_error_codes)}.\n"
+            warning_msg = f"The following errors were reported as warnings: {', '.join(warning_error_codes)}.\n"
+            msg = f"{msg}{warning_msg}"
         if ignorable_errors:
-            msg += (
+            error_msg += (
                 f"The following errors can be ignored: {', '.join(ignorable_errors)}.\n"
             )
         if non_ignorable_errors:
-            msg += f"The following errors cannot be ignored: {', '.join(non_ignorable_errors)}.\n"
+            error_msg += f"The following errors cannot be ignored: {', '.join(non_ignorable_errors)}.\n"
         if forcemergeable_errors:
-            msg += f"The following errors don't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
-        if must_be_handled_errors:
-            msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
-            msg += f"Note that the following errors cannot be force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"
-            msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
-        else:
-            msg += "##############################################################\n"
-            msg += "Please note that the PR can be force merged from the validation perspective.\n"
-            msg += "##############################################################\n"
+            error_msg += f"The following errors don't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
+        if error_msg:
+            msg = f"{msg}The following errors were thrown as a part of this pr: {', '.join(failing_error_codes)}.\n{error_msg}"
         logger.error(f"<red>{msg}</red>")
+        if must_be_handled_errors:
+            verdict_msg = ""
+            verdict_msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
+            verdict_msg += f"Note that the following errors cannot be force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"
+            verdict_msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
+            logger.error(f"<red>{verdict_msg}</red>")
+            msg += "\nnVerdict: PR can be force merged from validate perspective? ❌"
+        else:
+            verdict_msg = "#############################################################################\n"
+            verdict_msg += "Please note that the PR can be force merged from the validation perspective.\n"
+            verdict_msg += "############################################################################\n"
+            if exit_code:
+                logger.warning(f"<green>{verdict_msg}</green>")
+            else:
+                logger.info(f"<green>{verdict_msg}</green>")
+            msg += "\nVerdict: PR can be force merged from validate perspective? ✅"
+        self.save_validate_summary_to_artifacts(msg)
+
+    def save_validate_summary_to_artifacts(self, validate_summary: str):
+        """Initialize a txt file at with the validate summary.
+
+        Args:
+            validate_summary (str): The file name to create.
+        """
+        if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+            artifacts_folder
+        ).exists():
+            artifacts_validate_summary_path = Path(
+                f"{artifacts_folder}/validate_summary.txt"
+            )
+            logger.info(
+                f"Writing the validate summary results to a txt file at {artifacts_validate_summary_path}."
+            )
+            with open(artifacts_validate_summary_path, "w") as f:
+                f.write(validate_summary)
 
     def write_results_to_json_file(self):
         """

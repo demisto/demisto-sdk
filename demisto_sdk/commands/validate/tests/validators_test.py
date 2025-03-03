@@ -396,7 +396,7 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
             ],
             0,
             1,
-            0,
+            1,
             ["BA101"],
             [],
         ),
@@ -410,7 +410,7 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
                 )
             ],
             1,
-            0,
+            1,
             2,
             [],
             ["BA101"],
@@ -430,7 +430,7 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
                 ),
             ],
             1,
-            1,
+            2,
             2,
             ["BC100"],
             ["BA101"],
@@ -481,7 +481,7 @@ def test_post_results(
 
 
 @pytest.mark.parametrize(
-    "failing_error_codes, warning_error_codes, config_file_content, expected_msg",
+    "failing_error_codes, warning_error_codes, config_file_content, exit_code, expected_msg",
     [
         (
             ["BA100", "CR102", "CL101", "TE111"],
@@ -489,19 +489,22 @@ def test_post_results(
             ConfiguredValidations(
                 ignorable_errors=["BA100"], selected_path_based_section=["CR102"]
             ),
-            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors cannot be ignored: CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CL101, TE111.\n######################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: CR102.\n######################################################################################################\n</red>",
+            1,
+            "<red>Validate summary\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors cannot be ignored: CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CL101, TE111.\n</red><red>######################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: CR102.\n######################################################################################################\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],
             [],
             ConfiguredValidations(selected_path_based_section=["CR102", "BA100"]),
-            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors cannot be ignored: BA100, CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: CL101, TE111.\n#############################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: BA100, CR102.\n#############################################################################################################\n</red>",
+            1,
+            "<red>Validate summary\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors cannot be ignored: BA100, CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: CL101, TE111.\n</red><red>#############################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: BA100, CR102.\n#############################################################################################################\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],
             ["BC111"],
             ConfiguredValidations(ignorable_errors=["BA100", "TE111"]),
-            "<red>The following errors were reported as warnings: BC111.\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors cannot be ignored: CR102, CL101.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n##############################################################\nPlease note that the PR can be force merged from the validation perspective.\n##############################################################\n</red>",
+            1,
+            "<red>Validate summary\nThe following errors were reported as warnings: BC111.\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors cannot be ignored: CR102, CL101.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],
@@ -510,12 +513,18 @@ def test_post_results(
                 ignorable_errors=["BA100"],
                 selected_path_based_section=["BA100", "CR102", "CL101", "TE111"],
             ),
-            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors cannot be ignored: CR102, CL101, TE111.\n###########################################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: BA100, CR102, CL101, TE111.\n###########################################################################################################################\n</red>",
+            1,
+            "<red>Validate summary\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors cannot be ignored: CR102, CL101, TE111.\n</red><red>###########################################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: BA100, CR102, CL101, TE111.\n###########################################################################################################################\n</red>",
         ),
     ],
 )
 def test_summarize_validation_results(
-    mocker, failing_error_codes, warning_error_codes, config_file_content, expected_msg
+    mocker,
+    failing_error_codes,
+    warning_error_codes,
+    config_file_content,
+    exit_code,
+    expected_msg,
 ):
     """
     Given
@@ -536,9 +545,12 @@ def test_summarize_validation_results(
     mock = mocker.patch.object(logger, "error")
     validation_results = ResultWriter()
     validation_results.summarize_validation_results(
-        failing_error_codes, warning_error_codes, config_file_content
+        failing_error_codes, warning_error_codes, config_file_content, exit_code
     )
-    assert expected_msg == mock.call_args[0][0]
+    msg = ""
+    for args in mock.call_args_list:
+        msg += args[0][0]
+    assert expected_msg == msg
 
 
 @pytest.mark.parametrize(

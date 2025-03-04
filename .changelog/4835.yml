@@ -1,4 +1,0 @@
-changes:
-- description: Increase Docker container timeout when creating a new Docker image.
-  type: feature
-pr_number: 4835

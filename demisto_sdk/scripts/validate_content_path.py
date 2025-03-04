@@ -381,7 +381,7 @@ XSIAM_DEPTH_1_CHECKS = {
         {".json", ".png"}, InvalidXSIAMDashboardFileName
     ),
     XSIAM_REPORTS_DIR: XsiamStemConstraints(
-        {".json", ".jpg"}, InvalidXSIAMReportFileName
+        {".json", ".png"}, InvalidXSIAMReportFileName
     ),
 }
 

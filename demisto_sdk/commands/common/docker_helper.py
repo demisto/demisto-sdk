@@ -142,6 +142,12 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
 
 
 def is_custom_registry():
+    global DOCKER_REGISTRY_URL
+    DOCKER_REGISTRY_URL = os.getenv(  # get the value from .env in runtime
+        "DEMISTO_SDK_CONTAINER_REGISTRY",
+        os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
+    )
+
     return (
         not IS_CONTENT_GITLAB_CI and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
     )
@@ -233,6 +239,12 @@ class DockerBase:
     """
 
     def __init__(self):
+        global DOCKER_REGISTRY_URL
+        DOCKER_REGISTRY_URL = os.getenv(  # get the value from .env in runtime
+            "DEMISTO_SDK_CONTAINER_REGISTRY",
+            os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
+        )
+
         self.tmp_dir_name = tempfile.TemporaryDirectory(
             prefix=os.path.join(os.getcwd(), "tmp")
         )

@@ -1,0 +1,4 @@
+changes:
+- description: Removed mocking mechanism in test-content command.
+  type: internal
+pr_number: 4764

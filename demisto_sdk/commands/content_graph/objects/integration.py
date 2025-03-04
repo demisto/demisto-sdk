@@ -55,12 +55,14 @@ class IntegrationOutput(Output):
 
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
     name: str
+    quickaction: bool = Field(False)
 
     # From HAS_COMMAND relationship
     args: List[Argument] = Field([], exclude=True)
     outputs: List[IntegrationOutput] = Field([], exclude=True)
 
     deprecated: bool = Field(False)
+    hidden: bool = Field(False)
     description: Optional[str] = Field("")
 
     # missing attributes in DB
@@ -101,6 +103,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = Field(False, alias="isfetchassets")
+    supports_quick_actions: bool = Field(False, alias="supportsquickactions")
     is_fetch_events_and_assets: bool = False
     is_fetch_samples: bool = False
     is_feed: bool = False

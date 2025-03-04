@@ -29,7 +29,10 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.MarketplaceV2}
+        return {
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        }
 
     def connect_to_dependencies(self) -> None:
         """Collects the playbook used in the trigger as a mandatory dependency."""

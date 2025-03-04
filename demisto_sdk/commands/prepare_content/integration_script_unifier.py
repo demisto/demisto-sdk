@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     CONTRIBUTORS_LIST,
     DEFAULT_IMAGE_PREFIX,
     DEVELOPER_SUPPORT,
+    MIRRORING_COMMANDS,
     PARTNER_SUPPORT,
     SUPPORT_LEVEL_HEADER,
     TYPE_TO_EXTENSION,
@@ -83,9 +84,11 @@ class IntegrationScriptUnifier(Unifier):
         script_obj = data
 
         if not is_script_package:  # integration
-            IntegrationScriptUnifier.update_hidden_parameters_value(
+            # Change data in place
+            IntegrationScriptUnifier.update_hidden_parameters_value(data, marketplace)
+            IntegrationScriptUnifier.remove_mirroring_commands_and_settings(
                 data, marketplace
-            )  # changes data
+            )
             script_obj = data["script"]
         script_type = TYPE_TO_EXTENSION[script_obj["type"]]
         try:
@@ -171,6 +174,46 @@ class IntegrationScriptUnifier(Unifier):
                     data["configuration"][i]["hidden"] = marketplace in hidden
 
     @staticmethod
+    def remove_mirroring_commands_and_settings(
+        data: dict,
+        marketplace: Optional[MarketplaceVersions],
+    ):
+        """
+        Modifies data in place to remove mirroring commands, such as `get-mapping-fields` and `update-remote-system`,
+        and disable mirroring settings, such as `isremotesyncin` and `isremotesyncout` if the integration script is being
+        prepared for MarketplaceV2 or XPANSE.
+
+        Args:
+            data (dict): The integration data.
+            marketplace (Optional[MarketplaceVersions]): The optional marketplace version to check against.
+        """
+        marketplaces_without_mirroring = (
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        )
+        if marketplace not in marketplaces_without_mirroring:
+            # Only change data if marketplace platform does not support mirroring
+            return
+
+        name = data.get("name")
+        if script_commands := data["script"].get("commands"):
+            logger.debug(
+                f"Removing mirroring commands from {name} for marketplace: {marketplace.value}"
+            )
+            data["script"]["commands"] = [
+                command
+                for command in script_commands
+                if command["name"] not in MIRRORING_COMMANDS
+            ]
+
+        logger.debug(
+            f"Disabling mirroring settings in {name} for marketplace: {marketplace.value}"
+        )
+        data["script"]["ismappable"] = False
+        data["script"]["isremotesyncin"] = False
+        data["script"]["isremotesyncout"] = False
+
+    @staticmethod
     def add_custom_section(
         unified_yml: Dict, custom: str = "", is_script_package: bool = False
     ) -> Dict:
@@ -179,7 +222,7 @@ class IntegrationScriptUnifier(Unifier):
             unified_yml - The unified_yml
         Returns:
              the unified yml with the id/name/display appended with the custom label
-             if the fields exsits.
+             if the fields exists.
         """
         to_append = custom if is_script_package else f" - {custom}"
         if unified_yml.get("name"):

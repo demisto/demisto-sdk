@@ -1,4 +1,4 @@
 changes:
-- description: Update uploader error parsing tool to display details message when no error message is available.
+- description: Improved **uploader** error parsing tool to always show a meaningful message.
   type: internal
 pr_number: 4846

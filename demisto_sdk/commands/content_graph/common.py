@@ -575,3 +575,20 @@ def replace_marketplace_references(
             f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"
         )
     return data
+
+
+def append_supported_modules(data: Any, supported_modules: List[str]) -> Any:
+    """
+    Appends the `supportedModules` key & value to the data object.
+
+    Args:
+        data (Any): The data to process, which can be a dictionary, list, or string.
+        supported_modules (List[str]): The list of supported modules.
+
+    Returns:
+        Any: The same data object with supported modules appended.
+    """
+    if isinstance(data, dict):
+        if "supportedModules" not in data:
+            data["supportedModules"] = supported_modules
+    return data

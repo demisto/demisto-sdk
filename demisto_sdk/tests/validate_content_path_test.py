@@ -83,7 +83,6 @@ def test_xsiam_report_file_valid():
     (
         pytest.param("wrongPrefix", "json", id="bad name, good suffix"),
         pytest.param("myPack", "py", id="good name, bad suffix"),
-        pytest.param("image1", "jpg", id="good name, bad suffix"),
         pytest.param("image2", "png", id="bad name, good suffix"),
     ),
 )

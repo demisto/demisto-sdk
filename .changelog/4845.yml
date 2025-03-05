@@ -1,4 +1,4 @@
 changes:
-- description: Fixes an issue where the DOCKER_REGISTRY_URL isn't getting the correct value from the .env file.
+- description: Fixed an issue where the DOCKER_REGISTRY_URL wasn't getting the correct value from the .env file.
   type: fix
 pr_number: 4845

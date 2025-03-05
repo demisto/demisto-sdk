@@ -551,7 +551,7 @@ class IntegrationScriptUnifier(Unifier):
             existing_pack_info_debug_log_re = (
                 r"demisto\.debug\('pack name = .*?, pack version = .*?'\)"
             )
-            pack_name_escaped = pack_name.replace("'", "\'")
+            pack_name_escaped = pack_name.replace("'", "\\'")
             pack_info_debug_statement = f"demisto.debug('pack name = {pack_name_escaped}, pack version = {pack_version}')"
 
             if re.search(existing_pack_info_debug_log_re, script_code):

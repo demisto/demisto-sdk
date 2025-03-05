@@ -252,7 +252,32 @@ class Initializer:
             debug=True,
             get_only_current_file_names=False,
         )
-        logger.info(f"\n{modified_files=} {added_files=} {renamed_files=}")  # TODO: remove line
+
+        logger.info(f"\n{modified_files=}\n{added_files=}\n{renamed_files=}")
+
+        """
+        If this command runs on a build triggered by an external contribution PR,
+        the relevant modified files may have an "untracked" status in git.
+        The following code segment retrieves all relevant untracked files that were changed in the
+        external contribution PR. See CIAC-10968 for more info.
+
+        This code snippet ensures that the number of fetched files matches the number of files in
+        the contribution_files_relative_paths.txt file. If a discrepancy is found, indicating untracked files,
+        it raises a ValueError to halt execution due to a mismatch in file counts.
+        See CIAC-12482 for more info.
+        """
+
+        with open("contribution_files_relative_paths.txt", "r") as contribution_file:
+            contribution_files_relative_paths_count_lines = sum(1 for line in contribution_file if line.strip())
+
+        if contribution_files_relative_paths_count_lines != (
+                len(modified_files) + len(added_files) + len(renamed_files)):
+            logger.info("The number of fetched files does not match the number of files in the "
+                        "contribution_files_relative_paths.txt file. This indicates that there are untracked files.")
+            raise ValueError("Error: Mismatch in the number of files. Unable to proceed.")
+
+        # add len(txt file) == sum[len(add,modi,rename)] -> raise + add doc
+
         # if os.getenv("CONTRIB_BRANCH"):
         #     """
         #     If this command runs on a build triggered by an external contribution PR,

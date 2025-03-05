@@ -1,4 +1,4 @@
 changes:
-- description: Fix disabling of mirroring settings in IntegrationScriptUnifier to avoid adding new fields
+- description: Optimize disabling of mirroring settings in IntegrationScriptUnifier to avoid adding new fields to the unified integration YML.
   type: fix
 pr_number: 4849

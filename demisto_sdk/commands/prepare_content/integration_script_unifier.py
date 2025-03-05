@@ -209,9 +209,10 @@ class IntegrationScriptUnifier(Unifier):
         logger.debug(
             f"Disabling mirroring settings in {name} for marketplace: {marketplace.value}"
         )
-        data["script"]["ismappable"] = False
-        data["script"]["isremotesyncin"] = False
-        data["script"]["isremotesyncout"] = False
+        mirroring_setting_fields = ["ismappable", "isremotesyncin", "isremotesyncout"]
+        for setting_field in mirroring_setting_fields:
+            if data["script"].get(setting_field) is True:
+                data["script"][setting_field] = False
 
     @staticmethod
     def add_custom_section(

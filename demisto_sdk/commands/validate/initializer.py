@@ -269,7 +269,7 @@ class Initializer:
 
         with open("contribution_files_relative_paths.txt", "r") as contribution_file:
             contribution_files_relative_paths_count_lines = sum(1 for line in contribution_file if line.strip())
-
+        logger.info(f"{contribution_files_relative_paths_count_lines=}")
         if contribution_files_relative_paths_count_lines != (
                 len(modified_files) + len(added_files) + len(renamed_files)):
             logger.info("The number of fetched files does not match the number of files in the "

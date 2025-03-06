@@ -135,7 +135,9 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
             except Exception:
                 logger.exception(f"{log_prompt} - failed to login to docker registry")
         else:
-            logger.debug('One of docker_user or docker_pass is missing, skipping docker login')
+            logger.debug(
+                "One of docker_user or docker_pass is missing, skipping docker login"
+            )
     else:
         msg = "docker client already available, using current DOCKER_CLIENT"
         logger.debug(f"{log_prompt} - {msg}" if log_prompt else msg)

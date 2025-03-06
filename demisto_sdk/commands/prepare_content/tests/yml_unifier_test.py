@@ -602,26 +602,18 @@ def test_insert_pack_version_and_script_to_yml_js_and_ps1():
             """
             def main():
             """,
-            ["test pack", "1.0.3"],
-            "demisto.debug('pack name = test pack, pack version = 1.0.3')\nTEST_PACK_PACK_VERSION = '1.0.3'",
+            ["testPack", "1.0.3"],
+            "TESTPACK_PACK_VERSION = '1.0.3'\ndemisto.debug(f'pack id = testPack, pack version = {TESTPACK_PACK_VERSION}')",
             id="script without version",
         ),
         pytest.param(
             """
-            demisto.debug('pack name = test pack, pack version = 1.0.3')
+            demisto.debug('pack id = test pack, pack version = 1.0.3')
             def main():
             """,
-            ["test pack", "1.0.4"],
-            "demisto.debug('pack name = test pack, pack version = 1.0.4')\nTEST_PACK_PACK_VERSION = '1.0.4'",
+            ["testPack", "1.0.4"],
+            "TESTPACK_PACK_VERSION = '1.0.4'\ndemisto.debug(f'pack id = testPack, pack version = {TESTPACK_PACK_VERSION}')",
             id="script with version",
-        ),
-        pytest.param(
-            """
-            def main():
-            """,
-            ["here's a pack", "1.0.5"],
-            "demisto.debug('pack name = here\\'s a pack, pack version = 1.0.5')",
-            id="pack name with apostrophe",
         ),
     ],
 )

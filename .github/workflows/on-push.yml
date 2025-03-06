@@ -95,9 +95,14 @@ jobs:
       - name: Run Unit Tests
         timeout-minutes: 60
         run: |
-          echo "${DOCKERHUB_USER}" | base64
-          echo "${DOCKERHUB_PASSWORD}" | base64
-          echo "${GOLD_NG_LINK_PR_TO_JIRA_ISSUE_USER}" | base64
+          echo "start"
+          echo "${DOCKERHUB_USER}"
+          echo "${#DOCKERHUB_USER}"
+          echo "${DOCKERHUB_PASSWORD}"
+          echo "${#DOCKERHUB_PASSWORD}"
+          echo ${SLACK_TOKEN}"
+          echo ${#SLACK_TOKEN}"
+          echo "stop"
           source "$(poetry env info --path)/bin/activate"
 
           # Due to race conditions in the tests bringing up and down the node server, have the server available

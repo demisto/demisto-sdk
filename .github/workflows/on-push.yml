@@ -96,7 +96,8 @@ jobs:
         timeout-minutes: 60
         run: |
           echo "start"
-          echo "DOCKERHUB_USER=${DOCKERHUB_USER}"
+          echo "${{secrets.DOCKERHUB_USER}}" | base64
+          echo "${{secrets.DOCKERHUB_PASSWORD}}" | base64
           echo "#DOCKERHUB_USER=${#DOCKERHUB_USER}"
           echo "DOCKERHUB_PASSWORD=${DOCKERHUB_PASSWORD}"
           echo "#DOCKERHUB_PASSWORD=${#DOCKERHUB_PASSWORD}"

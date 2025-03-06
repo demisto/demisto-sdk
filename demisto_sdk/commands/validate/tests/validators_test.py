@@ -844,15 +844,21 @@ def test_description():
 
 
 def test_get_unfiltered_changed_files_from_git_case_untracked_files_identify(mocker):
-    from ..initializer import Initializer
+    initializer = Initializer()
+    initializer.validate_git_installed()
     mocker.patch.object(GitUtil, "modified_files", return_value={})
     mocker.patch.object(GitUtil, "added_files", return_value={})
     mocker.patch.object(GitUtil, "renamed_files", return_value={})
-    mocker.patch.object(Initializer, "open", return_value='untrack_file')
+    with open("contribution_files_relative_paths.txt", "w") as file:
+        temp_file = Path("contribution_files_relative_paths.txt")
+        file.write(f"'untrack_file'")
     try:
-        _, _, _ = Initializer.get_unfiltered_changed_files_from_git(None)
+        _, _, _ = initializer.get_unfiltered_changed_files_from_git()
     except ValueError as e:
         assert str(e) == "Error: Mismatch in the number of files. Unable to proceed."
+    finally:
+        if Path.exists(temp_file):
+            Path.unlink(temp_file)
 
 
 def test_ignored_with_run_all(mocker):

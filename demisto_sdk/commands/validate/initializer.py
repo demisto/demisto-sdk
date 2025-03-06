@@ -253,8 +253,6 @@ class Initializer:
             get_only_current_file_names=False,
         )
 
-        logger.info(f"\n{modified_files=}\n{added_files=}\n{renamed_files=}")
-
         """
         If this command runs on a build triggered by an external contribution PR,
         the relevant modified files may have an "untracked" status in git.

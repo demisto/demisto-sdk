@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue in the YML unifier which caused commands and scripts under packs whose names contained an apostrophe to return a syntax error during runtime in XSOAR.
+  type: fix
+pr_number: 4840

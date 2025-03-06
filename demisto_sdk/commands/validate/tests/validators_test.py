@@ -1,4 +1,3 @@
-import os
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Set
@@ -844,6 +843,17 @@ def test_description():
 
 
 def test_get_unfiltered_changed_files_from_git_case_untracked_files_identify(mocker):
+    """
+    Given:
+        An Initializer instance where the fetched git files are not equal to the amount of files written
+         in the contribution_files_relative_paths file.
+    When:
+        Calling get_unfiltered_changed_files_from_git in a scenario where modified_files, added_files,
+         and rename_files are empty, and the contribution_files_relative_paths file contains some file names.
+    Then:
+        Ensure that the error is raised and the function does not return modified_files,
+         added_files, or rename_files.
+    """
     initializer = Initializer()
     initializer.validate_git_installed()
     mocker.patch.object(GitUtil, "modified_files", return_value={})
@@ -851,7 +861,7 @@ def test_get_unfiltered_changed_files_from_git_case_untracked_files_identify(moc
     mocker.patch.object(GitUtil, "renamed_files", return_value={})
     with open("contribution_files_relative_paths.txt", "w") as file:
         temp_file = Path("contribution_files_relative_paths.txt")
-        file.write(f"'untrack_file'")
+        file.write("untrack_file")
     try:
         _, _, _ = initializer.get_unfiltered_changed_files_from_git()
     except ValueError as e:

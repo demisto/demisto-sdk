@@ -265,7 +265,9 @@ class Initializer:
         See CIAC-12482 for more info.
         """
         if os.getenv("CONTRIB_BRANCH"):
-            with open("contribution_files_relative_paths.txt", "r") as contribution_file:
+            with open(
+                "contribution_files_relative_paths.txt", "r"
+            ) as contribution_file:
                 contribution_files_relative_paths_count_lines = sum(
                     1 for line in contribution_file if line.strip()
                 )

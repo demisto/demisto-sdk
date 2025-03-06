@@ -849,7 +849,6 @@ def test_get_unfiltered_changed_files_from_git_case_untracked_files_identify(moc
     mocker.patch.object(GitUtil, "added_files", return_value={})
     mocker.patch.object(GitUtil, "renamed_files", return_value={})
     mocker.patch.object(Initializer, "open", return_value='untrack_file')
-    Initializer.get_unfiltered_changed_files_from_git(None)
     try:
         _, _, _ = Initializer.get_unfiltered_changed_files_from_git(None)
     except ValueError as e:

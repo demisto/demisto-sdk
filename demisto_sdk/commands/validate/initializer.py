@@ -264,22 +264,22 @@ class Initializer:
         it raises a ValueError to halt execution due to a mismatch in file counts.
         See CIAC-12482 for more info.
         """
+        if os.getenv("CONTRIB_BRANCH"):
+            with open("contribution_files_relative_paths.txt", "r") as contribution_file:
+                contribution_files_relative_paths_count_lines = sum(
+                    1 for line in contribution_file if line.strip()
+                )
 
-        with open("contribution_files_relative_paths.txt", "r") as contribution_file:
-            contribution_files_relative_paths_count_lines = sum(
-                1 for line in contribution_file if line.strip()
-            )
-
-        if contribution_files_relative_paths_count_lines != (
-            len(modified_files) + len(added_files) + len(renamed_files)
-        ):
-            logger.info(
-                "The number of fetched files does not match the number of files in the "
-                "contribution_files_relative_paths.txt file. This indicates that there are untracked files."
-            )
-            raise ValueError(
-                "Error: Mismatch in the number of files. Unable to proceed."
-            )
+            if contribution_files_relative_paths_count_lines != (
+                len(modified_files) + len(added_files) + len(renamed_files)
+            ):
+                logger.info(
+                    "The number of fetched files does not match the number of files in the "
+                    "contribution_files_relative_paths.txt file. This indicates that there are untracked files."
+                )
+                raise ValueError(
+                    "Error: Mismatch in the number of files. Unable to proceed."
+                )
 
         return modified_files, added_files, renamed_files
 

@@ -146,6 +146,8 @@ class SectionOrderValues(StrEnum):
     COLLECT = "Collect"
     OPTIMIZE = "Optimize"
     MIRRORING = "Mirroring"
+    COLLECT_ADVANCED = "Collect Advanced"
+    COLLECT_BASIC = "Collect Basic"
 
 
 class _StrictIntegration(BaseStrictModel):
@@ -153,7 +155,7 @@ class _StrictIntegration(BaseStrictModel):
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=4)] = (  # type:ignore[valid-type]
+    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=6)] = (  # type:ignore[valid-type]
         Field(alias="sectionorder")
     )
     configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]

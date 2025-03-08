@@ -128,13 +128,16 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         docker_pass = os.getenv(
             "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
         )
-        logger.debug(f"init_global_docker_client | {docker_user=}, {docker_pass=}")
         if docker_user and docker_pass:
             logger.debug(f"{log_prompt} - logging in to docker registry")
             try:
                 docker_login(DOCKER_CLIENT)
             except Exception:
                 logger.exception(f"{log_prompt} - failed to login to docker registry")
+        else:
+            logger.debug(
+                "One of docker_user or docker_pass is missing, skipping docker login"
+            )
     else:
         msg = "docker client already available, using current DOCKER_CLIENT"
         logger.debug(f"{log_prompt} - {msg}" if log_prompt else msg)

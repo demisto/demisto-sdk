@@ -11,7 +11,7 @@ class RunnerArgs(TypedDict):
     query: str
     insecure: bool
     incident_id: Optional[str]
-    status_incident_after_run: IncidentStatus
+    incident_post_run: IncidentStatus
     debug: Optional[str]
     debug_path: Optional[str]
     json_to_outputs: bool
@@ -30,10 +30,10 @@ def run(
         "--incident-id",
         help="The incident to run the query on, if not specified the playground will be used.",
     ),
-    status_incident_after_run: IncidentStatus = typer.Option(
+    incident_post_run: IncidentStatus = typer.Option(
         IncidentStatus.REMOVE.value,
-        "-sar",
-        "--status-incident-after-run",
+        "-ipr",
+        "--incident-post-run",
         help="Used only with Cortex XSOAR 8.x. Defines the status of the incident created after executing the command.",
     ),
     debug: bool = typer.Option(
@@ -110,7 +110,7 @@ def run(
         "query": query,
         "insecure": insecure,
         "incident_id": incident_id,
-        "status_incident_after_run": status_incident_after_run,
+        "incident_post_run": incident_post_run,
         "debug": "-" if debug else None,  # Convert debug to str or None
         "debug_path": debug_path,
         "json_to_outputs": json_to_outputs,

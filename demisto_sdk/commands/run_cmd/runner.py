@@ -55,7 +55,7 @@ class Runner:
         self,
         query: str,
         incident_id: str = None,
-        status_incident_after_run: IncidentStatus = IncidentStatus.REMOVE,
+        incident_post_run: IncidentStatus = IncidentStatus.REMOVE,
         insecure: bool = False,
         debug: str = None,
         debug_path: str = None,
@@ -72,7 +72,7 @@ class Runner:
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         self.client = demisto_client.configure(verify_ssl=verify)
         self.server_type = self.get_server_type()
-        self.status_incident_after_run = status_incident_after_run
+        self.incident_post_run = incident_post_run
         self.incident_id = incident_id or self.create_incident_for_query()
         self.json2outputs = json_to_outputs
         self.prefix = prefix
@@ -403,18 +403,18 @@ class Runner:
             return
 
         body: dict[str, Any] = {}
-        if self.status_incident_after_run == IncidentStatus.OPEN:
+        if self.incident_post_run == IncidentStatus.OPEN:
             logger.info(f"The incident {self.incident_id} remains open.")
             return
-        elif self.status_incident_after_run == IncidentStatus.CLOSE:
+        elif self.incident_post_run == IncidentStatus.CLOSE:
             path = "/incident/close"
             body = {"CustomFields": {}, "id": self.incident_id}
-        elif self.status_incident_after_run == IncidentStatus.REMOVE:
+        elif self.incident_post_run == IncidentStatus.REMOVE:
             path = "/incident/batchDelete"
             body = {"ids": [self.incident_id], "all": False, "filter": {}}
         else:
             raise DemistoRunTimeError(
-                "The argument `status_incident_after_run` was not set correctly.\n"
+                "The argument `incident_post_run` was not set correctly.\n"
                 "Allowed values are: `open`, `close`, `remove`."
             )
 
@@ -428,8 +428,8 @@ class Runner:
 
         if status_code != 200:
             logger.info(
-                f"Failed {self.status_incident_after_run.value}d the incident {self.incident_id}"
+                f"Failed {self.incident_post_run.value}d the incident {self.incident_id}"
             )
         logger.info(
-            f"Incident {self.incident_id} {self.status_incident_after_run.value}d successfully"
+            f"Incident {self.incident_id} {self.incident_post_run.value}d successfully"
         )

@@ -38,7 +38,7 @@ unset XSIAM_AUTH_ID
 * **-q --query** The query to run.
 * **--insecure** Skip certificate validation.
 * **-id --incident-id** The incident on which to run the query. If not specified, the playground will be used in Cortex XSOAR 6.x, while in Cortex XSOAR 8.x, a new incident will be created.
-* **-sar ----status-incident-after-run** Used only with Cortex XSOAR 8.x. Defines the status of the incident created after executing the command. Allowed values: `close`, `open`, `remove`, default is `remove`.
+* **-ipr --incident-post-run** Used only with Cortex XSOAR 8.x. Defines the status of the incident created after executing the command. Allowed values: `close`, `open`, `remove`, default is `remove`.
 * **--json-to-outputs** Whether to run json_to_outputs command on the context output of the query. If the context output does not exist or the `-r` flag is used, will use the raw response of the query.
 * **-p, --prefix** Used with `json-to-outputs` flag. Output prefix e.g. Jira.Ticket, VirusTotal.IP, the base path for the outputs that the script generates.
 * **-r, --raw-response** Used with `json-to-outputs` flag. Use the raw response of the query for `json-to-outputs`.

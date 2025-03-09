@@ -1,4 +1,0 @@
-changes:
-- description: Fix a bug in a validate that check that XSIAM report file name contain png and json.
-  type: fix
-pr_number: 4848

@@ -4,11 +4,11 @@
 * Fixed an issue where content items recognized in the graph with the word "incident" and referenced in XSIAM content items using the word "alert" (e.g., `SearchAlertsV2` instead of `SearchIncidentsV2`) resulted in incorrect relationship creation. [#4787](https://github.com/demisto/demisto-sdk/pull/4787)
 * Fixed an issue in the YML unifier which caused commands and scripts under packs whose names contained an apostrophe to return a syntax error during runtime in XSOAR. [#4840](https://github.com/demisto/demisto-sdk/pull/4840)
 * Fixed an issue where the DOCKER_REGISTRY_URL wasn't getting the correct value from the .env file. [#4845](https://github.com/demisto/demisto-sdk/pull/4845)
-* Fix a bug in a validate that check that XSIAM report file name contain png and json. [#4848](https://github.com/demisto/demisto-sdk/pull/4848)
-* Changed the env variable for docker user in the on-push.yml workflow. [#4851](https://github.com/demisto/demisto-sdk/pull/4851)
+* Fixed an issue in ***validate*** command related to XSIAM report file name containing png and json files. [#4848](https://github.com/demisto/demisto-sdk/pull/4848)
+* Updated the env variable for docker user in the on-push.yml workflow. [#4851](https://github.com/demisto/demisto-sdk/pull/4851)
 
 ### Internal
-* enhance validate summary msg. [#4838](https://github.com/demisto/demisto-sdk/pull/4838)
+* Updated the ***validate*** command summary message. [#4838](https://github.com/demisto/demisto-sdk/pull/4838)
 * Improved **uploader** error parsing tool to always show a meaningful message. [#4846](https://github.com/demisto/demisto-sdk/pull/4846)
 
 

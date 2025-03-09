@@ -243,7 +243,7 @@ def test_create_incident_for_query(
 
 
 @pytest.mark.parametrize(
-    "server_type, status_incident_after_run, is_incident_runtime_created, expected_call, expected_args",
+    "server_type, incident_post_run, is_incident_runtime_created, expected_call, expected_args",
     [
         (ServerType.XSIAM, IncidentStatus.REMOVE, False, 0, None),
         (ServerType.XSOAR, IncidentStatus.REMOVE, False, 0, None),
@@ -262,7 +262,7 @@ def test_delete_incident_if_needed(
     mocker,
     set_environment_variables,
     server_type,
-    status_incident_after_run,
+    incident_post_run,
     is_incident_runtime_created,
     expected_call,
     expected_args,
@@ -277,7 +277,7 @@ def test_delete_incident_if_needed(
     runner = Runner(
         "Query",
         json_to_outputs=True,
-        status_incident_after_run=status_incident_after_run,
+        incident_post_run=incident_post_run,
     )
     runner.is_incident_runtime_created = is_incident_runtime_created
     runner.delete_incident_if_needed()

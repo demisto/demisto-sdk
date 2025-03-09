@@ -275,7 +275,9 @@ class Initializer:
             with open(
                 "contribution_files_relative_paths.txt", "r"
             ) as contribution_file:
-                contribution_files_relative_paths_count_lines = len(contribution_file.readlines())
+                contribution_files_relative_paths_count_lines = len(
+                    contribution_file.readlines()
+                )
 
             affected_files = modified_files.union(added_files, renamed_files)
             if contribution_files_relative_paths_count_lines != len(affected_files):

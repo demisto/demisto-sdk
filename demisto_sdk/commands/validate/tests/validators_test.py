@@ -857,9 +857,9 @@ def test_get_unfiltered_changed_files_from_git_case_untracked_files_identify(moc
     """
     initializer = Initializer()
     initializer.validate_git_installed()
-    mocker.patch.object(GitUtil, "modified_files", return_value={})
-    mocker.patch.object(GitUtil, "added_files", return_value={})
-    mocker.patch.object(GitUtil, "renamed_files", return_value={})
+    mocker.patch.object(GitUtil, "modified_files", return_value=set())
+    mocker.patch.object(GitUtil, "added_files", return_value=set())
+    mocker.patch.object(GitUtil, "renamed_files", return_value=set())
     mocker.patch.dict(os.environ, {"CONTRIB_BRANCH": "true"})
     with open("contribution_files_relative_paths.txt", "w") as file:
         temp_file = Path("contribution_files_relative_paths.txt")

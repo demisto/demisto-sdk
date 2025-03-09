@@ -1,4 +1,0 @@
-changes:
-- description: Fixed cases where validate mistake <> in msgs for colors
-  type: fix
-pr_number: 4834

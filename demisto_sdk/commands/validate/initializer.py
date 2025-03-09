@@ -265,22 +265,24 @@ class Initializer:
         See CIAC-12482 for more info.
         """
         if os.getenv("CONTRIB_BRANCH"):
+            logger.info(
+                "\n<cyan>CONTRIB_BRANCH environment variable found, running validate in contribution flow "
+                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)</cyan>"
+            )
+            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra)
+            # and read file paths
+
             with open(
                 "contribution_files_relative_paths.txt", "r"
             ) as contribution_file:
-                contribution_files_relative_paths_count_lines = sum(
-                    1 for line in contribution_file if line.strip()
-                )
+                contribution_files_relative_paths_count_lines = len(contribution_file.readlines())
 
-            if contribution_files_relative_paths_count_lines != (
-                len(modified_files) + len(added_files) + len(renamed_files)
-            ):
-                logger.info(
-                    "The number of fetched files does not match the number of files in the "
-                    "contribution_files_relative_paths.txt file. This indicates that there are untracked files."
-                )
+            affected_files = modified_files.union(added_files, renamed_files)
+            if contribution_files_relative_paths_count_lines != len(affected_files):
                 raise ValueError(
-                    "Error: Mismatch in the number of files. Unable to proceed."
+                    "Error: Mismatch in the number of files. The number of fetched files does not match the number"
+                    " of files in the contribution_files_relative_paths.txt file."
+                    " This indicates that there are untracked files. Unable to proceed."
                 )
 
         return modified_files, added_files, renamed_files

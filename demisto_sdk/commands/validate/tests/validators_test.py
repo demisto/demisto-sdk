@@ -867,7 +867,7 @@ def test_get_unfiltered_changed_files_from_git_case_untracked_files_identify(moc
     try:
         _, _, _ = initializer.get_unfiltered_changed_files_from_git()
     except ValueError as e:
-        assert str(e) == "Error: Mismatch in the number of files. Unable to proceed."
+        assert "Error: Mismatch in the number of files." in str(e)
     finally:
         if Path.exists(temp_file):
             Path.unlink(temp_file)

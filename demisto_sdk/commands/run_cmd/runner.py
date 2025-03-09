@@ -377,7 +377,6 @@ class Runner:
             body={
                 "createInvestigation": True,
                 "name": "Demisto-sdk Run",
-                "CustomFields": {"menachemtest": "test"},
                 "owner": "",
                 "severity": 0,
                 "type": "Unclassified",

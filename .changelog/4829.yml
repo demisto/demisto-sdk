@@ -1,4 +1,4 @@
 changes:
-- description: Fix misidentifies non-new packs as new in contribution flow
+- description: Resolved an issue in external contributions pull requests where incorrect Git status fetching led to validation failures.
   type: fix
 pr_number: 4829

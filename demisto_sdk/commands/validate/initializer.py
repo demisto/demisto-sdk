@@ -252,30 +252,40 @@ class Initializer:
             debug=True,
             get_only_current_file_names=False,
         )
+
+        """
+        If this command runs on a build triggered by an external contribution PR,
+        the relevant modified files may have an "untracked" status in git.
+        The following code segment retrieves all relevant untracked files that were changed in the
+        external contribution PR. See CIAC-10968 for more info.
+
+        This code snippet ensures that the number of fetched files matches the number of files in
+        the contribution_files_relative_paths.txt file. If a discrepancy is found, indicating untracked files,
+        it raises a ValueError to halt execution due to a mismatch in file counts.
+        See CIAC-12482 for more info.
+        """
         if os.getenv("CONTRIB_BRANCH"):
-            """
-            If this command runs on a build triggered by an external contribution PR,
-            the relevant modified files would have an "untracked" status in git.
-            The following code segment retrieves all relevant untracked files that were changed in the external contribution PR
-            See CIAC-10968 for more info.
-            """
             logger.info(
                 "\n<cyan>CONTRIB_BRANCH environment variable found, running validate in contribution flow "
                 "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)</cyan>"
             )
-            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra) and read file paths
-            relative_untracked_files_paths: Set[Path] = set()
+            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra)
+            # and read file paths
+
             with open(
                 "contribution_files_relative_paths.txt", "r"
             ) as contribution_file:
-                for single_line in contribution_file:
-                    clean_line: str = single_line.rstrip("\n")
-                    relative_untracked_files_paths.add(Path(clean_line))
-            logger.info(
-                f"\n######## - Added untracked:\n{relative_untracked_files_paths}"
-            )
-            # modified_files = modified_files.union(relative_untracked_files_paths)
-            added_files = set(added_files).union(relative_untracked_files_paths)
+                contribution_files_relative_paths_count_lines = len(
+                    contribution_file.readlines()
+                )
+
+            affected_files = modified_files.union(added_files, renamed_files)
+            if contribution_files_relative_paths_count_lines != len(affected_files):
+                raise ValueError(
+                    "Error: Mismatch in the number of files. The number of fetched files does not match the number"
+                    " of files in the contribution_files_relative_paths.txt file."
+                    " This indicates that there are untracked files. Unable to proceed."
+                )
 
         return modified_files, added_files, renamed_files
 

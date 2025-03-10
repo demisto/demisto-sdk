@@ -24,5 +24,13 @@ timeout: '0'
 type: python
 subtype: python3
 dockerimage: demisto/python3:3.9.9.25564
+supportedModules:
+  - 'C1'
+  - 'C3'
+  - 'X0'
+  - 'X1'
+  - 'X3'
+  - 'X5'
+  - 'ENT_PLUS'
 tests:
 - No tests (auto formatted)

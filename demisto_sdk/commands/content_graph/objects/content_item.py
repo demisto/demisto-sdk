@@ -274,14 +274,6 @@ class ContentItem(BaseContent):
         if not self.path.exists():
             raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
-        logger.debug(f"preparing {self.path}")
-        logger.debug(f"prepare_for_upload {type(data)}")
-        logger.debug(f"""prepare_for_upload
-                     ################################################### TODO - Remove
-                     {type(data)}
-                     ###################################################
-                     # """)
-        logger.debug(f"prepare_for_upload {self.supportedModules=}")
         # Replace incorrect marketplace references
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
         data = append_supported_modules(data, self.supportedModules)

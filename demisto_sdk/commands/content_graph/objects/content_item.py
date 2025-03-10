@@ -276,7 +276,7 @@ class ContentItem(BaseContent):
         data = self.data
         logger.debug(f"preparing {self.path}")
         logger.debug(f"prepare_for_upload {type(data)}")
-        logger.debug(f"""prepare_for_upload 
+        logger.debug(f"""prepare_for_upload
                      ################################################### TODO - Remove
                      {type(data)}
                      ###################################################

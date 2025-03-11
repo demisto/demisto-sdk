@@ -577,12 +577,12 @@ def replace_marketplace_references(
     return data
 
 
-def append_supported_modules(data: Any, supported_modules: List[str]) -> Any:
+def append_supported_modules(data: dict, supported_modules: List[str]) -> Any:
     """
     Appends the `supportedModules` key & value to the data object if it doesn't already exist.
 
     Args:
-        data (Any): The data to process, which can be a dictionary, list, or string.
+        data (dict): The data to process.
         supported_modules (List[str]): The list of supported modules.
 
     Returns:

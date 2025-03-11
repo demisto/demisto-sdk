@@ -615,6 +615,14 @@ def test_insert_pack_version_and_script_to_yml_js_and_ps1():
             "demisto.debug('pack name = test pack, pack version = 1.0.4')",
             id="script with version",
         ),
+        pytest.param(
+            """
+            def main():
+            """,
+            ["here's a pack", "1.0.5"],
+            "demisto.debug('pack name = here\\'s a pack, pack version = 1.0.5')",
+            id="pack name with apostrophe",
+        ),
     ],
 )
 def test_insert_pack_version_and_script_to_yml_python_script(

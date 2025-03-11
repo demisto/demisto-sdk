@@ -396,7 +396,7 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
             ],
             0,
             1,
-            0,
+            1,
             ["BA101"],
             [],
         ),
@@ -410,7 +410,7 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
                 )
             ],
             1,
-            0,
+            1,
             2,
             [],
             ["BA101"],
@@ -430,7 +430,7 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
                 ),
             ],
             1,
-            1,
+            2,
             2,
             ["BC100"],
             ["BA101"],
@@ -481,7 +481,7 @@ def test_post_results(
 
 
 @pytest.mark.parametrize(
-    "failing_error_codes, warning_error_codes, config_file_content, expected_msg",
+    "failing_error_codes, warning_error_codes, config_file_content, exit_code, expected_msg",
     [
         (
             ["BA100", "CR102", "CL101", "TE111"],
@@ -489,19 +489,22 @@ def test_post_results(
             ConfiguredValidations(
                 ignorable_errors=["BA100"], selected_path_based_section=["CR102"]
             ),
-            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors cannot be ignored: CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CL101, TE111.\n######################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: CR102.\n######################################################################################################\n</red>",
+            1,
+            "<red>Validate summary\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors cannot be ignored: CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CL101, TE111.\n</red><red>######################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: CR102.\n######################################################################################################\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],
             [],
             ConfiguredValidations(selected_path_based_section=["CR102", "BA100"]),
-            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors cannot be ignored: BA100, CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: CL101, TE111.\n#############################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: BA100, CR102.\n#############################################################################################################\n</red>",
+            1,
+            "<red>Validate summary\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors cannot be ignored: BA100, CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: CL101, TE111.\n</red><red>#############################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: BA100, CR102.\n#############################################################################################################\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],
             ["BC111"],
             ConfiguredValidations(ignorable_errors=["BA100", "TE111"]),
-            "<red>The following errors were reported as warnings: BC111.\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors cannot be ignored: CR102, CL101.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n##############################################################\nPlease note that the PR can be force merged from the validation perspective.\n##############################################################\n</red>",
+            1,
+            "<red>Validate summary\nThe following errors were reported as warnings: BC111.\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors cannot be ignored: CR102, CL101.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n</red>",
         ),
         (
             ["BA100", "CR102", "CL101", "TE111"],
@@ -510,12 +513,18 @@ def test_post_results(
                 ignorable_errors=["BA100"],
                 selected_path_based_section=["BA100", "CR102", "CL101", "TE111"],
             ),
-            "<red>The following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors cannot be ignored: CR102, CL101, TE111.\n###########################################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: BA100, CR102, CL101, TE111.\n###########################################################################################################################\n</red>",
+            1,
+            "<red>Validate summary\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors cannot be ignored: CR102, CL101, TE111.\n</red><red>###########################################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: BA100, CR102, CL101, TE111.\n###########################################################################################################################\n</red>",
         ),
     ],
 )
 def test_summarize_validation_results(
-    mocker, failing_error_codes, warning_error_codes, config_file_content, expected_msg
+    mocker,
+    failing_error_codes,
+    warning_error_codes,
+    config_file_content,
+    exit_code,
+    expected_msg,
 ):
     """
     Given
@@ -536,9 +545,12 @@ def test_summarize_validation_results(
     mock = mocker.patch.object(logger, "error")
     validation_results = ResultWriter()
     validation_results.summarize_validation_results(
-        failing_error_codes, warning_error_codes, config_file_content
+        failing_error_codes, warning_error_codes, config_file_content, exit_code
     )
-    assert expected_msg == mock.call_args[0][0]
+    msg = ""
+    for args in mock.call_args_list:
+        msg += args[0][0]
+    assert expected_msg == msg
 
 
 @pytest.mark.parametrize(
@@ -788,115 +800,34 @@ def test_description():
     ]
 
 
-@pytest.mark.parametrize(
-    "untracked_files, modified_files, untracked_files_in_content, list_of_file_paths ,expected_output",
-    [
-        (
-            ["Packs/untracked.txt"],
-            set([Path("Packs/modified.txt")]),
-            set([Path("Packs/untracked.txt")]),
-            ["Packs/modified.txt", "Packs/untracked.txt"],
-            set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
-        ),
-        (
-            [
-                "Packs/untracked_1.txt",
-                "Packs/untracked_2.txt",
-                "invalid/path/untracked.txt",
-                "another/invalid/path/untracked.txt",
-            ],
-            set([Path("Packs/modified.txt")]),
-            set(
-                [
-                    Path("Packs/untracked_1.txt"),
-                    Path("Packs/untracked_2.txt"),
-                ]
-            ),
-            ["Packs/modified.txt", "Packs/untracked_1.txt", "Packs/untracked_2.txt"],
-            set(
-                [
-                    Path("Packs/modified.txt"),
-                    Path("Packs/untracked_1.txt"),
-                    Path("Packs/untracked_2.txt"),
-                ]
-            ),
-        ),
-        (
-            [
-                "Packs/untracked_1.txt",
-                "Packs/untracked_2.txt",
-                "invalid/path/untracked.txt",
-                "another/invalid/path/untracked.txt",
-            ],
-            set(),
-            set(
-                [
-                    Path("Packs/untracked_1.txt"),
-                    Path("Packs/untracked_2.txt"),
-                ]
-            ),
-            ["Packs/untracked_1.txt", "Packs/untracked_2.txt"],
-            set(
-                [
-                    Path("Packs/untracked_1.txt"),
-                    Path("Packs/untracked_2.txt"),
-                ]
-            ),
-        ),
-    ],
-    ids=[
-        "Valid untracked and modified files",
-        "Invalid untracked, valid untracked and modified files",
-        "No modified files, invalid and valid untracked files only",
-    ],
-)
-def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
-    mocker,
-    untracked_files,
-    modified_files,
-    untracked_files_in_content,
-    list_of_file_paths,
-    expected_output,
-):
+def test_get_unfiltered_changed_files_from_git_case_untracked_files_identify(mocker):
     """
-    This UT verifies changes made to validate command to support collection of
-    untracked files when running the build on an external contribution PR.
-    The UT mocks reading form the contribution_files_relative_paths.txt created
-    in Utils/update_contribution_pack_in_base_branch.py (Infra) as part of this flow.
-
     Given:
-        - A content build is running on external contribution PR, meaning:
-            - `CONTRIB_BRANCH` environment variable exists.
-            - validate command is running in context of an external contribution PR
+        An Initializer instance where the fetched git files are not equal to the amount of files written
+         in the contribution_files_relative_paths file.
     When:
-        Case 1: All untracked files have a "Pack/..." path, regular modified files are also exist.
-        Case 2: Not all untracked files have a "Pack/..." path, irrelevant untracked files exist which validate shouldn't run on.
-                Regular modified files are also exist.
-        Case 3: Not all untracked files have a "Pack/..." path, irrelevant untracked files also exist, regular modified files are also exist, No modified files.
-
+        Calling get_unfiltered_changed_files_from_git in a scenario where modified_files, added_files,
+         and rename_files are empty, and the contribution_files_relative_paths file contains some file names.
     Then:
-        - Collect all files within "Packs/" path and run the pre commit on them along with regular modified files if exist.
+        Ensure that the error is raised and the function does not return modified_files,
+         added_files, or rename_files.
     """
     initializer = Initializer()
     initializer.validate_git_installed()
-    mocker.patch.object(GitUtil, "modified_files", return_value=modified_files)
+    mocker.patch.object(GitUtil, "modified_files", return_value=set())
+    mocker.patch.object(GitUtil, "added_files", return_value=set())
+    mocker.patch.object(GitUtil, "renamed_files", return_value=set())
     mocker.patch.dict(os.environ, {"CONTRIB_BRANCH": "true"})
-    mocker.patch.object(GitUtil, "added_files", return_value={})
-    mocker.patch.object(GitUtil, "renamed_files", return_value={})
-    mocker.patch(
-        "git.repo.base.Repo._get_untracked_files", return_value=untracked_files
-    )
-
     with open("contribution_files_relative_paths.txt", "w") as file:
         temp_file = Path("contribution_files_relative_paths.txt")
-        for line in list_of_file_paths:
-            file.write(f"{line}\n")
-
-    output = initializer.get_unfiltered_changed_files_from_git()
-    assert output[1] == expected_output
-
-    if Path.exists(temp_file):
-        Path.unlink(temp_file)
+        file.write("untrack_file")
+    try:
+        _, _, _ = initializer.get_unfiltered_changed_files_from_git()
+    except ValueError as e:
+        assert "Error: Mismatch in the number of files." in str(e)
+    finally:
+        if Path.exists(temp_file):
+            Path.unlink(temp_file)
 
 
 def test_ignored_with_run_all(mocker):

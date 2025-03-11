@@ -113,7 +113,6 @@ class _Script(BaseStrictModel):
     is_mappable: Optional[bool] = Field(None, alias="ismappable")
     is_remote_sync_in: Optional[bool] = Field(None, alias="isremotesyncin")
     is_remote_sync_out: Optional[bool] = Field(None, alias="isremotesyncout")
-    supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
     commands: Optional[List[Command]] = None  # type:ignore[valid-type]
     run_once: Optional[bool] = Field(None, alias="runonce")
     sub_type: Optional[str] = Field([TYPE_PYTHON2, TYPE_PYTHON3], alias="subtype")
@@ -172,6 +171,7 @@ class _StrictIntegration(BaseStrictModel):
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
     hybrid: Optional[bool] = None
+    supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
 
     def __init__(self, **data):
         """

@@ -117,8 +117,6 @@ mapping:
         type: bool
       isremotesyncout_x2:
         type: bool
-      supportsquickactions:
-        type: bool
       commands:
         type: seq
         sequence:
@@ -181,6 +179,8 @@ mapping:
       enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
   hybrid:
     type: bool
+  supportsquickactions:
+      type: bool
 
 
 # integration->configuration

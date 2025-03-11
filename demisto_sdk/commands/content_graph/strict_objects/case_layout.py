@@ -59,7 +59,9 @@ class StrictCaseLayout(BaseStrictModel):
     to_version: Optional[str] = Field(None, alias="toVersion")
     description: Optional[str] = None
     system: Optional[bool] = None
-    marketplaces: Optional[List[Literal[MarketplaceVersions.MarketplaceV2]]] = None
+    marketplaces: Optional[
+        List[Literal[MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]]
+    ] = None
     edit: Optional[TabsAndSections] = None
     indicators_details: Optional[TabsAndSections] = Field(
         None, alias="indicatorsDetails"

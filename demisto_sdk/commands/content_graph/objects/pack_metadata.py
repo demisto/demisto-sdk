@@ -71,7 +71,6 @@ class PackMetadata(BaseModel):
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
     disable_monthly: Optional[bool] = Field(None, alias="disableMonthly")
     content_commit_hash: Optional[str] = Field(None, alias="contentCommitHash")
-    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
     def _enhance_pack_properties(
         self,

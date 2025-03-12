@@ -17,9 +17,12 @@ class XDRCTemplateParser(JSONContentItemParser, content_type=ContentType.XDRC_TE
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
+        )
         self.content_global_id = self.json_data.get("content_global_id")
         self.os_type = self.json_data.get("os_type")
         self.profile_type = self.json_data.get("profile_type")

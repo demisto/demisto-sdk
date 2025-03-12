@@ -33,9 +33,12 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
+        )
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
         self.is_beta = self.yml_data.get("beta", False)
@@ -50,9 +53,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch_samples = self.script_info.get("isFetchSamples", False)
         self.is_feed = self.script_info.get("feed", False)
         self.long_running = self.script_info.get("longRunning", False)
-        self.supports_quick_actions = self.script_info.get(
-            "supportsquickactions", False
-        )
+        self.supports_quick_actions = self.yml_data.get("supportsquickactions", False)
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()

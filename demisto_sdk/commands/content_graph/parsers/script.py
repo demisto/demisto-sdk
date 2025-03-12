@@ -12,11 +12,13 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(
             path=path,
             pack_marketplaces=pack_marketplaces,
+            pack_supported_modules=pack_supported_modules,
             is_test_script=False,
             git_sha=git_sha,
         )

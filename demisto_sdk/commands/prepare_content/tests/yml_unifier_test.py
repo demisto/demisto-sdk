@@ -165,7 +165,7 @@ def test_get_script_or_integration_package_data():
         yml_path,
         code_data,
     ) = IntegrationScriptUnifier.get_script_or_integration_package_data(
-        Path(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance")
+        Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/CalculateGeoDistance")
     )
     assert (
         yml_path
@@ -860,7 +860,7 @@ def test_insert_module_code__verify_offsets(mocker):
         (
             f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/",
             "Integrations",
-            f"{git_path()}/demisto_sdk/tests/test_files/" f"VulnDB/VulnDB",
+            f"{git_path()}/demisto_sdk/tests/test_files/" f"Packs/VulnDB/VulnDB",
         ),
         (
             f"{git_path()}/demisto_sdk/tests/test_files/Packs/CalculateGeoDistance/",

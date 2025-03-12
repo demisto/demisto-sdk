@@ -684,7 +684,9 @@ def add_related_files(file: Path) -> Set[Path]:
             else PS1_TEST_FILE_SUFFIX
         )
 
-        test_files = [
+test_files = []
+if file.parent.exists():
+    test_files = [_file for _file in file.parent.iterdir() if _file.name.endswith(test_file_suffix)]
             _file
             for _file in file.parent.iterdir()
             if file.parent.exists and _file.name.endswith(test_file_suffix)

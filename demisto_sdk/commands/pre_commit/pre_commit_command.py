@@ -677,16 +677,19 @@ def add_related_files(file: Path) -> Set[Path]:
 
     # Identifying test files by their suffix.
     if {".py", ".ps1"}.intersection({file.suffix for file in files_to_run}):
-        test_files = []
+        test_files: list[Path] = []
         test_file_suffix = (
             PY_TEST_FILE_SUFFIX
             if ".py" in (file.suffix for file in files_to_run)
             else PS1_TEST_FILE_SUFFIX
         )
 
-        test_files = []
         if file.parent.exists():
-            test_files = [_file for _file in file.parent.iterdir() if _file.name.endswith(test_file_suffix)]
+            test_files = [
+                _file
+                for _file in file.parent.iterdir()
+                if _file.name.endswith(test_file_suffix)
+            ]
             files_to_run.update(test_files)
     return files_to_run
 

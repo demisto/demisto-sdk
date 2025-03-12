@@ -121,10 +121,10 @@ def test_clean_python_code():
 
 def test_get_code_file():
     # Test integration case
-    package_path = f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/"
+    package_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/"
     assert (
         IntegrationScriptUnifier.get_code_file(package_path, ".py")
-        == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.py"
+        == f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/VulnDB.py"
     )
     with pytest.raises(Exception):
         IntegrationScriptUnifier.get_code_file(
@@ -133,9 +133,9 @@ def test_get_code_file():
     # Test script case
     assert (
         IntegrationScriptUnifier.get_code_file(
-            f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/", ".py"
+            f"{git_path()}/demisto_sdk/tests/test_files/Packs/CalculateGeoDistance/", ".py"
         )
-        == f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance.py"
+        == f"{git_path()}/demisto_sdk/tests/test_files/Packs/CalculateGeoDistance/CalculateGeoDistance.py"
     )
 
 
@@ -158,7 +158,7 @@ def test_get_script_or_integration_package_data():
             f"{git_path()}/demisto_sdk/tests/test_files/Unifier/SampleNoPyFile"
         )
     with open(
-        f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance.py"
+        f"{git_path()}/demisto_sdk/tests/test_files/Packs/CalculateGeoDistance/CalculateGeoDistance.py"
     ) as code_file:
         code = code_file.read()
     (
@@ -169,15 +169,15 @@ def test_get_script_or_integration_package_data():
     )
     assert (
         yml_path
-        == f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance.yml"
+        == f"{git_path()}/demisto_sdk/tests/test_files/Packs/CalculateGeoDistance/CalculateGeoDistance.yml"
     )
     assert code_data == code
 
 
 def test_get_data():
-    package_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
+    package_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/")
     with open(
-        f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png", "rb"
+        f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/VulnDB_image.png", "rb"
     ) as image_file:
         image = image_file.read()
     data, found_data_path = IntegrationScriptUnifier.get_data(
@@ -186,7 +186,7 @@ def test_get_data():
     assert data == image
     assert (
         found_data_path
-        == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png"
+        == f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/VulnDB_image.png"
     )
     data, found_data_path = IntegrationScriptUnifier.get_data(
         package_path, "*png", True
@@ -196,9 +196,9 @@ def test_get_data():
 
 
 def test_insert_description_to_yml():
-    package_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
+    package_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/")
     with open(
-        f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md", "rb"
+        f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/VulnDB_description.md", "rb"
     ) as desc_file:
         desc_data = desc_file.read().decode("utf-8")
     integration_doc_link = (
@@ -211,7 +211,7 @@ def test_insert_description_to_yml():
 
     assert (
         found_data_path
-        == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md"
+        == f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/VulnDB_description.md"
     )
     assert (desc_data + integration_doc_link) == yml_unified["detaileddescription"]
 
@@ -422,15 +422,15 @@ def test_insert_description_to_yml_doc_link_exist(tmp_path, mocker):
 
 
 def test_insert_image_to_yml():
-    package_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
+    package_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/")
     image_prefix = "data:image/png;base64,"
     with open(
-        f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png", "rb"
+        f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/VulnDB_image.png", "rb"
     ) as image_file:
         image_data = image_file.read()
         image_data = image_prefix + base64.b64encode(image_data).decode("utf-8")
     with open(
-        f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", encoding="utf-8"
+        f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/VulnDB.yml", encoding="utf-8"
     ) as yml_file:
         yml_unified_test = yaml.load(yml_file)
     yml_unified, found_img_path = IntegrationScriptUnifier.insert_image_to_yml(
@@ -439,7 +439,7 @@ def test_insert_image_to_yml():
     yml_unified_test["image"] = image_data
     assert (
         found_img_path
-        == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png"
+        == f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/VulnDB_image.png"
     )
     assert yml_unified == yml_unified_test
 
@@ -639,6 +639,169 @@ def get_generated_module_code(import_name, api_module_name):
     return (
         f"\n### GENERATED CODE ###"
         f": {import_name}\n"
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
         f"# This code was inserted in place of an API module.\n"
         f"register_module_line('{api_module_name}', 'start', __line__(), wrapper=-3)\n"
         f"{get_dummy_module(api_module_name)}\n"
@@ -695,14 +858,14 @@ def test_insert_module_code__verify_offsets(mocker):
     "package_path, dir_name, file_path",
     [
         (
-            f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/",
+            f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/",
             "Integrations",
             f"{git_path()}/demisto_sdk/tests/test_files/" f"VulnDB/VulnDB",
         ),
         (
-            f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/",
+            f"{git_path()}/demisto_sdk/tests/test_files/Packs/CalculateGeoDistance/",
             "Scripts",
-            f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance",
+            f"{git_path()}/demisto_sdk/tests/test_files/Packs/CalculateGeoDistance/CalculateGeoDistance",
         ),
     ],
 )
@@ -734,19 +897,19 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
     "package_path, dir_name, file_path",
     [
         (
-            f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/",
+            f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/",
             "Integrations",
-            f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB",
+            f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/VulnDB",
         ),
         (
-            f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/",
+            f"{git_path()}/demisto_sdk/tests/test_files/Packs/CalculateGeoDistance/",
             "Scripts",
-            f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance",
+            f"{git_path()}/demisto_sdk/tests/test_files/Packs/CalculateGeoDistance/CalculateGeoDistance",
         ),
         (
-            f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/",
+            f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/",
             "fake_directory",
-            f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB",
+            f"{git_path()}/demisto_sdk/tests/test_files/Packs/VulnDB/VulnDB",
         ),
     ],
 )

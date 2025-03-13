@@ -1908,6 +1908,7 @@ class Integration:
                 param_conf["value"] = param_conf["defaultValue"]
             module_instance["data"].append(param_conf)
         try:
+            logging.warning(f"Sending {module_instance=}")
             response, status_code, headers = demisto_client.generic_request_func(
                 self=client,
                 method="PUT",

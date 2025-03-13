@@ -22,8 +22,8 @@ def pre_commit(
     staged_only: bool = typer.Option(
         False, "--staged-only", help="Whether to run only on staged files."
     ),
-    commited_only: bool = typer.Option(
-        False, "--commited-only", help="Whether to run on committed files only."
+    committed_only: bool = typer.Option(
+        False, "--committed-only", help="Whether to run on committed files only."
     ),
     git_diff: bool = typer.Option(
         False,
@@ -134,7 +134,7 @@ def pre_commit(
     return_code = pre_commit_manager(
         input_files,
         staged_only,
-        commited_only,
+        committed_only,
         git_diff,
         prev_version,
         all_files,

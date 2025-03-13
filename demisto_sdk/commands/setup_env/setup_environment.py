@@ -794,7 +794,7 @@ def configure_integration(
 
 def clean_repo():
     """
-    Clean the repository from temporary files like 'CommonServerPython' and API modules created by the 'lint' command.
+    Clean the repository from temporary files like 'CommonServerPython' and API modules created by the 'pre-commit' command.
     """
     for path in PYTHONPATH:
         for temp_file in CONTENT_PATH.rglob(f"{path.name}.py"):

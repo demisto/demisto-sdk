@@ -374,11 +374,12 @@ class IntegrationScriptUnifier(Unifier):
         )
         pack_metadata = get_pack_metadata(file_path=str(package_path))
         pack_version = pack_metadata.get("currentVersion", "")
-        pack_name = pack_metadata.get("name", "")
-        if pack_name and pack_version:
-            script_code = IntegrationScriptUnifier.insert_pack_version(
-                script_type, script_code, pack_version, pack_name
-            )
+        if "Packs" in package_path.parts:
+            pack_id = package_path.parts[package_path.parts.index("Packs") + 1]
+            if pack_version:
+                script_code = IntegrationScriptUnifier.insert_pack_version(
+                    script_type, script_code, pack_version, pack_id
+                )
 
         if script_type == ".py":
             clean_code = IntegrationScriptUnifier.clean_python_code(script_code)
@@ -521,7 +522,7 @@ class IntegrationScriptUnifier(Unifier):
 
     @staticmethod
     def insert_pack_version(
-        script_type: str, script_code: str, pack_version: str, pack_name: str
+        script_type: str, script_code: str, pack_version: str, pack_id: str
     ) -> str:
         """
         Inserts the pack version to the script so it will be easy to know what was the contribution original pack version.
@@ -530,7 +531,7 @@ class IntegrationScriptUnifier(Unifier):
             script_type (str): The type of the script (e.g., ".js", ".ps1", ".py").
             script_code (str): The integration code.
             pack_version (str): The pack version.
-            pack_name (str): The pack name.
+            pack_id (str): The pack id.
 
         Returns:
             str: The integration script with the pack version appended if needed, otherwise returns the original script.
@@ -551,17 +552,20 @@ class IntegrationScriptUnifier(Unifier):
             existing_pack_info_debug_log_re = (
                 r"demisto\.debug\('pack name = .*?, pack version = .*?'\)"
             )
-            pack_name_escaped = pack_name.replace("'", "\\'")
-            pack_info_debug_statement = f"demisto.debug('pack name = {pack_name_escaped}, pack version = {pack_version}')"
+            global_name = f"{pack_id.upper()}_PACK_VERSION"
+            pack_version_statement = (
+                f"{global_name} = '{pack_version}'"
+                f"\ndemisto.debug(f'pack id = {pack_id}, pack version = {{{global_name}}}')"
+            )
 
             if re.search(existing_pack_info_debug_log_re, script_code):
                 script_code = re.sub(
                     existing_pack_info_debug_log_re,
-                    pack_info_debug_statement,
+                    pack_version_statement,
                     script_code,
                 )  # replace existing (edge case)
             else:  # common case
-                script_code = f"{pack_info_debug_statement}\n{script_code}"
+                script_code = f"{pack_version_statement}\n{script_code}"
             return script_code
         return script_code
 

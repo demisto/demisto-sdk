@@ -685,7 +685,11 @@ def add_related_files(file: Path) -> Set[Path]:
     )
     test_files = []
     if file.parent.exists():
-        test_files = [_file for _file in file.parent.iterdir() if _file.name.endswith(test_file_suffix)]
+        test_files = [
+            _file
+            for _file in file.parent.iterdir()
+            if _file.name.endswith(test_file_suffix)
+        ]
         files_to_run.update(test_files)
 
     return files_to_run

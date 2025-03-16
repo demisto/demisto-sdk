@@ -378,24 +378,6 @@ jobs:
           artifacts-path-dir: content/test-graph-commands
           artifact-name: test-graph-commands-artifacts
 
-  validate-files-old-validate:
-    runs-on: ubuntu-latest
-    name: Test Old Validate Command
-    timeout-minutes: 60
-    env:
-      CI_COMMIT_BRANCH: "master"
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Run Validate
-        uses: ./.github/actions/validate
-        with:
-          artifacts-path-dir: test-old-validate-command
-          artifact-name: test-old-validate-command-artifacts
-          validate-arguments: "-a --graph --skip-pack-dependencies --skip-new-validate --run-old-validate --prev-ver origin/master"
-
   validate-files-new-validate:
     runs-on: ubuntu-latest
     name: Test New Validate Command
@@ -423,7 +405,6 @@ jobs:
         graph-tests,
         test-pre-commit-command,
         test-graph-commands,
-        validate-files-old-validate,
         validate-files-new-validate,
       ]
     if: failure() && github.ref_name == 'master'

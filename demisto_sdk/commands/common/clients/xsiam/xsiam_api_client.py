@@ -53,11 +53,11 @@ class XsiamClient(XsoarSaasClient):
     """
 
     def delete_incidents(
-            self,
-            incident_ids: Union[str, List[str]],
-            filters: Dict[str, Any] = None,
-            _all: bool = False,
-            response_type: str = "object",
+        self,
+        incident_ids: Union[str, List[str]],
+        filters: Dict[str, Any] = None,
+        _all: bool = False,
+        response_type: str = "object",
     ):
         # if in the future it will be possible to delete incidents in XSIAM, implement this method
         raise NotImplementedError("it is not possible to delete incidents in XSIAM")
@@ -69,11 +69,11 @@ class XsiamClient(XsoarSaasClient):
     """
 
     def push_to_dataset(
-            self,
-            data: List[Dict[str, Any]],
-            vendor: str,
-            product: str,
-            data_format: str = "json",
+        self,
+        data: List[Dict[str, Any]],
+        vendor: str,
+        product: str,
+        data_format: str = "json",
     ):
         if self.server_config.token:
             endpoint = urljoin(self.server_config.base_api_url, "logs/v1/xsiam")
@@ -171,8 +171,8 @@ class XsiamClient(XsoarSaasClient):
         logger.debug(pformat(data))
 
         if (
-                response.status_code in range(200, 300)
-                and data.get("reply", {}).get("status", "") == "SUCCESS"
+            response.status_code in range(200, 300)
+            and data.get("reply", {}).get("status", "") == "SUCCESS"
         ):
             return data.get("reply", {}).get("results", {}).get("data", [])
         response.raise_for_status()
@@ -189,8 +189,8 @@ class XsiamClient(XsoarSaasClient):
             "/ioc-rules", "GET", response_type="object"
         )
         if (
-                "text/html" in response_headers.get("Content-Type")
-                or status_code != requests.codes.ok
+            "text/html" in response_headers.get("Content-Type")
+            or status_code != requests.codes.ok
         ):
             raise ApiException(
                 status=404, reason=f'{self} does not have "/ioc-rules" endpoint'
@@ -242,11 +242,11 @@ class XsiamClient(XsoarSaasClient):
         return alert_data
 
     def search_alerts(
-            self,
-            filters: list = None,
-            search_from: int = None,
-            search_to: int = None,
-            sort: dict = None,
+        self,
+        filters: list = None,
+        search_from: int = None,
+        search_to: int = None,
+        sort: dict = None,
     ) -> dict:
         """
         filters should be a list of dicts contains field, operator, value.
@@ -268,7 +268,9 @@ class XsiamClient(XsoarSaasClient):
         res = self._xdr_client.post(endpoint, json=body)
         return self._process_response(res, res.status_code, 200)["reply"]
 
-    def search_alerts_by_uuid(self, alert_uuids: list = None, filters: list = None, page_size: int = 100):
+    def search_alerts_by_uuid(
+        self, alert_uuids: list = None, filters: list = None, page_size: int = 100
+    ):
         """
         searches alerts using uuids which are concatenated to the end of the alert description.
         alert_uuids - list from the user of uuids appear in alerts description to search for.
@@ -296,7 +298,9 @@ class XsiamClient(XsoarSaasClient):
 
         while len(alert_ids) < len(alert_uuids) and count < total_count:
             search_to = min(count + page_size, total_count)
-            res = self.search_alerts(filters=filters, search_from=count, search_to=search_to)
+            res = self.search_alerts(
+                filters=filters, search_from=count, search_to=search_to
+            )
             alerts: list = res.get("alerts")  # type: ignore
             count += res.get("result_count")  # type: ignore
             alert_ids.extend(append_alerts(alert_uuids, alerts))

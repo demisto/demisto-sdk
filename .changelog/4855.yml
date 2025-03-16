@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where pre-commit failed on deleted content folders.
-  type: fix
-pr_number: 4855

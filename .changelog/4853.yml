@@ -1,4 +1,0 @@
-changes:
-- description: Fix the graph schemas to support supportsquickactions in the correct place.
-  type: internal
-pr_number: 4853

@@ -20,9 +20,12 @@ class CorrelationRuleParser(
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
+        )
 
     @cached_property
     def field_mapping(self):
@@ -49,7 +52,10 @@ class CorrelationRuleParser(
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.MarketplaceV2}
+        return {
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        }
 
     @property
     def strict_object(self):

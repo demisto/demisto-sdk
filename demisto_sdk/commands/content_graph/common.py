@@ -346,6 +346,7 @@ class Relationship(BaseModel):
     description: Optional[str] = None
     deprecated: Optional[bool] = None
     name: Optional[str] = None
+    quickaction: Optional[bool] = None
 
 
 class Relationships(dict):
@@ -545,6 +546,7 @@ def replace_marketplace_references(
         if marketplace in {
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XPANSE,
+            MarketplaceVersions.PLATFORM,
         }:
             if isinstance(data, dict):
                 keys_to_update = {}
@@ -572,4 +574,22 @@ def replace_marketplace_references(
         logger.error(
             f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"
         )
+    return data
+
+
+def append_supported_modules(data: dict, supported_modules: List[str]) -> Any:
+    """
+    Appends the `supportedModules` key & value to the data object if it doesn't already exist.
+
+    Args:
+        data (dict): The data to process.
+        supported_modules (List[str]): The list of supported modules.
+
+    Returns:
+        Any: The same data object with supported modules appended.
+    """
+
+    if isinstance(data, dict):
+        if "supportedModules" not in data:
+            data["supportedModules"] = supported_modules
     return data

@@ -42,6 +42,7 @@ def test_unify_xdrc_template():
         "os_type": "AGENT_OS_LINUX",
         "profile_type": "STANDARD",
         "yaml_template": "dGVzdDogZHVtbXlfdGVzdA==",
+        "supportedModules": ["C1", "C3", "X0", "X1", "X3", "X5", "ENT_PLUS"],
     }
     assert get_file(expected_json_path) == expected_json_file
 

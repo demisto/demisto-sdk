@@ -84,6 +84,8 @@ class _Command(BaseStrictModel):
     timeout: Optional[int] = None
     hidden: Optional[bool] = None
     polling: Optional[bool] = None
+    prettyname: Optional[str] = None
+    quickaction: Optional[bool] = None
 
 
 Command = create_model(
@@ -169,6 +171,7 @@ class _StrictIntegration(BaseStrictModel):
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
     hybrid: Optional[bool] = None
+    supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
 
     def __init__(self, **data):
         """

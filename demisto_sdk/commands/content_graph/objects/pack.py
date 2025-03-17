@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    DEFAULT_SUPPORTED_MODULES,
     MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
     ImagesFolderNames,
@@ -124,6 +125,7 @@ def upload_zip(
 
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     path: Path
+    supportedModules: List[str] = DEFAULT_SUPPORTED_MODULES
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
@@ -322,6 +324,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             path, marketplace, self.object_id, file_type=ImagesFolderNames.README_IMAGES
         )
 
+    def dump_release_notes(self, path: Path, marketplace: MarketplaceVersions) -> None:
+        # TODO - Update this to dump the release notes for the platform marketplace
+        # starting from platform supported version only.
+        try:
+            shutil.copytree(self.path / "ReleaseNotes", path)
+        except FileNotFoundError:
+            logger.debug(f'No such file {self.path / "ReleaseNotes"}')
+
     def dump(self, path: Path, marketplace: MarketplaceVersions, tpb: bool = False):
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
@@ -333,6 +343,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             content_types_excluded_from_upload = (
                 CONTENT_TYPES_EXCLUDED_FROM_UPLOAD.copy()
             )
+
             if tpb:
                 content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
 
@@ -379,10 +390,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             except FileNotFoundError:
                 logger.debug(f"No such file {self.path / VERSION_CONFIG_FILENAME}")
 
-            try:
-                shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
-            except FileNotFoundError:
-                logger.debug(f'No such file {self.path / "ReleaseNotes"}')
+            self.dump_release_notes(path / "ReleaseNotes", marketplace)
 
             try:
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")

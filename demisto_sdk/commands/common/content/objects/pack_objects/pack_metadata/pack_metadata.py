@@ -6,6 +6,7 @@ from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
+    DEFAULT_SUPPORTED_MODULES,
     PACKS_PACK_META_FILE_NAME,
     PARTNER_SUPPORT,
     XSOAR_AUTHOR,
@@ -59,6 +60,7 @@ class PackMetaData(JSONObject):
         self._useCases: List[str] = []
         self._keywords: List[str] = []
         self._dependencies: Dict[str, Dict] = {}
+        self._supported_modules: List[str] = DEFAULT_SUPPORTED_MODULES
 
     @property
     def name(self) -> str:
@@ -493,6 +495,13 @@ class PackMetaData(JSONObject):
         """Setter for the dependencies attribute"""
         self._dependencies = new_pack_dependencies
 
+    @property
+    def supported_modules(self):
+        """
+        List of supported platform products & add-ons.
+        """
+        return self._supported_modules
+
     def dump_metadata_file(self, dest_dir: Union[Path, str] = "") -> List[Path]:
         file_content = {
             "name": self.name,
@@ -577,7 +586,9 @@ class PackMetaData(JSONObject):
             self.categories = user_metadata.get("categories", [])
             self.use_cases = user_metadata.get("useCases", [])
             self.dependencies = user_metadata.get("dependencies", {})
-
+            self.supportedModules = user_metadata.get(
+                "supportedModules", DEFAULT_SUPPORTED_MODULES
+            )
             if self.price > 0:
                 self.premium = True
                 self.vendor_id = user_metadata.get("vendorId", "")

@@ -49,6 +49,7 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 )
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
+DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT") or 300)
 
 
 class DockerException(Exception):
@@ -100,7 +101,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
                 logger.debug(
                     "Gitlab CI use case detected, trying to create docker client from Gitlab CI job environment."
                 )
-                DOCKER_CLIENT = docker.from_env()
+                DOCKER_CLIENT = docker.from_env(timeout=timeout)
                 if DOCKER_CLIENT.ping():
                     # see https://docker-py.readthedocs.io/en/stable/client.html#docker.client.DockerClient.ping for more information about ping().
                     logger.debug(
@@ -127,13 +128,16 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         docker_pass = os.getenv(
             "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
         )
-        logger.debug(f"init_global_docker_client | {docker_user=}, {docker_pass=}")
         if docker_user and docker_pass:
             logger.debug(f"{log_prompt} - logging in to docker registry")
             try:
                 docker_login(DOCKER_CLIENT)
             except Exception:
                 logger.exception(f"{log_prompt} - failed to login to docker registry")
+        else:
+            logger.debug(
+                "One of docker_user or docker_pass is missing, skipping docker login"
+            )
     else:
         msg = "docker client already available, using current DOCKER_CLIENT"
         logger.debug(f"{log_prompt} - {msg}" if log_prompt else msg)
@@ -141,6 +145,12 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
 
 
 def is_custom_registry():
+    global DOCKER_REGISTRY_URL
+    DOCKER_REGISTRY_URL = os.getenv(  # get the value from .env in runtime
+        "DEMISTO_SDK_CONTAINER_REGISTRY",
+        os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
+    )
+
     return (
         not IS_CONTENT_GITLAB_CI and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
     )
@@ -232,6 +242,12 @@ class DockerBase:
     """
 
     def __init__(self):
+        global DOCKER_REGISTRY_URL
+        DOCKER_REGISTRY_URL = os.getenv(  # get the value from .env in runtime
+            "DEMISTO_SDK_CONTAINER_REGISTRY",
+            os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
+        )
+
         self.tmp_dir_name = tempfile.TemporaryDirectory(
             prefix=os.path.join(os.getcwd(), "tmp")
         )
@@ -355,7 +371,7 @@ class DockerBase:
         """
         Creates a container and pushing requested files to the container.
         """
-        docker_client = init_global_docker_client()
+        docker_client = init_global_docker_client(timeout=DOCKER_CONTAINER_TIMEOUT)
 
         try:
             container: docker.models.containers.Container = (
@@ -396,12 +412,24 @@ class DockerBase:
                 docker_push_output = init_global_docker_client().images.push(
                     test_image_name_to_push
                 )
-                logger.success(
-                    f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
-                )
                 logger.debug(
                     f"{log_prompt} - Push details for image {test_image_name_to_push}: {docker_push_output}"
                 )
+                outputs_lines = docker_push_output.strip().split("\r\n")
+                error_line = next(
+                    filter(lambda line: "errorDetail" in line, outputs_lines), None
+                )
+                if error_line:
+                    logger.error(
+                        f"{log_prompt} - Error pushing image {test_image_name_to_push}: {error_line}"
+                    )
+                    raise Exception(
+                        f"Failed to push image {test_image_name_to_push} to repository."
+                    )
+                else:
+                    logger.success(
+                        f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
+                    )
                 break
             except (
                 requests.exceptions.ConnectionError,
@@ -459,15 +487,12 @@ class DockerBase:
         repository, tag = image.rsplit(
             ":", 1
         )  # rsplit is used to support non-default docker ports which require extra colon. i.e: `image.registry:5000/repo/some-image:main`
+        if IS_CONTENT_GITLAB_CI:
+            repository = repository.replace(f"{DOCKER_REGISTRY_URL}/", "")
+
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )
-        if IS_CONTENT_GITLAB_CI:
-            container.commit(
-                repository=repository.replace(f"{DOCKER_REGISTRY_URL}/", ""),
-                tag=tag,
-                changes=self.changes[container_type],
-            )
         if push and IS_CONTENT_GITLAB_CI:
             self.push_image(image, log_prompt=log_prompt)
         return image
@@ -521,9 +546,9 @@ class DockerBase:
             )
 
         if additional_requirements:
-            pip_requirements.extend(additional_requirements)
+            pip_requirements = pip_requirements + additional_requirements
         identifier = hashlib.md5(
-            "\n".join(sorted(pip_requirements)).encode("utf-8")
+            "\n".join(sorted(set(pip_requirements))).encode("utf-8")
         ).hexdigest()
 
         test_docker_image = (
@@ -556,7 +581,7 @@ class DockerBase:
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
-                logger.critical(  # noqa: PLE1205
+                logger.exception(  # noqa: PLE1205
                     "{}", f"<red>{log_prompt} - Build errors occurred: {errors}</red>"
                 )
         return test_docker_image, errors

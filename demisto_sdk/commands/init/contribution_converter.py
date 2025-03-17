@@ -381,6 +381,7 @@ class ContributionConverter:
     def generate_readmes_for_new_content_pack(self, is_contribution=False) -> List[str]:
         """
         Generate the readme files for a new content pack.
+        Update the pack README file if such information was given (self.pack_readme != None).
 
         Returns:
         - `List[str]` with the paths to all the generated `README`s.
@@ -413,6 +414,11 @@ class ContributionConverter:
                     if file_name.startswith("playbook") and file_name.endswith(".yml"):
                         readme = self.generate_readme_for_pack_content_item(file)
                         readmes_generated.append(readme)
+
+        if self.pack_readme:
+            Path(self.working_dir_path, PACKS_README_FILE_NAME).write_text(
+                self.pack_readme
+            )
 
         return readmes_generated
 
@@ -748,10 +754,6 @@ class ContributionConverter:
         """
         logger.info("Creating pack base files")
         Path(self.working_dir_path, PACKS_README_FILE_NAME).touch()
-        if self.pack_readme:
-            Path(self.working_dir_path, PACKS_README_FILE_NAME).write_text(
-                self.pack_readme
-            )
 
         Path(self.working_dir_path, ".secrets-ignore").touch()
 

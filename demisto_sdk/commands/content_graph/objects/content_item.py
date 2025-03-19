@@ -276,7 +276,11 @@ class ContentItem(BaseContent):
         data = self.data
         # Replace incorrect marketplace references
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
-        data = append_supported_modules(data, self.supportedModules)
+        if current_marketplace == MarketplaceVersions.PLATFORM:
+            data = append_supported_modules(data, self.supportedModules)
+        else:
+            if "supportedModules" in data:
+                del data["supportedModules"]
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(
@@ -361,6 +365,7 @@ class ContentItem(BaseContent):
                 data=self.prepare_for_upload(current_marketplace=marketplace),
                 handler=self.handler,
             )
+            logger.info(f"path to dumped file: {str(dir / self.normalize_name)}")
         except FileNotFoundError as e:
             logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
 

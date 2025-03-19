@@ -1,0 +1,4 @@
+changes:
+- description: Fixed the the support for new `supportedModules` field.
+  type: fix
+pr_number: 4871

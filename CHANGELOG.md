@@ -1,4 +1,9 @@
 # Changelog
+## 1.36.3 (2025-03-19)
+### Fix
+* Fixed the the support for new `supportedModules` field. [#4871](https://github.com/demisto/demisto-sdk/pull/4871)
+
+
 ## 1.36.2 (2025-03-16)
 ### Feature
 * Added support for playbook tags in metadata dump, and support for *supportedModules* field. [#4832](https://github.com/demisto/demisto-sdk/pull/4832)

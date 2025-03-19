@@ -105,7 +105,7 @@ class TextFiles(RelatedFile):
     def file_content(self) -> str:
         if not self.file_content_str:
             try:
-                if self.git_sha:
+                if self.git_sha and not self.prev_ver:
                     self.file_content_str = TextFile.read_from_git_path(
                         path=self.file_path,
                         tag=self.git_sha,

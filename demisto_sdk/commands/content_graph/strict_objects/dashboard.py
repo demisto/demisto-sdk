@@ -96,6 +96,7 @@ class _StrictDashboard(BaseStrictModel):
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
+
 StrictDashboard = create_model(
     model_name="StrictDashboard",
     base_models=(

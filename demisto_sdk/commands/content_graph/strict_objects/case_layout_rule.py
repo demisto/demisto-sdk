@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -16,4 +16,3 @@ class StrictCaseLayoutRule(BaseStrictModel):
     description: Optional[str] = None
     incidents_filter: Optional[AlertsFilter] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-

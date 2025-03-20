@@ -4,7 +4,6 @@ from pydantic import Field
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
-    PlatformSupportedModules,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
@@ -112,9 +111,7 @@ class _StrictLayout(BaseStrictModel):
     details: Optional[Mapping] = None
     details_v2: Optional[Mapping] = Field(None, alias="detailsV2")
     mobile: Optional[Mapping] = None
-    supportedModules: Optional[List[PlatformSupportedModules]] = Field(
-        None, alias="supportedModules"
-    )
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictLayout = create_model(

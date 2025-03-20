@@ -4,7 +4,6 @@ from pydantic import Field
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
-    PlatformSupportedModules,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
 
@@ -65,9 +64,7 @@ class StrictCaseLayout(BaseStrictModel):
     marketplaces: Optional[
         List[Literal[MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]]
     ] = None
-    supportedModules: Optional[List[PlatformSupportedModules]] = Field(
-        None, alias="supportedModules"
-    )
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
     edit: Optional[TabsAndSections] = None
     indicators_details: Optional[TabsAndSections] = Field(
         None, alias="indicatorsDetails"

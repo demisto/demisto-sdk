@@ -4,7 +4,6 @@ from pydantic import Field
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
-    PlatformSupportedModules,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
@@ -40,9 +39,7 @@ class _StrictList(BaseStrictModel):
     type_: str = Field(alias="type")
     version: int
     marketplaces: Optional[List[MarketplaceVersions]] = None
-    supportedModules: Optional[List[PlatformSupportedModules]] = Field(
-        None, alias="supportedModules"
-    )
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictList = create_model(

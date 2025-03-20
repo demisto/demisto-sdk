@@ -10,7 +10,6 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     Auto,
     MarketplaceVersions,
-    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.common import (
@@ -144,9 +143,7 @@ class _BaseIntegrationScript(BaseStrictModel):
         None, alias="autoUpdateDockerImage"
     )
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
-    supportedModules: Optional[List[PlatformSupportedModules]] = Field(
-        None, alias="supportedModules"
-    )
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 BaseIntegrationScript = create_model(

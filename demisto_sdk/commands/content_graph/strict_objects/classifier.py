@@ -4,7 +4,6 @@ from pydantic import Field
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
-    PlatformSupportedModules,
 )
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseOptionalVersionJson,
@@ -38,9 +37,7 @@ class _StrictClassifier(BaseStrictModel):
     marketplaces: Optional[List[MarketplaceVersions]] = Field(
         None, alias="marketplaces"
     )
-    supportedModules: Optional[List[PlatformSupportedModules]] = Field(
-        None, alias="supportedModules"
-    )
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
     id_: str = Field(..., alias="id")
     version: int
 

@@ -15,3 +15,5 @@ class StrictCaseLayoutRule(BaseStrictModel):
     from_version: str = Field(alias="fromVersion")
     description: Optional[str] = None
     incidents_filter: Optional[AlertsFilter] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+

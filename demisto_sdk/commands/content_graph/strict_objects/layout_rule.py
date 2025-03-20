@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import Field
 
@@ -21,6 +21,7 @@ class _StrictLayoutRule(BaseStrictModel):
     )  # not using the base because it's required
     description: Optional[str] = None
     alerts_filter: Optional[AlertsFilter] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictLayoutRule = create_model(

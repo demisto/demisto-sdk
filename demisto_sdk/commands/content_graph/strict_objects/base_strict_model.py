@@ -143,8 +143,8 @@ class _BaseIntegrationScript(BaseStrictModel):
         None, alias="autoUpdateDockerImage"
     )
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
-
-
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    
 BaseIntegrationScript = create_model(
     model_name="BaseIntegrationScript",
     base_models=(

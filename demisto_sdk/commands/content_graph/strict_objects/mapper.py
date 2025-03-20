@@ -26,6 +26,7 @@ class _StrictMapper(BaseStrictModel):
     feed: Optional[bool] = None
     definition_id: Optional[str] = Field(None, alias="definitionId")
     marketplaces: Optional[List[MarketplaceVersions]] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictMapper = create_model(

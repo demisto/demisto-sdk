@@ -94,7 +94,7 @@ class _StrictDashboard(BaseStrictModel):
     period: Optional[Dict[str, Any]] = Field(default_factory=dict)
     layout: Optional[List[DashboardLayout]] = Field(default_factory=list)  # type:ignore[valid-type]
     marketplaces: Optional[List[MarketplaceVersions]] = None
-
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 StrictDashboard = create_model(
     model_name="StrictDashboard",

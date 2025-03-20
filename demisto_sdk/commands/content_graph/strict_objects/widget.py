@@ -38,6 +38,7 @@ class _StrictWidget(BaseStrictModel):
             MarketplaceVersions.XSOAR_ON_PREM,
         ],
     )
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictWidget = create_model(

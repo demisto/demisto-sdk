@@ -46,6 +46,7 @@ class _StrictIndicatorType(BaseStrictModel):
     layout: Optional[str] = None
     legacy_names: Optional[List[str]] = Field(None, alias="legacyNames")
     marketplaces: Optional[List[MarketplaceVersions]] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictIndicatorType = create_model(

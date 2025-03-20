@@ -1,4 +1,4 @@
 changes:
-- description: enter description about this PR
-  type: <breaking|feature|fix|internal>
+- description: Fixed support for the newly introduced supportedModule field.
+  type: fix
 pr_number: 4874

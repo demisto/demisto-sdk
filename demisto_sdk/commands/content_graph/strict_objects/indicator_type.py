@@ -2,7 +2,10 @@ from typing import Any, List, Optional
 
 from pydantic import Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MarketplaceVersions,
+    PlatformSupportedModules,
+)
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseOptionalVersionJson,
 )
@@ -46,7 +49,9 @@ class _StrictIndicatorType(BaseStrictModel):
     layout: Optional[str] = None
     legacy_names: Optional[List[str]] = Field(None, alias="legacyNames")
     marketplaces: Optional[List[MarketplaceVersions]] = None
-    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedModules: Optional[List[PlatformSupportedModules]] = Field(
+        None, alias="supportedModules"
+    )
 
 
 StrictIndicatorType = create_model(

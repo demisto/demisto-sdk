@@ -1,9 +1,8 @@
 # Changelog
 ## 1.36.4 (2025-03-21)
 ### Fix
-* Fixed support for the newly introduced *supportedModules* field. [#4876](https://github.com/demisto/demisto-sdk/pull/4876)
+* Fixed support for the newly introduced *supportedModules* field. [#4876](https://github.com/demisto/demisto-sdk/pull/4876)[#4874](https://github.com/demisto/demisto-sdk/pull/4874)
 * Fixed an issue where certain validations would fail when executing on the local branch without a corresponding remote branch. [#4872](https://github.com/demisto/demisto-sdk/pull/4872)
-* Fixed support for the newly introduced *supportedModules* field. [#4874](https://github.com/demisto/demisto-sdk/pull/4874)
 
 ### Internal
 * Removed old validate from all builds. [#4862](https://github.com/demisto/demisto-sdk/pull/4862)

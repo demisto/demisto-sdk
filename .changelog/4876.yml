@@ -1,4 +1,0 @@
-changes:
-- description: Fixed support for the newly introduced *supportedModules* field.
-  type: fix
-pr_number: 4876

@@ -1,4 +1,0 @@
-changes:
-- description: Removed old validate from all builds.
-  type: internal
-pr_number: 4862

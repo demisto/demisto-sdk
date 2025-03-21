@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where certain validations would fail when executing on the local branch without a corresponding remote branch.
-  type: fix
-pr_number: 4872

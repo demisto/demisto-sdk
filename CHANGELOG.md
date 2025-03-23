@@ -1,4 +1,31 @@
 # Changelog
+## 1.36.4 (2025-03-21)
+### Fix
+* Fixed support for the newly introduced *supportedModules* field. [#4876](https://github.com/demisto/demisto-sdk/pull/4876) [#4874](https://github.com/demisto/demisto-sdk/pull/4874)
+* Fixed an issue where certain validations would fail when executed from a local branch without a corresponding remote branch. [#4872](https://github.com/demisto/demisto-sdk/pull/4872)
+
+### Internal
+* Removed old validate from all builds. [#4862](https://github.com/demisto/demisto-sdk/pull/4862)
+
+
+## 1.36.3 (2025-03-19)
+### Fix
+* Fixed support for the newly introduced *supportedModule* field. [#4871](https://github.com/demisto/demisto-sdk/pull/4871)
+
+
+## 1.36.2 (2025-03-16)
+### Feature
+* Added support for playbook tags in metadata dump, and support for *supportedModules* field. [#4832](https://github.com/demisto/demisto-sdk/pull/4832)
+
+### Fix
+* Fixed an issue in external contributions pull requests flow where incorrect Git status fetching led to validation failures. [#4829](https://github.com/demisto/demisto-sdk/pull/4829)
+* Fixed an issue where ***pre-commit*** failed on deleted content folders. [#4855](https://github.com/demisto/demisto-sdk/pull/4855)
+
+### Internal
+* Fixed an issue with GitHub actions. [#4856](https://github.com/demisto/demisto-sdk/pull/4856)
+* Updated the Graph schemas to support *supportsquickactions* in the correct place. [#4853](https://github.com/demisto/demisto-sdk/pull/4853)
+
+
 ## 1.36.1 (2025-03-09)
 ### Fix
 * Fixed an issue where content items recognized in the graph with the word "incident" and referenced in XSIAM content items using the word "alert" (e.g., `SearchAlertsV2` instead of `SearchIncidentsV2`) resulted in incorrect relationship creation. [#4787](https://github.com/demisto/demisto-sdk/pull/4787)

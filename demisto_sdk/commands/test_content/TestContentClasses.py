@@ -652,65 +652,6 @@ class TestPlaybook:
 
             time.sleep(sleep_interval)
 
-    def delete_incident(self, client: DefaultApi, incident_id: str) -> bool:
-        """
-        Deletes a Demisto incident
-        Args:
-            client: demisto_client instance to use
-            incident_id: Incident to delete
-
-        Returns:
-            True if incident was deleted else False
-        """
-        try:
-            body = {"ids": [incident_id], "filter": {}, "all": False}
-            response, status_code, headers = demisto_client.generic_request_func(
-                self=client, method="POST", path="/incident/batchDelete", body=body
-            )
-        except ApiException:
-            self.log_exception(
-                "Failed to delete incident, error trying to communicate with demisto server"
-            )
-            return False
-
-        if status_code != requests.codes.ok:
-            self.log_error(
-                f"delete incident failed - response:{pformat(response)}, status code:{status_code} headers:{headers}"
-            )
-            return False
-
-        return True
-
-    def close_incident(self, client: DefaultApi, incident_id: str) -> bool:
-        """
-        Closes a Demisto incident
-        Args:
-            client: demisto_client instance to use
-            incident_id: Incident to close
-
-        Returns:
-            True if incident was closed else False
-        """
-        try:
-            body = {"id": incident_id, "CustomFields": {}}
-            response, status_code, headers = demisto_client.generic_request_func(
-                self=client, method="POST", path="/incident/close", body=body
-            )
-            self.log_info(f"Closed incident: {incident_id}.")
-        except ApiException:
-            self.log_warning(
-                "Failed to close incident, error trying to communicate with demisto server."
-            )
-            return False
-
-        if status_code != requests.codes.ok:
-            self.log_warning(
-                f"Close incident failed - response:{pformat(response)}, status code:{status_code} headers:{headers}"
-            )
-            return False
-
-        return True
-
     def print_context_to_log(self, client: DefaultApi, incident_id: str):
         try:
             body = {"query": f"${{{self.configuration.context_print_dt}}}"}

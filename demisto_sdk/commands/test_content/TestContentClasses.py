@@ -2489,32 +2489,12 @@ class TestContext:
                 )
 
             self.playbook.disable_integrations(self.client)
-            self._clean_incident_if_successful(playbook_state)
             return playbook_state
         except Exception:
             self.playbook.log_exception(
                 f"Failed to run incident test for {self.playbook}"
             )
             return PB_Status.FAILED
-
-    def _clean_incident_if_successful(self, playbook_state: str):
-        """
-        Deletes the integration instances and the incident if the test was successful or failed on docker rate limit
-        Args:
-            playbook_state: The state of the playbook with which we can check if the test was successful
-        """
-        test_passed = playbook_state in (
-            PB_Status.COMPLETED,
-            PB_Status.NOT_SUPPORTED_VERSION,
-        )
-        # batchDelete is not supported in XSIAM, only close.
-        # in XSIAM we are closing both successful and failed incidents
-        if self.build_context.server_type == XSIAM_SERVER_TYPE and self.incident_id:
-            self.playbook.close_incident(self.client, self.incident_id)
-            self.playbook.delete_integration_instances(self.client)
-        elif self.incident_id and test_passed:
-            self.playbook.delete_incident(self.client, self.incident_id)
-            self.playbook.delete_integration_instances(self.client)
 
     def _run_docker_threshold_test(self):
         self._collect_docker_images()
@@ -2649,7 +2629,6 @@ class TestContext:
             docker_test_results = self._run_docker_threshold_test()
             if not docker_test_results:
                 playbook_state = PB_Status.FAILED_DOCKER_TEST
-            self._clean_incident_if_successful(playbook_state)
         return playbook_state
 
     def _execute_test(self) -> bool:

@@ -376,13 +376,6 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             prepare_content
         )
 
-    if command_name == "xsoar-lint" or is_pre_commit or register_all:
-        from demisto_sdk.commands.xsoar_linter.xsoar_linter_setup import xsoar_linter
-
-        app.command(name="xsoar-lint", help="Runs the xsoar lint on the given paths.")(
-            xsoar_linter
-        )
-
     if command_name == "xsoar-config-file-update" or register_all:
         from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file_setup import (
             xsoar_config_file_update,
@@ -447,15 +440,6 @@ def register_commands(_args: list[str] = []):  # noqa: C901
         app.command(name="generate-modeling-rules", help="Generated modeling-rules.")(
             generate_modeling_rules
         )
-
-    if command_name == "lint" or register_all:
-        from demisto_sdk.commands.lint.lint_setup import lint
-
-        app.command(
-            name="lint",
-            help="Deprecated, use demisto-sdk pre-commit instead.",
-            hidden=True,
-        )(lint)
 
     if command_name == "create-id-set" or register_all:
         from demisto_sdk.commands.create_id_set.create_id_set_setup import create_id_set

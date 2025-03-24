@@ -1,0 +1,4 @@
+changes:
+- description: Removed closing and deleting incidents after test execution.
+  type: internal
+pr_number: 4882

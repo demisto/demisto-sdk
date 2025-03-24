@@ -133,11 +133,11 @@ def validate(
         "--run-specific-validations",
         help="Comma separated list of validations to run.",
     ),
-    additional_ignorable_errors: str = typer.Option(
-        None,
-        "-aie",
-        "--additional-ignorable-errors",
-        help="Comma separated list of validations to be ignorable along the ignorable_errors section in the config file.",
+    allow_ignore_all_errors: bool = typer.Option(
+        False,
+        "-iae",
+        "--allow-ignore-all-errors",
+        help="Whether to allow ignoring all error_codes or only the ones appear in the config file.",
     ),
     category_to_run: str = typer.Option(
         None, help="Run specific validations by stating category."
@@ -318,8 +318,8 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         path=kwargs.get("config_path"),
         category=kwargs.get("category_to_run"),
         explicitly_selected=(kwargs.get("run_specific_validations") or "").split(","),
-        additional_ignorable_errors=(
-            kwargs.get("additional_ignorable_errors") or ""
+        allow_ignore_all_errors=(
+            kwargs.get("allow_ignore_all_errors") or ""
         ).split(","),
     )
     initializer = Initializer(

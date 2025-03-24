@@ -28,11 +28,11 @@ class ConfigReader:
         path: Optional[Path] = None,
         category: Optional[str] = None,
         explicitly_selected: Optional[List[str]] = None,
-        additional_ignorable_errors: Optional[List[str]] = None,
+        allow_ignore_all_errors: Optional[List[str]] = None,
     ):
         self.category_to_run = category
         self.explicitly_selected = explicitly_selected
-        self.additional_ignorable_errors = additional_ignorable_errors
+        self.allow_ignore_all_errors = allow_ignore_all_errors
 
         if path is None:
             path = Path(CONFIG_FILE_PATH)
@@ -68,7 +68,7 @@ class ConfigReader:
         select = explicitly_selected or sorted(section.get("select", []))
         warning = sorted(section.get("warning", []))
         ignorable = sorted(self.config_file_content.get("ignorable_errors", []))
-        ignorable.extend(self.additional_ignorable_errors or [])
+        ignorable.extend(self.allow_ignore_all_errors or [])
         selected_path_based_section = sorted(
             self.config_file_content.get(PATH_BASED_VALIDATIONS, {}).get("select", [])
         )

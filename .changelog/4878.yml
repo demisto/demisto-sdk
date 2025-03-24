@@ -1,0 +1,4 @@
+changes:
+- description: Added allow-ignore-all-errors / iae flag. Use this flag to allow ignoring all errors in the build regardless of the set of ignorable errors in the config file. 
+  type: feature
+pr_number: 4878

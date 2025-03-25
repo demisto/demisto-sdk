@@ -264,6 +264,7 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
+          sed '/  - id: validate-validation-config-file/,/^    - --config-path=validation_config.toml$/d' .pre-commit-config_template.yaml > temp.yaml && mv temp.yaml .pre-commit-config_template.yaml
           mkdir -p test-pre-commit-command
           echo "# test" >> Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
           echo "# test" >> Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml

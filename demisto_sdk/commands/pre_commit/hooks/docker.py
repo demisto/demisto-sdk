@@ -38,8 +38,23 @@ from demisto_sdk.commands.common.tools import logger
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.lint.linter import DockerImageFlagOption
+
 from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
+
+
+class DockerImageFlagOption(Enum):
+    FROM_YML = "from-yml"
+    NATIVE = "native:"
+    NATIVE_DEV = "native:dev"
+    NATIVE_GA = "native:ga"
+    NATIVE_MAINTENANCE = "native:maintenance"
+    ALL_IMAGES = "all"
+    NATIVE_TARGET = "native:target"
+    NATIVE_CANDIDATE = "native:candidate"
+
+
+
+
 
 NO_SPLIT = None
 

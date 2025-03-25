@@ -94,7 +94,7 @@ def get_version_info():
 def show_version():
     """Display the SDK version and notify if updates are available."""
     current_version, last_release = get_version_info()
-    typer.echo(f"demisto-sdk version: {current_version}")
+    typer.echo(f"demisto-sdk custom remove-clean-incident version: {current_version}")
 
     if last_release and current_version != last_release:
         message = typer.style(

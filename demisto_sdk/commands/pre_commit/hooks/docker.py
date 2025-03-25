@@ -40,7 +40,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 
 from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook
-
+from enum import Enum
 
 class DockerImageFlagOption(Enum):
     FROM_YML = "from-yml"

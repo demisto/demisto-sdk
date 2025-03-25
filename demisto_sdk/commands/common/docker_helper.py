@@ -48,7 +48,7 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
     r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"
 )
 
-TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
+TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "pre_commit" / "resources"
 DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT") or 300)
 
 

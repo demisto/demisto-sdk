@@ -1,0 +1,7 @@
+pylint==1.9.5
+pytest==4.6.11
+pytest-mock==2.0.0
+requests-mock==1.9.3
+pytest-xdist==1.34.0
+pytest-json==0.4.0
+pytest-cov==2.12.1

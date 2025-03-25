@@ -264,6 +264,7 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
+          cat .pre-commit-config_template.yaml
           sed -i '/- repo: local/,/id: validate-validation-config-file/d' .pre-commit-config_template.yaml
           cat .pre-commit-config_template.yaml
           mkdir -p test-pre-commit-command

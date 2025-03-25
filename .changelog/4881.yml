@@ -1,0 +1,4 @@
+changes:
+- description: Removed ***lint*** command.
+  type: Breaking
+pr_number: 4881

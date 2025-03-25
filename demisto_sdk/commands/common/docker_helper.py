@@ -253,7 +253,7 @@ class DockerBase:
         )
         self.tmp_dir = Path(self.tmp_dir_name.name)
         installation_scripts = (
-            Path(__file__).parent.parent / "lint" / "resources" / "installation_scripts"
+            Path(__file__).parent.parent / "pre_commit" / "resources" / "installation_scripts"
         )
         self.installation_scripts = {
             TYPE_PYTHON: installation_scripts / "python_image.sh",

@@ -1,6 +1,8 @@
 import ast
 import re
 import tempfile
+from enum import Enum
+from typing import Any
 
 import demisto_client
 import typer
@@ -16,6 +18,18 @@ class DemistoRunTimeError(RuntimeError):
     """Demisto run time error"""
 
     pass
+
+
+class IncidentStatus(Enum):
+    OPEN = "open"
+    CLOSE = "close"
+    REMOVE = "remove"
+
+
+class ServerType(Enum):
+    XSOAR = "xsoar"
+    XSOAR_SAAS = "xsoar-saas"
+    XSIAM = "xsiam"
 
 
 class Runner:
@@ -41,6 +55,7 @@ class Runner:
         self,
         query: str,
         incident_id: str = None,
+        incident_post_run: IncidentStatus = IncidentStatus.REMOVE,
         insecure: bool = False,
         debug: str = None,
         debug_path: str = None,
@@ -50,13 +65,15 @@ class Runner:
         **kwargs,
     ):
         self.query = query if query.startswith("!") else f"!{query}"
-        self.incident_id = incident_id
         self.debug = debug
         self.debug_path = debug_path
         verify = (
             (not insecure) if insecure else None
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         self.client = demisto_client.configure(verify_ssl=verify)
+        self.server_type = self.get_server_type()
+        self.incident_post_run = incident_post_run
+        self.incident_id = incident_id or self.create_incident_for_query()
         self.json2outputs = json_to_outputs
         self.prefix = prefix
         self.raw_response = raw_response
@@ -64,8 +81,18 @@ class Runner:
         if self.debug or self.json2outputs:
             self.query += ' debug-mode="true"'
 
+    def __enter__(self) -> "Runner":
+        return self
+
+    def __exit__(self, *_):
+        self.delete_incident_if_needed()
+
     def run(self):
         """Runs an integration command on Demisto and prints the result."""
+        if self.server_type is ServerType.XSIAM:
+            raise DemistoRunTimeError(
+                "The `run` command is not supported for the XSIAM server type."
+            )
         investigation_id = self.incident_id or self._get_playground_id()
         logger.debug(f"running command in {investigation_id=}")
 
@@ -182,7 +209,7 @@ class Runner:
                 if entry.type == self.ERROR_ENTRY_TYPE:
                     logger.info("{}", f"<red>{entry.contents}</red>\n")  # noqa: PLE1205
                 else:
-                    logger.info(f"{entry.contents}\n")
+                    logger.info("{}", f"{entry.contents}\n")  # noqa: PLE1205
 
             # and entries with `file_id`s defined, that is the fileID of the debug log file
             if entry.type == self.DEBUG_FILE_ENTRY_TYPE:
@@ -312,3 +339,97 @@ class Runner:
         context = ast.literal_eval(context)
 
         return res, context
+
+    def get_server_type(self) -> ServerType:
+        if not self.client.api_client.configuration.host.startswith("https://api-"):
+            return ServerType.XSOAR
+        raw_response, _, response_headers = self.client.generic_request(
+            "/about", "GET", response_type="object"
+        )
+        if "text/html" in response_headers.get("Content-Type"):
+            raise ValueError(
+                "",  # TODO
+            )
+        logger.debug(f"about={raw_response}")
+
+        if (
+            raw_response.get("productMode", "") == "xsoar"
+            and raw_response.get("deploymentMode", "") == "saas"
+        ):
+            return ServerType.XSOAR_SAAS
+        return ServerType.XSIAM
+
+    def create_incident_for_query(self):
+        """
+        Creates an incident if the server is XSOAR SaaS and returns the incident ID.
+        Otherwise, no incident is created, and None is returned.
+        """
+
+        # Check if the server is XSOAR 8
+        if self.server_type is not ServerType.XSOAR_SAAS:
+            self.is_incident_runtime_created = False
+            return
+
+        incident, status_code, _ = self.client.generic_request(
+            path="/incident",
+            method="POST",
+            content_type="application/json",
+            body={
+                "createInvestigation": True,
+                "name": "Demisto-sdk Run",
+                "owner": "",
+                "severity": 0,
+                "type": "Unclassified",
+                "playbook": "",
+            },
+            response_type=object,
+        )
+
+        if status_code != 201:
+            logger.critical(
+                "Failed to create a new incident for executing the command."
+            )
+            raise RuntimeError(
+                "Failed to create a new incident for executing the command."
+            )
+        logger.info(
+            f"Incident was successfully created for executing the command - ID: {incident['id']}."
+        )
+        self.is_incident_runtime_created = True
+        return incident["id"]
+
+    def delete_incident_if_needed(self):
+        if not self.is_incident_runtime_created:
+            return
+
+        body: dict[str, Any] = {}
+        if self.incident_post_run == IncidentStatus.OPEN:
+            logger.info(f"The incident {self.incident_id} remains open.")
+            return
+        elif self.incident_post_run == IncidentStatus.CLOSE:
+            path = "/incident/close"
+            body = {"CustomFields": {}, "id": self.incident_id}
+        elif self.incident_post_run == IncidentStatus.REMOVE:
+            path = "/incident/batchDelete"
+            body = {"ids": [self.incident_id], "all": False, "filter": {}}
+        else:
+            raise DemistoRunTimeError(
+                "The argument `incident_post_run` was not set correctly.\n"
+                "Allowed values are: `open`, `close`, `remove`."
+            )
+
+        _, status_code, _ = self.client.generic_request(
+            path=path,
+            method="POST",
+            content_type="application/json",
+            body=body,
+            response_type=object,
+        )
+
+        if status_code != 200:
+            logger.info(
+                f"Failed {self.incident_post_run.value}d the incident {self.incident_id}"
+            )
+        logger.info(
+            f"Incident {self.incident_id} {self.incident_post_run.value}d successfully"
+        )

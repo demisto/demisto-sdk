@@ -78,3 +78,7 @@ mapping:
     sequence:
     - type: str
       enum: ['xsoar', 'xsoar_saas', 'xsoar_on_prem']
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str

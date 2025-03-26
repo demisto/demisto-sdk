@@ -28,7 +28,6 @@ The command will configure VSCode and XSOAR/XSIAM instances for development and 
   - Default: `False`
 
 - **file_paths**:
-  - Default: `<class 'list'>`
 
 - **--console-log-threshold**: Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.
 

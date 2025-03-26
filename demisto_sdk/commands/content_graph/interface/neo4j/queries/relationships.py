@@ -64,7 +64,8 @@ ON MATCH
 // Create the relationship
 MERGE (integration)-[r:{RelationshipType.HAS_COMMAND}{{
     deprecated: rel_data.deprecated,
-    description: rel_data.description
+    description: rel_data.description,
+    quickaction: rel_data.quickaction
 }}]->(cmd)
 
 RETURN count(r) AS relationships_merged"""
@@ -107,6 +108,46 @@ ON MATCH
     SET r.mandatorily = r.mandatorily OR rel_data.mandatorily
 
 RETURN count(r) AS relationships_merged"""
+
+
+def update_alert_to_incident_relationships():
+    return f"""
+// Update USES relationships when the source node contains "alert" in its ID.
+// This query addresses a scenario where relationships are created in our repository
+// to items that do not yet exist with the expected names. Since we know the item names
+// will be adjusted during upload (e.g., "incident" might be declared as "alert" in the marketplace),
+// we initially use the "expected" name (e.g., "alert"). This discrepancy causes a false "not_in_repository" flag.
+// The query ensures that the target node is updated to the correct item in the repository,
+// replacing "alert" with "incident" to align with the correct naming convention,
+// resolving the false flag and maintaining accurate relationships.
+
+// Get USES relationship when target node contains "alert" and target node not in repository
+// and source not is in marketplacev2 and not xsoar
+MATCH (source)-[r:{RelationshipType.USES}]->(target)
+WHERE toLower(target.object_id) CONTAINS 'alert' AND target.not_in_repository
+   AND 'marketplacev2' IN source.marketplaces
+   AND NOT 'xsoar' IN source.marketplaces
+WITH target, source, r
+
+// get nodes with "incident" instead "alert" in the object_id that is in repository with the same
+// content type and its in marketplacev2 and xsoar
+MATCH (target_incident)
+WHERE toLower(target_incident.object_id) = REPLACE(toLower(target.object_id), 'alert', 'incident')
+    AND NOT target_incident.not_in_repository
+    AND target.content_type in labels(target_incident)
+    AND 'marketplacev2' IN target_incident.marketplaces
+    AND 'xsoar' IN target_incident.marketplaces
+WITH target_incident,target, source, r
+
+
+// create a relationship with the new incident node
+CREATE (source)-[r_new:{RelationshipType.USES}{{mandatorily: r.mandatorily}}]->(target_incident)
+
+
+// delete the old target node and old relationship
+DELETE r
+DELETE target
+"""
 
 
 def build_in_pack_relationships_query() -> str:
@@ -153,6 +194,7 @@ MATCH (p1:{ContentType.PACK}{{object_id: rel_data.source}}),
 // Create the relationship, and mark as "from_metadata"
 CREATE (p1)-[r:{RelationshipType.DEPENDS_ON}{{
     mandatorily: rel_data.mandatorily,
+    target_min_version: rel_data.target_min_version,
     from_metadata: true,
     is_test: false
 }}]->(p2)
@@ -183,6 +225,8 @@ def create_relationships(
 
     for relationship, data in relationships.items():
         create_relationships_by_type(tx, relationship, data)
+
+    run_query(tx, update_alert_to_incident_relationships())
 
 
 def create_relationships_by_type(

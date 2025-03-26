@@ -24,11 +24,11 @@ class IncidentTypeValidAutoExtractFieldsValidator(BaseValidator[ContentTypes]):
         'isExtractingAllIndicatorTypes: true, extractAsIsIndicatorTypeId: "", '
         "extractIndicatorTypesIDs: []\n"
         "2. To extract the incident field to a specific indicator without using regex: \n"
-        'isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: "<INDICATOR_TYPE>", '
+        'isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: "INDICATOR_TYPE", '
         "extractIndicatorTypesIDs: []\n"
         "3. To extract indicators from the field using regex: \n"
         'isExtractingAllIndicatorTypes: false, extractAsIsIndicatorTypeId: "", '
-        'extractIndicatorTypesIDs: ["<INDICATOR_TYPE1>", "<INDICATOR_TYPE2>"]'
+        'extractIndicatorTypesIDs: ["INDICATOR_TYPE1", "INDICATOR_TYPE2"]'
     )
     related_field = "extractSettings"
 

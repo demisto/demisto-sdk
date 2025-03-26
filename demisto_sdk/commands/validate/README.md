@@ -10,10 +10,13 @@ This is used in our validation process both locally and in Gitlab.
 Validate changes using Git - this will check the current branch's changes against origin/master.
 If the **--post-commit** flag is supplied: validation will run only on the current branch's changed files that have been committed.
 If the **--post-commit** flag is not supplied: validation will run on all changed files in the current branch, both committed and not committed.
+Note that the validations being executed might differ according to the [validations configured for this execution mode](#Validation-Config-file).
 * **-a, --validate-all**
 Whether to run all validation on all files or not.
+Note that the validations being executed might differ according to the [validations configured for this execution mode](#Validation-Config-file).
 * **-i, --input**
 The path of the content pack/file to validate specifically.
+Note that the validations being executed might differ according to the [validations configured for this execution mode](#Validation-Config-file).
 * **-pc, --post-commit**
 Whether the validation should run only on the current branch's committed changed files. This applies only when the **-g** flag is supplied.
 * **-st, --staged**

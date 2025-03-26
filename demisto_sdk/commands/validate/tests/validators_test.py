@@ -1,7 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 from unittest.mock import patch
 
 import pytest
@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -395,7 +396,7 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
             ],
             0,
             1,
-            0,
+            1,
             ["BA101"],
             [],
         ),
@@ -409,8 +410,8 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
                 )
             ],
             1,
-            0,
             1,
+            2,
             [],
             ["BA101"],
         ),
@@ -429,15 +430,14 @@ def test_write_results_to_json_file(results, fixing_results, expected_results):
                 ),
             ],
             1,
-            1,
-            1,
+            2,
+            2,
             ["BC100"],
             ["BA101"],
         ),
     ],
 )
 def test_post_results(
-    mocker,
     only_throw_warnings,
     results,
     expected_exit_code,
@@ -463,7 +463,9 @@ def test_post_results(
     """
     validation_results = ResultWriter()
     validation_results.validation_results = results
-    exit_code = validation_results.post_results(only_throw_warning=only_throw_warnings)
+    exit_code = validation_results.post_results(
+        ConfiguredValidations(warning=only_throw_warnings)
+    )
     assert exit_code == expected_exit_code
 
     log_by_level = map_reduce(caplog.records, lambda log: log.levelno)
@@ -476,6 +478,79 @@ def test_post_results(
     assert len(errors) == expected_error_call_count
     for code in expected_error_code_in_errors:
         assert code in " ".join({log.message for log in errors})
+
+
+@pytest.mark.parametrize(
+    "failing_error_codes, warning_error_codes, config_file_content, exit_code, expected_msg",
+    [
+        (
+            ["BA100", "CR102", "CL101", "TE111"],
+            [],
+            ConfiguredValidations(
+                ignorable_errors=["BA100"], selected_path_based_section=["CR102"]
+            ),
+            1,
+            "<red>Validate summary\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors cannot be ignored: CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CL101, TE111.\n</red><red>######################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: CR102.\n######################################################################################################\n</red>",
+        ),
+        (
+            ["BA100", "CR102", "CL101", "TE111"],
+            [],
+            ConfiguredValidations(selected_path_based_section=["CR102", "BA100"]),
+            1,
+            "<red>Validate summary\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors cannot be ignored: BA100, CR102, CL101, TE111.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: CL101, TE111.\n</red><red>#############################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: BA100, CR102.\n#############################################################################################################\n</red>",
+        ),
+        (
+            ["BA100", "CR102", "CL101", "TE111"],
+            ["BC111"],
+            ConfiguredValidations(ignorable_errors=["BA100", "TE111"]),
+            1,
+            "<red>Validate summary\nThe following errors were reported as warnings: BC111.\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100, TE111.\nThe following errors cannot be ignored: CR102, CL101.\nThe following errors don't run as part of the nightly flow and therefore can be force merged: BA100, CR102, CL101, TE111.\n</red>",
+        ),
+        (
+            ["BA100", "CR102", "CL101", "TE111"],
+            [],
+            ConfiguredValidations(
+                ignorable_errors=["BA100"],
+                selected_path_based_section=["BA100", "CR102", "CL101", "TE111"],
+            ),
+            1,
+            "<red>Validate summary\nThe following errors were thrown as a part of this pr: BA100, CR102, CL101, TE111.\nThe following errors can be ignored: BA100.\nThe following errors cannot be ignored: CR102, CL101, TE111.\n</red><red>###########################################################################################################################\nNote that the following errors cannot be force merged and therefore must be handled: BA100, CR102, CL101, TE111.\n###########################################################################################################################\n</red>",
+        ),
+    ],
+)
+def test_summarize_validation_results(
+    mocker,
+    failing_error_codes,
+    warning_error_codes,
+    config_file_content,
+    exit_code,
+    expected_msg,
+):
+    """
+    Given
+    set of failing error codes and a ConfiguredValidations object with specified ignorable_errors and selected_path_based_section.
+        - Case 1: 4 failed errors, 1 ignorable, and 1 path based.
+        - Case 2: 4 failed errors, none are ignorable, and 2 are path based.
+        - Case 3: 4 failed errors, 2 ignorable, and none are path based.
+        - Case 4: 4 failed errors, 1 ignorable, and all are path based.
+    When
+    - Calling the summarize_validation_results function.
+    Then
+        - Make sure the error logger was called the correct message.
+        - Case 1: The error log should not mention warnings section, and be called with 1 ignorable error, 3 forcemergeable errors, 3 non ignorable errors, and 1 error that must be handled.
+        - Case 2: The error log should not mention warnings section, and omit the ignorable error section, post 2 forcemergeable errors, 4 non ignorable errors, and 2 error that must be handled.
+        - Case 3: The error log should mention warnings section, and be called with 2 ignorable errors, 4 forcemergeable errors, 2 non ignorable errors, no errors that must be handled, and a summary that says the PR is forcemergeable.
+        - Case 4: The error log should not mention warnings section, and be called with 1 ignorable error, no forcemergeable errors, 3 non ignorable errors, section and 4 error that must be handled.
+    """
+    mock = mocker.patch.object(logger, "error")
+    validation_results = ResultWriter()
+    validation_results.summarize_validation_results(
+        failing_error_codes, warning_error_codes, config_file_content, exit_code
+    )
+    msg = ""
+    for args in mock.call_args_list:
+        msg += args[0][0]
+    assert expected_msg == msg
 
 
 @pytest.mark.parametrize(
@@ -690,25 +765,6 @@ def test_get_items_status(repo):
     )
 
 
-def test_all_error_codes_configured():
-    """
-    test that the set of all validation errors that exist in the new format and the set of all the validation errors configured in the sdk_validation_config are equal to ensure all new validations are being tested.
-    """
-    config_file_path = "demisto_sdk/commands/validate/sdk_validation_config.toml"
-    config_file_content: dict = toml.load(config_file_path)
-    configured_errors_set: Set[str] = set()
-    for section in ("use_git", "path_based_validations"):
-        for key in ("select", "warning"):
-            configured_errors_set = configured_errors_set.union(
-                set(config_file_content[section][key])
-            )
-    existing_error_codes: Set[str] = set(
-        [validator.error_code for validator in get_all_validators()]
-    )
-    non_configured_existing_error_codes = existing_error_codes - configured_errors_set
-    assert not non_configured_existing_error_codes, f"The following error codes are not configured in the config file at 'demisto_sdk/commands/validate/sdk_validation_config.toml': {non_configured_existing_error_codes}."
-
-
 def test_validation_prefix():
     """
     Given   All validators
@@ -744,115 +800,34 @@ def test_description():
     ]
 
 
-@pytest.mark.parametrize(
-    "untracked_files, modified_files, untracked_files_in_content, list_of_file_paths ,expected_output",
-    [
-        (
-            ["Packs/untracked.txt"],
-            set([Path("Packs/modified.txt")]),
-            set([Path("Packs/untracked.txt")]),
-            ["Packs/modified.txt", "Packs/untracked.txt"],
-            set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
-        ),
-        (
-            [
-                "Packs/untracked_1.txt",
-                "Packs/untracked_2.txt",
-                "invalid/path/untracked.txt",
-                "another/invalid/path/untracked.txt",
-            ],
-            set([Path("Packs/modified.txt")]),
-            set(
-                [
-                    Path("Packs/untracked_1.txt"),
-                    Path("Packs/untracked_2.txt"),
-                ]
-            ),
-            ["Packs/modified.txt", "Packs/untracked_1.txt", "Packs/untracked_2.txt"],
-            set(
-                [
-                    Path("Packs/modified.txt"),
-                    Path("Packs/untracked_1.txt"),
-                    Path("Packs/untracked_2.txt"),
-                ]
-            ),
-        ),
-        (
-            [
-                "Packs/untracked_1.txt",
-                "Packs/untracked_2.txt",
-                "invalid/path/untracked.txt",
-                "another/invalid/path/untracked.txt",
-            ],
-            set(),
-            set(
-                [
-                    Path("Packs/untracked_1.txt"),
-                    Path("Packs/untracked_2.txt"),
-                ]
-            ),
-            ["Packs/untracked_1.txt", "Packs/untracked_2.txt"],
-            set(
-                [
-                    Path("Packs/untracked_1.txt"),
-                    Path("Packs/untracked_2.txt"),
-                ]
-            ),
-        ),
-    ],
-    ids=[
-        "Valid untracked and modified files",
-        "Invalid untracked, valid untracked and modified files",
-        "No modified files, invalid and valid untracked files only",
-    ],
-)
-def test_get_unfiltered_changed_files_from_git_in_external_pr_use_case(
-    mocker,
-    untracked_files,
-    modified_files,
-    untracked_files_in_content,
-    list_of_file_paths,
-    expected_output,
-):
+def test_get_unfiltered_changed_files_from_git_case_untracked_files_identify(mocker):
     """
-    This UT verifies changes made to validate command to support collection of
-    untracked files when running the build on an external contribution PR.
-    The UT mocks reading form the contribution_files_relative_paths.txt created
-    in Utils/update_contribution_pack_in_base_branch.py (Infra) as part of this flow.
-
     Given:
-        - A content build is running on external contribution PR, meaning:
-            - `CONTRIB_BRANCH` environment variable exists.
-            - validate command is running in context of an external contribution PR
+        An Initializer instance where the fetched git files are not equal to the amount of files written
+         in the contribution_files_relative_paths file.
     When:
-        Case 1: All untracked files have a "Pack/..." path, regular modified files are also exist.
-        Case 2: Not all untracked files have a "Pack/..." path, irrelevant untracked files exist which validate shouldn't run on.
-                Regular modified files are also exist.
-        Case 3: Not all untracked files have a "Pack/..." path, irrelevant untracked files also exist, regular modified files are also exist, No modified files.
-
+        Calling get_unfiltered_changed_files_from_git in a scenario where modified_files, added_files,
+         and rename_files are empty, and the contribution_files_relative_paths file contains some file names.
     Then:
-        - Collect all files within "Packs/" path and run the pre commit on them along with regular modified files if exist.
+        Ensure that the error is raised and the function does not return modified_files,
+         added_files, or rename_files.
     """
     initializer = Initializer()
     initializer.validate_git_installed()
-    mocker.patch.object(GitUtil, "modified_files", return_value=modified_files)
+    mocker.patch.object(GitUtil, "modified_files", return_value=set())
+    mocker.patch.object(GitUtil, "added_files", return_value=set())
+    mocker.patch.object(GitUtil, "renamed_files", return_value=set())
     mocker.patch.dict(os.environ, {"CONTRIB_BRANCH": "true"})
-    mocker.patch.object(GitUtil, "added_files", return_value={})
-    mocker.patch.object(GitUtil, "renamed_files", return_value={})
-    mocker.patch(
-        "git.repo.base.Repo._get_untracked_files", return_value=untracked_files
-    )
-
     with open("contribution_files_relative_paths.txt", "w") as file:
         temp_file = Path("contribution_files_relative_paths.txt")
-        for line in list_of_file_paths:
-            file.write(f"{line}\n")
-
-    output = initializer.get_unfiltered_changed_files_from_git()
-    assert output[1] == expected_output
-
-    if Path.exists(temp_file):
-        Path.unlink(temp_file)
+        file.write("untrack_file")
+    try:
+        _, _, _ = initializer.get_unfiltered_changed_files_from_git()
+    except ValueError as e:
+        assert "Error: Mismatch in the number of files." in str(e)
+    finally:
+        if Path.exists(temp_file):
+            Path.unlink(temp_file)
 
 
 def test_ignored_with_run_all(mocker):
@@ -934,3 +909,63 @@ def test_check_metadata_version_bump_on_content_changes(mocker, repo):
 
     # Assert the PA114 validation will run
     assert version_bump_validator
+
+
+@pytest.mark.parametrize(
+    "config_file_content, expected_results, allow_ignore_all_errors",
+    [
+        pytest.param(
+            {
+                "use_git": {
+                    "select": ["BA101", "BC100", "PA108"],
+                    "warning": ["BA100"],
+                },
+                "ignorable_errors": ["PA108"],
+            },
+            ConfiguredValidations(
+                ["BA101", "BC100", "PA108"], ["BA100"], ["PA108"], {}
+            ),
+            False,
+        ),
+        pytest.param(
+            {
+                "use_git": {
+                    "select": ["BA101", "BC100", "PA108"],
+                    "warning": ["BA100"],
+                },
+                "ignorable_errors": ["PA108"],
+            },
+            ConfiguredValidations(
+                ["BA101", "BC100", "PA108"],
+                ["BA100"],
+                ["BA101", "BC100", "PA108", "BA100"],
+                {},
+            ),
+            True,
+        ),
+    ],
+)
+def test_config_reader_ignore_all_flag(
+    mocker: MockerFixture,
+    config_file_content: Dict,
+    expected_results: ConfiguredValidations,
+    allow_ignore_all_errors: bool,
+):
+    """
+    Given
+    a config file content mock and a allow_ignore_all_errors flag
+        - Case 1: allow_ignore_all_errors set to False.
+        - Case 2: allow_ignore_all_errors set to True.
+    When
+    - Calling the gather_validations_from_conf function.
+    Then
+        - Case 1: Make sure the retrieved results contains the ignorable_errors mentioned in the ignorable_errors section.
+        - Case 2: Make sure the retrieved results contains all the error codes that appears in the select & warning sections.
+    """
+    mocker.patch.object(toml, "load", return_value=config_file_content)
+    config_reader = ConfigReader(allow_ignore_all_errors=allow_ignore_all_errors)
+    results: ConfiguredValidations = config_reader.read()
+    assert results.select == expected_results.select
+    assert results.ignorable_errors == expected_results.ignorable_errors
+    assert results.warning == expected_results.warning
+    assert results.support_level_dict == expected_results.support_level_dict

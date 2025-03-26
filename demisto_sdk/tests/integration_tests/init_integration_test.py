@@ -113,7 +113,7 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path, mocker):
         f"{integration_name}_image.png",
         "test_data",
         "README.md",
-        "command_examples",
+        "command_examples.txt",
     } == integration_dir_files
 
 
@@ -222,5 +222,5 @@ def test_integration_init_integration_positive_no_inline_pack_name(
         f"{integration_name}_image.png",
         "test_data",
         "README.md",
-        "command_examples",
+        "command_examples.txt",
     } == integration_dir_files

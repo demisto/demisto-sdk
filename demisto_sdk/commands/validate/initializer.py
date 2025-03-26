@@ -252,30 +252,40 @@ class Initializer:
             debug=True,
             get_only_current_file_names=False,
         )
+
+        """
+        If this command runs on a build triggered by an external contribution PR,
+        the relevant modified files may have an "untracked" status in git.
+        The following code segment retrieves all relevant untracked files that were changed in the
+        external contribution PR. See CIAC-10968 for more info.
+
+        This code snippet ensures that the number of fetched files matches the number of files in
+        the contribution_files_relative_paths.txt file. If a discrepancy is found, indicating untracked files,
+        it raises a ValueError to halt execution due to a mismatch in file counts.
+        See CIAC-12482 for more info.
+        """
         if os.getenv("CONTRIB_BRANCH"):
-            """
-            If this command runs on a build triggered by an external contribution PR,
-            the relevant modified files would have an "untracked" status in git.
-            The following code segment retrieves all relevant untracked files that were changed in the external contribution PR
-            See CIAC-10968 for more info.
-            """
             logger.info(
                 "\n<cyan>CONTRIB_BRANCH environment variable found, running validate in contribution flow "
                 "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)</cyan>"
             )
-            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra) and read file paths
-            relative_untracked_files_paths: Set[Path] = set()
+            # Open contribution_files_paths.txt created in Utils/update_contribution_pack_in_base_branch.py (Infra)
+            # and read file paths
+
             with open(
                 "contribution_files_relative_paths.txt", "r"
             ) as contribution_file:
-                for single_line in contribution_file:
-                    clean_line: str = single_line.rstrip("\n")
-                    relative_untracked_files_paths.add(Path(clean_line))
-            logger.info(
-                f"\n######## - Added untracked:\n{relative_untracked_files_paths}"
-            )
-            # modified_files = modified_files.union(relative_untracked_files_paths)
-            added_files = set(added_files).union(relative_untracked_files_paths)
+                contribution_files_relative_paths_count_lines = len(
+                    contribution_file.readlines()
+                )
+
+            affected_files = modified_files.union(added_files, renamed_files)
+            if contribution_files_relative_paths_count_lines != len(affected_files):
+                raise ValueError(
+                    "Error: Mismatch in the number of files. The number of fetched files does not match the number"
+                    " of files in the contribution_files_relative_paths.txt file."
+                    " This indicates that there are untracked files. Unable to proceed."
+                )
 
         return modified_files, added_files, renamed_files
 
@@ -515,9 +525,7 @@ class Initializer:
                 old_path = file_path
                 if isinstance(file_path, tuple):
                     file_path, old_path = file_path
-                obj = BaseContent.from_path(
-                    file_path, git_sha=current_git_sha, raise_on_exception=True
-                )
+                obj = BaseContent.from_path(file_path, raise_on_exception=True)
                 if obj:
                     obj.git_sha = current_git_sha
                     obj.git_status = git_status
@@ -601,6 +609,19 @@ class Initializer:
                     path = Path(path_str.replace(f"_{PACKS_README_FILE_NAME}", ".yml"))
                     if path not in statuses_dict:
                         statuses_dict[path] = None
+                elif path.parts[-2] not in [{INTEGRATIONS_DIR}, {SCRIPTS_DIR}]:
+                    # some nested folder, not related to the main content item.
+                    integration_script_index = (
+                        path.parts.index(INTEGRATIONS_DIR)
+                        if INTEGRATIONS_DIR in path.parts
+                        else path.parts.index(SCRIPTS_DIR)
+                    )
+                    path = Path(
+                        os.path.join(*path.parts[: integration_script_index + 2])
+                    )
+                    path = path / f"{path.parts[-1]}.yml"
+                    if path not in statuses_dict:
+                        statuses_dict[path] = None
                 else:
                     # Otherwise, assume the yml name is the name of the parent directory.
                     path = Path(path.parent / f"{path.parts[-2]}.yml")
@@ -614,7 +635,7 @@ class Initializer:
                 else:
                     # Otherwise obtain the yml path independently.
                     path = self.obtain_playbook_path(path)
-                    if path not in statuses_dict:
+                    if path not in statuses_dict and path.suffix == ".yml":
                         statuses_dict[path] = None
             elif MODELING_RULES_DIR in path_str or PARSING_RULES_DIR in path_str:
                 # If it's a modeling rule or a parsing rule obtain the yml.

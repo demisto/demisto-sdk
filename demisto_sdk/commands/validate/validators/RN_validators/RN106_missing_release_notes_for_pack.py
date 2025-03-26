@@ -38,6 +38,7 @@ class IsMissingReleaseNotes(BaseValidator[ContentTypes]):
     related_file_type = [RelatedFileType.RELEASE_NOTE]
     valid_packs: list[str] = []
     checked_packs: set[str] = set()
+    run_on_deprecated = True
 
     def get_missing_rns_for_api_module_dependents(
         self, api_module: ContentItem

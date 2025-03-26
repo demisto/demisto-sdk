@@ -23,6 +23,7 @@ class RelationshipData(BaseModel):
 
     # DEPENDS_ON relationship properties
     is_test: bool = False
+    target_min_version: Optional[str] = None
 
     # HAS_COMMAND relationship properties
     description: Optional[str] = None

@@ -24,7 +24,7 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
     error_message = "Possible backwards compatibility break, You've changed the {0} subtype from {1} to {2}, please undo."
     related_field = "subtype"
     fix_message = "Changing subtype back to ({0})."
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.MODIFIED]
     is_auto_fixable = True
     old_subtype: ClassVar[dict] = {}
 

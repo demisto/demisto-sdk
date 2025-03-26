@@ -22,7 +22,7 @@ class NewRequiredArgumentScriptValidator(BaseValidator[ContentTypes]):
     error_message = "Possible backward compatibility break: You have added the following new *required* arguments: {arg_list}. Please undo the changes."
     related_field = "script.arguments"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

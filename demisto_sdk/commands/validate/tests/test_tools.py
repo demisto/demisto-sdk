@@ -123,7 +123,9 @@ def create_parsing_rule_object(
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
     parsing_rule = pack.create_parsing_rule("TestParsingRule", yml_content)
-    parser = ParsingRuleParser(Path(parsing_rule.path), list(MarketplaceVersions))
+    parser = ParsingRuleParser(
+        Path(parsing_rule.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
     return ParsingRule.from_orm(parser)
 
 
@@ -181,7 +183,9 @@ def create_playbook_object(
     playbook = pack.create_playbook(**additional_params)
     playbook.create_default_playbook(name="sample")
     playbook.yml.update(yml_content)
-    parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
+    parser = PlaybookParser(
+        Path(playbook.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
     return Playbook.from_orm(parser)
 
 
@@ -214,7 +218,9 @@ def create_test_playbook_object(
     playbook = pack.create_test_playbook(**additional_params)
     playbook.create_default_test_playbook(name="sample")
     playbook.yml.update(yml_content)
-    parser = TestPlaybookParser(Path(playbook.path), list(MarketplaceVersions))
+    parser = TestPlaybookParser(
+        Path(playbook.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
     return TestPlaybook.from_orm(parser)
 
 
@@ -330,7 +336,8 @@ def create_pack_object(
     playbooks: int = 0,
     name: Optional[str] = None,
     release_note_content: Optional[str] = None,
-    bc_release_note_content: Optional[List[Dict[str, str]]] = None,
+    bc_release_note_content: Optional[dict] = None,
+    version_config: Optional[dict] = None,
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -373,6 +380,9 @@ def create_pack_object(
             "w",
         ) as outfile:
             outfile.write(json_object)
+
+    if version_config:
+        pack.version_config.write_json(version_config)
 
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
@@ -661,17 +671,26 @@ def create_trigger_object(
 
 
 def create_layout_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    file_path: Optional[str] = None,
 ) -> Layout:
     """Creating an layout object with altered fields from a default layout json structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
         values (Optional[List[Any]]): The values to update.
+        file_path: Optional[str]: For creating layout object from specific json file.
 
     Returns:
         The layout object.
     """
+    if file_path:
+        json_content = load_json(file_path)
+        pack = REPO.create_pack()
+        pack.create_layout(name="layout", content=json_content)
+        return cast(Layout, BaseContent.from_path(Path(pack.layouts[0].path)))
+
     json_content = load_json("layoutscontainer.json")
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()

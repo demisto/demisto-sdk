@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -19,7 +18,6 @@ class ImageExistsValidator(BaseValidator[ContentTypes]):
     error_message = "You've created/modified a yml or package without providing an image as a .png file. Please make sure to add an image at"
     related_field = "image"
     rationale = "Images make it easier to find integrations."
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.IMAGE]
 
     def obtain_invalid_content_items(

@@ -22,7 +22,7 @@ class NewRequiredArgumentIntegrationValidator(BaseValidator[ContentTypes]):
     rationale = "Adding a new argument to an existing command and defining it as *required* or changing an non-required argument to be required will break backward compatibility."
     error_message = "Possible backward compatibility break: You have added the following new *required* arguments: {custom_message} Please undo the changes."
     related_field = "script.commands.arguments"
-    expected_git_statuses = [GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

@@ -4,7 +4,6 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
-    GitStatuses,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -22,13 +21,12 @@ class IsValidBetaDescriptionValidator(BaseValidator[ContentTypes]):
     rationale = "Need a disclaimer for beta integrations."
     error_message = (
         f"No beta disclaimer note was found. "
-        f"Please make sure the description file (<integration_name>_description.md)"
+        f"Please make sure the description file (integration_name_description.md)"
         f" includes the beta disclaimer note. "
         f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
     )
     related_field = "beta"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.DESCRIPTION_File]
 
     def obtain_invalid_content_items(
@@ -39,6 +37,7 @@ class IsValidBetaDescriptionValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message,
                 content_object=content_item,
+                path=content_item.description_file.file_path,
             )
             for content_item in content_items
             if content_item.is_beta

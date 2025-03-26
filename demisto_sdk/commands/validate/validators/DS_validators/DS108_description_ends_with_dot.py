@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import ClassVar, Dict, Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import VALID_SENTENCE_SUFFIX, GitStatuses
+from demisto_sdk.commands.common.constants import VALID_SENTENCE_SUFFIX
 from demisto_sdk.commands.common.tools import is_string_ends_with_url
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -23,7 +23,6 @@ class DescriptionEndsWithDotValidator(BaseValidator[ContentTypes]):
     fix_message = "Added dots ('.') at the end of the following description fields:{0}"
     related_field = "description, comment"
     is_auto_fixable = True
-    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
     lines_without_dots: ClassVar[Dict[str, dict]] = {}
 
     def obtain_invalid_content_items(

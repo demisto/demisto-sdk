@@ -119,7 +119,7 @@ class ValidateManager:
             BaseValidator.graph_interface.close()
         self.add_invalid_content_items()
         return self.validation_results.post_results(
-            only_throw_warning=self.configured_validations.warning
+            config_file_content=self.configured_validations
         )
 
     def filter_validators(self) -> List[BaseValidator]:

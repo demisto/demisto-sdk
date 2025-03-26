@@ -67,7 +67,14 @@ def parse_error_response(error: ApiException) -> str:
 
         elif reason in ("Bad Request", "Forbidden"):
             error_body = json.loads(error.body)
-            message = error_body.get("error", "")
+            message = next(
+                (
+                    error_body.get(key)
+                    for key in ["error", "detail", "title"]
+                    if error_body.get(key)
+                ),
+                "",
+            )
             if message.startswith("[") and message.endswith("]"):
                 message = message[1:-1]
 

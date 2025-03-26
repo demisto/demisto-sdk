@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -36,7 +35,6 @@ class CustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
         RelatedFileType.DESCRIPTION_File,
         RelatedFileType.RELEASE_NOTE,
     ]
-    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.ADDED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

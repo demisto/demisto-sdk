@@ -21,6 +21,10 @@ LOG_FILE_NAME = "demisto_sdk_debug.log"
 
 NEO4J_DEFAULT_VERSION = "5.22.0"
 
+# Colors
+RED = "\033[91m"
+NO_COLOR = "\033[0m"
+
 # --- Environment Variables ---
 # General
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
@@ -52,6 +56,7 @@ AUTH_ID = "XSIAM_AUTH_ID"
 XSIAM_TOKEN = "XSIAM_TOKEN"
 XSIAM_COLLECTOR_TOKEN = "XSIAM_COLLECTOR_TOKEN"
 DEMISTO_VERIFY_SSL = "DEMISTO_VERIFY_SSL"
+PROJECT_ID = "PROJECT_ID"
 
 # Logging
 DEMISTO_SDK_LOG_FILE_PATH = "DEMISTO_SDK_LOG_FILE_PATH"
@@ -173,6 +178,7 @@ DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
 DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
+DEMISTO_SDK_MARKETPLACE_PLATFORM_INTERNAL_PROD = "marketplace-cortex-content-dev"
 
 # Server Types
 XSOAR_SERVER_TYPE = "XSOAR"
@@ -269,6 +275,7 @@ class FileType(StrEnum):
     CASE_LAYOUT_RULE = "caselayoutrule"
     CASE_FIELD = "casefield"
     CASE_LAYOUT = "caselayout"
+    VERSION_CONFIG = "version_config"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -943,6 +950,7 @@ PACKS_FOLDER = "Packs"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
 CONF_JSON_FILE_NAME = "conf.json"
+VERSION_CONFIG_FILE_NAME = "version_config.json"
 
 PYTHON_TEST_REGEXES = [PACKS_SCRIPT_TEST_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX]
 
@@ -1259,7 +1267,7 @@ TESTS_AND_DOC_DIRECTORIES = TESTS_DIRECTORIES + DOCS_DIRECTORIES
 VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "Pipfile",
     "Pipfile.lock",
-    "command_examples",
+    "command_examples.txt",
     "pack_metadata.json",
     "testdata",
     "test_data",
@@ -1328,7 +1336,6 @@ class PB_Status:
     IN_PROGRESS = "inprogress"
     FAILED_DOCKER_TEST = "failed_docker_test"
     CONFIGURATION_FAILED = "failed_configuration"
-    SECOND_PLAYBACK_REQUIRED = "second_playback_required"
 
 
 # change log regexes
@@ -1953,6 +1960,7 @@ class MarketplaceVersions(StrEnum):
     XPANSE = "xpanse"
     XSOAR_SAAS = "xsoar_saas"
     XSOAR_ON_PREM = "xsoar_on_prem"
+    PLATFORM = "platform"
 
 
 MarketplaceVersionToMarketplaceName = {
@@ -1960,6 +1968,7 @@ MarketplaceVersionToMarketplaceName = {
     MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
     MarketplaceVersions.XPANSE.value: DEMISTO_SDK_MARKETPLACE_XPANSE_DIST,
     MarketplaceVersions.XSOAR_SAAS.value: DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST,
+    MarketplaceVersions.PLATFORM.value: DEMISTO_SDK_MARKETPLACE_PLATFORM_INTERNAL_PROD,
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
@@ -1968,8 +1977,23 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR_ON_PREM: "Config/core_packs_list.json",
     MarketplaceVersions.MarketplaceV2: "Config/core_packs_mpv2_list.json",
     MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
+    MarketplaceVersions.PLATFORM: "Config/core_packs_platform_list.json",
 }
 
+
+class PlatformSupportedModules(StrEnum):
+    C1 = "C1"
+    C3 = "C3"
+    XO = "X0"
+    X1 = "X1"
+    X3 = "X3"
+    X5 = "X5"
+    ENT_PLUS = "ENT_PLUS"
+
+
+DEFAULT_SUPPORTED_MODULES: list[str] = [
+    product_code.value for product_code in PlatformSupportedModules
+]
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
     "html": Version("6.1.0"),
@@ -2218,3 +2242,26 @@ INVALID_IMAGE_PATH_REGEX = (
 # Test types:
 TEST_PLAYBOOKS = "TestPlaybooks"
 TEST_MODELING_RULES = "TestModelingRules"
+TEST_USE_CASES = "TestUseCases"
+
+PB_RELEASE_NOTES_FORMAT = {
+    "This playbook addresses the following alerts:": 5,
+    "Playbook Stages:": 5,
+    "Requirements:": 5,
+    "Triage:": 6,
+    "Early Containment:": 6,
+    "Investigation:": 6,
+    "Containment:": 6,
+}
+
+INCIDENT_COMMANDS: list[str] = [
+    "xsoar-search-incidents",
+    "xsoar-get-incident",
+]
+
+MIRRORING_COMMANDS: list[str] = [
+    "get-mapping-fields",
+    "get-remote-data",
+    "get-modified-remote-data",
+    "update-remote-system",
+]

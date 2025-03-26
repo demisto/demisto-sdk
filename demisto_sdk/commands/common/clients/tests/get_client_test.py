@@ -273,7 +273,7 @@ def test_get_client_from_server_type_unauthorized_exception(mocker):
         )
 
 
-def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
+def test_get_client_from_server_type_base_url_is_not_api_url(mocker, requests_mock):
     """
     Given:
      - /ioc-rules endpoint that is not valid
@@ -300,11 +300,15 @@ def test_get_client_from_server_type_base_url_is_not_api_url(mocker):
     mocker.patch.object(
         DefaultApi, "generic_request", side_effect=_xsoar_generic_request_side_effect
     )
+    base_url = "https://test5.com"
+    requests_mock.get(
+        f"{base_url}/public_api/v1/healthcheck",
+        json={"status": "available"},
+        status_code=200,
+    )
 
     with pytest.raises(ValueError):
-        get_client_from_server_type(
-            base_url="https://test5.com", api_key="test", auth_id="1"
-        )
+        get_client_from_server_type(base_url=base_url, api_key="test", auth_id="1")
 
 
 @pytest.mark.parametrize(

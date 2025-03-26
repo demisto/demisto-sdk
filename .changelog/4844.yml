@@ -1,0 +1,4 @@
+changes:
+- description: Changed the unify process to add a constant of the pack version to each Python file.
+  type: internal
+pr_number: 4844

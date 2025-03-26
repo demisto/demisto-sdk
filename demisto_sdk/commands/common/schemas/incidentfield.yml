@@ -106,6 +106,10 @@ mapping:
     sequence:
     - type: str
       enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str
   Aliases:
     type: seq
     sequence:

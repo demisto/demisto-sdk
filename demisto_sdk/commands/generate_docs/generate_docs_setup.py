@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 import typer
 
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import NO_COLOR, RED, FileType
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
@@ -123,17 +123,15 @@ def generate_docs(
         update_command_args_from_config_file("generate-docs", ctx.params)
         input_path_str: str = ctx.params.get("input", "")
         if not (input_path := Path(input_path_str)).exists():
-            raise Exception(f"<red>Input {input_path_str} does not exist.</red>")
+            raise Exception(f"Input {input_path_str} does not exist.")
 
         if (output_path := ctx.params.get("output")) and not Path(output_path).is_dir():
-            raise Exception(
-                f"<red>Output directory {output_path} is not a directory.</red>"
-            )
+            raise Exception(f"Output directory {output_path} is not a directory.")
 
         if input_path.is_file():
             if input_path.suffix.lower() not in {".yml", ".md"}:
                 raise Exception(
-                    f"<red>Input {input_path} is not a valid yml or readme file.</red>"
+                    f"Input {input_path} is not a valid yml or readme file."
                 )
             _generate_docs_for_file(ctx.params)
 
@@ -145,13 +143,13 @@ def generate_docs(
 
         else:
             raise Exception(
-                f"<red>Input {input_path} is neither a valid yml file, a 'Playbooks' folder, nor a readme file.</red>"
+                f"Input {input_path} is neither a valid yml file, a 'Playbooks' folder, nor a readme file."
             )
 
         return 0
 
-    except Exception:
-        typer.echo("Failed generating docs", err=True)
+    except Exception as e:
+        typer.echo(f"{RED}Failed generating docs: {str(e)}{NO_COLOR}", err=True)
         raise typer.Exit(1)
 
 
@@ -171,65 +169,58 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     use_graph = kwargs.get("graph", True)
     force = kwargs.get("force", False)
 
-    try:
-        file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
-        if file_type not in {
-            FileType.INTEGRATION,
-            FileType.SCRIPT,
-            FileType.PLAYBOOK,
-            FileType.README,
-        }:
-            raise Exception(
-                "<red>File is not an Integration, Script, Playbook, or README.</red>"
-            )
+    file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
+    if file_type not in {
+        FileType.INTEGRATION,
+        FileType.SCRIPT,
+        FileType.PLAYBOOK,
+        FileType.README,
+    }:
+        raise Exception("File is not an Integration, Script, Playbook, or README.")
 
-        if file_type == FileType.INTEGRATION:
-            typer.echo(f"Generating {file_type.value.lower()} documentation")
-            use_cases = kwargs.get("use_cases")
-            command_permissions = kwargs.get("command_permissions")
-            return generate_integration_doc(
-                input_path=input_path,
-                output=output_path,
-                use_cases=use_cases,
-                examples=examples,
-                permissions=permissions,
-                command_permissions=command_permissions,
-                limitations=limitations,
-                insecure=insecure,
-                command=command,
-                old_version=old_version,
-                skip_breaking_changes=skip_breaking_changes,
-                force=force,
-            )
-        elif file_type == FileType.SCRIPT:
-            typer.echo(f"Generating {file_type.value.lower()} documentation")
-            return generate_script_doc(
-                input_path=input_path,
-                output=output_path,
-                examples=examples,
-                permissions=permissions,
-                limitations=limitations,
-                insecure=insecure,
-                use_graph=use_graph,
-            )
-        elif file_type == FileType.PLAYBOOK:
-            typer.echo(f"Generating {file_type.value.lower()} documentation")
-            return generate_playbook_doc(
-                input_path=input_path,
-                output=output_path,
-                permissions=permissions,
-                limitations=limitations,
-                custom_image_path=custom_image_path,
-            )
-        elif file_type == FileType.README:
-            typer.echo(f"Adding template to {file_type.value.lower()} file")
-            return generate_readme_template(
-                input_path=Path(input_path), readme_template=readme_template
-            )
+    if file_type == FileType.INTEGRATION:
+        typer.echo(f"Generating {file_type.value.lower()} documentation")
+        use_cases = kwargs.get("use_cases")
+        command_permissions = kwargs.get("command_permissions")
+        return generate_integration_doc(
+            input_path=input_path,
+            output=output_path,
+            use_cases=use_cases,
+            examples=examples,
+            permissions=permissions,
+            command_permissions=command_permissions,
+            limitations=limitations,
+            insecure=insecure,
+            command=command,
+            old_version=old_version,
+            skip_breaking_changes=skip_breaking_changes,
+            force=force,
+        )
+    elif file_type == FileType.SCRIPT:
+        typer.echo(f"Generating {file_type.value.lower()} documentation")
+        return generate_script_doc(
+            input_path=input_path,
+            output=output_path,
+            examples=examples,
+            permissions=permissions,
+            limitations=limitations,
+            insecure=insecure,
+            use_graph=use_graph,
+        )
+    elif file_type == FileType.PLAYBOOK:
+        typer.echo(f"Generating {file_type.value.lower()} documentation")
+        return generate_playbook_doc(
+            input_path=input_path,
+            output=output_path,
+            permissions=permissions,
+            limitations=limitations,
+            custom_image_path=custom_image_path,
+        )
+    elif file_type == FileType.README:
+        typer.echo(f"Adding template to {file_type.value.lower()} file")
+        return generate_readme_template(
+            input_path=Path(input_path), readme_template=readme_template
+        )
 
-        else:
-            raise Exception(f"<red>File type {file_type.value} is not supported.</red>")
-
-    except Exception:
-        typer.echo(f"Failed generating docs for {input_path}", err=True)
-        raise typer.Exit(1)
+    else:
+        raise Exception(f"File type {file_type.value} is not supported.")

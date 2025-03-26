@@ -19,30 +19,32 @@ class IsPyFileContainCopyRightSectionValidator(BaseValidator[ContentTypes]):
     error_code = "BA119"
     description = "Validate that the python file doesn't have a copyright section with the words - BSD, MIT, Copyright, proprietary."
     rationale = "Content in the Cortex marketplace is licensed under the MIT license."
-    error_message = "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\n{0}"
+    error_message = "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): {0}."
     related_field = "Python code file, Python test code file."
     related_file_type = [RelatedFileType.CODE_FILE, RelatedFileType.TEST_CODE_FILE]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        return [
-            ValidationResult(
-                validator=self,
-                message=self.error_message.format(
-                    "\n".join(
-                        [
-                            f"The {file} contains copyright key words in line(s) {', '.join(malformed_lines)}."
-                            for file, malformed_lines in malformed_files.items()
-                        ]
+        validation_results: List[ValidationResult] = []
+        for content_item in content_items:
+            if content_item.type == "python" and (
+                malformed_files := self.get_malformed_files(content_item)
+            ):
+                for malformed_file, malformed_lines in malformed_files.items():
+                    validation_results.append(
+                        ValidationResult(
+                            validator=self,
+                            message=self.error_message.format(
+                                ", ".join(malformed_lines)
+                            ),
+                            content_object=content_item,
+                            path=content_item.code_file.file_path
+                            if malformed_file == "code file"
+                            else content_item.test_code_file.file_path,
+                        )
                     )
-                ),
-                content_object=content_item,
-            )
-            for content_item in content_items
-            if content_item.type == "python"
-            and (malformed_files := self.get_malformed_files(content_item))
-        ]
+        return validation_results
 
     def get_malformed_files(self, content_item: ContentTypes) -> Dict[str, List[str]]:
         malformed_files = {}

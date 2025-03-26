@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.tools import (
     collect_all_inputs_from_inputs_section,
@@ -22,7 +21,6 @@ class IsInputKeyNotInTasksValidator(BaseValidator[ContentTypes]):
     rationale = "For more info, see: https://xsoar.pan.dev/docs/playbooks/playbooks-overview#inputs-and-outputs"
     error_message = "The playbook '{playbook_name}' contains the following inputs that are not used in any of its tasks: {inputs_not_in_use}"
     related_field = "input"
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

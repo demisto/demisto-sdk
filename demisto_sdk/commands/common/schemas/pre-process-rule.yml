@@ -56,6 +56,9 @@ mapping:
     type: seq
     sequence:
     - include: readyNewEventFilters_schema
+  scriptID:
+    type: str
+    required: false
   scriptName:
     type: str
     required: true

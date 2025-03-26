@@ -2,7 +2,10 @@ from typing import Any, List, Literal, Optional, Union
 
 from pydantic import Field
 
-from demisto_sdk.commands.common.constants import IncidentFieldType, MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    IncidentFieldType,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseOptionalVersionJson,
@@ -67,9 +70,10 @@ class _StrictCaseField(BaseStrictModel):
     to_server_version: Optional[str] = Field(None, alias="toServerVersion")
     open_ended: Optional[bool] = Field(None, alias="openEnded")
     template: Optional[str] = None
-    marketplaces: Literal[MarketplaceVersions.MarketplaceV2] = Field(
-        default_factory=list
-    )
+    marketplaces: Literal[
+        MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM
+    ] = Field(default_factory=list)
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
     aliases: Optional[List[StrictAliases]] = Field(None, alias="Aliases")
     alias_to: Optional[str] = Field(None, alias="aliasTo")
 

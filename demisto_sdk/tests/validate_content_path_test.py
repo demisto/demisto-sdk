@@ -83,6 +83,7 @@ def test_xsiam_report_file_valid():
     (
         pytest.param("wrongPrefix", "json", id="bad name, good suffix"),
         pytest.param("myPack", "py", id="good name, bad suffix"),
+        pytest.param("image2", "png", id="bad name, good suffix"),
     ),
 )
 def test_xsiam_report_file_invalid(file_prefix: str, suffix: str):
@@ -450,7 +451,7 @@ def test_integration_script_file_invalid(file_name: str):
         ".vulture_whitelist.py",
         "README.md",
         f"{DUMMY_INTEGRATION_NAME}_description.md",
-        "command_examples",
+        "command_examples.txt",
         ".pylintrc",
     ],
 )

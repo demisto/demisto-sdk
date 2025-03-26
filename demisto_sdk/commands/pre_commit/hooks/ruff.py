@@ -44,7 +44,7 @@ class RuffHook(Hook):
             )
             safe_update_hook_args(hook, target_version)
             if os.getenv("GITHUB_ACTIONS", False):
-                hook["args"].append("--format=github")
+                hook["args"].append("--output-format=github")
             hook["files"] = join_files(
                 {
                     file

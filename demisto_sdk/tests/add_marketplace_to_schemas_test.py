@@ -41,6 +41,7 @@ def test_add_key(mocker):
                 "mode:xsoar_on_prem": {"type": "string"},
                 "mode:marketplacev2": {"type": "string"},
                 "mode:xpanse": {"type": "string"},
+                "mode:platform": {"type": "string"},
             },
         },
         "isfetch:xsoar": {"type": "string"},
@@ -48,4 +49,5 @@ def test_add_key(mocker):
         "isfetch:xsoar_saas": {"type": "string"},
         "isfetch:xsoar_on_prem": {"type": "string"},
         "isfetch:xpanse": {"type": "string"},
+        "isfetch:platform": {"type": "string"},
     }

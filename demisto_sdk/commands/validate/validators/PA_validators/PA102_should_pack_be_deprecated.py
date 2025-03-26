@@ -25,8 +25,8 @@ class ShouldPackBeDeprecatedValidator(BaseValidator[ContentTypes]):
         "The Pack {0} should be deprecated, as all its content items are deprecated.\n"
         "The name of the pack in the pack_metadata.json should end with (Deprecated).\n"
         "The description of the pack in the pack_metadata.json should be one of the following formats:\n"
-        "1. 'Deprecated. Use <PACK_NAME> instead.'\n"
-        "2. 'Deprecated. <REASON> No available replacement.'"
+        "1. 'Deprecated. Use PACK_NAME instead.'\n"
+        "2. 'Deprecated. REASON No available replacement.'"
     )
     fix_message = (
         "Deprecated the pack {0}.\n"
@@ -35,7 +35,7 @@ class ShouldPackBeDeprecatedValidator(BaseValidator[ContentTypes]):
     )
     related_field = "deprecated"
     is_auto_fixable = True
-    expected_git_statuses = [GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

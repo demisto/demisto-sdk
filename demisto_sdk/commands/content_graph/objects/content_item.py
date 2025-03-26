@@ -34,6 +34,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
+    append_supported_modules,
     replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
@@ -273,10 +274,13 @@ class ContentItem(BaseContent):
         if not self.path.exists():
             raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
-        logger.debug(f"preparing {self.path}")
-
         # Replace incorrect marketplace references
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
+        if current_marketplace == MarketplaceVersions.PLATFORM:
+            data = append_supported_modules(data, self.supportedModules)
+        else:
+            if "supportedModules" in data:
+                del data["supportedModules"]
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(
@@ -322,6 +326,7 @@ class ContentItem(BaseContent):
             "fromversion",
             "toversion",
             "deprecated",
+            "supportedModules",
         }
 
     @property
@@ -360,6 +365,7 @@ class ContentItem(BaseContent):
                 data=self.prepare_for_upload(current_marketplace=marketplace),
                 handler=self.handler,
             )
+            logger.debug(f"path to dumped file: {str(dir / self.normalize_name)}")
         except FileNotFoundError as e:
             logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
 

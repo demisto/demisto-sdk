@@ -27,8 +27,8 @@ class IsDeprecatedCorrectlyValidator(BaseValidator[ContentTypes]):
     )
     error_message = (
         "The description of all deprecated {0} should follow one of the formats:"
-        '1. "Deprecated. Use <CONTENT_ITEM_NAME> instead."'
-        '2. "Deprecated. <REASON> No available replacement."'
+        '1. "Deprecated. Use CONTENT_ITEM_NAME instead."'
+        '2. "Deprecated. REASON No available replacement."'
     )
     related_field = "description, comment"
 

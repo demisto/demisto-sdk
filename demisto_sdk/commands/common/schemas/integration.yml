@@ -176,9 +176,16 @@ mapping:
     type: seq
     sequence:
     - type: str
-      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem', 'platform']
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str
   hybrid:
     type: bool
+  supportsquickactions:
+      type: bool
+
 
 # integration->configuration
   name:xsoar:
@@ -287,6 +294,8 @@ schema;command_schema:
     name:
       type: str
       required: true
+    prettyname:
+      type: str
     execution:
       type: bool
     description:
@@ -316,7 +325,8 @@ schema;command_schema:
       type: bool
     polling:
       type: bool
-
+    quickaction:
+      type: bool
 # int
     name:xsoar:
       type: str
@@ -354,6 +364,14 @@ schema;argument_schema:
     name:
       type: str
       required: true
+    prettyname:
+      type: str
+    prettypredefined:
+      allowempty: true
+      type: map
+      mapping:
+        ".*":
+          type: str
     required:
       type: bool
     default:

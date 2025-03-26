@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     AlertsFilter,
 )
@@ -21,6 +22,8 @@ class _StrictLayoutRule(BaseStrictModel):
     )  # not using the base because it's required
     description: Optional[str] = None
     alerts_filter: Optional[AlertsFilter] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    marketplaces: Optional[List[MarketplaceVersions]] = None
 
 
 StrictLayoutRule = create_model(

@@ -23,8 +23,8 @@ class DeprecatedDescriptionValidator(BaseValidator[ContentTypes]):
     error_message = (
         "The deprecated playbook '{playbook_name}' has invalid description.\n"
         "The description of all deprecated playbooks should follow one of the formats:\n"
-        '1. "Deprecated. Use <PLAYBOOK_NAME> instead."\n'
-        '2. "Deprecated. <REASON> No available replacement."'
+        '1. "Deprecated. Use PLAYBOOK_NAME instead."\n'
+        '2. "Deprecated. REASON No available replacement."'
     )
     related_field = "description"
     is_auto_fixable = False

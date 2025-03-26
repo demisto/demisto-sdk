@@ -598,6 +598,14 @@ def test_parse_error_response__exception(reason: str):
         parse_error_response(api_exception)
         == "Error message\nTry checking your API key configuration."
     )
+    api_exception.body = json.dumps(
+        {"status": 400, "error": "", "detail": "Error importing file"}
+    )
+    assert parse_error_response(api_exception) == "Error importing file"
+    api_exception.body = json.dumps(
+        {"status": 400, "error": "", "detail": "", "title": "Error Title"}
+    )
+    assert parse_error_response(api_exception) == "Error Title"
 
 
 class TestPrintSummary:

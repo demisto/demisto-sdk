@@ -42,7 +42,6 @@ class Test(StrictBaseModel):
     integrations: Optional[Union[str, List[str]]] = None
     instance_names: Optional[Union[str, List[str]]] = None
     timeout: Optional[int] = None
-    is_mockable: Optional[bool] = None
     memory_threshold: Optional[int] = None
     pid_threshold: Optional[int] = None
     has_api: Optional[bool] = None
@@ -80,7 +79,6 @@ class ConfJSON(StrictBaseModel):
     skipped_integrations: Dict[str, str]
     native_nightly_packs: Optional[List[str]]
     nightly_packs: List[str]
-    unmockable_integrations: Dict[str, str]
     parallel_integrations: List[str]
     private_tests: List[str]
     docker_thresholds: DockerThresholds
@@ -102,7 +100,6 @@ class ConfJSON(StrictBaseModel):
                     itertools.chain.from_iterable(
                         always_iterable(test.integrations) for test in self.tests
                     ),
-                    self.unmockable_integrations.keys(),
                     self.parallel_integrations,
                     (
                         v

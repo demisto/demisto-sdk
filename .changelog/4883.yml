@@ -1,4 +1,4 @@
 changes:
-- description: Fix log level for file dumps.
+- description: Updated log level for file dumps.
   type: fix
 pr_number: 4883

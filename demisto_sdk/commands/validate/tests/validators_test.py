@@ -909,3 +909,63 @@ def test_check_metadata_version_bump_on_content_changes(mocker, repo):
 
     # Assert the PA114 validation will run
     assert version_bump_validator
+
+
+@pytest.mark.parametrize(
+    "config_file_content, expected_results, allow_ignore_all_errors",
+    [
+        pytest.param(
+            {
+                "use_git": {
+                    "select": ["BA101", "BC100", "PA108"],
+                    "warning": ["BA100"],
+                },
+                "ignorable_errors": ["PA108"],
+            },
+            ConfiguredValidations(
+                ["BA101", "BC100", "PA108"], ["BA100"], ["PA108"], {}
+            ),
+            False,
+        ),
+        pytest.param(
+            {
+                "use_git": {
+                    "select": ["BA101", "BC100", "PA108"],
+                    "warning": ["BA100"],
+                },
+                "ignorable_errors": ["PA108"],
+            },
+            ConfiguredValidations(
+                ["BA101", "BC100", "PA108"],
+                ["BA100"],
+                ["BA101", "BC100", "PA108", "BA100"],
+                {},
+            ),
+            True,
+        ),
+    ],
+)
+def test_config_reader_ignore_all_flag(
+    mocker: MockerFixture,
+    config_file_content: Dict,
+    expected_results: ConfiguredValidations,
+    allow_ignore_all_errors: bool,
+):
+    """
+    Given
+    a config file content mock and a allow_ignore_all_errors flag
+        - Case 1: allow_ignore_all_errors set to False.
+        - Case 2: allow_ignore_all_errors set to True.
+    When
+    - Calling the gather_validations_from_conf function.
+    Then
+        - Case 1: Make sure the retrieved results contains the ignorable_errors mentioned in the ignorable_errors section.
+        - Case 2: Make sure the retrieved results contains all the error codes that appears in the select & warning sections.
+    """
+    mocker.patch.object(toml, "load", return_value=config_file_content)
+    config_reader = ConfigReader(allow_ignore_all_errors=allow_ignore_all_errors)
+    results: ConfiguredValidations = config_reader.read()
+    assert results.select == expected_results.select
+    assert results.ignorable_errors == expected_results.ignorable_errors
+    assert results.warning == expected_results.warning
+    assert results.support_level_dict == expected_results.support_level_dict

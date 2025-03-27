@@ -1,0 +1,4 @@
+changes:
+- description: Added validation IM112, Verify the images in `doc_files` directory are not larger than 2 MB.
+  type: feature
+pr_number: 4526

@@ -42,7 +42,7 @@ exclude = [
 python = ">=3.9,<3.13"
 autopep8 = "^2.0.4"
 bandit = "^1.7.4"
-mypy = "^0.982"
+mypy = ">=0.982,<1.16"
 pylint = "^3.3.2"
 vulture = "^2.3"
 beautifulsoup4 = "^4.11.1"

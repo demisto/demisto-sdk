@@ -1193,6 +1193,7 @@ PACK_METADATA_PARTNER = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 PACK_METADATA_PARTNER_EMAIL_LIST = json.dumps(
@@ -1208,6 +1209,7 @@ PACK_METADATA_PARTNER_EMAIL_LIST = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 PACK_METADATA_STRINGS_EMAIL_LIST = json.dumps(
@@ -1223,6 +1225,7 @@ PACK_METADATA_STRINGS_EMAIL_LIST = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 PACK_METADATA_PARTNER_NO_EMAIL = json.dumps(
@@ -1238,6 +1241,7 @@ PACK_METADATA_PARTNER_NO_EMAIL = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 PACK_METADATA_PARTNER_NO_URL = json.dumps(
@@ -1253,6 +1257,7 @@ PACK_METADATA_PARTNER_NO_URL = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 PACK_METADATA_XSOAR = json.dumps(
@@ -1268,6 +1273,7 @@ PACK_METADATA_XSOAR = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 
@@ -1284,6 +1290,7 @@ PACK_METADATA_COMMUNITY = json.dumps(
         "tags": [],
         "useCases": [],
         "keywords": [],
+        "created": "2020-06-15T11:49:45Z",
     }
 )
 
@@ -1346,7 +1353,6 @@ def test_unify_partner_contributed_pack(mocker, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
@@ -1510,7 +1516,6 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
-
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_URL)
@@ -1619,7 +1624,6 @@ def test_unify_community_contributed(mocker, repo):
     Then
         - Ensure unify create unified file with community detailed description.
     """
-
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_COMMUNITY)

@@ -376,6 +376,13 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             prepare_content
         )
 
+    if command_name == "xsoar-lint" or is_pre_commit or register_all:
+        from demisto_sdk.commands.xsoar_linter.xsoar_linter_setup import xsoar_linter
+
+        app.command(name="xsoar-lint", help="Runs the xsoar lint on the given paths.")(
+            xsoar_linter
+        )
+
     if command_name == "xsoar-config-file-update" or register_all:
         from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file_setup import (
             xsoar_config_file_update,

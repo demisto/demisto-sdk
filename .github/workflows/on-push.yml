@@ -245,7 +245,6 @@ jobs:
           fetch-depth: 0
           repository: demisto/content
           path: content
-          ref: remove-lint
 
       - name: Cache Pre commit
         id: cache-pre-commit

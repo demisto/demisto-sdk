@@ -292,7 +292,6 @@ def test_xsoar_linter_errors(
     """
 
     mocker.patch("demisto_sdk.commands.common.docker_helper.docker_login", return_value=False)
-    mocker.patch.object(linter.Linter, "_update_support_level")
     test_path = Path(f"{GIT_ROOT}/demisto_sdk/tests/test_files")
     runner = linter.Linter(
         content_repo=test_path,

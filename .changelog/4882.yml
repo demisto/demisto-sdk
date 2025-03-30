@@ -1,4 +1,4 @@
 changes:
-- description: Close instead of deleting a successful incident during a test playbook in XSOAR 6.
+- description: Updated the ***test-content*** command to close successful incidents instead of deleting them during a test playbook run in XSOAR 6.
   type: internal
 pr_number: 4882

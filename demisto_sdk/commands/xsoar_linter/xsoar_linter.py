@@ -17,7 +17,9 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.pre_commit.resources.pylint_plugins.base_checker import base_msg
+from demisto_sdk.commands.pre_commit.resources.pylint_plugins.base_checker import (
+    base_msg,
+)
 from demisto_sdk.commands.pre_commit.resources.pylint_plugins.certified_partner_level_checker import (
     cert_partner_msg,
 )

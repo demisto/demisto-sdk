@@ -23,6 +23,7 @@ class _StrictModelingRule(BaseStrictModel):
     deprecated: Optional[bool] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
+
 StrictModelingRule = create_model(
     model_name="StrictModelingRule",
     base_models=(

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -21,6 +21,7 @@ class _StrictModelingRule(BaseStrictModel):
     schema_: Optional[str] = Field(None, alias="schema")
     comment: Optional[str] = None
     deprecated: Optional[bool] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictModelingRule = create_model(

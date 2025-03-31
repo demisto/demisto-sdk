@@ -1,0 +1,4 @@
+changes:
+- description: Fixed support for the newly introduced *supportedModules* field in Modeling Rules and Parsing Rules.
+  type: fix
+pr_number: 4885

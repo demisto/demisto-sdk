@@ -448,15 +448,6 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             generate_modeling_rules
         )
 
-    if command_name == "lint" or register_all:
-        from demisto_sdk.commands.lint.lint_setup import lint
-
-        app.command(
-            name="lint",
-            help="Deprecated, use demisto-sdk pre-commit instead.",
-            hidden=True,
-        )(lint)
-
     if command_name == "create-id-set" or register_all:
         from demisto_sdk.commands.create_id_set.create_id_set_setup import create_id_set
 

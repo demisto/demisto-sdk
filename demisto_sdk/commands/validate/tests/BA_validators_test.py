@@ -1446,7 +1446,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/XDRCTemplates/pack_205_xdrc_template/xdrc_template.json' and all related files were changed from '{}' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/XDRCTemplates/{}_xdrc_template/xdrc_template.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (

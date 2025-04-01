@@ -1,4 +1,5 @@
 import copy
+import re
 from pathlib import Path
 from typing import List
 
@@ -1278,14 +1279,14 @@ def test_IsEntityNameContainExcludedWordValidator(
             [create_pack_object(), create_pack_object()],
             1,
             [
-                "Pack for content item '/newPackName' and all related files were changed from 'pack_171' to 'newPackName', please undo."
+                "Pack for content item '/newPackName' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
             [create_integration_object(), create_integration_object()],
             1,
             [
-                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_173' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1295,7 +1296,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/ParsingRules/TestParsingRule/TestParsingRule.yml' and all related files were changed from 'pack_175' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/ParsingRules/TestParsingRule/TestParsingRule.yml' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1305,7 +1306,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/CorrelationRules/correlation_rule.yml' and all related files were changed from 'pack_177' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/CorrelationRules/correlation_rule.yml' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1315,7 +1316,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Playbooks/playbook-0.yml' and all related files were changed from 'pack_179' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Playbooks/playbook-0.yml' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1325,7 +1326,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/ModelingRules/modelingrule_0/modelingrule_0.yml' and all related files were changed from 'pack_181' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/ModelingRules/modelingrule_0/modelingrule_0.yml' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1335,7 +1336,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_183' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1345,7 +1346,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Scripts/script0/script0.yml' and all related files were changed from 'pack_185' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Scripts/script0/script0.yml' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1355,7 +1356,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Classifiers/classifier-test_classifier.json' and all related files were changed from 'pack_187' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Classifiers/classifier-test_classifier.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1365,7 +1366,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Lists/list-list.json' and all related files were changed from 'pack_189' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Lists/list-list.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1375,7 +1376,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Jobs/job-job.json' and all related files were changed from 'pack_191' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Jobs/job-job.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1385,7 +1386,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Dashboards/dashboard-dashboard.json' and all related files were changed from 'pack_193' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Dashboards/dashboard-dashboard.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1395,7 +1396,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/IncidentTypes/incidenttype-incident_type.json' and all related files were changed from 'pack_195' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/IncidentTypes/incidenttype-incident_type.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1405,7 +1406,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/IncidentFields/incidentfield-incident_field.json' and all related files were changed from 'pack_197' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/IncidentFields/incidentfield-incident_field.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1415,7 +1416,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Reports/report-report.json' and all related files were changed from 'pack_199' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Reports/report-report.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1425,7 +1426,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/XSIAMReports/xsiam_report.json' and all related files were changed from 'pack_201' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/XSIAMReports/xsiam_report.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1435,7 +1436,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/XSIAMDashboards/xsiam_dashboard.json' and all related files were changed from 'pack_203' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/XSIAMDashboards/xsiam_dashboard.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1445,7 +1446,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/XDRCTemplates/pack_205_xdrc_template/xdrc_template.json' and all related files were changed from 'pack_205' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/XDRCTemplates/pack_205_xdrc_template/xdrc_template.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1455,7 +1456,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/AssetsModelingRules/assets_modeling_rule/assets_modeling_rule.yml' and all related files were changed from 'pack_207' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/AssetsModelingRules/assets_modeling_rule/assets_modeling_rule.yml' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1465,7 +1466,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Triggers/trigger.json' and all related files were changed from 'pack_209' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Triggers/trigger.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1475,7 +1476,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Layouts/layout-layout.json' and all related files were changed from 'pack_211' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Layouts/layout-layout.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1485,7 +1486,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Widgets/widget-widget.json' and all related files were changed from 'pack_213' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Widgets/widget-widget.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1495,7 +1496,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/IndicatorFields/indicatorfield-indicator_field.json' and all related files were changed from 'pack_215' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/IndicatorFields/indicatorfield-indicator_field.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1505,7 +1506,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Wizards/wizard-test_wizard.json' and all related files were changed from 'pack_217' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Wizards/wizard-test_wizard.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1515,7 +1516,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/GenericDefinitions/genericdefinition-generic_definition.json' and all related files were changed from 'pack_219' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/GenericDefinitions/genericdefinition-generic_definition.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1525,7 +1526,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/GenericFields/generic_field/genericfield-generic_field.json' and all related files were changed from 'pack_221' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/GenericFields/generic_field/genericfield-generic_field.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1535,7 +1536,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/GenericTypes/generic_type/generictype-generic_type.json' and all related files were changed from 'pack_223' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/GenericTypes/generic_type/generictype-generic_type.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1545,7 +1546,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/GenericModules/genericmodule-generic_module.json' and all related files were changed from 'pack_225' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/GenericModules/genericmodule-generic_module.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1555,7 +1556,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Classifiers/classifier-mapper-incoming_mapper.json' and all related files were changed from 'pack_227' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-incoming_mapper.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1565,7 +1566,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Classifiers/classifier-mapper-outgoing_mapper.json' and all related files were changed from 'pack_229' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-outgoing_mapper.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1575,7 +1576,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/IndicatorTypes/reputation-indicator_type.json' and all related files were changed from 'pack_231' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/IndicatorTypes/reputation-indicator_type.json' and all related files were changed from '{}' to 'newPackName', please undo."
             ],
         ),
     ],
@@ -1605,12 +1606,9 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
     content_items[1].path = new_path
     results = PackNameValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
-    assert all(
-        [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_msgs)
-        ]
-    )
+    for result, expected_msg in zip(results, expected_msgs):
+        pack_number = pack_number = re.search(r"pack_\d+", result.message).group()
+        assert result.message == expected_msg.format(pack_number)
 
 
 @pytest.mark.parametrize(

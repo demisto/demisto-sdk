@@ -17,17 +17,19 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import base_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import (
+from demisto_sdk.commands.pre_commit.resources.pylint_plugins.base_checker import (
+    base_msg,
+)
+from demisto_sdk.commands.pre_commit.resources.pylint_plugins.certified_partner_level_checker import (
     cert_partner_msg,
 )
-from demisto_sdk.commands.lint.resources.pylint_plugins.community_level_checker import (
+from demisto_sdk.commands.pre_commit.resources.pylint_plugins.community_level_checker import (
     community_msg,
 )
-from demisto_sdk.commands.lint.resources.pylint_plugins.partner_level_checker import (
+from demisto_sdk.commands.pre_commit.resources.pylint_plugins.partner_level_checker import (
     partner_msg,
 )
-from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker import (
+from demisto_sdk.commands.pre_commit.resources.pylint_plugins.xsoar_level_checker import (
     xsoar_msg,
 )
 

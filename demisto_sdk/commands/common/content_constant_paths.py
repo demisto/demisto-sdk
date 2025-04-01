@@ -30,7 +30,7 @@ PYTHONPATH = [
         Path(CONTENT_PATH),
         COMMON_SERVER_PYTHON_PATH,
         DEMISTO_MOCK_PATH,
-        Path(__file__).parent.parent / "lint" / "resources" / "pylint_plugins",
+        Path(__file__).parent.parent / "pre_commit" / "resources" / "pylint_plugins",
     ]
 ]
 

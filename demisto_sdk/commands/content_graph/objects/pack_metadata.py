@@ -134,7 +134,8 @@ class PackMetadata(BaseModel):
             }
             if self.default_data_source_name
             and self.default_data_source_id
-            and marketplace in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
+            and marketplace
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             and not self.hybrid
             else None  # if the pack is multiple marketplace, override the initially set str default_data_source_id
         )

@@ -32,6 +32,7 @@ from demisto_sdk.commands.content_graph.objects.pack_metadata import PackMetadat
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_integration,
 )
+from demisto_sdk.commands.validate.tests.test_tools import create_playbook_object
 from TestSuite.test_tools import ChangeCWD
 
 TEST_DATA = src_root() / "tests" / "test_files"
@@ -804,3 +805,87 @@ def mock_pack_metadata_for_data_source(support, default_data_source, integration
     content_items = PackContentItems()
     content_items.integration.extend(integrations)
     return content_items, my_instance
+
+
+@pytest.mark.parametrize(
+    "content_item, incident_to_alert, expected_description",
+    [
+        (
+            create_playbook_object(
+                ["id", "name", "description"],
+                ["playbook-incidents", "playbook-incidents", "playbook-incidents"],
+            ),
+            True,
+            "playbook-alerts",
+        ),
+        (
+            create_playbook_object(
+                ["id", "name", "description"],
+                ["playbook-incidents", "playbook-incidents", "playbook-incidents"],
+            ),
+            False,
+            "my playbook tester",
+        ),
+        (
+            create_playbook_object(
+                ["id", "name", "description"],
+                ["playbook-incidents", "playbook-incidents", "my playbook tester"],
+            ),
+            True,
+            "my playbook tester",
+        ),
+    ],
+)
+def test_replace_item_if_has_higher_toversion_on_playbook(
+    content_item, incident_to_alert, expected_description
+):
+    """
+    Given:
+        a Pack Metadata, playbook, incidents_to_alerts flag.
+        - Case 1: Playbook with description different from the one in the metadata and incidents_to_alerts=True.
+        - Case 2: Playbook with description different from the one in the metadata and incidents_to_alerts=False.
+        - Case 3: Playbook with description similar to the one in the metadata and incidents_to_alerts=True.
+    When:
+        - Calling the _replace_item_if_has_higher_toversion method.
+    Then:
+        Ensure the id and the name fields in hte metadata we left untouched and the description is changed accordingly.
+        - Case 1: description should change.
+        - Case 2: description shouldn't change.
+        - Case 3: description shouldn't change.
+    """
+    content_item_metadata = {
+        "toversion": "99.99.99",
+        "id": "my playbook tester",
+        "name": "my playbook tester",
+        "description": "my playbook tester",
+    }
+    my_instance = PackMetadata(
+        name="test",
+        display_name="",
+        description="",
+        created="",
+        legacy=False,
+        support="",
+        url="",
+        email="",
+        eulaLink="",
+        price=0,
+        hidden=False,
+        commit="",
+        downloads=0,
+        keywords=[],
+        searchRank=0,
+        excludedDependencies=[],
+        videos=[],
+        modules=[],
+    )  # type: ignore
+    my_instance._replace_item_if_has_higher_toversion(
+        content_item,
+        content_item_metadata,
+        content_item.summary(MarketplaceVersions.MarketplaceV2, incident_to_alert),
+        MarketplaceVersions.MarketplaceV2,
+        incident_to_alert=incident_to_alert,
+    )
+    assert content_item_metadata["id"] == "my playbook tester"
+    assert content_item_metadata["name"] == "my playbook tester"
+    assert content_item_metadata["description"] == expected_description

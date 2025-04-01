@@ -597,6 +597,11 @@ class PackMetadata(BaseModel):
             )
             content_item_metadata.update(content_item_summary)
             self._set_empty_toversion_if_default(content_item_metadata)
+        if (
+            content_item.content_type == ContentType.PLAYBOOK
+            and content_item.description != content_item_summary["description"]
+        ):
+            content_item_metadata["description"] = content_item_summary["description"]
 
     @staticmethod
     def _set_empty_toversion_if_default(content_item_dict: dict):

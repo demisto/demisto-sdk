@@ -27,7 +27,6 @@ from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
-from demisto_sdk.commands.lint.commands_builder import excluded_files
 from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY,
@@ -44,6 +43,15 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_TYPE,
 )
 from TestSuite.test_tools import ChangeCWD
+
+excluded_files = [
+    "CommonServerPython.py",
+    "demistomock.py",
+    "CommonServerUserPython.py",
+    "conftest.py",
+    ".venv",
+]
+
 
 with open(SOURCE_FORMAT_INTEGRATION_COPY) as of:
     SOURCE_FORMAT_INTEGRATION_YML = (

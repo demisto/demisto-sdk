@@ -536,7 +536,11 @@ class PackMetadata(BaseModel):
             )
 
             self._replace_item_if_has_higher_toversion(
-                content_item, content_item_metadata, content_item_summary, marketplace
+                content_item,
+                content_item_metadata,
+                content_item_summary,
+                marketplace,
+                incident_to_alert,
             )
 
         else:
@@ -566,6 +570,7 @@ class PackMetadata(BaseModel):
         content_item_metadata: dict,
         content_item_summary: dict,
         marketplace: MarketplaceVersions,
+        incident_to_alert: bool = False,
     ):
         """
         Replaces the content item metadata object in the content items metadata list
@@ -576,6 +581,7 @@ class PackMetadata(BaseModel):
             content_item_metadata (dict): The existing content item metadata object in the list.
             content_item_summary (dict): The current content item summary to update if needed.
             marketplace (MarketplaceVersions): The marketplace to prepare the pack to upload.
+            incident_to_alert (bool): Whether the content item's incident_to_alert is set to True or not.
         """
         if marketplace == MarketplaceVersions.XSOAR:
             if parse(content_item.fromversion) > Version("7.9.9"):
@@ -598,6 +604,12 @@ class PackMetadata(BaseModel):
             )
             content_item_metadata.update(content_item_summary)
             self._set_empty_toversion_if_default(content_item_metadata)
+        if (
+            content_item.content_type == ContentType.PLAYBOOK
+            and content_item.description != content_item_summary["description"]
+            and incident_to_alert
+        ):
+            content_item_metadata["description"] = content_item_summary["description"]
 
     @staticmethod
     def _set_empty_toversion_if_default(content_item_dict: dict):

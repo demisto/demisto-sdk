@@ -1,4 +1,0 @@
-changes:
-- description: Added *dataSourceId* to Platform packs' metadata.
-  type: fix
-pr_number: 4887

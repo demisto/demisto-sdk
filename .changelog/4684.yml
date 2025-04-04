@@ -1,4 +1,0 @@
-changes:
-- description: Added the option to add content to the pack README of a new pack that was contributed through XSOAR UI.
-  type: feature
-pr_number: 4684

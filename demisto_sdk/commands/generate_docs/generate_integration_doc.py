@@ -1221,7 +1221,6 @@ def get_command_examples(commands_examples_input, specific_commands):
     logger.info(f"<yellow>the commands example input is {str(commands_examples_input)}</yellow>")
     logger.info(f"<yellow>the commands example input exists {Path(commands_examples_input).exists()}</yellow>")
     logger.info(f"<yellow>Resolved path: {Path(commands_examples_input).resolve()}</yellow>")
-    logger.info(f"<yellow>Current working directory: {os.getcwd()}</yellow>")
     if Path(commands_examples_input).is_file():
         with open(commands_examples_input) as examples_file:
             command_examples = examples_file.read().splitlines()

@@ -1,4 +1,23 @@
 # Changelog
+## 1.37.0 (2025-04-04)
+### Breaking
+* Removed ***lint*** command. [#4881](https://github.com/demisto/demisto-sdk/pull/4881)
+
+### Feature
+* Added allow-ignore-all-errors / iae flag. Use this flag to allow ignoring all errors in the build regardless of the set of ignorable errors in the config file. [#4878](https://github.com/demisto/demisto-sdk/pull/4878)
+* Added the option to add content to the pack README of a new pack that was contributed through XSOAR UI. [#4684](https://github.com/demisto/demisto-sdk/pull/4684)
+
+### Fix
+* Updated log level for file dumps. [#4883](https://github.com/demisto/demisto-sdk/pull/4883)
+* Added *dataSourceId* to Platform packs' metadata. [#4887](https://github.com/demisto/demisto-sdk/pull/4887)
+* Fixed an issue where playbooks descriptions were not displayed correctly on the marketplace. [#4886](https://github.com/demisto/demisto-sdk/pull/4886)
+* Fixed support for the newly introduced *supportedModules* field in Modeling Rules and Parsing Rules. [#4885](https://github.com/demisto/demisto-sdk/pull/4885)
+
+### Internal
+* Changed the unify process to add a constant of the pack version to each Python file. [#4844](https://github.com/demisto/demisto-sdk/pull/4844)
+* Updated the ***test-content*** command to close successful incidents instead of deleting them during a test playbook run in XSOAR 6. [#4882](https://github.com/demisto/demisto-sdk/pull/4882)
+
+
 ## 1.36.4 (2025-03-21)
 ### Fix
 * Fixed support for the newly introduced *supportedModules* field. [#4876](https://github.com/demisto/demisto-sdk/pull/4876) [#4874](https://github.com/demisto/demisto-sdk/pull/4874)

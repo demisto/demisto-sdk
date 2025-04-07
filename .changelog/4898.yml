@@ -1,0 +1,4 @@
+changes:
+- description: Fixed the processing of Platform content items to align with XSIAM content items' processing.
+  type: fix
+pr_number: 4898

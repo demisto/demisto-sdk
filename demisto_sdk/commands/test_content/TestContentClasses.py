@@ -2513,7 +2513,7 @@ class TestContext:
             self.playbook.close_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
         elif self.incident_id and test_passed:
-            self.playbook.delete_incident(self.client, self.incident_id)
+            self.playbook.close_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
 
     def _run_docker_threshold_test(self):

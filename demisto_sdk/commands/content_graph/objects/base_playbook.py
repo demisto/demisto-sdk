@@ -178,17 +178,6 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     quiet: bool = Field(False)
     tags: List[str] = Field([])
 
-    def summary(
-        self,
-        marketplace: Optional[MarketplaceVersions] = None,
-        incident_to_alert: bool = False,
-    ) -> dict:
-        summary = super().summary(marketplace, incident_to_alert)
-        # taking the description from the data after preparing the playbook to upload
-        # this might be different when replacing incident to alert in the description for marketplacev2
-        summary["description"] = self.data.get("description") or ""
-        return summary
-
     def prepare_for_upload(
         self,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
@@ -201,6 +190,20 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
             current_marketplace=current_marketplace,
             supported_marketplaces=self.marketplaces,
         )
+
+    def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+        """
+        Checks whether the playbook needs the preparation
+        of an `incident to alert`,
+        and this affects the `metadata.json` and the `dump` process of the playbook.
+
+        Args:
+            marketplace (MarketplaceVersions): the destination marketplace.
+
+        Returns:
+            bool: True if the given MP is MPV2
+        """
+        return marketplace == MarketplaceVersions.MarketplaceV2
 
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:

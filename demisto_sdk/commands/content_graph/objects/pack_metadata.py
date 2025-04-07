@@ -216,7 +216,8 @@ class PackMetadata(BaseModel):
             self.default_data_source_id
             and self.default_data_source_name
             and collected_content_items
-            and marketplace == MarketplaceVersions.MarketplaceV2
+            and marketplace
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             and not self.hybrid
         ):
             # order collected_content_items integration list so that the defaultDataSource will be first
@@ -336,7 +337,8 @@ class PackMetadata(BaseModel):
         tags |= (
             {PackTags.DATA_SOURCE}
             if self.is_data_source(content_items)
-            and marketplace == MarketplaceVersions.MarketplaceV2
+            and marketplace
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             else set()
         )
 

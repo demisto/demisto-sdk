@@ -98,7 +98,7 @@ google-cloud-secret-manager = "^2.18.3"
 json5 = "^0.9.14"
 klara = {version = "^0.6.3", optional = true}
 typing-extensions = "^4.1.1" # not a mypy types- dependency
-pre-commit = "^3.5.0"
+pre-commit = ">=3.5,<5.0"
 lxml = "^5.0.0"
 uv = "^0.1.5"
 toml = "^0.10.2"

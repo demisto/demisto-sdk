@@ -1,0 +1,4 @@
+changes:
+- description: Increased Content Graph memory allocation to 3GB to support heavier queries.
+  type: fix
+pr_number: 4899

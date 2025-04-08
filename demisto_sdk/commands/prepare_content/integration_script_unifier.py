@@ -552,7 +552,7 @@ class IntegrationScriptUnifier(Unifier):
             existing_pack_info_debug_log_re = (
                 r"demisto\.debug\('pack name = .*?, pack version = .*?'\)"
             )
-            global_name = f"{pack_id.upper()}_PACK_VERSION"
+            global_name = f"{pack_id.upper().replace('-', '_')}_PACK_VERSION"
             pack_version_statement = (
                 f"{global_name} = '{pack_version}'"
                 f"\ndemisto.debug(f'pack id = {pack_id}, pack version = {{{global_name}}}')"

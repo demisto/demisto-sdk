@@ -6,6 +6,15 @@ from demisto_sdk.commands.upload.uploader import SUCCESS_RETURN_CODE
 
 
 def test_upload_called_for_each_input(mocker):
+    """
+        GIVEN multiple valid input paths are returned by parse_multiple_path_inputs
+              and the upload method returns SUCCESS for each.
+
+        WHEN upload_content_entity is called with those inputs
+
+        THEN the upload method should be called once per input path
+             and the command should exit with SUCCESS_RETURN_CODE.
+        """
     # Arrange
     num_inputs = 3
     mock_inputs = [Path(f"/fake/path/input_{i}") for i in range(num_inputs)]

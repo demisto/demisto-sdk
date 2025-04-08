@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue in the unify, when there is a hyphen in the pack id.
+  type: fix
+pr_number: 4900

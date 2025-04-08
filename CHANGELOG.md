@@ -1,4 +1,12 @@
 # Changelog
+## 1.37.1 (2025-04-08)
+### Feature
+* Updated the integration template used in the ***init*** command to include the `sectionOrder` field. [#4890](https://github.com/demisto/demisto-sdk/pull/4890)
+
+### Fix
+* Fixed the processing of Platform content items to align with XSIAM content items processing. [#4898](https://github.com/demisto/demisto-sdk/pull/4898)
+
+
 ## 1.37.0 (2025-04-04)
 ### Breaking
 * Removed ***lint*** command. [#4881](https://github.com/demisto/demisto-sdk/pull/4881)

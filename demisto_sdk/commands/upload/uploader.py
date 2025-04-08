@@ -199,11 +199,11 @@ class Uploader:
             logger.info(
                 "<red>Could not connect to the server. Try checking your connection configurations.</red>"
             )
-            raise typer.Exit(ERROR_RETURN_CODE)
+            return ERROR_RETURN_CODE
 
         if not self.path or not self.path.exists():
             logger.error(f"<red>input path: {self.path} does not exist</red>")
-            raise typer.Exit(ERROR_RETURN_CODE)
+            return ERROR_RETURN_CODE
 
         if self.should_detach_files:
             item_detacher = ItemDetacher(
@@ -228,7 +228,7 @@ class Uploader:
             else:
                 success = self._upload_single(self.path)
         except KeyboardInterrupt:
-            raise typer.Exit(ABORTED_RETURN_CODE)
+            return ABORTED_RETURN_CODE
 
         if self.failed_parsing and not any(
             (
@@ -250,14 +250,11 @@ class Uploader:
                     )
                 )
             )
-            raise typer.Exit(ERROR_RETURN_CODE)
+            return ERROR_RETURN_CODE
 
         self.print_summary()
-        raise (
-            typer.Exit(SUCCESS_RETURN_CODE)
-            if success
-            else typer.Exit(ERROR_RETURN_CODE)
-        )
+        return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
+
 
     def _upload_single(self, path: Path) -> bool:
         """

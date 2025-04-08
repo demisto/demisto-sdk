@@ -9,7 +9,7 @@ from demisto_sdk.commands.upload.upload import upload_content_entity
 @logging_setup_decorator
 def upload(
     ctx: typer.Context,
-    input_path: Path = typer.Option(
+    input_path: list[Path] = typer.Option(
         None,
         "--input",
         "-i",

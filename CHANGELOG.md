@@ -1,8 +1,8 @@
 # Changelog
 ## 1.37.2 (2025-04-09)
 ### Fix
-* Fixed an issue where pre-commit failed when run on new docker image. [#4905](https://github.com/demisto/demisto-sdk/pull/4905)
-* Fixed an issue in the unify, when there is a hyphen in the pack id. [#4900](https://github.com/demisto/demisto-sdk/pull/4900)
+* Fixed an issue where ***pre-commit*** failed when run on new docker image. [#4905](https://github.com/demisto/demisto-sdk/pull/4905)
+* Fixed an issue in the ***unify*** command where a hyphen in the pack id would cause parsing error. [#4900](https://github.com/demisto/demisto-sdk/pull/4900)
 
 
 ## 1.37.1 (2025-04-08)

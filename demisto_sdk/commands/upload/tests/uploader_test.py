@@ -228,9 +228,8 @@ def test_upload_single_positive(mocker, path: str, content_class: ContentItem):
 
     uploader = Uploader(input=path)
     mocker.patch.object(uploader, "client")
-    with pytest.raises(typer.Exit):
-        assert uploader.upload() == SUCCESS_RETURN_CODE
 
+    assert uploader.upload() == SUCCESS_RETURN_CODE
     assert len(uploader._successfully_uploaded_content_items) == 1
     assert len(mocked_client_upload_method.call_args_list) == 1
 

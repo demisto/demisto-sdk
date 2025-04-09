@@ -1,4 +1,10 @@
 # Changelog
+## 1.37.2 (2025-04-09)
+### Fix
+* Fixed an issue where pre-commit failed when run on new docker image. [#4905](https://github.com/demisto/demisto-sdk/pull/4905)
+* Fixed an issue in the unify, when there is a hyphen in the pack id. [#4900](https://github.com/demisto/demisto-sdk/pull/4900)
+
+
 ## 1.37.1 (2025-04-08)
 ### Feature
 * Updated the integration template used in the ***init*** command to include the `sectionOrder` field. [#4890](https://github.com/demisto/demisto-sdk/pull/4890)

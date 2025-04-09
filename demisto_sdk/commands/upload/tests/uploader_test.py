@@ -10,7 +10,6 @@ from unittest.mock import MagicMock, patch
 
 import demisto_client
 import pytest
-import typer
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 from more_itertools import first_true
@@ -144,10 +143,10 @@ def test_upload_folder(
 
     uploader = Uploader(path)
     with patch.object(uploader, "client", return_value="ok"):
-        with pytest.raises(typer.Exit):
-            assert (
-                uploader.upload() == SUCCESS_RETURN_CODE
-            ), f"failed uploading {'/'.join(path.parts[-2:])}"
+        assert (
+            uploader.upload() == SUCCESS_RETURN_CODE
+        ), f"failed uploading {'/'.join(path.parts[-2:])}"
+
     assert len(uploader._successfully_uploaded_content_items) == item_count
     assert mock_upload.call_count == item_count
 
@@ -228,9 +227,8 @@ def test_upload_single_positive(mocker, path: str, content_class: ContentItem):
 
     uploader = Uploader(input=path)
     mocker.patch.object(uploader, "client")
-    with pytest.raises(typer.Exit):
-        assert uploader.upload() == SUCCESS_RETURN_CODE
 
+    assert uploader.upload() == SUCCESS_RETURN_CODE
     assert len(uploader._successfully_uploaded_content_items) == 1
     assert len(mocked_client_upload_method.call_args_list) == 1
 
@@ -255,8 +253,7 @@ def test_upload_single_not_supported(mocker):
     assert BaseContent.from_path(path) is None
     uploader = Uploader(input=path)
 
-    with pytest.raises(typer.Exit):
-        uploader.upload()
+    uploader.upload()
 
     assert len(uploader.failed_parsing) == 1
     failed_path, reason = uploader.failed_parsing[0]
@@ -303,13 +300,13 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure, mock
     )
     uploader = Uploader(input=path, insecure=False)
     uploader.client.import_incident_types_handler = MagicMock(side_effect=save_file)
-    with pytest.raises(typer.Exit):
-        uploader.upload()
 
-        with open(path) as json_file:
-            incident_type_data = json.load(json_file)
+    uploader.upload()
 
-        assert json.loads(DATA)[0] == incident_type_data
+    with open(path) as json_file:
+        incident_type_data = json.load(json_file)
+
+    assert json.loads(DATA)[0] == incident_type_data
 
 
 def test_upload_incident_field_correct_file_change(demisto_client_configure, mocker):
@@ -348,17 +345,16 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
     path = Path(
         f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/XDR_Alert_Count.json"
     )
-    with pytest.raises(typer.Exit):
-        uploader = Uploader(input=path, insecure=False)
-        uploader.client.import_incident_fields = MagicMock(
-            side_effect=save_file,
-        )
-        assert uploader.upload() == SUCCESS_RETURN_CODE
+    uploader = Uploader(input=path, insecure=False)
+    uploader.client.import_incident_fields = MagicMock(
+        side_effect=save_file,
+    )
+    assert uploader.upload() == SUCCESS_RETURN_CODE
 
-        with open(path) as json_file:
-            incident_field_data = json.load(json_file)
+    with open(path) as json_file:
+        incident_field_data = json.load(json_file)
 
-        assert json.loads(DATA)["incidentFields"][0] == incident_field_data
+    assert json.loads(DATA)["incidentFields"][0] == incident_field_data
 
 
 def test_upload_pack(demisto_client_configure, mocker, tmpdir):
@@ -382,8 +378,7 @@ def test_upload_pack(demisto_client_configure, mocker, tmpdir):
     uploader = Uploader(path, destination_zip_dir=tmpdir)
     mocker.patch.object(uploader, "client")
     mocked_upload_method = mocker.patch.object(ContentItem, "upload")
-    with pytest.raises(typer.Exit):
-        assert uploader.upload() == SUCCESS_RETURN_CODE
+    assert uploader.upload() == SUCCESS_RETURN_CODE
 
     expected_names = {
         "DummyIntegration.yml",
@@ -431,8 +426,8 @@ def test_upload_pack_with_tpb(demisto_client_configure, mocker, tmpdir):
     uploader = Uploader(path, destination_zip_dir=tmpdir, tpb=True)
     mocker.patch.object(uploader, "client")
     mocked_upload_method = mocker.patch.object(ContentItem, "upload")
-    with pytest.raises(typer.Exit):
-        assert uploader.upload() == SUCCESS_RETURN_CODE
+
+    assert uploader.upload() == SUCCESS_RETURN_CODE
     expected_names = {
         "DummyIntegration.yml",
         "UploadTest.yml",
@@ -512,16 +507,15 @@ def test_upload_invalid_path(mocker, caplog):
         return_value=Version("8.0.0"),
     )
     uploader = Uploader(input=path, insecure=False)
-    with pytest.raises(typer.Exit):
-        assert uploader.upload() == ERROR_RETURN_CODE
-        assert not any(
-            (
-                uploader.failed_parsing,
-                uploader._failed_upload_content_items,
-                uploader._failed_upload_version_mismatch,
-            )
+    assert uploader.upload() == ERROR_RETURN_CODE
+    assert not any(
+        (
+            uploader.failed_parsing,
+            uploader._failed_upload_content_items,
+            uploader._failed_upload_version_mismatch,
         )
-        assert f"<red>input path: {path.resolve()} does not exist</red>" in caplog.text
+    )
+    assert f"input path: {path.resolve()} does not exist" in caplog.text
 
 
 def test_upload_single_unsupported_file(mocker):
@@ -545,8 +539,7 @@ def test_upload_single_unsupported_file(mocker):
     )
     uploader = Uploader(input=path)
     mocker.patch.object(uploader, "client")
-    with pytest.raises(typer.Exit):
-        assert uploader.upload() == ERROR_RETURN_CODE
+    assert uploader.upload() == ERROR_RETURN_CODE
     assert uploader.failed_parsing == [(path, "unknown")]
 
 
@@ -711,30 +704,27 @@ class TestPrintSummary:
         path = Path(script.path)
 
         uploader = Uploader(path)
-        with pytest.raises(typer.Exit):
-            assert uploader.demisto_version == Version("6.6.0")
-            assert uploader.upload() == ERROR_RETURN_CODE
-            assert uploader._failed_upload_version_mismatch == [
-                BaseContent.from_path(path)
-            ]
+        assert uploader.demisto_version == Version("6.6.0")
+        assert uploader.upload() == ERROR_RETURN_CODE
+        assert uploader._failed_upload_version_mismatch == [BaseContent.from_path(path)]
 
-            assert (
-                f"Uploading {path.absolute()} to {uploader.client.api_client.configuration.host}..."
-            ) in caplog.text
-            assert "UPLOAD SUMMARY:\n" in caplog.text
-            assert (
-                "\n".join(
-                    (
-                        "<yellow>NOT UPLOADED DUE TO VERSION MISMATCH:",
-                        "╒═════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕",
-                        "│ NAME        │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │",
-                        "╞═════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡",
-                        "│ script0.yml │ Script │ 6.6.0           │ 0.0.0               │ 1.2.3             │",
-                        "╘═════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛",
-                        "</yellow>",
-                    )
+        assert (
+            f"Uploading {path.absolute()} to {uploader.client.api_client.configuration.host}..."
+        ) in caplog.text
+        assert "UPLOAD SUMMARY:\n" in caplog.text
+        assert (
+            "\n".join(
+                (
+                    "<yellow>NOT UPLOADED DUE TO VERSION MISMATCH:",
+                    "╒═════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕",
+                    "│ NAME        │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │",
+                    "╞═════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡",
+                    "│ script0.yml │ Script │ 6.6.0           │ 0.0.0               │ 1.2.3             │",
+                    "╘═════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛",
+                    "</yellow>",
                 )
-            ) in caplog.text
+            )
+        ) in caplog.text
 
 
 def mock_api_client(mocker, version: str = "6.6.0"):
@@ -764,11 +754,7 @@ class TestZippedPackUpload:
         uploader = Uploader(path)
 
         # Capture the exit code by catching the typer.Exit exception
-        with pytest.raises(typer.Exit) as exc_info:
-            assert uploader.upload() == SUCCESS_RETURN_CODE
-
-        # Validate the exit code is as expected (success)
-        assert exc_info.value.exit_code == SUCCESS_RETURN_CODE
+        assert uploader.upload() == SUCCESS_RETURN_CODE
 
         # Validate upload behavior
         assert len(uploader._successfully_uploaded_zipped_packs) == 1

@@ -10,7 +10,6 @@ from unittest.mock import MagicMock, patch
 
 import demisto_client
 import pytest
-import typer
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 from more_itertools import first_true
@@ -145,7 +144,7 @@ def test_upload_folder(
     uploader = Uploader(path)
     with patch.object(uploader, "client", return_value="ok"):
         assert (
-                uploader.upload() == SUCCESS_RETURN_CODE
+            uploader.upload() == SUCCESS_RETURN_CODE
         ), f"failed uploading {'/'.join(path.parts[-2:])}"
 
     assert len(uploader._successfully_uploaded_content_items) == item_count
@@ -643,7 +642,7 @@ class TestPrintSummary:
                     "╞═════════════════╪════════╪═════════════╪════════════════╡",
                     "│ DummyScript.yml │ Script │ DummyPack   │ 1.0.0          │",
                     "╘═════════════════╧════════╧═════════════╧════════════════╛",
-                    "</green>"
+                    "</green>",
                 )
             )
             in caplog.text
@@ -679,7 +678,7 @@ class TestPrintSummary:
                 "╞═════════════════╪════════╪════════════╡",
                 "│ DummyScript.yml │ Script │ Some Error │",
                 "╘═════════════════╧════════╧════════════╛",
-                "</red>"
+                "</red>",
             )
         )
 
@@ -707,9 +706,7 @@ class TestPrintSummary:
         uploader = Uploader(path)
         assert uploader.demisto_version == Version("6.6.0")
         assert uploader.upload() == ERROR_RETURN_CODE
-        assert uploader._failed_upload_version_mismatch == [
-            BaseContent.from_path(path)
-        ]
+        assert uploader._failed_upload_version_mismatch == [BaseContent.from_path(path)]
 
         assert (
             f"Uploading {path.absolute()} to {uploader.client.api_client.configuration.host}..."
@@ -724,7 +721,7 @@ class TestPrintSummary:
                     "╞═════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡",
                     "│ script0.yml │ Script │ 6.6.0           │ 0.0.0               │ 1.2.3             │",
                     "╘═════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛",
-                    "</yellow>"
+                    "</yellow>",
                 )
             )
         ) in caplog.text

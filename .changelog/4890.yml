@@ -1,4 +1,0 @@
-changes:
-- description: Updated the integration template used in the `init` command to include the `sectionOrder` field.
-  type: feature
-pr_number: 4890

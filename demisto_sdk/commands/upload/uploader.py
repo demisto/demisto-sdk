@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Iterable, List, Optional, Tuple, Union
 
 import demisto_client
-import typer
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
 from tabulate import tabulate
@@ -254,7 +253,6 @@ class Uploader:
 
         self.print_summary()
         return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
-
 
     def _upload_single(self, path: Path) -> bool:
         """

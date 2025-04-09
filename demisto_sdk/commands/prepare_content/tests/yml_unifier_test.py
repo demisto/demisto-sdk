@@ -605,9 +605,9 @@ def test_insert_pack_version_and_script_to_yml_js_and_ps1():
             """
             def main():
             """,
-            ["testPack", "1.0.3"],
+            ["test-Pack", "1.0.3"],
             "CONSTANT_PACK_VERSION = '1.0.3'"
-            "\ndemisto.debug('pack id = testPack, pack version = 1.0.3')",
+            "\ndemisto.debug('pack id = test-Pack, pack version = 1.0.3')",
             id="script without version",
         ),
         pytest.param(

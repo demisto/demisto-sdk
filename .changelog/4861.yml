@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where search_alerts_by_uuid returned wrong result.
+  type: internal
+pr_number: 4861

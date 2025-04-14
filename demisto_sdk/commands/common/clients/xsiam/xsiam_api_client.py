@@ -257,7 +257,7 @@ class XsiamClient(XsoarSaasClient):
         """
         logger.debug(
             f"Searching alerts by filters: {filters}. "
-            f"Start offset: {search_from}, end offset: {search_to}. "
+            f"Start offset: {search_from}, end offset: {search_to}."
         )
         body = {
             "request_data": {

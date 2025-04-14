@@ -1,0 +1,4 @@
+changes:
+- description: Fix an issue in `XsiamClient.search_alerts_by_uuid` that caused the logic to iterate over the first 100 results only.
+  type: fix
+pr_number: 4909

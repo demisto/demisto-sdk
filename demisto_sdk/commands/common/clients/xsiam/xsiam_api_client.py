@@ -1,6 +1,6 @@
 import gzip
 from pprint import pformat
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 from urllib.parse import urljoin
 
 import requests
@@ -273,21 +273,27 @@ class XsiamClient(XsoarSaasClient):
         res = self._xdr_client.post(endpoint, json=body)
         return self._process_response(res, res.status_code, 200)["reply"]
 
-    def search_alerts_by_uuid(
+    def _search_alerts_by_values(
         self,
-        alert_uuids: Optional[list] = None,
-        filters: Optional[list] = None,
+        filters: Optional[list],
+        match_values: Optional[list],
+        match_function: Callable[[dict, tuple], bool],
     ) -> list[str]:
-        """Finds XSIAM alerts where the alert description ends with any of the given UUIDs.
+        """
+        Applies a custom matching function to determine if each alert should be included based
+        on given values.
 
         Args:
-            alert_uuids (list | None): Optional list of UUIDs to find. Defaults to None.
-            filters (list | None): Optional list of field filters. Defaults to None.
+            filters (Optional[list]): A list of field filters to apply during the alert search.
+            match_values (Optional[list]): A list of values to check using the `match_function`.
+            match_function (Callable[[dict, tuple], bool]): A function that takes an alert dictionary
+                                                            and a `match_values` tuple. Returns True
+                                                            if matches, False otherwise.
 
         Returns:
-            list[str]: List of found alert IDs.
+            list[str]: A list of alert IDs that match the specified criteria.
         """
-        alert_uuids = alert_uuids or []
+        match_values: tuple[str, ...] = tuple(match_values or [])
         alert_ids: list[str] = []
 
         # If not specified, API uses search_from = 0 and search_to = 100 by default
@@ -295,9 +301,9 @@ class XsiamClient(XsoarSaasClient):
         alerts: list[dict] = res.get("alerts", [])
         cumulative_count: int = res.get("result_count", 0)  # Count of results so far
 
-        while len(alerts) > 0 and len(alert_uuids) > len(alert_ids):
+        while len(alerts) > 0 and len(match_values) > len(alert_ids):
             for alert in alerts:
-                if alert.get("description", "").endswith(tuple(alert_uuids)):
+                if match_function(alert, match_values):
                     alert_ids.append(alert.get("alert_id", ""))
 
             search_from = cumulative_count  # Start offset
@@ -312,3 +318,47 @@ class XsiamClient(XsoarSaasClient):
             cumulative_count += res.get("result_count", 0)
 
         return alert_ids
+
+    def search_alerts_by_uuid(
+        self,
+        alert_uuids: Optional[list] = None,
+        filters: Optional[list] = None,
+    ) -> list[str]:
+        """
+        Finds alerts where the description ends with any given UUIDs.
+
+        Args:
+            alert_uuids (Optional[list]): A list of UUIDs to check against the alert descriptions.
+                                          If None, no UUID-specific search is conducted.
+            filters (Optional[list]): A list of field filters to apply during the alert search.
+
+        Returns:
+            list[str]: A list of alert IDs where the descriptions end with any of the UUIDs.
+        """
+        return self._search_alerts_by_values(
+            filters,
+            alert_uuids,
+            lambda alert, uuids: alert.get("description", "").endswith(uuids),
+        )
+
+    def search_alerts_by_name(
+        self,
+        alert_names: Optional[list] = None,
+        filters: Optional[list] = None,
+    ) -> list[str]:
+        """
+        Finds alerts where the name exactly matches any of the given names.
+
+        Args:
+            alert_names (Optional[list]): A list of names to check against the alert names.
+                                          If None, no name-specific search is conducted.
+            filters (Optional[list]): A list of field filters to apply during the alert search.
+
+        Returns:
+            list[str]: A list of alert IDs that exactly match any of the names.
+        """
+        return self._search_alerts_by_values(
+            filters,
+            alert_names,
+            lambda alert, names: alert.get("name", "") in names,
+        )

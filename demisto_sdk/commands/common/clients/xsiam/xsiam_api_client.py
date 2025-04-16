@@ -236,7 +236,7 @@ class XsiamClient(XsoarSaasClient):
 
         Args:
             alert_id (str): The XSIAM alert ID to poll its state.
-            expected_states (Tuple[IncidentState, ...]): The states the XSIAM alert is expected to reach.
+            expected_states (Tuple[XsiamAlertState, ...]): The states the XSIAM alert is expected to reach.
             timeout (int): The time limit in seconds to wait for the expected states, defaults to 120.
 
         Returns:

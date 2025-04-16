@@ -29,10 +29,10 @@ from demisto_sdk.commands.common.clients.errors import (
 )
 from demisto_sdk.commands.common.constants import (
     MINIMUM_XSOAR_SAAS_VERSION,
-    IncidentState,
     InvestigationPlaybookState,
     MarketplaceVersions,
     XsiamAlertState,
+    XsoarIncidentState,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -762,7 +762,7 @@ class XsoarClient:
     def poll_incident_state(
         self,
         incident_id: str,
-        expected_states: Tuple[IncidentState, ...] = (IncidentState.CLOSED,),
+        expected_states: Tuple[XsoarIncidentState, ...] = (XsoarIncidentState.CLOSED,),
         timeout: int = 120,
     ) -> dict:
         """
@@ -770,7 +770,7 @@ class XsoarClient:
 
         Args:
             incident_id (str): The XSOAR incident ID to poll its state.
-            expected_states (Tuple[IncidentState, ...]): The states the XSOAR incident is expected to reach.
+            expected_states (Tuple[XsoarIncidentState, ...]): The states the XSOAR incident is expected to reach.
             timeout (int): The time limit in seconds to wait for the expected states, defaults to 120.
 
         Returns:
@@ -803,7 +803,7 @@ class XsoarClient:
             incident_status = (
                 XsiamAlertState(incident.get("status", 0)).name
                 if self.server_type is ServerType.XSIAM
-                else IncidentState(str(incident.get("status"))).name
+                else XsoarIncidentState(incident.get("status", 0)).name
             )
 
             incident_name = incident.get("name")
@@ -816,7 +816,7 @@ class XsoarClient:
 
         raise PollTimeout(
             f"The status of {incident_name} is {incident_status}",
-            expected_states=expected_states,
+            expected_states=expected_state_names,
             timeout=timeout,
         )
 

@@ -32,6 +32,7 @@ from demisto_sdk.commands.common.constants import (
     IncidentState,
     InvestigationPlaybookState,
     MarketplaceVersions,
+    XsiamAlertState,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -763,17 +764,17 @@ class XsoarClient:
         incident_id: str,
         expected_states: Tuple[IncidentState, ...] = (IncidentState.CLOSED,),
         timeout: int = 120,
-    ):
+    ) -> dict:
         """
-        Polls for an incident state
+        Polls for an XSOAR incident state
 
         Args:
-            incident_id: the incident ID to poll its state
-            expected_states: which states are considered to be valid for the incident to reach
-            timeout: how long to query until incidents reaches the expected state
+            incident_id: The XSOAR incident ID to poll its state
+            expected_states: Which states are considered to be valid for the XSOAR incident to reach
+            timeout: How long to query until the XSOAR incident reaches the expected state
 
         Returns:
-            raw response of the incident that reached into the relevant state.
+            dict: raw response of the XSOAR incident that reached the relevant state.
         """
         if timeout <= 0:
             raise ValueError("timeout argument must be larger than 0")
@@ -788,15 +789,22 @@ class XsoarClient:
 
         while elapsed_time < timeout:
             try:
-                incident = self.search_incidents(incident_id).get("data", [])[0]
+                incident: dict = self.search_incidents(incident_id).get("data", [])[0]
             except Exception as e:
                 raise ValueError(
                     f"Could not find incident ID {incident_id}, error:\n{e}"
                 )
             logger.debug(f"Incident raw response {incident}")
-            incident_status = IncidentState(str(incident.get("status"))).name
+
+            logger.debug(f"Getting status of incident on {self.server_type} server")
+            incident_status = (
+                XsiamAlertState(incident.get("status", 0)).name
+                if self.server_type is ServerType.XSIAM
+                else IncidentState(str(incident.get("status"))).name
+            )
+
             incident_name = incident.get("name")
-            logger.debug(f"status of the incident {incident_name} is {incident_status}")
+            logger.debug(f"Status of the incident {incident_name} is {incident_status}")
             if incident_status in expected_state_names:
                 return incident
             else:

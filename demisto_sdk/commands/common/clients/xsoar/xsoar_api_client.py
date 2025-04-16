@@ -800,6 +800,8 @@ class XsoarClient:
             logger.debug(f"Incident raw response {incident}")
 
             logger.debug(f"Getting status of incident on {self.server_type} server")
+            # Incident 'status' in API response is an integer:
+            # https://docs-cortex.paloaltonetworks.com/r/Cortex-XSOAR-6-API/Search-incidents-by-filter
             incident_status = (
                 XsiamAlertState(incident.get("status", 0)).name
                 if self.server_type is ServerType.XSIAM

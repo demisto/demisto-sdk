@@ -766,15 +766,18 @@ class XsoarClient:
         timeout: int = 120,
     ) -> dict:
         """
-        Polls for an XSOAR incident state
+        Polls for the state of an XSOAR incident until it matches any of the expected states or times out.
 
         Args:
-            incident_id: The XSOAR incident ID to poll its state
-            expected_states: Which states are considered to be valid for the XSOAR incident to reach
-            timeout: How long to query until the XSOAR incident reaches the expected state
+            incident_id (str): The XSOAR incident ID to poll its state.
+            expected_states (Tuple[IncidentState, ...]): The states the XSOAR incident is expected to reach.
+            timeout (int): The time limit in seconds to wait for the expected states, defaults to 120.
 
         Returns:
-            dict: raw response of the XSOAR incident that reached the relevant state.
+            dict: Raw response of the XSOAR incident that reached the relevant state.
+
+        Raises:
+            PollTimeout: If the incident did not reach any of the expected states in time.
         """
         if timeout <= 0:
             raise ValueError("timeout argument must be larger than 0")
@@ -812,7 +815,7 @@ class XsoarClient:
                 elapsed_time = int(time.time() - start_time)
 
         raise PollTimeout(
-            f"status of incident {incident_name} is {incident_status}",
+            f"The status of {incident_name} is {incident_status}",
             expected_states=expected_states,
             timeout=timeout,
         )

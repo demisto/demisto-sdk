@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where upload command did not upload more than one pack at once.
+  type: fix
+pr_number: 4904

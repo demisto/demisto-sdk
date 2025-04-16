@@ -5,7 +5,7 @@ from typing import List
 import typer
 
 from demisto_sdk.commands.common.logger import logging_setup_decorator
-
+from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 class ItemType(str, Enum):
     incident_type = "IncidentType"
@@ -126,5 +126,23 @@ def download(
     """
     from demisto_sdk.commands.download.downloader import Downloader
 
-    kwargs = locals()
+    kwargs = {
+        "output": output,
+        "input": input,
+        "regex": regex,
+        "force": force,
+        "insecure": insecure,
+        "list_files": list_files,
+        "all_custom_content": all_custom_content,
+        "run_format": run_format,
+        "system": system,
+        "item_type": item_type,
+        "init": init,
+        "keep_empty_folders": keep_empty_folders,
+        "auto_replace_uuids": auto_replace_uuids,
+        "console_log_threshold": console_log_threshold,
+        "file_log_threshold": file_log_threshold,
+        "log_file_path": log_file_path,
+    }
+    update_command_args_from_config_file("download", kwargs)
     Downloader(**kwargs).download()

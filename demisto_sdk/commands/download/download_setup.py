@@ -126,7 +126,7 @@ def download(
     ```
     """
     from demisto_sdk.commands.download.downloader import Downloader
-
+    from demisto_sdk.commands.common.logger import logger
     kwargs = {
         "output": output,
         "input": input,
@@ -145,5 +145,7 @@ def download(
         "file_log_threshold": file_log_threshold,
         "log_file_path": log_file_path,
     }
+    logger.info('###############')
     update_command_args_from_config_file("download", kwargs)
+    logger.info(kwargs)
     Downloader(**kwargs).download()

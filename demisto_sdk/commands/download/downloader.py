@@ -159,7 +159,6 @@ class Downloader:
         **kwargs,
     ):
         self.output_pack_path = output
-        logger.info(output)
         self.input_files = list(input) if input else []
         self.regex = regex
         self.force = force
@@ -186,8 +185,6 @@ class Downloader:
         Returns:
             int: Exit code. 1 if failed, 0 if succeeded
         """
-        logger.info('output_pack_path')
-        logger.info(self.output_pack_path)
         input_files_missing = False  # Used for returning an exit code of 1 if one of the inputs is missing.
         try:
             if self.should_list_files:

@@ -268,21 +268,41 @@ class XsiamClient(XsoarSaasClient):
         res = self._xdr_client.post(endpoint, json=body)
         return self._process_response(res, res.status_code, 200)["reply"]
 
-    def search_alerts_by_uuid(self, alert_uuids: list = None, filters: list = None):
+    def search_alerts_by_uuid(
+        self, alert_uuids: list = None, filters: list = None, page_size: int = 100
+    ):
+        """
+        searches alerts using uuids which are concatenated to the end of the alert description.
+        alert_uuids - list from the user of uuids appear in alerts description to search for.
+        filters - search filters
+        page_size - control the page size in the pagination. Default is 100.
+        """
+
+        def append_alerts(alert_uuids, alerts_from_response):
+            alert_ids = []
+            for alert in alerts_from_response:
+                for uuid in alert_uuids:
+                    alert_desc = alert.get("description")
+                    if type(alert_desc) is str and alert_desc.endswith(uuid):
+                        alert_ids.append(alert.get("alert_id"))
+            return alert_ids
+
         alert_uuids = alert_uuids or []
-        alert_ids: list = []
-        res = self.search_alerts(filters=filters)
+
+        res = self.search_alerts(filters=filters, search_to=page_size)
         alerts: list = res.get("alerts")  # type: ignore
         count: int = res.get("result_count")  # type: ignore
+        total_count: int = res.get("total_count")  # type: ignore
 
-        while len(alerts) > 0 and len(alert_uuids) > len(alert_ids):
-            for alert in alerts:
-                for uuid in alert_uuids:
-                    if alert.get("description").endswith(uuid):
-                        alert_ids.append(alert.get("alert_id"))
+        alert_ids = append_alerts(alert_uuids, alerts)
 
-            res = self.search_alerts(filters=filters, search_from=count)
-            alerts = res.get("alerts")  # type: ignore
-            count = res.get("result_count")  # type: ignore
+        while len(alert_ids) < len(alert_uuids) and count < total_count:
+            search_to = min(count + page_size, total_count)
+            res = self.search_alerts(
+                filters=filters, search_from=count, search_to=search_to
+            )
+            alerts: list = res.get("alerts")  # type: ignore
+            count += res.get("result_count")  # type: ignore
+            alert_ids.extend(append_alerts(alert_uuids, alerts))
 
         return alert_ids

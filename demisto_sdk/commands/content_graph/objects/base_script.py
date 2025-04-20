@@ -99,7 +99,9 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             except FileNotFoundError as e:
                 logger.warning(f"Failed to dump {obj.path} to {dir}: {e}")
 
-    def is_incident_to_alert(self, marketplace: Union[List[MarketplaceVersions], MarketplaceVersions]) -> bool:
+    def is_incident_to_alert(
+        self, marketplace: Union[List[MarketplaceVersions], MarketplaceVersions]
+    ) -> bool:
         """
         Checks whether the script needs the preparation
         of an `incident to alert`,

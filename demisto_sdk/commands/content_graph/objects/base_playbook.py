@@ -191,7 +191,9 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
             supported_marketplaces=self.marketplaces,
         )
 
-    def is_incident_to_alert(self, marketplace: Union[List[MarketplaceVersions], MarketplaceVersions]) -> bool:
+    def is_incident_to_alert(
+        self, marketplace: Union[List[MarketplaceVersions], MarketplaceVersions]
+    ) -> bool:
         """
         Checks whether the playbook needs the preparation
         of an `incident to alert`,

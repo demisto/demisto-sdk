@@ -1,6 +1,6 @@
 import gzip
 from pprint import pformat
-from typing import Any, Dict, List, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 from urllib.parse import urljoin
 
 import requests
@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
 from demisto_sdk.commands.common.logger import logger
 
 json = DEFAULT_JSON_HANDLER
+GET_ALERTS_BATCH_SIZE = 100
 
 
 class XsiamClient(XsoarSaasClient):
@@ -254,6 +255,10 @@ class XsiamClient(XsoarSaasClient):
         [{field: alert_id_list, operator: in, value: [1,2,3,4]}]
         Allowed values for fields - alert_id_list, alert_source, severity, creation_time
         """
+        logger.debug(
+            f"Searching alerts by filters: {filters}. "
+            f"Start offset: {search_from}, end offset: {search_to}."
+        )
         body = {
             "request_data": {
                 "filters": filters,
@@ -268,21 +273,92 @@ class XsiamClient(XsoarSaasClient):
         res = self._xdr_client.post(endpoint, json=body)
         return self._process_response(res, res.status_code, 200)["reply"]
 
-    def search_alerts_by_uuid(self, alert_uuids: list = None, filters: list = None):
-        alert_uuids = alert_uuids or []
-        alert_ids: list = []
+    def _search_alerts_by_values(
+        self,
+        filters: Optional[list],
+        match_values: Optional[list],
+        match_function: Callable[[dict, tuple], bool],
+    ) -> list[str]:
+        """
+        Applies a custom matching function to determine if each alert should be included based
+        on given values.
+
+        Args:
+            filters (Optional[list]): A list of field filters to apply during the alert search.
+            match_values (Optional[list]): A list of values to check using the `match_function`.
+            match_function (Callable[[dict, tuple], bool]): A function that takes an alert dictionary
+                                                            and a `match_values` tuple. Returns True
+                                                            if matches, False otherwise.
+
+        Returns:
+            list[str]: A list of alert IDs that match the specified criteria.
+        """
+        match_values: tuple[str, ...] = tuple(match_values or [])
+        alert_ids: list[str] = []
+
+        # If not specified, API uses search_from = 0 and search_to = 100 by default
         res = self.search_alerts(filters=filters)
-        alerts: list = res.get("alerts")  # type: ignore
-        count: int = res.get("result_count")  # type: ignore
+        alerts: list[dict] = res.get("alerts", [])
+        cumulative_count: int = res.get("result_count", 0)  # Count of results so far
 
-        while len(alerts) > 0 and len(alert_uuids) > len(alert_ids):
+        while len(alerts) > 0 and len(match_values) > len(alert_ids):
             for alert in alerts:
-                for uuid in alert_uuids:
-                    if alert.get("description").endswith(uuid):
-                        alert_ids.append(alert.get("alert_id"))
+                if match_function(alert, match_values):
+                    alert_ids.append(alert.get("alert_id", ""))
 
-            res = self.search_alerts(filters=filters, search_from=count)
-            alerts = res.get("alerts")  # type: ignore
-            count = res.get("result_count")  # type: ignore
+            search_from = cumulative_count  # Start offset
+            search_to = cumulative_count + GET_ALERTS_BATCH_SIZE  # End offset
+            # Advance start and end alert offsets for the next search batch
+            res = self.search_alerts(
+                filters=filters,
+                search_from=search_from,
+                search_to=search_to,
+            )
+            alerts = res.get("alerts", [])
+            cumulative_count += res.get("result_count", 0)
 
         return alert_ids
+
+    def search_alerts_by_uuid(
+        self,
+        alert_uuids: Optional[list] = None,
+        filters: Optional[list] = None,
+    ) -> list[str]:
+        """
+        Finds alerts where the description ends with any given UUIDs.
+
+        Args:
+            alert_uuids (Optional[list]): A list of UUIDs to check against the alert descriptions.
+                                          If None, no UUID-specific search is conducted.
+            filters (Optional[list]): A list of field filters to apply during the alert search.
+
+        Returns:
+            list[str]: A list of alert IDs where the descriptions end with any of the UUIDs.
+        """
+        return self._search_alerts_by_values(
+            filters,
+            alert_uuids,
+            lambda alert, uuids: alert.get("description", "").endswith(uuids),
+        )
+
+    def search_alerts_by_name(
+        self,
+        alert_names: Optional[list] = None,
+        filters: Optional[list] = None,
+    ) -> list[str]:
+        """
+        Finds alerts where the name exactly matches any of the given names.
+
+        Args:
+            alert_names (Optional[list]): A list of names to check against the alert names.
+                                          If None, no name-specific search is conducted.
+            filters (Optional[list]): A list of field filters to apply during the alert search.
+
+        Returns:
+            list[str]: A list of alert IDs that exactly match any of the names.
+        """
+        return self._search_alerts_by_values(
+            filters,
+            alert_names,
+            lambda alert, names: alert.get("name", "") in names,
+        )

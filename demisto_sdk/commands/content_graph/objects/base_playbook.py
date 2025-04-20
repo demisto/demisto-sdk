@@ -203,7 +203,10 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
         Returns:
             bool: True if the given MP is MPV2
         """
-        return MarketplaceVersions.MarketplaceV2 in marketplace or MarketplaceVersions.PLATFORM in marketplace
+        return (
+            MarketplaceVersions.MarketplaceV2 in marketplace
+            or MarketplaceVersions.PLATFORM in marketplace
+        )
 
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:

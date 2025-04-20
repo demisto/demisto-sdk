@@ -39,7 +39,10 @@ def prepare_descriptions_and_names(
     data: dict, marketplace: MarketplaceVersions
 ) -> dict:
     # Replace incidents to alerts only for XSIAM
-    replace_incident_to_alert = marketplace in (MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM)
+    replace_incident_to_alert = marketplace in (
+        MarketplaceVersions.MarketplaceV2,
+        MarketplaceVersions.PLATFORM,
+    )
 
     # Descriptions and names for all tasks
     for task_key, task_value in data.get("tasks", {}).items():

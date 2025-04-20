@@ -246,7 +246,17 @@ class XsiamClient(XsoarSaasClient):
         Raises:
             PollTimeout: If the alert did not reach any of the expected states in time.
         """
-        return self.poll_incident_state(alert_id, expected_states, timeout)
+        return super().poll_incident_state(alert_id, expected_states, timeout)
+
+    def poll_incident_state(self, *args):
+        """Overrides method from `XsoarClient`. Raises `NotImplementedError` to prevent usage in `XsiamClient`.
+
+        Raises:
+            NotImplementedError: When connected to an XSIAM tenant.
+        """
+        raise NotImplementedError(
+            "This method is not implemented in XsiamClient. Use poll_alert_state instead."
+        )
 
     def update_alert(self, alert_id: Union[str, list[str]], updated_data: dict) -> dict:
         """

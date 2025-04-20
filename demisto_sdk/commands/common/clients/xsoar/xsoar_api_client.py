@@ -1469,7 +1469,7 @@ class XsoarClient:
         max_timeout: int = 60,
         interval_between_tries: str = "3",
         complete_task: bool = False,
-    ):
+    ) -> dict[str, list]:
         """
         Wait and complete playbook tasks by given status. Same implementation as WaitAndCompleteTask script in content.
 
@@ -1484,7 +1484,7 @@ class XsoarClient:
 
 
         Returns:
-            a list of completed task if completed, and found tasks if not completed.
+            Dict[str, list]: A dictionary containing a list of completed task if completed, and found tasks if not completed.
         """
         if not all(state in self.PLAYBOOK_TASKS_STATES for state in task_states):  # type: ignore
             raise ValueError(
@@ -1497,10 +1497,11 @@ class XsoarClient:
         completed_tasks = []
         found_tasks = []
         start_time = time.time()
+        elapsed_time = 0
 
-        while time.time() - start_time > max_timeout:  # type: ignore[operator]
+        while elapsed_time < max_timeout:  # type: ignore[operator]
             # Get all tasks with one state of the states in task_states list
-            tasks_by_states, status_code, _ = self._xsoar_client.generic_request(
+            tasks_by_states, _, _ = self._xsoar_client.generic_request(
                 f"/investigation/{incident_id}/workplan/tasks",
                 method="POST",
                 body={"states": task_states, "types": self.PLAYBOOK_TASKS_TYPES},
@@ -1561,6 +1562,7 @@ class XsoarClient:
                 break
 
             time.sleep(float(interval_between_tries))  # type: ignore[arg-type]
+            elapsed_time = int(time.time() - start_time)
 
         if not completed_tasks and not found_tasks:
             if task_name and task_states:

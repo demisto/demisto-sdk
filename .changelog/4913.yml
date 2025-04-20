@@ -1,0 +1,4 @@
+changes:
+- description: Added the `incident to alert` mechanism for the Platform marketplace.
+  type: internal
+pr_number: 4913

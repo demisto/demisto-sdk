@@ -1,4 +1,4 @@
-from typing import Callable, List, Set
+from typing import Callable, List, Set, Union
 
 import demisto_client
 from pydantic import DirectoryPath, Field
@@ -76,7 +76,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
         data = self.prepare_for_upload(current_marketplace=marketplace)
 
         for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(
-            data, marketplace, self.is_incident_to_alert([marketplace])
+            data, marketplace, self.is_incident_to_alert(marketplace)
         ):
             # Two scripts return from the preparation, one the original, and other the new script,
             # in order to normalize the name of the new script, make a copy of the original object
@@ -99,7 +99,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             except FileNotFoundError as e:
                 logger.warning(f"Failed to dump {obj.path} to {dir}: {e}")
 
-    def is_incident_to_alert(self, marketplace: List[MarketplaceVersions]) -> bool:
+    def is_incident_to_alert(self, marketplace: Union[List[MarketplaceVersions], MarketplaceVersions]) -> bool:
         """
         Checks whether the script needs the preparation
         of an `incident to alert`,
@@ -111,6 +111,8 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
         Returns:
             bool: True if all conditions are true otherwise False
         """
+        if not isinstance(marketplace, list):
+            marketplace = [marketplace]
         return all(
             (
                 MarketplaceVersions.MarketplaceV2 in marketplace

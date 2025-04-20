@@ -555,7 +555,7 @@ class PackMetadata(BaseModel):
             )
 
         # If incident_to_alert is True then stop recursive
-        if not incident_to_alert and content_item.is_incident_to_alert([marketplace]):
+        if not incident_to_alert and content_item.is_incident_to_alert(marketplace):
             logger.debug(
                 f'Replacing incident to alert in content item with ID "{content_item.object_id}" and appending to metadata'
             )

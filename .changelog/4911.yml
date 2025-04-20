@@ -1,4 +1,0 @@
-changes:
-- description: Fix a timeout-related issue in `XsoarClient.pull_playbook_tasks_by_state`.
-  type: fix
-pr_number: 4911

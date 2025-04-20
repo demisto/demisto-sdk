@@ -1,0 +1,8 @@
+changes:
+- description: |-
+    Make multiple enhancements and fixes to `XsoarClient` and `XsiamClient` classes:
+      - Add a new `XsiamClient.search_alerts_by_name` method and fix an issue in the `XsiamClient.search_alerts_by_uuid` method that caused the logic to iterate over the first 100 results only.
+      - Add a new `XsiamClient.poll_alert_state` method that polls a Cortex XSIAM alert until it reaches any of the expected states.
+      - Fix a timeout-related issue in the `XsoarClient.pull_playbook_tasks_by_state` method.
+  type: feature
+pr_number: 4914

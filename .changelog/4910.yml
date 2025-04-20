@@ -1,4 +1,0 @@
-changes:
-- description: Add a new `XsiamClient.poll_alert_state` method that polls a Cortex XSIAM alert until it reaches any of the expected states.
-  type: feature
-pr_number: 4910

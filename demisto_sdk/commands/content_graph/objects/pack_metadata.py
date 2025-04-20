@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 from packaging.version import Version, parse
@@ -193,25 +192,67 @@ class PackMetadata(BaseModel):
         pack_name = self.path.parts[-1]
         base_path = self.path / pack_name
         for content_item in content_items:
+            if "HelloWorldModelingRules.yml" in str(content_item.path):
+                pass
             if should_ignore_item_in_metadata(content_item, marketplace):
                 continue
             if content_item.path.parts[-3] == "Integrations":
                 integration_file = content_item.path.parts[-1]
                 if not integration_file.startswith("integration-"):
                     integration_file = f"integration-{integration_file}"
-                content_item_path = base_path / content_item.path.parts[-3] / integration_file
+                content_item_path = (
+                    base_path / content_item.path.parts[-3] / integration_file
+                )
+            elif content_item.path.parts[-3] == "Scripts":
+                script_file = content_item.path.parts[-1]
+                if not script_file.startswith("script-"):
+                    script_file = f"script-{script_file}"
+                content_item_path = (
+                    base_path / content_item.path.parts[-3] / script_file
+                )
             elif content_item.path.parts[-2] == "Classifiers":
-                if content_item.type == 'mapping-incoming':
-                    content_item_path = base_path / content_item.path.parts[-2] / content_item.path.parts[-1].replace("classifier-", "classifier-mapper-")
+                if (
+                    content_item.type == "mapping-incoming"
+                    and "classifier-mapper-" not in content_item.path.parts[-1]
+                ):
+                    content_item_path = (
+                        base_path
+                        / content_item.path.parts[-2]
+                        / content_item.path.parts[-1].replace(
+                            "classifier-", "classifier-mapper-"
+                        )
+                    )
                 else:
-                    content_item_path = base_path / content_item.path.parts[-2] / content_item.path.parts[-1]
+                    content_item_path = (
+                        base_path
+                        / content_item.path.parts[-2]
+                        / content_item.path.parts[-1]
+                    )
+            elif content_item.path.parts[-3] == "ModelingRules":
+                modeling_rule_file = content_item.path.parts[-1]
+                if not modeling_rule_file.startswith("external-modelingrule-"):
+                    modeling_rule_file = f"external-modelingrule-{modeling_rule_file}"
+                content_item_path = (
+                    base_path / content_item.path.parts[-3] / modeling_rule_file
+                )
+            elif content_item.path.parts[-3] == "ParsingRules":
+                parsing_rule = content_item.path.parts[-1]
+                if not parsing_rule.startswith("external-parsingrule-"):
+                    parsing_rule = f"external-parsingrule-{parsing_rule}"
+                content_item_path = (
+                    base_path / content_item.path.parts[-3] / parsing_rule
+                )
             elif content_item.path.parts[-2] == "Playbooks":
                 playbook_file = content_item.path.parts[-1]
                 if not playbook_file.startswith("playbook-"):
                     playbook_file = f"playbook-{playbook_file}"
                 content_item_path = base_path / "Playbooks" / playbook_file
             else:
-                content_item_path = base_path / content_item.path.parts[-2] / content_item.path.parts[-1]
+                content_item_path = (
+                    base_path
+                    / content_item.path.parts[-2]
+                    / content_item.path.parts[-1]
+                )
             content_item = BaseContent.from_path(content_item_path)
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,

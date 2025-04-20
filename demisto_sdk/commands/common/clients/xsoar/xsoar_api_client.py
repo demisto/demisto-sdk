@@ -29,9 +29,10 @@ from demisto_sdk.commands.common.clients.errors import (
 )
 from demisto_sdk.commands.common.constants import (
     MINIMUM_XSOAR_SAAS_VERSION,
-    IncidentState,
     InvestigationPlaybookState,
     MarketplaceVersions,
+    XsiamAlertState,
+    XsoarIncidentState,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -761,19 +762,22 @@ class XsoarClient:
     def poll_incident_state(
         self,
         incident_id: str,
-        expected_states: Tuple[IncidentState, ...] = (IncidentState.CLOSED,),
+        expected_states: Tuple[XsoarIncidentState, ...] = (XsoarIncidentState.CLOSED,),
         timeout: int = 120,
-    ):
+    ) -> dict:
         """
-        Polls for an incident state
+        Polls for the state of an XSOAR incident until it matches any of the expected states or times out.
 
         Args:
-            incident_id: the incident ID to poll its state
-            expected_states: which states are considered to be valid for the incident to reach
-            timeout: how long to query until incidents reaches the expected state
+            incident_id (str): The XSOAR incident ID to poll its state.
+            expected_states (Tuple[XsoarIncidentState, ...]): The states the XSOAR incident is expected to reach.
+            timeout (int): The time limit in seconds to wait for the expected states, defaults to 120.
 
         Returns:
-            raw response of the incident that reached into the relevant state.
+            dict: Raw response of the XSOAR incident that reached the relevant state.
+
+        Raises:
+            PollTimeout: If the incident did not reach any of the expected states in time.
         """
         if timeout <= 0:
             raise ValueError("timeout argument must be larger than 0")
@@ -788,15 +792,24 @@ class XsoarClient:
 
         while elapsed_time < timeout:
             try:
-                incident = self.search_incidents(incident_id).get("data", [])[0]
+                incident: dict = self.search_incidents(incident_id).get("data", [])[0]
             except Exception as e:
                 raise ValueError(
                     f"Could not find incident ID {incident_id}, error:\n{e}"
                 )
             logger.debug(f"Incident raw response {incident}")
-            incident_status = IncidentState(str(incident.get("status"))).name
+
+            logger.debug(f"Getting status of incident on {self.server_type} server")
+            # Incident 'status' in API response is an integer:
+            # https://docs-cortex.paloaltonetworks.com/r/Cortex-XSOAR-6-API/Search-incidents-by-filter
+            incident_status = (
+                XsiamAlertState(incident.get("status", 0)).name
+                if self.server_type is ServerType.XSIAM
+                else XsoarIncidentState(incident.get("status", 0)).name
+            )
+
             incident_name = incident.get("name")
-            logger.debug(f"status of the incident {incident_name} is {incident_status}")
+            logger.debug(f"Status of the incident {incident_name} is {incident_status}")
             if incident_status in expected_state_names:
                 return incident
             else:
@@ -804,8 +817,8 @@ class XsoarClient:
                 elapsed_time = int(time.time() - start_time)
 
         raise PollTimeout(
-            f"status of incident {incident_name} is {incident_status}",
-            expected_states=expected_states,
+            f"The status of {incident_name} is {incident_status}",
+            expected_states=expected_state_names,
             timeout=timeout,
         )
 

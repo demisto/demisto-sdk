@@ -1,6 +1,6 @@
 import os
 import re
-from enum import Enum
+from enum import Enum, IntEnum
 from functools import reduce
 from pathlib import Path
 from typing import Dict, List
@@ -2207,11 +2207,17 @@ class InvestigationPlaybookState(StrEnum):
     WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
 
 
-class IncidentState(StrEnum):
-    NEW = "NEW"
-    IN_PROGRESS = "IN_PROGRESS"
-    CLOSED = "CLOSED"
-    ACKNOWLEDGED = "ACKNOWLEDGED"
+class XsoarIncidentState(IntEnum):
+    NEW = 0
+    IN_PROGRESS = 1
+    CLOSED = 2
+    ACKNOWLEDGED = 3
+
+
+class XsiamAlertState(IntEnum):
+    NEW = 0
+    UNDER_INVESTIGATION = 1
+    RESOLVED = 2
 
 
 class PlaybookTaskType(StrEnum):

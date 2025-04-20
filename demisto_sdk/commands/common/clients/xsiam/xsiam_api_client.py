@@ -1,6 +1,6 @@
 import gzip
 from pprint import pformat
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from urllib.parse import urljoin
 
 import requests
@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import ServerTyp
 from demisto_sdk.commands.common.clients.xsoar_saas.xsoar_saas_api_client import (
     XsoarSaasClient,
 )
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions, XsiamAlertState
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
 from demisto_sdk.commands.common.logger import logger
 
@@ -225,6 +225,28 @@ class XsiamClient(XsoarSaasClient):
             ]
         )
         return data["alerts"][0]["alert_id"]
+
+    def poll_alert_state(
+        self,
+        alert_id: str,
+        expected_states: Tuple[XsiamAlertState, ...] = (XsiamAlertState.RESOLVED,),
+        timeout: int = 120,
+    ) -> dict:
+        """
+        Polls for the state of an XSIAM alert until it matches any of the expected states or times out.
+
+        Args:
+            alert_id (str): The XSIAM alert ID to poll its state.
+            expected_states (Tuple[XsiamAlertState, ...]): The states the XSIAM alert is expected to reach.
+            timeout (int): The time limit in seconds to wait for the expected states, defaults to 120.
+
+        Returns:
+            dict: Raw response of the XSIAM alert that reached the relevant state.
+
+        Raises:
+            PollTimeout: If the alert did not reach any of the expected states in time.
+        """
+        return self.poll_incident_state(alert_id, expected_states, timeout)
 
     def update_alert(self, alert_id: Union[str, list[str]], updated_data: dict) -> dict:
         """

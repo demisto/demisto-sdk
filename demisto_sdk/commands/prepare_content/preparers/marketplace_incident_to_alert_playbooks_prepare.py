@@ -37,8 +37,10 @@ class MarketplaceIncidentToAlertPlaybooksPreparer:
         # convert the access fields of the playbook from the `incident` terminology to `alert` only if the playbook
         # should be uploaded to the XSIAM marketplace and is supported in more than one marketplace.
         if (
-            current_marketplace == MarketplaceVersions.MarketplaceV2
-            and MarketplaceVersions.MarketplaceV2 in supported_marketplaces
+            (current_marketplace == MarketplaceVersions.MarketplaceV2
+            and MarketplaceVersions.MarketplaceV2 in supported_marketplaces) or
+            (current_marketplace == MarketplaceVersions.PLATFORM
+            and MarketplaceVersions.PLATFORM in supported_marketplaces)
         ):
             data = prepare_playbook_access_fields(data, playbook)
 

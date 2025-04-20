@@ -191,7 +191,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
             supported_marketplaces=self.marketplaces,
         )
 
-    def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+    def is_incident_to_alert(self, marketplace: List[MarketplaceVersions]) -> bool:
         """
         Checks whether the playbook needs the preparation
         of an `incident to alert`,
@@ -203,7 +203,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
         Returns:
             bool: True if the given MP is MPV2
         """
-        return marketplace == MarketplaceVersions.MarketplaceV2
+        return MarketplaceVersions.MarketplaceV2 in marketplace or MarketplaceVersions.PLATFORM in marketplace
 
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:

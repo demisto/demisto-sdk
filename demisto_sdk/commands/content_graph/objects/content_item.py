@@ -387,7 +387,7 @@ class ContentItem(BaseContent):
         id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity
 
-    def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+    def is_incident_to_alert(self, marketplace: List[MarketplaceVersions]) -> bool:
         """
         As long as the content item does not have an implementation of the `is_incident_to_alert` function,
         the return value will always be false,

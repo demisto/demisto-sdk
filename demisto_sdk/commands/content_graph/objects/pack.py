@@ -347,15 +347,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             if tpb:
                 content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
 
-            excluded_items_list = []
-
             for content_item in self.content_items:
                 if content_item.content_type in content_types_excluded_from_upload:
                     logger.debug(
                         f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
                         "whose type was passed in `exclude_content_types`"
                     )
-                    excluded_items_list.append(content_item)
                     continue
 
                 if marketplace not in content_item.marketplaces:

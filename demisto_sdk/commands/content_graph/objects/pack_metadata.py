@@ -23,7 +23,6 @@ from demisto_sdk.commands.content_graph.objects.relationship import Relationship
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-from demisto_sdk.commands.upload.constants import CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
 
 MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
 MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
@@ -191,18 +190,7 @@ class PackMetadata(BaseModel):
         collected_content_items: dict = {}
         content_displays: dict = {}
         for content_item in content_items:
-            if content_item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
-                logger.debug(
-                    f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
-                    "whose type was passed in `exclude_content_types` into metadata"
-                )
-                continue
-            if marketplace not in content_item.marketplaces:
-                logger.debug(
-                    f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
-                    f"to destination {marketplace=}"
-                    f" - content item has marketplaces {content_item.marketplaces}"
-                )
+            if should_ignore_item_in_metadata(content_item, marketplace):
                 continue
             content_item = BaseContent.from_path(content_item.upload_path)
             self._add_item_to_metadata_list(

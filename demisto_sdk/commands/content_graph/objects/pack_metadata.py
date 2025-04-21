@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 from packaging.version import Version, parse
@@ -23,6 +24,7 @@ from demisto_sdk.commands.content_graph.objects.relationship import Relationship
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
+from demisto_sdk.commands.upload.constants import CONTENT_TYPES_EXCLUDED_FROM_UPLOAD
 
 MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
 MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION = Version("6.6.0")
@@ -104,6 +106,7 @@ class PackMetadata(BaseModel):
         marketplace: MarketplaceVersions,
         content_items: PackContentItems,
         dependencies: List[RelationshipData],
+        base_pack_path: str
     ) -> dict:
         """
         Enhancing the pack metadata properties after dumping into a dictionary. (properties that can't be calculating before)
@@ -126,7 +129,7 @@ class PackMetadata(BaseModel):
         (
             collected_content_items,
             content_displays,
-        ) = self._get_content_items_and_displays_metadata(marketplace, content_items)
+        ) = self._get_content_items_and_displays_metadata(marketplace, content_items, base_pack_path)
 
         default_data_source_value = (
             {
@@ -173,7 +176,7 @@ class PackMetadata(BaseModel):
         integration_list.insert(0, integration_metadata_object[0])
 
     def _get_content_items_and_displays_metadata(
-        self, marketplace: MarketplaceVersions, content_items: PackContentItems
+        self, marketplace: MarketplaceVersions, content_items: PackContentItems, base_pack_path: str
     ) -> Tuple[Dict, Dict]:
         """
         Gets the pack content items and display names to add into the pack's metadata dictionary.
@@ -189,71 +192,80 @@ class PackMetadata(BaseModel):
         """
         collected_content_items: dict = {}
         content_displays: dict = {}
-        pack_name = self.path.parts[-1]
-        base_path = self.path / pack_name
+        # pack_name = self.path.parts[-1]
+        # base_path = self.path / pack_name
+        # base_path = Path((str(base_path)).replace("/Packs/", f"/{base_pack_path}/"))
+        # base_path = Path(f"{base_pack_path}/{pack_name}")
         for content_item in content_items:
-            if "HelloWorldModelingRules.yml" in str(content_item.path):
-                pass
-            if should_ignore_item_in_metadata(content_item, marketplace):
+            if content_item.content_type in CONTENT_TYPES_EXCLUDED_FROM_UPLOAD:
+                logger.debug(
+                    f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
+                    "whose type was passed in `exclude_content_types` into metadata"
+                )
                 continue
-            if content_item.path.parts[-3] == "Integrations":
-                integration_file = content_item.path.parts[-1]
-                if not integration_file.startswith("integration-"):
-                    integration_file = f"integration-{integration_file}"
-                content_item_path = (
-                    base_path / content_item.path.parts[-3] / integration_file
-                )
-            elif content_item.path.parts[-3] == "Scripts":
-                script_file = content_item.path.parts[-1]
-                if not script_file.startswith("script-"):
-                    script_file = f"script-{script_file}"
-                content_item_path = (
-                    base_path / content_item.path.parts[-3] / script_file
-                )
-            elif content_item.path.parts[-2] == "Classifiers":
-                if (
-                    content_item.type == "mapping-incoming"
-                    and "classifier-mapper-" not in content_item.path.parts[-1]
-                ):
-                    content_item_path = (
-                        base_path
-                        / content_item.path.parts[-2]
-                        / content_item.path.parts[-1].replace(
-                            "classifier-", "classifier-mapper-"
-                        )
-                    )
-                else:
-                    content_item_path = (
-                        base_path
-                        / content_item.path.parts[-2]
-                        / content_item.path.parts[-1]
-                    )
-            elif content_item.path.parts[-3] == "ModelingRules":
-                modeling_rule_file = content_item.path.parts[-1]
-                if not modeling_rule_file.startswith("external-modelingrule-"):
-                    modeling_rule_file = f"external-modelingrule-{modeling_rule_file}"
-                content_item_path = (
-                    base_path / content_item.path.parts[-3] / modeling_rule_file
-                )
-            elif content_item.path.parts[-3] == "ParsingRules":
-                parsing_rule = content_item.path.parts[-1]
-                if not parsing_rule.startswith("external-parsingrule-"):
-                    parsing_rule = f"external-parsingrule-{parsing_rule}"
-                content_item_path = (
-                    base_path / content_item.path.parts[-3] / parsing_rule
-                )
-            elif content_item.path.parts[-2] == "Playbooks":
-                playbook_file = content_item.path.parts[-1]
-                if not playbook_file.startswith("playbook-"):
-                    playbook_file = f"playbook-{playbook_file}"
-                content_item_path = base_path / "Playbooks" / playbook_file
-            else:
-                content_item_path = (
-                    base_path
-                    / content_item.path.parts[-2]
-                    / content_item.path.parts[-1]
-                )
-            content_item = BaseContent.from_path(content_item_path)
+            # if "VerifyIPv4Indicator" in str(content_item.path) or "Feedsslabusech" in str(content_item) or "NozomiNetworks" in str(content_item):
+            #     pass
+            # if should_ignore_item_in_metadata(content_item, marketplace):
+            #     continue
+            # if content_item.path.parts[-3] == "Integrations":
+            #     integration_file = content_item.path.parts[-1]
+            #     if not integration_file.startswith("integration-"):
+            #         integration_file = f"integration-{integration_file}"
+            #     content_item_path = (
+            #         base_path / content_item.path.parts[-3] / integration_file
+            #     )
+            # elif content_item.path.parts[-3] == "Scripts":
+            #     script_file = content_item.path.parts[-1]
+            #     if not script_file.startswith("script-"):
+            #         script_file = f"script-{script_file}"
+            #     content_item_path = (
+            #         base_path / content_item.path.parts[-3] / script_file
+            #     )
+            # elif content_item.path.parts[-2] == "Classifiers":
+            #     if (
+            #         content_item.type == "mapping-incoming"
+            #         and "classifier-mapper-" not in content_item.path.parts[-1]
+            #     ):
+            #         content_item_path = (
+            #             base_path
+            #             / content_item.path.parts[-2]
+            #             / content_item.path.parts[-1].replace(
+            #                 "classifier-", "classifier-mapper-"
+            #             )
+            #         )
+            #     else:
+            #         content_item_path = (
+            #             base_path
+            #             / content_item.path.parts[-2]
+            #             / content_item.path.parts[-1]
+            #         )
+            # elif content_item.path.parts[-3] == "ModelingRules":
+            #     modeling_rule_file = content_item.path.parts[-1]
+            #     if not modeling_rule_file.startswith("external-modelingrule-"):
+            #         modeling_rule_file = f"external-modelingrule-{modeling_rule_file}"
+            #     content_item_path = (
+            #         base_path / content_item.path.parts[-3] / modeling_rule_file
+            #     )
+            # elif content_item.path.parts[-3] == "ParsingRules":
+            #     parsing_rule = content_item.path.parts[-1]
+            #     if not parsing_rule.startswith("external-parsingrule-"):
+            #         parsing_rule = f"external-parsingrule-{parsing_rule}"
+            #     content_item_path = (
+            #         base_path / content_item.path.parts[-3] / parsing_rule
+            #     )
+            # elif content_item.path.parts[-2] == "Playbooks":
+            #     playbook_file = content_item.path.parts[-1]
+            #     if not playbook_file.startswith("playbook-"):
+            #         playbook_file = f"playbook-{playbook_file}"
+            #     content_item_path = base_path / "Playbooks" / playbook_file
+            # else:
+            #     content_item_path = (
+            #         base_path
+            #         / content_item.path.parts[-2]
+            #         / content_item.path.parts[-1]
+            #     )
+            # if content_item.content_type 
+            # content_item = BaseContent.from_path(content_item.upload_path)
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,

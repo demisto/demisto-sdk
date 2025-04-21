@@ -252,12 +252,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         self.server_min_version = self.server_min_version or min_content_items_version
         self.content_items = PackContentItems(**content_item_dct)
 
-    def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
+    def dump_metadata(self, path: Path, marketplace: MarketplaceVersions, base_pack_path: str) -> None:
         """Dumps the pack metadata file.
 
         Args:
             path (Path): The path of the file to dump the metadata.
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
+            base_pack_path (str): The base path for the pack.
         """
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
         self._enhance_pack_properties(marketplace, self.object_id, self.content_items)
@@ -282,7 +283,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
         metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
         metadata.update(
-            self._format_metadata(marketplace, self.content_items, self.depends_on)
+            self._format_metadata(marketplace, self.content_items, self.depends_on, base_pack_path)
         )
         # Replace incorrect marketplace references
         metadata = replace_marketplace_references(metadata, marketplace, str(self.path))
@@ -333,6 +334,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             logger.debug(f'No such file {self.path / "ReleaseNotes"}')
 
     def dump(self, path: Path, marketplace: MarketplaceVersions, tpb: bool = False):
+        base_pack_path = "Packs"
+        if "prepare-content-tmp" in str(path):
+            base_pack_path = "prepare-content-tmp"
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
             return
@@ -378,7 +382,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     dir=path / folder,
                     marketplace=marketplace,
                 )
-            self.dump_metadata(path / "metadata.json", marketplace)
+            self.dump_metadata(path / "metadata.json", marketplace, base_pack_path)
             self.dump_readme(path / "README.md", marketplace)
             shutil.copy(
                 self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME

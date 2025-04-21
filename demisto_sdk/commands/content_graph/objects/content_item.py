@@ -58,6 +58,7 @@ class ContentItem(BaseContent):
     pack: Any = Field(None, exclude=True, repr=False)
     support: str = ""
     is_silent: bool = False
+    upload_path: Optional[Path] = None
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -365,6 +366,7 @@ class ContentItem(BaseContent):
                 data=self.prepare_for_upload(current_marketplace=marketplace),
                 handler=self.handler,
             )
+            self.upload_path = dir / self.normalize_name
             logger.debug(f"path to dumped file: {str(dir / self.normalize_name)}")
         except FileNotFoundError as e:
             logger.warning(f"Failed to dump {self.path} to {dir}: {e}")

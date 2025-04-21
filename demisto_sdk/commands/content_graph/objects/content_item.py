@@ -366,7 +366,6 @@ class ContentItem(BaseContent):
                 data=self.prepare_for_upload(current_marketplace=marketplace),
                 handler=self.handler,
             )
-            self.upload_path = dir / self.normalize_name
             logger.debug(f"path to dumped file: {str(dir / self.normalize_name)}")
         except FileNotFoundError as e:
             logger.warning(f"Failed to dump {self.path} to {dir}: {e}")

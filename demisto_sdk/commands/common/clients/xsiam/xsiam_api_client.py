@@ -248,7 +248,7 @@ class XsiamClient(XsoarSaasClient):
         """
         return super().poll_incident_state(alert_id, expected_states, timeout)
 
-    def poll_incident_state(self, *args):
+    def poll_incident_state(self, *args, **kwargs):
         """Overrides method from `XsoarClient`. Raises `NotImplementedError` to prevent usage in `XsiamClient`.
 
         Raises:

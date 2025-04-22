@@ -14,7 +14,7 @@ exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
 
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.36.4"
+version = "1.37.3"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"

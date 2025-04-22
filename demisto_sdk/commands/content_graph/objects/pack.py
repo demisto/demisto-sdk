@@ -528,7 +528,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 )
                 uploaded_successfully.append(item)
             except NotIndivitudallyUploadableException:
-                if marketplace == MarketplaceVersions.MarketplaceV2:
+                if marketplace in [
+                    MarketplaceVersions.MarketplaceV2,
+                    MarketplaceVersions.PLATFORM,
+                ]:
                     raise  # many XSIAM content types must be uploaded zipped.
                 logger.warning(
                     f"Not uploading pack {self.object_id}: {item.content_type} {item.object_id} as it was not indivudally uploaded"

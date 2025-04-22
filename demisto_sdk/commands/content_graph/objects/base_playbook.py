@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Callable, Dict, List, Optional, Set
+from typing import Callable, Dict, List, Optional, Set, Union
 
 import demisto_client
 from pydantic import BaseModel, Field
@@ -178,17 +178,6 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     quiet: bool = Field(False)
     tags: List[str] = Field([])
 
-    def summary(
-        self,
-        marketplace: Optional[MarketplaceVersions] = None,
-        incident_to_alert: bool = False,
-    ) -> dict:
-        summary = super().summary(marketplace, incident_to_alert)
-        # taking the description from the data after preparing the playbook to upload
-        # this might be different when replacing incident to alert in the description for marketplacev2
-        summary["description"] = self.data.get("description") or ""
-        return summary
-
     def prepare_for_upload(
         self,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
@@ -200,6 +189,27 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
             data,
             current_marketplace=current_marketplace,
             supported_marketplaces=self.marketplaces,
+        )
+
+    def is_incident_to_alert(
+        self, marketplace: Union[List[MarketplaceVersions], MarketplaceVersions]
+    ) -> bool:
+        """
+        Checks whether the playbook needs the preparation
+        of an `incident to alert`,
+        and this affects the `metadata.json` and the `dump` process of the playbook.
+
+        Args:
+            marketplace (MarketplaceVersions): the destination marketplace.
+
+        Returns:
+            bool: True if the given MP is MPV2
+        """
+        if not isinstance(marketplace, list):
+            marketplace = [marketplace]
+        return (
+            MarketplaceVersions.MarketplaceV2 in marketplace
+            or MarketplaceVersions.PLATFORM in marketplace
         )
 
     @classmethod

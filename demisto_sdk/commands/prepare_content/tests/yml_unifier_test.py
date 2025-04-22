@@ -605,9 +605,9 @@ def test_insert_pack_version_and_script_to_yml_js_and_ps1():
             """
             def main():
             """,
-            ["testPack", "1.0.3"],
-            "TESTPACK_PACK_VERSION = '1.0.3'"
-            "\ndemisto.debug(f'pack id = testPack, pack version = {TESTPACK_PACK_VERSION}')",
+            ["test-Pack", "1.0.3"],
+            "CONSTANT_PACK_VERSION = '1.0.3'"
+            "\ndemisto.debug('pack id = test-Pack, pack version = 1.0.3')",
             id="script without version",
         ),
         pytest.param(
@@ -616,9 +616,18 @@ def test_insert_pack_version_and_script_to_yml_js_and_ps1():
             def main():
             """,
             ["testPack", "1.0.4"],
-            "TESTPACK_PACK_VERSION = '1.0.4'"
-            "\ndemisto.debug(f'pack id = testPack, pack version = {TESTPACK_PACK_VERSION}')",
+            "CONSTANT_PACK_VERSION = '1.0.4'"
+            "\ndemisto.debug('pack id = testPack, pack version = 1.0.4')",
             id="script with version",
+        ),
+        pytest.param(
+            """
+            def main():
+            """,
+            ["here's a pack", "1.0.5"],
+            "CONSTANT_PACK_VERSION = '1.0.5'"
+            "\ndemisto.debug('pack id = here\\'s a pack, pack version = 1.0.5')",
+            id="pack name with apostrophe",
         ),
     ],
 )

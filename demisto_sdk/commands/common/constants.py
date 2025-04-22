@@ -2220,6 +2220,9 @@ class XsiamAlertState(IntEnum):
     RESOLVED = 2
 
 
+IncidentState = XsoarIncidentState  # To avoid breaking imports in other repos where SDK is installed
+
+
 class PlaybookTaskType(StrEnum):
     REGULAR = "regular"
     PLAYBOOK = "playbook"

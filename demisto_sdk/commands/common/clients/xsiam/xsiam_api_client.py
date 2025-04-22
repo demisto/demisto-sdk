@@ -245,6 +245,10 @@ class XsiamClient(XsoarSaasClient):
 
         Raises:
             PollTimeout: If the alert did not reach any of the expected states in time.
+
+        Example:
+            >>> client.poll_alert_state("123", expected_states=(XsiamAlertState.RESOLVED,))
+            {"id": "123", "name": "My name", "details": "My description", "labels": [], ... }
         """
         return super().poll_incident_state(alert_id, expected_states, timeout)
 
@@ -366,6 +370,10 @@ class XsiamClient(XsoarSaasClient):
 
         Returns:
             list[str]: A list of alert IDs where the descriptions end with any of the UUIDs.
+
+        Example:
+            >>> client.search_alerts_by_uuid(["550e8400-e29b-41d4-a716-446655440000"], [{"field": "creation_time", "operator": "gte", "value": 1745309363}])
+            ["54"]
         """
         return self._search_alerts_by_values(
             filters,
@@ -388,6 +396,10 @@ class XsiamClient(XsoarSaasClient):
 
         Returns:
             list[str]: A list of alert IDs that exactly match any of the names.
+
+        Example:
+            >>> client.search_alerts_by_name(["My Alert"], [{"field": "alert_id_list", "operator": "in", "value": [1, 2, 3]}])
+            ["1"]
         """
         return self._search_alerts_by_values(
             filters,

@@ -1617,12 +1617,13 @@ class XsoarClient:
             task_input (str): The input to complete the task with.
             task_id (Optional[str]): The ID of the task to complete. Must be provided if `task_name` is not given.
             task_name (Optional[str]): the name of the task to complete. Must be provided if `task_id` is not given.
-        
+
         Example:
             >>> client.complete_playbook_task("123", task_input="Completed", task_name="Analyze Data")
         """
         if not (task_name or task_id):
-            return RuntimeError("Task id or task name should be provided.")
+            raise ValueError("Either task_id or task_name should be provided.")
+
         elif not task_id:
             task = self.get_playbook_task_in_investigation(task_name, investigation_id)
             task_id = task.get("id")

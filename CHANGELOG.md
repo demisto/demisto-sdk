@@ -1,4 +1,15 @@
 # Changelog
+## 1.37.3 (2025-04-21)
+### Feature
+* Added support for local custom command configuration file - `.demisto-sdk-conf` to ***download*** command. [#4912](https://github.com/demisto/demisto-sdk/pull/4912)
+
+### Fix
+* Fixed an issue in the ***upload*** command where it did not upload more than one pack at once. [#4904](https://github.com/demisto/demisto-sdk/pull/4904)
+
+### Internal
+* Added the `incident to alert` mechanism for the Platform marketplace. [#4913](https://github.com/demisto/demisto-sdk/pull/4913)
+
+
 ## 1.37.2 (2025-04-09)
 ### Fix
 * Fixed an issue where ***pre-commit*** failed when run on new docker image. [#4905](https://github.com/demisto/demisto-sdk/pull/4905)

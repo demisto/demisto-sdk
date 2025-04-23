@@ -1604,19 +1604,22 @@ class XsoarClient:
 
     def complete_playbook_task(
         self,
-        investigation_id,
+        investigation_id: str,
         task_input: str,
-        task_id: str = None,
-        task_name: str = None,
-    ):
+        task_id: Optional[str] = None,
+        task_name: Optional[str] = None,
+    ) -> None:
         """
-        Complete a playbook task in an investigation.
+        Completes a playbook task in an investigation.
 
         Args:
-            investigation_id: Investigation ID that the playbook is running on
-            task_input: The input to complete the task with.
-            task_id: the task id to complete.
-            task_name: the name of the task to complete.
+            investigation_id (str): Investigation ID that the playbook is running on.
+            task_input (str): The input to complete the task with.
+            task_id (Optional[str]): The ID of the task to complete. Must be provided if `task_name` is not given.
+            task_name (Optional[str]): the name of the task to complete. Must be provided if `task_id` is not given.
+        
+        Example:
+            >>> client.complete_playbook_task("123", task_input="Completed", task_name="Analyze Data")
         """
         if not (task_name or task_id):
             return RuntimeError("Task id or task name should be provided.")
@@ -1624,7 +1627,7 @@ class XsoarClient:
             task = self.get_playbook_task_in_investigation(task_name, investigation_id)
             task_id = task.get("id")
         try:
-            response, status_code, _ = self._xsoar_client.generic_request(
+            self._xsoar_client.generic_request(
                 "/inv-playbook/task/complete",
                 method="POST",
                 response_type="object",

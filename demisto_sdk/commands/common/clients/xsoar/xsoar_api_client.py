@@ -1502,6 +1502,9 @@ class XsoarClient:
         Returns:
             Dict[str, list]: A dictionary containing a list of completed task if completed, and found tasks if not completed.
 
+        Raises:
+            PollTimeout: If the task(s) were not found or did not reach any of the expected task states.
+
         Example:
             >>> client.poll_playbook_tasks_by_state("123", task_name="My Task", task_states=["Completed"], max_timeout=30)
             {"CompletedTask": [{"task name": "My Task", "task state": "Completed"}], "FoundTask": [...]}
@@ -1584,19 +1587,20 @@ class XsoarClient:
             time.sleep(interval_between_tries)
             elapsed_time = int(time.time() - start_time)
 
-        if not completed_tasks and not found_tasks:
-            if task_name and task_states:
-                raise RuntimeError(
-                    f'The task "{task_name}" was not found by the script or it did not reach the {" or ".join(task_states)} state.'
-                )
-            elif task_states:
-                raise RuntimeError(
-                    f'None of the tasks reached the {" or ".join(task_states)} state.'
-                )
-            else:
-                raise RuntimeError("No tasks were found.")
+        if completed_tasks or found_tasks:
+            return {"CompletedTask": completed_tasks, "FoundTask": found_tasks}
 
-        return {"CompletedTask": completed_tasks, "FoundTask": found_tasks}
+        # If the task(s) were not found or did not reach any of the expected task states, raise PollTimeout exception
+        if task_name and task_states:
+            error_message = f"The task '{task_name}' was not found or did not reach any of the expected states"
+
+        elif task_states:
+            error_message = "None of the tasks reached any of the expected states"
+
+        else:
+            error_message = "No tasks were found in the investigation playbook"
+
+        raise PollTimeout(error_message, task_states, max_timeout)
 
     def complete_playbook_task(
         self,

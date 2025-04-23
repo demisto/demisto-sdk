@@ -205,7 +205,21 @@ class XsiamClient(XsoarSaasClient):
     #############################
     """
 
-    def create_alert_from_json(self, json_content: dict) -> int:
+    def create_alert_from_json(self, json_content: dict) -> str:
+        """Creates a custom XSIAM alert.
+
+        Args:
+            json_content (dict): A dictionary containing mandatory fields (vendor, product, severity, category)
+                                 and other fields that appears in the alert table.
+
+        Returns:
+            str: The alert external ID.
+
+        Example:
+        >>> create_alert_from_json({"description": "My alert desc", "severity": "Low", "vendor": "Example", "product": "Example", "category": "Other"})
+        "31c7c088-126b-4e0e-9523-85080c03753e"
+        """
+        # https://docs-cortex.paloaltonetworks.com/r/Cortex-XSIAM-REST-API/Create-a-Custom-Alert
         alert_payload = {"request_data": {"alert": json_content}}
         endpoint = urljoin(
             self.server_config.base_api_url, "/public_api/v1/alerts/create_alert"

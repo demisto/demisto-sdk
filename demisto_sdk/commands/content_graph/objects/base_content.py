@@ -172,6 +172,8 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             for name, value in inspect.getmembers(self.__class__)
             if isinstance(value, cached_property)
         }
+        print("skk--")
+        print(cached_properties)
         json_dct = json.loads(
             self.json(
                 exclude={

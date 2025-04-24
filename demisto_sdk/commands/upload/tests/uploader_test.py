@@ -1120,6 +1120,7 @@ class TestItemDetacher:
 
 def test_zip_multiple_packs(tmp_path: Path, integration, mocker, monkeypatch):
     from demisto_sdk.commands.content_graph.objects.pack import Pack
+
     tmp_path = tmp_path / "Packs"
     tmp_path.mkdir()
 

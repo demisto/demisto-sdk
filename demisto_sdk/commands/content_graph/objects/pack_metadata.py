@@ -192,7 +192,7 @@ class PackMetadata(BaseModel):
         for content_item in content_items:
             if should_ignore_item_in_metadata(content_item, marketplace):
                 continue
-            content_item = BaseContent.from_path(content_item.upload_path)
+            content_item = BaseContent.from_path(content_item.upload_path)  # type:ignore[assignment]
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,

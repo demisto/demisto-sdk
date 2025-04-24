@@ -174,7 +174,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             for name, value in inspect.getmembers(self.__class__)
             if isinstance(value, cached_property)
         }
-        print(f"after{cached_properties}")
+        print(f"after {cached_properties}")
         exclude_set = {
                     "commands",
                     "database_id",

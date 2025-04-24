@@ -150,8 +150,8 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
             if is_new_pack(content_item):
                 return False
             # If it's a pack content type check for the fields that require RNs.
-            old_dict = content_item.old_base_content_object.to_dict()  # type: ignore[union-attr]
-            current_dict = content_item.to_dict()  # type: ignore[union-attr]
+            old_dict = content_item.old_base_content_object.dict(exclude="release_note")  # type: ignore[union-attr]
+            current_dict = content_item.dict(exclude="release_note")  # type: ignore[union-attr]
             for field in PACK_METADATA_REQUIRE_RN_FIELDS:
                 if old_dict.get(field) != current_dict.get(field):
                     return True

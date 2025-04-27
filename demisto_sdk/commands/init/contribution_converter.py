@@ -347,7 +347,8 @@ class ContributionConverter:
                 include_untracked=False,
                 interactive=False,
             )
-        except SystemExit as e:
+        except Exception as e:
+            print("In the except clause.")
             if e.code != 0:
                 logger.error("There was an error.")
                 raise

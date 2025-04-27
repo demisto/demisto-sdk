@@ -147,8 +147,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 summary["isfetchevents"] = False
             if summary.get("isfetchassets"):
                 summary["isfetchassets"] = False
-        if self.unified_data:
-            summary["name"] = self.unified_data.get("display")
+        summary["name"] = self.display_name
         return summary
 
     def metadata_fields(self):

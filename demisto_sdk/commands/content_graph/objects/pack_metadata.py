@@ -200,7 +200,7 @@ class PackMetadata(BaseModel):
                     f"Failed to generate content item for {content_item.upload_path}, will use original content item: {str(e)}"
                 )
             if new_content_item:
-                content_item = new_content_item
+                content_item = new_content_item  # type:ignore[assignment]
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,

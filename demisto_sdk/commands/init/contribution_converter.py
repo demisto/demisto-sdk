@@ -338,14 +338,21 @@ class ContributionConverter:
             f"Executing 'format' on the restructured contribution zip new/modified files at {self.pack_dir_path}"
         )
         from_version = "6.0.0" if self.create_new else ""
-        format_manager(
-            from_version=from_version,
-            no_validate=True,
-            update_docker=True,
-            assume_answer=True,
-            include_untracked=False,
-            interactive=False,
-        )
+        try:
+            format_manager(
+                from_version=from_version,
+                no_validate=True,
+                update_docker=True,
+                assume_answer=True,
+                include_untracked=False,
+                interactive=False,
+            )
+        except SystemExit as e:
+            if e.code != 0:
+                logger.error("There was an error.")
+                raise
+            else:
+                logger.info("Exit code is 0.")
 
     def generate_readme_for_pack_content_item(
         self, yml_path: str, is_contribution: bool = False

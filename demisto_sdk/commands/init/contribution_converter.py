@@ -348,12 +348,7 @@ class ContributionConverter:
                 interactive=False,
             )
         except Exception as e:
-            print("In the except clause.")
-            if e.code != 0:
-                logger.error("There was an error.")
-                raise
-            else:
-                logger.info("Exit code is 0.")
+            logger.info(str(e))
 
     def generate_readme_for_pack_content_item(
         self, yml_path: str, is_contribution: bool = False

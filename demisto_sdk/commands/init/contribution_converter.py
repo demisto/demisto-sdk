@@ -348,7 +348,10 @@ class ContributionConverter:
                 interactive=False,
             )
         except Exception as e:
-            logger.info(str(e))
+            if str(e).strip() == "0":
+                logger.info(f"The exit code is {str(e)}")
+            else:
+                raise e
 
     def generate_readme_for_pack_content_item(
         self, yml_path: str, is_contribution: bool = False

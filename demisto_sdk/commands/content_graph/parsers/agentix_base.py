@@ -22,8 +22,8 @@ class AgentixBaseParser(YAMLContentItemParser):
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.is_enabled: bool = self.yml_data.get("isEnabled")
-        self.pack_id: str = self.yml_data.get("packID")
-        self.pack_name: str = self.yml_data.get("packName")
+        self.pack_id1: str = self.yml_data.get("packID")
+        self.pack_name1: str = self.yml_data.get("packName")
         self.tags: list[str] = self.yml_data.get("tags")
         self.is_system: bool = self.yml_data.get("isSystem")
         self.is_locked: bool = self.yml_data.get("isLocked")

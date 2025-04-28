@@ -323,6 +323,7 @@ def collect_images_relative_paths_from_markdown_and_replace_with_storage_path(
         MarketplaceVersions.XSOAR_SAAS,
         MarketplaceVersions.MarketplaceV2,
         MarketplaceVersions.XPANSE,
+        MarketplaceVersions.PLATFORM,
     ]:
         to_replace = f"{SERVER_API_TO_STORAGE}/{pack_name}"
     else:

@@ -178,7 +178,9 @@ DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
 DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
-DEMISTO_SDK_MARKETPLACE_PLATFORM_INTERNAL_PROD = "marketplace-cortex-content-dev"
+DEMISTO_SDK_MARKETPLACE_PLATFORM_INTERNAL_PROD = (
+    "marketplace-cortex-content-dev/april-content"  # CIAC-13208
+)
 
 # Server Types
 XSOAR_SERVER_TYPE = "XSOAR"

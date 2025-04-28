@@ -1,9 +1,8 @@
-from abc import ABC
 from pathlib import Path
 from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
 
 
-class AgentixAgent(AgentixBase, ABC):
+class AgentixAgent(AgentixBase):
     color: str
 
     @staticmethod

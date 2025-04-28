@@ -9,3 +9,8 @@ class AgentixAITask(BaseScript):
     post_script: str = Field('', alias="postScript")
     prompt: str = ''
     few_shots: str = Field('', alias="fewShots")
+
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        pass

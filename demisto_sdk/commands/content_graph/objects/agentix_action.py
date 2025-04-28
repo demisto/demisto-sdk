@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from pydantic import Field, BaseModel
@@ -33,3 +34,7 @@ class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
     content_item_id: str = Field(..., alias="contentItemId")
     content_item_type: str = Field(..., alias="contentItemType")
     content_item_version: str = Field(..., alias="contentItemVersion")
+
+    @staticmethod
+    def match(_dict: dict, path: Path) -> bool:
+        pass

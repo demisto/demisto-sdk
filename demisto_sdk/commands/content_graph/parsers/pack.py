@@ -105,6 +105,9 @@ class PackContentItems:
         self.assets_modeling_rule = ContentItemsList(
             content_type=ContentType.ASSETS_MODELING_RULE
         )
+        self.agentix_action = ContentItemsList(content_type=ContentType.AGENTIX_ACTION)
+        self.agentix_agent = ContentItemsList(content_type=ContentType.AGENTIX_AGENT)
+        self.agentix_ai_task = ContentItemsList(content_type=ContentType.AGENTIX_AI_TASK)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()

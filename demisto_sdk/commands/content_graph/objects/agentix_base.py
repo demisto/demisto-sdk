@@ -8,8 +8,8 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 class AgentixBase(ContentItem):
     is_enabled: bool = Field(..., alias="isEnabled")
-    pack_id: str = Field(..., alias="packID")
-    pack_name: str = Field(..., alias="packName")
+    pack_id1: str = Field(..., alias="packID")
+    pack_name1: str = Field(..., alias="packName")
     tags: Optional[list[str]]
     is_system: bool = Field(..., alias="isSystem")
     is_locked: bool = Field(..., alias="isLocked")

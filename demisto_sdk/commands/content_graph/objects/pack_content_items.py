@@ -39,6 +39,9 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.test_script import TestScript
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_ai_task import AgentixAITask
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
@@ -103,6 +106,9 @@ class PackContentItems(BaseModel):
     assets_modeling_rule: List[AssetsModelingRule] = Field(
         [], alias=ContentType.ASSETS_MODELING_RULE.value
     )
+    agentix_action: List[AgentixAction] = Field([], alias=ContentType.AGENTIX_ACTION.value)
+    agentix_agent: List[AgentixAgent] = Field([], alias=ContentType.AGENTIX_AGENT.value)
+    agentix_ai_task: List[AgentixAITask] = Field([], alias=ContentType.AGENTIX_AI_TASK.value)
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""

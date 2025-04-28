@@ -255,6 +255,8 @@ class ContentType(StrEnum):
         for content_type in ContentType.content_items():
             if content_type == ContentType.MAPPER:
                 continue
+            if content_type == ContentType.AGENTIX_ACTION:
+                pass
             pack_folder = pack_path / content_type.as_folder
             if pack_folder.is_dir() and not pack_folder.name.startswith("."):
                 if content_type not in ContentType.threat_intel_report_types():

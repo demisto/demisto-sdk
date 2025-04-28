@@ -1,3 +1,4 @@
+from pathlib import Path
 from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
 
 

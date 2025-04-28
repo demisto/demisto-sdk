@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any
 
 from pydantic import Field
 
@@ -21,3 +21,4 @@ class AgentixBase(BaseContent):
     version: str
     display: str = Field(..., alias="name")
     description: str
+    pack: Any = Field(None, exclude=True, repr=False)

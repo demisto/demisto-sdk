@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
 )
 from demisto_sdk.commands.content_graph.strict_objects.agentix_ai_task import AgentixAITask
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 
 
 class AgentixAITaskParser(IntegrationScriptParser, content_type=ContentType.AGENTIX_AI_TASK):
@@ -44,3 +45,11 @@ class AgentixAITaskParser(IntegrationScriptParser, content_type=ContentType.AGEN
     @property
     def display_name(self) -> Optional[str]:
         return get_value(self.yml_data, "name")
+
+    @property
+    def code(self) -> Optional[str]:
+        """
+        Returns:
+            str: The script code.
+        """
+        return self.script_info.get("script")

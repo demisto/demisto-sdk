@@ -1,4 +1,29 @@
 # Changelog
+## 1.37.3 (2025-04-21)
+### Feature
+* Added support for local custom command configuration file - `.demisto-sdk-conf` to ***download*** command. [#4912](https://github.com/demisto/demisto-sdk/pull/4912)
+
+### Fix
+* Fixed an issue in the ***upload*** command where it did not upload more than one pack at once. [#4904](https://github.com/demisto/demisto-sdk/pull/4904)
+
+### Internal
+* Added the `incident to alert` mechanism for the Platform marketplace. [#4913](https://github.com/demisto/demisto-sdk/pull/4913)
+
+
+## 1.37.2 (2025-04-09)
+### Fix
+* Fixed an issue where ***pre-commit*** failed when run on new docker image. [#4905](https://github.com/demisto/demisto-sdk/pull/4905)
+* Fixed an issue in the ***unify*** command where a hyphen in the pack id would cause parsing error. [#4900](https://github.com/demisto/demisto-sdk/pull/4900)
+
+
+## 1.37.1 (2025-04-08)
+### Feature
+* Updated the integration template used in the ***init*** command to include the `sectionOrder` field. [#4890](https://github.com/demisto/demisto-sdk/pull/4890)
+
+### Fix
+* Fixed the processing of Platform content items to align with XSIAM content items processing. [#4898](https://github.com/demisto/demisto-sdk/pull/4898)
+
+
 ## 1.37.0 (2025-04-04)
 ### Breaking
 * Removed ***lint*** command. [#4881](https://github.com/demisto/demisto-sdk/pull/4881)

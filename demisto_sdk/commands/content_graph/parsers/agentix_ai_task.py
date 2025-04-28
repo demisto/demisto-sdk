@@ -1,17 +1,12 @@
-from demisto_sdk.commands.content_graph.parsers import BaseScriptParser
-
-from dataclasses import dataclass
-from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_value
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.parsers.agentix_base import AgentixBaseParser
-from demisto_sdk.commands.content_graph.strict_objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
 
-class AgentixAITaskParser(BaseScriptParser, content_type=ContentType.AGENTIX_AI_TASK):
+class AgentixAITaskParser(IntegrationScriptParser, content_type=ContentType.AGENTIX_AI_TASK):
     def __init__(
         self,
         path: Path,

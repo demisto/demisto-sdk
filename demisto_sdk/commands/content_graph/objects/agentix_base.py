@@ -33,6 +33,7 @@ class AgentixBase(BaseContent):
     display: str = Field(..., alias="name")
     description: str
     pack: Any = Field(None, exclude=True, repr=False)
+    is_test: bool = False
 
     @property
     def data(self) -> dict:

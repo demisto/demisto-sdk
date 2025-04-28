@@ -286,7 +286,7 @@ def run_generate_unit_tests(
         output_dir = Path(input_path).parent
 
     if not examples:
-        logger.info("<red>No command examples file give, generating path alone</red>")
+        logger.info("<red>No command examples file given, generating path</red>")
         examples = str(input_path_obj.parent / "command_examples.txt")
 
     # Check the directory exists and if not, try to create it

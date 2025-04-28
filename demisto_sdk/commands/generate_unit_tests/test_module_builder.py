@@ -35,17 +35,11 @@ class TestModule:
     def to_ast(self):
         body = []
         if not self.to_concat:
-            logger.info("Got into the if in to_ast method")
             body.extend(self.imports)
-            logger.info("Extended imports")
             body.append(self.server_url)
-            logger.info("Extended server url")
             body.extend([self.util_json_builder(), self.generate_test_client()])
-            logger.info("Extended util json and test client")
         body.extend(self.global_args)
-        logger.info("Extended global args")
         body.extend([f.to_ast() for f in self.functions])
-        logger.info("Extended functions")
         return ast_mod.Module(body=body)
 
     def util_json_builder(self):
@@ -54,7 +48,6 @@ class TestModule:
         with io.open(path, mode='r', encoding='utf-8') as f:
             return json.loads(f.read())
         """
-        logger.info("In util json builder")
         io_open = ast_mod.Call(
             func=ast_mod.Attribute(value=ast_name("io"), attr=ast_name("open")),
             args=[ast_name("path")],
@@ -99,17 +92,13 @@ class TestModule:
             decorator_list=[],
             returns=None,
         )
-        logger.info("Return in util load json")
         return func
 
     def generate_test_client(self):
         """
         Return: client function to mock
         """
-        logger.info("in the generate test client")
         client_init_args = self.get_client_init_args(self.get_client_ast())
-        logger.info("After getting client ast")
-        logger.info(f"Client args are: {str(client_init_args)}")
         keywords = []
         for arg in client_init_args:
             arg_name = arg.arg
@@ -131,7 +120,6 @@ class TestModule:
                 value=ast_mod.Call(func=ast_name("Client"), args=[], keywords=keywords)
             )
         ]
-        logger.info("after for loop in generate test client")
 
         func = ast_mod.FunctionDef(
             name="client",
@@ -154,7 +142,6 @@ class TestModule:
             ],
             returns=None,
         )
-        logger.info(("after creating func in generate test client"))
         return func
 
     def get_client_ast(self):
@@ -162,9 +149,7 @@ class TestModule:
         Args: Ast tree of the input code.
         Return: Sub ast tree of the client class.
         """
-        logger.info("in get client ast")
         for body_node in self.tree.body:
-            logger.info("in the for loop")
             if hasattr(body_node, "bases"):
                 bases = [str(id) for id in body_node.bases]
                 if "BaseClient" in bases:
@@ -176,7 +161,7 @@ class TestModule:
         for statement in client_ast.body:
             if "name" in statement._fields and statement.name == "__init__":
                 return statement.args.args
-        logger.info("No init function was found in Client class.")
+        logger.debug("No init function was found in Client class.")
         return []
 
     def build_imports(self, names_to_import: list):

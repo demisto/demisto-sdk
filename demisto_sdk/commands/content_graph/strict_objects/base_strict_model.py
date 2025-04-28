@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
 
@@ -122,8 +123,8 @@ class StructureError(BaseStrictModel):
         field_name = ",".join(more_itertools.always_iterable(self.field_name))
         if self.error_type == "assertion_error":
             error_message = (
-                self.error_message
-                or f"An assertion error occurred for field {field_name}"
+                    self.error_message
+                    or f"An assertion error occurred for field {field_name}"
             )
         elif self.error_type == "value_error.extra":
             error_message = f"The field {field_name} is extra and {self.error_message}"
@@ -233,3 +234,20 @@ Or.update_forward_refs()
 
 class AlertsFilter(BaseStrictModel):
     filter: Optional[Union[Or, And]] = None
+
+
+class AgentixBase(BaseStrictModel):
+    is_enabled: bool = Field(..., alias="isEnabled")
+    pack_id: str = Field(..., alias="packID")
+    pack_name: str = Field(..., alias="packName")
+    tags: Optional[list[str]]
+    is_system: bool = Field(..., alias="isSystem")
+    is_locked: bool = Field(..., alias="isLocked")
+    is_detached: bool = Field(..., alias="isDetached")
+    modified: Optional[datetime]
+    modified_by: Optional[str] = Field(..., alias="modifiedBy")
+    category: Optional[str] = Field(..., alias="modifiedBy")
+    _id: str = Field(..., alias="id")
+    version: str
+    display: str = Field(..., alias="name")
+    description: str

@@ -1,10 +1,9 @@
-
 from pydantic import Field
 
-from demisto_sdk.commands.content_graph.strict_objects.script import StrictScript
+from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 
-class AgentixAITask(StrictScript):
+class AgentixAITask(IntegrationScript):
     is_llm: bool = Field(..., alias="isLLM")
     pre_script: str = Field('', alias="preScript")
     post_script: str = Field('', alias="postScript")

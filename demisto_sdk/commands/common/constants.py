@@ -276,6 +276,7 @@ class FileType(StrEnum):
     CASE_FIELD = "casefield"
     CASE_LAYOUT = "caselayout"
     VERSION_CONFIG = "version_config"
+    AGENTIX_AI_TASK = "agentixaitask"
 
 
 RN_HEADER_BY_FILE_TYPE = {

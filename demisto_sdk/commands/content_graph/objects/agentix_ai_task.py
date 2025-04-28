@@ -2,12 +2,13 @@ from pathlib import Path
 
 from pydantic import Field
 
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 
 
-class AgentixAITask(IntegrationScript):
+class AgentixAITask(IntegrationScript, content_type=ContentType.AGENTIX_AI_TASK):
     is_llm: bool = Field(..., alias="isLLM")
     pre_script: str = Field('', alias="preScript")
     post_script: str = Field('', alias="postScript")

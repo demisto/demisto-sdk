@@ -48,8 +48,20 @@ class AgentixAITaskParser(IntegrationScriptParser, content_type=ContentType.AGEN
 
     @property
     def code(self) -> Optional[str]:
-        """
+        """Gets the integration code.
+        If the integration is unified, then it is taken from the yml file.
+        Otherwise, uses the Unifier object to get it.
+
         Returns:
-            str: The script code.
+            str: The integration code.
         """
-        return self.script_info.get("script")
+        if self.is_unified or self.script_info.get("script") not in ("-", "", None):
+            return self.script_info.get("script")
+        if not self.git_sha:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data(
+                self.path.parent
+            )[1]
+        else:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
+                self.path, self.git_sha, self.yml_data
+            )[1]

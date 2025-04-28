@@ -4,15 +4,17 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects import AgentixAITask
 from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
+
 
 class AgentixAITaskParser(IntegrationScriptParser, content_type=ContentType.AGENTIX_AI_TASK):
     def __init__(
-        self,
-        path: Path,
-        pack_marketplaces: List[MarketplaceVersions],
-        pack_supported_modules: List[str],
-        git_sha: Optional[str] = None,
+            self,
+            path: Path,
+            pack_marketplaces: List[MarketplaceVersions],
+            pack_supported_modules: List[str],
+            git_sha: Optional[str] = None,
     ) -> None:
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha

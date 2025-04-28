@@ -1,11 +1,12 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.objects import AgentixAITask
 from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
+from demisto_sdk.commands.content_graph.strict_objects.agentix_ai_task import AgentixAITask
 
 
 class AgentixAITaskParser(IntegrationScriptParser, content_type=ContentType.AGENTIX_AI_TASK):
@@ -24,6 +25,15 @@ class AgentixAITaskParser(IntegrationScriptParser, content_type=ContentType.AGEN
         self.post_script: str = self.yml_data.get("postScript")
         self.prompt: str = self.yml_data.get("prompt")
         self.few_shots: str = self.yml_data.get("fewShots")
+
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update(
+            {
+                "object_id": "id"
+            }
+        )
+        return super().field_mapping
 
     @property
     def strict_object(self):

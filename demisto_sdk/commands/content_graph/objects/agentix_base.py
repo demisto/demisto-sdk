@@ -34,15 +34,4 @@ class AgentixBase(ContentItem):
     description: str
     pack: Any = Field(None, exclude=True, repr=False)
     is_test: bool = False
-
-
-    # name: str
-    # fromversion: str
-    # toversion: str
-    # display_name: str
-    # deprecated: bool
-    # description: Optional[str] = ""
-    # is_test: bool = False
-    # pack: Any = Field(None, exclude=True, repr=False)
-    # support: str = ""
     is_silent: bool = False

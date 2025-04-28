@@ -1,3 +1,4 @@
+from abc import ABC
 from pathlib import Path
 
 from pydantic import Field
@@ -7,7 +8,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 )
 
 
-class AgentixAITask(IntegrationScript):
+class AgentixAITask(IntegrationScript, ABC):
     is_llm: bool = Field(..., alias="isLLM")
     pre_script: str = Field('', alias="preScript")
     post_script: str = Field('', alias="postScript")

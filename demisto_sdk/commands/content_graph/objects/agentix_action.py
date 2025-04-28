@@ -1,3 +1,4 @@
+from abc import ABC
 from pathlib import Path
 from typing import Optional
 
@@ -26,7 +27,7 @@ class AgentixActionOutput(BaseModel):
     is_details_overridden: bool = Field(..., alias="isDetailsOverridden")
 
 
-class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
+class AgentixAction(AgentixBase, ABC, content_type=ContentType.AGENTIX_ACTION):
     arguments: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None
     few_shots: Optional[str] = Field(None, alias="fewShots")

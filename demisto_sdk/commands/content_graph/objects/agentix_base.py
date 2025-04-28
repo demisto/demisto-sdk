@@ -1,3 +1,4 @@
+from abc import ABC
 from datetime import datetime
 from typing import Optional
 
@@ -6,7 +7,7 @@ from pydantic import Field
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
-class AgentixBase(ContentItem):
+class AgentixBase(ContentItem, ABC):
     is_enabled: bool = Field(..., alias="isEnabled")
     pack_id1: str = Field(..., alias="packID")
     pack_name1: str = Field(..., alias="packName")

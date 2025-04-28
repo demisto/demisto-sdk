@@ -11,7 +11,7 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.parsers.agentix_base import AgentixBaseParser
 from demisto_sdk.commands.content_graph.strict_objects.agentix_agent import AgentixAgent
 
-class AgentixAITask(BaseScriptParser, content_type=ContentType.AGENTIX_AI_TASK):
+class AgentixAITaskParser(BaseScriptParser, content_type=ContentType.AGENTIX_AI_TASK):
     def __init__(
         self,
         path: Path,

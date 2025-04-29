@@ -27,7 +27,7 @@ class AgentixActionOutput(BaseModel):
 
 
 class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
-    arguments: Optional[list[AgentixActionArgument]] = None
+    args: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None
     few_shots: Optional[str] = Field(None, alias="fewShots")
     agent_id: str = Field(..., alias="agentId")

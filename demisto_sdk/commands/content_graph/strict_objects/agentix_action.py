@@ -1,9 +1,11 @@
 from typing import Optional
 
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
-from pydantic import Field
+from pydantic import Field, create_model
 
-from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import AgentixBase
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    AgentixBase,
+)
+from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
 
 
 class AgentixActionArgument(BaseStrictModel):
@@ -24,9 +26,8 @@ class AgentixActionOutput(BaseStrictModel):
     content_item_output_name: str = Field(..., alias="contentItemOutputName")
     is_details_overridden: bool = Field(..., alias="isDetailsOverridden")
 
-
 class AgentixAction(AgentixBase):
-    arguments: Optional[list[AgentixActionArgument]] = None
+    args: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None
     few_shots: Optional[str] = Field(None, alias="fewShots")
     agent_id: str = Field(..., alias="agentId")

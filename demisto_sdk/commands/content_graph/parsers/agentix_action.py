@@ -20,8 +20,6 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
-        self.arguments: Optional[list[AgentixActionArgument]] = self.yml_data.get("arguments")
-        self.outputs: Optional[list[AgentixActionOutput]] = self.yml_data.get("outputs")
         self.few_shots: Optional[str] = self.yml_data.get("fewShots")
         self.agent_id: str = self.yml_data.get("agentId")
         self.content_item_id: str = self.yml_data.get("contentItemId")
@@ -34,5 +32,9 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         return AgentixAction
 
     @property
-    def display_name(self) -> Optional[str]:
-        return get_value(self.yml_data, "name")
+    def args(self) -> list[AgentixActionArgument]:
+        return self.yml_data.get("args", [])
+
+    @property
+    def outputs(self) -> list[AgentixActionOutput]:
+        return self.yml_data.get("outputs", [])

@@ -26,7 +26,3 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
     @property
     def strict_object(self):
         return AgentixAgent
-
-    @property
-    def display_name(self) -> Optional[str]:
-        return get_value(self.yml_data, "name")

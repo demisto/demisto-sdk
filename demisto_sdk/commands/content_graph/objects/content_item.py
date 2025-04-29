@@ -34,7 +34,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
-    append_supported_modules,
     replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
@@ -275,6 +274,8 @@ class ContentItem(BaseContent):
         if not self.path.exists():
             raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
+        logger.debug(f"preparing {self.path}")
+
         # Replace incorrect marketplace references
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
         if current_marketplace == MarketplaceVersions.PLATFORM:
@@ -327,7 +328,6 @@ class ContentItem(BaseContent):
             "fromversion",
             "toversion",
             "deprecated",
-            "supportedModules",
         }
 
     @property

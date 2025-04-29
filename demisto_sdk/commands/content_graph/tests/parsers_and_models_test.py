@@ -6,7 +6,6 @@ import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DEFAULT_SUPPORTED_MODULES,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
@@ -20,8 +19,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
-from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
-from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     ContentItemParser,
@@ -29,8 +26,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
-from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
-from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
@@ -307,11 +302,7 @@ class TestParsersAndModels:
             classifier = create_classifier_object(paths=["toVersion"], values=["5.9.9"])
             classifier_path = Path(classifier.path)
             with pytest.raises(NotAContentItemException):
-                ClassifierParser(
-                    classifier_path,
-                    list(MarketplaceVersions),
-                    pack_supported_modules=[],
-                )
+                ClassifierParser(classifier_path, list(MarketplaceVersions))
 
     def test_classifier_parser(self, pack: Pack):
         """
@@ -333,9 +324,7 @@ class TestParsersAndModels:
             "TestClassifier", load_json("classifier.json")
         )
         classifier_path = Path(classifier.path)
-        parser = ClassifierParser(
-            classifier_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = ClassifierParser(classifier_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -382,7 +371,7 @@ class TestParsersAndModels:
         )
         colrrelation_rule_path = Path(colrrelation_rule.path)
         parser = CorrelationRuleParser(
-            colrrelation_rule_path, list(MarketplaceVersions), pack_supported_modules=[]
+            colrrelation_rule_path, list(MarketplaceVersions)
         )
         assert not parser.relationships
         model = CorrelationRule.from_orm(parser)
@@ -412,9 +401,7 @@ class TestParsersAndModels:
 
         dashboard = pack.create_dashboard("TestDashboard", load_json("dashboard.json"))
         dashboard_path = Path(dashboard.path)
-        parser = DashboardParser(
-            dashboard_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = DashboardParser(dashboard_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -456,9 +443,7 @@ class TestParsersAndModels:
         )
         generic_definition_path = Path(generic_definition.path)
         parser = GenericDefinitionParser(
-            generic_definition_path,
-            list(MarketplaceVersions),
-            pack_supported_modules=[],
+            generic_definition_path, list(MarketplaceVersions)
         )
         assert not parser.relationships
         model = GenericDefinition.from_orm(parser)
@@ -494,9 +479,7 @@ class TestParsersAndModels:
             "TestGenericModule", load_json("generic_module.json")
         )
         generic_module_path = Path(generic_module.path)
-        parser = GenericModuleParser(
-            generic_module_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = GenericModuleParser(generic_module_path, list(MarketplaceVersions))
         assert not parser.relationships
         model = GenericModule.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -530,9 +513,7 @@ class TestParsersAndModels:
             "TestGenericType", load_json("generic_type.json")
         )
         generic_type_path = Path(generic_type.path)
-        parser = GenericTypeParser(
-            generic_type_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = GenericTypeParser(generic_type_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={"Malware Report": ContentType.LAYOUT},
@@ -571,9 +552,7 @@ class TestParsersAndModels:
             "TestIncidentField", load_json("incident_field.json")
         )
         incident_field_path = Path(incident_field.path)
-        parser = IncidentFieldParser(
-            incident_field_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = IncidentFieldParser(incident_field_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_names={
@@ -617,9 +596,7 @@ class TestParsersAndModels:
             "TestIncidentType", load_json("incident_type.json")
         )
         incident_type_path = Path(incident_type.path)
-        parser = IncidentTypeParser(
-            incident_type_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = IncidentTypeParser(incident_type_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -665,9 +642,7 @@ class TestParsersAndModels:
             "TestIndicatorField", load_json("indicator_field.json")
         )
         indicator_field_path = Path(indicator_field.path)
-        parser = IndicatorFieldParser(
-            indicator_field_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = IndicatorFieldParser(indicator_field_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_names={
@@ -710,9 +685,7 @@ class TestParsersAndModels:
             "TestIndicatorType", load_json("indicator_type.json")
         )
         indicator_type_path = Path(indicator_type.path)
-        parser = IndicatorTypeParser(
-            indicator_type_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = IndicatorTypeParser(indicator_type_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -756,9 +729,7 @@ class TestParsersAndModels:
         integration.yml.update({"tests": ["test_playbook"]})
 
         integration_path = Path(integration.path)
-        parser = IntegrationParser(
-            integration_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = IntegrationParser(integration_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             integration_commands=["test-command"],
@@ -795,9 +766,7 @@ class TestParsersAndModels:
 
         integration = pack.create_integration(yml=load_yaml("unified_integration.yml"))
         integration_path = Path(integration.path)
-        parser = IntegrationParser(
-            integration_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = IntegrationParser(integration_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             integration_commands=[
@@ -840,9 +809,7 @@ class TestParsersAndModels:
 
         job = pack.create_job(is_feed=False, name="TestJob")
         job_path = Path(job.path)
-        parser = JobParser(
-            job_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = JobParser(job_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -876,9 +843,7 @@ class TestParsersAndModels:
 
         layout = pack.create_layout("TestLayout")
         layout_path = Path(layout.path)
-        parser = LayoutParser(
-            layout_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = LayoutParser(layout_path, list(MarketplaceVersions))
         model = Layout.from_orm(parser)
 
         ContentItemModelVerifier.run(
@@ -909,9 +874,7 @@ class TestParsersAndModels:
             "TestLayoutscontainer", load_json("layoutscontainer.json")
         )
         layout_path = Path(layout.path)
-        parser = LayoutParser(
-            layout_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = LayoutParser(layout_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -965,9 +928,7 @@ class TestParsersAndModels:
             "TestLayoutscontainer", load_json("layoutscontainer.json")
         )
         model = Layout.from_orm(
-            LayoutParser(
-                Path(layout.path), list(MarketplaceVersions), pack_supported_modules=[]
-            )
+            LayoutParser(Path(layout.path), list(MarketplaceVersions))
         )
         model.group = override_group
         ready_for_upload = model.prepare_for_upload(current_marketplace=marketplace)
@@ -997,9 +958,7 @@ class TestParsersAndModels:
 
         list_ = pack.create_list("TestList", load_json("list.json"))
         list_path = Path(list_.path)
-        parser = ListParser(
-            list_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = ListParser(list_path, list(MarketplaceVersions))
         assert not parser.relationships
         model = ListObject.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -1032,9 +991,7 @@ class TestParsersAndModels:
             "TestIncomingMapper", load_json("incoming_mapper.json")
         )
         mapper_path = Path(mapper.path)
-        parser = MapperParser(
-            mapper_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = MapperParser(mapper_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -1077,9 +1034,7 @@ class TestParsersAndModels:
             "TestOutgoingMapper", load_json("outgoing_mapper.json")
         )
         mapper_path = Path(mapper.path)
-        parser = MapperParser(
-            mapper_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = MapperParser(mapper_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -1126,9 +1081,7 @@ class TestParsersAndModels:
             "TestModelingRule", load_yaml("modeling_rule.yml")
         )
         modeling_rule_path = Path(modeling_rule.path)
-        parser = ModelingRuleParser(
-            modeling_rule_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = ModelingRuleParser(modeling_rule_path, list(MarketplaceVersions))
         assert not parser.relationships
         model = ModelingRule.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -1162,9 +1115,7 @@ class TestParsersAndModels:
             "TestAssetsModelingRule"
         )
         modeling_rule_path = Path(assets_modeling_rule.path)
-        parser = AssetsModelingRuleParser(
-            modeling_rule_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = AssetsModelingRuleParser(modeling_rule_path, list(MarketplaceVersions))
         assert not parser.relationships
         model = AssetsModelingRule.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -1196,9 +1147,7 @@ class TestParsersAndModels:
             "TestParsingRule", load_yaml("parsing_rule.yml")
         )
         parsing_rule_path = Path(parsing_rule.path)
-        parser = ParsingRuleParser(
-            parsing_rule_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = ParsingRuleParser(parsing_rule_path, list(MarketplaceVersions))
         assert not parser.relationships
         model = ParsingRule.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -1229,9 +1178,7 @@ class TestParsersAndModels:
         playbook.create_default_playbook(name="sample")
         playbook.yml.update({"description": "test\\ test2\\\n \\  test3\n   - test4  "})
         playbook_path = Path(playbook.path)
-        parser = PlaybookParser(
-            playbook_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = PlaybookParser(playbook_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -1266,9 +1213,7 @@ class TestParsersAndModels:
 
         report = pack.create_report("TestReport", load_json("report.json"))
         report_path = Path(report.path)
-        parser = ReportParser(
-            report_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = ReportParser(report_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -1305,9 +1250,7 @@ class TestParsersAndModels:
         script.create_default_script()
         script.code.write('demisto.executeCommand("dummy-command", dArgs)')
         script_path = Path(script.path)
-        parser = ScriptParser(
-            script_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = ScriptParser(script_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             commands_or_scripts_executions=["dummy-command"],
@@ -1356,9 +1299,7 @@ class TestParsersAndModels:
         script.create_default_script()
         script.yml.update({"autoUpdateDockerImage": raw_value})
         script_path = Path(script.path)
-        parser = ScriptParser(
-            script_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = ScriptParser(script_path, list(MarketplaceVersions))
         model = Script.from_orm(parser)
         assert model.auto_update_docker_image is expected_value
 
@@ -1383,9 +1324,7 @@ class TestParsersAndModels:
         test_playbook = pack.create_test_playbook()
         test_playbook.create_default_test_playbook(name="sample")
         test_playbook_path = Path(test_playbook.path)
-        parser = TestPlaybookParser(
-            test_playbook_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = TestPlaybookParser(test_playbook_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -1419,9 +1358,7 @@ class TestParsersAndModels:
 
         trigger = pack.create_trigger("TestTrigger", load_json("trigger.json"))
         trigger_path = Path(trigger.path)
-        parser = TriggerParser(
-            trigger_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = TriggerParser(trigger_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -1457,9 +1394,7 @@ class TestParsersAndModels:
 
         rule = pack.create_layout_rule("rule_test")
         rule_path = Path(rule.path)
-        parser = LayoutRuleParser(
-            rule_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = LayoutRuleParser(rule_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -1496,9 +1431,7 @@ class TestParsersAndModels:
 
         rule = pack.create_case_layout_rule("case_rule_test")
         rule_path = Path(rule.path)
-        parser = CaseLayoutRuleParser(
-            rule_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = CaseLayoutRuleParser(rule_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -1533,9 +1466,7 @@ class TestParsersAndModels:
 
         case_layout = pack.create_case_layout("TestCaseLayout")
         case_layout_path = Path(case_layout.path)
-        parser = CaseLayoutParser(
-            case_layout_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = CaseLayoutParser(case_layout_path, list(MarketplaceVersions))
         model = CaseLayout.from_orm(parser)
 
         ContentItemModelVerifier.run(
@@ -1570,9 +1501,7 @@ class TestParsersAndModels:
             "TestCaseField", load_json("case_field.json")
         )
         case_field_path = Path(case_field.path)
-        parser = CaseFieldParser(
-            case_field_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = CaseFieldParser(case_field_path, list(MarketplaceVersions))
         model = CaseField.from_orm(parser)
         ContentItemModelVerifier.run(
             model,
@@ -1602,9 +1531,7 @@ class TestParsersAndModels:
 
         widget = pack.create_widget("TestWidget", load_json("widget.json"))
         widget_path = Path(widget.path)
-        parser = WidgetParser(
-            widget_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = WidgetParser(widget_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
@@ -1651,9 +1578,7 @@ class TestParsersAndModels:
             ],
         )
         wizard_path = Path(wizard.path)
-        parser = WizardParser(
-            wizard_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = WizardParser(wizard_path, list(MarketplaceVersions))
         assert not parser.relationships
         model = Wizard.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -1700,9 +1625,7 @@ class TestParsersAndModels:
             "TestXSIAMDashboard", load_json("xsiam_dashboard.json")
         )
         xsiam_dashboard_path = Path(xsiam_dashboard.path)
-        parser = XSIAMDashboardParser(
-            xsiam_dashboard_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = XSIAMDashboardParser(xsiam_dashboard_path, list(MarketplaceVersions))
         assert not parser.relationships
         model = XSIAMDashboard.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -1735,9 +1658,7 @@ class TestParsersAndModels:
             "TestXSIAMReport", load_json("xsiam_report.json")
         )
         xsiam_report_path = Path(xsiam_report.path)
-        parser = XSIAMReportParser(
-            xsiam_report_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = XSIAMReportParser(xsiam_report_path, list(MarketplaceVersions))
         assert not parser.relationships
         model = XSIAMReport.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -1883,9 +1804,7 @@ class TestParsersAndModels:
         integration.yml.update({"tests": ["test_playbook"]})
 
         integration_path = Path(integration.path)
-        parser = IntegrationParser(
-            integration_path, list(MarketplaceVersions), pack_supported_modules=[]
-        )
+        parser = IntegrationParser(integration_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             integration_commands=["test-command"],
@@ -1899,105 +1818,6 @@ class TestParsersAndModels:
         assert model.python_version == expected_python_version
         # make sure that only after we called directly to the lazy property of the model, its loaded into the model
         assert "python_version" in str(model)
-
-    def test_supported_modules_parsing(self, mocker, repo: Repo):
-        """
-        Given:
-        - A pack with specified supported modules in its metadata
-
-        When:
-        - Parsing the pack
-
-        Then:
-        - Ensure the pack model correctly includes the specified supported modules
-        """
-        pack = repo.create_pack("HelloWorld")
-        pack_metadata = load_json("pack_metadata.json")
-        pack_metadata.update({"supportedModules": ["C1", "C3"]})
-        pack.pack_metadata.write_json(pack_metadata)
-        pack_path = Path(pack.path)
-        parser = PackParser(pack_path)
-
-        model = PackModel.from_orm(parser)
-        assert model.supportedModules == ["C1", "C3"]
-
-    def test_supported_modules_override(self, mocker, repo: Repo):
-        """
-        Given:
-        - A pack with specified supported modules in its metadata
-        - A script within the pack with its own supported modules
-
-        When:
-        - Parsing the script
-
-        Then:
-        - Ensure the script overrides the pack's supported modules
-        """
-        pack = repo.create_pack("HelloWorld")
-        pack_metadata = load_json("pack_metadata.json")
-        pack_metadata.update({"supportedModules": ["X1", "X3", "ENT_PLUS"]})
-        pack.pack_metadata.write_json(pack_metadata)
-
-        script = pack.create_script()
-        script.create_default_script()
-        script_path = Path(script.path)
-
-        parser = ScriptParser(
-            script_path, list(MarketplaceVersions), pack_supported_modules=["C1", "C3"]
-        )
-        model = Script.from_orm(parser)
-
-        assert model.supportedModules == ["C1", "C3"]
-
-    def test_supported_modules_inheritance(self, mocker, repo: Repo):
-        """
-        Given:
-        - A pack (sample1) with specified supported modules in its metadata
-        - Another pack (sample2) without specified supported modules
-        - A script within each pack
-
-        When:
-        - Parsing the scripts using ContentItemParser.from_path
-
-        Then:
-        - Ensure the script in sample1 inherits the pack's custom supported modules
-        - Ensure the script in sample2 uses the DEFAULT_SUPPORTED_MODULES
-        """
-        pack1 = repo.create_pack("sample1")
-        pack_metadata = load_json("pack_metadata.json")
-        pack_metadata.update({"supportedModules": ["C1", "C3"]})
-        pack1.pack_metadata.write_json(pack_metadata)
-
-        pack2 = repo.create_pack("sample2")
-        pack2.pack_metadata.write_json(load_json("pack_metadata.json"))
-
-        script1 = pack1.create_script()
-        script1.create_default_script()
-
-        script2 = pack2.create_script()
-        script2.create_default_script()
-
-        mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
-        parser = RepositoryParser(Path(repo.path))
-        parser.parse()
-        model = ContentDTO.from_orm(parser)
-
-        pack1_model = next(pack for pack in model.packs if pack.object_id == "sample1")
-        pack2_model = next(pack for pack in model.packs if pack.object_id == "sample2")
-
-        script1_model = next(
-            script
-            for script in pack1_model.content_items
-            if script.name == "sample_script"
-        )
-        script2_model = next(
-            script
-            for script in pack2_model.content_items
-            if script.name == "sample_script"
-        )
-
-        assert script1_model.supportedModules == ["C1", "C3"]
-        assert script2_model.supportedModules == DEFAULT_SUPPORTED_MODULES
 
 
 class TestFindContentType:
@@ -3278,7 +3098,5 @@ def test_layout_parser_group():
         },
     )
     layout_path = Path(layout.path)
-    layout_parser_instance = LayoutParser(
-        layout_path, list(MarketplaceVersions), pack_supported_modules=[]
-    )
+    layout_parser_instance = LayoutParser(layout_path, list(MarketplaceVersions))
     assert layout_parser_instance.group == "incident"

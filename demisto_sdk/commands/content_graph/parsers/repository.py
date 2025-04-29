@@ -52,8 +52,7 @@ class RepositoryParser:
                         self.packs.append(pack)
                         if progress_bar:
                             progress_bar.update(1)
-        except Exception as e:
-            logger.error(e)
+        except Exception:
             logger.error(traceback.format_exc())
             raise
 

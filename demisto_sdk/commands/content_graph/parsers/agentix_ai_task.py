@@ -32,6 +32,8 @@ class AgentixAITaskParser(IntegrationScriptParser, content_type=ContentType.AGEN
         self.pre_script: str = self.yml_data.get("preScript")
         self.post_script: str = self.yml_data.get("postScript")
         self.prompt: str = self.yml_data.get("prompt")
+        self.user_prompt: str = self.yml_data.get("userPrompt")
+        self.system_prompt: str = self.yml_data.get("systemPrompt")
         self.few_shots: str = self.yml_data.get("fewShots")
 
     @cached_property

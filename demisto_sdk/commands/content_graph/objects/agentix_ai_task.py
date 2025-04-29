@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import Set, List, Union
+from typing import List, Set, Union
 
-from pydantic import Field, DirectoryPath
+from pydantic import DirectoryPath, Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
@@ -10,15 +10,17 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_scripts_prepare import \
-    MarketplaceIncidentToAlertScriptsPreparer
+from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_scripts_prepare import (
+    MarketplaceIncidentToAlertScriptsPreparer,
+)
 
 
 class AgentixAITask(IntegrationScript, content_type=ContentType.AGENTIX_AI_TASK):
     is_llm: bool = Field(..., alias="isLLM")
     pre_script: str = Field('', alias="preScript")
     post_script: str = Field('', alias="postScript")
-    prompt: str = ''
+    user_prompt: str = Field('', alias="userPrompt")
+    system_prompt: str = Field('', alias="systemPrompt")
     few_shots: str = Field('', alias="fewShots")
 
     @staticmethod

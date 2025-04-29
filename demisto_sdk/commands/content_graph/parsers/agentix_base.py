@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, Optional, Set
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
@@ -32,16 +33,20 @@ class AgentixBaseParser(YAMLContentItemParser):
         self.modified_by: Optional[str] = self.yml_data.get("modifiedBy", None)
         self.category: Optional[str] = self.yml_data.get("category", None)
         self._id: str = self.yml_data.get("id")
-        self.display: str = self.yml_data.get("name")
 
     @cached_property
     def field_mapping(self):
         super().field_mapping.update(
             {
-                "object_id": "id"
+                "object_id": "id",
+                "display_name": "display",
             }
         )
         return super().field_mapping
+
+    @property
+    def display_name(self) -> Optional[str]:
+        return get_value(self.yml_data, self.field_mapping.get("display_name", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

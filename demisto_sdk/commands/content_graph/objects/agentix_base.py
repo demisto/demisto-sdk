@@ -30,7 +30,6 @@ class AgentixBase(ContentItem):
     category: Optional[str] = Field(..., alias="modifiedBy")
     _id: str = Field(..., alias="id")
     version: str
-    display_name: str = Field(..., alias="name")
     description: str
     pack: Any = Field(None, exclude=True, repr=False)
     is_test: bool = False

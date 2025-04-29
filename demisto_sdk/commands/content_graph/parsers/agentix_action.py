@@ -27,6 +27,7 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         self.content_item_id: str = self.yml_data.get("contentItemId")
         self.content_item_type: str = self.yml_data.get("contentItemType")
         self.content_item_version: str = self.yml_data.get("contentItemVersion")
+        self.content_item_pack_version: str = self.yml_data.get("contentItemPackVersion")
 
     @property
     def strict_object(self):

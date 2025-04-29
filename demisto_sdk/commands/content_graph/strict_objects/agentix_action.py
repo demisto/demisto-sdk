@@ -32,4 +32,5 @@ class AgentixAction(AgentixBase):
     agent_id: str = Field(..., alias="agentId")
     content_item_id: str = Field(..., alias="contentItemId")
     content_item_type: str = Field(..., alias="contentItemType")  # (1 script, 2 playbook, 3 command, 4 AI task)
-    content_item_version: str = Field(..., alias="contentItemVersion")  # TODO - int vs str
+    content_item_version: int = Field(..., alias="contentItemVersion")  # TODO - int vs str
+    content_item_pack_version: str = Field(..., alias="contentItemPackVersion")

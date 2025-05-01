@@ -319,6 +319,8 @@ def collect_images_relative_paths_from_markdown_and_replace_with_storage_path(
         f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/{MarketplaceVersionToMarketplaceName.get(marketplace)}"
         f"/content/packs/{pack_name}"
     )
+    logger.info(f"[BYOSI]{marketplace=} | {google_api_markdown_images_url=}")
+    
     if marketplace in [
         MarketplaceVersions.XSOAR_SAAS,
         MarketplaceVersions.MarketplaceV2,
@@ -357,5 +359,5 @@ def collect_images_relative_paths_from_markdown_and_replace_with_storage_path(
 
     with open(markdown_path, "w") as file:
         file.writelines(lines)
-
+    logger.info(f"[BYOSI] {images_list=}")
     return images_list

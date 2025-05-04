@@ -39,7 +39,8 @@ class AgentixAITaskParser(IntegrationScriptParser, content_type=ContentType.AGEN
     def field_mapping(self):
         super().field_mapping.update(
             {
-                "object_id": "id",
+                "object_id": "commonfields.id",
+                "version": "commonfields.version",
                 "docker_image": "dockerimage",
                 "description": "comment",
                 "type": "type",

@@ -29,7 +29,7 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         self.underlying_content_item_name: str = self.yml_data.get("underlyingContentItemName")
         self.underlying_content_item_type: int = self.yml_data.get("underlyingContentItemType") # (1 script, 2 playbook, 3 command, 4 AI task)
         self.underlying_content_item_version: int = self.yml_data.get("underlyingContentItemVersion")
-        self.content_item_pack_version: str = self.yml_data.get("underlyingContentItemPackVersion")
+        self.underlying_content_item_pack_version: str = self.yml_data.get("underlyingContentItemPackVersion")
 
     @property
     def strict_object(self):

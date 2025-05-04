@@ -328,7 +328,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         # TODO - Update this to dump the release notes for the platform marketplace
         # starting from platform supported version only.
         try:
-            shutil.copytree(self.path / "ReleaseNotes", path)
+            shutil.copytree(self.path / "ReleaseNotes", path,  dirs_exist_ok=True)
         except FileNotFoundError:
             logger.debug(f'No such file {self.path / "ReleaseNotes"}')
 
@@ -398,7 +398,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 logger.debug(f'No such file {self.path / "Author_image.png"}')
 
             try:
-                shutil.copytree(self.path / "doc_files", path / "doc_files")
+                shutil.copytree(self.path / "doc_files", path / "doc_files", dirs_exist_ok=True)
             except FileNotFoundError:
                 logger.debug(f'No such directory {self.path / "doc_files"}')
 

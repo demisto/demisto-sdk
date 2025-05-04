@@ -23,8 +23,8 @@ class AgentixBaseParser(YAMLContentItemParser):
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.is_enabled: bool = self.yml_data.get("isEnabled", False)
-        self.pack_id1: str = self.yml_data.get("packID", '')
-        self.pack_name1: str = self.yml_data.get("packName", '')
+        self.pack_id: str = self.yml_data.get("packID", '') #TODO Maybe Not needed
+        self.pack_name: str = self.yml_data.get("packName", '') #TODO Maybe Not needed
         self.tags: List[str] = self.yml_data.get("tags", [])
         self.is_system: bool = self.yml_data.get("isSystem", True)
         self.is_locked: bool = self.yml_data.get("isLocked", True)
@@ -32,13 +32,13 @@ class AgentixBaseParser(YAMLContentItemParser):
         self.modified: Optional[datetime] = self.yml_data.get("modified", None)
         self.modified_by: Optional[str] = self.yml_data.get("modifiedBy", None)
         self.category: Optional[str] = self.yml_data.get("category", None)
-        self._id: str = self.yml_data.get("id", '')
 
     @cached_property
     def field_mapping(self):
         super().field_mapping.update(
             {
-                "object_id": "id",
+                "object_id": "commonfields.id",
+                "version": "commonfields.version",
             }
         )
         return super().field_mapping

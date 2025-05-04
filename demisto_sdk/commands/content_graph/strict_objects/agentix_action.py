@@ -1,11 +1,11 @@
-from typing import Optional
+from typing import Optional, Type, cast
 
-from pydantic import Field, create_model
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     AgentixBase,
 )
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
+from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel, create_model
 
 
 class AgentixActionArgument(BaseStrictModel):
@@ -35,4 +35,4 @@ class AgentixAction(AgentixBase):
     underlying_content_item_name: str = Field(..., alias="underlyingContentItemName")
     underlying_content_item_type: int = Field(..., alias="underlyingContentItemType") # (1 script, 2 playbook, 3 command, 4 AI task)
     underlying_content_item_version: int = Field(..., alias="underlyingContentItemVersion") # TODO - int vs str
-    content_item_pack_version: str = Field(..., alias="underlyingContentItemPackVersion")
+    underlying_content_item_pack_version: str = Field(..., alias="underlyingContentItemPackVersion")

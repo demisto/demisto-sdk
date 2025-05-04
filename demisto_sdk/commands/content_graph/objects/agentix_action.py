@@ -35,7 +35,7 @@ class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
     underlying_content_item_name: str = Field(..., alias="underlyingContentItemName")
     underlying_content_item_type: int = Field(..., alias="underlyingContentItemType") # (1 script, 2 playbook, 3 command, 4 AI task)
     underlying_content_item_version: int = Field(..., alias="underlyingContentItemVersion")
-    content_item_pack_version: str = Field(..., alias="underlyingContentItemPackVersion")
+    underlying_content_item_pack_version: str = Field(..., alias="underlyingContentItemPackVersion")
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

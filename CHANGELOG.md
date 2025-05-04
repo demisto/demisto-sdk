@@ -2,7 +2,7 @@
 ## 1.37.4 (2025-05-04)
 ### Fix
 * Fixed an issue in ***prepare-content*** command where the metadata.json file was being generated from the wrong file. [#4892](https://github.com/demisto/demisto-sdk/pull/4892)
-* Fixed an issue in ***generate-unit-tests*** command where client init args where not used. [#4889](https://github.com/demisto/demisto-sdk/pull/4889)
+* Fixed an issue in ***generate-unit-tests*** command where client init arguments where not used. [#4889](https://github.com/demisto/demisto-sdk/pull/4889)
 
 
 ## 1.37.3 (2025-04-21)

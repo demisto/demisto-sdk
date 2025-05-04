@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue with generate-unit-tests command where client init args where not used.
-  type: fix
-pr_number: 4889

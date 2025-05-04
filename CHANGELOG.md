@@ -1,4 +1,10 @@
 # Changelog
+## 1.37.4 (2025-05-04)
+### Fix
+* Fixed an issue where the metadata.json file was being generated from the old file during prepare-content flow. [#4892](https://github.com/demisto/demisto-sdk/pull/4892)
+* Fixed an issue with generate-unit-tests command where client init args where not used. [#4889](https://github.com/demisto/demisto-sdk/pull/4889)
+
+
 ## 1.37.3 (2025-04-21)
 ### Feature
 * Added support for local custom command configuration file - `.demisto-sdk-conf` to ***download*** command. [#4912](https://github.com/demisto/demisto-sdk/pull/4912)

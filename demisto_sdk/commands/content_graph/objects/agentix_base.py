@@ -27,7 +27,7 @@ class AgentixBase(ContentItem):
     is_detached: bool = Field(..., alias="isDetached")
     modified: Optional[datetime]
     modified_by: Optional[str] = Field(..., alias="modifiedBy")
-    category: Optional[str] = Field(..., alias="modifiedBy")
+    category: Optional[str] = Field(..., alias="category")
     _id: str = Field(..., alias="id")
     version: str
     description: str

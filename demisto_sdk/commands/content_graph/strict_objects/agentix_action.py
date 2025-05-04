@@ -31,7 +31,8 @@ class AgentixAction(AgentixBase):
     outputs: Optional[list[AgentixActionOutput]] = None
     few_shots: Optional[str] = Field(None, alias="fewShots")
     agent_id: str = Field(..., alias="agentId")
-    content_item_id: str = Field(..., alias="contentItemId")
-    content_item_type: str = Field(..., alias="contentItemType")  # (1 script, 2 playbook, 3 command, 4 AI task)
-    content_item_version: int = Field(..., alias="contentItemVersion")  # TODO - int vs str
-    content_item_pack_version: str = Field(..., alias="contentItemPackVersion")
+    underlying_content_item_id: str = Field(..., alias="underlyingContentItemId")
+    underlying_content_item_name: str = Field(..., alias="underlyingContentItemName")
+    underlying_content_item_type: int = Field(..., alias="underlyingContentItemType") # (1 script, 2 playbook, 3 command, 4 AI task)
+    underlying_content_item_version: int = Field(..., alias="underlyingContentItemVersion") # TODO - int vs str
+    content_item_pack_version: str = Field(..., alias="underlyingContentItemPackVersion")

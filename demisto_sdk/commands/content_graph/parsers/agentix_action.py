@@ -5,8 +5,11 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.agentix_base import AgentixBaseParser
-from demisto_sdk.commands.content_graph.strict_objects.agentix_action import AgentixActionArgument, AgentixActionOutput, \
-    AgentixAction
+from demisto_sdk.commands.content_graph.strict_objects.agentix_action import (
+    AgentixAction,
+    AgentixActionArgument,
+    AgentixActionOutput,
+)
 
 
 class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_ACTION):
@@ -22,10 +25,11 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         )
         self.few_shots: Optional[str] = self.yml_data.get("fewShots")
         self.agent_id: str = self.yml_data.get("agentId")
-        self.content_item_id: str = self.yml_data.get("contentItemId")
-        self.content_item_type: str = self.yml_data.get("contentItemType")
-        self.content_item_version: str = self.yml_data.get("contentItemVersion")
-        self.content_item_pack_version: str = self.yml_data.get("contentItemPackVersion")
+        self.underlying_content_item_id: str = self.yml_data.get("underlyingContentItemId")
+        self.underlying_content_item_name: str = self.yml_data.get("underlyingContentItemName")
+        self.underlying_content_item_type: int = self.yml_data.get("underlyingContentItemType") # (1 script, 2 playbook, 3 command, 4 AI task)
+        self.underlying_content_item_version: int = self.yml_data.get("underlyingContentItemVersion")
+        self.content_item_pack_version: str = self.yml_data.get("underlyingContentItemPackVersion")
 
     @property
     def strict_object(self):

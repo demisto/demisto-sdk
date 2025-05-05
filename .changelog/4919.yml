@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the github action process_pack, in the contribution management repo, failed with the exit code 0.
+  type: internal
+pr_number: 4919

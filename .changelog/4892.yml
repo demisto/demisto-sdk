@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the metadata.json file was being generated from the old file during prepare-content flow.
-  type: fix
-pr_number: 4892

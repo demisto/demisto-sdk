@@ -2089,8 +2089,8 @@ class ParameterType(Enum):
     INTERVAL = 19
     BOLD_TITLE = 20
     DAY_DROPDOWN = 21
-    RESULT = 22     # A placeholder; the front-end will fill this with dynamically generated text.
-    ENGINE_LOCATION = 23   # A signal to the front-end; the 'engine' dropdown's position in the UI will match the order of this parameter.
+    RESULT = 22  # A placeholder; the front-end will fill this with dynamically generated text.
+    ENGINE_LOCATION = 23  # A signal to the front-end; the 'engine' dropdown's position in the UI will match the order of this parameter.
 
 
 class IncidentFieldType(

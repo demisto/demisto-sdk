@@ -45,7 +45,10 @@ class IsMissingDisplayFieldValidator(BaseValidator[ContentTypes]):
         Returns:
             List[str]: The list of the names of the params that are not valid.
         """
-        excluded_types = (ParameterType.EXPIRATION_FIELD.value, ParameterType.ENGINE_LOCATION.value)
+        excluded_types = (
+            ParameterType.EXPIRATION_FIELD.value,
+            ParameterType.ENGINE_LOCATION.value,
+        )
         excluded_names = ("feedExpirationPolicy", "feedExpirationInterval")
         return [
             param.name

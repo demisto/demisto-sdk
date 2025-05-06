@@ -17,6 +17,7 @@ class AgentixActionArgument(BaseStrictModel):
     is_hidden: bool = Field(..., alias="isHidden")
     content_item_arg_name: str = Field(..., alias="contentItemArgName")
     is_details_overridden: bool = Field(..., alias="isDetailsOverridden")
+    is_generatable: bool = Field(None, alias="isGeneratable")
 
 
 class AgentixActionOutput(BaseStrictModel):
@@ -25,6 +26,7 @@ class AgentixActionOutput(BaseStrictModel):
     output_type: str = Field(..., alias="outputType")  # TODO - on our side is a str like String, List and etc
     content_item_output_name: str = Field(..., alias="contentItemOutputName")
     is_details_overridden: bool = Field(..., alias="isDetailsOverridden")
+    is_essential: bool = Field(None, alias="isEssential")
 
 class AgentixAction(AgentixBase):
     args: Optional[list[AgentixActionArgument]] = None

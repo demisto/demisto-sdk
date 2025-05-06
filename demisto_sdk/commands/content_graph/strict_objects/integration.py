@@ -139,6 +139,38 @@ CommonFieldsIntegration = create_model(
     ),
 )
 
+class ConditionOperator(StrEnum):
+    """Supported operators for trigger conditions."""
+    NOT_EXISTS = "not_exists"
+    EXISTS = "exists"
+    EQUALS = "equals"
+    NOT_EQUALS = "not_equals"
+
+
+class Condition(BaseStrictModel):
+    """Represents a condition in a trigger."""
+    name: str
+    operator: ConditionOperator
+    value: Optional[str] = None
+
+
+class TriggerEffectAction(BaseStrictModel):
+    """Represents an action to be performed in a trigger effect."""
+    hidden: Optional[bool] = None
+    required: Optional[bool] = None
+
+
+class TriggerEffect(BaseStrictModel):
+    """Represents an effect in a trigger."""
+    name: str
+    action: TriggerEffectAction
+
+
+class Trigger(BaseStrictModel):
+    """Represents a trigger in the integration configuration."""
+    conditions: List[Condition]
+    effects: List[TriggerEffect]
+
 
 class SectionOrderValues(StrEnum):
     CONNECT = "Connect"
@@ -172,6 +204,7 @@ class _StrictIntegration(BaseStrictModel):
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
     hybrid: Optional[bool] = None
     supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
+    triggers: Optional[List[Trigger]] = None
 
     def __init__(self, **data):
         """

@@ -6,11 +6,15 @@ import pytest
 from typer.testing import CliRunner
 
 from demisto_sdk.__main__ import app
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.tests.constants_test import PACK_TARGET
+from demisto_sdk.tests.constants_test import GIT_ROOT, PACK_TARGET
 
 UNIT_TEST_DATA = src_root() / "commands" / "zip_packs" / "tests" / "data"
-TEST_PACK_PATH = Path(PACK_TARGET)
+TEST_PACK_PATH: Path = Path(PACK_TARGET)
+TEST_PACK_PATH_WITH_LIST = Path(
+    f"{GIT_ROOT}/demisto_sdk/tests/test_files/Packs/TestPackForZipPacksCommand"
+)
 
 
 @contextmanager
@@ -52,7 +56,7 @@ class TestPacksZipper:
             ("--no-zip-all", "uploadable_packs/TestPack.zip"),
         ],
     )
-    def test_zip_packs(self, zip_all, expected_path):
+    def test_zip_packs(self, zip_all: str, expected_path: str):
         """
         Given:
             - zip_all arg as True or False
@@ -68,9 +72,9 @@ class TestPacksZipper:
                 args=[
                     "zip-packs",
                     "-i",
-                    TEST_PACK_PATH,
+                    f"{TEST_PACK_PATH}",
                     "-o",
-                    tmp_output_dir,
+                    f"{tmp_output_dir}",
                     "--content-version",
                     "0.0.0",
                     zip_all,
@@ -80,6 +84,45 @@ class TestPacksZipper:
 
             zip_file_path = Path(tmp_output_dir) / expected_path
             assert zip_file_path.exists(), f"{zip_file_path} does not exist"
+
+    def test_zip_packs_metadata_validation(self):
+        """
+        Given:
+            - zip_all arg as True or False
+        When:
+            - run the zip_packs command
+        Then:
+            - validate the zip file exist in the destination output
+        """
+        runner = CliRunner()
+        with temp_dir() as tmp_output_dir:
+            result = runner.invoke(
+                app,
+                args=[
+                    "zip-packs",
+                    "-i",
+                    TEST_PACK_PATH_WITH_LIST,
+                    "-o",
+                    tmp_output_dir,
+                ],
+            )
+            assert result.exit_code == 0
+            unpack_archive(
+                f"{tmp_output_dir}/uploadable_packs/TestPackForZipPacksCommand.zip",
+                f"{tmp_output_dir}/uploadable_packs",
+            )
+            zip_file_path = Path(tmp_output_dir / "uploadable_packs")
+            for file_name in ["metadata.json", "pack_metadata.json", "README.md"]:
+                file_path = zip_file_path / file_name
+                assert file_path.exists()
+                if file_name == "metadata.json":
+                    with open(file_path, "r") as metadata_file:
+                        metadata_file_data = JSON_Handler().load(metadata_file)
+                        lists = metadata_file_data.get("contentItems", {}).get(
+                            "list", []
+                        )
+                        assert lists
+                        assert len(lists) == 1
 
     def test_zipped_packs(self):
         """

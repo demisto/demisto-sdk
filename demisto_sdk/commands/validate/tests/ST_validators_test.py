@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import pytest
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions

@@ -274,7 +274,7 @@ def test_invalid_section_order(pack: Pack):
     assert results[0].message == (
         "Structure error (type_error.enum) in field sectionorder,1 of integration_0.yml: "
         "value is not a valid enumeration member; permitted: "
-        "'Connect', 'Collect', 'Optimize', 'Mirroring, 'Result''"
+        "'Connect', 'Collect', 'Optimize', 'Mirroring', 'Result'"
     )
 
 

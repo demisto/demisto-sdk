@@ -1,4 +1,5 @@
 from pathlib import Path
+import pytest
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.parsers import (
@@ -272,7 +273,7 @@ def test_invalid_section_order(pack: Pack):
     assert results[0].message == (
         "Structure error (type_error.enum) in field sectionorder,1 of integration_0.yml: "
         "value is not a valid enumeration member; permitted: "
-        "'Connect', 'Collect', 'Optimize', 'Mirroring'"
+        "'Connect', 'Collect', 'Optimize', 'Mirroring, 'Result''"
     )
 
 
@@ -377,7 +378,7 @@ class TestST111:
         assert len(results) == 1
         assert results[0].message == (
             "Missing sectionorder key. Add sectionorder to the top of your YAML file and specify the order of the "
-            "Connect, Collect, Optimize, Mirroring sections (at least one is required)."
+            "Connect, Collect, Optimize, Mirroring, Result sections (at least one is required)."
         )
 
     def test_invalid_section(self):
@@ -418,10 +419,11 @@ class TestST111:
             "Please specify the section for these parameters."
         )
 
-    def test_valid_section_mirroring(self, pack: Pack):
+    @pytest.mark.parametrize("section_type", ["Mirroring", "Result"])
+    def test_valid_section(self, pack: Pack, section_type: str):
         """
         Given:
-            - an integration which contains the mirroring section
+            - an integration which contains a specific section (Mirroring or Result)
         When:
             - executing the IntegrationParser
         Then:
@@ -430,8 +432,8 @@ class TestST111:
         integration = pack.create_integration(yml=load_yaml("integration.yml"))
         integration_info = integration.yml.read_dict()
         curr_config = integration_info["configuration"]
-        curr_config[0]["section"] = "Mirroring"
-        integration.yml.update({"sectionorder": ["Connect", "Mirroring"]})
+        curr_config[0]["section"] = section_type
+        integration.yml.update({"sectionorder": ["Connect", section_type]})
         integration.yml.update({"configuration": curr_config})
 
         integration_parser = IntegrationParser(

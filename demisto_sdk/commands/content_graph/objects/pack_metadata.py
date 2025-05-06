@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json, is_external_repository
 from demisto_sdk.commands.content_graph.common import ContentType, PackTags
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -191,6 +192,15 @@ class PackMetadata(BaseModel):
         for content_item in content_items:
             if should_ignore_item_in_metadata(content_item, marketplace):
                 continue
+            new_content_item = None
+            try:
+                new_content_item = BaseContent.from_path(content_item.upload_path)  # type:ignore[assignment]
+            except Exception as e:
+                logger.error(
+                    f"Failed to generate content item for {content_item.upload_path}, will use original content item: {str(e)}"
+                )
+            if new_content_item:
+                content_item = new_content_item  # type:ignore[assignment]
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,
@@ -538,11 +548,7 @@ class PackMetadata(BaseModel):
             )
 
             self._replace_item_if_has_higher_toversion(
-                content_item,
-                content_item_metadata,
-                content_item_summary,
-                marketplace,
-                incident_to_alert,
+                content_item, content_item_metadata, content_item_summary, marketplace
             )
 
         else:
@@ -572,7 +578,6 @@ class PackMetadata(BaseModel):
         content_item_metadata: dict,
         content_item_summary: dict,
         marketplace: MarketplaceVersions,
-        incident_to_alert: bool = False,
     ):
         """
         Replaces the content item metadata object in the content items metadata list
@@ -583,7 +588,6 @@ class PackMetadata(BaseModel):
             content_item_metadata (dict): The existing content item metadata object in the list.
             content_item_summary (dict): The current content item summary to update if needed.
             marketplace (MarketplaceVersions): The marketplace to prepare the pack to upload.
-            incident_to_alert (bool): Whether the content item's incident_to_alert is set to True or not.
         """
         if marketplace == MarketplaceVersions.XSOAR:
             if parse(content_item.fromversion) > Version("7.9.9"):
@@ -606,12 +610,6 @@ class PackMetadata(BaseModel):
             )
             content_item_metadata.update(content_item_summary)
             self._set_empty_toversion_if_default(content_item_metadata)
-        if (
-            content_item.content_type == ContentType.PLAYBOOK
-            and content_item.description != content_item_summary["description"]
-            and incident_to_alert
-        ):
-            content_item_metadata["description"] = content_item_summary["description"]
 
     @staticmethod
     def _set_empty_toversion_if_default(content_item_dict: dict):

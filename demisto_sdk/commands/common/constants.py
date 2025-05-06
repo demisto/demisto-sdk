@@ -180,6 +180,7 @@ DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 DEMISTO_SDK_MARKETPLACE_PLATFORM_INTERNAL_PROD = "marketplace-cortex-content-dev"
 
+
 # Server Types
 XSOAR_SERVER_TYPE = "XSOAR"
 XSIAM_SERVER_TYPE = "XSIAM"
@@ -1964,7 +1965,7 @@ class MarketplaceVersions(StrEnum):
     PLATFORM = "platform"
 
 
-MarketplaceVersionToMarketplaceName = {
+MarketplaceVersionToMarketplaceName: Dict[str, str] = {
     MarketplaceVersions.XSOAR.value: DEMISTO_SDK_MARKETPLACE_XSOAR_DIST,
     MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
     MarketplaceVersions.XPANSE.value: DEMISTO_SDK_MARKETPLACE_XPANSE_DIST,

@@ -1,4 +1,4 @@
 changes:
 - description: Update IN118 validation to exclude parameters of type 23.
-  type: <breaking|feature|fix|internal>
+  type: feature
 pr_number: 4929

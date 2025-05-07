@@ -139,8 +139,10 @@ CommonFieldsIntegration = create_model(
     ),
 )
 
+
 class ConditionOperator(StrEnum):
     """YAML: triggers.<trigger_index>.conditions.<condition_index>.operator.  Valid operators for trigger conditions."""
+
     EXISTS = "exists"
     NOT_EXISTS = "not_exists"
     EQUALS = "equals"
@@ -149,6 +151,7 @@ class ConditionOperator(StrEnum):
 
 class Condition(BaseStrictModel):
     """YAML: triggers.<trigger_index>.conditions.<condition_index>.  A single condition in a trigger."""
+
     name: str
     operator: ConditionOperator
     value: Optional[str] = None
@@ -156,18 +159,21 @@ class Condition(BaseStrictModel):
 
 class TriggerEffectAction(BaseStrictModel):
     """YAML: triggers.<trigger_index>.effects.<effect_index>.action.  Action to take when a trigger condition is met."""
+
     hidden: Optional[bool] = None
     required: Optional[bool] = None
 
 
 class TriggerEffect(BaseStrictModel):
     """YAML: triggers.<trigger_index>.effects.<effect_index>. A single effect in a trigger."""
+
     name: str
     action: TriggerEffectAction
 
 
 class Trigger(BaseStrictModel):
     """YAML: triggers.<trigger_index>. A single trigger definition."""
+
     conditions: List[Condition]
     effects: List[TriggerEffect]
 

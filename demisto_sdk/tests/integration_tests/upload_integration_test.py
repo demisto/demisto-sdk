@@ -223,7 +223,13 @@ def test_zipped_pack_upload_positive(
     - Ensure success upload message is printed.
     - ensure yml / json content items inside the pack are getting unified.
     """
+    with open(
+        "demisto_sdk/tests/integration_tests/Tests/metadata_mock.json"
+    ) as metadata_mock:
+        metadata_mock = json.load(metadata_mock)
+    from demisto_sdk.commands.content_graph.objects.pack import Pack
 
+    mocker.patch.object(Pack, "_format_metadata", return_value=metadata_mock)
     mocker.patch.object(
         API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
     )

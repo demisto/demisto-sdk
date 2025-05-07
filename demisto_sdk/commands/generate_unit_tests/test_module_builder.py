@@ -162,7 +162,7 @@ class TestModule:
             if "name" in statement._fields and statement.name == "__init__":
                 return statement.args.args
         logger.debug("No init function was found in Client class.")
-        return None
+        return []
 
     def build_imports(self, names_to_import: list):
         aliases = [ast_name(name) for name in names_to_import]

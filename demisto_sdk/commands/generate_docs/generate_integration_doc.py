@@ -1218,6 +1218,9 @@ def get_command_examples(commands_examples_input, specific_commands):
 
     if not commands_examples_input:
         return []
+    logger.info(
+        f"<yellow>the commands example input is {str(commands_examples_input)}</yellow>"
+    )
 
     if Path(commands_examples_input).is_file():
         with open(commands_examples_input) as examples_file:

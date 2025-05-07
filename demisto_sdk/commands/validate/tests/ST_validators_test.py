@@ -486,10 +486,9 @@ def test_SchemaValidator_triggers_section__valid(pack: Pack):
     "invalid_trigger, expected_error_substring",
     [
         pytest.param(
-            {"conditions": [{"name": "engine", "operator": "exists"}], "effects": []},
+            {"conditions": [{"name": "engine", "operator": "exists"}]},
             "effects is required but missing",
-            "missing_effects",
-            id="missing_effects",
+            id="missing effects",
         ),
         pytest.param(
             {
@@ -499,8 +498,7 @@ def test_SchemaValidator_triggers_section__valid(pack: Pack):
                 ],
             },
             "value is not a valid enumeration member",
-            "invalid_operator",
-            id="invalid_operator",
+            id="invalid operator",
         ),
         pytest.param(
             {
@@ -513,8 +511,7 @@ def test_SchemaValidator_triggers_section__valid(pack: Pack):
                 ],
             },
             "value could not be parsed to a boolean",
-            "invalid_value_type",
-            id="invalid_value_type",
+            id="invalid value type",
         ),
     ],
 )

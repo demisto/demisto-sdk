@@ -373,10 +373,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 # The content structure is different from the server
                 if folder == "CaseLayouts":
                     folder = "Layouts"
-                dir = path / folder
-                content_item.upload_path = dir / content_item.normalize_name
+
                 content_item.dump(
-                    dir=dir,
+                    dir=path / folder,
                     marketplace=marketplace,
                 )
             self.dump_metadata(path / "metadata.json", marketplace)

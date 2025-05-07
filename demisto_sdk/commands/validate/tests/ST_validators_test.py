@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.parsers import (
     IntegrationParser,
@@ -440,3 +442,102 @@ class TestST111:
 
         results = SchemaValidator().obtain_invalid_content_items([integration_parser])
         assert len(results) == 0
+
+
+def test_SchemaValidator_triggers_section__valid(pack: Pack):
+    """
+    Given:
+        - An integration YAML file.
+    When:
+        - A valid 'triggers' section is added to the YAML and the SchemaValidator is run.
+    Then:
+        - The SchemaValidator should not report any errors related to the 'triggers' section.
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+
+    integration.yml.update(
+        {
+            "triggers": [
+                {
+                    "conditions": [
+                        {"name": "engine", "operator": "not_exists"},
+                        {"name": "isEngineGroup", "operator": "not_exists"},
+                    ],
+                    "effects": [
+                        {
+                            "name": "longRunningPort",
+                            "action": {"hidden": True, "required": False},
+                        },
+                        {"name": "credentials", "action": {"required": True}},
+                    ],
+                }
+            ]
+        }
+    )
+
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 0
+
+
+@pytest.mark.parametrize(
+    "invalid_trigger, expected_error_substring",
+    [
+        pytest.param(
+            {"conditions": [{"name": "engine", "operator": "exists"}], "effects": []},
+            "effects is required but missing",
+            "missing_effects",
+            id="missing_effects",
+        ),
+        pytest.param(
+            {
+                "conditions": [{"name": "engine", "operator": "invalid_operator"}],
+                "effects": [
+                    {"name": "effect1", "action": {"hidden": False, "required": True}}
+                ],
+            },
+            "value is not a valid enumeration member",
+            "invalid_operator",
+            id="invalid_operator",
+        ),
+        pytest.param(
+            {
+                "conditions": [{"name": "engine", "operator": "equals", "value": 123}],
+                "effects": [
+                    {
+                        "name": "effect1",
+                        "action": {"hidden": "string", "required": True},
+                    }
+                ],
+            },
+            "value could not be parsed to a boolean",
+            "invalid_value_type",
+            id="invalid_value_type",
+        ),
+    ],
+)
+def test_SchemaValidator_triggers_section__invalid(
+    pack: Pack, invalid_trigger, expected_error_substring
+):
+    """
+    Given:
+        - An integration YAML file with an invalid 'triggers' section.
+        Case 1: Missing 'effects' section.
+        Case 2: Invalid operator in a condition (not one of the allowed operators).
+        Case 3: Incorrect value type in an effect (not a boolean or boolean string).
+    When:
+        - The SchemaValidator is running.
+    Then:
+        - The SchemaValidator should report an error related to the invalid trigger.
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    integration.yml.update({"triggers": [invalid_trigger]})
+
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 1
+    assert expected_error_substring in results[0].message

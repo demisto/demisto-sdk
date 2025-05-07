@@ -515,9 +515,9 @@ class ContentItemsHandler:
         )
 
     def add_lists_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.LISTS].append(
-            {"name": content_object.get("name") or content_object.get("id", "")}
-        )
+        to_append = {"name": content_object.get("name") or content_object.get("id", "")}
+        if to_append.get("name"):
+            self.content_items[ContentItems.LISTS].append(to_append)
 
     def add_classifier_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.CLASSIFIERS].append(

@@ -213,7 +213,8 @@ class XsiamClient(XsoarSaasClient):
                                  and other fields that appears in the alert table.
 
         Returns:
-            str: The alert external ID.
+            str: The alert *external* ID.
+                 Use `XsiamClient.get_internal_alert_id()` to get the alert *internal* ID for other actions (e.g. polling alert state).
 
         Example:
         >>> create_alert_from_json({"description": "My alert desc", "severity": "Low", "vendor": "Example", "product": "Example", "category": "Other"})

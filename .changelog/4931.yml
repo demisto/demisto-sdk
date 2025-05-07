@@ -1,0 +1,4 @@
+changes:
+- description: Implemented Pydantic validation for YAML triggers section.
+  type: feature
+pr_number: 4931

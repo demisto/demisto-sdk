@@ -1,4 +1,5 @@
 {
+    "name": "name",
     "docs": "doc1",
     "images": {
         "test1": {

@@ -52,7 +52,7 @@ def test_SchemaValidator_None_as_value(pack: Pack):
     integration = pack.create_integration(yml=load_yaml("integration.yml"))
     integration.yml.update({"name": None})
     integration_parser = IntegrationParser(
-        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+        Path(integration.path), list(MarketplaceVersions)
     )
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
@@ -75,9 +75,7 @@ def test_SchemaValidator_missing_mandatory_field(pack: Pack):
     """
     script = pack.create_script(yml=load_yaml("script.yml"))
     script.yml.delete_key("name")
-    script_parser = ScriptParser(
-        Path(script.path), list(MarketplaceVersions), pack_supported_modules=[]
-    )
+    script_parser = ScriptParser(Path(script.path), list(MarketplaceVersions))
 
     results = SchemaValidator().obtain_invalid_content_items([script_parser])
     assert len(results) == 1
@@ -100,7 +98,7 @@ def test_SchemaValidator_extra_field(pack: Pack):
     integration = pack.create_integration(yml=load_yaml("integration.yml"))
     integration.yml.update({"EXTRA_FIELD": "EXTRA_FIELD"})
     integration_parser = IntegrationParser(
-        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+        Path(integration.path), list(MarketplaceVersions)
     )
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
@@ -138,9 +136,7 @@ def test_modeling_rule_parser_sanity_check(pack: Pack):
         },
     )
     modeling_rule_parser = ModelingRuleParser(
-        path=modeling_rule.yml.obj_path,
-        pack_marketplaces=[MarketplaceVersions.XSOAR],
-        pack_supported_modules=[],
+        path=modeling_rule.yml.obj_path, pack_marketplaces=[MarketplaceVersions.XSOAR]
     )
     assert modeling_rule_parser.structure_errors == []
 
@@ -175,9 +171,7 @@ def test_modeling_rule_parser_errors_check(pack: Pack):
     )
 
     modeling_rule_parser = ModelingRuleParser(
-        path=modeling_rule.yml.obj_path,
-        pack_marketplaces=[MarketplaceVersions.XSOAR],
-        pack_supported_modules=[],
+        path=modeling_rule.yml.obj_path, pack_marketplaces=[MarketplaceVersions.XSOAR]
     )
 
     assert len(modeling_rule_parser.structure_errors) == 2
@@ -264,7 +258,7 @@ def test_invalid_section_order(pack: Pack):
     integration.yml.update({"sectionorder": ["Connect", "Run"]})
 
     integration_parser = IntegrationParser(
-        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+        Path(integration.path), list(MarketplaceVersions)
     )
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
@@ -289,7 +283,7 @@ def test_missing_section_order(pack: Pack):
     integration.yml.delete_key("sectionorder")
 
     integration_parser = IntegrationParser(
-        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+        Path(integration.path), list(MarketplaceVersions)
     )
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
@@ -311,7 +305,7 @@ def test_invalid_section(pack: Pack):
     integration.yml.update({"configuration": curr_config})
 
     integration_parser = IntegrationParser(
-        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+        Path(integration.path), list(MarketplaceVersions)
     )
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
@@ -337,7 +331,7 @@ def test_missing_section(pack: Pack):
     integration.yml.update({"configuration": curr_config})
 
     integration_parser = IntegrationParser(
-        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+        Path(integration.path), list(MarketplaceVersions)
     )
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
@@ -435,7 +429,7 @@ class TestST111:
         integration.yml.update({"configuration": curr_config})
 
         integration_parser = IntegrationParser(
-            Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+            Path(integration.path), list(MarketplaceVersions)
         )
 
         results = SchemaValidator().obtain_invalid_content_items([integration_parser])

@@ -172,11 +172,13 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             for name, value in inspect.getmembers(self.__class__)
             if isinstance(value, cached_property)
         }
-        json_dct = self.dict(exclude={
-            "commands",
-            "database_id",
-        } | cached_properties
-                             )
+        json_dct = self.dict(
+            exclude={
+                "commands",
+                "database_id",
+            }
+            | cached_properties
+        )
 
         if "path" in json_dct and isinstance(json_dct["path"], Path):
             if json_dct["path"].is_absolute():

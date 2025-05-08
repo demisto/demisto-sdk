@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue with the **validate** command where warnings level logs were not appearing in the **content** repo build.
+  type: fix
+pr_number: 4933

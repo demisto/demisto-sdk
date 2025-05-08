@@ -427,7 +427,7 @@ class IntegrationScriptUnifier(Unifier):
                 "Is this really a package dir?"
             )
 
-        if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+        if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.AGENTIX_AI_TASK):
             code_type = get_yaml(yml_path, keep_order=False).get("type")
         else:
             code_type = (
@@ -445,7 +445,7 @@ class IntegrationScriptUnifier(Unifier):
         yml_path: Path, git_sha: str, yml_data: dict
     ):
         # should be static method
-        if find_type(str(yml_path)) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+        if find_type(str(yml_path)) in (FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.AGENTIX_AI_TASK):
             code_type = yml_data.get("type")
         else:
             code_type = yml_data.get("script", {}).get("type")

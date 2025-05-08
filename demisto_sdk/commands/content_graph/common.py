@@ -107,6 +107,9 @@ class ContentType(StrEnum):
     CASE_LAYOUT_RULE = "CaseLayoutRule"
     CASE_FIELD = "CaseField"
     CASE_LAYOUT = "CaseLayout"
+    AGENTIX_AGENT = "AgentixAgent"
+    AGENTIX_ACTION = "AgentixAction"
+    AGENTIX_AI_TASK = "AgentixAITask"
 
     @property
     def labels(self) -> List[str]:
@@ -252,6 +255,8 @@ class ContentType(StrEnum):
         for content_type in ContentType.content_items():
             if content_type == ContentType.MAPPER:
                 continue
+            if content_type == ContentType.AGENTIX_ACTION:
+                pass
             pack_folder = pack_path / content_type.as_folder
             if pack_folder.is_dir() and not pack_folder.name.startswith("."):
                 if content_type not in ContentType.threat_intel_report_types():

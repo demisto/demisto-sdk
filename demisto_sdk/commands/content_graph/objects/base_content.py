@@ -167,32 +167,16 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         """
 
         self.__add_lazy_properties()
-        print(f"sk-- {self.object_id}, {self.content_type}")
-        print(
-            f"the full data: {[(name, value, type(value)) for name, value in inspect.getmembers(self.__class__)]}"
-        )
         cached_properties = {
             name
             for name, value in inspect.getmembers(self.__class__)
             if isinstance(value, cached_property)
         }
-        print(f"cached_properties = {cached_properties}")
-        exclude_set = {
+        json_dct = self.dict(exclude={
             "commands",
             "database_id",
         } | cached_properties
-        print(f"{exclude_set=}")
-
-        # json_dct = json.loads(
-        #     self.json(
-
-        #         exclude={
-        #             "commands",
-        #             "database_id",
-        #     } | cached_properties
-        #     )
-        # )
-        json_dct = self.dict(exclude=exclude_set)
+                             )
 
         if "path" in json_dct and isinstance(json_dct["path"], Path):
             if json_dct["path"].is_absolute():

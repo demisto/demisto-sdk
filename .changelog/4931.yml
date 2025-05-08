@@ -1,4 +1,4 @@
 changes:
-- description: Implemented Pydantic validation for YAML triggers section.
+- description: Updated structure validation to include the 'triggers' section.
   type: feature
 pr_number: 4931

@@ -1,0 +1,4 @@
+changes:
+- description: "Fixed an intermittent JSON serialization issue in **demisto-sdk validate** command that was causing validation failures in GitHub Actions."
+  type: internal
+pr_number: 4921

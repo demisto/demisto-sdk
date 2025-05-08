@@ -179,15 +179,13 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             }
             | cached_properties
         )
-
-        if "path" in json_dct and isinstance(json_dct["path"], Path):
-            if json_dct["path"].is_absolute():
-                json_dct["path"] = (
-                    json_dct["path"].relative_to(CONTENT_PATH)
-                ).as_posix()
-            else:
-                json_dct["path"] = str(json_dct["path"])
-
+        content_item_path = json_dct.get("path")
+        if content_item_path and isinstance(content_item_path, Path):
+            json_dct["path"] = (
+                content_item_path.relative_to(CONTENT_PATH).as_posix()
+                if content_item_path.is_absolute()
+                else str(content_item_path)
+            )
         json_dct["content_type"] = self.content_type
         return json_dct
 

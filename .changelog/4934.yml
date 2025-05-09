@@ -1,4 +1,4 @@
 changes:
-- description: Modified the integration schema used in the ***demisto-sdk format*** command to include the 'triggers' section.
-  type: feature
+  - description: Modified the integration schema used in the ***demisto-sdk format*** command to include the 'triggers' section.
+    type: feature
 pr_number: 4934

@@ -217,9 +217,9 @@ mapping:
                     type: map
                     mapping:
                       hidden:
-                        type: boolean
+                        type: bool
                       required:
-                        type: boolean
+                        type: bool
 
 # integration->configuration
   name:xsoar:

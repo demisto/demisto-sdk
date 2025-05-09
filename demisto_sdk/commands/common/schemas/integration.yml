@@ -13,7 +13,7 @@ mapping:
       sortvalues:
         type: seq
         sequence:
-          - type: str
+        - type: str
       id:xsoar:
         type: str
       id:marketplacev2:
@@ -40,11 +40,11 @@ mapping:
   sectionOrder:
     type: seq
     sequence:
-      - type: str
+    - type: str
   sectionorder:
     type: seq
     sequence:
-      - type: str
+    - type: str
   fromversion:
     type: str
   toversion:
@@ -68,12 +68,12 @@ mapping:
     type: bool
   supportlevelheader:
     type: str
-    enum: ["xsoar", "partner", "community"]
+    enum: ['xsoar', 'partner', 'community']
   configuration:
     type: seq
     required: true
     sequence:
-      - include: configuration_schema
+    - include: configuration_schema
   script:
     type: map
     required: true
@@ -83,7 +83,7 @@ mapping:
         required: true
       type:
         type: str
-        enum: ["javascript", "python", "powershell"]
+        enum: ['javascript', 'python', 'powershell']
         required: true
       dockerimage:
         type: str
@@ -92,11 +92,11 @@ mapping:
       alt_dockerimages:
         type: seq
         sequence:
-          - type: str
+        - type: str
       nativeImage:
         type: seq
         sequence:
-          - type: str
+        - type: str
       isfetch:
         type: bool
       isfetchevents:
@@ -120,12 +120,12 @@ mapping:
       commands:
         type: seq
         sequence:
-          - include: command_schema
+        - include: command_schema
       runonce:
         type: bool
       subtype:
         type: str
-        enum: ["python2", "python3"]
+        enum: ['python2', 'python3']
       feed:
         type: bool
       isFetchSamples:
@@ -159,7 +159,7 @@ mapping:
   videos:
     type: seq
     sequence:
-      - type: str
+    - type: str
   versionedfields:
     type: any
   defaultEnabled:
@@ -167,7 +167,7 @@ mapping:
   tests:
     type: seq
     sequence:
-      - type: str
+    - type: str
   scriptNotVisible:
     type: bool
   autoUpdateDockerImage:
@@ -175,24 +175,16 @@ mapping:
   marketplaces:
     type: seq
     sequence:
-      - type: str
-        enum:
-          [
-            "xsoar",
-            "marketplacev2",
-            "xpanse",
-            "xsoar_saas",
-            "xsoar_on_prem",
-            "platform",
-          ]
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem', 'platform']
   supportedModules:
     type: seq
     sequence:
-      - type: str
+    - type: str
   hybrid:
     type: bool
   supportsquickactions:
-    type: bool
+      type: bool
 
   triggers:
     type: seq
@@ -229,7 +221,7 @@ mapping:
                       required:
                         type: bool
 
-  # integration->configuration
+# integration->configuration
   name:xsoar:
     type: str
   name:marketplacev2:
@@ -287,7 +279,7 @@ schema;configuration_schema:
     options:
       type: seq
       sequence:
-        - type: str
+      - type: str
     additionalinfo:
       type: str
     displaypassword:
@@ -299,7 +291,7 @@ schema;configuration_schema:
     fromlicense:
       type: str
 
-    # integration->script->command
+# integration->script->command
     defaultvalue:xsoar:
       type: any
     defaultvalue:marketplacev2:
@@ -350,15 +342,15 @@ schema;command_schema:
     arguments:
       type: seq
       sequence:
-        - include: argument_schema
+      - include: argument_schema
     outputs:
       type: seq
       sequence:
-        - include: output_schema
+      - include: output_schema
     important:
       type: seq
       sequence:
-        - include: important_schema
+      - include: important_schema
     timeout:
       type: int
     hidden:
@@ -369,7 +361,7 @@ schema;command_schema:
       type: bool
     quickaction:
       type: bool
-    # int
+# int
     name:xsoar:
       type: str
     name:marketplacev2:
@@ -423,11 +415,11 @@ schema;argument_schema:
       required: true
     auto:
       type: str
-      enum: ["PREDEFINED"]
+      enum: ['PREDEFINED']
     predefined:
       type: seq
       sequence:
-        - type: str
+      - type: str
     isArray:
       type: bool
     defaultValue:
@@ -441,7 +433,8 @@ schema;argument_schema:
     hidden:
       type: bool
 
-    # integration->script->command->outputs
+
+# integration->script->command->outputs
     name:xsoar:
       type: str
     name:marketplacev2:
@@ -509,7 +502,7 @@ schema;output_schema:
     type:
       type: str
 
-    # integration->script->command->important
+# integration->script->command->important
     description:xsoar:
       type: str
     description:marketplacev2:

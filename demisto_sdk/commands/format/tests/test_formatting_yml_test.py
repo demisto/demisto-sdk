@@ -251,7 +251,7 @@ class TestFormatting:
 
     def test_integration_format_triggers(self, pack):
         """
-        Given: 
+        Given:
             - An integration YAML file with a triggers section.
         When:
             - The format command is running.
@@ -283,7 +283,9 @@ class TestFormatting:
         integration.yml.write_dict(integration_data)
 
         # Run the format command
-        schema_path = Path(__file__).parent / "schemas" / "integration.yml"  # Adjust path as needed
+        schema_path = (
+            Path(__file__).parent / "schemas" / "integration.yml"
+        )  # Adjust path as needed
         formatter = IntegrationYMLFormat(integration.yml.path, path=str(schema_path))
         formatter.run_format()
 
@@ -291,7 +293,6 @@ class TestFormatting:
         formatted_data = integration.yml.read_dict()
         assert "triggers" in formatted_data
         assert formatted_data["triggers"] == original_triggers
-
 
     @pytest.mark.parametrize(
         "source_path, destination_path, formatter, yml_title, file_type",

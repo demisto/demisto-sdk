@@ -5,6 +5,7 @@ from demisto_sdk.commands.content_graph.strict_objects.case_layout_rule import (
 )
 
 
+# nothing
 class CaseLayoutRuleParser(LayoutRuleParser, content_type=ContentType.CASE_LAYOUT_RULE):
     def connect_to_dependencies(self) -> None:
         """Collects the playbook used in the trigger as a mandatory dependency."""

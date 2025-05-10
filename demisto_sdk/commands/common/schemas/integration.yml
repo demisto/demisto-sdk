@@ -186,40 +186,40 @@ mapping:
   supportsquickactions:
       type: bool
 
-  triggers:
-    type: seq
-    sequence:
-      - type: map
-        mapping:
-          conditions:
-            type: seq
-            sequence:
-              - type: map
-                mapping:
-                  name:
-                    type: str
-                    required: true
-                  operator:
-                    type: str
-                    enum: ["exists", "not_exists", "equals", "not_equals"]
-                    required: true
-                  value:
-                    type: str
-          effects:
-            type: seq
-            sequence:
-              - type: map
-                mapping:
-                  name:
-                    type: str
-                    required: true
-                  action:
-                    type: map
-                    mapping:
-                      hidden:
-                        type: bool
-                      required:
-                        type: bool
+  # triggers:
+  #   type: seq
+  #   sequence:
+  #     - type: map
+  #       mapping:
+  #         conditions:
+  #           type: seq
+  #           sequence:
+  #             - type: map
+  #               mapping:
+  #                 name:
+  #                   type: str
+  #                   required: true
+  #                 operator:
+  #                   type: str
+  #                   enum: ["exists", "not_exists", "equals", "not_equals"]
+  #                   required: true
+  #                 value:
+  #                   type: str
+  #         effects:
+  #           type: seq
+  #           sequence:
+  #             - type: map
+  #               mapping:
+  #                 name:
+  #                   type: str
+  #                   required: true
+  #                 action:
+  #                   type: map
+  #                   mapping:
+  #                     hidden:
+  #                       type: bool
+  #                     required:
+  #                       type: bool
 
 # integration->configuration
   name:xsoar:

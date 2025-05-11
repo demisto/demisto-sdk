@@ -1,4 +1,4 @@
 changes:
-- description: Update IN118 validation to exclude parameters of type 23.
+- description: Update IN118 validation to exclude parameters of type 23 (Engine parameter).
   type: feature
 pr_number: 4929

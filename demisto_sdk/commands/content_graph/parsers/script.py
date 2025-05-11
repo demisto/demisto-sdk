@@ -22,7 +22,22 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
             is_test_script=False,
             git_sha=git_sha,
         )
+        self.is_llm: bool = self.yml_data.get("isLLM", False)
+        self.model: str = self.yml_data.get("model", False)
+        # self.pre_script: str = self.yml_data.get("preScript", '')
+        # self.post_script: str = self.yml_data.get("postScript", '')
+        self.user_prompt: str = self.yml_data.get("userPrompt", '')
+        self.system_prompt: str = self.yml_data.get("systemPrompt", '')
+        self.few_shots: str = self.yml_data.get("fewShots", '')
 
     @property
     def strict_object(self):
         return StrictScript
+
+    @property
+    def pre_script(self):
+        pass
+
+    @property
+    def post_script(self):
+        pass

@@ -88,6 +88,13 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     polling: Optional[bool] = None
     skip_prepare: Optional[List[SkipPrepare]] = Field(None, alias="skipprepare")
     prettyname: Optional[str] = None
+    is_llm: bool = Field(False, alias="isLLM")
+    model: Optional[str] = None
+    pre_script: Optional[str] = Field(None, alias="preScript")
+    post_script: Optional[str] = Field(None, alias="postScript")
+    user_prompt: Optional[str] = Field(None, alias="userPrompt")
+    system_prompt: Optional[str] = Field(None, alias="systemPrompt")
+    few_shots: Optional[str] = Field(None, alias="fewShots")
 
 
 StrictScript = create_model(

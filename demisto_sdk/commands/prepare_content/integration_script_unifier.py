@@ -347,6 +347,9 @@ class IntegrationScriptUnifier(Unifier):
             )
         )
         if script_path_list:
+            for script in script_path_list:
+                if 'preScript' in script or 'postScript' in script:
+                    return script_path_list
             return script_path_list[0]
         else:
             raise ValueError(
@@ -427,9 +430,10 @@ class IntegrationScriptUnifier(Unifier):
                 "Is this really a package dir?"
             )
 
-        if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.AGENTIX_AI_TASK):
+        if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
+        # if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.AGENTIX_AI_TASK):
             code_type = get_yaml(yml_path, keep_order=False).get("type")
-        else:
+        else: #TODO - what is this else for??
             code_type = (
                 get_yaml(yml_path, keep_order=False).get("script", {}).get("type")
             )

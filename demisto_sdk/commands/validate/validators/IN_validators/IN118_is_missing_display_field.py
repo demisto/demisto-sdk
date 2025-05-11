@@ -47,7 +47,7 @@ class IsMissingDisplayFieldValidator(BaseValidator[ContentTypes]):
         """
         excluded_types = (
             ParameterType.EXPIRATION_FIELD.value,
-            ParameterType.ENGINE_LOCATION.value,
+            ParameterType.ENGINE_PLACEHOLDER.value,
         )
         excluded_names = ("feedExpirationPolicy", "feedExpirationInterval")
         return [

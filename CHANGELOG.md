@@ -13,7 +13,7 @@
 ### Internal
 * Fixed logging for the **sdk-changelog** command. [#4932](https://github.com/demisto/demisto-sdk/pull/4932)
 * Fixed an intermittent JSON serialization issue in **demisto-sdk validate** command that was causing validation failures in GitHub Actions. [#4921](https://github.com/demisto/demisto-sdk/pull/4921)
-* Fixed an issue where the github action process_pack, in the contribution management repo, failed with the exit code 0. [#4919](https://github.com/demisto/demisto-sdk/pull/4919)
+* Fixed an issue where the github action `process_pack`, in the contribution management repo, failed with the exit code 0. [#4919](https://github.com/demisto/demisto-sdk/pull/4919)
 
 
 ## 1.37.4 (2025-05-04)

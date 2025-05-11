@@ -1,4 +1,21 @@
 # Changelog
+## 1.37.5 (2025-05-11)
+### Feature
+* Make multiple enhancements and fixes to `XsoarClient` and `XsiamClient` classes:
+  - Add a new `XsiamClient.search_alerts_by_name` method and fix an issue in the `XsiamClient.search_alerts_by_uuid` method that caused the logic to iterate over the first 100 results only.
+  - Add a new `XsiamClient.poll_alert_state` method that polls a Cortex XSIAM alert until it reaches any of the expected states.
+  - Rename `XsoarClient.pull_playbook_tasks_by_state` to `XsoarClient.poll_playbook_tasks_by_state` and fix a timeout-related issue in the method.
+ [#4914](https://github.com/demisto/demisto-sdk/pull/4914)
+
+### Fix
+* Fixed an issue that caused Platform Packs' `README.md` files to reference incorrect image URLs. [#4924](https://github.com/demisto/demisto-sdk/pull/4924)
+
+### Internal
+* Fixed logging for the **sdk-changelog** command. [#4932](https://github.com/demisto/demisto-sdk/pull/4932)
+* Fixed an intermittent JSON serialization issue in **demisto-sdk validate** command that was causing validation failures in GitHub Actions. [#4921](https://github.com/demisto/demisto-sdk/pull/4921)
+* Fixed an issue where the github action process_pack, in the contribution management repo, failed with the exit code 0. [#4919](https://github.com/demisto/demisto-sdk/pull/4919)
+
+
 ## 1.37.4 (2025-05-04)
 ### Fix
 * Fixed an issue in ***prepare-content*** command where the metadata.json file was being generated from the wrong file. [#4892](https://github.com/demisto/demisto-sdk/pull/4892)

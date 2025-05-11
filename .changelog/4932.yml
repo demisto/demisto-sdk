@@ -1,4 +1,0 @@
-changes:
-- description: Fixed logging for the **sdk-changelog** command.
-  type: internal
-pr_number: 4932

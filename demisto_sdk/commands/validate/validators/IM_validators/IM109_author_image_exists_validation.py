@@ -16,7 +16,7 @@ ContentTypes = Pack
 class AuthorImageExistsValidator(BaseValidator[ContentTypes]):
     error_code = "IM109"
     description = "Checks if the pack has an author image path."
-    error_message = "You've created/modified a partner supported pack without providing an author image as a .png file. Please make sure to add an image at"
+    error_message = "You've created/modified a partner supported pack without providing an author image as a .png file. Please make sure to add an image under the following path"
     related_field = "Author_image"
     rationale = "Author images make it easier to identify the author."
     related_file_type = [RelatedFileType.AUTHOR_IMAGE]

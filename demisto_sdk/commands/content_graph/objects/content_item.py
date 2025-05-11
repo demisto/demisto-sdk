@@ -58,6 +58,7 @@ class ContentItem(BaseContent):
     pack: Any = Field(None, exclude=True, repr=False)
     support: str = ""
     is_silent: bool = False
+    upload_path: Optional[Path] = None
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -382,7 +383,9 @@ class ContentItem(BaseContent):
         id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity
 
-    def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+    def is_incident_to_alert(
+        self, marketplace: Union[List[MarketplaceVersions], MarketplaceVersions]
+    ) -> bool:
         """
         As long as the content item does not have an implementation of the `is_incident_to_alert` function,
         the return value will always be false,

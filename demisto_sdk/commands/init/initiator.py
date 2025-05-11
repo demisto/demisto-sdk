@@ -323,7 +323,8 @@ class Initiator:
                 )
             return template or (
                 self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION
-                if self.marketplace == MarketplaceVersions.MarketplaceV2
+                if self.marketplace
+                in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
                 else self.DEFAULT_INTEGRATION_TEMPLATE
             )
 
@@ -517,7 +518,10 @@ class Initiator:
             path = os.path.join(self.full_output_path, directory)
             os.mkdir(path=path)
         # create the relevant folders for XSIAM content pack.
-        if self.marketplace == MarketplaceVersions.MarketplaceV2:
+        if self.marketplace in [
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        ]:
             for directory in self.XSIAM_DIR:
                 path = os.path.join(self.full_output_path, directory)
                 os.mkdir(path=path)
@@ -550,7 +554,10 @@ class Initiator:
             input("\nDo you want to create an integration in the pack? Y/N ")
         ).lower()
         if string_to_bool(create_integration, default_when_empty=False):
-            if not self.marketplace == MarketplaceVersions.MarketplaceV2:
+            if self.marketplace not in [
+                MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.PLATFORM,
+            ]:
                 is_same_category = str(
                     input(
                         "\nDo you want to set the integration category as you defined in the pack "
@@ -796,7 +803,10 @@ class Initiator:
         Returns:
             bool. True if the integration was created successfully, False otherwise.
         """
-        if self.marketplace == MarketplaceVersions.MarketplaceV2:
+        if self.marketplace in [
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        ]:
             if not self.dir_name.lower().endswith(EVENT_COLLECTOR.lower()):
                 self.dir_name = f"{self.dir_name}{EVENT_COLLECTOR}"
             if not self.id.lower().endswith(EVENT_COLLECTOR.lower()):
@@ -842,7 +852,10 @@ class Initiator:
         Returns:
             bool. True if all the required inputs from the user are valid.
         """
-        if self.marketplace != MarketplaceVersions.MarketplaceV2:
+        if self.marketplace not in [
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        ]:
             return True
         if not self.output:
             logger.error(
@@ -871,11 +884,11 @@ class Initiator:
         if not self.verify_output_path_for_xsiam_content():
             return False
         product, vendor = self.get_product_and_vendor()
-        if (
-            self.marketplace == MarketplaceVersions.MarketplaceV2
-            and not self.create_initiators_and_init_modeling_parsing_rules(
-                product, vendor
-            )
+        if self.marketplace in [
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        ] and not self.create_initiators_and_init_modeling_parsing_rules(
+            product, vendor
         ):
             return False
         self.add_event_collector_suffix()
@@ -885,7 +898,8 @@ class Initiator:
             if (
                 self.output
                 and re.search(PACKS_DIR_REGEX, self.output)
-                and self.marketplace == MarketplaceVersions.MarketplaceV2
+                and self.marketplace
+                in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             ):
                 self.full_output_path = str(
                     find_pack_folder(Path(self.output))
@@ -912,7 +926,10 @@ class Initiator:
             local_template_path = os.path.normpath(
                 os.path.join(__file__, "..", "templates", self.template)
             )
-            if self.marketplace == MarketplaceVersions.MarketplaceV2:
+            if self.marketplace in [
+                MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.PLATFORM,
+            ]:
                 self.process_files(integration_template_files, local_template_path)
             else:
                 copy_tree(str(local_template_path), self.full_output_path)
@@ -1017,7 +1034,10 @@ class Initiator:
         """
         vendor = None
         product = None
-        if self.marketplace == MarketplaceVersions.MarketplaceV2:
+        if self.marketplace in [
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        ]:
             while not vendor:
                 vendor = str(input("Please enter vendor name: ").lower())
             while not product:
@@ -1121,7 +1141,8 @@ class Initiator:
             Path(self.full_output_path).joinpath(self.dir_name).with_suffix(".py")
         )
         if (
-            self.marketplace == MarketplaceVersions.MarketplaceV2
+            self.marketplace
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             and python_file_path.exists()
         ):
             with open(python_file_path) as fp:
@@ -1188,7 +1209,8 @@ class Initiator:
                 if self.category
                 else (
                     ANALYTICS_AND_SIEM_CATEGORY
-                    if self.marketplace == MarketplaceVersions.MarketplaceV2
+                    if self.marketplace
+                    in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
                     else Initiator.get_valid_user_input(
                         options_list=INTEGRATION_CATEGORIES,
                         option_message="\nIntegration category options: \n",

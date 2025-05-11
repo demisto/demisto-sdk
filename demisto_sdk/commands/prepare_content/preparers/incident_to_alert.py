@@ -39,7 +39,10 @@ def prepare_descriptions_and_names(
     data: dict, marketplace: MarketplaceVersions
 ) -> dict:
     # Replace incidents to alerts only for XSIAM
-    replace_incident_to_alert = marketplace == MarketplaceVersions.MarketplaceV2
+    replace_incident_to_alert = marketplace in (
+        MarketplaceVersions.MarketplaceV2,
+        MarketplaceVersions.PLATFORM,
+    )
 
     # Descriptions and names for all tasks
     for task_key, task_value in data.get("tasks", {}).items():
@@ -139,7 +142,7 @@ def get_script_names_from_playbooks_intended_preparation(
             for content_item in playbook.uses
             if isinstance(content_item.content_item_to, Script)
             and content_item.content_item_to.is_incident_to_alert(
-                MarketplaceVersions.MarketplaceV2
+                [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             )
         ]
     ]

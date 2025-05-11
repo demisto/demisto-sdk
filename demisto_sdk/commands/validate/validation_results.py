@@ -164,7 +164,7 @@ class ResultWriter:
             verdict_msg += f"Note that the following errors cannot be force merged and therefore must be handled: {', '.join(must_be_handled_errors)}.\n"
             verdict_msg += f"###############################################################################################{'#######' * len(must_be_handled_errors)}\n"
             logger.error(f"<red>{verdict_msg}</red>")
-            msg += "\nnVerdict: PR can be force merged from validate perspective? ❌"
+            msg += "\nVerdict: PR can be force merged from validate perspective? ❌"
         else:
             verdict_msg = "#############################################################################\n"
             verdict_msg += "Please note that the PR can be force merged from the validation perspective.\n"

@@ -373,9 +373,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 # The content structure is different from the server
                 if folder == "CaseLayouts":
                     folder = "Layouts"
-
+                dir = path / folder
+                content_item.upload_path = dir / content_item.normalize_name
                 content_item.dump(
-                    dir=path / folder,
+                    dir=dir,
                     marketplace=marketplace,
                 )
             self.dump_metadata(path / "metadata.json", marketplace)
@@ -527,7 +528,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 )
                 uploaded_successfully.append(item)
             except NotIndivitudallyUploadableException:
-                if marketplace == MarketplaceVersions.MarketplaceV2:
+                if marketplace in [
+                    MarketplaceVersions.MarketplaceV2,
+                    MarketplaceVersions.PLATFORM,
+                ]:
                     raise  # many XSIAM content types must be uploaded zipped.
                 logger.warning(
                     f"Not uploading pack {self.object_id}: {item.content_type} {item.object_id} as it was not indivudally uploaded"

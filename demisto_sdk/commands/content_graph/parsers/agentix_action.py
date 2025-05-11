@@ -1,8 +1,7 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.agentix_base import AgentixBaseParser
 from demisto_sdk.commands.content_graph.strict_objects.agentix_action import (

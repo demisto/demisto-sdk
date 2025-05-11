@@ -8,10 +8,10 @@ from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
 
 
 class AgentixActionArgument(BaseModel):
-    display: str = Field(..., alias="name") #TODO
+    display: str = Field(..., alias="name")  # TODO
     description: str
     arg_type: int = Field(..., alias="argType")
-    required: bool = Field(..., alias="required") #TODO
+    required: bool = Field(..., alias="required")  # TODO
     default_value: Optional[str] = Field(None, alias="defaultValue")
     is_hidden: bool = Field(..., alias="isHidden")
     content_item_arg_name: str = Field(..., alias="contentItemArgName")
@@ -19,7 +19,7 @@ class AgentixActionArgument(BaseModel):
 
 
 class AgentixActionOutput(BaseModel):
-    display: str = Field(..., alias="name") #TODO
+    display: str = Field(..., alias="name")  # TODO
     description: str
     output_type: str = Field(..., alias="outputType")
     content_item_output_name: str = Field(..., alias="contentItemOutputName")

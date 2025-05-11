@@ -238,16 +238,9 @@ class AlertsFilter(BaseStrictModel):
 
 class AgentixBase(BaseStrictModel):
     common_fields: CommonFields = Field(..., alias="commonfields")
-    is_enabled: bool = Field(..., alias="isEnabled")
-    pack_id: str = Field(..., alias="packID")
-    pack_name: str = Field(..., alias="packName")
+    is_enabled: bool = Field(..., alias="isEnabled")  # TODO - should be removed?
     tags: Optional[list[str]]
-    is_system: bool = Field(..., alias="isSystem")
-    is_locked: bool = Field(..., alias="isLocked")
-    is_detached: bool = Field(..., alias="isDetached")
-    modified: Optional[datetime]
-    modified_by: Optional[str] = Field(..., alias="modifiedBy")
     category: Optional[str] = Field(..., alias="modifiedBy")
-    version: str
-    display: str = Field(..., alias="name")
+    version: Optional[int] = 0
+    name: str
     description: str

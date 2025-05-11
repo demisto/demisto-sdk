@@ -22,15 +22,8 @@ class AgentixBaseParser(YAMLContentItemParser):
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
-        self.is_enabled: bool = self.yml_data.get("isEnabled", False)
-        self.pack_id: str = self.yml_data.get("packID", '') #TODO Maybe Not needed
-        self.pack_name: str = self.yml_data.get("packName", '') #TODO Maybe Not needed
+        self.is_enabled: bool = self.yml_data.get("isEnabled", False)  # TODO - should be removed?
         self.tags: List[str] = self.yml_data.get("tags", [])
-        self.is_system: bool = self.yml_data.get("isSystem", True)
-        self.is_locked: bool = self.yml_data.get("isLocked", True)
-        self.is_detached: bool = self.yml_data.get("isDetached", False)
-        self.modified: Optional[datetime] = self.yml_data.get("modified", None)
-        self.modified_by: Optional[str] = self.yml_data.get("modifiedBy", None)
         self.category: Optional[str] = self.yml_data.get("category", None)
 
     @cached_property

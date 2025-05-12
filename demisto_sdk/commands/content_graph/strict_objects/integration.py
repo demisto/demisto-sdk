@@ -172,7 +172,7 @@ class _StrictIntegration(BaseStrictModel):
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
     hybrid: Optional[bool] = None
     supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
-    isCloudProviderIntegration: Optional[bool] = Field(
+    is_cloud_provider_integration: Optional[bool] = Field(
         False, alias="isCloudProviderIntegration"
     )
 

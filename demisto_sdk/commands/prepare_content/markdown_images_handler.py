@@ -376,10 +376,6 @@ def generate_random_string(length: int) -> str:
     """
     Generate a random string of specified length using alphanumeric characters.
 
-    This function is used to create random filepath when the original path is empty or just "/",
-    which would cause the image file name to be invalid. The randomness ensures uniqueness
-    when there are multiple such cases in the same README.md file.
-
     Args:
         length (int): The desired length of the random filename
 
@@ -387,5 +383,5 @@ def generate_random_string(length: int) -> str:
         str: A random string composed of ASCII letters and digits
     """
     characters = string.ascii_letters + string.digits  # Use letters and digits
-    random_string = ''.join(random.choices(characters, k=length))
+    random_string = "".join(random.choices(characters, k=length))
     return random_string

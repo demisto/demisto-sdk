@@ -33,6 +33,7 @@ class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
     underlying_content_item_name: str = Field(..., alias="underlyingContentItemName")
     underlying_content_item_type: int = Field(..., alias="underlyingContentItemType")
     underlying_content_item_version: int = Field(..., alias="underlyingContentItemVersion")
+    requires_user_approval: bool = Field(False, alias="requiresUserApproval")
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

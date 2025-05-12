@@ -1,5 +1,7 @@
 import os
+import random
 import re
+import string
 from pathlib import Path
 from typing import List, Tuple
 from urllib.parse import urlparse
@@ -234,7 +236,11 @@ def process_markdown_images(
     is_url: bool,
 ) -> List[dict]:
     """
-    Generic function to process images in markdown and replace with storage path
+    Generic function to process images in markdown and replace with storage path.
+    Note:   In some cases, the path_obj variable would be empty or equal to "/", based on the URL in the README.md file,
+            this would cause the image file name to be invalid.
+            To handle this issue, a short random string value will be generated for the image.
+            The randomness is important in case there are multiple cases like this in the same README.md file.
 
     Args:
         markdown_path (Path): A path to the pack README file.
@@ -275,7 +281,12 @@ def process_markdown_images(
             if is_url:
                 original_path = res["url"]
                 parse_url = urlparse(original_path)
-                path_obj = Path(parse_url.path)
+
+                if not parse_url.path or parse_url.path == "/":
+                    random_path = "/" + generate_random_string(length=7)
+                    path_obj = Path(random_path)
+                else:
+                    path_obj = Path(parse_url.path)
             else:
                 original_path = res.group()
                 path_obj = Path(original_path)
@@ -359,3 +370,22 @@ def collect_images_relative_paths_from_markdown_and_replace_with_storage_path(
         file_type=file_type,
         is_url=False,
     )
+
+
+def generate_random_string(length: int) -> str:
+    """
+    Generate a random string of specified length using alphanumeric characters.
+
+    This function is used to create random filepath when the original path is empty or just "/",
+    which would cause the image file name to be invalid. The randomness ensures uniqueness
+    when there are multiple such cases in the same README.md file.
+
+    Args:
+        length (int): The desired length of the random filename
+
+    Returns:
+        str: A random string composed of ASCII letters and digits
+    """
+    characters = string.ascii_letters + string.digits  # Use letters and digits
+    random_string = ''.join(random.choices(characters, k=length))
+    return random_string

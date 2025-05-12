@@ -1,32 +1,29 @@
-from typing import Optional, Type, cast
+from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     AgentixBase,
 )
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel, create_model
+from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
 
 
 class AgentixActionArgument(BaseStrictModel):
-    display: str = Field(..., alias="name")  # TODO - alias
+    name: str
     description: str
-    arg_type: int = Field(..., alias="argType")  # TODO - (0 (text??) undefined, 1 unknown, 2 key/value, 3 text area)
-    required: bool = Field(..., alias="required")  # TODO - required or isMandatory
+    arg_type: int = Field(..., alias="argType")
+    required: bool = False
     default_value: Optional[str] = Field(None, alias="defaultValue")
-    is_hidden: bool = Field(..., alias="isHidden")
-    content_item_arg_name: str = Field(..., alias="contentItemArgName")
-    is_details_overridden: bool = Field(..., alias="isDetailsOverridden")
-    is_generatable: bool = Field(None, alias="isGeneratable")
+    hidden: bool = False
+    content_item_arg_name: str = Field(..., alias="underlyingContentItemArgName")
+    generatable: bool = False
 
 
 class AgentixActionOutput(BaseStrictModel):
-    display: str = Field(..., alias="name")  # TODO - alias
+    name: str
     description: str
-    output_type: str = Field(..., alias="outputType")  # TODO - on our side is a str like String, List and etc
-    content_item_output_name: str = Field(..., alias="contentItemOutputName")
-    is_details_overridden: bool = Field(..., alias="isDetailsOverridden")
-    is_essential: bool = Field(None, alias="isEssential")
+    type: str
+    content_item_output_name: str = Field(..., alias="underlyingContentItemOutputName")
 
 class AgentixAction(AgentixBase):
     args: Optional[list[AgentixActionArgument]] = None
@@ -35,6 +32,5 @@ class AgentixAction(AgentixBase):
     agent_id: str = Field(..., alias="agentId")
     underlying_content_item_id: str = Field(..., alias="underlyingContentItemId")
     underlying_content_item_name: str = Field(..., alias="underlyingContentItemName")
-    underlying_content_item_type: int = Field(..., alias="underlyingContentItemType") # (1 script, 2 playbook, 3 command, 4 AI task)
-    underlying_content_item_version: int = Field(..., alias="underlyingContentItemVersion") # TODO - int vs str
-    underlying_content_item_pack_version: str = Field(..., alias="underlyingContentItemPackVersion")
+    underlying_content_item_type: int = Field(..., alias="underlyingContentItemType")
+    underlying_content_item_version: int = Field(..., alias="underlyingContentItemVersion")

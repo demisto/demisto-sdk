@@ -1,0 +1,4 @@
+changes:
+- description: Add `isCloudProviderIntegration` flag to Integration schema.
+  type: feature
+pr_number: 4939

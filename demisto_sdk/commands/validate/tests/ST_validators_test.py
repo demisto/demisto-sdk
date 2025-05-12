@@ -344,6 +344,87 @@ def test_missing_section(pack: Pack):
     assert len(results) == 0
 
 
+def test_SchemaValidator_isCloudProviderIntegration_true(pack: Pack):
+    """
+    Given:
+        - An integration with `isCloudProviderIntegration` set to True
+    When:
+        - Executing the SchemaValidator (ST110 validation)
+    Then:
+        - Ensure the validation passes
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    integration.yml.update({"isCloudProviderIntegration": True})
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 0
+
+
+def test_SchemaValidator_isCloudProviderIntegration_false(pack: Pack):
+    """
+    Given:
+        - An integration with `isCloudProviderIntegration` set to False
+    When:
+        - executing the SchemaValidator (ST110 validation)
+    Then:
+        - Ensure the validation passes
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    integration.yml.update({"isCloudProviderIntegration": False})
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 0
+
+
+def test_SchemaValidator_isCloudProviderIntegration_none(pack: Pack):
+    """
+    Given:
+        - An integration with `isCloudProviderIntegration` set to None
+    When:
+        - Executing the SchemaValidator (ST110 validation)
+    Then:
+        - Ensure the validation fails
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    integration.yml.update({"isCloudProviderIntegration": None})
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 1
+    assert (
+        "The field isCloudProviderIntegration is not required, but should not be None if it exists"
+        in results[0].message
+    )
+
+
+def test_SchemaValidator_isCloudProviderIntegration_invalid_type(pack: Pack):
+    """
+    Given:
+       - An integration with `isCloudProviderIntegration` set to a non-boolean value
+    When:
+        - Executing the SchemaValidator (ST110 validation)
+    Then:
+        - Ensure the validation fails
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    integration.yml.update({"isCloudProviderIntegration": "not a boolean"})
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 1
+    assert "value could not be parsed to a boolean" in results[0].message
+
+
 class TestST111:
     def test_invalid_section_order(self):
         """

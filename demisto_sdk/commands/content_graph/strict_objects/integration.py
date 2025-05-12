@@ -172,6 +172,9 @@ class _StrictIntegration(BaseStrictModel):
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
     hybrid: Optional[bool] = None
     supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
+    isCloudProviderIntegration: Optional[bool] = Field(
+        False, alias="isCloudProviderIntegration"
+    )
 
     def __init__(self, **data):
         """

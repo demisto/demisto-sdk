@@ -54,6 +54,10 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_feed = self.script_info.get("feed", False)
         self.long_running = self.script_info.get("longRunning", False)
         self.supports_quick_actions = self.yml_data.get("supportsquickactions", False)
+        self.isCloudProviderIntegration = self.yml_data.get(
+            "isCloudProviderIntegration", False
+        )
+
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()

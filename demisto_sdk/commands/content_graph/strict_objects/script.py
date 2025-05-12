@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, root_validator
 
 from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
@@ -95,6 +95,53 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     user_prompt: Optional[str] = Field(None, alias="userPrompt")
     system_prompt: Optional[str] = Field(None, alias="systemPrompt")
     few_shots: Optional[str] = Field(None, alias="fewShots")
+
+    @root_validator
+    def validate_llm_constraints(cls, values):
+        """
+        Validates LLM-related field constraints based on the 'is_llm' flag.
+
+        - If 'is_llm' is True:
+            - 'script' must be empty.
+            - 'model' must be provided.
+            - 'user_prompt' must be provided.
+            - 'system_prompt' and 'few_shots' are optional.
+
+        - If 'is_llm' is False:
+            - All LLM-related fields ('model', 'pre_script', 'post_script',
+              'user_prompt', 'system_prompt', 'few_shots') must be None or empty.
+
+        Raises:
+            ValueError: If one or more validation conditions are not met.
+        """
+        errors = []
+        if values.get("is_llm"):
+            # Enforce LLM mode rules
+            if values.get("script") not in [None, ""]:
+                errors.append("When 'isLLM' is True, 'script' must be empty.")
+            if not values.get("model"):
+                errors.append("When 'isLLM' is True, 'model' must be provided.")
+            if not values.get("user_prompt"):
+                errors.append("When 'isLLM' is True, 'userPrompt' must be provided.")
+        else:
+            # Enforce non-LLM mode: all LLM-related fields must be None or empty
+            llm_fields = [
+                ("model", values.get("model")),
+                ("pre_script", values.get("pre_script")),
+                ("post_script", values.get("post_script")),
+                ("user_prompt", values.get("user_prompt")),
+                ("system_prompt", values.get("system_prompt")),
+                ("few_shots", values.get("few_shots")),
+            ]
+            errors.extend(
+                f"Field '{field_name}' must be empty when 'isLLM' is False."
+                for field_name, value in llm_fields
+                if value not in [None, ""]
+            )
+        if errors:
+            raise ValueError("Validation failed:\n" + "\n".join(errors))
+
+        return values
 
 
 StrictScript = create_model(

@@ -36,8 +36,8 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
 
     @property
     def pre_script(self):
-        pass
+        return self.get_code_by_key(key="preScript")
 
     @property
     def post_script(self):
-        pass
+        return self.get_code_by_key(key="postScript")

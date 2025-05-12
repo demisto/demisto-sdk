@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue that caused Platform Packs' `README.md` files to reference incorrect image URLs.
-  type: fix
-pr_number: 4924

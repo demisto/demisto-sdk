@@ -311,7 +311,7 @@ class IntegrationScriptUnifier(Unifier):
         return data, found_data_path
 
     @staticmethod
-    def get_code_file(package_path: Path, script_type):
+    def get_code_file(package_path: Path, script_type, key: str = "script"):
         """Return the first code file in the specified directory path
         :param script_type: script type: .py, .js, .ps1
         :type script_type: str
@@ -347,10 +347,8 @@ class IntegrationScriptUnifier(Unifier):
             )
         )
         if script_path_list:
-            for script in script_path_list:
-                if 'preScript' in script or 'postScript' in script:
-                    return script_path_list
-            return script_path_list[0]
+            return next((path for path in script_path_list if key!="script" and f"{key}-" in path), script_path_list[0])
+
         else:
             raise ValueError(
                 f"Could not find a code file {script_type} in {package_path}"
@@ -420,7 +418,7 @@ class IntegrationScriptUnifier(Unifier):
         return yml_unified, script_path
 
     @staticmethod
-    def get_script_or_integration_package_data(package_path: Path):
+    def get_script_or_integration_package_data(package_path: Path, key: str = "script"):
         # should be static method
         _, yml_path = get_yml_paths_in_dir(str(package_path))
 
@@ -438,7 +436,7 @@ class IntegrationScriptUnifier(Unifier):
                 get_yaml(yml_path, keep_order=False).get("script", {}).get("type")
             )
         code_path = IntegrationScriptUnifier.get_code_file(
-            package_path, TYPE_TO_EXTENSION[code_type]
+            package_path, TYPE_TO_EXTENSION[code_type], key
         )
         code = get_file(code_path, return_content=True)
 
@@ -446,13 +444,16 @@ class IntegrationScriptUnifier(Unifier):
 
     @staticmethod
     def get_script_or_integration_package_data_with_sha(
-        yml_path: Path, git_sha: str, yml_data: dict
+        yml_path: Path, git_sha: str, yml_data: dict, key: Optional[str] = None
     ):
         # should be static method
-        if find_type(str(yml_path)) in (FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.AGENTIX_AI_TASK):
+        # if find_type(str(yml_path)) in (FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.AGENTIX_AI_TASK):
+        if find_type(str(yml_path)) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
             code_type = yml_data.get("type")
         else:
             code_type = yml_data.get("script", {}).get("type")
+        if key:
+            yml_path = yml_path.with_name(f"{key}-{yml_path.name}")
         code_path = str(yml_path).replace(".yml", TYPE_TO_EXTENSION[code_type])  # type: ignore[index]
 
         code = TextFile.read_from_git_path(code_path, tag=git_sha)

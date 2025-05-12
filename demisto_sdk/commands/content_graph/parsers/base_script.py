@@ -81,16 +81,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         Returns:
             str: The script code.
         """
-        if self.is_unified or self.yml_data.get("script") not in ["-", ""]:
-            return self.yml_data.get("script")
-        if not self.git_sha:
-            return IntegrationScriptUnifier.get_script_or_integration_package_data(
-                self.path.parent
-            )[1]
-        else:
-            return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
-                self.path, self.git_sha, self.yml_data
-            )[1]
+        return self.get_code_by_key("script")
 
     def get_depends_on(self) -> Set[str]:
         depends_on: List[str] = self.yml_data.get("dependson", {}).get("must", [])
@@ -101,3 +92,15 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         if not code:
             raise ValueError("Script code is not available")
         return set(EXECUTE_CMD_PATTERN.findall(code))
+
+    def get_code_by_key(self, key: str = "script") -> Optional[str]:
+        if self.is_unified or self.yml_data.get(key) not in ["-", ""]:
+            return self.yml_data.get(key)
+        if not self.git_sha:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data(
+                self.path.parent, key
+            )[1]
+        else:
+            return IntegrationScriptUnifier.get_script_or_integration_package_data_with_sha(
+                self.path, self.git_sha, self.yml_data, key
+            )[1]

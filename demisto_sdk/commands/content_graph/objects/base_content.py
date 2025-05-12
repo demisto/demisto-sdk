@@ -172,19 +172,20 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             for name, value in inspect.getmembers(self.__class__)
             if isinstance(value, cached_property)
         }
-        json_dct = json.loads(
-            self.json(
-                exclude={
-                    "commands",
-                    "database_id",
-                }
-                | cached_properties
-            )
+        json_dct = self.dict(
+            exclude={
+                "commands",
+                "database_id",
+            }
+            | cached_properties
         )
-        if "path" in json_dct and Path(json_dct["path"]).is_absolute():
+        content_item_path = json_dct.get("path")
+        if content_item_path and isinstance(content_item_path, Path):
             json_dct["path"] = (
-                Path(json_dct["path"]).relative_to(CONTENT_PATH)
-            ).as_posix()  # type: ignore
+                content_item_path.relative_to(CONTENT_PATH).as_posix()
+                if content_item_path.is_absolute()
+                else str(content_item_path)
+            )
         json_dct["content_type"] = self.content_type
         return json_dct
 

@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue in the ***prepare-content*** command where wrong handling of the Image URL in the README.md file would cause the image file not to be created.
+  type: internal
+pr_number: 4938

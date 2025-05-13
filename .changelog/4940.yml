@@ -3,4 +3,4 @@ changes:
   type: fix
 - description: Fixed an issue where quick actions were available in non-platform marketplaces.
   type: fix
-pr_number: 4939
+pr_number: 4940

@@ -55,7 +55,7 @@ VALID_DOC_FILES_PATH_FOR_UNIT_TESTING = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/content_slim/Packs/Sample01/"
     f"doc_files/sample_packs.png"
 )
-
+DUMMY_PACK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Packs/DummyPack"
 DUMMY_SCRIPT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScriptUnified.yml"
 VALID_INTEGRATION_TEST_PATH = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test.yml"

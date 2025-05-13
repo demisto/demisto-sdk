@@ -8,13 +8,11 @@ from typer.testing import CliRunner
 from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.tests.constants_test import GIT_ROOT, PACK_TARGET
+from demisto_sdk.tests.constants_test import DUMMY_PACK_PATH, PACK_TARGET
 
 UNIT_TEST_DATA = src_root() / "commands" / "zip_packs" / "tests" / "data"
 TEST_PACK_PATH: Path = Path(PACK_TARGET)
-TEST_PACK_PATH_WITH_LIST = Path(
-    f"{GIT_ROOT}/demisto_sdk/tests/test_files/Packs/TestPackForZipPacksCommand"
-)
+DUMMY_PACK_PATH: Path = Path(DUMMY_PACK_PATH)
 
 
 @contextmanager
@@ -72,9 +70,9 @@ class TestPacksZipper:
                 args=[
                     "zip-packs",
                     "-i",
-                    f"{TEST_PACK_PATH}",
+                    TEST_PACK_PATH,
                     "-o",
-                    f"{tmp_output_dir}",
+                    tmp_output_dir,
                     "--content-version",
                     "0.0.0",
                     zip_all,
@@ -101,7 +99,7 @@ class TestPacksZipper:
                 args=[
                     "zip-packs",
                     "-i",
-                    TEST_PACK_PATH_WITH_LIST,
+                    DUMMY_PACK_PATH,
                     "-o",
                     tmp_output_dir,
                 ],

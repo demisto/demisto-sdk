@@ -106,7 +106,7 @@ class TestPacksZipper:
             )
             assert result.exit_code == 0
             unpack_archive(
-                f"{tmp_output_dir}/uploadable_packs/TestPackForZipPacksCommand.zip",
+                f"{tmp_output_dir}/uploadable_packs/DummyPack.zip",
                 f"{tmp_output_dir}/uploadable_packs",
             )
             zip_file_path = Path(tmp_output_dir / "uploadable_packs")

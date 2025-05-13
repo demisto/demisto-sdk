@@ -30,6 +30,17 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     Output,
 )
 
+MARKETPLACES_SUPPORTING_FETCH_EVENTS = [
+    MarketplaceVersions.MarketplaceV2,
+    MarketplaceVersions.PLATFORM,
+]
+
+MARKETPLACES_SUPPORTING_FETCH_ASSETS = [
+    MarketplaceVersions.MarketplaceV2,
+    MarketplaceVersions.XPANSE,
+    MarketplaceVersions.PLATFORM,
+]
+
 
 class Parameter(BaseModel):
     name: str
@@ -145,16 +156,16 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         incident_to_alert: bool = False,
     ) -> dict:
         summary = super().summary(marketplace, incident_to_alert)
-        if marketplace in [
-            MarketplaceVersions.XSOAR,
-            MarketplaceVersions.XSOAR_ON_PREM,
-            MarketplaceVersions.XSOAR_SAAS,
-            MarketplaceVersions.XPANSE,
-        ]:
-            if summary.get("isfetchevents"):
-                summary["isfetchevents"] = False
-            if current_marketplace != MarketplaceVersions.XPANSE and summary.get("isfetchassets"):
-                summary["isfetchassets"] = False
+        if (
+            marketplace not in MARKETPLACES_SUPPORTING_FETCH_EVENTS
+            and summary.get("isfetchevents")
+        ):
+            summary["isfetchevents"] = False
+        if (
+            marketplace not in MARKETPLACES_SUPPORTING_FETCH_ASSETS
+            and summary.get("isfetchassets")
+        ):
+            summary["isfetchevents"] = False
         summary["name"] = self.display_name
         return summary
 
@@ -181,23 +192,22 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         **kwargs,
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
-        if current_marketplace in [
-            MarketplaceVersions.XSOAR,
-            MarketplaceVersions.XSOAR_ON_PREM,
-            MarketplaceVersions.XSOAR_SAAS,
-            MarketplaceVersions.XPANSE,
-        ]:
-            script: dict = data.get("script", {})
-            if script.get("isfetchevents"):
-                data["script"]["isfetchevents"] = False
-            if current_marketplace != MarketplaceVersions.XPANSE and script.get("isfetchassets"):
-                data["script"]["isfetchassets"] = False
+        if (
+            current_marketplace not in MARKETPLACES_SUPPORTING_FETCH_EVENTS
+            and data["script"].get("isfetchevents")
+        ):
+            data["script"]["isfetchevents"] = False
+        if (
+            current_marketplace not in MARKETPLACES_SUPPORTING_FETCH_ASSETS
+            and data["script"].get("isfetchassets")
+        ):
+            data["script"]["isfetchassets"] = False
         if current_marketplace != MarketplaceVersions.PLATFORM:
-            # ensure quickactions are available only in platform marketplace
+            # quickactions should be available only in platform
             data["commands"] = [
                 cmd
                 for cmd in data["commands"]
-                if "quickaction" in cmd and cmd["quickaction"]
+                if cmd.get("quickaction")
             ]
 
         if supported_native_images := self.get_supported_native_images(

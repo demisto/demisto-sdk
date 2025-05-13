@@ -145,7 +145,11 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         incident_to_alert: bool = False,
     ) -> dict:
         summary = super().summary(marketplace, incident_to_alert)
-        if marketplace != MarketplaceVersions.MarketplaceV2:
+        if marketplace not in [
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.XSOAR_SAAS,
+        ]:
             if summary.get("isfetchevents"):
                 summary["isfetchevents"] = False
             if summary.get("isfetchassets"):
@@ -176,12 +180,23 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         **kwargs,
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
-        if current_marketplace != MarketplaceVersions.MarketplaceV2:
+        if current_marketplace not in [
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.XSOAR_SAAS,
+        ]:
             script: dict = data.get("script", {})
             if script.get("isfetchevents"):
                 data["script"]["isfetchevents"] = False
             if script.get("isfetchassets"):
                 data["script"]["isfetchassets"] = False
+        elif current_marketplace != MarketplaceVersions.PLATFORM:
+            # ensure quickactions are available only in platform marketplace
+            data["commands"] = [
+                cmd
+                for cmd in data["commands"]
+                if "quickaction" in cmd and cmd["quickaction"]
+            ]
 
         if supported_native_images := self.get_supported_native_images(
             ignore_native_image=kwargs.get("ignore_native_image") or False,

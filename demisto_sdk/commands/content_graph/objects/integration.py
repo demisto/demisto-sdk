@@ -145,7 +145,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         incident_to_alert: bool = False,
     ) -> dict:
         summary = super().summary(marketplace, incident_to_alert)
-        if marketplace not in [
+        if marketplace in [
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.XSOAR_ON_PREM,
             MarketplaceVersions.XSOAR_SAAS,
@@ -180,7 +180,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         **kwargs,
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
-        if current_marketplace not in [
+        if current_marketplace in [
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.XSOAR_ON_PREM,
             MarketplaceVersions.XSOAR_SAAS,

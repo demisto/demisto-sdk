@@ -1,0 +1,6 @@
+changes:
+- description: Fixed an issue where the **fetch-events** and **fetch-assets** functionalities were not available in the `platform` and `xpanse` marketplaces.
+  type: fix
+- description: Fixed an issue where quick actions were available in non-platform marketplaces.
+  type: fix
+pr_number: 4939

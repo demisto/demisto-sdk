@@ -18,7 +18,7 @@ class AgentixActionArgument(BaseModel):
 
 
 class AgentixActionOutput(BaseModel):
-    display: str
+    name: str
     description: str
     type: str
     content_item_output_name: str = Field(..., alias="underlyingContentItemOutputName")

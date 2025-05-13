@@ -22,7 +22,6 @@ class AgentixBaseParser(YAMLContentItemParser):
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
-        self.is_enabled: bool = self.yml_data.get("isEnabled", False)  # TODO - should be removed?
         self.tags: List[str] = self.yml_data.get("tags", [])
         self.category: Optional[str] = self.yml_data.get("category", None)
 

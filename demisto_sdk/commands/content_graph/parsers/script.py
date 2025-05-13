@@ -27,8 +27,6 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
         )
         # self.is_llm: bool = self.yml_data.get("isLLM", False)
         self.model: str = self.yml_data.get("model", False)
-        # self.pre_script: str = self.yml_data.get("preScript", '')
-        # self.post_script: str = self.yml_data.get("postScript", '')
         self.user_prompt: str = self.yml_data.get("userPrompt", '')
         self.system_prompt: str = self.yml_data.get("systemPrompt", '')
         self.few_shots: str = self.yml_data.get("fewShots", '')

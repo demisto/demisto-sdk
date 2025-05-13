@@ -8,22 +8,20 @@ from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
 
 
 class AgentixActionArgument(BaseModel):
-    display: str = Field(..., alias="name")  # TODO
+    name: str
     description: str
     arg_type: int = Field(..., alias="argType")
-    required: bool = Field(..., alias="required")  # TODO
+    required: bool = False
     default_value: Optional[str] = Field(None, alias="defaultValue")
-    is_hidden: bool = Field(..., alias="isHidden")
-    content_item_arg_name: str = Field(..., alias="contentItemArgName")
-    is_details_overridden: bool = Field(..., alias="isDetailsOverridden")
+    hidden: bool = False
+    content_item_arg_name: str = Field(..., alias="underlyingContentItemInputName")
 
 
 class AgentixActionOutput(BaseModel):
-    display: str = Field(..., alias="name")  # TODO
+    display: str
     description: str
-    output_type: str = Field(..., alias="outputType")
-    content_item_output_name: str = Field(..., alias="contentItemOutputName")
-    is_details_overridden: bool = Field(..., alias="isDetailsOverridden")
+    type: str
+    content_item_output_name: str = Field(..., alias="underlyingContentItemOutputName")
 
 
 class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
@@ -33,9 +31,9 @@ class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
     agent_id: str = Field(..., alias="agentId")
     underlying_content_item_id: str = Field(..., alias="underlyingContentItemId")
     underlying_content_item_name: str = Field(..., alias="underlyingContentItemName")
-    underlying_content_item_type: int = Field(..., alias="underlyingContentItemType") # (1 script, 2 playbook, 3 command, 4 AI task)
+    underlying_content_item_type: int = Field(..., alias="underlyingContentItemType")
     underlying_content_item_version: int = Field(..., alias="underlyingContentItemVersion")
-    underlying_content_item_pack_version: str = Field(..., alias="underlyingContentItemPackVersion")
+    requires_user_approval: bool = Field(False, alias="requiresUserApproval")
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
 
@@ -238,9 +237,8 @@ class AlertsFilter(BaseStrictModel):
 
 class AgentixBase(BaseStrictModel):
     common_fields: CommonFields = Field(..., alias="commonfields")
-    is_enabled: bool = Field(..., alias="isEnabled")  # TODO - should be removed?
-    tags: Optional[list[str]]
-    category: Optional[str] = Field(..., alias="modifiedBy")
-    version: Optional[int] = 0
+    tags: Optional[list[str]] = None
+    category: Optional[str] = None
+    version: Optional[int] = -1
     name: str
     description: str

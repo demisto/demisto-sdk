@@ -3,4 +3,4 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
 
 
 class AgentixAgent(AgentixBase):
-    color: str  # TODO - understanding the meaning
+    color: str

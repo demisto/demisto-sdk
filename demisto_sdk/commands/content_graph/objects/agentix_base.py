@@ -8,4 +8,4 @@ class AgentixBase(ContentItem):
     category: Optional[str] = None
     version: int = -1
     description: str
-    display: str
+    display_name: str

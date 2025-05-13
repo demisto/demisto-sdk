@@ -63,7 +63,7 @@ class ContentItemExportableFields(BaseStrictModel):
 class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     common_fields: CommonFieldsScript = Field(..., alias="commonfields")
     name_x2: Optional[str] = None
-    script: str
+    script: Optional[str] = None # TODO
     type_: ScriptType = Field(..., alias="type")
     tags: Optional[List[str]] = None
     enabled: Optional[bool] = None
@@ -142,6 +142,16 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
             raise ValueError("Validation failed:\n" + "\n".join(errors))
 
         return values
+
+    # @root_validator
+    # def validate_script_field(cls, values):
+    #     errors = []
+    #     if values.get("is_llm"):
+    #         pass
+    #     elif not values.get("script"):
+    #         errors.append("Content item of type script must provide a 'script' field.")
+    #     if errors:
+    #         raise ValueError("Validation failed:\n" + "\n".join(errors))
 
 
 StrictScript = create_model(

@@ -240,5 +240,5 @@ class AgentixBase(BaseStrictModel):
     tags: Optional[list[str]] = None
     category: Optional[str] = None
     version: Optional[int] = -1
-    name: str
+    display: str
     description: str

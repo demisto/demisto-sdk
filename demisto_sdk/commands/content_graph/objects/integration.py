@@ -149,10 +149,11 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.XSOAR_ON_PREM,
             MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XPANSE,
         ]:
             if summary.get("isfetchevents"):
                 summary["isfetchevents"] = False
-            if summary.get("isfetchassets"):
+            if current_marketplace != MarketplaceVersions.XPANSE and summary.get("isfetchassets"):
                 summary["isfetchassets"] = False
         summary["name"] = self.display_name
         return summary
@@ -184,13 +185,14 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.XSOAR_ON_PREM,
             MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.XPANSE,
         ]:
             script: dict = data.get("script", {})
             if script.get("isfetchevents"):
                 data["script"]["isfetchevents"] = False
-            if script.get("isfetchassets"):
+            if current_marketplace != MarketplaceVersions.XPANSE and script.get("isfetchassets"):
                 data["script"]["isfetchassets"] = False
-        elif current_marketplace != MarketplaceVersions.PLATFORM:
+        if current_marketplace != MarketplaceVersions.PLATFORM:
             # ensure quickactions are available only in platform marketplace
             data["commands"] = [
                 cmd

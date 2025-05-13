@@ -31,6 +31,7 @@ class AgentixBaseParser(YAMLContentItemParser):
             {
                 "object_id": "commonfields.id",
                 "version": "commonfields.version",
+                "name": "commonfields.id"
             }
         )
         return super().field_mapping
@@ -42,3 +43,7 @@ class AgentixBaseParser(YAMLContentItemParser):
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return set(MarketplaceVersions)
+
+    @property
+    def name(self) -> Optional[str]:
+        return get_value(self.yml_data, self.field_mapping.get("name", ""))

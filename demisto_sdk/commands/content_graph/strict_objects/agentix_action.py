@@ -11,11 +11,11 @@ from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictM
 class AgentixActionArgument(BaseStrictModel):
     name: str
     description: str
-    type: int
+    type: str
     required: bool = False
     default_value: Optional[str] = Field(None, alias="defaultValue")
     hidden: bool = False
-    content_item_arg_name: str = Field(..., alias="underlyingContentItemArgName")
+    content_item_arg_name: str = Field(..., alias="underlyingContentItemInputName")
     generatable: bool = False
 
 

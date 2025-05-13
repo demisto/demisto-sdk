@@ -61,7 +61,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         for cmd in self.get_depends_on():
             self.add_command_or_script_dependency(cmd)
 
-        for cmd in self.get_command_executions():
+        for cmd in self.get_command_executions(self.code):
             self.add_command_or_script_dependency(cmd)
 
     @property
@@ -87,9 +87,9 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         depends_on: List[str] = self.yml_data.get("dependson", {}).get("must", [])
         return {cmd.split("|")[-1] for cmd in depends_on}
 
-    def get_command_executions(self) -> Set[str]:
-        code = self.code
-        if not code:
+    def get_command_executions(self, code: Optional[str] = None) -> Set[str]:
+        # code = self.code
+        if not code and self.content_type == ContentType.SCRIPT and not self.is_llm:
             raise ValueError("Script code is not available")
         return set(EXECUTE_CMD_PATTERN.findall(code))
 

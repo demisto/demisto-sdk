@@ -9,4 +9,6 @@ class AgentixAgent(AgentixBase, content_type=ContentType.AGENTIX_AGENT):
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        pass
+        if "color" in _dict and path.suffix == ".yml":
+            return True
+        return False

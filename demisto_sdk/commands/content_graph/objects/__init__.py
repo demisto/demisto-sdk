@@ -41,7 +41,7 @@ __all__ = [
     "CaseLayoutRule",
     "AgentixAction",
     "AgentixAgent",
-    "AgentixAITask",
+    # "AgentixAITask",
 ]
 
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction

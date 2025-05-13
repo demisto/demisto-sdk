@@ -39,4 +39,6 @@ class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        pass
+        if "agentId" in _dict and path.suffix == ".yml":
+            return True
+        return False

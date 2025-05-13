@@ -221,6 +221,9 @@ mapping:
                       required:
                         type: bool
 
+  isCloudProviderIntegration:
+    type: bool
+
 # integration->configuration
   name:xsoar:
     type: str

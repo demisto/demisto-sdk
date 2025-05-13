@@ -114,6 +114,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     category: str
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
+    is_cloud_provider_integration: bool = Field(
+        False, alias="isCloudProviderIntegration"
+    )
 
     @property
     def imports(self) -> List["Script"]:

@@ -1,0 +1,4 @@
+changes:
+  - description: Add the 'Result' section to SectionOrderValues and updated related validations.
+    type: feature
+pr_number: 4930

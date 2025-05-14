@@ -156,14 +156,12 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         incident_to_alert: bool = False,
     ) -> dict:
         summary = super().summary(marketplace, incident_to_alert)
-        if (
-            marketplace not in MARKETPLACES_SUPPORTING_FETCH_EVENTS
-            and summary.get("isfetchevents")
+        if marketplace not in MARKETPLACES_SUPPORTING_FETCH_EVENTS and summary.get(
+            "isfetchevents"
         ):
             summary["isfetchevents"] = False
-        if (
-            marketplace not in MARKETPLACES_SUPPORTING_FETCH_ASSETS
-            and summary.get("isfetchassets")
+        if marketplace not in MARKETPLACES_SUPPORTING_FETCH_ASSETS and summary.get(
+            "isfetchassets"
         ):
             summary["isfetchevents"] = False
         summary["name"] = self.display_name
@@ -192,22 +190,20 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         **kwargs,
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
-        if (
-            current_marketplace not in MARKETPLACES_SUPPORTING_FETCH_EVENTS
-            and data["script"].get("isfetchevents")
-        ):
+        if current_marketplace not in MARKETPLACES_SUPPORTING_FETCH_EVENTS and data[
+            "script"
+        ].get("isfetchevents"):
             data["script"]["isfetchevents"] = False
-        if (
-            current_marketplace not in MARKETPLACES_SUPPORTING_FETCH_ASSETS
-            and data["script"].get("isfetchassets")
-        ):
+        if current_marketplace not in MARKETPLACES_SUPPORTING_FETCH_ASSETS and data[
+            "script"
+        ].get("isfetchassets"):
             data["script"]["isfetchassets"] = False
-        if current_marketplace != MarketplaceVersions.PLATFORM:
+        if current_marketplace != MarketplaceVersions.PLATFORM and isinstance(
+            data.get("commands"), list
+        ):
             # quickactions should be available only in platform
             data["commands"] = [
-                cmd
-                for cmd in data["commands"]
-                if cmd.get("quickaction")
+                cmd for cmd in data["commands"] if cmd.get("quickaction")
             ]
 
         if supported_native_images := self.get_supported_native_images(

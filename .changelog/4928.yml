@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the **zip-packs** command created a pack metadata file with empty lists when the pack contained a split json list.
-  type: fix
-pr_number: 4928

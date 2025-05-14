@@ -14,6 +14,11 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     ImageRelatedFile,
     LightSVGRelatedFile,
 )
+from demisto_sdk.commands.prepare_content.preparers.marketplace_commands_availability_preparer import (
+    MARKETPLACES_SUPPORTING_FETCH_ASSETS,
+    MARKETPLACES_SUPPORTING_FETCH_EVENTS,
+    MarketplaceCommandsAvailabilityPreparer,
+)
 
 if TYPE_CHECKING:
     # avoid circular imports
@@ -29,17 +34,6 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
     Output,
 )
-
-MARKETPLACES_SUPPORTING_FETCH_EVENTS = [
-    MarketplaceVersions.MarketplaceV2,
-    MarketplaceVersions.PLATFORM,
-]
-
-MARKETPLACES_SUPPORTING_FETCH_ASSETS = [
-    MarketplaceVersions.MarketplaceV2,
-    MarketplaceVersions.XPANSE,
-    MarketplaceVersions.PLATFORM,
-]
 
 
 class Parameter(BaseModel):
@@ -190,21 +184,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         **kwargs,
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
-        if current_marketplace not in MARKETPLACES_SUPPORTING_FETCH_EVENTS and data[
-            "script"
-        ].get("isfetchevents"):
-            data["script"]["isfetchevents"] = False
-        if current_marketplace not in MARKETPLACES_SUPPORTING_FETCH_ASSETS and data[
-            "script"
-        ].get("isfetchassets"):
-            data["script"]["isfetchassets"] = False
-        if current_marketplace != MarketplaceVersions.PLATFORM and isinstance(
-            data.get("commands"), list
-        ):
-            # quickactions should be available only in platform
-            data["commands"] = [
-                cmd for cmd in data["commands"] if cmd.get("quickaction")
-            ]
+        data = MarketplaceCommandsAvailabilityPreparer.prepare(
+            current_marketplace, data
+        )
 
         if supported_native_images := self.get_supported_native_images(
             ignore_native_image=kwargs.get("ignore_native_image") or False,

@@ -1,0 +1,95 @@
+import pytest
+
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.prepare_content.preparers.marketplace_commands_availability_preparer import (
+    MarketplaceCommandsAvailabilityPreparer,
+)
+
+
+@pytest.mark.parametrize(
+    "current_marketplace, expected_is_fetch_events",
+    [
+        (MarketplaceVersions.XSOAR, False),
+        (MarketplaceVersions.XSOAR_ON_PREM, False),
+        (MarketplaceVersions.XSOAR_SAAS, False),
+        (MarketplaceVersions.XPANSE, False),
+        (MarketplaceVersions.MarketplaceV2, True),
+        (MarketplaceVersions.PLATFORM, True),
+    ],
+)
+def test_prepare_is_fetch_events(current_marketplace, expected_is_fetch_events):
+    """
+    Given:
+        - An integration available on different marketplaces
+        - "Fetches events" is set to true
+
+    When:
+        - Calling MarketplaceSuffixPreparer.prepare on the integration data
+
+    Then:
+        - Ensure fetch-events is available only in XSIAM and platform marketplaces
+    """
+    data = {"script": {"isfetchevents": True}}
+    data = MarketplaceCommandsAvailabilityPreparer.prepare(data, current_marketplace)
+    assert data["script"]["isfetchevents"] is expected_is_fetch_events
+
+
+@pytest.mark.parametrize(
+    "current_marketplace, expected_is_fetch_assets",
+    [
+        (MarketplaceVersions.XSOAR, False),
+        (MarketplaceVersions.XSOAR_ON_PREM, False),
+        (MarketplaceVersions.XSOAR_SAAS, False),
+        (MarketplaceVersions.XPANSE, True),
+        (MarketplaceVersions.MarketplaceV2, True),
+        (MarketplaceVersions.PLATFORM, True),
+    ],
+)
+def test_prepare_is_fetch_assets(current_marketplace, expected_is_fetch_assets):
+    """
+    Given:
+        - An integration available on different marketplaces
+        - "Fetches assets" is set to true
+
+    When:
+        - Calling MarketplaceSuffixPreparer.prepare on the integration data
+
+    Then:
+        - Ensure fetch-assets is available only in XSIAM, platform and XPANSE marketplaces
+    """
+    data = {"script": {"isfetchassets": True}}
+    data = MarketplaceCommandsAvailabilityPreparer.prepare(data, current_marketplace)
+    assert data["script"]["isfetchassets"] is expected_is_fetch_assets
+
+
+@pytest.mark.parametrize(
+    "current_marketplace, expected_commands_length",
+    [
+        (MarketplaceVersions.XSOAR, 1),
+        (MarketplaceVersions.XSOAR_ON_PREM, 1),
+        (MarketplaceVersions.XSOAR_SAAS, 1),
+        (MarketplaceVersions.XPANSE, 1),
+        (MarketplaceVersions.MarketplaceV2, 1),
+        (MarketplaceVersions.PLATFORM, 2),
+    ],
+)
+def test_prepare_quick_actions(current_marketplace, expected_commands_length):
+    """
+    Given:
+        - An integration available on different marketplaces
+        - The integration has two commands, one of them is a quick action
+
+    When:
+        - Calling MarketplaceSuffixPreparer.prepare on the integration data
+
+    Then:
+        - Ensure only the platform keeps the quick action
+    """
+    data = {
+        "commands": [
+            {"name": "test"},
+            {"name": "test-quick-action", "quickaction": True},
+        ]
+    }
+    data = MarketplaceCommandsAvailabilityPreparer.prepare(data, current_marketplace)
+    assert len(data["commands"]) == expected_commands_length

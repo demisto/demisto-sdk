@@ -75,12 +75,12 @@ def test_prepare_is_fetch_assets(current_marketplace, expected_is_fetch_assets):
 @pytest.mark.parametrize(
     "current_marketplace, expected_commands_length",
     [
-        (MarketplaceVersions.XSOAR, 1),
-        (MarketplaceVersions.XSOAR_ON_PREM, 1),
-        (MarketplaceVersions.XSOAR_SAAS, 1),
-        (MarketplaceVersions.XPANSE, 1),
-        (MarketplaceVersions.MarketplaceV2, 1),
-        (MarketplaceVersions.PLATFORM, 2),
+        (MarketplaceVersions.XSOAR, 2),
+        (MarketplaceVersions.XSOAR_ON_PREM, 2),
+        (MarketplaceVersions.XSOAR_SAAS, 2),
+        (MarketplaceVersions.XPANSE, 2),
+        (MarketplaceVersions.MarketplaceV2, 2),
+        (MarketplaceVersions.PLATFORM, 3),
     ],
 )
 def test_prepare_quick_actions(current_marketplace, expected_commands_length):
@@ -98,6 +98,7 @@ def test_prepare_quick_actions(current_marketplace, expected_commands_length):
     data = {
         "commands": [
             {"name": "test"},
+            {"name": "test2"},
             {"name": "test-quick-action", "quickaction": True},
         ],
         "script": {},

@@ -20,7 +20,7 @@ class MarketplaceCommandsAvailabilityPreparer:
     @staticmethod
     def prepare(
         data: dict,
-        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        current_marketplace: MarketplaceVersions,
     ) -> dict:
         """
         Ensures all integration commands are available only in the correct marketplaces.
@@ -68,5 +68,5 @@ class MarketplaceCommandsAvailabilityPreparer:
             and isinstance(data.get("commands"), list)
         ):
             data["commands"] = [
-                cmd for cmd in data["commands"] if cmd.get("quickaction")
+                cmd for cmd in data["commands"] if not cmd.get("quickaction")
             ]

@@ -11,6 +11,10 @@ MARKETPLACES_SUPPORTING_FETCH_ASSETS = [
     MarketplaceVersions.PLATFORM,
 ]
 
+MARKETPLACES_SUPPORTING_QUICK_ACTIONS = [
+    MarketplaceVersions.PLATFORM,
+]
+
 
 class MarketplaceCommandsAvailabilityPreparer:
     @staticmethod
@@ -59,10 +63,10 @@ class MarketplaceCommandsAvailabilityPreparer:
         data: dict,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     ) -> None:
-        if current_marketplace != MarketplaceVersions.PLATFORM and isinstance(
-            data.get("commands"), list
+        if (
+            current_marketplace not in MARKETPLACES_SUPPORTING_QUICK_ACTIONS
+            and isinstance(data.get("commands"), list)
         ):
-            # quickactions should be available only in platform
             data["commands"] = [
                 cmd for cmd in data["commands"] if cmd.get("quickaction")
             ]

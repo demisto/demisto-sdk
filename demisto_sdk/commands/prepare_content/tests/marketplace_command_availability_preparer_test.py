@@ -99,7 +99,8 @@ def test_prepare_quick_actions(current_marketplace, expected_commands_length):
         "commands": [
             {"name": "test"},
             {"name": "test-quick-action", "quickaction": True},
-        ]
+        ],
+        "script": {},
     }
     data = MarketplaceCommandsAvailabilityPreparer.prepare(data, current_marketplace)
     assert len(data["commands"]) == expected_commands_length

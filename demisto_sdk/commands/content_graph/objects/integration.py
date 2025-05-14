@@ -185,7 +185,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
         data = MarketplaceCommandsAvailabilityPreparer.prepare(
-            current_marketplace, data
+            data, current_marketplace
         )
 
         if supported_native_images := self.get_supported_native_images(

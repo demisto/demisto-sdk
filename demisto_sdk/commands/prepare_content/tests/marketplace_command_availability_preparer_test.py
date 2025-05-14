@@ -6,6 +6,16 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_commands_availab
 )
 
 
+def test_alert_on_new_marketplace():
+    """
+    This test will fail whenever we are adding a new marketplace
+    without ensuring the correctness of MarketplaceCommandsAvailabilityPreparer.
+
+    When adding a new marketplace, please add a corresponding test case for each of the tests below!
+    """
+    assert len(list(MarketplaceVersions)) == 6
+
+
 @pytest.mark.parametrize(
     "current_marketplace, expected_is_fetch_events",
     [

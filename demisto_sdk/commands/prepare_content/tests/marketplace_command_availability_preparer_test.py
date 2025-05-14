@@ -96,12 +96,13 @@ def test_prepare_quick_actions(current_marketplace, expected_commands_length):
         - Ensure only the platform keeps the quick action
     """
     data = {
-        "commands": [
-            {"name": "test"},
-            {"name": "test2"},
-            {"name": "test-quick-action", "quickaction": True},
-        ],
-        "script": {},
+        "script": {
+            "commands": [
+                {"name": "test"},
+                {"name": "test2"},
+                {"name": "test-quick-action", "quickaction": True},
+            ],
+        },
     }
     data = MarketplaceCommandsAvailabilityPreparer.prepare(data, current_marketplace)
-    assert len(data["commands"]) == expected_commands_length
+    assert len(data["script"]["commands"]) == expected_commands_length

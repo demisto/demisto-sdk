@@ -65,8 +65,8 @@ class MarketplaceCommandsAvailabilityPreparer:
     ) -> None:
         if (
             current_marketplace not in MARKETPLACES_SUPPORTING_QUICK_ACTIONS
-            and isinstance(data.get("commands"), list)
+            and isinstance(data.get("script", {}).get("commands"), list)
         ):
-            data["commands"] = [
+            data["script"]["commands"] = [
                 cmd for cmd in data["commands"] if not cmd.get("quickaction")
             ]

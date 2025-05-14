@@ -41,7 +41,7 @@ class MarketplaceCommandsAvailabilityPreparer:
     @staticmethod
     def prepare_fetch_events(
         data: dict,
-        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        current_marketplace: MarketplaceVersions,
     ) -> None:
         if current_marketplace not in MARKETPLACES_SUPPORTING_FETCH_EVENTS and data[
             "script"
@@ -51,7 +51,7 @@ class MarketplaceCommandsAvailabilityPreparer:
     @staticmethod
     def prepare_fetch_assets(
         data: dict,
-        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        current_marketplace: MarketplaceVersions,
     ) -> None:
         if current_marketplace not in MARKETPLACES_SUPPORTING_FETCH_ASSETS and data[
             "script"
@@ -61,7 +61,7 @@ class MarketplaceCommandsAvailabilityPreparer:
     @staticmethod
     def prepare_quick_actions(
         data: dict,
-        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        current_marketplace: MarketplaceVersions,
     ) -> None:
         if (
             current_marketplace not in MARKETPLACES_SUPPORTING_QUICK_ACTIONS

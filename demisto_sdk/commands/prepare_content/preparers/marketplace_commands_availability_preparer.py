@@ -68,5 +68,5 @@ class MarketplaceCommandsAvailabilityPreparer:
             and isinstance(data.get("script", {}).get("commands"), list)
         ):
             data["script"]["commands"] = [
-                cmd for cmd in data["commands"] if not cmd.get("quickaction")
+                cmd for cmd in data["script"]["commands"] if not cmd.get("quickaction")
             ]

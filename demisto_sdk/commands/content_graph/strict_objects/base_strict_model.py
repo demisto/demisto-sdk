@@ -239,6 +239,6 @@ class AgentixBase(BaseStrictModel):
     common_fields: CommonFields = Field(..., alias="commonfields")
     tags: Optional[list[str]] = None
     category: Optional[str] = None
-    version: Optional[int] = -1
+    # version: Optional[int] = -1
     display: str
     description: str

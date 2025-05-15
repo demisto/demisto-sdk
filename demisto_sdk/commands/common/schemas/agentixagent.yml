@@ -1,0 +1,24 @@
+type: map
+mapping:
+  commonfields:
+    type: map
+    required: true
+    mapping:
+      id:
+        type: str
+        required: true
+      version:
+        type: int
+        required: true
+  color:
+    type: str
+    required: true
+  tags:
+    type: str
+  category:
+    type: str
+  display:
+    type: str
+  description:
+    type: str
+  

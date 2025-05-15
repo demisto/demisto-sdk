@@ -157,7 +157,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         if marketplace not in MARKETPLACES_SUPPORTING_FETCH_ASSETS and summary.get(
             "isfetchassets"
         ):
-            summary["isfetchevents"] = False
+            summary["isfetchassets"] = False
         summary["name"] = self.display_name
         return summary
 

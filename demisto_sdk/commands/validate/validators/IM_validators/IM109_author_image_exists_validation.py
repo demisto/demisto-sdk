@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import AUTHOR_IMAGE_FILE_NAME, PACKS_FOLDER, PARTNER_SUPPORT
+from demisto_sdk.commands.common.constants import (
+    AUTHOR_IMAGE_FILE_NAME,
+    PACKS_FOLDER,
+    PARTNER_SUPPORT,
+)
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (

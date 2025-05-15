@@ -5,7 +5,7 @@
 * Added the `isCloudProviderIntegration` field to the integration schema. [#4939](https://github.com/demisto/demisto-sdk/pull/4939)
 * Update IN118 validation to exclude parameters of type 23 (engine_placeholder parameter). [#4929](https://github.com/demisto/demisto-sdk/pull/4929)
 * Updated structure validation to include the 'triggers' section. [#4931](https://github.com/demisto/demisto-sdk/pull/4931)
-* Modified the integration schema used in the ***demisto-sdk format*** command to include the 'triggers' section. [#4934](https://github.com/demisto/demisto-sdk/pull/4934)
+* Added the `triggers` section to the integration schema. [#4934](https://github.com/demisto/demisto-sdk/pull/4934)
 
 ### Fix
 * Fixed an issue where the **zip-packs** command created a pack metadata file with empty lists when the pack contained a split json list. [#4928](https://github.com/demisto/demisto-sdk/pull/4928)

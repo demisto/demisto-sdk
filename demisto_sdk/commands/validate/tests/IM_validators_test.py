@@ -170,7 +170,10 @@ def test_AuthorImageExistsValidator_obtain_invalid_content_items_image_path():
     results = AuthorImageExistsValidator().obtain_invalid_content_items(content_items)
     assert len(results) == 1
     assert all(
-        "You've created/modified a yml or package in a partner supported pack without providing an author image as a .png file. Please make sure to add an image at"
+        (
+            "You've created/modified a partner supported pack without providing an author image as a .png file. Please "
+            "make sure to add an image under the following path Packs/HelloWorld/Author_image.png"
+        )
         in result.message
         for result in results
     )

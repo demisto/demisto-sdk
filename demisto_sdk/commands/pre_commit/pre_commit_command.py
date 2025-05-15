@@ -312,7 +312,7 @@ class PreCommitRunner:
                 universal_newlines=True,
             )
             logger.info(  # noqa: PLE1205
-                "{}", f"{git_diff.stdout}"
+                "{}", git_diff.stdout
             )
         return return_code
 

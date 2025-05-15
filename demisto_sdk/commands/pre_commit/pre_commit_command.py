@@ -231,12 +231,12 @@ class PreCommitRunner:
         """
         if pre_commit_context.mode:
             logger.info(  # noqa: PLE1205
-                "<yellow>{}<yellow>",
-                f"Running pre-commit hooks in `{pre_commit_context.mode}` mode.",
+                "{}",
+                f"<yellow>Running pre-commit hooks in `{pre_commit_context.mode}` mode.<yellow>",
             )
         if pre_commit_context.run_hook:
             logger.info(  # noqa: PLE1205
-                "<yellow>{}<yellow>", f"Running hook {pre_commit_context.run_hook}"
+                "{}", f"<yellow>Running hook {pre_commit_context.run_hook}<yellow>"
             )
 
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)

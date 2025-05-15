@@ -230,14 +230,11 @@ class PreCommitRunner:
             int: The exit code - 0 if everything is valid.
         """
         if pre_commit_context.mode:
-            logger.info(  # noqa: PLE1205
-                "{}",
-                f"<yellow>Running pre-commit hooks in `{pre_commit_context.mode}` mode.<yellow>",
+            logger.info(
+                f"<yellow>Running pre-commit hooks in `{pre_commit_context.mode}` mode.</yellow>"
             )
         if pre_commit_context.run_hook:
-            logger.info(  # noqa: PLE1205
-                "{}", f"<yellow>Running hook {pre_commit_context.run_hook}<yellow>"
-            )
+            logger.info(f"<yellow>Running hook {pre_commit_context.run_hook}</yellow>")
 
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
         # we don't need the context anymore, we can clear it to free up memory for the pre-commit checks

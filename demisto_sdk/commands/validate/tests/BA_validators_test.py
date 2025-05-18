@@ -2544,6 +2544,18 @@ def test_is_forbidden_content_item():
 
 
 def test_is_marketplace_exists():
+    """
+    Given
+    - One valid and one invalid AgentixAgent items.
+    - One valid and one invalid AgentixAction items.
+    - Two valid and one invalid Script items.
+
+    When
+    - Calling the IsMarketplaceExistsValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure 3 failures are returned and the error message contains the informative message.
+    """
     content_items = [AgentixAgent(color="red", description="", display="", path=Path("test.yml"),
                                 marketplaces=["xsoar"], name="test", fromversion="", toversion="",
                                 display_name="", deprecated=False, id="", node_id=""),

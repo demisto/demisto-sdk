@@ -1,10 +1,12 @@
 from pathlib import Path
 from typing import List, Optional, Set
+from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.common.logger import logger
 
 json = JSON_Handler()
 
@@ -41,3 +43,15 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
         if isinstance(_dict, dict) and "wizard" in _dict and path.suffix == ".json":
             return True
         return False
+
+    def dump(
+        self,
+        dir: DirectoryPath,
+        marketplace: MarketplaceVersions,
+    ) -> None:
+        if not self.path.exists():
+            logger.warning(f"Could not find file {self.path}, skipping dump")
+            return
+        if marketplace == MarketplaceVersions.MarketplaceV2 or marketplace == MarketplaceVersions.PLATFORM:
+            return
+        return super().dump(dir, marketplace)

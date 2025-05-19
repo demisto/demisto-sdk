@@ -57,6 +57,8 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
             marketplace == MarketplaceVersions.MarketplaceV2
             or marketplace == MarketplaceVersions.PLATFORM
         ):
-            logger.info(f"The wizard {dir} current marketplace is {marketplace} skipping dump.")
+            logger.info(
+                f"The wizard {dir} current marketplace is {marketplace} skipping dump."
+            )
             return
         return super().dump(dir, marketplace)

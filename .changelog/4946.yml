@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where Wizards were uploaded to the Platform marketplace, although they are not needed.
+  type: fix
+pr_number: 4946

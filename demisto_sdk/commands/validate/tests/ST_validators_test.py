@@ -18,6 +18,12 @@ from demisto_sdk.commands.validate.validators.ST_validators.ST110_is_valid_schem
 from demisto_sdk.commands.validate.validators.ST_validators.ST111_no_exclusions_schema import (
     StrictSchemaValidator,
 )
+from demisto_sdk.commands.validate.validators.ST_validators.ST113_supported_modules_is_not_empty import (
+    SupportedModulesIsNotEmpty,
+)
+from demisto_sdk.commands.validate.validators.ST_validators.ST114_is_quickaction_supported import (
+    IsQuickactionSupported,
+)
 from TestSuite.pack import Pack
 
 
@@ -440,3 +446,126 @@ class TestST111:
 
         results = SchemaValidator().obtain_invalid_content_items([integration_parser])
         assert len(results) == 0
+
+
+def test_missing_IsQuickactionSupported():
+    """
+    Given:
+        - an integration with a command that has 'quickaction: true'
+        - the integration is missing the 'supportsquickactions: true' field at the top level
+    When:
+        - execute the IsQuickactionSupported (ST114 validation) on the invalid integration
+    Then:
+        - Ensure the validation fails with the appropriate error message
+    """
+    integration = create_integration_object()
+    integration.data["supports_quick_actions"] = False
+
+    integration.data["script"]["commands"].append({
+        "name": "test-command-quickaction",
+        "quickaction": True,
+        "description": "test description",
+    })
+
+    results = IsQuickactionSupported().obtain_invalid_content_items([integration])
+    assert len(results) == 1
+    assert results[0].message == (
+            "Commands test-command-quickaction use quickaction, but the integration doesn’t support it. "
+            "Remove quickaction or add supportsquickactions: true at the top level yml."
+    )
+    assert results[0].validator.error_code == "ST114"
+
+
+def test_IsQuickactionSupported_with_supportsquickactions():
+    """
+    Given:
+        - an integration with a command that has 'quickaction: true'
+        - the integration also has 'supportsquickactions: true' at the top level
+    When:
+        - execute the IsQuickactionSupported (ST114 validation) on the valid integration
+    Then:
+        - Ensure the validation passes without any errors
+    """
+    integration = create_integration_object()
+    integration.data["supports_quick_actions"] = True
+
+    integration.data["script"]["commands"].append({
+        "name": "test-command-quickaction",
+        "quickaction": True,
+        "description": "test description",
+    })
+
+    results = IsQuickactionSupported().obtain_invalid_content_items([integration])
+    assert len(results) == 0
+
+
+def test_IsQuickactionSupported_no_quickaction_commands():
+    """
+    Given:
+        - an integration without any quickaction commands
+        - the integration is missing 'supportsquickactions' (which is fine in this case)
+    When:
+        - execute the IsQuickactionSupported (ST114 validation) on the integration
+    Then:
+        - Ensure the validation passes without any errors
+    """
+    integration = create_integration_object()
+    integration.data["supports_quick_actions"] = False
+
+    integration.data["script"]["commands"] = [{
+        "name": "test-command-quickaction",
+        "quickaction": False,
+        "description": "test description",
+    }]
+
+    results = IsQuickactionSupported().obtain_invalid_content_items([integration])
+    assert len(results) == 0
+
+
+def test_SupportedModulesIsNotEmpty_empty(pack: Pack):
+    """
+    Given:
+        - A content item (integration) with an empty 'supportedModules' list.
+    When:
+        - Running the SupportedModulesIsNotEmpty validator.
+    Then:
+        - Ensure the validation fails with the correct error message.
+    """
+    integration = create_integration_object()
+    integration.supportedModules = []
+
+    results = SupportedModulesIsNotEmpty().obtain_invalid_content_items([integration])
+    assert len(results) == 1
+    assert results[0].message == "supportedModules cannot be an empty list. To allow all modules, omit the field instead."
+    assert results[0].validator.error_code == "ST113"
+
+
+def test_SupportedModulesIsNotEmpty_not_empty(pack: Pack):
+    """
+    Given:
+        - A content item (integration) with a non-empty 'supportedModules' list.
+    When:
+        - Running the SupportedModulesIsNotEmpty validator.
+    Then:
+        - Ensure the validation passes without any errors.
+    """
+    integration = create_integration_object()
+
+    results = SupportedModulesIsNotEmpty().obtain_invalid_content_items([integration])
+    assert len(results) == 0
+
+
+def test_SupportedModulesIsNotEmpty_missing_field(pack: Pack):
+    """
+    Given:
+        - A content item (script) with the 'supportedModules' field missing.
+    When:
+        - Running the SupportedModulesIsNotEmpty validator.
+    Then:
+        - Ensure the validation passes without any errors (missing field is allowed).
+    """
+    script = create_script_object()
+    script.supportedModules = ["C3","X0","X1","X3"]
+
+    results = SupportedModulesIsNotEmpty().obtain_invalid_content_items([script])
+    assert len(results) == 0

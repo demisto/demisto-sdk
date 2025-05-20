@@ -21,7 +21,6 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
-        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
         """Parses the classifier.
@@ -32,9 +31,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
         Raises:
             IncorrectParserException: When detecting this content item is a mapper.
         """
-        super().__init__(
-            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
-        )
+        super().__init__(path, pack_marketplaces, git_sha=git_sha)
         self.type = self.json_data.get("type")
         if self.type != "classification":
             raise IncorrectParserException(correct_parser=MapperParser)
@@ -93,7 +90,6 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
-            MarketplaceVersions.PLATFORM,
         }
 
     @property

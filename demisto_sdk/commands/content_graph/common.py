@@ -575,21 +575,3 @@ def replace_marketplace_references(
             f"Error processing data for replacing incorrect marketplace at path '{path}': {e}"
         )
     return data
-
-
-def append_supported_modules(data: dict, supported_modules: List[str]) -> Any:
-    """
-    Appends the `supportedModules` key & value to the data object if it doesn't already exist.
-
-    Args:
-        data (dict): The data to process.
-        supported_modules (List[str]): The list of supported modules.
-
-    Returns:
-        Any: The same data object with supported modules appended.
-    """
-
-    if isinstance(data, dict):
-        if "supportedModules" not in data:
-            data["supportedModules"] = supported_modules
-    return data

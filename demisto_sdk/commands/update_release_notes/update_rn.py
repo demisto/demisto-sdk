@@ -1542,7 +1542,6 @@ def update_api_modules_dependents_rn(
     with ContentGraphInterface() as graph:
         update_content_graph(graph, use_git=True, dependencies=True)
         integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
-
         if integrations:
             logger.info("Executing update-release-notes on those as well.")
         for integration in integrations:

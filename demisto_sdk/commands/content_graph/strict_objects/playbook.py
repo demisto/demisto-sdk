@@ -2,7 +2,9 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import Field, constr
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     FORM_DYNAMIC_MODEL,
@@ -291,3 +293,5 @@ class StrictPlaybook(BaseStrictModel):
     tests: Optional[List[str]] = None
     role_name: Optional[List[str]] = Field(None, alias="rolename")
     marketplaces: Optional[List[MarketplaceVersions]] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    is_silent: Optional[bool] = Field(alias="issilent")

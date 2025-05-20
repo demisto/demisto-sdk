@@ -32,23 +32,24 @@ class ImageTooLargeValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(content_item.path),
                 content_object=content_item,
+                path=content_item.image.file_path,
             )
             for content_item in content_items
-            if self.is_image_valid(content_item)
+            if content_item.image.exist and not self.is_image_valid(content_item)
         ]
 
     def is_image_valid(self, content_item: ContentTypes):
         file_type = content_item.image.file_path.suffix
         if file_type == ".png":
-            return content_item.image.get_file_size().st_size > IMAGE_MAX_SIZE
+            return not content_item.image.get_file_size().st_size > IMAGE_MAX_SIZE
 
         elif file_type == ".svg":
             # No size validation done for SVG images
-            return False
+            return True
 
         elif file_type == ".yml":
             image_size = int(((len(content_item.data["image"]) - 22) / 4) * 3)
-            return image_size > IMAGE_MAX_SIZE
+            return not image_size > IMAGE_MAX_SIZE
 
         # image can't be saved in a different file type
-        return True
+        return False

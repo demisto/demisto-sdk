@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 
 
@@ -11,11 +10,17 @@ class Configuration:
         envs_dirs_base (set): Environment directory base.
     """
 
-    def __init__(self, logging_level=logging.INFO):
-        logging.basicConfig(level=logging_level)
+    def __init__(self):
         # refers to "demisto_sdk/commands" dir
         self.sdk_env_dir = str(Path(__file__).parent.parent)
         self.env_dir = str(Path().cwd())
         self.envs_dirs_base = str(
             Path(self.sdk_env_dir) / "lint" / "resources" / "pipfile_python"
         )
+
+
+class DemistoSDK:
+    """Core SDK class."""
+
+    def __init__(self):
+        self.configuration = Configuration()

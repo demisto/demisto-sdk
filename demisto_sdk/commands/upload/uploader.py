@@ -121,7 +121,8 @@ class Uploader:
                 )
             ) and response[0]:
                 installed_packs = {pack["name"] for pack in response[0]}
-                if common_packs := installed_packs.intersection(self.pack_names):
+                common_packs = installed_packs.intersection({path.stem})
+                if common_packs:
                     pack_names = "\n".join(sorted(common_packs))
                     product = (
                         self.marketplace.lower()
@@ -131,15 +132,15 @@ class Uploader:
                     logger.info(
                         "\n".join(
                             (
-                                "[red]This command will overwrite the following packs:",
+                                "<red>This command will overwrite the following packs:",
                                 pack_names,
-                                f"All changes made in these content items on {product} will be lost.[red]",
+                                f"All changes made in these content items on {product} will be lost.</red>",
                             )
                         )
                     )
                     if not self.override_existing:
                         logger.info(
-                            "[red]Are you sure you want to continue? y/[N][/red]"
+                            "<red>Are you sure you want to continue? y/[N]</red>"
                         )
                         return string_to_bool(str(input()), default_when_empty=False)
             return True
@@ -195,12 +196,12 @@ class Uploader:
         """Upload the pack / directory / file to the remote Cortex XSOAR instance."""
         if self.demisto_version.base_version == "0":
             logger.info(
-                "[red]Could not connect to the server. Try checking your connection configurations.[/red]"
+                "<red>Could not connect to the server. Try checking your connection configurations.</red>"
             )
             return ERROR_RETURN_CODE
 
         if not self.path or not self.path.exists():
-            logger.error(f"[red]input path: {self.path} does not exist[/red]")
+            logger.error(f"<red>input path: {self.path} does not exist</red>")
             return ERROR_RETURN_CODE
 
         if self.should_detach_files:
@@ -241,10 +242,10 @@ class Uploader:
             logger.error(
                 "\n".join(
                     (
-                        "[red]Nothing to upload: the input path should point to one of the following:",
+                        "<red>Nothing to upload: the input path should point to one of the following:",
                         "\t1. A Pack",
                         "\t2. A content entity directory that is inside a pack, e.g. Integrations",
-                        "\t3. A valid content item file, that can be imported to Cortex XSOAR manually.[/red]",
+                        "\t3. A valid content item file, that can be imported to Cortex XSOAR manually.</red>",
                     )
                 )
             )
@@ -384,11 +385,11 @@ class Uploader:
                     .upper()
                 )
                 logger.debug(
-                    f"[red]This command will overwrite the following packs:\n{pack_names}.\n"
-                    f"Any changes made on {product} will be lost.[red]"
+                    f"<red>This command will overwrite the following packs:\n{pack_names}.\n"
+                    f"Any changes made on {product} will be lost.</red>"
                 )
                 if not self.override_existing:
-                    logger.info("[red]Are you sure you want to continue? y/[N][/red]")
+                    logger.info("<red>Are you sure you want to continue? y/[N]</red>")
                     answer = str(input())
                     return answer in {"y", "Y", "yes"}
 
@@ -432,7 +433,7 @@ class Uploader:
                 tablefmt="fancy_grid",
             )
 
-            logger.info(f"[green]SUCCESSFUL UPLOADS:\n{uploaded_str}\n[/green]")
+            logger.info(f"<green>SUCCESSFUL UPLOADS:\n{uploaded_str}\n</green>")
 
         if self._skipped_upload_marketplace_mismatch:
             marketplace_mismatch_str = tabulate(
@@ -441,21 +442,24 @@ class Uploader:
                         item.path.name,
                         item.content_type,
                         self.marketplace,
-                        [marketplace.value for marketplace in item.marketplaces],
+                        ",".join(
+                            [marketplace.value for marketplace in item.marketplaces]
+                        ),
                     )
                     for item in self._skipped_upload_marketplace_mismatch
                 ),
                 headers=[
-                    "NAME",
-                    "TYPE",
-                    "MARKETPLACE",
-                    "FILE_MARKETPLACES",
+                    "Name",
+                    "Type",
+                    "Upload Destination Marketplace",
+                    "Content Marketplace(s)",
                 ],
                 tablefmt="fancy_grid",
             )
             logger.info(
-                f"[yellow]SKIPPED UPLOADED DUE TO MARKETPLACE MISMATCH:\n{marketplace_mismatch_str}\n[/yellow]"
+                f"<yellow>SKIPPED UPLOADING DUE TO MARKETPLACE MISMATCH:\n{marketplace_mismatch_str}\n</yellow>"
             )
+            logger.info("Did you forget to specify the marketplace?")
 
         if self._failed_upload_version_mismatch:
             version_mismatch_str = tabulate(
@@ -479,7 +483,7 @@ class Uploader:
                 tablefmt="fancy_grid",
             )
             logger.info(
-                f"[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:\n{version_mismatch_str}\n[/yellow]"
+                f"<yellow>NOT UPLOADED DUE TO VERSION MISMATCH:\n{version_mismatch_str}\n</yellow>"
             )
 
         if self.failed_parsing:
@@ -488,7 +492,7 @@ class Uploader:
                 headers=("FILE_NAME", "PATH", "REASON"),
                 tablefmt="fancy_grid",
             )
-            logger.info(f"[red]FAILED PARSING CONTENT:\n{failed_parsing_str}[/red]")
+            logger.info(f"<red>FAILED PARSING CONTENT:\n{failed_parsing_str}</red>")
 
         if self._failed_upload_content_items or self._failed_upload_zips:
             failed_upload_str = tabulate(
@@ -509,7 +513,7 @@ class Uploader:
                 headers=["NAME", "TYPE", "ERROR"],
                 tablefmt="fancy_grid",
             )
-            logger.info(f"[red]FAILED UPLOADS:\n{failed_upload_str}\n[/red]")
+            logger.info(f"<red>FAILED UPLOADS:\n{failed_upload_str}\n</red>")
 
 
 class ConfigFileParser:
@@ -549,7 +553,7 @@ class ItemDetacher:
 
         try:
             self.client.generic_request(endpoint, "POST")
-            logger.info(f"\n[green]File: {file_id} was detached[/green]")
+            logger.info(f"\n<green>File: {file_id} was detached</green>")
         except Exception as e:
             raise Exception(f"Exception raised when fetching custom content:\n{e}")
 
@@ -596,9 +600,11 @@ class ItemDetacher:
                 self.detach_item(file.get("file_id"), file_path=file.get("file_path"))
                 if upload_file:
                     Uploader(
-                        input=Path(raw_file_path)
-                        if (raw_file_path := file.get("file_path")) is not None
-                        else None,
+                        input=(
+                            Path(raw_file_path)
+                            if (raw_file_path := file.get("file_path")) is not None
+                            else None
+                        ),
                         marketplace=self.marketplace,
                     ).upload()
 
@@ -651,7 +657,7 @@ class ItemReattacher:
         endpoint = endpoint.replace(":id", item_id)
         try:
             self.client.generic_request(endpoint, "POST")
-            logger.debug(f"\n[green]{item_type}: {item_id} was reattached[/green]")
+            logger.debug(f"\n<green>{item_type}: {item_id} was reattached</green>")
         except Exception as e:
             raise Exception(f"Exception raised when fetching custom content:\n{e}")
 

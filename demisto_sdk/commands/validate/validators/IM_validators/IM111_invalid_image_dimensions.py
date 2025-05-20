@@ -17,7 +17,7 @@ ContentTypes = Integration
 
 
 def is_image_dimensions_valid(content_item: ContentTypes) -> bool:
-    if content_item.image.file_path.suffix == "png":
+    if content_item.image.exist:
         return (IMAGE_WIDTH, IMAGE_HEIGHT) == imagesize.get(
             content_item.image.file_path
         )
@@ -41,6 +41,7 @@ class InvalidImageDimensionsValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message,
                 content_object=content_item,
+                path=content_item.image.file_path,
             )
             for content_item in content_items
             if not is_image_dimensions_valid(content_item)

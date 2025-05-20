@@ -320,10 +320,6 @@ ERROR_CODE: Dict = {
         "code": "DS106",
         "related_field": "",
     },
-    "description_contains_demisto_word": {
-        "code": "DS107",
-        "related_field": "detaileddescription",
-    },
     "description_missing_dot_at_the_end": {
         "code": "DS108",
         "related_field": "description",
@@ -705,10 +701,6 @@ ERROR_CODE: Dict = {
         "code": "IN160",
         "related_field": "deprecated",
     },
-    "invalid_siem_marketplaces_entry": {
-        "code": "IN161",
-        "related_field": "display",
-    },
     "partner_collector_does_not_have_xsoar_support_level": {
         "code": "IN162",
         "related_field": "",
@@ -950,10 +942,6 @@ ERROR_CODE: Dict = {
         "code": "PA133",
         "related_field": "",
     },
-    "categories_field_does_not_match_standard": {
-        "code": "PA134",
-        "related_field": "",
-    },
     "pack_metadata_invalid_modules": {
         "code": "PA135",
         "related_field": "",
@@ -1097,10 +1085,6 @@ ERROR_CODE: Dict = {
     },
     "readme_equal_description_error": {
         "code": "RM105",
-        "related_field": "readme",
-    },
-    "readme_contains_demisto_word": {
-        "code": "RM106",
         "related_field": "readme",
     },
     "template_sentence_in_readme": {
@@ -1440,10 +1424,6 @@ ERROR_CODE: Dict = {
         "code": "GR102",
         "related_field": "",
     },
-    "using_unknown_content": {
-        "code": "GR103",
-        "related_field": "",
-    },
     "multiple_packs_with_same_display_name": {
         "code": "GR104",
         "related_field": "",
@@ -1454,10 +1434,6 @@ ERROR_CODE: Dict = {
     },
     "duplicated_script_name": {
         "code": "GR106",
-        "related_field": "",
-    },
-    "deprecated_items_usage": {
-        "code": "GR107",
         "related_field": "",
     },
     "hidden_pack_not_mandatory_dependency": {
@@ -1551,9 +1527,12 @@ ALLOWED_IGNORE_ERRORS = (
         "LO107",
         "IN107",
         "DB100",
+        "GR101",
         "GR103",
+        "GR107",  # temporary see CIAC-11781
         "IN150",
         "IN161",
+        "RM116",
     ]
 )
 
@@ -2093,14 +2072,6 @@ class Errors:
             f"The display name of this v{version_number} integration is incorrect , "
             f"should be **name** v{version_number}.\n"
             f"e.g: Kenna v{version_number}, Jira v{version_number}"
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_siem_marketplaces_entry():
-        return (
-            "The marketplaces field of this XSIAM integration is incorrect.\n"
-            'This field should have only the "marketplacev2" value.'
         )
 
     @staticmethod
@@ -2692,7 +2663,7 @@ class Errors:
             "For more information, refer to the following documentation: "
             "https://xsoar.pan.dev/docs/documentation/release-notes"
         )
-        return f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
+        return f'Did not find content items headers under "{content_type}" - might be due to invalid format.\n{error}'
 
     @staticmethod
     @error_code_decorator
@@ -2900,11 +2871,6 @@ class Errors:
             "make sure the name looks like the following: <integration_name>_description.md "
             "and that the integration_name is the same as the folder containing it."
         )
-
-    @staticmethod
-    @error_code_decorator
-    def description_contains_demisto_word(line_nums, yml_or_file):
-        return f"Found the word 'Demisto' in the description content {yml_or_file} in lines: {line_nums}."
 
     @staticmethod
     @error_code_decorator
@@ -4107,14 +4073,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def categories_field_does_not_match_standard(approved_list):
-        return (
-            f"The pack metadata categories field doesn't match the standard,\n"
-            f"please make sure the field contain only one category from the following options:\n{approved_list}"
-        )
-
-    @staticmethod
-    @error_code_decorator
     def modeling_rule_missing_schema_file(file_path: str):
         return f"The modeling rule {file_path} is missing a schema file."
 
@@ -4269,23 +4227,6 @@ class Errors:
             f"Content item '{content_name}' whose to_version is '{toversion}' uses the content items: "
             f"'{', '.join(content_items)}' whose to_version is lower (must be equal to, or more than ..)"
         )
-
-    @staticmethod
-    @error_code_decorator
-    def deprecated_items_usage(
-        deprecated_item: str,
-        using_deprecated_item: str,
-        deprecated_item_type: str,
-    ):
-        return (
-            f"The {deprecated_item_type} '{deprecated_item}' is deprecated but used in the following content item: "
-            f"{using_deprecated_item}."
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def using_unknown_content(content_name: str, unknown_content_names: Set[str]):
-        return f"Content item '{content_name}' using content items: {', '.join(unknown_content_names)} which cannot be found in the repository."
 
     @staticmethod
     @error_code_decorator

@@ -1,12 +1,13 @@
 from typing import Any, List, Optional
 
-from pydantic import Field
+from pydantic import Field, conlist, validator
 
 from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
     TYPE_PYTHON3,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     Argument,
     BaseIntegrationScript,
@@ -66,7 +67,7 @@ Configuration = create_model(
 )
 
 
-class IntegrationOutput(Output):
+class IntegrationOutput(Output):  # type:ignore[misc,valid-type]
     important: Optional[bool] = None  # not the Important class
     important_description: Optional[str] = Field(None, alias="importantDescription")
 
@@ -83,6 +84,8 @@ class _Command(BaseStrictModel):
     timeout: Optional[int] = None
     hidden: Optional[bool] = None
     polling: Optional[bool] = None
+    prettyname: Optional[str] = None
+    quickaction: Optional[bool] = None
 
 
 Command = create_model(
@@ -137,13 +140,51 @@ CommonFieldsIntegration = create_model(
 )
 
 
+class ConditionOperator(StrEnum):
+    EXISTS = "exists"
+    NOT_EXISTS = "not_exists"
+    EQUALS = "equals"
+    NOT_EQUALS = "not_equals"
+
+
+class Condition(BaseStrictModel):
+    name: str
+    operator: ConditionOperator
+    value: Optional[str] = None
+
+
+class TriggerEffectAction(BaseStrictModel):
+    hidden: Optional[bool] = None
+    required: Optional[bool] = None
+
+
+class TriggerEffect(BaseStrictModel):
+    name: str
+    action: TriggerEffectAction
+
+
+class Trigger(BaseStrictModel):
+    conditions: List[Condition]
+    effects: List[TriggerEffect]
+
+
+class SectionOrderValues(StrEnum):
+    CONNECT = "Connect"
+    COLLECT = "Collect"
+    OPTIMIZE = "Optimize"
+    MIRRORING = "Mirroring"
+    RESULT = "Result"
+
+
 class _StrictIntegration(BaseStrictModel):
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")  # type:ignore[valid-type]
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order_pascal_case: Optional[List[str]] = Field(None, alias="sectionOrder")
-    section_order_lower_case: Optional[List[str]] = Field(None, alias="sectionorder")
+    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=5)] = (  # type:ignore[valid-type]
+        Field(alias="sectionorder")
+    )
+    configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]
     image: Optional[str] = None
     description: str
     default_mapper_in: Optional[str] = Field(None, alias="defaultmapperin")
@@ -152,7 +193,6 @@ class _StrictIntegration(BaseStrictModel):
     detailed_description: Optional[str] = Field(None, alias="detaileddescription")
     auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")
     support_level_header: MarketplaceVersions = Field(None, alias="supportlevelheader")
-    configuration: List[Configuration]  # type:ignore[valid-type]
     script: Script  # type:ignore[valid-type]
     hidden: Optional[bool] = None
     videos: Optional[List[str]] = None
@@ -160,6 +200,46 @@ class _StrictIntegration(BaseStrictModel):
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
     hybrid: Optional[bool] = None
+    supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
+    is_cloud_provider_integration: Optional[bool] = Field(
+        False, alias="isCloudProviderIntegration"
+    )
+    triggers: Optional[List[Trigger]] = None
+
+    def __init__(self, **data):
+        """
+        Initializes the _StrictIntegration object.
+        Using this custom init function to support two aliases for the section_order field.
+        """
+        if "sectionOrder" in data and "sectionorder" not in data:
+            data["sectionorder"] = data.pop("sectionOrder")
+        elif "sectionOrder" in data and "sectionorder" in data:
+            data["sectionorder"] = list(
+                set(data["section_order"]) | set(data["section_order_camel_case"])
+            )
+        super().__init__(**data)
+
+    @validator("configurations")
+    def validate_sections(cls, configurations, values):
+        """
+        Validates each configuration object has a valid section clause.
+        A valid section clause is a section which is included in the list of the integration's section_order.
+        Even if the section is an allowed value (currently Collect, Connect or Optimize),it could be invalid if the
+        specific value is not present in section_order.
+        """
+        section_order_field = values.get("section_order")
+        if not section_order_field:
+            return configurations
+        integration_sections = [
+            section_name.value for section_name in section_order_field
+        ]
+        for config in configurations:
+            if not config.section:
+                return configurations
+            assert (
+                config.section in integration_sections
+            ), f"section {config.section} of {config.display} is not present in section_order {integration_sections}"
+        return configurations
 
 
 StrictIntegration = create_model(

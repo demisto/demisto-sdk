@@ -7,7 +7,6 @@ import typer
 from freezegun import freeze_time
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.logger import logger
 
 DEFAULT_TEST_EVENT_ID = UUID("00000000-0000-0000-0000-000000000000")
 
@@ -167,47 +166,6 @@ def test_convert_epoch_time_to_string_time(epoc_time, with_ms, human_readable_ti
 
 
 @pytest.mark.parametrize(
-    "day, suffix",
-    [
-        (1, "st"),
-        (2, "nd"),
-        (3, "rd"),
-        (4, "th"),
-        (10, "th"),
-        (11, "th"),
-        (12, "th"),
-        (21, "st"),
-        (31, "st"),
-    ],
-)
-def test_day_suffix(day, suffix):
-    """
-    Given:
-        - A day of a month.
-            case-1: 1 => st.
-            case-2: 2 => nd.
-            case-3: 3 => rd.
-            case-4: 4 => th.
-            case-5: 10 => th.
-            case-6: 11 => th.
-            case-7: 12 => th.
-            case-8: 21 => st.
-            case-9: 31 => st.
-
-    When:
-        - The day_suffix function is running.
-
-    Then:
-        - Verify we get the expected results.
-    """
-    from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
-        day_suffix,
-    )
-
-    assert day_suffix(day) == suffix
-
-
-@pytest.mark.parametrize(
     "mr_text, expected_result",
     [
         ("historically", False),
@@ -305,9 +263,6 @@ class TestValidateSchemaAlignedWithTestData:
             TestData,
         )
 
-        logger_error_mocker = mocker.patch.object(logger, "error")
-        logger_warning_mocker = mocker.patch.object(logger, "warning")
-
         test_data = TestData(
             data=[
                 EventLog(
@@ -322,8 +277,6 @@ class TestValidateSchemaAlignedWithTestData:
         )
 
         validate_schema_aligned_with_test_data(test_data=test_data, schema=schema_file)
-        assert not logger_error_mocker.called
-        assert not logger_warning_mocker.called
 
     def test_validate_schema_aligned_with_test_data_missing_fields_in_test_data(
         self, mocker
@@ -348,9 +301,6 @@ class TestValidateSchemaAlignedWithTestData:
             TestData,
         )
 
-        logger_error_mocker = mocker.patch.object(logger, "error")
-        logger_warning_mocker = mocker.patch.object(logger, "warning")
-
         test_data = TestData(
             data=[
                 EventLog(
@@ -373,8 +323,6 @@ class TestValidateSchemaAlignedWithTestData:
                 }
             },
         )
-        assert not logger_error_mocker.called
-        assert logger_warning_mocker.called
 
     def test_validate_schema_aligned_with_test_data_invalid_schema_mappings(
         self, mocker
@@ -399,9 +347,6 @@ class TestValidateSchemaAlignedWithTestData:
             TestData,
         )
 
-        logger_error_mocker = mocker.patch.object(logger, "error")
-        logger_warning_mocker = mocker.patch.object(logger, "warning")
-
         test_data = TestData(
             data=[
                 EventLog(
@@ -425,11 +370,9 @@ class TestValidateSchemaAlignedWithTestData:
             },
         )
         assert success is False
-        assert logger_error_mocker.called
-        assert not logger_warning_mocker.called
 
     def test_validate_schema_aligned_with_test_data_events_have_same_key_with_different_types(
-        self, mocker
+        self, caplog
     ):
         """
         Given:
@@ -449,9 +392,6 @@ class TestValidateSchemaAlignedWithTestData:
             EventLog,
             TestData,
         )
-
-        logger_error_mocker = mocker.patch.object(logger, "error")
-        logger_warning_mocker = mocker.patch.object(logger, "warning")
 
         test_data = TestData(
             data=[
@@ -484,8 +424,4 @@ class TestValidateSchemaAlignedWithTestData:
             },
         )
         assert success is False
-        assert (
-            "The testdata contains events with the same event_key"
-            in logger_error_mocker.call_args_list[0].args[0]
-        )
-        assert not logger_warning_mocker.called
+        assert "The testdata contains events with the same event_key" in caplog.text

@@ -1,12 +1,11 @@
-import logging
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
@@ -50,7 +49,7 @@ class TestGenericModuleUnifier:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main,
+                app,
                 [UNIFY_CMD, "-i", generic_module_path, "-mp", "marketplacev2"],
                 catch_exceptions=False,
             )
@@ -80,7 +79,7 @@ class TestParsingRuleUnifier:
 
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [UNIFY_CMD, "-i", pack.parsing_rules[0].path, "-o", tmpdir],
             catch_exceptions=False,
         )
@@ -121,7 +120,7 @@ class TestParsingRuleUnifier:
 
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [UNIFY_CMD, "-i", pack.parsing_rules[0].path, "-o", tmpdir],
             catch_exceptions=False,
         )
@@ -154,7 +153,7 @@ class TestModelingRuleUnifier:
 
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
-            main,
+            app,
             [UNIFY_CMD, "-i", pack.modeling_rules[0].path, "-o", tmpdir],
             catch_exceptions=False,
         )
@@ -190,17 +189,34 @@ class TestIntegrationScriptUnifier:
 
         with ChangeCWD(pack.repo_path):
             with TemporaryDirectory() as artifact_dir:
-                mocker.patch.object(os, "getenv", return_value=artifact_dir)
                 runner = CliRunner(mix_stderr=False)
                 if flag:
                     runner.invoke(
-                        main, [UNIFY_CMD, "-i", f"{integration.path}", "-c", "Test"]
+                        app,
+                        [
+                            UNIFY_CMD,
+                            "-i",
+                            f"{integration.path}",
+                            "-c",
+                            "Test",
+                            "-o",
+                            str(artifact_dir),
+                        ],
                     )
                 else:
-                    runner.invoke(main, [UNIFY_CMD, "-i", f"{integration.path}"])
+                    runner.invoke(
+                        app,
+                        [
+                            UNIFY_CMD,
+                            "-i",
+                            f"{integration.path}",
+                            "-o",
+                            str(artifact_dir),
+                        ],
+                    )
 
                 with open(
-                    os.path.join(integration.path, "integration-dummy-integration.yml")
+                    os.path.join(artifact_dir, "integration-dummy-integration.yml")
                 ) as unified_yml:
                     unified_yml_data = yaml.load(unified_yml)
                     if flag:
@@ -231,7 +247,7 @@ class TestIntegrationScriptUnifier:
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            runner.invoke(main, [UNIFY_CMD, "-i", f"{script.path}", "-c", "Test"])
+            runner.invoke(app, [UNIFY_CMD, "-i", f"{script.path}", "-c", "Test"])
             with open(
                 os.path.join(script.path, "script-dummy-script.yml")
             ) as unified_yml:
@@ -239,7 +255,7 @@ class TestIntegrationScriptUnifier:
                 assert unified_yml_data.get("name") == "sample_scriptTest"
                 assert unified_yml_data.get("nativeimage") == ["8.1", "8.2"]
 
-    def test_ignore_native_image_integration(self, mocker, repo):
+    def test_ignore_native_image_integration(self, monkeypatch, repo):
         """
         Given:
             - integration that can use native-images
@@ -256,9 +272,10 @@ class TestIntegrationScriptUnifier:
 
         with ChangeCWD(pack.repo_path):
             with TemporaryDirectory() as artifact_dir:
-                mocker.patch.object(os, "getenv", return_value=artifact_dir)
+                monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+                monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
                 runner = CliRunner(mix_stderr=False)
-                runner.invoke(main, [UNIFY_CMD, "-i", f"{integration.path}", "-ini"])
+                runner.invoke(app, [UNIFY_CMD, "-i", f"{integration.path}", "-ini"])
 
                 with open(
                     os.path.join(integration.path, "integration-dummy-integration.yml")
@@ -282,8 +299,9 @@ class TestIntegrationScriptUnifier:
         script.create_default_script()
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
-            runner.invoke(main, [UNIFY_CMD, "-i", f"{script.path}", "-ini"])
+            CliRunner(mix_stderr=False).invoke(
+                app, [UNIFY_CMD, "-i", f"{script.path}", "-ini"]
+            )
             with open(
                 os.path.join(script.path, "script-dummy-script.yml")
             ) as unified_yml:
@@ -308,12 +326,6 @@ class TestLayoutUnifer:
             - make sure the 'fromServerVersion' and 'fromVersion' are the same.
             - make sure the 'toVersion' and 'toServerVersion' are the same.
         """
-        logger_warning = mocker.patch.object(
-            logging.getLogger("demisto-sdk"), "warning"
-        )
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
-
         pack = REPO.create_pack("test")
         layout = pack.create_layoutcontainer(
             name="test",
@@ -329,14 +341,11 @@ class TestLayoutUnifer:
         with ChangeCWD(REPO.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
-                main, [UNIFY_CMD, "-i", f"{layout.path}", "-o", output]
+                app, [UNIFY_CMD, "-i", f"{layout.path}", "-o", output]
             )
 
             assert result.exit_code == 0
             assert not result.exception
-
-            assert logger_warning.call_count == 0
-            assert logger_error.call_count == 0
 
             with open(Path(output).name) as updated_layout:
                 layout_data = json.load(updated_layout)

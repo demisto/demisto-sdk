@@ -68,9 +68,12 @@ class BaseStrictModel(BaseModel, ABC):
             "file_hashes_priority",  # indicator_type
             "legacy_names",  # indicator_type
             "default_template_id",  # xsiam-report
+            "breaking_changes_notes",  # release-notes-config
         }:
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
-            assert value is not None, f"{value} may not be None"
+            assert (
+                value is not None
+            ), f"The field {field.alias or field.name} is not required, but should not be None if it exists"
         return value
 
 

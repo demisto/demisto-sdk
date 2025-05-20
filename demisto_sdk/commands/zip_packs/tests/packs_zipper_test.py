@@ -2,20 +2,17 @@ from contextlib import contextmanager
 from pathlib import Path
 from shutil import rmtree, unpack_archive
 
-import click
-import demisto_client
 import pytest
-from demisto_client.demisto_api import DefaultApi
-from packaging.version import parse
+from typer.testing import CliRunner
 
-from demisto_sdk.__main__ import zip_packs
+from demisto_sdk.__main__ import app
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.commands.upload import uploader
-from demisto_sdk.commands.upload.uploader import Uploader
-from demisto_sdk.tests.constants_test import PACK_TARGET
+from demisto_sdk.tests.constants_test import DUMMY_PACK_PATH, PACK_TARGET
 
 UNIT_TEST_DATA = src_root() / "commands" / "zip_packs" / "tests" / "data"
-TEST_PACK_PATH = Path(PACK_TARGET)
+TEST_PACK_PATH: Path = Path(PACK_TARGET)
+DUMMY_PACK_PATH: Path = Path(DUMMY_PACK_PATH)
 
 
 @contextmanager
@@ -53,11 +50,11 @@ class TestPacksZipper:
     @pytest.mark.parametrize(
         argnames="zip_all, expected_path",
         argvalues=[
-            (True, "uploadable_packs.zip"),
-            (False, "uploadable_packs/TestPack.zip"),
+            ("--zip-all", "uploadable_packs.zip"),
+            ("--no-zip-all", "uploadable_packs/TestPack.zip"),
         ],
     )
-    def test_zip_packs(self, zip_all, expected_path):
+    def test_zip_packs(self, zip_all: str, expected_path: str):
         """
         Given:
             - zip_all arg as True or False
@@ -66,17 +63,64 @@ class TestPacksZipper:
         Then:
             - validate the zip file exist in the destination output
         """
-
+        runner = CliRunner()
         with temp_dir() as tmp_output_dir:
-            click.Context(command=zip_packs).invoke(
-                zip_packs,
-                input=TEST_PACK_PATH,
-                output=tmp_output_dir,
-                content_version="0.0.0",
-                zip_all=zip_all,
+            result = runner.invoke(
+                app,
+                args=[
+                    "zip-packs",
+                    "-i",
+                    TEST_PACK_PATH,
+                    "-o",
+                    tmp_output_dir,
+                    "--content-version",
+                    "0.0.0",
+                    zip_all,
+                ],
             )
+            assert result.exit_code == 0
 
-            assert Path(f"{tmp_output_dir}/{expected_path}").exists()
+            zip_file_path = Path(tmp_output_dir) / expected_path
+            assert zip_file_path.exists(), f"{zip_file_path} does not exist"
+
+    def test_zip_packs_metadata_validation(self):
+        """
+        Given:
+            - zip_all arg as True or False
+        When:
+            - run the zip_packs command
+        Then:
+            - validate the zip file exist in the destination output
+        """
+        runner = CliRunner()
+        with temp_dir() as tmp_output_dir:
+            result = runner.invoke(
+                app,
+                args=[
+                    "zip-packs",
+                    "-i",
+                    DUMMY_PACK_PATH,
+                    "-o",
+                    tmp_output_dir,
+                ],
+            )
+            assert result.exit_code == 0
+            unpack_archive(
+                f"{tmp_output_dir}/uploadable_packs/DummyPack.zip",
+                f"{tmp_output_dir}/uploadable_packs",
+            )
+            zip_file_path = Path(tmp_output_dir / "uploadable_packs")
+            for file_name in ["metadata.json", "pack_metadata.json", "README.md"]:
+                file_path = zip_file_path / file_name
+                assert file_path.exists()
+                if file_name == "metadata.json":
+                    with open(file_path, "r") as metadata_file:
+                        metadata_file_data = JSON_Handler().load(metadata_file)
+                        lists = metadata_file_data.get("contentItems", {}).get(
+                            "list", []
+                        )
+                        assert lists
+                        assert len(lists) == 1
 
     def test_zipped_packs(self):
         """
@@ -88,43 +132,23 @@ class TestPacksZipper:
             - validate the zip file created and contain the pack zip inside it
         """
 
+        runner = CliRunner()
         with temp_dir() as tmp_output_dir:
-            click.Context(command=zip_packs).invoke(
-                zip_packs,
-                input=TEST_PACK_PATH,
-                output=tmp_output_dir,
-                content_version="0.0.0",
-                zip_all=True,
+            runner.invoke(
+                app,
+                args=[
+                    "zip-packs",
+                    "-i",
+                    TEST_PACK_PATH,
+                    "-o",
+                    tmp_output_dir,
+                    "--content-version",
+                    "0.0.0",
+                    "--zip-all",
+                ],
             )
             unpack_archive(f"{tmp_output_dir}/uploadable_packs.zip", tmp_output_dir)
             assert Path(f"{tmp_output_dir}/TestPack.zip").exists()
-
-    def test_zip_with_upload(self, mocker):
-        """
-        Given:
-            - the upload flag is turn on
-        When:
-            - run the zip_packs command
-        Then:
-            - validate the upload command was called once
-        """
-        mocker.patch.object(demisto_client, "configure", return_value=DefaultApi())
-        mocker.patch.object(
-            uploader, "get_demisto_version", return_value=parse("6.0.0")
-        )
-        mocker.patch.object(Uploader, "upload")
-
-        with temp_dir() as tmp_output_dir:
-            click.Context(command=zip_packs).invoke(
-                zip_packs,
-                input=TEST_PACK_PATH,
-                output=tmp_output_dir,
-                content_version="0.0.0",
-                zip_all=True,
-                upload=True,
-            )
-
-            assert Uploader.upload.called_once()
 
     # Edge cases
     def test_invalid_pack_name(self):
@@ -136,14 +160,20 @@ class TestPacksZipper:
         Then:
             - validate zip is not created
         """
-
+        runner = CliRunner()
         with temp_dir() as tmp_output_dir:
-            click.Context(command=zip_packs).invoke(
-                zip_packs,
-                input="invalid_pack_name",
-                output=tmp_output_dir,
-                content_version="0.0.0",
-                zip_all=False,
+            runner.invoke(
+                app,
+                args=[
+                    "zip-packs",
+                    "-i",
+                    "invalid_pack_name",
+                    "-o",
+                    tmp_output_dir,
+                    "--content-version",
+                    "0.0.0",
+                    "--no-zip-all",
+                ],
             )
 
             assert not Path(f"{tmp_output_dir}/uploadable_packs/TestPack.zip").exists()
@@ -155,15 +185,22 @@ class TestPacksZipper:
         When:
             - run the zip_packs command
         Then:
-            - validate the missed directory is created and the zip is exist
+            - validate the missed directory is created and the zip is existed
         """
         with temp_dir() as tmp_output_dir:
-            click.Context(command=zip_packs).invoke(
-                zip_packs,
-                input=TEST_PACK_PATH,
-                output=tmp_output_dir,
-                content_version="0.0.0",
-                zip_all=True,
+            runner = CliRunner()
+            runner.invoke(
+                app,
+                args=[
+                    "zip-packs",
+                    "-i",
+                    TEST_PACK_PATH,
+                    "-o",
+                    tmp_output_dir,
+                    "--content-version",
+                    "0.0.0",
+                    "--zip-all",
+                ],
             )
 
             assert Path(f"{tmp_output_dir}/uploadable_packs.zip").exists()

@@ -120,12 +120,18 @@ mapping:
     type: seq
     sequence:
     - type: str
-      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem', 'platform']
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str
   skipprepare:
     type: seq
     sequence:
     - type: str
       enum: ['script-name-incident-to-alert']
+  prettyname:
+      type: str
 
 # script->args
   name:xsoar:
@@ -147,6 +153,8 @@ mapping:
   deprecated:xsoar_saas:
     type: bool
   deprecated:xsoar_on_prem:
+    type: bool
+  hidden:marketplacev2:
     type: bool
 schema;argument_schema:
   type: map
@@ -182,6 +190,14 @@ schema;argument_schema:
       type: str
     hidden:
       type: bool
+    prettyname:
+      type: str
+    prettypredefined:
+      allowempty: true
+      type: map
+      mapping:
+        ".*":
+          type: str
 
 # script->outputs
     name:xsoar:
@@ -234,6 +250,9 @@ schema;argument_schema:
       type: bool
     deprecated:xsoar_on_prem:
       type: bool
+    hidden:marketplacev2:
+      type: bool
+
 schema;output_schema:
   type: map
   mapping:

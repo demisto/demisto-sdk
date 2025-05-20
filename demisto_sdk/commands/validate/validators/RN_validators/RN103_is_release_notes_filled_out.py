@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -26,7 +25,6 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
     related_field = "release_note"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.RELEASE_NOTE]
-    expected_git_statuses = [GitStatuses.ADDED]
 
     @staticmethod
     def strip_exclusion_tag(release_notes_comments):
@@ -46,6 +44,7 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message,
                 content_object=content_item,
+                path=content_item.release_note.file_path,
             )
             for content_item in content_items
             if content_item.release_note.exist
@@ -57,7 +56,14 @@ class IsReleaseNotesFilledOutValidator(BaseValidator[ContentTypes]):
                 )
                 or any(
                     note in rn_stripped_content
-                    for note in ["%%UPDATE_RN%%", "%%XSIAM_VERSION%%"]
+                    for note in [
+                        "%%UPDATE_RN%%",
+                        "%%XSIAM_VERSION%%",
+                        "%%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%",
+                        "%%UPDATE_CONTENT_ITEM_DESCRIPTION%%",
+                        "%%UPDATE_CONTENT_ITEM_NAME%%",
+                        "%%UPDATE_CONTENT_ITEM_TYPE%%",
+                    ]
                 )
             )
         ]

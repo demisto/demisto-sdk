@@ -6,10 +6,7 @@ import typer
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.logger import (
-    logger,
-    logging_setup,
-)
+from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import (
     get_all_repo_pack_ids,
     is_external_repository,
@@ -225,6 +222,8 @@ def update(
     ),
     output_path: Path = typer.Option(
         None,
+        "-o",
+        "--output-path",
         exists=True,
         dir_okay=True,
         file_okay=False,
@@ -256,9 +255,10 @@ def update(
     or by an argument of packs to update with.
     """
     logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file_path=log_file_path,
+        console_threshold=console_log_threshold,
+        file_threshold=file_log_threshold,
+        path=log_file_path,
+        calling_function="graph update",
     )
     with ContentGraphInterface() as content_graph_interface:
         update_content_graph(

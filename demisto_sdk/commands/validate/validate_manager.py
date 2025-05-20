@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional, Set
 
+from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
@@ -78,6 +79,16 @@ class ValidateManager:
                         filtered_content_objects_for_validator
                     )
                 )  # type: ignore
+                if (
+                    validator.expected_execution_mode == [ExecutionMode.ALL_FILES]
+                    and self.initializer.execution_mode == ExecutionMode.ALL_FILES
+                ):
+                    validation_results = [
+                        validation_result
+                        for validation_result in validation_results
+                        if validation_result.content_object
+                        in filtered_content_objects_for_validator
+                    ]
                 try:
                     if self.allow_autofix and validator.is_auto_fixable:
                         for validation_result in validation_results:
@@ -108,7 +119,7 @@ class ValidateManager:
             BaseValidator.graph_interface.close()
         self.add_invalid_content_items()
         return self.validation_results.post_results(
-            only_throw_warning=self.configured_validations.warning
+            config_file_content=self.configured_validations
         )
 
     def filter_validators(self) -> List[BaseValidator]:
@@ -134,10 +145,11 @@ class ValidateManager:
             [
                 InvalidContentItemResult(
                     path=invalid_path,
-                    message="The given file is not supported in the validate command, see the error above.\n"
+                    message="The given file is not supported in the validate command, please refer to the error above.\n"
                     "The validate command supports: Integrations, Scripts, Playbooks, "
                     "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types,"
-                    " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules.",
+                    " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules.\n"
+                    "To fix this issue, please try to run `demisto-sdk format` on the file.",
                     error_code="BA102",
                 )
                 for invalid_path in self.invalid_items

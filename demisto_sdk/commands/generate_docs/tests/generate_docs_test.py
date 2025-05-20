@@ -12,15 +12,17 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_README_FILE_NAME,
 )
 from demisto_sdk.commands.common.files.text_file import TextFile
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_json, get_yaml
+from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 
 # from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.generate_docs import common
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
+    IntegrationDocUpdateManager,
     append_or_replace_command_in_docs,
     disable_md_autolinks,
     generate_commands_section,
@@ -37,6 +39,8 @@ from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
 )
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
+
+json = JSON_Handler()
 
 FILES_PATH = os.path.normpath(
     os.path.join(__file__, git_path(), "demisto_sdk", "tests", "test_files")
@@ -59,6 +63,7 @@ TEST_FILES = os.path.join(
 )
 
 yaml = YAML_Handler()
+
 
 # common tests
 
@@ -566,7 +571,7 @@ def test_generate_commands_section():
     expected_section = [
         "## Commands",
         "",
-        "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
+        "You can execute these commands from the CLI, as part of an automation, or in a playbook.",
         "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
         "",
         "### non-deprecated-cmd",
@@ -807,7 +812,7 @@ def test_generate_commands_with_permissions_section():
     expected_section = [
         "## Commands",
         "",
-        "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
+        "You can execute these commands from the CLI, as part of an automation, or in a playbook.",
         "After you successfully execute a command"
         ", a DBot message appears in the War Room with the command details.",
         "",
@@ -863,7 +868,7 @@ def test_generate_commands_with_permissions_section_command_doesnt_exist():
     expected_section = [
         "## Commands",
         "",
-        "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
+        "You can execute these commands from the CLI, as part of an automation, or in a playbook.",
         "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
         "",
         "### non-deprecated-cmd",
@@ -1047,7 +1052,8 @@ class TestGenerateIntegrationDoc:
                 os.path.join(str(tmp_path), INTEGRATIONS_README_FILE_NAME)
             ) as real_file:
                 fake_data = fake_file.read()
-                assert fake_data == real_file.read()
+                real_file_read = real_file.read()
+                assert fake_data == real_file_read
                 assert (
                     "This integration was integrated and tested with version xx of"
                     not in fake_data
@@ -1173,7 +1179,7 @@ class TestGenerateIntegrationDoc:
         assert "#### Command example" in actual_doc
         assert "#### Context Example" in actual_doc
         assert (
-            actual_doc[1078]
+            actual_doc[1071]
             == "| allowed_input_type_param | Enum Found as the last part of Change.allowedInput[].update hypermedia URL.supported values include:change-management-ack,lets-encrypt-challenges-completed,post-verification-warnings-ack,pre-verification-warnings-ack. Possible values are: change-management-ack, lets-encrypt-challenges-completed, post-verification-warnings-ack, pre-verification-warnings-ack. Default is post-verification-warnings-ack. | Optional | "
         )
 
@@ -1263,19 +1269,19 @@ class TestGenerateIntegrationDoc:
             (tmp_path / INTEGRATIONS_README_FILE_NAME).read_text().splitlines()
         )
         assert (
-            actual_text[54]
+            actual_text[49]
             == f"| entry_id | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
         )
         assert (
-            actual_text[55]
+            actual_text[50]
             == f"| target | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
         )
         assert (
-            actual_text[73]
+            actual_text[68]
             == f"| file_path | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
         )
         assert (
-            actual_text[74]
+            actual_text[69]
             == f"| file_name | {common.DEFAULT_ARG_DESCRIPTION} | Required | "
         )
 
@@ -1292,7 +1298,7 @@ class TestGetCommandExamples:
         Then
             - Verify that the returned commands from the examples are only the specific commands.
         """
-        command_examples = tmp_path / "command_examples"
+        command_examples = tmp_path / "command_examples.txt"
 
         with open(command_examples, "w+") as ce:
             ce.write(
@@ -1322,7 +1328,7 @@ class TestGetCommandExamples:
         Then
             - Verify that the returned commands from the examples are only the specific commands.
         """
-        command_examples = tmp_path / "command_examples"
+        command_examples = tmp_path / "command_examples.txt"
 
         with open(command_examples, "w+") as ce:
             ce.write(
@@ -1351,7 +1357,7 @@ class TestGetCommandExamples:
         Then
             - Verify that the returned commands from the examples are only the specific commands
         """
-        command_examples = tmp_path / "command_examples"
+        command_examples = tmp_path / "command_examples.txt"
 
         with open(command_examples, "w+") as ce:
             ce.write(
@@ -1397,7 +1403,7 @@ def test_generate_table_section_numbered_section():
 
 
 yml_data_cases = [
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1417,22 +1423,18 @@ yml_data_cases = [
                     "type": 8,
                 },
             ],
-        },  # case no param with additional info field
+        },
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
-            "    | **Parameter** | **Required** |",
-            "    | --- | --- |",
-            "    | test1 | True |",
-            "    | test2 | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
+            "| **Parameter** | **Required** |",
+            "| --- | --- |",
+            "| test1 | True |",
+            "| test2 | True |",
             "",
         ],  # expected
+        id="case no param with additional info field",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1446,22 +1448,18 @@ yml_data_cases = [
                 },
                 {"display": "test2", "name": "test2", "required": True, "type": 8},
             ],
-        },  # case some params with additional info field
+        },
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | test1 | More info | True |",
-            "    | test2 |  | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| test1 | More info | True |",
+            "| test2 |  | True |",
             "",
         ],  # expected
+        id="case some params with additional info field",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1481,22 +1479,18 @@ yml_data_cases = [
                     "type": 8,
                 },
             ],
-        },  # case all params with additional info field
+        },
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | test1 | More info | True |",
-            "    | test2 | Some more data | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| test1 | More info | True |",
+            "| test2 | Some more data | True |",
             "",
         ],  # expected
+        id="case all params with additional info field",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1510,22 +1504,18 @@ yml_data_cases = [
                     "type": 9,
                 },
             ],
-        },  # case credentials parameter have displaypassword
+        },
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | userName | Credentials | True |",
-            "    | password |  | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| userName | Credentials | True |",
+            "| password |  | True |",
             "",
         ],  # expected
+        id="case credentials parameter have displaypassword",
     ),
-    (
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1538,22 +1528,151 @@ yml_data_cases = [
                     "type": 9,
                 },
             ],
-        },  # case credentials parameter have no displaypassword
+        },
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | userName | Credentials | True |",
-            "    | Password |  | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| userName | Credentials | True |",
+            "| Password |  | True |",
             "",
         ],  # expected
+        id="case credentials parameter have no displaypassword",
     ),
-    (
+    pytest.param(
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "name": "user_name",
+                    "additionalinfo": "Credentials",
+                    "required": True,
+                    "type": 9,
+                },
+            ],
+        },
+        [
+            "",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| user_name | Credentials | True |",
+            "| Password |  | True |",
+            "",
+        ],  # expected
+        id="case credentials parameter have no display",
+    ),
+    pytest.param(
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "name": "user_name",
+                    "displaypassword": "Password",
+                    "additionalinfo": "Credentials",
+                    "hiddenusername": True,
+                    "required": True,
+                    "type": 9,
+                },
+            ],
+        },
+        [
+            "",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| Password | Credentials | True |",
+            "",
+        ],  # expected
+        id="case credentials parameter have hiddenusername",
+    ),
+    pytest.param(
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "name": "user_name",
+                    "display": "User Name",
+                    "additionalinfo": "Credentials",
+                    "hiddenpassword": True,
+                    "required": True,
+                    "type": 9,
+                },
+            ],
+        },
+        [
+            "",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| User Name | Credentials | True |",
+            "",
+        ],  # expected
+        id="case credentials parameter have hiddenpassword",
+    ),
+    pytest.param(
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "display": "User Name",
+                    "name": "user_anme",
+                    "additionalinfo": "The User Name",
+                    "required": True,
+                    "type": 0,
+                },
+                {
+                    "name": "user_name",
+                    "display": "UserName",
+                    "additionalinfo": "Credentials",
+                    "hiddenusername": True,
+                    "hiddenpassword": True,
+                    "type": 9,
+                },
+            ],
+        },
+        [
+            "",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| User Name | The User Name | True |",
+            "",
+        ],  # expected
+        id="case credentials parameter have hiddenusername and hiddenpassword",
+    ),
+    pytest.param(
+        {
+            "name": "test",
+            "display": "test",
+            "displaypassword": "password",
+            "configuration": [
+                {
+                    "display": "User Name",
+                    "name": "user_anme",
+                    "additionalinfo": "The User Name",
+                    "required": True,
+                    "type": 0,
+                },
+                {
+                    "display": "Password",
+                    "name": "password",
+                    "additionalinfo": "The Password",
+                    "hidden": True,
+                    "type": 4,
+                },
+            ],
+        },
+        [
+            "",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| User Name | The User Name | True |",
+            "",
+        ],  # expected
+        id="case of hidden parameter",
+    ),
+    pytest.param(
         {
             "name": "test",
             "display": "test",
@@ -1580,21 +1699,17 @@ yml_data_cases = [
                     "type": 8,
                 },
             ],
-        },  # case some param with additional information, one that should take default, and one overriding default
+        },
         [
-            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
-            "2. Search for test.",
-            "3. Click **Add instance** to create and configure a new integration instance.",
             "",
-            "    | **Parameter** | **Description** | **Required** |",
-            "    | --- | --- | --- |",
-            "    | test1 | More info | True |",
-            "    | API key | The API Key to use for the connection. | True |",
-            "    | Proxy | non-default info. | True |",
-            "",
-            "4. Click **Test** to validate the URLs, token, and connection.",
+            "| **Parameter** | **Description** | **Required** |",
+            "| --- | --- | --- |",
+            "| test1 | More info | True |",
+            "| API key | The API Key to use for the connection. | True |",
+            "| Proxy | non-default info. | True |",
             "",
         ],  # expected
+        id="case some param with additional information, one that should take default, and one overriding default",
     ),
 ]
 
@@ -1708,21 +1823,6 @@ TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS: List[
         [
             {"Parameter": "username", "Description": "Username", "Required": True},
             {"Description": "", "Parameter": "Password", "Required": True},
-        ],
-    ),
-    (
-        [],
-        {
-            "displaypassword": "specialPassword",
-            "additionalinfo": "Enter your password",
-            "required": False,
-        },
-        [
-            {
-                "Description": "Enter your password",
-                "Parameter": "specialPassword",
-                "Required": False,
-            }
         ],
     ),
     (
@@ -2325,7 +2425,7 @@ class TestIntegrationDocUpdate:
         generate_integration_doc(input_path=git_repo.packs[0].integrations[0].yml.path)
 
         actual = git_repo.packs[0].integrations[0].readme.read().splitlines()
-        assert actual[61] == "    | Debug logging enabled |  | False |"
+        assert actual[61] == "| Debug logging enabled |  | False |"
         assert (
             actual[806]
             == "| limit | Maximum number of records to return. Default is 100. | Optional | "
@@ -2705,3 +2805,109 @@ class TestIntegrationDocUpdate:
         assert actual
         assert "### splunk-results-1" not in actual
         assert "### splunk-results" in actual
+
+    @pytest.mark.parametrize(
+        "doc_text_lines, expected_first_line, expected_last_line",
+        [
+            (
+                test_case["doc_text_lines"],
+                test_case["expected_first_line"],
+                test_case["expected_last_line"],
+            )
+            for test_case in load_json("table_bounds_test_cases.json")
+        ],
+    )
+    def test_find_table_bounds(
+        self,
+        doc_text_lines: list[str],
+        expected_first_line: str,
+        expected_last_line: str,
+    ):
+        """
+        Parameterized test that checks different scenarios for find_table_bounds.
+
+        Args:
+            - doc_text_lines (List[str]): The lines of the README document being tested.
+            - expected_first_line (str or None): Expected first line of the table containing the parameter keyword.
+            - expected_last_line (str or None): Expected last line of the table.
+
+        Verifies:
+            - The actual first line of the detected table matches `expected_first_line`.
+            - The actual last line of the detected table matches `expected_last_line`.
+        """
+
+        integration_doc_update_manager = IntegrationDocUpdateManager("", False, {}, {})
+
+        first_line, last_line = integration_doc_update_manager.find_table_bounds(
+            doc_text_lines
+        )
+
+        assert first_line == expected_first_line
+        assert last_line == expected_last_line
+
+    def test_valid_table_replacement(self, mocker: MockerFixture):
+        """Test if the configuration section is correctly replaced when a valid table is found."""
+        from demisto_sdk.commands.generate_docs.generate_integration_doc import (
+            IntegrationDiffDetector,
+        )
+
+        # Mock setup
+        integration_doc_update_manager = IntegrationDocUpdateManager("", False, {}, {})
+        integration_doc_update_manager.update_errors = []
+        integration_doc_update_manager.output_doc = "Header\n| Parameter | Description |\n|-----------|-------------|\n| param1 | desc1 |"
+        integration_doc_update_manager.integration_diff = IntegrationDiffDetector(
+            "", ""
+        )
+
+        new_section = ["| Parameter | Description |", "| param2 | desc2 |"]
+        mocker.patch(
+            "demisto_sdk.commands.generate_docs.generate_integration_doc.generate_setup_section",
+            return_value=new_section,
+        )
+        mocker.patch.object(
+            IntegrationDocUpdateManager,
+            "find_table_bounds",
+            return_value=("| Parameter | Description |", "| param1 | desc1 |"),
+        )
+
+        # Run the function
+        integration_doc_update_manager._update_conf_section()
+
+        # Check the result
+        expected_output = "Header\n| Parameter | Description |\n| param2 | desc2 |"
+        assert integration_doc_update_manager.output_doc == expected_output
+        assert len(integration_doc_update_manager.update_errors) == 0
+
+    def test_table_not_found(self, mocker):
+        """Test when the parameter table is not found in the README."""
+        from demisto_sdk.commands.generate_docs.generate_integration_doc import (
+            IntegrationDiffDetector,
+        )
+
+        # Mock setup
+        integration_doc_update_manager = IntegrationDocUpdateManager("", False, {}, {})
+        integration_doc_update_manager.update_errors = []
+        integration_doc_update_manager.output_doc = (
+            "Header\nSome random text\nNo table here."
+        )
+        integration_doc_update_manager.integration_diff = IntegrationDiffDetector(
+            "", ""
+        )
+
+        mocker.patch(
+            "demisto_sdk.commands.generate_docs.generate_integration_doc.generate_setup_section",
+            return_value="",
+        )
+        # Patch the method to simulate no table found
+        mocker.patch.object(
+            IntegrationDocUpdateManager, "find_table_bounds", return_value=(None, None)
+        )
+
+        # Run the function
+        integration_doc_update_manager._update_conf_section()
+
+        # Check that the correct error is logged
+        assert (
+            "Unable to find configuration section line in README: Parameters table not found or incomplete in the "
+            "README."
+        ) in integration_doc_update_manager.update_errors

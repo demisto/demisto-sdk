@@ -1,11 +1,8 @@
-import logging
+from typer.testing import CliRunner
 
-from click.testing import CliRunner
-
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from TestSuite.test_tools import (
     ChangeCWD,
-    str_in_call_args_list,
 )
 
 DOC_REVIEW = "doc-review"
@@ -23,8 +20,6 @@ def test_spell_integration_dir_valid(repo, mocker, monkeypatch):
     - Ensure spell check runs on yml and md files only.
     - Ensure no misspelled words are found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("my_pack")
     integration = pack.create_integration("myint")
@@ -32,12 +27,12 @@ def test_spell_integration_dir_valid(repo, mocker, monkeypatch):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
-            main, [DOC_REVIEW, "-i", integration.path], catch_exceptions=False
+        result = runner.invoke(
+            app, [DOC_REVIEW, "-i", integration.path], catch_exceptions=False
         )
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "No misspelled words found ",
                     integration.yml.path,
@@ -46,15 +41,11 @@ def test_spell_integration_dir_valid(repo, mocker, monkeypatch):
                 ]
             ]
         )
-        assert not str_in_call_args_list(
-            logger_info.call_args_list, "Words that might be misspelled were found in"
-        )
-        assert not str_in_call_args_list(
-            logger_info.call_args_list, integration.code.path
-        )
+        assert "Words that might be misspelled were found in" not in result.output
+        assert integration.code.path not in result.output
 
 
-def test_spell_integration_invalid(repo, mocker, monkeypatch):
+def test_spell_integration_invalid(repo):
     """
     Given
     - a integration file path with misspelled words.
@@ -65,8 +56,6 @@ def test_spell_integration_invalid(repo, mocker, monkeypatch):
     Then
     - Ensure misspelled words are found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("my_pack")
     integration = pack.create_integration("myint")
@@ -78,22 +67,13 @@ def test_spell_integration_invalid(repo, mocker, monkeypatch):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
-            main, [DOC_REVIEW, "-i", integration.yml.path], catch_exceptions=False
+        result = runner.invoke(
+            app, [DOC_REVIEW, "-i", integration.yml.path], catch_exceptions=False
         )
-        assert not str_in_call_args_list(
-            logger_info.call_args_list, "No misspelled words found "
-        )
-        assert all(
-            [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
-                for current_str in [
-                    "Words that might be misspelled were found in",
-                    "kfawh",
-                    "ggghghgh",
-                ]
-            ]
-        )
+        assert "No misspelled words found " not in result.output
+        assert "Words that might be misspelled were found in" in result.output
+        assert "kfawh" in result.output
+        assert "ggghghgh" in result.output
 
 
 def test_spell_script_invalid(repo, mocker, monkeypatch):
@@ -107,8 +87,6 @@ def test_spell_script_invalid(repo, mocker, monkeypatch):
     Then
     - Ensure misspelled words are found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("my_pack")
     script = pack.create_script("myscr")
@@ -123,20 +101,14 @@ def test_spell_script_invalid(repo, mocker, monkeypatch):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(main, [DOC_REVIEW, "-i", script.yml.path], catch_exceptions=False)
-        assert not str_in_call_args_list(
-            logger_info.call_args_list, "No misspelled words found "
+        result = runner.invoke(
+            app, [DOC_REVIEW, "-i", script.yml.path], catch_exceptions=False
         )
-        assert all(
-            [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
-                for current_str in [
-                    "Words that might be misspelled were found in",
-                    "kfawh",
-                    "ddddddd",
-                ]
-            ]
-        )
+    assert "No misspelled words found " not in result.output
+    assert "Words that might be misspelled were found in" in result.output
+    assert "kfawh" in result.output
+    assert "ddddddd" in result.output
+    assert "kfawh" in result.output
 
 
 def test_spell_playbook_invalid(repo, mocker, monkeypatch):
@@ -150,8 +122,6 @@ def test_spell_playbook_invalid(repo, mocker, monkeypatch):
     Then
     - Ensure misspelled words are found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("my_pack")
     playbook = pack.create_playbook("myplaybook")
@@ -167,22 +137,13 @@ def test_spell_playbook_invalid(repo, mocker, monkeypatch):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
-            main, [DOC_REVIEW, "-i", playbook.yml.path], catch_exceptions=False
+        result = runner.invoke(
+            app, [DOC_REVIEW, "-i", playbook.yml.path], catch_exceptions=False
         )
-        assert not str_in_call_args_list(
-            logger_info.call_args_list, "No misspelled words found "
-        )
-        assert all(
-            [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
-                for current_str in [
-                    "Words that might be misspelled were found in",
-                    "kfawh",
-                    "ddddddd",
-                ]
-            ]
-        )
+        assert "No misspelled words found " not in result.output
+        assert "Words that might be misspelled were found in" in result.output
+        assert "kfawh" in result.output
+        assert "ddddddd" in result.output
 
 
 def test_spell_readme_invalid(repo, mocker, monkeypatch):
@@ -197,8 +158,6 @@ def test_spell_readme_invalid(repo, mocker, monkeypatch):
     - Ensure misspelled words are found.
     - Ensure legal camelCase words are not marked.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("my_pack")
     integration = pack.create_integration("myint")
@@ -211,12 +170,12 @@ def test_spell_readme_invalid(repo, mocker, monkeypatch):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(
-            main, [DOC_REVIEW, "-i", integration.readme.path], catch_exceptions=False
+        result = runner.invoke(
+            app, [DOC_REVIEW, "-i", integration.readme.path], catch_exceptions=False
         )
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "Words that might be misspelled were found in",
                     "readme",
@@ -227,7 +186,7 @@ def test_spell_readme_invalid(repo, mocker, monkeypatch):
         )
         assert all(
             [
-                not str_in_call_args_list(logger_info.call_args_list, current_str)
+                current_str not in result.output
                 for current_str in [
                     "No misspelled words found ",
                     "GoodCase",
@@ -253,8 +212,6 @@ def test_review_release_notes_valid(repo, mocker, monkeypatch):
     Then
     - Ensure no errors are found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("my_pack")
     valid_rn = (
@@ -266,10 +223,10 @@ def test_review_release_notes_valid(repo, mocker, monkeypatch):
     rn = pack.create_release_notes(version="1.1.0", content=valid_rn)
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(main, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False)
+        result = runner.invoke(app, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False)
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     "No misspelled words found",
                     f" - Release notes {rn.path} match a known template.",
@@ -295,8 +252,6 @@ def test_review_release_notes_invalid(repo, mocker, monkeypatch):
     - Ensure misspelled words are found and correct fix is suggested.
     - Ensure all errors are found.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("my_pack")
     valid_rn = (
@@ -308,11 +263,11 @@ def test_review_release_notes_invalid(repo, mocker, monkeypatch):
     rn = pack.create_release_notes(version="1.1.0", content=valid_rn)
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(main, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False)
+        result = runner.invoke(app, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False)
 
         assert all(
             [
-                str_in_call_args_list(logger_info.call_args_list, current_str)
+                current_str in result.output
                 for current_str in [
                     'Notes for the line: "fixed a bug where the ***ip*** commanda '
                     'failed when unknown categories were returned"',
@@ -338,15 +293,9 @@ def test_templates_print(repo, mocker, monkeypatch):
     - Ensure templates are printed.
     - Ensure no additional checks run.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(main, [DOC_REVIEW, "--templates"], catch_exceptions=False)
-        assert str_in_call_args_list(
-            logger_info.call_args_list, "General Pointers About Release Notes:"
-        )
-        assert not str_in_call_args_list(
-            logger_info.call_args_list, "Checking spelling on"
-        )
+        result = runner.invoke(app, [DOC_REVIEW, "--templates"], catch_exceptions=False)
+        assert "General Pointers About Release Notes:" in result.output
+        assert "Checking spelling on" not in result.output

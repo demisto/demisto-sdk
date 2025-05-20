@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.logger import (
     handle_deprecated_args,
     logger,
     logging_setup,
+    logging_setup_decorator,
 )
 from demisto_sdk.commands.common.tools import get_max_version
 
@@ -28,6 +29,7 @@ SCHEMA_TYPE_NUMBER = "Number"
 SCHEMA_TYPE_BOOLEAN = "Boolean"
 
 
+@logging_setup_decorator
 @app.command(
     no_args_is_help=True,
     context_settings={
@@ -112,12 +114,12 @@ def generate_modeling_rules(
     ),
 ):
     logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file_path=log_file_path,
+        console_threshold=console_log_threshold,
+        file_threshold=file_log_threshold,
+        path=log_file_path,
+        calling_function=__name__,
     )
     handle_deprecated_args(ctx.args)
-    errors = False
     try:
         path_prefix = snake_to_camel_case(vendor)
         outputfile_schema = Path(output_path, (f"{path_prefix}ModelingRules.json"))
@@ -149,9 +151,9 @@ def generate_modeling_rules(
     except Exception:
         with StringIO() as sio:
             traceback.print_exc(file=sio)
-            logger.error(f"[red]{sio.getvalue()}[/red]", extra={"markup": True})
-        errors = True
-    if errors:
+            logger.error(
+                f"<red>{sio.getvalue()}</red>",
+            )
         raise typer.Exit(1)
 
 

@@ -50,6 +50,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA100_is_valid_versi
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
     IDNameValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA103_is_tests_section_valid import (
+    IsTestsSectionValidValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA105_id_contain_slashes import (
     IDContainSlashesValidator,
 )
@@ -101,6 +104,12 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA125_customer_facin
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA126_content_item_is_deprecated_correctly import (
     IsDeprecatedCorrectlyValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_context_path_depth import (
+    IsValidContextPathDepthValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_script_name_starts_with_digit import (
+    IsCommandOrScriptNameStartsWithDigitValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -1644,7 +1653,7 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
         pytest.param(
             [
                 create_pack_object(
-                    ["version"], ["1.0.1"], release_note_content="test-module"
+                    ["currentVersion"], ["1.0.1"], release_note_content="test-module"
                 )
             ],
             1,
@@ -1686,11 +1695,12 @@ def test_CustomerFacingDocsDisallowedTermsValidator(
                 ),
                 create_integration_object(code="Copyright"),
             ],
-            3,
+            4,
             [
-                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\nThe code file contains copyright key words in line(s) 1, 2.",
-                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\nThe code file contains copyright key words in line(s) 1.\nThe test code file contains copyright key words in line(s) 2.",
-                "Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found in lines:\nThe code file contains copyright key words in line(s) 1.",
+                "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): 1, 2.",
+                "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): 1.",
+                "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): 2.",
+                "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): 1.",
             ],
         ),
     ],
@@ -2145,3 +2155,351 @@ def test_IsHaveUnitTestFileValidator_obtain_invalid_content_items__invalid_item(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+def test_is_valid_context_path_depth_command():
+    """
+    Given
+    - One invalid integration with one command:
+        - One output has depth bigger then 5.
+    When
+    - Calling the IsValidContextPathDepthValidator obtain_invalid_content_items function.
+    Then
+    - Make sure one failure is returned and the error message is correct.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "ip",
+                            "description": "ip command",
+                            "deprecated": False,
+                            "arguments": [],
+                            "outputs": [
+                                {
+                                    "name": "output_1",
+                                    "contextPath": "path_1.2.3.4.5.6",
+                                    "description": "description_1",
+                                },
+                                {
+                                    "name": "output_2",
+                                    "contextPath": "path_2",
+                                    "description": "description_2",
+                                },
+                            ],
+                        },
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+        expected_msg = "The level of depth for context output path for command: ip In the yml should be less or equal to 5 check the following outputs:\npath_1.2.3.4.5.6\n"
+        result = IsValidContextPathDepthValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(result) == 1
+
+        if result:
+            assert result[0].message == expected_msg
+
+
+def test_is_valid_context_path_depth_script():
+    """
+    Given
+    - One invalid script :
+        - One output has depth bigger then 5.
+    When
+    - Calling the IsValidContextPathDepthValidator obtain_invalid_content_items function.
+    Then
+    - Make sure one failure is returned and the error message is correct.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_script_object(
+                paths=["outputs"],
+                values=[
+                    [
+                        {"contextPath": "File.EntryID", "description": "test_3"},
+                        {
+                            "contextPath": "test.test.1.2.3.4.5.6",
+                            "description": "test_4",
+                        },
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+        expected_msg = "The level of depth for context output path for script: myScript In the yml should be less or equal to 5 check the following outputs:\ntest.test.1.2.3.4.5.6"
+        result = IsValidContextPathDepthValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(result) == 1
+
+        if result:
+            assert result[0].message == expected_msg
+
+
+def test_is_valid_context_path_depth_command_multiple_invalid_outputs():
+    """
+    Given
+    - One invalid integration with one command:
+        - multiple outputs have depth bigger then 5.
+    When
+    - Calling the IsValidContextPathDepthValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the paths exist in the error message that is returned
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "ip",
+                            "description": "ip command",
+                            "deprecated": False,
+                            "arguments": [],
+                            "outputs": [
+                                {
+                                    "name": "output_1",
+                                    "contextPath": "path_1.2.3.4.5.6",
+                                    "description": "description_1",
+                                },
+                                {
+                                    "name": "output_2",
+                                    "contextPath": "path_2",
+                                    "description": "description_2",
+                                },
+                                {
+                                    "name": "output_2",
+                                    "contextPath": "path_2.3.4.5.6.7.8.9",
+                                    "description": "description_2",
+                                },
+                            ],
+                        },
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+
+        invalid_path_1 = "path_1.2.3.4.5.6"
+        invalid_path_2 = "path_2.3.4.5.6.7.8.9"
+        result = IsValidContextPathDepthValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(result) == 1
+
+        if result:
+            assert invalid_path_1 in result[0].message
+            assert invalid_path_2 in result[0].message
+
+
+def test_is_valid_context_path_depth_command_multiple_commands_with_invalid_outputs():
+    """
+    Given
+    - One invalid integration with two commands each has several outputs:
+        - two outputs for each command have depth bigger then 5.
+    When
+    - Calling the IsValidContextPathDepthValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the paths exist in the error message that is returned
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "ip",
+                            "description": "ip command",
+                            "deprecated": False,
+                            "arguments": [],
+                            "outputs": [
+                                {
+                                    "name": "output_1",
+                                    "contextPath": "path_1.2.3.4.5.6",
+                                    "description": "description_1",
+                                },
+                                {
+                                    "name": "output_2",
+                                    "contextPath": "path_2",
+                                    "description": "description_2",
+                                },
+                                {
+                                    "name": "output_3",
+                                    "contextPath": "path_3.3.4.5.6.7.8.9",
+                                    "description": "description_3",
+                                },
+                            ],
+                        },
+                        {
+                            "name": "file",
+                            "description": "file command",
+                            "deprecated": False,
+                            "arguments": [],
+                            "outputs": [
+                                {
+                                    "name": "output_1",
+                                    "contextPath": "path_10.11.12.13.14.15",
+                                    "description": "description_1",
+                                },
+                                {
+                                    "name": "output_2",
+                                    "contextPath": "path_2",
+                                    "description": "description_2",
+                                },
+                                {
+                                    "name": "output_3",
+                                    "contextPath": "path_12.13.14.15.16.17.18.19",
+                                    "description": "description_2",
+                                },
+                            ],
+                        },
+                    ]
+                ],
+                pack_info={"support": XSOAR_SUPPORT},
+            ),
+        ]
+        invalid_path_ip_1 = "path_1.2.3.4.5.6"
+        invalid_path_ip_2 = "path_3.3.4.5.6.7.8.9"
+        invalid_path_file_1 = "path_10.11.12.13.14.15"
+        invalid_path_file_2 = "path_12.13.14.15.16.17.18.19"
+        result = IsValidContextPathDepthValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(result) == 1
+
+        if result:
+            assert invalid_path_ip_1 in result[0].message
+            assert invalid_path_ip_2 in result[0].message
+            assert invalid_path_file_1 in result[0].message
+            assert invalid_path_file_2 in result[0].message
+
+
+def test_IsTestsSectionValidValidator_obtain_invalid_content_items():
+    """
+    Given
+    - content items iterable with 5 content items:
+        - One integration with a tests section which is an empty list.
+        - One integration with a tests section which is the string "No tests (auto formatted)".
+        - One script with a tests section which is an the string "No tests".
+        - One script with a tests section which is a non empty list.
+        - One script with a tests section which is an empty string.
+    When
+    - Calling the IsTestsSectionValidValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failures is returned and the error message is correct:
+        - Should fail.
+        - Shouldn't fail.
+        - Shouldn't fail.
+        - Shouldn't fail.
+        - Should fail.
+    """
+    content_items = [
+        create_integration_object(paths=["tests"], values=[[]]),
+        create_integration_object(
+            paths=["tests"], values=["No tests (auto formatted)"]
+        ),
+        create_script_object(paths=["tests"], values=["No tests"]),
+        create_script_object(paths=["tests"], values=[["- test_1", "- test_2"]]),
+        create_script_object(paths=["tests"], values=[""]),
+    ]
+    results = IsTestsSectionValidValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == 2
+    expected_msgs = [
+        'The tests section of the following Integration is malformed. It should either be a non empty list for tests or "No tests" in case there are no tests.',
+        'The tests section of the following Script is malformed. It should either be a non empty list for tests or "No tests" in case there are no tests.',
+    ]
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+
+def test_is_command_or_script_name_starts_with_digit_invalid():
+    """
+    Given
+    - One invalid integration with two commands (one of which starts with a digit character).
+    When
+    - Calling the IsCommandOrScriptNameStartsWithDigitValidator obtain_invalid_content_items function.
+    Then
+    - Make sure one failure is returned and the error message contains the relevant command name.
+    """
+    content_items = [
+        create_integration_object(
+            paths=["script.commands"],
+            values=[
+                [
+                    {
+                        "name": "1system-get-users",
+                        "description": "Get users from 1System",
+                        "deprecated": False,
+                        "arguments": [],
+                        "outputs": [],
+                    },
+                    {
+                        "name": "one-system-get-assets",
+                        "description": "Get cloud assets from 1System",
+                        "deprecated": False,
+                        "arguments": [],
+                        "outputs": [],
+                    },
+                ]
+            ],
+            pack_info={"support": XSOAR_SUPPORT},
+        ),
+    ]
+    expected_msg = (
+        "The following integration command names start with a digit: 1system-get-users"
+    )
+    results = (
+        IsCommandOrScriptNameStartsWithDigitValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
+
+    assert len(results) == 1
+    assert results[0].message == expected_msg
+
+
+def test_is_command_or_script_name_starts_with_digit_valid():
+    """
+    Given
+    - One valid integration with one command starting with a letter character.
+    When
+    - Calling the IsCommandOrScriptNameStartsWithDigitValidator obtain_invalid_content_items function.
+    Then
+    - Make sure no failures are returned.
+    """
+    content_items = [
+        create_integration_object(
+            paths=["script.commands"],
+            values=[
+                [
+                    {
+                        "name": "one-system-get-users",
+                        "description": "Get users from 1System",
+                        "deprecated": False,
+                        "arguments": [],
+                        "outputs": [],
+                    },
+                ]
+            ],
+            pack_info={"support": XSOAR_SUPPORT},
+        ),
+    ]
+    results = (
+        IsCommandOrScriptNameStartsWithDigitValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
+
+    assert len(results) == 0

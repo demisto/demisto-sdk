@@ -1,7 +1,8 @@
 ## Run playbook
 
-**Run a playbook in a given Demisto instance.**
-**This command creates a new instance in Demisto and runs the given playbook.**
+### Overview
+
+This command runs the given playbook in Cortex XSOAR or Cortex XSIAM.
 
 In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Cortex XSOAR/XSIAM instance URL,
 and `DEMISTO_API_KEY` environment variable should contain a valid Cortex XSOAR/XSIAM API Key.
@@ -22,21 +23,12 @@ In order to set Demisto SDK to work with Cortex XSOAR instance, you need to dele
 unset XSIAM_AUTH_ID
 ```
 
-**Arguments**:
-* **-u, --url**
-                        URL to a Demisto instance.
-* **-p, --playbook_id**
-                        The ID of the playbook to run.
-* **-n, --no-wait**
-                        Trigger the playbook without waiting for it to finish its run.
-                        (default: False)
-* **-t, --timeout**
-                        Timeout for the command in seconds. The playbook will continue to run in Demisto.
-                        (default: 90)
-* **--insecure**
-                        Skip certificate validation.
-* **-w, --wait**
-                        Wait until the playbook run is finished and get a response.
+### Options
+* **-u, --url** URL to a XSOAR instance. If not provided, the url will be taken from DEMISTO_BASE_URL environment variable.
+* **-p, --playbook_id** The ID of the playbook to run.
+* **-t, --timeout** Timeout for the command in seconds.The playbook will continue to run in Cortex XSOAR/Cortex XSIAM. The default is 90 seconds.
+* **--insecure** Skip certificate validation.
+* **-w, --wait** Wait until the playbook run is finished and get a response.
 
 
 ### Examples

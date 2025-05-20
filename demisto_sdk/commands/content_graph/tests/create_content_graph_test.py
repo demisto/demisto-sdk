@@ -1,6 +1,4 @@
-import os
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Tuple
 from zipfile import ZipFile
 
@@ -412,6 +410,7 @@ def build_in_pack_relationship(
                     ContentType.COMMAND,
                     description="",
                     deprecated=False,
+                    quickaction=False,
                 ),
             )
 
@@ -563,9 +562,7 @@ class TestCreateContentGraph:
         }
         assert returned_scripts == {"SampleScript", "TestApiModule"}
         with ChangeCWD(repo.path):
-            with TemporaryDirectory() as dir:
-                mocker.patch.object(os, "getenv", return_value=dir)
-                content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
+            content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
         assert (tmp_path / "TestPack").exists()
         assert (tmp_path / "TestPack" / "metadata.json").exists()
         assert (
@@ -817,9 +814,7 @@ class TestCreateContentGraph:
         assert len(all_content_items) == 3
 
         with ChangeCWD(graph_repo.path):
-            with TemporaryDirectory() as dir:
-                mocker.patch.object(os, "getenv", return_value=dir)
-                content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
+            content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
         scripts_path = tmp_path / pack.name / "Scripts"
         assert (scripts_path / "script-getIncident.yml").exists()
         assert (scripts_path / "script-getAlert.yml").exists()

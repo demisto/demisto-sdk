@@ -36,8 +36,9 @@ def parse_upload_response(response: Any, path: Path, content_type: "ContentType"
         )
         with contextlib.suppress(Exception):
             response_str = str(response)
-        logger.debug(
-            f"got the following response when uploading {content_type} {path}: {response_str}"
+        logger.debug(  # noqa: PLE1205
+            "{}",
+            f"got the following response when uploading {content_type} {path}: {response_str}",
         )
 
 
@@ -66,7 +67,14 @@ def parse_error_response(error: ApiException) -> str:
 
         elif reason in ("Bad Request", "Forbidden"):
             error_body = json.loads(error.body)
-            message = error_body.get("error", "")
+            message = next(
+                (
+                    error_body.get(key)
+                    for key in ["error", "detail", "title"]
+                    if error_body.get(key)
+                ),
+                "",
+            )
             if message.startswith("[") and message.endswith("]"):
                 message = message[1:-1]
 

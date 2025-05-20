@@ -1,5 +1,4 @@
 import glob
-import logging
 import os
 import shutil
 from configparser import ConfigParser
@@ -9,6 +8,7 @@ from typing import Callable, List, Optional, Tuple, Union
 
 import pytest
 import requests
+from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -64,6 +64,9 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.logger import (
+    string_to_bool as string_to_bool_logger,
+)
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     TagParser,
@@ -156,7 +159,7 @@ from TestSuite.file import File
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD
 
 GIT_ROOT = git_path()
 
@@ -186,6 +189,39 @@ class TestGenericFunctions:
     @pytest.mark.parametrize("file_path, func", FILE_PATHS)
     def test_get_file(self, file_path, func):
         assert func(file_path)
+
+    def test_get_file_failure_is_not_raised(self, mocker):
+        """
+        Given:
+            - Wrongly formatted yml file.
+        When:
+            - Getting the file using get_file with raise_on_error=False
+        Then:
+            - Assert no error is raised.
+        """
+        mocker.patch.object(Path, "exists", return_value=True)
+        bad_yml_data = 'name: "some"\ndescription: "bla bla"nah\n'
+        mocker.patch.object(
+            Path, "read_bytes", return_value=bad_yml_data.encode("utf-8")
+        )
+
+        def raise_loguru_exp(log_line):
+            if "<file>" in log_line:
+                raise Exception(
+                    'Tag "<file>" does not correspond to any known color directive.'
+                )
+
+        # Mock problematic logger behaviour since it does not reproduce on Github actions.
+        # Since Github actions do not allow colors, the exception is usually raised locally only.
+        # To verify, you can delete this line and run the test locally and compare with the Github action.
+        mocker.patch(
+            "demisto_sdk.commands.common.tools.logger.error",
+            side_effect=raise_loguru_exp,
+        )
+        try:
+            get_file(file_path="some_file.yml", raise_on_error=False, clear_cache=True)
+        except Exception as e:
+            assert False, f"Function get_file raised an error: {e}"
 
     @pytest.mark.parametrize("file_path, _", FILE_PATHS)
     def test_get_file_or_remote_with_local(self, file_path: str, _):
@@ -744,6 +780,7 @@ class TestGetFilesInDir:
         files = [
             f"{project_dir}/__init__.py",
             f"{project_dir}/downloader.py",
+            f"{project_dir}/download_setup.py",
             f"{project_dir}/README.md",
         ]
         assert sorted(get_files_in_dir(project_dir, ["py", "md"], False)) == sorted(
@@ -1571,37 +1608,25 @@ def test_get_relative_path_from_packs_dir():
     assert get_relative_path_from_packs_dir(unrelated_path) == unrelated_path
 
 
-@pytest.mark.parametrize(
-    "version,expected_result",
-    [
-        ("1.3.8", ["* Updated the **secrets** command to work on forked branches."]),
-        ("1.3", []),
-    ],
-)
-def test_get_release_note_entries(requests_mock, version, expected_result):
+def test_get_release_note_entries_found(mocker: MockerFixture):
     """
-    Given:
-        - Version of the demisto-sdk.
-
-    When:
-        - Running get_release_note_entries.
-
-    Then:
-        - Ensure that the result as expected.
+    Given: A valid version tag
+    When: Calling get_release_note_entries
+    Then: The correct release note body is returned
     """
-    requests_mock.get("https://api.github.com/repos/demisto/demisto-sdk")
-    #
-    with open(
-        f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_changelog.md",
-        "rb",
-    ) as f:
-        changelog = f.read()
-    requests_mock.get(
-        "https://raw.githubusercontent.com/demisto/demisto-sdk/master/CHANGELOG.md",
-        content=changelog,
-    )
+    from demisto_sdk.commands.common.tools import Github
 
-    assert get_release_note_entries(version) == expected_result
+    mock_repo = mocker.Mock()
+    mocker.patch.object(Github, "get_repo", return_value=mock_repo)
+    mock_release = mocker.Mock()
+    mock_release.tag_name = "v1.0.0"
+    mock_release.body = "Release notes for v1.0.0"
+    mock_repo.get_releases.return_value = [mock_release]
+
+    result = get_release_note_entries("1.0.0")
+
+    assert result == "Release notes for v1.0.0"
+    mock_repo.get_releases.assert_called_once()
 
 
 def test_suppress_stdout(capsys):
@@ -2671,25 +2696,47 @@ def test_get_display_name(data, answer, tmpdir):
     assert get_display_name(file.path) == answer
 
 
-@pytest.mark.parametrize("value", ("true", "True", 1, "1", "yes", "y"))
-def test_string_to_bool_true(value: str):
-    assert string_to_bool(value)
+@pytest.mark.parametrize(
+    "value,expected_result",
+    (
+        ("true", True),
+        ("True", True),
+        (1, True),
+        ("1", True),
+        ("yes", True),
+        ("y", True),
+        ("Yes", True),
+        ("Y", True),
+        ("false", False),
+        ("False", False),
+        ("F", False),
+        ("f", False),
+        (0, False),
+        ("0", False),
+        ("n", False),
+        ("N", False),
+        ("no", False),
+        ("No", False),
+        ("NO", False),
+    ),
+)
+def test_string_to_bool_true(value: Tuple[str, ...], expected_result: bool):
+    assert string_to_bool(value) is expected_result
+    assert string_to_bool_logger(value) is expected_result
 
 
 @pytest.mark.parametrize("value", ("", None))
 def test_string_to_bool_default_true(value: str):
     assert string_to_bool(value, True)
-
-
-@pytest.mark.parametrize("value", ("false", "False", 0, "0", "n", "no"))
-def test_string_to_bool_false(value: str):
-    assert not string_to_bool(value)
+    assert string_to_bool_logger(value, True)
 
 
 @pytest.mark.parametrize("value", ("", " ", "כן", None, "None"))
 def test_string_to_bool_error(value: str):
     with pytest.raises(ValueError):
         string_to_bool(value)
+    with pytest.raises(ValueError):
+        string_to_bool_logger(value)
 
 
 @pytest.mark.parametrize(
@@ -2781,6 +2828,13 @@ def test_get_core_packs(mocker):
             MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.XPANSE] in full_file_path
         ):
             return ["Base", "CommonScripts", "Core"]
+        elif (
+            MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.PLATFORM]
+            in full_file_path
+        ):
+            return {
+                "core_packs_list": ["Base", "CommonPlaybooks", "CommonScripts", "Core"]
+            }
         return None
 
     mocker.patch.object(tools, "get_remote_file", side_effect=mock_get_remote_file)
@@ -3216,7 +3270,7 @@ def test_get_content_path(input_path, expected_output):
     assert tools.get_content_path(input_path) == expected_output
 
 
-def test_get_content_path_no_remote(mocker):
+def test_get_content_path_no_remote(mocker, caplog, monkeypatch):
     """
     Given:
         - A path to a file or directory in the content repo, with no remote
@@ -3225,21 +3279,15 @@ def test_get_content_path_no_remote(mocker):
     Then:
         Validate that a warning is issued as (resulting from a raised exception).
     """
-    from git import Repo  # noqa: TID251
+    from git import Repo  # noqa: TID251 # required for the test
 
-    def raise_value_exception(name):
-        raise ValueError()
-
-    mocker.patch.object(Repo, "remote", side_effect=raise_value_exception)
+    mocker.patch.object(Repo, "remote", side_effect=ValueError())
     mocker.patch(
         "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
     )
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING", "")
     tools.get_content_path(Path("/User/username/test"))
-    assert str_in_call_args_list(
-        logger_info.call_args_list,
-        "[yellow]Please run demisto-sdk in content repository![/yellow]",
-    )
+    assert "run demisto-sdk in a content repository" in caplog.text
 
 
 @pytest.mark.parametrize(

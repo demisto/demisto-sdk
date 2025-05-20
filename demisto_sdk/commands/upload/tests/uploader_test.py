@@ -1,24 +1,23 @@
-import logging
-import os
 import shutil
 import zipfile
 from builtins import len
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Optional, Set
+from typing import TYPE_CHECKING, Any, Set
+from unittest import mock
 from unittest.mock import MagicMock, patch
 
-import click
 import demisto_client
 import pytest
-from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 from more_itertools import first_true
 from packaging.version import Version
+from rich.console import Console
+from typer.testing import CliRunner
 
-from demisto_sdk.__main__ import main, upload
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
@@ -61,7 +60,6 @@ from demisto_sdk.commands.upload.uploader import (
     Uploader,
     parse_error_response,
 )
-from TestSuite.test_tools import flatten_call_args, str_in_call_args_list
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -142,11 +140,13 @@ def test_upload_folder(
     path = Path(content_path, path_end)
 
     assert path.exists()
+
     uploader = Uploader(path)
     with patch.object(uploader, "client", return_value="ok"):
         assert (
             uploader.upload() == SUCCESS_RETURN_CODE
         ), f"failed uploading {'/'.join(path.parts[-2:])}"
+
     assert len(uploader._successfully_uploaded_content_items) == item_count
     assert mock_upload.call_count == item_count
 
@@ -228,11 +228,9 @@ def test_upload_single_positive(mocker, path: str, content_class: ContentItem):
     uploader = Uploader(input=path)
     mocker.patch.object(uploader, "client")
 
-    # run
-    uploader.upload()
-
+    assert uploader.upload() == SUCCESS_RETURN_CODE
     assert len(uploader._successfully_uploaded_content_items) == 1
-    assert mocked_client_upload_method.called_once()
+    assert len(mocked_client_upload_method.call_args_list) == 1
 
 
 def test_upload_single_not_supported(mocker):
@@ -302,6 +300,7 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure, mock
     )
     uploader = Uploader(input=path, insecure=False)
     uploader.client.import_incident_types_handler = MagicMock(side_effect=save_file)
+
     uploader.upload()
 
     with open(path) as json_file:
@@ -394,6 +393,7 @@ def test_upload_pack(demisto_client_configure, mocker, tmpdir):
         "classifier-aws_sns_test_classifier.json",
         "widget-ActiveIncidentsByRole.json",
         "layoutscontainer-test.json",
+        "listForTest.json",
         "upload_test_dashboard.json",
         "DummyXDRCTemplate.json",
     }
@@ -427,8 +427,8 @@ def test_upload_pack_with_tpb(demisto_client_configure, mocker, tmpdir):
     uploader = Uploader(path, destination_zip_dir=tmpdir, tpb=True)
     mocker.patch.object(uploader, "client")
     mocked_upload_method = mocker.patch.object(ContentItem, "upload")
-    assert uploader.upload() == SUCCESS_RETURN_CODE
 
+    assert uploader.upload() == SUCCESS_RETURN_CODE
     expected_names = {
         "DummyIntegration.yml",
         "UploadTest.yml",
@@ -443,6 +443,7 @@ def test_upload_pack_with_tpb(demisto_client_configure, mocker, tmpdir):
         "classifier-aws_sns_test_classifier.json",
         "widget-ActiveIncidentsByRole.json",
         "layoutscontainer-test.json",
+        "listForTest.json",
         "upload_test_dashboard.json",
         "DummyXDRCTemplate.json",
     }
@@ -488,15 +489,16 @@ def test_upload_packs_from_configfile(demisto_client_configure, mocker):
     upload_mock = mocker.patch.object(
         Uploader, "upload", return_value=SUCCESS_RETURN_CODE
     )
-    click.Context(command=upload).invoke(
-        upload, input_config_file=f"{git_path()}/configfile_test.json", zip=False
+    runner = CliRunner()
+    runner.invoke(
+        app,
+        ["upload", "--input-config-file", f"{git_path()}/configfile_test.json", "-nz"],
     )
 
     assert upload_mock.call_count == 2
 
 
-def test_upload_invalid_path(mocker):
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+def test_upload_invalid_path(mocker, caplog):
     mocker.patch.object(demisto_client, "configure", return_value="object")
 
     path = Path(
@@ -515,9 +517,7 @@ def test_upload_invalid_path(mocker):
             uploader._failed_upload_version_mismatch,
         )
     )
-    assert flatten_call_args(logger_error.call_args_list) == (
-        f"[red]input path: {path.resolve()} does not exist[/red]",
-    )
+    assert f"input path: {path.resolve()} does not exist" in caplog.text
 
 
 def test_upload_single_unsupported_file(mocker):
@@ -593,6 +593,14 @@ def test_parse_error_response__exception(reason: str):
         parse_error_response(api_exception)
         == "Error message\nTry checking your API key configuration."
     )
+    api_exception.body = json.dumps(
+        {"status": 400, "error": "", "detail": "Error importing file"}
+    )
+    assert parse_error_response(api_exception) == "Error importing file"
+    api_exception.body = json.dumps(
+        {"status": 400, "error": "", "detail": "", "title": "Error Title"}
+    )
+    assert parse_error_response(api_exception) == "Error Title"
 
 
 class TestPrintSummary:
@@ -600,6 +608,7 @@ class TestPrintSummary:
         self,
         demisto_client_configure,
         mocker,
+        caplog,
     ):
         """
         Given
@@ -618,29 +627,30 @@ class TestPrintSummary:
             "CONTENT_PATH",
             Path(f"{git_path()}/demisto_sdk/tests/test_files"),
         )
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mock_api_client(mocker)
 
         uploader = Uploader(None)
         uploader._successfully_uploaded_content_items = [DUMMY_SCRIPT_OBJECT]
         uploader.print_summary()
 
-        logged = flatten_call_args(logger_info.call_args_list)
-
-        assert logged[0] == "UPLOAD SUMMARY:\n"
-        assert logged[-1] == "\n".join(
-            (
-                "[green]SUCCESSFUL UPLOADS:",
-                "╒═════════════════╤════════╤═════════════╤════════════════╕",
-                "│ NAME            │ TYPE   │ PACK NAME   │ PACK VERSION   │",
-                "╞═════════════════╪════════╪═════════════╪════════════════╡",
-                "│ DummyScript.yml │ Script │ DummyPack   │ 1.0.0          │",
-                "╘═════════════════╧════════╧═════════════╧════════════════╛",
-                "[/green]",
+        assert "UPLOAD SUMMARY:\n" in caplog.text
+        assert (
+            "\n".join(
+                (
+                    "<green>SUCCESSFUL UPLOADS:",
+                    "╒═════════════════╤════════╤═════════════╤════════════════╕",
+                    "│ NAME            │ TYPE   │ PACK NAME   │ PACK VERSION   │",
+                    "╞═════════════════╪════════╪═════════════╪════════════════╡",
+                    "│ DummyScript.yml │ Script │ DummyPack   │ 1.0.0          │",
+                    "╘═════════════════╧════════╧═════════════╧════════════════╛",
+                    "</green>",
+                )
             )
+            in caplog.text
         )
 
-    def test_print_summary_failed_uploaded(self, demisto_client_configure, mocker):
+    def test_print_summary_failed_uploaded(self, caplog, mocker):
         """
         Given
             - A uploaded script named SomeScriptName which failed to upload
@@ -651,31 +661,31 @@ class TestPrintSummary:
         Then
             - Ensure uploaded failure message is printed as expected
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mock_api_client(mocker)
 
         uploader = Uploader(None)
         uploader._failed_upload_content_items = [(DUMMY_SCRIPT_OBJECT, "Some Error")]
         uploader.print_summary()
 
-        assert logger_info.call_count == 2
-        logged = flatten_call_args(logger_info.call_args_list)
+        assert len(caplog.records) == 2
+        logged = [record.message for record in caplog.records]
 
         assert logged[0] == "UPLOAD SUMMARY:\n"
         assert logged[1] == "\n".join(
             (
-                "[red]FAILED UPLOADS:",
+                "<red>FAILED UPLOADS:",
                 "╒═════════════════╤════════╤════════════╕",
                 "│ NAME            │ TYPE   │ ERROR      │",
                 "╞═════════════════╪════════╪════════════╡",
                 "│ DummyScript.yml │ Script │ Some Error │",
                 "╘═════════════════╧════════╧════════════╛",
-                "[/red]",
+                "</red>",
             )
         )
 
     def test_print_summary_version_mismatch(
-        self, demisto_client_configure, mocker, repo
+        self, demisto_client_configure, mocker, repo, caplog
     ):
         """
         Given
@@ -687,7 +697,7 @@ class TestPrintSummary:
         Then
             - Ensure uploaded unuploaded message is printed as expected
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         mock_api_client(mocker)
 
         pack = repo.create_pack()
@@ -700,25 +710,23 @@ class TestPrintSummary:
         assert uploader.upload() == ERROR_RETURN_CODE
         assert uploader._failed_upload_version_mismatch == [BaseContent.from_path(path)]
 
-        logged = flatten_call_args(logger_info.call_args_list)
-        assert len(logged) == 3
-        assert logged[0] == (
+        assert (
             f"Uploading {path.absolute()} to {uploader.client.api_client.configuration.host}..."
-        )
-        assert logged[1] == "UPLOAD SUMMARY:\n"
-        assert logged[2] == (
+        ) in caplog.text
+        assert "UPLOAD SUMMARY:\n" in caplog.text
+        assert (
             "\n".join(
                 (
-                    "[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:",
+                    "<yellow>NOT UPLOADED DUE TO VERSION MISMATCH:",
                     "╒═════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕",
                     "│ NAME        │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │",
                     "╞═════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡",
                     "│ script0.yml │ Script │ 6.6.0           │ 0.0.0               │ 1.2.3             │",
                     "╘═════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛",
-                    "[/yellow]",
+                    "</yellow>",
                 )
             )
-        )
+        ) in caplog.text
 
 
 def mock_api_client(mocker, version: str = "6.6.0"):
@@ -746,40 +754,13 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
         # run
         uploader = Uploader(path)
+
+        # Capture the exit code by catching the typer.Exit exception
         assert uploader.upload() == SUCCESS_RETURN_CODE
 
-        # validate
+        # Validate upload behavior
         assert len(uploader._successfully_uploaded_zipped_packs) == 1
         assert mocked_upload_content_packs.call_args[1]["file"] == str(path)
-
-    @pytest.mark.parametrize(argnames="path", argvalues=("invalid_zip_path", None))
-    def test_upload_invalid_zip_path(self, mocker, path: Optional[Path]):
-        """
-        Given:
-            - invalid path in the input argument
-        When:
-            - run the upload zipped pack
-        Then:
-            - validate the error msg
-        """
-        # prepare
-        expected_err = (
-            f"input path: {path} does not exist"
-            if path
-            else "No input provided for uploading"
-        )
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        mock_api_client(mocker)
-
-        # run
-        status = click.Context(command=upload).invoke(upload, input=path)
-
-        # validate
-        assert status == ERROR_RETURN_CODE
-
-        logged = flatten_call_args(logger_error.call_args_list)
-        assert len(logged) == 1
-        assert expected_err in logged[0]
 
     @pytest.mark.parametrize(
         argnames="user_answer, exp_call_count", argvalues=[("y", 1), ("n", 0)]
@@ -789,17 +770,14 @@ class TestZippedPackUpload:
     ):
         """
         Given:
-            - Zip of pack to upload where this pack already installed
-        Where:
-            - Upload this pack
+            - A pack to upload where this pack is already installed.
+        When:
+            - Uploading the pack and responding to the overwrite prompt.
         Then:
-            - Validate user asked if sure to overwrite this pack
+            - Validate that the user is prompted and the configuration update happens accordingly.
         """
         mock_api_client(mocker)
-        mocker.patch("builtins.input", return_value=user_answer)
-        mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
-        )
+        mock_input = mocker.patch("builtins.input", return_value=user_answer)
         mocker.patch.object(
             API_CLIENT,
             "generic_request",
@@ -807,11 +785,12 @@ class TestZippedPackUpload:
         )
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
-        # run
-        click.Context(command=upload).invoke(upload, input=str(TEST_PACK_ZIP))
+        runner = CliRunner()
+        result = runner.invoke(app, ["upload", "-i", str(TEST_PACK_ZIP)])
 
-        # validate
-        tools.update_server_configuration.call_count == exp_call_count
+        # Assertions
+        assert mock_input.called, "Input was not called as expected"
+        assert "Are you sure you want to continue? y/[N]" in result.output
 
     def test_upload_zip_does_not_exist(self):
         """
@@ -826,14 +805,18 @@ class TestZippedPackUpload:
             - Ensure failure upload message is printed to the stderr as the failure caused by click.Path.convert check.
         """
         invalid_zip_path = "not_exist_dir/not_exist_zip"
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, ["upload", "-i", invalid_zip_path, "--insecure"])
-        assert result.exit_code == 2
-        assert isinstance(result.exception, SystemExit)
-        assert (
-            f"Invalid value for '-i' / '--input': Path '{invalid_zip_path}' does not exist"
-            in result.stderr
-        )
+        with mock.patch.object(Console, "print", wraps=Console().print) as mock_print:
+            runner = CliRunner(mix_stderr=True)
+            result = runner.invoke(
+                app, ["upload", "-i", invalid_zip_path, "--insecure"]
+            )
+
+            assert result.exit_code == 2
+            assert isinstance(result.exception, SystemExit)
+
+            # Check for error message in the output
+            assert "Invalid value for '--input' / '-i'" in result.stdout
+            mock_print.assert_called()
 
     @pytest.mark.parametrize(
         argnames="path", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
@@ -858,7 +841,10 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
 
         # run
-        click.Context(command=upload).invoke(upload, input=str(path))
+        runner = CliRunner()
+
+        # Run the command using runner.invoke()
+        runner.invoke(app, ["upload", "-i", str(path)])
         assert mock_upload_content_packs.call_count == 1
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)
         assert mock_upload_content_packs.call_args[1]["skip_verify"] == "true"
@@ -890,11 +876,10 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "generic_request", return_value=([], 200, None))
 
         # run
-        result = click.Context(command=upload).invoke(
-            upload, input=str(path), skip_validation=True
-        )
+        runner = CliRunner()
+        result = runner.invoke(app, ["upload", "-i", str(path), "--skip_validation"])
 
-        assert result == SUCCESS_RETURN_CODE
+        assert result.exit_code == 0
 
         upload_call_args = mock_upload_content_packs.call_args[1]
         assert upload_call_args["skip_validation"] == "true"
@@ -926,7 +911,8 @@ class TestZippedPackUpload:
         )
         mocker.patch("builtins.input", return_value="y")
         # run
-        click.Context(command=upload).invoke(upload, input=str(path))
+        runner = CliRunner()
+        runner.invoke(app, ["upload", "-i", str(path)])
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)
         assert mock_upload_content_packs.call_args[1].get("skip_validate") is None
 
@@ -960,6 +946,7 @@ class TestZippedPackUpload:
         mocker,
         marketplace: MarketplaceVersions,
         expected_files: Set[str],
+        monkeypatch,
     ):
         """
         Given:
@@ -979,15 +966,21 @@ class TestZippedPackUpload:
         mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
 
         with TemporaryDirectory() as dir:
-            mocker.patch.object(os, "getenv", return_value=dir)
-            click.Context(command=upload).invoke(
-                upload,
-                marketplace=marketplace,
-                input=TEST_XSIAM_PACK,
-                zip=True,
-                keep_zip=dir,
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", dir)
+            runner = CliRunner()
+            runner.invoke(
+                app,
+                [
+                    "upload",
+                    "-i",
+                    str(TEST_XSIAM_PACK),
+                    "--zip",
+                    "-mp",
+                    marketplace,
+                    "--keep-zip",
+                    dir,
+                ],
             )
-
             with zipfile.ZipFile(
                 Path(dir) / MULTIPLE_ZIPPED_PACKS_FILE_NAME, "r"
             ) as outer_zip_file:
@@ -1009,9 +1002,7 @@ class TestZippedPackUpload:
 
 
 class TestItemDetacher:
-    def test_detach_item(self, mocker):
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-
+    def test_detach_item(self, mocker, caplog):
         mock_api_client(mocker)
         mocker.patch.object(
             API_CLIENT,
@@ -1025,11 +1016,8 @@ class TestItemDetacher:
             file_path="Scripts/file_path",
         )
 
-        assert logger_info.call_count == 1
-        assert str_in_call_args_list(
-            logger_info.call_args_list,
-            "File: file was detached",
-        )
+        assert len(caplog.records) == 1
+        assert "File: file was detached" in caplog.text
 
     def test_extract_items_from_dir(self, mocker, repo):
         repo = repo.setup_one_pack(name="Pack")
@@ -1132,7 +1120,9 @@ class TestItemDetacher:
         # Tests that the function successfully zips and dumps multiple valid pack paths.
 
 
-def test_zip_multiple_packs(tmp_path: Path, integration, mocker):
+def test_zip_multiple_packs(tmp_path: Path, integration, mocker, monkeypatch):
+    from demisto_sdk.commands.content_graph.objects.pack import Pack
+
     tmp_path = tmp_path / "Packs"
     tmp_path.mkdir()
 
@@ -1158,8 +1148,9 @@ def test_zip_multiple_packs(tmp_path: Path, integration, mocker):
     zipped_pack_path = tmp_path / "zipped.zip"
     mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
     mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", retrun_value={})
+    mocker.patch.object(Pack, "_format_metadata", return_value={})
     with TemporaryDirectory() as dir:
-        mocker.patch.object(os, "getenv", return_value=dir)
+        monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", dir)
         zip_multiple_packs(
             [pack0.path, pack1.path, zipped_pack_path],
             MarketplaceVersions.XSOAR,

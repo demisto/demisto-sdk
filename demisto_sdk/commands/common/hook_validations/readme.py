@@ -196,7 +196,6 @@ class ReadMeValidator(BaseValidator):
                 self.verify_no_default_sections_left(),
                 self.verify_readme_is_not_too_short(),
                 self.is_context_different_in_yml(),
-                self.verify_demisto_in_readme_content(),
                 self.verify_template_not_in_readme(),
                 self.verify_copyright_section_in_readme_content(),
                 # self.has_no_markdown_lint_errors(),
@@ -217,7 +216,7 @@ class ReadMeValidator(BaseValidator):
             ):
                 return False
             logger.info(
-                "[yellow]Validation of MDX file failed due to unable to start the mdx server, skipping.[/yellow]"
+                "<yellow>Validation of MDX file failed due to unable to start the mdx server, skipping.</yellow>"
             )
             return True
         for _ in range(RETRIES_VERIFY_MDX):
@@ -487,7 +486,7 @@ class ReadMeValidator(BaseValidator):
         current_pack_name = self.pack_path.name
         if ignore_packs and current_pack_name in ignore_packs:
             logger.info(
-                f"[yellow]Default sentences check - Pack {current_pack_name} is ignored.[/yellow]"
+                f"<yellow>Default sentences check - Pack {current_pack_name} is ignored.</yellow>"
             )
             return errors  # returns empty string
 
@@ -640,33 +639,6 @@ class ReadMeValidator(BaseValidator):
                     invalid_lines.append(line_num + 1)
 
         return invalid_lines
-
-    @error_codes("RM106")
-    def verify_demisto_in_readme_content(self):
-        """
-        Checks if there are the word 'Demisto' in the README content.
-
-        Return:
-            True if 'Demisto' does not exist in the README content, and False if it does.
-        """
-
-        # Checks if the Readme.md is in the main repo.
-        if str(self.file_path.parent) == self.content_path:
-            return True
-
-        is_valid = True
-        invalid_lines = self.check_readme_content_contain_text(
-            text_list=["demisto ", " demisto"], is_lower=True
-        )
-
-        if invalid_lines:
-            error_message, error_code = Errors.readme_contains_demisto_word(
-                invalid_lines
-            )
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                is_valid = False
-
-        return is_valid
 
     @error_codes("RM115")
     def has_no_markdown_lint_errors(self):

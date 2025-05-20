@@ -8,7 +8,6 @@ from .abstract_pack_objects.yaml_unify_content_object import YAMLContentUnifiedO
 from .author_image.author_image import AuthorImage
 from .change_log.change_log import ChangeLog
 from .classifier.classifier import Classifier, ClassifierMapper, OldClassifier
-from .connection.connection import Connection
 from .contributors.contributors import Contributors
 from .corrlation_rule.correlation_rule import CorrelationRule
 from .dashboard.dashboard import Dashboard

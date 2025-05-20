@@ -9,17 +9,15 @@ from demisto_sdk.commands.common.constants import (
     HTML_IMAGE_LINK_REGEX,
     URL_IMAGE_LINK_REGEX,
 )
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    ContentTypes,
     ValidationResult,
 )
 
-ContentTypes = ContentItem
 
-
-class RelativeImagePathValidator(BaseValidator, ABC):
+class RelativeImagePathValidator(BaseValidator[ContentTypes], ABC):
     error_code = "RM108"
     description = (
         "This validation verifies that images in the readme and description files are"
@@ -38,15 +36,20 @@ class RelativeImagePathValidator(BaseValidator, ABC):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        return [
-            ValidationResult(
-                validator=self,
-                message=self.error_message.format(error_message),
-                content_object=content_item,
-            )
-            for content_item in content_items
-            if (error_message := self.validate_content_items(content_item))
-        ]
+        validation_results: List[ValidationResult] = []
+        for content_item in content_items:
+            if invalid_md_files := self.validate_content_items(content_item):
+                for file_path, error_message in invalid_md_files.items():
+                    if error_message:
+                        validation_results.append(
+                            ValidationResult(
+                                validator=self,
+                                message=self.error_message.format(error_message),
+                                content_object=content_item,
+                                path=file_path,
+                            )
+                        )
+        return validation_results
 
     def validate_content_items(self, content_item):
         """Check if the content items are valid by passing verify_absolute_images_not_exist and verify_relative_saved_in_doc_files.
@@ -55,7 +58,7 @@ class RelativeImagePathValidator(BaseValidator, ABC):
             content_item {ContentTypes} -- The content item to check.
 
         Returns:
-            str -- The error message if the content item isn't valid.
+            dict -- The error message for each related file mapped by related file path.
         """
         raise NotImplementedError("Subclasses must implement this method.")
 
@@ -74,20 +77,24 @@ class RelativeImagePathValidator(BaseValidator, ABC):
             re.IGNORECASE | re.MULTILINE,
         )
         if absolute_links:
-            # Extract the actual link from the found absolute links,
-            absolute_links = [
-                # extracts the URL from the matched link tuple, choosing between absolute_link[1] or absolute_link[2]
-                # based on whether the link matches the URL or HTML pattern.
-                absolute_link[1] if absolute_link[0] else absolute_link[2]
-                for absolute_link in absolute_links
-            ]
+            # Extract and filter links in a single pass
+            absolute_links_without_assets = []
 
-            return (
-                " Invalid image path(s) have been detected."
-                " Please utilize relative paths instead for the links provided below.:\n"
-                + "\n".join(absolute_links)
-                + "\n\n"
-            )
+            for absolute_link in absolute_links:
+                # Choose the appropriate link
+                link = absolute_link[1] if absolute_link[0] else absolute_link[2]
+
+                # Skip links that contain "content-assets" and end with ".gif"
+                if link and not ("content-assets" in link and link.endswith(".gif")):
+                    absolute_links_without_assets.append(link)
+
+            if absolute_links_without_assets:
+                return (
+                    " Invalid image path(s) have been detected."
+                    " Please utilize relative paths instead for the links provided below:\n"
+                    + "\n".join(absolute_links_without_assets)
+                    + "\n\n"
+                )
         return ""
 
     def verify_relative_saved_in_doc_files(self, content_item) -> str:
@@ -117,7 +124,7 @@ class RelativeImagePathValidator(BaseValidator, ABC):
         invalid_links = [
             rel_img
             for rel_img in relative_images
-            if not re.match(DOC_FILE_IMAGE_REGEX, rel_img)
+            if not re.search(DOC_FILE_IMAGE_REGEX, rel_img)
         ]
         if invalid_links:
             return (

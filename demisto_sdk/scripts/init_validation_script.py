@@ -26,6 +26,7 @@ RELATED_FILES_DICT = {
     "11": "RelatedFileType.SECRETS_IGNORE",
     "12": "RelatedFileType.AUTHOR_IMAGE",
     "13": "RelatedFileType.RELEASE_NOTE",
+    "14": "RelatedFileType.VERSION_CONFIG",
 }
 
 CONTENT_TYPES_DICT = {
@@ -204,8 +205,8 @@ class ValidationInitializer:
         calling all the info requesting functions
         """
         self.initialize_error_details()
-        self.initialize_validation_details()
         self.initialize_using_graph()
+        self.initialize_validation_details()
         self.initialize_file_name()
 
     def initialize_error_details(self):
@@ -310,7 +311,7 @@ class ValidationInitializer:
             )
         else:
             self.class_declaration = (
-                f"class {validator_class_name}(BaseValidator, ABC):"
+                f"class {validator_class_name}(BaseValidator[ContentTypes], ABC):"
             )
 
     def initialize_git_statuses(self):
@@ -626,12 +627,12 @@ Fill the content types as the numbers they appear as: """
     def Generate_files_according_execution_mode(self, execution_mode):
         """Generate files according to the execution_mode if using graph"""
         if execution_mode == "AllFiles":
+            expected_execution_mode = "[ExecutionMode.ALL_FILES]"
+            all_files = True
+        else:
             expected_execution_mode = (
                 "[ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]"
             )
-            all_files = True
-        else:
-            expected_execution_mode = "[ExecutionMode.ALL_FILES]"
             all_files = False
         return f"""
 from __future__ import annotations
@@ -640,17 +641,14 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import ExecutionMode
 {self.related_files_imports}
-from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
-)
+from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
 
 from demisto_sdk.commands.validate.validators.{self.error_code[:2]}_validators.{self.file_name} import {self.class_name}
 
 {self.supported_content_types}
 
 
-class {self.class_name}{execution_mode}({self.class_name}, BaseValidator[ContentTypes]):
+class {self.class_name}{execution_mode}({self.class_name}):
     expected_execution_mode = {expected_execution_mode}
 
     def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:

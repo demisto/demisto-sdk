@@ -206,7 +206,7 @@ class GitUtil:
         try:
             commit = self.get_commit(commit_or_branch, from_remote=from_remote)
         except CommitOrBranchNotFoundError:
-            logger.exception(f"Could not get commit {commit_or_branch}")
+            logger.debug(f"Could not get commit {commit_or_branch}")
             return False
 
         path = str(self.path_from_git_root(path))
@@ -325,7 +325,7 @@ class GitUtil:
             # if remote does not exist we are checking against the commit sha1
             else:
                 committed = {
-                    Path(os.path.join(item.a_path))
+                    Path(os.path.join(item.a_path))  # type: ignore
                     for item in self.repo.commit(rev=branch)
                     .diff(current_branch_or_hash)
                     .iter_change_type("M")
@@ -352,7 +352,7 @@ class GitUtil:
 
         # get all the files that are staged on the branch and identified as modified.
         staged = {
-            Path(os.path.join(item.a_path))
+            Path(os.path.join(item.a_path))  # type: ignore
             for item in self.repo.head.commit.diff().iter_change_type("M")
         }.union(untracked).union(untrue_rename_staged)
 
@@ -373,7 +373,7 @@ class GitUtil:
         # if remote does not exist we are checking against the commit sha1
         else:
             committed_added = {
-                Path(os.path.join(item.a_path))
+                Path(os.path.join(item.a_path))  # type: ignore
                 for item in self.repo.commit(rev=branch)
                 .diff(current_branch_or_hash)
                 .iter_change_type("A")
@@ -446,7 +446,7 @@ class GitUtil:
         # if remote does not exist we are checking against the commit sha1
         else:
             committed = {
-                Path(os.path.join(item.a_path))
+                Path(os.path.join(item.a_path))  # type: ignore
                 for item in self.repo.commit(rev=branch)
                 .diff(current_branch_or_hash)
                 .iter_change_type("A")
@@ -477,7 +477,7 @@ class GitUtil:
 
         # get all the files that are staged on the branch and identified as added.
         staged = {
-            Path(os.path.join(item.a_path))
+            Path(os.path.join(item.a_path))  # type: ignore
             for item in self.repo.head.commit.diff().iter_change_type("A")
         }.union(untrue_rename_staged)
 
@@ -487,7 +487,7 @@ class GitUtil:
         # so will added it from the staged added files.
         # same goes to untracked files - can be identified as modified but are actually added against prev_ver
         committed_added_locally_modified = {
-            Path(os.path.join(item.a_path))
+            Path(os.path.join(item.a_path))  # type: ignore
             for item in self.repo.head.commit.diff().iter_change_type("M")
         }.intersection(committed)
         untracked = untracked_added.union(untracked_modified.intersection(committed))
@@ -550,7 +550,7 @@ class GitUtil:
             # if remote does not exist we are checking against the commit sha1
             else:
                 committed = {
-                    Path(os.path.join(item.a_path))
+                    Path(os.path.join(item.a_path))  # type: ignore
                     for item in self.repo.commit(rev=branch)
                     .diff(current_branch_or_hash)
                     .iter_change_type("D")
@@ -571,7 +571,7 @@ class GitUtil:
 
         # get all the files that are staged on the branch and identified as added.
         staged = {
-            Path(os.path.join(item.a_path))
+            Path(os.path.join(item.a_path))  # type: ignore
             for item in self.repo.head.commit.diff().iter_change_type("D")
         }.union(untracked)
 
@@ -631,7 +631,7 @@ class GitUtil:
             # if remote does not exist we are checking against the commit sha1
             else:
                 committed = {
-                    (Path(item.a_path), Path(item.b_path))
+                    (Path(item.a_path), Path(item.b_path))  # type: ignore
                     for item in self.repo.commit(rev=branch)
                     .diff(current_branch_or_hash)
                     .iter_change_type("R")
@@ -667,7 +667,7 @@ class GitUtil:
 
         # get all the files that are staged on the branch and identified as renamed and are with 100% score.
         staged = {
-            (Path(item.a_path), Path(item.b_path))
+            (Path(item.a_path), Path(item.b_path))  # type: ignore
             for item in self.repo.head.commit.diff().iter_change_type("R")
             if item.score == 100
         }.union(untracked)
@@ -793,7 +793,7 @@ class GitUtil:
         try:
             if requested_status != "R":
                 return {
-                    Path(os.path.join(item.a_path))
+                    Path(os.path.join(item.a_path))  # type: ignore
                     for item in self.repo.commit("HEAD~1")
                     .diff()
                     .iter_change_type(requested_status)
@@ -801,7 +801,7 @@ class GitUtil:
                 }
             else:
                 return {
-                    (Path(item.a_path), Path(item.b_path))
+                    (Path(item.a_path), Path(item.b_path))  # type: ignore
                     for item in self.repo.commit("HEAD~1")
                     .diff()
                     .iter_change_type(requested_status)
@@ -940,9 +940,9 @@ class GitUtil:
 
         if staged_only:
             return {
-                Path(item.b_path)
+                Path(item.b_path)  # type: ignore
                 for item in self.repo.head.commit.diff().iter_change_type("R")
-                if item.score < 100
+                if item.score < 100  # type: ignore
                 and self._check_file_status(
                     file_path=str(item.b_path), remote=remote, branch=branch
                 )
@@ -965,32 +965,40 @@ class GitUtil:
 
         # if remote does not exist we are checking against the commit sha1
         return {
-            Path(item.b_path)
+            Path(item.b_path)  # type: ignore
             for item in self.repo.commit(rev=branch)
             .diff(current_branch_or_hash)
             .iter_change_type("R")
-            if item.score < 100
+            if item.score < 100  # type: ignore
             and self._check_file_status(
                 file_path=str(item.b_path), remote=remote, branch=branch
             )
             == status
         }
 
-    def _check_file_status(self, file_path: str, remote: str, branch: str) -> str:
+    def _check_file_status(
+        self,
+        file_path: str,
+        remote: str,
+        branch: str,
+        feature_branch_or_hash: Optional[str] = None,
+    ) -> str:
         """Get the git status of a given file path
         Args:
             file_path (str): the file path to check
             remote (str): the used git remote
             branch (str): the used git branch
+            feature_branch_or_hash (str | None): compare against a specific branch or commit
         Returns:
             str: the git status of the file (M, A, R, D).
         """
-        current_branch_or_hash = self.get_current_git_branch_or_hash()
+        if not feature_branch_or_hash:
+            feature_branch_or_hash = self.get_current_git_branch_or_hash()
 
         if remote:
             diff_line = self.repo.git.diff(
                 "--name-status",
-                f"{remote}/{branch}...{current_branch_or_hash}",
+                f"{remote}/{branch}...{feature_branch_or_hash}",
                 "--",
                 file_path,
             )
@@ -998,7 +1006,7 @@ class GitUtil:
         # if remote does not exist we are checking against the commit sha1
         else:
             diff_line = self.repo.git.diff(
-                "--name-status", f"{branch}...{current_branch_or_hash}", "--", file_path
+                "--name-status", f"{branch}...{feature_branch_or_hash}", "--", file_path
             )
 
         if not diff_line:

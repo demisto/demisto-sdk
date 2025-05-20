@@ -21,6 +21,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
         """Parses the classifier.
@@ -31,7 +32,9 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
         Raises:
             IncorrectParserException: When detecting this content item is a mapper.
         """
-        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
+        )
         self.type = self.json_data.get("type")
         if self.type != "classification":
             raise IncorrectParserException(correct_parser=MapperParser)
@@ -47,12 +50,14 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
     def get_filters_and_transformers_from_complex_value(
         self, complex_value: dict
     ) -> None:
-        for filter in complex_value.get("filters", []):
+        filters = complex_value.get("filters") or []
+        for filter in filters:
             if filter:
                 filter_script = filter[0].get("operator").split(".")[-1]
                 self.add_dependency_by_id(filter_script, ContentType.SCRIPT)
 
-        for transformer in complex_value.get("transformers", []):
+        transformers = complex_value.get("transformers") or []
+        for transformer in transformers:
             if transformer:
                 transformer_script = transformer.get("operator").split(".")[-1]
                 self.add_dependency_by_id(transformer_script, ContentType.SCRIPT)
@@ -88,6 +93,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.PLATFORM,
         }
 
     @property

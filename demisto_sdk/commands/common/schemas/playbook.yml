@@ -38,6 +38,8 @@ mapping:
     type: bool
   deprecated:
     type: bool
+  issilent:
+    type: bool
   starttaskid:
     type: str
     required: true
@@ -402,9 +404,11 @@ mapping:
     type: seq
     sequence:
     - type: str
-      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem']
-
-
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem', 'platform']
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str
 # playbook->tasks
   name:xsoar:
     type: str

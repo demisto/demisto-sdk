@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json, is_external_repository
 from demisto_sdk.commands.content_graph.common import ContentType, PackTags
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -134,7 +135,8 @@ class PackMetadata(BaseModel):
             }
             if self.default_data_source_name
             and self.default_data_source_id
-            and marketplace == MarketplaceVersions.MarketplaceV2
+            and marketplace
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             and not self.hybrid
             else None  # if the pack is multiple marketplace, override the initially set str default_data_source_id
         )
@@ -188,12 +190,17 @@ class PackMetadata(BaseModel):
         collected_content_items: dict = {}
         content_displays: dict = {}
         for content_item in content_items:
-            if content_item.is_test:
-                logger.debug(
-                    f"Skip loading the {content_item.name} test playbook/script into metadata.json"
-                )
+            if should_ignore_item_in_metadata(content_item, marketplace):
                 continue
-
+            new_content_item = None
+            try:
+                new_content_item = BaseContent.from_path(content_item.upload_path)  # type:ignore[assignment]
+            except Exception as e:
+                logger.error(
+                    f"Failed to generate content item for {content_item.upload_path}, will use original content item: {str(e)}"
+                )
+            if new_content_item:
+                content_item = new_content_item  # type:ignore[assignment]
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,
@@ -205,19 +212,22 @@ class PackMetadata(BaseModel):
             )
 
         content_displays = {
-            content_type: content_type_display
-            if (
-                collected_content_items[content_type]
-                and len(collected_content_items[content_type]) == 1
+            content_type: (
+                content_type_display
+                if (
+                    collected_content_items[content_type]
+                    and len(collected_content_items[content_type]) == 1
+                )
+                else f"{content_type_display}s"
             )
-            else f"{content_type_display}s"
             for content_type, content_type_display in content_displays.items()
         }
         if (
             self.default_data_source_id
             and self.default_data_source_name
             and collected_content_items
-            and marketplace == MarketplaceVersions.MarketplaceV2
+            and marketplace
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             and not self.hybrid
         ):
             # order collected_content_items integration list so that the defaultDataSource will be first
@@ -244,7 +254,8 @@ class PackMetadata(BaseModel):
         return {
             r.content_item_to.object_id: {
                 "mandatory": r.mandatorily,
-                "minVersion": r.content_item_to.current_version,  # type:ignore[attr-defined]
+                # Get the minVersion either from the pack_metadata if exists, or from graph calculation
+                "minVersion": r.target_min_version or r.content_item_to.current_version,  # type:ignore[attr-defined]
                 "author": self._get_author(
                     r.content_item_to.author,  # type:ignore[attr-defined]
                     marketplace,
@@ -336,7 +347,8 @@ class PackMetadata(BaseModel):
         tags |= (
             {PackTags.DATA_SOURCE}
             if self.is_data_source(content_items)
-            and marketplace == MarketplaceVersions.MarketplaceV2
+            and marketplace
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             else set()
         )
 
@@ -430,14 +442,16 @@ class PackMetadata(BaseModel):
         When a support level is provided, the returned display names are without the contribution suffix.
         """
         return [
-            {
-                "name": IntegrationScriptUnifier.remove_support_from_display_name(
-                    integration.display_name, support_level
-                ),
-                "id": integration.object_id,  # same as integration.name
-            }
-            if include_name
-            else integration.object_id
+            (
+                {
+                    "name": IntegrationScriptUnifier.remove_support_from_display_name(
+                        integration.display_name, support_level
+                    ),
+                    "id": integration.object_id,  # same as integration.name
+                }
+                if include_name
+                else integration.object_id
+            )
             for integration in content_items.integration
             if integration.is_data_source()
         ]
@@ -494,6 +508,8 @@ class PackMetadata(BaseModel):
             return author
         elif marketplace == MarketplaceVersions.MarketplaceV2:
             return author.replace("Cortex XSOAR", "Cortex XSIAM")
+        elif marketplace == MarketplaceVersions.PLATFORM:
+            return author.replace("Cortex XSOAR", "Cortex")
         raise ValueError(f"Unknown marketplace version for author: {marketplace}")
 
     def _add_item_to_metadata_list(
@@ -637,3 +653,24 @@ class PackMetadata(BaseModel):
             )  # to avoid duplicate modeling rules with different versions and ids
         ]
         return filtered_content_items[0] if filtered_content_items else None
+
+
+def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersions):
+    """
+    Checks whether content item should be ignored from metadata
+    """
+    if content_item.is_test:
+        logger.debug(
+            f"Skipping {content_item.name} in metadata creation: item is test playbook/script."
+        )
+    elif content_item.is_silent:
+        logger.debug(
+            f"Skipping {content_item.name} in metadata creation: item is silent playbook/trigger."
+        )
+    elif marketplace not in content_item.marketplaces:
+        logger.debug(
+            f"Skipping {content_item.name} in metadata creation: item is not supported in {marketplace=}."
+        )
+    else:
+        return False
+    return True

@@ -20,11 +20,16 @@ class IndicatorFieldParser(
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
+        )
         self.associated_to_all = self.json_data.get("associatedToAll")
         self.select_values = self.json_data.get("selectValues")
+        self.required = self.json_data.get("required")
+        self.associated_types = self.json_data.get("associatedTypes")
 
         self.connect_to_dependencies()
 
@@ -59,6 +64,7 @@ class IndicatorFieldParser(
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.PLATFORM,
         }
 
     def connect_to_dependencies(self) -> None:

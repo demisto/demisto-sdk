@@ -1,7 +1,6 @@
 import html
 import os.path
 import re
-from enum import Enum
 from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -19,15 +18,6 @@ class HEADER_TYPE:
     H3 = "###"
 
 
-class CONFIGURATION_SECTION_STEPS(Enum):
-    STEP_1 = "1. Navigate to **Settings** > **Integrations** > **Servers & Services**."
-    STEP_2_TEMPLATE = "2. Search for {}."
-    STEP_3 = (
-        "3. Click **Add instance** to create and configure a new integration instance."
-    )
-    STEP_4 = "4. Click **Test** to validate the URLs, token, and connection."
-
-
 def save_output(path, file_name, content):
     """
     Creates the output file in path.
@@ -40,7 +30,7 @@ def save_output(path, file_name, content):
     with open(output, mode="w", encoding="utf8") as doc_file:
         doc_file.write(content)
     add_file_to_git(output)
-    logger.info(f"[green]Output file was saved to '{output}'[/green]")
+    logger.info(f"<green>Output file was saved to '{output}'</green>")
 
 
 def generate_section(title, data=""):
@@ -144,8 +134,10 @@ def generate_table_section(
             section = [""]
         return section
 
-    section.extend([text, "    |", "    |"]) if numbered_section else section.extend(
-        [text, "|", "|"]
+    (
+        section.extend([text, "    |", "    |"])
+        if numbered_section
+        else section.extend([text, "|", "|"])
     )
     header_index = len(section) - 2
     for key in data[0]:
@@ -384,5 +376,5 @@ def add_file_to_git(file_path: str):
         run_command(f"git add {file_path}", exit_on_error=False)
     except RuntimeError:
         logger.info(
-            f"[yellow]Could not add the following file to git: {file_path}[/yellow]"
+            f"<yellow>Could not add the following file to git: {file_path}</yellow>"
         )

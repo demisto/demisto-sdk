@@ -1,4 +1,4 @@
-import logging
+import logging  # noqa: TID251 # special case: parallel logging
 import os
 import re
 import sys
@@ -41,11 +41,6 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import get_demisto_version, get_json_file
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import acquire_test_lock
-from demisto_sdk.commands.test_content.mock_server import (
-    RESULT,
-    MITMProxy,
-    run_with_mock,
-)
 from demisto_sdk.commands.test_content.ParallelLoggingManager import (
     ParallelLoggingManager,
 )
@@ -116,7 +111,6 @@ class TestConfiguration:
         self.runnable_on_docker_only: bool = test_configuration.get(
             "runnable_on_docker_only", False
         )
-        self.is_mockable = test_configuration.get("is_mockable")
         self.context_print_dt = test_configuration.get("context_print_dt")
         self.test_integrations: List[str] = self._parse_integrations_conf(
             test_configuration
@@ -133,7 +127,6 @@ class TestConfiguration:
         self.external_playbook_config: dict = test_configuration.get(
             "external_playbook_config", {}
         )
-        self.is_first_playback_failed: bool = False
         self.number_of_executions: int = 0
         self.number_of_successful_runs: int = 0
 
@@ -162,11 +155,8 @@ class TestConfiguration:
             MarketplaceVersions(marketplace) for marketplace in marketplaces_conf
         ]
 
-        if MarketplaceVersions.XSOAR in marketplaces_conf:
-            marketplaces_conf.append(MarketplaceVersions.XSOAR_SAAS)
-
-        if MarketplaceVersions.XSOAR_ON_PREM in marketplaces_conf:
-            marketplaces_conf.append(MarketplaceVersions.XSOAR)
+        # The marketplace parsing to server version
+        # happens in the marketplaces_match_server_type method.
 
         return marketplaces_conf
 
@@ -188,11 +178,7 @@ class TestPlaybook:
         self.start_time = datetime.now(timezone.utc)
         self.build_context = build_context
         self.server_context = server_context
-
         self.configuration: TestConfiguration = test_configuration
-        self.is_mockable: bool = (
-            self.configuration.playbook_id not in server_context.unmockable_test_ids
-        )
         self.test_suite = TestSuite(self.configuration.playbook_id)
         self.test_suite_system_out: List[str] = []
         self.test_suite_system_err: List[str] = []
@@ -259,15 +245,6 @@ class TestPlaybook:
         self.test_suite.add_property("cloud_ui_path", self.server_context.cloud_ui_path)
         self.test_suite.add_property(
             "instances_ips", ",".join(self.build_context.instances_ips)
-        )
-
-        self.test_suite.add_property(
-            "playbook.is_mockable",
-            self.is_mockable,  # type:ignore[arg-type]
-        )
-        self.test_suite.add_property(
-            "is_mockable",
-            self.configuration.is_mockable,  # type:ignore[arg-type]
         )
         self.test_suite.add_property("playbook_id", self.configuration.playbook_id)
         self.test_suite.add_property("from_version", self.configuration.from_version)
@@ -523,7 +500,6 @@ class TestPlaybook:
             instance_created = integration.create_integration_instance(
                 client,
                 self.configuration.playbook_id,
-                self.is_mockable,
                 instance_configuration,
             )
             if not instance_created:
@@ -810,12 +786,10 @@ class BuildContext:
         # --------------------------- Testing preparation -------------------------------
 
         self.tests_data_keeper = TestResults(
-            self.conf.unmockable_integrations,
             kwargs["artifacts_path"],
             kwargs.get("service_account"),
             kwargs.get("artifacts_bucket"),
         )
-        self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.machine_assignment_json = get_json_file(kwargs["machine_assignment"])
 
         # --------------------------- Machine preparation logic -------------------------------
@@ -946,38 +920,6 @@ class BuildContext:
 
         return res.json()
 
-    # --------------------------- Testing logic -------------------------------
-
-    def _get_unmockable_tests_from_conf(self) -> list:
-        """
-        Extracts the unmockable test playbook by looking at all playbooks that has unmockable integrations
-        Returns:
-            A with unmockable playbook names
-        """
-        unmockable_integrations = self.conf.unmockable_integrations
-        tests = self.conf.tests
-        unmockable_tests = []
-        for test_record in tests:
-            test_name = test_record.playbook_id
-            unmockable_integrations_used = [
-                integration_name
-                for integration_name in test_record.test_integrations
-                if integration_name in unmockable_integrations
-            ]
-            if (
-                test_name
-                and (not test_record.test_integrations or unmockable_integrations_used)
-                or not self.isAMI
-            ):
-                unmockable_tests.append(test_record)
-                # In case a test has both - an unmockable integration and is configured with is_mockable=False -
-                # it will be added twice if we don't continue.
-                continue
-            if test_record.is_mockable is False:
-                unmockable_tests.append(test_record)
-
-        return unmockable_tests
-
 
 class ServerContext:
     def __init__(
@@ -993,7 +935,6 @@ class ServerContext:
         self.server_ip = server_private_ip
         self.server_url: str = ""
         self.build_context = build_context
-        self.proxy: Optional[MITMProxy] = None
         self.cloud_ui_path = None
         self.client: Optional[DefaultApi] = None
         self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
@@ -1004,18 +945,11 @@ class ServerContext:
         # --------------------------- Testing preparation -------------------------------
 
         self.use_retries_mechanism: bool = use_retries_mechanism
-        self.unmockable_test_ids: Set[str] = set()
+        self.test_ids: Set[str] = set()
         self.filtered_tests: List[str] = []
         self.test_retries_queue: Queue = Queue()
         self.all_integrations_configurations: Optional[List] = []
-        self.mockable_tests_to_run: Queue = Queue()
-        self.unmockable_tests_to_run: Queue = Queue()
-
-    def _execute_unmockable_tests(self):
-        """
-        Iterates the mockable tests queue and executes them as long as there are tests to execute
-        """
-        self._execute_tests(self.unmockable_tests_to_run)
+        self.tests_to_run: Queue = Queue()
 
     def _execute_tests(self, queue: Queue):
         """
@@ -1038,31 +972,11 @@ class ServerContext:
             self.configure_new_client()
             if TestContext(
                 self.build_context, test_playbook, self.client, self
-            ).execute_test(self.proxy):
+            ).execute_test():
                 self.executed_tests.add(test_playbook.configuration.playbook_id)
             else:
                 queue.put(test_playbook)
             queue.task_done()
-
-    def _execute_mockable_tests(self):
-        """
-        Iterates the mockable tests queue and executes them as long as there are tests to execute
-        """
-        if self.proxy:
-            self.proxy.configure_proxy_in_demisto(
-                proxy=f"{self.proxy.ami.internal_ip}:{self.proxy.PROXY_PORT}",
-                username=self.build_context.secret_conf.server_username,
-                password=self.build_context.secret_conf.server_password,
-                server=self.server_url,
-            )
-        self._execute_tests(self.mockable_tests_to_run)
-        if self.proxy:
-            self.proxy.configure_proxy_in_demisto(
-                proxy="",
-                username=self.build_context.secret_conf.server_username,
-                password=self.build_context.secret_conf.server_password,
-                server=self.server_url,
-            )
 
     def _execute_failed_tests(self):
         self._execute_tests(self.test_retries_queue)
@@ -1111,9 +1025,38 @@ class ServerContext:
     def reset_containers(self):
         pass
 
-    @abstractmethod
     def execute_tests(self):
-        pass
+        try:
+            self.build_context.logging_module.info(
+                f"Starts tests with server url - {get_ui_url(self.server_url)}",
+                real_time=True,
+            )
+            self.build_context.logging_module.info(
+                f"Running the following tests: {self.filtered_tests}",
+                real_time=True,
+            )
+            self.build_context.logging_module.info("Running tests", real_time=True)
+            self.configure_new_client()
+            self._execute_tests(self.tests_to_run)
+            if self.use_retries_mechanism:
+                self.build_context.logging_module.info(
+                    "Running failed tests", real_time=True
+                )
+                self._execute_failed_tests()
+            self.build_context.logging_module.info(
+                f"Finished tests with server url - " f"{get_ui_url(self.server_url)}",
+                real_time=True,
+            )
+
+            self.build_context.logging_module.debug(
+                f"Tests executed on server {self.server_ip}:\n"
+                f"{pformat(self.executed_tests)}"
+            )
+        except Exception:
+            self.build_context.logging_module.exception("~~ Thread failed ~~")
+            raise
+        finally:
+            self.build_context.logging_module.execute_logs()
 
     @abstractmethod
     def _get_all_integration_config(self) -> Optional[list]:
@@ -1198,15 +1141,21 @@ class ServerContext:
                 queue.put(playbook)
         return queue
 
-    @abstractmethod
-    def _get_tests_to_run(self) -> Tuple[Queue, Queue]:
+    def _get_tests_to_run(self) -> Queue:
         """
-        Gets tests to run in the current build and updates the unmockable tests ids set
+        Gets tests to run in the current build.
         Returns:
-            - A queue with mockable TestPlaybook instances to run in the current build
-            - A queue with unmockable TestPlaybook instances to run in the current build
+            - A queue with TestPlaybook instances to run in the current build.
         """
-        pass
+        tests_to_run = self._get_all_tests()
+        self.test_ids_to_run = {test.playbook_id for test in tests_to_run}
+
+        self.build_context.logging_module.debug(
+            f"Tests IDs selected to run: {pformat(self.test_ids_to_run)}"
+        )
+
+        tests_queue = self._generate_tests_queue(tests_to_run)
+        return tests_queue
 
 
 class CloudServerContext(ServerContext):
@@ -1238,10 +1187,7 @@ class CloudServerContext(ServerContext):
             .get("tests", {})
             .get(TEST_PLAYBOOKS, [])
         )
-        (
-            self.mockable_tests_to_run,
-            self.unmockable_tests_to_run,
-        ) = self._get_tests_to_run()
+        self.tests_to_run = self._get_tests_to_run()
         self.all_integrations_configurations = self._get_all_integration_config()
 
     def reset_containers(self):
@@ -1265,27 +1211,6 @@ class CloudServerContext(ServerContext):
         # In XSIAM or XSOAR SAAS - We don't use demisto username
         os.environ.pop("DEMISTO_USERNAME", None)
         return self.get_all_installed_integrations_configurations(self.server_url)
-
-    def _get_tests_to_run(self) -> Tuple[Queue, Queue]:
-        """
-        Gets tests to run in the current build and updates the unmockable tests ids set
-        Returns:
-            - A queue with mockable TestPlaybook instances to run in the current build
-            - A queue with unmockable TestPlaybook instances to run in the current build
-        """
-        all_tests = self._get_all_tests()
-
-        # In XSIAM or XSOAR SAAS - Set all tests to unmockable.
-        unmockable_tests = all_tests
-        self.unmockable_test_ids = {test.playbook_id for test in all_tests}
-
-        self.build_context.logging_module.debug(
-            f"Unmockable tests selected: {pformat(self.unmockable_test_ids)}"
-        )
-
-        mockable_tests_queue = self._generate_tests_queue([])
-        unmockable_tests_queue = self._generate_tests_queue(unmockable_tests)
-        return mockable_tests_queue, unmockable_tests_queue
 
     def check_if_can_create_manual_alerts(self):
         """
@@ -1374,42 +1299,6 @@ class CloudServerContext(ServerContext):
                 "Please add it in order to create Manual Correlation Rule."
             )
 
-    def execute_tests(self):
-        try:
-            self.build_context.logging_module.info(
-                f"Starts tests with server url - {get_ui_url(self.server_url)}",
-                real_time=True,
-            )
-            self.build_context.logging_module.info(
-                f"Running the following tests: {self.filtered_tests}",
-                real_time=True,
-            )
-            self._execute_mockable_tests()
-            self.build_context.logging_module.info(
-                "Running mock-disabled tests", real_time=True
-            )
-            self.configure_new_client()
-            self._execute_unmockable_tests()
-            if self.use_retries_mechanism:
-                self.build_context.logging_module.info(
-                    "Running failed tests", real_time=True
-                )
-                self._execute_failed_tests()
-            self.build_context.logging_module.info(
-                f"Finished tests with server url - " f"{get_ui_url(self.server_url)}",
-                real_time=True,
-            )
-
-            self.build_context.logging_module.debug(
-                f"Tests executed on server {self.server_ip}:\n"
-                f"{pformat(self.executed_tests)}"
-            )
-        except Exception:
-            self.build_context.logging_module.exception("~~ Thread failed ~~")
-            raise
-        finally:
-            self.build_context.logging_module.execute_logs()
-
 
 class OnPremServerContext(ServerContext):
     def __init__(
@@ -1423,22 +1312,12 @@ class OnPremServerContext(ServerContext):
         self.server_url = f"https://{self.server_ip}"
         self.api_key = build_context.api_key
         self.configure_new_client()
-
-        self.proxy = MITMProxy(
-            server_private_ip,
-            self.build_context.logging_module,
-            build_number=self.build_context.build_number,
-            branch_name=self.build_context.build_name,
-        )
         self.filtered_tests = (
             self.build_context.machine_assignment_json.get("xsoar-machine", {})
             .get("tests", {})
             .get(TEST_PLAYBOOKS, [])
         )
-        (
-            self.mockable_tests_to_run,
-            self.unmockable_tests_to_run,
-        ) = self._get_tests_to_run()
+        self.tests_to_run = self._get_tests_to_run()
         self.all_integrations_configurations = self._get_all_integration_config()
 
     def reset_containers(self):
@@ -1469,83 +1348,6 @@ class OnPremServerContext(ServerContext):
             return []
 
         return self.get_all_installed_integrations_configurations(self.server_url)
-
-    def _get_tests_to_run(self) -> Tuple[Queue, Queue]:
-        """
-        Gets tests to run in the current build and updates the unmockable tests ids set
-        Returns:
-            - A queue with mockable TestPlaybook instances to run in the current build
-            - A queue with unmockable TestPlaybook instances to run in the current build
-        """
-        all_tests = self._get_all_tests()
-        # In XSIAM or XSOAR SAAS - Set all tests to unmockable.
-        unmockable_tests = []
-        if self.build_context.server or not self.build_context.isAMI:
-            unmockable_tests = all_tests
-            self.unmockable_test_ids = {test.playbook_id for test in all_tests}
-        elif self.build_context.isAMI:
-            unmockable_tests = self.build_context.conf_unmockable_tests
-            self.unmockable_test_ids = {
-                test.playbook_id for test in self.build_context.conf_unmockable_tests
-            }
-        self.build_context.logging_module.debug(
-            f"Unmockable tests selected: {pformat(self.unmockable_test_ids)}"
-        )
-        mockable_tests = [
-            test
-            for test in all_tests
-            if test.playbook_id not in self.unmockable_test_ids
-        ]
-        self.build_context.logging_module.debug(
-            f"Mockable tests selected: {pformat([test.playbook_id for test in mockable_tests])}"
-        )
-        mockable_tests_queue = self._generate_tests_queue(mockable_tests)
-        unmockable_tests_queue = self._generate_tests_queue(unmockable_tests)
-        return mockable_tests_queue, unmockable_tests_queue
-
-    def execute_tests(self):
-        try:
-            self.build_context.logging_module.info(
-                f"Starts tests with server url - {get_ui_url(self.server_url)}",
-                real_time=True,
-            )
-            self.build_context.logging_module.info(
-                f"Running the following tests: {self.filtered_tests}",
-                real_time=True,
-            )
-            self._execute_mockable_tests()
-            self.build_context.logging_module.info(
-                "Running mock-disabled tests", real_time=True
-            )
-            self.configure_new_client()
-            self._execute_unmockable_tests()
-            if self.use_retries_mechanism:
-                self.build_context.logging_module.info(
-                    "Running failed tests", real_time=True
-                )
-                self._execute_failed_tests()
-            self.build_context.logging_module.info(
-                f"Finished tests with server url - " f"{get_ui_url(self.server_url)}",
-                real_time=True,
-            )
-
-            self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)
-
-            if (
-                self.build_context.isAMI
-                and self.proxy
-                and self.proxy.should_update_mock_repo
-            ):
-                self.proxy.push_mock_files()
-            self.build_context.logging_module.debug(
-                f"Tests executed on server {self.server_ip}:\n"
-                f"{pformat(self.executed_tests)}"
-            )
-        except Exception:
-            self.build_context.logging_module.exception("~~ Thread failed ~~")
-            raise
-        finally:
-            self.build_context.logging_module.execute_logs()
 
 
 class IntegrationConfiguration:
@@ -1599,9 +1401,6 @@ class Conf:
         self.skipped_tests: Dict[str, str] = conf.get("skipped_tests")  # type: ignore
         self.skipped_integrations: Dict[str, str] = conf.get("skipped_integrations")  # type: ignore
         self.skipped_integrations_set = set(self.skipped_integrations.keys())
-        self.unmockable_integrations: Dict[str, str] = conf.get(
-            "unmockable_integrations"
-        )  # type: ignore
         self.parallel_integrations: List[str] = conf["parallel_integrations"]
         self.docker_thresholds = conf.get("docker_thresholds", {}).get("images", {})
 
@@ -1609,7 +1408,6 @@ class Conf:
 class TestResults:
     def __init__(
         self,
-        unmockable_integrations,
         artifacts_path: str,
         service_account: str = None,
         artifacts_bucket: str = None,
@@ -1622,7 +1420,6 @@ class TestResults:
         self.rerecorded_tests: List[str] = []
         self.empty_files: List[str] = []
         self.test_results_xml_file = JUnitXml()
-        self.unmockable_integrations = unmockable_integrations
         self.playbook_skipped_integration: Set[str] = set()
         self.artifacts_path = Path(artifacts_path)
         self.service_account = service_account
@@ -1655,32 +1452,26 @@ class TestResults:
 
     def print_test_summary(
         self,
-        is_ami: bool = True,
         logging_module: Union[Any, ParallelLoggingManager] = logging,
     ):
         """
         Takes the information stored in the tests_data_keeper and prints it in a human-readable way.
         Args:
-            is_ami: indicating if the server running the tests is an AMI or not.
             logging_module: Logging module to use for test_summary
         """
         succeed_playbooks = self.succeeded_playbooks
         failed_playbooks = self.failed_playbooks
         skipped_tests = self.skipped_tests
-        unmocklable_integrations = self.unmockable_integrations
         skipped_integration = self.skipped_integrations
-        rerecorded_tests = self.rerecorded_tests
-        empty_files = self.empty_files
 
         succeed_count = len(succeed_playbooks)
         failed_count = len(failed_playbooks)
-        rerecorded_count = len(rerecorded_tests) if is_ami else 0
-        empty_mocks_count = len(empty_files) if is_ami else 0
         logging_module.real_time_logs_only = True
         logging_module.info("TEST RESULTS:")
         logging_module.info(
             f"Number of playbooks tested - {succeed_count + failed_count}"
         )
+
         if succeed_count:
             logging_module.success(f"Number of succeeded tests - {succeed_count}")
             logging_module.success(
@@ -1689,41 +1480,6 @@ class TestResults:
                         [
                             f"\n\t\t\t\t\t\t\t - {playbook_id}"
                             for playbook_id in succeed_playbooks
-                        ]
-                    )
-                )
-            )
-        if rerecorded_count > 0:
-            logging_module.debug(
-                f"Number of tests with failed playback and successful re-recording - {rerecorded_count}"
-            )
-            logging_module.debug(
-                "Tests with failed playback and successful re-recording: {}".format(
-                    "".join(
-                        [
-                            f"\n\t\t\t\t\t\t\t - {playbook_id}"
-                            for playbook_id in rerecorded_tests
-                        ]
-                    )
-                )
-            )
-
-        if empty_mocks_count > 0:
-            logging_module.debug(
-                f"Successful tests with empty mock files count- {empty_mocks_count}:\n"
-            )
-            proxy_explanation = (
-                "\t\t\t\t\t\t\t (either there were no http requests or no traffic is passed through the proxy.\n"
-                "\t\t\t\t\t\t\t Investigate the playbook and the integrations.\n"
-                "\t\t\t\t\t\t\t If the integration has no http traffic, add to unmockable_integrations in conf.json)"
-            )
-            logging_module.debug(proxy_explanation)
-            logging_module.debug(
-                "Successful tests with empty mock files: {}".format(
-                    "".join(
-                        [
-                            f"\n\t\t\t\t\t\t\t - {playbook_id}"
-                            for playbook_id in empty_files
                         ]
                     )
                 )
@@ -1737,13 +1493,6 @@ class TestResults:
         if skipped_tests:
             self.print_table("Skipped Tests", skipped_tests, logging_module.debug)
 
-        if unmocklable_integrations:
-            self.print_table(
-                "Unmockable Integrations",
-                unmocklable_integrations,
-                logging_module.debug,
-            )
-
         if failed_count:
             logging_module.error(f"Number of failed tests - {failed_count}:")
             logging_module.error(
@@ -1756,6 +1505,13 @@ class TestResults:
                     )
                 )
             )
+
+        content_status_update = ContentStatusUpdater(
+            artifacts_folder=self.artifacts_path
+        )
+        content_status_update.update_content_status(
+            successful_tests=succeed_playbooks, failed_tests=list(failed_playbooks)
+        )
 
     @staticmethod
     def print_table(table_name: str, table_data: dict, logging_method: Callable):
@@ -1851,16 +1607,13 @@ class Integration:
         config_item.params = json.loads(item_as_string)
         return config_item
 
-    def _set_integration_params(
-        self, server_url: str, playbook_id: str, is_mockable: bool
-    ) -> bool:
+    def _set_integration_params(self, server_url: str, playbook_id: str) -> bool:
         """
         Finds the matching configuration for the integration in content-test-data conf.json file
         in accordance with the configured instance name if exist and configures the proxy parameter if needed
         Args:
             server_url: The url of the demisto server to configure the integration in
             playbook_id: The ID of the playbook for which the integration should be configured
-            is_mockable: Should the proxy parameter be set to True or not
 
         Returns:
             True if found a matching configuration else False if found more than one configuration candidate returns False
@@ -1918,10 +1671,6 @@ class Integration:
             else:
                 self.configuration = integration_params[0]
 
-        if is_mockable:
-            self.playbook.log_debug(f"Configuring {self} with proxy params")
-            for param in ("proxy", "useProxy", "useproxy", "insecure", "unsecure"):
-                self.configuration.params[param] = True  # type: ignore
         return True
 
     def _get_integration_config(self, server_url: str) -> Optional[dict]:
@@ -2083,7 +1832,6 @@ class Integration:
         self,
         client: DefaultApi,
         playbook_id: str,
-        is_mockable: bool,
         instance_configuration: dict,
     ) -> bool:
         """
@@ -2092,13 +1840,12 @@ class Integration:
             instance_configuration: The configuration of the instance to create.
             client: The demisto_client instance to use.
             playbook_id: The playbook id for which the instance should be created.
-            is_mockable: Indicates whether the integration should be configured with proxy=True or not.
 
         Returns:
             The integration configuration as it exists on the server after it was configured
         """
         server_url = client.api_client.configuration.host
-        self._set_integration_params(server_url, playbook_id, is_mockable)
+        self._set_integration_params(server_url, playbook_id)
         configuration = self._get_integration_config(
             client.api_client.configuration.host
         )
@@ -2120,7 +1867,7 @@ class Integration:
 
         self.playbook.log_info(
             f"Configuring instance for {self} (instance name: {instance_name}, "  # type: ignore
-            f'validate "test-module": {self.configuration.should_validate_test_module})'
+            f'validate "test-module": {self.configuration.should_validate_test_module})'  # type:ignore[union-attr]
         )
 
         # define module instance:
@@ -2766,7 +2513,7 @@ class TestContext:
             self.playbook.close_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
         elif self.incident_id and test_passed:
-            self.playbook.delete_incident(self.client, self.incident_id)
+            self.playbook.close_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
 
     def _run_docker_threshold_test(self):
@@ -2851,43 +2598,28 @@ class TestContext:
         )
 
     @staticmethod
-    def _get_failed_stage(
-        status: Optional[str], is_second_playback_run: bool = False
-    ) -> str:
+    def _get_failed_stage(status: Optional[str]) -> str:
         """
         Gets the test failed stage.
 
         Args:
             status: what is the test status.
-            is_second_playback_run: Is The playbook run on a second playback after a freshly created record.
         """
-        if is_second_playback_run:
-            return "Second playback"
         if status == PB_Status.FAILED_DOCKER_TEST:
             return "Docker test"
         if status == PB_Status.CONFIGURATION_FAILED:
             return "Configuration"
         return "Execution"
 
-    def _add_to_failed_playbooks(
-        self, is_second_playback_run: bool = False, status: Optional[str] = None
-    ):
+    def _add_to_failed_playbooks(self, status: Optional[str] = None):
         """
         Adds the playbook to the failed playbooks list
 
         Args:
-            is_second_playback_run: Is The playbook run on a second playback after a freshly created record
+            status: The test status.
         """
-        failed_stage = self._get_failed_stage(status, is_second_playback_run)
+        failed_stage = self._get_failed_stage(status)
         playbook_name_to_add = self.playbook.configuration.playbook_id
-        if not self.playbook.is_mockable:
-            playbook_name_to_add += " (Mock Disabled)"
-        if is_second_playback_run:
-            self.playbook.log_error(
-                "Playback on newly created record has failed, see the following confluence page for help:\n"
-                "https://confluence.paloaltonetworks.com/display/DemistoContent/Debug+Proxy-Related+Test+Failures"
-            )
-            playbook_name_to_add += " (Second Playback)"
 
         self._add_details_to_failed_tests_report(
             self.playbook.configuration.playbook_id, failed_stage
@@ -2920,15 +2652,15 @@ class TestContext:
             self._clean_incident_if_successful(playbook_state)
         return playbook_state
 
-    def _execute_unmockable_test(self) -> bool:
+    def _execute_test(self) -> bool:
         """
-        Executes an unmockable test
+        Executes a test
         In case the test failed to execute because one of the test's integrations were locked will return False
         as indication that the test was not done.
         Returns:
             True if test has finished its execution else False
         """
-        self.playbook.log_info(f"------ Test {self} start ------ (Mock: Disabled)")
+        self.playbook.log_info(f"------ Test {self} start ------")
         with acquire_test_lock(self.playbook) as lock:
             if lock:
                 status = self._incident_and_docker_test()
@@ -2941,9 +2673,6 @@ class TestContext:
     def _update_complete_status(
         self,
         is_first_execution: bool,
-        is_record_run: bool,
-        is_first_playback_run: bool,
-        is_second_playback_run: bool,
         use_retries_mechanism: bool,
         number_of_executions: int,
     ):
@@ -2951,45 +2680,28 @@ class TestContext:
         Updates (if necessary) the playbook status in case the original status is complete.
         Args:
             is_first_execution: whether it is the first execution or not.
-            is_record_run: whether it is a record execution or not.
-            is_first_playback_run: whether it is the first playback execution or not.
-            is_second_playback_run: whether it is the second playback execution or not.
             use_retries_mechanism: whether to use the retries mechanism or not.
             number_of_executions: the number of times the test was executed.
         Returns:
             PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
             PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
-            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
             PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
         """
 
         self.playbook.log_success(f"PASS: {self} succeed")
 
-        # count successful run only when recording mockable or executing unmockable test.
-        if not is_first_playback_run and not is_second_playback_run:
-            self.playbook.configuration.number_of_successful_runs += 1
-
-        # mockable test, first record passed, still need to check second playback.
-        if is_first_execution and is_record_run:
-            return PB_Status.SECOND_PLAYBACK_REQUIRED
-
-        # first/last playback passed (mockable tests) or first execution passed (unmockable tests). adding to succeeded
-        # playbooks, no more executions are needed.
-        if is_first_execution or is_first_playback_run or is_second_playback_run:
+        # if the first execution passed. adding to succeeded playbooks, no more executions are needed.
+        if is_first_execution:
             return PB_Status.COMPLETED
 
+        self.playbook.configuration.number_of_successful_runs += 1
         if use_retries_mechanism:
-            return self._update_status_based_on_retries_mechanism(
-                number_of_executions, is_record_run
-            )
+            return self._update_status_based_on_retries_mechanism(number_of_executions)
 
         return PB_Status.COMPLETED
 
     def _update_failed_status(
         self,
-        is_record_run: bool,
-        is_first_playback_run: bool,
-        is_second_playback_run: bool,
         use_retries_mechanism: bool,
         number_of_executions: int,
     ):
@@ -2997,49 +2709,41 @@ class TestContext:
         Handles the playbook failed status
         - Logs according to the results
         Args:
-            is_record_run: whether it is a record execution.
-            is_first_playback_run: whether it is the first playback execution.
-            is_second_playback_run: whether it is the second playback execution.
             use_retries_mechanism: whether to use the retries' mechanism.
             number_of_executions: how many times the test was executed.
         Returns:
             PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
             PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
-            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
             PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
         """
-        # in case the first playback run fails, the code should continue to record the playback.
-        if is_first_playback_run:
-            return PB_Status.IN_PROGRESS
-
-        # in case the second playback run fails, test-playbook is considered a failure.
-        if is_second_playback_run:
-            return PB_Status.FAILED
 
         # in case of using the retries mechanism, the function should determine whether the test-playbook is considered
         # a failure or give it another try.
         if use_retries_mechanism:
-            return self._update_status_based_on_retries_mechanism(
-                number_of_executions, is_record_run
-            )
+            return self._update_status_based_on_retries_mechanism(number_of_executions)
 
         # the test-playbook is considered a failed playbook.
         return PB_Status.FAILED
 
-    def _update_status_based_on_retries_mechanism(
-        self, number_of_executions, is_record_run
-    ):
+    def _update_status_based_on_retries_mechanism(self, number_of_executions):
         """
         Updates the status of a test-playbook when using the retries' mechanism.
         Args:
             number_of_executions: how many times the test was executed.
-            is_record_run: whether it is a record execution.
         Returns:
             PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
             PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
-            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
             PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
         """
+        if (
+            number_of_executions == 2
+            and self.playbook.configuration.number_of_successful_runs == 0
+        ):
+            self.playbook.log_info(
+                "Test-Playbook was executed 2 times, and passed only 0 times. Adding to failed playbooks."
+            )
+            return PB_Status.FAILED
+
         if number_of_executions < MAX_RETRIES:
             self.playbook.log_info(
                 f"Using the retries mechanism for test {self}.\n"
@@ -3054,14 +2758,6 @@ class TestContext:
                 self.playbook.configuration.number_of_successful_runs
                 >= RETRIES_THRESHOLD
             ):
-                # It's not enough that the record run will pass to declare the test as successful,
-                # we need the second playback to pass as well.
-                if is_record_run:
-                    self.playbook.log_info(
-                        f"Test-Playbook recording was executed {MAX_RETRIES} times, and passed {self.playbook.configuration.number_of_successful_runs} times."
-                        f" Running second playback."
-                    )
-                    return PB_Status.SECOND_PLAYBACK_REQUIRED
                 self.playbook.log_info(
                     f"Test-Playbook was executed {MAX_RETRIES} times, and passed {self.playbook.configuration.number_of_successful_runs} times."
                     f" Adding to succeeded playbooks."
@@ -3077,20 +2773,14 @@ class TestContext:
     def _update_playbook_status(
         self,
         status: str,
-        is_first_playback_run: bool = False,
-        is_second_playback_run: bool = False,
-        is_record_run: bool = False,
     ) -> str:
         """
         Updates the playbook status if necessary and adds the test to the right set (succeeded/failed) if test is done.
         Args:
             status: The string representation of the playbook execution
-            is_first_playback_run: Is the playbook runs in playback mode
-            is_second_playback_run: Is The playbook run on a second playback after a freshly created record
         Returns:
             PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
             PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
-            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
             PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
         """
         use_retries_mechanism = self.server_context.use_retries_mechanism
@@ -3100,9 +2790,6 @@ class TestContext:
 
             updated_status = self._update_complete_status(
                 is_first_execution,
-                is_record_run,
-                is_first_playback_run,
-                is_second_playback_run,
                 use_retries_mechanism,
                 number_of_executions,
             )
@@ -3113,9 +2800,6 @@ class TestContext:
 
         else:  # test-playbook failed
             updated_status = self._update_failed_status(
-                is_record_run,
-                is_first_playback_run,
-                is_second_playback_run,
                 use_retries_mechanism,
                 number_of_executions,
             )
@@ -3123,64 +2807,8 @@ class TestContext:
         if updated_status == PB_Status.COMPLETED:
             self._add_to_succeeded_playbooks()
         elif updated_status == PB_Status.FAILED:
-            self._add_to_failed_playbooks(is_second_playback_run=is_second_playback_run)
+            self._add_to_failed_playbooks()
         return updated_status
-
-    def _execute_mockable_test(self, proxy: MITMProxy):
-        """
-        Executes a mockable test
-        In case the test failed to execute because one of the test's integrations were locked will return False
-        as indication that the test was not done.
-        Returns:
-            True if test has finished its execution else False
-        """
-        # we want to test first playback only once (we want to skip it when using retries mechanism)
-        if (
-            not self.playbook.configuration.is_first_playback_failed
-            and proxy.has_mock_file(self.playbook.configuration.playbook_id)
-        ):
-            self.playbook.log_info(f"------ Test {self} start ------ (Mock: Playback)")
-            with run_with_mock(
-                proxy, self.playbook.configuration.playbook_id
-            ) as result_holder:
-                status = self._incident_and_docker_test()
-                status = self._update_playbook_status(
-                    status, is_first_playback_run=True
-                )
-                result_holder[RESULT] = status == PB_Status.COMPLETED
-            if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
-                return True
-            self.playbook.log_warning(
-                "Test failed with mock, recording new mock file. (Mock: Recording)"
-            )
-            self.playbook.configuration.is_first_playback_failed = True
-
-        # Running on record mode since playback has failed or mock file was not found
-        self.playbook.log_info(f"------ Test {self} start ------ (Mock: Recording)")
-        with acquire_test_lock(self.playbook) as lock:
-            if not lock:
-                # If the integrations were not locked - the test has not finished its execution
-                return False
-
-            with run_with_mock(
-                proxy, self.playbook.configuration.playbook_id, record=True
-            ) as result_holder:
-                status = self._incident_and_docker_test()
-                self.playbook.configuration.number_of_executions += 1
-                status = self._update_playbook_status(status, is_record_run=True)
-                result_holder[RESULT] = status == PB_Status.SECOND_PLAYBACK_REQUIRED
-        # Running playback after successful record to verify the record is valid for future runs
-        if status == PB_Status.SECOND_PLAYBACK_REQUIRED:
-            self.playbook.log_info(
-                f"------ Test {self} start ------ (Mock: Second playback)"
-            )
-            with run_with_mock(
-                proxy, self.playbook.configuration.playbook_id
-            ) as result_holder:
-                status = self._run_incident_test()
-                self._update_playbook_status(status, is_second_playback_run=True)
-                result_holder[RESULT] = status == PB_Status.COMPLETED
-        return True
 
     def _is_runnable_on_current_server_instance(self) -> bool:
         """
@@ -3202,13 +2830,11 @@ class TestContext:
             return False
         return True
 
-    def execute_test(self, proxy: Optional[MITMProxy] = None) -> bool:
+    def execute_test(self) -> bool:
         """
         Executes the test and return a boolean that indicates whether the test was executed or not.
-        In case the test was not executed - it will be returned to the queue and will be collected later in the future
+        In case the test was not executed, it will be returned to the queue and will be collected later in the future
         by some other ServerContext instance.
-        Args:
-            proxy: The MITMProxy instance to use in the current test
 
         Returns:
             True if the test was executed by the instance else False
@@ -3217,11 +2843,7 @@ class TestContext:
         try:
             if not self._is_runnable_on_current_server_instance():
                 return False
-            return (
-                self._execute_mockable_test(proxy)  # type: ignore[arg-type]
-                if self.playbook.is_mockable
-                else self._execute_unmockable_test()
-            )
+            return self._execute_test()
         except Exception:
             self.playbook.log_exception(
                 f"Unexpected error while running test on playbook {self.playbook}"
@@ -3244,3 +2866,95 @@ class TestContext:
 
     def __repr__(self):
         return str(self)
+
+
+class ContentStatusUpdater:
+    def __init__(self, artifacts_folder: Path) -> None:
+        """
+        Initializes the ContentStatusUpdater with the folder and content status filename.
+
+        Args:
+            artifacts_folder (str): The folder where the content status file is located.
+        """
+        self.artifacts_folder = artifacts_folder
+        self.content_status_filename = "content_status.json"
+        self.content_status_path = Path(artifacts_folder, self.content_status_filename)
+        self.content_status: Dict[Any, Any] = {}
+
+    def update_content_status(
+        self, successful_tests: List[str], failed_tests: List[str]
+    ) -> None:
+        """
+        Updates the content status with the provided test results, adding the failed and successful playbooks.
+        content_status.json is a file that keeps track of the failed and successful playbooks in the content repository
+        and is generated by the nightly build.
+
+        Args:
+            successful_tests (List[str]): List of successful playbooks to be added.
+            failed_tests (List[str]): List of failed playbooks to be added.
+        """
+        logging.info(
+            f"Starting update_content_status with {len(failed_tests)} failed tests and "
+            f"{len(successful_tests)} successful tests."
+        )
+
+        self._load_content_status()
+        self._initialize_content_status_keys()
+
+        self._update_playbooks("failed_playbooks", failed_tests)
+        self._update_playbooks("successful_playbooks", successful_tests)
+
+        self._save_content_status()
+
+    def _load_content_status(self) -> None:
+        """
+        Attempts to load the content status from the file. If the file doesn't exist or is invalid, initializes an empty status.
+        """
+        if self.content_status_path.exists():
+            logging.info(f"Content status file exists at {self.content_status_path}")
+            with open(self.content_status_path, "r") as content_file:
+                self.content_status = json.load(content_file)
+                logging.info(f"Loaded content status: {self.content_status}")
+        else:
+            logging.info(
+                f"Initializing empty content status at {self.content_status_path}"
+            )
+            self.content_status = {}
+
+    def _initialize_content_status_keys(self) -> None:
+        """
+        Ensures that the 'failed_playbooks' and 'successful_playbooks' keys are initialized in the content status.
+        """
+        for key in ["failed_playbooks", "successful_playbooks"]:
+            if key not in self.content_status:
+                logging.info(
+                    f"'{key}' key not in content_status. Initializing to empty list."
+                )
+                self.content_status[key] = []
+
+    def _update_playbooks(self, key: str, tests: List[str]) -> None:
+        """
+        Updates the given key in the content status dictionary with the provided list of tests, ensuring no duplicates.
+
+        Args:
+            key (str): The key ('failed_playbooks' or 'successful_playbooks') to update.
+            tests (List[str]): The list of tests (either successful or failed) to add to the content status.
+        """
+        current_playbooks = self.content_status.get(key, [])
+        new_playbooks = sorted(set(tests).difference(current_playbooks))
+        if new_playbooks:
+            logging.info(f"Adding {len(new_playbooks)} new {key}: {new_playbooks}")
+            current_playbooks.extend(new_playbooks)
+        else:
+            logging.info(f"No new {key} to add.")
+
+    def _save_content_status(self) -> None:
+        """
+        Saves the updated content status back to the specified file path.
+        """
+        Path(self.content_status_path.name).mkdir(exist_ok=True)
+        with open(self.content_status_path, "w") as content_file:
+            json.dump(self.content_status, content_file, indent=4)
+            logging.info(
+                f"Saved updated content_status.json to {self.content_status_path}"
+            )

@@ -22,10 +22,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import (
-    write_dict,
-)
+from demisto_sdk.commands.common.tools import should_disable_multiprocessing, write_dict
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -52,6 +51,9 @@ SKIPPED_HOOKS = {"format", "validate", "secrets"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 INTEGRATIONS_BATCH = 300
+
+PY_TEST_FILE_SUFFIX = "_test.py"
+PS1_TEST_FILE_SUFFIX = ".Tests.ps1"
 
 
 class PreCommitRunner:
@@ -118,6 +120,7 @@ class PreCommitRunner:
         precommit_env: dict,
         verbose: bool = False,
         stdout: Optional[int] = subprocess.PIPE,
+        json_output_path: Optional[Path] = None,
     ) -> int:
         """This function runs the pre-commit process and waits until finished.
         We run this function in multithread.
@@ -127,23 +130,29 @@ class PreCommitRunner:
             precommit_env (dict): The pre-commit environment variables
             verbose (bool, optional): Whether print verbose output. Defaults to False.
             stdout (Optional[int], optional): The way to handle stdout. Defaults to subprocess.PIPE.
-
+            json_output_path (Optional[Path]): Optional path to a JSON formatted output file/dir where pre-commit hooks
+                results are stored. None by deafult, and file is not created.
         Returns:
             int: return code - 0 if hook passed, 1 if failed
         """
         logger.debug(f"Running hook {hook_id}")
+
+        if json_output_path and json_output_path.is_dir():
+            json_output_path = json_output_path / f"{hook_id}.json"
+
         process = PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
             verbose,
             stdout,
             command=["run", "-a", hook_id],
+            json_output_path=json_output_path,
         )
 
         if process.stdout:
-            logger.info("%s", process.stdout)
+            logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
         if process.stderr:
-            logger.error("%s", process.stderr)
+            logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
         return process.returncode
 
     @staticmethod
@@ -153,6 +162,7 @@ class PreCommitRunner:
         verbose: bool,
         stdout=None,
         command: Optional[List[str]] = None,
+        json_output_path: Optional[Path] = None,
     ) -> subprocess.CompletedProcess:
         """Runs a process of pre-commit
 
@@ -162,13 +172,15 @@ class PreCommitRunner:
             verbose (bool): whether to print verbose output
             stdout (optional): use `subprocess.PIPE` to capture stdout. Use None to print it. Defaults to None.
             command (Optional[List[str]], optional): The pre-commit command to run. Defaults to None.
-
+            json_output_path (Optional[Path]): Optional path to a JSON formatted output file/dir where pre-commit hooks
+                results are stored. None by deafult, and file is not created.
         Returns:
             _type_: _description_
         """
         if command is None:
             command = ["run", "-a"]
-        return subprocess.run(
+        output = subprocess.PIPE if json_output_path else stdout
+        completed_process = subprocess.run(
             list(
                 filter(
                     None,
@@ -185,10 +197,17 @@ class PreCommitRunner:
             ),
             env=precommit_env,
             cwd=CONTENT_PATH,
-            stdout=stdout,
-            stderr=stdout,
+            stdout=output,
+            stderr=output,
             universal_newlines=True,
         )
+        # Only writing failed hook results.
+        if json_output_path and completed_process.returncode != 0:
+            with open(json_output_path, "w") as json_file:
+                json = JSON_Handler()
+                json.dump(completed_process.__dict__, json_file, indent=4)
+
+        return completed_process
 
     @staticmethod
     def run(
@@ -196,6 +215,7 @@ class PreCommitRunner:
         precommit_env: dict,
         verbose: bool,
         show_diff_on_failure: bool,
+        json_output_path: Optional[Path] = None,
     ) -> int:
         """Execute the pre-commit hooks on the files.
 
@@ -204,38 +224,54 @@ class PreCommitRunner:
             precommit_env (dict): The environment variables dict.
             verbose (bool):  Whether run pre-commit in verbose mode.
             show_diff_on_failure (bool): Whether to show diff when a hook fail or not.
-
+            json_output_path (Optional[Path]): Optional path to a JSON formatted output file/dir where pre-commit hooks
+                results are stored. None by deafult, and file is not created.
         Returns:
             int: The exit code - 0 if everything is valid.
         """
         if pre_commit_context.mode:
             logger.info(
-                f"[yellow]Running pre-commit hooks in `{pre_commit_context.mode}` mode.[/yellow]"
+                f"<yellow>Running pre-commit hooks in `{pre_commit_context.mode}` mode.</yellow>"
             )
         if pre_commit_context.run_hook:
-            logger.info(f"[yellow]Running hook {pre_commit_context.run_hook}[/yellow]")
+            logger.info(f"<yellow>Running hook {pre_commit_context.run_hook}</yellow>")
 
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
         # we don't need the context anymore, we can clear it to free up memory for the pre-commit checks
         del pre_commit_context
+
         # install dependencies of all hooks in advance
         PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
             verbose,
             command=["install-hooks"],
+            json_output_path=json_output_path
+            if not json_output_path or json_output_path.is_file()
+            else json_output_path / "install-hooks.json",
         )
 
         num_processes = cpu_count()
         all_hooks_exit_codes = []
-        for (
-            original_hook_id,
-            generated_hooks,
-        ) in PreCommitRunner.original_hook_id_to_generated_hook_ids.items():
+        hooks_to_run = PreCommitRunner.original_hook_id_to_generated_hook_ids.items()
+        logger.debug(f"run {hooks_to_run=}")
+
+        for original_hook_id, generated_hooks in hooks_to_run:
             if generated_hooks:
                 logger.debug(f"Running hook {original_hook_id} with {generated_hooks}")
                 hook_ids = generated_hooks.hook_ids
-                if generated_hooks.parallel and len(hook_ids) > 1:
+                if (
+                    generated_hooks.parallel
+                    and len(hook_ids) > 1
+                    and not should_disable_multiprocessing()
+                ):
+                    # We shall not write results to the same file if running hooks in parallel, therefore,
+                    # writing the results to a parallel directory.
+                    if json_output_path and not json_output_path.is_dir():
+                        json_output_path = (
+                            json_output_path.parent / json_output_path.stem
+                        )
+                        json_output_path.mkdir(exist_ok=True)
                     with ThreadPool(num_processes) as pool:
                         current_hooks_exit_codes = pool.map(
                             partial(
@@ -243,6 +279,7 @@ class PreCommitRunner:
                                 precommit_env=precommit_env,
                                 verbose=verbose,
                                 stdout=subprocess.PIPE,
+                                json_output_path=json_output_path,
                             ),
                             hook_ids,
                         )
@@ -252,7 +289,7 @@ class PreCommitRunner:
                             hook_id,
                             precommit_env=precommit_env,
                             verbose=verbose,
-                            stdout=None,
+                            json_output_path=json_output_path,
                         )
                         for hook_id in hook_ids
                     ]
@@ -274,7 +311,9 @@ class PreCommitRunner:
                 stdout=subprocess.PIPE,
                 universal_newlines=True,
             )
-            logger.info(git_diff.stdout)
+            logger.info(  # noqa: PLE1205
+                "{}", git_diff.stdout
+            )
         return return_code
 
     @staticmethod
@@ -284,6 +323,7 @@ class PreCommitRunner:
         show_diff_on_failure: bool = False,
         exclude_files: Optional[Set[Path]] = None,
         dry_run: bool = False,
+        json_output_path: Optional[Path] = None,
     ) -> int:
         """Trigger the relevant hooks.
 
@@ -293,7 +333,8 @@ class PreCommitRunner:
             show_diff_on_failure (bool, optional): Whether to show diff when a hook fail or not. Defaults to False.
             exclude_files (Optional[Set[Path]], optional): Files to exclude when running. Defaults to None.
             dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode. Defaults to False.
-
+            json_output_path (Path, optional): Optional path to a JSON formatted output file/dir where pre-commit hooks
+                results are stored. None by default, and file is not created.
         Returns:
             int: The exit code, 0 if nothing failed.
         """
@@ -328,9 +369,10 @@ class PreCommitRunner:
         PreCommitRunner.prepare_hooks(pre_commit_context)
 
         if pre_commit_context.all_files:
-            pre_commit_context.precommit_template["exclude"] += (
-                f"|{join_files(exclude_files or set())}"
-            )
+            if exclude_files:
+                pre_commit_context.precommit_template["exclude"] += (
+                    f"|{join_files(exclude_files)}"
+                )
         else:
             pre_commit_context.precommit_template["files"] = join_files(
                 pre_commit_context.files_to_run
@@ -345,7 +387,11 @@ class PreCommitRunner:
             )
             return ret_val
         ret_val = PreCommitRunner.run(
-            pre_commit_context, precommit_env, verbose, show_diff_on_failure
+            pre_commit_context,
+            precommit_env,
+            verbose,
+            show_diff_on_failure,
+            json_output_path,
         )
         return ret_val
 
@@ -398,13 +444,22 @@ def group_by_language(
     for integration_script_paths in more_itertools.chunked_even(
         integrations_scripts_mapping.keys(), INTEGRATIONS_BATCH
     ):
-        with multiprocessing.Pool(processes=cpu_count()) as pool:
-            content_items = pool.map(BaseContent.from_path, integration_script_paths)
-            for content_item in content_items:
-                if not content_item or not isinstance(content_item, IntegrationScript):
-                    continue
-                # content-item is a script/integration
+        if should_disable_multiprocessing():
+            # Run sequentially
+            content_items: List[Optional[BaseContent]] = list(
+                map(BaseContent.from_path, integration_script_paths)
+            )
+        else:
+            # Use multiprocessing (not supported when running within Content scripts/integrations).
+            with multiprocessing.Pool(processes=cpu_count()) as pool:
+                content_items = list(
+                    pool.map(BaseContent.from_path, integration_script_paths)
+                )
+
+        for content_item in content_items:
+            if isinstance(content_item, IntegrationScript):
                 integrations_scripts.add(content_item)
+
     logger.debug("Pre-Commit: Finished parsing all integrations and scripts")
     exclude_integration_script = set()
     for integration_script in integrations_scripts:
@@ -508,6 +563,7 @@ def pre_commit_manager(
     docker_image: Optional[str] = None,
     run_hook: Optional[str] = None,
     pre_commit_template_path: Optional[Path] = None,
+    json_output_path: Optional[Path] = None,
 ) -> int:
     """Run pre-commit hooks .
 
@@ -522,12 +578,15 @@ def pre_commit_manager(
         force_run_hooks (Optional[List[str]], optional): List for hooks to force run. Defaults to None.
         verbose (bool, optional): Whether run pre-commit in verbose mode. Defaults to False.
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
-        dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the config file.
+        dry_run (bool, optional): Whether to run the pre-commit hooks in dry-run mode, which will only create the
+            config file.
         run_docker_hooks (bool, optional): Whether to run docker based hooks or not.
         image_ref: (str, optional): Override the image from YAML / native config file with this image reference.
-        docker_image: (str, optional): Override the `docker_image` property in the template file. This is a comma separated list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.
+        docker_image: (str, optional): Override the `docker_image` property in the template file. This is a comma
+            separated list of: `from-yml`, `native:dev`, `native:ga`, `native:candidate`.
         pre_commit_template_path (Path, optional): Path to the template pre-commit file.
-
+        json_output_path (Path, optional): Optional path to a JSON formatted output file/dir where pre-commit hooks results
+            are stored. None by default, and file is not created.
     Returns:
         int: Return code of pre-commit.
     """
@@ -596,6 +655,7 @@ def pre_commit_manager(
         show_diff_on_failure,
         exclude_files,
         dry_run,
+        json_output_path,
     )
 
 
@@ -610,19 +670,30 @@ def add_related_files(file: Path) -> Set[Path]:
     Returns:
         Set[Path]: The set of related files.
     """
-    files_to_run = set()
-    files_to_run.add(file)
-    if ".yml" in (file.suffix for file in files_to_run):
+    files_to_run = {file}
+    if ".yml" in file.suffix:
         py_file_path = file.with_suffix(".py")
         if py_file_path.exists():
             files_to_run.add(py_file_path)
-    if {".py", ".ps1"}.intersection({file.suffix for file in files_to_run}):
-        if ".py" in (file.suffix for file in files_to_run):
-            test_file = file.with_name(f"{file.stem}_test.py")
-        else:
-            test_file = file.with_name(f"{file.stem}.Tests.ps1")
-        if test_file.exists():
-            files_to_run.add(test_file)
+
+    # Identifying test files by their suffix.
+    if not {".py", ".ps1"}.intersection({file.suffix for file in files_to_run}):
+        return files_to_run
+
+    test_file_suffix = (
+        PY_TEST_FILE_SUFFIX
+        if ".py" in (file.suffix for file in files_to_run)
+        else PS1_TEST_FILE_SUFFIX
+    )
+    test_files = []
+    if file.parent.exists():
+        test_files = [
+            _file
+            for _file in file.parent.iterdir()
+            if _file.name.endswith(test_file_suffix)
+        ]
+        files_to_run.update(test_files)
+
     return files_to_run
 
 
@@ -671,8 +742,8 @@ def preprocess_files(
             See CIAC-10968 for more info.
             """
             logger.info(
-                "\n[cyan]CONTRIB_BRANCH environment variable found, running pre-commit in contribution flow "
-                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)[/cyan]"
+                "\n<cyan>CONTRIB_BRANCH environment variable found, running pre-commit in contribution flow "
+                "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)</cyan>"
             )
     elif all_files:
         raw_files = all_git_files

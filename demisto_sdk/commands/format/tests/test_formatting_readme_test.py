@@ -1,6 +1,7 @@
 from typing import Optional
 
 import pytest
+import typer
 
 from demisto_sdk.commands.common.hook_validations.readme import (
     ReadmeUrl,
@@ -38,7 +39,7 @@ def test_format_with_update_docker_flag(mocker, monkeypatch):
     Check when run demisto-sdk format execute with -ud (update docker) from repo which does not have a mdx server,
     (but has a node), that the run ends without any exception.
     """
-    monkeypatch.setenv("COLUMNS", "1000")
+
     from demisto_sdk.commands.common.git_util import GitUtil
     from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
     from demisto_sdk.commands.format.format_module import format_manager
@@ -54,7 +55,11 @@ def test_format_with_update_docker_flag(mocker, monkeypatch):
         return_value=(set(), set(), set(), set(), True),
     )
     mocker.patch.object(GitUtil, "deleted_files", return_value=set())
-    assert format_manager(input=f"{git_path()}/Packs/TestPack", update_docker=True) == 0
+    with pytest.raises(typer.Exit):
+        assert (
+            format_manager(input=f"{git_path()}/Packs/TestPack", update_docker=True)
+            == 0
+        )
 
 
 def get_new_url_from_user_assume_yes(relative_url: list) -> Optional[str]:

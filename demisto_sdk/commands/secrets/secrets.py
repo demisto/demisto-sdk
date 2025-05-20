@@ -159,9 +159,9 @@ class SecretsValidator:
 
                 secrets_found_string += (
                     "For more information about whitelisting visit: "
-                    "https://xsoar.pan.dev/docs/concepts/demisto-sdk#secrets"
+                    "https://docs-cortex.paloaltonetworks.com/r/1/Demisto-SDK-Guide/secrets"
                 )
-                logger.info(f"[red]{secrets_found_string}[/red]")
+                logger.info(f"<red>{secrets_found_string}</red>")
         return secret_to_location_mapping
 
     def reformat_secrets_output(self, secrets_list):
@@ -338,7 +338,7 @@ class SecretsValidator:
                 )
             except re.error as err:
                 error_string = f"Could not use secrets with item: {item}"
-                logger.info(f"[red]{error_string}[/red]")
+                logger.info(f"<red>{error_string}</red>")
                 raise re.error(error_string, str(err))
         return file_content
 
@@ -504,10 +504,10 @@ class SecretsValidator:
                     )
                     if not Path(white_list_line).is_file():
                         logger.info(
-                            f"[yellow]{white_list_line} not found.\n"
+                            f"<yellow>{white_list_line} not found.\n"
                             "please add the file name in the following format\n"
                             "file:[Scripts|Integrations|Playbooks]/name/file.example\n"
-                            "e.g. file:Scripts/HelloWorldScript/HelloWorldScript.py[/yellow]"
+                            "e.g. file:Scripts/HelloWorldScript/HelloWorldScript.py</yellow>"
                         )
                     files_white_list.append(white_list_line)
                 else:
@@ -567,7 +567,7 @@ class SecretsValidator:
                 return file_contents
         except Exception as ex:
             logger.info(
-                f"[red]Unable to parse the following file {file_path} due to error {ex}[/red]"
+                f"<red>Unable to parse the following file {file_path} due to error {ex}</red>"
             )
             raise
 
@@ -610,7 +610,7 @@ class SecretsValidator:
         return commit.strip()
 
     def find_secrets(self):
-        logger.info("[green]Starting secrets detection[/green]")
+        logger.info("<green>Starting secrets detection</green>")
         is_circle = self.is_circle
         commit = self.get_current_commit()
         secrets_found = self.get_secrets(commit, is_circle)
@@ -618,7 +618,7 @@ class SecretsValidator:
             return True
         else:
             logger.info(
-                "[green]Finished validating secrets, no secrets were found.[/green]"
+                "<green>Finished validating secrets, no secrets were found.</green>"
             )
             return False
 

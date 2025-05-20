@@ -7,10 +7,7 @@ import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.logger import (
-    logger,
-    logging_setup,
-)
+from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
@@ -80,6 +77,8 @@ def create(
     ),
     output_path: Path = typer.Option(
         None,
+        "-o",
+        "--output-path",
         exists=True,
         dir_okay=True,
         file_okay=False,
@@ -111,9 +110,10 @@ def create(
     a Repository model and uploaded to the graph database.
     """
     logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file_path=log_file_path,
+        console_threshold=console_log_threshold,
+        file_threshold=file_log_threshold,
+        path=log_file_path,
+        calling_function="graph create",
     )
     with ContentGraphInterface() as content_graph_interface:
         create_content_graph(

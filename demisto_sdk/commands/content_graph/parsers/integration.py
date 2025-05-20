@@ -21,9 +21,11 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 class CommandParser:
     name: str
     deprecated: bool
+    hidden: bool
     description: str
     args: List[dict]
     outputs: List[dict]
+    quickaction: bool
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
@@ -31,9 +33,12 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
+        )
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
         self.is_beta = self.yml_data.get("beta", False)
@@ -48,7 +53,11 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch_samples = self.script_info.get("isFetchSamples", False)
         self.is_feed = self.script_info.get("feed", False)
         self.long_running = self.script_info.get("longRunning", False)
-        self.is_long_running = self.script_info.get("longRunning", False)
+        self.supports_quick_actions = self.yml_data.get("supportsquickactions", False)
+        self.is_cloud_provider_integration = self.yml_data.get(
+            "isCloudProviderIntegration", False
+        )
+
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
@@ -88,9 +97,11 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         for command_data in self.script_info.get("commands", []):
             name = command_data.get("name")
             deprecated = command_data.get("deprecated", False) or self.deprecated
+            hidden = command_data.get("hidden", False)
             description = command_data.get("description")
             args = command_data.get("arguments") or []
             outputs = command_data.get("outputs") or []
+            quickaction = command_data.get("quickaction", False)
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
                 target=name,
@@ -98,14 +109,17 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 name=name,
                 deprecated=deprecated,
                 description=description,
+                quickaction=quickaction,
             )
             self.commands.append(
                 CommandParser(
                     name=name,
                     description=description,
                     deprecated=deprecated,
+                    hidden=hidden,
                     args=args,
                     outputs=outputs,
+                    quickaction=quickaction,
                 )
             )
 

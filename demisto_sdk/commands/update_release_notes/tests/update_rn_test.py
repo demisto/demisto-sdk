@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     FileType,
 )
+from demisto_sdk.commands.common.docker.docker_image import DockerImage
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -22,16 +23,21 @@ from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
 )
+from demisto_sdk.commands.content_graph.objects.integration import Command
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_integration,
 )
 from demisto_sdk.commands.update_release_notes.update_rn import (
-    CLASS_BY_FILE_TYPE,
     UpdateRN,
-    deprecated_commands,
+    content_type,
+    generate_content_deprecation_rn,
     get_deprecated_comment_from_desc,
     get_deprecated_rn,
-    get_file_description,
+)
+from demisto_sdk.commands.validate.tests.test_tools import (
+    create_integration_object,
+    create_playbook_object,
+    create_script_object,
 )
 
 
@@ -76,27 +82,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = (
-            "\n#### Classifiers\n\n##### Hello World Classifier\n\n- %%UPDATE_RN%%\n"
-            "\n#### Connections\n\n##### Hello World Connection\n\n- %%UPDATE_RN%%\n"
-            "\n#### Dashboards\n\n##### Hello World Dashboard\n\n- %%UPDATE_RN%%\n"
-            "\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- %%UPDATE_RN%%\n"
-            "\n#### Incident Types\n\n##### Hello World Incident Type\n\n- %%UPDATE_RN%%\n"
-            "\n#### Indicator Fields\n\n##### Hello World Indicator Field\n\n- %%UPDATE_RN%%\n"
-            "\n#### Indicator Types\n\n##### Hello World Indicator Type\n\n- %%UPDATE_RN%%\n"
-            "\n#### Integrations\n\n##### Hello World Integration\n\n- %%UPDATE_RN%%\n"
-            "\n#### Jobs\n\n##### Hello World Job #1\n\n- %%UPDATE_RN%%\n"
-            "##### Hello World Job #2\n\n- %%UPDATE_RN%%\n"
-            "\n#### Layouts\n\n##### Hello World Layout\n\n- %%UPDATE_RN%%\n"
-            "##### Second Hello World Layout\n\n- %%UPDATE_RN%%\n"
-            "\n#### Modules\n\n##### Hello World Generic Module\n\n- %%UPDATE_RN%%\n"
-            "\n#### Objects\n\n##### Hello World Generic Definition\n\n- %%UPDATE_RN%%\n"
-            "\n#### Playbooks\n\n##### Hello World Playbook\n\n- %%UPDATE_RN%%\n"
-            "\n#### Reports\n\n##### Hello World Report\n\n- %%UPDATE_RN%%\n"
-            "\n#### Scripts\n\n##### Hello World Script\n\n- %%UPDATE_RN%%\n"
-            "\n#### Widgets\n\n##### Hello World Widget\n\n- %%UPDATE_RN%%\n"
-            "\n#### Wizards\n\n##### Hello World Wizard\n\n- %%UPDATE_RN%%\n"
-        )
+        expected_result = "\n#### Classifiers\n\n##### Hello World Classifier\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% classifier to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Dashboards\n\n##### Hello World Dashboard\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% dashboard to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% incident field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Incident Types\n\n##### Hello World Incident Type\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% incident type to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Indicator Fields\n\n##### Hello World Indicator Field\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% indicator field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Indicator Types\n\n##### Hello World Indicator Type\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% indicator type to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Integrations\n\n##### Hello World Integration\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% integration to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Jobs\n\n##### Hello World Job #1\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% job to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n##### Hello World Job #2\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% job to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Layouts\n\n##### Hello World Layout\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% layout to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n##### Second Hello World Layout\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% layout to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Modules\n\n##### Hello World Generic Module\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% module to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Objects\n\n##### Hello World Generic Definition\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% object to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Playbooks\n\n##### Hello World Playbook\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% playbook to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Reports\n\n##### Hello World Report\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% report to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Scripts\n\n##### Hello World Script\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% script to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Widgets\n\n##### Hello World Widget\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% widget to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Wizards\n\n##### Hello World Wizard\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% wizard to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
         mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
@@ -158,10 +144,6 @@ class TestRNUpdate:
                 "description": "",
                 "is_new_file": False,
             },
-            ("Hello World Connection", FileType.CONNECTION): {
-                "description": "",
-                "is_new_file": False,
-            },
             ("Hello World Report", FileType.REPORT): {
                 "description": "",
                 "is_new_file": False,
@@ -201,10 +183,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = (
-            "\n#### Object Fields\n\n##### Sample Generic Field\n\n- %%UPDATE_RN%%\n"
-            "\n#### Object Types\n\n##### Sample Generic Type\n\n- %%UPDATE_RN%%\n"
-        )
+        expected_result = "\n#### Object Fields\n\n##### Sample Generic Field\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% object field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n\n#### Object Types\n\n##### Sample Generic Type\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% object type to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
 
         pack_path = TestRNUpdate.FILES_PATH + "/generic_testing"
         mock_master.return_value = "1.0.0"
@@ -239,10 +218,6 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = (
-            "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n"
-            "- New: Hello World Playbook description\n"
-        )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"
@@ -254,12 +229,22 @@ class TestRNUpdate:
         )
         changed_items = {
             ("Hello World Playbook", FileType.PLAYBOOK): {
-                "description": "Hello World Playbook description",
+                "description": (
+                    "This playbook addresses the following alerts:\n"
+                    "Playbook Stages:\nRequirements:\nTriage:\n"
+                    "Early Containment:\nInvestigation:\nContainment:\n"
+                ),
                 "is_new_file": True,
+                "name": "test_playbook",
             },
         }
         release_notes = update_rn.build_rn_template(changed_items)
-        assert expected_result == release_notes
+        assert release_notes == (
+            "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n"
+            "##### This playbook addresses the following alerts:\n"
+            "##### Playbook Stages:\n##### Requirements:\n###### Triage:\n"
+            "###### Early Containment:\n###### Investigation:\n###### Containment:\n\n"
+        )
 
     @mock.patch.object(UpdateRN, "get_master_version")
     def test_build_rn_template_markdown_valid(self, mock_master, mocker):
@@ -284,19 +269,22 @@ class TestRNUpdate:
         )
         changed_items = {
             ("Hello World Integration", FileType.INTEGRATION): {
-                "description": "",
                 "is_new_file": True,
+                "name": "Hello World Integration",
                 "fromversion": "5.0.0",
+                "description": "it is a new integration",
             },
             ("Hello World Playbook", FileType.PLAYBOOK): {
                 "description": "",
                 "is_new_file": True,
+                "name": "Hello World Integration",
                 "fromversion": "5.5.0",
             },
             ("Hello World Script", FileType.SCRIPT): {
-                "description": "",
                 "is_new_file": True,
+                "name": "Hello World Integration",
                 "fromversion": "6.0.0",
+                "description": "it is a new script",
             },
         }
         release_notes = update_rn.build_rn_template(changed_items)
@@ -316,9 +304,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = (
-            "\n#### Playbooks\n\n##### Hello World Playbook\n\n- %%UPDATE_RN%%\n"
-        )
+        expected_result = "\n#### Playbooks\n\n##### Hello World Playbook\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% playbook to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
@@ -348,11 +334,11 @@ class TestRNUpdate:
             - a dict of changed items
         When:
             - we want to produce a release notes template for files without descriptions like :
-            'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
         Then:
             - return a markdown string
         """
-        expected_result = "\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- %%UPDATE_RN%%\n"
+        expected_result = "\n#### Incident Fields\n\n##### Hello World IncidentField\n\n- Updated the %%UPDATE_CONTENT_ITEM_NAME%% incident field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"
@@ -378,7 +364,7 @@ class TestRNUpdate:
             - a dict of changed items, with a documentation rn update
         When:
             - we want to produce a release notes template for files without descriptions like :
-            'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
+            'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
         Then:
             - return a markdown string
         """
@@ -910,9 +896,9 @@ class TestRNUpdate:
         )
 
     new_file_test_params = [
-        (FileType.TEST_SCRIPT.value, "(Available from Cortex XSOAR 5.5.0).", ["xsoar"]),
+        (FileType.TEST_SCRIPT, "(Available from Cortex XSOAR 5.5.0).", ["xsoar"]),
         (
-            FileType.MODELING_RULE.value,
+            FileType.MODELING_RULE,
             "(Available from Cortex XSIAM %%XSIAM_VERSION%%).",
             ["marketplacev2"],
         ),
@@ -956,26 +942,50 @@ class TestRNUpdate:
         )
         assert expected_result in desc
 
+    def test_build_rn_desc_unicode_escape_handling(self):
+        """
+        Given
+            - An input string containing escaped unicode sequences such as '\\n' and '\\t'.
+        When
+            - Running the command build_rn_desc to generate the release notes description.
+        Then
+            - Validate that the escaped sequences are correctly interpreted and included
+              in the release notes description as their respective characters.
+        """
+        input_text = "Line with \\n newline and \\t tab characters"
+        expected_output = "##### \n\n- Line with \n newline and \t tab characters\n"
+
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorld",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorld"},
+            added_files=set(),
+        )
+
+        output = update_rn.build_rn_desc(text=input_text)
+
+        assert output == expected_output, f"Expected {expected_output}, got {output}"
+
     @pytest.mark.parametrize(
         "file_type, marketplaces, expected_result, not_expected",
         [
             (
                 # Case 1: xsoar file type and xsoar marketplace, should only have xsoar.
-                FileType.TEST_SCRIPT.value,
+                FileType.TEST_SCRIPT,
                 ["xsoar"],
                 "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
                 "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
             ),
             (
                 # Case 2: xsoar file type and xsiam marketplace, should only have xsiam.
-                FileType.TEST_SCRIPT.value,
+                FileType.TEST_SCRIPT,
                 ["marketplacev2"],
                 "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
                 "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
             ),
             (
                 # Case 3: xsoar file type and xsoar & xsiam marketplaces, should have both.
-                FileType.TEST_SCRIPT.value,
+                FileType.TEST_SCRIPT,
                 ["xsoar", "marketplacev2"],
                 "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>\n"
                 "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
@@ -983,14 +993,14 @@ class TestRNUpdate:
             ),
             (
                 # Case 4: xsiam file type and xsiam marketplace, should only have xsiam.
-                FileType.MODELING_RULE.value,
+                FileType.MODELING_RULE,
                 ["marketplacev2"],
                 "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
                 "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
             ),
             (
                 # Case 5: xsiam file type and xsoar & xsiam marketplaces, should only have xsiam.
-                FileType.MODELING_RULE.value,
+                FileType.MODELING_RULE,
                 ["xsoar", "marketplacev2"],
                 "<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>",
                 "<~XSOAR> (Available from Cortex XSOAR 5.5.0).</~XSOAR>",
@@ -1336,32 +1346,22 @@ class TestRNUpdate:
         When:
             - Calling build_rn_desc function
         Then:
-            Ensure the function returns a valid rn when the command is deprecated compared to last yml and the
+            Ensure the function returns a valid rn when the command is deprecated compared to last content object and the
              text is added
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        FILES_PATH = os.path.normpath(
-            os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files")
+        changed_content_object = create_integration_object()
+        changed_content_object.old_base_content_object = deepcopy(
+            changed_content_object
         )
-        NOT_DEP_INTEGRATION_PATH = pathlib.Path(
-            FILES_PATH, "deprecated_rn_test", "not_deprecated_integration.yml"
-        )
-
+        changed_content_object.old_base_content_object.commands[0].deprecated = False
+        changed_content_object.commands[0].deprecated = True
         update_rn = UpdateRN(
             pack_path="Packs/Test",
             update_type="minor",
             modified_files_in_pack={"Integration"},
             added_files=set(),
-        )
-        old_yml_obj, new_yml_obj = get_mock_yml_obj(
-            NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False
-        )
-        new_yml_obj.script["commands"][0]["deprecated"] = True
-
-        mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn.get_yml_objects",
-            return_value=(old_yml_obj, new_yml_obj),
         )
 
         desc = update_rn.build_rn_desc(
@@ -1371,13 +1371,12 @@ class TestRNUpdate:
             text="text for test",
             from_version="5.5.0",
             docker_image=None,
-            path=NOT_DEP_INTEGRATION_PATH,
+            changed_content_object=changed_content_object,
         )
 
         assert (
             desc
-            == "##### Integration test\n\n- text for test\n- Command ***xdr-get-incidents*** is deprecated. Use "
-            "%%% instead.\n"
+            == "##### Integration test\n\n- Deprecated the **test-command** command. Use %%% instead.\n- text for test\n"
         )
 
     def test_deprecated_rn_integration_command(self, mocker):
@@ -1389,84 +1388,22 @@ class TestRNUpdate:
         Then:
             Ensure the function returns a valid rn when the command is deprecated compared to last yml
         """
-        FILES_PATH = os.path.normpath(
-            os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files")
-        )
-        NOT_DEP_INTEGRATION_PATH = pathlib.Path(
-            FILES_PATH, "deprecated_rn_test", "not_deprecated_integration.yml"
-        )
 
-        old_yml_obj, new_yml_obj = get_mock_yml_obj(
-            NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False
+        changed_content_object = create_integration_object()
+        changed_content_object.old_base_content_object = deepcopy(
+            changed_content_object
         )
-        new_yml_obj.script["commands"][0]["deprecated"] = True
-
-        mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn.get_yml_objects",
-            return_value=(old_yml_obj, new_yml_obj),
-        )
-        # When command is newly deprecated
-        res = get_deprecated_rn(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION)
-        assert (
-            res == "- Command ***xdr-get-incidents*** is deprecated. Use %%% instead.\n"
-        )
-
+        changed_content_object.old_base_content_object.deprecated = True
+        changed_content_object.deprecated = True
         # When the command is already deprecated
-        old_yml_obj["script"]["commands"][0]["deprecated"] = True
-        res = get_deprecated_rn(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION)
+        res = get_deprecated_rn(changed_content_object)
         assert res == ""
+        changed_content_object.old_base_content_object.deprecated = False
+        # When the command is not already deprecated
+        res = get_deprecated_rn(changed_content_object)
+        assert res == "- Deprecated. Use %%% instead.\n"
 
-    @pytest.mark.parametrize(
-        "path, file_type, deprecated, expected_res",
-        [
-            (NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, True, ""),
-            (NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False, ""),
-            (
-                DEP_INTEGRATION_PATH,
-                FileType.INTEGRATION,
-                False,
-                "- Deprecated. Use %%% instead.\n",
-            ),
-            (
-                DEP_DESC_INTEGRATION_PATH,
-                FileType.INTEGRATION,
-                False,
-                "- Deprecated. Use Other Integration instead.\n",
-            ),
-            (DEP_INTEGRATION_PATH, FileType.INTEGRATION, True, ""),
-            (NOT_DEP_PLAYBOOK_PATH, FileType.PLAYBOOK, True, ""),
-            (NOT_DEP_PLAYBOOK_PATH, FileType.PLAYBOOK, False, ""),
-            (
-                DEP_PLAYBOOK_PATH,
-                FileType.PLAYBOOK,
-                False,
-                "- Deprecated. Use %%% instead.\n",
-            ),
-            (
-                DEP_DESC_PLAYBOOK_PATH,
-                FileType.PLAYBOOK,
-                False,
-                "- Deprecated. Use another playbook instead.\n",
-            ),
-            (DEP_PLAYBOOK_PATH, FileType.PLAYBOOK, True, ""),
-            (NOT_DEP_SCRIPT_PATH, FileType.SCRIPT, True, ""),
-            (NOT_DEP_SCRIPT_PATH, FileType.SCRIPT, False, ""),
-            (
-                DEP_SCRIPT_PATH,
-                FileType.SCRIPT,
-                False,
-                "- Deprecated. Use %%% instead.\n",
-            ),
-            (
-                DEP_DESC_SCRIPT_PATH,
-                FileType.SCRIPT,
-                False,
-                "- Deprecated. No available replacement.\n",
-            ),
-            (DEP_SCRIPT_PATH, FileType.SCRIPT, True, ""),
-        ],
-    )
-    def test_deprecated_rn_yml(self, mocker, path, file_type, deprecated, expected_res):
+    def test_deprecated_rn_yml(self, mocker):
         """
         Given:
             - Path to a yml Object, and if the last yml was deprecated
@@ -1478,56 +1415,134 @@ class TestRNUpdate:
         Then:
             Ensure the function returns a valid rn when the yml is deprecated.
         """
-        old_yml_obj, new_yml_obj = get_mock_yml_obj(path, file_type, deprecated)
-        mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn.get_yml_objects",
-            return_value=(old_yml_obj, new_yml_obj),
+        # Integration
+        deprecated_integration = create_integration_object()
+        deprecated_integration.old_base_content_object = deepcopy(
+            deprecated_integration
         )
-        res = get_deprecated_rn(path, file_type)
-        assert res == expected_res
+        deprecated_integration.old_base_content_object.deprecated = True
+        deprecated_integration.deprecated = True
+        res = get_deprecated_rn(deprecated_integration)
+        assert res == ""
+        deprecated_integration.old_base_content_object.deprecated = False
+        res = get_deprecated_rn(deprecated_integration)
+        assert res == "- Deprecated. Use %%% instead.\n"
+        # Playbook
+        deprecated_playbook = create_playbook_object()
+        deprecated_playbook.old_base_content_object = deepcopy(deprecated_playbook)
+        deprecated_playbook.old_base_content_object.deprecated = True
+        deprecated_playbook.deprecated = True
+        res = get_deprecated_rn(deprecated_playbook)
+        assert res == ""
+        deprecated_playbook.old_base_content_object.deprecated = False
+        res = get_deprecated_rn(deprecated_playbook)
+        assert res == "- Deprecated. Use %%% instead.\n"
+        # Script
+        deprecated_script = create_script_object()
+        deprecated_script.old_base_content_object = deepcopy(deprecated_script)
+        deprecated_script.old_base_content_object.deprecated = True
+        deprecated_script.deprecated = True
+        res = get_deprecated_rn(deprecated_script)
+        assert res == ""
+        deprecated_script.old_base_content_object.deprecated = False
+        res = get_deprecated_rn(deprecated_script)
+        assert res == "- Deprecated. Use %%% instead.\n"
 
-    def test_deprecated_rn_yml_no_commands_section(self, mocker, pack):
+    def test_does_content_item_header_exist_in_rns_true(self):
         """
         Given:
-            - deprecated integration which does not have "commands" section
+            A release notes string containing a content item header.
         When:
-            - Calling get_deprecated_rn function
+            Checking if the content item header exists in the release notes.
         Then:
-            - Ensure the function returns a valid rn when the yml is deprecated without the "commands" section
-
+            The method should return True.
         """
-        integration = pack.create_integration(
-            name="test",
-            yml={
-                "commonfields": {"id": "test", "version": -1},
-                "name": "test",
-                "display": "test",
-                "description": "this is an integration test",
-                "category": "category",
-                "script": {
-                    "type": "python",
-                    "subtype": "python3",
-                    "script": "",
-                    "dockerimage": "",
-                },
-                "configuration": [],
-            },
+        update_rn = UpdateRN(
+            pack_path="",
+            update_type="",
+            modified_files_in_pack={},
+            added_files={},
+        )
+        current_rn = "##### Integration Name\n- Added a new feature"
+        content_name = "Integration Name"
+
+        result = update_rn.does_content_item_header_exist_in_rns(
+            current_rn, content_name
         )
 
-        assert get_deprecated_rn(integration.path, FileType.INTEGRATION) == ""
+        assert result is True
 
+    def test_does_content_item_header_exist_in_rns_false(self):
+        """
+        Given:
+            A release notes string not containing a specific content item header.
+        When:
+            Checking if the content item header exists in the release notes.
+        Then:
+            The method should return False.
+        """
+        update_rn = UpdateRN(
+            pack_path="",
+            update_type="",
+            modified_files_in_pack={},
+            added_files={},
+        )
+        current_rn = "##### Other Integration\n- Fixed a bug"
+        content_name = "Integration Name"
 
-def get_mock_yml_obj(path, file_type, deprecated) -> dict:
-    new_yml_obj = CLASS_BY_FILE_TYPE[file_type](path)
-    if file_type == FileType.INTEGRATION:
-        old_yml_dict = {
-            "script": {"commands": deepcopy(new_yml_obj.script.get("commands"))},
-            "deprecated": deprecated,
-        }
-    else:
-        old_yml_dict = {"deprecated": deprecated}
+        result = update_rn.does_content_item_header_exist_in_rns(
+            current_rn, content_name
+        )
 
-    return old_yml_dict, new_yml_obj
+        assert result is False
+
+    def test_does_content_item_header_exist_in_rns_object_types(self):
+        """
+        Given:
+            A release notes string containing an Object Types section with a GenericType.
+        When:
+            Checking if the content item header exists in the release notes.
+        Then:
+            The method should return True, matching the GenericType name.
+        """
+        update_rn = UpdateRN(
+            pack_path="",
+            update_type="",
+            modified_files_in_pack={},
+            added_files={},
+        )
+        current_rn = "#### Object Types\n- **Sample GenericType**"
+        content_name = "Sample GenericType"
+
+        result = update_rn.does_content_item_header_exist_in_rns(
+            current_rn, content_name
+        )
+
+        assert result is True
+
+    def test_does_content_item_header_exist_in_rns_playbooks(self):
+        """
+        Given:
+            A release notes string containing a Playbooks section with a new playbook.
+        When:
+            Checking if the content item header exists in the release notes.
+        Then:
+            The method should return True, matching the playbook name.
+        """
+        update_rn = UpdateRN(
+            pack_path="",
+            update_type="",
+            modified_files_in_pack={},
+            added_files={},
+        )
+        current_rn = "#### Playbooks\n\n##### New: Entity Enrichment - Generic v3\n\nNew: Enrich entities using one or more integrations."
+        content_name = "Entity Enrichment - Generic v3"
+
+        result = update_rn.does_content_item_header_exist_in_rns(
+            current_rn, content_name
+        )
+
+        assert result is True
 
 
 class TestRNUpdateUnit:
@@ -1601,7 +1616,7 @@ class TestRNUpdateUnit:
 
 ##### Sample IncidentField
 
-- %%UPDATE_RN%%
+- Updated the %%UPDATE_CONTENT_ITEM_NAME%% incident field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.
 
 ##### XDR Alerts
 
@@ -1623,11 +1638,11 @@ class TestRNUpdateUnit:
 
 ##### Cortex XDR - IR
 
-- %%UPDATE_RN%%
+- Updated the %%UPDATE_CONTENT_ITEM_NAME%% integration to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.
 
 ##### Sample
 
-- %%UPDATE_RN%%
+- Updated the %%UPDATE_CONTENT_ITEM_NAME%% integration to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.
 
 """
 
@@ -1697,12 +1712,6 @@ class TestRNUpdateUnit:
             "Packs/VulnDB/Integrations/VulnDB/VulnDB.yml",
             FileType.INTEGRATION,
             ("VulnDB", FileType.INTEGRATION),
-        ),
-        (
-            "Packs/VulnDB",
-            "Packs/VulnDB/Connections/VulnDB/VulnDB.yml",
-            FileType.CONNECTION,
-            ("VulnDB", FileType.CONNECTION),
         ),
         (
             "Packs/VulnDB",
@@ -2144,88 +2153,12 @@ class TestRNUpdateUnit:
         )
         assert execute_update_mock.call_count == 1
 
-    def test_update_docker_image_when_yml_has_changed_but_not_docker_image_property(
-        self, mocker
-    ):
-        """
-        Given
-            - Modified .yml file
-        When
-            - Working on an integration's yml, but haven't update docker image
-
-        Then
-            - No changes should be done in release notes
-        """
-        from demisto_sdk.commands.update_release_notes.update_rn import (
-            check_docker_image_changed,
-        )
-
-        return_value = "+category: Utilities\
-                        +commonfields:\
-                        +  id: Test\
-                        +  version: -1\
-                        +configuration:\
-                        +- defaultvalue: https://soar.test.com\
-                        +  display: Server URL (e.g. https://soar.test.com)\
-                        +- display: Fetch incidents\
-                        +  name: isFetch\
-                        +- display: Incident type"
-
-        mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn.run_command",
-            return_value=return_value,
-        )
-
-        assert (
-            check_docker_image_changed(main_branch="origin/master", packfile="test.yml")
-            is None
-        )
-
-    @pytest.mark.parametrize(
-        "return_value_mock",
-        [
-            ("+  dockerimage: demisto/python3:3.9.8.24399"),
-            ("+dockerimage: demisto/python3:3.9.8.24399"),
-        ],
-    )
-    def test_check_docker_image_changed(self, mocker, return_value_mock):
-        """
-        This test checks that for both integration and script YMLs, where the docker image resides at a different level,
-        changes made to this key are found correctly by 'check_docker_image_changed' function.
-        Given
-            - Case 1: a git diff mock of a modified integration .yml file where the docker is changed and there're spaces between the
-            '+' and the dockerimage
-            - Case 2: a git diff mock of a modified sccript .yml file where the docker is changed and there's no space between the
-            '+' and the dockerimage
-        When
-            - calling the check_docker_image_changed function
-        Then
-            Ensure that the dockerimage was extracted correctly for each case where each case demonstrate either integration
-            yml or Script yml.
-            - Case 1: Should extract the dockerimage version for integration yml demonstration.
-            - Case 2: Should extract the dockerimage version for script yml demonstration.
-        """
-        from demisto_sdk.commands.update_release_notes.update_rn import (
-            check_docker_image_changed,
-        )
-
-        return_value = "+  dockerimage: demisto/python3:3.9.8.24399"
-
-        mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn.run_command",
-            return_value=return_value,
-        )
-        assert (
-            check_docker_image_changed(main_branch="origin/master", packfile="test.yml")
-            == "demisto/python3:3.9.8.24399"
-        )
-
     def test_update_docker_image_in_yml(self, mocker):
         """
         Given
-            - Modified .yml file
+            - integration object with a change in docker image.
         When
-            - Updating docker image tag
+            - Updating docker image tag.
 
         Then
             - A new release notes is created. and it has a new record for updating docker image.
@@ -2233,28 +2166,19 @@ class TestRNUpdateUnit:
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        expected_res = (
-            "diff --git a/Packs/test1/Integrations/test1/test1.yml b/Packs/test1/Integrations/test1/test1.yml\n"
-            "--- a/Packs/test1/Integrations/test1/test1.yml\n"
-            "+++ b/Packs/test1/Integrations/test1/test1.yml\n"
-            "@@ -1270,7 +1270,7 @@ script:\n"
-            "description: update docker image.\n"
-            "execution: false\n"
-            "name: test1\n"
-            "-  dockerimage: demisto/python3:3.9.6.22912\n"
-            "+  dockerimage: demisto/python3:3.9.6.22914\n"
-            "feed: false\n"
-            "isfetch: false\n"
-            "longRunning: false\n"
+        integration_for_test = create_integration_object()
+        integration_for_test.docker_image = DockerImage("test/test:1111")
+        integration_for_test.old_base_content_object = deepcopy(integration_for_test)
+        integration_for_test.old_base_content_object.docker_image = DockerImage(
+            "test/test:2222"
         )
-
         with open(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
         ) as file:
             pack_data = json.load(file)
         mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn.run_command",
-            return_value=expected_res,
+            "demisto_sdk.commands.update_release_notes.update_rn.create_content_item_object",
+            return_value=integration_for_test,
         )
         mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)
         mocker.patch.object(UpdateRN, "get_pack_metadata", return_value=pack_data)
@@ -2289,12 +2213,12 @@ class TestRNUpdateUnit:
         Path(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
         ).unlink()
-        assert "Updated the Docker image to: *demisto/python3:3.9.6.22914*." in RN
+        assert "Updated the Docker image to: *test/test:1111*." in RN
 
     def test_update_docker_image_in_yml_when_RN_aleady_exists(self, mocker):
         """
         Given
-            - Modified .yml file, but relevant release notes is already exist.
+            - integration object with a change in docker image.
         When
             - Updating docker image tag.
 
@@ -2303,6 +2227,12 @@ class TestRNUpdateUnit:
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
+        integration_for_test = create_integration_object()
+        integration_for_test.docker_image = DockerImage("dockerimage:python/test:1243")
+        integration_for_test.old_base_content_object = deepcopy(integration_for_test)
+        integration_for_test.old_base_content_object.docker_image = DockerImage(
+            "test/test:2222"
+        )
         with open(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
         ) as file:
@@ -2312,10 +2242,6 @@ class TestRNUpdateUnit:
             "w",
         ) as file:
             file.write("### Integrations\n")
-        mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn.run_command",
-            return_value="+  dockerimage:python/test:1243",
-        )
         mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)
         mocker.patch.object(UpdateRN, "get_pack_metadata", return_value=pack_data)
         mocker.patch(
@@ -2337,6 +2263,10 @@ class TestRNUpdateUnit:
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
             return_value="",
+        )
+        mocker.patch(
+            "demisto_sdk.commands.update_release_notes.update_rn.create_content_item_object",
+            return_value=integration_for_test,
         )
 
         client = UpdateRN(
@@ -2370,7 +2300,7 @@ class TestRNUpdateUnit:
             - Updating docker image tag.
 
         Then
-            - A new record with the updated docker image is added.
+            - No update docker image release note exists.
         """
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
@@ -2379,10 +2309,6 @@ class TestRNUpdateUnit:
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
         ) as file:
             pack_data = json.load(file)
-        mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn.run_command",
-            return_value="+  type:True",
-        )
         mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
         mocker.patch.object(UpdateRN, "get_pack_metadata", return_value=pack_data)
         mocker.patch(
@@ -2421,87 +2347,63 @@ class TestRNUpdateUnit:
     def test_new_integration_docker_not_updated(self, mocker):
         """
         Given
-            - New integration created.
+            - New Integration.
         When
-            - Running update-release-notes command
-
+            - Updating docker image tag.
         Then
-            - Docker is not indicated as updated.
+            - No need for add rn for updated docker image.
         """
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        with open(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
-        ) as file:
-            pack_data = json.load(file)
-        mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn.run_command",
-            return_value="+  dockerimage:python/test:1243",
+        integration = create_integration_object()
+        integration.old_base_content_object = deepcopy(integration)
+        integration.old_base_content_object.docker_image = DockerImage(
+            "demisto/bs4:1.0.0.7864"
         )
-        mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)
-        mocker.patch.object(UpdateRN, "get_pack_metadata", return_value=pack_data)
-        mocker.patch.object(UpdateRN, "build_rn_template", return_value="##### Test")
-        mocker.patch.object(
-            UpdateRN,
-            "get_changed_file_name_and_type",
-            return_value=("Test", FileType.INTEGRATION),
-        )
-        mocker.patch.object(
-            UpdateRN,
-            "get_release_notes_path",
-            return_value="demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes"
-            "/1_1_0.md",
-        )
-        mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
-
         client = UpdateRN(
             pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
             update_type="minor",
             modified_files_in_pack={"Packs/Test/Integrations/Test.yml"},
             added_files={"Packs/Test/Integrations/Test.yml"},
         )
-        client.execute_update()
-        with open(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        ) as file:
-            RN = file.read()
-        Path(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        ).unlink()
-        assert "Updated the Docker image to: *dockerimage:python/test:1243*" not in RN
+        assert (
+            client.get_docker_image_if_changed(
+                integration, "Packs/Test/Integrations/Test.yml"
+            )
+            is None
+        )
 
-    docker_image_test_rn = (
-        "#### Integrations\n\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image "
-        "to: *demisto/python3:3.9.1.149615*.\n"
-    )
-    docker_image_test_data = [
-        (
-            "#### Integrations\n\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n",
-            None,
-            "#### Integrations\n\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n",
-            False,
-        ),
-        (
-            "#### Integrations\n\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n",
-            "demisto/python3:3.9.1.149615",
-            docker_image_test_rn,
-            True,
-        ),
-        (
-            docker_image_test_rn,
-            "demisto/python3:3.9.1.149615",
-            docker_image_test_rn,
-            False,
-        ),
-        (
-            docker_image_test_rn,
-            "demisto/python3:3.9.1.149616",
-            "#### Integrations\n\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image "
-            "to: *demisto/python3:3.9.1.149616*.\n",
-            True,
-        ),
-    ]
+    def test_midified_integration_docker_is_updated(self, mocker):
+        """
+        Given
+            - Existing integration.
+        When
+            - Updating docker image tag.
+
+        Then
+            - Updated docker image rn exists.
+        """
+
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        integration = create_integration_object()
+        integration.old_base_content_object = deepcopy(integration)
+        integration.old_base_content_object.docker_image = DockerImage(
+            "demisto/bs4:1.0.0.7864"
+        )
+        client = UpdateRN(
+            pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
+            update_type="minor",
+            modified_files_in_pack={"Packs/Test/Integrations/Test.yml"},
+            added_files={},
+        )
+        assert (
+            client.get_docker_image_if_changed(
+                integration, "Packs/Test/Integrations/Test.yml"
+            )
+            == "demisto/bs4:1.0.0.7863"
+        )
 
     BUILD_RN_CONFIG_FILE_INPUTS = [
         (False, None, None),
@@ -2597,65 +2499,84 @@ def test_docker_image_is_added_for_every_integration(mocker, repo):
     - Pack to update with release notes.
 
     When:
-    - First call to update release notes: Two YMLs had their docker image updated.
-    - Second call to update release notes: Two YMLs were updated again.
+    - First call to update release notes: Two content objects had their docker image updated.
+    - Second call to update release notes: Two content objects were updated again.
 
     Then:
-    - Ensure two entries for update docker image are added to release notes, one for each YML.
-    - Ensure two entries for update docker images are added to release notes, one for each YML, with the
+    - Ensure two entries for update docker image are added to release notes, one for each content object.
+    - Ensure two entries for update docker images are added to release notes, one for each content object, with the
       newer docker image.
 
     """
-    yml_mock = {
-        "display": "test",
-        "script": {"type": "python", "dockerimage": "demisto/python3:3.9.5.123"},
-    }
-    pack = repo.create_pack("PackName")
+    script_for_test = create_script_object()
+    script_for_test.old_base_content_object = deepcopy(script_for_test)
+    script_for_test.docker_image = DockerImage("demisto/python3:3.9.5.124")
+    script_for_test.old_base_content_object.docker_image = DockerImage(
+        "demisto/python3:3.9.5.123"
+    )
+    script_for_test2 = deepcopy(script_for_test)
     mocker.patch(
-        "demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed",
-        return_value="demisto/python3:3.9.5.124",
+        "demisto_sdk.commands.update_release_notes.update_rn.create_content_item_object",
+        side_effect=[
+            script_for_test,
+            script_for_test2,
+            script_for_test,
+            script_for_test2,
+        ],
     )
     mocker.patch(
         "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
         return_value="",
     )
-    integration = pack.create_integration("integration", "bla", yml_mock)
-    integration.create_default_integration()
-    integration.yml.update({"display": "Sample1"})
-    integration2 = pack.create_integration("integration2", "bla2", yml_mock)
-    integration2.create_default_integration()
-    integration2.yml.update({"display": "Sample2"})
-    pack.pack_metadata.write_json({"currentVersion": "0.0.0"})
+    with open(
+        "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
+    ) as file:
+        pack_data = json.load(file)
+    mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
+    mocker.patch.object(UpdateRN, "get_pack_metadata", return_value=pack_data)
+    mocker.patch.object(
+        UpdateRN,
+        "get_changed_file_name_and_type",
+        side_effect=[
+            ("Test", FileType.SCRIPT),
+            ("Test2", FileType.SCRIPT),
+            ("Test", FileType.SCRIPT),
+            ("Test2", FileType.SCRIPT),
+        ],
+    )
     client = UpdateRN(
-        pack_path=str(pack.path),
-        update_type="revision",
+        pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
+        update_type=None,
         modified_files_in_pack={
-            f"{str(integration.path)}/integration.yml",
-            f"{str(integration2.path)}/integration2.yml",
+            "Packs/Test/Integrations/Test.yml",
+            "Packs/Test/Integrations/Test2.yml",
         },
         added_files=set(),
     )
     client.execute_update()
-    with open(str(f"{pack.path}/ReleaseNotes/0_0_1.md")) as f:
+    with open(
+        "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/ReleaseNotes/1_19_1.md"
+    ) as f:
         rn_text = f.read()
     assert (
         rn_text.count("Updated the Docker image to: *demisto/python3:3.9.5.124*.") == 2
     )
-    mocker.patch(
-        "demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed",
-        return_value="demisto/python3:3.9.5.125",
-    )
+    script_for_test.docker_image = DockerImage("demisto/python3:3.9.5.125")
+    script_for_test2.docker_image = DockerImage("demisto/python3:3.9.5.125")
     client = UpdateRN(
-        pack_path=str(pack.path),
+        pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
         update_type=None,
         modified_files_in_pack={
-            f"{str(integration.path)}/integration.yml",
-            f"{str(integration2.path)}/integration2.yml",
+            "Packs/Test/Integrations/Test.yml",
+            "Packs/Test/Integrations/Test2.yml",
         },
         added_files=set(),
     )
+    mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)
     client.execute_update()
-    with open(str(f"{pack.path}/ReleaseNotes/0_0_1.md")) as f:
+    with open(
+        "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/ReleaseNotes/1_19_1.md"
+    ) as f:
         rn_text = f.read()
     assert (
         rn_text.count("Updated the Docker image to: *demisto/python3:3.9.5.124*.") == 0
@@ -2663,6 +2584,9 @@ def test_docker_image_is_added_for_every_integration(mocker, repo):
     assert (
         rn_text.count("Updated the Docker image to: *demisto/python3:3.9.5.125*.") == 2
     )
+    Path(
+        "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/ReleaseNotes/1_19_1.md"
+    ).unlink()
 
 
 HANDLE_EXISTING_RN_WITH_DOCKER_IMAGE_INPUTS = [
@@ -2781,10 +2705,6 @@ def test_create_md_if_currentversion_is_higher(
     }
     pack = repo.create_pack("PackName")
     mocker.patch(
-        "demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed",
-        return_value="demisto/python3:3.9.5.124",
-    )
-    mocker.patch(
         "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
         return_value="",
     )
@@ -2818,12 +2738,15 @@ def test_deprecated_commands():
     Then:
         Ensure the function return a set of the deprecated commands only.
     """
-    commands = [
-        {"name": "command_1", "deprecated": True},
-        {"name": "command_2", "deprecated": False},
-    ]
-    res = deprecated_commands(commands)
-    assert res == {"command_1"}
+    old_command = Command(name="command_1", deprecated=False)
+    new_command = Command(name="command_1", deprecated=True)
+    res = generate_content_deprecation_rn(
+        name="command_1",
+        old_content=old_command,
+        new_content=new_command,
+        content_type=content_type.COMMAND,
+    )
+    assert res == "- Deprecated the **command_1** command. Use %%% instead.\n"
 
 
 def test_get_deprecated_comment_from_desc():
@@ -2878,28 +2801,6 @@ def test_handle_existing_rn_version_path(mocker, repo):
     client.existing_rn_version_path = "ReleaseNotes/1_0_1.md"
     client.handle_existing_rn_version_path(f"{str(pack.path)}/ReleaseNotes/1_0_1.md")
     assert not client.should_delete_existing_rn
-
-
-@pytest.mark.parametrize(
-    "path, file_type, expected_results",
-    [
-        (
-            "demisto_sdk/commands/update_release_notes/tests_data/modeling_rules_yml_mock.yml",
-            FileType.MODELING_RULE,
-            "testing modeling rules description extraction.",
-        )
-    ],
-)
-def test_get_file_description(path, file_type, expected_results):
-    """
-    Given:
-        - File type and file path.
-    When:
-        - Calling get_file_description function.
-    Then:
-        Ensure the function extracted the information from the right field.
-    """
-    assert get_file_description(path, file_type) == expected_results
 
 
 def test_no_release_notes_for_first_version(mocker):

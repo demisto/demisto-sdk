@@ -9,11 +9,11 @@ import pytest
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 import demisto_sdk.commands.pre_commit.pre_commit_context as context
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.native_image import NativeImageConfig
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
-from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
@@ -22,6 +22,7 @@ from demisto_sdk.commands.pre_commit.pre_commit_command import (
     PreCommitContext,
     PreCommitRunner,
     group_by_language,
+    pre_commit_manager,
     preprocess_files,
     subprocess,
 )
@@ -122,7 +123,12 @@ def test_config_files(mocker, repo: Repo, native_image_config):
         - make sure that the created hooks are pylint based only as its the only hook that should be split
     """
 
-    def devtest_side_effect(image_tag: str, is_powershell: bool, should_pull: bool):
+    def devtest_side_effect(
+        image_tag: str,
+        is_powershell: bool,
+        should_pull: bool,
+        should_install_mypy_additional_dependencies: bool,
+    ):
         return image_tag
 
     mocker.patch(
@@ -252,35 +258,6 @@ def test_handle_api_modules(mocker, git_repo: Repo):
     ) in files_to_run
 
 
-def test_mypy_hooks(mocker):
-    """
-    Testing mypy hook created successfully (the python version is correct)
-    """
-    mypy_hook = {
-        "args": [
-            "--ignore-missing-imports",
-            "--check-untyped-defs",
-            "--show-error-codes",
-            "--follow-imports=silent",
-            "--allow-redefinition",
-            "--python-version=3.10",
-        ],
-        "id": "mypy",
-    }
-    mocker.patch.object(
-        PreCommitContext, "python_version_to_files", PYTHON_VERSION_TO_FILES
-    )
-
-    mypy_hook = create_hook(mypy_hook)
-    MypyHook(**mypy_hook).prepare_hook()
-    for hook, python_version in itertools.zip_longest(
-        mypy_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
-    ):
-        assert hook["args"][-1] == f"--python-version={python_version}"
-        assert hook["name"] == f"mypy-py{python_version}"
-        assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
-
-
 @pytest.mark.parametrize("github_actions", [True, False])
 def test_ruff_hook(github_actions, mocker):
     """
@@ -312,7 +289,7 @@ def test_ruff_hook(github_actions, mocker):
         assert hook["name"] == f"ruff-py{python_version}"
         assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
         if github_actions:
-            assert hook["args"][2] == "--format=github"
+            assert hook["args"][2] == "--output-format=github"
 
 
 def test_ruff_hook_nightly_mode(mocker):
@@ -826,3 +803,45 @@ def test_system_hooks():
         system_hook["repo"]["hooks"][0]["entry"]
         == f"{Path(sys.executable).parent}/demisto-sdk"
     )
+
+
+def test_run_pre_commit_with_json_output_path(mocker, tmp_path):
+    """
+    Given: A pre-commit setup with a specified JSON output path.
+    When: Running the pre-commit manager with a specific hook.
+    Then:
+        - The exit code is non-zero
+        - A JSON output file is created at the specified path
+    """
+    mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(tmp_path))
+
+    test_integration_path = (
+        tmp_path
+        / "Packs"
+        / "TestPack"
+        / "Integrations"
+        / "TestIntegration"
+        / "TestIntegration.yml"
+    )
+    test_integration_path.parent.mkdir(parents=True, exist_ok=True)
+
+    mocker.patch(
+        "demisto_sdk.commands.pre_commit.pre_commit_command.preprocess_files",
+        return_value=[test_integration_path],
+    )
+
+    exit_code = pre_commit_manager(
+        input_files=[test_integration_path],
+        run_hook="check-ast",
+        json_output_path=tmp_path,
+    )
+    hook_output_path = tmp_path / "check-ast.json"
+    assert exit_code != 0
+    assert hook_output_path.exists()
+    with open(hook_output_path, "r") as f:
+        json = JSON_Handler()
+        output = json.load(f)
+        assert 1 == output.get("returncode")
+        assert output.get("stdout").startswith(
+            "An error has occurred: FatalError: git failed. Is it installed, and are you in a Git repository directory?"
+        )

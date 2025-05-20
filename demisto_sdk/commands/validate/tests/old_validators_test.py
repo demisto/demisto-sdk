@@ -1,5 +1,4 @@
 import contextlib
-import logging
 import os
 import sys
 from configparser import ConfigParser
@@ -156,8 +155,6 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
 from TestSuite.pack import Pack
 from TestSuite.test_tools import (
     ChangeCWD,
-    count_str_in_call_args_list,
-    str_in_call_args_list,
 )
 
 
@@ -785,14 +782,6 @@ class TestValidators:
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
         )
         mocker.patch.object(Pack, "should_be_deprecated", return_value=False)
-        mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
-            return_value=["Analytics & SIEM"],
-        )
-        mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
-            return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
-        )
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file content from get_dict_from_file function.
         validate_manager = OldValidateManager(skip_conf_json=True)
@@ -801,7 +790,7 @@ class TestValidators:
         )
         assert result
 
-    def test_files_validator_missing_meta_file(self, repo, mocker, monkeypatch):
+    def test_files_validator_missing_meta_file(self, repo, caplog, monkeypatch):
         """
         Given
             A path of a pack folder
@@ -810,8 +799,6 @@ class TestValidators:
         Then
             Ensure required_pack_file_does_not_exist fails if and only if PACKS_PACK_META_FILE_NAME doesn't exist
         """
-        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-        monkeypatch.setenv("COLUMNS", "1000")
         pack = repo.create_pack("pack")
         validate_manager = OldValidateManager(skip_conf_json=True)
         err_msg, err_code = Errors.required_pack_file_does_not_exist(
@@ -821,19 +808,14 @@ class TestValidators:
         validate_manager.validate_pack_unique_files(
             str(pack.path), pack_error_ignore_list={}
         )
-        assert not str_in_call_args_list(logger_error.call_args_list, err_msg)
-        assert not str_in_call_args_list(logger_error.call_args_list, err_code)
+        assert err_msg not in caplog.text
+        assert err_code not in caplog.text
 
         Path(pack.pack_metadata.path).unlink()
         validate_manager.validate_pack_unique_files(
             str(pack.path), pack_error_ignore_list={}
         )
-        assert all(
-            [
-                str_in_call_args_list(logger_error.call_args_list, err_msg),
-                str_in_call_args_list(logger_error.call_args_list, err_code),
-            ]
-        )
+        assert err_msg in caplog.text
 
     def test_validate_pack_dependencies(self, mocker):
         """
@@ -856,14 +838,6 @@ class TestValidators:
                 "id_set",
                 "id_set.json",
             )
-        )
-        mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
-            return_value=["Analytics & SIEM"],
-        )
-        mocker.patch(
-            "demisto_sdk.commands.common.hook_validations.pack_unique_files.get_current_categories",
-            return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"],
         )
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
@@ -1877,7 +1851,7 @@ class TestValidators:
             "Packs/pack_id/test_data/file.json",
             "Packs/pack_id/Scripts/script_id/test_data/file.json",
             "Packs/pack_id/TestPlaybooks/test_data/file.json",
-            "Packs/pack_id/Integrations/integration_id/command_examples",
+            "Packs/pack_id/Integrations/integration_id/command_examples.txt",
             "Packs/pack_id/Integrations/integration_id/test.txt",
             "Packs/pack_id/.secrets-ignore",
         ],
@@ -2135,7 +2109,7 @@ def test_run_validation_using_git_on_only_metadata_changed(
     assert res
 
 
-def test_validate_using_git_on_changed_marketplaces(mocker, pack):
+def test_validate_using_git_on_changed_marketplaces(mocker, pack, caplog):
     """
     Given:
         -   Modified marketplaces in pack_metadata
@@ -2147,7 +2121,7 @@ def test_validate_using_git_on_changed_marketplaces(mocker, pack):
     Then:
         -   Ensure the pack's content items are validated.
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
     old_pack_metadata = pack_metadata.copy()
     old_pack_metadata["marketplaces"] = ["xsoar"]
     new_pack_metadata = pack_metadata.copy()
@@ -2188,12 +2162,8 @@ def test_validate_using_git_on_changed_marketplaces(mocker, pack):
     assert len(validate_manager.packs_with_mp_change) == 1
 
     expected_string, expected_code = Errors.wrong_version()
-    assert all(
-        [
-            str_in_call_args_list(logger_error.call_args_list, expected_string),
-            str_in_call_args_list(logger_error.call_args_list, expected_code),
-        ]
-    )
+    assert expected_string in caplog.text
+    assert expected_code in caplog.text
 
 
 def test_is_mapping_fields_command_exist(integration):
@@ -2378,7 +2348,7 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
         "Packs/pack_id/test_data/file.json",
         "Packs/pack_id/Scripts/script_id/test_data/file.json",
         "Packs/pack_id/TestPlaybooks/test_data/file.json",
-        "Packs/pack_id/Integrations/integration_id/command_examples",
+        "Packs/pack_id/Integrations/integration_id/command_examples.txt",
         "Packs/pack_id/Integrations/integration_id/.vulture_whitelist.py",
     ],
 )
@@ -2448,7 +2418,7 @@ def test_check_file_relevance_and_format_path_ignored_git_and_circle_files(
     ) == ("", "", True)
 
 
-def test_check_file_relevance_and_format_path_type_missing_file(mocker):
+def test_check_file_relevance_and_format_path_type_missing_file(mocker, caplog):
     """
     Given
     - file path to validate
@@ -2461,7 +2431,6 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
     - make sure BA102 is returned as the file cannot be recognized
     """
     validator_obj = OldValidateManager(is_external_repo=True, check_is_unskipped=False)
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
     mocker.patch(
         "demisto_sdk.commands.validate.old_validate_manager.find_type",
@@ -2471,10 +2440,9 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
         "Packs/type_missing_filename", None, set()
     ) == ("", "", False)
 
-    assert str_in_call_args_list(
-        logger_error.call_args_list,
-        "[BA102] - File Packs/type_missing_filename is not supported in the validate command",
-    )
+    assert (
+        "[BA102] - File Packs/type_missing_filename is not supported in the validate command"
+    ) in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -2652,9 +2620,7 @@ def test_job_sanity(repo, is_feed: bool):
 
 @pytest.mark.parametrize("is_feed", (True, False))
 @pytest.mark.parametrize("version", ("6.4.9", ""))
-def test_job_from_version(
-    repo, mocker, monkeypatch, is_feed: bool, version: Optional[str]
-):
+def test_job_from_version(repo, mocker, caplog, is_feed: bool, version: Optional[str]):
     """
     Given
             A valid Job object in a repo
@@ -2663,8 +2629,7 @@ def test_job_from_version(
     Then
             Ensure the autogenerated Job files pass
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack()
     job = pack.create_job(is_feed, "job_name")
     job.update({"fromVersion": version})
@@ -2677,13 +2642,12 @@ def test_job_from_version(
             StructureValidator(job.path, is_new_file=True),
             pack_error_ignore_list=list(),
         )
-    assert str_in_call_args_list(
-        logger_info.call_args_list,
-        f"fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})",
-    )
+    assert (
+        f"fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})"
+    ) in caplog.text
 
 
-def test_job_non_feed_with_selected_feeds(repo, mocker, monkeypatch):
+def test_job_non_feed_with_selected_feeds(repo, caplog):
     """
     Given
             A Job object in a repo, with non-empty selectedFeeds when isFeed is set to false
@@ -2692,8 +2656,7 @@ def test_job_non_feed_with_selected_feeds(repo, mocker, monkeypatch):
     Then
             Ensure an error is raised, and validation fails
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack()
     job = pack.create_job(is_feed=False, name="job_name", selected_feeds=["feed_name"])
     validate_manager = OldValidateManager(
@@ -2705,13 +2668,12 @@ def test_job_non_feed_with_selected_feeds(repo, mocker, monkeypatch):
             StructureValidator(job.path, is_new_file=True),
             pack_error_ignore_list=list(),
         )
-    assert str_in_call_args_list(
-        logger_info.call_args_list,
-        "Job objects cannot have non-empty selectedFeeds when isFeed is set to false",
-    )
+    assert (
+        "Job objects cannot have non-empty selectedFeeds when isFeed is set to false"
+    ) in caplog.text
 
 
-def test_job_both_selected_and_all_feeds_in_job(repo, mocker, monkeypatch):
+def test_job_both_selected_and_all_feeds_in_job(repo, caplog):
     """
     Given
             A Job object in a repo, with non-empty selectedFeeds values but isAllFields set to true
@@ -2720,8 +2682,7 @@ def test_job_both_selected_and_all_feeds_in_job(repo, mocker, monkeypatch):
     Then
             Ensure an error is raised, and validation fails
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack()
     job = pack.create_job(is_feed=True, name="job_name", selected_feeds=["feed_name"])
     job.update({"isAllFeeds": True})
@@ -2734,15 +2695,14 @@ def test_job_both_selected_and_all_feeds_in_job(repo, mocker, monkeypatch):
             StructureValidator(job.path, is_new_file=True),
             pack_error_ignore_list=list(),
         )
-    assert str_in_call_args_list(
-        logger_info.call_args_list,
-        "Job cannot have non-empty selectedFeeds values when isAllFields is set to true",
-    )
+    assert (
+        "Job cannot have non-empty selectedFeeds values when isAllFields is set to true"
+    ) in caplog.text
 
 
 @pytest.mark.parametrize("is_feed", (True, False))
 @pytest.mark.parametrize("name", ("", " ", "  ", "\n", "\t"))
-def test_job_blank_name(repo, mocker, name: str, is_feed: bool, monkeypatch):
+def test_job_blank_name(repo, mocker, name: str, is_feed: bool, caplog):
     """
     Given
             A Job object in a repo, with a blank (space/empty) value as its name
@@ -2751,8 +2711,7 @@ def test_job_blank_name(repo, mocker, name: str, is_feed: bool, monkeypatch):
     Then
             Ensure an error is raised, and validation fails
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack()
     job = pack.create_job(is_feed=is_feed, name=name)
     job.update(
@@ -2769,16 +2728,11 @@ def test_job_blank_name(repo, mocker, name: str, is_feed: bool, monkeypatch):
             pack_error_ignore_list=list(),
         )
     expected_string, expected_code = Errors.empty_or_missing_job_name()
-    assert all(
-        [
-            str_in_call_args_list(logger_error.call_args_list, expected_string),
-            str_in_call_args_list(logger_error.call_args_list, expected_code),
-        ]
-    )
+    assert all([expected_string in caplog.text, expected_code in caplog.text])
 
 
 @pytest.mark.parametrize("is_feed", (True, False))
-def test_job_missing_name(repo, mocker, monkeypatch, is_feed: bool):
+def test_job_missing_name(repo, caplog, is_feed: bool):
     """
     Given
             A Job object in a repo, with an empty value as name
@@ -2787,8 +2741,7 @@ def test_job_missing_name(repo, mocker, monkeypatch, is_feed: bool):
     Then
             Ensure an error is raised, and validation fails
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack()
     job = pack.create_job(is_feed=is_feed)
     job.remove(
@@ -2805,12 +2758,7 @@ def test_job_missing_name(repo, mocker, monkeypatch, is_feed: bool):
             pack_error_ignore_list=list(),
         )
     expected_string, expected_code = Errors.empty_or_missing_job_name()
-    assert all(
-        [
-            str_in_call_args_list(logger_error.call_args_list, expected_string),
-            str_in_call_args_list(logger_error.call_args_list, expected_code),
-        ]
-    )
+    assert all([expected_string in caplog.text, expected_code in caplog.text])
 
 
 @pytest.mark.parametrize(
@@ -2818,7 +2766,7 @@ def test_job_missing_name(repo, mocker, monkeypatch, is_feed: bool):
     ((True, []), (True, None), (False, ["my_field"]), (True, ["my_field"])),
 )
 def test_job_unexpected_field_values_in_non_feed_job(
-    repo, mocker, monkeypatch, is_all_feeds: bool, selected_feeds: Optional[List[str]]
+    repo, caplog, monkeypatch, is_all_feeds: bool, selected_feeds: Optional[List[str]]
 ):
     """
     Given
@@ -2828,8 +2776,7 @@ def test_job_unexpected_field_values_in_non_feed_job(
     Then
             Ensure an error is raised, and validation fails
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack()
     job = pack.create_job(is_feed=True, name="job_name")
     job.update({"isAllFeeds": False})
@@ -2842,10 +2789,9 @@ def test_job_unexpected_field_values_in_non_feed_job(
             StructureValidator(job.path, is_new_file=True),
             pack_error_ignore_list=list(),
         )
-    assert str_in_call_args_list(
-        logger_info.call_args_list,
-        "Job must either have non-empty selectedFeeds OR have isAllFields set to true when isFeed is set to true",
-    )
+    assert (
+        "Job must either have non-empty selectedFeeds OR have isAllFields set to true when isFeed is set to true"
+    ) in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -2879,6 +2825,7 @@ def test_validate_deleted_files(
     expected_error_output,
     expected_result,
     added_files,
+    caplog,
 ):
     """
     Given
@@ -2888,9 +2835,7 @@ def test_validate_deleted_files(
     Then
             Assert the expected result (True or False) and the expected output (if there is an expected output).
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    monkeypatch.setenv("COLUMNS", "1000")
+
     validate_manager = OldValidateManager(check_is_unskipped=False, skip_conf_json=True)
     if added_files:
         mocker.patch(
@@ -2906,9 +2851,9 @@ def test_validate_deleted_files(
 
     assert expected_result is result
     if expected_info_output:
-        assert str_in_call_args_list(logger_info.call_args_list, expected_info_output)
+        assert expected_info_output in caplog.text
     if expected_error_output:
-        assert str_in_call_args_list(logger_error.call_args_list, expected_error_output)
+        assert expected_error_output in caplog.text
 
 
 def test_was_file_renamed_but_labeled_as_deleted(mocker):
@@ -2983,7 +2928,7 @@ def test_validate_pack_name(repo):
     )
 
 
-def test_image_error(set_git_test_env, mocker, monkeypatch):
+def test_image_error(set_git_test_env, caplog):
     """
     Given
             a image that isn't located in the right folder.
@@ -2992,17 +2937,11 @@ def test_image_error(set_git_test_env, mocker, monkeypatch):
     Then
             Ensure an error is raised, and  the right error is given.
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    monkeypatch.setenv("COLUMNS", "1000")
+
     validate_manager = OldValidateManager()
     validate_manager.run_validations_on_file(IGNORED_PNG, None)
     expected_string, expected_code = Errors.invalid_image_name_or_location()
-    assert all(
-        [
-            str_in_call_args_list(logger_error.call_args_list, expected_string),
-            str_in_call_args_list(logger_error.call_args_list, expected_code),
-        ]
-    )
+    assert all([expected_string in caplog.text, expected_code in caplog.text])
 
 
 modeling_rule_file_changes = [
@@ -3064,7 +3003,7 @@ pack_metadata_invalid_tags = {
 
 @pytest.mark.parametrize("pack_metadata_info", [pack_metadata_invalid_tags])
 def test_run_validation_using_git_on_metadata_with_invalid_tags(
-    mocker, monkeypatch, repo, pack_metadata_info
+    mocker, monkeypatch, repo, pack_metadata_info, caplog
 ):
     """
     Given
@@ -3075,17 +3014,10 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     Then
         - Assert validation fails and the right error number is shown.
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack()
     pack.pack_metadata.write_json(pack_metadata_info)
     mocker.patch.object(OldValidateManager, "setup_git_params", return_value=True)
-    mocker.patch.object(
-        PackUniqueFilesValidator,
-        "is_categories_field_match_standard",
-        return_value=True,
-    )
     mocker.patch.object(
         OldValidateManager,
         "get_unfiltered_changed_files_from_git",
@@ -3101,7 +3033,7 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     with contextlib.redirect_stdout(std_output):
         with ChangeCWD(repo.path):
             res = validate_manager.run_validation_using_git()
-    assert str_in_call_args_list(logger_error.call_args_list, "[PA123]")
+    assert "[PA123]" in caplog.text
     assert not res
 
 
@@ -3229,7 +3161,7 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_failure(
     )
 
 
-def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, mocker):
+def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, caplog):
     """
     Given:
     - Content of a customer-facing docs file (README, Release Notes, etc.)
@@ -3240,7 +3172,7 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
     Then:
     - Ensure that if a disallowed term is found, False is returned, and True otherwise.
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+
     file_content = "This is an example with the 'test-module' term within it."
 
     pack = repo.create_pack()
@@ -3266,8 +3198,7 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
         )
 
         # Assure errors were logged (1 error per validated file)
-        assert count_str_in_call_args_list(logger_error.call_args_list, "BA125") == 4
-        pass
+        assert caplog.text.count("BA125") == 4
 
 
 @pytest.mark.parametrize(
@@ -3275,22 +3206,15 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
     [
         (
             {"Packs/test/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109\n",
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
-            "",
-            {"Packs/test/Integrations/test/test.yml"},
-        ),
-        (
-            {"Packs/test/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n",
             "",
             set(),
         ),
         (
             {"Packs/test1/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
-            "[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n",
+            "[file:test2.yml]\nignore=BA108,BA109,\n",
             "",
             {
                 "Packs/test1/Integrations/test/test.yml",
@@ -3308,9 +3232,9 @@ def test_validate_no_disallowed_terms_in_customer_facing_docs_end_to_end(repo, m
         ),
         (
             {"Packs/test1/.pack-ignore"},
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n[file:test2.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n[file:test2.yml]\nignore=BA108,BA109,\n",
             {},
-            "[file:test.yml]\nignore=BA108,BA109,DS107\n",
+            "[file:test.yml]\nignore=BA108,BA109,\n",
             {"Packs/test1/Integrations/test2/test2.yml"},
         ),
         (
@@ -3405,7 +3329,7 @@ def test_get_all_files_edited_in_pack_ignore(
     )
 
 
-def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker):
+def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker, caplog):
     """
     Given:
     - empty .pack-ignore returned from git api
@@ -3420,7 +3344,7 @@ def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker):
     """
     from git import GitCommandError
 
-    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    caplog.set_level("WARNING")
 
     mocker.patch.object(
         GitUtil,
@@ -3443,7 +3367,7 @@ def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker):
 
     validate_manager = OldValidateManager()
     config = ConfigParser(allow_no_value=True)
-    config.read_string("[file:test.yml]\nignore=BA108,BA109,DS107")
+    config.read_string("[file:test.yml]\nignore=BA108,BA109")
 
     mocker.patch(
         "demisto_sdk.commands.validate.old_validate_manager.get_pack_ignore_content",
@@ -3453,4 +3377,4 @@ def test_get_all_files_edited_in_pack_ignore_with_git_error(mocker):
     assert validate_manager.get_all_files_edited_in_pack_ignore(
         {"Packs/test/.pack-ignore"}
     ) == {"Packs/test/Integrations/test/test.yml"}
-    assert logger_warning.called
+    assert caplog.text

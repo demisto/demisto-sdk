@@ -1,5 +1,6 @@
 """Configuring tests for the content suite"""
 
+import os
 import shutil
 from pathlib import Path
 from typing import Generator
@@ -10,6 +11,8 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
 
 import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.__main__ import register_commands
+from demisto_sdk.commands.common.constants import DEMISTO_SDK_LOG_NO_COLORS
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
@@ -165,6 +168,19 @@ def mock_update_id_set_cpu_count() -> Generator:
         yield _fixture
 
 
+@pytest.fixture(scope="session", autouse=True)
+def disable_log_colors():
+    os.environ[DEMISTO_SDK_LOG_NO_COLORS] = "1"
+
+
 @pytest.fixture(autouse=True)
 def clear_cache():
     tools.get_file.cache_clear()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def register_sdk_commands():
+    """
+    Ensure that demisto-sdk Typer app commands are registered before each test session.
+    """
+    register_commands()

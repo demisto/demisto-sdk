@@ -17,22 +17,27 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import base_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import (
+from demisto_sdk.commands.pre_commit.resources.pylint_plugins.base_checker import (
+    base_msg,
+)
+from demisto_sdk.commands.pre_commit.resources.pylint_plugins.certified_partner_level_checker import (
     cert_partner_msg,
 )
-from demisto_sdk.commands.lint.resources.pylint_plugins.community_level_checker import (
+from demisto_sdk.commands.pre_commit.resources.pylint_plugins.community_level_checker import (
     community_msg,
 )
-from demisto_sdk.commands.lint.resources.pylint_plugins.partner_level_checker import (
+from demisto_sdk.commands.pre_commit.resources.pylint_plugins.partner_level_checker import (
     partner_msg,
 )
-from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker import (
+from demisto_sdk.commands.pre_commit.resources.pylint_plugins.xsoar_level_checker import (
     xsoar_msg,
 )
 
 ENV = os.environ
-ERROR_CODE_REGEX = r"^/[^:\n]+:\d+:\d+: E\d+ .*$"
+ERROR_AND_WARNING_CODE_PATTERN = re.compile(
+    r"^(?P<path>/[^:\n]+):(?P<line>\d+):(?P<col>\d+): (?P<error_code>(?P<type>[EW])\d+)(?P<error_message> .*)$",
+    re.MULTILINE,
+)
 
 
 def build_xsoar_linter_command(
@@ -130,6 +135,7 @@ class ProcessResults:
 
     return_code: int = 0
     errors: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
     errors_and_warnings: str = ""
 
 
@@ -168,8 +174,12 @@ def process_file(file_path: Path) -> ProcessResults:
             errors_and_warnings_str = log_data.decode("utf-8")
             results.errors_and_warnings = errors_and_warnings_str
             # catch only error codes from the error and warning string
-            pattern = re.compile(ERROR_CODE_REGEX, re.MULTILINE)
-            results.errors += pattern.findall(errors_and_warnings_str)
+            for line in errors_and_warnings_str.splitlines():
+                if error_or_warning := ERROR_AND_WARNING_CODE_PATTERN.match(line):
+                    if error_or_warning["type"] == "E":
+                        results.errors.append(line)
+                    else:
+                        results.warnings.append(line)
         except subprocess.TimeoutExpired:
             results.errors.append(
                 f"Got a timeout while processing the following file: {str(file_path)}"
@@ -195,6 +205,7 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     """
     return_codes = []
     errors = []
+    warning = []
     errors_and_warnings = []
 
     if not file_paths:
@@ -208,12 +219,32 @@ def xsoar_linter_manager(file_paths: Optional[List[Path]]):
     for result in results:
         return_codes.append(result.return_code)
         errors += result.errors
+        warning += result.warnings
         errors_and_warnings.append(result.errors_and_warnings)
     errors_and_warnings_concat = "\n".join(elem for elem in errors_and_warnings if elem)
     logger.info(errors_and_warnings_concat)
 
     if any(return_codes):  # An error was found
-        errors_str = "\n".join(error for error in errors if error)
+        errors, warnings = list(filter(None, errors)), list(filter(None, warning))
+
+        if os.getenv("GITHUB_ACTIONS"):
+            print_errors_github_action(errors)
+            if os.getenv("DEMISTO_SDK_XSOAR_LINTER_WARNING_ANNOTATIONS"):
+                print_errors_github_action(warnings)
+
+        errors_str = "\n".join(errors)
         logger.error(f"Found the following errors: \n{errors_str}")
 
     return int(any(return_codes))
+
+
+def print_errors_github_action(errors_and_warnings: List[str]) -> None:
+    for item in errors_and_warnings:
+        if not (match := ERROR_AND_WARNING_CODE_PATTERN.match(item)):
+            logger.debug(f"Failed parsing error {item}")
+            continue
+
+        prefix = {"W": "warning", "E": "error"}[match["type"]]
+        print(  # noqa: T201
+            f"::{prefix} file={match.group('path')},line={match.group('line')},col={match.group('col')},title=XSOAR Linter {match.group('error_code')}::{match.group('error_message')}"
+        )

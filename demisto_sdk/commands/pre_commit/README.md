@@ -1,5 +1,7 @@
 ## Pre-commit
 
+### Overview
+
 This command enhances the content development experience, by running a variety of checks and linters.
 It utilizes the [pre-commit](https://github.com/pre-commit/pre-commit) framework.
 A `.pre-commit-config-template.yaml` file is used to configure the hooks (if found in the content repo. Otherwise, a [default](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/pre_commit/.pre-commit-config_template.yaml) is used)
@@ -8,16 +10,7 @@ Since content items are made to run in containers with different Python versions
 
 **Note**: An internet connection is required for this command.
 
-## Usage
-
-### Manually Running
-* In a terminal shell, change the directory to the folder that is used as a the content repo.
-* Run `demisto-sdk pre-commit`.
-
-### Automatically, as a git hook
-* Create a [git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) that runs `demisto-sdk pre-commit`.
-
-**Arguments**:
+### Options
 * **-i, --input, --files**
 The paths to run pre-commit on. May pass multiple paths.
 * **--staged-only**
@@ -61,23 +54,17 @@ Path to save log files onto.
 * **--template-path**
 A custom path for pre-defined pre-commit template, if not provided will use the default template.
 
-## Examples:
+### Usage
 
-`demisto-sdk --pre-commit`
-Will run pre-commit on all files collected by git.
+#### Manually Running
+* In a terminal shell, change the directory to the folder that is used as a the content repo.
+* Run `demisto-sdk pre-commit`.
 
-`demisto-sdk --pre-commit -i Packs/hello_world`
-Will run pre-commit on all files in pack hello_world.
+#### Automatically, as a git hook
+* Create a [git hook](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) that runs `demisto-sdk pre-commit`.
 
-
-`demisto-sdk --pre-commit --no-validate`
-Will run pre-commit without the validate step.
-
-`demisto-sdk --pre-commit --show-diff-on-failure`
-Will run pre-commit and show differences when failing.
-
-## Modes
-When different args set for the different modes are needed, for example, some rules should be excluded in the nightly build.
+### Modes
+You can set different arguments for different modes. for example, some rules should be excluded in the nightly build.
 Any key can be set this way.
 You can set this as follows.
 ```yaml
@@ -91,7 +78,7 @@ You can set this as follows.
 And call precommit as follows: `demisto-sdk pre-commit -a --mode nightly`.
 Note, that it is possible to use any mode that you like, and have multiple modes for each hook, like in the example.
 
-## Hooks
+### Hooks
 Hooks can be set in the `.pre-commit-config_template.yaml` file. The syntax is similar to the official [`pre-commit` hooks](https://pre-commit.com/#new-hooks). But the command allows more keys to be set:
 
 ### Skip key
@@ -112,7 +99,7 @@ In this example, both hooks will be skipped.
   needs: ["sample-hook"]
 ```
 
-## parallel key
+### parallel key
 The parallel key indicates whether a hook should run in parallel, by default hooks such as mypy, ruff and docker produce multiple hooks which run in parallel.
 Default is True. In order to avoid running a specific hook in parallel you can set it to `false`. When setting the parallel of a hook to `false`, a split hook will run sequentially.
 ```yaml
@@ -120,9 +107,9 @@ Default is True. In order to avoid running a specific hook in parallel you can s
   parallel: false
 ```
 
-## Steps
+### Steps
 
-### External tools
+#### External tools
 #### [Ruff](https://github.com/astral-sh/ruff)
 Runs Ruff, the extremely fast Python linter, using the Python version used in the container image set for the content item.
 
@@ -150,7 +137,7 @@ The following SDK commands are automatically run
 ### Docker hooks
 To run a command in a script's relevant container you can set up a Docker Hook.
 
-A docker hook must be under the `local` repo and it's `id` must end with `in-docker`.
+A docker hook must be under the `local` repo, and it's `id` must end with `in-docker`.
 
 #### Example
 ```yaml
@@ -187,3 +174,17 @@ Often with commands we run in the docker we have a configuration file that is sp
       arg_name: '--config'
       file_name: 'ruff.toml'
 ```
+### Examples:
+
+`demisto-sdk --pre-commit`
+Will run pre-commit on all files collected by git.
+
+`demisto-sdk --pre-commit -i Packs/hello_world`
+Will run pre-commit on all files in pack hello_world.
+
+
+`demisto-sdk --pre-commit --no-validate`
+Will run pre-commit without the validate step.
+
+`demisto-sdk --pre-commit --show-diff-on-failure`
+Will run pre-commit and show differences when failing.

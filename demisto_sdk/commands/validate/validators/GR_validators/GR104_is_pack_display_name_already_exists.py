@@ -5,7 +5,6 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -14,19 +13,17 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Pack
 
 
-class IsPackDisplayNameAlreadyExistsValidator(BaseValidator, ABC):
+class IsPackDisplayNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR104"
-    description = "Validate that there are no duplicate display names in the repo"
-    rationale = (
-        "We want to avoid the existance of duplicate display names"
-        " in order to make sure we don't confuse between content items."
+    description = (
+        "Validate that there are no duplicate display names of packs in the repo"
     )
+    rationale = "Prevent confusion between packs."
     error_message = (
         "Pack '{content_id}' has a duplicate display_name as: {pack_display_id}."
     )
     related_field = ""
     is_auto_fixable = False
-    related_file_type = [RelatedFileType.JSON]
 
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool

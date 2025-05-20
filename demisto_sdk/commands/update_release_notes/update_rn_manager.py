@@ -80,9 +80,9 @@ class UpdateReleaseNotesManager:
         self.create_release_notes(modified_files, added_files, old_format_files)
         if len(self.total_updated_packs) > 1:
             logger.info(
-                "\n[green]Successfully updated the following packs:\n"
+                "\n<green>Successfully updated the following packs:\n"
                 + "\n".join(self.total_updated_packs)
-                + "[/green]"
+                + "</green>"
             )
 
     def filter_to_relevant_files(
@@ -172,6 +172,7 @@ class UpdateReleaseNotesManager:
             if not validate_manager.git_util:  # in case git utils can't be initialized.
                 raise git.InvalidGitRepositoryError("unable to connect to git.")
             validate_manager.setup_git_params()
+            self.prev_ver = validate_manager.prev_ver
             if self.given_pack:
                 with suppress_stdout():
                     # The Validator prints errors which are related to all changed files that
@@ -282,8 +283,8 @@ class UpdateReleaseNotesManager:
                 )
         else:
             logger.info(
-                "[yellow]No changes that require release notes were detected. If such changes were made, "
-                "please commit the changes and rerun the command.[/yellow]"
+                "<yellow>No changes that require release notes were detected. If such changes were made, "
+                "please commit the changes and rerun the command.</yellow>"
             )
 
     def create_pack_release_notes(
@@ -328,6 +329,10 @@ class UpdateReleaseNotesManager:
                 is_force=self.is_force,
                 existing_rn_version_path=existing_rn_version,
                 is_bc=self.is_bc,
+                prev_ver=self.prev_ver,
+            )
+            logger.info(
+                "Creating release notes is in progress... It may take about minute."
             )
             updated = update_pack_rn.execute_update()
             self.rn_path.append(update_pack_rn.rn_path)
@@ -342,9 +347,9 @@ class UpdateReleaseNotesManager:
                     os.unlink(self.packs_existing_rn[pack])
         else:
             logger.info(
-                f"[yellow]Either no changes were found in {pack} pack "
+                f"<yellow>Either no changes were found in {pack} pack "
                 f"or the changes found should not be documented in the release notes file.\n"
-                f"If relevant changes were made, please commit the changes and rerun the command.[/yellow]"
+                f"If relevant changes were made, please commit the changes and rerun the command.</yellow>"
             )
 
     def get_existing_rn(self, pack) -> Optional[str]:

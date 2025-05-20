@@ -8,6 +8,6 @@ def generate_readme_template(input_path: Path, readme_template: str):
         template = README_TEMPLATES.get(readme_template, "")
         if not template:
             raise Exception(
-                f"[red]Template type {readme_template} is not supported. Please select one of: {list(README_TEMPLATES.keys())}[/red]"
+                f"Template type {readme_template} is not supported. Please select one of: {list(README_TEMPLATES.keys())}"
             )
         file_object.write(template)

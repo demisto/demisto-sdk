@@ -1,12 +1,10 @@
-import logging
 from os import listdir
 from pathlib import Path
 
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
-from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import app
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
-from TestSuite.test_tools import str_in_call_args_list
 
 INIT_CMD = "init"
 
@@ -23,7 +21,6 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path, mocker):
     - Ensure pack metadata is created successfully.
     - Ensure integration directory contain all files.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack_name = "SuperPack"
     fill_pack_metadata = "Y"
@@ -72,12 +69,12 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path, mocker):
 
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        main, [INIT_CMD, "-o", tmp_dir_path, "-n", pack_name], input="\n".join(inputs)
+        app, [INIT_CMD, "-o", tmp_dir_path, "-n", pack_name], input="\n".join(inputs)
     )
 
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 f"Successfully created the pack SuperPack in: {tmp_pack_path}",
                 f"Created pack metadata at path : {tmp_pack_metadata_path}",
@@ -116,7 +113,7 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path, mocker):
         f"{integration_name}_image.png",
         "test_data",
         "README.md",
-        "command_examples",
+        "command_examples.txt",
     } == integration_dir_files
 
 
@@ -134,7 +131,6 @@ def test_integration_init_integration_positive_no_inline_pack_name(
     - Ensure pack metadata is created successfully.
     - Ensure integration directory contain all files.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack_name = "SuperPack"
     fill_pack_metadata = "Y"
@@ -183,14 +179,12 @@ def test_integration_init_integration_positive_no_inline_pack_name(
     tmp_integration_path = tmp_pack_path / "Integrations" / integration_name
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(
-        main, [INIT_CMD, "-o", tmp_dir_path], input="\n".join(inputs)
-    )
+    result = runner.invoke(app, [INIT_CMD, "-o", tmp_dir_path], input="\n".join(inputs))
 
     assert result.exit_code == 0
     assert all(
         [
-            str_in_call_args_list(logger_info.call_args_list, current_str)
+            current_str in result.output
             for current_str in [
                 f"Successfully created the pack SuperPack in: {tmp_pack_path}",
                 f"Created pack metadata at path : {tmp_pack_metadata_path}",
@@ -228,5 +222,5 @@ def test_integration_init_integration_positive_no_inline_pack_name(
         f"{integration_name}_image.png",
         "test_data",
         "README.md",
-        "command_examples",
+        "command_examples.txt",
     } == integration_dir_files

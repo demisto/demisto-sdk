@@ -1,5 +1,4 @@
 import glob
-import logging
 import os
 
 import pytest
@@ -8,7 +7,7 @@ import requests_mock
 import demisto_sdk
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD
 
 VALID_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-valid.md"
 INVALID_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-invalid.md"
@@ -134,7 +133,7 @@ def test_air_gapped_env(tmp_path, mocker):
     assert ReadMeValidator(r).is_mdx_file()
 
 
-def test_is_image_path_valid(mocker):
+def test_is_image_path_valid(mocker, caplog):
     """
     Given
         - A README file with 2 invalid images paths in it.
@@ -147,7 +146,6 @@ def test_is_image_path_valid(mocker):
             - Valid image path was not caught
             - An alternative paths were suggested
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     blob_images_paths = [
         "https://github.com/demisto/content/blob/123/Packs/AutoFocus/doc_files/AutoFocusPolling.png",
         "https://github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png",
@@ -167,20 +165,11 @@ def test_is_image_path_valid(mocker):
 
     assert not result
     assert all(
-        [
-            str_in_call_args_list(logger_error.call_args_list, current_str)
-            for current_str in blob_images_paths
-        ]
-        + [
-            str_in_call_args_list(logger_error.call_args_list, current_str)
-            for current_str in raw_images_paths
-        ]
-        + [
-            not str_in_call_args_list(logger_error.call_args_list, current_str)
-            for current_str in assets_images_paths
-        ]
+        [current_str in caplog.text for current_str in blob_images_paths]
+        + [current_str in caplog.text for current_str in raw_images_paths]
+        + [current_str not in caplog.text for current_str in assets_images_paths]
     )
-    assert not str_in_call_args_list(logger_error.call_args_list, raw_image_path)
+    assert raw_image_path not in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -195,7 +184,7 @@ def test_is_image_path_valid(mocker):
     ],
 )
 def test_unvalid_verify_no_empty_sections(
-    integration, file_input, missing_section, mocker
+    integration, file_input, missing_section, mocker, caplog
 ):
     """
     Given
@@ -205,8 +194,6 @@ def test_unvalid_verify_no_empty_sections(
     Then
         - Ensure no empty sections from the SECTIONS list
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
-
     integration.readme.write(file_input)
     readme_path = integration.readme.path
 
@@ -219,7 +206,7 @@ def test_unvalid_verify_no_empty_sections(
         )
 
         assert not result
-        assert str_in_call_args_list(logger_error.call_args_list, section_error)
+        assert section_error in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -228,7 +215,9 @@ def test_unvalid_verify_no_empty_sections(
         "## Troubleshooting\n## OtherSection\n## Additional Information\n\n## OtherSection\n##"
     ],
 )
-def test_combined_unvalid_verify_no_empty_sections(integration, mocker, file_input):
+def test_combined_unvalid_verify_no_empty_sections(
+    integration, mocker, file_input, caplog
+):
     """
     Given
         - Couple of empty sections
@@ -237,7 +226,6 @@ def test_combined_unvalid_verify_no_empty_sections(integration, mocker, file_inp
     Then
         - Ensure no empty sections from the SECTIONS list
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
 
     integration.readme.write(file_input)
     readme_path = integration.readme.path
@@ -252,7 +240,7 @@ def test_combined_unvalid_verify_no_empty_sections(integration, mocker, file_inp
         )
 
         assert not result
-        assert str_in_call_args_list(logger_error.call_args_list, error)
+        assert error in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -345,7 +333,9 @@ def test_copyright_sections(integration, file_input):
         ),
     ],
 )
-def test_verify_no_default_sections_left(integration, mocker, file_input, section):
+def test_verify_no_default_sections_left(
+    integration, mocker, file_input, section, caplog
+):
     """
     Given
         - Readme that contains sections that are created as default and need to be changed
@@ -354,7 +344,6 @@ def test_verify_no_default_sections_left(integration, mocker, file_input, sectio
     Then
         - Ensure no default sections in the readme file
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     integration.readme.write(file_input)
     readme_path = integration.readme.path
 
@@ -362,9 +351,8 @@ def test_verify_no_default_sections_left(integration, mocker, file_input, sectio
         readme_validator = ReadMeValidator(readme_path)
         result = readme_validator.verify_no_default_sections_left()
 
-        section_error = f'Replace "{section}" with a suitable info.'
+        assert f'Replace "{section}" with a suitable info.' in caplog.text
         assert not result
-        assert str_in_call_args_list(logger_error.call_args_list, section_error)
 
 
 ERROR_FOUND_CASES = [
@@ -502,7 +490,7 @@ def test_context_difference_created_is_valid(mocker, difference_found, expected)
         handle_error_mock.assert_not_called()
 
 
-def test_invalid_short_file(mocker):
+def test_invalid_short_file(mocker, caplog):
     """
     Given
         - Non empty Readme with less than 30 chars.
@@ -511,7 +499,6 @@ def test_invalid_short_file(mocker):
     Then
         - Ensure verify on Readme fails
     """
-    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     readme_validator = ReadMeValidator(INVALID3_MD)
     result = readme_validator.verify_readme_is_not_too_short()
     short_readme_error = (
@@ -520,93 +507,13 @@ def test_invalid_short_file(mocker):
         "Pack README files are expected to include a few sentences about the pack and/or images."
     )
     assert not result
-    assert str_in_call_args_list(logger_error.call_args_list, short_readme_error)
-
-
-def test_demisto_in_integration_readme(repo):
-    """
-    Given
-        - An integration README contains the word 'Demisto'.
-
-    When
-        - Running verify_demisto_in_readme_content.
-
-    Then
-        - Ensure that the validation fails.
-    """
-
-    pack = repo.create_pack("PackName")
-    integration = pack.create_integration("IntName")
-
-    readme_path = glob.glob(
-        os.path.join(os.path.dirname(integration.yml.path), "*README.md")
-    )[0]
-
-    with open(readme_path, "w") as f:
-        f.write("This checks if we have the word Demisto in the README.")
-
-    with ChangeCWD(repo.path):
-        readme_validator = ReadMeValidator(integration.readme.path)
-
-        assert not readme_validator.verify_demisto_in_readme_content()
+    assert short_readme_error in caplog.text
 
 
 def init_readmeValidator(readme_validator, repo, readme_path):
     readme_validator.content_path = str(repo.path)
     readme_validator.file_path = readme_path
     readme_validator.specific_validations = None
-
-
-def test_demisto_in_repo_readme(mocker, repo):
-    """
-    Given
-        - A repo README contains the word 'Demisto'.
-
-    When
-        - Running verify_demisto_in_readme_content.
-
-    Then
-        - Ensure that the validation not fails.
-    """
-    from pathlib import Path
-
-    readme_path = Path(repo.path) / "README.md"
-    mocker.patch.object(ReadMeValidator, "__init__", return_value=None)
-
-    with open(readme_path, "w") as f:
-        f.write("This checks if we have the word Demisto in the README.")
-
-    with ChangeCWD(repo.path):
-        readme_validator = ReadMeValidator()
-        init_readmeValidator(readme_validator, repo, readme_path)
-        assert readme_validator.verify_demisto_in_readme_content()
-
-
-def test_demisto_not_in_readme(repo):
-    """
-    Given
-        - An integration README without the word 'Demisto'.
-
-    When
-        - Running verify_demisto_in_readme_content.
-
-    Then
-        - Ensure that the validation passes.
-    """
-
-    pack = repo.create_pack("PackName")
-    integration = pack.create_integration("IntName")
-
-    readme_path = glob.glob(
-        os.path.join(os.path.dirname(integration.yml.path), "*README.md")
-    )[0]
-
-    with open(readme_path, "w") as f:
-        f.write("This checks if we have the word XSOAR in the README.")
-
-    readme_validator = ReadMeValidator(integration.readme.path)
-
-    assert readme_validator.verify_demisto_in_readme_content()
 
 
 def test_verify_template_not_in_readme(repo):

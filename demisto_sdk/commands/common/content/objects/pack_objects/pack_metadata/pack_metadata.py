@@ -1,4 +1,3 @@
-import logging
 import os
 from datetime import datetime
 from typing import Dict, List, Union
@@ -7,6 +6,7 @@ from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
+    DEFAULT_SUPPORTED_MODULES,
     PACKS_PACK_META_FILE_NAME,
     PARTNER_SUPPORT,
     XSOAR_AUTHOR,
@@ -60,6 +60,7 @@ class PackMetaData(JSONObject):
         self._useCases: List[str] = []
         self._keywords: List[str] = []
         self._dependencies: Dict[str, Dict] = {}
+        self._supported_modules: List[str] = DEFAULT_SUPPORTED_MODULES
 
     @property
     def name(self) -> str:
@@ -494,6 +495,13 @@ class PackMetaData(JSONObject):
         """Setter for the dependencies attribute"""
         self._dependencies = new_pack_dependencies
 
+    @property
+    def supported_modules(self):
+        """
+        List of supported platform products & add-ons.
+        """
+        return self._supported_modules
+
     def dump_metadata_file(self, dest_dir: Union[Path, str] = "") -> List[Path]:
         file_content = {
             "name": self.name,
@@ -530,16 +538,13 @@ class PackMetaData(JSONObject):
 
         return [new_metadata_path]
 
-    def load_user_metadata(
-        self, pack_id: str, pack_name: str, pack_path: Path, logger: logging.Logger
-    ) -> None:
+    def load_user_metadata(self, pack_id: str, pack_name: str, pack_path: Path) -> None:
         """Loads user defined metadata and stores part of it's data in defined properties fields.
 
         Args:
             pack_id (str): The pack's id.
             pack_name (str): The pack's name.
             pack_path (Path): The pack's path.
-            logger (logging.Logger): System logger already initialized.
 
         """
         user_metadata_path = os.path.join(
@@ -581,7 +586,9 @@ class PackMetaData(JSONObject):
             self.categories = user_metadata.get("categories", [])
             self.use_cases = user_metadata.get("useCases", [])
             self.dependencies = user_metadata.get("dependencies", {})
-
+            self.supportedModules = user_metadata.get(
+                "supportedModules", DEFAULT_SUPPORTED_MODULES
+            )
             if self.price > 0:
                 self.premium = True
                 self.vendor_id = user_metadata.get("vendorId", "")
@@ -593,15 +600,12 @@ class PackMetaData(JSONObject):
         except Exception:
             logger.error(f"Failed loading {pack_name} user metadata.")
 
-    def handle_dependencies(
-        self, pack_name: str, id_set_path: str, logger: logging.Logger
-    ) -> None:
+    def handle_dependencies(self, pack_name: str, id_set_path: str) -> None:
         """Updates pack's dependencies using the find_dependencies command.
 
         Args:
             pack_name (str): The pack's name.
             id_set_path (str): the id_set file path.
-            logger (logging.Logger): System logger already initialized.
         """
         calculated_dependencies = PackDependencies.find_dependencies(
             pack_name,

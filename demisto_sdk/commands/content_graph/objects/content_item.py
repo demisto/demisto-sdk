@@ -34,6 +34,8 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
+    append_supported_modules,
+    replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -55,6 +57,8 @@ class ContentItem(BaseContent):
     is_test: bool = False
     pack: Any = Field(None, exclude=True, repr=False)
     support: str = ""
+    is_silent: bool = False
+    upload_path: Optional[Path] = None
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -271,7 +275,13 @@ class ContentItem(BaseContent):
         if not self.path.exists():
             raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
-        logger.debug(f"preparing {self.path}")
+        # Replace incorrect marketplace references
+        data = replace_marketplace_references(data, current_marketplace, str(self.path))
+        if current_marketplace == MarketplaceVersions.PLATFORM:
+            data = append_supported_modules(data, self.supportedModules)
+        else:
+            if "supportedModules" in data:
+                del data["supportedModules"]
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(
@@ -317,6 +327,7 @@ class ContentItem(BaseContent):
             "fromversion",
             "toversion",
             "deprecated",
+            "supportedModules",
         }
 
     @property
@@ -335,15 +346,7 @@ class ContentItem(BaseContent):
         for _ in range(2):
             # we iterate twice to handle cases of doubled prefixes like `classifier-mapper-`
             for prefix in server_names:
-                try:
-                    name = name.removeprefix(f"{prefix}-")  # type: ignore[attr-defined]
-                except AttributeError:
-                    # not supported in python 3.8
-                    name = (
-                        name[len(prefix) + 1 :]
-                        if name.startswith(f"{prefix}-")
-                        else name
-                    )
+                name = name.removeprefix(f"{prefix}-")
         normalized = f"{self.content_type.server_name}-{name}"
         logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized
@@ -363,6 +366,7 @@ class ContentItem(BaseContent):
                 data=self.prepare_for_upload(current_marketplace=marketplace),
                 handler=self.handler,
             )
+            logger.debug(f"path to dumped file: {str(dir / self.normalize_name)}")
         except FileNotFoundError as e:
             logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
 
@@ -379,7 +383,9 @@ class ContentItem(BaseContent):
         id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity
 
-    def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+    def is_incident_to_alert(
+        self, marketplace: Union[List[MarketplaceVersions], MarketplaceVersions]
+    ) -> bool:
         """
         As long as the content item does not have an implementation of the `is_incident_to_alert` function,
         the return value will always be false,

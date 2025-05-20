@@ -41,6 +41,7 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
                 validator=self,
                 message=self.error_message.format(", ".join(invalid_lines)),
                 content_object=content_item,
+                path=content_item.readme.file_path,
             )
             for content_item in content_items
             if (
@@ -76,6 +77,10 @@ class IsImageExistsInReadmeValidator(BaseValidator[ContentTypes]):
                 path_validate.convert(image_path, param=None, ctx=None)
 
             except click.exceptions.BadParameter:
-                invalid_image_paths.append(image_path)
+                try:
+                    alternative_path = image_path.removeprefix("Packs/")
+                    path_validate.convert(alternative_path, param=None, ctx=None)
+                except click.exceptions.BadParameter:
+                    invalid_image_paths.append(image_path)
 
         return invalid_image_paths

@@ -8,6 +8,10 @@ on:
     branches:
       - "**"
 
+env:
+  DEMISTO_SDK_LOG_FILE_SIZE: 10000000
+  DEMISTO_SDK_LOG_NO_COLORS: "true"
+
 concurrency:
   group: tests-${{ github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -25,7 +29,7 @@ jobs:
       - name: Python ${{ matrix.python-version }} - Setup Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Validate Changelog
         env:
@@ -53,7 +57,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Cache pre-commit
         uses: actions/cache@v4
@@ -72,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
     defaults:
       run:
@@ -117,7 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
     defaults:
       run:
@@ -156,7 +160,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
     defaults:
       run:
@@ -196,10 +200,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Download all artifacts
         uses: actions/download-artifact@v4
       - name: Run coverage
@@ -233,7 +237,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.10"
+          python-version: "3.11"  # CIAC-11940
 
       - name: Checkout Content
         uses: actions/checkout@v4
@@ -260,6 +264,7 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
+          sed '/  - id: validate-validation-config-file/,/^    - --config-path=validation_config.toml$/d' .pre-commit-config_template.yaml > temp.yaml && mv temp.yaml .pre-commit-config_template.yaml
           mkdir -p test-pre-commit-command
           echo "# test" >> Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml
           echo "# test" >> Packs/CortexXDR/Integrations/CortexXDRIR/CortexXDRIR.yml
@@ -304,7 +309,7 @@ jobs:
 
       - name: Check whether validate_content_path changed
         id: files-changed
-        uses: tj-actions/changed-files@v45
+        uses: tj-actions/changed-files@v46.0.1
         with:
           files: |
             demisto_sdk/scripts/validate_content_path.py
@@ -322,7 +327,7 @@ jobs:
         if: steps.files-changed.outputs.any_changed == 'true'
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Validate content master paths
         if: steps.files-changed.outputs.any_changed == 'true'
@@ -330,10 +335,12 @@ jobs:
           source $(poetry env info --path)/bin/activate
           validate-content-path validate-all content --skip-depth-one-file --skip-depth-one-folder --skip-depth-zero-file --skip-integration-script-file-name --skip-integration-script-file-type --skip-markdown --skip-suffix
 
-
   test-graph-commands:
     runs-on: ubuntu-latest
     name: Test Graph Commands
+    env:
+      DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -341,7 +348,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Checkout content
         uses: actions/checkout@v4
@@ -354,16 +361,16 @@ jobs:
         run: |
           source $(poetry env info --path)/bin/activate
           cd content
-          mkdir -p test-graph-commands
+          mkdir -p ./test-graph-commands/content_graph
           # create content graph from scratch
-          demisto-sdk create-content-graph
+          demisto-sdk graph create
           # clean import folder
           sudo rm -rf /var/lib/neo4j/import
           # Update content graph from the bucket
-          demisto-sdk update-content-graph -g -o ./test-graph-commands/content_graph
+          demisto-sdk graph update -g -o ./test-graph-commands/content_graph
 
           # Update content graph from the the previous content graph that was created/built
-          demisto-sdk update-content-graph -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
+          demisto-sdk graph update -i ./test-graph-commands/content_graph/xsoar.zip -o ./test-graph-commands/content_graph
 
       - name: Upload artifacts
         if: always()
@@ -372,29 +379,13 @@ jobs:
           artifacts-path-dir: content/test-graph-commands
           artifact-name: test-graph-commands-artifacts
 
-  validate-files-old-validate:
-    runs-on: ubuntu-latest
-    name: Test Old Validate Command
-    timeout-minutes: 60
-    env:
-      CI_COMMIT_BRANCH: "master"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Run Validate
-        uses: ./.github/actions/validate
-        with:
-          artifacts-path-dir: test-old-validate-command
-          artifact-name: test-old-validate-command-artifacts
-          validate-arguments: "-a --graph --skip-pack-dependencies --skip-new-validate --run-old-validate --prev-ver origin/master"
-
   validate-files-new-validate:
     runs-on: ubuntu-latest
     name: Test New Validate Command
     timeout-minutes: 60
     env:
       CI_COMMIT_BRANCH: "master"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -415,7 +406,6 @@ jobs:
         graph-tests,
         test-pre-commit-command,
         test-graph-commands,
-        validate-files-old-validate,
         validate-files-new-validate,
       ]
     if: failure() && github.ref_name == 'master'
@@ -427,7 +417,7 @@ jobs:
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -446,7 +436,7 @@ jobs:
       - name: Setup Environment
         uses: ./.github/actions/setup_environment
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Generate Docs
         run: poetry run python demisto_sdk/commands/validate/generate_validate_docs.py validation_docs.md
@@ -472,8 +462,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
 
       - name: pip intsall current project
         run: pip install .

@@ -13,7 +13,6 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ASSETS_MODELING_RULES_DIR,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -125,13 +124,13 @@ class Initiator:
 
     TEMPLATE_INTEGRATION_NAME = "%%TEMPLATE_NAME%%"
     TEMPLATE_INTEGRATION_FILES = {
+        "README.md",
         f"{TEMPLATE_INTEGRATION_NAME}.py",
         f"{TEMPLATE_INTEGRATION_NAME}.yml",
         f"{TEMPLATE_INTEGRATION_NAME}_description.md",
         f"{TEMPLATE_INTEGRATION_NAME}_image.png",
         f"{TEMPLATE_INTEGRATION_NAME}_test.py",
-        "README.md",
-        "command_examples",
+        "command_examples.txt",
     }
 
     DEFAULT_INTEGRATION_TEST_DATA_FILES = {
@@ -219,7 +218,6 @@ class Initiator:
         LAYOUTS_DIR,
         TEST_PLAYBOOKS_DIR,
         CLASSIFIERS_DIR,
-        CONNECTIONS_DIR,
         DASHBOARDS_DIR,
         INDICATOR_TYPES_DIR,
         REPORTS_DIR,
@@ -325,7 +323,8 @@ class Initiator:
                 )
             return template or (
                 self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION
-                if self.marketplace == MarketplaceVersions.MarketplaceV2
+                if self.marketplace
+                in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
                 else self.DEFAULT_INTEGRATION_TEMPLATE
             )
 
@@ -519,14 +518,17 @@ class Initiator:
             path = os.path.join(self.full_output_path, directory)
             os.mkdir(path=path)
         # create the relevant folders for XSIAM content pack.
-        if self.marketplace == MarketplaceVersions.MarketplaceV2:
+        if self.marketplace in [
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        ]:
             for directory in self.XSIAM_DIR:
                 path = os.path.join(self.full_output_path, directory)
                 os.mkdir(path=path)
 
         self.create_pack_base_files()
         logger.info(
-            f"[green]Successfully created the pack {self.dir_name} in: {self.full_output_path}[/green]"
+            f"<green>Successfully created the pack {self.dir_name} in: {self.full_output_path}</green>"
         )
 
         metadata_path = os.path.join(self.full_output_path, "pack_metadata.json")
@@ -545,14 +547,17 @@ class Initiator:
             json.dump(pack_metadata, fp, indent=4)
 
             logger.info(
-                f"[green]Created pack metadata at path : {metadata_path}[/green]"
+                f"<green>Created pack metadata at path : {metadata_path}</green>"
             )
 
         create_integration = str(
             input("\nDo you want to create an integration in the pack? Y/N ")
         ).lower()
         if string_to_bool(create_integration, default_when_empty=False):
-            if not self.marketplace == MarketplaceVersions.MarketplaceV2:
+            if self.marketplace not in [
+                MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.PLATFORM,
+            ]:
                 is_same_category = str(
                     input(
                         "\nDo you want to set the integration category as you defined in the pack "
@@ -798,7 +803,10 @@ class Initiator:
         Returns:
             bool. True if the integration was created successfully, False otherwise.
         """
-        if self.marketplace == MarketplaceVersions.MarketplaceV2:
+        if self.marketplace in [
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        ]:
             if not self.dir_name.lower().endswith(EVENT_COLLECTOR.lower()):
                 self.dir_name = f"{self.dir_name}{EVENT_COLLECTOR}"
             if not self.id.lower().endswith(EVENT_COLLECTOR.lower()):
@@ -836,7 +844,7 @@ class Initiator:
                     f.write("\n")
         except FileNotFoundError:
             logger.info(
-                "[yellow]Could not find the .secrets-ignore file - make sure your path is correct[/yellow]"
+                "<yellow>Could not find the .secrets-ignore file - make sure your path is correct</yellow>"
             )
 
     def verify_output_path_for_xsiam_content(self) -> bool:
@@ -844,11 +852,14 @@ class Initiator:
         Returns:
             bool. True if all the required inputs from the user are valid.
         """
-        if self.marketplace != MarketplaceVersions.MarketplaceV2:
+        if self.marketplace not in [
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        ]:
             return True
         if not self.output:
             logger.error(
-                "[red]An output directory is required to utilize the --xsiam flag. Please attempt the operation again using the -o flag to specify the output directory.[/red]"
+                "<red>An output directory is required to utilize the --xsiam flag. Please attempt the operation again using the -o flag to specify the output directory.</red>"
             )
             return False
         # Check if the output path matches either the Integrations directory or a subdirectory under Packs
@@ -857,7 +868,7 @@ class Initiator:
         )
         if not valid_output_path:
             logger.error(
-                "[red]The output directory is invalid - make sure the name looks like one of the following: Packs/**/Integrations [/red]"
+                "<red>The output directory is invalid - make sure the name looks like one of the following: Packs/**/Integrations </red>"
             )
             return False
         return True
@@ -873,11 +884,11 @@ class Initiator:
         if not self.verify_output_path_for_xsiam_content():
             return False
         product, vendor = self.get_product_and_vendor()
-        if (
-            self.marketplace == MarketplaceVersions.MarketplaceV2
-            and not self.create_initiators_and_init_modeling_parsing_rules(
-                product, vendor
-            )
+        if self.marketplace in [
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        ] and not self.create_initiators_and_init_modeling_parsing_rules(
+            product, vendor
         ):
             return False
         self.add_event_collector_suffix()
@@ -887,7 +898,8 @@ class Initiator:
             if (
                 self.output
                 and re.search(PACKS_DIR_REGEX, self.output)
-                and self.marketplace == MarketplaceVersions.MarketplaceV2
+                and self.marketplace
+                in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             ):
                 self.full_output_path = str(
                     find_pack_folder(Path(self.output))
@@ -914,7 +926,10 @@ class Initiator:
             local_template_path = os.path.normpath(
                 os.path.join(__file__, "..", "templates", self.template)
             )
-            if self.marketplace == MarketplaceVersions.MarketplaceV2:
+            if self.marketplace in [
+                MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.PLATFORM,
+            ]:
                 self.process_files(integration_template_files, local_template_path)
             else:
                 copy_tree(str(local_template_path), self.full_output_path)
@@ -936,8 +951,8 @@ class Initiator:
             if secrets:
                 new_line = "\n"
                 logger.info(
-                    f"\n[green]The following secrets were detected:\n"
-                    f"{new_line.join(secret for secret in secrets)}[/green]"
+                    f"\n<green>The following secrets were detected:\n"
+                    f"{new_line.join(secret for secret in secrets)}</green>"
                 )
 
                 ignore_secrets = input(
@@ -947,7 +962,7 @@ class Initiator:
                     self.ignore_secrets(secrets)
 
         logger.info(
-            f"[green]Finished creating integration: {self.full_output_path}.[/green]"
+            f"<green>Finished creating integration: {self.full_output_path}.</green>"
         )
 
         return True
@@ -997,8 +1012,8 @@ class Initiator:
         if secrets:
             new_line = "\n"
             logger.info(
-                f"\n[green]The following secrets were detected in the pack:\n"
-                f"{new_line.join(secret for secret in secrets)}[/green]"
+                f"\n<green>The following secrets were detected in the pack:\n"
+                f"{new_line.join(secret for secret in secrets)}</green>"
             )
 
             ignore_secrets = input(
@@ -1007,7 +1022,7 @@ class Initiator:
             if ignore_secrets in ["y", "yes"]:
                 self.ignore_secrets(secrets)
 
-        logger.info(f"[green]Finished creating script: {self.full_output_path}[/green]")
+        logger.info(f"<green>Finished creating script: {self.full_output_path}</green>")
 
         return True
 
@@ -1019,7 +1034,10 @@ class Initiator:
         """
         vendor = None
         product = None
-        if self.marketplace == MarketplaceVersions.MarketplaceV2:
+        if self.marketplace in [
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+        ]:
             while not vendor:
                 vendor = str(input("Please enter vendor name: ").lower())
             while not product:
@@ -1104,7 +1122,7 @@ class Initiator:
         ):
             yml_dict["fromversion"] = self.SUPPORTED_FROM_VERSION_XSIAM
             logger.info(
-                "[yellow]The version is not provided or is lower than the supported version; the value will be set to the default version. [/yellow]"
+                "<yellow>The version is not provided or is lower than the supported version; the value will be set to the default version. </yellow>"
             )
         with open(yml_path, "w") as f:
             yaml.dump(yml_dict, f)
@@ -1123,7 +1141,8 @@ class Initiator:
             Path(self.full_output_path).joinpath(self.dir_name).with_suffix(".py")
         )
         if (
-            self.marketplace == MarketplaceVersions.MarketplaceV2
+            self.marketplace
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             and python_file_path.exists()
         ):
             with open(python_file_path) as fp:
@@ -1180,7 +1199,7 @@ class Initiator:
         ):
             yml_dict["fromversion"] = compared_version
             logger.info(
-                "[yellow]The selected version is lower than the supported version; the value will be set to the default version. [/yellow]"
+                "<yellow>The selected version is lower than the supported version; the value will be set to the default version. </yellow>"
             )
 
         if integration:
@@ -1190,7 +1209,8 @@ class Initiator:
                 if self.category
                 else (
                     ANALYTICS_AND_SIEM_CATEGORY
-                    if self.marketplace == MarketplaceVersions.MarketplaceV2
+                    if self.marketplace
+                    in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
                     else Initiator.get_valid_user_input(
                         options_list=INTEGRATION_CATEGORIES,
                         option_message="\nIntegration category options: \n",
@@ -1326,7 +1346,7 @@ class Initiator:
                 os.mkdir(self.full_output_path)
 
             else:
-                logger.info(f"[red]Pack not created in {self.full_output_path}[/red]")
+                logger.info(f"<red>Pack not created in {self.full_output_path}</red>")
                 return False
 
         return True
@@ -1478,7 +1498,7 @@ class Initiator:
                     f.write(file_content)
             except Exception:
                 logger.info(
-                    f"[yellow]Could not fetch remote template - {path}. Using local templates instead.[/yellow]"
+                    f"<yellow>Could not fetch remote template - {path}. Using local templates instead.</yellow>"
                 )
                 return False
 

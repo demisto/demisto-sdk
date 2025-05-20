@@ -39,6 +39,7 @@ from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
@@ -51,6 +52,7 @@ from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
 )
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 from demisto_sdk.commands.content_graph.parsers.related_files import ImageRelatedFile
+from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.file import File
 from TestSuite.repo import Repo
@@ -121,7 +123,9 @@ def create_parsing_rule_object(
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
     parsing_rule = pack.create_parsing_rule("TestParsingRule", yml_content)
-    parser = ParsingRuleParser(Path(parsing_rule.path), list(MarketplaceVersions))
+    parser = ParsingRuleParser(
+        Path(parsing_rule.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
     return ParsingRule.from_orm(parser)
 
 
@@ -152,6 +156,7 @@ def create_playbook_object(
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
     readme_content: Optional[str] = None,
+    file_name: Optional[str] = None,
 ) -> Playbook:
     """Creating a playbook object with altered fields from a default playbook yml structure.
 
@@ -160,8 +165,45 @@ def create_playbook_object(
         values (Optional[List[Any]]): The values to update.
         pack_info (Optional[List[str]]): The playbook's pack name.
         readme_content (Optional[List[Any]]): The playbook's readme.
+        file_name (Optional[List[Any]]): The playbook's file name.
     Returns:
         The playbook object.
+    """
+    yml_content = load_yaml("playbook.yml")
+    update_keys(yml_content, paths, values)
+    pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
+    additional_params = {}
+    if file_name:
+        additional_params["name"] = file_name
+    if readme_content is not None:
+        additional_params["readme"] = readme_content
+
+    playbook = pack.create_playbook(**additional_params)
+    playbook.create_default_playbook(name="sample")
+    playbook.yml.update(yml_content)
+    parser = PlaybookParser(
+        Path(playbook.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+    return Playbook.from_orm(parser)
+
+
+def create_test_playbook_object(
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
+    readme_content: Optional[str] = None,
+) -> TestPlaybook:
+    """Creating a test playbook object with altered fields from a default test playbook yml structure.
+
+    Args:
+        paths (Optional[List[str]]): The keys to update.
+        values (Optional[List[Any]]): The values to update.
+        pack_info (Optional[List[str]]): The playbook's pack name.
+        readme_content (Optional[List[Any]]): The playbook's readme.
+    Returns:
+        The test playbook object.
     """
     yml_content = load_yaml("playbook.yml")
     update_keys(yml_content, paths, values)
@@ -173,11 +215,13 @@ def create_playbook_object(
     if readme_content is not None:
         additional_params["readme"] = readme_content
 
-    playbook = pack.create_playbook(**additional_params)
-    playbook.create_default_playbook(name="sample")
+    playbook = pack.create_test_playbook(**additional_params)
+    playbook.create_default_test_playbook(name="sample")
     playbook.yml.update(yml_content)
-    parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
-    return Playbook.from_orm(parser)
+    parser = TestPlaybookParser(
+        Path(playbook.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+    return TestPlaybook.from_orm(parser)
 
 
 def create_doc_file_object(
@@ -292,6 +336,8 @@ def create_pack_object(
     playbooks: int = 0,
     name: Optional[str] = None,
     release_note_content: Optional[str] = None,
+    bc_release_note_content: Optional[dict] = None,
+    version_config: Optional[dict] = None,
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -305,11 +351,11 @@ def create_pack_object(
     json_content = load_json("pack_metadata.json")
     update_keys(json_content, paths, values)
     remove_fields_from_dict(json_content, fields_to_delete)
-    pack = REPO.create_pack()
+    pack = REPO.create_pack(name)
     pack_path = Path(pack.path)
 
     if release_note_content is not None:
-        if (version := Version(json_content.get("version", "1.0.0"))) == Version(
+        if (version := Version(json_content.get("currentVersion", "1.0.0"))) == Version(
             "1.0.0"
         ):
             raise ValueError(
@@ -319,6 +365,24 @@ def create_pack_object(
         (
             pack_path / RELEASE_NOTES_DIR / (str(version).replace(".", "_") + ".md")
         ).write_text(release_note_content)
+
+    if bc_release_note_content is not None:
+        if (version := Version(json_content.get("currentVersion", "1.0.0"))) == Version(
+            "1.0.0"
+        ):
+            raise ValueError(
+                "Can't write release notes for v1.0.0, set version to another value"
+            )
+        json_object = json.dumps(bc_release_note_content, indent=4)
+
+        with open(
+            pack_path / RELEASE_NOTES_DIR / (str(version).replace(".", "_") + ".json"),
+            "w",
+        ) as outfile:
+            outfile.write(json_object)
+
+    if version_config:
+        pack.version_config.write_json(version_config)
 
     PackParser.parse_ignored_errors = MagicMock(return_value={})
     pack.pack_metadata.write_json(json_content)
@@ -585,13 +649,16 @@ def create_assets_modeling_rule_object(
 
 
 def create_trigger_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    file_name: str = "trigger",
 ) -> Trigger:
     """Creating an trigger object with altered fields from a default trigger json structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
         values (Optional[List[Any]]): The values to update.
+        file_name (str): the file name.
 
     Returns:
         The trigger object.
@@ -599,22 +666,31 @@ def create_trigger_object(
     json_content = load_json("trigger.json")
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()
-    pack.create_trigger(name="trigger", content=json_content)
+    pack.create_trigger(name=file_name, content=json_content)
     return cast(Trigger, BaseContent.from_path(Path(pack.triggers[0].path)))
 
 
 def create_layout_object(
-    paths: Optional[List[str]] = None, values: Optional[List[Any]] = None
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    file_path: Optional[str] = None,
 ) -> Layout:
     """Creating an layout object with altered fields from a default layout json structure.
 
     Args:
         paths (Optional[List[str]]): The keys to update.
         values (Optional[List[Any]]): The values to update.
+        file_path: Optional[str]: For creating layout object from specific json file.
 
     Returns:
         The layout object.
     """
+    if file_path:
+        json_content = load_json(file_path)
+        pack = REPO.create_pack()
+        pack.create_layout(name="layout", content=json_content)
+        return cast(Layout, BaseContent.from_path(Path(pack.layouts[0].path)))
+
     json_content = load_json("layoutscontainer.json")
     update_keys(json_content, paths, values)
     pack = REPO.create_pack()

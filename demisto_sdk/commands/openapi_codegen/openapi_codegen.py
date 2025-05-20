@@ -122,7 +122,7 @@ class OpenAPIIntegration:
             with open(self.file_path, "rb") as json_file:
                 self.json = json.load(json_file)
         except Exception as e:
-            logger.info(f"[red]Failed to load the swagger file: {e}[/red]")
+            logger.info(f"<red>Failed to load the swagger file: {e}</red>")
             sys.exit(1)
 
         if self.json.get("host", None):
@@ -155,7 +155,7 @@ class OpenAPIIntegration:
                     )
             except Exception as e:
                 logger.info(
-                    f"[red]Failed adding the command for the path {path}: {e}[/red]"
+                    f"<red>Failed adding the command for the path {path}: {e}</red>"
                 )
                 raise
         self.handle_duplicates(self.functions)
@@ -936,9 +936,12 @@ class OpenAPIIntegration:
                             new_ref_arg = {
                                 "name": k,
                                 "in": arg.get("in"),
-                                "required": True
-                                if k in self.reference.get(ref, {}).get("required", [])
-                                else False,
+                                "required": (
+                                    True
+                                    if k
+                                    in self.reference.get(ref, {}).get("required", [])
+                                    else False
+                                ),
                             }
                             if "$ref" in ref_arg[k]:
                                 new_ref_arg["properties"] = {}
@@ -1039,7 +1042,7 @@ class OpenAPIIntegration:
                 fp.write(self.generate_python_code())
                 return python_file
         except Exception as err:
-            logger.info(f"[red]Error writing {python_file} - {err}[/red]")
+            logger.info(f"<red>Error writing {python_file} - {err}</red>")
             raise
 
     def save_yaml(self, directory: str) -> str:
@@ -1058,7 +1061,7 @@ class OpenAPIIntegration:
                 yaml.dump(self.generate_yaml().to_dict(), fp)
             return yaml_file
         except Exception as err:
-            logger.info(f"[red]Error writing {yaml_file} - {err}[/red]")
+            logger.info(f"<red>Error writing {yaml_file} - {err}</red>")
             raise
 
     def save_config(self, config: dict, directory: str) -> str:
@@ -1078,7 +1081,7 @@ class OpenAPIIntegration:
                 json.dump(config, fp, indent=4)
             return config_file
         except Exception as err:
-            logger.info(f"[red]Error writing {config_file} - {err}[/red]")
+            logger.info(f"<red>Error writing {config_file} - {err}</red>")
             raise
 
     def save_image_and_desc(self, directory: str) -> tuple:
@@ -1109,7 +1112,7 @@ class OpenAPIIntegration:
             )
             return image_path, desc_path
         except Exception as err:
-            logger.info(f"[red]Error copying image and description files - {err}[/red]")
+            logger.info(f"<red>Error copying image and description files - {err}</red>")
             return "", ""
 
     def save_package(self, directory: str) -> tuple:

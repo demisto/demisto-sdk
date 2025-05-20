@@ -29,9 +29,10 @@ from demisto_sdk.commands.common.clients.errors import (
 )
 from demisto_sdk.commands.common.constants import (
     MINIMUM_XSOAR_SAAS_VERSION,
-    IncidentState,
     InvestigationPlaybookState,
     MarketplaceVersions,
+    XsiamAlertState,
+    XsoarIncidentState,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -57,6 +58,16 @@ class XsoarClient:
     """
 
     _ENTRY_TYPE_ERROR: int = 4
+    PLAYBOOK_TASKS_STATES = [
+        "New",
+        "InProgress",
+        "Completed",
+        "Waiting",
+        "Error",
+        "Skipped",
+        "Blocked",
+    ]
+    PLAYBOOK_TASKS_TYPES = ["regular", "condition", "collection"]
 
     def __init__(
         self,
@@ -205,6 +216,28 @@ class XsoarClient:
     def external_base_url(self) -> str:
         # url that its purpose is to expose apis of integrations outside from xsoar/xsiam
         return self.server_config.config.base_api_url
+
+    """
+    #############################
+    Helper methods
+    #############################
+    """
+
+    def _process_response(self, response, status_code, expected_status=200):
+        """Process the HTTP response coming from the XSOAR client."""
+        if status_code == expected_status:
+            if response:
+                try:
+                    return response.json()
+                except json.JSONDecodeError:
+                    error = response.text
+                    err_msg = f"Failed to parse json response - with status code {response.status_code}"
+                    err_msg += f"\n{error}" if error else ""
+                    logger.error(err_msg)
+                    response.raise_for_status()
+        else:
+            error_message = f"Expected status {expected_status}, but got {status_code}. Response: {response}"
+            raise Exception(error_message)
 
     """
     #############################
@@ -596,6 +629,40 @@ class XsoarClient:
 
         raise ValueError(f"Could not find instance for instance name '{instance_name}'")
 
+    def disable_integration_instance(self, instance_name):
+        return self.update_integration_instance_state(False, instance_name)
+
+    def enable_integration_instance(self, instance_name):
+        return self.update_integration_instance_state(True, instance_name)
+
+    def update_integration_instance_state(self, enable: bool, instance_name: str):
+        # it will throw an error if the instance does not exist
+        instance = self.get_integration_instance(instance_name)
+
+        integration_instance_body_request = {
+            "id": instance.get("id"),
+            "brand": instance.get("brand"),
+            "name": instance_name,
+            "data": instance.get("data"),
+            "isIntegrationScript": instance.get("isIntegrationScript"),
+            "enabled": "true" if enable else "false",
+            "version": -1,
+        }
+        logger.info(
+            f"{'Enabling' if enable else 'Disabling'} integration instance {instance_name} for integration {instance.get('brand')}"
+        )
+
+        raw_response, _, _ = self.xsoar_client.generic_request(
+            method="PUT",
+            path="/settings/integration",
+            body=integration_instance_body_request,
+            response_type="object",
+        )
+        logger.info(
+            f"Successfully {'enabled' if enable else 'disabled'} integration instance {instance_name} for Integration {instance.get('brand')}"
+        )
+        return raw_response
+
     """
     #############################
     incidents related methods
@@ -695,19 +762,26 @@ class XsoarClient:
     def poll_incident_state(
         self,
         incident_id: str,
-        expected_states: Tuple[IncidentState, ...] = (IncidentState.CLOSED,),
+        expected_states: Tuple[XsoarIncidentState, ...] = (XsoarIncidentState.CLOSED,),
         timeout: int = 120,
-    ):
+    ) -> dict:
         """
-        Polls for an incident state
+        Polls for the state of an XSOAR incident until it matches any of the expected states or times out.
 
         Args:
-            incident_id: the incident ID to poll its state
-            expected_states: which states are considered to be valid for the incident to reach
-            timeout: how long to query until incidents reaches the expected state
+            incident_id (str): The XSOAR incident ID to poll its state.
+            expected_states (Tuple[XsoarIncidentState, ...]): The states the XSOAR incident is expected to reach.
+            timeout (int): The time limit in seconds to wait for the expected states, defaults to 120.
 
         Returns:
-            raw response of the incident that reached into the relevant state.
+            dict: Raw response of the XSOAR incident that reached the relevant state.
+
+        Raises:
+            PollTimeout: If the incident did not reach any of the expected states in time.
+
+        Example:
+            >>> client.poll_incident_state("456", expected_states=(XsoarIncidentState.CLOSED,))
+            {"id": "456", "name": "My name", "details": "My description", "labels": [], ... }
         """
         if timeout <= 0:
             raise ValueError("timeout argument must be larger than 0")
@@ -722,15 +796,24 @@ class XsoarClient:
 
         while elapsed_time < timeout:
             try:
-                incident = self.search_incidents(incident_id).get("data", [])[0]
+                incident: dict = self.search_incidents(incident_id).get("data", [])[0]
             except Exception as e:
                 raise ValueError(
                     f"Could not find incident ID {incident_id}, error:\n{e}"
                 )
             logger.debug(f"Incident raw response {incident}")
-            incident_status = IncidentState(str(incident.get("status"))).name
+
+            logger.debug(f"Getting status of incident on {self.server_type} server")
+            # Incident 'status' in API response is an integer:
+            # https://docs-cortex.paloaltonetworks.com/r/Cortex-XSOAR-6-API/Search-incidents-by-filter
+            incident_status = (
+                XsiamAlertState(incident.get("status", 0)).name
+                if self.server_type is ServerType.XSIAM
+                else XsoarIncidentState(incident.get("status", 0)).name
+            )
+
             incident_name = incident.get("name")
-            logger.debug(f"status of the incident {incident_name} is {incident_status}")
+            logger.debug(f"Status of the incident {incident_name} is {incident_status}")
             if incident_status in expected_state_names:
                 return incident
             else:
@@ -738,8 +821,8 @@ class XsoarClient:
                 elapsed_time = int(time.time() - start_time)
 
         raise PollTimeout(
-            f"status of incident {incident_name} is {incident_status}",
-            expected_states=expected_states,
+            f"The status of {incident_name} is {incident_status}",
+            expected_states=expected_state_names,
             timeout=timeout,
         )
 
@@ -1015,6 +1098,51 @@ class XsoarClient:
         Returns:
             the context after running the command
         """
+        return self._run_command(
+            "!", command, investigation_id, should_delete_context, response_type
+        )
+
+    @retry(exceptions=ApiException)
+    def run_slash_command(
+        self,
+        command: str,
+        investigation_id: Optional[str] = None,
+        should_delete_context: bool = True,
+        response_type: str = "object",
+    ) -> Tuple[List[Entry], Dict[str, Any]]:
+        """
+        Args:
+            command: the command to run
+            investigation_id: investigation ID of a specific incident / playground
+            should_delete_context: whether context should be deleted before executing the command
+            response_type: the response type of the raw response
+
+        Returns:
+            the context after running the command
+        """
+        return self._run_command(
+            "/", command, investigation_id, should_delete_context, response_type
+        )
+
+    def _run_command(
+        self,
+        command_type: str,
+        command: str,
+        investigation_id: Optional[str] = None,
+        should_delete_context: bool = True,
+        response_type: str = "object",
+    ) -> Tuple[List[Entry], Dict[str, Any]]:
+        """
+        Args:
+            command_type: command type, slash or cli command.
+            command: the command to run
+            investigation_id: investigation ID of a specific incident / playground
+            should_delete_context: whether context should be deleted before executing the command
+            response_type: the response type of the raw response
+
+        Returns:
+            the context after running the command
+        """
         if not investigation_id:
             if self.server_config.server_type == ServerType.XSOAR:
                 investigation_id = self.get_playground_id()
@@ -1024,8 +1152,8 @@ class XsoarClient:
                 raise ValueError(
                     "Investigation_id must be provided for xsoar-saas/xsiam"
                 )
-        if not command.startswith("!"):
-            command = f"!{command}"
+        if not command.startswith(command_type):
+            command = f"{command_type}{command}"
 
         if should_delete_context:
             update_entry = {
@@ -1300,7 +1428,273 @@ class XsoarClient:
             f"is {playbook_state}",
             expected_states=expected_states,
             timeout=timeout,
-            reason=f"{self.get_incident_playbook_failure(incident_id)}"
-            if playbook_state == InvestigationPlaybookState.FAILED
-            else None,
+            reason=(
+                f"{self.get_incident_playbook_failure(incident_id)}"
+                if playbook_state == InvestigationPlaybookState.FAILED
+                else None
+            ),
+        )
+
+    def get_playbook_data(self, playbook_id: int) -> dict:
+        playbook_endpoint = f"/playbook/{playbook_id}"
+
+        response, status_code, _ = self._xsoar_client.generic_request(
+            playbook_endpoint, method="GET", accept="application/json"
+        )
+        return self._process_response(response, status_code, 200)
+
+    def update_playbook_input(self, playbook_id: str, new_inputs: dict):
+        saving_inputs_path = f"/playbook/inputs/{playbook_id}"
+        response, status_code, _ = self._xsoar_client.generic_request(
+            saving_inputs_path, method="POST", body={"inputs": new_inputs}
+        )
+        return self._process_response(response, status_code, 200)
+
+    def get_playbook_task_in_investigation(self, task_name, investigation_id):
+        """
+        Get playbook task in an incident.
+
+        Args:
+            investigation_id: incident ID that the playbook is running on
+            task_name: The name of the task to retrieve data on it.
+        Returns:
+            a dict of the task details.
+        """
+        tasks, status_code, _ = self._xsoar_client.generic_request(
+            f"/investigation/{investigation_id}/workplan/tasks",
+            method="POST",
+            body={
+                "states": self.PLAYBOOK_TASKS_STATES,
+                "types": self.PLAYBOOK_TASKS_TYPES,
+            },
+            response_type="object",
+        )
+
+        for task in tasks:
+            if task_name == task.get("task").get("name"):
+                return task
+        raise ValueError(
+            f"{task_name} task was not found in {investigation_id} investigation."
+        )
+
+    def poll_playbook_tasks_by_state(
+        self,
+        incident_id: str,
+        task_input: Optional[str] = None,
+        task_states: Optional[list] = None,
+        task_name: Optional[str] = None,
+        max_timeout: int = 60,
+        interval_between_tries: Union[int, float] = 3,
+        complete_task: bool = False,
+    ) -> dict[str, list]:
+        """
+        Wait and complete playbook tasks by given status. Same implementation as WaitAndCompleteTask script in content.
+
+        Args:
+            incident_id (str): incident ID that the playbook is running on.
+            task_input (Optional[str]): Outcome for a conditional task. For example, "Yes".
+            task_states (Optional[list]): The list of states. Possible values: New, InProgress, Completed, Waiting, Error, Skipped, Blocked. Leave empty to get all task states.
+            task_name (Optional[str]): The name of the task that should be completed. If no task name is provided, will complete all tasks with the state `task_state`.
+            max_timeout (int): Timeout in seconds for the script to complete tasks.
+            interval_between_tries (Union[int, float]): Time in seconds to wait between each check iteration.
+            complete_task (bool): Whether to complete the task in addition to checking if it is completed.
+
+        Returns:
+            Dict[str, list]: A dictionary containing a list of completed task if completed, and found tasks if not completed.
+
+        Raises:
+            PollTimeout: If the task(s) were not found or did not reach any of the expected task states.
+
+        Example:
+            >>> client.poll_playbook_tasks_by_state("123", task_name="My Task", task_states=["Completed"], max_timeout=30)
+            {"CompletedTask": [{"task name": "My Task", "task state": "Completed"}], "FoundTask": [...]}
+        """
+        if not all(state in self.PLAYBOOK_TASKS_STATES for state in task_states):  # type: ignore
+            raise ValueError(
+                f"task_states are bad. Possible values: {self.PLAYBOOK_TASKS_STATES}"
+            )
+        if not task_states:
+            task_states = self.PLAYBOOK_TASKS_STATES
+        if complete_task and not task_input:
+            raise RuntimeError("Task input argument is missing to complete tasks.")
+        completed_tasks = []
+        found_tasks = []
+        start_time = time.time()
+        elapsed_time = 0
+
+        while elapsed_time < max_timeout:  # type: ignore[operator]
+            # Get all tasks with one state of the states in task_states list
+            tasks_by_states, _, _ = self._xsoar_client.generic_request(
+                f"/investigation/{incident_id}/workplan/tasks",
+                method="POST",
+                body={"states": task_states, "types": self.PLAYBOOK_TASKS_TYPES},
+                response_type="object",
+            )
+            requested_task = None
+
+            # find task to complete if was given task name
+            if task_name:
+                for task in tasks_by_states:
+                    if task.get("task").get("name") == task_name:
+                        requested_task = task
+                        break
+
+            if requested_task and complete_task:
+                # complete the requested task
+                self.complete_playbook_task(
+                    investigation_id=incident_id,
+                    task_id=requested_task.get("id"),
+                    task_input=task_input,  # type: ignore
+                )
+
+                completed_tasks.append(requested_task.get("task").get("name"))
+                break
+
+            # Do not complete the task
+            elif requested_task:
+                # just validate that task was found and not complete it
+                found_tasks.append(
+                    {
+                        "task name": requested_task.get("task").get("name"),
+                        "task state": requested_task.get("state"),
+                    }
+                )
+                break
+
+            elif not task_name and tasks_by_states and complete_task:
+                # complete all tasks, which state is task_states
+                for task in tasks_by_states:
+                    self.complete_playbook_task(
+                        investigation_id=incident_id,
+                        task_id=task.get("id"),
+                        task_input=task_input,  # type: ignore
+                    )
+                    completed_tasks.append(task.get("task").get("name"))
+
+                break
+
+            elif not task_name and tasks_by_states:
+                # just validate that task was found and not complete it
+                found_tasks.extend(
+                    {
+                        "task name": task.get("task").get("name"),
+                        "task state": task.get("state"),
+                    }
+                    for task in tasks_by_states
+                )
+                break
+
+            time.sleep(interval_between_tries)
+            elapsed_time = int(time.time() - start_time)
+
+        if completed_tasks or found_tasks:
+            return {"CompletedTask": completed_tasks, "FoundTask": found_tasks}
+
+        # If the task(s) were not found or did not reach any of the expected task states, raise PollTimeout exception
+        if task_name and task_states:
+            error_message = f"The task '{task_name}' was not found or did not reach any of the expected states"
+
+        elif task_states:
+            error_message = "None of the tasks reached any of the expected states"
+
+        else:
+            error_message = "No tasks were found in the investigation playbook"
+
+        raise PollTimeout(error_message, task_states, max_timeout)
+
+    def complete_playbook_task(
+        self,
+        investigation_id: str,
+        task_input: str,
+        task_id: Optional[str] = None,
+        task_name: Optional[str] = None,
+    ) -> None:
+        """
+        Completes a playbook task in an investigation.
+
+        Args:
+            investigation_id (str): Investigation ID that the playbook is running on.
+            task_input (str): The input to complete the task with.
+            task_id (Optional[str]): The ID of the task to complete. Must be provided if `task_name` is not given.
+            task_name (Optional[str]): the name of the task to complete. Must be provided if `task_id` is not given.
+
+        Example:
+            >>> client.complete_playbook_task("123", task_input="Completed", task_name="Analyze Data")
+        """
+        if not (task_name or task_id):
+            raise ValueError("Either task_id or task_name should be provided.")
+
+        elif not task_id:
+            task = self.get_playbook_task_in_investigation(task_name, investigation_id)
+            task_id = task.get("id")
+        try:
+            self._xsoar_client.generic_request(
+                "/inv-playbook/task/complete",
+                method="POST",
+                response_type="object",
+                content_type="multipart/form-data",
+                form_params=[
+                    ("investigationId", investigation_id),
+                    ("taskId", task_id),
+                    ("taskInput", task_input),
+                ],
+            )
+        except ApiException as e:
+            if e.status == 400 and "Task is completed already" in e.body:
+                logger.info(
+                    f"task with id {task_id} is already completed, or it does not exist."
+                )
+            elif "Could not find investigations" in e.body:
+                raise ValueError(
+                    f"Could not find investigation with id: {investigation_id}"
+                )
+            else:
+                raise RuntimeError(f"Failed Completing task {task_id}. Error: {e}")
+
+        logger.info(
+            f"The playbook task with id {task_id} was completed with input {task_input}"
+        )
+
+    def upload_file_to_war_room(
+        self,
+        file_path,
+        incident_id,
+        file_name: str = None,
+        file_comment: str = None,
+        field: str = None,
+        show_media_file: str = None,
+        last: str = None,
+    ):
+        """
+        Upload a file attachment to an investigation .
+
+        Args:
+            file_path: path of the file to upload to the incident.
+            incident_id: incident ID to upload to
+            file_name: the name of the file to upload
+            file_comment: comment on the file
+            file_name: The name of the task to retrieve data on it.
+            field: field name to hold the attachment details. If not specified, `attachment` will be used.
+            show_media_file: show media file
+            last: If set to true will create an investigation. Used for uploading after creating incident.
+        """
+        form_params = []
+        if file_name:
+            form_params.append(("fileName", file_name))
+        if file_comment:
+            form_params.append(("fileComment", file_comment))
+        if field:
+            form_params.append(("field", field))
+        if show_media_file:
+            form_params.append(("showMediaFile", show_media_file))
+        if last:
+            form_params.append(("last", last))
+
+        self._xsoar_client.generic_request(
+            f"/entry/upload/{incident_id}",
+            method="POST",
+            form_params=form_params,
+            response_type="object",
+            content_type="multipart/form-data",
+            files={"file": file_path},
         )

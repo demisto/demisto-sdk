@@ -3,11 +3,13 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Set
 
+import pydantic
 import regex
 from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
+    DEFAULT_SUPPORTED_MODULES,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     PACK_DEFAULT_MARKETPLACES,
@@ -18,6 +20,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
+    get_file,
     get_json,
     get_pack_ignore_content,
     get_pack_latest_rn_version,
@@ -40,6 +43,12 @@ from demisto_sdk.commands.content_graph.parsers.content_items_list import (
 )
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     StructureError,
+)
+from demisto_sdk.commands.content_graph.strict_objects.pack_meta_data import (
+    StrictPackMetadata,
+)
+from demisto_sdk.commands.content_graph.strict_objects.release_notes_config import (
+    StrictReleaseNotesConfig,
 )
 
 
@@ -177,6 +186,9 @@ class PackMetadataParser:
         )
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
+        self.supportedModules: List[str] = metadata.get(
+            "supportedModules", DEFAULT_SUPPORTED_MODULES
+        )
 
     @property
     def url(self) -> str:
@@ -278,10 +290,10 @@ class PackParser(BaseContentParser, PackMetadataParser):
         except FileNotFoundError:
             logger.debug(f"No contributors file found in {path}")
         logger.debug(f"Parsing {self.node_id}")
-        self.parse_ignored_errors(git_sha)
+        self.parse_ignored_errors()
         if not metadata_only:
             self.parse_pack_folders()
-        self.get_rn_info()
+        self.get_rn_info(git_sha)
 
         logger.debug(f"Successfully parsed {self.node_id}")
 
@@ -298,6 +310,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
                     source=self.object_id,
                     target=pack_id,
                     mandatorily=dependency.get("mandatory"),
+                    target_min_version=dependency.get("minVersion"),
                 )
         except AttributeError as error:
             raise AttributeError(
@@ -330,7 +343,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         try:
             content_item = ContentItemParser.from_path(
-                content_item_path, self.marketplaces
+                content_item_path, self.marketplaces, self.supportedModules
             )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)
@@ -350,16 +363,19 @@ class PackParser(BaseContentParser, PackMetadataParser):
             return True
         return False
 
-    def parse_ignored_errors(self, git_sha: Optional[str]):
+    def parse_ignored_errors(self):
         """Sets the pack's ignored_errors field."""
-        self.ignored_errors_dict = (
-            dict(get_pack_ignore_content(self.path.name) or {})  # type:ignore[var-annotated]
-            if not git_sha
-            else {}
-        )
+        try:
+            self.ignored_errors_dict = (
+                dict(get_pack_ignore_content(self.path.name) or {})  # type:ignore[var-annotated]
+            )
+        except Exception as e:
+            logger.warning(
+                f"Failed to extract ignored errors list for {self.path.name} for {self.object_id}, reason: {e}"
+            )
 
-    def get_rn_info(self):
-        self.latest_rn_version = get_pack_latest_rn_version(str(self.path))
+    def get_rn_info(self, git_sha: Optional[str] = None):
+        self.latest_rn_version = get_pack_latest_rn_version(str(self.path), git_sha)
 
     @cached_property
     def field_mapping(self):
@@ -388,12 +404,47 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "default_data_source_id": "defaultDataSource",
         }
 
-    # TODO - implementing all those 3 methods
-    def validate_structure(self) -> List[StructureError]:
-        return []
-
     def raw_data(self) -> dict:
         raise NotImplementedError
 
+    @property
     def strict_object(self):
-        raise NotImplementedError
+        raise NotImplementedError("This object has a different behavior")
+
+    def validate_structure(self) -> List[StructureError]:
+        """
+        This method uses the parsed data and attempts to build a Pydantic (strict) object from it.
+        Whenever the data and schema mismatch, we store the error using the 'structure_errors' attribute,
+        which will be read during the ST110 validation run.
+        In Pack, we need to check two files: the metadata and the RNs json files, so we override the
+        method for combing all the pydantic errors from the both files.
+        """
+        pydantic_error_list: List[StructureError] = []
+
+        # validate Rn's files
+        for file in self.path.glob("ReleaseNotes/*.json"):
+            validate_structure(file, pydantic_error_list)
+
+        # validate pack metadata file
+        validate_structure(
+            Path(self.path, PACK_METADATA_FILENAME),
+            pydantic_error_list,
+        )
+
+        return pydantic_error_list
+
+
+def validate_structure(file: Path, pydantic_error_list: list) -> None:
+    """
+    This function is called by the method validate_structure and build the appropriate strict object.
+    In case of invalid structure file, adds the error to the given list.
+    """
+    try:
+        if file.stem == "pack_metadata":
+            StrictPackMetadata.parse_obj(get_file(file))
+        else:
+            StrictReleaseNotesConfig.parse_obj(get_file(file))
+    except pydantic.error_wrappers.ValidationError as e:
+        pydantic_error_list += [
+            StructureError(path=file, **error) for error in e.errors()
+        ]

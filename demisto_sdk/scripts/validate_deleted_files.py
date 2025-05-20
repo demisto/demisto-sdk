@@ -49,11 +49,17 @@ def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
                 tag=DEMISTO_GIT_PRIMARY_BRANCH,
                 verify_ssl=True if os.getenv("CI") else False,
             )
-
+    is_silent = check_if_content_item_is_silent(file_content)
     if file_type := find_type(str(file_path), file_content):
-        return file_type in FileType_ALLOWED_TO_DELETE
-
+        return True if file_type in FileType_ALLOWED_TO_DELETE or is_silent else False
     return True
+
+
+def check_if_content_item_is_silent(file_dict):
+    if isinstance(file_dict, dict):
+        if file_dict.get("issilent"):
+            return True
+    return False
 
 
 def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
@@ -90,7 +96,7 @@ def validate_forbidden_deleted_files(
 ):
     if not protected_dirs:
         raise ValueError("Provide at least one protected dir")
-    logging_setup()
+    logging_setup(calling_function=__name__)
     try:
         forbidden_deleted_files = get_forbidden_deleted_files(set(protected_dirs))
     except Exception as error:

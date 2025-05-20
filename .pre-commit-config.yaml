@@ -1,7 +1,7 @@
 exclude: demisto_sdk/tests/test_files/.*|.circleci/config.yml|demisto_sdk/commands/.*/tests/test_files/.*
 repos:
-- repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: v0.5.2
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.6.6
   hooks:
   - id: ruff
     args:
@@ -45,3 +45,18 @@ repos:
   - id: mypy
     exclude: tests/.*|demisto_sdk/commands/init/templates/.*
     language: system
+- repo: local
+  hooks:
+    - id: generate-command-docs
+      name: Generate Documentation for Changed Commands  # Required when using local hooks
+      entry: generate-command-docs
+      language: python
+      files: ^.*_setup\.py$
+      pass_filenames: false
+    - id: validate-validation-config-file
+      name: Validation for validate_config file  # Required when using local hooks
+      entry: validate-validation-config-file
+      language: python
+      pass_filenames: false
+      args:
+      - --config-path=demisto_sdk/commands/validate/sdk_validation_config.toml

@@ -58,7 +58,6 @@ from demisto_sdk.commands.common.tools import (
     check_timestamp_format,
     extract_error_codes_from_file,
     get_core_pack_list,
-    get_current_categories,
     get_current_usecases,
     get_json,
     get_local_remote_file,
@@ -71,7 +70,6 @@ from demisto_sdk.commands.find_dependencies.find_dependencies import PackDepende
 from demisto_sdk.commands.validate.tools import (
     extract_non_approved_tags,
     filter_by_marketplace,
-    validate_categories_approved,
 )
 
 ALLOWED_CERTIFICATION_VALUES = ["certified", "verified"]
@@ -395,7 +393,6 @@ class PackUniqueFilesValidator(BaseValidator):
                 self._is_price_changed(),
                 self._is_valid_support_type(),
                 self.is_right_usage_of_usecase_tag(),
-                self.is_categories_field_match_standard(),
                 not self.should_pack_be_deprecated(),
             ]
         ):
@@ -884,7 +881,7 @@ class PackUniqueFilesValidator(BaseValidator):
         # if running on master branch in private repo - do not run the test
         if current_repo.get_current_git_branch_or_hash() == DEMISTO_GIT_PRIMARY_BRANCH:
             logger.debug(
-                "[yellow]Running on master branch - skipping price change validation[/yellow]"
+                "<yellow>Running on master branch - skipping price change validation</yellow>"
             )
             return None
         try:
@@ -904,7 +901,7 @@ class PackUniqueFilesValidator(BaseValidator):
         # if there was no past version
         if not old_meta_file_content:
             logger.debug(
-                "[yellow]Unable to find previous pack_metadata.json file - skipping price change validation[/yellow]"
+                "<yellow>Unable to find previous pack_metadata.json file - skipping price change validation</yellow>"
             )
             return None
 
@@ -978,7 +975,7 @@ class PackUniqueFilesValidator(BaseValidator):
     def validate_pack_dependencies(self):
         try:
             logger.info(
-                f"\n[cyan]Running pack dependencies validation on {self.pack}[/cyan]\n"
+                f"\n<cyan>Running pack dependencies validation on {self.pack}</cyan>\n"
             )
             core_pack_list = get_core_pack_list()
 
@@ -993,20 +990,20 @@ class PackUniqueFilesValidator(BaseValidator):
             )
 
             if not first_level_dependencies:
-                logger.debug("[yellow]No first level dependencies found[/yellow]")
+                logger.debug("<yellow>No first level dependencies found</yellow>")
                 return True
 
             for core_pack in core_pack_list:
                 first_level_dependencies.pop(core_pack, None)
             if not first_level_dependencies:
                 logger.debug(
-                    "[yellow]Found first level dependencies only on core packs[/yellow]"
+                    "<yellow>Found first level dependencies only on core packs</yellow>"
                 )
                 return True
 
             dependency_result = json.dumps(first_level_dependencies, indent=4)
-            logger.info(f"[bold]Found dependencies result for {self.pack} pack:[/bold]")
-            logger.info(f"[bold]{dependency_result}[/bold]")
+            logger.info(f"<bold>Found dependencies result for {self.pack} pack:</bold>")
+            logger.info(f"<bold>{dependency_result}</bold>")
 
             if self.pack in core_pack_list:
                 if not self.validate_core_pack_dependencies(first_level_dependencies):
@@ -1076,25 +1073,3 @@ class PackUniqueFilesValidator(BaseValidator):
                 ),
             )
         return False
-
-    @error_codes("PA134")
-    def is_categories_field_match_standard(self) -> bool:
-        """
-        Check that the pack category is in the schema.
-
-        Returns:
-            bool: True if pack contain only one category and the category is from the approved list. Otherwise, return False.
-        """
-        if is_external_repository():
-            return True
-        categories = self._read_metadata_content().get("categories", [])
-        approved_list = get_current_categories()
-        if not len(categories) == 1 or not validate_categories_approved(
-            categories, approved_list
-        ):
-            if self._add_error(
-                Errors.categories_field_does_not_match_standard(approved_list),
-                self.pack_meta_file,
-            ):
-                return False
-        return True

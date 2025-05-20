@@ -1,6 +1,6 @@
 import os
 import re
-from enum import Enum
+from enum import Enum, IntEnum
 from functools import reduce
 from pathlib import Path
 from typing import Dict, List
@@ -19,7 +19,11 @@ NEO4J_DIR = PROJECT_DATA_DIR / "neo4j"
 
 LOG_FILE_NAME = "demisto_sdk_debug.log"
 
-NEO4J_DEFAULT_VERSION = "5.13.0"
+NEO4J_DEFAULT_VERSION = "5.22.0"
+
+# Colors
+RED = "\033[91m"
+NO_COLOR = "\033[0m"
 
 # --- Environment Variables ---
 # General
@@ -31,6 +35,10 @@ DEMISTO_SDK_OFFICIAL_CONTENT_PROJECT_ID = os.getenv(
     "CI_PROJECT_ID", "1061"
 )  # Default value is the ID of the content repo on GitLab
 ENV_SDK_WORKING_OFFLINE = "DEMISTO_SDK_OFFLINE_ENV"
+SDK_OFFLINE_ERROR_MESSAGE = (
+    "<red>An internet connection is required for this command. If connected to the "
+    "internet, un-set the DEMISTO_SDK_OFFLINE_ENV environment variable.</red>"
+)
 
 DEFAULT_DOCKER_REGISTRY_URL = "docker.io"
 DOCKER_REGISTRY_URL = os.getenv(
@@ -48,6 +56,7 @@ AUTH_ID = "XSIAM_AUTH_ID"
 XSIAM_TOKEN = "XSIAM_TOKEN"
 XSIAM_COLLECTOR_TOKEN = "XSIAM_COLLECTOR_TOKEN"
 DEMISTO_VERIFY_SSL = "DEMISTO_VERIFY_SSL"
+PROJECT_ID = "PROJECT_ID"
 
 # Logging
 DEMISTO_SDK_LOG_FILE_PATH = "DEMISTO_SDK_LOG_FILE_PATH"
@@ -55,7 +64,7 @@ DEMISTO_SDK_LOG_NOTIFY_PATH = "DEMISTO_SDK_LOG_NOTIFY_PATH"
 DEMISTO_SDK_LOG_FILE_SIZE = "DEMISTO_SDK_LOG_FILE_SIZE"
 DEMISTO_SDK_LOG_FILE_COUNT = "DEMISTO_SDK_LOG_FILE_COUNT"
 DEMISTO_SDK_LOG_NO_COLORS = "DEMISTO_SDK_LOG_NO_COLORS"
-
+DEMISTO_SDK_LOGGING_SET = "DEMISTO_SDK_LOGGING_SET"
 # Neo4j
 DEMISTO_SDK_NEO4J_VERSION = "DEMISTO_SDK_NEO4J_VERSION"
 DEMISTO_SDK_NEO4J_DATABASE_HTTP = "DEMISTO_SDK_NEO4J_DATABASE_HTTP"
@@ -88,7 +97,6 @@ GENERIC_DEFINITIONS_DIR = "GenericDefinitions"
 LAYOUTS_DIR = "Layouts"
 CLASSIFIERS_DIR = "Classifiers"
 MAPPERS_DIR = "Classifiers"
-CONNECTIONS_DIR = "Connections"
 PACKS_DIR = "Packs"
 TOOLS_DIR = "Tools"
 RELEASE_NOTES_DIR = "ReleaseNotes"
@@ -128,7 +136,6 @@ INCIDENT = "incident"  # prefix to identify any incident entity
 INCIDENT_TYPE = "incidenttype"
 INCIDENT_FIELD = "incidentfield"
 INDICATOR_FIELD = "indicatorfield"
-CONNECTION = "connection"
 CLASSIFIER = "classifier"
 DASHBOARD = "dashboard"
 REPORT = "report"
@@ -139,7 +146,6 @@ TOOL = "tools"
 BETA_INTEGRATION = "betaintegration"
 DOCUMENTATION = "doc"
 MAPPER = "classifier-mapper"
-CANVAS = "canvas"
 OLD_REPUTATION = "reputations.json"
 PACK_VERIFY_KEY = "content.pack.verify"
 XSOAR_CONFIG_FILE = "xsoar_config.json"
@@ -172,6 +178,8 @@ DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
 DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
+DEMISTO_SDK_MARKETPLACE_PLATFORM_INTERNAL_PROD = "marketplace-cortex-content-dev"
+
 
 # Server Types
 XSOAR_SERVER_TYPE = "XSOAR"
@@ -204,7 +212,6 @@ class FileType(StrEnum):
     CLASSIFIER = "classifier"
     WIDGET = "widget"
     REPORT = "report"
-    CONNECTION = "canvas-context-connections"
     README = "readme"
     RELEASE_NOTES = "releasenotes"
     RELEASE_NOTES_CONFIG = "releasenotesconfig"
@@ -269,6 +276,7 @@ class FileType(StrEnum):
     CASE_LAYOUT_RULE = "caselayoutrule"
     CASE_FIELD = "casefield"
     CASE_LAYOUT = "caselayout"
+    VERSION_CONFIG = "version_config"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -287,7 +295,6 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.REPORT: "Reports",
     FileType.WIDGET: "Widgets",
     FileType.DASHBOARD: "Dashboards",
-    FileType.CONNECTION: "Connections",
     FileType.MAPPER: "Mappers",
     FileType.PRE_PROCESS_RULES: "PreProcess Rules",
     FileType.GENERIC_DEFINITION: "Objects",
@@ -327,7 +334,6 @@ ENTITY_TYPE_TO_DIR = {
     FileType.INCIDENT_TYPE.value: INCIDENT_TYPES_DIR,
     FileType.INDICATOR_FIELD.value: INDICATOR_FIELDS_DIR,
     FileType.INDICATOR_TYPE.value: INDICATOR_TYPES_DIR,
-    FileType.CONNECTION.value: CONNECTIONS_DIR,
     FileType.CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.DASHBOARD.value: DASHBOARDS_DIR,
     FileType.REPUTATION.value: INDICATOR_TYPES_DIR,
@@ -398,7 +404,6 @@ CONTENT_ENTITIES_DIRS = [
     INCIDENT_TYPES_DIR,
     LAYOUTS_DIR,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
     GENERIC_MODULES_DIR,
@@ -780,11 +785,6 @@ PACKS_CLASSIFIER_JSON_5_9_9_REGEX = rf"{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.jso
 _PACKS_MAPPER_BASE_REGEX = rf"{PACKS_CLASSIFIERS_DIR_REGEX}\/classifier-(?=mapper).*"
 PACKS_MAPPER_JSON_REGEX = rf"{_PACKS_MAPPER_BASE_REGEX}\.json"
 
-PACKS_CONNECTIONS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{CONNECTIONS_DIR}"
-PACKS_CONNECTION_JSON_REGEX = (
-    rf"{PACKS_CONNECTIONS_DIR_REGEX}\/canvas-context-connections.*\.json$"
-)
-
 PACKS_RELEASE_NOTES_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{RELEASE_NOTES_DIR}"
 
 PLAYBOOKS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{PLAYBOOKS_DIR}"
@@ -818,10 +818,6 @@ TEST_PLAYBOOK_REGEX = (
 )
 TEST_NOT_PLAYBOOK_REGEX = (
     rf"{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!playbook).*-.*\.yml$"
-)
-
-CONNECTIONS_REGEX = (
-    rf"{CAN_START_WITH_DOT_SLASH}{CONNECTIONS_DIR}.*canvas-context-connections.*\.json$"
 )
 
 INDICATOR_TYPES_REPUTATIONS_REGEX = (
@@ -949,11 +945,13 @@ PACKS_README_FILE_NAME = INTEGRATIONS_README_FILE_NAME = SCRIPTS_README_FILE_NAM
     "README.md"
 )
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
+PACKS_VERSION_CONFIG_FILE_NAME = "version_config.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
 CONF_JSON_FILE_NAME = "conf.json"
+VERSION_CONFIG_FILE_NAME = "version_config.json"
 
 PYTHON_TEST_REGEXES = [PACKS_SCRIPT_TEST_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX]
 
@@ -1084,10 +1082,6 @@ JSON_ALL_GENERIC_DEFINITIONS_REGEXES = [
 
 JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES = [PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX]
 
-JSON_ALL_CONNECTIONS_REGEXES = [
-    CONNECTIONS_REGEX,
-]
-
 JSON_ALL_REPORTS_REGEXES = [PACKS_REPORT_JSON_REGEX]
 
 JSON_ALL_JOB_REGEXES = [JOB_JSON_REGEX]
@@ -1137,7 +1131,6 @@ CHECKED_TYPES_REGEXES = [
     PACKS_REPORT_JSON_REGEX,
     PACKS_RELEASE_NOTES_REGEX,
     PACKS_TOOLS_REGEX,
-    CONNECTIONS_REGEX,
     JOB_JSON_REGEX,
     WIZARD_JSON_REGEX,
     # ReleaseNotes
@@ -1192,7 +1185,6 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     PRE_PROCESS_RULES_DIR,
     CLASSIFIERS_DIR,
     INDICATOR_TYPES_DIR,
-    CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
     LISTS_DIR,
     JOBS_DIR,
@@ -1208,7 +1200,6 @@ PACKS_DIRECTORIES = [
     INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR,
     REPORTS_DIR,
-    CONNECTIONS_DIR,
     PLAYBOOKS_DIR,
     JOBS_DIR,
     WIZARDS_DIR,
@@ -1277,7 +1268,7 @@ TESTS_AND_DOC_DIRECTORIES = TESTS_DIRECTORIES + DOCS_DIRECTORIES
 VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "Pipfile",
     "Pipfile.lock",
-    "command_examples",
+    "command_examples.txt",
     "pack_metadata.json",
     "testdata",
     "test_data",
@@ -1286,6 +1277,7 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "doc_files",
     "doc_imgs",
     ".secrets-ignore",
+    "version_config.json",  # TODO: remove and validate this file CIAC-12331
 )
 
 
@@ -1345,7 +1337,6 @@ class PB_Status:
     IN_PROGRESS = "inprogress"
     FAILED_DOCKER_TEST = "failed_docker_test"
     CONFIGURATION_FAILED = "failed_configuration"
-    SECOND_PLAYBACK_REQUIRED = "second_playback_required"
 
 
 # change log regexes
@@ -1354,6 +1345,13 @@ CONTENT_RELEASE_TAG_REGEX = r"^\d{2}\.\d{1,2}\.\d"
 RELEASE_NOTES_REGEX = (
     re.escape(UNRELEASE_HEADER)
     + r"([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}"
+)
+CONTENT_TYPE_SECTION_REGEX = re.compile(
+    r"^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)", re.M
+)
+CONTENT_ITEM_SECTION_REGEX = re.compile(
+    r"^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|" r"^- (?:New: )?$",
+    re.M,
 )
 
 # pack contributors template
@@ -1399,7 +1397,6 @@ SCHEMA_TO_REGEX = {
     "script": YML_SCRIPT_REGEXES,
     "widget": JSON_ALL_WIDGETS_REGEXES,
     "dashboard": JSON_ALL_DASHBOARDS_REGEXES,
-    "canvas-context-connections": JSON_ALL_CONNECTIONS_REGEXES,
     "classifier_5_9_9": JSON_ALL_CLASSIFIER_REGEXES_5_9_9,
     "classifier": JSON_ALL_CLASSIFIER_REGEXES,
     "mapper": JSON_ALL_MAPPER_REGEXES,
@@ -1688,16 +1685,6 @@ FEED_REQUIRED_PARAMS = [
         "must_be_one_of": {},
     },
     {
-        "name": "feedExpirationPolicy",
-        "must_equal": {
-            "display": "",
-            "type": 17,
-            "options": ["never", "interval", "indicatorType", "suddenDeath"],
-        },
-        "must_contain": {},
-        "must_be_one_of": {},
-    },
-    {
         "name": "feedExpirationInterval",
         "must_equal": {"display": "", "type": 1},
         "must_contain": {},
@@ -1974,13 +1961,15 @@ class MarketplaceVersions(StrEnum):
     XPANSE = "xpanse"
     XSOAR_SAAS = "xsoar_saas"
     XSOAR_ON_PREM = "xsoar_on_prem"
+    PLATFORM = "platform"
 
 
-MarketplaceVersionToMarketplaceName = {
+MarketplaceVersionToMarketplaceName: Dict[str, str] = {
     MarketplaceVersions.XSOAR.value: DEMISTO_SDK_MARKETPLACE_XSOAR_DIST,
     MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
     MarketplaceVersions.XPANSE.value: DEMISTO_SDK_MARKETPLACE_XPANSE_DIST,
     MarketplaceVersions.XSOAR_SAAS.value: DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST,
+    MarketplaceVersions.PLATFORM.value: DEMISTO_SDK_MARKETPLACE_PLATFORM_INTERNAL_PROD,
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
@@ -1989,8 +1978,23 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR_ON_PREM: "Config/core_packs_list.json",
     MarketplaceVersions.MarketplaceV2: "Config/core_packs_mpv2_list.json",
     MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
+    MarketplaceVersions.PLATFORM: "Config/core_packs_platform_list.json",
 }
 
+
+class PlatformSupportedModules(StrEnum):
+    C1 = "C1"
+    C3 = "C3"
+    XO = "X0"
+    X1 = "X1"
+    X3 = "X3"
+    X5 = "X5"
+    ENT_PLUS = "ENT_PLUS"
+
+
+DEFAULT_SUPPORTED_MODULES: list[str] = [
+    product_code.value for product_code in PlatformSupportedModules
+]
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
     "html": Version("6.1.0"),
@@ -2085,6 +2089,8 @@ class ParameterType(Enum):
     INTERVAL = 19
     BOLD_TITLE = 20
     DAY_DROPDOWN = 21
+    RESULT_LINK = 22  # A placeholder; the front-end will fill this with dynamically generated text.
+    ENGINE_PLACEHOLDER = 23  # A signal to the front-end; the 'engine' dropdown's position in the UI will match the order of this parameter.
 
 
 class IncidentFieldType(
@@ -2170,18 +2176,17 @@ MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME = "markdown_relatve_path_images
 SERVER_API_TO_STORAGE = "api/marketplace/file?name=content/packs"
 
 STRING_TO_BOOL_MAP = {
+    # should only have lowercase keys, see string_to_bool
+    "t": True,
     "y": True,
     "1": True,
     "yes": True,
     "true": True,
-    "True": True,
     "n": False,
+    "f": False,
     "0": False,
     "no": False,
     "false": False,
-    "False": False,
-    "t": True,
-    "f": False,
 }
 
 SCHEMA_FILE_VALID_ATTRIBUTES_TYPE = {"string", "int", "float", "datetime", "boolean"}
@@ -2205,11 +2210,20 @@ class InvestigationPlaybookState(StrEnum):
     WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
 
 
-class IncidentState(StrEnum):
-    NEW = "NEW"
-    IN_PROGRESS = "IN_PROGRESS"
-    CLOSED = "CLOSED"
-    ACKNOWLEDGED = "ACKNOWLEDGED"
+class XsoarIncidentState(IntEnum):
+    NEW = 0
+    IN_PROGRESS = 1
+    CLOSED = 2
+    ACKNOWLEDGED = 3
+
+
+class XsiamAlertState(IntEnum):
+    NEW = 0
+    UNDER_INVESTIGATION = 1
+    RESOLVED = 2
+
+
+IncidentState = XsoarIncidentState  # To avoid breaking imports in other repos where SDK is installed
 
 
 class PlaybookTaskType(StrEnum):
@@ -2240,3 +2254,26 @@ INVALID_IMAGE_PATH_REGEX = (
 # Test types:
 TEST_PLAYBOOKS = "TestPlaybooks"
 TEST_MODELING_RULES = "TestModelingRules"
+TEST_USE_CASES = "TestUseCases"
+
+PB_RELEASE_NOTES_FORMAT = {
+    "This playbook addresses the following alerts:": 5,
+    "Playbook Stages:": 5,
+    "Requirements:": 5,
+    "Triage:": 6,
+    "Early Containment:": 6,
+    "Investigation:": 6,
+    "Containment:": 6,
+}
+
+INCIDENT_COMMANDS: list[str] = [
+    "xsoar-search-incidents",
+    "xsoar-get-incident",
+]
+
+MIRRORING_COMMANDS: list[str] = [
+    "get-mapping-fields",
+    "get-remote-data",
+    "get-modified-remote-data",
+    "update-remote-system",
+]

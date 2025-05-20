@@ -23,9 +23,15 @@ class YAMLContentItemParser(ContentItemParser):
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces, git_sha)
+        super().__init__(
+            path,
+            pack_marketplaces,
+            pack_supported_modules=pack_supported_modules,
+            git_sha=git_sha,
+        )
         self.path = (
             self.get_path_with_suffix(".yml")
             if not git_sha
@@ -33,6 +39,10 @@ class YAMLContentItemParser(ContentItemParser):
             if not self.path.suffix == ".yml"
             else self.path
         )  # If git_sha is given then we know we're running on the old_content_object copy and we can assume that the file_path is either the actual item path or the path to the item's dir.
+
+        self.supportedModules: List[str] = self.yml_data.get(
+            "supportedModules", pack_supported_modules
+        )
         self.structure_errors = self.validate_structure()
         if not isinstance(self.yml_data, dict):
             raise InvalidContentItemException(
@@ -75,6 +85,10 @@ class YAMLContentItemParser(ContentItemParser):
     @property
     def deprecated(self) -> bool:
         return get_value(self.yml_data, self.field_mapping.get("deprecated", ""), False)
+
+    @property
+    def is_silent(self) -> bool:
+        return get_value(self.yml_data, "issilent", False)
 
     @property
     def description(self) -> Optional[str]:

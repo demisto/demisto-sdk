@@ -20,6 +20,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
+    create_dynamic_model,
     create_model,
 )
 
@@ -39,6 +40,8 @@ CommonFields = create_model(
 
 class _Argument(BaseStrictModel):
     name: str
+    prettyname: Optional[str] = None
+    pretty_predefined: Optional[dict] = Field(None, alias="prettypredefined")
     required: Optional[bool] = None
     default: Optional[bool] = None
     description: str
@@ -51,6 +54,13 @@ class _Argument(BaseStrictModel):
     hidden: Optional[bool] = None
 
 
+HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="hidden",
+    type_=Optional[bool],
+    default=None,
+    suffixes=[MarketplaceVersions.MarketplaceV2.value],
+)
+
 Argument = create_model(
     model_name="Argument",
     base_models=(
@@ -60,6 +70,7 @@ Argument = create_model(
         DESCRIPTION_DYNAMIC_MODEL,
         DEPRECATED_DYNAMIC_MODEL,
         DEFAULT_DYNAMIC_MODEL,
+        HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL,
     ),
 )
 
@@ -110,7 +121,10 @@ class StructureError(BaseStrictModel):
     def __str__(self):
         field_name = ",".join(more_itertools.always_iterable(self.field_name))
         if self.error_type == "assertion_error":
-            error_message = f"The field {field_name} is not required, but should not be None if it exists"
+            error_message = (
+                self.error_message
+                or f"An assertion error occurred for field {field_name}"
+            )
         elif self.error_type == "value_error.extra":
             error_message = f"The field {field_name} is extra and {self.error_message}"
         elif self.error_type == "value_error.missing":
@@ -129,6 +143,7 @@ class _BaseIntegrationScript(BaseStrictModel):
         None, alias="autoUpdateDockerImage"
     )
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 BaseIntegrationScript = create_model(

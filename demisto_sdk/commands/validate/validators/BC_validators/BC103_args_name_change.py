@@ -21,7 +21,7 @@ class ArgsNameChangeValidator(BaseValidator[ContentTypes]):
         "to the names of the following existing arguments: {args}. Please undo the changes."
     )
     related_field = "args.name"
-    expected_git_statuses = [GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

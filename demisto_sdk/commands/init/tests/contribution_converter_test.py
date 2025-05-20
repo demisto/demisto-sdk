@@ -1502,6 +1502,7 @@ class TestReadmes:
             create_new=True,
             working_dir_path=str(contribution_temp_dir),
             base_dir=git_repo.path,
+            pack_readme=readme,
         )
 
         # Convert the contribution to a pack
@@ -1509,6 +1510,10 @@ class TestReadmes:
 
         # Check new Pack README exists
         assert Path(contrib_converter.working_dir_path, PACKS_README_FILE_NAME).exists()
+        content_pack_readme = Path(
+            contrib_converter.working_dir_path, PACKS_README_FILE_NAME
+        ).read_text()
+        assert content_pack_readme == readme
 
         # Check new Integration README exists
         assert Path(contrib_converter.readme_files[0]).exists()
@@ -1601,10 +1606,7 @@ class TestReadmes:
             for line in list(differ.compare(original_readme, actual_readme))
             if line.startswith("+ ")
         ]
-        assert (
-            "+     | Debug logging enabled | Test configuration | False |"
-            in added_lines
-        )
+        assert "+ | Debug logging enabled | Test configuration | False |" in added_lines
         assert (
             "+ | limit | Maximum number of records to return. Default is 100. | Optional | "
             in added_lines

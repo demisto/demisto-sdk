@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where Wizards were uploaded to the Platform marketplace, although they are not needed.
+- description: Added support to upload Wizards only to the XSOAR marketplace.
   type: fix
 pr_number: 4946

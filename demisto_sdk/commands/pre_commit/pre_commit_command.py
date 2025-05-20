@@ -135,7 +135,7 @@ class PreCommitRunner:
         Returns:
             int: return code - 0 if hook passed, 1 if failed
         """
-        logger.debug(f"Running hook {hook_id}")
+        logger.info(f"Running hook {hook_id}")
 
         if json_output_path and json_output_path.is_dir():
             json_output_path = json_output_path / f"{hook_id}.json"
@@ -241,6 +241,7 @@ class PreCommitRunner:
         del pre_commit_context
 
         # install dependencies of all hooks in advance
+        logger.info("PreCommitRunner._run_pre_commit_process")
         PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
@@ -254,11 +255,11 @@ class PreCommitRunner:
         num_processes = cpu_count()
         all_hooks_exit_codes = []
         hooks_to_run = PreCommitRunner.original_hook_id_to_generated_hook_ids.items()
-        logger.debug(f"run {hooks_to_run=}")
+        logger.info(f"run {hooks_to_run=}")
 
         for original_hook_id, generated_hooks in hooks_to_run:
             if generated_hooks:
-                logger.debug(f"Running hook {original_hook_id} with {generated_hooks}")
+                logger.info(f"Running hook {original_hook_id} with {generated_hooks}")
                 hook_ids = generated_hooks.hook_ids
                 if (
                     generated_hooks.parallel
@@ -365,7 +366,7 @@ class PreCommitRunner:
                 logger.info(
                     f"Running pre-commit with Python {python_version} on:\n{changed_files_string}"
                 )
-
+        logger.info("prepare_hooks")
         PreCommitRunner.prepare_hooks(pre_commit_context)
 
         if pre_commit_context.all_files:
@@ -386,6 +387,7 @@ class PreCommitRunner:
                 f"Dry run, skipping pre-commit.\nConfig file saved to {PRECOMMIT_CONFIG_MAIN_PATH}"
             )
             return ret_val
+        logger.info("PreCommitRunner.run")
         ret_val = PreCommitRunner.run(
             pre_commit_context,
             precommit_env,
@@ -591,12 +593,20 @@ def pre_commit_manager(
         int: Return code of pre-commit.
     """
     # We have imports to this module, however it does not exists in the repo.
+    logger.info(  # noqa: PLE1205
+        "{}",
+        f"initializer pre-commit manager with:{validate=},{show_diff_on_failure=}\
+                ,{run_docker_hooks=}, {dry_run=}, {skip_hooks=}",
+    )
     (CONTENT_PATH / "CommonServerUserPython.py").touch()
 
     if not any((input_files, staged_only, git_diff, all_files)):
         logger.info("No arguments were given, running on staged files and git changes.")
         git_diff = True
-
+        logger.info(  # noqa: PLE1205
+            "{}",
+            "preprocess_files",
+        )
     files_to_run = preprocess_files(
         input_files=input_files,
         staged_only=staged_only,
@@ -623,9 +633,22 @@ def pre_commit_manager(
     if secrets and "secrets" in skipped_hooks:
         skipped_hooks.remove("secrets")
 
+    logger.info(  # noqa: PLE1205
+        "{}",
+        f"{skipped_hooks=}",
+    )
+
     if not pre_commit_template_path:
+        logger.info(  # noqa: PLE1205
+            "{}",
+            "not pre_commit_template_path",
+        )
         if PRECOMMIT_TEMPLATE_PATH.exists():
             pre_commit_template_path = PRECOMMIT_TEMPLATE_PATH
+            logger.info(  # noqa: PLE1205
+                "{}",
+                "use PRECOMMIT_TEMPLATE_PATH",
+            )
         else:
             pre_commit_template_path = DEFAULT_PRE_COMMIT_TEMPLATE_PATH
     if pre_commit_template_path and not pre_commit_template_path.exists():
@@ -648,7 +671,7 @@ def pre_commit_manager(
         docker_image,
         pre_commit_template_path=pre_commit_template_path,
     )
-
+    logger.info("Running pre-commit prepare_and_run")
     return PreCommitRunner.prepare_and_run(
         pre_commit_context,
         verbose,

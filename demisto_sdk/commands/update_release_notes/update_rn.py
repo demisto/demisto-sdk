@@ -1024,6 +1024,16 @@ def get_file_description(path, file_type) -> str:
     return "%%UPDATE_RN%%"
 
 
+def is_integration_deprecated(integration) -> bool:
+    """
+    Checks if an integration is deprecated based on its display field in the yml.
+    """
+    old_yml, new_yml = get_yml_objects(integration.path, FileType.INTEGRATION)
+    if old_yml.get("deprecated") and new_yml.is_deprecated:
+        return True
+    return False
+
+
 def update_api_modules_dependents_rn(
     pre_release: bool,
     update_type: Union[str, None],
@@ -1049,14 +1059,18 @@ def update_api_modules_dependents_rn(
     api_module_set = api_module_set.union(get_api_module_ids(modified))
     logger.info(
         f"[yellow]Changes were found in the following APIModules : {api_module_set}, updating all dependent "
-        f"integrations.[/yellow]"
+        f"integrations that are not deprecated.[/yellow]"
     )
     with ContentGraphInterface() as graph:
         update_content_graph(graph, use_git=True, dependencies=True)
         integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
+
         if integrations:
             logger.info("Executing update-release-notes on those as well.")
         for integration in integrations:
+            if is_integration_deprecated(integration):
+                logger.info(f"Skipping deprecated integration: {integration.pack_id}")
+                continue
             integration_pack_name = integration.pack_id
             integration_path = integration.path
             integration_pack_path = pack_name_to_path(integration_pack_name)

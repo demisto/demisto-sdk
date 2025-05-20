@@ -208,9 +208,10 @@ class MarketplaceTagParser:
             MarketplaceVersions.XSOAR_ON_PREM.value,
             MarketplaceVersions.XSOAR_SAAS.value,
         ]
-        self._should_remove_xsiam_text = (
-            marketplace not in [MarketplaceVersions.MarketplaceV2.value, MarketplaceVersions.PLATFORM.value]
-        )
+        self._should_remove_xsiam_text = marketplace not in [
+            MarketplaceVersions.MarketplaceV2.value,
+            MarketplaceVersions.PLATFORM.value,
+        ]
         self._should_remove_xpanse_text = (
             marketplace != MarketplaceVersions.XPANSE.value
         )

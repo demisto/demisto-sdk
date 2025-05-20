@@ -60,3 +60,9 @@ repos:
       pass_filenames: false
       args:
       - --config-path=demisto_sdk/commands/validate/sdk_validation_config.toml
+
+- repo: https://github.com/igorshubovych/markdownlint-cli
+  rev: v0.44.0  # Check for the latest version
+  hooks:
+    - id: markdownlint
+      files: \.md$

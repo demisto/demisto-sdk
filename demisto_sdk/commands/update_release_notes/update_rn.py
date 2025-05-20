@@ -1540,11 +1540,8 @@ def update_api_modules_dependents_rn(
         f"integrations that are not deprecated.</yellow>"
     )
     with ContentGraphInterface() as graph:
-        logger.info("step1.")
         update_content_graph(graph, use_git=True, dependencies=True)
-        logger.info("step2.")
         integrations = get_api_module_dependencies_from_graph(api_module_set, graph)
-        logger.info("step3.")
 
         if integrations:
             logger.info("Executing update-release-notes on those as well.")

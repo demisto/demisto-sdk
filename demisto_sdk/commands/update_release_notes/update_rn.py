@@ -1547,11 +1547,14 @@ def update_api_modules_dependents_rn(
         for integration in integrations:
             integration_pack_name = integration.pack_id
             integration_path = integration.path
-            integration_name = get_display_name(integration_path, get_yaml(integration_path))
+            integration_name = get_display_name(
+                integration_path, get_yaml(integration_path)
+            )
             if integration.deprecated:
                 logger.info(
-                f"<yellow>Skipping update to the release notes for the deprecated integration:"
-                f" {integration_name}</yellow>")
+                    f"<yellow>Skipping update to the release notes for the deprecated integration:"
+                    f" {integration_name}</yellow>"
+                )
                 continue
             integration_pack_path = pack_name_to_path(integration_pack_name)
             update_pack_rn = UpdateRN(

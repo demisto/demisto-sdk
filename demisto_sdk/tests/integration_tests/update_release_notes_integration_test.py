@@ -473,8 +473,6 @@ def test_update_release_notes_modified_apimodule(
     - If the integration is not deprecated: Ensure RNs are bumped and message printed.
     - If deprecated: Ensure RNs are not created and deprecation skip message is printed.
     """
-
-    # Set up packs and paths
     repo.setup_one_pack("ApiModules")
     api_module_pack = repo.packs[0]
     api_module_script_path = join(
@@ -509,7 +507,6 @@ def test_update_release_notes_modified_apimodule(
     class MockedDependencyNode:
         integration = taxii_feed_integration
 
-    # Patch dependencies
     mocker.patch(
         "demisto_sdk.commands.update_release_notes.update_rn.ContentGraphInterface",
         return_value=MockedContentGraphInterface(),
@@ -541,7 +538,7 @@ def test_update_release_notes_modified_apimodule(
 
     result = runner.invoke(
         app,
-        ["update-release-notes", "-i", join("Packs", "ApiModules")],
+        [UPDATE_RN_COMMAND, "-i", join("Packs", "ApiModules")],
     )
 
     assert result.exit_code == 0

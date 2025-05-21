@@ -485,6 +485,7 @@ def test_update_release_notes_modified_apimodule(
     taxii_feed_integration.pack_id = "FeedTAXII"
     taxii_feed_integration.deprecated = is_deprecated
 
+    # Mock the behavior of Neo4jContentGraphInterface
     class MockedContentGraphInterface:
         def __enter__(self):
             return self
@@ -493,6 +494,7 @@ def test_update_release_notes_modified_apimodule(
             pass
 
         def search(self, object_id, all_level_imports):
+            # Simulate the graph search
             if "ApiModules_script" in object_id:
                 return [MockedApiModuleNode(id_) for id_ in object_id]
             return []
@@ -502,7 +504,7 @@ def test_update_release_notes_modified_apimodule(
             self.object_id = object_id
             self.imported_by = [
                 MockedDependencyNode().integration
-            ]
+            ] # Simulate a list of dependencies
 
     class MockedDependencyNode:
         integration = taxii_feed_integration

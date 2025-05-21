@@ -59,6 +59,7 @@ class ContentItem(BaseContent):
     support: str = ""
     is_silent: bool = False
     upload_path: Optional[Path] = None
+    pack_supported_module: List[str]
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -278,7 +279,8 @@ class ContentItem(BaseContent):
         # Replace incorrect marketplace references
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
         if current_marketplace == MarketplaceVersions.PLATFORM:
-            data = append_supported_modules(data, self.supportedModules)
+            self.pack
+            data = append_supported_modules(data, self.supportedModules, self.pack_supported_module)
         else:
             if "supportedModules" in data:
                 del data["supportedModules"]

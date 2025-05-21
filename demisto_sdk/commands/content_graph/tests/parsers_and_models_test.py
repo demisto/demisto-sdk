@@ -6,7 +6,6 @@ import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DEFAULT_SUPPORTED_MODULES,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
@@ -1961,7 +1960,7 @@ class TestParsersAndModels:
 
         Then:
         - Ensure the script in sample1 inherits the pack's custom supported modules
-        - Ensure the script in sample2 uses the DEFAULT_SUPPORTED_MODULES
+        - Ensure the script in sample2 not include the supportedModules field
         """
         pack1 = repo.create_pack("sample1")
         pack_metadata = load_json("pack_metadata.json")
@@ -1997,7 +1996,7 @@ class TestParsersAndModels:
         )
 
         assert script1_model.supportedModules == ["C1", "C3"]
-        assert script2_model.supportedModules == DEFAULT_SUPPORTED_MODULES
+        assert script2_model.supportedModules == []
 
 
 class TestFindContentType:

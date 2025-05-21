@@ -436,18 +436,42 @@ def test_update_release_notes_existing(demisto_client, mocker):
     assert expected_rn == rn
 
 
-def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
+@pytest.mark.parametrize("is_deprecated, expected_strings, unexpected_strings", [
+    (
+        False,
+        [
+            "Release notes are not required for the ApiModules pack since this pack is not versioned.",
+            "Changes were detected. Bumping FeedTAXII to version: 1.0.1"
+        ],
+        [
+            "Skipping update to the release notes for the deprecated integration"
+        ]
+    ),
+    (
+        True,
+        [
+            "Skipping update to the release notes for the deprecated integration"
+        ],
+        [
+            "Changes were detected. Bumping FeedTAXII to version: 1.0.1"
+        ]
+    ),
+])
+def test_update_release_notes_modified_apimodule(
+    demisto_client, repo, mocker, is_deprecated, expected_strings, unexpected_strings
+):
     """
     Given
     - ApiModules_script.yml which is part of APIModules pack was changed.
-    - FeedTAXII pack path exists and uses ApiModules_script
+    - FeedTAXII pack path exists and uses ApiModules_script.
+    - The FeedTAXII integration may or may not be deprecated.
 
     When
     - Running demisto-sdk update-release-notes command.
 
     Then
-    - Ensure release notes file created with no errors for APIModule and related pack FeedTAXII.
-    - Ensure message is printed when update release notes process finished.
+    - If the integration is not deprecated: Ensure RNs are bumped and message printed.
+    - If deprecated: Ensure RNs are not created and deprecation skip message is printed.
     """
 
     # Set up packs and paths
@@ -461,8 +485,8 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
     taxii_feed_pack = repo.packs[1]
     taxii_feed_integration = taxii_feed_pack.integrations[0]
     taxii_feed_integration.pack_id = "FeedTAXII"
+    taxii_feed_integration.deprecated = is_deprecated
 
-    # Mock the behavior of Neo4jContentGraphInterface
     class MockedContentGraphInterface:
         def __enter__(self):
             return self
@@ -471,7 +495,6 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
             pass
 
         def search(self, object_id, all_level_imports):
-            # Simulate the graph search
             if "ApiModules_script" in object_id:
                 return [MockedApiModuleNode(id_) for id_ in object_id]
             return []
@@ -481,11 +504,12 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
             self.object_id = object_id
             self.imported_by = [
                 MockedDependencyNode().integration
-            ]  # Simulate a list of dependencies
+            ]
 
     class MockedDependencyNode:
         integration = taxii_feed_integration
 
+    # Patch dependencies
     mocker.patch(
         "demisto_sdk.commands.update_release_notes.update_rn.ContentGraphInterface",
         return_value=MockedContentGraphInterface(),
@@ -517,20 +541,16 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
 
     result = runner.invoke(
         app,
-        [UPDATE_RN_COMMAND, "-i", join("Packs", "ApiModules")],
+        ["update-release-notes", "-i", join("Packs", "ApiModules")],
     )
 
     assert result.exit_code == 0
     assert not result.exception
-    assert all(
-        [
-            current_str in result.output
-            for current_str in [
-                "Release notes are not required for the ApiModules pack since this pack is not versioned.",
-                "Changes were detected. Bumping FeedTAXII to version: 1.0.1",
-            ]
-        ]
-    )
+
+    for expected in expected_strings:
+        assert expected in result.output
+    for unexpected in unexpected_strings:
+        assert unexpected not in result.output
 
 
 def test_update_release_on_metadata_change(demisto_client, mocker, repo):

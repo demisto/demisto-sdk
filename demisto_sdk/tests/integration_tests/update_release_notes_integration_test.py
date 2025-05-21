@@ -436,27 +436,30 @@ def test_update_release_notes_existing(demisto_client, mocker):
     assert expected_rn == rn
 
 
-@pytest.mark.parametrize("is_deprecated, expected_strings, unexpected_strings", [
-    (
-        False,
-        [
-            "Release notes are not required for the ApiModules pack since this pack is not versioned.",
-            "Changes were detected. Bumping FeedTAXII to version: 1.0.1"
-        ],
-        [
-            "Skipping update to the release notes for the deprecated integration"
-        ]
-    ),
-    (
-        True,
-        [
-            "Skipping update to the release notes for the deprecated integration"
-        ],
-        [
-            "Changes were detected. Bumping FeedTAXII to version: 1.0.1"
-        ]
-    ),
-])
+@pytest.mark.parametrize(
+    "is_deprecated, expected_strings, unexpected_strings",
+    [
+        (
+            False,
+            [
+                "Release notes are not required for the ApiModules pack since this pack is not versioned.",
+                "Changes were detected. Bumping FeedTAXII to version: 1.0.1"
+            ],
+            [
+                "Skipping update to the release notes for the deprecated integration"
+            ]
+        ),
+        (
+            True,
+            [
+                "Skipping update to the release notes for the deprecated integration"
+            ],
+            [
+                "Changes were detected. Bumping FeedTAXII to version: 1.0.1"
+            ]
+        ),
+    ],
+)
 def test_update_release_notes_modified_apimodule(
     demisto_client, repo, mocker, is_deprecated, expected_strings, unexpected_strings
 ):
@@ -504,7 +507,7 @@ def test_update_release_notes_modified_apimodule(
             self.object_id = object_id
             self.imported_by = [
                 MockedDependencyNode().integration
-            ] # Simulate a list of dependencies
+            ]  # Simulate a list of dependencies
 
     class MockedDependencyNode:
         integration = taxii_feed_integration

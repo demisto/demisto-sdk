@@ -443,20 +443,14 @@ def test_update_release_notes_existing(demisto_client, mocker):
             False,
             [
                 "Release notes are not required for the ApiModules pack since this pack is not versioned.",
-                "Changes were detected. Bumping FeedTAXII to version: 1.0.1"
+                "Changes were detected. Bumping FeedTAXII to version: 1.0.1",
             ],
-            [
-                "Skipping update to the release notes for the deprecated integration"
-            ]
+            ["Skipping update to the release notes for the deprecated integration"],
         ),
         (
             True,
-            [
-                "Skipping update to the release notes for the deprecated integration"
-            ],
-            [
-                "Changes were detected. Bumping FeedTAXII to version: 1.0.1"
-            ]
+            ["Skipping update to the release notes for the deprecated integration"],
+            ["Changes were detected. Bumping FeedTAXII to version: 1.0.1"],
         ),
     ],
 )

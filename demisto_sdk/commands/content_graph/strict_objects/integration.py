@@ -86,6 +86,7 @@ class _Command(BaseStrictModel):
     polling: Optional[bool] = None
     prettyname: Optional[str] = None
     quickaction: Optional[bool] = None
+    compliant_policies: Optional[List[str]] = None  # type:ignore[valid-type]
 
 
 Command = create_model(

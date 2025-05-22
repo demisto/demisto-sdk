@@ -1,8 +1,8 @@
-from os import PathLike
 from pathlib import Path
 from typing import Dict, List, Optional, Set
-from pydantic import DirectoryPath
+
 import pytest
+from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -1719,10 +1719,16 @@ class TestParsersAndModels:
         model = Wizard.from_orm(parser)
         dir_path: DirectoryPath = Path(wizard.path)  # type: ignore
         model.dump(dir_path, MarketplaceVersions.MarketplaceV2)
-        assert f"The wizard {dir_path} current marketplace is marketplacev2 skipping dump." in caplog.text
+        assert (
+            f"The wizard {dir_path} current marketplace is marketplacev2 skipping dump."
+            in caplog.text
+        )
 
         model.dump(dir_path, MarketplaceVersions.PLATFORM)
-        assert f"The wizard {dir_path} current marketplace is platform skipping dump." in caplog.text
+        assert (
+            f"The wizard {dir_path} current marketplace is platform skipping dump."
+            in caplog.text
+        )
 
     def test_xsiam_dashboard_parser(self, pack: Pack):
         """

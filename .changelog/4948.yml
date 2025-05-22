@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue when creating a release note for an ApiModule also created release notes for deprecated integrations.
+  type: fix
+pr_number: 4948

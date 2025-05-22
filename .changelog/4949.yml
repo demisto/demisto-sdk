@@ -1,0 +1,4 @@
+changes:
+- description: Fix XSIAM tags utilization for platform packs' README files.
+  type: fix
+pr_number: 4949

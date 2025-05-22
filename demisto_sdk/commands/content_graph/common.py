@@ -589,7 +589,16 @@ def append_supported_modules(data: dict, supported_modules: List[str]) -> Any:
         Any: The same data object with supported modules appended.
     """
 
+    # if not pack_supported_module or not supported_modules:
+    #     return data
+
+    # for module in pack_supported_module:
+    #     if module not in supported_modules:
+    #         return data
+
+    # del data["supportedModules"]
+    # return data
     if isinstance(data, dict):
-        if "supportedModules" not in data:
+        if "supportedModules" not in data and supported_modules:
             data["supportedModules"] = supported_modules
     return data

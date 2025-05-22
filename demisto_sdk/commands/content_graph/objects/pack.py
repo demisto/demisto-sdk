@@ -14,7 +14,6 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    DEFAULT_SUPPORTED_MODULES,
     MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
     ImagesFolderNames,
@@ -125,7 +124,7 @@ def upload_zip(
 
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     path: Path
-    supportedModules: List[str] = DEFAULT_SUPPORTED_MODULES
+    supportedModules: List[str] = []
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False

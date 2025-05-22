@@ -1,0 +1,4 @@
+changes:
+- description: Bump werkzeug version from 2.3.8 to 3.0.6 and poetry.lock format update.
+  type: fix
+pr_number: 4858

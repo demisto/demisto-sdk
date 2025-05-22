@@ -1,4 +1,4 @@
 changes:
-- description: Added support for new `compliantpolicies`` integration and script yml key.
+- description: Added support for the new `compliantpolicies` integration and script yml key.
   type: feature
 pr_number: 4953

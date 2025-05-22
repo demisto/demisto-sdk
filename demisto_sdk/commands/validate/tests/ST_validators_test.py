@@ -18,11 +18,11 @@ from demisto_sdk.commands.validate.validators.ST_validators.ST110_is_valid_schem
 from demisto_sdk.commands.validate.validators.ST_validators.ST111_no_exclusions_schema import (
     StrictSchemaValidator,
 )
+from demisto_sdk.commands.validate.validators.ST_validators.ST112_is_quickaction_supported import (
+    IsQuickactionSupported,
+)
 from demisto_sdk.commands.validate.validators.ST_validators.ST113_supported_modules_is_not_empty import (
     SupportedModulesIsNotEmpty,
-)
-from demisto_sdk.commands.validate.validators.ST_validators.ST114_is_quickaction_supported import (
-    IsQuickactionSupported,
 )
 from TestSuite.pack import Pack
 
@@ -454,18 +454,22 @@ def test_missing_IsQuickactionSupported():
         - an integration with a command that has 'quickaction: true'
         - the integration is missing the 'supportsquickactions: true' field at the top level
     When:
-        - execute the IsQuickactionSupported (ST114 validation) on the invalid integration
+        - execute the IsQuickactionSupported (ST112 validation) on the invalid integration
     Then:
         - Ensure the validation fails with the appropriate error message
     """
-    integration = create_integration_object()
-    integration.data["supports_quick_actions"] = False
-
-    integration.data["script"]["commands"].append({
+    integration = create_integration_object(paths=["commands"], values=[{
         "name": "test-command-quickaction",
         "quickaction": True,
         "description": "test description",
-    })
+    }])
+    integration.supports_quick_actions = False
+
+    # integration.commands.append({
+    #     "name": "test-command-quickaction",
+    #     "quickaction": True,
+    #     "description": "test description",
+    # })
 
     results = IsQuickactionSupported().obtain_invalid_content_items([integration])
     assert len(results) == 1
@@ -473,7 +477,7 @@ def test_missing_IsQuickactionSupported():
             "Commands test-command-quickaction use quickaction, but the integration doesn’t support it. "
             "Remove quickaction or add supportsquickactions: true at the top level yml."
     )
-    assert results[0].validator.error_code == "ST114"
+    assert results[0].validator.error_code == "ST112"
 
 
 def test_IsQuickactionSupported_with_supportsquickactions():
@@ -482,14 +486,14 @@ def test_IsQuickactionSupported_with_supportsquickactions():
         - an integration with a command that has 'quickaction: true'
         - the integration also has 'supportsquickactions: true' at the top level
     When:
-        - execute the IsQuickactionSupported (ST114 validation) on the valid integration
+        - execute the IsQuickactionSupported (ST112 validation) on the valid integration
     Then:
         - Ensure the validation passes without any errors
     """
     integration = create_integration_object()
-    integration.data["supports_quick_actions"] = True
+    integration.supports_quick_actions = True
 
-    integration.data["script"]["commands"].append({
+    integration.commands.append({
         "name": "test-command-quickaction",
         "quickaction": True,
         "description": "test description",
@@ -505,7 +509,7 @@ def test_IsQuickactionSupported_no_quickaction_commands():
         - an integration without any quickaction commands
         - the integration is missing 'supportsquickactions' (which is fine in this case)
     When:
-        - execute the IsQuickactionSupported (ST114 validation) on the integration
+        - execute the IsQuickactionSupported (ST112 validation) on the integration
     Then:
         - Ensure the validation passes without any errors
     """

@@ -13,11 +13,11 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Integration
 
 class IsQuickactionSupported(BaseValidator[ContentTypes]):
-    error_code = "ST114"
+    error_code = "ST112"
     description = "a content item with a quick action command also have supportsquickaction field in top level yml."
     rationale = "Maintain valid structure for content items."
     error_message = (
-        "Commands {0} use quickaction, but the integration doesn’t support it. "
+        "The following commands are using quickaction without the integrations support: {0}. "
         "Remove quickaction or add supportsquickactions: true at the top level yml."
     )
     related_field = "quickaction"
@@ -38,12 +38,11 @@ class IsQuickactionSupported(BaseValidator[ContentTypes]):
         ]
 
     def is_quickaction_supported(self, content_item):
-        if not content_item.data.get("supports_quick_actions"):
-            commands = content_item.data.get("script", {}).get("commands")
+        if not content_item.supports_quick_actions:
+            commands = content_item.commands
             quickaction_commands = []
             for command in commands:
-                if command.get("quickaction"):
-                    quickaction_commands.append(command.get("name"))
+                if command.quickaction:
+                    quickaction_commands.append(command.name)
 
             return quickaction_commands
-

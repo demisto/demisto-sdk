@@ -17,7 +17,7 @@ class IsSupportedModulesRemoved(BaseValidator[ContentTypes]):
     error_code = "BC115"
     description = "Ensure that no support module are removed from an existing content item."
     rationale = "Removing a support module for content item can break functionality for customers."
-    error_message = "Support modules {} have been removed. Please restore them or use a force merge if necessary."
+    error_message = "The following support modules have been removed from the integration {}. Please undo."
     related_field = "supportedModules"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]

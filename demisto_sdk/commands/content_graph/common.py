@@ -588,12 +588,15 @@ def append_supported_modules(data: dict, supported_modules: List[str], pack_supp
     Returns:
         Any: The same data object with supported modules appended.
     """
-    if not supported_modules and not pack_supported_modules and "supportedModules" in data:
+    if not supported_modules and "supportedModules" in data:
         del data["supportedModules"]
-    for module in pack_supported_modules:
-        if module not in supported_modules:
-            return data
+        return data
 
-    if "supportedModules" in data and not supported_modules:
-        del data["supportedModules"]
+    if pack_supported_modules and supported_modules:
+        for module in pack_supported_modules:
+            if module not in supported_modules:
+                return data
+
+        if "supportedModules" in data:
+            del data["supportedModules"]
     return data

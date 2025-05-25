@@ -88,7 +88,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     polling: Optional[bool] = None
     skip_prepare: Optional[List[SkipPrepare]] = Field(None, alias="skipprepare")
     prettyname: Optional[str] = None
-    compliant_policies: Optional[List[str]] = None # type:ignore[valid-type]
+    compliant_policies: Optional[List[str]] = Field(None, alias="compliantpolicies")
 
 
 StrictScript = create_model(

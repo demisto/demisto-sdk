@@ -4,8 +4,8 @@ demisto_sdk/commands/common/hook_validations/ @idovandijk @YuvHayun
 demisto_sdk/commands/validate/default_config.toml @YuvHayun
 
 # VS Code plugin
-.vscode/ @anas-yousef
-.devcontainer/ @anas-yousef
+.vscode/ @shmuel44
+.devcontainer/ @shmuel44
 
 # Github Actions
 .github/workflows @samuelFain

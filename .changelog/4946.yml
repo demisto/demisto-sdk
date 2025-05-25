@@ -1,4 +1,0 @@
-changes:
-- description: Added support to upload Wizards only to the XSOAR marketplace.
-  type: fix
-pr_number: 4946

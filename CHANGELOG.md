@@ -1,4 +1,19 @@
 # Changelog
+## 1.38.1 (2025-05-25)
+### Feature
+* Removed the **mypy** hook from the ***pre-commit*** command since there is a new **mypy-in-docker** hook. [#4950](https://github.com/demisto/demisto-sdk/pull/4950)
+
+### Fix
+* Fixed an issue where creating a release note for an `ApiModule` also created release notes for deprecated integrations. [#4948](https://github.com/demisto/demisto-sdk/pull/4948)
+* Fixed XSIAM tags utilization for platform pack's README files. [#4949](https://github.com/demisto/demisto-sdk/pull/4949)
+* Added support for uploading Wizards exclusively to the XSOAR marketplace. [#4946](https://github.com/demisto/demisto-sdk/pull/4946)
+* Fixed an issue where logging would fail when the *--show-diff-on-failure* flag was selected when running the ***pre-commit*** command.  [#4941](https://github.com/demisto/demisto-sdk/pull/4941)
+* Fixed an issue where **fetch-assets** could appear as available for unsupported marketplaces in integration metadata. [#4943](https://github.com/demisto/demisto-sdk/pull/4943)
+
+### Internal
+* Fixed an issue related to the validation message of *IM109*. [#4936](https://github.com/demisto/demisto-sdk/pull/4936)
+
+
 ## 1.38.0 (2025-05-14)
 ### Feature
 * Add the 'Result' section to SectionOrderValues and updated related validations. [#4930](https://github.com/demisto/demisto-sdk/pull/4930)

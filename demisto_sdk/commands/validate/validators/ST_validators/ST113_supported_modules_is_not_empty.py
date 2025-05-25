@@ -88,7 +88,7 @@ class SupportedModulesIsNotEmpty(BaseValidator[ContentTypes]):
     error_message = "supportedModules cannot be an empty list. To allow all modules, omit the field instead."
     related_field = "supportedModules"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
     related_file_type = [RelatedFileType.SCHEMA]
 
 

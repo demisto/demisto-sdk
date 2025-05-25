@@ -224,11 +224,6 @@ mapping:
   isCloudProviderIntegration:
     type: bool
 
-  compliantpolicies:
-    type: seq
-    sequence:
-    - type: str
-
 # integration->configuration
   name:xsoar:
     type: str
@@ -369,6 +364,10 @@ schema;command_schema:
       type: bool
     quickaction:
       type: bool
+    compliantpolicies:
+      type: seq
+      sequence:
+      - type: str
 # int
     name:xsoar:
       type: str

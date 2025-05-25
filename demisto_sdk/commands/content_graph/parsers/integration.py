@@ -58,7 +58,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_cloud_provider_integration = self.yml_data.get(
             "isCloudProviderIntegration", False
         )
-        # self.compliant_policies = self.yml_data.get("compliantpolicies", {})
 
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
@@ -104,7 +103,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             args = command_data.get("arguments") or []
             outputs = command_data.get("outputs") or []
             quickaction = command_data.get("quickaction", False)
-            compliantpoliciesL: list[str] = command_data.get("compliantpolicies") or []
+            compliantpolicies: list[str] = command_data.get("compliantpolicies") or []
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
                 target=name,
@@ -112,7 +111,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 name=name,
                 deprecated=deprecated,
                 description=description,
-                quickaction=quickaction,
             )
             self.commands.append(
                 CommandParser(

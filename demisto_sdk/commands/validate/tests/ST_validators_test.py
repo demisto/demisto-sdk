@@ -458,24 +458,16 @@ def test_missing_IsQuickactionSupported():
     Then:
         - Ensure the validation fails with the appropriate error message
     """
-    integration = create_integration_object(paths=["commands"], values=[{
-        "name": "test-command-quickaction",
-        "quickaction": True,
-        "description": "test description",
-    }])
-    integration.supports_quick_actions = False
+    integration = create_integration_object()
 
-    # integration.commands.append({
-    #     "name": "test-command-quickaction",
-    #     "quickaction": True,
-    #     "description": "test description",
-    # })
+    integration.supports_quick_actions = False
+    integration.commands[0].quickaction = True
 
     results = IsQuickactionSupported().obtain_invalid_content_items([integration])
     assert len(results) == 1
     assert results[0].message == (
-            "Commands test-command-quickaction use quickaction, but the integration doesn’t support it. "
-            "Remove quickaction or add supportsquickactions: true at the top level yml."
+            'The following commands are using quickaction without the integrations support: test-command. '
+            'Remove quickaction or add supportsquickactions: true at the top level yml.'
     )
     assert results[0].validator.error_code == "ST112"
 
@@ -491,13 +483,9 @@ def test_IsQuickactionSupported_with_supportsquickactions():
         - Ensure the validation passes without any errors
     """
     integration = create_integration_object()
-    integration.supports_quick_actions = True
 
-    integration.commands.append({
-        "name": "test-command-quickaction",
-        "quickaction": True,
-        "description": "test description",
-    })
+    integration.supports_quick_actions = True
+    integration.commands[0].quickaction = True
 
     results = IsQuickactionSupported().obtain_invalid_content_items([integration])
     assert len(results) == 0
@@ -514,13 +502,9 @@ def test_IsQuickactionSupported_no_quickaction_commands():
         - Ensure the validation passes without any errors
     """
     integration = create_integration_object()
-    integration.data["supports_quick_actions"] = False
 
-    integration.data["script"]["commands"] = [{
-        "name": "test-command-quickaction",
-        "quickaction": False,
-        "description": "test description",
-    }]
+    integration.supports_quick_actions = False
+    integration.commands[0].quickaction = False
 
     results = IsQuickactionSupported().obtain_invalid_content_items([integration])
     assert len(results) == 0

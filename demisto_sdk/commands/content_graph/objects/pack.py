@@ -285,6 +285,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         )
         # Replace incorrect marketplace references
         metadata = replace_marketplace_references(metadata, marketplace, str(self.path))
+        if "supportedModules" in metadata and not metadata["supportedModules"]:
+            del metadata["supportedModules"]
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:

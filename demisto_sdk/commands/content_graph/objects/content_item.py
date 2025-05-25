@@ -278,8 +278,7 @@ class ContentItem(BaseContent):
         # Replace incorrect marketplace references
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
         if current_marketplace == MarketplaceVersions.PLATFORM:
-            # self.in_pack.pack_metadata_dict
-            data = append_supported_modules(data, self.supportedModules)
+            data = append_supported_modules(data, self.supportedModules, self.pack.supportedModules)
         else:
             if "supportedModules" in data:
                 del data["supportedModules"]

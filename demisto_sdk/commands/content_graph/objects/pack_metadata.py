@@ -141,9 +141,6 @@ class PackMetadata(BaseModel):
             else None  # if the pack is multiple marketplace, override the initially set str default_data_source_id
         )
 
-        if "supportedModules" in _metadata and not _metadata["supportedModules"]:
-            del _metadata["supportedModules"]
-
         _metadata.update(
             {
                 "contentItems": collected_content_items,

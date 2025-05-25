@@ -23,7 +23,8 @@ class AgentixActionOutput(BaseStrictModel):
     name: str
     description: str
     type: str
-    content_item_output_name: str = Field(..., alias="underlyingContentItemOutputName")
+    content_item_output_name: str = Field(None, alias="underlyingContentItemOutputName")
+    context_path: str = Field(None, alias="contextPath")
 
 class AgentixAction(AgentixBase):
     args: Optional[list[AgentixActionArgument]] = None

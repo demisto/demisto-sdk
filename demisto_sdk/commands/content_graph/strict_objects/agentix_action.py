@@ -22,7 +22,7 @@ class AgentixActionArgument(BaseStrictModel):
 class AgentixActionOutput(BaseStrictModel):
     # name: str
     description: str
-    type: str
+    type: Optional[str] = None
     content_item_output_name: str = Field(None, alias="underlyingContentItemOutputName")
     context_path: str = Field(None, alias="contextPath")
 

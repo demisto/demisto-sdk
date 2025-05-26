@@ -380,9 +380,9 @@ class YmlSplitter:
         remove the auto-generated section headers if they exist.
         """
         logger.info("Removing the section headers code")
-        script = re.sub(r"CONSTANT_PACK_VERSION = '(\d+\.\d+\.\d+)'\n", "", script)
+        script = re.sub(r"CONSTANT_PACK_VERSION = '(\d+\.\d+\.\d+)'(\n*)", "", script)
         script = re.sub(
-            r"demisto\.debug\('pack id = .*?, pack version = .*?'\)\n", "", script
+            r"demisto\.debug\('pack id = .*?, pack version = .*?'\)(\n*)", "", script
         )
         script = re.sub(r"(?:#|//)+ pack version: (\d+\.\d+\.\d+)(\n|$)", "", script)
         return re.sub(

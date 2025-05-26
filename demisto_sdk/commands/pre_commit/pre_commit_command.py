@@ -34,7 +34,6 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook, join_files
-from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
@@ -78,7 +77,6 @@ class PreCommitRunner:
             "sourcery": SourceryHook,
             "validate": ValidateFormatHook,
             "format": ValidateFormatHook,
-            "mypy": MypyHook,
         }
 
         for hook_id in hooks.copy():
@@ -311,7 +309,9 @@ class PreCommitRunner:
                 stdout=subprocess.PIPE,
                 universal_newlines=True,
             )
-            logger.info(git_diff.stdout)
+            logger.info(  # noqa: PLE1205
+                "{}", git_diff.stdout
+            )
         return return_code
 
     @staticmethod
@@ -668,28 +668,30 @@ def add_related_files(file: Path) -> Set[Path]:
     Returns:
         Set[Path]: The set of related files.
     """
-    files_to_run = set()
-    files_to_run.add(file)
-    if ".yml" in (file.suffix for file in files_to_run):
+    files_to_run = {file}
+    if ".yml" in file.suffix:
         py_file_path = file.with_suffix(".py")
         if py_file_path.exists():
             files_to_run.add(py_file_path)
 
     # Identifying test files by their suffix.
-    if {".py", ".ps1"}.intersection({file.suffix for file in files_to_run}):
-        test_files = []
-        test_file_suffix = (
-            PY_TEST_FILE_SUFFIX
-            if ".py" in (file.suffix for file in files_to_run)
-            else PS1_TEST_FILE_SUFFIX
-        )
+    if not {".py", ".ps1"}.intersection({file.suffix for file in files_to_run}):
+        return files_to_run
 
+    test_file_suffix = (
+        PY_TEST_FILE_SUFFIX
+        if ".py" in (file.suffix for file in files_to_run)
+        else PS1_TEST_FILE_SUFFIX
+    )
+    test_files = []
+    if file.parent.exists():
         test_files = [
             _file
             for _file in file.parent.iterdir()
             if _file.name.endswith(test_file_suffix)
         ]
         files_to_run.update(test_files)
+
     return files_to_run
 
 

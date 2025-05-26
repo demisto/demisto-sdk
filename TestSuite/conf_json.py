@@ -19,7 +19,6 @@ class ConfJSON:
         tests: Optional[List[dict]] = None,
         skipped_tests: Optional[Dict[str, str]] = None,
         skipped_integrations: Optional[Dict[str, str]] = None,
-        unmockable_integrations: Optional[List[str]] = None,
         docker_thresholds: Optional[dict] = None,
     ):
         if tests is None:
@@ -28,8 +27,6 @@ class ConfJSON:
             skipped_tests = {}
         if skipped_integrations is None:
             skipped_integrations = {}
-        if unmockable_integrations is None:
-            unmockable_integrations = []
         if docker_thresholds is None:
             docker_thresholds = {"_comment": "", "images": []}
         self._file_path.write_text(
@@ -38,7 +35,6 @@ class ConfJSON:
                     "tests": tests,
                     "skipped_tests": skipped_tests,
                     "skipped_integrations": skipped_integrations,
-                    "unmockable_integrations": unmockable_integrations,
                     "docker_thresholds": docker_thresholds,
                     # the next fields are not modified in tests (hence lack of args), but are structurally required.
                     "available_tests_fields": [],

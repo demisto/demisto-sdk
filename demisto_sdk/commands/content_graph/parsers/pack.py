@@ -9,6 +9,7 @@ from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
+    DEFAULT_SUPPORTED_MODULES,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     PACK_DEFAULT_MARKETPLACES,
@@ -187,6 +188,9 @@ class PackMetadataParser:
         )
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
+        self.supportedModules: List[str] = metadata.get(
+            "supportedModules", DEFAULT_SUPPORTED_MODULES
+        )
 
     @property
     def url(self) -> str:
@@ -341,7 +345,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         try:
             content_item = ContentItemParser.from_path(
-                content_item_path, self.marketplaces
+                content_item_path, self.marketplaces, self.supportedModules
             )
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)

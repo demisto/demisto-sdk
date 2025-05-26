@@ -2,7 +2,9 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseOptionalVersionJson,
 )
@@ -38,6 +40,7 @@ class _StrictWidget(BaseStrictModel):
             MarketplaceVersions.XSOAR_ON_PREM,
         ],
     )
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictWidget = create_model(

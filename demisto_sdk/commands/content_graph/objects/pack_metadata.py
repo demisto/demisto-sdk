@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_json, is_external_repository
 from demisto_sdk.commands.content_graph.common import ContentType, PackTags
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -71,7 +72,6 @@ class PackMetadata(BaseModel):
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
     disable_monthly: Optional[bool] = Field(None, alias="disableMonthly")
     content_commit_hash: Optional[str] = Field(None, alias="contentCommitHash")
-    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
     def _enhance_pack_properties(
         self,
@@ -135,7 +135,8 @@ class PackMetadata(BaseModel):
             }
             if self.default_data_source_name
             and self.default_data_source_id
-            and marketplace == MarketplaceVersions.MarketplaceV2
+            and marketplace
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             and not self.hybrid
             else None  # if the pack is multiple marketplace, override the initially set str default_data_source_id
         )
@@ -191,6 +192,15 @@ class PackMetadata(BaseModel):
         for content_item in content_items:
             if should_ignore_item_in_metadata(content_item, marketplace):
                 continue
+            new_content_item = None
+            try:
+                new_content_item = BaseContent.from_path(content_item.upload_path)  # type:ignore[assignment]
+            except Exception as e:
+                logger.error(
+                    f"Failed to generate content item for {content_item.upload_path}, will use original content item: {str(e)}"
+                )
+            if new_content_item:
+                content_item = new_content_item  # type:ignore[assignment]
             self._add_item_to_metadata_list(
                 collected_content_items=collected_content_items,
                 content_item=content_item,
@@ -216,7 +226,8 @@ class PackMetadata(BaseModel):
             self.default_data_source_id
             and self.default_data_source_name
             and collected_content_items
-            and marketplace == MarketplaceVersions.MarketplaceV2
+            and marketplace
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             and not self.hybrid
         ):
             # order collected_content_items integration list so that the defaultDataSource will be first
@@ -336,7 +347,8 @@ class PackMetadata(BaseModel):
         tags |= (
             {PackTags.DATA_SOURCE}
             if self.is_data_source(content_items)
-            and marketplace == MarketplaceVersions.MarketplaceV2
+            and marketplace
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
             else set()
         )
 

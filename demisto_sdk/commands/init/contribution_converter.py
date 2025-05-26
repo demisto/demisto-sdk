@@ -125,6 +125,7 @@ class ContributionConverter:
         contribution: str,
         name: str = "",
         description: str = "",
+        pack_readme: str = "",
         author: str = "",
         gh_user: str = "",
         create_new: bool = True,
@@ -154,8 +155,10 @@ class ContributionConverter:
             base_dir (Union[str], optional): Used to explicitly pass the path to the top-level directory of the
                 local content repo. If no value is passed, the `CONTENT_PATH` variable is used to determine
                 the path. Defaults to None.
+            pack_readme (str): The content of the new pack readme, if create_new == True.
 
         """
+        self.pack_readme = pack_readme
         self.configuration = Configuration()
         self.contribution = contribution
         self.description = description
@@ -335,14 +338,20 @@ class ContributionConverter:
             f"Executing 'format' on the restructured contribution zip new/modified files at {self.pack_dir_path}"
         )
         from_version = "6.0.0" if self.create_new else ""
-        format_manager(
-            from_version=from_version,
-            no_validate=True,
-            update_docker=True,
-            assume_answer=True,
-            include_untracked=False,
-            interactive=False,
-        )
+        try:
+            format_manager(
+                from_version=from_version,
+                no_validate=True,
+                update_docker=True,
+                assume_answer=True,
+                include_untracked=False,
+                interactive=False,
+            )
+        except Exception as e:
+            if str(e).strip() == "0":
+                logger.info(f"The exit code is {str(e)}")
+            else:
+                raise e
 
     def generate_readme_for_pack_content_item(
         self, yml_path: str, is_contribution: bool = False
@@ -378,6 +387,7 @@ class ContributionConverter:
     def generate_readmes_for_new_content_pack(self, is_contribution=False) -> List[str]:
         """
         Generate the readme files for a new content pack.
+        Update the pack README file if such information was given (self.pack_readme != None).
 
         Returns:
         - `List[str]` with the paths to all the generated `README`s.
@@ -410,6 +420,11 @@ class ContributionConverter:
                     if file_name.startswith("playbook") and file_name.endswith(".yml"):
                         readme = self.generate_readme_for_pack_content_item(file)
                         readmes_generated.append(readme)
+
+        if self.pack_readme:
+            Path(self.working_dir_path, PACKS_README_FILE_NAME).write_text(
+                self.pack_readme
+            )
 
         return readmes_generated
 

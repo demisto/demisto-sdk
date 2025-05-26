@@ -17,9 +17,12 @@ class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
+        )
         self.dependency_packs: str = json.dumps(
             self.json_data.get("dependency_packs") or []
         )
@@ -33,8 +36,7 @@ class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
             MarketplaceVersions.XSOAR,
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
-            MarketplaceVersions.PLATFORM,
-        }
+        }  # CIAC-13812 - Wizards shouldn't be in XSIAM and Platform marketplaces
 
     def get_packs(self) -> List[str]:
         packs: List[str] = []

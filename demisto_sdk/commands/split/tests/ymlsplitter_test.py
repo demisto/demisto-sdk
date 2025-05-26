@@ -291,7 +291,9 @@ def test_extract_code(tmpdir, file_path, file_type):
         "script"
     ]
     assert "CONSTANT_PACK_VERSION = '1.6.28'" in script_before_split
-    assert "demisto.debug('pack id = Zoom, pack version = 1.6.28')" in script_before_split
+    assert (
+        "demisto.debug('pack id = Zoom, pack version = 1.6.28')" in script_before_split
+    )
     assert "register_module_line('Zoom', 'start', __line__())" in script_before_split
 
     extractor.extract_code(extractor.output)

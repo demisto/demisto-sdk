@@ -386,6 +386,9 @@ class YmlSplitter:
         script = re.sub(
             r"demisto\.debug\('pack id = .*?, pack version = .*?'\)(\n*)", "", script
         )
+        script = re.sub(
+            r"demisto\.debug\('pack name = .*?, pack version = .*?'\)(\n*)", "", script
+        )
         script = re.sub(r"(?:#|//)+ pack version: (\d+\.\d+\.\d+)(\n|$)", "", script)
         return re.sub(
             r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)(\n|$)",

@@ -29,6 +29,7 @@ script:
     CONSTANT_PACK_VERSION = '1.6.28'
     demisto.debug('pack id = Zoom, pack version = 1.6.28')
     
+    demisto.debug('pack name = Zoom, pack version = 1.6.28')
     
     import datetime
     import jwt

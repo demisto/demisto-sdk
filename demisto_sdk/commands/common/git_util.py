@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from functools import lru_cache
@@ -754,24 +755,28 @@ class GitUtil:
 
         self.fetch()
         remote, branch = self.handle_prev_ver(prev_ver)
+        logger.info(f"remote: {remote}, branch: {branch}")
         current_hash = self.get_current_commit_hash()
+        logger.info(f"current_hash: {current_hash}")
 
         if remote:
+            logger.info(f"remote: {remote}")
+            git_diff = self.repo.git.diff("--name-only", f"{remote}/{branch}...{current_hash}").split("\n")
+            logging.info(f"git_diff: {git_diff}")
             return {
                 Path(os.path.join(item))
-                for item in self.repo.git.diff(
-                    "--name-only", f"{remote}/{branch}...{current_hash}"
-                ).split("\n")
+                for item in git_diff
                 if item
             }
 
         # if remote does not exist we are checking against the commit sha1
         else:
+            logger.info(f"remote: {remote}")
+            git_diff = self.repo.git.diff("--name-only", f"{branch}...{current_hash}").split("\n")
+            logging.info(f"git_diff: {git_diff}")
             return {
                 Path(os.path.join(item))
-                for item in self.repo.git.diff(
-                    "--name-only", f"{branch}...{current_hash}"
-                ).split("\n")
+                for item in git_diff
                 if item
             }
 

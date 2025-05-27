@@ -193,7 +193,9 @@ class YmlSplitter:
         Returns:
              int. status code for the operation.
         """
-        logger.info(f"Extract the code from {code_file_path} , {executed_from_contrib_converter=}")
+        logger.info(
+            f"Extract the code from {code_file_path} , {executed_from_contrib_converter=}"
+        )
         common_server = self.common_server
         if common_server:
             common_server = "CommonServerPython" not in str(

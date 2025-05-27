@@ -282,12 +282,12 @@ class GitUtil:
         """
         remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
-        logging.info(f"Moshe log remote: {remote} branch: {branch}")
-        logging.info(f"Moshe log Current branch: {current_branch_or_hash}")
+        logger.info(f"Moshe log remote: {remote} branch: {branch}")
+        logger.info(f"Moshe log Current branch: {current_branch_or_hash}")
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status="M")
-        logging.info(f"Moshe log last commit: {last_commit}")
+        logger.info(f"Moshe log last commit: {last_commit}")
         if last_commit:
             self.debug_print(
                 debug=debug, status="Modified", staged=set(), committed=last_commit
@@ -300,7 +300,7 @@ class GitUtil:
             item[0]  # type: ignore[index]
             for item in self.renamed_files(prev_ver, committed_only, staged_only)
         }
-        logging.info(f"Moshe log renamed: {renamed}")
+        logger.info(f"Moshe log renamed: {renamed}")
 
         # handle a case where a file is wrongly recognized as renamed (not 100% score) and
         # is actually of modified status
@@ -310,20 +310,20 @@ class GitUtil:
         untrue_rename_committed = self.handle_wrong_renamed_status(
             status="M", remote=remote, branch=branch, staged_only=False
         )
-        logging.info(f"Moshe log untrue renamed staged: {untrue_rename_staged}")
-        logging.info(f"Moshe log untrue renamed commited: {untrue_rename_committed}")
+        logger.info(f"Moshe log untrue renamed staged: {untrue_rename_staged}")
+        logger.info(f"Moshe log untrue renamed commited: {untrue_rename_committed}")
 
         deleted = self.deleted_files(prev_ver, committed_only, staged_only)
-        logging.info(f"Moshe log deleted: {deleted}")
+        logger.info(f"Moshe log deleted: {deleted}")
 
         committed = set()
 
         if not staged_only:
-            logging.info(f"Moshe log staged only: {staged_only}")
+            logger.info(f"Moshe log staged only: {staged_only}")
             # get all committed files identified as modified which are changed from prev_ver.
             # this can result in extra files identified which were not touched on this branch.
             if remote:
-                logging.info(f"Moshe log remote only: {remote}")
+                logger.info(f"Moshe log remote only: {remote}")
                 committed = {
                     Path(os.path.join(item.a_path))
                     for item in self.repo.remote(name=remote)
@@ -331,7 +331,7 @@ class GitUtil:
                     .commit.diff(current_branch_or_hash)
                     .iter_change_type("M")
                 }.union(untrue_rename_committed)
-                logging.info(f"Moshe log committed: {committed}")
+                logger.info(f"Moshe log committed: {committed}")
 
             # if remote does not exist we are checking against the commit sha1
             else:
@@ -341,21 +341,21 @@ class GitUtil:
                     .diff(current_branch_or_hash)
                     .iter_change_type("M")
                 }.union(untrue_rename_committed)
-                logging.info(f"Moshe log committed: {committed}")
+                logger.info(f"Moshe log committed: {committed}")
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed modified files.
             all_branch_changed_files = self._get_all_changed_files(prev_ver)
-            logging.info(f"Moshe log all changed files: {all_branch_changed_files}")
+            logger.info(f"Moshe log all changed files: {all_branch_changed_files}")
             committed = committed.intersection(all_branch_changed_files)
-            logging.info(f"Moshe log all committed files: {committed}")
+            logger.info(f"Moshe log all committed files: {committed}")
 
         # remove the renamed and deleted files from the committed
         committed = committed - renamed - deleted
-        logging.info(f"Moshe log all committed files: {committed}")
+        logger.info(f"Moshe log all committed files: {committed}")
 
         if committed_only:
-            logging.info(f"Moshe log committed only: {committed_only}")
+            logger.info(f"Moshe log committed only: {committed_only}")
             self.debug_print(
                 debug=debug, status="Modified", staged=set(), committed=committed
             )
@@ -363,17 +363,17 @@ class GitUtil:
 
         untracked: Set = set()
         if include_untracked:
-            logging.info(f"Moshe log include_untracked: {include_untracked}")
+            logger.info(f"Moshe log include_untracked: {include_untracked}")
             # get all untracked modified files
             untracked = self._get_untracked_files("M")
-            logging.info(f"Moshe log untracked: {untracked}")
+            logger.info(f"Moshe log untracked: {untracked}")
 
         # get all the files that are staged on the branch and identified as modified.
         staged = {
             Path(os.path.join(item.a_path))  # type: ignore
             for item in self.repo.head.commit.diff().iter_change_type("M")
         }.union(untracked).union(untrue_rename_staged)
-        logging.info(f"Moshe log staged: {staged}")
+        logger.info(f"Moshe log staged: {staged}")
 
         # If a file is Added in regards to prev_ver
         # and is then modified locally after being committed - it is identified as modified
@@ -381,7 +381,7 @@ class GitUtil:
         # so will remove it from the staged modified files.
         # also remove the deleted and renamed files as well.
         if remote:
-            logging.info(f"Moshe log remote: {remote}")
+            logger.info(f"Moshe log remote: {remote}")
             committed_added = {
                 Path(os.path.join(item.a_path))
                 for item in self.repo.remote(name=remote)
@@ -389,7 +389,7 @@ class GitUtil:
                 .commit.diff(current_branch_or_hash)
                 .iter_change_type("A")
             }
-            logging.info(f"Moshe log committed added: {committed_added}")
+            logger.info(f"Moshe log committed added: {committed_added}")
 
         # if remote does not exist we are checking against the commit sha1
         else:
@@ -399,13 +399,13 @@ class GitUtil:
                 .diff(current_branch_or_hash)
                 .iter_change_type("A")
             }
-            logging.info(f"Moshe log committed added: {committed_added}")
+            logger.info(f"Moshe log committed added: {committed_added}")
 
         staged = staged - committed_added - renamed - deleted
-        logging.info(f"Moshe log staged: {staged}")
+        logger.info(f"Moshe log staged: {staged}")
 
         if staged_only:
-            logging.info(f"Moshe log staged only: {staged_only}")
+            logger.info(f"Moshe log staged only: {staged_only}")
             self.debug_print(
                 debug=debug, status="Modified", staged=staged, committed=set()
             )
@@ -785,7 +785,7 @@ class GitUtil:
         if remote:
             logger.info(f"remote: {remote}")
             git_diff = self.repo.git.diff("--name-only", f"{remote}/{branch}...{current_hash}").split("\n")
-            logging.info(f"git_diff: {git_diff}")
+            logger.info(f"git_diff: {git_diff}")
             return {
                 Path(os.path.join(item))
                 for item in git_diff
@@ -796,7 +796,7 @@ class GitUtil:
         else:
             logger.info(f"remote: {remote}")
             git_diff = self.repo.git.diff("--name-only", f"{branch}...{current_hash}").split("\n")
-            logging.info(f"git_diff: {git_diff}")
+            logger.info(f"git_diff: {git_diff}")
             return {
                 Path(os.path.join(item))
                 for item in git_diff

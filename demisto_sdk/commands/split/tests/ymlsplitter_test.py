@@ -295,7 +295,10 @@ def test_extract_code(tmpdir, file_path, file_type):
         "demisto.debug('pack id = Zoom, pack version = 1.6.28')" in script_before_split
     )
     assert "register_module_line('Zoom', 'start', __line__())" in script_before_split
-    assert "demisto.debug('pack name = Zoom, pack version = 1.6.28')" in script_before_split
+    assert (
+        "demisto.debug('pack name = Zoom, pack version = 1.6.28')"
+        in script_before_split
+    )
 
     extractor.extract_code(extractor.output)
     with open(extractor.output, "rb") as temp_code:
@@ -306,7 +309,9 @@ def test_extract_code(tmpdir, file_path, file_type):
         assert "register_module_line" not in file_data
         assert "demisto.debug('pack id = Zoom, pack version = 1.6.28')" not in file_data
         assert "CONSTANT_PACK_VERSION = '1.6.28'" not in file_data
-        assert "demisto.debug('pack name = Zoom, pack version = 1.6.28')" not in file_data
+        assert (
+            "demisto.debug('pack name = Zoom, pack version = 1.6.28')" not in file_data
+        )
     Path(extractor.output).unlink()
 
     extractor.common_server = False

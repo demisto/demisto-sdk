@@ -111,6 +111,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 name=name,
                 deprecated=deprecated,
                 description=description,
+                quickaction=quickaction,
             )
             self.commands.append(
                 CommandParser(

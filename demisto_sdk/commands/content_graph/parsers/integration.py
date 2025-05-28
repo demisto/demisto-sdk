@@ -88,7 +88,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
 
     @property
     def params(self) -> Optional[List]:
-        return get_value(self.yml_data, paths=self.field_mapping.get("params", ""), [])
+        return get_value(self.yml_data, self.field_mapping.get("params", ""), [])
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.

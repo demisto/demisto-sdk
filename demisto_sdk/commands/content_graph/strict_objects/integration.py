@@ -86,7 +86,7 @@ class _Command(BaseStrictModel):
     polling: Optional[bool] = None
     prettyname: Optional[str] = None
     quickaction: Optional[bool] = None
-    importantDescription: Optional[List[str]] = Field(None, alias="importantDescription")
+    compliantpolicies: Optional[List[str]] = Field(None, alias="compliantpolicies")
 
 
 Command = create_model(

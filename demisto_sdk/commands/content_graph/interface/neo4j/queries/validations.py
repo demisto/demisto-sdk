@@ -345,3 +345,23 @@ RETURN collect(tp) AS content_items
         filter(None, (item.get("content_items") for item in run_query(tx, query))),
         default=[],
     )
+
+
+def validate_support_modules_match_his_dependencies(
+    tx: Transaction,
+    content_item_ids: List[str],
+):
+    query = f""" // Check if any module in content_item1's supportedModules is NOT in content_item2's supportedModules.
+    MATCH (content_item1)-[r:{RelationshipType.USES}]->(content_item2)
+    WHERE content_item1.object_id in {content_item_ids}
+    AND NOT r.is_test
+    AND ANY(module_from_1 IN content_item1.supportedModules WHERE NOT module_from_1 IN content_item2.supportedModules)
+    RETURN content_item1, collect(r) as relationships, collect(content_item2) as nodes_to"""
+    return {
+        item.get("content_item1").element_id: Neo4jRelationshipResult(
+            node_from=item.get("content_item1"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }

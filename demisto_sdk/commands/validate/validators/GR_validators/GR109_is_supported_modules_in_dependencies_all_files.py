@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
@@ -37,10 +37,9 @@ from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
-from demisto_sdk.commands.validate.validators.base_validator import (
-    BaseValidator,
-    ValidationResult,
+from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
+from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_in_dependencies import (
+    SupportedModulesCompatibility,
 )
 
 ContentTypes = Union[
@@ -79,24 +78,10 @@ ContentTypes = Union[
     CaseLayoutRule
 ]
 
-class SupportedModulesIsNotEmpty(BaseValidator[ContentTypes]):
-    error_code = "ST113"
-    description = "supportedModules can't be an empty list. If it's missing, all modules are supported by default."
-    rationale = "Maintain valid structure for content items."
-    error_message = "supportedModules cannot be an empty list. To allow all modules, omit the field instead."
-    related_field = "supportedModules"
-    is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
-    related_file_type = [RelatedFileType.SCHEMA]
+class SupportedModulesCompatibilityListFiles(SupportedModulesCompatibility):
+    expected_execution_mode = [ExecutionMode.ALL_FILES]
 
-
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        return [
-            ValidationResult(
-                validator=self,
-                message=self.error_message,
-                content_object=content_item,
-            )
-            for content_item in content_items
-            if content_item.supportedModules == list()
-        ]
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
+        return self.obtain_invalid_content_items_using_graph(content_items, True)

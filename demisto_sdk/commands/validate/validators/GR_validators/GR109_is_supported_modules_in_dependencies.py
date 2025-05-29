@@ -1,9 +1,11 @@
 
 from __future__ import annotations
 
+from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
@@ -79,24 +81,46 @@ ContentTypes = Union[
     CaseLayoutRule
 ]
 
-class SupportedModulesIsNotEmpty(BaseValidator[ContentTypes]):
-    error_code = "ST113"
-    description = "supportedModules can't be an empty list. If it's missing, all modules are supported by default."
-    rationale = "Maintain valid structure for content items."
-    error_message = "supportedModules cannot be an empty list. To allow all modules, omit the field instead."
+class SupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
+    error_code = "GR109"
+    description = "If content_item A depends on content_item B - then `supportedModules` of content_item B should include all `supportedModules` of content_item A"
+    rationale = "A content item must have all its mandatory dependencies support the modules it operates on, to ensure it functions correctly."
+    error_message = "The following mandatory dependencies do not support some required modules: {0}"
     related_field = "supportedModules"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
+    # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
     related_file_type = [RelatedFileType.SCHEMA]
 
 
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        return [
-            ValidationResult(
-                validator=self,
-                message=self.error_message,
-                content_object=content_item,
+    def obtain_invalid_content_items_using_graph(
+            self, content_items: Iterable[ContentTypes], validate_all_files: bool
+        ) -> List[ValidationResult]:
+        results: List[ValidationResult] = []
+        file_paths_to_validate = (
+            [
+                str(content_item.path.relative_to(CONTENT_PATH))
+                for content_item in content_items
+            ]
+            if not validate_all_files
+            else []
+        )
+        dependencies = self.graph.find_invalid_content_item_dependencies(
+            file_paths_to_validate
+        )
+
+        for content_item in dependencies:
+            names_of_unknown_items = [
+                relationship.content_item_to.object_id
+                or relationship.content_item_to.name
+                for relationship in content_item.uses
+            ]
+            results.append(
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message.format(
+                        ', '.join([f"depandencie {item.name} does not support required modules: [{', '.join([module for module in item.suportedModules])}]]" for item in names_of_unknown_items])
+                    ),
+                    content_object=content_item,
+                )
             )
-            for content_item in content_items
-            if content_item.supportedModules == list()
-        ]
+        return results

@@ -32,6 +32,6 @@ class AgentixAction(AgentixBase):
     agent_id: str = Field(..., alias="agentId")
     underlying_content_item_id: str = Field(..., alias="underlyingContentItemId")
     underlying_content_item_name: str = Field(..., alias="underlyingContentItemName")
-    underlying_content_item_type: int = Field(..., alias="underlyingContentItemType")
+    underlying_content_item_type: str = Field(..., alias="underlyingContentItemType")
     underlying_content_item_version: int = Field(..., alias="underlyingContentItemVersion")
     requires_user_approval: bool = Field(False, alias="requiresUserApproval")

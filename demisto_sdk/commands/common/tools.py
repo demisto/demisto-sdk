@@ -1824,6 +1824,8 @@ def find_type(
         FileType | None: Enum representation of the content file type, None otherwise.
     """
     from demisto_sdk.commands.content_graph.objects import (
+        AgentixAction,
+        AgentixAgent,
         CaseField,
         CaseLayout,
         CaseLayoutRule,
@@ -2017,6 +2019,12 @@ def find_type(
 
     if IndicatorField.match(_dict, Path(path)):
         return FileType.INDICATOR_FIELD
+
+    if AgentixAgent.match(_dict, Path(path)):
+        return FileType.AGENTIX_AGENT
+
+    if AgentixAction.match(_dict, Path(path)):
+        return FileType.AGENTIX_ACTION
 
     return None
 

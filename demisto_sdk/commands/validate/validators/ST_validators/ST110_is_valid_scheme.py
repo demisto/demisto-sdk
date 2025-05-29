@@ -31,6 +31,8 @@ from demisto_sdk.commands.content_graph.objects import (
     XDRCTemplate,
     XSIAMDashboard,
     XSIAMReport,
+    AgentixAgent,
+    AgentixAction,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
@@ -74,6 +76,8 @@ ContentTypes = Union[
     Pack,
     ModelingRule,
     AssetsModelingRule,
+    AgentixAgent,
+    AgentixAction
 ]
 
 
@@ -85,8 +89,8 @@ class SchemaValidator(BaseValidator[ContentTypes]):
     rationale = "Maintain valid structure for content items."
 
     def obtain_invalid_content_items(
-        self,
-        content_items: Iterable[ContentTypes],
+            self,
+            content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
         return [
             ValidationResult(

@@ -602,6 +602,16 @@ class ContributionConverter:
                 if pack_version_reg := re.search(
                     r"(?:###|//) pack version: (\d+\.\d+\.\d+)", script
                 ):
+                    logger.info(
+                        f"Found a pack version {pack_version_reg.groups()[0]} using ###|//"
+                    )
+                    return pack_version_reg.groups()[0]
+                elif pack_version_reg := re.search(
+                    r"pack version = (\d+\.\d+\.\d+)'\)", script
+                ):
+                    logger.info(
+                        f"Found a pack version {pack_version_reg.groups()[0]} using pack version ="
+                    )
                     return pack_version_reg.groups()[0]
             except Exception as e:
                 logger.warning(f"Failed extracting pack version from script: {e}")
@@ -613,6 +623,9 @@ class ContributionConverter:
         contributed item versions.
         """
         if self.contribution_items_version:
+            logger.info(
+                f"Creating a warning message since the contributed version isn't the latest version. {self.contribution_items_version}"
+            )
             self.contribution_items_version_note = "> **Warning**\n"
             self.contribution_items_version_note += (
                 "> The changes in the contributed files were not made on the "
@@ -716,14 +729,23 @@ class ContributionConverter:
                             Path(content_item_file_path)
                         )
                         if isinstance(content_item, IntegrationScript):
+                            logger.info(
+                                "The content item is of type IntegrationScript."
+                            )
                             script = content_item.code
                             contributor_item_version = self.extract_pack_version(script)
                             current_pack_version = get_pack_metadata(
                                 file_path=str(self.pack_dir_path)
                             ).get("currentVersion", "0.0.0")
+                            logger.info(
+                                f"Extracted the pack versions {contributor_item_version=}, {current_pack_version=}"
+                            )
                             if contributor_item_version != "0.0.0" and Version(
                                 current_pack_version
                             ) > Version(contributor_item_version):
+                                logger.info(
+                                    "The contributed version isn't the latest version."
+                                )
                                 self.contribution_items_version[content_item.name] = {
                                     "contribution_version": contributor_item_version,
                                     "latest_version": current_pack_version,

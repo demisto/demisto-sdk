@@ -25,12 +25,12 @@ configuration:
   required: false
 script:
   script: |-
-    ### pack version: 1.0.3
     register_module_line('Zoom', 'start', __line__())
-    # pack version: 1.0.3
+    CONSTANT_PACK_VERSION = '1.6.28'
+    demisto.debug('pack id = Zoom, pack version = 1.6.28')
+    demisto.debug('pack name = Zoom, pack version = 1.6.28')
     import datetime
     import jwt
-    #### pack version: 1.0.3
     import requests
     import json
     import shutil

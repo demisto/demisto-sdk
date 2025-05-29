@@ -871,7 +871,11 @@ def test_rearranging_before_conversion_indicator_and_incident_fields(repo: Repo)
     "input_script, output_version",
     [
         (
-            "This is a test script\n the script contains a pack version\n ### pack version: 3.4.5  TEST TEST",
+            "This is a test script\n the script contains a pack version\n demisto.debug('pack id = id, pack version = 3.4.5')  TEST TEST",
+            "3.4.5",
+        ),
+        (
+            "This is a test script\n the script contains a pack version\ndemisto.debug('pack id = id, pack version = 3.4.5')\n  TEST TEST",
             "3.4.5",
         ),
         (
@@ -900,7 +904,8 @@ def test_extract_pack_version(input_script: str, output_version: str, repo: Repo
     contribution_converter = ContributionConverter(
         contribution="contrib.zip", base_dir=repo.path
     )
-    assert contribution_converter.extract_pack_version(input_script) == output_version
+    result = contribution_converter.extract_pack_version(input_script)
+    assert result == output_version
 
 
 def test_create_contribution_items_version_note(repo: Repo):

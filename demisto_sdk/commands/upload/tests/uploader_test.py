@@ -393,6 +393,7 @@ def test_upload_pack(demisto_client_configure, mocker, tmpdir):
         "classifier-aws_sns_test_classifier.json",
         "widget-ActiveIncidentsByRole.json",
         "layoutscontainer-test.json",
+        "listForTest.json",
         "upload_test_dashboard.json",
         "DummyXDRCTemplate.json",
     }
@@ -442,6 +443,7 @@ def test_upload_pack_with_tpb(demisto_client_configure, mocker, tmpdir):
         "classifier-aws_sns_test_classifier.json",
         "widget-ActiveIncidentsByRole.json",
         "layoutscontainer-test.json",
+        "listForTest.json",
         "upload_test_dashboard.json",
         "DummyXDRCTemplate.json",
     }
@@ -1119,6 +1121,8 @@ class TestItemDetacher:
 
 
 def test_zip_multiple_packs(tmp_path: Path, integration, mocker, monkeypatch):
+    from demisto_sdk.commands.content_graph.objects.pack import Pack
+
     tmp_path = tmp_path / "Packs"
     tmp_path.mkdir()
 
@@ -1144,6 +1148,7 @@ def test_zip_multiple_packs(tmp_path: Path, integration, mocker, monkeypatch):
     zipped_pack_path = tmp_path / "zipped.zip"
     mocker.patch.object(BaseContent, "from_path", side_effect=[pack0, pack1, None])
     mocker.patch.object(PackMetadata, "_get_tags_from_landing_page", retrun_value={})
+    mocker.patch.object(Pack, "_format_metadata", return_value={})
     with TemporaryDirectory() as dir:
         monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", dir)
         zip_multiple_packs(

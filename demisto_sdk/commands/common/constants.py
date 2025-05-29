@@ -1,6 +1,6 @@
 import os
 import re
-from enum import Enum
+from enum import Enum, IntEnum
 from functools import reduce
 from pathlib import Path
 from typing import Dict, List
@@ -179,6 +179,7 @@ DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 DEMISTO_SDK_MARKETPLACE_PLATFORM_INTERNAL_PROD = "marketplace-cortex-content-dev"
+
 
 # Server Types
 XSOAR_SERVER_TYPE = "XSOAR"
@@ -1963,7 +1964,7 @@ class MarketplaceVersions(StrEnum):
     PLATFORM = "platform"
 
 
-MarketplaceVersionToMarketplaceName = {
+MarketplaceVersionToMarketplaceName: Dict[str, str] = {
     MarketplaceVersions.XSOAR.value: DEMISTO_SDK_MARKETPLACE_XSOAR_DIST,
     MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
     MarketplaceVersions.XPANSE.value: DEMISTO_SDK_MARKETPLACE_XPANSE_DIST,
@@ -2088,6 +2089,8 @@ class ParameterType(Enum):
     INTERVAL = 19
     BOLD_TITLE = 20
     DAY_DROPDOWN = 21
+    RESULT_LINK = 22  # A placeholder; the front-end will fill this with dynamically generated text.
+    ENGINE_PLACEHOLDER = 23  # A signal to the front-end; the 'engine' dropdown's position in the UI will match the order of this parameter.
 
 
 class IncidentFieldType(
@@ -2207,11 +2210,20 @@ class InvestigationPlaybookState(StrEnum):
     WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
 
 
-class IncidentState(StrEnum):
-    NEW = "NEW"
-    IN_PROGRESS = "IN_PROGRESS"
-    CLOSED = "CLOSED"
-    ACKNOWLEDGED = "ACKNOWLEDGED"
+class XsoarIncidentState(IntEnum):
+    NEW = 0
+    IN_PROGRESS = 1
+    CLOSED = 2
+    ACKNOWLEDGED = 3
+
+
+class XsiamAlertState(IntEnum):
+    NEW = 0
+    UNDER_INVESTIGATION = 1
+    RESOLVED = 2
+
+
+IncidentState = XsoarIncidentState  # To avoid breaking imports in other repos where SDK is installed
 
 
 class PlaybookTaskType(StrEnum):

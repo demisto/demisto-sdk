@@ -34,7 +34,6 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook, join_files
-from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
@@ -78,7 +77,6 @@ class PreCommitRunner:
             "sourcery": SourceryHook,
             "validate": ValidateFormatHook,
             "format": ValidateFormatHook,
-            "mypy": MypyHook,
         }
 
         for hook_id in hooks.copy():
@@ -311,7 +309,9 @@ class PreCommitRunner:
                 stdout=subprocess.PIPE,
                 universal_newlines=True,
             )
-            logger.info(git_diff.stdout)
+            logger.info(  # noqa: PLE1205
+                "{}", git_diff.stdout
+            )
         return return_code
 
     @staticmethod

@@ -18,11 +18,10 @@ class AgentixActionArgument(BaseModel):
 
 
 class AgentixActionOutput(BaseModel):
-    # name: str
     description: str
     type: str
-    content_item_output_name: str = Field(None, alias="underlyingContentItemOutputName") # TODO
-    context_path: str = Field(None, alias="contextPath")
+    content_item_output_name: str = Field(None, alias="underlyingContentItemOutputName")
+    name: str = Field(None, alias="name")
 
 
 class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):

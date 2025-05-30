@@ -721,15 +721,21 @@ def preprocess_files(
     """
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
+    logger.info(f"staged files: {staged_files}")
     all_git_files = git_util.get_all_files().union(staged_files)
+    logger.info(f"all files: {all_git_files}")
+
     contribution_flow = os.getenv("CONTRIB_BRANCH")
     if input_files:
         raw_files = set(input_files)
     elif staged_only:
         raw_files = staged_files
     elif use_git:
+        logger.info("Moshe use git is True")
         raw_files = git_util._get_all_changed_files(prev_version)
+        logger.info(f"Moshe {raw_files}")
         if not commited_only:
+            logger.info(f"commited only is {commited_only}")
             raw_files = raw_files.union(staged_files)
         if contribution_flow:
             """

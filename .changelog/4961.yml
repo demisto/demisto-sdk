@@ -1,0 +1,4 @@
+changes:
+- description: Fixed XSIAM 3.x to hide classifiers and mappers parameters from configuration.
+  type: fix
+pr_number: 4961

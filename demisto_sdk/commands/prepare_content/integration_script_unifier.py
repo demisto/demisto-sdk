@@ -190,6 +190,7 @@ class IntegrationScriptUnifier(Unifier):
         marketplaces_without_mirroring = (
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XPANSE,
+            MarketplaceVersions.PLATFORM,
         )
         if marketplace not in marketplaces_without_mirroring:
             # Only change data if marketplace platform does not support mirroring

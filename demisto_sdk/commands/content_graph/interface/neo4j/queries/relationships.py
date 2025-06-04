@@ -65,8 +65,7 @@ ON MATCH
 MERGE (integration)-[r:{RelationshipType.HAS_COMMAND}{{
     deprecated: rel_data.deprecated,
     description: rel_data.description,
-    quickaction: rel_data.quickaction,
-    compliantpolicies: rel_data.compliantpolicies
+    quickaction: rel_data.quickaction
 }}]->(cmd)
 
 RETURN count(r) AS relationships_merged"""

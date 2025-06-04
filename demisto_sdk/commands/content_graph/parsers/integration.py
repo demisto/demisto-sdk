@@ -103,7 +103,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             args = command_data.get("arguments") or []
             outputs = command_data.get("outputs") or []
             quickaction = command_data.get("quickaction", False)
-            compliantpolicies: list[str] = command_data.get("compliantpolicies") or []
+            compliantpolicies: list[str] = command_data.get("compliantpolicies") or [
+                "Shmuel"
+            ]
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
                 target=name,

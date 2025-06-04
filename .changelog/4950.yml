@@ -1,4 +1,0 @@
-changes:
-- description: Removed the **mypy** hook from the **pre-commit** command since there is a new **mypy-in-docker** hook.
-  type: feature
-pr_number: 4950

@@ -35,7 +35,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         self.tags: List[str] = self.yml_data.get("tags", [])
         self.skip_prepare: List[str] = self.yml_data.get("skipprepare", [])
         self.compliantpolicies: Optional[List[str]] = self.yml_data.get(
-            "compliantpolicies", ["shmuel-1"]
+            "compliantpolicies", []
         )
         self.connect_to_dependencies()
         self.connect_to_tests()

@@ -38,7 +38,7 @@ class AgentixBaseParser(YAMLContentItemParser):
 
     @property
     def display_name(self) -> Optional[str]:
-        return self.yml_data.get("display", [])
+        return get_value(self.yml_data, self.field_mapping.get("display", ""))
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

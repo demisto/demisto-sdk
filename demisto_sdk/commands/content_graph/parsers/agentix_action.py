@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import List, Optional
 
@@ -30,6 +31,15 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         self.underlying_content_item_version: int = self.yml_data.get("underlyingContentItemVersion")
         self.underlying_content_item_pack_version: str = self.yml_data.get("underlyingContentItemPackVersion")
         self.requires_user_approval: bool = self.yml_data.get("requiresUserApproval")
+
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update(
+            {
+                "display": "name"
+            }
+        )
+        return super().field_mapping
 
     @property
     def strict_object(self):

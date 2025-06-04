@@ -23,6 +23,15 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
         )
         self.color: str = self.yml_data.get("color")
 
+    @cached_property
+    def field_mapping(self):
+        super().field_mapping.update(
+            {
+                "display": "display"
+            }
+        )
+        return super().field_mapping
+
     @property
     def strict_object(self):
         return AgentixAgent

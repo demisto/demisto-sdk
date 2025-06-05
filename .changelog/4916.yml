@@ -1,4 +1,0 @@
-changes:
-- description: Upgraded XSOAR 6 tenants in the content build to versions 6.13 and 6.14.
-  type: internal
-pr_number: 4916

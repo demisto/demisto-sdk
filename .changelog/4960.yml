@@ -1,4 +1,0 @@
-changes:
-- description: Added the ability to un-skip a specific hook in a specific mode.
-  type: feature
-pr_number: 4960

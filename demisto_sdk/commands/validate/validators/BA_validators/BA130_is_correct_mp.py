@@ -44,4 +44,4 @@ class IsMarketplaceExistsValidator(BaseValidator[ContentTypes]):
             ContentType.AGENTIX_AGENT,
             ContentType.AGENTIX_ACTION,
         ]) or (content_item.content_type == ContentType.SCRIPT and content_item.is_llm):
-            return len(content_item.marketplaces) > 1 or len(content_item.marketplaces) == 0 or MarketplaceVersions.XSOAR_SAAS.value != content_item.marketplaces[0].value
+            return len(content_item.marketplaces) > 1 or len(content_item.marketplaces) == 0 or MarketplaceVersions.PLATFORM.value != content_item.marketplaces[0].value

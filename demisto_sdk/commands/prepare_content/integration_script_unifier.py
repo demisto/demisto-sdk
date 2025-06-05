@@ -80,12 +80,9 @@ class IntegrationScriptUnifier(Unifier):
         if path.parent.name in {"Integrations", "Scripts"}:
             return data
         package_path = path.parent
-        is_LLM_script = data.get("isLLM", False)
-        is_script_package = isinstance(data.get("script"), str) or is_LLM_script
+        is_script_package = isinstance(data.get("script"), str)
         script_obj = data
 
-        if is_LLM_script:
-            pass
         if not is_script_package:  # integration
             # Change data in place
             IntegrationScriptUnifier.update_hidden_parameters_value(data, marketplace)
@@ -95,8 +92,7 @@ class IntegrationScriptUnifier(Unifier):
             script_obj = data["script"]
         script_type = TYPE_TO_EXTENSION[script_obj["type"]]
         try:
-            if not is_LLM_script:
-                IntegrationScriptUnifier.get_code_file(package_path, script_type)
+            IntegrationScriptUnifier.get_code_file(package_path, script_type)
         except ValueError:
             logger.warning(
                 f"No code file found for '{path}', assuming file is already unified."
@@ -105,7 +101,7 @@ class IntegrationScriptUnifier(Unifier):
         yml_unified = copy.deepcopy(data)
 
         yml_unified, _ = IntegrationScriptUnifier.insert_script_to_yml(
-            package_path, script_type, yml_unified, data, is_script_package, is_LLM_script
+            package_path, script_type, yml_unified, data, is_script_package
         )
         if not is_script_package:
             yml_unified, _ = IntegrationScriptUnifier.insert_image_to_yml(
@@ -315,7 +311,7 @@ class IntegrationScriptUnifier(Unifier):
         return data, found_data_path
 
     @staticmethod
-    def get_code_file(package_path: Path, script_type, key: str = "script"):
+    def get_code_file(package_path: Path, script_type):
         """Return the first code file in the specified directory path
         :param script_type: script type: .py, .js, .ps1
         :type script_type: str
@@ -343,21 +339,19 @@ class IntegrationScriptUnifier(Unifier):
             return os.path.join(
                 package_path, Path(os.path.normpath(package_path)).name + ".py"
             )
-        script_prefix = key if key == "preScript" or key == "postScript" else ''
+
         script_path_list = list(
             filter(
                 lambda x: not re.search(ignore_regex, x, flags=re.IGNORECASE),
-                sorted(glob.glob(os.path.join(package_path, f"{script_prefix}*" + script_type))),
+                sorted(glob.glob(os.path.join(package_path, "*" + script_type))),
             )
         )
         if script_path_list:
             return script_path_list[0]
-
-        elif key != "preScript" and key != "postScript":
+        else:
             raise ValueError(
                 f"Could not find a code file {script_type} in {package_path}"
             )
-        return ''
 
     @staticmethod
     def insert_script_to_yml(
@@ -366,79 +360,64 @@ class IntegrationScriptUnifier(Unifier):
         yml_unified: dict,
         yml_data: dict,
         is_script_package: bool,
-        is_LLM_script: bool = False
     ):
-        codes_list = {}
-        if not is_LLM_script:
-            script_path = IntegrationScriptUnifier.get_code_file(package_path, script_type)
-            script_code = get_file(script_path, return_content=True)
-            codes_list.update({"script": script_code})
-        else:
-            pre_script_path = IntegrationScriptUnifier.get_code_file(package_path, script_type, key="preScript")
-            if pre_script_path:
-                pre_script_code = get_file(pre_script_path, return_content=True)
-                codes_list.update({"preScript": pre_script_code})
-            post_script_path = IntegrationScriptUnifier.get_code_file(package_path, script_type, key="postScript")
-            if post_script_path:
-                post_script_code = get_file(post_script_path, return_content=True)
-                codes_list.update({"postScript": post_script_code})
-
+        script_path = IntegrationScriptUnifier.get_code_file(package_path, script_type)
+        script_code = get_file(script_path, return_content=True)
 
         # Check if the script imports an API module. If it does,
         # the API module code will be pasted in place of the import.
-        for key, code_ in codes_list.items():
-            imports_to_names = IntegrationScriptUnifier.check_api_module_imports(
-                code_
-            )
-            script_code = IntegrationScriptUnifier.insert_module_code(
-                code_, imports_to_names, get_content_path(package_path)
-            )
-            pack_metadata = get_pack_metadata(file_path=str(package_path))
-            pack_version = pack_metadata.get("currentVersion", "")
-            if "Packs" in package_path.parts:
-                pack_id = package_path.parts[package_path.parts.index("Packs") + 1]
-                if pack_version:
-                    script_code = IntegrationScriptUnifier.insert_pack_version(
-                        script_type, script_code, pack_version, pack_id
-                    )
+        imports_to_names = IntegrationScriptUnifier.check_api_module_imports(
+            script_code
+        )
+        script_code = IntegrationScriptUnifier.insert_module_code(
+            script_code, imports_to_names, get_content_path(package_path)
+        )
+        pack_metadata = get_pack_metadata(file_path=str(package_path))
+        pack_version = pack_metadata.get("currentVersion", "")
+        if "Packs" in package_path.parts:
+            pack_id = package_path.parts[package_path.parts.index("Packs") + 1]
+            if pack_version:
+                script_code = IntegrationScriptUnifier.insert_pack_version(
+                    script_type, script_code, pack_version, pack_id
+                )
 
-            if script_type == ".py":
-                clean_code = IntegrationScriptUnifier.clean_python_code(script_code)
-                if "CommonServer" not in yml_data["name"]:
-                    # CommonServerPython has those line hard-coded so there is no need to add them here.
-                    clean_code = (
-                        f"register_module_line('{yml_data['name']}', 'start', __line__())\n"
-                        f"{clean_code}\n"
-                        f"register_module_line('{yml_data['name']}', 'end', __line__())\n"
-                    )
-            elif script_type == ".ps1":
-                clean_code = IntegrationScriptUnifier.clean_pwsh_code(script_code)
-            else:
-                # for JS scripts
-                clean_code = script_code
+        if script_type == ".py":
+            clean_code = IntegrationScriptUnifier.clean_python_code(script_code)
+            if "CommonServer" not in yml_data["name"]:
+                # CommonServerPython has those line hard-coded so there is no need to add them here.
+                clean_code = (
+                    f"register_module_line('{yml_data['name']}', 'start', __line__())\n"
+                    f"{clean_code}\n"
+                    f"register_module_line('{yml_data['name']}', 'end', __line__())\n"
+                )
+        elif script_type == ".ps1":
+            clean_code = IntegrationScriptUnifier.clean_pwsh_code(script_code)
+        else:
+            # for JS scripts
+            clean_code = script_code
 
-            if is_script_package:
-                if yml_data.get(key, "") not in ("", "-"):
-                    logger.warning(
-                        f"Script section is not empty in package {package_path}."
-                        f"It should be blank or a dash(-)."
-                    )
+        if is_script_package:
+            if yml_data.get("script", "") not in ("", "-"):
+                logger.warning(
+                    f"Script section is not empty in package {package_path}."
+                    f"It should be blank or a dash(-)."
+                )
 
-                yml_unified[key] = FoldedScalarString(clean_code)
+            yml_unified["script"] = FoldedScalarString(clean_code)
 
-            else:
-                if yml_data["script"].get("script", "") not in ("", "-"):
-                    logger.warning(
-                        f"Script section is not empty in package {package_path}."
-                        f"It should be blank or a dash(-)."
-                    )
+        else:
+            if yml_data["script"].get("script", "") not in ("", "-"):
+                logger.warning(
+                    f"Script section is not empty in package {package_path}."
+                    f"It should be blank or a dash(-)."
+                )
 
-                yml_unified["script"]["script"] = FoldedScalarString(clean_code)
+            yml_unified["script"]["script"] = FoldedScalarString(clean_code)
 
-        return yml_unified, '' if is_LLM_script else script_path
+        return yml_unified, script_path
 
     @staticmethod
-    def get_script_or_integration_package_data(package_path: Path, key: str = "script"):
+    def get_script_or_integration_package_data(package_path: Path):
         # should be static method
         _, yml_path = get_yml_paths_in_dir(str(package_path))
 
@@ -449,14 +428,13 @@ class IntegrationScriptUnifier(Unifier):
             )
 
         if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
-        # if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.AGENTIX_AI_TASK):
             code_type = get_yaml(yml_path, keep_order=False).get("type")
-        else: #TODO - what is this else for??
+        else:
             code_type = (
                 get_yaml(yml_path, keep_order=False).get("script", {}).get("type")
             )
         code_path = IntegrationScriptUnifier.get_code_file(
-            package_path, TYPE_TO_EXTENSION[code_type], key
+            package_path, TYPE_TO_EXTENSION[code_type]
         )
         code = get_file(code_path, return_content=True)
 
@@ -464,16 +442,13 @@ class IntegrationScriptUnifier(Unifier):
 
     @staticmethod
     def get_script_or_integration_package_data_with_sha(
-        yml_path: Path, git_sha: str, yml_data: dict, key: Optional[str] = None
+        yml_path: Path, git_sha: str, yml_data: dict
     ):
         # should be static method
-        # if find_type(str(yml_path)) in (FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.AGENTIX_AI_TASK):
         if find_type(str(yml_path)) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
             code_type = yml_data.get("type")
         else:
             code_type = yml_data.get("script", {}).get("type")
-        if key:
-            yml_path = yml_path.with_name(f"{key}-{yml_path.name}")
         code_path = str(yml_path).replace(".yml", TYPE_TO_EXTENSION[code_type])  # type: ignore[index]
 
         code = TextFile.read_from_git_path(code_path, tag=git_sha)

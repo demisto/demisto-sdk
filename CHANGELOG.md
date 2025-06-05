@@ -1,4 +1,15 @@
 # Changelog
+## 1.38.2 (2025-06-05)
+### Feature
+* Added the ability to un-skip a specific hook in a specific mode. [#4960](https://github.com/demisto/demisto-sdk/pull/4960)
+
+### Fix
+* Fixed XSIAM 3.x to hide classifiers and mappers parameters from configuration. [#4961](https://github.com/demisto/demisto-sdk/pull/4961)
+
+### Internal
+* Upgraded XSOAR 6 tenants in the content build to versions 6.13 and 6.14. [#4916](https://github.com/demisto/demisto-sdk/pull/4916)
+
+
 ## 1.38.1 (2025-05-25)
 ### Feature
 * Removed the **mypy** hook from the ***pre-commit*** command since there is a new **mypy-in-docker** hook. [#4950](https://github.com/demisto/demisto-sdk/pull/4950)

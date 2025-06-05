@@ -1,0 +1,4 @@
+changes:
+- description: Added the MyPy pre-commit hook
+  type: feature
+pr_number: 4963

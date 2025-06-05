@@ -277,7 +277,6 @@ class FileType(StrEnum):
     CASE_FIELD = "casefield"
     CASE_LAYOUT = "caselayout"
     VERSION_CONFIG = "version_config"
-    # AGENTIX_AI_TASK = "agentixaitask"
     AGENTIX_AGENT = "agentixagent"
     AGENTIX_ACTION = "agentixaction"
 

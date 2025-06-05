@@ -15,8 +15,6 @@ class Script(BaseScript, content_type=ContentType.SCRIPT):  # type: ignore[call-
 
     is_llm: bool = Field(False, alias="isLLM")
     model: Optional[str] = None
-    pre_script: Optional[str] = Field(None, alias="preScript", exclude=True)
-    post_script: Optional[str] = Field(None, alias="postScript", exclude=True)
     user_prompt: Optional[str] = Field(None, alias="userPrompt")
     system_prompt: Optional[str] = Field(None, alias="systemPrompt")
     few_shots: Optional[str] = Field(None, alias="fewShots")

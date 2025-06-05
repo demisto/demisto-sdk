@@ -135,10 +135,6 @@ mapping:
     type: bool
   model:
     type: str
-  preScript:
-    type: str
-  postScript:
-    type: str
   userPrompt:
     type: str
   systemPrompt:

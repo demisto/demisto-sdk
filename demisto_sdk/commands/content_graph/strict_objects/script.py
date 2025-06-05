@@ -90,8 +90,6 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     prettyname: Optional[str] = None
     is_llm: bool = Field(False, alias="isLLM")
     model: Optional[str] = None
-    pre_script: Optional[str] = Field(None, alias="preScript")
-    post_script: Optional[str] = Field(None, alias="postScript")
     user_prompt: Optional[str] = Field(None, alias="userPrompt")
     system_prompt: Optional[str] = Field(None, alias="systemPrompt")
     few_shots: Optional[str] = Field(None, alias="fewShots")
@@ -127,8 +125,6 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
             # Enforce non-LLM mode: all LLM-related fields must be None or empty
             llm_fields = [
                 ("model", values.get("model")),
-                ("pre_script", values.get("pre_script")),
-                ("post_script", values.get("post_script")),
                 ("user_prompt", values.get("user_prompt")),
                 ("system_prompt", values.get("system_prompt")),
                 ("few_shots", values.get("few_shots")),

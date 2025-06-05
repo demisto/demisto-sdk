@@ -352,11 +352,11 @@ def validate_support_modules_match_his_dependencies(
     content_item_ids: List[str],
 ):
     query = f""" // Check if any module in content_item1's supportedModules is NOT in content_item2's supportedModules.
-    MATCH (content_item1)-[r:{RelationshipType.USES}]->(content_item2)
-    WHERE content_item1.object_id in {content_item_ids}
-    AND NOT r.is_test
-    AND ANY(module_from_1 IN content_item1.supportedModules WHERE NOT module_from_1 IN content_item2.supportedModules)
-    RETURN content_item1, collect(r) as relationships, collect(content_item2) as nodes_to"""
+    MATCH (content_item1{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(content_item2)
+    WHERE {f"content_item1.object_id IN {content_item_ids} AND " if content_item_ids else ""}
+        ANY(module_from_1 IN content_item1.supportedModules WHERE NOT module_from_1 IN content_item2.supportedModules)
+    RETURN content_item1, collect(r) as relationships, collect(content_item2) as nodes_to
+    """
     return {
         item.get("content_item1").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item1"),

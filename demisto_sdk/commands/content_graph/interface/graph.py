@@ -313,6 +313,12 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def find_invalid_content_item_dependencies(
+        self, content_item_ids: List[str]
+    ) -> List[BaseNode]:
+        pass
+
+    @abstractmethod
     def get_api_module_imports(self, api_module: str) -> List[IntegrationScript]:
         pass
 

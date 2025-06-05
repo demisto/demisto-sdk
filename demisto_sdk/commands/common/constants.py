@@ -277,9 +277,11 @@ class FileType(StrEnum):
     CASE_FIELD = "casefield"
     CASE_LAYOUT = "caselayout"
     VERSION_CONFIG = "version_config"
+    AGENTIX_AGENT = "agentixagent"
+    AGENTIX_ACTION = "agentixaction"
 
 
-RN_HEADER_BY_FILE_TYPE = {
+RN_HEADER_BY_FILE_TYPE = { # TODO
     FileType.PLAYBOOK: "Playbooks",
     FileType.INTEGRATION: "Integrations",
     FileType.BETA_INTEGRATION: "Integrations",

@@ -61,6 +61,7 @@ class IntegrationOutput(Output):
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
     name: str
     quickaction: bool = Field(False)
+    compliantpolicies: Optional[list[str]] = Field([])
 
     # From HAS_COMMAND relationship
     args: List[Argument] = Field([], exclude=True)

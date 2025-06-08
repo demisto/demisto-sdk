@@ -3,6 +3,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
+from packaging.version import parse
+
 
 import pytest
 
@@ -30,10 +32,11 @@ from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 TEST_DATA_PATH = (
-    Path(git_path()) / "demisto_sdk" / "commands" / "pre_commit" / "tests" / "test_data"
+        Path(git_path()) / "demisto_sdk" / "commands" / "pre_commit" / "tests" / "test_data"
 )
 
 PYTHON_VERSION_TO_FILES = {
+    "2.7": {Path("Packs/Pack0/Integrations/integration0/integration0.py")},
     "3.8": {Path("Packs/Pack1/Integrations/integration1/integration1.py")},
     "3.9": {Path("Packs/Pack1/Integrations/integration2/integration2.py")},
     "3.10": {Path("Packs/Pack1/Integrations/integration3/integration3.py")},
@@ -65,12 +68,12 @@ class Obj:
 
 
 def create_hook(
-    hook: dict,
-    mode: str = "",
-    all_files=False,
-    input_files: Optional[List[Path]] = None,
-    image_ref: Optional[str] = None,
-    docker_image: Optional[str] = None,
+        hook: dict,
+        mode: str = "",
+        all_files=False,
+        input_files: Optional[List[Path]] = None,
+        image_ref: Optional[str] = None,
+        docker_image: Optional[str] = None,
 ):
     """
     This function mocks hook as he returns in _get_hooks() function
@@ -124,10 +127,10 @@ def test_config_files(mocker, repo: Repo, native_image_config):
     """
 
     def devtest_side_effect(
-        image_tag: str,
-        is_powershell: bool,
-        should_pull: bool,
-        should_install_mypy_additional_dependencies: bool,
+            image_tag: str,
+            is_powershell: bool,
+            should_pull: bool,
+            should_install_mypy_additional_dependencies: bool,
     ):
         return image_tag
 
@@ -178,7 +181,7 @@ def test_config_files(mocker, repo: Repo, native_image_config):
         GitUtil,
         "get_all_files",
         return_value=relative_paths
-        | {Path("README.md"), Path("test.md"), Path("fix.md")},
+                     | {Path("README.md"), Path("test.md"), Path("fix.md")},
     )
     files_to_run = preprocess_files([Path(pack1.path)])
     assert files_to_run == relative_paths
@@ -191,23 +194,23 @@ def test_config_files(mocker, repo: Repo, native_image_config):
         python_version_to_files,
         "",
         pre_commit_template_path=TEST_DATA_PATH
-        / ".pre-commit-config_template-test.yaml",
+                                 / ".pre-commit-config_template-test.yaml",
     )
     assert (
-        Path(script1.yml.path).relative_to(repo.path)
-        in pre_commit_context.python_version_to_files["2.7"]
+            Path(script1.yml.path).relative_to(repo.path)
+            in pre_commit_context.python_version_to_files["2.7"]
     )
     assert (
-        Path(integration3.yml.path).relative_to(repo.path)
-        in pre_commit_context.python_version_to_files["3.8"]
+            Path(integration3.yml.path).relative_to(repo.path)
+            in pre_commit_context.python_version_to_files["3.8"]
     )
     assert (
-        Path(integration1.yml.path).relative_to(repo.path)
-        in pre_commit_context.python_version_to_files["3.9"]
+            Path(integration1.yml.path).relative_to(repo.path)
+            in pre_commit_context.python_version_to_files["3.9"]
     )
     assert (
-        Path(integration2.yml.path).relative_to(repo.path)
-        in pre_commit_context.python_version_to_files["3.10"]
+            Path(integration2.yml.path).relative_to(repo.path)
+            in pre_commit_context.python_version_to_files["3.10"]
     )
     assert all(
         Path(obj.path).relative_to(repo.path)
@@ -215,8 +218,8 @@ def test_config_files(mocker, repo: Repo, native_image_config):
         for obj in (incident_field, classifier)
     )
     assert (
-        Path(integration_deprecated.yml.path).relative_to(repo.path)
-        not in pre_commit_context.python_version_to_files["3.10"]
+            Path(integration_deprecated.yml.path).relative_to(repo.path)
+            not in pre_commit_context.python_version_to_files["3.10"]
     )
 
     PreCommitRunner.prepare_and_run(pre_commit_context)
@@ -249,13 +252,13 @@ def test_handle_api_modules(mocker, git_repo: Repo):
         )
     files_to_run = {(path, obj.path) for path, obj in files_to_run[0]["2.7"]}
     assert (
-        Path(script.yml.path).relative_to(git_repo.path),
-        integration.object.path.relative_to(git_repo.path),
-    ) in files_to_run
+               Path(script.yml.path).relative_to(git_repo.path),
+               integration.object.path.relative_to(git_repo.path),
+           ) in files_to_run
     assert (
-        Path(integration.yml.path).relative_to(git_repo.path),
-        integration.object.path.relative_to(git_repo.path),
-    ) in files_to_run
+               Path(integration.yml.path).relative_to(git_repo.path),
+               integration.object.path.relative_to(git_repo.path),
+           ) in files_to_run
 
 
 @pytest.mark.parametrize("github_actions", [True, False])
@@ -279,17 +282,21 @@ def test_ruff_hook(github_actions, mocker):
     )
     RuffHook(**ruff_hook).prepare_hook()
     python_version_to_ruff = {"3.8": "py38", "3.9": "py39", "3.10": "py310"}
-    for hook, python_version in itertools.zip_longest(
-        ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
-    ):
+    for hook in ruff_hook["repo"]["hooks"]:
+        python_version = hook["name"].replace("ruff-py", "")
+        assert python_version in python_version_to_ruff
         assert (
-            f"--target-version={python_version_to_ruff[python_version]}" in hook["args"]
+                f"--target-version={python_version_to_ruff[python_version]}" in hook["args"]
         )
         assert "--fix" in hook["args"]
         assert hook["name"] == f"ruff-py{python_version}"
         assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
         if github_actions:
             assert hook["args"][2] == "--output-format=github"
+    assert all(
+        parse(hook["name"].replace("ruff-py", "")) > parse("3.7")
+        for hook in ruff_hook["repo"]["hooks"]
+    )
 
 
 def test_ruff_hook_nightly_mode(mocker):
@@ -311,7 +318,7 @@ def test_ruff_hook_nightly_mode(mocker):
     RuffHook(**ruff_hook).prepare_hook()
 
     for hook, _ in itertools.zip_longest(
-        ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
+            ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
     ):
         hook_args = hook["args"]
         assert "--fix" not in hook_args
@@ -462,53 +469,53 @@ class TestPreprocessFiles:
         "untracked_files, modified_files, untracked_files_in_content ,expected_output",
         [
             (
-                ["Packs/untracked.txt"],
-                set([Path("Packs/modified.txt")]),
-                set([Path("Packs/untracked.txt")]),
-                set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
+                    ["Packs/untracked.txt"],
+                    set([Path("Packs/modified.txt")]),
+                    set([Path("Packs/untracked.txt")]),
+                    set([Path("Packs/modified.txt"), Path("Packs/untracked.txt")]),
             ),
             (
-                [
-                    "Packs/untracked_1.txt",
-                    "Packs/untracked_2.txt",
-                    "invalid/path/untracked.txt",
-                    "another/invalid/path/untracked.txt",
-                ],
-                set([Path("Packs/modified.txt")]),
-                set(
                     [
-                        Path("Packs/untracked_1.txt"),
-                        Path("Packs/untracked_2.txt"),
-                    ]
-                ),
-                set(
-                    [
-                        Path("Packs/modified.txt"),
-                        Path("Packs/untracked_1.txt"),
-                        Path("Packs/untracked_2.txt"),
-                    ]
-                ),
+                        "Packs/untracked_1.txt",
+                        "Packs/untracked_2.txt",
+                        "invalid/path/untracked.txt",
+                        "another/invalid/path/untracked.txt",
+                    ],
+                    set([Path("Packs/modified.txt")]),
+                    set(
+                        [
+                            Path("Packs/untracked_1.txt"),
+                            Path("Packs/untracked_2.txt"),
+                        ]
+                    ),
+                    set(
+                        [
+                            Path("Packs/modified.txt"),
+                            Path("Packs/untracked_1.txt"),
+                            Path("Packs/untracked_2.txt"),
+                        ]
+                    ),
             ),
             (
-                [
-                    "Packs/untracked_1.txt",
-                    "Packs/untracked_2.txt",
-                    "invalid/path/untracked.txt",
-                    "another/invalid/path/untracked.txt",
-                ],
-                set(),
-                set(
                     [
-                        Path("Packs/untracked_1.txt"),
-                        Path("Packs/untracked_2.txt"),
-                    ]
-                ),
-                set(
-                    [
-                        Path("Packs/untracked_1.txt"),
-                        Path("Packs/untracked_2.txt"),
-                    ]
-                ),
+                        "Packs/untracked_1.txt",
+                        "Packs/untracked_2.txt",
+                        "invalid/path/untracked.txt",
+                        "another/invalid/path/untracked.txt",
+                    ],
+                    set(),
+                    set(
+                        [
+                            Path("Packs/untracked_1.txt"),
+                            Path("Packs/untracked_2.txt"),
+                        ]
+                    ),
+                    set(
+                        [
+                            Path("Packs/untracked_1.txt"),
+                            Path("Packs/untracked_2.txt"),
+                        ]
+                    ),
             ),
         ],
         ids=[
@@ -518,12 +525,12 @@ class TestPreprocessFiles:
         ],
     )
     def test_preprocess_files_in_external_pr_use_case(
-        self,
-        mocker,
-        untracked_files,
-        modified_files,
-        untracked_files_in_content,
-        expected_output,
+            self,
+            mocker,
+            untracked_files,
+            modified_files,
+            untracked_files_in_content,
+            expected_output,
     ):
         """
         This UT verifies changes made to pre commit command to support collection of
@@ -587,7 +594,7 @@ def test_exclude_hooks_by_version(mocker, repo: Repo):
         python_version_to_files,
         "",
         pre_commit_template_path=TEST_DATA_PATH
-        / ".pre-commit-config_template-test.yaml",
+                                 / ".pre-commit-config_template-test.yaml",
     )
     PreCommitRunner.prepare_hooks(pre_commit_context)
 
@@ -624,7 +631,7 @@ def test_exclude_hooks_by_support_level(mocker, repo: Repo):
         python_version_to_files,
         "",
         pre_commit_template_path=TEST_DATA_PATH
-        / ".pre-commit-config_template-test.yaml",
+                                 / ".pre-commit-config_template-test.yaml",
     )
 
     PreCommitRunner.prepare_hooks(pre_commit_context)
@@ -684,23 +691,23 @@ def test_coverage_analyze_general_hook(mode, expected_args):
     "hook, expected_result",
     [
         (
-            {"files": r"\.py$", "exclude": r"_test\.py$", "id": "test"},
-            ["file1.py", "file6.py"],
+                {"files": r"\.py$", "exclude": r"_test\.py$", "id": "test"},
+                ["file1.py", "file6.py"],
         ),
         (
-            {"files": r"\.py$", "id": "test"},
-            ["file1.py", "file6.py", "file2_test.py"],
+                {"files": r"\.py$", "id": "test"},
+                ["file1.py", "file6.py", "file2_test.py"],
         ),
         (
-            {"id": "test"},
-            [
-                "file1.py",
-                "file2_test.py",
-                "file3.ps1",
-                "file4.md",
-                "file5.md",
-                "file6.py",
-            ],
+                {"id": "test"},
+                [
+                    "file1.py",
+                    "file2_test.py",
+                    "file3.ps1",
+                    "file4.md",
+                    "file5.md",
+                    "file6.py",
+                ],
         ),
         ({"files": r"\.ps1$", "id": "test"}, ["file3.ps1"]),
     ],
@@ -768,7 +775,7 @@ def test_skip_hook_with_mode(mocker):
         python_version_to_files,
         "",
         pre_commit_template_path=TEST_DATA_PATH
-        / ".pre-commit-config_template-test.yaml",
+                                 / ".pre-commit-config_template-test.yaml",
     )
     repos = get_repos(pre_commit_runner.precommit_template)
     assert not repos["https://github.com/charliermarsh/ruff-pre-commit"]["hooks"]
@@ -800,8 +807,8 @@ def test_system_hooks():
     )
     SystemHook(**system_hook).prepare_hook()
     assert (
-        system_hook["repo"]["hooks"][0]["entry"]
-        == f"{Path(sys.executable).parent}/demisto-sdk"
+            system_hook["repo"]["hooks"][0]["entry"]
+            == f"{Path(sys.executable).parent}/demisto-sdk"
     )
 
 
@@ -816,12 +823,12 @@ def test_run_pre_commit_with_json_output_path(mocker, tmp_path):
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(tmp_path))
 
     test_integration_path = (
-        tmp_path
-        / "Packs"
-        / "TestPack"
-        / "Integrations"
-        / "TestIntegration"
-        / "TestIntegration.yml"
+            tmp_path
+            / "Packs"
+            / "TestPack"
+            / "Integrations"
+            / "TestIntegration"
+            / "TestIntegration.yml"
     )
     test_integration_path.parent.mkdir(parents=True, exist_ok=True)
 

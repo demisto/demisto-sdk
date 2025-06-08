@@ -124,7 +124,7 @@ def upload_zip(
 
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     path: Path
-    supportedModules: List[str] = []
+    supportedModules: Optional[List[str]] = None
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False

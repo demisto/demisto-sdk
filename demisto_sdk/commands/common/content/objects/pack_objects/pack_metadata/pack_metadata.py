@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from packaging.version import Version, parse
 from wcmatch.pathlib import Path
@@ -59,7 +59,7 @@ class PackMetaData(JSONObject):
         self._useCases: List[str] = []
         self._keywords: List[str] = []
         self._dependencies: Dict[str, Dict] = {}
-        self._supported_modules: List[str] = []
+        self._supported_modules: Optional[List[str]] = None
 
     @property
     def name(self) -> str:
@@ -586,7 +586,7 @@ class PackMetaData(JSONObject):
             self.use_cases = user_metadata.get("useCases", [])
             self.dependencies = user_metadata.get("dependencies", {})
             self.supportedModules = user_metadata.get(
-                "supportedModules", []
+                "supportedModules"
             )
             if self.price > 0:
                 self.premium = True

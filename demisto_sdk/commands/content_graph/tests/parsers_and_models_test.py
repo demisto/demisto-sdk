@@ -2048,7 +2048,7 @@ class TestParsersAndModels:
         )
 
         assert script1_model.supportedModules == ["C1", "C3"]
-        assert script2_model.supportedModules == []
+        assert script2_model.supportedModules is None
 
 
 class TestFindContentType:

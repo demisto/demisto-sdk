@@ -185,8 +185,8 @@ class PackMetadataParser:
         )
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
-        self.supportedModules: List[str] = metadata.get(
-            "supportedModules", []
+        self.supportedModules: Optional[List[str]] = metadata.get(
+            "supportedModules"
         )
 
     @property

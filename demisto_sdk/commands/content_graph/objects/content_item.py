@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Union
 
 import demisto_client
 from packaging.version import Version
@@ -299,7 +299,7 @@ class ContentItem(BaseContent):
             dict: Dictionary representation of the summary content item.
         """
 
-        exclude_fields = {}
+        exclude_fields: Dict[Union[int, str], Any] = {}
         if not self.supportedModules:
             exclude_fields["supportedModules"] = True
 

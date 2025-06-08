@@ -61,6 +61,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR108_is_invalid_pac
 from demisto_sdk.commands.validate.validators.GR_validators.GR108_is_invalid_packs_dependencies_valid_list_files import (
     IsInvalidPacksDependenciesValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_in_dependencies_all_files import (
+    SupportedModulesCompatibilityAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_in_dependencies_list_files import (
+    SupportedModulesCompatibilityListFiles,
+)
 from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
@@ -1109,3 +1115,101 @@ def test_IsInvalidPacksDependenciesValidatorListFiles(repo_for_test_gr_108: Repo
         )
     )
     assert not results
+
+
+@pytest.fixture
+def repo_for_test_gr_109(graph_repo: Repo):
+    """
+    Creates a test repository with three packs for testing GR109 validator.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack1: Contains a playbook that uses a command from Pack2.
+             Has a mandatory dependency on Pack2 and with supportedModules: "module_x".
+    - Pack2: Containing an integration.
+    - Pack3: An empty pack for additional testing scenarios.
+    """
+    playbook_using_pack2_command = {
+        "id": "PlaybookA",
+        "name": "PlaybookA",
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "1",
+                "task": {
+                    "id": "1",
+                    "script": "IntegrationB|||test-command-1",
+                    "brand": "IntegrationB",
+                    "iscommand": "true",
+                },
+            }
+        },
+        "supportedModules": ["module_x"]
+    }
+    # Pack 1: playbook uses command from pack 2
+    pack_1 = graph_repo.create_pack("Pack1")
+
+    pack_1.create_playbook("PlaybookA", yml=playbook_using_pack2_command)
+
+    # Define Pack2 as a mandatory dependency for Pack1
+    pack_1.pack_metadata.update({"dependencies": {"Pack2": {"mandatory": True}}})
+
+    # Pack 2: hidden
+    pack_2 = graph_repo.create_pack("Pack2")
+    integration = pack_2.create_integration("IntegrationB")
+    integration.set_commands(["test-command-1", "test-command-2"])
+
+    # Pack3
+    graph_repo.create_pack("Pack3")
+    return graph_repo
+
+
+def test_SupportedModulesCompatibility_invalid_all_files(
+    repo_for_test_gr_109: Repo,
+):
+    """
+    Given:
+        A test repository with PlaybookA (supportedModules: ['module_x', 'module_y'])
+        depending on IntegrationB (supportedModules: ['module_x']).
+    When:
+        Running the SupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should return a result indicating that IntegrationB is missing 'module_y'.
+    """
+    graph_interface = repo_for_test_gr_109.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = SupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following mandatory dependencies missing required modules: IntegrationB is missing: [module_x]"
+    )
+    assert results[0].content_object.object_id == "PlaybookA"
+
+
+def test_SupportedModulesCompatibility_invalid_list_files(
+    repo_for_test_gr_109: Repo,
+):
+    """
+    Given:
+        A test repository with PlaybookA (supportedModules: ['module_x', 'module_y'])
+        depending on IntegrationB (supportedModules: ['module_x']),
+        and ScriptC (supportedModules: ['module_a']) depending on IntegrationD (supportedModules: ['module_a', 'module_b']).
+    When:
+        Running the SupportedModulesCompatibility validator on specific content items.
+    Then:
+        1. For PlaybookA: The validator should return a result indicating that IntegrationB is missing 'module_y'.
+        2. For ScriptC: The validator should not return any results (valid dependencies).
+    """
+    graph_interface = repo_for_test_gr_109.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = SupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+        [repo_for_test_gr_109.packs[0].playbooks[0].object]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following mandatory dependencies missing required modules: IntegrationB is missing: [module_x]"
+    )
+    assert results[0].content_object.object_id == "PlaybookA"

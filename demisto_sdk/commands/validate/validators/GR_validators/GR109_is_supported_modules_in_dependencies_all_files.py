@@ -78,7 +78,7 @@ ContentTypes = Union[
     CaseLayoutRule
 ]
 
-class SupportedModulesCompatibilityListFiles(SupportedModulesCompatibility):
+class SupportedModulesCompatibilityAllFiles(SupportedModulesCompatibility):
     expected_execution_mode = [ExecutionMode.ALL_FILES]
 
     def obtain_invalid_content_items(

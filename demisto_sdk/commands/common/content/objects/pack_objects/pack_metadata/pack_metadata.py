@@ -585,9 +585,7 @@ class PackMetaData(JSONObject):
             self.categories = user_metadata.get("categories", [])
             self.use_cases = user_metadata.get("useCases", [])
             self.dependencies = user_metadata.get("dependencies", {})
-            self.supportedModules = user_metadata.get(
-                "supportedModules"
-            )
+            self.supportedModules = user_metadata.get("supportedModules")
             if self.price > 0:
                 self.premium = True
                 self.vendor_id = user_metadata.get("vendorId", "")

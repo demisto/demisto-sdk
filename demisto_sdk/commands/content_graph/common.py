@@ -577,7 +577,11 @@ def replace_marketplace_references(
     return data
 
 
-def append_supported_modules(data: dict, supported_modules: Optional[List[str]], pack_supported_modules: Optional[List[str]]) -> Any:
+def append_supported_modules(
+    data: dict,
+    supported_modules: Optional[List[str]],
+    pack_supported_modules: Optional[List[str]],
+) -> Any:
     """
     Appends the `supportedModules` key & value to the data object if it doesn't already exist.
 

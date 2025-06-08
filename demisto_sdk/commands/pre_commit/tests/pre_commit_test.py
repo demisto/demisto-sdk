@@ -294,7 +294,7 @@ def test_ruff_hook(github_actions, mocker):
         if github_actions:
             assert hook["args"][2] == "--output-format=github"
     assert all(
-        parse(hook["name"].replace("ruff-py", "")) > parse("3.7")
+        parse(hook["name"].replace("ruff-py", "")) >= parse("3.7")
         for hook in ruff_hook["repo"]["hooks"]
     )
 

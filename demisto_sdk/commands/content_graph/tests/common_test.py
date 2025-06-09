@@ -338,6 +338,8 @@ def test_replace_marketplace_references__error_handling():
     mock_logger.error.assert_called_once_with(
         "Error processing data for replacing incorrect marketplace at path 'example/path': Test exception"
     )
+
+
 @pytest.mark.parametrize(
     "data, supported_modules, pack_supported_modules, expected",
     [
@@ -399,7 +401,9 @@ def test_replace_marketplace_references__error_handling():
         ),
     ],
 )
-def test_append_supported_modules(data, supported_modules, pack_supported_modules, expected):
+def test_append_supported_modules(
+    data, supported_modules, pack_supported_modules, expected
+):
     """
     Tests the append_supported_modules function with various combinations of inputs.
     Ensures the function correctly modifies the data dictionary based on the supported modules.
@@ -408,7 +412,7 @@ def test_append_supported_modules(data, supported_modules, pack_supported_module
     result = append_supported_modules(
         data=data,
         supported_modules=supported_modules,
-        pack_supported_modules=pack_supported_modules
+        pack_supported_modules=pack_supported_modules,
     )
     assert id(result) == original_id
     assert result == expected

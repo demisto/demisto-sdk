@@ -84,7 +84,7 @@ ContentTypes = Union[
 class SupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     error_code = "GR109"
     description = "For a dependency where Content Item A relies on Content Item B, the supportedModules of Content Item A must be a subset of Content Item B's supportedModules."
-    rationale = "A content item must have all its mandatory dependencies support the modules it operates on, to ensure it functions correctly."
+    rationale = "When Content Item A has a dependency on Content Item B, Content Item A's supportedModules are restricted to only those modules also present in Content Item B's supportedModules."
     error_message = "The following mandatory dependencies missing required modules: {0}"
     related_field = "supportedModules"
     is_auto_fixable = False

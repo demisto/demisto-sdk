@@ -671,7 +671,9 @@ def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersion
         logger.debug(
             f"Skipping {content_item.name} in metadata creation: item is not supported in {marketplace=}."
         )
-    elif content_item.content_type == ContentType.AGENTIX_ACTION or content_item.content_type == ContentType.AGENTIX_AGENT: # TODO
+    elif (content_item.content_type == ContentType.AGENTIX_ACTION
+          or content_item.content_type == ContentType.AGENTIX_AGENT
+          or content_item.content_type == ContentType.SCRIPT and content_item.is_llm) : # TODO
         logger.info(
             f"Skipping {content_item.name} in metadata creation: item is under Agentix {content_item.content_type.value=}."
         )

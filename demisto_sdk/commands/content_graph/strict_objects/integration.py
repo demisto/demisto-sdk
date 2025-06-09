@@ -86,6 +86,7 @@ class _Command(BaseStrictModel):
     polling: Optional[bool] = None
     prettyname: Optional[str] = None
     quickaction: Optional[bool] = None
+    compliantpolicies: Optional[List[str]] = None
 
 
 Command = create_model(
@@ -140,11 +141,40 @@ CommonFieldsIntegration = create_model(
 )
 
 
+class ConditionOperator(StrEnum):
+    EXISTS = "exists"
+    NOT_EXISTS = "not_exists"
+    EQUALS = "equals"
+    NOT_EQUALS = "not_equals"
+
+
+class Condition(BaseStrictModel):
+    name: str
+    operator: ConditionOperator
+    value: Optional[str] = None
+
+
+class TriggerEffectAction(BaseStrictModel):
+    hidden: Optional[bool] = None
+    required: Optional[bool] = None
+
+
+class TriggerEffect(BaseStrictModel):
+    name: str
+    action: TriggerEffectAction
+
+
+class Trigger(BaseStrictModel):
+    conditions: List[Condition]
+    effects: List[TriggerEffect]
+
+
 class SectionOrderValues(StrEnum):
     CONNECT = "Connect"
     COLLECT = "Collect"
     OPTIMIZE = "Optimize"
     MIRRORING = "Mirroring"
+    RESULT = "Result"
 
 
 class _StrictIntegration(BaseStrictModel):
@@ -152,7 +182,7 @@ class _StrictIntegration(BaseStrictModel):
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=4)] = (  # type:ignore[valid-type]
+    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=5)] = (  # type:ignore[valid-type]
         Field(alias="sectionorder")
     )
     configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]
@@ -172,6 +202,10 @@ class _StrictIntegration(BaseStrictModel):
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
     hybrid: Optional[bool] = None
     supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
+    is_cloud_provider_integration: Optional[bool] = Field(
+        False, alias="isCloudProviderIntegration"
+    )
+    triggers: Optional[List[Trigger]] = None
 
     def __init__(self, **data):
         """

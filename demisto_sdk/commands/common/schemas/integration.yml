@@ -186,6 +186,43 @@ mapping:
   supportsquickactions:
       type: bool
 
+  triggers:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          conditions:
+            type: seq
+            sequence:
+              - type: map
+                mapping:
+                  name:
+                    type: str
+                    required: true
+                  operator:
+                    type: str
+                    enum: ["exists", "not_exists", "equals", "not_equals"]
+                    required: true
+                  value:
+                    type: str
+          effects:
+            type: seq
+            sequence:
+              - type: map
+                mapping:
+                  name:
+                    type: str
+                    required: true
+                  action:
+                    type: map
+                    mapping:
+                      hidden:
+                        type: bool
+                      required:
+                        type: bool
+
+  isCloudProviderIntegration:
+    type: bool
 
 # integration->configuration
   name:xsoar:
@@ -327,6 +364,10 @@ schema;command_schema:
       type: bool
     quickaction:
       type: bool
+    compliantpolicies:
+      type: seq
+      sequence:
+      - type: str
 # int
     name:xsoar:
       type: str

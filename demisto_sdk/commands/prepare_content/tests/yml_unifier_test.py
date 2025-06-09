@@ -1343,6 +1343,7 @@ PREPARE_CONTENT_MARKETPLACE_MIRRORING = (
     pytest.param(MarketplaceVersions.XSOAR_ON_PREM, 2, True, id="XSOAR ON-PREM"),
     pytest.param(MarketplaceVersions.MarketplaceV2, 1, False, id="XSIAM"),
     pytest.param(MarketplaceVersions.XPANSE, 1, False, id="XPANSE"),
+    pytest.param(MarketplaceVersions.PLATFORM, 1, False, id="PLATFORM"),
 )
 
 

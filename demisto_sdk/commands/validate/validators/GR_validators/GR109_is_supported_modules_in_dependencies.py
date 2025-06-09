@@ -88,41 +88,43 @@ class SupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     error_message = "The following mandatory dependencies missing required modules: {0}"
     related_field = "supportedModules"
     is_auto_fixable = False
-    # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
     related_file_type = [RelatedFileType.SCHEMA]
 
 
     def obtain_invalid_content_items_using_graph(
             self, content_items: Iterable[ContentTypes], validate_all_files: bool
         ) -> List[ValidationResult]:
-        content_item_ids = (
+        target_content_item_ids = (
             [] if validate_all_files else [content_item.object_id for content_item in content_items]
         )
-        dependencies = self.graph.find_invalid_content_item_dependencies(
-            content_item_ids
+
+        invalid_content_items = self.graph.find_invalid_content_item_dependencies(
+            target_content_item_ids
         )
 
         results: List[ValidationResult] = []
 
-        for dependency_item in dependencies:
+        for invalid_item in invalid_content_items:
+            missing_modules_by_dependency = {}
+            for dependency in invalid_item.uses:
+                missing_modules = [
+                    module for module in invalid_item.supportedModules
+                    if module not in dependency.content_item_to.supportedModules
+                ]
+                if missing_modules:
+                    missing_modules_by_dependency[dependency.content_item_to.object_id] = missing_modules
 
-            modules_unsupported = {
-                relationship.content_item_to.object_id: [
-                    module for module in dependency_item.supportedModules
-                    if module not in relationship.content_item_to.supportedModules
-                ] for relationship in dependency_item.uses
-            }
+            if missing_modules_by_dependency:
+                formatted_messages = []
+                for name, modules in missing_modules_by_dependency.items():
+                    formatted_messages.append(f"{name} is missing: [{', '.join(modules)}]")
 
-            results.append(
-                ValidationResult(
-                    validator=self,
-                    message=self.error_message.format(
-                        ', '.join([
-                            f"{name} is missing: [{', '.join([module for module in modules])}]"
-                            for name, modules in modules_unsupported.items()
-                        ])
-                    ),
-                    content_object=dependency_item,
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(', '.join(formatted_messages)),
+                        content_object=invalid_item,
+                    )
                 )
-            )
         return results

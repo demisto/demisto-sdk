@@ -600,12 +600,16 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self, content_item_ids: List[str]
     ) -> List[BaseNode]:
         """
-        Retrieves all the packs that are dependent on hidden packs
+        Retrieves content items with invalid dependency relationships based on supported modules.
+
+        This method identifies content items where a dependent item's `supportedModules`
+        are not fully included in the `supportedModules` of the item it depends on.
 
         Args:
-            pack_ids (List[str]): List of pack IDs to check for invalid dependencies.
+            content_item_ids (List[str]): List of content item IDs to check for invalid dependencies.
+                                        If empty, all relevant content items will be checked.
         Returns:
-            List[BaseNode]: Packs which depend on hidden packs, if any exist.
+            List[BaseNode]: Content items that have invalid supported module dependencies, if any exist.
 
         """
         with self.driver.session() as session:

@@ -1,11 +1,9 @@
-
 from __future__ import annotations
 
 from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
@@ -78,8 +76,9 @@ ContentTypes = Union[
     XSIAMReport,
     CaseField,
     CaseLayout,
-    CaseLayoutRule
+    CaseLayoutRule,
 ]
+
 
 class SupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     error_code = "GR109"
@@ -88,15 +87,20 @@ class SupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     error_message = "The following mandatory dependencies missing required modules: {0}"
     related_field = "supportedModules"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
     related_file_type = [RelatedFileType.SCHEMA]
 
-
     def obtain_invalid_content_items_using_graph(
-            self, content_items: Iterable[ContentTypes], validate_all_files: bool
-        ) -> List[ValidationResult]:
+        self, content_items: Iterable[ContentTypes], validate_all_files: bool
+    ) -> List[ValidationResult]:
         target_content_item_ids = (
-            [] if validate_all_files else [content_item.object_id for content_item in content_items]
+            []
+            if validate_all_files
+            else [content_item.object_id for content_item in content_items]
         )
 
         invalid_content_items = self.graph.find_invalid_content_item_dependencies(
@@ -109,21 +113,28 @@ class SupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             missing_modules_by_dependency = {}
             for dependency in invalid_item.uses:
                 missing_modules = [
-                    module for module in invalid_item.supportedModules
+                    module
+                    for module in invalid_item.supportedModules
                     if module not in dependency.content_item_to.supportedModules
                 ]
                 if missing_modules:
-                    missing_modules_by_dependency[dependency.content_item_to.object_id] = missing_modules
+                    missing_modules_by_dependency[
+                        dependency.content_item_to.object_id
+                    ] = missing_modules
 
             if missing_modules_by_dependency:
                 formatted_messages = []
                 for name, modules in missing_modules_by_dependency.items():
-                    formatted_messages.append(f"{name} is missing: [{', '.join(modules)}]")
+                    formatted_messages.append(
+                        f"{name} is missing: [{', '.join(modules)}]"
+                    )
 
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message.format(', '.join(formatted_messages)),
+                        message=self.error_message.format(
+                            ", ".join(formatted_messages)
+                        ),
                         content_object=invalid_item,
                     )
                 )

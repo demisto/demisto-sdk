@@ -12,6 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Integration
 
+
 class IsQuickactionSupported(BaseValidator[ContentTypes]):
     error_code = "ST112"
     description = "a content item with a quick action command also have supportsquickaction field in top level yml."
@@ -25,12 +26,13 @@ class IsQuickactionSupported(BaseValidator[ContentTypes]):
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.SCHEMA]
 
-
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(', '.join(quickaction_commands)),
+                message=self.error_message.format(", ".join(quickaction_commands)),
                 content_object=content_item,
             )
             for content_item in content_items

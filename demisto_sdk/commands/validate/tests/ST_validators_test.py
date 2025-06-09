@@ -550,8 +550,8 @@ def test_missing_IsQuickactionSupported():
     results = IsQuickactionSupported().obtain_invalid_content_items([integration])
     assert len(results) == 1
     assert results[0].message == (
-            'The following commands are using quickaction without the integrations support: test-command. '
-            'Remove quickaction or add supportsquickactions: true at the top level yml.'
+        "The following commands are using quickaction without the integrations support: test-command. "
+        "Remove quickaction or add supportsquickactions: true at the top level yml."
     )
     assert results[0].validator.error_code == "ST112"
 
@@ -608,7 +608,10 @@ def test_SupportedModulesIsNotEmpty_empty(pack: Pack):
 
     results = SupportedModulesIsNotEmpty().obtain_invalid_content_items([integration])
     assert len(results) == 1
-    assert results[0].message == "supportedModules cannot be an empty list. To allow all modules, omit the field instead."
+    assert (
+        results[0].message
+        == "supportedModules cannot be an empty list. To allow all modules, omit the field instead."
+    )
     assert results[0].validator.error_code == "ST113"
 
 
@@ -637,10 +640,12 @@ def test_SupportedModulesIsNotEmpty_missing_field(pack: Pack):
         - Ensure the validation passes without any errors (missing field is allowed).
     """
     script = create_script_object()
-    script.supportedModules = ["C3","X0","X1","X3"]
+    script.supportedModules = ["C3", "X0", "X1", "X3"]
 
     results = SupportedModulesIsNotEmpty().obtain_invalid_content_items([script])
     assert len(results) == 0
+
+
 def test_SchemaValidator_triggers_section__valid(pack: Pack):
     """
     Given:

@@ -15,14 +15,15 @@ ContentTypes = Integration
 
 class IsSupportedModulesRemoved(BaseValidator[ContentTypes]):
     error_code = "BC115"
-    description = "Ensure that no support module are removed from an existing content item."
+    description = (
+        "Ensure that no support module are removed from an existing content item."
+    )
     rationale = "Removing a support module for content item can break functionality for customers."
     error_message = "The following support modules have been removed from the integration {}. Removing supported modules is not allowed, Please undo."
     related_field = "supportedModules"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.SCHEMA]
-
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

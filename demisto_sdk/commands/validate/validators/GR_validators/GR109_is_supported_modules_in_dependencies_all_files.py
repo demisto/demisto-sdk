@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Iterable, List, Union
@@ -75,8 +74,9 @@ ContentTypes = Union[
     XSIAMReport,
     CaseField,
     CaseLayout,
-    CaseLayoutRule
+    CaseLayoutRule,
 ]
+
 
 class SupportedModulesCompatibilityAllFiles(SupportedModulesCompatibility):
     expected_execution_mode = [ExecutionMode.ALL_FILES]

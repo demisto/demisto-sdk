@@ -241,4 +241,4 @@ class AgentixBase(BaseStrictModel):
     category: Optional[str] = None
     name: str
     description: str
-    disable: bool = False
+    disabled: bool = False

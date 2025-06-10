@@ -1,6 +1,6 @@
 from functools import cached_property
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -46,9 +46,9 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         return AgentixAction
 
     @property
-    def args(self) -> list[AgentixActionArgument]:
+    def args(self) -> list[Any]:
         return self.yml_data.get("args", [])
 
     @property
-    def outputs(self) -> list[AgentixActionOutput]:
+    def outputs(self) -> list[Any]:
         return self.yml_data.get("outputs", [])

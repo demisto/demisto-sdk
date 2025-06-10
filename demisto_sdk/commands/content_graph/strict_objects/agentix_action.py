@@ -15,7 +15,7 @@ class AgentixActionArgument(BaseStrictModel):
     required: bool = False
     default_value: Optional[str] = Field(None, alias="defaultValue")
     hidden: bool = False
-    disable: bool = False
+    disabled: bool = False
     content_item_arg_name: str = Field(..., alias="underlyingContentItemInputName")
     generatable: bool = False
 
@@ -25,7 +25,7 @@ class AgentixActionOutput(BaseStrictModel):
     type: str
     content_item_output_name: str = Field(..., alias="underlyingContentItemOutputName")
     name: str
-    disable: bool = False
+    disabled: bool = False
 
 class AgentixAction(AgentixBase):
     args: Optional[list[AgentixActionArgument]] = None

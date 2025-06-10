@@ -7,8 +7,6 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.agentix_base import AgentixBaseParser
 from demisto_sdk.commands.content_graph.strict_objects.agentix_action import (
     AgentixAction,
-    AgentixActionArgument,
-    AgentixActionOutput,
 )
 
 

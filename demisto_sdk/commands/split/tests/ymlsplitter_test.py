@@ -290,9 +290,15 @@ def test_extract_code(tmpdir, file_path, file_type):
     script_before_split = yaml.load(Path(extractor.input).read_text())["script"][
         "script"
     ]
-    assert "### pack version: 1.0.3" in script_before_split
-    assert "# pack version: 1.0.3" in script_before_split
-    assert "#### pack version: 1.0.3" in script_before_split
+    assert "CONSTANT_PACK_VERSION = '1.6.28'" in script_before_split
+    assert (
+        "demisto.debug('pack id = Zoom, pack version = 1.6.28')" in script_before_split
+    )
+    assert "register_module_line('Zoom', 'start', __line__())" in script_before_split
+    assert (
+        "demisto.debug('pack name = Zoom, pack version = 1.6.28')"
+        in script_before_split
+    )
 
     extractor.extract_code(extractor.output)
     with open(extractor.output, "rb") as temp_code:
@@ -301,9 +307,11 @@ def test_extract_code(tmpdir, file_path, file_type):
         assert "from CommonServerPython import *  #" in file_data
         assert file_data[-1] == "\n"
         assert "register_module_line" not in file_data
-        assert "### pack version: 1.0.3" not in file_data
-        assert "# pack version: 1.0.3" not in file_data
-        assert "#### pack version: 1.0.3" not in file_data
+        assert "demisto.debug('pack id = Zoom, pack version = 1.6.28')" not in file_data
+        assert "CONSTANT_PACK_VERSION = '1.6.28'" not in file_data
+        assert (
+            "demisto.debug('pack name = Zoom, pack version = 1.6.28')" not in file_data
+        )
     Path(extractor.output).unlink()
 
     extractor.common_server = False

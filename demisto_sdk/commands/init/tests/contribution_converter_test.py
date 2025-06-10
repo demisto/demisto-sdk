@@ -871,7 +871,15 @@ def test_rearranging_before_conversion_indicator_and_incident_fields(repo: Repo)
     "input_script, output_version",
     [
         (
+            "This is a test script\n the script contains a pack version\n demisto.debug('pack id = id, pack version = 3.4.5')  TEST TEST",
+            "3.4.5",
+        ),
+        (
             "This is a test script\n the script contains a pack version\n ### pack version: 3.4.5  TEST TEST",
+            "3.4.5",
+        ),
+        (
+            "This is a test script\n the script contains a pack version\ndemisto.debug('pack id = id, pack version = 3.4.5')\n  TEST TEST",
             "3.4.5",
         ),
         (

@@ -1128,38 +1128,37 @@ def repo_for_test_gr_109(graph_repo: Repo):
     - Pack2: Containing an integration.
     - Pack3: An empty pack for additional testing scenarios.
     """
-    playbook_using_pack2_command = {
-        "id": "PlaybookA",
-        "name": "PlaybookA",
-        "tasks": {
-            "0": {
-                "id": "0",
-                "taskid": "1",
-                "task": {
-                    "id": "1",
-                    "script": "IntegrationB|||test-command-1",
-                    "brand": "IntegrationB",
-                    "iscommand": "true",
-                },
-            }
-        },
-        "supportedModules": ["module_x"]
+    yml = {
+        "commonfields": {"id": "Script1", "version": -1},
+        "name": "Script1",
+        "comment": "this is script Script1",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_x"],
     }
-    # Pack 1: playbook uses command from pack 2
-    pack_1 = graph_repo.create_pack("Pack1")
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {"marketplaces": [MarketplaceVersions.MarketplaceV2.value]}
+    )
+    pack_a.create_script("Script1", code='demisto.executeCommand("SearchAlerts", {})', yml=yml)
+    pack_a.create_script("Script2", code='demisto.executeCommand("SearchAlerts", {})')
+    pack_a.create_integration("Integration1")
 
-    pack_1.create_playbook("PlaybookA", yml=playbook_using_pack2_command)
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.XSOAR.value,
+            ]
+        }
+    )
+    pack_b.create_script(
+        "SearchIncidents", code='demisto.executeCommand("SearchIncidents", {})'
+    )
 
-    # Define Pack2 as a mandatory dependency for Pack1
-    pack_1.pack_metadata.update({"dependencies": {"Pack2": {"mandatory": True}}})
-
-    # Pack 2: hidden
-    pack_2 = graph_repo.create_pack("Pack2")
-    integration = pack_2.create_integration("IntegrationB")
-    integration.set_commands(["test-command-1", "test-command-2"])
-
-    # Pack3
-    graph_repo.create_pack("Pack3")
     return graph_repo
 
 
@@ -1168,12 +1167,12 @@ def test_SupportedModulesCompatibility_invalid_all_files(
 ):
     """
     Given:
-        A test repository with PlaybookA (supportedModules: ['module_x', 'module_y'])
-        depending on IntegrationB (supportedModules: ['module_x']).
+        A test repository with Script1 (supportedModules: ['module_x'])
+        depending on SearchIncidents script (supportedModules: ['C1']).
     When:
         Running the SupportedModulesCompatibility validator on all files.
     Then:
-        The validator should return a result indicating that IntegrationB is missing 'module_y'.
+        The validator should return a result indicating that SearchIncidents is missing 'module_x'.
     """
     graph_interface = repo_for_test_gr_109.create_graph()
     BaseValidator.graph_interface = graph_interface
@@ -1182,9 +1181,9 @@ def test_SupportedModulesCompatibility_invalid_all_files(
     assert len(results) == 1
     assert (
         results[0].message
-        == "The following mandatory dependencies missing required modules: IntegrationB is missing: [module_x]"
+        == "The following mandatory dependencies missing required modules: SearchIncidents is missing: [module_x]"
     )
-    assert results[0].content_object.object_id == "PlaybookA"
+    assert results[0].content_object.object_id == "Script1"
 
 
 def test_SupportedModulesCompatibility_invalid_list_files(
@@ -1192,24 +1191,22 @@ def test_SupportedModulesCompatibility_invalid_list_files(
 ):
     """
     Given:
-        A test repository with PlaybookA (supportedModules: ['module_x', 'module_y'])
-        depending on IntegrationB (supportedModules: ['module_x']),
-        and ScriptC (supportedModules: ['module_a']) depending on IntegrationD (supportedModules: ['module_a', 'module_b']).
+        A test repository with Script1 (supportedModules: ['module_x'])
+        depending on SearchIncidents script (supportedModules: ['C1']).
     When:
         Running the SupportedModulesCompatibility validator on specific content items.
     Then:
-        1. For PlaybookA: The validator should return a result indicating that IntegrationB is missing 'module_y'.
-        2. For ScriptC: The validator should not return any results (valid dependencies).
+        For Script1: The validator should return a result indicating that SearchIncidents is missing 'module_x'.
     """
     graph_interface = repo_for_test_gr_109.create_graph()
     BaseValidator.graph_interface = graph_interface
 
     results = SupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
-        [repo_for_test_gr_109.packs[0].playbooks[0].object]
+        [repo_for_test_gr_109.packs[0].scripts[0].object]
     )
     assert len(results) == 1
     assert (
         results[0].message
-        == "The following mandatory dependencies missing required modules: IntegrationB is missing: [module_x]"
+        == "The following mandatory dependencies missing required modules: SearchIncidents is missing: [module_x]"
     )
-    assert results[0].content_object.object_id == "PlaybookA"
+    assert results[0].content_object.object_id == "Script1"

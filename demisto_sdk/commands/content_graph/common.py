@@ -351,6 +351,7 @@ class Relationship(BaseModel):
     deprecated: Optional[bool] = None
     name: Optional[str] = None
     quickaction: Optional[bool] = None
+    compliantpolicies: Optional[list[str]] = None
 
 
 class Relationships(dict):

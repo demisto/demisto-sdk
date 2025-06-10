@@ -88,6 +88,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     polling: Optional[bool] = None
     skip_prepare: Optional[List[SkipPrepare]] = Field(None, alias="skipprepare")
     prettyname: Optional[str] = None
+    compliantpolicies: Optional[List[str]] = Field(None, alias="compliantpolicies")
     is_llm: bool = Field(False, alias="isLLM")
     model: Optional[str] = None
     user_prompt: Optional[str] = Field(None, alias="userPrompt")
@@ -138,17 +139,6 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
             raise ValueError("Validation failed:\n" + "\n".join(errors))
 
         return values
-
-    # @root_validator
-    # def validate_script_field(cls, values):
-    #     errors = []
-    #     if values.get("is_llm"):
-    #         pass
-    #     elif not values.get("script"):
-    #         errors.append("Content item of type script must provide a 'script' field.")
-    #     if errors:
-    #         raise ValueError("Validation failed:\n" + "\n".join(errors))
-
 
 StrictScript = create_model(
     model_name="StrictScript",

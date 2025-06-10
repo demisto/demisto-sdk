@@ -26,6 +26,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         pack_supported_modules: List[str],
         is_test_script: bool = False,
         git_sha: Optional[str] = None,
+        compliantpolicies: Optional[List[str]] = [],
     ) -> None:
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
@@ -33,6 +34,9 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         self.is_test: bool = is_test_script
         self.tags: List[str] = self.yml_data.get("tags", [])
         self.skip_prepare: List[str] = self.yml_data.get("skipprepare", [])
+        self.compliantpolicies: Optional[List[str]] = self.yml_data.get(
+            "compliantpolicies", []
+        )
         self.connect_to_dependencies()
         self.connect_to_tests()
 

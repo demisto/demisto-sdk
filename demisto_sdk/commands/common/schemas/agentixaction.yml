@@ -87,7 +87,7 @@ schema;outputs_schema:
     type:
       type: str
       required: true
-    underlyingContentItemOutputName:
+    underlyingoutputcontextpath:
       type: str
 
         

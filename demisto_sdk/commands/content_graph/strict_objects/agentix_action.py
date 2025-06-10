@@ -23,7 +23,7 @@ class AgentixActionArgument(BaseStrictModel):
 class AgentixActionOutput(BaseStrictModel):
     description: str
     type: str
-    content_item_output_name: str = Field(..., alias="underlyingContentItemOutputName")
+    content_item_output_name: str = Field(..., alias="underlyingoutputcontextpath")
     name: str
     disabled: bool = False
 

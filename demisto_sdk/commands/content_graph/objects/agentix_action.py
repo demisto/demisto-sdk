@@ -22,7 +22,7 @@ class AgentixActionOutput(BaseModel):
     description: str
     type: str
     disabled: bool = False
-    content_item_output_name: str = Field(None, alias="underlyingContentItemOutputName")
+    content_item_output_name: str = Field(..., alias="underlyingoutputcontextpath")
     name: str
 
 

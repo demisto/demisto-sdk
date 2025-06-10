@@ -1142,7 +1142,9 @@ def repo_for_test_gr_109(graph_repo: Repo):
     pack_a.pack_metadata.update(
         {"marketplaces": [MarketplaceVersions.MarketplaceV2.value]}
     )
-    pack_a.create_script("Script1", code='demisto.executeCommand("SearchAlerts", {})', yml=yml)
+    pack_a.create_script(
+        "Script1", code='demisto.executeCommand("SearchAlerts", {})', yml=yml
+    )
     pack_a.create_script("Script2", code='demisto.executeCommand("SearchAlerts", {})')
     pack_a.create_integration("Integration1")
 

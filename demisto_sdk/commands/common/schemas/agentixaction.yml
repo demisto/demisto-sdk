@@ -69,7 +69,7 @@ schema;args_schema:
       type: str
     hidden:
       type: bool
-    underlyingContentItemInputName:
+    underlyingargname:
       type: str
     generatable:
       type: bool

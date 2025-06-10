@@ -16,7 +16,7 @@ class AgentixActionArgument(BaseStrictModel):
     default_value: Optional[str] = Field(None, alias="defaultValue")
     hidden: bool = False
     disabled: bool = False
-    content_item_arg_name: str = Field(..., alias="underlyingContentItemInputName")
+    content_item_arg_name: str = Field(..., alias="underlyingargname")
     generatable: bool = False
 
 

@@ -36,6 +36,7 @@ class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
     underlying_content_item_type: str = Field(..., alias="underlyingContentItemType")
     underlying_content_item_version: int = Field(..., alias="underlyingContentItemVersion")
     requires_user_approval: bool = Field(False, alias="requiresUserApproval")
+    example_prompts: list[str] = Field(None, alias="exampleprompts")
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

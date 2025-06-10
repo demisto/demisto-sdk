@@ -11,7 +11,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictM
 class AgentixActionArgument(BaseStrictModel):
     name: str
     description: str
-    type: Optional[str] = None
+    type: str
     required: bool = False
     default_value: Optional[str] = Field(None, alias="defaultValue")
     hidden: bool = False

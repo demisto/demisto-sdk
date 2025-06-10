@@ -10,7 +10,7 @@ from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
 class AgentixActionArgument(BaseModel):
     name: str
     description: str
-    type: Optional[str] = None
+    type: str
     required: bool = False
     default_value: Optional[str] = Field(None, alias="defaultValue")
     hidden: bool = False

@@ -9,3 +9,4 @@ class AgentixBase(ContentItem):
     version: int = -1
     description: str
     display_name: str
+    disable: bool = False

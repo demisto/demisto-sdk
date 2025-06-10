@@ -14,12 +14,14 @@ class AgentixActionArgument(BaseModel):
     required: bool = False
     default_value: Optional[str] = Field(None, alias="defaultValue")
     hidden: bool = False
+    disable: bool = False
     content_item_arg_name: str = Field(..., alias="underlyingContentItemInputName")
 
 
 class AgentixActionOutput(BaseModel):
     description: str
     type: str
+    disable: bool = False
     content_item_output_name: str = Field(None, alias="underlyingContentItemOutputName")
     name: str = Field(None, alias="name")
 

@@ -23,7 +23,7 @@ class AgentixActionOutput(BaseModel):
     type: str
     disable: bool = False
     content_item_output_name: str = Field(None, alias="underlyingContentItemOutputName")
-    name: str = Field(None, alias="name")
+    name: str
 
 
 class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):

@@ -22,7 +22,7 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.few_shots: Optional[str] = self.yml_data.get("fewshots")
-        self.agent_id: str = self.yml_data.get("agentId")
+        self.agent_id: str = self.yml_data.get("agentid")
         self.underlying_content_item_id: str = self.yml_data.get("underlyingcontentitemid")
         self.underlying_content_item_name: str = self.yml_data.get("underlyingcontentitemname")
         self.underlying_content_item_type: str = self.yml_data.get("underlyingcontentitemtype")

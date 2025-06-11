@@ -28,7 +28,7 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         self.underlying_content_item_version: int = self.yml_data.get("underlyingcontentitemversion")
         self.underlying_content_item_pack_version: str = self.yml_data.get("underlyingcontentitempackversion")
         self.requires_user_approval: bool = self.yml_data.get("requiresuserapproval")
-        self.example_prompts: list[str] = self.yml_data.get("exampleprompts")
+        self.example_prompts: Optional[list[str]] = self.yml_data.get("exampleprompts")
 
     @cached_property
     def field_mapping(self):

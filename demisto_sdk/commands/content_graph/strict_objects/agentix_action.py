@@ -36,4 +36,4 @@ class AgentixAction(AgentixBase):
     underlying_content_item_type: str = Field(..., alias="underlyingcontentitemtype")
     underlying_content_item_version: int = Field(..., alias="underlyingcontentitemversion")
     requires_user_approval: bool = Field(False, alias="requiresuserapproval")
-    example_prompts: list[str] = Field(None, alias="exampleprompts")
+    example_prompts: Optional[list[str]] = Field(None, alias="exampleprompts")

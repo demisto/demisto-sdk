@@ -11,7 +11,7 @@ from demisto_sdk.commands.pre_commit.hooks.hook import (
     safe_update_hook_args,
 )
 
-MINIMAL_PYTHON_VERSION_RO_RUN_RUFF = "3.7"
+MINIMAL_PYTHON_VERSION_TO_RUN_RUFF = "3.7"
 class RuffHook(Hook):
     @staticmethod
     def _python_version_to_ruff(python_version: str):

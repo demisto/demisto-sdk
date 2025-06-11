@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.native_image import NativeImageConfig
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
-from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook, MINIMAL_PYTHON_VERSION_RO_RUN_RUFF
+from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook, MINIMAL_PYTHON_VERSION_TO_RUN_RUFF
 from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
@@ -294,7 +294,7 @@ def test_ruff_hook(github_actions, mocker):
         if github_actions:
             assert hook["args"][2] == "--output-format=github"
     assert all(
-        parse(hook["name"].replace("ruff-py", "")) >= parse(MINIMAL_PYTHON_VERSION_RO_RUN_RUFF)
+        parse(hook["name"].replace("ruff-py", "")) >= parse(MINIMAL_PYTHON_VERSION_TO_RUN_RUFF)
         for hook in ruff_hook["repo"]["hooks"]
     )
 

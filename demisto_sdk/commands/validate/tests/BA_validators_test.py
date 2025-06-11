@@ -78,7 +78,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA111_is_entity_name
     ERROR_MSG_TEMPLATE,
     IsEntityNameContainExcludedWordValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA112_is_valid_compliant_policy_name import IsValidCompliantPolicyNameValidator
+from demisto_sdk.commands.validate.validators.BA_validators.BA112_is_valid_compliant_policy_name import (
+    IsValidCompliantPolicyNameValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA113_is_content_item_name_contain_trailing_spaces import (
     ContentTypes as ContentTypes113,
 )
@@ -2510,44 +2512,59 @@ def test_is_command_or_script_name_starts_with_digit_valid():
     "content_item, policy_names, expected_failures",
     [
         pytest.param(
-            create_script_object(paths=["compliantpolicies"], values=[["valid_policy_1"]]),
+            create_script_object(
+                paths=["compliantpolicies"], values=[["valid_policy_1"]]
+            ),
             {"valid_policy_1"},
             0,
-            id="valid_policy_name"
+            id="valid_policy_name",
         ),
         pytest.param(
-            create_script_object(paths=["compliantpolicies"], values=[["invalid_policy"]]),
+            create_script_object(
+                paths=["compliantpolicies"], values=[["invalid_policy"]]
+            ),
             {"valid_policy_1", "valid_policy_2"},
             1,
-            id="invalid_policy_name"
+            id="invalid_policy_name",
         ),
         pytest.param(
-            create_script_object(paths=["compliantpolicies"], values=[["valid_policy_1", "valid_policy_2"]]),
+            create_script_object(
+                paths=["compliantpolicies"],
+                values=[["valid_policy_1", "valid_policy_2"]],
+            ),
             {"valid_policy_1", "valid_policy_2"},
             0,
-            id="multiple_valid_policies"
+            id="multiple_valid_policies",
         ),
         pytest.param(
-            create_script_object(paths=["compliantpolicies"], values=[["valid_policy_1", "invalid_policy"]]),
+            create_script_object(
+                paths=["compliantpolicies"],
+                values=[["valid_policy_1", "invalid_policy"]],
+            ),
             {"valid_policy_1", "valid_policy_2"},
             1,
-            id="mixed_valid_and_invalid_policies"
+            id="mixed_valid_and_invalid_policies",
         ),
         pytest.param(
             create_script_object(paths=["compliantpolicies"], values=[[]]),
             {"valid_policy_1"},
             0,
-            id="empty_policy_list"
+            id="empty_policy_list",
         ),
         pytest.param(
-            create_script_object(paths=["compliantpolicies"], values=[["invalid_policy_1", "invalid_policy_2"]]),
+            create_script_object(
+                paths=["compliantpolicies"],
+                values=[["invalid_policy_1", "invalid_policy_2"]],
+            ),
             {"valid_policy_1", "valid_policy_2"},
             2,
-            id="multiple_invalid_policies"
+            id="multiple_invalid_policies",
         ),
-    ]
+    ],
 )
-def test_script_compliant_policy_name_validator(content_item, policy_names, expected_failures):
+def test_script_compliant_policy_name_validator(
+    content_item, policy_names, expected_failures
+):
     """
     Given
     - A Script object with compliant policies.
@@ -2564,7 +2581,9 @@ def test_script_compliant_policy_name_validator(content_item, policy_names, expe
     - A script with empty policy list
     - A script with multiple invalid policies
     """
-    results = IsValidCompliantPolicyNameValidator().content_contains_invalid_compliant_policy_name(content_item, policy_names)
+    results = IsValidCompliantPolicyNameValidator().content_contains_invalid_compliant_policy_name(
+        content_item, policy_names
+    )
     assert len(results) == expected_failures
 
 
@@ -2572,92 +2591,120 @@ def test_script_compliant_policy_name_validator(content_item, policy_names, expe
     "content_item, policy_names, expected_failures",
     [
         pytest.param(
-            create_integration_object(paths=["script.commands"], values=[[{
-                "name": "test-command",
-                "compliantpolicies": ["valid_policy_1"]
-            }]]),
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [{"name": "test-command", "compliantpolicies": ["valid_policy_1"]}]
+                ],
+            ),
             {"valid_policy_1"},
             0,
-            id="integration_with_valid_policy"
+            id="integration_with_valid_policy",
         ),
         pytest.param(
-            create_integration_object(paths=["script.commands"], values=[[{
-                "name": "test-command",
-                "compliantpolicies": ["invalid_policy"]
-            }]]),
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [{"name": "test-command", "compliantpolicies": ["invalid_policy"]}]
+                ],
+            ),
             {"valid_policy_1", "valid_policy_2"},
             1,
-            id="integration_with_invalid_policy"
+            id="integration_with_invalid_policy",
         ),
         pytest.param(
-            create_integration_object(paths=["script.commands"], values=[[{
-                "name": "test-command",
-                "compliantpolicies": ["valid_policy_1", "valid_policy_2"]
-            }]]),
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "test-command",
+                            "compliantpolicies": ["valid_policy_1", "valid_policy_2"],
+                        }
+                    ]
+                ],
+            ),
             {"valid_policy_1", "valid_policy_2"},
             0,
-            id="integration_with_multiple_valid_policies"
+            id="integration_with_multiple_valid_policies",
         ),
         pytest.param(
-            create_integration_object(paths=["script.commands"], values=[[{
-                "name": "test-command",
-                "compliantpolicies": ["valid_policy_1", "invalid_policy"]
-            }]]),
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "test-command",
+                            "compliantpolicies": ["valid_policy_1", "invalid_policy"],
+                        }
+                    ]
+                ],
+            ),
             {"valid_policy_1", "valid_policy_2"},
             1,
-            id="integration_with_mixed_valid_and_invalid_policies"
+            id="integration_with_mixed_valid_and_invalid_policies",
         ),
         pytest.param(
-            create_integration_object(paths=["script.commands"], values=[[{
-                "name": "test-command",
-                "compliantpolicies": []
-            }]]),
+            create_integration_object(
+                paths=["script.commands"],
+                values=[[{"name": "test-command", "compliantpolicies": []}]],
+            ),
             {"valid_policy_1"},
             0,
-            id="integration_with_empty_policy_list"
+            id="integration_with_empty_policy_list",
         ),
         pytest.param(
-            create_integration_object(paths=["script.commands"], values=[[{
-                "name": "test-command",
-                "compliantpolicies": ["invalid_policy_1", "invalid_policy_2"]
-            }]]),
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "test-command",
+                            "compliantpolicies": [
+                                "invalid_policy_1",
+                                "invalid_policy_2",
+                            ],
+                        }
+                    ]
+                ],
+            ),
             {"valid_policy_1", "valid_policy_2"},
             2,
-            id="integration_with_multiple_invalid_policies"
+            id="integration_with_multiple_invalid_policies",
         ),
         pytest.param(
-            create_integration_object(paths=["script.commands"], values=[[
-                {
-                    "name": "command1",
-                    "compliantpolicies": ["valid_policy_1"]
-                },
-                {
-                    "name": "command2",
-                    "compliantpolicies": ["invalid_policy"]
-                }
-            ]]),
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {"name": "command1", "compliantpolicies": ["valid_policy_1"]},
+                        {"name": "command2", "compliantpolicies": ["invalid_policy"]},
+                    ]
+                ],
+            ),
             {"valid_policy_1", "valid_policy_2"},
             1,
-            id="integration_with_multiple_commands_one_invalid_policy"
+            id="integration_with_multiple_commands_one_invalid_policy",
         ),
         pytest.param(
-            create_integration_object(paths=["script.commands"], values=[[
-                {
-                    "name": "command1",
-                    "compliantpolicies": ["invalid_policy_1"]
-                },
-                {
-                    "name": "command2",
-                    "compliantpolicies": ["invalid_policy_2"]
-                }
-            ]]),
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {"name": "command1", "compliantpolicies": ["invalid_policy_1"]},
+                        {"name": "command2", "compliantpolicies": ["invalid_policy_2"]},
+                    ]
+                ],
+            ),
             {"valid_policy_1", "valid_policy_2"},
             2,
-            id="integration_with_multiple_commands_multiple_invalid_policies"
+            id="integration_with_multiple_commands_multiple_invalid_policies",
         ),
-    ]
+    ],
 )
-def test_integration_compliant_policy_name_validator(content_item, policy_names, expected_failures):
+def test_integration_compliant_policy_name_validator(
+    content_item, policy_names, expected_failures
+):
     """
     Given
     - An integration with commands containing compliant policies.
@@ -2676,5 +2723,7 @@ def test_integration_compliant_policy_name_validator(content_item, policy_names,
     - An integration with multiple commands where one has invalid policy
     - An integration with multiple commands where multiple have invalid policies
     """
-    results = IsValidCompliantPolicyNameValidator().content_contains_invalid_compliant_policy_name(content_item, policy_names)
+    results = IsValidCompliantPolicyNameValidator().content_contains_invalid_compliant_policy_name(
+        content_item, policy_names
+    )
     assert len(results) == expected_failures

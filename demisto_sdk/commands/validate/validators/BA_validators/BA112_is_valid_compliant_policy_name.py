@@ -1,11 +1,7 @@
-
 from __future__ import annotations
 
-from abc import ABC
-from pathlib import Path
 from typing import Iterable, List, Set, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.tools import get_compliant_polices
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -34,13 +30,15 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    invalid_policy_names, content_item.path,
+                    invalid_policy_names,
+                    content_item.path,
                 ),
                 content_object=content_item,
             )
             for content_item in content_items
             if (
-                invalid_policy_names := self.content_contains_invalid_compliant_policy_name(
+                invalid_policy_names
+                := self.content_contains_invalid_compliant_policy_name(
                     content_item, valid_compliant_policy_names
                 )
             )
@@ -54,10 +52,15 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
             Set of valid policy names
         """
         compliant_policies_list: list[dict] = get_compliant_polices()
-        return {policy.get("name", "") for policy in compliant_policies_list if policy.get("name")}
+        return {
+            policy.get("name", "")
+            for policy in compliant_policies_list
+            if policy.get("name")
+        }
 
-
-    def content_contains_invalid_compliant_policy_name(self, content_item: ContentTypes, valid_compliant_policy_names: Set[str]) -> list[str]:
+    def content_contains_invalid_compliant_policy_name(
+        self, content_item: ContentTypes, valid_compliant_policy_names: Set[str]
+    ) -> list[str]:
         """
         Check if a content item (Integration or Script) contains invalid compliant policy names.
 
@@ -68,7 +71,7 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
         Returns:
             bool: True if invalid policy name found, False otherwise
         """
-        invalid_policy_names : list[str] = []
+        invalid_policy_names: list[str] = []
 
         if isinstance(content_item, Integration):
             for command in content_item.commands:

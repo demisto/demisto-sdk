@@ -26,7 +26,7 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         self.underlying_content_item_name: str = self.yml_data.get("underlyingcontentitemname")
         self.underlying_content_item_type: str = self.yml_data.get("underlyingcontentitemtype")
         self.underlying_content_item_version: int = self.yml_data.get("underlyingcontentitemversion")
-        self.underlying_content_item_pack_version: str = self.yml_data.get("underlyingContentItemPackVersion")
+        self.underlying_content_item_pack_version: str = self.yml_data.get("underlyingcontentitempackversion")
         self.requires_user_approval: bool = self.yml_data.get("requiresuserapproval")
         self.example_prompts: list[str] = self.yml_data.get("exampleprompts")
 

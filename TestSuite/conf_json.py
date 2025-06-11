@@ -20,6 +20,7 @@ class ConfJSON:
         skipped_tests: Optional[Dict[str, str]] = None,
         skipped_integrations: Optional[Dict[str, str]] = None,
         docker_thresholds: Optional[dict] = None,
+
     ):
         if tests is None:
             tests = []
@@ -45,6 +46,8 @@ class ConfJSON:
                     "private_tests": [],
                     "test_marketplacev2": [],
                     "reputation_tests": [],
+                    "selected_nightly_tpb": [],
+
                 }
             ),
             None,

@@ -13,7 +13,7 @@ class AgentixActionArgument(BaseStrictModel):
     description: str
     type: str
     required: bool = False
-    default_value: Optional[str] = Field(None, alias="defaultValue")
+    default_value: Optional[str] = Field(None, alias="defaultvalue")
     hidden: bool = False
     disabled: bool = False
     content_item_arg_name: str = Field(..., alias="underlyingargname")

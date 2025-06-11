@@ -110,6 +110,7 @@ class YmlSplitter:
              int. status code for the operation.
         """
         try:
+            logger.info("Trying to retrieve the output path to split.")
             output_path = self.get_output_path()
         except ValueError as ex:
             logger.error(str(ex))
@@ -192,6 +193,9 @@ class YmlSplitter:
         Returns:
              int. status code for the operation.
         """
+        logger.info(
+            f"Extract the code from {code_file_path} , {executed_from_contrib_converter=}"
+        )
         common_server = self.common_server
         if common_server:
             common_server = "CommonServerPython" not in str(
@@ -377,6 +381,14 @@ class YmlSplitter:
         """
         remove the auto-generated section headers if they exist.
         """
+        logger.info("Removing the section headers code")
+        script = re.sub(r"CONSTANT_PACK_VERSION = '(\d+\.\d+\.\d+)'(\n*)", "", script)
+        script = re.sub(
+            r"demisto\.debug\('pack id = .*?, pack version = .*?'\)(\n*)", "", script
+        )
+        script = re.sub(
+            r"demisto\.debug\('pack name = .*?, pack version = .*?'\)(\n*)", "", script
+        )
         script = re.sub(r"(?:#|//)+ pack version: (\d+\.\d+\.\d+)(\n|$)", "", script)
         return re.sub(
             r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)(\n|$)",

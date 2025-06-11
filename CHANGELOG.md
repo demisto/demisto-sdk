@@ -1,4 +1,9 @@
 # Changelog
+## 1.38.3 (2025-06-08)
+### Feature
+* Added support for the new `compliantpolicies` key in integrations and scripts. [#4953](https://github.com/demisto/demisto-sdk/pull/4953)
+
+
 ## 1.38.2 (2025-06-05)
 ### Feature
 * Added the ability to un-skip a specific hook in a specific mode. [#4960](https://github.com/demisto/demisto-sdk/pull/4960)

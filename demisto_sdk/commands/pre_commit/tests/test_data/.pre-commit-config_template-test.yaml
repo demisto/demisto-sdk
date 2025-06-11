@@ -63,6 +63,20 @@ repos:
   - repo: https://github.com/demisto/demisto-sdk
     rev: ""
     hooks:
+      - id: mypy
+        args:
+          [
+            --ignore-missing-imports,
+            --check-untyped-defs,
+            --show-error-codes,
+            --follow-imports=silent,
+            --allow-redefinition,
+            # `--python-version` argument is replaced in runtime
+            --python-version=3.10,
+          ]
+        exclude: "test_data|tests_data|.venv|.*_test.py$|infrastructure_tests"
+        skip: true
+        skip:validate_content: false
 
       # enable with --test
       - id: run-unit-tests

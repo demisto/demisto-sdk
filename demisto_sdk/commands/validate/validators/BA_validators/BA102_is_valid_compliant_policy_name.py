@@ -25,9 +25,7 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes], ABC):
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
-    def obtain_invalid_content_items(
-        self, content_items: Iterable[ContentTypes]
-    ) -> List[ValidationResult]:
+    def is_valid(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         valid_compliant_policy_names: Set[str] = self._get_valid_policy_names()
 
         return [

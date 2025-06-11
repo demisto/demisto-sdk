@@ -1123,10 +1123,11 @@ def repo_for_test_gr_109(graph_repo: Repo):
     Creates a test repository with three packs for testing GR109 validator.
 
     This fixture sets up a graph repository with the following structure:
-    - Pack1: Contains a playbook that uses a command from Pack2.
-             Has a mandatory dependency on Pack2 and with supportedModules: "module_x".
-    - Pack2: Containing an integration.
-    - Pack3: An empty pack for additional testing scenarios.
+    - Pack A: Contains Script1, Script2 and Integration1 that
+              Script1  uses a command from Pack_b and configured with `supportedModules: ["module_x"]`.
+              script2 and integration for additional testing scenarios.
+    - Pack B: Contains "SearchIncidents" script.
+              Note: "Pack B" does *not* list "module_x" in its supportedModules.
     """
     yml = {
         "commonfields": {"id": "Script1", "version": -1},
@@ -1169,12 +1170,12 @@ def test_SupportedModulesCompatibility_invalid_all_files(
 ):
     """
     Given:
-        A test repository with Script1 (supportedModules: ['module_x'])
-        depending on SearchIncidents script (supportedModules: ['C1']).
+        A repository where "Script1" (with `supportedModules: ['module_x']`)
+        depends on "SearchIncidents", which does not support "module_x".
     When:
         Running the SupportedModulesCompatibility validator on all files.
     Then:
-        The validator should return a result indicating that SearchIncidents is missing 'module_x'.
+        The validator should identify "Script1" as invalid, reporting that "SearchIncidents" is missing "module_x".
     """
     graph_interface = repo_for_test_gr_109.create_graph()
     BaseValidator.graph_interface = graph_interface
@@ -1193,12 +1194,13 @@ def test_SupportedModulesCompatibility_invalid_list_files(
 ):
     """
     Given:
-        A test repository with Script1 (supportedModules: ['module_x'])
-        depending on SearchIncidents script (supportedModules: ['C1']).
+        A repository where "Script1" (with `supportedModules: ['module_x']`)
+        depends on "SearchIncidents", which does not support "module_x".
     When:
-        Running the SupportedModulesCompatibility validator on specific content items.
+        The SupportedModulesCompatibility validator runs specifically on "Script1".
     Then:
-        For Script1: The validator should return a result indicating that SearchIncidents is missing 'module_x'.
+        The validator should identify "Script1" as invalid, reporting that "SearchIncidents"
+        is missing the required "module_x".
     """
     graph_interface = repo_for_test_gr_109.create_graph()
     BaseValidator.graph_interface = graph_interface

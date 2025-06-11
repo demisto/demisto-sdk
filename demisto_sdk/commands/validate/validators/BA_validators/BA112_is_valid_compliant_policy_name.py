@@ -57,7 +57,7 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
         return {policy.get("name", "") for policy in compliant_policies_list if policy.get("name")}
 
 
-    def content_contains_invalid_compliant_policy_name(self, content_item: ContentTypes, valid_compliant_policy_names: Set[str]) -> "":
+    def content_contains_invalid_compliant_policy_name(self, content_item: ContentTypes, valid_compliant_policy_names: Set[str]) -> list[str]:
         """
         Check if a content item (Integration or Script) contains invalid compliant policy names.
 
@@ -68,7 +68,7 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
         Returns:
             bool: True if invalid policy name found, False otherwise
         """
-        invalid_policy_names : List[str] = []
+        invalid_policy_names : list[str] = []
 
         if isinstance(content_item, Integration):
             for command in content_item.commands:

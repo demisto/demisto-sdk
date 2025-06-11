@@ -28,19 +28,19 @@ mapping:
     type: seq
     sequence:
     - include: outputs_schema
-  fewShots:
+  fewshots:
     type: str
-  agentId:
+  agentid:
     type: str
-  underlyingContentItemId:
+  underlyingcontentitemid:
     type: str
-  underlyingContentItemName:
+  underlyingcontentitemname:
     type: str
-  underlyingContentItemType:
+  underlyingcontentitemtype:
     type: int
-  underlyingContentItemVersion:
+  underlyingcontentitemversion:
     type: int
-  requiresUserApproval:
+  requiresuserapproval:
     type: bool
   marketplaces:
     type: seq
@@ -65,7 +65,7 @@ schema;args_schema:
       required: true
     required:
       type: bool
-    defaultValue:
+    defaultvalue:
       type: str
     hidden:
       type: bool

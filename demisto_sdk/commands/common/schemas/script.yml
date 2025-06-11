@@ -139,7 +139,7 @@ mapping:
     type: str
   systemPrompt:
     type: str
-  fewShots:
+  fewshots:
     type: str
 
   compliantpolicies:

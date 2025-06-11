@@ -17,7 +17,7 @@ class Script(BaseScript, content_type=ContentType.SCRIPT):  # type: ignore[call-
     model: Optional[str] = None
     user_prompt: Optional[str] = Field(None, alias="userPrompt")
     system_prompt: Optional[str] = Field(None, alias="systemPrompt")
-    few_shots: Optional[str] = Field(None, alias="fewShots")
+    few_shots: Optional[str] = Field(None, alias="fewshots")
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

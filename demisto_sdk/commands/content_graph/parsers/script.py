@@ -29,7 +29,7 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
         self.model: str = self.yml_data.get("model", False)
         self.user_prompt: str = self.yml_data.get("userPrompt", '')
         self.system_prompt: str = self.yml_data.get("systemPrompt", '')
-        self.few_shots: str = self.yml_data.get("fewShots", '')
+        self.few_shots: str = self.yml_data.get("fewshots", '')
 
     @property
     def strict_object(self):

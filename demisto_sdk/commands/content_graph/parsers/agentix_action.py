@@ -21,14 +21,14 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
-        self.few_shots: Optional[str] = self.yml_data.get("fewShots")
+        self.few_shots: Optional[str] = self.yml_data.get("fewshots")
         self.agent_id: str = self.yml_data.get("agentId")
-        self.underlying_content_item_id: str = self.yml_data.get("underlyingContentItemId")
-        self.underlying_content_item_name: str = self.yml_data.get("underlyingContentItemName")
-        self.underlying_content_item_type: str = self.yml_data.get("underlyingContentItemType")
-        self.underlying_content_item_version: int = self.yml_data.get("underlyingContentItemVersion")
+        self.underlying_content_item_id: str = self.yml_data.get("underlyingcontentitemid")
+        self.underlying_content_item_name: str = self.yml_data.get("underlyingcontentitemname")
+        self.underlying_content_item_type: str = self.yml_data.get("underlyingcontentitemtype")
+        self.underlying_content_item_version: int = self.yml_data.get("underlyingcontentitemversion")
         self.underlying_content_item_pack_version: str = self.yml_data.get("underlyingContentItemPackVersion")
-        self.requires_user_approval: bool = self.yml_data.get("requiresUserApproval")
+        self.requires_user_approval: bool = self.yml_data.get("requiresuserapproval")
         self.example_prompts: list[str] = self.yml_data.get("exampleprompts")
 
     @cached_property

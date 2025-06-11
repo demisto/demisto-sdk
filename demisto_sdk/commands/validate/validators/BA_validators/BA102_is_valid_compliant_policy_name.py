@@ -19,14 +19,15 @@ ContentTypes = Union[Integration, Script]
 class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes], ABC):
     error_code = "BA102"
     description = "Validator to ensure compliant policy names in Integrations and Scripts match those defined in the Config/compliant_policies.json file."
-    rationale = "123"
-    error_message = "Invalid compliant policy name(s) found in '{0}'. Please use only policy names defined in Config/compliant_policies.json."
-    related_field = ""
+    rationale = "Enforce consistent and predefined compliant policy naming conventions across relevant content items."
+    error_message = "Invalid compliant policy name(s) found for '{0}'. Please use only policy names defined in Config/compliant_policies.json."
+    related_field = "compliantpolicies"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
-
-    def obtain_invalid_content_items_using_graph(self, content_items: Iterable[ContentTypes], validate_all_files: bool) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         valid_compliant_policy_names: Set[str] = self._get_valid_policy_names()
 
         return [

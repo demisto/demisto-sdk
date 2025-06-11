@@ -56,7 +56,7 @@ select = [
   "PA115",
   "PA128",
   "PA130",
-  "RP101",
+  "RP101"
 ]
 warning = []
 
@@ -272,6 +272,6 @@ select = [
   "IM101",
   "IM108",
   "IM109",
-  "RP101",
+  "RP101"
 ]
 warning = []

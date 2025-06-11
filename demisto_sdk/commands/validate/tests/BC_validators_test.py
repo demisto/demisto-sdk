@@ -1676,7 +1676,7 @@ def test_IsSupportedModulesRemoved_with_removed_modules():
     assert len(res) == 1
     assert (
         res[0].message
-        == "The following support modules have been removed from the integration 'X1', 'X3'. Please undo."
+        == "The following support modules have been removed from the integration 'X1', 'X3'. Removing supported modules is not allowed, Please undo."
     )
     assert res[0].validator.error_code == "BC115"
 

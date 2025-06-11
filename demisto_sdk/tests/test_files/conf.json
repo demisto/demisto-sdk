@@ -46,7 +46,9 @@
     "nightly_packs": [
         "CommonScripts"
     ],
-    "selected_nightly_tpb": ["test test"],
+    "selected_nightly_tpb": [
+        "test test"
+    ],
     "parallel_integrations": [
         "AWS - ACM"
     ],

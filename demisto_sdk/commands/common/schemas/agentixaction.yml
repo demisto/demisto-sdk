@@ -87,6 +87,3 @@ schema;outputs_schema:
       required: true
     underlyingoutputcontextpath:
       type: str
-
-        
-  

@@ -21,4 +21,3 @@ mapping:
     type: str
   description:
     type: str
-  

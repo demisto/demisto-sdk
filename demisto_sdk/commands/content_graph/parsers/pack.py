@@ -364,8 +364,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
         parts = list(self.path.parts)
         new_parts = []
         for part in parts:
-            if part == 'content':
-                new_parts.extend(['content-test-conf', 'content'])
+            if part == "content":
+                new_parts.extend(["content-test-conf", "content"])
             elif part == PACKS_FOLDER:
                 new_parts.append(PRIVATE_PACKS_FOLDER)
             else:
@@ -379,7 +379,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
                 ) in folder_path.iterdir():  # todo: consider multiprocessing
                     self.parse_content_item(content_item_path)
         else:
-            logger.info("Can not find the pack under content-test-conf-repo, prepare-content only using content repo.")
+            logger.info(
+                "Can not find the pack under content-test-conf-repo, prepare-content only using content repo."
+            )
 
     @property
     def deprecated(self) -> bool:

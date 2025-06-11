@@ -12,11 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[
-    AgentixAgent,
-    AgentixAction,
-    Script
-]
+ContentTypes = Union[AgentixAgent, AgentixAction, Script]
 
 
 class IsMarketplaceExistsValidator(BaseValidator[ContentTypes]):
@@ -26,8 +22,8 @@ class IsMarketplaceExistsValidator(BaseValidator[ContentTypes]):
     error_message = f"The items {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isLLM=true should be uploaded to xsoar_saas only. Please specify only xsoar_saas under marketplaces."
 
     def obtain_invalid_content_items(
-            self,
-            content_items: Iterable[ContentTypes],
+        self,
+        content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
         return [
             ValidationResult(
@@ -40,8 +36,16 @@ class IsMarketplaceExistsValidator(BaseValidator[ContentTypes]):
         ]
 
     def is_invalid_marketplace(self, content_item: ContentTypes) -> bool:
-        if (content_item.content_type in [
-            ContentType.AGENTIX_AGENT,
-            ContentType.AGENTIX_ACTION,
-        ]) or (content_item.content_type == ContentType.SCRIPT and content_item.is_llm):
-            return len(content_item.marketplaces) > 1 or len(content_item.marketplaces) == 0 or MarketplaceVersions.PLATFORM.value != content_item.marketplaces[0].value
+        if (
+            content_item.content_type
+            in [
+                ContentType.AGENTIX_AGENT,
+                ContentType.AGENTIX_ACTION,
+            ]
+        ) or (content_item.content_type == ContentType.SCRIPT and content_item.is_llm):
+            return (
+                len(content_item.marketplaces) > 1
+                or len(content_item.marketplaces) == 0
+                or MarketplaceVersions.PLATFORM.value
+                != content_item.marketplaces[0].value
+            )

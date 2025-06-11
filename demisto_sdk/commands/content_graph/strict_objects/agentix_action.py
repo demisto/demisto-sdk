@@ -27,6 +27,7 @@ class AgentixActionOutput(BaseStrictModel):
     name: str
     disabled: bool = False
 
+
 class AgentixAction(AgentixBase):
     args: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None
@@ -34,6 +35,8 @@ class AgentixAction(AgentixBase):
     underlying_content_item_id: str = Field(..., alias="underlyingcontentitemid")
     underlying_content_item_name: str = Field(..., alias="underlyingcontentitemname")
     underlying_content_item_type: str = Field(..., alias="underlyingcontentitemtype")
-    underlying_content_item_version: int = Field(..., alias="underlyingcontentitemversion")
+    underlying_content_item_version: int = Field(
+        ..., alias="underlyingcontentitemversion"
+    )
     requires_user_approval: bool = Field(False, alias="requiresuserapproval")
     example_prompts: Optional[list[str]] = Field(None, alias="exampleprompts")

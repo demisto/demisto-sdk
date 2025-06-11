@@ -22,21 +22,27 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.agent_id: str = self.yml_data.get("agentid")
-        self.underlying_content_item_id: str = self.yml_data.get("underlyingcontentitemid")
-        self.underlying_content_item_name: str = self.yml_data.get("underlyingcontentitemname")
-        self.underlying_content_item_type: str = self.yml_data.get("underlyingcontentitemtype")
-        self.underlying_content_item_version: int = self.yml_data.get("underlyingcontentitemversion")
-        self.underlying_content_item_pack_version: str = self.yml_data.get("underlyingcontentitempackversion")
+        self.underlying_content_item_id: str = self.yml_data.get(
+            "underlyingcontentitemid"
+        )
+        self.underlying_content_item_name: str = self.yml_data.get(
+            "underlyingcontentitemname"
+        )
+        self.underlying_content_item_type: str = self.yml_data.get(
+            "underlyingcontentitemtype"
+        )
+        self.underlying_content_item_version: int = self.yml_data.get(
+            "underlyingcontentitemversion"
+        )
+        self.underlying_content_item_pack_version: str = self.yml_data.get(
+            "underlyingcontentitempackversion"
+        )
         self.requires_user_approval: bool = self.yml_data.get("requiresuserapproval")
         self.example_prompts: Optional[list[str]] = self.yml_data.get("exampleprompts")
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update(
-            {
-                "display": "name"
-            }
-        )
+        super().field_mapping.update({"display": "name"})
         return super().field_mapping
 
     @property

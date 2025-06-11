@@ -104,7 +104,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "caselayout": LayoutBaseFormat,
     "caselayoutrule": BaseUpdateJSON,
     "agentixaction": GenericAgentixFormat,
-    "agentixagent" : GenericAgentixFormat
+    "agentixagent": GenericAgentixFormat,
 }
 
 UNFORMATTED_FILES = [

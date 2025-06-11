@@ -321,7 +321,7 @@ class OldValidateManager:
             FileType.CASE_LAYOUT,
             FileType.CASE_FIELD,
             FileType.AGENTIX_ACTION,
-            FileType.AGENTIX_AGENT
+            FileType.AGENTIX_AGENT,
         )
 
         self.is_external_repo = is_external_repo

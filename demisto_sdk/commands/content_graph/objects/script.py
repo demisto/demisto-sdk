@@ -22,11 +22,8 @@ class Script(BaseScript, content_type=ContentType.SCRIPT):  # type: ignore[call-
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         if (
-            (("script" in _dict
-            and isinstance(_dict["script"], str))
-            or "isLLM" in _dict)
-            and path.suffix == ".yml"
-        ):
+            ("script" in _dict and isinstance(_dict["script"], str)) or "isLLM" in _dict
+        ) and path.suffix == ".yml":
             if TEST_PLAYBOOKS_DIR not in path.parts:
                 return True
         return False

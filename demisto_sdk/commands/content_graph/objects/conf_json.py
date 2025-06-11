@@ -84,6 +84,7 @@ class ConfJSON(StrictBaseModel):
     docker_thresholds: DockerThresholds
     test_marketplacev2: List[str]
     reputation_tests: List[str]
+    selected_nightly_tpb: List[str]
 
     @staticmethod
     def from_path(path: Path = CONF_PATH) -> "ConfJSON":

@@ -30,7 +30,6 @@ class AgentixActionOutput(BaseStrictModel):
 class AgentixAction(AgentixBase):
     args: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None
-    few_shots: Optional[str] = Field(None, alias="fewshots")
     agent_id: str = Field(..., alias="agentid")
     underlying_content_item_id: str = Field(..., alias="underlyingcontentitemid")
     underlying_content_item_name: str = Field(..., alias="underlyingcontentitemname")

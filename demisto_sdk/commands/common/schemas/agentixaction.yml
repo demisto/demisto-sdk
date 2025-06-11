@@ -28,8 +28,6 @@ mapping:
     type: seq
     sequence:
     - include: outputs_schema
-  fewshots:
-    type: str
   agentid:
     type: str
   underlyingcontentitemid:

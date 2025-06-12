@@ -2581,7 +2581,7 @@ def test_script_compliant_policy_name_validator(
     - A script with empty policy list
     - A script with multiple invalid policies
     """
-    results = IsValidCompliantPolicyNameValidator().content_contains_invalid_compliant_policy_name(
+    results = IsValidCompliantPolicyNameValidator().get_contnet_item_invalid_compliant_policies(
         content_item, policy_names
     )
     assert len(results) == expected_failures
@@ -2723,7 +2723,7 @@ def test_integration_compliant_policy_name_validator(
     - An integration with multiple commands where one has invalid policy
     - An integration with multiple commands where multiple have invalid policies
     """
-    results = IsValidCompliantPolicyNameValidator().content_contains_invalid_compliant_policy_name(
+    results = IsValidCompliantPolicyNameValidator().get_contnet_item_invalid_compliant_policies(
         content_item, policy_names
     )
     assert len(results) == expected_failures

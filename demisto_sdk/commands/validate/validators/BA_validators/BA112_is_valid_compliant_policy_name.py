@@ -38,7 +38,7 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 invalid_policy_names
-                := self.content_contains_invalid_compliant_policy_name(
+                := self.get_contnet_item_invalid_compliant_policies(
                     content_item, valid_compliant_policy_names
                 )
             )
@@ -49,7 +49,7 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
         Get the set of valid compliant policy names from the "Config/compliant_policies.json" in Content repository.
 
         Returns:
-            Set of valid policy names
+            Set of existing policy names
         """
         compliant_policies_list: list[dict] = get_compliant_polices()
         return {
@@ -58,7 +58,7 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
             if policy.get("name")
         }
 
-    def content_contains_invalid_compliant_policy_name(
+    def get_contnet_item_invalid_compliant_policies(
         self, content_item: ContentTypes, valid_compliant_policy_names: Set[str]
     ) -> Set[str]:
         """

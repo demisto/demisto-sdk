@@ -1,0 +1,4 @@
+changes:
+- description: Added support for a new section in the conf.json file.
+  type: internal
+pr_number: 4969

@@ -22,10 +22,10 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
             is_test_script=False,
             git_sha=git_sha,
         )
-        # self.is_llm: bool = self.yml_data.get("isLLM", False)
+        # self.is_llm: bool = self.yml_data.get("isllm", False)
         self.model: str = self.yml_data.get("model", False)
-        self.user_prompt: str = self.yml_data.get("userPrompt", "")
-        self.system_prompt: str = self.yml_data.get("systemPrompt", "")
+        self.user_prompt: str = self.yml_data.get("userprompt", "")
+        self.system_prompt: str = self.yml_data.get("systemprompt", "")
         self.few_shots: str = self.yml_data.get("fewshots", "")
 
     @property
@@ -34,4 +34,4 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
 
     @property
     def is_llm(self) -> Optional[str]:
-        return self.yml_data.get("isLLM", False)
+        return self.yml_data.get("isllm", False)

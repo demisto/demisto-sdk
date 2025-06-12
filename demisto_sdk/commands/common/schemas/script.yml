@@ -131,13 +131,13 @@ mapping:
       enum: ['script-name-incident-to-alert']
   prettyname:
       type: str
-  isLLM:
+  isllm:
     type: bool
   model:
     type: str
-  userPrompt:
+  userprompt:
     type: str
-  systemPrompt:
+  systemprompt:
     type: str
   fewshots:
     type: str

@@ -89,10 +89,10 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     skip_prepare: Optional[List[SkipPrepare]] = Field(None, alias="skipprepare")
     prettyname: Optional[str] = None
     compliantpolicies: Optional[List[str]] = Field(None, alias="compliantpolicies")
-    is_llm: bool = Field(False, alias="isLLM")
+    is_llm: bool = Field(False, alias="isllm")
     model: Optional[str] = None
-    user_prompt: Optional[str] = Field(None, alias="userPrompt")
-    system_prompt: Optional[str] = Field(None, alias="systemPrompt")
+    user_prompt: Optional[str] = Field(None, alias="userprompt")
+    system_prompt: Optional[str] = Field(None, alias="systemprompt")
     few_shots: Optional[str] = Field(None, alias="fewshots")
 
     @root_validator
@@ -118,12 +118,12 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
             # Enforce LLM mode rules
             if "script" in values:
                 errors.append(
-                    "When 'isLLM' is True, 'script' should not appear in yml."
+                    "When 'isllm' is True, 'script' should not appear in yml."
                 )
             if not values.get("model"):
-                errors.append("When 'isLLM' is True, 'model' must be provided.")
+                errors.append("When 'isllm' is True, 'model' must be provided.")
             if not values.get("user_prompt"):
-                errors.append("When 'isLLM' is True, 'userPrompt' must be provided.")
+                errors.append("When 'isllm' is True, 'userprompt' must be provided.")
         else:
             # Enforce non-LLM mode: all LLM-related fields must be None or empty
             llm_fields = [
@@ -133,7 +133,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
                 ("few_shots", values.get("few_shots")),
             ]
             errors.extend(
-                f"Field '{field_name}' must be empty when 'isLLM' is False."
+                f"Field '{field_name}' must be empty when 'isllm' is False."
                 for field_name, value in llm_fields
                 if value not in [None, ""]
             )

@@ -2697,7 +2697,7 @@ def test_script_compliant_policy_name_validator(
                 ],
             ),
             {"valid_policy_1", "valid_policy_2"},
-            ["invalid_policy_1","invalid_policy_2"],
+            ["invalid_policy_1", "invalid_policy_2"],
             id="integration_with_multiple_commands_multiple_invalid_policies",
         ),
     ],

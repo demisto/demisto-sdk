@@ -37,8 +37,7 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                invalid_policy_names
-                := self.get_invalid_compliant_policies(
+                invalid_policy_names := self.get_invalid_compliant_policies(
                     content_item, valid_compliant_policy_names
                 )
             )

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import ExecutionMode
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
@@ -36,9 +37,10 @@ from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
-from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_in_dependencies import (
-    SupportedModulesCompatibility,
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.validate.validators.base_validator import (
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = Union[
@@ -78,10 +80,64 @@ ContentTypes = Union[
 ]
 
 
-class SupportedModulesCompatibilityAllFiles(SupportedModulesCompatibility):
-    expected_execution_mode = [ExecutionMode.ALL_FILES]
+class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
+    error_code = "GR109"
+    description = "For a dependency where Content Item A relies on Content Item B, the supportedModules of Content Item A must be a subset of Content Item B's supportedModules."
+    rationale = "When Content Item A has a dependency on Content Item B, Content Item A's supportedModules are restricted to only those modules also present in Content Item B's supportedModules."
+    error_message = "The following mandatory dependencies missing required modules: {0}"
+    related_field = "supportedModules"
+    is_auto_fixable = False
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
+    related_file_type = [RelatedFileType.SCHEMA]
 
-    def obtain_invalid_content_items(
-        self, content_items: Iterable[ContentTypes]
+    def obtain_invalid_content_items_using_graph(
+        self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-        return self.obtain_invalid_content_items_using_graph(content_items, True)
+        target_content_item_ids = (
+            []
+            if validate_all_files
+            else [content_item.object_id for content_item in content_items]
+        )
+
+        invalid_content_items = (
+            self.graph.find_content_items_with_module_mismatch_dependencies(
+                target_content_item_ids
+            )
+        )
+
+        results: List[ValidationResult] = []
+
+        for invalid_item in invalid_content_items:
+            missing_modules_by_dependency = {}
+            for dependency in invalid_item.uses:
+                missing_modules = [
+                    module
+                    for module in invalid_item.supportedModules
+                    if module not in dependency.content_item_to.supportedModules
+                ]
+                if missing_modules:
+                    missing_modules_by_dependency[
+                        dependency.content_item_to.object_id
+                    ] = missing_modules
+
+            if missing_modules_by_dependency:
+                formatted_messages = []
+                for name, modules in missing_modules_by_dependency.items():
+                    formatted_messages.append(
+                        f"{name} is missing: [{', '.join(modules)}]"
+                    )
+
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
+                            ", ".join(formatted_messages)
+                        ),
+                        content_object=invalid_item,
+                    )
+                )
+        return results

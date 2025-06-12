@@ -2516,7 +2516,7 @@ def test_is_command_or_script_name_starts_with_digit_valid():
                 paths=["compliantpolicies"], values=[["valid_policy_1"]]
             ),
             {"valid_policy_1"},
-            0,
+            [],
             id="valid_policy_name",
         ),
         pytest.param(
@@ -2524,7 +2524,7 @@ def test_is_command_or_script_name_starts_with_digit_valid():
                 paths=["compliantpolicies"], values=[["invalid_policy"]]
             ),
             {"valid_policy_1", "valid_policy_2"},
-            1,
+            ["invalid_policy"],
             id="invalid_policy_name",
         ),
         pytest.param(
@@ -2533,7 +2533,7 @@ def test_is_command_or_script_name_starts_with_digit_valid():
                 values=[["valid_policy_1", "valid_policy_2"]],
             ),
             {"valid_policy_1", "valid_policy_2"},
-            0,
+            [],
             id="multiple_valid_policies",
         ),
         pytest.param(
@@ -2542,13 +2542,13 @@ def test_is_command_or_script_name_starts_with_digit_valid():
                 values=[["valid_policy_1", "invalid_policy"]],
             ),
             {"valid_policy_1", "valid_policy_2"},
-            1,
+            ["invalid_policy"],
             id="mixed_valid_and_invalid_policies",
         ),
         pytest.param(
             create_script_object(paths=["compliantpolicies"], values=[[]]),
             {"valid_policy_1"},
-            0,
+            [],
             id="empty_policy_list",
         ),
         pytest.param(
@@ -2557,7 +2557,7 @@ def test_is_command_or_script_name_starts_with_digit_valid():
                 values=[["invalid_policy_1", "invalid_policy_2"]],
             ),
             {"valid_policy_1", "valid_policy_2"},
-            2,
+            ["invalid_policy_1", "invalid_policy_2"],
             id="multiple_invalid_policies",
         ),
     ],
@@ -2571,7 +2571,7 @@ def test_script_compliant_policy_name_validator(
     When
     - Calling the IsValidCompliantPolicyNameValidator content_contains_invalid_compliant_policy_name function.
     Then
-    - Make sure the expected number of failures are returned.
+    - Make sure the expected sorted list of failures is returned.
 
     Test cases:
     - A script with valid policy name
@@ -2584,7 +2584,7 @@ def test_script_compliant_policy_name_validator(
     results = IsValidCompliantPolicyNameValidator().get_invalid_compliant_policies(
         content_item, policy_names
     )
-    assert len(results) == expected_failures
+    assert results == sorted(expected_failures)
 
 
 @pytest.mark.parametrize(
@@ -2598,7 +2598,7 @@ def test_script_compliant_policy_name_validator(
                 ],
             ),
             {"valid_policy_1"},
-            0,
+            [],
             id="integration_with_valid_policy",
         ),
         pytest.param(
@@ -2609,7 +2609,7 @@ def test_script_compliant_policy_name_validator(
                 ],
             ),
             {"valid_policy_1", "valid_policy_2"},
-            1,
+            ["invalid_policy"],
             id="integration_with_invalid_policy",
         ),
         pytest.param(
@@ -2625,7 +2625,7 @@ def test_script_compliant_policy_name_validator(
                 ],
             ),
             {"valid_policy_1", "valid_policy_2"},
-            0,
+            [],
             id="integration_with_multiple_valid_policies",
         ),
         pytest.param(
@@ -2641,7 +2641,7 @@ def test_script_compliant_policy_name_validator(
                 ],
             ),
             {"valid_policy_1", "valid_policy_2"},
-            1,
+            ["invalid_policy"],
             id="integration_with_mixed_valid_and_invalid_policies",
         ),
         pytest.param(
@@ -2650,7 +2650,7 @@ def test_script_compliant_policy_name_validator(
                 values=[[{"name": "test-command", "compliantpolicies": []}]],
             ),
             {"valid_policy_1"},
-            0,
+            [],
             id="integration_with_empty_policy_list",
         ),
         pytest.param(
@@ -2661,15 +2661,15 @@ def test_script_compliant_policy_name_validator(
                         {
                             "name": "test-command",
                             "compliantpolicies": [
-                                "invalid_policy_1",
                                 "invalid_policy_2",
+                                "invalid_policy_1",
                             ],
                         }
                     ]
                 ],
             ),
             {"valid_policy_1", "valid_policy_2"},
-            2,
+            ["invalid_policy_1", "invalid_policy_2"],
             id="integration_with_multiple_invalid_policies",
         ),
         pytest.param(
@@ -2683,7 +2683,7 @@ def test_script_compliant_policy_name_validator(
                 ],
             ),
             {"valid_policy_1", "valid_policy_2"},
-            1,
+            ["invalid_policy"],
             id="integration_with_multiple_commands_one_invalid_policy",
         ),
         pytest.param(
@@ -2697,7 +2697,7 @@ def test_script_compliant_policy_name_validator(
                 ],
             ),
             {"valid_policy_1", "valid_policy_2"},
-            2,
+            ["invalid_policy_1","invalid_policy_2"],
             id="integration_with_multiple_commands_multiple_invalid_policies",
         ),
     ],
@@ -2711,7 +2711,7 @@ def test_integration_compliant_policy_name_validator(
     When
     - Calling the IsValidCompliantPolicyNameValidator content_contains_invalid_compliant_policy_name function.
     Then
-    - Make sure the expected number of failures are returned.
+    - Make sure the expected sorted list of failures is returned.
 
     Test cases:
     - An integration with valid policy name
@@ -2726,4 +2726,4 @@ def test_integration_compliant_policy_name_validator(
     results = IsValidCompliantPolicyNameValidator().get_invalid_compliant_policies(
         content_item, policy_names
     )
-    assert len(results) == expected_failures
+    assert results == sorted(expected_failures)

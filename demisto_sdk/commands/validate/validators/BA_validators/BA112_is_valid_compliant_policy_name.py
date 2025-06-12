@@ -69,7 +69,7 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
             valid_compliant_policy_names: Set of valid compliant policy names
 
         Returns:
-            list[str]: A list of sorted, invalid policy names found in the content item
+            list[str]: A sorted list of invalid policy names found in the content item
         """
         all_policies = set()
 

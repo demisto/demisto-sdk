@@ -37,8 +37,8 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
-from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_in_dependencies import (
-    SupportedModulesCompatibility,
+from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_compatibility import (
+    IsSupportedModulesCompatibility,
 )
 
 ContentTypes = Union[
@@ -78,10 +78,10 @@ ContentTypes = Union[
 ]
 
 
-class SupportedModulesCompatibilityListFiles(SupportedModulesCompatibility):
-    expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
+class IsSupportedModulesCompatibilityAllFiles(IsSupportedModulesCompatibility):
+    expected_execution_mode = [ExecutionMode.ALL_FILES]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        return self.obtain_invalid_content_items_using_graph(content_items, False)
+        return self.obtain_invalid_content_items_using_graph(content_items, True)

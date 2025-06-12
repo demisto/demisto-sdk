@@ -61,11 +61,11 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR108_is_invalid_pac
 from demisto_sdk.commands.validate.validators.GR_validators.GR108_is_invalid_packs_dependencies_valid_list_files import (
     IsInvalidPacksDependenciesValidatorListFiles,
 )
-from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_in_dependencies_all_files import (
-    SupportedModulesCompatibilityAllFiles,
+from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_compatibility_all_files import (
+    IsSupportedModulesCompatibilityAllFiles,
 )
-from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_in_dependencies_list_files import (
-    SupportedModulesCompatibilityListFiles,
+from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_compatibility_list_files import (
+    IsSupportedModulesCompatibilityListFiles,
 )
 from TestSuite.repo import Repo
 
@@ -1173,13 +1173,13 @@ def test_SupportedModulesCompatibility_invalid_all_files(
         A repository where "Script1" (with `supportedModules: ['module_x']`)
         depends on "SearchIncidents", which does not support "module_x".
     When:
-        Running the SupportedModulesCompatibility validator on all files.
+        Running the IsSupportedModulesCompatibility validator on all files.
     Then:
         The validator should identify "Script1" as invalid, reporting that "SearchIncidents" is missing "module_x".
     """
     graph_interface = repo_for_test_gr_109.create_graph()
     BaseValidator.graph_interface = graph_interface
-    results = SupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
 
     assert len(results) == 1
     assert (
@@ -1197,7 +1197,7 @@ def test_SupportedModulesCompatibility_invalid_list_files(
         A repository where "Script1" (with `supportedModules: ['module_x']`)
         depends on "SearchIncidents", which does not support "module_x".
     When:
-        The SupportedModulesCompatibility validator runs specifically on "Script1".
+        The IsSupportedModulesCompatibility validator runs specifically on "Script1".
     Then:
         The validator should identify "Script1" as invalid, reporting that "SearchIncidents"
         is missing the required "module_x".
@@ -1205,7 +1205,7 @@ def test_SupportedModulesCompatibility_invalid_list_files(
     graph_interface = repo_for_test_gr_109.create_graph()
     BaseValidator.graph_interface = graph_interface
 
-    results = SupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+    results = IsSupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
         [repo_for_test_gr_109.packs[0].scripts[0].object]
     )
     assert len(results) == 1

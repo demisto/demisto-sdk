@@ -65,6 +65,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_items_using_deprecated,
+    get_supported_modules_mismatch_dependencies,
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
@@ -72,7 +73,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
     validate_packs_with_hidden_mandatory_dependencies,
-    validate_support_modules_match_his_dependencies,
     validate_test_playbook_in_use,
     validate_toversion,
     validate_unknown_content,
@@ -596,7 +596,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_invalid_content_item_dependencies(
+    def find_content_items_with_module_mismatch_dependencies(
         self, content_item_ids: List[str]
     ) -> List[BaseNode]:
         """
@@ -614,7 +614,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         with self.driver.session() as session:
             results = session.execute_read(
-                validate_support_modules_match_his_dependencies, content_item_ids
+                get_supported_modules_mismatch_dependencies, content_item_ids
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

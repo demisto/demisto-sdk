@@ -347,19 +347,19 @@ RETURN collect(tp) AS content_items
     )
 
 
-def validate_support_modules_match_his_dependencies(
+def get_supported_modules_mismatch_dependencies(
     tx: Transaction,
     content_item_ids: List[str],
 ):
-    query = f""" // Check if any module in content_item1's supportedModules is NOT in content_item2's supportedModules.
-    MATCH (content_item1{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(content_item2)
-    WHERE {f"content_item1.object_id IN {content_item_ids} AND " if content_item_ids else ""}
-        ANY(module_from_1 IN content_item1.supportedModules WHERE NOT module_from_1 IN content_item2.supportedModules)
-    RETURN content_item1, collect(r) as relationships, collect(content_item2) as nodes_to
+    query = f""" // Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
+    MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(contentItemB)
+    WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItemA.object_id IN {content_item_ids})
+      AND NOT ALL(module IN contentItemA.supportedModules WHERE module IN contentItemB.supportedModules)
+    RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
     """
     return {
-        item.get("content_item1").element_id: Neo4jRelationshipResult(
-            node_from=item.get("content_item1"),
+        item.get("contentItemA").element_id: Neo4jRelationshipResult(
+            node_from=item.get("contentItemA"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
         )

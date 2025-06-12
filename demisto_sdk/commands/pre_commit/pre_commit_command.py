@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     PACKS_FOLDER,
     SCRIPTS_DIR,
+    TEST_DATA_DIR
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
@@ -635,6 +636,9 @@ def pre_commit_manager(
         return 1
 
     logger.info(f"Running pre-commit using template {pre_commit_template_path}")
+    logger.info(f"input files {input_files}")
+    for key in language_to_files_with_objects.keys():
+        logger.info(f"key {key} with len {len(language_to_files_with_objects[key])} ")
 
     pre_commit_context = PreCommitContext(
         list(input_files) if input_files else None,
@@ -671,20 +675,41 @@ def add_related_files(file: Path) -> Set[Path]:
         Set[Path]: The set of related files.
     """
     files_to_run = {file}
+    test_data_changed = False
     if ".yml" in file.suffix:
         py_file_path = file.with_suffix(".py")
         if py_file_path.exists():
             files_to_run.add(py_file_path)
 
+    # if the file in test_data:
+    # find the integration_iter directory and then test_files
+    if (
+        set(file.parts) & {TEST_DATA_DIR}
+        and file.parts[0] == PACKS_FOLDER  # this is relative path so it works
+    ):
+        test_data_index = file.parts.index(TEST_DATA_DIR)
+        path_to_test_data_folder_parts = Path(*file.parts[:test_data_index + 1])
+        test_data_changed = True
+
     # Identifying test files by their suffix.
-    if not {".py", ".ps1"}.intersection({file.suffix for file in files_to_run}):
+    if not {".py", ".ps1"}.intersection({file.suffix for file in files_to_run}) and not test_data_changed:
         return files_to_run
 
     test_file_suffix = (
         PY_TEST_FILE_SUFFIX
-        if ".py" in (file.suffix for file in files_to_run)
+        if ".py" in (file.suffix for file in files_to_run) or test_data_changed
         else PS1_TEST_FILE_SUFFIX
     )
+    if test_data_changed:
+        test_files = []
+        if path_to_test_data_folder_parts.exists():
+            test_files = [
+                _file
+                for _file in path_to_test_data_folder_parts.iterdir()
+                if _file.name.endswith(test_file_suffix)
+            ]
+            files_to_run.update(test_files)
+
     test_files = []
     if file.parent.exists():
         test_files = [
@@ -693,6 +718,8 @@ def add_related_files(file: Path) -> Set[Path]:
             if _file.name.endswith(test_file_suffix)
         ]
         files_to_run.update(test_files)
+
+    logger.info(f"files_to_run: {files_to_run}")
 
     return files_to_run
 
@@ -763,5 +790,6 @@ def preprocess_files(
         file.relative_to(CONTENT_PATH) if file.is_absolute() else file
         for file in files_to_run
     }
+
     # filter out files that are not in the content git repo (e.g in .gitignore)
     return relative_paths & all_git_files

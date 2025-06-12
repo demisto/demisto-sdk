@@ -1,8 +1,8 @@
 import os
 from copy import deepcopy
 from typing import Any, Dict
-from packaging.version import parse
 
+from packaging.version import parse
 
 from demisto_sdk.commands.pre_commit.hooks.hook import (
     GeneratedHooks,
@@ -12,6 +12,8 @@ from demisto_sdk.commands.pre_commit.hooks.hook import (
 )
 
 MINIMAL_PYTHON_VERSION_TO_RUN_RUFF = "3.7"
+
+
 class RuffHook(Hook):
     @staticmethod
     def _python_version_to_ruff(python_version: str):

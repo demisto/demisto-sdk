@@ -233,3 +233,12 @@ Or.update_forward_refs()
 
 class AlertsFilter(BaseStrictModel):
     filter: Optional[Union[Or, And]] = None
+
+
+class AgentixBase(BaseStrictModel):
+    common_fields: CommonFields = Field(..., alias="commonfields")
+    tags: Optional[list[str]] = None
+    category: Optional[str] = None
+    name: str
+    description: str
+    disabled: bool = False

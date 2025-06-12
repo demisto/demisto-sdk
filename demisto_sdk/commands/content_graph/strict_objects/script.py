@@ -63,7 +63,7 @@ class ContentItemExportableFields(BaseStrictModel):
 class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     common_fields: CommonFieldsScript = Field(..., alias="commonfields")
     name_x2: Optional[str] = None
-    script: Optional[str] = None # TODO
+    script: Optional[str] = None  # TODO
     type_: ScriptType = Field(..., alias="type")
     tags: Optional[List[str]] = None
     enabled: Optional[bool] = None
@@ -89,10 +89,10 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     skip_prepare: Optional[List[SkipPrepare]] = Field(None, alias="skipprepare")
     prettyname: Optional[str] = None
     compliantpolicies: Optional[List[str]] = Field(None, alias="compliantpolicies")
-    is_llm: bool = Field(False, alias="isLLM")
+    is_llm: bool = Field(False, alias="isllm")
     model: Optional[str] = None
-    user_prompt: Optional[str] = Field(None, alias="userPrompt")
-    system_prompt: Optional[str] = Field(None, alias="systemPrompt")
+    user_prompt: Optional[str] = Field(None, alias="userprompt")
+    system_prompt: Optional[str] = Field(None, alias="systemprompt")
     few_shots: Optional[str] = Field(None, alias="fewshots")
 
     @root_validator
@@ -117,11 +117,13 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
         if values.get("is_llm"):
             # Enforce LLM mode rules
             if "script" in values:
-                errors.append("When 'isLLM' is True, 'script' should not appear in yml.")
+                errors.append(
+                    "When 'isllm' is True, 'script' should not appear in yml."
+                )
             if not values.get("model"):
-                errors.append("When 'isLLM' is True, 'model' must be provided.")
+                errors.append("When 'isllm' is True, 'model' must be provided.")
             if not values.get("user_prompt"):
-                errors.append("When 'isLLM' is True, 'userPrompt' must be provided.")
+                errors.append("When 'isllm' is True, 'userprompt' must be provided.")
         else:
             # Enforce non-LLM mode: all LLM-related fields must be None or empty
             llm_fields = [
@@ -131,7 +133,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
                 ("few_shots", values.get("few_shots")),
             ]
             errors.extend(
-                f"Field '{field_name}' must be empty when 'isLLM' is False."
+                f"Field '{field_name}' must be empty when 'isllm' is False."
                 for field_name, value in llm_fields
                 if value not in [None, ""]
             )
@@ -139,6 +141,15 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
             raise ValueError("Validation failed:\n" + "\n".join(errors))
 
         return values
+
+    # TODO
+    # @root_validator
+    # def validate_script_value(cls, values):
+    #     errors = []
+    #     if not values.get("is_llm", False):
+    #         if "script" not in values or not values.get('script'):
+    #             errors.append("Field script must be specified and not empty.")
+
 
 StrictScript = create_model(
     model_name="StrictScript",

@@ -2592,6 +2592,6 @@ def test_is_marketplace_exists():
     )
 
     assert len(results) == 3
-    assert results[0].message == ("The items AgentixAgent, AgentixAction and Script with isLLM=true"
+    assert results[0].message == ("The items AgentixAgent, AgentixAction and Script with isllm=true"
                                   " should be uploaded to xsoar_saas only. Please specify only xsoar_saas"
                                   " under marketplaces.")

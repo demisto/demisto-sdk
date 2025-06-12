@@ -110,7 +110,10 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         if self.content_type == ContentType.SCRIPT and self.is_llm:
             return set()
         code = self.code
-        if not code and (self.content_type != ContentType.SCRIPT
-                         or self.content_type == ContentType.SCRIPT and not self.is_llm):
+        if not code and (
+            self.content_type != ContentType.SCRIPT
+            or self.content_type == ContentType.SCRIPT
+            and not self.is_llm
+        ):
             raise ValueError("Script code is not available")
         return set(EXECUTE_CMD_PATTERN.findall(code))

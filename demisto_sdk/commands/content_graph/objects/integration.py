@@ -205,7 +205,12 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        if "category" in _dict and path.suffix == ".yml" and "agentid" not in _dict and "color" not in _dict:
+        if (
+            "category" in _dict
+            and path.suffix == ".yml"
+            and "agentid" not in _dict
+            and "color" not in _dict
+        ):
             return True
         return False
 

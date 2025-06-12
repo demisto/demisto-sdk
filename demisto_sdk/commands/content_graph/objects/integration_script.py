@@ -115,7 +115,9 @@ class IntegrationScript(ContentItem):
             if kwargs.get("unify_only")
             else super().prepare_for_upload(current_marketplace)
         )
-        if self.content_type != ContentType.SCRIPT or (self.content_type == ContentType.SCRIPT and not self.is_llm):
+        if self.content_type != ContentType.SCRIPT or (
+            self.content_type == ContentType.SCRIPT and not self.is_llm
+        ):
             data = IntegrationScriptUnifier.unify(
                 self.path, data, current_marketplace, **kwargs
             )

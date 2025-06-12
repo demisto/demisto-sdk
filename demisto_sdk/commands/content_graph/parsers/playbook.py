@@ -13,7 +13,6 @@ class PlaybookParser(BasePlaybookParser, content_type=ContentType.PLAYBOOK):
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
-        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
         """Parses the test playbook.
@@ -26,11 +25,7 @@ class PlaybookParser(BasePlaybookParser, content_type=ContentType.PLAYBOOK):
             IncorrectParserException: When detecting this content item is a test script.
         """
         super().__init__(
-            path,
-            pack_marketplaces,
-            pack_supported_modules,
-            is_test_playbook=False,
-            git_sha=git_sha,
+            path, pack_marketplaces, is_test_playbook=False, git_sha=git_sha
         )
 
     @property

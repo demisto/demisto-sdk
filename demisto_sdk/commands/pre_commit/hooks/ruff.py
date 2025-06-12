@@ -35,7 +35,7 @@ class RuffHook(Hook):
         ruff_hook_ids = []
 
         for python_version in self.context.python_version_to_files:
-            if parse(python_version) < parse(MINIMAL_PYTHON_VERSION_RO_RUN_RUFF):
+            if parse(python_version) < parse(MINIMAL_PYTHON_VERSION_TO_RUN_RUFF):
                 continue
 
             ruff_python_version = f"ruff-py{python_version}"

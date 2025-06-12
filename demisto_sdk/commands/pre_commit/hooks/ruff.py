@@ -2,12 +2,16 @@ import os
 from copy import deepcopy
 from typing import Any, Dict
 
+from packaging.version import parse
+
 from demisto_sdk.commands.pre_commit.hooks.hook import (
     GeneratedHooks,
     Hook,
     join_files,
     safe_update_hook_args,
 )
+
+MINIMAL_PYTHON_VERSION_TO_RUN_RUFF = "3.7"
 
 
 class RuffHook(Hook):
@@ -33,6 +37,9 @@ class RuffHook(Hook):
         ruff_hook_ids = []
 
         for python_version in self.context.python_version_to_files:
+            if parse(python_version) < parse(MINIMAL_PYTHON_VERSION_TO_RUN_RUFF):
+                continue
+
             ruff_python_version = f"ruff-py{python_version}"
             hook: Dict[str, Any] = {
                 "name": ruff_python_version,

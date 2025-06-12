@@ -1,0 +1,4 @@
+changes:
+- description: Update the pre-commit SDK configuration to only run ruff on Python versions >= 3.7.
+  type: internal
+pr_number: 4964

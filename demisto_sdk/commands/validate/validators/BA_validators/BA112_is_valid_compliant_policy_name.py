@@ -38,7 +38,7 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 invalid_policy_names
-                := self.get_contnet_item_invalid_compliant_policies(
+                := self.get_invalid_compliant_policies(
                     content_item, valid_compliant_policy_names
                 )
             )
@@ -58,9 +58,9 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
             if policy.get("name")
         }
 
-    def get_contnet_item_invalid_compliant_policies(
+    def get_invalid_compliant_policies(
         self, content_item: ContentTypes, valid_compliant_policy_names: Set[str]
-    ) -> Set[str]:
+    ) -> list[str]:
         """
         Check if a content item (Integration or Script) contains invalid compliant policy names.
 
@@ -69,12 +69,11 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
             valid_compliant_policy_names: Set of valid compliant policy names
 
         Returns:
-            Set[str]: Set of invalid policy names found in the content item
+            list[str]: A list of sorted, invalid policy names found in the content item
         """
         all_policies = set()
 
         if isinstance(content_item, Integration):
-            # Collect all policies from all commands in the integration
             for command in content_item.commands:
                 if command.compliantpolicies:
                     all_policies.update(command.compliantpolicies)
@@ -82,4 +81,4 @@ class IsValidCompliantPolicyNameValidator(BaseValidator[ContentTypes]):
             all_policies.update(content_item.compliantpolicies)
 
         # Use set difference to find invalid policies efficiently
-        return all_policies - valid_compliant_policy_names
+        return sorted(list(all_policies - valid_compliant_policy_names))

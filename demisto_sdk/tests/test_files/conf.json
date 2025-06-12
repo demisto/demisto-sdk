@@ -47,7 +47,7 @@
         "CommonScripts"
     ],
     "selected_nightly_tpb": [
-        "test test"
+        "example test playbook"
     ],
     "parallel_integrations": [
         "AWS - ACM"

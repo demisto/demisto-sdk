@@ -87,11 +87,11 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     error_message = "The following mandatory dependencies missing required modules: {0}"
     related_field = "supportedModules"
     is_auto_fixable = False
-    # expected_git_statuses = [
-    #     GitStatuses.ADDED,
-    #     GitStatuses.MODIFIED,
-    #     GitStatuses.RENAMED,
-    # ]
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
     related_file_type = [RelatedFileType.SCHEMA]
 
     def obtain_invalid_content_items_using_graph(

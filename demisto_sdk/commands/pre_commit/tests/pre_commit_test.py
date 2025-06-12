@@ -320,9 +320,7 @@ def test_ruff_hook_nightly_mode(mocker):
 
     RuffHook(**ruff_hook).prepare_hook()
 
-    for hook, _ in itertools.zip_longest(
-        ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
-    ):
+    for hook in ruff_hook["repo"]["hooks"]:
         hook_args = hook["args"]
         assert "--fix" not in hook_args
         assert "--config=nightly_ruff.toml" in hook_args

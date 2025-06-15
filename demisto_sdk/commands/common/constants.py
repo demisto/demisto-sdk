@@ -120,6 +120,7 @@ ASSETS_MODELING_RULES_DIR = "AssetsModelingRules"
 CASE_LAYOUT_RULES_DIR = "CaseLayoutRules"
 CASE_LAYOUTS_DIR = "CaseLayouts"
 CASE_FIELDS_DIR = "CaseFields"
+TEST_DATA_DIR = "test_data"
 
 # NAMES OF ENTITIES
 

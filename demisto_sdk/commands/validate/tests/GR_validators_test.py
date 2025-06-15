@@ -61,6 +61,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR108_is_invalid_pac
 from demisto_sdk.commands.validate.validators.GR_validators.GR108_is_invalid_packs_dependencies_valid_list_files import (
     IsInvalidPacksDependenciesValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_compatibility_all_files import (
+    IsSupportedModulesCompatibilityAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_compatibility_list_files import (
+    IsSupportedModulesCompatibilityListFiles,
+)
 from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
@@ -1109,3 +1115,102 @@ def test_IsInvalidPacksDependenciesValidatorListFiles(repo_for_test_gr_108: Repo
         )
     )
     assert not results
+
+
+@pytest.fixture
+def repo_for_test_gr_109(graph_repo: Repo):
+    """
+    Creates a test repository with three packs for testing GR109 validator.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains Script1, Script2 and Integration1 that
+              Script1  uses a command from Pack_b and configured with `supportedModules: ["module_x"]`.
+              script2 and integration for additional testing scenarios.
+    - Pack B: Contains "SearchIncidents" script.
+              Note: "Pack B" does *not* list "module_x" in its supportedModules.
+    """
+    yml = {
+        "commonfields": {"id": "Script1", "version": -1},
+        "name": "Script1",
+        "comment": "this is script Script1",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_x"],
+    }
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {"marketplaces": [MarketplaceVersions.MarketplaceV2.value]}
+    )
+    pack_a.create_script(
+        "Script1", code='demisto.executeCommand("SearchAlerts", {})', yml=yml
+    )
+    pack_a.create_script("Script2", code='demisto.executeCommand("SearchAlerts", {})')
+    pack_a.create_integration("Integration1")
+
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.XSOAR.value,
+            ]
+        }
+    )
+    pack_b.create_script(
+        "SearchIncidents", code='demisto.executeCommand("SearchIncidents", {})'
+    )
+
+    return graph_repo
+
+
+def test_SupportedModulesCompatibility_invalid_all_files(
+    repo_for_test_gr_109: Repo,
+):
+    """
+    Given:
+        A repository where "Script1" (with `supportedModules: ['module_x']`)
+        depends on "SearchIncidents", which does not support "module_x".
+    When:
+        Running the IsSupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should identify "Script1" as invalid, reporting that "SearchIncidents" is missing "module_x".
+    """
+    graph_interface = repo_for_test_gr_109.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following mandatory dependencies missing required modules: SearchIncidents is missing: [module_x]"
+    )
+    assert results[0].content_object.object_id == "Script1"
+
+
+def test_SupportedModulesCompatibility_invalid_list_files(
+    repo_for_test_gr_109: Repo,
+):
+    """
+    Given:
+        A repository where "Script1" (with `supportedModules: ['module_x']`)
+        depends on "SearchIncidents", which does not support "module_x".
+    When:
+        The IsSupportedModulesCompatibility validator runs specifically on "Script1".
+    Then:
+        The validator should identify "Script1" as invalid, reporting that "SearchIncidents"
+        is missing the required "module_x".
+    """
+    graph_interface = repo_for_test_gr_109.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsSupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+        [repo_for_test_gr_109.packs[0].scripts[0].object]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following mandatory dependencies missing required modules: SearchIncidents is missing: [module_x]"
+    )
+    assert results[0].content_object.object_id == "Script1"

@@ -23,7 +23,7 @@ class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentType
     related_field = ""
     is_auto_fixable = False
     # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
-    related_file_type = [RelatedFileType.README]
+    related_file_type = [RelatedFileType.YML]
 
     def obtain_invalid_content_items_using_graph(self, content_items: Iterable[ContentTypes],
                                                  validate_all_files: bool) -> List[ValidationResult]:

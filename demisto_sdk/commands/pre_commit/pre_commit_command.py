@@ -663,7 +663,7 @@ def pre_commit_manager(
 def add_related_files(file: Path) -> Set[Path]:
     """This returns the related files set, including the original file
     If the file is `.yml`, it will add the `.py` file and the test file.
-    If the file is `.py` or `.ps1`, it will add the tests file.
+    If the file is `.py` or `.ps1` or in 'test_datd' folder, it will add the tests file.
 
     Args:
         file (Path): The file to add related files for.
@@ -678,17 +678,19 @@ def add_related_files(file: Path) -> Set[Path]:
         if py_file_path.exists():
             files_to_run.add(py_file_path)
 
+    # Identifying test files
+
     # if the file in test_data:
     # find the integration_iter directory and then test_files
     if (
         set(file.parts) & {TEST_DATA_DIR}
-        and file.parts[0] == PACKS_FOLDER  # this is relative path so it works
+        and file.parts[0] == PACKS_FOLDER
     ):
         test_data_index = file.parts.index(TEST_DATA_DIR)
         path_to_test_data_folder_parts = Path(*file.parts[:test_data_index + 1])
         test_data_changed = True
 
-    # Determine the test file suffix
+    # Check if source code file change
     has_python_related_file = any(".py" in f.suffix for f in files_to_run)
     has_pwrshell_related_file = any(".ps1" in f.suffix for f in files_to_run)
 
@@ -696,12 +698,14 @@ def add_related_files(file: Path) -> Set[Path]:
     if not (has_python_related_file or has_pwrshell_related_file or test_data_changed):
         return files_to_run
 
+    # Determine the test file suffix
     test_file_suffix = (
         PY_TEST_FILE_SUFFIX
         if has_python_related_file or test_data_changed
         else PS1_TEST_FILE_SUFFIX
     )
 
+    # Determine the path to start search for test files
     if has_python_related_file or has_pwrshell_related_file:
         path_file = file
     else:

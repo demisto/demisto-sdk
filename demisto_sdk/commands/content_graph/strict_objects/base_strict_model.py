@@ -242,3 +242,5 @@ class AgentixBase(BaseStrictModel):
     name: str
     description: str
     disabled: bool = False
+    marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
+    supportedModules: Optional[List[str]] = None

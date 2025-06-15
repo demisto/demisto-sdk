@@ -123,9 +123,7 @@ def create_parsing_rule_object(
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
     parsing_rule = pack.create_parsing_rule("TestParsingRule", yml_content)
-    parser = ParsingRuleParser(
-        Path(parsing_rule.path), list(MarketplaceVersions), pack_supported_modules=[]
-    )
+    parser = ParsingRuleParser(Path(parsing_rule.path), list(MarketplaceVersions))
     return ParsingRule.from_orm(parser)
 
 
@@ -183,9 +181,7 @@ def create_playbook_object(
     playbook = pack.create_playbook(**additional_params)
     playbook.create_default_playbook(name="sample")
     playbook.yml.update(yml_content)
-    parser = PlaybookParser(
-        Path(playbook.path), list(MarketplaceVersions), pack_supported_modules=[]
-    )
+    parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
     return Playbook.from_orm(parser)
 
 
@@ -218,9 +214,7 @@ def create_test_playbook_object(
     playbook = pack.create_test_playbook(**additional_params)
     playbook.create_default_test_playbook(name="sample")
     playbook.yml.update(yml_content)
-    parser = TestPlaybookParser(
-        Path(playbook.path), list(MarketplaceVersions), pack_supported_modules=[]
-    )
+    parser = TestPlaybookParser(Path(playbook.path), list(MarketplaceVersions))
     return TestPlaybook.from_orm(parser)
 
 

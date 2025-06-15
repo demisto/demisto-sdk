@@ -636,9 +636,6 @@ def pre_commit_manager(
         return 1
 
     logger.info(f"Running pre-commit using template {pre_commit_template_path}")
-    logger.info(f"input files {input_files}")
-    for key in language_to_files_with_objects.keys():
-        logger.info(f"key {key} with len {len(language_to_files_with_objects[key])} ")
 
     pre_commit_context = PreCommitContext(
         list(input_files) if input_files else None,
@@ -691,35 +688,34 @@ def add_related_files(file: Path) -> Set[Path]:
         path_to_test_data_folder_parts = Path(*file.parts[:test_data_index + 1])
         test_data_changed = True
 
-    # Identifying test files by their suffix.
-    if not {".py", ".ps1"}.intersection({file.suffix for file in files_to_run}) and not test_data_changed:
+    # Determine the test file suffix
+    has_python_related_file = any(".py" in f.suffix for f in files_to_run)
+    has_pwrshell_related_file = any(".ps1" in f.suffix for f in files_to_run)
+
+    # Early exit if no relevant test files are expected
+    if not (has_python_related_file or has_pwrshell_related_file or test_data_changed):
         return files_to_run
 
     test_file_suffix = (
         PY_TEST_FILE_SUFFIX
-        if ".py" in (file.suffix for file in files_to_run) or test_data_changed
+        if has_python_related_file or test_data_changed
         else PS1_TEST_FILE_SUFFIX
     )
-    if test_data_changed:
-        test_files = []
-        if path_to_test_data_folder_parts.exists():
-            test_files = [
-                _file
-                for _file in path_to_test_data_folder_parts.iterdir()
-                if _file.name.endswith(test_file_suffix)
-            ]
-            files_to_run.update(test_files)
+
+    if has_python_related_file or has_pwrshell_related_file:
+        path_file = file
+    else:
+        path_file = path_to_test_data_folder_parts
+
 
     test_files = []
-    if file.parent.exists():
+    if path_file.parent.exists():
         test_files = [
             _file
-            for _file in file.parent.iterdir()
+            for _file in path_file.parent.iterdir()
             if _file.name.endswith(test_file_suffix)
         ]
         files_to_run.update(test_files)
-
-    logger.info(f"files_to_run: {files_to_run}")
 
     return files_to_run
 

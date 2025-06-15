@@ -100,7 +100,7 @@ In this example, both hooks will be skipped.
 ```
 
 ### parallel key
-The parallel key indicates whether a hook should run in parallel, by default hooks such as ruff and docker produce multiple hooks which run in parallel.
+The parallel key indicates whether a hook should run in parallel, by default hooks such as mypy, ruff and docker produce multiple hooks which run in parallel.
 Default is True. In order to avoid running a specific hook in parallel you can set it to `false`. When setting the parallel of a hook to `false`, a split hook will run sequentially.
 ```yaml
 - id: sample-hook

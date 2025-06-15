@@ -663,7 +663,7 @@ def pre_commit_manager(
 def add_related_files(file: Path) -> Set[Path]:
     """This returns the related files set, including the original file
     If the file is `.yml`, it will add the `.py` file and the test file.
-    If the file is `.py` or `.ps1` or in 'test_datd' folder, it will add the tests file.
+    If the file is `.py` or `.ps1` or in 'test_data' folder, it will add the tests file.
 
     Args:
         file (Path): The file to add related files for.
@@ -683,7 +683,7 @@ def add_related_files(file: Path) -> Set[Path]:
     # if the file in test_data:
     # find the integration_iter directory and then test_files
     if (
-        set(file.parts) & {TEST_DATA_DIR}
+        TEST_DATA_DIR in file.parts
         and file.parts[0] == PACKS_FOLDER
     ):
         test_data_index = file.parts.index(TEST_DATA_DIR)

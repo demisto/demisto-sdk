@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where **fetch-assets** could appear as available for unsupported marketplaces in integration metadata.
-  type: fix
-pr_number: 4943

@@ -1,0 +1,4 @@
+changes:
+- description: Removed mitmproxy package as it is no longer used.
+  type: fix
+pr_number: 4952

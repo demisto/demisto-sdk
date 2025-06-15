@@ -4,13 +4,14 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
     AgentixAgent,
+    Script
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = Union[AgentixAgent, AgentixAction]
+ContentTypes = Union[AgentixAgent, AgentixAction, Script]
 
 
 class IsForbiddenContentItemValidator(BaseValidator[ContentTypes]):
@@ -18,7 +19,7 @@ class IsForbiddenContentItemValidator(BaseValidator[ContentTypes]):
     description = "We should not push these items to the Content repository."
     rationale = "These types of items should be stored in a private repository."
     error_message = (
-        f"The items {ContentType.AGENTIX_AGENT} and {ContentType.AGENTIX_ACTION}"
+        f"The items {ContentType.AGENTIX_AGENT} and {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with is_llm=True"
         f" should be stored in content-test-conf, not in Content"
     )
 
@@ -40,4 +41,4 @@ class IsForbiddenContentItemValidator(BaseValidator[ContentTypes]):
         return content_item.content_type in [
             ContentType.AGENTIX_AGENT,
             ContentType.AGENTIX_ACTION,
-        ]
+        ] or (content_item.content_type == ContentType.SCRIPT and content_item.is_llm)

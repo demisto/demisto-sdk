@@ -133,6 +133,11 @@ mapping:
   prettyname:
       type: str
 
+  compliantpolicies:
+    type: seq
+    sequence:
+    - type: str
+
 # script->args
   name:xsoar:
     type: str

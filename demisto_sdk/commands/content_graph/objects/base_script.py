@@ -1,4 +1,4 @@
-from typing import Callable, List, Set, Union
+from typing import Callable, List, Optional, Set, Union
 
 import demisto_client
 from pydantic import DirectoryPath, Field
@@ -34,6 +34,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
     runas: str = ""
     args: List[Argument] = Field([], exclude=True)
     outputs: List[Output] = Field([], exclude=True)
+    compliantpolicies: Optional[list[str]] = Field([])
 
     def metadata_fields(self) -> Set[str]:
         return (

@@ -363,8 +363,6 @@ def _validate(path: Path) -> None:
         ):
             raise InvalidXSIAMParsingRuleFileName
 
-        elif first_level_folder == AGE
-
 
 def _validate_image_file_name(image_name: str):
     if INVALID_CHARS_IN_IMAGES_REGEX.findall(image_name):

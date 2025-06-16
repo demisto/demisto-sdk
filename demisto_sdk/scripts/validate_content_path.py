@@ -290,6 +290,7 @@ def _validate(path: Path) -> None:
             raise InvalidDepthZeroFile
         return  # following checks assume the depth>0, so we stop here
     logger.info(f"{parts_inside_pack=}")
+    logger.info(f"{DEPTH_ONE_FOLDERS=}")
     if (first_level_folder := parts_inside_pack[0]) not in DEPTH_ONE_FOLDERS:
         raise InvalidDepthOneFolder
 

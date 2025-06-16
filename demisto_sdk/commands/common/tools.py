@@ -3156,6 +3156,31 @@ def get_current_categories() -> list:
     return approved_categories_json.get("approved_list", [])
 
 
+def get_compliant_polices() -> list:
+    """
+    Gets compliant policies list from current branch (only in content repo).
+
+    Returns:
+        List of compliant policies from current branch.
+    """
+    if is_external_repository():
+        return []
+    try:
+        compliant_policies_json, _ = get_dict_from_file(
+            "Config/compliant_policies.json"
+        )
+    except FileNotFoundError:
+        logger.warning(
+            "File compliant_policies.json was not found. Getting from remote."
+        )
+        compliant_policies_json = get_remote_file("Config/compliant_policies.json")
+    return (
+        compliant_policies_json.get("policies", [])
+        if isinstance(compliant_policies_json, dict)
+        else []
+    )
+
+
 @contextmanager
 def suppress_stdout():
     """

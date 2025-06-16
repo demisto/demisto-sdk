@@ -80,8 +80,6 @@ class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentType
                 if integration.object_id == pack_id:
                     return True
         elif content_item_type == "script":
-            for script in graph_result[0].scripts:
-                if script.object_id == pack_id:
-                    return True
+            return True
 
         return False

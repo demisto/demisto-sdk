@@ -1,4 +1,0 @@
-changes:
-- description: Fixed the command **demisto-sdk split** to catch the new format of the integration debug information, and updated the contribution converter script respectively.
-  type: internal
-pr_number: 4958

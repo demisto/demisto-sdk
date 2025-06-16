@@ -9,6 +9,8 @@ from tqdm import tqdm
 from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import (
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
     AUTHOR_IMAGE_FILE_NAME,
     CASE_FIELDS_DIR,
     CASE_LAYOUTS_DIR,
@@ -50,8 +52,6 @@ from demisto_sdk.commands.common.constants import (
     WIZARDS_DIR,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
-    AGENTIX_ACTIONS_DIR,
-    AGENTIX_AGENTS_DIR,
 )
 from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -115,9 +115,9 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         WIDGETS_DIR,
         WIZARDS_DIR,
         LAYOUT_RULES_DIR,
-        *TESTS_AND_DOC_DIRECTORIES,
         AGENTIX_AGENTS_DIR,
-        AGENTIX_AGENTS_DIR
+        AGENTIX_ACTIONS_DIR
+        *TESTS_AND_DOC_DIRECTORIES,
     )
 )
 
@@ -308,7 +308,7 @@ def _validate(path: Path) -> None:
 
     if depth == 1:  # Packs/myPack/<first level folder>/<the file>
         _exempt_unified_files(path, first_level_folder)  # Raises PathIsUnified
-
+        logger.info(f"{DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES=}")
         if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise InvalidDepthOneFile

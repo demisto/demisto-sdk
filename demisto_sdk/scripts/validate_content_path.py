@@ -50,6 +50,8 @@ from demisto_sdk.commands.common.constants import (
     WIZARDS_DIR,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
 )
 from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -251,7 +253,7 @@ class PathIsTestData(ExemptedPath):
 
 def _validate(path: Path) -> None:
     """Runs the logic and raises exceptions on skipped/errorneous paths"""
-    logger.debug(f"checking {path}")
+    logger.info(f"checking {path}")
     if path.is_dir():
         raise PathIsFolder
     if PACKS_FOLDER not in path.parts:
@@ -287,7 +289,7 @@ def _validate(path: Path) -> None:
         if path.name not in ZERO_DEPTH_FILES:
             raise InvalidDepthZeroFile
         return  # following checks assume the depth>0, so we stop here
-
+    logger.info(f"{parts_inside_pack=}")
     if (first_level_folder := parts_inside_pack[0]) not in DEPTH_ONE_FOLDERS:
         raise InvalidDepthOneFolder
 
@@ -360,6 +362,8 @@ def _validate(path: Path) -> None:
             path.stem == path.parent.name and path.suffix in {".yml", ".xif"}
         ):
             raise InvalidXSIAMParsingRuleFileName
+
+        elif first_level_folder == AGE
 
 
 def _validate_image_file_name(image_name: str):

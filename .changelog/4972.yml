@@ -1,4 +1,4 @@
 changes:
-- description: Changes in test_data folder trigger the unit-tests hook in pre-commit
+- description: Changes in test_data folder trigger the unit-tests hook in pre-commit.
   type: internal
 pr_number: 4972

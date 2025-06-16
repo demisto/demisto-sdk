@@ -1,4 +1,18 @@
 # Changelog
+## 1.38.4 (2025-06-16)
+### Feature
+* Added the MyPy pre-commit hook [#4963](https://github.com/demisto/demisto-sdk/pull/4963)
+
+### Fix
+* Removed mitmproxy package as it is no longer used. [#4952](https://github.com/demisto/demisto-sdk/pull/4952)
+* Bump werkzeug from version 2.3.8 to 3.1.3. [#4858](https://github.com/demisto/demisto-sdk/pull/4858)
+
+### Internal
+* Update the pre-commit SDK configuration to only run ruff on Python versions >= 3.7. [#4964](https://github.com/demisto/demisto-sdk/pull/4964)
+* Fixed the command **demisto-sdk split** to catch the new format of the integration debug information, and updated the contribution converter script respectively. [#4958](https://github.com/demisto/demisto-sdk/pull/4958)
+* Added support for a new section in the conf.json file. [#4969](https://github.com/demisto/demisto-sdk/pull/4969)
+
+
 ## 1.38.3 (2025-06-08)
 ### Feature
 * Added support for the new `compliantpolicies` key in integrations and scripts. [#4953](https://github.com/demisto/demisto-sdk/pull/4953)

@@ -708,7 +708,6 @@ def add_related_files(file: Path) -> Set[Path]:
     else:
         path_file = path_to_test_data_folder_parts
 
-
     test_files = []
     if path_file.parent.exists():
         test_files = [

@@ -177,6 +177,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     tasks: Dict[str, TaskConfig] = Field([], exclude=True)
     quiet: bool = Field(False)
     tags: List[str] = Field([])
+    tests: List[str] = Field([])
 
     def prepare_for_upload(
         self,
@@ -232,6 +233,14 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     @cached_property
     def image(self) -> ImageRelatedFile:
         return ImageRelatedFile(self.path, git_sha=self.git_sha)
+
+    @property
+    def test_use_case_names(self) -> Set[str]:
+        return {test for test in self.tests if test.endswith("use_case_test")}
+
+    @property
+    def test_playbook_ids(self) -> Set[str]:
+        return {test for test in self.tests if test not in self.test_use_case_names}
 
     def metadata_fields(self) -> Set[str]:
         return (

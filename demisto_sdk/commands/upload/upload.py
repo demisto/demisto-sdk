@@ -1,6 +1,7 @@
 import shutil
 import tempfile
 from contextlib import suppress
+from itertools import zip_longest
 from pathlib import Path
 from typing import Iterable, List, Sequence
 from zipfile import ZipFile
@@ -34,6 +35,7 @@ def upload_content_entity(**kwargs):
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 
     inputs = parse_multiple_path_inputs(kwargs.get("input"))
+    private_packs_paths = parse_multiple_path_inputs(kwargs.get('private_packs_path'))
 
     keep_zip = kwargs.pop("keep_zip", None)
     destination_zip_path = Path(keep_zip or tempfile.mkdtemp())
@@ -71,11 +73,13 @@ def upload_content_entity(**kwargs):
     kwargs.pop("input")
     # Here the magic happens
     upload_result = SUCCESS_RETURN_CODE
-    for input in inputs:
+    paths = list(zip_longest(inputs, private_packs_paths))
+    for input,private_pack_path in paths:
         result = Uploader(
             input=input,
             marketplace=marketplace,
             destination_zip_dir=destination_zip_path,
+            private_pack_path=private_pack_path,
             **kwargs,
         ).upload()
         if result == ABORTED_RETURN_CODE:

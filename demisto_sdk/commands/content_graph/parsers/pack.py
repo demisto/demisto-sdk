@@ -255,7 +255,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
     content_type = ContentType.PACK
 
     def __init__(
-        self, path: Path, git_sha: Optional[str] = None, metadata_only: bool = False, private_packs_path: Path = None
+        self, path: Path, git_sha: Optional[str] = None, metadata_only: bool = False, private_pack_path: Path = None
     ) -> None:
         """Parses a pack and its content items.
 
@@ -265,7 +265,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         if path.name == PACK_METADATA_FILENAME:
             path = path.parent
         BaseContentParser.__init__(self, path)
-        self.private_packs_path = private_packs_path
+        self.private_pack_path = private_pack_path
         self.structure_errors: List[StructureError] = self.validate_structure()
 
         try:
@@ -339,7 +339,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
                 content_item_path
             ) in folder_path.iterdir():  # todo: consider multiprocessing
                 self.parse_content_item(content_item_path)
-        if self.private_packs_path:
+        if self.private_pack_path:
             self.parse_content_test_conf_folders()
 
     def parse_content_item(self, content_item_path: Path) -> None:
@@ -363,9 +363,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     def parse_content_test_conf_folders(self):
         logger.info("Checking if content-test-conf repo has additional content items.")
-        if self.private_packs_path.is_dir():
-            logger.info(f"{str(self.private_packs_path)} is a dir.")
-            for folder_path in ContentType.pack_folders(self.private_packs_path):
+        if self.private_pack_path.is_dir():
+            logger.info(f"{str(self.private_pack_path)} is a dir.")
+            for folder_path in ContentType.pack_folders(self.private_pack_path):
                 for (
                     content_item_path
                 ) in folder_path.iterdir():  # todo: consider multiprocessing

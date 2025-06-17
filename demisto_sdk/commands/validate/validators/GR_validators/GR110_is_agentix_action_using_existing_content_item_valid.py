@@ -37,7 +37,8 @@ class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentType
             content_item_type = content_item.underlying_content_item_type
             content_item_id = content_item.underlying_content_item_id
 
-            if content_item_id in ["_any_", "_builtin_"]:  # no validation when the action wraps a builtin or enrich command
+            if content_item_id in ["_any_", "_builtin_"]:
+                # Actions that wrap built-in or enrich commands are not validated
                 continue
 
             if content_item_type not in ["command", "script"]:  # Validate when the action wraps a command or script
@@ -81,9 +82,10 @@ class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentType
 
         if content_item_type == "command":
             for item in graph_result:
-                if type(item.content_type) == ContentType.COMMAND:
-                    if item.integrations[0].object_id == content_item_id:
-                        return True
+                if item.content_type == ContentType.COMMAND:
+                    for integration in item.integrations:
+                        if integration.object_id == content_item_id:
+                            return True
         elif content_item_type == "script":
             return True
 

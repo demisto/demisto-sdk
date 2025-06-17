@@ -23,22 +23,20 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         )
         self.agent_id: str = self.yml_data.get("agentid")
         self.underlying_content_item_id: str = self.yml_data.get(
-            "underlyingcontentitemid"
-        )
+            "underlyingcontentitem").get('id')
         self.underlying_content_item_name: str = self.yml_data.get(
-            "underlyingcontentitemname"
-        )
+            "underlyingcontentitem").get('name')
         self.underlying_content_item_type: str = self.yml_data.get(
-            "underlyingcontentitemtype"
-        )
+            "underlyingcontentitem").get('type')
+        self.underlying_content_item_command: str = self.yml_data.get(
+            "underlyingcontentitem").get('command')
         self.underlying_content_item_version: int = self.yml_data.get(
-            "underlyingcontentitemversion"
-        )
+            "underlyingcontentitem").get('version')
         self.underlying_content_item_pack_version: str = self.yml_data.get(
             "underlyingcontentitempackversion"
         )
         self.requires_user_approval: bool = self.yml_data.get("requiresuserapproval")
-        self.example_prompts: Optional[list[str]] = self.yml_data.get("exampleprompts")
+        self.few_shots: Optional[list[str]] = self.yml_data.get("fewshots")
 
     @cached_property
     def field_mapping(self):

@@ -1,6 +1,5 @@
 from __future__ import annotations
-
-import logging
+import re
 from abc import ABC
 
 from typing import Iterable, List
@@ -15,6 +14,22 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = AgentixAction
+
+
+def replace_alerts_with_incidents(text: str) -> str:
+    def replacer(match):
+        word = match.group()
+        replacement = "incidents" if word.lower() == "alerts" else "incident"
+        # Match the original casing
+        if word.isupper():
+            return replacement.upper()
+        elif word[0].isupper():
+            return replacement.capitalize()
+        else:
+            return replacement
+
+    # Match case-insensitive "alert" or "alerts"
+    return re.sub(r'alerts?', replacer, text, flags=re.IGNORECASE)
 
 
 class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentTypes], ABC):
@@ -52,6 +67,13 @@ class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentType
                 continue
 
             graph_result = self.graph.search(object_id=name)
+
+            replaced_name = replace_alerts_with_incidents(name)
+
+            # Check again with incident/s instead of alert/s if some content items appear in a few names
+            if not graph_result and name != replaced_name:
+                name = replaced_name
+                graph_result = self.graph.search(object_id=name)
 
             if not graph_result:  # the command or the script does not exist in the Content repo
                 results.append(

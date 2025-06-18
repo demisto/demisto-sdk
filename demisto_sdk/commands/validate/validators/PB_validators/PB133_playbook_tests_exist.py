@@ -26,16 +26,6 @@ class PlaybookTestsExistValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        """Obtains playbooks where tests referenced in the YML do not exist in the appropriate
-        directory in the pack.
-
-        Args:
-            content_items (Iterable[ContentTypes]): Playbooks to be validated.
-
-        Returns:
-            List[ValidationResult]: List of ValidationResult objects for any referenced tests
-                                    that do not exist in the pack.
-        """
         validation_results: List[ValidationResult] = []
 
         for content_item in content_items:
@@ -49,21 +39,19 @@ class PlaybookTestsExistValidator(BaseValidator[ContentTypes]):
             pack_test_playbook_ids = {
                 test_playbook.id for test_playbook in pack.test_playbooks
             }
-            validation_results.extend(
-                [
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            id=content_item.object_id,
-                            test_name=test_playbook_id,
-                            test_dir_name="TestPlaybooks",
-                        ),
-                        content_object=content_item,
-                    )
-                    for test_playbook_id in content_item.test_playbook_ids
-                    if test_playbook_id not in pack_test_playbook_ids
-                ]
-            )
+            validation_results += [
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message.format(
+                        id=content_item.object_id,
+                        test_name=test_playbook_id,
+                        test_dir_name="TestPlaybooks",
+                    ),
+                    content_object=content_item,
+                )
+                for test_playbook_id in content_item.test_playbook_ids
+                if test_playbook_id not in pack_test_playbook_ids
+            ]
 
             test_use_cases_dir = pack.path / "TestUseCases"
             if test_use_cases_dir.exists():
@@ -72,20 +60,18 @@ class PlaybookTestsExistValidator(BaseValidator[ContentTypes]):
                 pack_test_use_case_names = {
                     test_use_case.name for test_use_case in pack.test_use_cases
                 }
-                validation_results.extend(
-                    [
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message.format(
-                                id=content_item.object_id,
-                                test_name=test_use_case_name,
-                                test_dir_name="TestUseCases",
-                            ),
-                            content_object=content_item,
-                        )
-                        for test_use_case_name in content_item.test_use_case_names
-                        if test_use_case_name not in pack_test_use_case_names
-                    ]
-                )
+                validation_results += [
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
+                            id=content_item.object_id,
+                            test_name=test_use_case_name,
+                            test_dir_name="TestUseCases",
+                        ),
+                        content_object=content_item,
+                    )
+                    for test_use_case_name in content_item.test_use_case_names
+                    if test_use_case_name not in pack_test_use_case_names
+                ]
 
         return validation_results

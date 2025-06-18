@@ -53,25 +53,27 @@ class PlaybookTestsExistValidator(BaseValidator[ContentTypes]):
                 if test_playbook_id not in pack_test_playbook_ids
             ]
 
+            # Optional since "TestUseCases" folder may not exist in the environment
             test_use_cases_dir = pack.path / "TestUseCases"
-            if test_use_cases_dir.exists():
-                # Optional since "TestUseCases" folder may not exist in the environment
-                logger.debug(f"Validating against test use cases under {pack.name}.")
-                pack_test_use_case_names = {
-                    test_use_case.name for test_use_case in pack.test_use_cases
-                }
-                validation_results += [
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            id=content_item.object_id,
-                            test_name=test_use_case_name,
-                            test_dir_name="TestUseCases",
-                        ),
-                        content_object=content_item,
-                    )
-                    for test_use_case_name in content_item.test_use_case_names
-                    if test_use_case_name not in pack_test_use_case_names
-                ]
+            if not test_use_cases_dir.exists():
+                continue
+
+            logger.debug(f"Validating against test use cases under {pack.name}.")
+            pack_test_use_case_names = {
+                test_use_case.name for test_use_case in pack.test_use_cases
+            }
+            validation_results += [
+                ValidationResult(
+                    validator=self,
+                    message=self.error_message.format(
+                        id=content_item.object_id,
+                        test_name=test_use_case_name,
+                        test_dir_name="TestUseCases",
+                    ),
+                    content_object=content_item,
+                )
+                for test_use_case_name in content_item.test_use_case_names
+                if test_use_case_name not in pack_test_use_case_names
+            ]
 
         return validation_results

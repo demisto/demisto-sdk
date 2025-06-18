@@ -646,7 +646,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             return []
 
         related_files: List[TestPlaybookRelatedFile] = []
-        for test_playbook_path in pack_test_playbooks_path.iterdir():
+        for test_playbook_path in pack_test_playbooks_path.rglob("*.yml"):
             related_files.append(
                 TestPlaybookRelatedFile(
                     main_file_path=self.path,
@@ -662,12 +662,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             return []
 
         related_files: List[TestUseCaseRelatedFile] = []
-        for test_use_case_path in pack_test_use_cases_path.rglob("*"):
-            if not test_use_case_path.is_file():
-                continue
-
+        for test_use_case_path in pack_test_use_cases_path.rglob("*.py"):
             file_name = get_relative_path(
-                file_path=test_use_case_path, relative_to=pack_test_use_cases_path
+                file_path=test_use_case_path, relative_to=pack_test_use_cases_path,
             )
             related_files.append(
                 TestUseCaseRelatedFile(

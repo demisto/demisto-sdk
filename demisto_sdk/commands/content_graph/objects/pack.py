@@ -664,7 +664,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         related_files: List[TestUseCaseRelatedFile] = []
         for test_use_case_path in pack_test_use_cases_path.rglob("*.py"):
             file_name = get_relative_path(
-                file_path=test_use_case_path, relative_to=pack_test_use_cases_path,
+                file_path=test_use_case_path,
+                relative_to=pack_test_use_cases_path,
             )
             related_files.append(
                 TestUseCaseRelatedFile(

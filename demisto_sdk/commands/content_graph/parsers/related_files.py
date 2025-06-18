@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.files import TextFile
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON5_HANDLER as json5
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_child_files
 
@@ -389,3 +390,49 @@ class TestCodeRelatedFile(CodeRelatedFile):
             self.main_file_path.parent
             / f"{self.main_file_path.parts[-2]}_test{self.suffix}"
         ]
+
+
+class TestPlaybookRelatedFile(TextFiles):
+    file_type = RelatedFileType.YML
+
+    def __init__(
+        self,
+        main_file_path: Path,
+        playbook_file_name: str,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        self.file_name = playbook_file_name
+        super().__init__(main_file_path, git_sha, prev_ver)
+
+    def get_optional_paths(self) -> List[Path]:
+        return [self.main_file_path / "TestPlaybooks" / self.file_name]
+
+    @property
+    def id(self) -> Optional[str]:
+        data = yaml.load(self.file_content)
+        if isinstance(data, dict):
+            return data.get("id")
+        logger.debug(f"Test playbook {self.file_name} has invalid YML schema.")
+        return None
+
+
+class TestUseCaseRelatedFile(TextFiles):
+    file_type = RelatedFileType.TEST_CODE_FILE
+
+    def __init__(
+        self,
+        main_file_path: Path,
+        test_use_file_name: str,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        self.file_name = test_use_file_name
+        super().__init__(main_file_path, git_sha, prev_ver)
+
+    def get_optional_paths(self) -> List[Path]:
+        return [self.main_file_path / "TestUseCases" / self.file_name]
+
+    @property
+    def name(self) -> str:
+        return self.file_name.removesuffix(".py")

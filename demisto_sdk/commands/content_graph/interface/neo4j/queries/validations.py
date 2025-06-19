@@ -358,6 +358,26 @@ def validate_playbook_tests_in_repository(
     return {
         item.get("content_item_from").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
+                        relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }
+
+
+def get_supported_modules_mismatch_dependencies(
+    tx: Transaction,
+    content_item_ids: List[str],
+):
+    query = f""" // Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
+    MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(contentItemB)
+    WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItemA.object_id IN {content_item_ids})
+      AND NOT ALL(module IN contentItemA.supportedModules WHERE module IN contentItemB.supportedModules)
+    RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
+    """
+    return {
+        item.get("contentItemA").element_id: Neo4jRelationshipResult(
+            node_from=item.get("contentItemA"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
         )

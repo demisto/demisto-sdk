@@ -145,7 +145,10 @@ class Initializer:
             committed_only=self.committed_only,
             staged_only=self.staged,
         )
-
+        logger.info(f"{modified_files=}")
+        logger.info(f"{added_files=}")
+        logger.info(f"{renamed_files=}")
+        logger.info(f"{deleted_files=}")
         return (
             modified_files,
             added_files,
@@ -252,7 +255,9 @@ class Initializer:
             debug=True,
             get_only_current_file_names=False,
         )
-
+        logger.info(f"{modified_files=}")
+        logger.info(f"{added_files=}")
+        logger.info(f"{renamed_files=}")
         """
         If this command runs on a build triggered by an external contribution PR,
         the relevant modified files may have an "untracked" status in git.
@@ -427,10 +432,6 @@ class Initializer:
             renamed_files,
             deleted_files,
         ) = self.collect_files_to_run(self.file_path)
-        logger.info(f"{modified_files=}")
-        logger.info(f"{added_files=}")
-        logger.info(f"{renamed_files=}")
-        logger.info(f"{deleted_files=}")
         file_by_status_dict: Dict[Path, GitStatuses] = {
             file: GitStatuses.MODIFIED for file in modified_files
         }

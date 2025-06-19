@@ -48,67 +48,77 @@ class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentType
         results: List[ValidationResult] = []
 
         for content_item in content_items:
-            name = content_item.underlying_content_item_name
             content_item_type = content_item.underlying_content_item_type
-            content_item_id = content_item.underlying_content_item_id
 
-            if content_item_id in ["_any_", "_builtin_"]:
-                # Actions that wrap built-in or enrich commands are not validated
-                continue
-
-            if content_item_type not in ["command", "script"]:  # Validate when the action wraps a command or script
+            if content_item_type not in {"command", "script"}:  # Validate when the action wraps a command or a script
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=f"The content item {name} is not a command or script so it's still not supported",
+                        message=(
+                            f"The action '{content_item.name}' wraps a content type '{content_item_type}', "
+                            "which is currently unsupported in Agentix. Only 'command' and 'script' types are allowed."
+                        ),
                         content_object=content_item,
                     )
                 )
                 continue
+            elif content_item_type == "command":
+                command_or_script_name = content_item.underlying_content_item_command
+            else:  # script
+                command_or_script_name = content_item.underlying_content_item_id
 
-            graph_result = self.graph.search(object_id=name)
+            integration_or_script_id = content_item.underlying_content_item_id
 
-            replaced_name = replace_alerts_with_incidents(name)
+            if command_or_script_name in {"_any_", "_builtin_"}:
+                # Actions that wrap built-in or enrich commands are not validated
+                continue
+
+            graph_result = self.graph.search(object_id=command_or_script_name)
+
+            replaced_name = replace_alerts_with_incidents(command_or_script_name)
 
             # Check again with incident/s instead of alert/s if some content items appear in a few names
-            if not graph_result and name != replaced_name:
-                name = replaced_name
-                graph_result = self.graph.search(object_id=name)
+            if not graph_result and command_or_script_name != replaced_name:
+                command_or_script_name = replaced_name
+                graph_result = self.graph.search(object_id=command_or_script_name)
 
             if not graph_result:  # the command or the script does not exist in the Content repo
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=f"The content item '{name}' does not exist in the Content repository",
+                        message=(
+                            f"The content item '{command_or_script_name}' could not be found in the Content repository. "
+                            "Ensure the referenced command or script exists."
+                        ),
                         content_object=content_item,
                     )
                 )
 
-            elif not self.is_content_item_related_to_the_right_pack(content_item_type=content_item_type,
-                                                                    content_item_id=content_item_id,
-                                                                    graph_result=graph_result):
+            elif not self.is_content_item_related_to_correct_pack(item_type=content_item_type,
+                                                                  integration_or_script_id=integration_or_script_id,
+                                                                  graph_result=graph_result):
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=f"The action relates the command '{name}' to '{content_item_id}' integration id"
-                                f" which is not the right integration."
-                                f" Please edit the action with the right integration.",
+                        message=(
+                            f"The command '{command_or_script_name}' is not correctly related to integration ID "
+                            f"'{integration_or_script_id}'. Please verify the correct integration ID."
+                        ),
                         content_object=content_item,
                     )
                 )
 
         return results
 
-    def is_content_item_related_to_the_right_pack(self, content_item_type: str, content_item_id: str,
-                                                  graph_result: List) -> bool:
-
-        if content_item_type == "command":
-            for item in graph_result:
-                if item.content_type == ContentType.COMMAND:
-                    for integration in item.integrations:
-                        if integration.object_id == content_item_id:
-                            return True
-        elif content_item_type == "script":
+    def is_content_item_related_to_correct_pack(self, item_type: str, integration_or_script_id: str,
+                                                graph_result: List) -> bool:
+        if item_type == "command":
+            return any(
+                integration.object_id == integration_or_script_id
+                for item in graph_result
+                if item.content_type == ContentType.COMMAND
+                for integration in item.integrations
+            )
+        elif item_type == "script":
             return True
-
         return False

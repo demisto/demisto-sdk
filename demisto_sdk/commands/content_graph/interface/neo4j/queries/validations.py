@@ -358,7 +358,7 @@ def validate_playbook_tests_in_repository(
     return {
         item.get("content_item_from").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
-                        relationships=item.get("relationships"),
+            relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
         )
         for item in run_query(tx, query)

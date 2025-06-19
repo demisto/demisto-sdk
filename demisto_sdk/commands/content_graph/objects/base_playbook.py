@@ -177,7 +177,6 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     tasks: Dict[str, TaskConfig] = Field([], exclude=True)
     quiet: bool = Field(False)
     tags: List[str] = Field([])
-    tests: List[str] = Field([])
 
     def prepare_for_upload(
         self,

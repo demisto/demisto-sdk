@@ -28,17 +28,11 @@ class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
     args: Optional[list[AgentixActionArgument]] = Field(None, exclude=True)
     outputs: Optional[list[AgentixActionOutput]] = Field(None, exclude=True)
     agent_id: str = Field(..., alias="agentid")
-    # underlying_content_item_id: str = Field(..., alias="underlyingcontentitemid")
-    # underlying_content_item_name: str = Field(..., alias="underlyingcontentitemname")
-    # underlying_content_item_type: str = Field(..., alias="underlyingcontentitemtype")
-    # underlying_content_item_command: str = Field(..., alias="underlyingcontentitemcommand")
     underlying_content_item_id: str
     underlying_content_item_name: str
     underlying_content_item_type: str
     underlying_content_item_command: str
-    underlying_content_item_version: int = Field(
-        ..., alias="underlyingcontentitemversion"
-    )
+    underlying_content_item_version: int
     requires_user_approval: bool = Field(False, alias="requiresuserapproval")
     few_shots: Optional[list[str]] = Field(None, alias="fewshots")
 

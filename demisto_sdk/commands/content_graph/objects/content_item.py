@@ -46,6 +46,7 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer 
 
 CONTENT_ITEMS_TO_SKIP_ID_MODIFICATION = [ContentType.PLAYBOOK]
 
+
 class ContentItem(BaseContent):
     path: Path
     marketplaces: List[MarketplaceVersions]

@@ -9,6 +9,8 @@ from tqdm import tqdm
 from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import (
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
     AUTHOR_IMAGE_FILE_NAME,
     CASE_FIELDS_DIR,
     CASE_LAYOUTS_DIR,
@@ -113,6 +115,8 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         WIDGETS_DIR,
         WIZARDS_DIR,
         LAYOUT_RULES_DIR,
+        AGENTIX_AGENTS_DIR,
+        AGENTIX_ACTIONS_DIR,
         *TESTS_AND_DOC_DIRECTORIES,
     )
 )
@@ -251,7 +255,7 @@ class PathIsTestData(ExemptedPath):
 
 def _validate(path: Path) -> None:
     """Runs the logic and raises exceptions on skipped/errorneous paths"""
-    logger.debug(f"checking {path}")
+    logger.info(f"checking {path}")
     if path.is_dir():
         raise PathIsFolder
     if PACKS_FOLDER not in path.parts:
@@ -287,7 +291,8 @@ def _validate(path: Path) -> None:
         if path.name not in ZERO_DEPTH_FILES:
             raise InvalidDepthZeroFile
         return  # following checks assume the depth>0, so we stop here
-
+    logger.info(f"{parts_inside_pack=}")
+    logger.info(f"{DEPTH_ONE_FOLDERS=}")
     if (first_level_folder := parts_inside_pack[0]) not in DEPTH_ONE_FOLDERS:
         raise InvalidDepthOneFolder
 
@@ -303,7 +308,7 @@ def _validate(path: Path) -> None:
 
     if depth == 1:  # Packs/myPack/<first level folder>/<the file>
         _exempt_unified_files(path, first_level_folder)  # Raises PathIsUnified
-
+        logger.info(f"{DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES=}")
         if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise InvalidDepthOneFile

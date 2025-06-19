@@ -208,7 +208,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         if (
             "category" in _dict
             and path.suffix == ".yml"
-            and "agentid" not in _dict
+            and "underlyingcontentitem" not in _dict
             and "color" not in _dict
         ):
             return True

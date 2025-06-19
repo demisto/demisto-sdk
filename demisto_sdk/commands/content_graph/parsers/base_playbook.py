@@ -100,7 +100,7 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
     def tests(self) -> List[str]:
         tests: List[str] = get_value(self.yml_data, self.field_mapping.get("tests", []))
         if not tests or (
-            len(tests) == 1 and tests[0].casefold().startswith("no tests")
+            len(tests) == 1 and tests[0].casefold().startswith("no test")
         ):
             return []
         return tests

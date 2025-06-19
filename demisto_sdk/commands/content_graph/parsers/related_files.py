@@ -1,3 +1,4 @@
+import ast
 import base64
 import re
 from abc import ABC
@@ -436,3 +437,9 @@ class TestUseCaseRelatedFile(TextFiles):
     @property
     def name(self) -> str:
         return self.file_name.removesuffix(".py")
+
+    @cached_property
+    def config_docstring(self) -> dict:
+        parsed_ast = ast.parse(self.file_content)
+        docstring = ast.get_docstring(parsed_ast)
+        return json5.loads(docstring) if docstring else {}

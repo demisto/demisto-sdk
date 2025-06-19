@@ -44,6 +44,7 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer 
     MarketplaceSuffixPreparer,
 )
 
+CONTENT_ITEMS_TO_SKIP_ID_MODIFICATION = [ContentType.PLAYBOOK]
 
 class ContentItem(BaseContent):
     path: Path
@@ -309,7 +310,10 @@ class ContentItem(BaseContent):
             if incident_to_alert:
                 summary_res.update(
                     {
-                        "id": replace_incident_to_alert(summary_res["id"]),
+                        "id": replace_incident_to_alert(summary_res["id"])
+                        if self.content_type
+                        not in CONTENT_ITEMS_TO_SKIP_ID_MODIFICATION
+                        else summary_res["id"],
                         "name": replace_incident_to_alert(summary_res["name"]),
                         "description": replace_incident_to_alert(
                             summary_res["description"]

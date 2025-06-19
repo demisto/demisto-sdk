@@ -255,7 +255,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
     content_type = ContentType.PACK
 
     def __init__(
-        self, path: Path, git_sha: Optional[str] = None, metadata_only: bool = False
+        self, path: Path, git_sha: Optional[str] = None, metadata_only: bool = False, private_pack_path: Path = None
     ) -> None:
         """Parses a pack and its content items.
 
@@ -265,6 +265,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         if path.name == PACK_METADATA_FILENAME:
             path = path.parent
         BaseContentParser.__init__(self, path)
+        self.private_pack_path = private_pack_path
         self.structure_errors: List[StructureError] = self.validate_structure()
 
         try:
@@ -338,7 +339,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
                 content_item_path
             ) in folder_path.iterdir():  # todo: consider multiprocessing
                 self.parse_content_item(content_item_path)
-        # self.parse_content_test_conf_folders() # TODO
+        if self.private_pack_path:
+            self.parse_content_test_conf_folders()
 
     def parse_content_item(self, content_item_path: Path) -> None:
         """Potentially parses a single content item.
@@ -359,29 +361,19 @@ class PackParser(BaseContentParser, PackMetadataParser):
             logger.error(f"{content_item_path} - invalid content item")
             raise
 
-    # def parse_content_test_conf_folders(self):
-    #     logger.info("Checking if content-test-conf repo has additional content items.")
-    #     parts = list(self.path.parts)
-    #     new_parts = []
-    #     for part in parts:
-    #         if part == "content":
-    #             new_parts.extend(["content-test-conf", "content"])
-    #         elif part == PACKS_FOLDER:
-    #             new_parts.append(PRIVATE_PACKS_FOLDER)
-    #         else:
-    #             new_parts.append(part)
-    #     content_test_conf_path = Path(*new_parts)
-    #     if content_test_conf_path.is_dir():
-    #         logger.info(f"{str(content_test_conf_path)} is a dir.")
-    #         for folder_path in ContentType.pack_folders(content_test_conf_path):
-    #             for (
-    #                 content_item_path
-    #             ) in folder_path.iterdir():  # todo: consider multiprocessing
-    #                 self.parse_content_item(content_item_path)
-    #     else:
-    #         logger.info(
-    #             "Can not find the pack under content-test-conf-repo, prepare-content only using content repo."
-    #         )
+    def parse_content_test_conf_folders(self):
+        logger.info("Checking if content-test-conf repo has additional content items.")
+        if self.private_pack_path.is_dir():
+            logger.info(f"{str(self.private_pack_path)} is a dir.")
+            for folder_path in ContentType.pack_folders(self.private_pack_path):
+                for (
+                    content_item_path
+                ) in folder_path.iterdir():  # todo: consider multiprocessing
+                    self.parse_content_item(content_item_path)
+        else:
+            logger.info(
+                "Can not find the pack under content-test-conf-repo, prepare-content only using content repo."
+            )
 
     @property
     def deprecated(self) -> bool:

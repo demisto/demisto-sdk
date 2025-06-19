@@ -1,0 +1,4 @@
+changes:
+- description: Created two new playbook validations *PB133* and *PB134* to ensure referenced tests exist and test use case dependencies are valid.
+  type: feature
+pr_number: 4976

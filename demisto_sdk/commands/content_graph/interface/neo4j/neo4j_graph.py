@@ -73,6 +73,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
     validate_packs_with_hidden_mandatory_dependencies,
+    validate_playbook_tests_in_repository,
     validate_test_playbook_in_use,
     validate_toversion,
     validate_unknown_content,
@@ -427,6 +428,19 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
                 validate_unknown_content,
+                file_paths,
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def get_unknown_playbook_tests(
+        self,
+        file_paths: List[str],
+    ) -> List[BaseNode]:
+        with self.driver.session() as session:
+            results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
+                validate_playbook_tests_in_repository,
                 file_paths,
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())

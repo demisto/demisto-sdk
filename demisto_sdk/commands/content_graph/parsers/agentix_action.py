@@ -36,7 +36,7 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
             "underlyingcontentitempackversion"
         )
         self.requires_user_approval: bool = self.yml_data.get("requiresuserapproval")
-        self.few_shots: Optional[list[str]] = self.yml_data.get("fewshots")
+        self.few_shots: Optional[str] = self.yml_data.get("fewshots")
 
     @cached_property
     def field_mapping(self):

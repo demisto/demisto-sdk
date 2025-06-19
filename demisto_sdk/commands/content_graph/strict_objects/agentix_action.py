@@ -36,7 +36,6 @@ class UnderlyingContentItem(BaseStrictModel):
 class AgentixAction(AgentixBase):
     args: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None
-    agent_id: str = Field(..., alias="agentid")
     underlying_content_item: UnderlyingContentItem = Field(..., alias="underlyingcontentitem")
     requires_user_approval: bool = Field(False, alias="requiresuserapproval")
     few_shots: Optional[str] = Field(None, alias="fewshots")

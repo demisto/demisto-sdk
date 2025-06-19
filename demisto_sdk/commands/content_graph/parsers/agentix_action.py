@@ -21,7 +21,6 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
-        self.agent_id: str = self.yml_data.get("agentid")
         self.underlying_content_item_id: str = self.yml_data.get(
             "underlyingcontentitem").get('id')
         self.underlying_content_item_name: str = self.yml_data.get(

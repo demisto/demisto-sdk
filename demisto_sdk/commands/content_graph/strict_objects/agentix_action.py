@@ -27,10 +27,10 @@ class AgentixActionOutput(BaseStrictModel):
     disabled: bool = False
 
 class UnderlyingContentItem(BaseStrictModel):
-    id: str
-    name: str
+    id: str = None
+    name: str = None
     type: str
-    command: str
+    command: str = None
     version: str
 
 class AgentixAction(AgentixBase):

@@ -23,7 +23,7 @@ class PlaybookTestUseCaseConfigValidator(BaseValidator[ContentTypes]):
     description = "Validate test use case configuration in the file docstring"
     rationale = "Avoid failures in finding and installing dependencies"
     error_message = "Invalid configuration in {test_use_case_name}. {reason}."
-    related_field = ""
+    related_field = "tests"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.TEST_CODE_FILE]
 

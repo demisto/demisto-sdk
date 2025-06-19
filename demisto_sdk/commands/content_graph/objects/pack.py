@@ -58,7 +58,6 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     ReadmeRelatedFile,
     RNRelatedFile,
     SecretsIgnoreRelatedFile,
-    TestPlaybookRelatedFile,
     TestUseCaseRelatedFile,
     VersionConfigRelatedFile,
 )
@@ -638,19 +637,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             else None,
             latest_rn=self.latest_rn_version,
         )
-
-    @cached_property
-    def test_playbooks(self) -> List[TestPlaybookRelatedFile]:
-        pack_test_playbooks_path: Path = self.path / "TestPlaybooks"
-        related_files: List[TestPlaybookRelatedFile] = []
-        for test_playbook_path in pack_test_playbooks_path.rglob("*.yml"):
-            related_files.append(
-                TestPlaybookRelatedFile(
-                    main_file_path=self.path,
-                    playbook_file_name=test_playbook_path.name,
-                )
-            )
-        return related_files
 
     @cached_property
     def test_use_cases(self) -> List[TestUseCaseRelatedFile]:

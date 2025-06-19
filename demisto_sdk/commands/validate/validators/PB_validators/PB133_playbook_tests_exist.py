@@ -10,7 +10,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-TEST_USE_CASE_SUFFIX  = "_use_case_test"
+TEST_USE_CASE_SUFFIX = "_use_case_test"
 TESTS_LIST_ITEMS_TO_SKIP = ("no test", "run all tests")
 
 ContentTypes = Playbook
@@ -47,19 +47,20 @@ class PlaybookTestsExistValidator(BaseValidator[ContentTypes], ABC):
             missing_test_use_case_names = set()
 
             for playbook_test in content_item.tested_by:
-                if not playbook_test.object_id:
+                test_id = playbook_test.object_id
+                if not test_id:
                     continue
 
-                if playbook_test.object_id.casefold().startswith(TESTS_LIST_ITEMS_TO_SKIP):
+                if test_id.casefold().startswith(TESTS_LIST_ITEMS_TO_SKIP):
                     continue
 
-                if TEST_USE_CASE_SUFFIX not in playbook_test.object_id:
-                    playbook_id = playbook_test.object_id
+                if TEST_USE_CASE_SUFFIX not in test_id:
+                    playbook_id = test_id
                     missing_test_playbooks_ids.add(playbook_id)
 
                 else:
                     pack_test_use_cases_path = content_item.pack.path / "TestUseCases"
-                    test_name = f"{playbook_test.object_id}.py"
+                    test_name = f"{test_id}.py"
                     test_use_case_path = pack_test_use_cases_path / test_name
 
                     if (

@@ -578,7 +578,11 @@ def replace_marketplace_references(
     return data
 
 
-def append_supported_modules(data: dict, supported_modules: List[str]) -> Any:
+def append_supported_modules(
+    data: dict,
+    supported_modules: Optional[List[str]],
+    pack_supported_modules: Optional[List[str]],
+) -> Any:
     """
     Appends the `supportedModules` key & value to the data object if it doesn't already exist.
 
@@ -589,8 +593,15 @@ def append_supported_modules(data: dict, supported_modules: List[str]) -> Any:
     Returns:
         Any: The same data object with supported modules appended.
     """
+    if not supported_modules and "supportedModules" in data:
+        del data["supportedModules"]
+        return data
 
-    if isinstance(data, dict):
-        if "supportedModules" not in data:
-            data["supportedModules"] = supported_modules
+    if pack_supported_modules and supported_modules:
+        for module in pack_supported_modules:
+            if module not in supported_modules:
+                return data
+
+        if "supportedModules" in data:
+            del data["supportedModules"]
     return data

@@ -251,7 +251,6 @@ class PackMetadata(BaseModel):
         Returns:
             dict: The dependencies of the pack.
         """
-        logger.info(f"this is the dependencies {dependencies=}")
         return {
             r.content_item_to.object_id: {
                 "mandatory": r.mandatorily,

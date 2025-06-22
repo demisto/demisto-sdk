@@ -69,7 +69,7 @@ class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentType
 
             integration_or_script_id = content_item.underlying_content_item_id
 
-            if command_or_script_name in {"_any_", "_builtin_"}:
+            if integration_or_script_id in {"_any_", "_builtin_"}:
                 # Actions that wrap built-in or enrich commands are not validated
                 continue
 

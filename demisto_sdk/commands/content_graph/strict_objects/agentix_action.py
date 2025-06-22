@@ -19,7 +19,6 @@ class AgentixActionArgument(BaseStrictModel):
     content_item_arg_name: str = Field(..., alias="underlyingargname")
     generatable: bool = False
 
-
 class AgentixActionOutput(BaseStrictModel):
     description: str
     type: str
@@ -27,16 +26,16 @@ class AgentixActionOutput(BaseStrictModel):
     name: str
     disabled: bool = False
 
+class UnderlyingContentItem(BaseStrictModel):
+    id: str = None
+    name: str = None
+    type: str
+    command: str = None
+    version: str
 
 class AgentixAction(AgentixBase):
     args: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None
-    agent_id: str = Field(..., alias="agentid")
-    underlying_content_item_id: str = Field(..., alias="underlyingcontentitemid")
-    underlying_content_item_name: str = Field(..., alias="underlyingcontentitemname")
-    underlying_content_item_type: str = Field(..., alias="underlyingcontentitemtype")
-    underlying_content_item_version: int = Field(
-        ..., alias="underlyingcontentitemversion"
-    )
+    underlying_content_item: UnderlyingContentItem = Field(..., alias="underlyingcontentitem")
     requires_user_approval: bool = Field(False, alias="requiresuserapproval")
-    example_prompts: Optional[list[str]] = Field(None, alias="exampleprompts")
+    few_shots: Optional[str] = Field(None, alias="fewshots")

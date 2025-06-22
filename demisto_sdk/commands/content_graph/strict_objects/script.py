@@ -116,7 +116,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
         errors = []
         if values.get("is_llm"):
             # Enforce LLM mode rules
-            if values.get("script"):
+            if values.get("script"): # TODO- maybe better in a validation
                 errors.append(
                     "When 'isllm' is True, 'script' should not appear in yml."
                 )

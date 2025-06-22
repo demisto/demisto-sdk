@@ -351,10 +351,10 @@ def validate_playbook_tests_in_repository(
     tx: Transaction, playbook_paths: List[str]
 ) -> Dict[str, Neo4jRelationshipResult]:
     query = f"""
-        MATCH (content_item_from: Playbook)-[r:{RelationshipType.TESTED_BY}]->(n{{not_in_repository: true}})
-        {f'WHERE content_item_from.path in {playbook_paths}' if playbook_paths else ''}
-        RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
-        """
+    MATCH (content_item_from: Playbook)-[r:{RelationshipType.TESTED_BY}]->(n{{not_in_repository: true}})
+    {f'WHERE content_item_from.path in {playbook_paths}' if playbook_paths else ''}
+    RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
+    """
     return {
         item.get("content_item_from").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),

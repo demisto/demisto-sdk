@@ -79,6 +79,10 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB131_is_silent_play
 from demisto_sdk.commands.validate.validators.PB_validators.PB132_no_readme_for_silent_playbook import (
     NoReadmeForSilentPlaybook,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB133_playbook_tests_exist import (
+    PlaybookTestsExistValidator,
+)
+from TestSuite.pack import Pack as TestSuitePack
 from TestSuite.repo import Repo
 
 
@@ -2603,3 +2607,67 @@ def test_NoReadmeForSilentPlaybook():
         [playbook]
     )
     assert len(invalid_content_items) == 0
+
+
+def test_PlaybookTestsExistValidator_valid(graph_repo: Repo):
+    """ """
+    playbook_id = "Generic Remediation"
+    test_playbook_id = "Remediation Test"
+    test_use_case_name = "Remediation_use_case_test"
+
+    pack: TestSuitePack = graph_repo.create_pack("Incident Remediation Pack")
+    pack.create_playbook(
+        "playbook-GenericRemediation",
+        yml={
+            "id": playbook_id,
+            "name": playbook_id,
+            # Referenced PB tests are valid and defined below
+            "tests": [test_playbook_id, test_use_case_name],
+        },
+    )
+    pack.create_test_playbook(
+        "playbook-RemediationTest",
+        yml={
+            "id": test_playbook_id,
+            "name": test_playbook_id,
+        },
+    )
+    pack.create_test_use_case(
+        test_use_case_name,
+        content="import pytest\n...",
+    )
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+    validation_results = (
+        PlaybookTestsExistValidator().obtain_invalid_content_items_using_graph(
+            content_items=[], validate_all_files=True
+        )
+    )
+
+    assert len(validation_results) == 0
+
+
+def test_PlaybookTestsExistValidator_invalid(graph_repo: Repo):
+    playbook_id = "Extract Indicators"
+    test_playbook_id = "Extraction & Enrichment Test"
+
+    pack: TestSuitePack = graph_repo.create_pack("Indcator Extraction Pack")
+    pack.create_playbook(
+        "playbook-ExtractIndicators",
+        yml={
+            "id": playbook_id,
+            "name": playbook_id,
+            # Referenced PB tests do not exist!
+            "tests": [test_playbook_id],
+        },
+    )
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+    validation_results = (
+        PlaybookTestsExistValidator().obtain_invalid_content_items_using_graph(
+            content_items=[], validate_all_files=True
+        )
+    )
+
+    expected_message = f"Playbook '{playbook_id}' references the following missing test playbooks: {test_playbook_id}."
+    assert validation_results[0].message == expected_message

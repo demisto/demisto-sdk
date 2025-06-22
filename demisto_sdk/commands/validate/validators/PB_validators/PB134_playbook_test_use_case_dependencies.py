@@ -4,6 +4,7 @@ from typing import Iterable, List, Tuple
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.tools import find_pack_folder
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.parsers.related_files import (
@@ -50,7 +51,7 @@ class PlaybookTestUseCaseConfigValidator(BaseValidator[ContentTypes]):
             pack: Pack = content_item.pack
 
             # Optional since "TestUseCases" folder may not exist in the environment
-            test_use_cases_dir = pack.path / "TestUseCases"
+            test_use_cases_dir = find_pack_folder(content_item.path) / "TestUseCases"
             if not test_use_cases_dir.exists():
                 continue
 

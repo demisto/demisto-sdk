@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.tools import find_pack_folder
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -59,7 +60,9 @@ class PlaybookTestsExistValidator(BaseValidator[ContentTypes], ABC):
                     missing_test_playbooks_ids.add(playbook_id)
 
                 else:
-                    pack_test_use_cases_path = content_item.pack.path / "TestUseCases"
+                    pack_test_use_cases_path = (
+                        find_pack_folder(content_item.path) / "TestUseCases"
+                    )
                     test_name = f"{test_id}.py"
                     test_use_case_path = pack_test_use_cases_path / test_name
 

@@ -269,7 +269,7 @@ class PackMetadata(BaseModel):
             if r.is_direct
             and r.content_item_to.object_id not in self.excluded_dependencies
             and not r.content_item_to.hidden  # type: ignore
-            and not r.content_item_to.is_test  # type: ignore
+            and not r.is_test  # type: ignore
         }
 
     def _get_pack_tags(

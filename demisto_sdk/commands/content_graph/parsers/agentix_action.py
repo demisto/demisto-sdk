@@ -31,9 +31,6 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
             "underlyingcontentitem").get('command')
         self.underlying_content_item_version: int = self.yml_data.get(
             "underlyingcontentitem").get('version')
-        self.underlying_content_item_pack_version: str = self.yml_data.get(
-            "underlyingcontentitempackversion"
-        )
         self.requires_user_approval: bool = self.yml_data.get("requiresuserapproval")
         self.few_shots: Optional[str] = self.yml_data.get("fewshots")
 

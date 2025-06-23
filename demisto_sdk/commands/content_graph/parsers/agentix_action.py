@@ -51,4 +51,4 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         return self.yml_data.get("outputs", [])
 
     def few_shots(self) -> Optional[list[str]]:
-        return self.yml_data.get("fewshots", [])
+        return self.yml_data.get("fewshots", None)

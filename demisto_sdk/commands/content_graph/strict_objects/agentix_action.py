@@ -38,4 +38,4 @@ class AgentixAction(AgentixBase):
     outputs: Optional[list[AgentixActionOutput]] = None
     underlying_content_item: UnderlyingContentItem = Field(..., alias="underlyingcontentitem")
     requires_user_approval: bool = Field(False, alias="requiresuserapproval")
-    few_shots: Optional[str] = Field(None, alias="fewshots")
+    few_shots: Optional[list[str]] = Field([], alias="fewshots")

@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where prepare-content would create multiple playbooks for marketplaceV2.
-  type: fix
-pr_number: 4980

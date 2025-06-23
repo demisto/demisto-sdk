@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.pre_commit.hooks.utils import get_property
 from demisto_sdk.commands.pre_commit.pre_commit_context import PreCommitContext
 
-PROPERTIES_TO_DELETE = {"needs"}
+PROPERTIES_TO_DELETE = {"needs", "skip"}
 
 
 @dataclass

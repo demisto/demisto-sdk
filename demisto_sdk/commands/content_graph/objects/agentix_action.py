@@ -33,7 +33,7 @@ class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
     underlying_content_item_command: str = None
     underlying_content_item_version: int
     requires_user_approval: bool = Field(False, alias="requiresuserapproval")
-    few_shots: Optional[list[str]] = Field(None, alias="fewshots")
+    few_shots: Optional[list[str]] = Field([], alias="fewshots")
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

@@ -4,9 +4,7 @@ from typing import Iterable, List, Tuple
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import find_pack_folder
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     RelatedFileType,
     TestUseCaseRelatedFile,
@@ -16,14 +14,14 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Playbook
+ContentTypes = Pack
 
 
 class PlaybookTestUseCaseConfigValidator(BaseValidator[ContentTypes]):
     error_code = "PB134"
     description = "Validate test use case configuration in the file docstring"
     rationale = "Avoid failures in finding and installing dependencies"
-    error_message = "Invalid configuration in {test_use_case_name}. {reason}."
+    error_message = "Invalid configuration in test use case: {path}. {reason}."
     related_field = "tests"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.TEST_CODE_FILE]
@@ -44,27 +42,20 @@ class PlaybookTestUseCaseConfigValidator(BaseValidator[ContentTypes]):
         validation_results: List[ValidationResult] = []
 
         for content_item in content_items:
-            if not content_item.in_pack:
-                logger.debug(f"Playbook: {content_item.object_id} not in pack.")
-                continue
-
-            pack: Pack = content_item.pack
-
             # Optional since "TestUseCases" folder may not exist in the environment
-            test_use_cases_dir = find_pack_folder(content_item.path) / "TestUseCases"
+            test_use_cases_dir = content_item.path / "TestUseCases"
             if not test_use_cases_dir.exists():
+                logger.debug(f"Pack '{content_item.name}' has no test use cases.")
                 continue
 
-            for test_use_case in pack.test_use_cases:
+            for test_use_case in content_item.test_use_cases:
                 is_valid, reason = self.validate_config_docstring(test_use_case)
                 if not is_valid:
+                    path = test_use_case.file_path.relative_to(content_item.path)
                     validation_results.append(
                         ValidationResult(
                             validator=self,
-                            message=self.error_message.format(
-                                test_use_case_name=test_use_case.name,
-                                reason=reason,
-                            ),
+                            message=self.error_message.format(path=path, reason=reason),
                             content_object=content_item,
                         )
                     )
@@ -75,22 +66,26 @@ class PlaybookTestUseCaseConfigValidator(BaseValidator[ContentTypes]):
     def validate_config_docstring(
         test_use_case: TestUseCaseRelatedFile,
     ) -> Tuple[bool, str]:
+        """Validates the test use case docstring in the Python file.
+
+        Args:
+            test_use_case (TestUseCaseRelatedFile): A related pack test use case.
+
+        Returns:
+            Tuple[bool, str]: A tuple of a boolean indicating whether the configuration
+            docstring is valid or not and the error, if any.
+        """
         try:
             config = test_use_case.config_docstring
-            is_valid, reason = True, ""
 
         except SyntaxError:
-            is_valid, reason = False, "Invalid Python syntax"
+            return False, "Invalid Python syntax"
 
         except JSONDecodeError:
-            is_valid, reason = False, "Invalid JSON object"
+            return False, "Invalid JSON object"
 
         additional_needed_packs = config.get("additional_needed_packs", {})
         if not isinstance(additional_needed_packs, dict):
-            is_valid, reason = False, "Invalid config schema"
+            return False, "Invalid object schema"
 
-        file_path = test_use_case.file_path
-        if not is_valid:
-            logger.debug(f"Invalid test use case config in {file_path}. {reason}.")
-
-        return is_valid, reason
+        return True, ""

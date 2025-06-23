@@ -1,11 +1,13 @@
 import pytest
 
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
 from demisto_sdk.commands.content_graph.objects.pack_content_items import (
     PackContentItems,
 )
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.tests.test_tools import (
+    create_pack_object,
     create_playbook_object,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
@@ -81,6 +83,9 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB132_no_readme_for_
 )
 from demisto_sdk.commands.validate.validators.PB_validators.PB133_playbook_tests_exist import (
     PlaybookTestsExistValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB134_playbook_test_use_case_config import (
+    PlaybookTestUseCaseConfigValidator,
 )
 from TestSuite.pack import Pack as TestSuitePack
 from TestSuite.repo import Repo
@@ -2670,4 +2675,37 @@ def test_PlaybookTestsExistValidator_invalid(graph_repo: Repo):
     )
 
     expected_message = f"Playbook '{playbook_id}' references the following missing test playbooks: {test_playbook_id}."
+    assert validation_results[0].message == expected_message
+
+
+def test_PlaybookTestUseCaseConfigValidator_valid():
+    config = json.dumps(  # Valid JSON object and schema
+        {"additional_needed_packs": {"ServiceDeskPlus": "sdp_instance_1"}}
+    )
+    test_use_case_content = f"'''\n{config}\n'''\nimport pytest"
+    pack: TestSuitePack = create_pack_object(
+        test_use_case_content=test_use_case_content
+    )
+
+    validation_results = (
+        PlaybookTestUseCaseConfigValidator().obtain_invalid_content_items(
+            content_items=[pack]
+        )
+    )
+    assert validation_results == []
+
+
+def test_PlaybookTestUseCaseConfigValidator_invalid():
+    config = '{"additional_needed_packs": 123}'  # Invalid schema
+    test_use_case_content = f"'''\n{config}\n'''\nimport pytest"
+    pack: TestSuitePack = create_pack_object(
+        test_use_case_content=test_use_case_content,
+    )
+
+    validation_results = (
+        PlaybookTestUseCaseConfigValidator().obtain_invalid_content_items(
+            content_items=[pack]
+        )
+    )
+    expected_message = f"Invalid configuration in test use case: TestUseCases/{pack.name}_test_use_case.py. Invalid object schema."
     assert validation_results[0].message == expected_message

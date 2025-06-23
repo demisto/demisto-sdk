@@ -188,6 +188,8 @@ def test_pack_metadata_marketplacev2(
         - Make sure the the metadata value as expected.
         - Make sure that along 3 versions of a playbook, only the latest is in the metadata.
         - Make sure the script tags are in the pack metadata tags.
+        - Make sure the playbook name with incident in it is being changed.
+        - Make sure the playbook id with incident in it is not changed.
     """
     mocker.patch.object(
         IntegrationScript, "get_supported_native_images", return_value=[]
@@ -219,6 +221,9 @@ def test_pack_metadata_marketplacev2(
     playbook2 = pack.create_playbook()
     playbook2.create_default_playbook(name="MyPlaybook")
     playbook2.yml.update({"fromversion": "6.10.0"})
+    playbook3 = pack.create_playbook()
+    playbook3.create_default_playbook(name="MyincidentPlaybook")
+    playbook3.yml.update({"fromversion": "6.10.0"})
 
     pack.create_modeling_rule(
         name="MyModelingRule",
@@ -285,6 +290,14 @@ def test_pack_metadata_marketplacev2(
     assert metadata_playbook.get("fromversion") == "6.10.0"
     assert metadata_playbook.get("id") == "MyPlaybook"
     assert metadata_playbook.get("name") == "MyPlaybook"
+
+    metadata_playbook_2 = metadata.get("contentItems", {}).get("playbook", [{}])[1]
+    assert metadata_playbook_2.get("id") == "MyincidentPlaybook"
+    assert metadata_playbook_2.get("name") == "MyalertPlaybook"
+    assert "MyalertPlaybook" not in [
+        playbook.get("id")
+        for playbook in metadata.get("contentItems", {}).get("playbook", [{}])
+    ]
 
     metadata_modeling_rule = metadata.get("contentItems", {}).get("modelingrule", [{}])[
         0

@@ -2615,7 +2615,16 @@ def test_NoReadmeForSilentPlaybook():
 
 
 def test_PlaybookTestsExistValidator_valid(graph_repo: Repo):
-    """ """
+    """
+    Given:
+    - A playbook that correctly refrences a test playbook and test use case that exist.
+
+    When:
+    - Calling PlaybookTestsExistValidator.obtain_invalid_content_items_using_graph.
+
+    Then:
+    - Ensure no validation errors.
+    """
     playbook_id = "Generic Remediation"
     test_playbook_id = "Remediation Test"
     test_use_case_name = "Remediation_use_case_test"
@@ -2653,6 +2662,16 @@ def test_PlaybookTestsExistValidator_valid(graph_repo: Repo):
 
 
 def test_PlaybookTestsExistValidator_invalid(graph_repo: Repo):
+    """
+    Given:
+    - A playbook that refrences a test playbook that does not exist.
+
+    When:
+    - Calling PlaybookTestsExistValidator.obtain_invalid_content_items_using_graph.
+
+    Then:
+    - Ensure a validation error is returned with the expected message (missing test playbook).
+    """
     playbook_id = "Extract Indicators"
     test_playbook_id = "Extraction & Enrichment Test"
 
@@ -2679,6 +2698,16 @@ def test_PlaybookTestsExistValidator_invalid(graph_repo: Repo):
 
 
 def test_PlaybookTestUseCaseConfigValidator_valid():
+    """
+    Given:
+    - A pack that contains a test use case with a valid configuration docstring.
+
+    When:
+    - Calling PlaybookTestUseCaseConfigValidator.obtain_invalid_content_items.
+
+    Then:
+    - Ensure no validation errors.
+    """
     config = json.dumps(  # Valid JSON object and schema
         {"additional_needed_packs": {"ServiceDeskPlus": "sdp_instance_1"}}
     )
@@ -2696,6 +2725,16 @@ def test_PlaybookTestUseCaseConfigValidator_valid():
 
 
 def test_PlaybookTestUseCaseConfigValidator_invalid():
+    """
+    Given:
+    - A pack that contains a test use case with an invalid configuration docstring.
+
+    When:
+    - Calling PlaybookTestUseCaseConfigValidator.obtain_invalid_content_items.
+
+    Then:
+    - Ensure a validation error is returned with the expected message (invalid schema).
+    """
     config = '{"additional_needed_packs": 123}'  # Invalid schema
     test_use_case_content = f"'''\n{config}\n'''\nimport pytest"
     pack: TestSuitePack = create_pack_object(
@@ -2707,5 +2746,5 @@ def test_PlaybookTestUseCaseConfigValidator_invalid():
             content_items=[pack]
         )
     )
-    expected_message = f"Invalid configuration in test use case: TestUseCases/{pack.name}_test_use_case.py. Invalid object schema."
+    expected_message = f"Invalid configuration in test use case: TestUseCases/{pack.name}_use_case_test.py. Invalid object schema."
     assert validation_results[0].message == expected_message

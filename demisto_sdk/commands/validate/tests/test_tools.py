@@ -396,7 +396,7 @@ def create_pack_object(
             pack.create_playbook()
     if test_use_case_content:
         pack.create_test_use_case(
-            name=f"{json_content['name']}_test_use_case",
+            name=f"{json_content['name']}_use_case_test",
             content=test_use_case_content,
         )
 

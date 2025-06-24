@@ -1,6 +1,5 @@
 import pytest
 
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.objects.base_playbook import TaskConfig
 from demisto_sdk.commands.content_graph.objects.pack_content_items import (
     PackContentItems,
@@ -2697,7 +2696,7 @@ def test_PlaybookTestsExistValidator_invalid(graph_repo: Repo):
     assert validation_results[0].message == expected_message
 
 
-def test_PlaybookTestUseCaseConfigValidator_valid():
+def test_PlaybookTestUseCaseConfigValidator_valid(mocker):
     """
     Given:
     - A pack that contains a test use case with a valid configuration docstring.
@@ -2708,14 +2707,16 @@ def test_PlaybookTestUseCaseConfigValidator_valid():
     Then:
     - Ensure no validation errors.
     """
-    config = json.dumps(  # Valid JSON object and schema
-        {"additional_needed_packs": {"ServiceDeskPlus": "sdp_instance_1"}}
-    )
+    config = '{"additional_needed_packs": {"MyPack": "pack_instance_1"}}'
     test_use_case_content = f"'''\n{config}\n'''\nimport pytest"
     pack: TestSuitePack = create_pack_object(
         test_use_case_content=test_use_case_content
     )
 
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.PB_validators.PB134_playbook_test_use_case_config.get_all_repo_pack_ids",
+        return_value=["MyPack"],
+    )
     validation_results = (
         PlaybookTestUseCaseConfigValidator().obtain_invalid_content_items(
             content_items=[pack]
@@ -2724,7 +2725,30 @@ def test_PlaybookTestUseCaseConfigValidator_valid():
     assert validation_results == []
 
 
-def test_PlaybookTestUseCaseConfigValidator_invalid():
+@pytest.mark.parametrize(
+    "config, expected_invalid_reason",
+    [
+        pytest.param(
+            '{"additional"_"needed_packs": /dkfg.})',
+            "Invalid JSON object",
+            id="Invalid JSON",
+        ),
+        pytest.param(
+            '{"additional_needed_packs": 123}',
+            "Invalid object schema",
+            id="Invalid Schema",
+        ),
+        pytest.param(
+            '{"additional_needed_packs": {"BlahBlah": "hello_instance"}}',
+            "Unknown packs: BlahBlah",
+            id="Invalid Pack",
+        ),
+    ],
+)
+def test_PlaybookTestUseCaseConfigValidator_invalid(
+    config: str,
+    expected_invalid_reason: str,
+):
     """
     Given:
     - A pack that contains a test use case with an invalid configuration docstring.
@@ -2733,9 +2757,8 @@ def test_PlaybookTestUseCaseConfigValidator_invalid():
     - Calling PlaybookTestUseCaseConfigValidator.obtain_invalid_content_items.
 
     Then:
-    - Ensure a validation error is returned with the expected message (invalid schema).
+    - Ensure a validation error is returned with the expected message.
     """
-    config = '{"additional_needed_packs": 123}'  # Invalid schema
     test_use_case_content = f"'''\n{config}\n'''\nimport pytest"
     pack: TestSuitePack = create_pack_object(
         test_use_case_content=test_use_case_content,
@@ -2746,5 +2769,5 @@ def test_PlaybookTestUseCaseConfigValidator_invalid():
             content_items=[pack]
         )
     )
-    expected_message = f"Invalid configuration in test use case: TestUseCases/{pack.name}_use_case_test.py. Invalid object schema."
+    expected_message = f"Invalid configuration in test use case: TestUseCases/{pack.name}_use_case_test.py. {expected_invalid_reason}."
     assert validation_results[0].message == expected_message

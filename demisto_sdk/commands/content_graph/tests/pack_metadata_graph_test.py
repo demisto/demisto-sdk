@@ -216,7 +216,7 @@ def test_pack_metadata_marketplacev2(
     )
 
     playbook1 = pack.create_playbook()
-    playbook1.create_default_playbook(name="MyPlaybook")
+    playbook1.create_default_playbook(name="MyincidentPlaybook")
     playbook1.yml.update({"fromversion": "6.5.0", "toversion": "6.7.9"})
     playbook2 = pack.create_playbook()
     playbook2.create_default_playbook(name="MyincidentPlaybook")

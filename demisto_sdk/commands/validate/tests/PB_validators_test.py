@@ -2696,7 +2696,7 @@ def test_PlaybookTestsExistValidator_invalid(graph_repo: Repo):
     assert validation_results[0].message == expected_message
 
 
-def test_PlaybookTestUseCaseConfigValidator_valid(mocker):
+def test_PlaybookTestUseCaseConfigValidator_valid():
     """
     Given:
     - A pack that contains a test use case with a valid configuration docstring.
@@ -2707,16 +2707,12 @@ def test_PlaybookTestUseCaseConfigValidator_valid(mocker):
     Then:
     - Ensure no validation errors.
     """
-    config = '{"additional_needed_packs": {"MyPack": "pack_instance_1"}}'
+    config = '{"additional_needed_packs": {"TestPack": "pack_instance_1"}}'
     test_use_case_content = f"'''\n{config}\n'''\nimport pytest"
     pack: TestSuitePack = create_pack_object(
         test_use_case_content=test_use_case_content
     )
 
-    mocker.patch(
-        "demisto_sdk.commands.validate.validators.PB_validators.PB134_playbook_test_use_case_config.get_all_repo_pack_ids",
-        return_value=["MyPack"],
-    )
     validation_results = (
         PlaybookTestUseCaseConfigValidator().obtain_invalid_content_items(
             content_items=[pack]

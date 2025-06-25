@@ -1995,6 +1995,7 @@ class PlatformSupportedModules(StrEnum):
     X3 = "X3"
     X5 = "X5"
     ENT_PLUS = "ENT_PLUS"
+    AGENTIX = "agentix"
 
 
 DEFAULT_SUPPORTED_MODULES: list[str] = [

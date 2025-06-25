@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     PACKS_FOLDER,
     SCRIPTS_DIR,
-    TEST_DATA_DIR,
+    TESTS_DIRECTORIES,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
@@ -680,12 +680,14 @@ def add_related_files(file: Path) -> Set[Path]:
 
     # Identifying test files
 
-    # if the file in test_data:
+    # if the file in some test directory:
     # find the integration_iter directory and then test_files
-    if TEST_DATA_DIR in file.parts and file.parts[0] == PACKS_FOLDER:
-        test_data_index = file.parts.index(TEST_DATA_DIR)
-        path_to_test_data_folder_parts = Path(*file.parts[: test_data_index + 1])
-        test_data_changed = True
+    for test_dir in TESTS_DIRECTORIES:
+        if test_dir in file.parts and file.parts[0] == PACKS_FOLDER:
+            test_data_index = file.parts.index(test_dir)
+            path_to_test_data_folder_parts = Path(*file.parts[: test_data_index + 1])
+            test_data_changed = True
+            break  # Stop after the first matching test directory
 
     # Check if source code file change
     has_python_related_file = any(".py" in f.suffix for f in files_to_run)

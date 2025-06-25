@@ -153,7 +153,7 @@ class ResultWriter:
             )
         if non_ignorable_errors:
             error_msg += f"The following errors cannot be ignored: {', '.join(non_ignorable_errors)}.\n"
-        error_msg += "If BA129 in the pre-commit github action failed, it can not be ignored and can not force merge the PR."
+        error_msg += "If the BA129 validation in the pre-commit GitHub Action fails, the pull request cannot be force-merged."
         if forcemergeable_errors:
             error_msg += f"The following errors don't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
         if error_msg:

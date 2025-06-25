@@ -1,5 +1,5 @@
 from functools import cached_property
-from typing import Callable, Dict, List, Optional, Set, Union
+from typing import Callable, Dict, List, Optional, Set
 
 import demisto_client
 from pydantic import BaseModel, Field
@@ -189,27 +189,6 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
             data,
             current_marketplace=current_marketplace,
             supported_marketplaces=self.marketplaces,
-        )
-
-    def is_incident_to_alert(
-        self, marketplace: Union[List[MarketplaceVersions], MarketplaceVersions]
-    ) -> bool:
-        """
-        Checks whether the playbook needs the preparation
-        of an `incident to alert`,
-        and this affects the `metadata.json` and the `dump` process of the playbook.
-
-        Args:
-            marketplace (MarketplaceVersions): the destination marketplace.
-
-        Returns:
-            bool: True if the given MP is MPV2
-        """
-        if not isinstance(marketplace, list):
-            marketplace = [marketplace]
-        return (
-            MarketplaceVersions.MarketplaceV2 in marketplace
-            or MarketplaceVersions.PLATFORM in marketplace
         )
 
     @classmethod

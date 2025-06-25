@@ -45,6 +45,7 @@ class ConfJSON:
                     "private_tests": [],
                     "test_marketplacev2": [],
                     "reputation_tests": [],
+                    "selected_nightly_tpb": [],
                 }
             ),
             None,

@@ -1,0 +1,9 @@
+changes:
+- description: |
+    Created the following new validateion:
+    - ST112: Validate that any content item with a quick action command also has the supportsquickactions field in its top level yml.
+    - ST113: Validate that supportedModules can't be an empty list.
+    - BC115: Validate that no support modules are removed from an existing content item.
+    - GR109: Validate that if content item A depends on content item B, then content item B's supportedModules must include all supportedModules of content item A.
+  type: feature
+pr_number: 4947

@@ -398,19 +398,23 @@ class TestUseCaseRelatedFile(TextFiles):
     def __init__(
         self,
         main_file_path: Path,
-        test_use_file_name: str,
+        test_use_case_name: str,
         git_sha: Optional[str] = None,
         prev_ver: Optional[str] = None,
     ) -> None:
-        self.file_name = test_use_file_name
+        self._test_use_case_name = test_use_case_name
         super().__init__(main_file_path, git_sha, prev_ver)
 
     def get_optional_paths(self) -> List[Path]:
-        return [self.main_file_path / "TestUseCases" / self.file_name]
+        return [
+            self.main_file_path.parent.parent
+            / "TestUseCases"
+            / f"{self._test_use_case_name}.py"
+        ]
 
     @property
     def name(self) -> str:
-        return self.file_name.removesuffix(".py")
+        return self._test_use_case_name
 
     @cached_property
     def config_docstring(self) -> dict:

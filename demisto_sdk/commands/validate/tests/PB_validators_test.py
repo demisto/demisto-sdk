@@ -6,8 +6,8 @@ from demisto_sdk.commands.content_graph.objects.pack_content_items import (
 )
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.tests.test_tools import (
-    create_pack_object,
     create_playbook_object,
+    create_test_use_case_file_object,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename import (
@@ -2708,14 +2708,20 @@ def test_PlaybookTestUseCaseConfigValidator_valid():
     - Ensure no validation errors.
     """
     config = '{"additional_needed_packs": {"TestPack": "pack_instance_1"}}'
-    test_use_case_content = f"'''\n{config}\n'''\nimport pytest"
-    pack: TestSuitePack = create_pack_object(
-        test_use_case_content=test_use_case_content
+    test_use_case_name = "CloudInfra_use_case_test"
+    playbook = create_playbook_object(
+        paths=["tests"],
+        values=[[test_use_case_name]],
+    )
+    create_test_use_case_file_object(
+        playbook_path=playbook.path,
+        test_use_case_name=test_use_case_name,
+        test_use_case_content=f"'''\n{config}\n'''\nimport pytest",
     )
 
     validation_results = (
         PlaybookTestUseCaseConfigValidator().obtain_invalid_content_items(
-            content_items=[pack]
+            content_items=[playbook]
         )
     )
     assert validation_results == []
@@ -2755,15 +2761,21 @@ def test_PlaybookTestUseCaseConfigValidator_invalid(
     Then:
     - Ensure a validation error is returned with the expected message.
     """
-    test_use_case_content = f"'''\n{config}\n'''\nimport pytest"
-    pack: TestSuitePack = create_pack_object(
-        test_use_case_content=test_use_case_content,
+    test_use_case_name = "Generic_use_case_test"
+    playbook = create_playbook_object(
+        paths=["tests"],
+        values=[[test_use_case_name]],
+    )
+    create_test_use_case_file_object(
+        playbook_path=playbook.path,
+        test_use_case_name=test_use_case_name,
+        test_use_case_content=f"'''\n{config}\n'''\nimport pytest",
     )
 
     validation_results = (
         PlaybookTestUseCaseConfigValidator().obtain_invalid_content_items(
-            content_items=[pack]
+            content_items=[playbook]
         )
     )
-    expected_message = f"Invalid configuration in test use case: TestUseCases/{pack.name}_use_case_test.py. {expected_invalid_reason}."
+    expected_message = f"Invalid configuration in test use case: {test_use_case_name}. {expected_invalid_reason}."
     assert validation_results[0].message == expected_message

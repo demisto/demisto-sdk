@@ -58,7 +58,6 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     ReadmeRelatedFile,
     RNRelatedFile,
     SecretsIgnoreRelatedFile,
-    TestUseCaseRelatedFile,
     VersionConfigRelatedFile,
 )
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
@@ -637,20 +636,3 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             else None,
             latest_rn=self.latest_rn_version,
         )
-
-    @cached_property
-    def test_use_cases(self) -> List[TestUseCaseRelatedFile]:
-        pack_test_use_cases_path: Path = self.path / "TestUseCases"
-        related_files: List[TestUseCaseRelatedFile] = []
-        for test_use_case_path in pack_test_use_cases_path.rglob("*.py"):
-            file_name = get_relative_path(
-                file_path=test_use_case_path,
-                relative_to=pack_test_use_cases_path,
-            )
-            related_files.append(
-                TestUseCaseRelatedFile(
-                    main_file_path=self.path,
-                    test_use_file_name=str(file_name),
-                )
-            )
-        return related_files

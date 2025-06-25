@@ -5,8 +5,8 @@ from typing import Iterable, List, Tuple
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import get_all_repo_pack_ids
-from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.common.tools import find_pack_folder, get_all_repo_pack_ids
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     RelatedFileType,
     TestUseCaseRelatedFile,
@@ -18,14 +18,14 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ALL_PACK_IDS = get_all_repo_pack_ids()
 
-ContentTypes = Pack
+ContentTypes = Playbook
 
 
 class PlaybookTestUseCaseConfigValidator(BaseValidator[ContentTypes]):
     error_code = "PB134"
     description = "Validate test use case configuration in the file docstring"
     rationale = "Avoid failures in finding and installing dependencies"
-    error_message = "Invalid configuration in test use case: {path}. {reason}."
+    error_message = "Invalid configuration in test use case: {name}. {reason}."
     related_field = ""
     is_auto_fixable = False
     related_file_type = [RelatedFileType.TEST_CODE_FILE]
@@ -47,20 +47,21 @@ class PlaybookTestUseCaseConfigValidator(BaseValidator[ContentTypes]):
         validation_results: List[ValidationResult] = []
 
         for content_item in content_items:
+            pack_path = find_pack_folder(content_item.path)
             # Optional since "TestUseCases" folder may not exist in the environment
-            test_use_cases_dir = content_item.path / "TestUseCases"
-            if not test_use_cases_dir.exists():
-                logger.debug(f"Pack '{content_item.name}' has no test use cases.")
+            if not (pack_path / "TestUseCases").exists():
+                logger.debug(f"Pack '{content_item.pack_name}' has no test use cases.")
                 continue
 
             for test_use_case in content_item.test_use_cases:
                 is_valid, reason = self.validate_config_docstring(test_use_case)
                 if not is_valid:
-                    path = test_use_case.file_path.relative_to(content_item.path)
                     validation_results.append(
                         ValidationResult(
                             validator=self,
-                            message=self.error_message.format(path=path, reason=reason),
+                            message=self.error_message.format(
+                                name=test_use_case.name, reason=reason
+                            ),
                             content_object=content_item,
                         )
                     )

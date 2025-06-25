@@ -705,10 +705,10 @@ def add_related_files(file: Path) -> Set[Path]:
     )
 
     # Determine the path to start search for test files
-    if has_python_related_file or has_pwrshell_related_file:
-        path_file = file
-    else:
+    if test_data_changed:
         path_file = path_to_test_data_folder_parts
+    else:
+        path_file = file
 
     test_files = []
     if path_file.parent.exists():

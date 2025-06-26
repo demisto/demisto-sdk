@@ -111,9 +111,11 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
 def get_items_using_deprecated(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[graph.Node]]]:
-    return get_items_using_deprecated_commands(
-        tx, file_paths
-    ) + get_items_using_deprecated_content_items(tx, file_paths)
+    return (
+        get_items_using_deprecated_commands(tx, file_paths)
+        + get_items_using_deprecated_content_items_by_non_deprecated(tx, file_paths)
+        + get_items_using_deprecated_content_items_by_deprecated(tx, file_paths)
+    )
 
 
 def get_items_using_deprecated_commands(
@@ -138,7 +140,7 @@ RETURN c.object_id AS deprecated_command, collect(p) AS object_using_deprecated"
     ]
 
 
-def get_items_using_deprecated_content_items(
+def get_items_using_deprecated_content_items_by_non_deprecated(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[graph.Node]]]:
     files_filter = f"AND p.path IN {file_paths}" if file_paths else ""
@@ -151,6 +153,24 @@ WITH p, d, c1
 WHERE c1 IS NULL
 {files_filter}
 RETURN d.object_id AS deprecated_content, collect(p) AS object_using_deprecated
+    """
+    return [
+        (
+            item.get("deprecated_content"),
+            item.get("object_using_deprecated"),
+        )
+        for item in run_query(tx, query)
+    ]
+
+def get_items_using_deprecated_content_items_by_deprecated(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, List[graph.Node]]]:
+    files_filter = f"AND d.path IN {file_paths}" if file_paths else ""
+
+    query = f"""
+    MATCH (p{{deprecated: false}})-[:USES]->(d{{deprecated: true}}) WHERE not p.is_test
+    {files_filter}
+    RETURN d.object_id AS deprecated_content, collect(p) AS object_using_deprecated
     """
     return [
         (

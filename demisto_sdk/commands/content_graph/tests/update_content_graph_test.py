@@ -278,6 +278,22 @@ def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
 # COMPARISON HELPER FUNCTIONS
 
 
+def _normalize_field_supported_modules(pack_a: Pack, pack_b: Pack) -> None:
+    if not pack_a.supportedModules:
+        pack_b.supportedModules = None
+
+
+def normalize_nodes_and_objects_before_comparison(pack_a: Pack, pack_b: Pack) -> None:
+    """
+    Normalize nodes and objects in both packs to ensure consistent comparison.
+
+    Args:
+        pack_a (Pack): First pack to normalize
+        pack_b (Pack): Second pack to normalize
+    """
+    _normalize_field_supported_modules(pack_a, pack_b)
+
+
 def compare(
     packs_from_content_dto: List[Pack],
     packs_from_graph: List[Pack],
@@ -289,8 +305,7 @@ def compare(
     packs_from_graph.sort(key=lambda pack: pack.object_id)
     assert len(packs_from_content_dto) == len(packs_from_graph)
     for pack_a, pack_b in zip(packs_from_content_dto, packs_from_graph):
-        if not pack_a.supportedModules:
-            pack_b.supportedModules = None
+        normalize_nodes_and_objects_before_comparison(pack_a, pack_b)
         assert pack_a.to_dict() == pack_b.to_dict()
         _compare_content_items(list(pack_a.content_items), list(pack_b.content_items))
         _compare_relationships(pack_a, pack_b)

@@ -51,7 +51,10 @@ from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
     ParsingRuleParser,
 )
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
-from demisto_sdk.commands.content_graph.parsers.related_files import ImageRelatedFile
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    ImageRelatedFile,
+    TestUseCaseRelatedFile,
+)
 from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.file import File
@@ -242,6 +245,29 @@ def create_doc_file_object(
     return ImageRelatedFile(doc_path)
 
 
+def create_test_use_case_file_object(
+    playbook_path: Path,
+    test_use_case_name: str,
+    test_use_case_content: str,
+) -> TestUseCaseRelatedFile:
+    """Creating test use case file object.
+
+    Args:
+        playbook_path (Path): The path to the playbook that is tested by the test use case.
+        test_use_case_name (str): The name of the test use case (without the `.py` extension).
+        test_use_case_content (str): The contents of the test use case file.
+    Returns:
+        TestUseCaseRelatedFile: The test use case file object.
+    """
+    test_use_case_path = (
+        playbook_path.parent.parent / "TestUseCases" / f"{test_use_case_name}.py"
+    )
+    test_use_case_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(test_use_case_path, "w") as f:
+        f.write(test_use_case_content)
+    return TestUseCaseRelatedFile(playbook_path, test_use_case_name)
+
+
 def create_modeling_rule_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
@@ -338,6 +364,7 @@ def create_pack_object(
     release_note_content: Optional[str] = None,
     bc_release_note_content: Optional[dict] = None,
     version_config: Optional[dict] = None,
+    test_use_case_content: Optional[str] = None,
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -393,6 +420,11 @@ def create_pack_object(
     if playbooks:
         for _ in range(playbooks):
             pack.create_playbook()
+    if test_use_case_content:
+        pack.create_test_use_case(
+            name=f"{json_content['name']}_use_case_test",
+            content=test_use_case_content,
+        )
 
     return cast(Pack, BaseContent.from_path(pack_path))
 

@@ -100,6 +100,7 @@ class Pack(TestSuiteBase):
         self.lists: List[ContentList] = list()
         self.playbooks: List[Playbook] = list()
         self.test_playbooks: List[Playbook] = list()
+        self.test_use_cases: List[TextBased] = list()
         self.release_notes: List[TextBased] = list()
         self.release_notes_config: List[JSONBased] = list()
         self.jobs: List[Job] = list()
@@ -134,6 +135,9 @@ class Pack(TestSuiteBase):
 
         self._test_playbooks_path = self._pack_path / "TestPlaybooks"
         self._test_playbooks_path.mkdir(exist_ok=True)
+
+        self._test_use_cases_path = self._pack_path / "TestUseCases"
+        self._test_use_cases_path.mkdir(exist_ok=True)
 
         self._classifiers_path = self._pack_path / "Classifiers"
         self._classifiers_path.mkdir(exist_ok=True)
@@ -600,6 +604,13 @@ class Pack(TestSuiteBase):
         )
         self.test_playbooks.append(playbook)
         return playbook
+
+    def create_test_use_case(self, name: str, content: str = ""):
+        pb_test_use_case = self._create_text_based(
+            f"{name}.py", content, dir_path=self._test_use_cases_path
+        )
+        self.test_use_cases.append(pb_test_use_case)
+        return pb_test_use_case
 
     def create_release_notes(
         self, version: str, content: str = "", is_bc: bool = False

@@ -297,6 +297,8 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
         )
     if content_item.git_status == GitStatuses.RENAMED:
         return not is_pack_move(content_item)
-    if isinstance(content_item, (AgentixAction, AgentixAgent)) or (isinstance(content_item, Script) and content_item.is_llm):
+    if isinstance(content_item, (AgentixAction, AgentixAgent)) or (
+        isinstance(content_item, Script) and content_item.is_llm
+    ):
         return True
     return content_item.git_status is None

@@ -35,7 +35,7 @@ def upload_content_entity(**kwargs):
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 
     inputs = parse_multiple_path_inputs(kwargs.get("input"))
-    private_packs_paths = parse_multiple_path_inputs(kwargs.get('private_packs_path'))
+    private_packs_paths = parse_multiple_path_inputs(kwargs.get("private_packs_path"))
 
     keep_zip = kwargs.pop("keep_zip", None)
     destination_zip_path = Path(keep_zip or tempfile.mkdtemp())
@@ -74,7 +74,7 @@ def upload_content_entity(**kwargs):
     # Here the magic happens
     upload_result = SUCCESS_RETURN_CODE
     paths = list(zip_longest(inputs, private_packs_paths))
-    for input,private_pack_path in paths:
+    for input, private_pack_path in paths:
         result = Uploader(
             input=input,
             marketplace=marketplace,

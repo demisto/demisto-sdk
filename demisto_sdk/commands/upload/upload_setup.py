@@ -93,8 +93,10 @@ def upload(
         None, "--log-file-path", help="Path to save log files."
     ),
     private_packs_path: str = typer.Option(
-        None, "--private-packs-path", help="Path to pack folder in private packs repo (optional)."
-    )
+        None,
+        "--private-packs-path",
+        help="Path to pack folder in private packs repo (optional).",
+    ),
 ):
     """
     ** Upload a content entity to Cortex XSOAR/XSIAM.**
@@ -137,5 +139,5 @@ def upload(
         skip_validation=skip_validation,
         reattach=reattach,
         override_existing=override_existing,
-        private_packs_path=private_packs_path
+        private_packs_path=private_packs_path,
     )

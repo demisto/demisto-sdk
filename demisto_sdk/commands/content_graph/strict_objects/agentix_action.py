@@ -19,12 +19,14 @@ class AgentixActionArgument(BaseStrictModel):
     content_item_arg_name: str = Field(..., alias="underlyingargname")
     generatable: bool = False
 
+
 class AgentixActionOutput(BaseStrictModel):
     description: str
     type: str
     content_item_output_name: str = Field(..., alias="underlyingoutputcontextpath")
     name: str
     disabled: bool = False
+
 
 class UnderlyingContentItem(BaseStrictModel):
     id: str = None
@@ -33,9 +35,12 @@ class UnderlyingContentItem(BaseStrictModel):
     command: str = None
     version: str
 
+
 class AgentixAction(AgentixBase):
     args: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None
-    underlying_content_item: UnderlyingContentItem = Field(..., alias="underlyingcontentitem")
+    underlying_content_item: UnderlyingContentItem = Field(
+        ..., alias="underlyingcontentitem"
+    )
     requires_user_approval: bool = Field(False, alias="requiresuserapproval")
     few_shots: Optional[list[str]] = Field(None, alias="fewshots")

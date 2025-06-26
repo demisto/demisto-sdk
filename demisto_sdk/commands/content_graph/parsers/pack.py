@@ -14,8 +14,6 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     PACK_DEFAULT_MARKETPLACES,
     PACK_NAME_DEPRECATED_REGEX,
-    PACKS_FOLDER,
-    PRIVATE_PACKS_FOLDER,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -255,7 +253,11 @@ class PackParser(BaseContentParser, PackMetadataParser):
     content_type = ContentType.PACK
 
     def __init__(
-        self, path: Path, git_sha: Optional[str] = None, metadata_only: bool = False, private_pack_path: Path = None
+        self,
+        path: Path,
+        git_sha: Optional[str] = None,
+        metadata_only: bool = False,
+        private_pack_path: Path = None,
     ) -> None:
         """Parses a pack and its content items.
 

@@ -65,7 +65,14 @@ CALL apoc.periodic.iterate(
 
 
 SET_DEFAULT_SUPPORTED_MODULE ="""
-  MATCH (s) WHERE s.supportedModules IS NULL AND NOT s.deprecated SET s.supportedModules = {default_supported_module}
+  MATCH (p:Pack)
+  WHERE p.supportedModules IS NULL AND NOT p.deprecated
+  SET p.supportedModules = {default_supported_module}
+  WITH p
+
+  MATCH (p:Pack)<-[:IN_PACK]-(n)
+  WHERE n.supportedModules IS NULL AND NOT n.deprecated
+  SET n.supportedModules = p.supportedModules
 """
 
 

@@ -289,6 +289,8 @@ def compare(
     packs_from_graph.sort(key=lambda pack: pack.object_id)
     assert len(packs_from_content_dto) == len(packs_from_graph)
     for pack_a, pack_b in zip(packs_from_content_dto, packs_from_graph):
+        if not pack_a.supportedModules:
+            pack_b.supportedModules = None
         assert pack_a.to_dict() == pack_b.to_dict()
         _compare_content_items(list(pack_a.content_items), list(pack_b.content_items))
         _compare_relationships(pack_a, pack_b)

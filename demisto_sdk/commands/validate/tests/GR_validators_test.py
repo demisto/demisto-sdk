@@ -777,7 +777,7 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid_script(
     assert len(validation_results) == 0
 
 
-def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid_playbook(
+def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_deprecated_playbook(
     repo_for_test_gr_107: Repo,
 ):
     """
@@ -791,8 +791,8 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid_playbook(
     - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific playbook.
 
     Then:
-    - Verify that the validator correctly identifies that no deprecated content items are used.
-    - Assert that the validation results are empty.
+    - Verify that the validator correctly identifies that a deprecated playbook is used by the integration.
+    - Assert that the validation results contains exactly one item.
     """
     graph_interface = repo_for_test_gr_107.create_graph()
     BaseValidator.graph_interface = graph_interface
@@ -804,7 +804,7 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid_playbook(
         pack_objects
     )
 
-    assert len(validation_results) == 0
+    assert len(validation_results) == 1
 
 
 def test_GR107_IsDeprecatedContentItemInUsageValidatorAllFiles_is_invalid(

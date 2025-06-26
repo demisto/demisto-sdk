@@ -55,6 +55,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     remove_packs_before_creation,
     remove_server_nodes,
     return_preserved_relationships,
+    set_default_supported_module,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
@@ -368,8 +369,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 get_relationships_to_preserve, pack_ids
             )
             session.execute_write(remove_packs_before_creation, pack_ids)
-            session.execute_write(create_nodes, nodes)
             session.execute_write(remove_empty_properties)
+            session.execute_write(create_nodes, nodes)
+            session.execute_write(set_default_supported_module)
 
     def get_relationships_by_path(
         self,

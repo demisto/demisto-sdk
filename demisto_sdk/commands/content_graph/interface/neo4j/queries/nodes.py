@@ -2,7 +2,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from neo4j import Transaction, graph
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions, PlatformSupportedModules
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     CONTENT_PRIVATE_ITEMS,
@@ -62,6 +62,11 @@ CALL apoc.periodic.iterate(
     SET n += nullifyMap",
     {batchSize:30000, parallel:true, iterateList:true}
 );"""
+
+
+SET_DEFAULT_SUPPORTED_MODULE ="""
+  MATCH (s) WHERE s.supportedModules IS NULL AND NOT s.deprecated SET s.supportedModules = {default_supported_module}
+"""
 
 
 def get_relationships_to_preserve(
@@ -266,3 +271,8 @@ def delete_all_graph_nodes(tx: Transaction) -> None:
 
 def remove_empty_properties(tx: Transaction) -> None:
     run_query(tx, REMOVE_EMPTY_PROPERTIES)
+
+
+def set_default_supported_module(tx: Transaction) -> None:
+    query = SET_DEFAULT_SUPPORTED_MODULE.format(default_supported_module=[sm.value for sm in PlatformSupportedModules])
+    run_query(tx, query)

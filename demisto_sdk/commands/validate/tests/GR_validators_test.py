@@ -777,7 +777,7 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid_script(
     assert len(validation_results) == 0
 
 
-def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_deprecated_playbook(
+def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_used_deprecated_item(
     repo_for_test_gr_107: Repo,
 ):
     """

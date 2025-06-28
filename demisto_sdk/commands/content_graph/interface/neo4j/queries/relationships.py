@@ -3,7 +3,10 @@ from typing import Any, Dict, List, Optional
 
 from neo4j import Transaction
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MarketplaceVersions,
+    PlatformSupportedModules,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -15,6 +18,17 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     node_map,
     run_query,
 )
+
+SET_DEFAULT_SUPPORTED_MODULE ="""
+  MATCH (p:Pack)
+  WHERE p.supportedModules IS NULL AND NOT p.deprecated
+  SET p.supportedModules = {default_supported_module}
+  WITH p
+
+  MATCH (p)<-[:IN_PACK]-(n)
+  WHERE n.supportedModules IS NULL AND NOT n.deprecated
+  SET n.supportedModules = p.supportedModules
+"""
 
 
 def build_source_properties() -> str:
@@ -474,4 +488,9 @@ def delete_all_graph_relationships(tx: Transaction) -> None:
         DELETE r
         };
     """
+    run_query(tx, query)
+
+
+def set_default_supported_module_by_relationships(tx: Transaction) -> None:
+    query = SET_DEFAULT_SUPPORTED_MODULE.format(default_supported_module=[sm.value for sm in PlatformSupportedModules])
     run_query(tx, query)

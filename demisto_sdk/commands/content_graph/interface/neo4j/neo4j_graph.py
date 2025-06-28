@@ -55,7 +55,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     remove_packs_before_creation,
     remove_server_nodes,
     return_preserved_relationships,
-    set_default_supported_module,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
@@ -63,6 +62,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     delete_all_graph_relationships,
     get_sources_by_path,
     get_targets_by_path,
+    set_default_supported_module_by_relationships,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_items_using_deprecated,
@@ -371,7 +371,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(remove_packs_before_creation, pack_ids)
             session.execute_write(remove_empty_properties)
             session.execute_write(create_nodes, nodes)
-            session.execute_write(set_default_supported_module)
 
     def get_relationships_by_path(
         self,
@@ -674,6 +673,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             # For more details: https://jira-hq.paloaltonetworks.local/browse/CIAC-7149
             session.execute_write(remove_content_private_nodes)
             session.execute_write(remove_server_nodes)
+
+    def update_special_node_fields(self) -> None:
+        with self.driver.session() as session:
+            # Updates fields that are missing from the original parser objects but required in the graph representation
+            session.execute_write(set_default_supported_module_by_relationships)
 
     def import_graph(
         self,

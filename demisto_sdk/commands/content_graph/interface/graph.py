@@ -138,6 +138,10 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def update_special_node_fields(self) -> None:
+        pass
+
+    @abstractmethod
     def import_graph(
         self,
         imported_path: Optional[Path] = None,

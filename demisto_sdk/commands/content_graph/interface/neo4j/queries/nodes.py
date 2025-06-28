@@ -64,18 +64,6 @@ CALL apoc.periodic.iterate(
 );"""
 
 
-SET_DEFAULT_SUPPORTED_MODULE ="""
-  MATCH (p:Pack)
-  WHERE p.supportedModules IS NULL AND NOT p.deprecated
-  SET p.supportedModules = {default_supported_module}
-  WITH p
-
-  MATCH (p:Pack)<-[:IN_PACK]-(n)
-  WHERE n.supportedModules IS NULL AND NOT n.deprecated
-  SET n.supportedModules = p.supportedModules
-"""
-
-
 def get_relationships_to_preserve(
     tx: Transaction,
     pack_ids: List[str],
@@ -278,8 +266,3 @@ def delete_all_graph_nodes(tx: Transaction) -> None:
 
 def remove_empty_properties(tx: Transaction) -> None:
     run_query(tx, REMOVE_EMPTY_PROPERTIES)
-
-
-def set_default_supported_module(tx: Transaction) -> None:
-    query = SET_DEFAULT_SUPPORTED_MODULE.format(default_supported_module=[sm.value for sm in PlatformSupportedModules])
-    run_query(tx, query)

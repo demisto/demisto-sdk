@@ -305,7 +305,7 @@ def compare(
     packs_from_graph.sort(key=lambda pack: pack.object_id)
     assert len(packs_from_content_dto) == len(packs_from_graph)
     for pack_a, pack_b in zip(packs_from_content_dto, packs_from_graph):
-        # normalize_nodes_and_objects_before_comparison(pack_a, pack_b)
+        normalize_nodes_and_objects_before_comparison(pack_a, pack_b)
         assert pack_a.to_dict() == pack_b.to_dict()
         _compare_content_items(list(pack_a.content_items), list(pack_b.content_items))
         _compare_relationships(pack_a, pack_b)

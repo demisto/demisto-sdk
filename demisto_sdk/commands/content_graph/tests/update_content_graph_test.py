@@ -291,11 +291,8 @@ def _normalize_field_supported_modules(pack_a: Pack, pack_b: Pack) -> None:
 
 def normalize_nodes_and_objects_before_comparison(pack_a: Pack, pack_b: Pack) -> None:
     """
-    Normalize nodes and objects in both packs to ensure consistent comparison.
-
-    Args:
-        pack_a (Pack): First pack to normalize
-        pack_b (Pack): Second pack to normalize
+    Normalize nodes and objects in both packs to ensure consistent comparison,
+    only for fields that were intentionally defined to be different between the objects and the nodes.
     """
     _normalize_field_supported_modules(pack_a, pack_b)
 

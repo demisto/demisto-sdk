@@ -15,7 +15,7 @@ ContentTypes = Union[AgentixAgent, AgentixAction, Script]
 
 
 class IsForbiddenContentItemValidator(BaseValidator[ContentTypes]):
-    error_code = "BA129"
+    error_code = "AG100"
     description = "We should not push these items to the Content repository."
     rationale = "These types of items should be stored in a private repository."
     error_message = (

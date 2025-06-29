@@ -117,12 +117,6 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_conte
 from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_script_name_starts_with_digit import (
     IsCommandOrScriptNameStartsWithDigitValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA129_is_forbidden_content_item import (
-    IsForbiddenContentItemValidator,
-)
-from demisto_sdk.commands.validate.validators.BA_validators.BA130_is_correct_mp import (
-    IsMarketplaceExistsValidator,
-)
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
@@ -2736,85 +2730,3 @@ def test_integration_compliant_policy_name_validator(
         content_item, policy_names
     )
     assert results == sorted(expected_failures)
-
-def test_is_forbidden_content_item():
-    """
-    Given
-    - One valid AgentixAgent item.
-
-    When
-    - Calling the IsForbiddenContentItemValidator obtain_invalid_content_items function.
-
-    Then
-    - Make sure one failure is returned and the error message contains the informative message.
-    """
-
-    content_items = [AgentixAgent(color="red", description="", display="", path=Path("test.yml"),
-                                  marketplaces=["xsoar"], name="test", fromversion="", toversion="",
-                                  display_name="", deprecated=False, id="", node_id="")]
-    expected_msg = (
-        f"The items {ContentType.AGENTIX_AGENT} and {ContentType.AGENTIX_ACTION} "
-        f"should be stored in content-test-conf, not in Content"
-    )
-    results = (
-        IsForbiddenContentItemValidator().obtain_invalid_content_items(
-            content_items
-        )
-    )
-
-    assert len(results) == 1
-    assert results[0].message == expected_msg
-
-
-def test_is_marketplace_exists():
-    """
-    Given
-    - One valid and one invalid AgentixAgent items.
-    - One valid and one invalid AgentixAction items.
-    - Two valid and one invalid Script items.
-
-    When
-    - Calling the IsMarketplaceExistsValidator obtain_invalid_content_items function.
-
-    Then
-    - Make sure 3 failures are returned and the error message contains the informative message.
-    """
-    content_items = [AgentixAgent(color="red", description="", display="", path=Path("test.yml"),
-                                marketplaces=["xsoar"], name="test", fromversion="", toversion="",
-                                display_name="", deprecated=False, id="", node_id=""),
-                    AgentixAgent(color="red", description="", display="", path=Path("test.yml"),
-                                marketplaces=["xsoar_saas"], name="test", fromversion="", toversion="",
-                                display_name="", deprecated=False, id="", node_id=""),
-                    AgentixAction(color="red", description="", display="", path=Path("test.yml"),
-                                marketplaces=["xsoar"], name="test", fromversion="", toversion="",
-                                display_name="", deprecated=False, id="", node_id="",
-                                underlyingContentItemId="test", underlyingContentItemName="test",
-                                underlyingcontentitemtype=1, underlyingContentItemVersion=-1, agent_id="test"),
-                    AgentixAction(color="red", description="", display="", path=Path("test.yml"),
-                                marketplaces=["xsoar_saas"], name="test", fromversion="", toversion="",
-                                display_name="", deprecated=False, id="", node_id="",
-                                underlyingContentItemId="test", underlyingContentItemName="test",
-                                underlyingcontentitemtype=1, underlyingContentItemVersion=-1, agent_id="test"),
-                    Script(is_llm=True, marketplaces=["xsoar_saas"], id="", script='print("hello world")',
-                           node_id="", path=Path("test.yml"), name="test1", fromversion="6.0.0",
-                           toversion="8.0.0", display_name="test", deprecated=False, type='python',
-                           tags=['test'], skip_prepare=[]),
-                    Script(is_llm=False, marketplaces=["xsoar"], id="", script='print("hello world")',
-                           node_id="", path=Path("test.yml"), name="test1", fromversion="6.0.0",
-                           toversion="8.0.0", display_name="test", deprecated=False, type='python',
-                           tags=['test'], skip_prepare=[]),
-                    Script(is_llm=True, marketplaces=["xsoar"], id="", script='print("hello world")',
-                           node_id="", path=Path("test.yml"), name="test1", fromversion="6.0.0",
-                           toversion="8.0.0", display_name="test", deprecated=False, type='python',
-                           tags=['test'], skip_prepare=[])
-                    ]
-    results = (
-        IsMarketplaceExistsValidator().obtain_invalid_content_items(
-            content_items
-        )
-    )
-
-    assert len(results) == 3
-    assert results[0].message == ("The items AgentixAgent, AgentixAction and Script with isllm=true"
-                                  " should be uploaded to xsoar_saas only. Please specify only xsoar_saas"
-                                  " under marketplaces.")

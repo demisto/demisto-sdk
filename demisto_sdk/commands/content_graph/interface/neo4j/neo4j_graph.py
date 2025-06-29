@@ -369,8 +369,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 get_relationships_to_preserve, pack_ids
             )
             session.execute_write(remove_packs_before_creation, pack_ids)
-            session.execute_write(remove_empty_properties)
             session.execute_write(create_nodes, nodes)
+            session.execute_write(remove_empty_properties)
 
     def get_relationships_by_path(
         self,
@@ -674,9 +674,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(remove_content_private_nodes)
             session.execute_write(remove_server_nodes)
 
-    def update_special_node_fields(self) -> None:
+    def update_specific_fields_for_neo4j(self) -> None:
         with self.driver.session() as session:
-            # Updates fields that are missing from the original parser objects but required in the graph representation
+            # Updates/rewrites fields for Neo4j graph nodes to present them differently than in the source objects.
             session.execute_write(set_default_supported_module_by_relationships)
 
     def import_graph(

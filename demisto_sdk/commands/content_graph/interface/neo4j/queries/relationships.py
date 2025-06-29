@@ -20,6 +20,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 )
 
 SET_DEFAULT_SUPPORTED_MODULE = """
+  //For all packs and content items within those packs,
+  //if they have no explicit supported module defined and are not deprecated,
+  //this query will set their supportedModules property to the default value, which represents all modules.
   MATCH (p:Pack)
   WHERE p.supportedModules IS NULL AND NOT p.deprecated
   SET p.supportedModules = {default_supported_module}
@@ -492,6 +495,8 @@ def delete_all_graph_relationships(tx: Transaction) -> None:
 
 
 def set_default_supported_module_by_relationships(tx: Transaction) -> None:
+    # In the source objects, an undefined or unspecified supported module is represented as None.
+    # In Neo4j, however, for validation purposes, we want to explicitly list all modules.
     query = SET_DEFAULT_SUPPORTED_MODULE.format(
         default_supported_module=[sm.value for sm in PlatformSupportedModules]
     )

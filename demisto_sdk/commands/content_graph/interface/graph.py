@@ -138,7 +138,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def update_special_node_fields(self) -> None:
+    def update_specific_fields_for_neo4j(self) -> None:
         pass
 
     @abstractmethod

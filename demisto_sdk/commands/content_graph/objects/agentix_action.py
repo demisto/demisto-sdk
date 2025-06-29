@@ -17,12 +17,14 @@ class AgentixActionArgument(BaseModel):
     disabled: bool = False
     content_item_arg_name: str = Field(..., alias="underlyingargname")
 
+
 class AgentixActionOutput(BaseModel):
     description: str
     type: str
     disabled: bool = False
     content_item_output_name: str = Field(..., alias="underlyingoutputcontextpath")
     name: str
+
 
 class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
     args: Optional[list[AgentixActionArgument]] = Field(None, exclude=True)

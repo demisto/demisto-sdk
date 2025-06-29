@@ -120,7 +120,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_
 from demisto_sdk.commands.validate.validators.BA_validators.BA129_is_forbidden_content_item import (
     IsForbiddenContentItemValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA130_is_correct_mp import (
+from demisto_sdk.commands.validate.validators.BA_validators.BA130_is_correct_mp_sm import (
     IsMarketplaceExistsValidator,
 )
 from TestSuite.repo import ChangeCWD
@@ -132,61 +132,61 @@ VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
-                [
-                    create_integration_object(
-                        paths=["commonfields.id"], values=["changedName"]
-                    ),
-                    create_integration_object(),
-                ],
-                1,
-                [
-                    "The name attribute (currently TestIntegration) should be identical to its `id` attribute (changedName)"
-                ],
+            [
+                create_integration_object(
+                    paths=["commonfields.id"], values=["changedName"]
+                ),
+                create_integration_object(),
+            ],
+            1,
+            [
+                "The name attribute (currently TestIntegration) should be identical to its `id` attribute (changedName)"
+            ],
         ),
         (
-                [
-                    create_classifier_object(paths=["id"], values=["changedName"]),
-                    create_classifier_object(paths=["id"], values=["Github Classifier"]),
-                ],
-                1,
-                [
-                    "The name attribute (currently Github Classifier) should be identical to its `id` attribute (changedName)"
-                ],
+            [
+                create_classifier_object(paths=["id"], values=["changedName"]),
+                create_classifier_object(paths=["id"], values=["Github Classifier"]),
+            ],
+            1,
+            [
+                "The name attribute (currently Github Classifier) should be identical to its `id` attribute (changedName)"
+            ],
         ),
         (
-                [
-                    create_dashboard_object(),
-                ],
-                0,
-                [],
+            [
+                create_dashboard_object(),
+            ],
+            0,
+            [],
         ),
         (
-                [
-                    create_incident_type_object(),
-                ],
-                0,
-                [],
+            [
+                create_incident_type_object(),
+            ],
+            0,
+            [],
         ),
         (
-                [
-                    create_wizard_object(),
-                ],
-                0,
-                [],
+            [
+                create_wizard_object(),
+            ],
+            0,
+            [],
         ),
         (
-                [
-                    create_wizard_object({"id": "should_fail"}),
-                ],
-                1,
-                [
-                    "The name attribute (currently test_wizard) should be identical to its `id` attribute (should_fail)"
-                ],
+            [
+                create_wizard_object({"id": "should_fail"}),
+            ],
+            1,
+            [
+                "The name attribute (currently test_wizard) should be identical to its `id` attribute (should_fail)"
+            ],
         ),
     ],
 )
 def test_IDNameValidator_obtain_invalid_content_items(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -222,19 +222,19 @@ def test_IDNameValidator_obtain_invalid_content_items(
     "content_item, expected_name, expected_fix_msg",
     [
         (
-                create_wizard_object({"id": "should_fix"}),
-                "should_fix",
-                "Changing name to be equal to id (should_fix).",
+            create_wizard_object({"id": "should_fix"}),
+            "should_fix",
+            "Changing name to be equal to id (should_fix).",
         ),
         (
-                create_incident_type_object(["id"], ["should_fix"]),
-                "should_fix",
-                "Changing name to be equal to id (should_fix).",
+            create_incident_type_object(["id"], ["should_fix"]),
+            "should_fix",
+            "Changing name to be equal to id (should_fix).",
         ),
         (
-                create_integration_object(["commonfields.id"], ["should_fix"]),
-                "should_fix",
-                "Changing name to be equal to id (should_fix).",
+            create_integration_object(["commonfields.id"], ["should_fix"]),
+            "should_fix",
+            "Changing name to be equal to id (should_fix).",
         ),
     ],
 )
@@ -259,20 +259,20 @@ def test_IDNameValidator_fix(content_item, expected_name, expected_fix_msg):
     [
         ([create_indicator_field_object(), create_incident_field_object()], 0, []),
         (
-                [
-                    create_indicator_field_object(
-                        paths=["cliName"], values=["changed_cliName"]
-                    ),
-                ],
-                1,
-                [
-                    "The cli name changed_cliName doesn't match the standards. the cliName should be: email."
-                ],
+            [
+                create_indicator_field_object(
+                    paths=["cliName"], values=["changed_cliName"]
+                ),
+            ],
+            1,
+            [
+                "The cli name changed_cliName doesn't match the standards. the cliName should be: email."
+            ],
         ),
     ],
 )
 def test_CliNameMatchIdValidator_obtain_invalid_content_items(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -301,16 +301,16 @@ def test_CliNameMatchIdValidator_obtain_invalid_content_items(
     "content_item, expected_name, expected_fix_msg",
     [
         (
-                create_indicator_field_object(
-                    paths=["cliName"], values=["changed_cliName"]
-                ),
-                "email",
-                "Changing the cli name to (email).",
+            create_indicator_field_object(
+                paths=["cliName"], values=["changed_cliName"]
+            ),
+            "email",
+            "Changing the cli name to (email).",
         ),
         (
-                create_incident_field_object(paths=["id"], values=["incident_domain"]),
-                "domain",
-                "Changing the cli name to (domain).",
+            create_incident_field_object(paths=["id"], values=["incident_domain"]),
+            "domain",
+            "Changing the cli name to (domain).",
         ),
     ],
 )
@@ -333,53 +333,53 @@ def test_CliNameMatchIdValidator_fix(content_item, expected_name, expected_fix_m
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
-                [
-                    create_incident_field_object(),
-                    create_widget_object(),
-                    create_wizard_object(),
-                    create_report_object(),
-                    create_xsiam_report_object(),
-                    create_script_object(),
-                    create_dashboard_object(),
-                    create_incident_type_object(),
-                    create_generic_module_object(),
-                    create_generic_type_object(),
-                    create_incoming_mapper_object(),
-                    create_outgoing_mapper_object(),
-                    create_generic_definition_object(),
-                    create_classifier_object(),
-                    create_xsiam_dashboard_object(),
-                    create_job_object(),
-                    create_list_object(),
-                    create_parsing_rule_object(),
-                    create_playbook_object(),
-                    create_generic_field_object(),
-                    create_correlation_rule_object(),
-                    create_assets_modeling_rule_object(),
-                    create_layout_object(),
-                ],
-                0,
-                [],
+            [
+                create_incident_field_object(),
+                create_widget_object(),
+                create_wizard_object(),
+                create_report_object(),
+                create_xsiam_report_object(),
+                create_script_object(),
+                create_dashboard_object(),
+                create_incident_type_object(),
+                create_generic_module_object(),
+                create_generic_type_object(),
+                create_incoming_mapper_object(),
+                create_outgoing_mapper_object(),
+                create_generic_definition_object(),
+                create_classifier_object(),
+                create_xsiam_dashboard_object(),
+                create_job_object(),
+                create_list_object(),
+                create_parsing_rule_object(),
+                create_playbook_object(),
+                create_generic_field_object(),
+                create_correlation_rule_object(),
+                create_assets_modeling_rule_object(),
+                create_layout_object(),
+            ],
+            0,
+            [],
         ),
         (
-                [
-                    create_incident_field_object(["fromVersion"], ["4.5.0"]),
-                    create_wizard_object({"fromVersion": "4.5.0"}),
-                    create_playbook_object(["fromversion"], ["4.5.0"]),
-                    create_generic_field_object(["fromVersion"], ["4.5.0"]),
-                ],
-                4,
-                [
-                    "The IncidentField from version field is either missing or insufficient, need at least 5.0.0, current is 4.5.0.",
-                    "The Wizard from version field is either missing or insufficient, need at least 6.8.0, current is 4.5.0.",
-                    "The Playbook from version field is either missing or insufficient, need at least 5.0.0, current is 4.5.0.",
-                    "The GenericField from version field is either missing or insufficient, need at least 6.5.0, current is 4.5.0.",
-                ],
+            [
+                create_incident_field_object(["fromVersion"], ["4.5.0"]),
+                create_wizard_object({"fromVersion": "4.5.0"}),
+                create_playbook_object(["fromversion"], ["4.5.0"]),
+                create_generic_field_object(["fromVersion"], ["4.5.0"]),
+            ],
+            4,
+            [
+                "The IncidentField from version field is either missing or insufficient, need at least 5.0.0, current is 4.5.0.",
+                "The Wizard from version field is either missing or insufficient, need at least 6.8.0, current is 4.5.0.",
+                "The Playbook from version field is either missing or insufficient, need at least 5.0.0, current is 4.5.0.",
+                "The GenericField from version field is either missing or insufficient, need at least 6.5.0, current is 4.5.0.",
+            ],
         ),
     ],
 )
 def test_IsFromVersionSufficientAllItemsValidator_obtain_invalid_content_items(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -409,24 +409,24 @@ def test_IsFromVersionSufficientAllItemsValidator_obtain_invalid_content_items(
     "content_items, expected_msgs, expected_new_from_versions",
     [
         (
-                [
-                    create_incident_field_object(["fromVersion"], ["4.5.0"]),
-                    create_wizard_object({"fromVersion": "4.5.0"}),
-                    create_playbook_object(["fromversion"], ["4.5.0"]),
-                    create_generic_field_object(["fromVersion"], ["4.5.0"]),
-                ],
-                [
-                    "Raised the fromversion field to 5.0.0",
-                    "Raised the fromversion field to 6.8.0",
-                    "Raised the fromversion field to 5.0.0",
-                    "Raised the fromversion field to 6.5.0",
-                ],
-                ["5.0.0", "6.8.0", "5.0.0", "6.5.0"],
+            [
+                create_incident_field_object(["fromVersion"], ["4.5.0"]),
+                create_wizard_object({"fromVersion": "4.5.0"}),
+                create_playbook_object(["fromversion"], ["4.5.0"]),
+                create_generic_field_object(["fromVersion"], ["4.5.0"]),
+            ],
+            [
+                "Raised the fromversion field to 5.0.0",
+                "Raised the fromversion field to 6.8.0",
+                "Raised the fromversion field to 5.0.0",
+                "Raised the fromversion field to 6.5.0",
+            ],
+            ["5.0.0", "6.8.0", "5.0.0", "6.5.0"],
         ),
     ],
 )
 def test_IsFromVersionSufficientAllItemsValidator_fix(
-        content_items, expected_msgs, expected_new_from_versions
+    content_items, expected_msgs, expected_new_from_versions
 ):
     """
     Given
@@ -438,7 +438,7 @@ def test_IsFromVersionSufficientAllItemsValidator_fix(
         - Make sure the contentitem from version was set to the right version and the right message was returned.
     """
     for content_item, expected_msg, expected_new_from_version in zip(
-            content_items, expected_msgs, expected_new_from_versions
+        content_items, expected_msgs, expected_new_from_versions
     ):
         assert content_item.fromversion == "4.5.0"
         result = IsFromVersionSufficientAllItemsValidator().fix(content_item)
@@ -450,40 +450,40 @@ def test_IsFromVersionSufficientAllItemsValidator_fix(
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
-                [
-                    create_indicator_field_object(),
-                    create_incident_field_object(),
-                    create_widget_object(),
-                    create_wizard_object(),
-                    create_report_object(),
-                    create_xsiam_report_object(),
-                    create_integration_object(),
-                    create_script_object(),
-                    create_dashboard_object(),
-                    create_incident_type_object(),
-                    create_generic_module_object(),
-                    create_generic_type_object(),
-                    create_incoming_mapper_object(),
-                    create_outgoing_mapper_object(),
-                    create_generic_definition_object(),
-                    create_classifier_object(),
-                    create_xsiam_dashboard_object(),
-                    create_job_object(),
-                    create_list_object(),
-                    create_parsing_rule_object(),
-                    create_playbook_object(),
-                    create_generic_field_object(),
-                    create_correlation_rule_object(),
-                    create_assets_modeling_rule_object(),
-                    create_layout_object(),
-                ],
-                0,
-                [],
+            [
+                create_indicator_field_object(),
+                create_incident_field_object(),
+                create_widget_object(),
+                create_wizard_object(),
+                create_report_object(),
+                create_xsiam_report_object(),
+                create_integration_object(),
+                create_script_object(),
+                create_dashboard_object(),
+                create_incident_type_object(),
+                create_generic_module_object(),
+                create_generic_type_object(),
+                create_incoming_mapper_object(),
+                create_outgoing_mapper_object(),
+                create_generic_definition_object(),
+                create_classifier_object(),
+                create_xsiam_dashboard_object(),
+                create_job_object(),
+                create_list_object(),
+                create_parsing_rule_object(),
+                create_playbook_object(),
+                create_generic_field_object(),
+                create_correlation_rule_object(),
+                create_assets_modeling_rule_object(),
+                create_layout_object(),
+            ],
+            0,
+            [],
         ),
     ],
 )
 def test_FromToVersionSyncedValidator_obtain_invalid_content_items(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -511,68 +511,68 @@ def test_FromToVersionSyncedValidator_obtain_invalid_content_items(
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
-                [
-                    create_indicator_field_object(
-                        ["type", "fromVersion"], ["html", "6.1.0"]
-                    ),
-                    create_indicator_field_object(
-                        ["type", "fromVersion"], ["grid", "5.5.0"]
-                    ),
-                    create_indicator_field_object(),
-                ],
-                0,
-                [],
+            [
+                create_indicator_field_object(
+                    ["type", "fromVersion"], ["html", "6.1.0"]
+                ),
+                create_indicator_field_object(
+                    ["type", "fromVersion"], ["grid", "5.5.0"]
+                ),
+                create_indicator_field_object(),
+            ],
+            0,
+            [],
         ),
         (
-                [
-                    create_indicator_field_object(
-                        ["type", "fromVersion"], ["html", "6.0.0"]
-                    ),
-                    create_indicator_field_object(
-                        ["type", "fromVersion"], ["grid", "5.0.0"]
-                    ),
-                ],
-                2,
-                [
-                    "The fromversion of IndicatorField with type html must be at least 6.1.0, current is 6.0.0.",
-                    "The fromversion of IndicatorField with type grid must be at least 5.5.0, current is 5.0.0.",
-                ],
+            [
+                create_indicator_field_object(
+                    ["type", "fromVersion"], ["html", "6.0.0"]
+                ),
+                create_indicator_field_object(
+                    ["type", "fromVersion"], ["grid", "5.0.0"]
+                ),
+            ],
+            2,
+            [
+                "The fromversion of IndicatorField with type html must be at least 6.1.0, current is 6.0.0.",
+                "The fromversion of IndicatorField with type grid must be at least 5.5.0, current is 5.0.0.",
+            ],
         ),
         (
-                [
-                    create_indicator_field_object(
-                        ["type", "fromVersion"], ["html", "6.1.0"]
-                    ),
-                    create_indicator_field_object(
-                        ["type", "fromVersion"], ["grid", "5.5.0"]
-                    ),
-                    create_indicator_field_object(
-                        ["type", "fromVersion"], ["html", "6.0.0"]
-                    ),
-                    create_indicator_field_object(
-                        ["type", "fromVersion"], ["grid", "5.0.0"]
-                    ),
-                    create_indicator_field_object(),
-                ],
-                2,
-                [
-                    "The fromversion of IndicatorField with type html must be at least 6.1.0, current is 6.0.0.",
-                    "The fromversion of IndicatorField with type grid must be at least 5.5.0, current is 5.0.0.",
-                ],
+            [
+                create_indicator_field_object(
+                    ["type", "fromVersion"], ["html", "6.1.0"]
+                ),
+                create_indicator_field_object(
+                    ["type", "fromVersion"], ["grid", "5.5.0"]
+                ),
+                create_indicator_field_object(
+                    ["type", "fromVersion"], ["html", "6.0.0"]
+                ),
+                create_indicator_field_object(
+                    ["type", "fromVersion"], ["grid", "5.0.0"]
+                ),
+                create_indicator_field_object(),
+            ],
+            2,
+            [
+                "The fromversion of IndicatorField with type html must be at least 6.1.0, current is 6.0.0.",
+                "The fromversion of IndicatorField with type grid must be at least 5.5.0, current is 5.0.0.",
+            ],
         ),
         (
-                [
-                    create_indicator_field_object(["fromVersion"], ["4.5.0"]),
-                ],
-                1,
-                [
-                    "The fromversion of IndicatorField with type shortText must be at least 5.0.0, current is 4.5.0.",
-                ],
+            [
+                create_indicator_field_object(["fromVersion"], ["4.5.0"]),
+            ],
+            1,
+            [
+                "The fromversion of IndicatorField with type shortText must be at least 5.0.0, current is 4.5.0.",
+            ],
         ),
     ],
 )
 def test_IsFromVersionSufficientIndicatorFieldValidator_obtain_invalid_content_items(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -619,27 +619,27 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_obtain_invalid_content_i
     "indicator_field, current_version, expected_msg, expected_fixed_version",
     [
         (
-                create_indicator_field_object(["type", "fromVersion"], ["html", "6.0.0"]),
-                "6.0.0",
-                "Raised the fromversion field to 6.1.0",
-                "6.1.0",
+            create_indicator_field_object(["type", "fromVersion"], ["html", "6.0.0"]),
+            "6.0.0",
+            "Raised the fromversion field to 6.1.0",
+            "6.1.0",
         ),
         (
-                create_indicator_field_object(["type", "fromVersion"], ["grid", "5.0.0"]),
-                "5.0.0",
-                "Raised the fromversion field to 5.5.0",
-                "5.5.0",
+            create_indicator_field_object(["type", "fromVersion"], ["grid", "5.0.0"]),
+            "5.0.0",
+            "Raised the fromversion field to 5.5.0",
+            "5.5.0",
         ),
         (
-                create_indicator_field_object(paths=["fromVersion"], values=["4.5.0"]),
-                "4.5.0",
-                "Raised the fromversion field to 5.0.0",
-                "5.0.0",
+            create_indicator_field_object(paths=["fromVersion"], values=["4.5.0"]),
+            "4.5.0",
+            "Raised the fromversion field to 5.0.0",
+            "5.0.0",
         ),
     ],
 )
 def test_IsFromVersionSufficientIndicatorFieldValidator_fix(
-        indicator_field, current_version, expected_msg, expected_fixed_version
+    indicator_field, current_version, expected_msg, expected_fixed_version
 ):
     """
     Given
@@ -659,8 +659,8 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_fix(
     """
     assert indicator_field.fromversion == current_version
     assert (
-            IsFromVersionSufficientIndicatorFieldValidator().fix(indicator_field).message
-            == expected_msg
+        IsFromVersionSufficientIndicatorFieldValidator().fix(indicator_field).message
+        == expected_msg
     )
     assert indicator_field.fromversion == expected_fixed_version
 
@@ -669,105 +669,105 @@ def test_IsFromVersionSufficientIndicatorFieldValidator_fix(
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
-                [
-                    create_integration_object(
-                        paths=[
-                            "script.feed",
-                            "fromversion",
-                        ],
-                        values=[True, "5.5.0"],
-                    ),
-                    create_integration_object(
-                        paths=[
-                            "script.feed",
-                            "fromversion",
-                        ],
-                        values=[False, "5.0.0"],
-                    ),
-                ],
-                0,
-                [],
+            [
+                create_integration_object(
+                    paths=[
+                        "script.feed",
+                        "fromversion",
+                    ],
+                    values=[True, "5.5.0"],
+                ),
+                create_integration_object(
+                    paths=[
+                        "script.feed",
+                        "fromversion",
+                    ],
+                    values=[False, "5.0.0"],
+                ),
+            ],
+            0,
+            [],
         ),
         (
-                [
-                    create_integration_object(
-                        paths=[
-                            "script.feed",
-                            "fromversion",
-                        ],
-                        values=[True, "6.0.0"],
-                    ),
-                    create_integration_object(
-                        paths=[
-                            "script.feed",
-                            "fromversion",
-                        ],
-                        values=[True, "5.0.0"],
-                    ),
-                ],
-                1,
-                [
-                    "The integration is a feed integration and therefore require a fromversion field of at least 5.5.0, current version is: 5.0.0."
-                ],
+            [
+                create_integration_object(
+                    paths=[
+                        "script.feed",
+                        "fromversion",
+                    ],
+                    values=[True, "6.0.0"],
+                ),
+                create_integration_object(
+                    paths=[
+                        "script.feed",
+                        "fromversion",
+                    ],
+                    values=[True, "5.0.0"],
+                ),
+            ],
+            1,
+            [
+                "The integration is a feed integration and therefore require a fromversion field of at least 5.5.0, current version is: 5.0.0."
+            ],
         ),
         (
-                [
-                    create_ps_integration_object(
-                        paths=["fromversion"],
-                        values=["5.5.0"],
-                    ),
-                    create_integration_object(
-                        paths=[
-                            "fromversion",
-                        ],
-                        values=["5.0.0"],
-                    ),
-                ],
-                0,
-                [],
+            [
+                create_ps_integration_object(
+                    paths=["fromversion"],
+                    values=["5.5.0"],
+                ),
+                create_integration_object(
+                    paths=[
+                        "fromversion",
+                    ],
+                    values=["5.0.0"],
+                ),
+            ],
+            0,
+            [],
         ),
         (
-                [
-                    create_integration_object(
-                        paths=[
-                            "fromversion",
-                        ],
-                        values=["6.0.0"],
-                    ),
-                    create_ps_integration_object(
-                        paths=["fromversion"],
-                        values=["5.0.0"],
-                    ),
-                ],
-                1,
-                [
-                    "The integration is a powershell integration and therefore require a fromversion field of at least 5.5.0, current version is: 5.0.0."
-                ],
+            [
+                create_integration_object(
+                    paths=[
+                        "fromversion",
+                    ],
+                    values=["6.0.0"],
+                ),
+                create_ps_integration_object(
+                    paths=["fromversion"],
+                    values=["5.0.0"],
+                ),
+            ],
+            1,
+            [
+                "The integration is a powershell integration and therefore require a fromversion field of at least 5.5.0, current version is: 5.0.0."
+            ],
         ),
         (
-                [
-                    create_integration_object(
-                        paths=[
-                            "fromversion",
-                        ],
-                        values=["4.5.0"],
-                    ),
-                    create_integration_object(
-                        paths=[
-                            "fromversion",
-                        ],
-                        values=["5.0.0"],
-                    ),
-                ],
-                1,
-                [
-                    "The integration is a regular integration and therefore require a fromversion field of at least 5.0.0, current version is: 4.5.0."
-                ],
+            [
+                create_integration_object(
+                    paths=[
+                        "fromversion",
+                    ],
+                    values=["4.5.0"],
+                ),
+                create_integration_object(
+                    paths=[
+                        "fromversion",
+                    ],
+                    values=["5.0.0"],
+                ),
+            ],
+            1,
+            [
+                "The integration is a regular integration and therefore require a fromversion field of at least 5.0.0, current version is: 4.5.0."
+            ],
         ),
     ],
 )
 def test_IsFromVersionSufficientIntegrationValidator_obtain_invalid_content_items(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -805,29 +805,29 @@ def test_IsFromVersionSufficientIntegrationValidator_obtain_invalid_content_item
     "integration, current_version, expected_msg, expected_fixed_version",
     [
         (
-                create_ps_integration_object(paths=["fromversion"], values=["5.0.0"]),
-                "5.0.0",
-                "Raised the fromversion field to 5.5.0",
-                "5.5.0",
+            create_ps_integration_object(paths=["fromversion"], values=["5.0.0"]),
+            "5.0.0",
+            "Raised the fromversion field to 5.5.0",
+            "5.5.0",
         ),
         (
-                create_integration_object(
-                    paths=["fromversion", "script.feed"], values=["5.0.0", True]
-                ),
-                "5.0.0",
-                "Raised the fromversion field to 5.5.0",
-                "5.5.0",
+            create_integration_object(
+                paths=["fromversion", "script.feed"], values=["5.0.0", True]
+            ),
+            "5.0.0",
+            "Raised the fromversion field to 5.5.0",
+            "5.5.0",
         ),
         (
-                create_integration_object(paths=["fromversion"], values=["4.5.0"]),
-                "4.5.0",
-                "Raised the fromversion field to 5.0.0",
-                "5.0.0",
+            create_integration_object(paths=["fromversion"], values=["4.5.0"]),
+            "4.5.0",
+            "Raised the fromversion field to 5.0.0",
+            "5.0.0",
         ),
     ],
 )
 def test_IsFromVersionSufficientIntegrationValidator_fix(
-        integration, current_version, expected_msg, expected_fixed_version
+    integration, current_version, expected_msg, expected_fixed_version
 ):
     """
     Given
@@ -845,8 +845,8 @@ def test_IsFromVersionSufficientIntegrationValidator_fix(
     """
     assert integration.fromversion == current_version
     assert (
-            IsFromVersionSufficientIntegrationValidator().fix(integration).message
-            == expected_msg
+        IsFromVersionSufficientIntegrationValidator().fix(integration).message
+        == expected_msg
     )
     assert integration.fromversion == expected_fixed_version
 
@@ -855,55 +855,55 @@ def test_IsFromVersionSufficientIntegrationValidator_fix(
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
-                [
-                    create_indicator_field_object(),
-                    create_incident_field_object(),
-                    create_widget_object(),
-                    create_wizard_object(),
-                    create_report_object(),
-                    create_xsiam_report_object(),
-                    create_integration_object(),
-                    create_script_object(),
-                    create_dashboard_object(),
-                    create_incident_type_object(),
-                    create_generic_module_object(),
-                    create_generic_type_object(),
-                    create_incoming_mapper_object(),
-                    create_outgoing_mapper_object(),
-                    create_generic_definition_object(),
-                    create_classifier_object(),
-                    create_xsiam_dashboard_object(),
-                    create_job_object(),
-                    create_list_object(),
-                    create_parsing_rule_object(),
-                    create_playbook_object(),
-                    create_generic_field_object(),
-                    create_correlation_rule_object(),
-                    create_assets_modeling_rule_object(),
-                    create_layout_object(),
-                ],
-                0,
-                [],
+            [
+                create_indicator_field_object(),
+                create_incident_field_object(),
+                create_widget_object(),
+                create_wizard_object(),
+                create_report_object(),
+                create_xsiam_report_object(),
+                create_integration_object(),
+                create_script_object(),
+                create_dashboard_object(),
+                create_incident_type_object(),
+                create_generic_module_object(),
+                create_generic_type_object(),
+                create_incoming_mapper_object(),
+                create_outgoing_mapper_object(),
+                create_generic_definition_object(),
+                create_classifier_object(),
+                create_xsiam_dashboard_object(),
+                create_job_object(),
+                create_list_object(),
+                create_parsing_rule_object(),
+                create_playbook_object(),
+                create_generic_field_object(),
+                create_correlation_rule_object(),
+                create_assets_modeling_rule_object(),
+                create_layout_object(),
+            ],
+            0,
+            [],
         ),
         (
-                [
-                    create_incident_type_object(["id"], ["Tra/ps"]),
-                    create_incident_field_object(["id"], ["incide/nt_cv/e"]),
-                    create_list_object(["id"], ["checked integrations/"]),
-                    create_integration_object(["commonfields.id"], ["TestIntegrati/on"]),
-                ],
-                4,
-                [
-                    "The IncidentType ID field (Tra/ps) include a slash (/), make sure to remove it.",
-                    "The IncidentField ID field (tcv/e) include a slash (/), make sure to remove it.",
-                    "The List ID field (checked integrations/) include a slash (/), make sure to remove it.",
-                    "The Integration ID field (TestIntegrati/on) include a slash (/), make sure to remove it.",
-                ],
+            [
+                create_incident_type_object(["id"], ["Tra/ps"]),
+                create_incident_field_object(["id"], ["incide/nt_cv/e"]),
+                create_list_object(["id"], ["checked integrations/"]),
+                create_integration_object(["commonfields.id"], ["TestIntegrati/on"]),
+            ],
+            4,
+            [
+                "The IncidentType ID field (Tra/ps) include a slash (/), make sure to remove it.",
+                "The IncidentField ID field (tcv/e) include a slash (/), make sure to remove it.",
+                "The List ID field (checked integrations/) include a slash (/), make sure to remove it.",
+                "The Integration ID field (TestIntegrati/on) include a slash (/), make sure to remove it.",
+            ],
         ),
     ],
 )
 def test_IDContainSlashesValidator_obtain_invalid_content_items(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -931,33 +931,33 @@ def test_IDContainSlashesValidator_obtain_invalid_content_items(
     "content_item, current_id, expected_fix_msg, expected_id",
     [
         (
-                create_incident_type_object(["id"], ["Tra/ps"]),
-                "Tra/ps",
-                "Removed slashes (/) from ID, new ID is Traps.",
-                "Traps",
+            create_incident_type_object(["id"], ["Tra/ps"]),
+            "Tra/ps",
+            "Removed slashes (/) from ID, new ID is Traps.",
+            "Traps",
         ),
         (
-                create_incident_field_object(["id"], ["incident_c/v/e"]),
-                "c/v/e",
-                "Removed slashes (/) from ID, new ID is cve.",
-                "cve",
+            create_incident_field_object(["id"], ["incident_c/v/e"]),
+            "c/v/e",
+            "Removed slashes (/) from ID, new ID is cve.",
+            "cve",
         ),
         (
-                create_list_object(["id"], ["checked integrations/"]),
-                "checked integrations/",
-                "Removed slashes (/) from ID, new ID is checked integrations.",
-                "checked integrations",
+            create_list_object(["id"], ["checked integrations/"]),
+            "checked integrations/",
+            "Removed slashes (/) from ID, new ID is checked integrations.",
+            "checked integrations",
         ),
         (
-                create_integration_object(["commonfields.id"], ["TestIntegrati///on"]),
-                "TestIntegrati///on",
-                "Removed slashes (/) from ID, new ID is TestIntegration.",
-                "TestIntegration",
+            create_integration_object(["commonfields.id"], ["TestIntegrati///on"]),
+            "TestIntegrati///on",
+            "Removed slashes (/) from ID, new ID is TestIntegration.",
+            "TestIntegration",
         ),
     ],
 )
 def test_IDContainSlashesValidator_fix(
-        content_item, current_id, expected_fix_msg, expected_id
+    content_item, current_id, expected_fix_msg, expected_id
 ):
     """
     Given
@@ -1022,46 +1022,46 @@ def test_IsDeprecatedCorrectlyValidator_obtain_invalid_content_items():
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
-                [
-                    create_indicator_field_object(),
-                    create_incident_field_object(),
-                    create_widget_object(),
-                    create_wizard_object(dict_to_update={"version": -1}),
-                    create_integration_object(),
-                    create_script_object(),
-                    create_dashboard_object(),
-                    create_incident_type_object(),
-                    create_generic_module_object(),
-                    create_generic_type_object(),
-                    create_incoming_mapper_object(),
-                    create_outgoing_mapper_object(),
-                    create_generic_definition_object(),
-                    create_classifier_object(),
-                    create_list_object(["version"], [-1]),
-                    create_playbook_object(),
-                    create_generic_field_object(),
-                    create_layout_object(),
-                ],
-                0,
-                [],
+            [
+                create_indicator_field_object(),
+                create_incident_field_object(),
+                create_widget_object(),
+                create_wizard_object(dict_to_update={"version": -1}),
+                create_integration_object(),
+                create_script_object(),
+                create_dashboard_object(),
+                create_incident_type_object(),
+                create_generic_module_object(),
+                create_generic_type_object(),
+                create_incoming_mapper_object(),
+                create_outgoing_mapper_object(),
+                create_generic_definition_object(),
+                create_classifier_object(),
+                create_list_object(["version"], [-1]),
+                create_playbook_object(),
+                create_generic_field_object(),
+                create_layout_object(),
+            ],
+            0,
+            [],
         ),
         (
-                [
-                    create_incident_field_object(["version"], [-2]),
-                    create_list_object(["version"], [1]),
-                    create_integration_object(["commonfields.version"], [0]),
-                ],
-                3,
-                [
-                    "The version for our files should always be -1, please update the file.",
-                    "The version for our files should always be -1, please update the file.",
-                    "The version for our files should always be -1, please update the file.",
-                ],
+            [
+                create_incident_field_object(["version"], [-2]),
+                create_list_object(["version"], [1]),
+                create_integration_object(["commonfields.version"], [0]),
+            ],
+            3,
+            [
+                "The version for our files should always be -1, please update the file.",
+                "The version for our files should always be -1, please update the file.",
+                "The version for our files should always be -1, please update the file.",
+            ],
         ),
     ],
 )
 def test_IsValidVersionValidator_obtain_invalid_content_items(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -1097,8 +1097,8 @@ def test_IsValidVersionValidator_fix():
     content_item = create_integration_object(["commonfields.version"], [0])
     assert content_item.version != -1
     assert (
-            IsValidVersionValidator().fix(content_item).message
-            == "Updated the content item version to -1."
+        IsValidVersionValidator().fix(content_item).message
+        == "Updated the content item version to -1."
     )
     assert content_item.version == -1
 
@@ -1169,7 +1169,7 @@ def test_IsValidVersionValidator_fix():
     ],
 )
 def test_IsEntityTypeInEntityNameValidator_obtain_invalid_content_items(
-        content_items, expected_msg
+    content_items, expected_msg
 ):
     """
     Given
@@ -1248,7 +1248,7 @@ def test_IsEntityTypeInEntityNameValidator_obtain_invalid_content_items(
     ],
 )
 def test_IsEntityNameContainExcludedWordValidator(
-        content_items, expected_number_of_failures, expected_error_message
+    content_items, expected_number_of_failures, expected_error_message
 ):
     """
     Given
@@ -1287,313 +1287,313 @@ def test_IsEntityNameContainExcludedWordValidator(
     "content_items, expected_number_of_failures, expected_msgs",
     [
         (
-                [create_pack_object(), create_pack_object()],
-                1,
-                [
-                    "Pack for content item '/newPackName' and all related files were changed from 'pack_171' to 'newPackName', please undo."
-                ],
+            [create_pack_object(), create_pack_object()],
+            1,
+            [
+                "Pack for content item '/newPackName' and all related files were changed from 'pack_171' to 'newPackName', please undo."
+            ],
         ),
         (
-                [create_integration_object(), create_integration_object()],
-                1,
-                [
-                    "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_173' to 'newPackName', please undo."
-                ],
+            [create_integration_object(), create_integration_object()],
+            1,
+            [
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_173' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_parsing_rule_object(),
-                    create_parsing_rule_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/ParsingRules/TestParsingRule/TestParsingRule.yml' and all related files were changed from 'pack_175' to 'newPackName', please undo."
-                ],
+            [
+                create_parsing_rule_object(),
+                create_parsing_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/ParsingRules/TestParsingRule/TestParsingRule.yml' and all related files were changed from 'pack_175' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_correlation_rule_object(),
-                    create_correlation_rule_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/CorrelationRules/correlation_rule.yml' and all related files were changed from 'pack_177' to 'newPackName', please undo."
-                ],
+            [
+                create_correlation_rule_object(),
+                create_correlation_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/CorrelationRules/correlation_rule.yml' and all related files were changed from 'pack_177' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_playbook_object(),
-                    create_playbook_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Playbooks/playbook-0.yml' and all related files were changed from 'pack_179' to 'newPackName', please undo."
-                ],
+            [
+                create_playbook_object(),
+                create_playbook_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Playbooks/playbook-0.yml' and all related files were changed from 'pack_179' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_modeling_rule_object(),
-                    create_modeling_rule_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/ModelingRules/modelingrule_0/modelingrule_0.yml' and all related files were changed from 'pack_181' to 'newPackName', please undo."
-                ],
+            [
+                create_modeling_rule_object(),
+                create_modeling_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/ModelingRules/modelingrule_0/modelingrule_0.yml' and all related files were changed from 'pack_181' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_ps_integration_object(),
-                    create_ps_integration_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_183' to 'newPackName', please undo."
-                ],
+            [
+                create_ps_integration_object(),
+                create_ps_integration_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_183' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_script_object(),
-                    create_script_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Scripts/script0/script0.yml' and all related files were changed from 'pack_185' to 'newPackName', please undo."
-                ],
+            [
+                create_script_object(),
+                create_script_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Scripts/script0/script0.yml' and all related files were changed from 'pack_185' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_classifier_object(),
-                    create_classifier_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Classifiers/classifier-test_classifier.json' and all related files were changed from 'pack_187' to 'newPackName', please undo."
-                ],
+            [
+                create_classifier_object(),
+                create_classifier_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Classifiers/classifier-test_classifier.json' and all related files were changed from 'pack_187' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_list_object(),
-                    create_list_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Lists/list-list.json' and all related files were changed from 'pack_189' to 'newPackName', please undo."
-                ],
+            [
+                create_list_object(),
+                create_list_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Lists/list-list.json' and all related files were changed from 'pack_189' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_job_object(),
-                    create_job_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Jobs/job-job.json' and all related files were changed from 'pack_191' to 'newPackName', please undo."
-                ],
+            [
+                create_job_object(),
+                create_job_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Jobs/job-job.json' and all related files were changed from 'pack_191' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_dashboard_object(),
-                    create_dashboard_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Dashboards/dashboard-dashboard.json' and all related files were changed from 'pack_193' to 'newPackName', please undo."
-                ],
+            [
+                create_dashboard_object(),
+                create_dashboard_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Dashboards/dashboard-dashboard.json' and all related files were changed from 'pack_193' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_incident_type_object(),
-                    create_incident_type_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/IncidentTypes/incidenttype-incident_type.json' and all related files were changed from 'pack_195' to 'newPackName', please undo."
-                ],
+            [
+                create_incident_type_object(),
+                create_incident_type_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IncidentTypes/incidenttype-incident_type.json' and all related files were changed from 'pack_195' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_incident_field_object(),
-                    create_incident_field_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/IncidentFields/incidentfield-incident_field.json' and all related files were changed from 'pack_197' to 'newPackName', please undo."
-                ],
+            [
+                create_incident_field_object(),
+                create_incident_field_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IncidentFields/incidentfield-incident_field.json' and all related files were changed from 'pack_197' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_report_object(),
-                    create_report_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Reports/report-report.json' and all related files were changed from 'pack_199' to 'newPackName', please undo."
-                ],
+            [
+                create_report_object(),
+                create_report_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Reports/report-report.json' and all related files were changed from 'pack_199' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_xsiam_report_object(),
-                    create_xsiam_report_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/XSIAMReports/xsiam_report.json' and all related files were changed from 'pack_201' to 'newPackName', please undo."
-                ],
+            [
+                create_xsiam_report_object(),
+                create_xsiam_report_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/XSIAMReports/xsiam_report.json' and all related files were changed from 'pack_201' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_xsiam_dashboard_object(),
-                    create_xsiam_dashboard_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/XSIAMDashboards/xsiam_dashboard.json' and all related files were changed from 'pack_203' to 'newPackName', please undo."
-                ],
+            [
+                create_xsiam_dashboard_object(),
+                create_xsiam_dashboard_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/XSIAMDashboards/xsiam_dashboard.json' and all related files were changed from 'pack_203' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_xdrc_template_object(),
-                    create_xdrc_template_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/XDRCTemplates/pack_205_xdrc_template/xdrc_template.json' and all related files were changed from 'pack_205' to 'newPackName', please undo."
-                ],
+            [
+                create_xdrc_template_object(),
+                create_xdrc_template_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/XDRCTemplates/pack_205_xdrc_template/xdrc_template.json' and all related files were changed from 'pack_205' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_assets_modeling_rule_object(),
-                    create_assets_modeling_rule_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/AssetsModelingRules/assets_modeling_rule/assets_modeling_rule.yml' and all related files were changed from 'pack_207' to 'newPackName', please undo."
-                ],
+            [
+                create_assets_modeling_rule_object(),
+                create_assets_modeling_rule_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/AssetsModelingRules/assets_modeling_rule/assets_modeling_rule.yml' and all related files were changed from 'pack_207' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_trigger_object(),
-                    create_trigger_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Triggers/trigger.json' and all related files were changed from 'pack_209' to 'newPackName', please undo."
-                ],
+            [
+                create_trigger_object(),
+                create_trigger_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Triggers/trigger.json' and all related files were changed from 'pack_209' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_layout_object(),
-                    create_layout_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Layouts/layout-layout.json' and all related files were changed from 'pack_211' to 'newPackName', please undo."
-                ],
+            [
+                create_layout_object(),
+                create_layout_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Layouts/layout-layout.json' and all related files were changed from 'pack_211' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_widget_object(),
-                    create_widget_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Widgets/widget-widget.json' and all related files were changed from 'pack_213' to 'newPackName', please undo."
-                ],
+            [
+                create_widget_object(),
+                create_widget_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Widgets/widget-widget.json' and all related files were changed from 'pack_213' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_indicator_field_object(),
-                    create_indicator_field_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/IndicatorFields/indicatorfield-indicator_field.json' and all related files were changed from 'pack_215' to 'newPackName', please undo."
-                ],
+            [
+                create_indicator_field_object(),
+                create_indicator_field_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IndicatorFields/indicatorfield-indicator_field.json' and all related files were changed from 'pack_215' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_wizard_object(),
-                    create_wizard_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Wizards/wizard-test_wizard.json' and all related files were changed from 'pack_217' to 'newPackName', please undo."
-                ],
+            [
+                create_wizard_object(),
+                create_wizard_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Wizards/wizard-test_wizard.json' and all related files were changed from 'pack_217' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_generic_definition_object(),
-                    create_generic_definition_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/GenericDefinitions/genericdefinition-generic_definition.json' and all related files were changed from 'pack_219' to 'newPackName', please undo."
-                ],
+            [
+                create_generic_definition_object(),
+                create_generic_definition_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericDefinitions/genericdefinition-generic_definition.json' and all related files were changed from 'pack_219' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_generic_field_object(),
-                    create_generic_field_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/GenericFields/generic_field/genericfield-generic_field.json' and all related files were changed from 'pack_221' to 'newPackName', please undo."
-                ],
+            [
+                create_generic_field_object(),
+                create_generic_field_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericFields/generic_field/genericfield-generic_field.json' and all related files were changed from 'pack_221' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_generic_type_object(),
-                    create_generic_type_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/GenericTypes/generic_type/generictype-generic_type.json' and all related files were changed from 'pack_223' to 'newPackName', please undo."
-                ],
+            [
+                create_generic_type_object(),
+                create_generic_type_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericTypes/generic_type/generictype-generic_type.json' and all related files were changed from 'pack_223' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_generic_module_object(),
-                    create_generic_module_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/GenericModules/genericmodule-generic_module.json' and all related files were changed from 'pack_225' to 'newPackName', please undo."
-                ],
+            [
+                create_generic_module_object(),
+                create_generic_module_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/GenericModules/genericmodule-generic_module.json' and all related files were changed from 'pack_225' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_incoming_mapper_object(),
-                    create_incoming_mapper_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Classifiers/classifier-mapper-incoming_mapper.json' and all related files were changed from 'pack_227' to 'newPackName', please undo."
-                ],
+            [
+                create_incoming_mapper_object(),
+                create_incoming_mapper_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-incoming_mapper.json' and all related files were changed from 'pack_227' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_outgoing_mapper_object(),
-                    create_outgoing_mapper_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/Classifiers/classifier-mapper-outgoing_mapper.json' and all related files were changed from 'pack_229' to 'newPackName', please undo."
-                ],
+            [
+                create_outgoing_mapper_object(),
+                create_outgoing_mapper_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-outgoing_mapper.json' and all related files were changed from 'pack_229' to 'newPackName', please undo."
+            ],
         ),
         (
-                [
-                    create_indicator_type_object(),
-                    create_indicator_type_object(),
-                ],
-                1,
-                [
-                    "Pack for content item '/newPackName/IndicatorTypes/reputation-indicator_type.json' and all related files were changed from 'pack_231' to 'newPackName', please undo."
-                ],
+            [
+                create_indicator_type_object(),
+                create_indicator_type_object(),
+            ],
+            1,
+            [
+                "Pack for content item '/newPackName/IndicatorTypes/reputation-indicator_type.json' and all related files were changed from 'pack_231' to 'newPackName', please undo."
+            ],
         ),
     ],
 )
 def test_ValidPackNameValidator_obtain_invalid_content_items(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given:
@@ -1675,7 +1675,7 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
     ],
 )
 def test_CustomerFacingDocsDisallowedTermsValidator(
-        content_items, expected_number_of_failures, expected_error_message
+    content_items, expected_number_of_failures, expected_error_message
 ):
     """
     Given
@@ -1700,25 +1700,25 @@ def test_CustomerFacingDocsDisallowedTermsValidator(
     [
         ([create_script_object(), create_integration_object()], 0, []),
         (
-                [
-                    create_script_object(code="BSD\nMIT"),
-                    create_script_object(
-                        code="MIT", test_code="here we are going to fail\nproprietary"
-                    ),
-                    create_integration_object(code="Copyright"),
-                ],
-                4,
-                [
-                    "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): 1, 2.",
-                    "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): 1.",
-                    "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): 2.",
-                    "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): 1.",
-                ],
+            [
+                create_script_object(code="BSD\nMIT"),
+                create_script_object(
+                    code="MIT", test_code="here we are going to fail\nproprietary"
+                ),
+                create_integration_object(code="Copyright"),
+            ],
+            4,
+            [
+                "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): 1, 2.",
+                "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): 1.",
+                "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): 2.",
+                "The file contains copyright key words (BSD, MIT, Copyright, proprietary) in line(s): 1.",
+            ],
         ),
     ],
 )
 def test_IsPyFileContainCopyRightSectionValidator(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given
@@ -1773,7 +1773,7 @@ def test_IsPyFileContainCopyRightSectionValidator(
     ],
 )
 def test_IsContentItemNameContainTrailingSpacesValidator_obtain_invalid_content_items_success(
-        content_items: ContentTypes113,
+    content_items: ContentTypes113,
 ):
     """Test validate BA113 - Trailing spaces in content item name
     Given:
@@ -1900,8 +1900,8 @@ def test_IsContentItemNameContainTrailingSpacesValidator_obtain_invalid_content_
     ],
 )
 def test_IsContentItemNameContainTrailingSpacesValidator_obtain_invalid_content_items_failure(
-        content_items: ContentTypes113,
-        expected_field_error_messages: List[str],
+    content_items: ContentTypes113,
+    expected_field_error_messages: List[str],
 ):
     """
     Given:
@@ -1918,8 +1918,8 @@ def test_IsContentItemNameContainTrailingSpacesValidator_obtain_invalid_content_
     )
     assert len(results) == 1  # one failure
     assert (
-            results[0].message
-            == f"The following fields have a trailing spaces: {expected_field_error_messages[0]}."
+        results[0].message
+        == f"The following fields have a trailing spaces: {expected_field_error_messages[0]}."
     )
 
 
@@ -1968,7 +1968,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_obtain_invalid_content_
     ],
 )
 def test_IsContentItemNameContainTrailingSpacesValidator_fix(
-        content_item: ContentTypes113, fields_with_trailing_spaces: List[str]
+    content_item: ContentTypes113, fields_with_trailing_spaces: List[str]
 ):
     """
     Test validate BA113 - Trailing spaces in content item name
@@ -1992,8 +1992,8 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
     results = validator.fix(content_item)
     assert content_item.name == VALUE_WITH_TRAILING_SPACE.rstrip()
     assert (
-            results.message
-            == f"Removed trailing spaces from the {', '.join(fields_with_trailing_spaces)} fields of following content items: {VALUE_WITH_TRAILING_SPACE.rstrip()}"
+        results.message
+        == f"Removed trailing spaces from the {', '.join(fields_with_trailing_spaces)} fields of following content items: {VALUE_WITH_TRAILING_SPACE.rstrip()}"
     )
 
 
@@ -2027,7 +2027,7 @@ def test_IsContentItemNameContainTrailingSpacesValidator_fix(
     ],
 )
 def test_FileNameHasSeparatorsValidator_obtain_invalid_content_items(
-        content_item, expected_number_of_failures, expected_messages
+    content_item, expected_number_of_failures, expected_messages
 ):
     """
     Test validate BA109 FileNameHasSeparatorsValidator - File names with separators
@@ -2089,7 +2089,7 @@ def test_FileNameHasSeparatorsValidator_obtain_invalid_content_items(
     ],
 )
 def test_IsFolderNameHasSeparatorsValidator_obtain_invalid_content_items(
-        content_items, expected_number_of_failures, expected_msg
+    content_items, expected_number_of_failures, expected_msg
 ):
     result = IsFolderNameHasSeparatorsValidator().obtain_invalid_content_items(
         content_items
@@ -2737,6 +2737,7 @@ def test_integration_compliant_policy_name_validator(
     )
     assert results == sorted(expected_failures)
 
+
 def test_is_forbidden_content_item():
     """
     Given
@@ -2749,17 +2750,28 @@ def test_is_forbidden_content_item():
     - Make sure one failure is returned and the error message contains the informative message.
     """
 
-    content_items = [AgentixAgent(color="red", description="", display="", path=Path("test.yml"),
-                                  marketplaces=["xsoar"], name="test", fromversion="", toversion="",
-                                  display_name="", deprecated=False, id="", node_id="")]
+    content_items = [
+        AgentixAgent(
+            color="red",
+            description="",
+            display="",
+            path=Path("test.yml"),
+            marketplaces=["xsoar"],
+            name="test",
+            fromversion="",
+            toversion="",
+            display_name="",
+            deprecated=False,
+            id="",
+            node_id="",
+        )
+    ]
     expected_msg = (
         f"The items {ContentType.AGENTIX_AGENT} and {ContentType.AGENTIX_ACTION} "
         f"should be stored in content-test-conf, not in Content"
     )
-    results = (
-        IsForbiddenContentItemValidator().obtain_invalid_content_items(
-            content_items
-        )
+    results = IsForbiddenContentItemValidator().obtain_invalid_content_items(
+        content_items
     )
 
     assert len(results) == 1
@@ -2779,42 +2791,127 @@ def test_is_marketplace_exists():
     Then
     - Make sure 3 failures are returned and the error message contains the informative message.
     """
-    content_items = [AgentixAgent(color="red", description="", display="", path=Path("test.yml"),
-                                marketplaces=["xsoar"], name="test", fromversion="", toversion="",
-                                display_name="", deprecated=False, id="", node_id=""),
-                    AgentixAgent(color="red", description="", display="", path=Path("test.yml"),
-                                marketplaces=["xsoar_saas"], name="test", fromversion="", toversion="",
-                                display_name="", deprecated=False, id="", node_id=""),
-                    AgentixAction(color="red", description="", display="", path=Path("test.yml"),
-                                marketplaces=["xsoar"], name="test", fromversion="", toversion="",
-                                display_name="", deprecated=False, id="", node_id="",
-                                underlyingContentItemId="test", underlyingContentItemName="test",
-                                underlyingcontentitemtype=1, underlyingContentItemVersion=-1, agent_id="test"),
-                    AgentixAction(color="red", description="", display="", path=Path("test.yml"),
-                                marketplaces=["xsoar_saas"], name="test", fromversion="", toversion="",
-                                display_name="", deprecated=False, id="", node_id="",
-                                underlyingContentItemId="test", underlyingContentItemName="test",
-                                underlyingcontentitemtype=1, underlyingContentItemVersion=-1, agent_id="test"),
-                    Script(is_llm=True, marketplaces=["xsoar_saas"], id="", script='print("hello world")',
-                           node_id="", path=Path("test.yml"), name="test1", fromversion="6.0.0",
-                           toversion="8.0.0", display_name="test", deprecated=False, type='python',
-                           tags=['test'], skip_prepare=[]),
-                    Script(is_llm=False, marketplaces=["xsoar"], id="", script='print("hello world")',
-                           node_id="", path=Path("test.yml"), name="test1", fromversion="6.0.0",
-                           toversion="8.0.0", display_name="test", deprecated=False, type='python',
-                           tags=['test'], skip_prepare=[]),
-                    Script(is_llm=True, marketplaces=["xsoar"], id="", script='print("hello world")',
-                           node_id="", path=Path("test.yml"), name="test1", fromversion="6.0.0",
-                           toversion="8.0.0", display_name="test", deprecated=False, type='python',
-                           tags=['test'], skip_prepare=[])
-                    ]
-    results = (
-        IsMarketplaceExistsValidator().obtain_invalid_content_items(
-            content_items
-        )
-    )
+    content_items = [
+        AgentixAgent(
+            color="red",
+            description="",
+            display="",
+            path=Path("test.yml"),
+            marketplaces=["xsoar"],
+            name="test",
+            fromversion="",
+            toversion="",
+            display_name="",
+            deprecated=False,
+            id="",
+            node_id="",
+        ),
+        AgentixAgent(
+            color="red",
+            description="",
+            display="",
+            path=Path("test.yml"),
+            marketplaces=["xsoar_saas"],
+            name="test",
+            fromversion="",
+            toversion="",
+            display_name="",
+            deprecated=False,
+            id="",
+            node_id="",
+        ),
+        AgentixAction(
+            color="red",
+            description="",
+            display="",
+            path=Path("test.yml"),
+            marketplaces=["xsoar"],
+            name="test",
+            fromversion="",
+            toversion="",
+            display_name="",
+            deprecated=False,
+            id="",
+            node_id="",
+            underlyingContentItemId="test",
+            underlyingContentItemName="test",
+            underlyingcontentitemtype=1,
+            underlyingContentItemVersion=-1,
+            agent_id="test",
+        ),
+        AgentixAction(
+            color="red",
+            description="",
+            display="",
+            path=Path("test.yml"),
+            marketplaces=["xsoar_saas"],
+            name="test",
+            fromversion="",
+            toversion="",
+            display_name="",
+            deprecated=False,
+            id="",
+            node_id="",
+            underlyingContentItemId="test",
+            underlyingContentItemName="test",
+            underlyingcontentitemtype=1,
+            underlyingContentItemVersion=-1,
+            agent_id="test",
+        ),
+        Script(
+            is_llm=True,
+            marketplaces=["xsoar_saas"],
+            id="",
+            script='print("hello world")',
+            node_id="",
+            path=Path("test.yml"),
+            name="test1",
+            fromversion="6.0.0",
+            toversion="8.0.0",
+            display_name="test",
+            deprecated=False,
+            type="python",
+            tags=["test"],
+            skip_prepare=[],
+        ),
+        Script(
+            is_llm=False,
+            marketplaces=["xsoar"],
+            id="",
+            script='print("hello world")',
+            node_id="",
+            path=Path("test.yml"),
+            name="test1",
+            fromversion="6.0.0",
+            toversion="8.0.0",
+            display_name="test",
+            deprecated=False,
+            type="python",
+            tags=["test"],
+            skip_prepare=[],
+        ),
+        Script(
+            is_llm=True,
+            marketplaces=["xsoar"],
+            id="",
+            script='print("hello world")',
+            node_id="",
+            path=Path("test.yml"),
+            name="test1",
+            fromversion="6.0.0",
+            toversion="8.0.0",
+            display_name="test",
+            deprecated=False,
+            type="python",
+            tags=["test"],
+            skip_prepare=[],
+        ),
+    ]
+    results = IsMarketplaceExistsValidator().obtain_invalid_content_items(content_items)
 
     assert len(results) == 3
-    assert results[0].message == ("The items AgentixAgent, AgentixAction and Script with isllm=true"
-                                  " should be uploaded to xsoar_saas only. Please specify only xsoar_saas"
-                                  " under marketplaces.")
+    assert results[0].message == (
+        "The items AgentixAgent, AgentixAction and Script with isllm=true"
+        " should be uploaded to xsoar_saas only. Please specify only xsoar_saas"
+        " under marketplaces."
+    )

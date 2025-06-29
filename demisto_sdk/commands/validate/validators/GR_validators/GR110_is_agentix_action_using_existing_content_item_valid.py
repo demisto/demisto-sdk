@@ -1,10 +1,9 @@
 from __future__ import annotations
+
 import re
 from abc import ABC
-
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import AgentixAction
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -29,12 +28,16 @@ def replace_alerts_with_incidents(text: str) -> str:
             return replacement
 
     # Match case-insensitive "alert" or "alerts"
-    return re.sub(r'alerts?', replacer, text, flags=re.IGNORECASE)
+    return re.sub(r"alerts?", replacer, text, flags=re.IGNORECASE)
 
 
-class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentTypes], ABC):
+class IsAgentixActionUsingExistingContentItemValidator(
+    BaseValidator[ContentTypes], ABC
+):
     error_code = "GR110"
-    description = "Avoid creating Agentix actions that wrap non-existent commands or scripts"
+    description = (
+        "Avoid creating Agentix actions that wrap non-existent commands or scripts"
+    )
     rationale = "Actions in Agentix should wrap only existing commands or scripts"
     error_message = ""
     related_field = ""
@@ -42,15 +45,18 @@ class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentType
     # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.YML]
 
-    def obtain_invalid_content_items_using_graph(self, content_items: Iterable[ContentTypes],
-                                                 validate_all_files: bool) -> List[ValidationResult]:
-
+    def obtain_invalid_content_items_using_graph(
+        self, content_items: Iterable[ContentTypes], validate_all_files: bool
+    ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
 
         for content_item in content_items:
             content_item_type = content_item.underlying_content_item_type
 
-            if content_item_type not in {"command", "script"}:  # Validate when the action wraps a command or a script
+            if content_item_type not in {
+                "command",
+                "script",
+            }:  # Validate when the action wraps a command or a script
                 results.append(
                     ValidationResult(
                         validator=self,
@@ -82,7 +88,9 @@ class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentType
                 command_or_script_name = replaced_name
                 graph_result = self.graph.search(object_id=command_or_script_name)
 
-            if not graph_result:  # the command or the script does not exist in the Content repo
+            if (
+                not graph_result
+            ):  # the command or the script does not exist in the Content repo
                 results.append(
                     ValidationResult(
                         validator=self,
@@ -94,9 +102,11 @@ class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentType
                     )
                 )
 
-            elif not self.is_content_item_related_to_correct_pack(item_type=content_item_type,
-                                                                  integration_or_script_id=integration_or_script_id,
-                                                                  graph_result=graph_result):
+            elif not self.is_content_item_related_to_correct_pack(
+                item_type=content_item_type,
+                integration_or_script_id=integration_or_script_id,
+                graph_result=graph_result,
+            ):
                 results.append(
                     ValidationResult(
                         validator=self,
@@ -110,8 +120,9 @@ class IsAgentixActionUsingExistingContentItemValidator(BaseValidator[ContentType
 
         return results
 
-    def is_content_item_related_to_correct_pack(self, item_type: str, integration_or_script_id: str,
-                                                graph_result: List) -> bool:
+    def is_content_item_related_to_correct_pack(
+        self, item_type: str, integration_or_script_id: str, graph_result: List
+    ) -> bool:
         if item_type == "command":
             return any(
                 integration.object_id == integration_or_script_id

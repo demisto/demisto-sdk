@@ -44,7 +44,9 @@ class PrepareUploadManager:
             private_packs_path = Path(kwargs["private_packs_path"])
         else:
             private_packs_path = None
-        content_item = BaseContent.from_path(input, private_pack_path=private_packs_path)
+        content_item = BaseContent.from_path(
+            input, private_pack_path=private_packs_path
+        )
         if not isinstance(content_item, (ContentItem, Pack)):
             raise ValueError(
                 f"Unsupported input for {input}. Please provide a path to a content item or a pack."

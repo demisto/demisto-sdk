@@ -281,7 +281,13 @@ def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
 def _normalize_field_supported_modules(pack_a: Pack, pack_b: Pack) -> None:
     if not pack_a.supportedModules:
         pack_b.supportedModules = None
-
+    content_items_need_set_supported_modules_none = []
+    for content_item in pack_a.content_items:
+        if content_item.supportedModules is None:
+            content_items_need_set_supported_modules_none.append(content_item.name)
+    for content_item in pack_b.content_items:
+        if content_item.name in content_items_need_set_supported_modules_none:
+            content_item.supportedModules = None
 
 def normalize_nodes_and_objects_before_comparison(pack_a: Pack, pack_b: Pack) -> None:
     """

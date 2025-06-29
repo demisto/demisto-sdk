@@ -289,6 +289,7 @@ def _normalize_field_supported_modules(pack_a: Pack, pack_b: Pack) -> None:
         if content_item.name in content_items_need_set_supported_modules_none:
             content_item.supportedModules = None
 
+
 def normalize_nodes_and_objects_before_comparison(pack_a: Pack, pack_b: Pack) -> None:
     """
     Normalize nodes and objects in both packs to ensure consistent comparison,

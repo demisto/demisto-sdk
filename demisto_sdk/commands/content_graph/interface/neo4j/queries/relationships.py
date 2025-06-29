@@ -19,7 +19,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
 )
 
-SET_DEFAULT_SUPPORTED_MODULE ="""
+SET_DEFAULT_SUPPORTED_MODULE = """
   MATCH (p:Pack)
   WHERE p.supportedModules IS NULL AND NOT p.deprecated
   SET p.supportedModules = {default_supported_module}
@@ -492,5 +492,7 @@ def delete_all_graph_relationships(tx: Transaction) -> None:
 
 
 def set_default_supported_module_by_relationships(tx: Transaction) -> None:
-    query = SET_DEFAULT_SUPPORTED_MODULE.format(default_supported_module=[sm.value for sm in PlatformSupportedModules])
+    query = SET_DEFAULT_SUPPORTED_MODULE.format(
+        default_supported_module=[sm.value for sm in PlatformSupportedModules]
+    )
     run_query(tx, query)

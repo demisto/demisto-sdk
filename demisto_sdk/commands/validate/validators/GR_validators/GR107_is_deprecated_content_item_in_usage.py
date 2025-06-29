@@ -89,6 +89,7 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
     error_message = "The item '{item_id}' is using the following deprecated items: {deprecated_items}"
     related_field = "deprecated"
     is_auto_fixable = False
+    run_on_deprecated = True
 
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool

@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue in *GR107* where only on direction of deprecated items usage was validated.
+  type: fix
+pr_number: 4983

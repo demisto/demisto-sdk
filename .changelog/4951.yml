@@ -1,0 +1,4 @@
+changes:
+- description: Removed default addition of `supportedModule` for content items where this field was not explicitly defined.
+  type: internal
+pr_number: 4951

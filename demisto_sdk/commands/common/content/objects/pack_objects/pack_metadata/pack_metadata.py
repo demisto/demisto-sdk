@@ -1,12 +1,11 @@
 import os
 from datetime import datetime
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_SUPPORTED_MODULES,
     PACKS_PACK_META_FILE_NAME,
     PARTNER_SUPPORT,
     XSOAR_AUTHOR,
@@ -60,7 +59,7 @@ class PackMetaData(JSONObject):
         self._useCases: List[str] = []
         self._keywords: List[str] = []
         self._dependencies: Dict[str, Dict] = {}
-        self._supported_modules: List[str] = DEFAULT_SUPPORTED_MODULES
+        self._supported_modules: Optional[List[str]] = None
 
     @property
     def name(self) -> str:
@@ -586,9 +585,7 @@ class PackMetaData(JSONObject):
             self.categories = user_metadata.get("categories", [])
             self.use_cases = user_metadata.get("useCases", [])
             self.dependencies = user_metadata.get("dependencies", {})
-            self.supportedModules = user_metadata.get(
-                "supportedModules", DEFAULT_SUPPORTED_MODULES
-            )
+            self.supportedModules = user_metadata.get("supportedModules")
             if self.price > 0:
                 self.premium = True
                 self.vendor_id = user_metadata.get("vendorId", "")

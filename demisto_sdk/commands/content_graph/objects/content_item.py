@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Union
 
 import demisto_client
 from packaging.version import Version
@@ -278,7 +278,9 @@ class ContentItem(BaseContent):
         # Replace incorrect marketplace references
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
         if current_marketplace == MarketplaceVersions.PLATFORM:
-            data = append_supported_modules(data, self.supportedModules)
+            data = append_supported_modules(
+                data, self.supportedModules, self.pack.supportedModules
+            )
         else:
             if "supportedModules" in data:
                 del data["supportedModules"]
@@ -296,7 +298,15 @@ class ContentItem(BaseContent):
         Returns:
             dict: Dictionary representation of the summary content item.
         """
-        summary_res = self.dict(include=self.metadata_fields(), by_alias=True)
+
+        exclude_fields: Dict[Union[int, str], Any] = {}
+        if not self.supportedModules:
+            exclude_fields["supportedModules"] = True
+
+        summary_res = self.dict(
+            include=self.metadata_fields(), by_alias=True, exclude=exclude_fields
+        )
+
         if marketplace and marketplace != MarketplaceVersions.XSOAR:
             data = self.data
             if "id" in summary_res:

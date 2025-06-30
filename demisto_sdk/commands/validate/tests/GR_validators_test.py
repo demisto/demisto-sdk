@@ -1169,7 +1169,9 @@ def repo_for_test_gr_109(graph_repo: Repo):
         "supportedModules": ["module_y"],
     }
     pack_b.create_script(
-        "SearchIncidents", code='demisto.executeCommand("SearchIncidents", {})', yml=yml2
+        "SearchIncidents",
+        code='demisto.executeCommand("SearchIncidents", {})',
+        yml=yml2,
     )
 
     return graph_repo

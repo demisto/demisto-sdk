@@ -1158,8 +1158,18 @@ def repo_for_test_gr_109(graph_repo: Repo):
             ]
         }
     )
+    yml2 = {
+        "commonfields": {"id": "SearchIncidents", "version": -1},
+        "name": "SearchIncidents",
+        "comment": "this is script SearchIncidents",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_y"],
+    }
     pack_b.create_script(
-        "SearchIncidents", code='demisto.executeCommand("SearchIncidents", {})'
+        "SearchIncidents", code='demisto.executeCommand("SearchIncidents", {})', yml=yml2
     )
 
     return graph_repo

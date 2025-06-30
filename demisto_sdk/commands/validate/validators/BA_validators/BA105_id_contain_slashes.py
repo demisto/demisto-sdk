@@ -68,7 +68,7 @@ ContentTypes = Union[
     XSIAMDashboard,
     XSIAMReport,
     AgentixAction,
-    AgentixAgent
+    AgentixAgent,
 ]
 
 

@@ -77,7 +77,7 @@ ContentTypes = Union[
     CaseLayout,
     CaseLayoutRule,
     AgentixAction,
-    AgentixAgent
+    AgentixAgent,
 ]
 
 

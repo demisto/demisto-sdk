@@ -10,7 +10,11 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Integration, Script, ]
+ContentTypes = Union[
+    Integration,
+    Script,
+    AgentixAction
+]
 
 
 class IsCommandOrScriptNameStartsWithDigitValidator(BaseValidator[ContentTypes]):
@@ -44,7 +48,10 @@ class IsCommandOrScriptNameStartsWithDigitValidator(BaseValidator[ContentTypes])
                 content_type = "script"
                 invalid_command_names.append(content_item.name)
 
-            elif isinstance(content_item, AgentixAction) and content_item.name[0].isdigit():
+            elif (
+                isinstance(content_item, AgentixAction)
+                and content_item.name[0].isdigit()
+            ):
                 content_type = "Agentix Action"
                 invalid_command_names.append(content_item.name)
 

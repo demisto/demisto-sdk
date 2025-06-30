@@ -50,7 +50,7 @@ ContentTypes = Union[
     ListObject,
     Widget,
     AgentixAgent,
-    AgentixAction
+    AgentixAction,
 ]
 
 

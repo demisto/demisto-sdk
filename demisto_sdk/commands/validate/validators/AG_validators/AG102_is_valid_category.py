@@ -21,14 +21,16 @@ class IsValidCategoryValidator(BaseValidator[ContentTypes]):
         "See the list of allowed categories in the platform: "
         "https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories"
     )
-    error_message = "The Agentix-item '{0}' category '{1}' doesn't match the standard,\n" \
-                    "please make sure that the field is a category from the following options: {2}."
+    error_message = (
+        "The Agentix-item '{0}' category '{1}' doesn't match the standard,\n"
+        "please make sure that the field is a category from the following options: {2}."
+    )
     related_field = "category"
     is_auto_fixable = False
     # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
 
     def obtain_invalid_content_items(
-            self, content_items: Iterable[ContentTypes]
+        self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         approved_list = get_current_categories()
         return [
@@ -44,4 +46,3 @@ class IsValidCategoryValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if content_item.category and content_item.category not in approved_list
         ]
-

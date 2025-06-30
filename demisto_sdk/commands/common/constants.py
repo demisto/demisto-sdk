@@ -320,7 +320,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.ASSETS_MODELING_RULE: "Assets Modeling Rules",
     FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
     FileType.CASE_FIELD: "Case Fields",
-    FileType.CASE_LAYOUT: "Case Layouts"
+    FileType.CASE_LAYOUT: "Case Layouts",
 }
 
 FILE_TYPE_BY_RN_HEADER = {

@@ -138,6 +138,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                     self.error_code,
                     ignorable_errors,
                     content_item,
+                    ["GR107"],
                     self.related_file_type,
                 ),
             ]
@@ -256,6 +257,7 @@ def is_error_ignored(
     err_code: str,
     ignorable_errors: List[str],
     content_item: ContentTypes,
+    always_run_on_error_code: List[str],
     related_file_type: Optional[List[RelatedFileType]] = None,
 ) -> bool:
     """
@@ -269,7 +271,7 @@ def is_error_ignored(
     Returns:
         bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
     """
-    if err_code not in ignorable_errors:
+    if (err_code not in ignorable_errors) or (err_code in always_run_on_error_code):
         return False
     if related_file_type:
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.

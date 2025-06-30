@@ -108,7 +108,8 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
         )
         for item in self.graph.find_items_using_deprecated_items(content_item_paths):
             for item_using_deprecated in item.content_items_using_deprecated:
-                grouped_results[item_using_deprecated]["deprecated_items"].add(  # type: ignore[index]
+                if self.error_code not in item_using_deprecated.ignored_errors:
+                    grouped_results[item_using_deprecated]["deprecated_items"].add(  # type: ignore[index]
                     item.deprecated_item_id
                 )
         return [
@@ -122,3 +123,5 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
             )
             for item_using_deprecated, data in grouped_results.items()
         ]
+
+    # def relevant_item_relationships(self, item_using_deprecated_ignored_errors, ):

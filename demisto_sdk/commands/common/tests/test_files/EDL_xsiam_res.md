@@ -5,8 +5,8 @@ If you have several Generic Export Indicators Service integration instances, mak
 Note: After a successful configuration of an instance, if the 'test button' is clicked again, it may result in a failure due to an incorrect assumption that the port is already in use. Nevertheless, it is important to highlight that despite this issue, the instance will continue to function correctly.
 
 
-### Access the Generic Export Indicators Service by Instance Name (HTTPS)
 
+### Access the Generic Export Indicators Service by Instance Name (HTTPS)
 
 **Note**: Do not set `username` and `password` in the integration instance if you are running the integration via the hosted instance. The `username` and `password` fields are for usage when running the integration via an on-prem engine.
 

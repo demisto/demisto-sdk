@@ -1,14 +1,14 @@
 ## How to Access the Generic Export Indicators Service
-
 Use one of the following methods to access the Generic Export Indicators Service to make sure your indicators are exported properly.
+
 If you have several Generic Export Indicators Service integration instances, make sure to use **different listening ports** to separate the outbound feeds.
 Note: After a successful configuration of an instance, if the 'test button' is clicked again, it may result in a failure due to an incorrect assumption that the port is already in use. Nevertheless, it is important to highlight that despite this issue, the instance will continue to function correctly.
-
 
 ### Access the Generic Export Indicators Service by URL and Port (HTTP)
 In a web browser, go to **http://<cortex-xsoar-server-address>:<listen_port>**.
 
 **Note**: For security purposes, Cortex XSOAR recommends that you use HTTPS when accessing the indicator service through the URL and port. To do so, you must provide a certificate and private key, in the respective fields. In addition, make sure to provide credentials that must be used to connect to the integration instance.
+
 ### Access the Generic Export Indicators Service by Instance Name (HTTPS)
 
 

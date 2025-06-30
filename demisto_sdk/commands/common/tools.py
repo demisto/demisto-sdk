@@ -53,6 +53,8 @@ from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 
 from demisto_sdk.commands.common.constants import (
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
     ASSETS_MODELING_RULES_DIR,
@@ -1763,6 +1765,12 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
 
         elif CORRELATION_RULES_DIR in path.parts:
             return FileType.CORRELATION_RULE
+
+        elif AGENTIX_ACTIONS_DIR in path.parts:
+            return FileType.AGENTIX_ACTION
+
+        elif AGENTIX_AGENTS_DIR in path.parts:
+            return FileType.AGENTIX_AGENT
 
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE

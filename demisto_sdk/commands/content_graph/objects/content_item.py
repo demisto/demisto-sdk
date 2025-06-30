@@ -170,6 +170,10 @@ class ContentItem(BaseContent):
     @property
     def pack_version(self) -> Optional[Version]:
         return self.in_pack.pack_version if self.in_pack else None
+    
+    @property
+    def pack_path(self) -> Optional[Path]:
+        return self.in_pack.path if self.in_pack else None
 
     @property
     def uses(self) -> List["RelationshipData"]:

@@ -4,8 +4,7 @@ from typing import Iterable, List, Tuple
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
-from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import find_pack_folder, get_all_repo_pack_ids
+from demisto_sdk.commands.common.tools import get_all_repo_pack_ids
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     RelatedFileType,
@@ -47,12 +46,6 @@ class PlaybookTestUseCaseConfigValidator(BaseValidator[ContentTypes]):
         validation_results: List[ValidationResult] = []
 
         for content_item in content_items:
-            pack_path = find_pack_folder(content_item.path)
-            # Optional since "TestUseCases" folder may not exist in the environment
-            if not (pack_path / "TestUseCases").exists():
-                logger.debug(f"Pack '{content_item.pack_name}' has no test use cases.")
-                continue
-
             for test_use_case in content_item.test_use_cases:
                 is_valid, reason = self.validate_config_docstring(test_use_case)
                 if not is_valid:

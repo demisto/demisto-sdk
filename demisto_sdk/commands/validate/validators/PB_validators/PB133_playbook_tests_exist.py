@@ -5,7 +5,6 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.tools import find_pack_folder
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -51,8 +50,6 @@ class PlaybookTestsExistValidator(BaseValidator[ContentTypes], ABC):
 
             for playbook_test in content_item.tested_by:
                 test_id = playbook_test.object_id
-                if not test_id:
-                    continue
 
                 if test_id.casefold().startswith(TESTS_LIST_ITEMS_TO_SKIP):
                     continue
@@ -61,10 +58,8 @@ class PlaybookTestsExistValidator(BaseValidator[ContentTypes], ABC):
                     playbook_id = test_id
                     missing_test_playbooks_ids.add(playbook_id)
 
-                else:
-                    pack_test_use_cases_path = (
-                        find_pack_folder(content_item.path) / "TestUseCases"
-                    )
+                elif content_item.pack_path:
+                    pack_test_use_cases_path = content_item.pack_path / "TestUseCases"
                     test_name = f"{test_id}.py"
                     test_use_case_path = pack_test_use_cases_path / test_name
 

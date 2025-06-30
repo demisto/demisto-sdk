@@ -14,10 +14,22 @@ mapping:
     type: str
     required: true
   tags:
-    type: str
+    type: seq
+    sequence:
+    - type: str
   category:
+    type: str
+  name:
     type: str
   display:
     type: str
   description:
     type: str
+  marketplaces:
+    type: seq
+    sequence:
+    - type: str
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str

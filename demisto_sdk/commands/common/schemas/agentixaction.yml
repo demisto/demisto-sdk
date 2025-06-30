@@ -28,16 +28,22 @@ mapping:
     type: seq
     sequence:
     - include: outputs_schema
-  agentid:
-    type: str
-  underlyingcontentitemid:
-    type: str
-  underlyingcontentitemname:
-    type: str
-  underlyingcontentitemtype:
-    type: int
-  underlyingcontentitemversion:
-    type: int
+  underlyingcontentitem:
+    type: map
+    required: true
+    mapping:
+      id:
+        type: str
+        required: true
+      name:
+        type: str
+        required: true
+      type:
+        type: str
+        required: true
+      version:
+        type: int
+        required: true
   requiresuserapproval:
     type: bool
   marketplaces:
@@ -45,6 +51,10 @@ mapping:
     sequence:
     - type: str
   supportedModules:
+    type: seq
+    sequence:
+    - type: str
+  fewshots:
     type: seq
     sequence:
     - type: str
@@ -71,7 +81,7 @@ schema;args_schema:
       type: str
     generatable:
       type: bool
-    isDetailsOverridden:
+    disabled:
       type: bool
 schema;outputs_schema:
   type: map
@@ -87,3 +97,5 @@ schema;outputs_schema:
       required: true
     underlyingoutputcontextpath:
       type: str
+    disabled:
+      type: bool

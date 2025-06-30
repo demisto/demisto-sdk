@@ -32,7 +32,7 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         self.underlying_content_item_version: int = self.yml_data.get(
             "underlyingcontentitem").get('version')
         self.requires_user_approval: bool = self.yml_data.get("requiresuserapproval")
-        self.few_shots: Optional[str] = self.yml_data.get("fewshots")
+
     @cached_property
     def field_mapping(self):
         super().field_mapping.update({"display": "name"})

@@ -1,4 +1,0 @@
-changes:
-- description: Added BA112 validation to enforce compliant policy naming for the "Preference Center" feature.
-  type: feature
-pr_number: 4968

@@ -1848,8 +1848,12 @@ class Integration:
         """
         server_url = client.api_client.configuration.host
         if self.build_context.is_saas_server_type:
-            logging.info(f"Using server URL from build context: {server_url}")
-            server_url = f"ext-{server_url}"
+            logging.info(f"Using server URL from build context in XSOAR SAAS: {server_url}")
+            # Parse URL and add `ext-` prefix to hostname
+            # e.g., https://api-crtx-.us.paloaltonetworks.com -> https://ext-api-crtx-.us.paloaltonetworks.com
+            parsed_url = urllib.parse.urlparse(server_url)
+            ext_hostname = f"ext-{parsed_url.netloc}"
+            server_url = parsed_url._replace(netloc=ext_hostname).geturl()
         self._set_integration_params(server_url, playbook_id)
         configuration = self._get_integration_config(
             client.api_client.configuration.host

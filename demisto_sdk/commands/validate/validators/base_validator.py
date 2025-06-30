@@ -138,7 +138,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                     self.error_code,
                     ignorable_errors,
                     content_item,
-                    ["GR107"],
+                    ["GR107"], # TODO: move to constant
                     self.related_file_type,
                 ),
             ]

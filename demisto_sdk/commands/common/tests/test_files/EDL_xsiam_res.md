@@ -8,6 +8,7 @@ Note: After a successful configuration of an instance, if the 'test button' is c
 
 ### Access the Generic Export Indicators Service by Instance Name (HTTPS)
 
+
 **Note**: Do not set `username` and `password` in the integration instance if you are running the integration via the hosted instance. The `username` and `password` fields are for usage when running the integration via an on-prem engine.
 
 **Note**: If no `Listen Port` param was given and the test button was clicked, the test will run with the default port 1111. After pressing `save & exit` a new free port will be assigned to the `Listen Port` parameter automatically.
@@ -20,6 +21,7 @@ curl -v -u test:password https://edl-my-xsiam-subdomain.us.paloaltonetworks.com/
 ```
 
 **Note**: The External Dynamic List is not accessible via web browsers and you will receive an unauthorized error if accessing the External Dynamic List via a browser.
+
 
 
 

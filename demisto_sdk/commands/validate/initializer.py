@@ -145,7 +145,10 @@ class Initializer:
             committed_only=self.committed_only,
             staged_only=self.staged,
         )
-
+        logger.info(f"{modified_files=}")
+        logger.info(f"{added_files=}")
+        logger.info(f"{renamed_files=}")
+        logger.info(f"{deleted_files=}")
         return (
             modified_files,
             added_files,
@@ -252,7 +255,6 @@ class Initializer:
             debug=True,
             get_only_current_file_names=False,
         )
-
         """
         If this command runs on a build triggered by an external contribution PR,
         the relevant modified files may have an "untracked" status in git.

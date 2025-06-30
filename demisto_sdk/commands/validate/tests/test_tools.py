@@ -364,7 +364,6 @@ def create_pack_object(
     release_note_content: Optional[str] = None,
     bc_release_note_content: Optional[dict] = None,
     version_config: Optional[dict] = None,
-    test_use_case_content: Optional[str] = None,
 ) -> Pack:
     """Creating an pack object with altered fields from a default pack_metadata json structure.
 
@@ -420,11 +419,6 @@ def create_pack_object(
     if playbooks:
         for _ in range(playbooks):
             pack.create_playbook()
-    if test_use_case_content:
-        pack.create_test_use_case(
-            name=f"{json_content['name']}_use_case_test",
-            content=test_use_case_content,
-        )
 
     return cast(Pack, BaseContent.from_path(pack_path))
 

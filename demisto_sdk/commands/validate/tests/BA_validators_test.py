@@ -114,12 +114,6 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_conte
 from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_script_name_starts_with_digit import (
     IsCommandOrScriptNameStartsWithDigitValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA129_is_forbidden_content_item import (
-    IsForbiddenContentItemValidator,
-)
-from demisto_sdk.commands.validate.validators.BA_validators.BA130_is_correct_mp_sm import (
-    IsMarketplaceExistsValidator,
-)
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "

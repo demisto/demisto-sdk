@@ -1158,8 +1158,20 @@ def repo_for_test_gr_109(graph_repo: Repo):
             ]
         }
     )
+    yml2 = {
+        "commonfields": {"id": "SearchIncidents", "version": -1},
+        "name": "SearchIncidents",
+        "comment": "this is script SearchIncidents",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_y"],
+    }
     pack_b.create_script(
-        "SearchIncidents", code='demisto.executeCommand("SearchIncidents", {})'
+        "SearchIncidents",
+        code='demisto.executeCommand("SearchIncidents", {})',
+        yml=yml2,
     )
 
     return graph_repo
@@ -1214,3 +1226,68 @@ def test_SupportedModulesCompatibility_invalid_list_files(
         == "The following mandatory dependencies missing required modules: SearchIncidents is missing: [module_x]"
     )
     assert results[0].content_object.object_id == "Script1"
+
+
+@pytest.fixture
+def repo_for_test_gr_109_with_supported_module_none(graph_repo: Repo):
+    """
+    Creates a test repository with three packs for testing GR109 validator.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains Script1, Script2 and Integration1 that
+              Script1  uses a command from Pack_b and configured with `supportedModules: ["module_x"]`.
+              script2 and integration for additional testing scenarios.
+    - Pack B: Contains "SearchIncidents" script.
+              Note: "Pack B" does *not* list "module_x" in its supportedModules.
+    """
+    yml = {
+        "commonfields": {"id": "Script1", "version": -1},
+        "name": "Script1",
+        "comment": "this is script Script1",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_x"],
+    }
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {"marketplaces": [MarketplaceVersions.MarketplaceV2.value]}
+    )
+    pack_a.create_script(
+        "Script1", code='demisto.executeCommand("SearchAlerts", {})', yml=yml
+    )
+    pack_a.create_integration("Integration1")
+
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.XSOAR.value,
+            ]
+        }
+    )
+    pack_b.create_script(
+        "SearchIncidents", code='demisto.executeCommand("SearchIncidents", {})'
+    )
+
+    return graph_repo
+
+
+def test_SupportedModulesCompatibility_supported_module_none(
+    repo_for_test_gr_109_with_supported_module_none: Repo,
+):
+    """
+    Given:
+        A repository where "Script1" (with supportedModules: ['module_x']) depends on "SearchIncidents", whose supportedModules is None.
+    When:
+        Running the IsSupportedModulesCompatibility validator.
+    Then:
+        The validator should pass
+    """
+    graph_interface = repo_for_test_gr_109_with_supported_module_none.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 0

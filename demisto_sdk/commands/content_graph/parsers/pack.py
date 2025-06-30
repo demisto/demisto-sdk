@@ -257,7 +257,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         path: Path,
         git_sha: Optional[str] = None,
         metadata_only: bool = False,
-        private_pack_path: Path = None,
+        private_pack_path: Optional[Path] = None,
     ) -> None:
         """Parses a pack and its content items.
 

@@ -287,7 +287,7 @@ class BaseContent(BaseNode):
         git_sha: Optional[str] = None,
         raise_on_exception: bool = False,
         metadata_only: bool = False,
-        private_pack_path: Path = None,
+        private_pack_path: Optional[Path] = None,
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from {path}")
 

@@ -258,7 +258,7 @@ class Uploader:
         self.print_summary()
         return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
 
-    def _upload_single(self, path: Path, private_pack_path: Path) -> bool:
+    def _upload_single(self, path: Path, private_pack_path: Optional[Path] = None) -> bool:
         """
         Upload a content item, a pack, or a zip containing packs.
 

@@ -1854,6 +1854,7 @@ class Integration:
             parsed_url = urllib.parse.urlparse(server_url)
             ext_hostname = f"ext-{parsed_url.netloc}"
             server_url = parsed_url._replace(netloc=ext_hostname).geturl()
+            logging.info(f"Added ext to server url: {server_url}")
         self._set_integration_params(server_url, playbook_id)
         configuration = self._get_integration_config(
             client.api_client.configuration.host

@@ -120,6 +120,7 @@ from demisto_sdk.commands.common.constants import (
     UNRELEASE_HEADER,
     URL_REGEX,
     UUID_REGEX,
+    VALID_MARKETPLACE_TAGS,
     VERSION_CONFIG_FILE_NAME,
     WIDGETS_DIR,
     XDRC_TEMPLATE_DIR,
@@ -196,6 +197,9 @@ class MarketplaceTagParser:
 
             marketplaces_in_tag = {mp.strip() for mp in marketplaces_in_tag_str.split(',')}
             relevant_tags_for_upload = MARKETPLACE_TAG_MAPPING[self.marketplace]
+
+            if any(tag not in VALID_MARKETPLACE_TAGS for tag in marketplaces_in_tag):
+                return match.group(0) # Leaving block untouched due to invalid marketplace tags
 
             if any(tag in marketplaces_in_tag for tag in relevant_tags_for_upload):
                 return content

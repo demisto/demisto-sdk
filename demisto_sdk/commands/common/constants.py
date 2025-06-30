@@ -2149,20 +2149,23 @@ HTML_IMAGE_LINK_REGEX = r'(<img.*?src\s*=\s*"(https://.*?)")'
 MARKETPLACE_LIST_PATTERN = r"[A-Z_]+(?:,[A-Z_]+)*"
 TAG_CONTENT_PATTERN = r"(?:.|\s)*?"
 
-PLATFORM_MP = "platform"
-XSIAM_MP = "marketplacev2"
-XSOAR_MP = "xsoar"
-XPANSE_MP = "xpanse"
-XSOAR_SAAS_MP = "xsoar_saas"
-XSOAR_ON_PREM_MP = "xsoar_on_prem"
-
 MARKETPLACE_TAG_MAPPING = {
-    PLATFORM_MP: ["PLATFORM"],
-    XSIAM_MP: ["XSIAM"],
-    XPANSE_MP: ["XPANSE"],
-    XSOAR_MP: ["XSOAR", "XSOAR_ON_PREM"], # If uploading to XSOAR, keep XSOAR and XSOAR_ON_PREM tags
-    XSOAR_SAAS_MP: ["XSOAR_SAAS", "XSOAR"], # If uploading to XSOAR_SAAS, keep XSOAR_SAAS and XSOAR tags
-    XSOAR_ON_PREM_MP: ["XSOAR_ON_PREM"], # If uploading to XSOAR_ON_PREM, keep XSOAR_ON_PREM tags
+    MarketplaceVersions.PLATFORM.value: ["PLATFORM", "XSIAM"],
+    MarketplaceVersions.MarketplaceV2.value: ["XSIAM", "XSIAM_ONLY"],
+    MarketplaceVersions.XPANSE.value: ["XPANSE"],
+    MarketplaceVersions.XSOAR.value: ["XSOAR", "XSOAR_ON_PREM"], # If uploading to XSOAR, keep XSOAR and XSOAR_ON_PREM tags
+    MarketplaceVersions.XSOAR_SAAS.value: ["XSOAR_SAAS", "XSOAR"], # If uploading to XSOAR_SAAS, keep XSOAR_SAAS and XSOAR tags
+    MarketplaceVersions.XSOAR_ON_PREM.value: ["XSOAR_ON_PREM"], # If uploading to XSOAR_ON_PREM, keep XSOAR_ON_PREM tags
+}
+
+VALID_MARKETPLACE_TAGS = {
+    "XSOAR",
+    "XSOAR_SAAS",
+    "XSOAR_ON_PREM",
+    "XPANSE",
+    "XSIAM",
+    "XSIAM_ONLY",
+    "PLATFORM",
 }
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"

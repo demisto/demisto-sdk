@@ -138,10 +138,6 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def update_specific_fields_for_neo4j(self) -> None:
-        pass
-
-    @abstractmethod
     def import_graph(
         self,
         imported_path: Optional[Path] = None,

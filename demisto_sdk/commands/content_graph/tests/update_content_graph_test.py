@@ -278,26 +278,6 @@ def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
 # COMPARISON HELPER FUNCTIONS
 
 
-def _normalize_field_supported_modules(pack_a: Pack, pack_b: Pack) -> None:
-    if not pack_a.supportedModules:
-        pack_b.supportedModules = None
-    content_items_need_set_supported_modules_none = []
-    for content_item in pack_a.content_items:
-        if content_item.supportedModules is None:
-            content_items_need_set_supported_modules_none.append(content_item.name)
-    for content_item in pack_b.content_items:
-        if content_item.name in content_items_need_set_supported_modules_none:
-            content_item.supportedModules = None
-
-
-def normalize_nodes_and_objects_before_comparison(pack_a: Pack, pack_b: Pack) -> None:
-    """
-    Normalize nodes and objects in both packs to ensure consistent comparison,
-    only for fields that were intentionally defined to be different between the objects and the nodes.
-    """
-    _normalize_field_supported_modules(pack_a, pack_b)
-
-
 def compare(
     packs_from_content_dto: List[Pack],
     packs_from_graph: List[Pack],
@@ -309,7 +289,6 @@ def compare(
     packs_from_graph.sort(key=lambda pack: pack.object_id)
     assert len(packs_from_content_dto) == len(packs_from_graph)
     for pack_a, pack_b in zip(packs_from_content_dto, packs_from_graph):
-        normalize_nodes_and_objects_before_comparison(pack_a, pack_b)
         assert pack_a.to_dict() == pack_b.to_dict()
         _compare_content_items(list(pack_a.content_items), list(pack_b.content_items))
         _compare_relationships(pack_a, pack_b)

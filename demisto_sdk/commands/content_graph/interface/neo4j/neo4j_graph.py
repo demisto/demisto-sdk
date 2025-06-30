@@ -62,7 +62,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     delete_all_graph_relationships,
     get_sources_by_path,
     get_targets_by_path,
-    set_default_supported_module_by_relationships,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_items_using_deprecated,
@@ -673,11 +672,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             # For more details: https://jira-hq.paloaltonetworks.local/browse/CIAC-7149
             session.execute_write(remove_content_private_nodes)
             session.execute_write(remove_server_nodes)
-
-    def update_specific_fields_for_neo4j(self) -> None:
-        with self.driver.session() as session:
-            # Updates/rewrites fields for Neo4j graph nodes to present them differently than in the source objects.
-            session.execute_write(set_default_supported_module_by_relationships)
 
     def import_graph(
         self,

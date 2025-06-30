@@ -74,4 +74,3 @@ class ContentGraphBuilder:
         self.content_graph.create_relationships(self.relationships)
         gc.collect()
         self.content_graph.remove_non_repo_items()
-        self.content_graph.update_specific_fields_for_neo4j()

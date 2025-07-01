@@ -1,4 +1,21 @@
 # Changelog
+## 1.38.5 (2025-06-29)
+### Feature
+* Added BA112 validation to enforce compliant policy naming for the "Preference Center" feature. [#4968](https://github.com/demisto/demisto-sdk/pull/4968)
+* Created the following new validateion:
+- ST112: Validate that any content item with a quick action command also has the supportsquickactions field in its top level yml.
+- ST113: Validate that supportedModules can't be an empty list.
+- BC115: Validate that no support modules are removed from an existing content item.
+- GR109: Validate that if content item A depends on content item B, then content item B's supportedModules must include all supportedModules of content item A.
+ [#4947](https://github.com/demisto/demisto-sdk/pull/4947)
+
+### Fix
+* Fixed an issue where prepare-content would create multiple playbooks for marketplaceV2. [#4981](https://github.com/demisto/demisto-sdk/pull/4981)
+
+### Internal
+* Changes in test data folder trigger the unit-tests hook in pre-commit. [#4972](https://github.com/demisto/demisto-sdk/pull/4972)
+
+
 ## 1.38.4 (2025-06-16)
 ### Feature
 * Added the MyPy **demisto-sdk pre-commit** hook. [#4963](https://github.com/demisto/demisto-sdk/pull/4963)

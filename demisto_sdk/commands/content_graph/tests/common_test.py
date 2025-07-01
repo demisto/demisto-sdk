@@ -8,6 +8,7 @@ from ruamel.yaml.scalarstring import (  # noqa: TID251 - only importing FoldedSc
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     MarketplaceVersions,
+    append_supported_modules,
     replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
@@ -337,3 +338,81 @@ def test_replace_marketplace_references__error_handling():
     mock_logger.error.assert_called_once_with(
         "Error processing data for replacing incorrect marketplace at path 'example/path': Test exception"
     )
+
+
+@pytest.mark.parametrize(
+    "data, supported_modules, pack_supported_modules, expected",
+    [
+        pytest.param(
+            {"name": "test", "supportedModules": ["module1"]},
+            None,
+            None,
+            {"name": "test"},
+            id="Remove supportedModules when supported_modules is None",
+        ),
+        pytest.param(
+            {"name": "test"},
+            ["module1", "module2"],
+            ["module1", "module2", "module3"],
+            {"name": "test"},
+            id="No change when pack modules are superset of supported modules",
+        ),
+        pytest.param(
+            {"name": "test", "supportedModules": ["module1"]},
+            ["module1", "module2"],
+            ["module1"],
+            {"name": "test"},
+            id="Remove supportedModules when pack modules are subset of supported modules",
+        ),
+        pytest.param(
+            {"name": "test"},
+            ["module1", "module2"],
+            None,
+            {"name": "test"},
+            id="No change when pack_supported_modules is None",
+        ),
+        pytest.param(
+            {"name": "test", "supportedModules": ["old_module"]},
+            ["module1", "module2"],
+            ["module3", "module4"],
+            {"name": "test", "supportedModules": ["old_module"]},
+            id="Keep supportedModules when no modules in common",
+        ),
+        pytest.param(
+            {"name": "test"},
+            None,
+            ["module1", "module2"],
+            {"name": "test"},
+            id="No change when supported_modules is None but pack_supported_modules exists",
+        ),
+        pytest.param(
+            {"name": "test", "otherKey": "value"},
+            None,
+            None,
+            {"name": "test", "otherKey": "value"},
+            id="No change when supportedModules key doesn't exist and supported_modules is None",
+        ),
+        pytest.param(
+            {"name": "test", "supportedModules": []},
+            None,
+            None,
+            {"name": "test"},
+            id="Remove empty supportedModules when supported_modules is None",
+        ),
+    ],
+)
+def test_append_supported_modules(
+    data, supported_modules, pack_supported_modules, expected
+):
+    """
+    Tests the append_supported_modules function with various combinations of inputs.
+    Ensures the function correctly modifies the data dictionary based on the supported modules.
+    """
+    original_id = id(data)
+    result = append_supported_modules(
+        data=data,
+        supported_modules=supported_modules,
+        pack_supported_modules=pack_supported_modules,
+    )
+    assert id(result) == original_id
+    assert result == expected

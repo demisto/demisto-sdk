@@ -399,6 +399,7 @@ def get_supported_modules_mismatch_dependencies(
     query = f""" // Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
     MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(contentItemB)
     WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItemA.object_id IN {content_item_ids})
+      AND contentItemB.supportedModules IS NOT NULL
       AND NOT ALL(module IN contentItemA.supportedModules WHERE module IN contentItemB.supportedModules)
     RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
     """

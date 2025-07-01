@@ -1,6 +1,6 @@
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
+from demisto_sdk.commands.common.constants import GitStatuses, PlatformSupportedModules
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
@@ -17,9 +17,9 @@ ContentTypes = Union[AgentixAgent, AgentixAction, Script]
 
 class IsMarketplaceExistsValidator(BaseValidator[ContentTypes]):
     error_code = "AG101"
-    description = f"Content items of type {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to platform only."
-    rationale = "These types of items should be uploaded to platform only."
-    error_message = f"The items {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to platform only. Please specify only platform under marketplaces."
+    description = f"Content items of type {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to agentix supported module only."
+    rationale = "These types of items should be uploaded to agentix supported module only."
+    error_message = f"The items {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to agentix supported module only. Please specify only agentix under supportedModules."
     # expected_git_statuses = [
     #     GitStatuses.ADDED,
     #     GitStatuses.MODIFIED,
@@ -51,6 +51,6 @@ class IsMarketplaceExistsValidator(BaseValidator[ContentTypes]):
             return (
                 len(content_item.marketplaces) > 1
                 or len(content_item.marketplaces) == 0
-                or MarketplaceVersions.PLATFORM.value
+                or PlatformSupportedModules.AGENTIX
                 != content_item.marketplaces[0].value
             )

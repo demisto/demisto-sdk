@@ -368,9 +368,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         if self.private_pack_path.is_dir():
             logger.info(f"{str(self.private_pack_path)} is a dir.")
             for folder_path in ContentType.pack_folders(self.private_pack_path):
-                for (
-                    content_item_path
-                ) in folder_path.iterdir():
+                for content_item_path in folder_path.iterdir():
                     self.parse_content_item(content_item_path)
         else:
             logger.info(

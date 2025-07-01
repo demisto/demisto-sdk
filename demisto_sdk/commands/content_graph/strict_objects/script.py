@@ -142,6 +142,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
 
         return values
 
+
 StrictScript = create_model(
     model_name="StrictScript",
     base_models=(

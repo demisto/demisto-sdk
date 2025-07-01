@@ -1,7 +1,6 @@
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
-
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
@@ -24,7 +23,11 @@ class IsForbiddenContentItemValidator(BaseValidator[ContentTypes]):
         f"The items {ContentType.AGENTIX_AGENT} and {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with is_llm=True"
         f" should be stored in content-test-conf, not in Content"
     )
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
 
     def obtain_invalid_content_items(
         self,

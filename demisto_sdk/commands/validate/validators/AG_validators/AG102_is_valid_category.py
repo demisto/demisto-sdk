@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
-
 from demisto_sdk.commands.common.tools import get_current_categories
 from demisto_sdk.commands.content_graph.objects import AgentixAction, AgentixAgent
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -27,7 +26,11 @@ class IsValidCategoryValidator(BaseValidator[ContentTypes]):
     )
     related_field = "category"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

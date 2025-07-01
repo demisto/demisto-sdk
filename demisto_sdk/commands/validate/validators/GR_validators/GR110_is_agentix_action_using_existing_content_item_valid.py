@@ -5,7 +5,6 @@ from abc import ABC
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
-
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import AgentixAction
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -44,7 +43,11 @@ class IsAgentixActionUsingExistingContentItemValidator(
     error_message = ""
     related_field = ""
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.RENAMED]
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
     related_file_type = [RelatedFileType.YML]
 
     def obtain_invalid_content_items_using_graph(

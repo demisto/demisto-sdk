@@ -20,11 +20,11 @@ class IsMarketplaceExistsValidator(BaseValidator[ContentTypes]):
     description = f"Content items of type {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to xsoar_saas only."
     rationale = "These types of items should be uploaded to xsoar_saas only."
     error_message = f"The items {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to xsoar_saas only. Please specify only xsoar_saas under marketplaces."
-    expected_git_statuses = [
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-        GitStatuses.RENAMED,
-    ]
+    # expected_git_statuses = [
+    #     GitStatuses.ADDED,
+    #     GitStatuses.MODIFIED,
+    #     GitStatuses.RENAMED,
+    # ]
 
     def obtain_invalid_content_items(
         self,

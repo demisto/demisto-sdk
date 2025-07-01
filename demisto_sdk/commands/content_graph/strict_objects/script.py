@@ -142,15 +142,6 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
 
         return values
 
-    # TODO
-    # @root_validator
-    # def validate_script_value(cls, values):
-    #     errors = []
-    #     if not values.get("is_llm", False):
-    #         if "script" not in values or not values.get('script'):
-    #             errors.append("Field script must be specified and not empty.")
-
-
 StrictScript = create_model(
     model_name="StrictScript",
     base_models=(

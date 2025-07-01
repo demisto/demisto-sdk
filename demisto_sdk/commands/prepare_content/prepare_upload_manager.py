@@ -40,7 +40,7 @@ class PrepareUploadManager:
             marketplace = MarketplaceVersions(marketplace)
         if force:
             kwargs["force"] = True
-        if kwargs["private_packs_path"]:
+        if kwargs.get("private_packs_path"):
             private_packs_path = Path(kwargs["private_packs_path"])
         else:
             private_packs_path = None

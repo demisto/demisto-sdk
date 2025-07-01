@@ -370,7 +370,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             for folder_path in ContentType.pack_folders(self.private_pack_path):
                 for (
                     content_item_path
-                ) in folder_path.iterdir():  # todo: consider multiprocessing
+                ) in folder_path.iterdir():
                     self.parse_content_item(content_item_path)
         else:
             logger.info(

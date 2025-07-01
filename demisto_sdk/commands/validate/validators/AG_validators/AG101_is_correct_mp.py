@@ -17,9 +17,9 @@ ContentTypes = Union[AgentixAgent, AgentixAction, Script]
 
 class IsMarketplaceExistsValidator(BaseValidator[ContentTypes]):
     error_code = "AG101"
-    description = f"Content items of type {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to xsoar_saas only."
-    rationale = "These types of items should be uploaded to xsoar_saas only."
-    error_message = f"The items {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to xsoar_saas only. Please specify only xsoar_saas under marketplaces."
+    description = f"Content items of type {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to platform only."
+    rationale = "These types of items should be uploaded to platform only."
+    error_message = f"The items {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to platform only. Please specify only platform under marketplaces."
 
     def obtain_invalid_content_items(
         self,

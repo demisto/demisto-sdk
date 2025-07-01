@@ -145,10 +145,6 @@ class Initializer:
             committed_only=self.committed_only,
             staged_only=self.staged,
         )
-        logger.info(f"{modified_files=}")
-        logger.info(f"{added_files=}")
-        logger.info(f"{renamed_files=}")
-        logger.info(f"{deleted_files=}")
         return (
             modified_files,
             added_files,

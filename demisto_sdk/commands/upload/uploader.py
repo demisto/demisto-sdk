@@ -104,7 +104,7 @@ class Uploader:
         self.tpb = tpb  # -tpb flag
         self.destination_zip_dir = destination_zip_dir
         self.private_pack_path = (
-            None if private_pack_path is None else Path(private_pack_path)
+            None if not private_pack_path else Path(private_pack_path)
         )
 
     def _upload_zipped(self, path: Path) -> bool:

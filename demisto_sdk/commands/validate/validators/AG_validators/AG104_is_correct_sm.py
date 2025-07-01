@@ -16,7 +16,7 @@ ContentTypes = Union[AgentixAgent, AgentixAction, Script]
 
 
 class IsMarketplaceExistsValidator(BaseValidator[ContentTypes]):
-    error_code = "AG101"
+    error_code = "AG104"
     description = f"Content items of type {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to agentix supported module only."
     rationale = "These types of items should be uploaded to agentix supported module only."
     error_message = f"The items {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to agentix supported module only. Please specify only agentix under supportedModules."
@@ -49,8 +49,8 @@ class IsMarketplaceExistsValidator(BaseValidator[ContentTypes]):
             ]
         ) or (content_item.content_type == ContentType.SCRIPT and content_item.is_llm):
             return (
-                len(content_item.marketplaces) > 1
-                or len(content_item.marketplaces) == 0
+                len(content_item.supportedModules) > 1
+                or len(content_item.supportedModules) == 0
                 or PlatformSupportedModules.AGENTIX
-                != content_item.marketplaces[0].value
+                != content_item.supportedModules[0].value
             )

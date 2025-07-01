@@ -51,6 +51,6 @@ class IsMarketplaceExistsValidator(BaseValidator[ContentTypes]):
             return (
                 len(content_item.supportedModules) > 1
                 or len(content_item.supportedModules) == 0
-                or PlatformSupportedModules.AGENTIX
-                != content_item.supportedModules[0].value
+                or PlatformSupportedModules.AGENTIX.value
+                != content_item.supportedModules[0]
             )

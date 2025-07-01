@@ -14,7 +14,11 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import ExecutionMode, GitStatuses
+from demisto_sdk.commands.common.constants import (
+    ALWAYS_RUN_ON_ERROR_CODE,
+    ExecutionMode,
+    GitStatuses,
+)
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_abstract_class
@@ -138,7 +142,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                     self.error_code,
                     ignorable_errors,
                     content_item,
-                    ["GR107"], # TODO: move to constant
                     self.related_file_type,
                 ),
             ]
@@ -257,7 +260,6 @@ def is_error_ignored(
     err_code: str,
     ignorable_errors: List[str],
     content_item: ContentTypes,
-    always_run_on_error_code: List[str],
     related_file_type: Optional[List[RelatedFileType]] = None,
 ) -> bool:
     """
@@ -271,7 +273,7 @@ def is_error_ignored(
     Returns:
         bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
     """
-    if (err_code not in ignorable_errors) or (err_code in always_run_on_error_code):
+    if (err_code not in ignorable_errors) or (err_code in ALWAYS_RUN_ON_ERROR_CODE):
         return False
     if related_file_type:
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.

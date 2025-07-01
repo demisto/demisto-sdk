@@ -108,8 +108,6 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
         )
         for item in self.graph.find_items_using_deprecated_items(content_item_paths):
             for item_using_deprecated in item.content_items_using_deprecated:
-                # if item_using_deprecated has an ignore:GR107 in .pack-ignore file, don't include the deprecated item in the result
-                if self.error_code not in item_using_deprecated.ignored_errors:
                     grouped_results[item_using_deprecated]["deprecated_items"].add(  # type: ignore[index]
                     item.deprecated_item_id
                 )

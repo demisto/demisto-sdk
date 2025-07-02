@@ -108,7 +108,7 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
         )
         for item in self.graph.find_items_using_deprecated_items(content_item_paths):
             for item_using_deprecated in item.content_items_using_deprecated:
-                    grouped_results[item_using_deprecated]["deprecated_items"].add(  # type: ignore[index]
+                grouped_results[item_using_deprecated]["deprecated_items"].add(  # type: ignore[index]
                     item.deprecated_item_id
                 )
         return [

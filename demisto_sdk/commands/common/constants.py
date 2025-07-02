@@ -1280,9 +1280,10 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "version_config.json",  # TODO: remove and validate this file CIAC-12331
 )
 
-# Contains a list of validation error codes that must always execute, regardless of ignore settings.
+# A list of validation error codes that must always execute, regardless of ignore settings.
 # This addresses unique cases where validation must run first, then filter the relevant results afterward.
 ALWAYS_RUN_ON_ERROR_CODE = ["GR107"]
+
 
 class GitStatuses(StrEnum):
     RENAMED = "R"

@@ -264,6 +264,7 @@ def is_error_ignored(
 ) -> bool:
     """
     Check if the given validation error code is ignored by the current item ignored error list.
+    Note: If the validation's error code is in ALWAYS_RUN_ON_ERROR_CODE, the function will always return False.
 
     Args:
         err_code (str): The validation's error code.

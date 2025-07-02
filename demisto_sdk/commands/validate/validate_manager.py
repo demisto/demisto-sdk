@@ -93,9 +93,11 @@ class ValidateManager:
                         in filtered_content_objects_for_validator
                     ]
                 try:
-                    validation_results = self.filter_validation_results(
-                        validation_results
-                    )
+                    # check if any of the validators error code appears in ALWAYS_RUN_ON_ERROR_CODE
+                    if any(error_code in ALWAYS_RUN_ON_ERROR_CODE for error_code in {validator.error_code for validator in self.validators}):
+                        validation_results = self.filter_validation_results(
+                            validation_results
+                        )
 
                     if self.allow_autofix and validator.is_auto_fixable:
                         for validation_result in validation_results:
@@ -163,7 +165,7 @@ class ValidateManager:
             ]
         )
 
-    def filter_validation_results(self, validation_results) -> List[ValidationResult]:
+    def filter_validation_results(self, validation_results: List[ValidationResult]) -> List[ValidationResult]:
         """
         Filters out validation results for error codes that are both in ALWAYS_RUN_ON_ERROR_CODE
         and in the content object's ignored_errors list.

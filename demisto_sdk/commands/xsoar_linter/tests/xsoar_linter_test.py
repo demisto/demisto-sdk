@@ -75,22 +75,6 @@ def test_build_xsoar_linter_command_valid_support_level(
     assert output == expected
 
 
-def test_build_xsoar_linter_command_invalid_support_level():
-    """
-    Given:
-        An invalid pack support level.
-
-    When:
-        Calling `build_xsoar_linter_command` function.
-
-    Then:
-        Assert that a `ValueError` is raised the correct error message.
-    """
-    support_level = "hello"
-    with pytest.raises(ValueError, match=f"Invalid support level: {support_level}"):
-        build_xsoar_linter_command(support_level)
-
-
 @pytest.mark.parametrize(
     "integration_script, expected_env",
     [

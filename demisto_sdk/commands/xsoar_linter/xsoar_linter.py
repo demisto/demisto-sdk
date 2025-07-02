@@ -9,7 +9,6 @@ from typing import List, Optional
 
 from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME
 from demisto_sdk.commands.common.content_constant_paths import PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
@@ -49,9 +48,6 @@ def build_xsoar_linter_command(
     Args:
         support_level: Support level for the file.
         formatting_script: if the file being checked is a formatting script.
-
-    Raises:
-        ValueError: if the support level is invalid.
 
     Returns:
        str: xsoar linter command using pylint load plugins.
@@ -106,9 +102,9 @@ def build_xsoar_linter_command(
             for msg in checker_msgs_list:
                 errors_to_use.append(msg)
     else:
-        raise ValueError(
-            f"Invalid support level: {support_level}. Please provide a valid value in {PACKS_PACK_META_FILE_NAME}. "
-            f"Valid values: {', '.join(support_levels.keys())}."
+        logger.warning(
+            f"Integration support level: '{support_level}' is not valid. "
+            f"Known values: {', '.join(support_levels.keys())}."
         )
 
     # Enable only Demisto Plugins errors.

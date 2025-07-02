@@ -46,6 +46,6 @@ class IsSupportedModulesRemoved(BaseValidator[ContentTypes]):
         ]
 
     def removed_parameters(self, old_item: ContentTypes, new_item: ContentTypes) -> set:
-        old_params = set(old_item.supportedModules)
-        new_params = set(new_item.supportedModules)
+        old_params = set(old_item.supportedModules or [])
+        new_params = set(new_item.supportedModules or [])
         return old_params.difference(new_params)

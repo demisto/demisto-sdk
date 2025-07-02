@@ -9,6 +9,7 @@ from typing import List, Optional
 
 from packaging.version import Version
 
+from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME
 from demisto_sdk.commands.common.content_constant_paths import PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
@@ -49,21 +50,33 @@ def build_xsoar_linter_command(
         support_level: Support level for the file.
         formatting_script: if the file being checked is a formatting script.
 
+    Raises:
+        ValueError: if the support level is invalid.
+
     Returns:
        str: xsoar linter command using pylint load plugins.
-
     """
     if not support_level:
         support_level = "base"
     # linters by support level
     support_levels = {
-        "base": "base_checker",
-        "community": "base_checker,community_level_checker",
-        "partner": "base_checker,community_level_checker,partner_level_checker",
-        "certified partner": "base_checker,community_level_checker,partner_level_checker,"
-        "certified_partner_level_checker",
-        "xsoar": "base_checker,community_level_checker,partner_level_checker,certified_partner_level_checker,"
-        "xsoar_level_checker",
+        "base": ["base_checker"],
+        "community": ["base_checker", "community_level_checker"],
+        "developer": ["base_checker", "community_level_checker"],
+        "partner": ["base_checker", "community_level_checker", "partner_level_checker"],
+        "certified partner": [
+            "base_checker",
+            "community_level_checker",
+            "partner_level_checker",
+            "certified_partner_level_checker",
+        ],
+        "xsoar": [
+            "base_checker",
+            "community_level_checker",
+            "partner_level_checker",
+            "certified_partner_level_checker",
+            "xsoar_level_checker",
+        ],
     }
     # messages from all level linters
     Msg_XSOAR_linter = {
@@ -83,16 +96,20 @@ def build_xsoar_linter_command(
     ]
     checkers_to_use = []
     errors_to_use = []
-    if support_levels.get(support_level):
-        checkers = support_levels.get(support_level)
-        support = checkers.split(",") if checkers else []
-        for checker in support:
+
+    if checkers := support_levels.get(support_level, []):
+        for checker in checkers:
             checkers_to_use.append(checker)
             checker_msgs_list = Msg_XSOAR_linter.get(checker, {}).keys()
             if formatting_script and "W9008" in checker_msgs_list:
                 checker_msgs_list = [msg for msg in checker_msgs_list if msg != "W9008"]
             for msg in checker_msgs_list:
                 errors_to_use.append(msg)
+    else:
+        raise ValueError(
+            f"Invalid support level: {support_level}. Please provide a valid value in {PACKS_PACK_META_FILE_NAME}. "
+            f"Valid values: {', '.join(support_levels.keys())}."
+        )
 
     # Enable only Demisto Plugins errors.
     command.append(f"--enable={','.join(errors_to_use)}")

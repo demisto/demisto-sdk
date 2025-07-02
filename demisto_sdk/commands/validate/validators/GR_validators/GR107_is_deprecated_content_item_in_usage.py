@@ -122,5 +122,3 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
             )
             for item_using_deprecated, data in grouped_results.items()
         ]
-
-    # def relevant_item_relationships(self, item_using_deprecated_ignored_errors, ):

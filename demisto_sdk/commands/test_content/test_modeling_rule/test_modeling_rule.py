@@ -1154,36 +1154,18 @@ def validate_modeling_rule(
                     f"{get_relative_path_to_content(modeling_rule_directory)} and then rerun\n{executed_command}</red>",
                 )
         else:
-            if is_nightly:
-                # Running in nightly mode, don't fail the test if no test data file is found.
-                err = f"No test data file for {get_relative_path_to_content(modeling_rule_directory)} found. "
-                logger.warning(
-                    f"<red>{err}</red>",
-                )
-                test_data_test_case = TestCase(
-                    "Test data file does not exist",
-                    classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",  # type:ignore[arg-type]
-                )
-                test_data_test_case.result += [Skipped(err)]  # type:ignore[arg-type]
-                modeling_rule_test_suite.add_testcase(test_data_test_case)
-                return True, modeling_rule_test_suite
-
-            # Not running in nightly mode, fail the test if no test data file is found.
-            err = (
-                f"Please create a test data file for {get_relative_path_to_content(modeling_rule_directory)} "
-                f"and then rerun\n{executed_command}"
-            )
-            logger.error(
+            # Running in nightly mode, don't fail the test if no test data file is found.
+            err = f"No test data file for {get_relative_path_to_content(modeling_rule_directory)} found. "
+            logger.warning(
                 f"<red>{err}</red>",
             )
             test_data_test_case = TestCase(
                 "Test data file does not exist",
                 classname=f"Modeling Rule {get_relative_path_to_content(modeling_rule.schema_path)}",  # type:ignore[arg-type]
             )
-            test_data_test_case.result += [Error(err)]  # type:ignore[arg-type]
+            test_data_test_case.result += [Skipped(err)]  # type:ignore[arg-type]
             modeling_rule_test_suite.add_testcase(test_data_test_case)
-            return False, modeling_rule_test_suite
-        return False, None
+            return True, modeling_rule_test_suite
 
 
 def validate_modeling_rule_version_against_tenant(

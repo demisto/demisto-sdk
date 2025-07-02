@@ -12,6 +12,7 @@ from math import ceil
 from pathlib import Path
 from pprint import pformat
 from queue import Empty, Queue
+from random import randint
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import demisto_client
@@ -1602,7 +1603,7 @@ class Integration:
         Returns:
             IntegrationConfiguration class with the modified params
         """
-        placeholders_map = {"%%SERVER_HOST%%": server_url}
+        placeholders_map = {"%%SERVER_HOST%%": f"{server_url}:{randint(8000, 9000)}"}
         item_as_string = json.dumps(config_item.params)
         for key, value in placeholders_map.items():
             item_as_string = item_as_string.replace(key, value)

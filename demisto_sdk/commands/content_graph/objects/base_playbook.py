@@ -14,6 +14,7 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     ImageRelatedFile,
     ReadmeRelatedFile,
+    TestUseCaseRelatedFile,
 )
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_playbooks_prepare import (
     MarketplaceIncidentToAlertPlaybooksPreparer,
@@ -177,6 +178,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     tasks: Dict[str, TaskConfig] = Field([], exclude=True)
     quiet: bool = Field(False)
     tags: List[str] = Field([])
+    tests: List[str] = Field([])
 
     def prepare_for_upload(
         self,
@@ -211,6 +213,19 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     @cached_property
     def image(self) -> ImageRelatedFile:
         return ImageRelatedFile(self.path, git_sha=self.git_sha)
+
+    @cached_property
+    def test_use_cases(self) -> List[TestUseCaseRelatedFile]:
+        related_files: List[TestUseCaseRelatedFile] = []
+        for test_name in self.tests:
+            if test_name.endswith("_use_case_test"):
+                related_files.append(
+                    TestUseCaseRelatedFile(
+                        main_file_path=self.path,
+                        test_use_case_name=test_name,
+                    )
+                )
+        return related_files
 
     def metadata_fields(self) -> Set[str]:
         return (

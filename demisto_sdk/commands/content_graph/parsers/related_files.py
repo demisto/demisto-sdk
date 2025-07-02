@@ -1,3 +1,4 @@
+import ast
 import base64
 import re
 from abc import ABC
@@ -389,3 +390,34 @@ class TestCodeRelatedFile(CodeRelatedFile):
             self.main_file_path.parent
             / f"{self.main_file_path.parts[-2]}_test{self.suffix}"
         ]
+
+
+class TestUseCaseRelatedFile(TextFiles):
+    file_type = RelatedFileType.TEST_CODE_FILE
+
+    def __init__(
+        self,
+        main_file_path: Path,
+        test_use_case_name: str,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        self._test_use_case_name = test_use_case_name
+        super().__init__(main_file_path, git_sha, prev_ver)
+
+    def get_optional_paths(self) -> List[Path]:
+        return [
+            self.main_file_path.parent.parent
+            / "TestUseCases"
+            / f"{self._test_use_case_name}.py"
+        ]
+
+    @property
+    def name(self) -> str:
+        return self._test_use_case_name
+
+    @cached_property
+    def config_docstring(self) -> dict:
+        parsed_ast = ast.parse(self.file_content)
+        docstring = ast.get_docstring(parsed_ast)
+        return json5.loads(docstring) if docstring else {}

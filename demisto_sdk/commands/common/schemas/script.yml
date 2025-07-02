@@ -29,7 +29,6 @@ mapping:
     type: str
   script:
     type: str
-    required: true
   type:
     type: str
     required: true
@@ -132,6 +131,16 @@ mapping:
       enum: ['script-name-incident-to-alert']
   prettyname:
       type: str
+  isllm:
+    type: bool
+  model:
+    type: str
+  userprompt:
+    type: str
+  systemprompt:
+    type: str
+  fewshots:
+    type: str
 
   compliantpolicies:
     type: seq

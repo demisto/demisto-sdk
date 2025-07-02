@@ -1141,7 +1141,12 @@ def repo_for_test_gr_109(graph_repo: Repo):
     }
     pack_a = graph_repo.create_pack("Pack A")
     pack_a.pack_metadata.update(
-        {"marketplaces": [MarketplaceVersions.MarketplaceV2.value, MarketplaceVersions.PLATFORM.value]}
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
     )
     pack_a.create_script(
         "Script1", code='demisto.executeCommand("SearchAlerts", {})', yml=yml
@@ -1156,7 +1161,9 @@ def repo_for_test_gr_109(graph_repo: Repo):
         "skipprepare": [],
         "supportedModules": ["module_y"],
     }
-    pack_a.create_script("Script2", code='demisto.executeCommand("SearchAlerts", {})', yml=yml2)
+    pack_a.create_script(
+        "Script2", code='demisto.executeCommand("SearchAlerts", {})', yml=yml2
+    )
     pack_a.create_integration("Integration1")
 
     pack_b = graph_repo.create_pack("Pack B")
@@ -1262,7 +1269,12 @@ def repo_for_test_gr_109_with_supported_module_none_in_content_item_b(graph_repo
     }
     pack_a = graph_repo.create_pack("Pack A")
     pack_a.pack_metadata.update(
-        {"marketplaces": [MarketplaceVersions.MarketplaceV2.value, MarketplaceVersions.PLATFORM.value]}
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
     )
     pack_a.create_script(
         "Script1", code='demisto.executeCommand("SearchAlerts", {})', yml=yml
@@ -1296,7 +1308,9 @@ def test_SupportedModulesCompatibility_supported_module_none_in_content_item_b(
     Then:
         The validator should pass
     """
-    graph_interface = repo_for_test_gr_109_with_supported_module_none_in_content_item_b.create_graph()
+    graph_interface = (
+        repo_for_test_gr_109_with_supported_module_none_in_content_item_b.create_graph()
+    )
     BaseValidator.graph_interface = graph_interface
     results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
 
@@ -1326,7 +1340,12 @@ def repo_for_test_gr_109_with_supported_module_none_in_content_item_a(graph_repo
     }
     pack_a = graph_repo.create_pack("Pack A")
     pack_a.pack_metadata.update(
-        {"marketplaces": [MarketplaceVersions.MarketplaceV2.value, MarketplaceVersions.PLATFORM.value]}
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
     )
     pack_a.create_script(
         "Script1", code='demisto.executeCommand("SearchAlerts", {})', yml=yml
@@ -1335,12 +1354,12 @@ def repo_for_test_gr_109_with_supported_module_none_in_content_item_a(graph_repo
 
     pack_b = graph_repo.create_pack("Pack B")
     pack_b.pack_metadata.update(
-         {
+        {
             "marketplaces": [
                 MarketplaceVersions.MarketplaceV2.value,
                 MarketplaceVersions.XSOAR.value,
             ],
-            "supportedModules": ["X0"]
+            "supportedModules": ["X0"],
         }
     )
     pack_b.create_script(
@@ -1362,7 +1381,9 @@ def test_SupportedModulesCompatibility_supported_module_none_in_content_item_a(
     Then:
         The validator should identify "Script1" as invalid, reporting that "SearchIncidents" is missing "module_x".
     """
-    graph_interface = repo_for_test_gr_109_with_supported_module_none_in_content_item_a.create_graph()
+    graph_interface = (
+        repo_for_test_gr_109_with_supported_module_none_in_content_item_a.create_graph()
+    )
     BaseValidator.graph_interface = graph_interface
     results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
 

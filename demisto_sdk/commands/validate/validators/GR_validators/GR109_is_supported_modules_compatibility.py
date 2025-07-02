@@ -116,7 +116,8 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             for dependency in invalid_item.uses:
                 missing_modules = [
                     module
-                    for module in invalid_item.supportedModules or [sm.value for sm in PlatformSupportedModules]
+                    for module in invalid_item.supportedModules
+                    or [sm.value for sm in PlatformSupportedModules]
                     if module not in dependency.content_item_to.supportedModules
                 ]
                 if missing_modules:

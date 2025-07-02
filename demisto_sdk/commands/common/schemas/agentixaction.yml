@@ -1,0 +1,89 @@
+type: map
+mapping:
+  commonfields:
+    type: map
+    required: true
+    mapping:
+      id:
+        type: str
+        required: true
+      version:
+        type: int
+        required: true
+  tags:
+    type: seq
+    sequence:
+    - type: str
+  category:
+    type: str
+  display:
+    type: str
+  description:
+    type: str
+  args:
+    type: seq
+    sequence:
+    - include: args_schema
+  outputs:
+    type: seq
+    sequence:
+    - include: outputs_schema
+  agentid:
+    type: str
+  underlyingcontentitemid:
+    type: str
+  underlyingcontentitemname:
+    type: str
+  underlyingcontentitemtype:
+    type: int
+  underlyingcontentitemversion:
+    type: int
+  requiresuserapproval:
+    type: bool
+  marketplaces:
+    type: seq
+    sequence:
+    - type: str
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str
+
+schema;args_schema:
+  type: map
+  mapping:
+    name:
+      type: str
+      required: true
+    description:
+      type: str
+      required: true
+    type:
+      type: str
+      required: true
+    required:
+      type: bool
+    defaultvalue:
+      type: str
+    hidden:
+      type: bool
+    underlyingargname:
+      type: str
+    generatable:
+      type: bool
+    isDetailsOverridden:
+      type: bool
+schema;outputs_schema:
+  type: map
+  mapping:
+    name:
+      type: str
+      required: true
+    description:
+      type: str
+      required: true
+    type:
+      type: str
+      required: true
+    underlyingoutputcontextpath:
+      type: str

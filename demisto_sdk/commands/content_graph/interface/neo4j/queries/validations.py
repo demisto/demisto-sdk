@@ -119,7 +119,29 @@ def get_items_using_deprecated(
 def get_items_using_deprecated_commands(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[graph.Node]]]:
-    files_filter = f"AND p.path IN {file_paths}" if file_paths else ""
+    """
+    Retrieves non-deprecated content items that are using deprecated commands.
+
+    This function queries the Neo4j graph database to find relationships where a non-deprecated
+    content item (`p`) uses a command (`c`) that is marked as deprecated (`deprecated: true`).
+    It also ensures that the deprecated command is not also provided by a non-deprecated integration.
+    Results can be filtered by specific file paths.
+
+    Args:
+        tx (Transaction): The Neo4j transaction object to execute the query within.
+        file_paths (List[str]): A list of file paths to filter the results. If the list is empty,
+                                 no file path filtering is applied.
+
+    Returns:
+        List[Tuple[str, List[graph.Node]]]: A list of tuples, where each tuple contains:
+                                            - The object ID of the deprecated command (str).
+                                            - A list of Neo4j graph nodes representing the
+                                              content item objects that use the deprecated command.
+    """
+    files_filter = (
+        f"AND p.path IN {file_paths} OR c.path IN {file_paths}" if file_paths else ""
+    )  # filter by both cases were non-deprecated item is using
+    # deprecated commands OR deprecated command is used by non-deprecated items.
 
     command_query = f"""// Returning all the items which using deprecated commands
 MATCH (p{{deprecated: false}})-[:USES]->(c:Command)<-[:HAS_COMMAND{{deprecated: true}}]-(i:Integration) WHERE NOT p.is_test
@@ -141,7 +163,30 @@ RETURN c.object_id AS deprecated_command, collect(p) AS object_using_deprecated"
 def get_items_using_deprecated_content_items(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[graph.Node]]]:
-    files_filter = f"AND p.path IN {file_paths}" if file_paths else ""
+    """
+    Retrieves non-deprecated items that are using other deprecated content items.
+
+    This function queries the Neo4j graph database to find relationships where a non-deprecated
+    content item (`p`) uses another content item (`d`) that is marked as deprecated (`deprecated: true`).
+    It specifically excludes cases where the 'USES' relationship is to a command, as commands are handled
+    by a dedicated query. Results can be filtered by specific file paths.
+
+    Args:
+        tx (Transaction): The Neo4j transaction object to execute the query within.
+        file_paths (List[str]): A list of file paths to filter the results. If the list is empty,
+                                 no file path filtering is applied.
+
+    Returns:
+        List[Tuple[str, List[graph.Node]]]: A list of tuples, where each tuple contains:
+                                            - The object ID of the deprecated content item (str).
+                                            - A list of Neo4j graph nodes representing the
+                                              content item objects that use the deprecated content item.
+    """
+
+    files_filter = (
+        f"AND p.path IN {file_paths} OR d.path IN {file_paths}" if file_paths else ""
+    )  # filter by both cases were non-deprecated item is using other
+    # deprecated items OR deprecated item is used by non-deprecated items.
 
     query = f"""
     MATCH (p{{deprecated: false}})-[:USES]->(d{{deprecated: true}}) WHERE not p.is_test

@@ -1146,7 +1146,17 @@ def repo_for_test_gr_109(graph_repo: Repo):
     pack_a.create_script(
         "Script1", code='demisto.executeCommand("SearchAlerts", {})', yml=yml
     )
-    pack_a.create_script("Script2", code='demisto.executeCommand("SearchAlerts", {})')
+    yml2 = {
+        "commonfields": {"id": "Script2", "version": -1},
+        "name": "Script2",
+        "comment": "this is script Script2",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_y"],
+    }
+    pack_a.create_script("Script2", code='demisto.executeCommand("SearchAlerts", {})', yml=yml2)
     pack_a.create_integration("Integration1")
 
     pack_b = graph_repo.create_pack("Pack B")
@@ -1158,7 +1168,7 @@ def repo_for_test_gr_109(graph_repo: Repo):
             ]
         }
     )
-    yml2 = {
+    yml3 = {
         "commonfields": {"id": "SearchIncidents", "version": -1},
         "name": "SearchIncidents",
         "comment": "this is script SearchIncidents",
@@ -1171,7 +1181,7 @@ def repo_for_test_gr_109(graph_repo: Repo):
     pack_b.create_script(
         "SearchIncidents",
         code='demisto.executeCommand("SearchIncidents", {})',
-        yml=yml2,
+        yml=yml3,
     )
 
     return graph_repo

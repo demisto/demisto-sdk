@@ -1854,7 +1854,7 @@ class Integration:
             parsed_url = urllib.parse.urlparse(server_url)
             server_url = urllib.parse.urlunparse((
                 parsed_url.scheme,
-                f"ext-{parsed_url.hostname}:{randint(8000, 9000)}",  # Add `ext-` prefix and port
+                f"ext-{parsed_url.hostname}:{randint(8000, 9000)}",  # Add `ext-` prefix and random port
                 parsed_url.path,
                 parsed_url.params,
                 parsed_url.query,

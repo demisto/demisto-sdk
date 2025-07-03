@@ -1603,7 +1603,7 @@ class Integration:
         Returns:
             IntegrationConfiguration class with the modified params
         """
-        placeholders_map = {"%%SERVER_HOST%%": f"{server_url}:{randint(8000, 9000)}"}
+        placeholders_map = {"%%SERVER_HOST%%": server_url}
         item_as_string = json.dumps(config_item.params)
         for key, value in placeholders_map.items():
             item_as_string = item_as_string.replace(key, value)
@@ -1849,13 +1849,18 @@ class Integration:
         """
         server_url = client.api_client.configuration.host
         if self.build_context.is_saas_server_type:
-            logging.info(f"Using server URL from build context in XSOAR SAAS: {server_url}")
-            # Parse URL and add `ext-` prefix to hostname
-            # e.g., https://api-crtx-.us.paloaltonetworks.com -> https://ext-api-crtx-.us.paloaltonetworks.com
+            logging.info(f"Using server URL from build context in XSOAR SAAS: {server_url}.")
+            # Update URL https://api-crtx-.paloaltonetworks.com -> https://ext-api-crtx-.paloaltonetworks.com:<port>
             parsed_url = urllib.parse.urlparse(server_url)
-            ext_hostname = f"ext-{parsed_url.netloc}"
-            server_url = parsed_url._replace(netloc=ext_hostname).geturl()
-            logging.info(f"Added ext to server url: {server_url}")
+            server_url = urllib.parse.urlunparse((
+                parsed_url.scheme,
+                f"ext-{parsed_url.hostname}:{randint(8000, 9000)}",  # Add `ext-` prefix and port
+                parsed_url.path,
+                parsed_url.params,
+                parsed_url.query,
+                parsed_url.fragment
+            ))
+            logging.info(f"Added ext and port to server url: {server_url} in XSOAR SAAS.")
         self._set_integration_params(server_url, playbook_id)
         configuration = self._get_integration_config(
             client.api_client.configuration.host

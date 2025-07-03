@@ -12,6 +12,7 @@ from math import ceil
 from pathlib import Path
 from pprint import pformat
 from queue import Empty, Queue
+from random import randint
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import demisto_client
@@ -1847,6 +1848,19 @@ class Integration:
             The integration configuration as it exists on the server after it was configured
         """
         server_url = client.api_client.configuration.host
+        if self.build_context.is_saas_server_type:
+            logging.info(f"Using server URL from build context in XSOAR SAAS: {server_url}.")
+            # Update URL https://api-crtx-.paloaltonetworks.com -> https://ext-api-crtx-.paloaltonetworks.com:<port>
+            parsed_url = urllib.parse.urlparse(server_url)
+            server_url = urllib.parse.urlunparse((
+                parsed_url.scheme,
+                f"ext-{parsed_url.hostname}:{randint(8000, 9000)}",  # Add `ext-` prefix and random port
+                parsed_url.path,
+                parsed_url.params,
+                parsed_url.query,
+                parsed_url.fragment
+            ))
+            logging.info(f"Added ext and port to server url: {server_url} in XSOAR SAAS.")
         self._set_integration_params(server_url, playbook_id)
         configuration = self._get_integration_config(
             client.api_client.configuration.host

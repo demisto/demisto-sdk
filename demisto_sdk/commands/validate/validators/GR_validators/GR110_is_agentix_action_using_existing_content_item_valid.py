@@ -43,11 +43,11 @@ class IsAgentixActionUsingExistingContentItemValidator(
     error_message = ""
     related_field = ""
     is_auto_fixable = False
-    # expected_git_statuses = [
-    #     GitStatuses.ADDED,
-    #     GitStatuses.MODIFIED,
-    #     GitStatuses.RENAMED,
-    # ]
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
     related_file_type = [RelatedFileType.YML]
 
     def obtain_invalid_content_items_using_graph(

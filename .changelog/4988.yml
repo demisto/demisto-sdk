@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the ***xsoar-lint*** command would not run if the pack support level was set to 'developer'.
+  type: fix
+pr_number: 4988

@@ -606,6 +606,7 @@ def pre_commit_manager(
         all_files=all_files,
         prev_version=prev_version,
     )
+    logger.info(f"{files_to_run=}")
     if not files_to_run:
         logger.info("No files were changed, skipping pre-commit.")
         return 0

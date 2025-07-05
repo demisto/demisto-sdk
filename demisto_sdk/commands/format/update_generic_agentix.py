@@ -5,12 +5,10 @@ from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_file,
-    search_and_delete_from_conf,
 )
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -36,7 +34,7 @@ class GenericAgentixFormat(BaseUpdate):
         output: str = "",
         path: str = "",
         from_version: str = "",
-        no_validate: bool = False,
+        no_validate: bool = True,
         assume_answer: Union[bool, None] = None,
         deprecate: bool = False,
         add_tests: bool = True,
@@ -103,41 +101,6 @@ class GenericAgentixFormat(BaseUpdate):
         self.sync_data_to_master()
 
         self.remove_nativeimage_tag_if_exist()
-
-    def remove_from_conf_json(self, file_type, content_item_id) -> None:
-        """
-        Updates conf.json remove the file's test playbooks.
-        Args:
-            file_type: The typr of the file, can be integration, playbook or testplaybook.
-            content_item_id: The content item id.
-        """
-        related_test_playbook = self.data.get("tests", [])
-        no_test_playbooks_explicitly = any(
-            test
-            for test in related_test_playbook
-            if ("no test" in test.lower()) or ("no tests" in test.lower())
-        )
-        try:
-            conf_json_content = self._load_conf_file()
-        except FileNotFoundError:
-            logger.debug(
-                f"<yellow>Unable to find {CONF_PATH} - skipping update.</yellow>"
-            )
-            return
-        conf_json_test_configuration = conf_json_content["tests"]
-        conf_json_content["tests"] = search_and_delete_from_conf(
-            conf_json_test_configuration,
-            content_item_id,
-            file_type,
-            related_test_playbook,
-            no_test_playbooks_explicitly,
-        )
-        self._save_to_conf_json(conf_json_content)
-
-    def _save_to_conf_json(self, conf_json_content: Dict) -> None:
-        """Save formatted JSON data to destination file."""
-        with open(CONF_PATH, "w") as file:
-            json.dump(conf_json_content, file, indent=4)
 
     def remove_spaces_end_of_id_and_name(self):
         """Updates the id and name of the YML to have no spaces on its end"""

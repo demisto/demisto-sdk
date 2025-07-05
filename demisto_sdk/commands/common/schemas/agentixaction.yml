@@ -16,6 +16,8 @@ mapping:
     - type: str
   category:
     type: str
+  name:
+    type: str
   display:
     type: str
   description:
@@ -44,6 +46,9 @@ mapping:
       version:
         type: int
         required: true
+      command:
+        type: str
+        required: false
   requiresuserapproval:
     type: bool
   marketplaces:

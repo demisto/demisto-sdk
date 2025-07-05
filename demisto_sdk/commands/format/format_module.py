@@ -398,7 +398,8 @@ def run_format_on_file(
     if file_type not in CONTENT_ITEMS_WITH_GRAPH and "graph" in kwargs:
         # relevant only for incidentfield/layouts/mappers
         del kwargs["graph"]
-
+    if "agentix" in file_type:
+        del kwargs["no_validate"]
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
     if not updater_class:  # fail format so long as xsiam entities dont have formatters
         logger.info(

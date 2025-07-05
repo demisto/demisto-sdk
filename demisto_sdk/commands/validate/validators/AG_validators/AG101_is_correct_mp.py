@@ -15,7 +15,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[AgentixAgent, AgentixAction, Script]
 
 
-class IsMarketplaceExistsValidator(BaseValidator[ContentTypes]):
+class IsCorrectMPValidator(BaseValidator[ContentTypes]):
     error_code = "AG101"
     description = f"Content items of type {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to platform only."
     rationale = "These types of items should be uploaded to platform only."

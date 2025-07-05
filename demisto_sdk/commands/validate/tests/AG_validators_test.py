@@ -8,7 +8,10 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_c
     IsForbiddenContentItemValidator,
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp import (
-    IsMarketplaceExistsValidator,
+    IsCorrectMPValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG104_is_correct_sm import (
+    IsCorrectSMValidator,
 )
 
 
@@ -52,15 +55,15 @@ def test_is_forbidden_content_item():
     assert results[0].message == expected_msg
 
 
-def test_is_marketplace_exists():
+def test_is_correct_marketplace():
     """
     Given
     - One valid and one invalid AgentixAgent items.
     - One valid and one invalid AgentixAction items.
-    - Two valid and one invalid Script items.
+    - Four valid and one invalid Script items.
 
     When
-    - Calling the IsMarketplaceExistsValidator obtain_invalid_content_items function.
+    - Calling the IsCorrectMPValidator obtain_invalid_content_items function.
 
     Then
     - Make sure 3 failures are returned and the error message contains the informative message.
@@ -180,12 +183,188 @@ def test_is_marketplace_exists():
             tags=["test"],
             skip_prepare=[],
         ),
+        Script(
+            is_llm=True,
+            marketplaces=["platform"],
+            id="",
+            script='print("hello world")',
+            node_id="",
+            path=Path("test.yml"),
+            name="test1",
+            fromversion="6.0.0",
+            toversion="8.0.0",
+            display_name="test",
+            deprecated=False,
+            type="python",
+            tags=["test"],
+            skip_prepare=[],
+        ),
+        Script(
+            is_llm=False,
+            marketplaces=["xsoar"],
+            id="",
+            script='print("hello world")',
+            node_id="",
+            path=Path("test.yml"),
+            name="test1",
+            fromversion="6.0.0",
+            toversion="8.0.0",
+            display_name="test",
+            deprecated=False,
+            type="python",
+            tags=["test"],
+            skip_prepare=[],
+        ),
     ]
-    results = IsMarketplaceExistsValidator().obtain_invalid_content_items(content_items)
+    results = IsCorrectMPValidator().obtain_invalid_content_items(content_items)
 
-    assert len(results) == 3
+    assert len(results) == 6
     assert results[0].message == (
         "The items AgentixAgent, AgentixAction and Script with isllm=true"
-        " should be uploaded to xsoar_saas only. Please specify only xsoar_saas"
+        " should be uploaded to platform only. Please specify only platform"
         " under marketplaces."
+    )
+
+def test_is_correct_supportedModules():
+    """
+    Given
+    - Two invalid AgentixAgent items.
+    - One valid and one invalid AgentixAction items.
+    - Two valid and one invalid Script items.
+
+    When
+    - Calling the IsMarketplaceExistsValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure 4 failures are returned and the error message contains the informative message.
+    """
+    content_items = [
+        AgentixAgent(
+            color="red",
+            description="",
+            display="",
+            path=Path("test.yml"),
+            marketplaces=["platform"],
+            name="test",
+            fromversion="",
+            toversion="",
+            display_name="",
+            deprecated=False,
+            id="",
+            node_id="",
+            supportedModules=["X1"]
+        ),
+        AgentixAgent(
+            color="red",
+            description="",
+            display="",
+            path=Path("test.yml"),
+            marketplaces=["platform"],
+            name="test",
+            fromversion="",
+            toversion="",
+            display_name="",
+            deprecated=False,
+            id="",
+            node_id=""
+        ),
+        AgentixAction(
+            color="red",
+            description="",
+            display="",
+            path=Path("test.yml"),
+            marketplaces=["platform"],
+            name="test",
+            fromversion="",
+            toversion="",
+            display_name="",
+            deprecated=False,
+            id="",
+            node_id="",
+            underlying_content_item_id="test",
+            underlying_content_item_name="test",
+            underlying_content_item_type="script",
+            underlying_content_item_version=-1,
+            agent_id="test",
+            supportedModules=["X1", "agentix"]
+        ),
+        AgentixAction(
+            color="red",
+            description="",
+            display="",
+            path=Path("test.yml"),
+            marketplaces=["platform"],
+            name="test",
+            fromversion="",
+            toversion="",
+            display_name="",
+            deprecated=False,
+            id="",
+            node_id="",
+            underlying_content_item_id="test",
+            underlying_content_item_name="test",
+            underlying_content_item_type="script",
+            underlying_content_item_version=-1,
+            agent_id="test",
+            supportedModules=["agentix"]
+        ),
+        Script(
+            is_llm=True,
+            marketplaces=["platform"],
+            id="",
+            script='print("hello world")',
+            node_id="",
+            path=Path("test.yml"),
+            name="test1",
+            fromversion="6.0.0",
+            toversion="8.0.0",
+            display_name="test",
+            deprecated=False,
+            type="python",
+            tags=["test"],
+            skip_prepare=[],
+            supportedModules=["agentix"]
+        ),
+        Script(
+            is_llm=False,
+            marketplaces=["platform"],
+            id="",
+            script='print("hello world")',
+            node_id="",
+            path=Path("test.yml"),
+            name="test1",
+            fromversion="6.0.0",
+            toversion="8.0.0",
+            display_name="test",
+            deprecated=False,
+            type="python",
+            tags=["test"],
+            skip_prepare=[],
+            supportedModules=["X1", "agentix"]
+        ),
+        Script(
+            is_llm=True,
+            marketplaces=["xsoar"],
+            id="",
+            script='print("hello world")',
+            node_id="",
+            path=Path("test.yml"),
+            name="test1",
+            fromversion="6.0.0",
+            toversion="8.0.0",
+            display_name="test",
+            deprecated=False,
+            type="python",
+            tags=["test"],
+            skip_prepare=[],
+            supportedModules=["X1", "agentix"]
+        ),
+    ]
+    results = IsCorrectSMValidator().obtain_invalid_content_items(content_items)
+
+    assert len(results) == 4
+    assert results[0].message == (
+        "The items AgentixAgent, AgentixAction and Script with isllm=true"
+        " should be uploaded to agentix supported module only. "
+        "Please specify only agentix under supportedModules."
     )

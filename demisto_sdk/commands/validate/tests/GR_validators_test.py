@@ -1390,6 +1390,6 @@ def test_SupportedModulesCompatibility_supported_module_none_in_content_item_a(
     assert len(results) == 1
     assert (
         results[0].message
-        == "The following mandatory dependencies missing required modules: SearchIncidents is missing: [C1, C3, X1, X3, X5, ENT_PLUS]"
+        == "The following mandatory dependencies missing required modules: SearchIncidents is missing: [C1, C3, X1, X3, X5, ENT_PLUS, agentix]"
     )
     assert results[0].content_object.object_id == "Script1"

@@ -41,7 +41,7 @@ def test_is_forbidden_content_item():
         )
     ]
     expected_msg = (
-        f"The items {ContentType.AGENTIX_AGENT} and {ContentType.AGENTIX_ACTION} "
+        f"The items {ContentType.AGENTIX_AGENT} and {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with is_llm=True"
         f"should be stored in content-test-conf, not in Content"
     )
     results = IsForbiddenContentItemValidator().obtain_invalid_content_items(
@@ -107,10 +107,10 @@ def test_is_marketplace_exists():
             deprecated=False,
             id="",
             node_id="",
-            underlyingContentItemId="test",
-            underlyingContentItemName="test",
-            underlyingcontentitemtype=1,
-            underlyingContentItemVersion=-1,
+            underlying_content_item_id="test",
+            underlying_content_item_name="test",
+            underlying_content_item_type="script",
+            underlying_content_item_command=-1,
             agent_id="test",
         ),
         AgentixAction(
@@ -126,9 +126,9 @@ def test_is_marketplace_exists():
             deprecated=False,
             id="",
             node_id="",
-            underlyingContentItemId="test",
-            underlyingContentItemName="test",
-            underlyingcontentitemtype=1,
+            underlying_content_item_id="test",
+            underlying_content_item_name="test",
+            underlying_content_item_type="script",
             underlyingContentItemVersion=-1,
             agent_id="test",
         ),

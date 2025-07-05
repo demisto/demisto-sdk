@@ -1,6 +1,6 @@
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from demisto_sdk.commands.common.constants import GitStatuses, PlatformSupportedModules
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,

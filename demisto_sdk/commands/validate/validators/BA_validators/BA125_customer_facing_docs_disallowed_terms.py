@@ -72,6 +72,8 @@ class CustomerFacingDocsDisallowedTermsValidator(BaseValidator[ContentTypes]):
         return found_terms
 
     def get_related_files(self, content_item):
+        if content_item.content_type == "Script" and content_item.is_llm:
+            return []
         related_files = [content_item.readme]
         if isinstance(content_item, Integration):
             related_files.append(content_item.description_file)

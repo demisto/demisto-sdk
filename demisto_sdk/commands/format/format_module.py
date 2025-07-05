@@ -29,6 +29,7 @@ from demisto_sdk.commands.format.update_classifier import (
 from demisto_sdk.commands.format.update_correlation_rule import CorrelationRuleYMLFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
+from demisto_sdk.commands.format.update_generic_agentix import GenericAgentixFormat
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_genericdefinition import (
@@ -102,6 +103,8 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "casefield": BaseUpdateJSON,
     "caselayout": LayoutBaseFormat,
     "caselayoutrule": BaseUpdateJSON,
+    "agentixaction": GenericAgentixFormat,
+    "agentixagent": GenericAgentixFormat,
 }
 
 UNFORMATTED_FILES = [
@@ -395,7 +398,8 @@ def run_format_on_file(
     if file_type not in CONTENT_ITEMS_WITH_GRAPH and "graph" in kwargs:
         # relevant only for incidentfield/layouts/mappers
         del kwargs["graph"]
-
+    if "agentix" in file_type:
+        del kwargs["no_validate"]
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
     if not updater_class:  # fail format so long as xsiam entities dont have formatters
         logger.info(

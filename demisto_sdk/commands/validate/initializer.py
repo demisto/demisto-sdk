@@ -145,7 +145,6 @@ class Initializer:
             committed_only=self.committed_only,
             staged_only=self.staged,
         )
-
         return (
             modified_files,
             added_files,
@@ -252,7 +251,6 @@ class Initializer:
             debug=True,
             get_only_current_file_names=False,
         )
-
         """
         If this command runs on a build triggered by an external contribution PR,
         the relevant modified files may have an "untracked" status in git.

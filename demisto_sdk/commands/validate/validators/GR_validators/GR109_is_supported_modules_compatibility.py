@@ -3,8 +3,8 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.content_graph.objects import Job
+from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from demisto_sdk.commands.content_graph.objects import AgentixAction, AgentixAgent, Job
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -77,6 +77,8 @@ ContentTypes = Union[
     CaseField,
     CaseLayout,
     CaseLayoutRule,
+    AgentixAction,
+    AgentixAgent,
 ]
 
 
@@ -87,11 +89,11 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     error_message = "The following mandatory dependencies missing required modules: {0}"
     related_field = "supportedModules"
     is_auto_fixable = False
-    expected_git_statuses = [
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-        GitStatuses.RENAMED,
-    ]
+    # expected_git_statuses = [
+    #     GitStatuses.ADDED,
+    #     GitStatuses.MODIFIED,
+    #     GitStatuses.RENAMED,
+    # ]
     related_file_type = [RelatedFileType.SCHEMA]
 
     def obtain_invalid_content_items_using_graph(
@@ -117,6 +119,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 missing_modules = [
                     module
                     for module in invalid_item.supportedModules
+                    or [sm.value for sm in PlatformSupportedModules]
                     if module not in dependency.content_item_to.supportedModules
                 ]
                 if missing_modules:

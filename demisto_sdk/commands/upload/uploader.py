@@ -73,6 +73,7 @@ class Uploader:
         zip: bool = False,
         tpb: bool = False,
         destination_zip_dir: Optional[Path] = None,
+        private_pack_path: Optional[Path] = None,
         **kwargs,
     ):
         self.path = None if input is None else Path(input)
@@ -102,6 +103,9 @@ class Uploader:
         self.zip = zip  # -z flag
         self.tpb = tpb  # -tpb flag
         self.destination_zip_dir = destination_zip_dir
+        self.private_pack_path = (
+            None if not private_pack_path else Path(private_pack_path)
+        )
 
     def _upload_zipped(self, path: Path) -> bool:
         """
@@ -225,7 +229,7 @@ class Uploader:
             elif self.path.is_dir() and is_uploadable_dir(self.path):
                 success = self._upload_entity_dir(self.path)
             else:
-                success = self._upload_single(self.path)
+                success = self._upload_single(self.path, self.private_pack_path)
         except KeyboardInterrupt:
             return ABORTED_RETURN_CODE
 
@@ -254,7 +258,9 @@ class Uploader:
         self.print_summary()
         return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
 
-    def _upload_single(self, path: Path) -> bool:
+    def _upload_single(
+        self, path: Path, private_pack_path: Optional[Path] = None
+    ) -> bool:
         """
         Upload a content item, a pack, or a zip containing packs.
 
@@ -266,7 +272,9 @@ class Uploader:
             NotIndivitudallyUploadedException (see exception class)
             NotUploadableException
         """
-        content_item: Union[ContentItem, Pack] = BaseContent.from_path(path)  # type:ignore[assignment]
+        content_item: Union[ContentItem, Pack] = BaseContent.from_path(
+            path, private_pack_path=private_pack_path
+        )  # type:ignore[assignment]
         if content_item is None:
             reason = (
                 "Deprecated type - use LayoutContainer instead"

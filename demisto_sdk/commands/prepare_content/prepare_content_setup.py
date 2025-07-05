@@ -85,6 +85,11 @@ def prepare_content(
     log_file_path: str = typer.Option(
         None, "--log-file-path", help="Path to save log files."
     ),
+    private_packs_path: str = typer.Option(
+        None,
+        "--private-packs-path",
+        help="Path to pack folder in private packs repo (optional).",
+    ),
 ):
     """
     This command prepares content to upload to the platform. If the content item is a pack, prepare-content creates the pack zip file. If the content item is an integration/script/rule, prepare-content creates the unified YAML file.

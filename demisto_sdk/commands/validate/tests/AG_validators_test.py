@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -43,7 +42,7 @@ def test_is_forbidden_content_item():
             node_id="",
         )
     ]
-    expected_msg = ("The following Agentix related content item 'display Name' should not be uploaded through content repo, please move it to content-test-conf repo.")
+    expected_msg = "The following Agentix related content item 'display Name' should not be uploaded through content repo, please move it to content-test-conf repo."
     results = IsForbiddenContentItemValidator().obtain_invalid_content_items(
         content_items
     )
@@ -216,7 +215,10 @@ def test_is_correct_marketplace():
     results = IsCorrectMPValidator().obtain_invalid_content_items(content_items)
 
     assert len(results) == 6
-    assert results[0].message == ("The following Agentix related content item 'test' should have only marketplace 'platform'.")
+    assert results[0].message == (
+        "The following Agentix related content item 'test' should have only marketplace 'platform'."
+    )
+
 
 def test_is_correct_supportedModules():
     """
@@ -245,7 +247,7 @@ def test_is_correct_supportedModules():
             deprecated=False,
             id="",
             node_id="",
-            supportedModules=["X1"]
+            supportedModules=["X1"],
         ),
         AgentixAgent(
             color="red",
@@ -259,7 +261,7 @@ def test_is_correct_supportedModules():
             display_name="test",
             deprecated=False,
             id="",
-            node_id=""
+            node_id="",
         ),
         AgentixAction(
             color="red",
@@ -279,7 +281,7 @@ def test_is_correct_supportedModules():
             underlying_content_item_type="script",
             underlying_content_item_version=-1,
             agent_id="test",
-            supportedModules=["X1", "agentix"]
+            supportedModules=["X1", "agentix"],
         ),
         AgentixAction(
             color="red",
@@ -299,7 +301,7 @@ def test_is_correct_supportedModules():
             underlying_content_item_type="script",
             underlying_content_item_version=-1,
             agent_id="test",
-            supportedModules=["agentix"]
+            supportedModules=["agentix"],
         ),
         Script(
             is_llm=True,
@@ -316,7 +318,7 @@ def test_is_correct_supportedModules():
             type="python",
             tags=["test"],
             skip_prepare=[],
-            supportedModules=["agentix"]
+            supportedModules=["agentix"],
         ),
         Script(
             is_llm=False,
@@ -333,7 +335,7 @@ def test_is_correct_supportedModules():
             type="python",
             tags=["test"],
             skip_prepare=[],
-            supportedModules=["X1", "agentix"]
+            supportedModules=["X1", "agentix"],
         ),
         Script(
             is_llm=True,
@@ -350,10 +352,12 @@ def test_is_correct_supportedModules():
             type="python",
             tags=["test"],
             skip_prepare=[],
-            supportedModules=["X1", "agentix"]
+            supportedModules=["X1", "agentix"],
         ),
     ]
     results = IsCorrectSMValidator().obtain_invalid_content_items(content_items)
 
     assert len(results) == 4
-    assert results[0].message == ("The following Agentix related content item 'test' should have only supportedModule 'agentix'.")
+    assert results[0].message == (
+        "The following Agentix related content item 'test' should have only supportedModule 'agentix'."
+    )

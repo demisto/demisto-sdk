@@ -50,11 +50,12 @@ class IsCorrectSMValidator(BaseValidator[ContentTypes]):
                 ContentType.AGENTIX_ACTION,
             ]
         ) or (content_item.content_type == ContentType.SCRIPT and content_item.is_llm):
-            current_supportedModules = content_item.supportedModules if content_item.supportedModules else []
+            current_supportedModules = (
+                content_item.supportedModules if content_item.supportedModules else []
+            )
             return (
                 len(current_supportedModules) > 1
                 or len(current_supportedModules) == 0
-                or PlatformSupportedModules.AGENTIX.value
-                != current_supportedModules[0]
+                or PlatformSupportedModules.AGENTIX.value != current_supportedModules[0]
             )
         return False

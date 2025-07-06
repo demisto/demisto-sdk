@@ -4,7 +4,6 @@ import re
 from abc import ABC
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import AgentixAction
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -56,7 +55,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
             if content_item_type not in {
                 "command",
                 "script",
-                "playbook"
+                "playbook",
             }:  # Validate when the action wraps a command, a script or a playbook
                 results.append(
                     ValidationResult(

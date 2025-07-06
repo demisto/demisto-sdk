@@ -19,9 +19,7 @@ class IsForbiddenContentItemValidator(BaseValidator[ContentTypes]):
     error_code = "AG100"
     description = "We should not push these items to the Content repository."
     rationale = "These types of items should be stored in a private repository."
-    error_message = (
-        "The following Agentix related content item '{0}' should not be uploaded through content repo, please move it to content-test-conf repo."
-    )
+    error_message = "The following Agentix related content item '{0}' should not be uploaded through content repo, please move it to content-test-conf repo."
     expected_git_statuses = [
         GitStatuses.ADDED,
         GitStatuses.MODIFIED,

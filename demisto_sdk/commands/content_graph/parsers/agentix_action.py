@@ -23,19 +23,19 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         )
         self.underlying_content_item_id: str = self.yml_data.get(
             "underlyingcontentitem"
-        ).get("id") # type: ignore
+        ).get("id")  # type: ignore
         self.underlying_content_item_name: str = self.yml_data.get(
             "underlyingcontentitem"
-        ).get("name") # type: ignore
+        ).get("name")  # type: ignore
         self.underlying_content_item_type: str = self.yml_data.get(
             "underlyingcontentitem"
-        ).get("type") # type: ignore
+        ).get("type")  # type: ignore
         self.underlying_content_item_command: str = self.yml_data.get(
             "underlyingcontentitem"
-        ).get("command") # type: ignore
+        ).get("command")  # type: ignore
         self.underlying_content_item_version: int = self.yml_data.get(
             "underlyingcontentitem"
-        ).get("version") # type: ignore
+        ).get("version")  # type: ignore
         self.requires_user_approval: bool = self.yml_data.get("requiresuserapproval")
 
     @cached_property

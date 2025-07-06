@@ -49,7 +49,7 @@ class IsCorrectSMValidator(BaseValidator[ContentTypes]):
                 ContentType.AGENTIX_AGENT,
                 ContentType.AGENTIX_ACTION,
             ]
-        ) or (content_item.content_type == ContentType.SCRIPT and content_item.is_llm): # type: ignore
+        ) or (content_item.content_type == ContentType.SCRIPT and content_item.is_llm):  # type: ignore
             current_supportedModules = (
                 content_item.supportedModules if content_item.supportedModules else []
             )

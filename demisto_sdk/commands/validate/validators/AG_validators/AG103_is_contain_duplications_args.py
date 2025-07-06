@@ -44,7 +44,7 @@ class IsActionArgsContainDuplicationsValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (duplicated_args_by := self.is_containing_dups(content_item.args)) # type: ignore
+            if (duplicated_args_by := self.is_containing_dups(content_item.args))  # type: ignore
         ]
 
     def is_containing_dups(self, arguments: List[AgentixActionArgument]) -> set:

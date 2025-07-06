@@ -81,7 +81,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
 
             graph_result = self.graph.search(object_id=command_or_script_name)
 
-            replaced_name = replace_alerts_with_incidents(command_or_script_name)
+            replaced_name = replace_alerts_with_incidents(command_or_script_name) # type: ignore
 
             # Check again with incident/s instead of alert/s if some content items appear in a few names
             if not graph_result and command_or_script_name != replaced_name:
@@ -104,7 +104,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
 
             elif not self.is_content_item_related_to_correct_pack(
                 item_type=content_item_type,
-                integration_or_script_id=integration_or_script_id,
+                integration_or_script_id=integration_or_script_id, # type: ignore
                 graph_result=graph_result,
             ):
                 results.append(

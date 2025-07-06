@@ -236,7 +236,7 @@ class AlertsFilter(BaseStrictModel):
 
 
 class AgentixBase(BaseStrictModel):
-    common_fields: CommonFields = Field(..., alias="commonfields")
+    common_fields: CommonFields = Field(..., alias="commonfields") # type:ignore[valid-type]
     tags: Optional[list[str]] = None
     category: Optional[str] = None
     name: str

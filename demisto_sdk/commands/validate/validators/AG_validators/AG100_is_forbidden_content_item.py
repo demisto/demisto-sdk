@@ -44,4 +44,4 @@ class IsForbiddenContentItemValidator(BaseValidator[ContentTypes]):
         return content_item.content_type in [
             ContentType.AGENTIX_AGENT,
             ContentType.AGENTIX_ACTION,
-        ] or (content_item.content_type == ContentType.SCRIPT and content_item.is_llm)
+        ] or (content_item.content_type == ContentType.SCRIPT and content_item.is_llm) # type: ignore

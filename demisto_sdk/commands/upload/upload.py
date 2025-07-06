@@ -34,8 +34,8 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 def upload_content_entity(**kwargs):
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 
-    inputs = parse_multiple_path_inputs(kwargs.get("input"))
-    private_packs_paths = parse_multiple_path_inputs(kwargs.get("private_packs_path"))
+    inputs = parse_multiple_path_inputs(kwargs.get("input")) or []
+    private_packs_paths = parse_multiple_path_inputs(kwargs.get("private_packs_path")) or []
 
     keep_zip = kwargs.pop("keep_zip", None)
     destination_zip_path = Path(keep_zip or tempfile.mkdtemp())

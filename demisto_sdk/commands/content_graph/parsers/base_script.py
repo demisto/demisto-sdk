@@ -101,18 +101,18 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
             )[1]
 
     def get_depends_on(self) -> Set[str]:
-        if self.content_type == ContentType.SCRIPT and self.is_llm:
+        if self.content_type == ContentType.SCRIPT and self.is_llm:  # type: ignore
             return set()
         depends_on: List[str] = self.yml_data.get("dependson", {}).get("must", [])
         return {cmd.split("|")[-1] for cmd in depends_on}
 
     def get_command_executions(self) -> Set[str]:
-        if self.content_type == ContentType.SCRIPT and self.is_llm:
+        if self.content_type == ContentType.SCRIPT and self.is_llm:  # type: ignore
             return set()
         code = self.code
         if not code and (
             self.content_type != ContentType.SCRIPT
-            or (self.content_type == ContentType.SCRIPT and not self.is_llm)
+            or (self.content_type == ContentType.SCRIPT and not self.is_llm)  # type: ignore
         ):
             raise ValueError("Script code is not available")
         return set(EXECUTE_CMD_PATTERN.findall(code))

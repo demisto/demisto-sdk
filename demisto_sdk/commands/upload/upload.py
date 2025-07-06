@@ -75,7 +75,9 @@ def upload_content_entity(**kwargs):
     kwargs.pop("input")
     # Here the magic happens
     upload_result = SUCCESS_RETURN_CODE
-    paths: List[tuple[Optional[Path], Optional[Path]]] = list(zip_longest(inputs, private_packs_paths))
+    paths: List[tuple[Optional[Path], Optional[Path]]] = list(
+        zip_longest(inputs, private_packs_paths)
+    )
     for input, private_pack_path in paths:
         result = Uploader(
             input=input,

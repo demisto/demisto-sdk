@@ -17,16 +17,16 @@ ContentTypes = Union[AgentixAgent, AgentixAction, Script]
 
 class IsCorrectSMValidator(BaseValidator[ContentTypes]):
     error_code = "AG104"
-    description = f"Content items of type {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to agentix supported module only."
+    description = f"Content items of type {', '.join(filter(None, [ContentType.AGENTIX_AGENT, ContentType.AGENTIX_ACTION, ContentType.SCRIPT]))} with isllm=True should be uploaded to agentix supported module only."
     rationale = (
         "These types of items should be uploaded to agentix supported module only."
     )
-    error_message = f"The items {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to agentix supported module only. Please specify only agentix under supportedModules."
-    # expected_git_statuses = [
-    #     GitStatuses.ADDED,
-    #     GitStatuses.MODIFIED,
-    #     GitStatuses.RENAMED,
-    # ]
+    error_message = "The following Agentix related content item '{0}' should have only supportedModule 'agentix'."
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
 
     def obtain_invalid_content_items(
         self,
@@ -35,7 +35,7 @@ class IsCorrectSMValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(content_item.display_name),
                 content_object=content_item,
             )
             for content_item in content_items

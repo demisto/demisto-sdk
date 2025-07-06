@@ -20,14 +20,13 @@ class IsForbiddenContentItemValidator(BaseValidator[ContentTypes]):
     description = "We should not push these items to the Content repository."
     rationale = "These types of items should be stored in a private repository."
     error_message = (
-        f"The items {ContentType.AGENTIX_AGENT} and {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with is_llm=True"
-        f" should be stored in content-test-conf, not in Content"
+        "The following Agentix related content item '{0}' should not be uploaded through content repo, please move it to content-test-conf repo."
     )
-    # expected_git_statuses = [
-    #     GitStatuses.ADDED,
-    #     GitStatuses.MODIFIED,
-    #     GitStatuses.RENAMED,
-    # ]
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
 
     def obtain_invalid_content_items(
         self,
@@ -36,7 +35,7 @@ class IsForbiddenContentItemValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(content_item.display_name),
                 content_object=content_item,
             )
             for content_item in content_items

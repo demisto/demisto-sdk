@@ -43,11 +43,6 @@ class IsAgentixActionUsingExistingContentItemValidator(
     error_message = ""
     related_field = ""
     is_auto_fixable = False
-    expected_git_statuses = [
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-        GitStatuses.RENAMED,
-    ]
     related_file_type = [RelatedFileType.YML]
 
     def obtain_invalid_content_items_using_graph(
@@ -61,7 +56,8 @@ class IsAgentixActionUsingExistingContentItemValidator(
             if content_item_type not in {
                 "command",
                 "script",
-            }:  # Validate when the action wraps a command or a script
+                "playbook"
+            }:  # Validate when the action wraps a command, a script or a playbook
                 results.append(
                     ValidationResult(
                         validator=self,
@@ -75,7 +71,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
                 continue
             elif content_item_type == "command":
                 command_or_script_name = content_item.underlying_content_item_command
-            else:  # script
+            else:  # script or playbook
                 command_or_script_name = content_item.underlying_content_item_id
 
             integration_or_script_id = content_item.underlying_content_item_id

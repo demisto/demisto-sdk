@@ -31,22 +31,19 @@ def test_is_forbidden_content_item():
         AgentixAgent(
             color="red",
             description="",
-            display="",
+            display="display Name",
             path=Path("test.yml"),
-            marketplaces=["xsoar"],
+            marketplaces=["platform"],
             name="test",
             fromversion="",
             toversion="",
-            display_name="",
+            display_name="display Name",
             deprecated=False,
             id="",
             node_id="",
         )
     ]
-    expected_msg = (
-        f"The items {ContentType.AGENTIX_AGENT} and {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with is_llm=True "
-        f"should be stored in content-test-conf, not in Content"
-    )
+    expected_msg = ("The following Agentix related content item 'display Name' should not be uploaded through content repo, please move it to content-test-conf repo.")
     results = IsForbiddenContentItemValidator().obtain_invalid_content_items(
         content_items
     )
@@ -58,15 +55,15 @@ def test_is_forbidden_content_item():
 def test_is_correct_marketplace():
     """
     Given
-    - One valid and one invalid AgentixAgent items.
-    - One valid and one invalid AgentixAction items.
-    - Four valid and one invalid Script items.
+    - Two invalid AgentixAgent items.
+    - Two invalid AgentixAction items.
+    - Four valid and two invalid Script items.
 
     When
     - Calling the IsCorrectMPValidator obtain_invalid_content_items function.
 
     Then
-    - Make sure 3 failures are returned and the error message contains the informative message.
+    - Make sure 6 failures are returned and the error message contains the informative message.
     """
     content_items = [
         AgentixAgent(
@@ -78,7 +75,7 @@ def test_is_correct_marketplace():
             name="test",
             fromversion="",
             toversion="",
-            display_name="",
+            display_name="test",
             deprecated=False,
             id="",
             node_id="",
@@ -92,7 +89,7 @@ def test_is_correct_marketplace():
             name="test",
             fromversion="",
             toversion="",
-            display_name="",
+            display_name="test",
             deprecated=False,
             id="",
             node_id="",
@@ -106,7 +103,7 @@ def test_is_correct_marketplace():
             name="test",
             fromversion="",
             toversion="",
-            display_name="",
+            display_name="test",
             deprecated=False,
             id="",
             node_id="",
@@ -125,7 +122,7 @@ def test_is_correct_marketplace():
             name="test",
             fromversion="",
             toversion="",
-            display_name="",
+            display_name="test",
             deprecated=False,
             id="",
             node_id="",
@@ -219,11 +216,7 @@ def test_is_correct_marketplace():
     results = IsCorrectMPValidator().obtain_invalid_content_items(content_items)
 
     assert len(results) == 6
-    assert results[0].message == (
-        "The items AgentixAgent, AgentixAction and Script with isllm=true"
-        " should be uploaded to platform only. Please specify only platform"
-        " under marketplaces."
-    )
+    assert results[0].message == ("The following Agentix related content item 'test' should have only marketplace 'platform'.")
 
 def test_is_correct_supportedModules():
     """
@@ -248,7 +241,7 @@ def test_is_correct_supportedModules():
             name="test",
             fromversion="",
             toversion="",
-            display_name="",
+            display_name="test",
             deprecated=False,
             id="",
             node_id="",
@@ -263,7 +256,7 @@ def test_is_correct_supportedModules():
             name="test",
             fromversion="",
             toversion="",
-            display_name="",
+            display_name="test",
             deprecated=False,
             id="",
             node_id=""
@@ -277,7 +270,7 @@ def test_is_correct_supportedModules():
             name="test",
             fromversion="",
             toversion="",
-            display_name="",
+            display_name="test",
             deprecated=False,
             id="",
             node_id="",
@@ -297,7 +290,7 @@ def test_is_correct_supportedModules():
             name="test",
             fromversion="",
             toversion="",
-            display_name="",
+            display_name="test",
             deprecated=False,
             id="",
             node_id="",
@@ -344,7 +337,7 @@ def test_is_correct_supportedModules():
         ),
         Script(
             is_llm=True,
-            marketplaces=["xsoar"],
+            marketplaces=["xsoar", "platform"],
             id="",
             script='print("hello world")',
             node_id="",
@@ -363,8 +356,4 @@ def test_is_correct_supportedModules():
     results = IsCorrectSMValidator().obtain_invalid_content_items(content_items)
 
     assert len(results) == 4
-    assert results[0].message == (
-        "The items AgentixAgent, AgentixAction and Script with isllm=true"
-        " should be uploaded to agentix supported module only. "
-        "Please specify only agentix under supportedModules."
-    )
+    assert results[0].message == ("The following Agentix related content item 'test' should have only supportedModule 'agentix'.")

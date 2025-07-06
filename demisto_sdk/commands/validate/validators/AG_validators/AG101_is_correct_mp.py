@@ -1,6 +1,6 @@
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
@@ -17,14 +17,14 @@ ContentTypes = Union[AgentixAgent, AgentixAction, Script]
 
 class IsCorrectMPValidator(BaseValidator[ContentTypes]):
     error_code = "AG101"
-    description = f"Content items of type {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to platform only."
+    description = f"Content items of type {', '.join(filter(None, [ContentType.AGENTIX_AGENT, ContentType.AGENTIX_ACTION, ContentType.SCRIPT]))} with isllm=true should be uploaded to platform only."
     rationale = "These types of items should be uploaded to platform only."
-    error_message = f"The items {ContentType.AGENTIX_AGENT}, {ContentType.AGENTIX_ACTION} and {ContentType.SCRIPT} with isllm=true should be uploaded to platform only. Please specify only platform under marketplaces."
-    # expected_git_statuses = [
-    #     GitStatuses.ADDED,
-    #     GitStatuses.MODIFIED,
-    #     GitStatuses.RENAMED,
-    # ]
+    error_message = "The following Agentix related content item '{0}' should have only marketplace 'platform'."
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
 
     def obtain_invalid_content_items(
         self,
@@ -33,7 +33,7 @@ class IsCorrectMPValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message,
+                message=self.error_message.format(content_item.display_name),
                 content_object=content_item,
             )
             for content_item in content_items

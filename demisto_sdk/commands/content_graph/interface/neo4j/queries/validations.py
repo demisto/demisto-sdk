@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     GENERAL_DEFAULT_FROMVERSION,
     MarketplaceVersions,
+    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
@@ -372,8 +373,8 @@ def get_supported_modules_mismatch_dependencies(
     query = f""" // Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
     MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(contentItemB)
     WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItemA.object_id IN {content_item_ids})
-      AND contentItemB.supportedModules IS NOT NULL
-      AND NOT ALL(module IN contentItemA.supportedModules WHERE module IN contentItemB.supportedModules)
+      AND contentItemB.supportedModules IS NOT NULL AND 'platform' IN contentItemA.marketplaces
+      AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {[sm.value for sm in PlatformSupportedModules]}) WHERE module IN contentItemB.supportedModules)
     RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
     """
     return {

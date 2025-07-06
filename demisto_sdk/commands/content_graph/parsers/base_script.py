@@ -115,4 +115,6 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
             or (self.content_type == ContentType.SCRIPT and not self.is_llm)  # type: ignore
         ):
             raise ValueError("Script code is not available")
-        return set(EXECUTE_CMD_PATTERN.findall(code))
+        if code:
+            return set(EXECUTE_CMD_PATTERN.findall(code))
+        return set()

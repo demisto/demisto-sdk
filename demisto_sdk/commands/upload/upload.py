@@ -3,7 +3,7 @@ import tempfile
 from contextlib import suppress
 from itertools import zip_longest
 from pathlib import Path
-from typing import Any, Iterable, List, Sequence
+from typing import Any, Iterable, List, Optional, Sequence
 from zipfile import ZipFile
 
 import typer
@@ -75,7 +75,7 @@ def upload_content_entity(**kwargs):
     kwargs.pop("input")
     # Here the magic happens
     upload_result = SUCCESS_RETURN_CODE
-    paths: List[tuple[Any, Any]] = list(zip_longest(inputs, private_packs_paths))
+    paths: List[tuple[Optional[Path], Optional[Path]]] = list(zip_longest(inputs, private_packs_paths))
     for input, private_pack_path in paths:
         result = Uploader(
             input=input,

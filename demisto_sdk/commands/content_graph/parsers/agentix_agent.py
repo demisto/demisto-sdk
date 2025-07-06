@@ -19,7 +19,7 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
-        self.color: str = self.yml_data.get("color") # type: ignore
+        self.color: str = self.yml_data.get("color")  # type: ignore
 
     @cached_property
     def field_mapping(self):

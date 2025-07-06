@@ -62,7 +62,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         """Creates USES_COMMAND_OR_SCRIPT mandatory relationships with the commands/scripts used.
         At this stage, we can't determine whether the dependencies are commands or scripts.
         """
-        if self.content_type == ContentType.SCRIPT and self.is_llm: # type: ignore
+        if self.content_type == ContentType.SCRIPT and self.is_llm:  # type: ignore
             return None
         for cmd in self.get_depends_on():
             self.add_command_or_script_dependency(cmd)
@@ -87,7 +87,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         Returns:
             str: The script code.
         """
-        if self.content_type == ContentType.SCRIPT and self.is_llm: # type: ignore
+        if self.content_type == ContentType.SCRIPT and self.is_llm:  # type: ignore
             return None
         if self.is_unified or self.yml_data.get("script") not in ["-", ""]:
             return self.yml_data.get("script")

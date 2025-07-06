@@ -218,7 +218,6 @@ select = [
   "GR104",
   "GR105",
   "GR108",
-  "GR109",
   "GR110",
   "IF100",
   "IF101",
@@ -253,7 +252,8 @@ select = [
   "BC115"
 ]
 warning = [
-  "RM108"
+  "RM108",
+  "GR109"
 ]
 
 [support_level]
@@ -478,7 +478,6 @@ select = [
   "GR106",
   "GR107",
   "GR108",
-  "GR109",
   "GR110",
   "IF100",
   "IF101",
@@ -538,4 +537,5 @@ select = [
   "BA112"
 ]
 warning = [
+  "GR109"
 ]

@@ -362,7 +362,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     def parse_content_test_conf_folders(self):
         logger.info("Checking if content-test-conf repo has additional content items.")
-        if self.private_pack_path.is_dir():
+        if self.private_pack_path and self.private_pack_path.is_dir():
             logger.info(f"{str(self.private_pack_path)} is a dir.")
             for folder_path in ContentType.pack_folders(self.private_pack_path):
                 for content_item_path in folder_path.iterdir():

@@ -29,10 +29,10 @@ class AgentixActionOutput(BaseStrictModel):
 
 
 class UnderlyingContentItem(BaseStrictModel):
-    id: str = None
-    name: str = None
+    id: Optional[str] = None
+    name: Optional[str] = None
     type: str
-    command: str = None
+    command: Optional[str] = None
     version: str
 
 

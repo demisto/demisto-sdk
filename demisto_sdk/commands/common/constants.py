@@ -120,6 +120,8 @@ ASSETS_MODELING_RULES_DIR = "AssetsModelingRules"
 CASE_LAYOUT_RULES_DIR = "CaseLayoutRules"
 CASE_LAYOUTS_DIR = "CaseLayouts"
 CASE_FIELDS_DIR = "CaseFields"
+AGENTIX_ACTIONS_DIR = "AgentixActions"
+AGENTIX_AGENTS_DIR = "AgentixAgents"
 
 # NAMES OF ENTITIES
 
@@ -277,6 +279,8 @@ class FileType(StrEnum):
     CASE_FIELD = "casefield"
     CASE_LAYOUT = "caselayout"
     VERSION_CONFIG = "version_config"
+    AGENTIX_AGENT = "agentixagent"
+    AGENTIX_ACTION = "agentixaction"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -424,6 +428,8 @@ CONTENT_ENTITIES_DIRS = [
     CASE_LAYOUT_RULES_DIR,
     CASE_FIELDS_DIR,
     CASE_LAYOUTS_DIR,
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -948,6 +954,7 @@ PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 PACKS_VERSION_CONFIG_FILE_NAME = "version_config.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
+PRIVATE_PACKS_FOLDER = "PrivatePacks"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
 CONF_JSON_FILE_NAME = "conf.json"
@@ -1994,6 +2001,7 @@ class PlatformSupportedModules(StrEnum):
     X3 = "X3"
     X5 = "X5"
     ENT_PLUS = "ENT_PLUS"
+    AGENTIX = "agentix"
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {

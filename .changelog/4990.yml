@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the GR109 validation failed due to checking content items that are not supported by the platform.
+  type: fix
+pr_number: 4990

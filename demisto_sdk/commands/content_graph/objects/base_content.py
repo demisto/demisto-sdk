@@ -286,6 +286,7 @@ class BaseContent(BaseNode):
         git_sha: Optional[str] = None,
         raise_on_exception: bool = False,
         metadata_only: bool = False,
+        private_pack_path: Optional[Path] = None,
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from {path}")
 
@@ -296,7 +297,12 @@ class BaseContent(BaseNode):
         ):  # if the path given is a pack
             try:
                 return CONTENT_TYPE_TO_MODEL[ContentType.PACK].from_orm(
-                    PackParser(path, git_sha=git_sha, metadata_only=metadata_only)
+                    PackParser(
+                        path,
+                        git_sha=git_sha,
+                        metadata_only=metadata_only,
+                        private_pack_path=private_pack_path,
+                    )
                 )
             except InvalidContentItemException:
                 logger.error(f"Could not parse content from {path}")

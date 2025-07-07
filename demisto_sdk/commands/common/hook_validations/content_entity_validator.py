@@ -698,6 +698,10 @@ class ContentEntityValidator(BaseValidator):
         file_path = os.path.normpath(self.file_path)
         path_split = file_path.split(os.sep)
         file_type = find_type(self.file_path, _dict=self.current_file, file_type="yml")
+        if file_type == FileType.SCRIPT and self.current_file.get(
+            "isllm"
+        ):  # README not needed
+            return True
         if file_type == FileType.PLAYBOOK:
             if self.current_file.get("issilent"):
                 return True

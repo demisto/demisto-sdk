@@ -59,7 +59,7 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
     @cached_property
     def field_mapping(self):
         super().field_mapping.update(
-            {"object_id": "id", "tasks": "tasks", "quiet": "quiet"}
+            {"object_id": "id", "tasks": "tasks", "quiet": "quiet", "tests": "tests"}
         )
         return super().field_mapping
 
@@ -95,6 +95,20 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
     @property
     def tasks(self) -> Optional[Dict]:
         return get_value(self.yml_data, self.field_mapping.get("tasks", ""), {})
+
+    @property
+    def tests(self) -> List[str]:
+        tests: List[str] = get_value(self.yml_data, self.field_mapping.get("tests", []))
+        if not tests:
+            return []
+
+        if len(tests) == 1 and (
+            tests[0].casefold().startswith("no test")
+            or tests[0].casefold == "run all tests"
+        ):
+            return []
+
+        return tests
 
     def handle_script_task(self, task: Dict[str, Any], is_mandatory: bool) -> None:
         """Collects a script dependency.

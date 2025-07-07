@@ -139,11 +139,10 @@ def get_items_using_deprecated_commands(
                                             - A list of Neo4j graph nodes representing the
                                               content item objects that use the deprecated command.
     """
-    # find items for both sides of the relationship where a non-deprecated item uses deprecated commands.
+    # find items for both sides of the relationship where a non-deprecated item uses deprecated item.
     files_filter = (
         f"AND p.path IN {file_paths} OR c.path IN {file_paths}" if file_paths else ""
     )
-
 
     command_query = f"""// Returning all the items which using deprecated commands
 MATCH (p{{deprecated: false}})-[:USES]->(c:Command)<-[:HAS_COMMAND{{deprecated: true}}]-(i:Integration) WHERE NOT p.is_test
@@ -184,7 +183,7 @@ def get_items_using_deprecated_content_items(
                                             - A list of Neo4j graph nodes representing the
                                               content item objects that use the deprecated content item.
     """
-    # find items for both sides of the relationship where a non-deprecated item uses deprecated commands.
+    # find items for both sides of the relationship where a non-deprecated item uses deprecated item.
     files_filter = (
         f"AND p.path IN {file_paths} OR d.path IN {file_paths}" if file_paths else ""
     )

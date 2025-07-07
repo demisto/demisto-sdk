@@ -806,6 +806,7 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_used_deprecated_
 
     assert len(validation_results) == 1
 
+
 def test_GR107_deprecated_collected_used_by_deprecated(
     repo_for_test_gr_107: Repo,
 ):
@@ -960,6 +961,7 @@ demisto.execute_command("AnotherDeprecatedScript", dArgs)
     )
 
     assert len(validation_results) == 1
+
 
 def test_GR107_IsDeprecatedContentItemInUsageValidatorAllFiles_is_invalid(
     repo_for_test_gr_107: Repo,

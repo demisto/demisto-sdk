@@ -810,53 +810,38 @@ def test_GR107_deprecated_collected_used_by_deprecated(
     repo_for_test_gr_107: Repo,
 ):
     """
-    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for deprecated item used by deprecated item.
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for deprecated item using deprecated item.
 
     Given:
-    - A repository with a deprecated playbook and a deprecated playbook that uses the deprecated playbook.
-    The deprecated playbook does not use any deprecated content items.
+    - A repository with a deprecated script that uses another deprecated script.
+      Both scripts are deprecated, so this relationship should be acceptable.
 
     When:
-    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific deprecated playbook.
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the deprecated script that uses deprecated content.
 
     Then:
-    - Verify that the validator correctly identifies that a deprecated playbook is used by the deprecated playbook.
-    - Assert that the validation results contains exactly one item.
+    - Verify that the validator correctly identifies that deprecated-to-deprecated usage is acceptable.
+    - Assert that the validation results are empty since deprecated items can use other deprecated items.
     """
-    # Add deprecated playbook that uses the existing deprecated playbook
-    playbook_dict_deprecated_using_deprecated = {
-        "id": "DeprecatedUsingDeprecated",
-        "name": "DeprecatedUsingDeprecated",
-        "deprecated": "true",
-        "tasks": {
-            "4": {
-                "id": "4",
-                "taskid": "1",
-                "type": "playbook",
-                "task": {
-                    "id": "1",
-                    "name": "DeprecatedPlaybook",
-                    "playbookName": "DeprecatedPlaybook",
-                },
-            }
-        },
-    }
-    repo_for_test_gr_107.packs[1].create_playbook(
+    # Create a deprecated script that uses the existing deprecated script
+    repo_for_test_gr_107.packs[1].create_script(
         name="DeprecatedUsingDeprecated",
-        yml=playbook_dict_deprecated_using_deprecated,
-    )
+        code='demisto.execute_command("DeprecatedScript", dArgs)',
+    ).set_data(deprecated="true")
 
     graph_interface = repo_for_test_gr_107.create_graph()
     BaseValidator.graph_interface = graph_interface
 
     pack_objects = [
-        repo_for_test_gr_107.packs[1].playbooks[1].get_graph_object(graph_interface),
+        repo_for_test_gr_107.packs[1]
+        .scripts[3]
+        .get_graph_object(graph_interface),  # DeprecatedUsingDeprecated
     ]
     validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
         pack_objects
     )
 
-    assert len(validation_results) == 1
+    assert len(validation_results) == 0
 
 
 def test_GR107_not_deprecated_collected_uses_deprecated(

@@ -806,6 +806,175 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_used_deprecated_
 
     assert len(validation_results) == 1
 
+def test_GR107_deprecated_collected_used_by_deprecated(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for deprecated item used by deprecated item.
+
+    Given:
+    - A repository with a deprecated playbook and a deprecated playbook that uses the deprecated playbook.
+    The deprecated playbook does not use any deprecated content items.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific deprecated playbook.
+
+    Then:
+    - Verify that the validator correctly identifies that a deprecated playbook is used by the deprecated playbook.
+    - Assert that the validation results contains exactly one item.
+    """
+    # Add deprecated playbook that uses the existing deprecated playbook
+    playbook_dict_deprecated_using_deprecated = {
+        "id": "DeprecatedUsingDeprecated",
+        "name": "DeprecatedUsingDeprecated",
+        "deprecated": "true",
+        "tasks": {
+            "4": {
+                "id": "4",
+                "taskid": "1",
+                "type": "playbook",
+                "task": {
+                    "id": "1",
+                    "name": "DeprecatedPlaybook",
+                    "playbookName": "DeprecatedPlaybook",
+                },
+            }
+        },
+    }
+    repo_for_test_gr_107.packs[1].create_playbook(
+        name="DeprecatedUsingDeprecated",
+        yml=playbook_dict_deprecated_using_deprecated,
+    )
+
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1].playbooks[1].get_graph_object(graph_interface),
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
+    assert len(validation_results) == 1
+
+
+def test_GR107_not_deprecated_collected_uses_deprecated(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for non-deprecated item using deprecated item.
+
+    Given:
+    - A repository with a non-deprecated script that uses a deprecated script.
+      The non-deprecated script uses deprecated content items.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific non-deprecated script.
+
+    Then:
+    - Verify that the validator correctly identifies that the non-deprecated script uses deprecated content.
+    - Assert that the validation results contains exactly one item.
+    """
+    # Add non-deprecated script that uses the existing deprecated script
+    repo_for_test_gr_107.packs[1].create_script(
+        name="NonDeprecatedUsingDeprecated",
+        code='demisto.execute_command("DeprecatedScript", dArgs)',
+    )
+
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1].scripts[3].get_graph_object(graph_interface),
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
+    assert len(validation_results) == 1
+
+
+def test_GR107_not_deprecated_collected_uses_not_deprecated(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for non-deprecated item using non-deprecated item.
+
+    Given:
+    - A repository with a non-deprecated script that uses a non-deprecated script.
+      The non-deprecated script does not use any deprecated content items.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific non-deprecated script.
+
+    Then:
+    - Verify that the validator correctly identifies that no deprecated content items are used.
+    - Assert that the validation results are empty.
+    """
+    # Add non-deprecated script that uses the existing non-deprecated script
+    repo_for_test_gr_107.packs[1].create_script(
+        name="NonDeprecatedUsingNonDeprecated",
+        code='demisto.execute_command("SampleScript", dArgs)',
+    )
+
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1].scripts[3].get_graph_object(graph_interface),
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
+    assert len(validation_results) == 0
+
+
+def test_GR107_not_being_deprecated_with_complex_chain(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for script using deprecated content in complex chain.
+
+    Given:
+    - A repository with a non-deprecated script that uses deprecated content items.
+      The script uses multiple deprecated content items in a complex chain.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific non-deprecated script.
+
+    Then:
+    - Verify that the validator correctly identifies that the script uses deprecated content items.
+    - Assert that the validation results contains exactly one item.
+    """
+    # Add another deprecated script for complex chain
+    repo_for_test_gr_107.packs[1].create_script(
+        name="AnotherDeprecatedScript"
+    ).set_data(deprecated="true")
+
+    # Add non-deprecated script that uses deprecated scripts
+    repo_for_test_gr_107.packs[1].create_script(
+        name="NonDeprecatedUsingMultipleDeprecated",
+        code="""
+demisto.execute_command("DeprecatedScript", dArgs)
+demisto.execute_command("AnotherDeprecatedScript", dArgs)
+        """,
+    )
+
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1]
+        .scripts[4]
+        .get_graph_object(graph_interface),  # NonDeprecatedUsingMultipleDeprecated
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
+    assert len(validation_results) == 1
 
 def test_GR107_IsDeprecatedContentItemInUsageValidatorAllFiles_is_invalid(
     repo_for_test_gr_107: Repo,

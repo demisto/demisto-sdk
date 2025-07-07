@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.native_image import (
     ScriptIntegrationSupportedNativeImages,
 )
 from demisto_sdk.commands.content_graph.common import (
+    ContentType,
     lazy_property,
     replace_marketplace_references,
 )
@@ -114,9 +115,12 @@ class IntegrationScript(ContentItem):
             if kwargs.get("unify_only")
             else super().prepare_for_upload(current_marketplace)
         )
-        data = IntegrationScriptUnifier.unify(
-            self.path, data, current_marketplace, **kwargs
-        )
+        if self.content_type != ContentType.SCRIPT or (
+            self.content_type == ContentType.SCRIPT and not self.is_llm  # type: ignore
+        ):
+            data = IntegrationScriptUnifier.unify(
+                self.path, data, current_marketplace, **kwargs
+            )
         # Replace marketplace references if needed
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
         self.unified_data = data

@@ -153,6 +153,7 @@ class ResultWriter:
             )
         if non_ignorable_errors:
             error_msg += f"The following errors cannot be ignored: {', '.join(non_ignorable_errors)}.\n"
+        error_msg += "If the AG100 validation in the pre-commit GitHub Action fails, the pull request cannot be force-merged.\n"
         if forcemergeable_errors:
             error_msg += f"The following errors don't run as part of the nightly flow and therefore can be force merged: {', '.join(forcemergeable_errors)}.\n"
         if error_msg:

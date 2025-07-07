@@ -1,0 +1,35 @@
+type: map
+mapping:
+  commonfields:
+    type: map
+    required: true
+    mapping:
+      id:
+        type: str
+        required: true
+      version:
+        type: int
+        required: true
+  color:
+    type: str
+    required: true
+  tags:
+    type: seq
+    sequence:
+    - type: str
+  category:
+    type: str
+  name:
+    type: str
+  display:
+    type: str
+  description:
+    type: str
+  marketplaces:
+    type: seq
+    sequence:
+    - type: str
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str

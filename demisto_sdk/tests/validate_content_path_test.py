@@ -221,7 +221,7 @@ def test_content_entities_dir_length():
     If this test failed, it's likely you modified either CONTENT_ENTITIES_DIRS or FOLDERS_ALLOWED_TO_CONTAIN_FILES.
     Update the test values accordingly.
     """
-    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 35
+    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 37
 
     # change this one if you added a content item folder that can't have files directly under it
     assert (
@@ -230,7 +230,7 @@ def test_content_entities_dir_length():
                 CONTENT_ENTITIES_DIRS
             )
         )
-        == 27
+        == 29
     )
 
 

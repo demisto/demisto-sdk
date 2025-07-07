@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.generic_definition import (
@@ -47,6 +49,8 @@ ContentTypes = Union[
     GenericType,
     ListObject,
     Widget,
+    AgentixAgent,
+    AgentixAction,
 ]
 
 

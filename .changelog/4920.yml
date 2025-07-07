@@ -1,0 +1,4 @@
+changes:
+- description: Add support for agentix content items- Action, Agent and enhancement of script.
+  type: feature
+pr_number: 4920

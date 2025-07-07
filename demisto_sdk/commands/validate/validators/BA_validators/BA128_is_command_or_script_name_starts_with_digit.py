@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -9,7 +10,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Integration, Script]
+ContentTypes = Union[Integration, Script, AgentixAction]
 
 
 class IsCommandOrScriptNameStartsWithDigitValidator(BaseValidator[ContentTypes]):
@@ -41,6 +42,13 @@ class IsCommandOrScriptNameStartsWithDigitValidator(BaseValidator[ContentTypes])
 
             elif isinstance(content_item, Script) and content_item.name[0].isdigit():
                 content_type = "script"
+                invalid_command_names.append(content_item.name)
+
+            elif (
+                isinstance(content_item, AgentixAction)
+                and content_item.name[0].isdigit()
+            ):
+                content_type = "Agentix Action"
                 invalid_command_names.append(content_item.name)
 
             if invalid_command_names:

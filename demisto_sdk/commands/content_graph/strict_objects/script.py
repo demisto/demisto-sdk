@@ -63,7 +63,7 @@ class ContentItemExportableFields(BaseStrictModel):
 class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     common_fields: CommonFieldsScript = Field(..., alias="commonfields")
     name_x2: Optional[str] = None
-    script: Optional[str] = None  # TODO
+    script: Optional[str] = None
     type_: ScriptType = Field(..., alias="type")
     tags: Optional[List[str]] = None
     enabled: Optional[bool] = None
@@ -116,7 +116,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
         errors = []
         if values.get("is_llm"):
             # Enforce LLM mode rules
-            if values.get("script"):  # TODO- maybe better in a validation
+            if values.get("script"):
                 errors.append(
                     "When 'isllm' is True, 'script' should not appear in yml."
                 )

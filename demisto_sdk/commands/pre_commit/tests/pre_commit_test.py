@@ -1,10 +1,10 @@
-import itertools
 import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
 
 import pytest
+from packaging.version import parse
 
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 import demisto_sdk.commands.pre_commit.pre_commit_context as context
@@ -14,7 +14,10 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.native_image import NativeImageConfig
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import Hook, join_files
-from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
+from demisto_sdk.commands.pre_commit.hooks.ruff import (
+    MINIMAL_PYTHON_VERSION_TO_RUN_RUFF,
+    RuffHook,
+)
 from demisto_sdk.commands.pre_commit.hooks.system import SystemHook
 from demisto_sdk.commands.pre_commit.hooks.validate_format import ValidateFormatHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
@@ -34,6 +37,7 @@ TEST_DATA_PATH = (
 )
 
 PYTHON_VERSION_TO_FILES = {
+    "2.7": {Path("Packs/Pack0/Integrations/integration0/integration0.py")},
     "3.8": {Path("Packs/Pack1/Integrations/integration1/integration1.py")},
     "3.9": {Path("Packs/Pack1/Integrations/integration2/integration2.py")},
     "3.10": {Path("Packs/Pack1/Integrations/integration3/integration3.py")},
@@ -279,9 +283,9 @@ def test_ruff_hook(github_actions, mocker):
     )
     RuffHook(**ruff_hook).prepare_hook()
     python_version_to_ruff = {"3.8": "py38", "3.9": "py39", "3.10": "py310"}
-    for hook, python_version in itertools.zip_longest(
-        ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
-    ):
+    for hook in ruff_hook["repo"]["hooks"]:
+        python_version = hook["name"].replace("ruff-py", "")
+        assert python_version in python_version_to_ruff
         assert (
             f"--target-version={python_version_to_ruff[python_version]}" in hook["args"]
         )
@@ -290,6 +294,11 @@ def test_ruff_hook(github_actions, mocker):
         assert hook["files"] == join_files(PYTHON_VERSION_TO_FILES[python_version])
         if github_actions:
             assert hook["args"][2] == "--output-format=github"
+    assert all(
+        parse(hook["name"].replace("ruff-py", ""))
+        >= parse(MINIMAL_PYTHON_VERSION_TO_RUN_RUFF)
+        for hook in ruff_hook["repo"]["hooks"]
+    )
 
 
 def test_ruff_hook_nightly_mode(mocker):
@@ -310,9 +319,7 @@ def test_ruff_hook_nightly_mode(mocker):
 
     RuffHook(**ruff_hook).prepare_hook()
 
-    for hook, _ in itertools.zip_longest(
-        ruff_hook["repo"]["hooks"], PYTHON_VERSION_TO_FILES.keys()
-    ):
+    for hook in ruff_hook["repo"]["hooks"]:
         hook_args = hook["args"]
         assert "--fix" not in hook_args
         assert "--config=nightly_ruff.toml" in hook_args

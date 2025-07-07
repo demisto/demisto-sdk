@@ -65,6 +65,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC113_is_changed_inc
 from demisto_sdk.commands.validate.validators.BC_validators.BC114_is_changed_or_removed_fields import (
     IsChangedOrRemovedFieldsValidator,
 )
+from demisto_sdk.commands.validate.validators.BC_validators.BC115_is_supported_module_removed import (
+    IsSupportedModulesRemoved,
+)
 from TestSuite.repo import ChangeCWD
 
 ALL_MARKETPLACES = list(MarketplaceVersions)
@@ -1647,3 +1650,55 @@ def test_IsChangedOrRemovedFieldsValidator_obtain_invalid_content_items_fail():
         invalid_results[0].message
         == "The following fields were modified/removed from the integration, please undo:\nThe following fields were removed: ismappable.\nThe following fields were modified: feed."
     )
+
+
+def test_IsSupportedModulesRemoved_with_removed_modules():
+    """
+    Given
+    - A content item whose 'supportedModules' list had modules removed compared to the previous version.
+
+    When
+    - Running IsSupportedModulesRemoved.obtain_invalid_content_items.
+
+    Then
+    - Return a ValidationResult inicdating which modules were removed.
+    """
+    new_item = create_integration_object(
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=["supportedModules"],
+        values=[["C1", "C3", "X0", "X1", "X3"]],
+    )
+
+    res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 1
+    assert (
+        res[0].message
+        == "The following support modules have been removed from the integration 'X1', 'X3'. Removing supported modules is not allowed, Please undo."
+    )
+    assert res[0].validator.error_code == "BC115"
+
+
+def test_IsSupportedModulesRemoved_without_removed_modules():
+    """
+    Given
+    - A content item whose 'supportedModules' list has not changed.
+
+    When
+    - Running IsSupportedModulesRemoved.obtain_invalid_content_items.
+
+    Then
+    - Return an empty list, indicating no validation issues.
+    """
+    new_item = create_integration_object(
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+    )
+
+    res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 0

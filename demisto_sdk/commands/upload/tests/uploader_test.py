@@ -393,6 +393,7 @@ def test_upload_pack(demisto_client_configure, mocker, tmpdir):
         "classifier-aws_sns_test_classifier.json",
         "widget-ActiveIncidentsByRole.json",
         "layoutscontainer-test.json",
+        "listForTest.json",
         "upload_test_dashboard.json",
         "DummyXDRCTemplate.json",
     }
@@ -442,6 +443,7 @@ def test_upload_pack_with_tpb(demisto_client_configure, mocker, tmpdir):
         "classifier-aws_sns_test_classifier.json",
         "widget-ActiveIncidentsByRole.json",
         "layoutscontainer-test.json",
+        "listForTest.json",
         "upload_test_dashboard.json",
         "DummyXDRCTemplate.json",
     }

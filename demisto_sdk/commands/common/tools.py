@@ -208,9 +208,10 @@ class MarketplaceTagParser:
             MarketplaceVersions.XSOAR_ON_PREM.value,
             MarketplaceVersions.XSOAR_SAAS.value,
         ]
-        self._should_remove_xsiam_text = (
-            marketplace != MarketplaceVersions.MarketplaceV2.value
-        )
+        self._should_remove_xsiam_text = marketplace not in [
+            MarketplaceVersions.MarketplaceV2.value,
+            MarketplaceVersions.PLATFORM.value,
+        ]
         self._should_remove_xpanse_text = (
             marketplace != MarketplaceVersions.XPANSE.value
         )
@@ -3145,6 +3146,31 @@ def get_current_categories() -> list:
         )
         approved_categories_json = get_remote_file("Config/approved_categories.json")
     return approved_categories_json.get("approved_list", [])
+
+
+def get_compliant_polices() -> list:
+    """
+    Gets compliant policies list from current branch (only in content repo).
+
+    Returns:
+        List of compliant policies from current branch.
+    """
+    if is_external_repository():
+        return []
+    try:
+        compliant_policies_json, _ = get_dict_from_file(
+            "Config/compliant_policies.json"
+        )
+    except FileNotFoundError:
+        logger.warning(
+            "File compliant_policies.json was not found. Getting from remote."
+        )
+        compliant_policies_json = get_remote_file("Config/compliant_policies.json")
+    return (
+        compliant_policies_json.get("policies", [])
+        if isinstance(compliant_policies_json, dict)
+        else []
+    )
 
 
 @contextmanager

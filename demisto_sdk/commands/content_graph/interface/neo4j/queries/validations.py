@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     GENERAL_DEFAULT_FROMVERSION,
     MarketplaceVersions,
+    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
@@ -345,3 +346,42 @@ RETURN collect(tp) AS content_items
         filter(None, (item.get("content_items") for item in run_query(tx, query))),
         default=[],
     )
+
+
+def validate_playbook_tests_in_repository(
+    tx: Transaction, playbook_paths: List[str]
+) -> Dict[str, Neo4jRelationshipResult]:
+    query = f"""
+    MATCH (content_item_from: Playbook)-[r:{RelationshipType.TESTED_BY}]->(n{{not_in_repository: true}})
+    {f'WHERE content_item_from.path in {playbook_paths}' if playbook_paths else ''}
+    RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
+    """
+    return {
+        item.get("content_item_from").element_id: Neo4jRelationshipResult(
+            node_from=item.get("content_item_from"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }
+
+
+def get_supported_modules_mismatch_dependencies(
+    tx: Transaction,
+    content_item_ids: List[str],
+):
+    query = f""" // Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
+    MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(contentItemB)
+    WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItemA.object_id IN {content_item_ids})
+      AND contentItemB.supportedModules IS NOT NULL AND 'platform' IN contentItemA.marketplaces
+      AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {[sm.value for sm in PlatformSupportedModules]}) WHERE module IN contentItemB.supportedModules)
+    RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
+    """
+    return {
+        item.get("contentItemA").element_id: Neo4jRelationshipResult(
+            node_from=item.get("contentItemA"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }

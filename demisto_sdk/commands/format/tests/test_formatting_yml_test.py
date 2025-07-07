@@ -249,6 +249,51 @@ class TestFormatting:
             == ""
         )
 
+    def test_integration_format_triggers(self, pack):
+        """
+        Given:
+            - An integration YAML file with a triggers section.
+        When:
+            - The format command is running.
+        Then:
+            - The triggers section should be correctly formatted and preserved.
+        """
+        integration = pack.create_integration()
+        integration.create_default_integration()
+
+        original_triggers = [
+            {
+                "conditions": [
+                    {"name": "engine", "operator": "not_exists"},
+                    {"name": "isEngineGroup", "operator": "not_exists"},
+                ],
+                "effects": [
+                    {
+                        "name": "longRunningPort",
+                        "action": {"hidden": True, "required": False},
+                    },
+                    {"name": "credentials", "action": {"required": True}},
+                ],
+            }
+        ]
+
+        # Add triggers to the integration YAML
+        integration_data = integration.yml.read_dict()
+        integration_data["triggers"] = original_triggers
+        integration.yml.write_dict(integration_data)
+
+        # Run the format command
+        schema_path = (
+            Path(__file__).parent / "schemas" / "integration.yml"
+        )  # Adjust path as needed
+        formatter = IntegrationYMLFormat(integration.yml.path, path=str(schema_path))
+        formatter.run_format()
+
+        # Assert that the triggers section is correctly formatted
+        formatted_data = integration.yml.read_dict()
+        assert "triggers" in formatted_data
+        assert formatted_data["triggers"] == original_triggers
+
     @pytest.mark.parametrize(
         "source_path, destination_path, formatter, yml_title, file_type",
         BASIC_YML_TEST_PACKS,

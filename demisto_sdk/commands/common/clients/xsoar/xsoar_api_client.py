@@ -29,9 +29,10 @@ from demisto_sdk.commands.common.clients.errors import (
 )
 from demisto_sdk.commands.common.constants import (
     MINIMUM_XSOAR_SAAS_VERSION,
-    IncidentState,
     InvestigationPlaybookState,
     MarketplaceVersions,
+    XsiamAlertState,
+    XsoarIncidentState,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
@@ -761,19 +762,26 @@ class XsoarClient:
     def poll_incident_state(
         self,
         incident_id: str,
-        expected_states: Tuple[IncidentState, ...] = (IncidentState.CLOSED,),
+        expected_states: Tuple[XsoarIncidentState, ...] = (XsoarIncidentState.CLOSED,),
         timeout: int = 120,
-    ):
+    ) -> dict:
         """
-        Polls for an incident state
+        Polls for the state of an XSOAR incident until it matches any of the expected states or times out.
 
         Args:
-            incident_id: the incident ID to poll its state
-            expected_states: which states are considered to be valid for the incident to reach
-            timeout: how long to query until incidents reaches the expected state
+            incident_id (str): The XSOAR incident ID to poll its state.
+            expected_states (Tuple[XsoarIncidentState, ...]): The states the XSOAR incident is expected to reach.
+            timeout (int): The time limit in seconds to wait for the expected states, defaults to 120.
 
         Returns:
-            raw response of the incident that reached into the relevant state.
+            dict: Raw response of the XSOAR incident that reached the relevant state.
+
+        Raises:
+            PollTimeout: If the incident did not reach any of the expected states in time.
+
+        Example:
+            >>> client.poll_incident_state("456", expected_states=(XsoarIncidentState.CLOSED,))
+            {"id": "456", "name": "My name", "details": "My description", "labels": [], ... }
         """
         if timeout <= 0:
             raise ValueError("timeout argument must be larger than 0")
@@ -788,15 +796,24 @@ class XsoarClient:
 
         while elapsed_time < timeout:
             try:
-                incident = self.search_incidents(incident_id).get("data", [])[0]
+                incident: dict = self.search_incidents(incident_id).get("data", [])[0]
             except Exception as e:
                 raise ValueError(
                     f"Could not find incident ID {incident_id}, error:\n{e}"
                 )
             logger.debug(f"Incident raw response {incident}")
-            incident_status = IncidentState(str(incident.get("status"))).name
+
+            logger.debug(f"Getting status of incident on {self.server_type} server")
+            # Incident 'status' in API response is an integer:
+            # https://docs-cortex.paloaltonetworks.com/r/Cortex-XSOAR-6-API/Search-incidents-by-filter
+            incident_status = (
+                XsiamAlertState(incident.get("status", 0)).name
+                if self.server_type is ServerType.XSIAM
+                else XsoarIncidentState(incident.get("status", 0)).name
+            )
+
             incident_name = incident.get("name")
-            logger.debug(f"status of the incident {incident_name} is {incident_status}")
+            logger.debug(f"Status of the incident {incident_name} is {incident_status}")
             if incident_status in expected_state_names:
                 return incident
             else:
@@ -804,8 +821,8 @@ class XsoarClient:
                 elapsed_time = int(time.time() - start_time)
 
         raise PollTimeout(
-            f"status of incident {incident_name} is {incident_status}",
-            expected_states=expected_states,
+            f"The status of {incident_name} is {incident_status}",
+            expected_states=expected_state_names,
             timeout=timeout,
         )
 
@@ -1460,31 +1477,37 @@ class XsoarClient:
             f"{task_name} task was not found in {investigation_id} investigation."
         )
 
-    def pull_playbook_tasks_by_state(
+    def poll_playbook_tasks_by_state(
         self,
         incident_id: str,
-        task_input: str = None,
-        task_states: list = None,
-        task_name: str = None,
+        task_input: Optional[str] = None,
+        task_states: Optional[list] = None,
+        task_name: Optional[str] = None,
         max_timeout: int = 60,
-        interval_between_tries: str = "3",
+        interval_between_tries: Union[int, float] = 3,
         complete_task: bool = False,
-    ):
+    ) -> dict[str, list]:
         """
         Wait and complete playbook tasks by given status. Same implementation as WaitAndCompleteTask script in content.
 
         Args:
-            incident_id: incident ID that the playbook is running on
-            task_input: Outcome for a conditional task. For example, "Yes"
-            task_states: list of states. Possible values: New, InProgress, Completed, Waiting, Error, Skipped, Blocked (leave empty to get all tasks)
-            task_name: The name of the task that should be completed. If no task name is provided, will complete all tasks with the state `task_state`
-            max_timeout: Timeout in seconds for the script to complete tasks.
-            interval_between_tries: Time (seconds) to wait between each check iteration.
-            complete_task: Whether to complete the task in addition to checking if it is completed.
-
+            incident_id (str): incident ID that the playbook is running on.
+            task_input (Optional[str]): Outcome for a conditional task. For example, "Yes".
+            task_states (Optional[list]): The list of states. Possible values: New, InProgress, Completed, Waiting, Error, Skipped, Blocked. Leave empty to get all task states.
+            task_name (Optional[str]): The name of the task that should be completed. If no task name is provided, will complete all tasks with the state `task_state`.
+            max_timeout (int): Timeout in seconds for the script to complete tasks.
+            interval_between_tries (Union[int, float]): Time in seconds to wait between each check iteration.
+            complete_task (bool): Whether to complete the task in addition to checking if it is completed.
 
         Returns:
-            a list of completed task if completed, and found tasks if not completed.
+            Dict[str, list]: A dictionary containing a list of completed task if completed, and found tasks if not completed.
+
+        Raises:
+            PollTimeout: If the task(s) were not found or did not reach any of the expected task states.
+
+        Example:
+            >>> client.poll_playbook_tasks_by_state("123", task_name="My Task", task_states=["Completed"], max_timeout=30)
+            {"CompletedTask": [{"task name": "My Task", "task state": "Completed"}], "FoundTask": [...]}
         """
         if not all(state in self.PLAYBOOK_TASKS_STATES for state in task_states):  # type: ignore
             raise ValueError(
@@ -1497,10 +1520,11 @@ class XsoarClient:
         completed_tasks = []
         found_tasks = []
         start_time = time.time()
+        elapsed_time = 0
 
-        while time.time() - start_time > max_timeout:  # type: ignore[operator]
+        while elapsed_time < max_timeout:  # type: ignore[operator]
             # Get all tasks with one state of the states in task_states list
-            tasks_by_states, status_code, _ = self._xsoar_client.generic_request(
+            tasks_by_states, _, _ = self._xsoar_client.generic_request(
                 f"/investigation/{incident_id}/workplan/tasks",
                 method="POST",
                 body={"states": task_states, "types": self.PLAYBOOK_TASKS_TYPES},
@@ -1560,45 +1584,51 @@ class XsoarClient:
                 )
                 break
 
-            time.sleep(float(interval_between_tries))  # type: ignore[arg-type]
+            time.sleep(interval_between_tries)
+            elapsed_time = int(time.time() - start_time)
 
-        if not completed_tasks and not found_tasks:
-            if task_name and task_states:
-                raise RuntimeError(
-                    f'The task "{task_name}" was not found by the script or it did not reach the {" or ".join(task_states)} state.'
-                )
-            elif task_states:
-                raise RuntimeError(
-                    f'None of the tasks reached the {" or ".join(task_states)} state.'
-                )
-            else:
-                raise RuntimeError("No tasks were found.")
+        if completed_tasks or found_tasks:
+            return {"CompletedTask": completed_tasks, "FoundTask": found_tasks}
 
-        return {"CompletedTask": completed_tasks, "FoundTask": found_tasks}
+        # If the task(s) were not found or did not reach any of the expected task states, raise PollTimeout exception
+        if task_name and task_states:
+            error_message = f"The task '{task_name}' was not found or did not reach any of the expected states"
+
+        elif task_states:
+            error_message = "None of the tasks reached any of the expected states"
+
+        else:
+            error_message = "No tasks were found in the investigation playbook"
+
+        raise PollTimeout(error_message, task_states, max_timeout)
 
     def complete_playbook_task(
         self,
-        investigation_id,
+        investigation_id: str,
         task_input: str,
-        task_id: str = None,
-        task_name: str = None,
-    ):
+        task_id: Optional[str] = None,
+        task_name: Optional[str] = None,
+    ) -> None:
         """
-        Complete a playbook task in an investigation.
+        Completes a playbook task in an investigation.
 
         Args:
-            investigation_id: Investigation ID that the playbook is running on
-            task_input: The input to complete the task with.
-            task_id: the task id to complete.
-            task_name: the name of the task to complete.
+            investigation_id (str): Investigation ID that the playbook is running on.
+            task_input (str): The input to complete the task with.
+            task_id (Optional[str]): The ID of the task to complete. Must be provided if `task_name` is not given.
+            task_name (Optional[str]): the name of the task to complete. Must be provided if `task_id` is not given.
+
+        Example:
+            >>> client.complete_playbook_task("123", task_input="Completed", task_name="Analyze Data")
         """
         if not (task_name or task_id):
-            return RuntimeError("Task id or task name should be provided.")
+            raise ValueError("Either task_id or task_name should be provided.")
+
         elif not task_id:
             task = self.get_playbook_task_in_investigation(task_name, investigation_id)
             task_id = task.get("id")
         try:
-            response, status_code, _ = self._xsoar_client.generic_request(
+            self._xsoar_client.generic_request(
                 "/inv-playbook/task/complete",
                 method="POST",
                 response_type="object",

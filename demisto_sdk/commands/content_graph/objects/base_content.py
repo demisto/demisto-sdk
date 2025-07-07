@@ -22,7 +22,6 @@ from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_SUPPORTED_MODULES,
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
     PACKS_PACK_META_FILE_NAME,
@@ -103,7 +102,6 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
     source_repo: str = "content"
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
-    supportedModules: List[str] = DEFAULT_SUPPORTED_MODULES
     relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False
     )
@@ -172,19 +170,20 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             for name, value in inspect.getmembers(self.__class__)
             if isinstance(value, cached_property)
         }
-        json_dct = json.loads(
-            self.json(
-                exclude={
-                    "commands",
-                    "database_id",
-                }
-                | cached_properties
-            )
+        json_dct = self.dict(
+            exclude={
+                "commands",
+                "database_id",
+            }
+            | cached_properties
         )
-        if "path" in json_dct and Path(json_dct["path"]).is_absolute():
+        content_item_path = json_dct.get("path")
+        if content_item_path and isinstance(content_item_path, Path):
             json_dct["path"] = (
-                Path(json_dct["path"]).relative_to(CONTENT_PATH)
-            ).as_posix()  # type: ignore
+                content_item_path.relative_to(CONTENT_PATH).as_posix()
+                if content_item_path.is_absolute()
+                else str(content_item_path)
+            )
         json_dct["content_type"] = self.content_type
         return json_dct
 
@@ -205,6 +204,7 @@ class BaseContent(BaseNode):
     old_base_content_object: Optional["BaseContent"] = None
     related_content_dict: dict = Field({}, exclude=True)
     structure_errors: List[StructureError] = Field(default_factory=list, exclude=True)
+    supportedModules: Optional[List[str]] = None
 
     def _save(
         self,

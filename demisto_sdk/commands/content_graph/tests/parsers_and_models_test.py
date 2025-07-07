@@ -2,11 +2,11 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 import pytest
+from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DEFAULT_SUPPORTED_MODULES,
     MINIMUM_XSOAR_SAAS_VERSION,
     MarketplaceVersions,
 )
@@ -1678,6 +1678,57 @@ class TestParsersAndModels:
             "Malware Investigation & Response Incident Handler"
         }
 
+    def test_wizard_dump(self, pack: Pack, caplog):
+        """
+        Given:
+            - A pack with a wizard.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify that dump() is being skipped for a wizard if the pack marketplace is mpv2 or platform.
+        """
+        from demisto_sdk.commands.content_graph.objects.wizard import Wizard
+        from demisto_sdk.commands.content_graph.parsers.wizard import WizardParser
+
+        caplog.set_level("DEBUG")
+        pack_metadata = load_json("pack_metadata_mpv2_platform.json")
+        pack.pack_metadata.write_json(pack_metadata)
+        wizard_json = load_json("wizard.json")
+        wizard = pack.create_wizard(
+            "TestWizard",
+            categories_to_packs={
+                c["name"]: c["packs"] for c in wizard_json["dependency_packs"]
+            },
+            fetching_integrations=[
+                i["name"] for i in wizard_json["wizard"]["fetching_integrations"]
+            ],
+            set_playbooks=wizard_json["wizard"]["set_playbook"],
+            supporting_integrations=[
+                i["name"] for i in wizard_json["wizard"]["supporting_integrations"]
+            ],
+        )
+        wizard_path = Path(wizard.path)
+        parser = WizardParser(
+            wizard_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert "marketplacev2" not in parser.supported_marketplaces
+        assert "platform" not in parser.supported_marketplaces
+        assert "xsoar" in parser.supported_marketplaces
+
+        model = Wizard.from_orm(parser)
+        dir_path: DirectoryPath = Path(wizard.path)  # type: ignore
+        model.dump(dir_path, MarketplaceVersions.MarketplaceV2)
+        assert (
+            f"The wizard {dir_path} current marketplace is marketplacev2 skipping dump."
+            in caplog.text
+        )
+
+        model.dump(dir_path, MarketplaceVersions.PLATFORM)
+        assert (
+            f"The wizard {dir_path} current marketplace is platform skipping dump."
+            in caplog.text
+        )
+
     def test_xsiam_dashboard_parser(self, pack: Pack):
         """
         Given:
@@ -1961,7 +2012,7 @@ class TestParsersAndModels:
 
         Then:
         - Ensure the script in sample1 inherits the pack's custom supported modules
-        - Ensure the script in sample2 uses the DEFAULT_SUPPORTED_MODULES
+        - Ensure the script in sample2 not include the supportedModules field
         """
         pack1 = repo.create_pack("sample1")
         pack_metadata = load_json("pack_metadata.json")
@@ -1997,7 +2048,7 @@ class TestParsersAndModels:
         )
 
         assert script1_model.supportedModules == ["C1", "C3"]
-        assert script2_model.supportedModules == DEFAULT_SUPPORTED_MODULES
+        assert script2_model.supportedModules is None
 
 
 class TestFindContentType:

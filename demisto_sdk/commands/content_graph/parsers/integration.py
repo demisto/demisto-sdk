@@ -26,6 +26,7 @@ class CommandParser:
     args: List[dict]
     outputs: List[dict]
     quickaction: bool
+    compliantpolicies: List[str]
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
@@ -54,6 +55,10 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_feed = self.script_info.get("feed", False)
         self.long_running = self.script_info.get("longRunning", False)
         self.supports_quick_actions = self.yml_data.get("supportsquickactions", False)
+        self.is_cloud_provider_integration = self.yml_data.get(
+            "isCloudProviderIntegration", False
+        )
+
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
@@ -98,6 +103,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             args = command_data.get("arguments") or []
             outputs = command_data.get("outputs") or []
             quickaction = command_data.get("quickaction", False)
+            compliantpolicies: list[str] = command_data.get("compliantpolicies") or []
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
                 target=name,
@@ -106,6 +112,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 deprecated=deprecated,
                 description=description,
                 quickaction=quickaction,
+                compliantpolicies=compliantpolicies,
             )
             self.commands.append(
                 CommandParser(
@@ -116,6 +123,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                     args=args,
                     outputs=outputs,
                     quickaction=quickaction,
+                    compliantpolicies=compliantpolicies,
                 )
             )
 

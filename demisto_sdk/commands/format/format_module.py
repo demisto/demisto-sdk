@@ -162,7 +162,7 @@ def format_manager(
         add_tests (bool): Whether to exclude tests automatically.
         id_set_path (str): The path of the id_set.json file.
         clear_cache (bool): wether to clear the cache
-        use_graph (bool): wheter to use the graph in format
+        use_graph (bool): whether to use the graph in format
     Returns:
         int 0 in case of success 1 otherwise
     """

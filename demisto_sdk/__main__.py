@@ -139,7 +139,10 @@ def register_commands(_args: list[str] = []):  # noqa: C901
         _args (list[str]): The list of command-line arguments.
     """
 
-    register_nothing = (
+    # Command name would be the first non-flag/option argument.
+    command_name: str = next((arg for arg in _args if not arg.startswith("-")), "")
+
+    register_nothing = not command_name and (
         "-v" in _args
         or "--version" in _args
         or "-rn" in _args
@@ -152,8 +155,6 @@ def register_commands(_args: list[str] = []):  # noqa: C901
     is_help = "-h" in _args or "--help" in _args
     register_all = any([is_test, is_help])
 
-    # Command name would be the first non-flag/option argument.
-    command_name: str = next((arg for arg in _args if not arg.startswith("-")), "")
     # Pre-commit runs a few commands as hooks.
     is_pre_commit = "pre-commit" == command_name
 

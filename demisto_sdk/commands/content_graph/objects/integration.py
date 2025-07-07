@@ -14,6 +14,11 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     ImageRelatedFile,
     LightSVGRelatedFile,
 )
+from demisto_sdk.commands.prepare_content.preparers.marketplace_commands_availability_preparer import (
+    MARKETPLACES_SUPPORTING_FETCH_ASSETS,
+    MARKETPLACES_SUPPORTING_FETCH_EVENTS,
+    MarketplaceCommandsAvailabilityPreparer,
+)
 
 if TYPE_CHECKING:
     # avoid circular imports
@@ -56,6 +61,7 @@ class IntegrationOutput(Output):
 class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
     name: str
     quickaction: bool = Field(False)
+    compliantpolicies: Optional[list[str]] = Field([])
 
     # From HAS_COMMAND relationship
     args: List[Argument] = Field([], exclude=True)
@@ -114,6 +120,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     category: str
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
+    is_cloud_provider_integration: bool = Field(
+        False, alias="isCloudProviderIntegration"
+    )
 
     @property
     def imports(self) -> List["Script"]:
@@ -142,11 +151,14 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         incident_to_alert: bool = False,
     ) -> dict:
         summary = super().summary(marketplace, incident_to_alert)
-        if marketplace != MarketplaceVersions.MarketplaceV2:
-            if summary.get("isfetchevents"):
-                summary["isfetchevents"] = False
-            if summary.get("isfetchassets"):
-                summary["isfetchassets"] = False
+        if marketplace not in MARKETPLACES_SUPPORTING_FETCH_EVENTS and summary.get(
+            "isfetchevents"
+        ):
+            summary["isfetchevents"] = False
+        if marketplace not in MARKETPLACES_SUPPORTING_FETCH_ASSETS and summary.get(
+            "isfetchassets"
+        ):
+            summary["isfetchassets"] = False
         summary["name"] = self.display_name
         return summary
 
@@ -173,12 +185,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         **kwargs,
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
-        if current_marketplace != MarketplaceVersions.MarketplaceV2:
-            script: dict = data.get("script", {})
-            if script.get("isfetchevents"):
-                data["script"]["isfetchevents"] = False
-            if script.get("isfetchassets"):
-                data["script"]["isfetchassets"] = False
+        data = MarketplaceCommandsAvailabilityPreparer.prepare(
+            data, current_marketplace
+        )
 
         if supported_native_images := self.get_supported_native_images(
             ignore_native_image=kwargs.get("ignore_native_image") or False,

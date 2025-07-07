@@ -1600,9 +1600,14 @@ def test_ShouldHaveDisplayFieldValidator_fix():
                             },
                             {
                                 "name": "test_2",
+                                "type": 23,
+                                "required": False,
+                            },
+                            {
+                                "name": "test_3",
                                 "type": 8,
                                 "required": False,
-                                "display": "test 2",
+                                "display": "test 3",
                             },
                         ]
                     ],
@@ -1673,7 +1678,7 @@ def test_IsMissingDisplayFieldValidator_obtain_invalid_content_items(
         - Case 1: Three valid integrations:
             - One integration without type 17 param, all other params with display name.
             - One integration without params.
-            - One integration with two params: one type 17 without display name and one type 8 with display name.
+            - One integration with three params: one type 17, one type 23 (neither has a display name), and one type 8 with display name.
         - Case 2: Two invalid integrations:
             - One integration with two params: one type 17 and type params both without display name.
             - One integration with three params: Two type 10 without display name, and one type 10 with display name.

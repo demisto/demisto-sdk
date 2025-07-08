@@ -38,6 +38,23 @@ IS_FETCH_EVENTS_DYNAMIC_MODEL = create_dynamic_model(
     default=None,
 )
 
+class SupportedModulesValues(StrEnum):
+    C1 = "C1"
+    C3 = "C3"
+    X0 = "X0"
+    X1 = "X1"
+    X3 = "X3"
+    X5 = "X5"
+    ENT_PLUS = "ENT_PLUS"
+
+
+class SectionOrderValues(StrEnum):
+    CONNECT = "Connect"
+    COLLECT = "Collect"
+    OPTIMIZE = "Optimize"
+    MIRRORING = "Mirroring"
+    RESULT = "Result"
+
 
 class _Configuration(BaseStrictModel):
     display: Optional[str] = None
@@ -54,6 +71,7 @@ class _Configuration(BaseStrictModel):
     hidden_username: Optional[bool] = Field(None, alias="hiddenusername")
     hidden_password: Optional[bool] = Field(None, alias="hiddenpassword")
     from_license: Optional[str] = Field(None, alias="fromlicense")
+
 
 
 Configuration = create_model(
@@ -87,6 +105,7 @@ class _Command(BaseStrictModel):
     prettyname: Optional[str] = None
     quickaction: Optional[bool] = None
     compliantpolicies: Optional[List[str]] = None
+    supportedModules: Optional[conlist(SupportedModulesValues, min_items=1, max_items=7)]
 
 
 Command = create_model(
@@ -169,14 +188,6 @@ class Trigger(BaseStrictModel):
     effects: List[TriggerEffect]
 
 
-class SectionOrderValues(StrEnum):
-    CONNECT = "Connect"
-    COLLECT = "Collect"
-    OPTIMIZE = "Optimize"
-    MIRRORING = "Mirroring"
-    RESULT = "Result"
-
-
 class _StrictIntegration(BaseStrictModel):
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")  # type:ignore[valid-type]
     display: str
@@ -206,6 +217,7 @@ class _StrictIntegration(BaseStrictModel):
         False, alias="isCloudProviderIntegration"
     )
     triggers: Optional[List[Trigger]] = None
+    supportedModules: Optional[conlist(SupportedModulesValues, min_items=1, max_items=7)]
 
     def __init__(self, **data):
         """

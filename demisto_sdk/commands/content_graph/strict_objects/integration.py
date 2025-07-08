@@ -73,7 +73,6 @@ class _Configuration(BaseStrictModel):
     from_license: Optional[str] = Field(None, alias="fromlicense")
 
 
-
 Configuration = create_model(
     model_name="Configuration",
     base_models=(

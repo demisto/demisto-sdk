@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
 
 import more_itertools
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, conlist
 
 from demisto_sdk.commands.common.constants import (
     TYPE_JS,

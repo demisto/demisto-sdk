@@ -16,6 +16,7 @@ from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import 
     Important,
     Output,
     ScriptType,
+    SupportedModulesValues,
 )
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DEFAULT_DYNAMIC_MODEL_LOWER_CASE,
@@ -37,15 +38,6 @@ IS_FETCH_EVENTS_DYNAMIC_MODEL = create_dynamic_model(
     type_=Optional[bool],
     default=None,
 )
-
-class SupportedModulesValues(StrEnum):
-    C1 = "C1"
-    C3 = "C3"
-    X0 = "X0"
-    X1 = "X1"
-    X3 = "X3"
-    X5 = "X5"
-    ENT_PLUS = "ENT_PLUS"
 
 
 class SectionOrderValues(StrEnum):

@@ -29,6 +29,16 @@ class _CommonFields(BaseStrictModel):
     version: int
 
 
+class SupportedModulesValues(StrEnum):
+    C1 = "C1"
+    C3 = "C3"
+    X0 = "X0"
+    X1 = "X1"
+    X3 = "X3"
+    X5 = "X5"
+    ENT_PLUS = "ENT_PLUS"
+
+
 CommonFields = create_model(
     model_name="CommonFields",
     base_models=(
@@ -52,6 +62,7 @@ class _Argument(BaseStrictModel):
     deprecated: Optional[bool] = None
     type: Optional[str] = None
     hidden: Optional[bool] = None
+    supportedModules: Optional[conlist(SupportedModulesValues, min_items=1, max_items=7)]
 
 
 HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL = create_dynamic_model(

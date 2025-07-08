@@ -1,0 +1,4 @@
+changes:
+- description: fixed a syntax issue when printing feed parameters related errors.
+  type: fix
+pr_number: 4995

@@ -1,4 +1,0 @@
-changes:
-- description: Bump `setuptools` version in pyproject.toml.
-  type: internal
-pr_number: 4993

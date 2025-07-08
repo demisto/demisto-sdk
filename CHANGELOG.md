@@ -1,4 +1,20 @@
 # Changelog
+## 1.38.6 (2025-07-07)
+### Feature
+* Add support for agentix content items- Action, Agent and enhancement of script. [#4920](https://github.com/demisto/demisto-sdk/pull/4920)
+* Added new playbook validation *PB133* to ensure that test playbooks and test use cases referenced in the playbook YML exist. [#4976](https://github.com/demisto/demisto-sdk/pull/4976)
+* Added new playbook validation *PB134* to ensure that the configuration docstring in playbook test use cases is valid. [#4976](https://github.com/demisto/demisto-sdk/pull/4976)
+
+### Fix
+* Fixed an issue where the ***xsoar-lint*** command would not run if the pack support level was set to 'developer'. [#4988](https://github.com/demisto/demisto-sdk/pull/4988)
+* Fixed an issue where the ***doc-review*** command is not recognized if the *--release-notes* flag is specified. [#4987](https://github.com/demisto/demisto-sdk/pull/4987)
+* Fixed an issue where the GR109 validation failed due to checking content items that are not supported by the platform. [#4990](https://github.com/demisto/demisto-sdk/pull/4990)
+
+### Internal
+* Removed default addition of `supportedModule` for content items where this field was not explicitly defined. [#4951](https://github.com/demisto/demisto-sdk/pull/4951)
+* Bump `setuptools` version in pyproject.toml. [#4993](https://github.com/demisto/demisto-sdk/pull/4993)
+
+
 ## 1.38.5 (2025-06-29)
 ### Feature
 * Added BA112 validation to enforce compliant policy naming for the "Preference Center" feature. [#4968](https://github.com/demisto/demisto-sdk/pull/4968)

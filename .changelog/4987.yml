@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the ***doc-review*** command is not recognized if the *--release-notes* flag is specified.
-  type: fix
-pr_number: 4987

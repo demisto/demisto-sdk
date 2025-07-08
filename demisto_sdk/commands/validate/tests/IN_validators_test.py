@@ -4176,6 +4176,82 @@ def test_IsMissingReputationOutputValidator_obtain_invalid_content_items(
                         ],
                     ],
                 ),
+                    create_integration_object(
+                    paths=["script.feed", "configuration"],
+                    values=[
+                        True,
+                        [
+                            {
+                                "name": "feed",
+                                "defaultvalue": "true",
+                                "display": "Fetch indicators",
+                                "type": 8,
+                            },
+                            {
+                                "name": "feedReputation",
+                                "display": "Indicator Reputation",
+                                "type": 18,
+                                "options": ["None", "Good", "Suspicious", "Bad"],
+                                "additionalinfo": "Indicators from this integration instance will be marked with this reputation",
+                            },
+                            {
+                                "name": FEED_RELIABILITY,
+                                "display": "Source Reliability",
+                                "type": 15,
+                                "required": True,
+                                "options": [
+                                    "A - Completely reliable",
+                                    "B - Usually reliable",
+                                    "C - Fairly reliable",
+                                    "D - Not usually reliable",
+                                    "E - Unreliable",
+                                    "F - Reliability cannot be judged",
+                                ],
+                                "additionalinfo": "Reliability of the source providing the intelligence data",
+                                "defaultvalue": "C - Fairly reliable",
+                            },
+                            {
+                                "name": "feedExpirationPolicy",
+                                "display": "",
+                                "type": 17,
+                                "options": [
+                                    "never",
+                                    "interval",
+                                    "indicatorType",
+                                    "suddenDeath",
+                                ],
+                            },
+                            {
+                                "name": "feedExpirationInterval",
+                                "display": "",
+                                "type": 1,
+                            },
+                            {
+                                "name": "feedFetchInterval",
+                                "display": "Feed Fetch Interval",
+                                "type": 19,
+                            },
+                            {
+                                "name": "feedBypassExclusionList",
+                                "display": "Bypass exclusion list",
+                                "type": 8,
+                                "additionalinfo": "When selected, the exclusion list is ignored for indicators from this feed. This means that if an indicator from this feed is on the exclusion list, the indicator might still be added to the system.",
+                            },
+                            {
+                                "name": "feedTags",
+                                "display": "Tags",
+                                "type": 0,
+                                "additionalinfo": "Supports CSV values.",
+                            },
+                            {
+                                "name": "tlp_color",
+                                "display": "Traffic Light Protocol Color",
+                                "type": 15,
+                                "additionalinfo": "The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed"
+                            },
+                        ],
+                    ],
+                ),
             ],
             2,
             [

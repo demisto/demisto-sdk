@@ -72,7 +72,8 @@ class IsValidFeedIntegrationValidator(BaseValidator[ContentTypes]):
                 msg = f"{msg}\n\tThe field '{key}' must appear and contain '{val}'."
         if must_be_one_of := value.get("must_be_one_of"):
             for key, val in must_be_one_of.items():
-                msg = f"{msg}\n\tThe field '{key}' must be one of the following {', '.join(val['options'])}."
+                lists_str = ' or '.join(', '.join(str(item) for item in sublist) for sublist in val)
+                msg = f"{msg}\n\tThe field '{key}' must be one of the following lists: {lists_str}."
         return msg
 
     def get_invalid_feed_params(

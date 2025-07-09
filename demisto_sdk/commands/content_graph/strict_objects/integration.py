@@ -98,7 +98,7 @@ class _Command(BaseStrictModel):
     compliantpolicies: Optional[List[str]] = None
     supportedModules: Optional[
         conlist(SupportedModulesValues, min_items=1, max_items=7)
-    ] # type:ignore[valid-type]
+    ]  # type:ignore[valid-type]
 
 
 Command = create_model(
@@ -212,7 +212,7 @@ class _StrictIntegration(BaseStrictModel):
     triggers: Optional[List[Trigger]] = None
     supportedModules: Optional[
         conlist(SupportedModulesValues, min_items=1, max_items=7)
-    ] # type:ignore[valid-type]
+    ]  # type:ignore[valid-type]
 
     def __init__(self, **data):
         """

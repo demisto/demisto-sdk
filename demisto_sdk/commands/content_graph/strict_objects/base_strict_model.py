@@ -64,7 +64,7 @@ class _Argument(BaseStrictModel):
     hidden: Optional[bool] = None
     supportedModules: Optional[
         conlist(SupportedModulesValues, min_items=1, max_items=7)
-    ] # type:ignore[valid-type]
+    ]  # type:ignore[valid-type]
 
 
 HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL = create_dynamic_model(

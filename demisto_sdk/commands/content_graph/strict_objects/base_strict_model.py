@@ -1,8 +1,8 @@
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Annotated, Any, List, Literal, Optional, Tuple, Union
 
 import more_itertools
-from pydantic import BaseModel, Field, conlist
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     TYPE_JS,
@@ -63,8 +63,8 @@ class _Argument(BaseStrictModel):
     type: Optional[str] = None
     hidden: Optional[bool] = None
     supportedModules: Optional[
-        conlist(SupportedModulesValues, min_items=1, max_items=7)
-    ]  # type:ignore[valid-type]
+        Annotated[List[SupportedModulesValues], Field(min_length=1, max_length=7)]
+    ]
 
 
 HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL = create_dynamic_model(

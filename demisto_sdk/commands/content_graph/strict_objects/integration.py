@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Annotated, Any, List, Optional
 
 from pydantic import Field, conlist, validator
 
@@ -97,8 +97,8 @@ class _Command(BaseStrictModel):
     quickaction: Optional[bool] = None
     compliantpolicies: Optional[List[str]] = None
     supportedModules: Optional[
-        conlist(SupportedModulesValues, min_items=1, max_items=7)
-    ]  # type:ignore[valid-type]
+        Annotated[List[SupportedModulesValues], Field(min_length=1, max_length=7)]
+    ]
 
 
 Command = create_model(
@@ -211,8 +211,8 @@ class _StrictIntegration(BaseStrictModel):
     )
     triggers: Optional[List[Trigger]] = None
     supportedModules: Optional[
-        conlist(SupportedModulesValues, min_items=1, max_items=7)
-    ]  # type:ignore[valid-type]
+        Annotated[List[SupportedModulesValues], Field(min_length=1, max_length=7)]
+    ]
 
     def __init__(self, **data):
         """

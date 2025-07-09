@@ -1,4 +1,4 @@
 changes:
-- description: enter description about this PR
+- description: Add support for supportedModules field in integration, command, and argument.
   type: feature
 pr_number: 4996

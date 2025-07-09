@@ -1,7 +1,11 @@
 variables:
-  CURRENT_BRANCH_NAME: "${INFRA_BRANCH}"
+  # TODO Fix before merge
+  # CURRENT_BRANCH_NAME: "${INFRA_BRANCH}"
+  CURRENT_BRANCH_NAME: "security-scans-demisto-sdk"
 
 include:
   - file: "/.gitlab/ci/demisto-sdk/.gitlab-ci.yml"
-    ref: "${INFRA_BRANCH}"
+    # TODO Fix before merge
+    # ref: "${INFRA_BRANCH}"
+    ref: "security-scans-demisto-sdk"
     project: "${CI_PROJECT_NAMESPACE}/infra"

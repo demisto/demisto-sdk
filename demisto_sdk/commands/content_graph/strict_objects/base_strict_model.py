@@ -62,7 +62,9 @@ class _Argument(BaseStrictModel):
     deprecated: Optional[bool] = None
     type: Optional[str] = None
     hidden: Optional[bool] = None
-    supportedModules: Optional[conlist(SupportedModulesValues, min_items=1, max_items=7)]
+    supportedModules: Optional[
+        conlist(SupportedModulesValues, min_items=1, max_items=7)
+    ] # type:ignore[valid-type]
 
 
 HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL = create_dynamic_model(

@@ -36,7 +36,7 @@ class SupportedModulesValues(StrEnum):
     X1 = "X1"
     X3 = "X3"
     X5 = "X5"
-    ENT_PLUS = "ENT_PLUS",
+    ENT_PLUS = "ENT_PLUS"
     AGENTIX = "agentix"
 
 

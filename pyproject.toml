@@ -93,7 +93,7 @@ typer = {extras = ["all"], version = "^0.13.0"}
 packaging = "^24.0"
 orjson = "^3.8.3"
 more-itertools = "^10.0.0"
-junitparser = "^3.1.0"
+junitparser = "^3.1.2"
 google-cloud-secret-manager = "^2.18.3"
 json5 = "^0.9.14"
 klara = {version = "^0.6.3", optional = true}
@@ -106,6 +106,8 @@ werkzeug = "^3.1.3" # Added as mitmproxy8 -> flask<2.1
 loguru = "^0.7.2"
 pygithub = "^2.2.0"
 setuptools = ">=80.9.0"
+python-gitlab = "^3.0.0" # import gitlab
+jira = "^3.8.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]

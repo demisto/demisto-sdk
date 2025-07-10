@@ -37,6 +37,7 @@ class SupportedModulesValues(StrEnum):
     X3 = "X3"
     X5 = "X5"
     ENT_PLUS = "ENT_PLUS"
+    AGENTIX = "agentix"
 
 
 CommonFields = create_model(

@@ -5,8 +5,7 @@ from typing import Optional, Tuple, Union
 
 import requests
 from dateparser import parse
-from pkg_resources import parse_version
-
+from packaging.version import parse
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_DOCKER_NAME,
     IronBankDockers,
@@ -268,7 +267,7 @@ class DockerImageValidator(BaseValidator):
         for num_tag in only_numbered_tags:
             # the version_tag.release returns a tuple from the version numbers '1.2.3.45' -> (1, 2, 3, 45)
             # The last place is always a build number, therefore always increasing.
-            if parse_version(max_tag).release[-1] < parse_version(num_tag).release[-1]:
+            if parse(max_tag).release[-1] < parse(num_tag).release[-1]:
                 max_tag = num_tag
 
         return max_tag

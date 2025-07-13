@@ -22,9 +22,9 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
             is_test_script=False,
             git_sha=git_sha,
         )
-        self.model: str = self.yml_data.get("model", False)
-        self.user_prompt: str = self.yml_data.get("userprompt", "")
-        self.system_prompt: str = self.yml_data.get("systemprompt", "")
+        self.model: Optional[str] = self.yml_data.get("model", "")
+        self.user_prompt: Optional[str] = self.yml_data.get("userprompt", "")
+        self.system_prompt: Optional[str] = self.yml_data.get("systemprompt", "")
         self.few_shots: Optional[str] = self.yml_data.get("fewshots", "")
 
     @property

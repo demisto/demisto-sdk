@@ -281,14 +281,14 @@ def does_dict_have_alternative_key(data: dict) -> bool:
 
     return False
 
-def should_skip_code_isllm_scripts(file_path: str) -> bool:
+def should_skip_code_isllm_scripts(file_path: str) -> tuple[bool, str]:
     _, yml_path = get_yml_paths_in_dir(str(file_path))
     if not yml_path:
         raise Exception(
             f"No yml files found in package path: {file_path}. "
             "Is this really a package dir?"
         )
-    return str2bool(get_yaml(yml_path, keep_order=False).get("isllm", False))
+    return str2bool(get_yaml(yml_path, keep_order=False).get("isllm", False)), yml_path
 
 def should_skip_item_by_mp(
     file_path: str,
@@ -1851,8 +1851,9 @@ def process_script(
             code = None
             logger.info("in else")
             # package script
-            llm_script = should_skip_code_isllm_scripts(file_path)
+            llm_script, yml_path = should_skip_code_isllm_scripts(file_path)
             logger.info(f"{llm_script=}")
+            logger.info(f"{yml_path=}")
             if not llm_script:
                 logger.info("Should retrieve script.")
                 (

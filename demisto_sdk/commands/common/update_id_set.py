@@ -863,6 +863,9 @@ def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
 
 def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None, llm_script: bool = False):
     data_dictionary = get_yaml(file_path)
+    depends_on = None
+    command_to_integration = None
+    script_executions = None
     if not llm_script:
         if script_code is None:
             script_code = data_dictionary.get("script", "")

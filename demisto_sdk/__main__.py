@@ -1,10 +1,10 @@
+import importlib.metadata
 import os
 import platform
 import sys
 
 import typer
 from dotenv import load_dotenv
-import importlib.metadata
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel

@@ -6,6 +6,7 @@ from typing import Optional, Tuple, Union
 import requests
 from dateparser import parse
 from packaging.version import parse
+
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_DOCKER_NAME,
     IronBankDockers,

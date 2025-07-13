@@ -4,7 +4,7 @@ import sys
 
 import typer
 from dotenv import load_dotenv
-from pkg_resources import DistributionNotFound, get_distribution
+import importlib.metadata
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -77,8 +77,8 @@ def main(
 def get_version_info():
     """Retrieve version and latest release information."""
     try:
-        current_version = get_distribution("demisto-sdk").version
-    except DistributionNotFound:
+        current_version = importlib.metadata.version("demisto-sdk")
+    except importlib.metadata.PackageNotFoundError:
         current_version = "dev"
         typer.echo(
             "Could not find the version of demisto-sdk. Running in development mode."

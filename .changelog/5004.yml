@@ -1,0 +1,4 @@
+changes:
+- description: Fix ID set on non py. file when content item is script.
+  type: fix
+pr_number: 5004

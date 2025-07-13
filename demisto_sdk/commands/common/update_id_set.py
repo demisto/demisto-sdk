@@ -68,6 +68,8 @@ from demisto_sdk.commands.common.tools import (
     get_json,
     get_pack_name,
     get_yaml,
+    get_yml_paths_in_dir,
+    str2bool,
 )
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -279,6 +281,14 @@ def does_dict_have_alternative_key(data: dict) -> bool:
 
     return False
 
+def should_skip_code_isllm_scripts(file_path: str) -> bool:
+    _, yml_path = get_yml_paths_in_dir(str(file_path))
+    if not yml_path:
+        raise Exception(
+            f"No yml files found in package path: {file_path}. "
+            "Is this really a package dir?"
+        )
+    return str2bool(get_yaml(yml_path, keep_order=False).get("isllm", False))
 
 def should_skip_item_by_mp(
     file_path: str,
@@ -851,12 +861,22 @@ def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
     return {id_: playbook_data}
 
 
-def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
+def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None, llm_script: bool = False):
     data_dictionary = get_yaml(file_path)
+    if not llm_script:
+        if script_code:
+            script_code = data_dictionary.get("script", "")
+        depends_on, command_to_integration = get_depends_on(data_dictionary)
+        script_executions = sorted(
+            list(
+                set(
+                    re.findall(
+                        r"execute_?command\(['\"](\w+)['\"].*", script_code, re.IGNORECASE
+                    )
+                )
+            )
+        )
     id_ = data_dictionary.get("commonfields", {}).get("id", "-")
-    if script_code is None:
-        script_code = data_dictionary.get("script", "")
-
     name = data_dictionary.get("name", "-")
     display_name = get_display_name(file_path, data_dictionary)
     type_ = data_dictionary.get("type", "")
@@ -867,16 +887,6 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
     deprecated = data_dictionary.get("deprecated", False)
     fromversion = data_dictionary.get("fromversion")
     docker_image = data_dictionary.get("dockerimage")
-    depends_on, command_to_integration = get_depends_on(data_dictionary)
-    script_executions = sorted(
-        list(
-            set(
-                re.findall(
-                    r"execute_?command\(['\"](\w+)['\"].*", script_code, re.IGNORECASE
-                )
-            )
-        )
-    )
     pack = get_pack_name(file_path)
     marketplaces = get_item_marketplaces(
         file_path, item_data=data_dictionary, packs=packs
@@ -1822,7 +1832,9 @@ def process_script(
     res = []
     excluded_items_from_id_set: dict = {}
     try:
+        logger.info(f"{file_path=}")
         if Path(file_path).is_file():
+            logger.info("in if")
             if should_skip_item_by_mp(
                 file_path,
                 marketplace,
@@ -1836,13 +1848,19 @@ def process_script(
                     logger.info(f"adding {file_path} to id_set")
                 res.append(get_script_data(file_path, packs=packs))
         else:
+            code = None
+            logger.info("in else")
             # package script
-            (
-                yml_path,
-                code,
-            ) = IntegrationScriptUnifier.get_script_or_integration_package_data(
-                Path(file_path)
-            )
+            llm_script = should_skip_code_isllm_scripts(file_path)
+            logger.info(f"{llm_script=}")
+            if not llm_script:
+                logger.info("Should retrieve script.")
+                (
+                    yml_path,
+                    code,
+                ) = IntegrationScriptUnifier.get_script_or_integration_package_data(
+                    Path(file_path)
+                )
             if should_skip_item_by_mp(
                 yml_path,
                 marketplace,
@@ -1853,7 +1871,7 @@ def process_script(
                 return [], excluded_items_from_id_set
             if print_logs:
                 logger.info(f"adding {file_path} to id_set")
-            res.append(get_script_data(yml_path, script_code=code, packs=packs))
+            res.append(get_script_data(yml_path, script_code=code, packs=packs, llm_script=llm_script))
     except Exception as exp:
         logger.info(f"<red>failed to process {file_path}, Error: {str(exp)}</red>")
         raise

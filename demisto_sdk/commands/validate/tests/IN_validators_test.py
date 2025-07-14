@@ -163,6 +163,9 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN163_is_valid_feed_
     REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE,
     IsValidFeedExpirationPolicyValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN164_is_new_required_param_no_default import (
+    IsNewRequiredParamNoDefaultIntegrationValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 MARKETPLACE_VALUES = [mp.value for mp in MarketplaceVersions]
@@ -5963,3 +5966,276 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
         IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
     )
     assert len(validation_results) == 0
+
+
+## -------------------------  IsNewRequiredParamNoDefaultIntegrationValidator IN164 Tests ------------------------- ##
+@pytest.mark.parametrize(
+    "content_items, old_content_items, expected_number_of_failures, expected_msgs",
+    [
+        # Case 1: Valid - new integration with required params (should pass)
+        (
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[{"name": "param1", "required": True}]]
+                )],
+                [],  # No old content (new integration)
+                0,
+                [],
+        ),
+        # Case 2: Valid - existing integration with no changes
+        (
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[{"name": "param1", "required": True, "defaultvalue": "default"}]]
+                )],
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[{"name": "param1", "required": True, "defaultvalue": "default"}]]
+                )],
+                0,
+                [],
+        ),
+        # Case 3: Valid - new required param with default value (should pass)
+        (
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[
+                        {"name": "param1", "required": True, "defaultvalue": "new_default_value"},
+                        {"name": "param2", "required": True, "defaultvalue": "default2"}
+                    ]]
+                )],
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[{"name": "param1", "required": True, "defaultvalue": "default"}]]
+                )],
+                0,
+                [],
+        ),
+        # Case 4: Valid - new non-required param no default (should pass)
+        (
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[
+                        {"name": "param1", "required": True, "defaultvalue": "default"},
+                        {"name": "param2", "required": False}
+                    ]]
+                )],
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[{"name": "param1", "required": True, "defaultvalue": "default"}]]
+                )],
+                0,
+                [],
+        ),
+        # Case 5: Valid - parameter was already required, added a default (should pass)
+        (
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[
+                        {"name": "param1", "required": True},
+                        {"name": "param2", "required": True, "defaultvalue": "default2"}
+                    ]]
+                )],
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[
+                        {"name": "param1", "required": True},
+                        {"name": "param2", "required": True}
+                    ]]
+                )],
+                0,
+                [],
+        ),
+        # Case 6: Valid - parameter is now not required (should pass)
+        (
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[
+                        {"name": "param1", "required": False},
+                    ]]
+                )],
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[
+                        {"name": "param1", "required": True},
+                    ]]
+                )],
+                0,
+                [],
+        ),
+        # Case 7: Valid - changed from non-required to required with default
+        (
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[
+                        {"name": "param1", "required": True, "defaultvalue": "default"},
+                        {"name": "param2", "required": True, "defaultvalue": "safe_default"}
+                    ]]
+                )],
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[
+                        {"name": "param1", "required": True, "defaultvalue": "default"},
+                        {"name": "param2", "required": False}
+                    ]]
+                )],
+                0,
+                [],
+        ),
+        # Case 8: Invalid - new required param without default (should fail)
+        (
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[
+                        {"name": "param1", "required": True, "defaultvalue": "default"},
+                        {"name": "newparam", "required": True}  # New required param without default
+                    ]]
+                )],
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[{"name": "param1", "required": True, "defaultvalue": "default"}]]
+                )],
+                1,
+                [
+                    'Possible backward compatibility break: You have added the following new *required* parameters: "newparam". Please undo the changes or provide '
+ 'default values. If cannot give default value, please make the parameter not '
+ 'required and check in code implementation that it was configured.'
+                ],
+        ),
+        # Case 9: Invalid - multiple new required params without defaults
+        (
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[
+                        {"name": "param1", "required": True, "defaultvalue": "default"},
+                        {"name": "param2", "required": True},  # New required param without default
+                        {"name": "param3", "required": True}  # Another new required param without default
+                    ]]
+                )],
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[{"name": "param1", "required": True, "defaultvalue": "default"}]]
+                )],
+                1,
+                [
+                    'Possible backward compatibility break: You have added the following new *required* parameters: "param2", "param3". Please undo the changes or provide '
+ 'default values. If cannot give default value, please make the parameter not '
+ 'required and check in code implementation that it was configured.'
+                ],
+        ),
+        # Case 10: Invalid - changed from non-required to required without default
+        (
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[
+                        {"name": "param1", "required": True, "defaultvalue": "default"},
+                        {"name": "param2", "required": True}  # Changed from false to true with no default
+                    ]]
+                )],
+                [create_integration_object(
+                    paths=["configuration"],
+                    values=[[
+                        {"name": "param1", "required": True, "defaultvalue": "default"},
+                        {"name": "param2", "required": False}
+                    ]]
+                )],
+                1,
+                [
+                    'Possible backward compatibility break: You have added the following new *required* parameters: "param2". Please undo the changes or provide '
+ 'default values. If cannot give default value, please make the parameter not '
+ 'required and check in code implementation that it was configured.'
+                ],
+        ),
+
+    ],
+)
+def test_IsNewRequiredParamNoDefaultIntegrationValidator_obtain_invalid_content_items(
+        content_items, old_content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    content_items and old_content_items iterables.
+
+    When
+    - Calling the IsNewRequiredParamNoDefaultIntegrationValidator obtain_invalid_content_items function.
+    Then
+        - Make sure the right amount of failures return and that the right message is returned.
+        - Cases 1-7: Should pass validation
+        - Cases 8-10: Should fail validation with appropriate error messages
+    """
+    create_old_file_pointers(content_items, old_content_items)
+    results = IsNewRequiredParamNoDefaultIntegrationValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(results) == expected_number_of_failures
+    actual_messages = [result.message for result in results]
+    assert actual_messages == expected_msgs
+
+def test_IsNewRequiredParamNoDefaultIntegrationValidator_no_old_content():
+    """
+    Given:
+        - A new integration (no old_base_content_object) with required parameters.
+    When:
+        - The IsNewRequiredParamNoDefaultIntegrationValidator is invoked.
+    Then:
+        - The validation should pass because new integrations are allowed to have required parameters without a default.
+    """
+    new_content_item = create_integration_object(
+        paths=["configuration"],
+        values=[[
+            {"name": "param1", "required": True},
+            {"name": "param2", "required": True},
+            {"name": "param3", "required": True, "defaultValue": "default"}
+        ]],
+    )
+    # Don't set old_base_content_object (simulates new integration)
+
+    results = IsNewRequiredParamNoDefaultIntegrationValidator().obtain_invalid_content_items([new_content_item])
+    assert len(results) == 0
+
+
+@pytest.mark.parametrize(
+    "param_required, param_default, old_param_required, should_fail",
+    [
+        (True, None, True, False),  # Was required, still required - OK
+        (True, "default", True, False),  # Was required, still required with default - OK
+        (True, None, False, True),  # Was optional, now required without default - FAIL
+        (True, "default", False, False),  # Was optional, now required with default - OK
+        (False, None, True, False),  # Was required, now optional - OK
+        (False, None, False, False),  # Was optional, still optional - OK
+    ],
+)
+def test_IsNewRequiredParamNoDefaultIntegrationValidator_parameter_requirement_changes(
+        param_required, param_default, old_param_required, should_fail
+):
+    """
+    Given:
+        - Various combinations of parameter requirement changes between old and new versions.
+    When:
+        - The IsNewRequiredParamNoDefaultIntegrationValidator is invoked.
+    Then:
+        - The validation should only fail when a parameter becomes required without a default value.
+    """
+    new_config = {"name": "test_param", "required": param_required}
+    if param_default:
+        new_config["defaultvalue"] = param_default
+
+    old_config = {"name": "test_param", "required": old_param_required}
+
+    new_content_item = create_integration_object(
+        paths=["configuration"],
+        values=[[new_config]],
+    )
+    old_content_item = create_integration_object(
+        paths=["configuration"],
+        values=[[old_config]]
+    )
+
+    create_old_file_pointers([new_content_item], [old_content_item])
+    results = IsNewRequiredParamNoDefaultIntegrationValidator().obtain_invalid_content_items([new_content_item])
+
+    if should_fail:
+        assert len(results) == 1
+        assert "test_param" in results[0].message
+    else:
+        assert len(results) == 0

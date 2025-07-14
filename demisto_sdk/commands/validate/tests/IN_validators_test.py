@@ -6201,7 +6201,7 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             ],
             1,
             [
-                'Possible backward compatibility break: You have added the following new *required* parameters: newparam. Please undo the changes or provide '
+                "Possible backward compatibility break: You have added the following new *required* parameters: newparam. Please undo the changes or provide "
                 "default values. If cannot give default value, please make the parameter not "
                 "required and check in code implementation that it was configured."
             ],
@@ -6245,7 +6245,7 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             ],
             1,
             [
-                'Possible backward compatibility break: You have added the following new *required* parameters: param2, param3. Please undo the changes or provide '
+                "Possible backward compatibility break: You have added the following new *required* parameters: param2, param3. Please undo the changes or provide "
                 "default values. If cannot give default value, please make the parameter not "
                 "required and check in code implementation that it was configured."
             ],
@@ -6286,7 +6286,7 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             ],
             1,
             [
-                'Possible backward compatibility break: You have added the following new *required* parameters: param2. Please undo the changes or provide '
+                "Possible backward compatibility break: You have added the following new *required* parameters: param2. Please undo the changes or provide "
                 "default values. If cannot give default value, please make the parameter not "
                 "required and check in code implementation that it was configured."
             ],

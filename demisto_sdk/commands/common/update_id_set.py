@@ -879,6 +879,8 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None, 
                 )
             )
         )
+    else:
+        logger.info(f"Does not retrieve script for {file_path=}")
     id_ = data_dictionary.get("commonfields", {}).get("id", "-")
     name = data_dictionary.get("name", "-")
     display_name = get_display_name(file_path, data_dictionary)
@@ -894,7 +896,7 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None, 
     marketplaces = get_item_marketplaces(
         file_path, item_data=data_dictionary, packs=packs
     )
-
+    logger.info(f"{file_path=}, {llm_script=}, {marketplaces=}")
     if "Packs" in file_path and not file_path.startswith("Packs"):
         file_path = file_path[file_path.index("Packs") :]
 
@@ -1835,9 +1837,7 @@ def process_script(
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        logger.info(f"{file_path=}")
         if Path(file_path).is_file():
-            logger.info("in if")
             if should_skip_item_by_mp(
                 file_path,
                 marketplace,
@@ -1852,11 +1852,8 @@ def process_script(
                 res.append(get_script_data(file_path, packs=packs))
         else:
             code = None
-            logger.info("in else")
             # package script
             llm_script, yml_path = should_skip_code_isllm_scripts(file_path)
-            logger.info(f"{llm_script=}")
-            logger.info(f"{yml_path=}")
             if not llm_script:
                 logger.info("Should retrieve script.")
                 (

@@ -30,6 +30,7 @@ from typing import (
     Callable,
     Dict,
     Iterable,
+    Iterator,
     List,
     Match,
     Optional,
@@ -818,7 +819,7 @@ def safe_read_unicode(bytes_data: bytes) -> str:
             logger.debug(
                 "Could not read data using UTF-8 encoding. Trying to auto-detect encoding..."
             )
-            return UnicodeDammit(bytes_data).unicode_markup
+            return UnicodeDammit(bytes_data).unicode_markup or ""
 
         except UnicodeDecodeError:
             logger.error("Could not auto-detect encoding.")
@@ -3403,7 +3404,7 @@ def get_pack_dir(path):
 
 
 @contextmanager
-def ProcessPoolHandler() -> ProcessPool:
+def ProcessPoolHandler() -> Iterator[ProcessPool]:
     """Process pool Handler which terminate all processes in case of Exception.
 
     Yields:

@@ -1,0 +1,4 @@
+changes:
+- description: Addressed `pkg_resources` deprecation warning by migrating to `importlib.metadata`.
+  type: fix
+pr_number: 5002

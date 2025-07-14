@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
     Parameter,
@@ -65,7 +64,7 @@ class IsNewRequiredParamNoDefaultIntegrationValidator(BaseValidator[ContentTypes
         return results
 
     def _param_was_required_before(
-        self, required_param: Parameter, old_content_item: BaseContent
+        self, required_param: Parameter, old_content_item
     ) -> bool:
         """
         Check if this parameter was already required in the old version.

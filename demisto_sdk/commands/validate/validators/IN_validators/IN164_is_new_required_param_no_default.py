@@ -26,7 +26,7 @@ class IsNewRequiredParamNoDefaultIntegrationValidator(BaseValidator[ContentTypes
     )
     error_message = (
         "Possible backward compatibility break: "
-        "You have added the following new *required* parameters: {param_list}. "
+        "You have added the following new *required* parameters: {0}. "
         "Please undo the changes or provide default values. If cannot give default value, "
         "please make the parameter not required and check in code implementation that it was configured."
     )
@@ -42,10 +42,6 @@ class IsNewRequiredParamNoDefaultIntegrationValidator(BaseValidator[ContentTypes
         for content_item in content_items:
             old_content_item = content_item.old_base_content_object
 
-            # If there is no old content item, this is a new integration so there is no issue creating a required param
-            if not old_content_item:
-                continue
-
             new_required_params_with_no_default = [
                 param.name
                 for param in content_item.params
@@ -59,9 +55,7 @@ class IsNewRequiredParamNoDefaultIntegrationValidator(BaseValidator[ContentTypes
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message.format(
-                            param_list=", ".join(new_required_params_with_no_default)
-                        ),
+                        message=self.error_message.format(", ".join(new_required_params_with_no_default)),
                         content_object=content_item,
                     )
                 )

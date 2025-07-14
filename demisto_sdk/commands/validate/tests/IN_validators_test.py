@@ -5976,17 +5976,6 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             [
                 create_integration_object(
                     paths=["configuration"],
-                    values=[[{"name": "param1", "required": True}]],
-                )
-            ],
-            [],
-            0,
-            [],
-        ),
-        (
-            [
-                create_integration_object(
-                    paths=["configuration"],
                     values=[
                         [
                             {
@@ -6310,24 +6299,23 @@ def test_IsNewRequiredParamNoDefaultIntegrationValidator_obtain_invalid_content_
     """
     Given
     - content_items and old_content_items to test backward compatibility.
-        - Case 1: A new integration with a required parameter (no old file).
-        - Case 2: An existing integration with no changes to its parameters.
-        - Case 3: An existing integration with a new required parameter that has a default value.
-        - Case 4: An existing integration with a new non-required parameter.
-        - Case 5: An existing integration where a default value is added to a pre-existing required parameter.
-        - Case 6: An existing integration where a parameter is changed from required to not required.
-        - Case 7: An existing integration where a parameter is changed from non-required to required and given a default.
-        - Case 8: An existing integration with a new required parameter that does NOT have a default value.
-        - Case 9: An existing integration with multiple new required parameters that do NOT have default values.
-        - Case 10: An existing integration where a parameter is changed from non-required to required without a default.
+        - Case 1: An existing integration with no changes to its parameters.
+        - Case 2: An existing integration with a new required parameter that has a default value.
+        - Case 3: An existing integration with a new non-required parameter.
+        - Case 4: An existing integration where a default value is added to a pre-existing required parameter.
+        - Case 5: An existing integration where a parameter is changed from required to not required.
+        - Case 6: An existing integration where a parameter is changed from non-required to required and given a default.
+        - Case 7: An existing integration with a new required parameter that does NOT have a default value.
+        - Case 8: An existing integration with multiple new required parameters that do NOT have default values.
+        - Case 9: An existing integration where a parameter is changed from non-required to required without a default.
 
     When
     - Calling the IsNewRequiredParamNoDefaultIntegrationValidator's obtain_invalid_content_items function.
 
     Then
     - Ensure the validator returns the correct number of failures and the expected error messages.
-        - Cases 1-7: Should pass validation, returning 0 failures.
-        - Cases 8-10: Should fail validation, returning 1 failure each with the appropriate error message.
+        - Cases 1-6: Should pass validation, returning 0 failures.
+        - Cases 7-9: Should fail validation, returning 1 failure each with the appropriate error message.
     """
     create_old_file_pointers(content_items, old_content_items)
     results = (

@@ -6327,6 +6327,7 @@ def test_IsNewRequiredParamNoDefaultIntegrationValidator_obtain_invalid_content_
     actual_messages = [result.message for result in results]
     assert actual_messages == expected_msgs
 
+
 def test_IsNewRequiredParamNoDefaultIntegrationValidator_no_old_content():
     """
     Given:

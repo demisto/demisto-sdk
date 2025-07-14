@@ -55,7 +55,9 @@ class IsNewRequiredParamNoDefaultIntegrationValidator(BaseValidator[ContentTypes
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message.format(", ".join(new_required_params_with_no_default)),
+                        message=self.error_message.format(
+                            ", ".join(new_required_params_with_no_default)
+                        ),
                         content_object=content_item,
                     )
                 )

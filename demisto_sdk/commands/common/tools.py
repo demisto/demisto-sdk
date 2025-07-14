@@ -29,8 +29,8 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Generator,
     Iterable,
+    Iterator,
     List,
     Match,
     Optional,
@@ -3404,7 +3404,7 @@ def get_pack_dir(path):
 
 
 @contextmanager
-def ProcessPoolHandler() -> Generator[ProcessPool, None, None]:
+def ProcessPoolHandler() -> Iterator[ProcessPool]:
     """Process pool Handler which terminate all processes in case of Exception.
 
     Yields:

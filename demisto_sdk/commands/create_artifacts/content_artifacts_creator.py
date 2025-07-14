@@ -5,7 +5,7 @@ import time
 from concurrent.futures import as_completed
 from contextlib import contextmanager
 from shutil import make_archive, rmtree
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, Iterator, List, Optional, Union
 
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
@@ -252,7 +252,7 @@ class ArtifactsManager:
                 )
 
     def create_content_artifacts(self) -> int:
-        with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
+        with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:  # type: ignore[var-annotated]
             futures: List[ProcessFuture] = []
             # content/Packs
             futures.extend(dump_packs(self, pool))
@@ -674,7 +674,7 @@ class ContentItemsHandler:
 
 
 @contextmanager
-def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
+def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> Iterator[ProcessPool]:
     """Process pool Handler which terminate all processes in case of Exception.
 
     Args:

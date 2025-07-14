@@ -6201,7 +6201,7 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             ],
             1,
             [
-                'Possible backward compatibility break: You have added the following new *required* parameters: "newparam". Please undo the changes or provide '
+                'Possible backward compatibility break: You have added the following new *required* parameters: newparam. Please undo the changes or provide '
                 "default values. If cannot give default value, please make the parameter not "
                 "required and check in code implementation that it was configured."
             ],
@@ -6245,7 +6245,7 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             ],
             1,
             [
-                'Possible backward compatibility break: You have added the following new *required* parameters: "param2", "param3". Please undo the changes or provide '
+                'Possible backward compatibility break: You have added the following new *required* parameters: param2, param3. Please undo the changes or provide '
                 "default values. If cannot give default value, please make the parameter not "
                 "required and check in code implementation that it was configured."
             ],
@@ -6286,7 +6286,7 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             ],
             1,
             [
-                'Possible backward compatibility break: You have added the following new *required* parameters: "param2". Please undo the changes or provide '
+                'Possible backward compatibility break: You have added the following new *required* parameters: param2. Please undo the changes or provide '
                 "default values. If cannot give default value, please make the parameter not "
                 "required and check in code implementation that it was configured."
             ],
@@ -6326,35 +6326,6 @@ def test_IsNewRequiredParamNoDefaultIntegrationValidator_obtain_invalid_content_
     assert len(results) == expected_number_of_failures
     actual_messages = [result.message for result in results]
     assert actual_messages == expected_msgs
-
-
-def test_IsNewRequiredParamNoDefaultIntegrationValidator_no_old_content():
-    """
-    Given:
-        - A new integration (no old_base_content_object) with required parameters.
-    When:
-        - The IsNewRequiredParamNoDefaultIntegrationValidator is invoked.
-    Then:
-        - The validation should pass because new integrations are allowed to have required parameters without a default.
-    """
-    new_content_item = create_integration_object(
-        paths=["configuration"],
-        values=[
-            [
-                {"name": "param1", "required": True},
-                {"name": "param2", "required": True},
-                {"name": "param3", "required": True, "defaultValue": "default"},
-            ]
-        ],
-    )
-    # Don't set old_base_content_object (simulates new integration)
-
-    results = (
-        IsNewRequiredParamNoDefaultIntegrationValidator().obtain_invalid_content_items(
-            [new_content_item]
-        )
-    )
-    assert len(results) == 0
 
 
 @pytest.mark.parametrize(

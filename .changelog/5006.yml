@@ -1,0 +1,4 @@
+changes:
+- description: When making an existing/new param required without a default in an existing integration, users cannot update their existing instances in the marketplace. This validator ensures that such a param will not be allowed to be configured.
+  type: internal
+pr_number: 5006

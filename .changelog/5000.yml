@@ -1,0 +1,4 @@
+changes:
+- description: Remove redundant SupportedModulesValues ENUM and import the existing one.
+  type: fix
+pr_number: 5000

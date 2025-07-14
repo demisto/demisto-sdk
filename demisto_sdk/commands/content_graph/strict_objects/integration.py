@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Annotated, Any, List, Optional
 
 from pydantic import Field, conlist, validator
 
@@ -6,6 +6,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
     TYPE_PYTHON3,
     MarketplaceVersions,
+    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
@@ -37,6 +38,14 @@ IS_FETCH_EVENTS_DYNAMIC_MODEL = create_dynamic_model(
     type_=Optional[bool],
     default=None,
 )
+
+
+class SectionOrderValues(StrEnum):
+    CONNECT = "Connect"
+    COLLECT = "Collect"
+    OPTIMIZE = "Optimize"
+    MIRRORING = "Mirroring"
+    RESULT = "Result"
 
 
 class _Configuration(BaseStrictModel):
@@ -87,6 +96,9 @@ class _Command(BaseStrictModel):
     prettyname: Optional[str] = None
     quickaction: Optional[bool] = None
     compliantpolicies: Optional[List[str]] = None
+    supportedModules: Optional[
+        Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
+    ]
 
 
 Command = create_model(
@@ -169,14 +181,6 @@ class Trigger(BaseStrictModel):
     effects: List[TriggerEffect]
 
 
-class SectionOrderValues(StrEnum):
-    CONNECT = "Connect"
-    COLLECT = "Collect"
-    OPTIMIZE = "Optimize"
-    MIRRORING = "Mirroring"
-    RESULT = "Result"
-
-
 class _StrictIntegration(BaseStrictModel):
     common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")  # type:ignore[valid-type]
     display: str
@@ -206,6 +210,9 @@ class _StrictIntegration(BaseStrictModel):
         False, alias="isCloudProviderIntegration"
     )
     triggers: Optional[List[Trigger]] = None
+    supportedModules: Optional[
+        Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
+    ]
 
     def __init__(self, **data):
         """

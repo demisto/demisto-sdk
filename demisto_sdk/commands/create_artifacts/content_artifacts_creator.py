@@ -258,11 +258,32 @@ class ArtifactsManager:
             futures.extend(dump_packs(self, pool))
             # content/TestPlaybooks
             if not self.remove_test_playbooks:
-                futures.append(pool.schedule(dump_tests_conditionally, args=(self,)))
+                futures.append(
+                    pool.schedule(
+                        dump_tests_conditionally,
+                        args=[
+                            self,
+                        ],
+                    )
+                )
             # content/content-descriptor.json
-            futures.append(pool.schedule(dump_content_descriptor, args=(self,)))
+            futures.append(
+                pool.schedule(
+                    dump_content_descriptor,
+                    args=[
+                        self,
+                    ],
+                )
+            )
             # content/Documentation/doc-*.json
-            futures.append(pool.schedule(dump_content_documentations, args=(self,)))
+            futures.append(
+                pool.schedule(
+                    dump_content_documentations,
+                    args=[
+                        self,
+                    ],
+                )
+            )
             # Wait for all futures to be finished
             wait_futures_complete(futures, self)
             # Add suffix
@@ -1725,7 +1746,7 @@ def zip_dirs(artifact_manager: ArtifactsManager):
                 artifact_manager.content_packs_path,
                 artifact_manager.content_all_path,
             ]:
-                pool.schedule(make_archive, args=(artifact_dir, "zip", artifact_dir))
+                pool.schedule(make_archive, args=[artifact_dir, "zip", artifact_dir])
 
 
 def zip_packs(artifact_manager: ArtifactsManager):
@@ -1743,7 +1764,7 @@ def zip_packs(artifact_manager: ArtifactsManager):
                 artifact_manager.content_uploadable_zips_path, pack.id
             )
 
-            pool.schedule(make_archive, args=(zip_path, "zip", dumped_pack_dir))
+            pool.schedule(make_archive, args=[zip_path, "zip", dumped_pack_dir])
 
 
 def report_artifacts_paths(artifact_manager: ArtifactsManager):
@@ -1789,10 +1810,10 @@ def sign_packs(artifact_manager: ArtifactsManager):
                     futures.append(
                         pool.schedule(
                             pack.sign_pack,
-                            args=(
+                            args=[
                                 dumped_pack_dir,
                                 artifact_manager.signDirectory,
-                            ),
+                            ],
                         )
                     )
             else:
@@ -1805,10 +1826,10 @@ def sign_packs(artifact_manager: ArtifactsManager):
                         futures.append(
                             pool.schedule(
                                 pack.sign_pack,
-                                args=(
+                                args=[
                                     dumped_pack_dir,
                                     artifact_manager.signDirectory,
-                                ),
+                                ],
                             )
                         )
 

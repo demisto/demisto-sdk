@@ -1,4 +1,4 @@
 changes:
-- description: Added the IN164 validation. The validation ensures that <complete>
+- description: Added the IN164 validation. The validation ensures that a required param in an existing integration has a default value.
   type: internal
 pr_number: 5006

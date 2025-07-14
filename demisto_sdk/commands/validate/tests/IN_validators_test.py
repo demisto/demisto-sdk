@@ -5972,7 +5972,6 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
 @pytest.mark.parametrize(
     "content_items, old_content_items, expected_number_of_failures, expected_msgs",
     [
-        # Case 1: Valid - new integration with required params (should pass)
         (
             [
                 create_integration_object(
@@ -5980,11 +5979,10 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
                     values=[[{"name": "param1", "required": True}]],
                 )
             ],
-            [],  # No old content (new integration)
+            [],
             0,
             [],
         ),
-        # Case 2: Valid - existing integration with no changes
         (
             [
                 create_integration_object(
@@ -6017,7 +6015,6 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             0,
             [],
         ),
-        # Case 3: Valid - new required param with default value (should pass)
         (
             [
                 create_integration_object(
@@ -6055,7 +6052,6 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             0,
             [],
         ),
-        # Case 4: Valid - new non-required param no default (should pass)
         (
             [
                 create_integration_object(
@@ -6089,7 +6085,6 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             0,
             [],
         ),
-        # Case 5: Valid - parameter was already required, added a default (should pass)
         (
             [
                 create_integration_object(
@@ -6120,7 +6115,6 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             0,
             [],
         ),
-        # Case 6: Valid - parameter is now not required (should pass)
         (
             [
                 create_integration_object(
@@ -6145,7 +6139,6 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             0,
             [],
         ),
-        # Case 7: Valid - changed from non-required to required with default
         (
             [
                 create_integration_object(
@@ -6184,7 +6177,6 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
             0,
             [],
         ),
-        # Case 8: Invalid - new required param without default (should fail)
         (
             [
                 create_integration_object(
@@ -6199,7 +6191,7 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
                             {
                                 "name": "newparam",
                                 "required": True,
-                            },  # New required param without default
+                            },
                         ]
                     ],
                 )
@@ -6225,7 +6217,6 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
                 "required and check in code implementation that it was configured."
             ],
         ),
-        # Case 9: Invalid - multiple new required params without defaults
         (
             [
                 create_integration_object(
@@ -6240,11 +6231,11 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
                             {
                                 "name": "param2",
                                 "required": True,
-                            },  # New required param without default
+                            },
                             {
                                 "name": "param3",
                                 "required": True,
-                            },  # Another new required param without default
+                            },
                         ]
                     ],
                 )
@@ -6270,7 +6261,6 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
                 "required and check in code implementation that it was configured."
             ],
         ),
-        # Case 10: Invalid - changed from non-required to required without default
         (
             [
                 create_integration_object(
@@ -6285,7 +6275,7 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
                             {
                                 "name": "param2",
                                 "required": True,
-                            },  # Changed from false to true with no default
+                            },
                         ]
                     ],
                 )
@@ -6319,14 +6309,25 @@ def test_IsNewRequiredParamNoDefaultIntegrationValidator_obtain_invalid_content_
 ):
     """
     Given
-    content_items and old_content_items iterables.
+    - content_items and old_content_items to test backward compatibility.
+        - Case 1: A new integration with a required parameter (no old file).
+        - Case 2: An existing integration with no changes to its parameters.
+        - Case 3: An existing integration with a new required parameter that has a default value.
+        - Case 4: An existing integration with a new non-required parameter.
+        - Case 5: An existing integration where a default value is added to a pre-existing required parameter.
+        - Case 6: An existing integration where a parameter is changed from required to not required.
+        - Case 7: An existing integration where a parameter is changed from non-required to required and given a default.
+        - Case 8: An existing integration with a new required parameter that does NOT have a default value.
+        - Case 9: An existing integration with multiple new required parameters that do NOT have default values.
+        - Case 10: An existing integration where a parameter is changed from non-required to required without a default.
 
     When
-    - Calling the IsNewRequiredParamNoDefaultIntegrationValidator obtain_invalid_content_items function.
+    - Calling the IsNewRequiredParamNoDefaultIntegrationValidator's obtain_invalid_content_items function.
+
     Then
-        - Make sure the right amount of failures return and that the right message is returned.
-        - Cases 1-7: Should pass validation
-        - Cases 8-10: Should fail validation with appropriate error messages
+    - Ensure the validator returns the correct number of failures and the expected error messages.
+        - Cases 1-7: Should pass validation, returning 0 failures.
+        - Cases 8-10: Should fail validation, returning 1 failure each with the appropriate error message.
     """
     create_old_file_pointers(content_items, old_content_items)
     results = (
@@ -6337,7 +6338,6 @@ def test_IsNewRequiredParamNoDefaultIntegrationValidator_obtain_invalid_content_
     assert len(results) == expected_number_of_failures
     actual_messages = [result.message for result in results]
     assert actual_messages == expected_msgs
-
 
 def test_IsNewRequiredParamNoDefaultIntegrationValidator_no_old_content():
     """

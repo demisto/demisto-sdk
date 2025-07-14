@@ -60,9 +60,7 @@ class IsNewRequiredParamNoDefaultIntegrationValidator(BaseValidator[ContentTypes
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
-                            param_list=", ".join(
-                                f'"{p}"' for p in new_required_params_with_no_default
-                            )
+                            param_list=", ".join(new_required_params_with_no_default)
                         ),
                         content_object=content_item,
                     )

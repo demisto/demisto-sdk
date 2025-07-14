@@ -1746,7 +1746,7 @@ def zip_dirs(artifact_manager: ArtifactsManager):
                 artifact_manager.content_packs_path,
                 artifact_manager.content_all_path,
             ]:
-                pool.schedule(make_archive, args=[artifact_dir, "zip", artifact_dir])
+                pool.schedule(make_archive, args=[artifact_dir, "zip", artifact_dir])  # type: ignore[attr-defined]
 
 
 def zip_packs(artifact_manager: ArtifactsManager):
@@ -1764,7 +1764,7 @@ def zip_packs(artifact_manager: ArtifactsManager):
                 artifact_manager.content_uploadable_zips_path, pack.id
             )
 
-            pool.schedule(make_archive, args=[zip_path, "zip", dumped_pack_dir])
+            pool.schedule(make_archive, args=[zip_path, "zip", dumped_pack_dir])  # type: ignore[attr-defined]
 
 
 def report_artifacts_paths(artifact_manager: ArtifactsManager):
@@ -1814,7 +1814,7 @@ def sign_packs(artifact_manager: ArtifactsManager):
                                 dumped_pack_dir,
                                 artifact_manager.signDirectory,
                             ],
-                        )
+                        )  # type: ignore[attr-defined]
                     )
             else:
                 for pack_name in artifact_manager.pack_names:
@@ -1830,7 +1830,7 @@ def sign_packs(artifact_manager: ArtifactsManager):
                                     dumped_pack_dir,
                                     artifact_manager.signDirectory,
                                 ],
-                            )
+                            )  # type: ignore[attr-defined]
                         )
 
         wait_futures_complete(futures, artifact_manager)

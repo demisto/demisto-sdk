@@ -3166,7 +3166,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
                 pool.schedule(
                     calculate_single_pack_dependencies,
                     args=[pack, dependency_graph],
-                )
+                )  # type: ignore[attr-defined]
             )
         wait_futures_complete(futures=futures, done_fn=add_pack_metadata_results)
         logger.info(
@@ -3237,8 +3237,8 @@ def get_packs_dependent_on_given_packs(
             futures.append(
                 pool.schedule(
                     calculate_single_pack_depends_on,
-                    args=(str(pack), reverse_dependency_graph),
-                )
+                    args=[str(pack), reverse_dependency_graph],
+                )  # type: ignore[attr-defined]
             )
         wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
         # finished iteration over pack folders

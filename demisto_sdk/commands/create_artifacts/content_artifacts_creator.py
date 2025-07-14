@@ -663,6 +663,7 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
         ProcessPool: Pebble process pool.
     """
     global logger
+    pool: ProcessPool
     with ProcessPool(max_workers=artifact_manager.cpus, initializer=child_mute) as pool:
         try:
             yield pool
@@ -930,7 +931,7 @@ def dump_packs(
     if "all" in artifact_manager.pack_names:
         for pack_name, pack in artifact_manager.packs.items():
             if pack_name not in IGNORED_PACKS:
-                futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack)))
+                futures.append(pool.schedule(dump_pack, args=[artifact_manager, pack]))
 
     else:
         for pack_name in artifact_manager.pack_names:
@@ -938,7 +939,7 @@ def dump_packs(
                 futures.append(
                     pool.schedule(
                         dump_pack,
-                        args=(artifact_manager, artifact_manager.packs[pack_name]),
+                        args=[artifact_manager, artifact_manager.packs[pack_name]],
                     )
                 )
 
@@ -1716,6 +1717,7 @@ def zip_dirs(artifact_manager: ArtifactsManager):
             artifact_manager.content_packs_path,
         )
     else:
+        pool: ProcessPool
         with ProcessPoolHandler(artifact_manager) as pool:
             for artifact_dir in [
                 artifact_manager.content_test_path,
@@ -1728,6 +1730,7 @@ def zip_dirs(artifact_manager: ArtifactsManager):
 
 def zip_packs(artifact_manager: ArtifactsManager):
     """Zip packs directories"""
+    pool: ProcessPool
     with ProcessPoolHandler(artifact_manager) as pool:
         for pack_name, pack in artifact_manager.packs.items():
             if (
@@ -1772,6 +1775,7 @@ def sign_packs(artifact_manager: ArtifactsManager):
     global logger
 
     if artifact_manager.signDirectory and artifact_manager.signature_key:
+        pool: ProcessPool
         with ProcessPoolHandler(artifact_manager) as pool:
             with open("keyfile", "wb") as keyfile:
                 keyfile.write(artifact_manager.signature_key.encode())

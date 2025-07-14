@@ -818,7 +818,7 @@ def safe_read_unicode(bytes_data: bytes) -> str:
             logger.debug(
                 "Could not read data using UTF-8 encoding. Trying to auto-detect encoding..."
             )
-            return UnicodeDammit(bytes_data).unicode_markup
+            return UnicodeDammit(bytes_data).unicode_markup or ""
 
         except UnicodeDecodeError:
             logger.error("Could not auto-detect encoding.")

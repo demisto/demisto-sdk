@@ -4,7 +4,7 @@ from functools import lru_cache
 from typing import Optional, Tuple, Union
 
 import requests
-from dateparser import parse
+from dateparser import parse as parse_date
 from packaging.version import parse as parse_version
 
 from demisto_sdk.commands.common.constants import (
@@ -160,7 +160,7 @@ class DockerImageValidator(BaseValidator):
         Returns:
             bool: True if the docker is more than 3 days old.
         """
-        three_days_ago: Optional[datetime] = parse("3 months ago")
+        three_days_ago: Optional[datetime] = parse_date("3 months ago")
         last_updated = self.get_docker_image_creation_date(
             self.docker_image_name, self.docker_image_tag
         )

@@ -5,7 +5,7 @@ import time
 from concurrent.futures import as_completed
 from contextlib import contextmanager
 from shutil import make_archive, rmtree
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, Iterator, List, Optional, Union
 
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
@@ -252,17 +252,38 @@ class ArtifactsManager:
                 )
 
     def create_content_artifacts(self) -> int:
-        with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
+        with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:  # type: ignore[var-annotated]
             futures: List[ProcessFuture] = []
             # content/Packs
             futures.extend(dump_packs(self, pool))
             # content/TestPlaybooks
             if not self.remove_test_playbooks:
-                futures.append(pool.schedule(dump_tests_conditionally, args=(self,)))
+                futures.append(
+                    pool.schedule(
+                        dump_tests_conditionally,
+                        args=[
+                            self,
+                        ],
+                    )
+                )
             # content/content-descriptor.json
-            futures.append(pool.schedule(dump_content_descriptor, args=(self,)))
+            futures.append(
+                pool.schedule(
+                    dump_content_descriptor,
+                    args=[
+                        self,
+                    ],
+                )
+            )
             # content/Documentation/doc-*.json
-            futures.append(pool.schedule(dump_content_documentations, args=(self,)))
+            futures.append(
+                pool.schedule(
+                    dump_content_documentations,
+                    args=[
+                        self,
+                    ],
+                )
+            )
             # Wait for all futures to be finished
             wait_futures_complete(futures, self)
             # Add suffix
@@ -653,7 +674,7 @@ class ContentItemsHandler:
 
 
 @contextmanager
-def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
+def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> Iterator[ProcessPool]:
     """Process pool Handler which terminate all processes in case of Exception.
 
     Args:
@@ -663,6 +684,7 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
         ProcessPool: Pebble process pool.
     """
     global logger
+    pool: ProcessPool
     with ProcessPool(max_workers=artifact_manager.cpus, initializer=child_mute) as pool:
         try:
             yield pool
@@ -930,7 +952,7 @@ def dump_packs(
     if "all" in artifact_manager.pack_names:
         for pack_name, pack in artifact_manager.packs.items():
             if pack_name not in IGNORED_PACKS:
-                futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack)))
+                futures.append(pool.schedule(dump_pack, args=[artifact_manager, pack]))
 
     else:
         for pack_name in artifact_manager.pack_names:
@@ -938,7 +960,7 @@ def dump_packs(
                 futures.append(
                     pool.schedule(
                         dump_pack,
-                        args=(artifact_manager, artifact_manager.packs[pack_name]),
+                        args=[artifact_manager, artifact_manager.packs[pack_name]],
                     )
                 )
 
@@ -1716,6 +1738,7 @@ def zip_dirs(artifact_manager: ArtifactsManager):
             artifact_manager.content_packs_path,
         )
     else:
+        pool: ProcessPool
         with ProcessPoolHandler(artifact_manager) as pool:
             for artifact_dir in [
                 artifact_manager.content_test_path,
@@ -1723,11 +1746,12 @@ def zip_dirs(artifact_manager: ArtifactsManager):
                 artifact_manager.content_packs_path,
                 artifact_manager.content_all_path,
             ]:
-                pool.schedule(make_archive, args=(artifact_dir, "zip", artifact_dir))
+                pool.schedule(make_archive, args=[artifact_dir, "zip", artifact_dir])  # type: ignore[attr-defined]
 
 
 def zip_packs(artifact_manager: ArtifactsManager):
     """Zip packs directories"""
+    pool: ProcessPool
     with ProcessPoolHandler(artifact_manager) as pool:
         for pack_name, pack in artifact_manager.packs.items():
             if (
@@ -1740,7 +1764,7 @@ def zip_packs(artifact_manager: ArtifactsManager):
                 artifact_manager.content_uploadable_zips_path, pack.id
             )
 
-            pool.schedule(make_archive, args=(zip_path, "zip", dumped_pack_dir))
+            pool.schedule(make_archive, args=[zip_path, "zip", dumped_pack_dir])  # type: ignore[attr-defined]
 
 
 def report_artifacts_paths(artifact_manager: ArtifactsManager):
@@ -1772,6 +1796,7 @@ def sign_packs(artifact_manager: ArtifactsManager):
     global logger
 
     if artifact_manager.signDirectory and artifact_manager.signature_key:
+        pool: ProcessPool
         with ProcessPoolHandler(artifact_manager) as pool:
             with open("keyfile", "wb") as keyfile:
                 keyfile.write(artifact_manager.signature_key.encode())
@@ -1785,11 +1810,11 @@ def sign_packs(artifact_manager: ArtifactsManager):
                     futures.append(
                         pool.schedule(
                             pack.sign_pack,
-                            args=(
+                            args=[
                                 dumped_pack_dir,
                                 artifact_manager.signDirectory,
-                            ),
-                        )
+                            ],
+                        )  # type: ignore[attr-defined]
                     )
             else:
                 for pack_name in artifact_manager.pack_names:
@@ -1801,11 +1826,11 @@ def sign_packs(artifact_manager: ArtifactsManager):
                         futures.append(
                             pool.schedule(
                                 pack.sign_pack,
-                                args=(
+                                args=[
                                     dumped_pack_dir,
                                     artifact_manager.signDirectory,
-                                ),
-                            )
+                                ],
+                            )  # type: ignore[attr-defined]
                         )
 
         wait_futures_complete(futures, artifact_manager)

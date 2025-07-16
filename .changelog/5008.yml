@@ -1,0 +1,4 @@
+changes:
+- description: Fix handling of playbook in gr110
+  type: fix
+pr_number: 5008

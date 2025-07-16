@@ -896,7 +896,6 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None, 
     marketplaces = get_item_marketplaces(
         file_path, item_data=data_dictionary, packs=packs
     )
-    logger.info(f"{file_path=}, {llm_script=}, {marketplaces=}")
     if "Packs" in file_path and not file_path.startswith("Packs"):
         file_path = file_path[file_path.index("Packs") :]
 

@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.base_script import BaseScriptParser
 from demisto_sdk.commands.content_graph.strict_objects.script import StrictScript
@@ -22,10 +23,11 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
             is_test_script=False,
             git_sha=git_sha,
         )
-        self.model: str = self.yml_data.get("model", False)
-        self.user_prompt: str = self.yml_data.get("userprompt", "")
-        self.system_prompt: str = self.yml_data.get("systemprompt", "")
+        self.model: Optional[str] = self.yml_data.get("model", "")
+        self.user_prompt: Optional[str] = self.yml_data.get("userprompt", "")
+        self.system_prompt: Optional[str] = self.yml_data.get("systemprompt", "")
         self.few_shots: Optional[str] = self.yml_data.get("fewshots", "")
+        logger.info("i am in tals sdk")
 
     @property
     def strict_object(self):

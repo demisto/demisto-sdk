@@ -473,27 +473,27 @@ class DockerBase:
         self.requirements.write_text(
             "\n".join(install_packages) if install_packages else ""
         )
-        logger.debug(f"Trying to pull image {base_image}")
+        logger.info(f"Trying to pull image {base_image}")
         self.pull_image(base_image)
-        container = self.create_container(
-            image=base_image,
-            command="/bin/sh",  # Do not run install.sh yet
-            files_to_push=self.installation_files(container_type),
-        )
         # container = self.create_container(
         #     image=base_image,
+        #     command="/bin/sh",  # Do not run install.sh yet
         #     files_to_push=self.installation_files(container_type),
-        #     command="/install.sh",
         # )
+        container = self.create_container(
+            image=base_image,
+            files_to_push=self.installation_files(container_type),
+            command="/install.sh",
+        )
         container.start()
-        chmod_result = container.exec_run("chmod +x /install.sh")
-        if chmod_result.exit_code != 0:
-            raise RuntimeError(f"chmod failed: {chmod_result.output.decode()}")
+        # chmod_result = container.exec_run("chmod +x /install.sh")
+        # if chmod_result.exit_code != 0:
+        #     raise RuntimeError(f"chmod failed: {chmod_result.output.decode()}")
 
-        # Step 4: Run /install.sh
-        install_result = container.exec_run("/install.sh")
-        if install_result.exit_code != 0:
-            raise RuntimeError(f"/install.sh failed: {install_result.output.decode()}")
+        # # Step 4: Run /install.sh
+        # install_result = container.exec_run("/install.sh")
+        # if install_result.exit_code != 0:
+        #     raise RuntimeError(f"/install.sh failed: {install_result.output.decode()}")
         if container.wait().get("StatusCode") != 0:
             container_logs = container.logs()
             raise docker.errors.BuildError(

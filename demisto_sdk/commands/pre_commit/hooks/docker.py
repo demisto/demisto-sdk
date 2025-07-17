@@ -194,6 +194,7 @@ def devtest_image(
 
     """
     docker_base = get_docker()
+    logger.info(f"{is_powershell=}")
     image, errors = docker_base.get_or_create_test_image(
         base_image=image_tag,
         container_type=TYPE_PWSH if is_powershell else TYPE_PYTHON,

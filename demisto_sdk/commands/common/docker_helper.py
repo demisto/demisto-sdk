@@ -379,7 +379,7 @@ class DockerBase:
         try:
             container: docker.models.containers.Container = (
                 docker_client.containers.create(
-                    image=image, command=command, environment=environment, **kwargs
+                    image=image, command=command, environment=environment, user="root", **kwargs
                 )
             )
         except (
@@ -475,11 +475,13 @@ class DockerBase:
         )
         logger.info(f"Trying to pull image {base_image}")
         self.pull_image(base_image)
+        logger.info(f"finished pulling {base_image}")
         # container = self.create_container(
         #     image=base_image,
         #     command="/bin/sh",  # Do not run install.sh yet
         #     files_to_push=self.installation_files(container_type),
         # )
+        logger.info(f"files = {self.installation_files(container_type)}")
         container = self.create_container(
             image=base_image,
             files_to_push=self.installation_files(container_type),
@@ -579,7 +581,7 @@ class DockerBase:
         test_docker_image = self.get_image_registry(test_docker_image)
 
         try:
-            logger.debug(
+            logger.info(
                 f"{log_prompt} - Trying to pull existing image {test_docker_image}"
             )
             self.pull_image(test_docker_image)

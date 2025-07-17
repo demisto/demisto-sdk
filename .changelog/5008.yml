@@ -1,4 +1,4 @@
 changes:
-- description: Fix handling of playbook in gr110
-  type: fix
+- description: Fix handling of playbooks in GR110 validation.
+  type: internal
 pr_number: 5008

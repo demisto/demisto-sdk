@@ -281,6 +281,7 @@ def does_dict_have_alternative_key(data: dict) -> bool:
 
     return False
 
+
 def should_skip_code_isllm_scripts(file_path: str) -> tuple[bool, str]:
     _, yml_path = get_yml_paths_in_dir(str(file_path))
     if not yml_path:
@@ -289,6 +290,7 @@ def should_skip_code_isllm_scripts(file_path: str) -> tuple[bool, str]:
             "Is this really a package dir?"
         )
     return str2bool(get_yaml(yml_path, keep_order=False).get("isllm", False)), yml_path
+
 
 def should_skip_item_by_mp(
     file_path: str,
@@ -861,7 +863,9 @@ def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
     return {id_: playbook_data}
 
 
-def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None, llm_script: bool = False):
+def get_script_data(
+    file_path, script_code=None, packs: Dict[str, Dict] = None, llm_script: bool = False
+):
     data_dictionary = get_yaml(file_path)
     depends_on = None
     command_to_integration = None
@@ -874,7 +878,9 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None, 
             list(
                 set(
                     re.findall(
-                        r"execute_?command\(['\"](\w+)['\"].*", script_code, re.IGNORECASE
+                        r"execute_?command\(['\"](\w+)['\"].*",
+                        script_code,
+                        re.IGNORECASE,
                     )
                 )
             )
@@ -1871,7 +1877,11 @@ def process_script(
                 return [], excluded_items_from_id_set
             if print_logs:
                 logger.info(f"adding {file_path} to id_set")
-            res.append(get_script_data(yml_path, script_code=code, packs=packs, llm_script=llm_script))
+            res.append(
+                get_script_data(
+                    yml_path, script_code=code, packs=packs, llm_script=llm_script
+                )
+            )
     except Exception as exp:
         logger.info(f"<red>failed to process {file_path}, Error: {str(exp)}</red>")
         raise

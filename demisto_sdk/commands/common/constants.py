@@ -2153,9 +2153,17 @@ MARKETPLACE_TAG_MAPPING = {
     MarketplaceVersions.PLATFORM.value: ["PLATFORM", "XSIAM"],
     MarketplaceVersions.MarketplaceV2.value: ["XSIAM", "XSIAM_ONLY"],
     MarketplaceVersions.XPANSE.value: ["XPANSE"],
-    MarketplaceVersions.XSOAR.value: ["XSOAR", "XSOAR_ON_PREM"], # If uploading to XSOAR, keep XSOAR and XSOAR_ON_PREM tags
-    MarketplaceVersions.XSOAR_SAAS.value: ["XSOAR_SAAS", "XSOAR"], # If uploading to XSOAR_SAAS, keep XSOAR_SAAS and XSOAR tags
-    MarketplaceVersions.XSOAR_ON_PREM.value: ["XSOAR_ON_PREM"], # If uploading to XSOAR_ON_PREM, keep XSOAR_ON_PREM tags
+    MarketplaceVersions.XSOAR.value: [
+        "XSOAR",
+        "XSOAR_ON_PREM",
+    ],  # If uploading to XSOAR, keep XSOAR and XSOAR_ON_PREM tags
+    MarketplaceVersions.XSOAR_SAAS.value: [
+        "XSOAR_SAAS",
+        "XSOAR",
+    ],  # If uploading to XSOAR_SAAS, keep XSOAR_SAAS and XSOAR tags
+    MarketplaceVersions.XSOAR_ON_PREM.value: [
+        "XSOAR_ON_PREM"
+    ],  # If uploading to XSOAR_ON_PREM, keep XSOAR_ON_PREM tags
 }
 
 VALID_MARKETPLACE_TAGS = {

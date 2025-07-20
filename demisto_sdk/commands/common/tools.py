@@ -185,7 +185,9 @@ class MarketplaceTagParser:
         Returns:
             (str) The release notes entry string after filtering.
         """
-        regex_for_any_tag_block = rf"<~({MARKETPLACE_LIST_PATTERN})>({TAG_CONTENT_PATTERN})</~\1>"
+        regex_for_any_tag_block = (
+            rf"<~({MARKETPLACE_LIST_PATTERN})>({TAG_CONTENT_PATTERN})</~\1>"
+        )
 
         def filter_callback(match: re.Match) -> str:
             """
@@ -195,11 +197,15 @@ class MarketplaceTagParser:
             marketplaces_in_tag_str = match.group(1)
             content = match.group(2)
 
-            marketplaces_in_tag = {mp.strip() for mp in marketplaces_in_tag_str.split(',')}
+            marketplaces_in_tag = {
+                mp.strip() for mp in marketplaces_in_tag_str.split(",")
+            }
             relevant_tags_for_upload = MARKETPLACE_TAG_MAPPING[self.marketplace]
 
             if any(tag not in VALID_MARKETPLACE_TAGS for tag in marketplaces_in_tag):
-                return match.group(0) # Leaving block untouched due to invalid marketplace tags
+                return match.group(
+                    0
+                )  # Leaving block untouched due to invalid marketplace tags
 
             if any(tag in marketplaces_in_tag for tag in relevant_tags_for_upload):
                 return content
@@ -208,7 +214,6 @@ class MarketplaceTagParser:
 
         filtered_rn = re.sub(regex_for_any_tag_block, filter_callback, text)
         return filtered_rn
-
 
 
 MARKETPLACE_TAG_PARSER = None

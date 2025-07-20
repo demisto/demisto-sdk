@@ -2399,7 +2399,6 @@ class TestMarketplaceTagParser:
 
         assert actual == res
 
-
     @pytest.mark.parametrize(
         "upload_marketplace, expected_result",
         [
@@ -2412,7 +2411,7 @@ class TestMarketplaceTagParser:
                 "More text. "
                 "Content for XSOAR and XSIAM. "
                 "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
-                "End text."
+                "End text.",
             ),
             (
                 MarketplaceVersions.XSOAR.value,  # Uploading to XSOAR marketplace
@@ -2423,7 +2422,7 @@ class TestMarketplaceTagParser:
                 "XSOAR specific content. "
                 "XSOAR_ON_PREM specific content. "
                 "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
-                "End text."
+                "End text.",
             ),
             (
                 MarketplaceVersions.XPANSE.value,  # Uploading to XPANSE marketplace
@@ -2432,7 +2431,7 @@ class TestMarketplaceTagParser:
                 "More text. "
                 "PLATFORM and XPANSE only. "
                 "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
-                "End text."
+                "End text.",
             ),
             (
                 MarketplaceVersions.XSOAR_SAAS.value,  # Uploading to XSOAR_SAAS marketplace
@@ -2443,7 +2442,7 @@ class TestMarketplaceTagParser:
                 "XSOAR specific content. "
                 "XSOAR_SAAS specific content. "
                 "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
-                "End text."
+                "End text.",
             ),
             (
                 MarketplaceVersions.XSOAR_ON_PREM.value,  # Uploading to XSOAR_ON_PREM marketplace
@@ -2452,7 +2451,7 @@ class TestMarketplaceTagParser:
                 "More text. "
                 "XSOAR_ON_PREM specific content. "
                 "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
-                "End text."
+                "End text.",
             ),
             (
                 MarketplaceVersions.PLATFORM.value,  # Uploading to PLATFORM marketplace
@@ -2463,7 +2462,7 @@ class TestMarketplaceTagParser:
                 "PLATFORM and XPANSE only. "
                 "Content for XSOAR and XSIAM. "
                 "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
-                "End text."
+                "End text.",
             ),
         ],
     )
@@ -2484,7 +2483,6 @@ class TestMarketplaceTagParser:
         result = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
 
         assert result == expected_result
-
 
 
 @pytest.mark.parametrize(

@@ -1,7 +1,7 @@
 # Changelog
 ## 1.38.7 (2025-07-20)
 ### Feature
-* Add support for supportedModules field in integration, command, and argument. [#4996](https://github.com/demisto/demisto-sdk/pull/4996)
+* Added support for `supportedModules` field in integrations, commands, and command arguments. [#4996](https://github.com/demisto/demisto-sdk/pull/4996)
 * Added support for PLATFORM marketplace and multi-marketplace tags (e.g., <~XSIAM,PLATFORM>) in release notes. [#4982](https://github.com/demisto/demisto-sdk/pull/4982)
 
 ### Fix

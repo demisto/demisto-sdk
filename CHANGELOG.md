@@ -11,7 +11,7 @@
 * Fixed SupportedModulesValues to have agentix in the list. [#4996](https://github.com/demisto/demisto-sdk/pull/4996)
 
 ### Internal
-* Fix handling of playbooks in GR110 validation. [#5008](https://github.com/demisto/demisto-sdk/pull/5008)
+* Fixed handling of playbooks in *GR110* validation. [#5008](https://github.com/demisto/demisto-sdk/pull/5008)
 * Added the *IN164* validation. The validation ensures that a required param in an existing integration has a default value. [#5006](https://github.com/demisto/demisto-sdk/pull/5006)
 
 

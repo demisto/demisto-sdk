@@ -1,0 +1,4 @@
+changes:
+- description: Added support for PLATFORM marketplace and multi-marketplace tags (e.g., <~XSIAM,PLATFORM>) in release notes.
+  type: feature
+pr_number: 4982

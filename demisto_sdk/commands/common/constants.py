@@ -2150,30 +2150,35 @@ URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>https://[a-zA-Z_/\.0-9\- :%]*?)\)(
 
 HTML_IMAGE_LINK_REGEX = r'(<img.*?src\s*=\s*"(https://.*?)")'
 
-XSOAR_PREFIX_TAG = "<~XSOAR>\n"
-XSOAR_SUFFIX_TAG = "\n</~XSOAR>\n"
-XSOAR_INLINE_PREFIX_TAG = "<~XSOAR>"
-XSOAR_INLINE_SUFFIX_TAG = "</~XSOAR>"
+MARKETPLACE_LIST_PATTERN = r"[A-Z_]+(?:,[A-Z_]+)*"
+TAG_CONTENT_PATTERN = r"(?:.|\s)*?"
 
-XSOAR_SAAS_PREFIX_TAG = "<~XSOAR_SAAS>\n"
-XSOAR_SAAS_SUFFIX_TAG = "\n</~XSOAR_SAAS>\n"
-XSOAR_SAAS_INLINE_PREFIX_TAG = "<~XSOAR_SAAS>"
-XSOAR_SAAS_INLINE_SUFFIX_TAG = "</~XSOAR_SAAS>"
+MARKETPLACE_TAG_MAPPING = {
+    MarketplaceVersions.PLATFORM.value: ["PLATFORM", "XSIAM"],
+    MarketplaceVersions.MarketplaceV2.value: ["XSIAM", "XSIAM_ONLY"],
+    MarketplaceVersions.XPANSE.value: ["XPANSE"],
+    MarketplaceVersions.XSOAR.value: [
+        "XSOAR",
+        "XSOAR_ON_PREM",
+    ],  # If uploading to XSOAR, keep XSOAR and XSOAR_ON_PREM tags
+    MarketplaceVersions.XSOAR_SAAS.value: [
+        "XSOAR_SAAS",
+        "XSOAR",
+    ],  # If uploading to XSOAR_SAAS, keep XSOAR_SAAS and XSOAR tags
+    MarketplaceVersions.XSOAR_ON_PREM.value: [
+        "XSOAR_ON_PREM"
+    ],  # If uploading to XSOAR_ON_PREM, keep XSOAR_ON_PREM tags
+}
 
-XSOAR_ON_PREM_PREFIX_TAG = "<~XSOAR_ON_PREM>\n"
-XSOAR_ON_PREM_SUFFIX_TAG = "\n</~XSOAR_ON_PREM>\n"
-XSOAR_ON_PREM_INLINE_PREFIX_TAG = "<~XSOAR_ON_PREM>"
-XSOAR_ON_PREM_INLINE_SUFFIX_TAG = "</~XSOAR_ON_PREM>"
-
-XSIAM_PREFIX_TAG = "<~XSIAM>\n"
-XSIAM_SUFFIX_TAG = "\n</~XSIAM>\n"
-XSIAM_INLINE_PREFIX_TAG = "<~XSIAM>"
-XSIAM_INLINE_SUFFIX_TAG = "</~XSIAM>"
-
-XPANSE_PREFIX_TAG = "<~XPANSE>\n"
-XPANSE_SUFFIX_TAG = "\n</~XPANSE>\n"
-XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
-XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
+VALID_MARKETPLACE_TAGS = {
+    "XSOAR",
+    "XSOAR_SAAS",
+    "XSOAR_ON_PREM",
+    "XPANSE",
+    "XSIAM",
+    "XSIAM_ONLY",
+    "PLATFORM",
+}
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
 MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME = "markdown_relatve_path_images.json"

@@ -8,7 +8,7 @@
 * Fixed a syntax issue when printing feed parameters related errors. [#4995](https://github.com/demisto/demisto-sdk/pull/4995)
 * Addressed `pkg_resources` deprecation warning by migrating to `importlib.metadata`. [#5002](https://github.com/demisto/demisto-sdk/pull/5002)
 * Removed redundant `SupportedModulesValues` enum. [#5000](https://github.com/demisto/demisto-sdk/pull/5000)
-* Fixed SupportedModulesValues to have agentix in the list. [#4996](https://github.com/demisto/demisto-sdk/pull/4996)
+* Updated `SupportedModulesValues` to support agentix. [#4996](https://github.com/demisto/demisto-sdk/pull/4996)
 
 ### Internal
 * Fixed handling of playbooks in *GR110* validation. [#5008](https://github.com/demisto/demisto-sdk/pull/5008)

@@ -5,7 +5,7 @@
 * Added support for PLATFORM marketplace and multi-marketplace tags (e.g., <~XSIAM,PLATFORM>) in release notes. [#4982](https://github.com/demisto/demisto-sdk/pull/4982)
 
 ### Fix
-* fixed a syntax issue when printing feed parameters related errors. [#4995](https://github.com/demisto/demisto-sdk/pull/4995)
+* Fixed a syntax issue when printing feed parameters related errors. [#4995](https://github.com/demisto/demisto-sdk/pull/4995)
 * Addressed `pkg_resources` deprecation warning by migrating to `importlib.metadata`. [#5002](https://github.com/demisto/demisto-sdk/pull/5002)
 * Remove redundant SupportedModulesValues ENUM and import the existing one. [#5000](https://github.com/demisto/demisto-sdk/pull/5000)
 * Fixed SupportedModulesValues to have agentix in the list. [#4996](https://github.com/demisto/demisto-sdk/pull/4996)

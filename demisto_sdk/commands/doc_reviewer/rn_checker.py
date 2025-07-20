@@ -117,7 +117,9 @@ class ReleaseNotesChecker:
         "stability and maintenance enhancements.",
     }
 
-    MARKETPLACE_ANY_TAG_PATTERN = rf"(<~{MARKETPLACE_LIST_PATTERN}>|</~{MARKETPLACE_LIST_PATTERN}>)"
+    MARKETPLACE_ANY_TAG_PATTERN = (
+        rf"(<~{MARKETPLACE_LIST_PATTERN}>|</~{MARKETPLACE_LIST_PATTERN}>)"
+    )
 
     def __init__(
         self,

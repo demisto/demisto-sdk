@@ -180,7 +180,7 @@ class MarketplaceTagParser:
     def parse_text(self, text):
         import time
         start_total = time.time()
-        logger.info("[parse_text] Starting parse_text execution.")
+        logger.info("<yellow>[parse_text] Starting parse_text execution.")
         """
         Filters out from text the sub-entries that are wrapped by marketplace-specific tags.
         Supports single tags like <~XSOAR> and comma-separated tags like <~XSOAR,XSIAM>.
@@ -195,39 +195,39 @@ class MarketplaceTagParser:
             rf"<~({MARKETPLACE_LIST_PATTERN})>({TAG_CONTENT_PATTERN})</~\1>"
         )
         regex_start = time.time()
-        logger.info(f"[parse_text] Compiled regex pattern: {regex_for_any_tag_block}")
+        logger.info(f"<yellow>[parse_text] Compiled regex pattern: {regex_for_any_tag_block}")
 
         def filter_callback(match: re.Match) -> str:
             cb_start = time.time()
-            logger.info(f"[parse_text] Entered filter_callback for match: {match}")
+            logger.info(f"<yellow>[parse_text] Entered filter_callback for match: {match}")
             """
             This function is called for each match found by `regex_for_any_tag_block`.
             It determines whether to keep the content or remove the entire block.
             """
-            logger.info(f"filter_callback: {match}")
+            logger.info(f"f<yellow>ilter_callback: {match}")
             marketplaces_in_tag_str = match.group(1)
             content = match.group(2)
 
             marketplaces_in_tag = {
                 mp.strip() for mp in marketplaces_in_tag_str.split(",")
             }
-            logger.info(f"[parse_text] marketplaces_in_tag: {marketplaces_in_tag}")
+            logger.info(f"<yellow>[parse_text] marketplaces_in_tag: {marketplaces_in_tag}")
             relevant_tags_for_upload = MARKETPLACE_TAG_MAPPING[self.marketplace]
-            logger.info(f"[parse_text] relevant_tags_for_upload: {relevant_tags_for_upload}")
+            logger.info(f"<yellow>[parse_text] relevant_tags_for_upload: {relevant_tags_for_upload}")
 
             tag_check_start = time.time()
             if any(tag not in VALID_MARKETPLACE_TAGS for tag in marketplaces_in_tag):
-                logger.info(f"[parse_text] Invalid tag found, returning original block. Time spent on tag check: {time.time() - tag_check_start:.6f}s")
+                logger.info(f"<yellow>[parse_text] Invalid tag found, returning original block. Time spent on tag check: {time.time() - tag_check_start:.6f}s")
                 return match.group(
                     0
                 )  # Leaving block untouched due to invalid marketplace tags
 
             mp_tag_check_start = time.time()
             if any(tag in marketplaces_in_tag for tag in relevant_tags_for_upload):
-                logger.info(f"[parse_text] Tag matches relevant tags. Time spent on relevant tag check: {time.time() - mp_tag_check_start:.6f}s. Callback total: {time.time() - cb_start:.6f}s")
+                logger.info(f"<yellow>[parse_text] Tag matches relevant tags. Time spent on relevant tag check: {time.time() - mp_tag_check_start:.6f}s. Callback total: {time.time() - cb_start:.6f}s")
                 return content
             else:
-                logger.info(f"[parse_text] No relevant tag found. Time spent on relevant tag check: {time.time() - mp_tag_check_start:.6f}s. Callback total: {time.time() - cb_start:.6f}s")
+                logger.info(f"<yellow>[parse_text] No relevant tag found. Time spent on relevant tag check: {time.time() - mp_tag_check_start:.6f}s. Callback total: {time.time() - cb_start:.6f}s")
                 return ""
 
         filtered_rn = re.sub(regex_for_any_tag_block, filter_callback, text)

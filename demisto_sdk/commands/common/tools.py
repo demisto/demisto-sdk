@@ -12,7 +12,7 @@ import traceback
 import urllib.parse
 import xml.etree.ElementTree as ET
 from abc import ABC
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
@@ -176,6 +176,25 @@ class MarketplaceTagParser:
     @marketplace.setter
     def marketplace(self, marketplace):
         self._marketplace = marketplace
+        
+    def _has_unmatched_tags(self, text: str) -> bool:
+        """
+        Checks for unmatched opening/closing marketplace tags in the text.
+        Returns True if there are any inconsistencies.
+        """
+        opening_tags = re.findall(r"<~([A-Z,]+)>", text)
+        closing_tags = re.findall(r"</~([A-Z,]+)>", text)
+
+        # Count occurrences per tag
+        open_counter = Counter(opening_tags)
+        close_counter = Counter(closing_tags)
+
+        for tag in open_counter:
+            if open_counter[tag] != close_counter.get(tag, 0):
+                logger.warning(f"[parse_text] Unmatched tag found: \\<~{tag}> has {open_counter[tag]} open(s), {close_counter.get(tag, 0)} close(s).")
+                return True
+
+        return False
 
     def parse_text(self, text):
         """
@@ -188,44 +207,35 @@ class MarketplaceTagParser:
         Returns:
             (str) The release notes entry string after filtering.
         """
-        logger.info("<red>[parse_text] Starting parse_text execution.</red>")
-
         regex_for_any_tag_block = (
             rf"<~({MARKETPLACE_LIST_PATTERN})>({TAG_CONTENT_PATTERN})</~\1>"
         )
-        logger.info(f"<red>[parse_text] Compiled regex pattern: {regex_for_any_tag_block}</red>")
+        if self._has_unmatched_tags(text):
+            logger.warning("<red>[parse_text] Unmatched tags detected. Returning text unmodified.</red>")
+            return text  # Or raise an error / fix it if you want
+
 
         def filter_callback(match: re.Match) -> str:
             """
             This function is called for each match found by `regex_for_any_tag_block`.
             It determines whether to keep the content or remove the entire block.
             """
-            cb_start = time.time()
-            logger.info(f"<red>[parse_text] filter_callback: {match}</red>")
             marketplaces_in_tag_str = match.group(1)
             content = match.group(2)
-            logger.info(f"<red>[parse_text] Entered filter_callback for match: {match}</red>")
 
             marketplaces_in_tag = {
                 mp.strip() for mp in marketplaces_in_tag_str.split(",")
             }
-            logger.info(f"<red>[parse_text] marketplaces_in_tag: {marketplaces_in_tag}</red>")
             relevant_tags_for_upload = MARKETPLACE_TAG_MAPPING[self.marketplace]
-            logger.info(f"<red>[parse_text] relevant_tags_for_upload: {relevant_tags_for_upload}</red>")
 
-            tag_check_start = time.time()
             if any(tag not in VALID_MARKETPLACE_TAGS for tag in marketplaces_in_tag):
-                logger.info(f"<red>[parse_text] Invalid tag found, returning original block. Time spent on tag check: {time.time() - tag_check_start:.6f}s</red>")
                 return match.group(
                     0
                 )  # Leaving block untouched due to invalid marketplace tags
 
-            mp_tag_check_start = time.time()
             if any(tag in marketplaces_in_tag for tag in relevant_tags_for_upload):
-                logger.info(f"<red>[parse_text] Tag matches relevant tags. Time spent on relevant tag check: {time.time() - mp_tag_check_start:.6f}s. Callback total: {time.time() - cb_start:.6f}s</red>")
                 return content
             else:
-                logger.info(f"<red>[parse_text] No relevant tag found. Time spent on relevant tag check: {time.time() - mp_tag_check_start:.6f}s. Callback total: {time.time() - cb_start:.6f}s</red>")
                 return ""
 
         filtered_rn = re.sub(regex_for_any_tag_block, filter_callback, text)

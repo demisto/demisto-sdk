@@ -180,7 +180,7 @@ class MarketplaceTagParser:
     def parse_text(self, text):
         import time
         start_total = time.time()
-        logger.info("<yellow>[parse_text] Starting parse_text execution.")
+        logger.info("<yellow>[parse_text] Starting parse_text execution.</yellow>")
         """
         Filters out from text the sub-entries that are wrapped by marketplace-specific tags.
         Supports single tags like <~XSOAR> and comma-separated tags like <~XSOAR,XSIAM>.

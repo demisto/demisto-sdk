@@ -178,9 +178,6 @@ class MarketplaceTagParser:
         self._marketplace = marketplace
 
     def parse_text(self, text):
-        import time
-        start_total = time.time()
-        logger.info("<yellow>[parse_text] Starting parse_text execution.</yellow>")
         """
         Filters out from text the sub-entries that are wrapped by marketplace-specific tags.
         Supports single tags like <~XSOAR> and comma-separated tags like <~XSOAR,XSIAM>.
@@ -191,43 +188,44 @@ class MarketplaceTagParser:
         Returns:
             (str) The release notes entry string after filtering.
         """
+        logger.info("<red>[parse_text] Starting parse_text execution.</red>")
+
         regex_for_any_tag_block = (
             rf"<~({MARKETPLACE_LIST_PATTERN})>({TAG_CONTENT_PATTERN})</~\1>"
         )
-        regex_start = time.time()
-        logger.info(f"<yellow>[parse_text] Compiled regex pattern: {regex_for_any_tag_block}</yellow>")
+        logger.info(f"<red>[parse_text] Compiled regex pattern: {regex_for_any_tag_block}</red>")
 
         def filter_callback(match: re.Match) -> str:
-            cb_start = time.time()
-            logger.info(f"<yellow>[parse_text] Entered filter_callback for match: {match}</yellow>")
             """
             This function is called for each match found by `regex_for_any_tag_block`.
             It determines whether to keep the content or remove the entire block.
             """
-            logger.info(f"<yellow>[parse_text] filter_callback: {match}</yellow>")
+            cb_start = time.time()
+            logger.info(f"<red>[parse_text] filter_callback: {match}</red>")
             marketplaces_in_tag_str = match.group(1)
             content = match.group(2)
+            logger.info(f"<red>[parse_text] Entered filter_callback for match: {match}</red>")
 
             marketplaces_in_tag = {
                 mp.strip() for mp in marketplaces_in_tag_str.split(",")
             }
-            logger.info(f"<yellow>[parse_text] marketplaces_in_tag: {marketplaces_in_tag}</yellow>")
+            logger.info(f"<red>[parse_text] marketplaces_in_tag: {marketplaces_in_tag}</red>")
             relevant_tags_for_upload = MARKETPLACE_TAG_MAPPING[self.marketplace]
-            logger.info(f"<yellow>[parse_text] relevant_tags_for_upload: {relevant_tags_for_upload}</yellow>")
+            logger.info(f"<red>[parse_text] relevant_tags_for_upload: {relevant_tags_for_upload}</red>")
 
             tag_check_start = time.time()
             if any(tag not in VALID_MARKETPLACE_TAGS for tag in marketplaces_in_tag):
-                logger.info(f"<yellow>[parse_text] Invalid tag found, returning original block. Time spent on tag check: {time.time() - tag_check_start:.6f}s</yellow>")
+                logger.info(f"<red>[parse_text] Invalid tag found, returning original block. Time spent on tag check: {time.time() - tag_check_start:.6f}s</red>")
                 return match.group(
                     0
                 )  # Leaving block untouched due to invalid marketplace tags
 
             mp_tag_check_start = time.time()
             if any(tag in marketplaces_in_tag for tag in relevant_tags_for_upload):
-                logger.info(f"<yellow>[parse_text] Tag matches relevant tags. Time spent on relevant tag check: {time.time() - mp_tag_check_start:.6f}s. Callback total: {time.time() - cb_start:.6f}s</yellow>")
+                logger.info(f"<red>[parse_text] Tag matches relevant tags. Time spent on relevant tag check: {time.time() - mp_tag_check_start:.6f}s. Callback total: {time.time() - cb_start:.6f}s</red>")
                 return content
             else:
-                logger.info(f"<yellow>[parse_text] No relevant tag found. Time spent on relevant tag check: {time.time() - mp_tag_check_start:.6f}s. Callback total: {time.time() - cb_start:.6f}s</yellow>")
+                logger.info(f"<red>[parse_text] No relevant tag found. Time spent on relevant tag check: {time.time() - mp_tag_check_start:.6f}s. Callback total: {time.time() - cb_start:.6f}s</red>")
                 return ""
 
         filtered_rn = re.sub(regex_for_any_tag_block, filter_callback, text)

@@ -184,6 +184,10 @@ schema;section_schema:
       type: seq
       sequence:
       - include: field_schema
+    filters:
+      type: seq
+      sequence:
+      - include: arg_filters_schema
 
     name:xsoar:
       type: str

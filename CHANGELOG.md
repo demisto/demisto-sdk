@@ -1,4 +1,21 @@
 # Changelog
+## 1.38.8 (2025-07-22)
+### Feature
+* Add support for supportedModules field in integration, command, and argument. [#4996](https://github.com/demisto/demisto-sdk/pull/4996)
+* Added support for PLATFORM marketplace and multi-marketplace tags (e.g., <~XSIAM,PLATFORM>) in release notes. [#4982](https://github.com/demisto/demisto-sdk/pull/4982)
+
+### Fix
+* fixed a syntax issue when printing feed parameters related errors. [#4995](https://github.com/demisto/demisto-sdk/pull/4995)
+* Added ASM and Exposure Management to supported modules const [#5012](https://github.com/demisto/demisto-sdk/pull/5012)
+* Addressed `pkg_resources` deprecation warning by migrating to `importlib.metadata`. [#5002](https://github.com/demisto/demisto-sdk/pull/5002)
+* Remove redundant SupportedModulesValues ENUM and import the existing one. [#5000](https://github.com/demisto/demisto-sdk/pull/5000)
+* Fixed SupportedModulesValues to have agentix in the list. [#4996](https://github.com/demisto/demisto-sdk/pull/4996)
+
+### Internal
+* Fix handling of playbooks in GR110 validation. [#5008](https://github.com/demisto/demisto-sdk/pull/5008)
+* Added the IN164 validation. The validation ensures that a required param in an existing integration has a default value. [#5006](https://github.com/demisto/demisto-sdk/pull/5006)
+
+
 ## 1.38.6 (2025-07-07)
 ### Feature
 * Add support for agentix content items- Action, Agent and enhancement of script. [#4920](https://github.com/demisto/demisto-sdk/pull/4920)

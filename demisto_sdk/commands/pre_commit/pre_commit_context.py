@@ -78,6 +78,7 @@ class PreCommitContext:
             raise TypeError(
                 f"Pre-commit template in {self.pre_commit_template_path} is not a dictionary."
             )
+        logger.info(f"{self.precommit_template=}")
         self.hooks = self._get_hooks(self.precommit_template)
         self.hooks_need_docker = self._hooks_need_docker()
         logger.debug(f"PreCommitContext: {self.asdict()}")

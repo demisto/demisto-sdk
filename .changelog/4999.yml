@@ -1,4 +1,0 @@
-changes:
-- description: Fixed SupportedModulesValues to have agentix in the list.
-  type: fix
-pr_number: 4996

@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where `display filters` were missing in layout containers' schemas.
+- description: Fixed an issue where `display filters` were missing in layout container's schemas.
   type: fix
 pr_number: 5014

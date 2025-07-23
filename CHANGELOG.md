@@ -2,7 +2,6 @@
 ## 1.38.8 (2025-07-22)
 ### Fix
 * Added ASM and Exposure Management to supported modules const. [#5012](https://github.com/demisto/demisto-sdk/pull/5012)
-* Fixed an issue where `display filters` were missing in layout contatiners' schemas.
 
 ## 1.38.7 (2025-07-20)
 ### Feature

@@ -12,7 +12,7 @@ import traceback
 import urllib.parse
 import xml.etree.ElementTree as ET
 from abc import ABC
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
@@ -176,6 +176,25 @@ class MarketplaceTagParser:
     @marketplace.setter
     def marketplace(self, marketplace):
         self._marketplace = marketplace
+        
+    def _has_unmatched_tags(self, text: str) -> bool:
+        """
+        Checks for unmatched opening/closing marketplace tags in the text.
+        Returns True if there are any inconsistencies.
+        """
+        opening_tags = re.findall(r"<~([A-Z,]+)>", text)
+        closing_tags = re.findall(r"</~([A-Z,]+)>", text)
+
+        # Count occurrences per tag
+        open_counter = Counter(opening_tags)
+        close_counter = Counter(closing_tags)
+
+        for tag in open_counter:
+            if open_counter[tag] != close_counter.get(tag, 0):
+                logger.warning(f"[parse_text] Unmatched tag found: \\<~{tag}> has {open_counter[tag]} open(s), {close_counter.get(tag, 0)} close(s).")
+                return True
+
+        return False
 
     def parse_text(self, text):
         """
@@ -191,6 +210,10 @@ class MarketplaceTagParser:
         regex_for_any_tag_block = (
             rf"<~({MARKETPLACE_LIST_PATTERN})>({TAG_CONTENT_PATTERN})</~\1>"
         )
+        if self._has_unmatched_tags(text):
+            logger.warning("<red>[parse_text] Unmatched tags detected. Returning text unmodified.</red>")
+            return text  # Or raise an error / fix it if you want
+
 
         def filter_callback(match: re.Match) -> str:
             """

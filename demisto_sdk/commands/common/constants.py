@@ -1998,6 +1998,8 @@ class PlatformSupportedModules(StrEnum):
     X5 = "X5"
     ENT_PLUS = "ENT_PLUS"
     AGENTIX = "agentix"
+    ASM = "asm"
+    EXPOSURE_MANAGEMENT = "exposure_management"
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {

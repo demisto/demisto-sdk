@@ -130,6 +130,6 @@ class IsAgentixActionUsingExistingContentItemValidator(
                 if item.content_type == ContentType.COMMAND
                 for integration in item.integrations
             )
-        elif item_type == "script":
+        elif item_type == "script" or item_type == "playbook":
             return True
         return False

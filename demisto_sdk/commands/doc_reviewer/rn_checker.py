@@ -1,24 +1,8 @@
 import pprint
+import re
 from typing import List
 
-from demisto_sdk.commands.common.constants import (
-    XPANSE_INLINE_PREFIX_TAG,
-    XPANSE_INLINE_SUFFIX_TAG,
-    XPANSE_PREFIX_TAG,
-    XPANSE_SUFFIX_TAG,
-    XSIAM_INLINE_PREFIX_TAG,
-    XSIAM_INLINE_SUFFIX_TAG,
-    XSIAM_PREFIX_TAG,
-    XSIAM_SUFFIX_TAG,
-    XSOAR_INLINE_PREFIX_TAG,
-    XSOAR_INLINE_SUFFIX_TAG,
-    XSOAR_PREFIX_TAG,
-    XSOAR_SAAS_INLINE_PREFIX_TAG,
-    XSOAR_SAAS_INLINE_SUFFIX_TAG,
-    XSOAR_SAAS_PREFIX_TAG,
-    XSOAR_SAAS_SUFFIX_TAG,
-    XSOAR_SUFFIX_TAG,
-)
+from demisto_sdk.commands.common.constants import MARKETPLACE_LIST_PATTERN
 from demisto_sdk.commands.common.logger import logger
 
 
@@ -133,24 +117,9 @@ class ReleaseNotesChecker:
         "stability and maintenance enhancements.",
     }
 
-    MP_TAGS = {
-        XSOAR_PREFIX_TAG,
-        XSOAR_SUFFIX_TAG,
-        XSOAR_INLINE_PREFIX_TAG,
-        XSOAR_INLINE_SUFFIX_TAG,
-        XSOAR_SAAS_PREFIX_TAG,
-        XSOAR_SAAS_SUFFIX_TAG,
-        XSOAR_SAAS_INLINE_PREFIX_TAG,
-        XSOAR_SAAS_INLINE_SUFFIX_TAG,
-        XSIAM_PREFIX_TAG,
-        XSIAM_SUFFIX_TAG,
-        XSIAM_INLINE_PREFIX_TAG,
-        XSIAM_INLINE_SUFFIX_TAG,
-        XPANSE_PREFIX_TAG,
-        XPANSE_SUFFIX_TAG,
-        XPANSE_INLINE_PREFIX_TAG,
-        XPANSE_INLINE_SUFFIX_TAG,
-    }
+    MARKETPLACE_ANY_TAG_PATTERN = (
+        rf"(<~{MARKETPLACE_LIST_PATTERN}>|</~{MARKETPLACE_LIST_PATTERN}>)"
+    )
 
     def __init__(
         self,
@@ -216,8 +185,7 @@ class ReleaseNotesChecker:
 
         line: str
         for line_number, line in enumerate(self.file_content, start=1):
-            for tag in self.MP_TAGS:
-                line = line.replace(tag, "")
+            line = re.sub(self.MARKETPLACE_ANY_TAG_PATTERN, "", line)
 
             line = line.lstrip(" -")
             line = line.rstrip()

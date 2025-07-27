@@ -675,8 +675,11 @@ def add_related_files(file: Path) -> Set[Path]:
     test_data_changed = False
     if ".yml" in file.suffix:
         py_file_path = file.with_suffix(".py")
+        ps1_file_path = file.with_suffix(".ps1")
         if py_file_path.exists():
             files_to_run.add(py_file_path)
+        if ps1_file_path.exists():
+            files_to_run.add(ps1_file_path)
 
     # Identifying test files
 

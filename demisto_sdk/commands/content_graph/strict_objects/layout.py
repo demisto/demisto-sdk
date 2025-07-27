@@ -54,6 +54,7 @@ class _Section(BaseStrictModel):
     query_type: Optional[str] = Field(None, alias="queryType")
     sort_values: Optional[str] = Field(None, alias="sortValues")
     fields: Optional[List[SectionField]] = None  # type:ignore[valid-type]
+    filters: Optional[List[ArgFilters]] = None
 
 
 Section = create_model(

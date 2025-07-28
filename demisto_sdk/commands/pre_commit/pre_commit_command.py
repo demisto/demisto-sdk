@@ -678,7 +678,7 @@ def add_related_files(file: Path) -> Set[Path]:
         ps1_file_path = file.with_suffix(".ps1")
         if py_file_path.exists():
             files_to_run.add(py_file_path)
-        if ps1_file_path.exists():
+        elif ps1_file_path.exists():
             files_to_run.add(ps1_file_path)
 
     # Identifying test files

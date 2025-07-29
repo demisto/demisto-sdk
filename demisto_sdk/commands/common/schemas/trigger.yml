@@ -18,6 +18,8 @@ mapping:
     required: true
   issilent:
     type: bool
+  auto_enabled:
+    type: bool
   suggestion_reason:
     type: str
     required: true

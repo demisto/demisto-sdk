@@ -407,10 +407,15 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
             raise InvalidIntegrationScriptFileName
 
     elif path.suffix == ".py":
-        if not path.stem.startswith(parent) and path.stem not in {
-            "conftest",
-            ".vulture_whitelist",
-        }:
+        if path.stem in {parent, "conftest", ".vulture_whitelist"}:
+            # These are special exceptions allowed
+            return
+
+        if not path.stem.startswith(parent):
+            raise InvalidIntegrationScriptFileName
+        elif not path.stem.partition(parent)[-1].islower():
+            raise InvalidIntegrationScriptFileName
+        elif path.stem.partition(parent)[-1].endswith('tests'):
             raise InvalidIntegrationScriptFileName
 
     elif path.suffix == ".md":

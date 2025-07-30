@@ -50,6 +50,11 @@ To use these functions, Set the following environment variables, or place an [.e
     export DEMISTO_API_KEY=<API_KEY>
     export XSIAM_AUTH_ID=<THE_XSIAM_AUTH_ID>
     ```
+- Please note that using an Advanced security level key will require using the DEMISTO_ADVANCED_API_KEY as an environment variable parameter in place of the DEMISTO_API_KEY. 
+
+   ```bash
+   export DEMISTO_ADVANCED_API_KEY
+   ```
 
 - Please note that once the `XSIAM_AUTH_ID` environment variable is set, the SDK commands will be configured to work with a Cortex XSIAM / XSOAR 8.x instance.
 In order to set Demisto SDK to work with a Cortex XSOAR 6.x instance, you need to delete the `XSIAM_AUTH_ID` parameter from your environment. To do this, please run the following command:

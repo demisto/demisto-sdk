@@ -407,9 +407,7 @@ def _validate_integration_script_file(path: Path, parts_after_packs: Sequence[st
             raise InvalidIntegrationScriptFileName
 
     elif path.suffix == ".py":
-        if path.stem not in {
-            parent,
-            f"{parent}_test",
+        if not path.stem.startswith(parent) and path.stem not in {
             "conftest",
             ".vulture_whitelist",
         }:

@@ -6,6 +6,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_script_object,
 )
+
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.SC_validators import (
     SC109_script_name_is_not_unique_validator,
@@ -13,6 +14,8 @@ from demisto_sdk.commands.validate.validators.SC_validators import (
 from demisto_sdk.commands.validate.validators.SC_validators.SC100_script_has_invalid_version import (
     ScriptNameIsVersionedCorrectlyValidator,
 )
+from demisto_sdk.commands.validate.validators.SC_validators.SC101_script_arguments_aggregated_not_exists_validator import \
+    (MandatoryGenericArgumentsAggregatedScriptValidator)
 from demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator_core_packs import (
     IsScriptArgumentsContainIncidentWordValidatorCorePacks,
 )
@@ -65,8 +68,62 @@ def test_ScriptNameIsVersionCorrectlyValidator():
     assert fix_result.content_object.name == "TestV2"
 
 
+def test_MandatoryGenericArgumentsAggregatedScriptValidator(mocker):
+    """
+    Given:
+     - 1 Aggregated script with argument "verbose" does not exist
+     - 1 Aggregated script with argument "brand" does not exist
+
+    When:
+     - Running the MandatoryGenericArgumentsAggregatedScriptValidator validator
+
+    Then:
+     - make sure the script with the invalid version fails on the validation
+    """
+    with ChangeCWD(REPO.path):
+        mocker.patch(
+            "demisto_sdk.commands.validate.validators.SC_validators.SC101_script_arguments_aggregated_not_exists_validator",
+            return_value=["PackWithInvalidScript"],
+        )
+
+        content_items = (
+            create_script_object(
+                paths=["name", "args"],
+                values=[ "InvalidScript1",
+                    [
+                        {
+                            "name": "brand",
+                            "description": "test",
+                        }
+                    ],
+                ],
+                pack_info={"name": "Aggregated Scripts"},
+            ),
+            create_script_object(
+                paths=["name", "args"],
+                values=[ "InvalidScript2",
+                    [
+                        {
+                            "name": "verbose",
+                            "description": "test",
+                        }
+                    ],
+                ],
+                pack_info={"name": "Aggregated Scripts"},
+            ),
+            create_script_object(),
+        )
+
+        results = MandatoryGenericArgumentsAggregatedScriptValidator().obtain_invalid_content_items(
+            content_items
+        )
+    assert len(results) == 2
+    assert results[0].content_object.name == "InvalidScript1"
+    assert results[0].content_object.name == "InvalidScript2"
+
+
 def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_obtain_invalid_content_items(
-    mocker,
+        mocker,
 ):
     """
     Given:
@@ -146,7 +203,7 @@ def test_ScriptRunAsIsNotDBotRoleValidator_obtain_invalid_content_items():
 
 
 def test_DuplicatedScriptNameValidatorListFiles_obtain_invalid_content_items(
-    mocker, graph_repo: Repo
+        mocker, graph_repo: Repo
 ):
     """
     Given
@@ -194,7 +251,7 @@ def test_DuplicatedScriptNameValidatorListFiles_obtain_invalid_content_items(
 
 
 def test_DuplicatedScriptNameValidatorAllFiles_obtain_invalid_content_items(
-    mocker, graph_repo: Repo
+        mocker, graph_repo: Repo
 ):
     """
     Given

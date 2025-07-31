@@ -1,5 +1,5 @@
 from __future__ import annotations
-from demisto_sdk.commands.common.logger import logger
+
 import re
 from typing import ClassVar, Dict, Iterable, List
 
@@ -32,10 +32,6 @@ class ScriptNameIsVersionedCorrectlyValidator(BaseValidator[ContentTypes]):
     ) -> List[ValidationResult]:
         invalid_content_items = []
         for script in content_items:
-            logger.info(
-                f"Validating script name: {script.name} for script {script.content_type}")
-            logger.info(
-                f"Validating script Path: {script.path} for script {script.path.parent.name}")
             name = script.name
             matches = VERSION_NAME_REGEX.findall(name)
             if matches:

@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
-    FixResult,
     ValidationResult,
 )
 

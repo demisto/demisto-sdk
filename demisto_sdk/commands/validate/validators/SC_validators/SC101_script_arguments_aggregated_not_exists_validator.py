@@ -4,7 +4,7 @@ from abc import ABC
 
 from typing import ClassVar, Dict, Iterable, List
 
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -14,6 +14,8 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Script
 
+AGGREGATED_SCRIPTS_NAME = "Aggregated Scripts"
+
 
 class MandatoryGenericArgumentsAggregatedScriptValidator(BaseValidator[ContentTypes], ABC):
     error_code = "SC101"
@@ -22,27 +24,26 @@ class MandatoryGenericArgumentsAggregatedScriptValidator(BaseValidator[ContentTy
     )
     rationale = "Aggregated scripts should have mandatory generic arguments, this standardization ensures that."
     error_message = "Missing argument {0} in aggregated script {1}."
-    fix_message = "Add argument {0} to aggregated script {1}."
     related_field = "args"
 
     def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         invalid_content_items = []
-        for content_item in content_items:
-            if content_item.path.parent.name == "Packs/AggregatedScripts":
-                if not any(arg.name == "verbose" for arg in content_item.args):
+        for script in content_items:
+            if script.pack.name == AGGREGATED_SCRIPTS_NAME:
+                if not any(arg.name == "verbose" for arg in script.args):
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
-                            message=self.error_message.format("verbose", content_item.name),
-                            content_object=content_item
+                            message=self.error_message.format("verbose", script.name),
+                            content_object=script
                         )
                     )
-                if not any(arg.name == "brands" for arg in content_item.args):
+                if not any(arg.name == "brands" for arg in script.args):
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
-                            message=self.error_message.format("brands", content_item.name),
-                            content_object=content_item
+                            message=self.error_message.format("brands", script.name),
+                            content_object=script
                         )
                     )
 

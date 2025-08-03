@@ -1,0 +1,4 @@
+changes:
+- description: Added the SC101 validation. The validation ensures the existence of the verbose and brands arguments for aggregated scripts.
+  type: internal
+pr_number: 5020

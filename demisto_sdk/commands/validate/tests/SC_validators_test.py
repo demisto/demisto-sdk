@@ -71,15 +71,18 @@ def test_ScriptNameIsVersionCorrectlyValidator():
 def test_MandatoryGenericArgumentsAggregatedScriptValidator(mocker):
     """
     Given:
-     - 1 Aggregated script with argument "verbose" does not exist
-     - 1 Aggregated script with argument "brand" does not exist
+     - 1 Aggregated script with argument "verbose" does not exist.
+     - 1 Aggregated script with argument "brands" does not exist.
+     - 1 Aggregated script with argument "brands" and verbose.
+     - 1 Regular Script.
 
     When:
-     - Running the MandatoryGenericArgumentsAggregatedScriptValidator validator
+     - Running the MandatoryGenericArgumentsAggregatedScriptValidator validator.
 
     Then:
-     - make sure the script with the invalid version fails on the validation
+     - Make sure the scripts with the invalid version fails on the validation.
     """
+
     with ChangeCWD(REPO.path):
         mocker.patch(
             "demisto_sdk.commands.validate.validators.SC_validators.SC101_script_arguments_aggregated_not_exists_validator",

@@ -6,7 +6,6 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_script_object,
 )
-
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.SC_validators import (
     SC109_script_name_is_not_unique_validator,
@@ -14,8 +13,9 @@ from demisto_sdk.commands.validate.validators.SC_validators import (
 from demisto_sdk.commands.validate.validators.SC_validators.SC100_script_has_invalid_version import (
     ScriptNameIsVersionedCorrectlyValidator,
 )
-from demisto_sdk.commands.validate.validators.SC_validators.SC101_script_arguments_aggregated_not_exists_validator import \
-    (MandatoryGenericArgumentsAggregatedScriptValidator)
+from demisto_sdk.commands.validate.validators.SC_validators.SC101_script_arguments_aggregated_not_exists_validator import (
+    MandatoryGenericArgumentsAggregatedScriptValidator,
+)
 from demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator_core_packs import (
     IsScriptArgumentsContainIncidentWordValidatorCorePacks,
 )
@@ -92,7 +92,8 @@ def test_MandatoryGenericArgumentsAggregatedScriptValidator(mocker):
         content_items = (
             create_script_object(
                 paths=["name", "args"],
-                values=[ "InvalidScript1",
+                values=[
+                    "InvalidScript1",
                     [
                         {
                             "name": "brands",
@@ -104,7 +105,8 @@ def test_MandatoryGenericArgumentsAggregatedScriptValidator(mocker):
             ),
             create_script_object(
                 paths=["name", "args"],
-                values=[ "InvalidScript2",
+                values=[
+                    "InvalidScript2",
                     [
                         {
                             "name": "verbose",
@@ -116,21 +118,22 @@ def test_MandatoryGenericArgumentsAggregatedScriptValidator(mocker):
             ),
             create_script_object(
                 paths=["name", "args"],
-                values=["ValidScript",
-                        [
-                            {
-                                "name": "verbose",
-                                "description": "test",
-                            },
-                            {
-                                "name": "brands",
-                                "description": "test",
-                            }
-                        ],
-                        ],
+                values=[
+                    "ValidScript",
+                    [
+                        {
+                            "name": "verbose",
+                            "description": "test",
+                        },
+                        {
+                            "name": "brands",
+                            "description": "test",
+                        },
+                    ],
+                ],
                 pack_info={"name": "Aggregated Scripts"},
             ),
-            create_script_object()
+            create_script_object(),
         )
 
         results = MandatoryGenericArgumentsAggregatedScriptValidator().obtain_invalid_content_items(
@@ -140,8 +143,9 @@ def test_MandatoryGenericArgumentsAggregatedScriptValidator(mocker):
     assert results[0].content_object.name == "InvalidScript1"
     assert results[1].content_object.name == "InvalidScript2"
 
+
 def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_obtain_invalid_content_items(
-        mocker,
+    mocker,
 ):
     """
     Given:
@@ -221,7 +225,7 @@ def test_ScriptRunAsIsNotDBotRoleValidator_obtain_invalid_content_items():
 
 
 def test_DuplicatedScriptNameValidatorListFiles_obtain_invalid_content_items(
-        mocker, graph_repo: Repo
+    mocker, graph_repo: Repo
 ):
     """
     Given
@@ -269,7 +273,7 @@ def test_DuplicatedScriptNameValidatorListFiles_obtain_invalid_content_items(
 
 
 def test_DuplicatedScriptNameValidatorAllFiles_obtain_invalid_content_items(
-        mocker, graph_repo: Repo
+    mocker, graph_repo: Repo
 ):
     """
     Given

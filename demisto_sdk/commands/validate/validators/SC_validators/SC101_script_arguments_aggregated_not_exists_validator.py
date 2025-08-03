@@ -16,14 +16,16 @@ AGGREGATED_SCRIPTS_MANDATORY_ARGUMENTS = ["verbose", "brands"]
 
 class MandatoryGenericArgumentsAggregatedScriptValidator(BaseValidator[ContentTypes]):
     error_code = "SC101"
-    description = (
-        "Checks if aggregated script has mandatory generic arguments."
-    )
+    description = "Checks if aggregated script has mandatory generic arguments."
     rationale = "Aggregated scripts should have mandatory generic arguments, this standardization ensures that."
-    error_message = "The Aggregated Script {0} is missing the following mandatory argument{1}: {2}."
+    error_message = (
+        "The Aggregated Script {0} is missing the following mandatory argument{1}: {2}."
+    )
     related_field = "args"
 
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         invalid_content_items = []
         for script in content_items:
             if script.pack.name == AGGREGATED_SCRIPTS_NAME:
@@ -36,9 +38,12 @@ class MandatoryGenericArgumentsAggregatedScriptValidator(BaseValidator[ContentTy
                     invalid_content_items.append(
                         ValidationResult(
                             validator=self,
-                            message=self.error_message.format(script.name, "" if len(missing_args) == 1 else "s",
-                                                              ", ".join(missing_args)),
-                            content_object=script
+                            message=self.error_message.format(
+                                script.name,
+                                "" if len(missing_args) == 1 else "s",
+                                ", ".join(missing_args),
+                            ),
+                            content_object=script,
                         )
                     )
 

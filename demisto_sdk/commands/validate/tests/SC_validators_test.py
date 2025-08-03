@@ -92,7 +92,7 @@ def test_MandatoryGenericArgumentsAggregatedScriptValidator(mocker):
                 values=[ "InvalidScript1",
                     [
                         {
-                            "name": "brand",
+                            "name": "brands",
                             "description": "test",
                         }
                     ],
@@ -111,7 +111,23 @@ def test_MandatoryGenericArgumentsAggregatedScriptValidator(mocker):
                 ],
                 pack_info={"name": "Aggregated Scripts"},
             ),
-            create_script_object(),
+            create_script_object(
+                paths=["name", "args"],
+                values=["ValidScript",
+                        [
+                            {
+                                "name": "verbose",
+                                "description": "test",
+                            },
+                            {
+                                "name": "brands",
+                                "description": "test",
+                            }
+                        ],
+                        ],
+                pack_info={"name": "Aggregated Scripts"},
+            ),
+            create_script_object()
         )
 
         results = MandatoryGenericArgumentsAggregatedScriptValidator().obtain_invalid_content_items(
@@ -119,8 +135,7 @@ def test_MandatoryGenericArgumentsAggregatedScriptValidator(mocker):
         )
     assert len(results) == 2
     assert results[0].content_object.name == "InvalidScript1"
-    assert results[0].content_object.name == "InvalidScript2"
-
+    assert results[1].content_object.name == "InvalidScript2"
 
 def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_obtain_invalid_content_items(
         mocker,

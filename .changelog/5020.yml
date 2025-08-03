@@ -1,0 +1,4 @@
+changes:
+- description: Adding validation for aggregated scripts, checks if script has mandatory generic arguments.
+  type: internal
+pr_number: 5020

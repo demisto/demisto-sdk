@@ -1,4 +1,4 @@
 changes:
-- description: Adding validation for aggregated scripts, checks if script has mandatory generic arguments.
+- description: Added the SC100 validation. The validation ensures the existence of the verbose and brands arguments for aggregated scripts.
   type: internal
 pr_number: 5020

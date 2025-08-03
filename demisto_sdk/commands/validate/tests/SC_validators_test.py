@@ -73,14 +73,14 @@ def test_MandatoryGenericArgumentsAggregatedScriptValidator(mocker):
     Given:
      - 1 Aggregated script with argument "verbose" does not exist.
      - 1 Aggregated script with argument "brands" does not exist.
-     - 1 Aggregated script with argument "brands" and verbose.
-     - 1 Regular Script.
+     - 1 Aggregated script with argument "brands" and "verbose".
+     - 1 Regular Script without "verbose" or "brands".
 
     When:
      - Running the MandatoryGenericArgumentsAggregatedScriptValidator validator.
 
     Then:
-     - Make sure the scripts with the invalid version fails on the validation.
+     - Make sure the first two scripts fails with missing arguments.
     """
 
     with ChangeCWD(REPO.path):

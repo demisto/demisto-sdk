@@ -31,7 +31,6 @@ class AgentixBaseParser(YAMLContentItemParser):
             {
                 "object_id": "commonfields.id",
                 "version": "commonfields.version",
-                "name": "commonfields.name",
             }
         )
         return super().field_mapping

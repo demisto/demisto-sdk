@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     Auto,
     MarketplaceVersions,
+    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.common import (
@@ -27,16 +28,6 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 
 class _CommonFields(BaseStrictModel):
     version: int
-
-
-class SupportedModulesValues(StrEnum):
-    C1 = "C1"
-    C3 = "C3"
-    X0 = "X0"
-    X1 = "X1"
-    X3 = "X3"
-    X5 = "X5"
-    ENT_PLUS = "ENT_PLUS"
 
 
 CommonFields = create_model(
@@ -63,7 +54,7 @@ class _Argument(BaseStrictModel):
     type: Optional[str] = None
     hidden: Optional[bool] = None
     supportedModules: Optional[
-        Annotated[List[SupportedModulesValues], Field(min_length=1, max_length=7)]
+        Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
     ]
 
 

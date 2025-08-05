@@ -296,6 +296,8 @@ class BaseContent(BaseNode):
             or path.name == PACKS_PACK_META_FILE_NAME
         ):  # if the path given is a pack
             try:
+                print(path)
+                print(private_pack_path)
                 return CONTENT_TYPE_TO_MODEL[ContentType.PACK].from_orm(
                     PackParser(
                         path,

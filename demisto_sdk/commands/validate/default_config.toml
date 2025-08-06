@@ -1,4 +1,5 @@
 ignorable_errors = [
+  "BA101",
   "BA105",
   "BA106",
   "BA116",

@@ -88,7 +88,7 @@ gsutil = {version = "5.17", optional = true}
 ordered-set = "^4.1.0"
 paramiko = ">=3.4.1,<4.0"
 neo4j = "^5.14.0"
-pydantic = "^1.10"
+pydantic = "^2.0.0"
 typer = {extras = ["all"], version = "^0.13.0"}
 packaging = "^24.0"
 orjson = "^3.8.3"

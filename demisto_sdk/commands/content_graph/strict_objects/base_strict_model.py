@@ -244,6 +244,7 @@ class AgentixBase(BaseStrictModel):
     tags: Optional[list[str]] = None
     category: Optional[str] = None
     name: str
+    display: str
     description: str
     disabled: bool = False
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None

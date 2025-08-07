@@ -1,0 +1,4 @@
+changes:
+- description: Improved tag filtering to detect and ignore incorrectly formatted or unmatched marketplace tags.
+  type: feature
+pr_number: 5026

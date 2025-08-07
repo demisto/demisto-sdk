@@ -30,6 +30,7 @@ from typing import (
     Callable,
     Dict,
     Iterable,
+    Iterator,
     List,
     Match,
     Optional,
@@ -87,6 +88,8 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR,
     LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
+    MARKETPLACE_LIST_PATTERN,
+    MARKETPLACE_TAG_MAPPING,
     MARKETPLACE_TO_CORE_PACKS_FILE,
     MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN,
@@ -112,6 +115,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
     SIEM_ONLY_ENTITIES,
     TABLE_INCIDENT_TO_ALERT,
+    TAG_CONTENT_PATTERN,
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
     TRIGGER_DIR,
@@ -119,6 +123,7 @@ from demisto_sdk.commands.common.constants import (
     UNRELEASE_HEADER,
     URL_REGEX,
     UUID_REGEX,
+    VALID_MARKETPLACE_TAGS,
     VERSION_CONFIG_FILE_NAME,
     WIDGETS_DIR,
     XDRC_TEMPLATE_DIR,
@@ -160,43 +165,9 @@ urllib3.disable_warnings()
 GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
 
 
-class TagParser:
-    def __init__(self, marketplace_tag):
-        self.pattern = rf"<~{marketplace_tag}>.*?</~{marketplace_tag}>|<~{marketplace_tag}>\n.*?\n</~{marketplace_tag}>\n"
-        self.only_tags_pattern = rf"<~{marketplace_tag}>|</~{marketplace_tag}>|<~{marketplace_tag}>\n|\n</~{marketplace_tag}>\n"
-
-    def parse(self, text: str, remove_tag: Optional[bool] = False) -> str:
-        """
-        Given a prefix and suffix of an expected tag, remove the tag and the text it's wrapping, or just the wrappers
-        Args:
-            text (str): text that may contain given tags.
-            remove_tag (bool): overrides remove_tag_text value. Determines whether to remove the tag
-
-        Returns:
-            Text with no wrapper tags.
-        """
-        if remove_tag:
-            text = re.sub(self.pattern, "", text, flags=re.DOTALL)
-
-        text = re.sub(self.only_tags_pattern, "", text, flags=re.DOTALL)
-        return text
-
-
 class MarketplaceTagParser:
-    XSOAR_TAG = "XSOAR"
-    XSIAM_TAG = "XSIAM"
-    XPANSE_TAG = "XPANSE"
-    XSOAR_SAAS_TAG = "XSOAR_SAAS"
-    XSOAR_ON_PREM_TAG = "XSOAR_ON_PREM"
-
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
         self.marketplace = marketplace
-
-        self._xsoar_parser = TagParser(marketplace_tag=self.XSOAR_TAG)
-        self._xsiam_parser = TagParser(marketplace_tag=self.XSIAM_TAG)
-        self._xpanse_parser = TagParser(marketplace_tag=self.XPANSE_TAG)
-        self._xsoar_saas_parser = TagParser(marketplace_tag=self.XSOAR_SAAS_TAG)
-        self._xsoar_on_prem_parser = TagParser(marketplace_tag=self.XSOAR_ON_PREM_TAG)
 
     @property
     def marketplace(self):
@@ -205,43 +176,47 @@ class MarketplaceTagParser:
     @marketplace.setter
     def marketplace(self, marketplace):
         self._marketplace = marketplace
-        self._should_remove_xsoar_text = marketplace not in [
-            MarketplaceVersions.XSOAR.value,
-            MarketplaceVersions.XSOAR_ON_PREM.value,
-            MarketplaceVersions.XSOAR_SAAS.value,
-        ]
-        self._should_remove_xsiam_text = marketplace not in [
-            MarketplaceVersions.MarketplaceV2.value,
-            MarketplaceVersions.PLATFORM.value,
-        ]
-        self._should_remove_xpanse_text = (
-            marketplace != MarketplaceVersions.XPANSE.value
-        )
-        self._should_remove_xsoar_saas_text = (
-            marketplace != MarketplaceVersions.XSOAR_SAAS.value
-        )
-        self._should_remove_xsoar_on_prem_text = marketplace not in [
-            MarketplaceVersions.XSOAR_ON_PREM.value,
-            MarketplaceVersions.XSOAR.value,
-        ]
 
     def parse_text(self, text):
-        # Remove the tags of the products if specified should_remove.
-        text = self._xsoar_parser.parse(
-            remove_tag=self._should_remove_xsoar_text, text=text
+        """
+        Filters out from text the sub-entries that are wrapped by marketplace-specific tags.
+        Supports single tags like <~XSOAR> and comma-separated tags like <~XSOAR,XSIAM>.
+
+        Args:
+            text(str): Text that may contain given tags.
+
+        Returns:
+            (str) The release notes entry string after filtering.
+        """
+        regex_for_any_tag_block = (
+            rf"<~({MARKETPLACE_LIST_PATTERN})>({TAG_CONTENT_PATTERN})</~\1>"
         )
-        text = self._xsoar_saas_parser.parse(
-            remove_tag=self._should_remove_xsoar_saas_text, text=text
-        )
-        text = self._xsiam_parser.parse(
-            remove_tag=self._should_remove_xsiam_text, text=text
-        )
-        text = self._xsoar_on_prem_parser.parse(
-            remove_tag=self._should_remove_xsoar_on_prem_text, text=text
-        )
-        return self._xpanse_parser.parse(
-            remove_tag=self._should_remove_xpanse_text, text=text
-        )
+
+        def filter_callback(match: re.Match) -> str:
+            """
+            This function is called for each match found by `regex_for_any_tag_block`.
+            It determines whether to keep the content or remove the entire block.
+            """
+            marketplaces_in_tag_str = match.group(1)
+            content = match.group(2)
+
+            marketplaces_in_tag = {
+                mp.strip() for mp in marketplaces_in_tag_str.split(",")
+            }
+            relevant_tags_for_upload = MARKETPLACE_TAG_MAPPING[self.marketplace]
+
+            if any(tag not in VALID_MARKETPLACE_TAGS for tag in marketplaces_in_tag):
+                return match.group(
+                    0
+                )  # Leaving block untouched due to invalid marketplace tags
+
+            if any(tag in marketplaces_in_tag for tag in relevant_tags_for_upload):
+                return content
+            else:
+                return ""
+
+        filtered_rn = re.sub(regex_for_any_tag_block, filter_callback, text)
+        return filtered_rn
 
 
 MARKETPLACE_TAG_PARSER = None
@@ -818,7 +793,7 @@ def safe_read_unicode(bytes_data: bytes) -> str:
             logger.debug(
                 "Could not read data using UTF-8 encoding. Trying to auto-detect encoding..."
             )
-            return UnicodeDammit(bytes_data).unicode_markup
+            return UnicodeDammit(bytes_data).unicode_markup or ""
 
         except UnicodeDecodeError:
             logger.error("Could not auto-detect encoding.")
@@ -3403,7 +3378,7 @@ def get_pack_dir(path):
 
 
 @contextmanager
-def ProcessPoolHandler() -> ProcessPool:
+def ProcessPoolHandler() -> Iterator[ProcessPool]:
     """Process pool Handler which terminate all processes in case of Exception.
 
     Yields:

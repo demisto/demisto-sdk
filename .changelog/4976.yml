@@ -1,6 +1,0 @@
-changes:
-- description: Added new playbook validation *PB133* to ensure that test playbooks and test use cases referenced in the playbook YML exist.
-  type: feature
-- description: Added new playbook validation *PB134* to ensure that the configuration docstring in playbook test use cases is valid.
-  type: feature
-pr_number: 4976

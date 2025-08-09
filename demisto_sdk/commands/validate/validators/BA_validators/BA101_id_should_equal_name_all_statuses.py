@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Union
 
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
@@ -9,12 +10,13 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
-from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
     IDNameValidator,
 )
 
-ContentTypes = Union[Integration, Layout, Mapper, Playbook, Script, Wizard, Job, AgentixAction]
+ContentTypes = Union[
+    Integration, Layout, Mapper, Playbook, Script, Wizard, Job, AgentixAction
+]
 
 
 class IDNameAllStatusesValidator(IDNameValidator[ContentTypes]):

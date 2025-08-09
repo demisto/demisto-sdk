@@ -182,7 +182,9 @@ class MarketplaceTagParser:
         Checks for unmatched <~...> and </~...> tags using a stack-based approach.
         Returns True if there are any mismatched or unmatched tags.
         """
-        tag_pattern = re.compile(rf"<(?P<closing>/)?~(?P<name>{MARKETPLACE_LIST_PATTERN})>")
+        tag_pattern = re.compile(
+            rf"<(?P<closing>/)?~(?P<name>{MARKETPLACE_LIST_PATTERN})>"
+        )
         stack = []
 
         for match in tag_pattern.finditer(text):
@@ -193,12 +195,16 @@ class MarketplaceTagParser:
                 stack.append(tag_name)
             else:
                 if not stack:
-                    logger.warning(f"Found a closing tag for '{tag_name}' with no matching opening tag")
+                    logger.warning(
+                        f"Found a closing tag for '{tag_name}' with no matching opening tag"
+                    )
                     return True
 
                 last_opened = stack.pop()
                 if last_opened != tag_name:
-                    logger.warning(f"Expected closing tag for '{last_opened}', but found '{tag_name}' instead.")
+                    logger.warning(
+                        f"Expected closing tag for '{last_opened}', but found '{tag_name}' instead."
+                    )
                     return True
 
         # If stack is not empty, there are unmatched opening tags
@@ -216,7 +222,9 @@ class MarketplaceTagParser:
             (str) The release notes entry string after filtering.
         """
         if self._has_unmatched_tags(text):
-            logger.warning("<red>[parse_text] Unmatched tags detected. Returning text unmodified.</red>")
+            logger.warning(
+                "<red>[parse_text] Unmatched tags detected. Returning text unmodified.</red>"
+            )
             return "release_notes"
 
         regex_for_any_tag_block = (

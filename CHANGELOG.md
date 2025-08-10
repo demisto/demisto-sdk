@@ -1,4 +1,22 @@
 # Changelog
+## 1.38.9 (2025-08-10)
+### Feature
+* Improved tag filtering to detect and ignore incorrectly formatted or unmatched marketplace tags. [#5026](https://github.com/demisto/demisto-sdk/pull/5026)
+
+### Fix
+* Updated the ***doc-review*** command to fail on malformed files regardless of whether the **--always-true** argument is set (the always-true argument ignores only spelling errors). [#5024](https://github.com/demisto/demisto-sdk/pull/5024)
+* Fixed an issue where `display filters` were missing in layout container's schemas. [#5014](https://github.com/demisto/demisto-sdk/pull/5014)
+* Fixed an issue in *GR107* where only on direction of deprecated items usage was validated. [#4983](https://github.com/demisto/demisto-sdk/pull/4983)
+* handle demisto-sdk error requests.exceptions.JSONDecodeError [#5029](https://github.com/demisto/demisto-sdk/pull/5029)
+* Add .ps1 support to related files detection in pre-commit to ensure PowerShell integrations are validated correctly. [#5007](https://github.com/demisto/demisto-sdk/pull/5007)
+
+### Internal
+* Added the SC101 validation. The validation ensures the existence of the verbose and brands arguments for aggregated scripts. [#5020](https://github.com/demisto/demisto-sdk/pull/5020)
+* Added support for cases where certain validations must always run first, and filter the relevant results afterward based on each validated content item's ignore list. [#4983](https://github.com/demisto/demisto-sdk/pull/4983)
+* Added AgentixAction to the BA101 validation. Added display field support to AgentixAction. [#5022](https://github.com/demisto/demisto-sdk/pull/5022)
+* Basic CI/CD infrastructure. [#4998](https://github.com/demisto/demisto-sdk/pull/4998)
+
+
 ## 1.38.8 (2025-07-22)
 ### Fix
 * Added ASM and Exposure Management to supported modules const. [#5012](https://github.com/demisto/demisto-sdk/pull/5012)

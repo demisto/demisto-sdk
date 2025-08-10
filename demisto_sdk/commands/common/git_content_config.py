@@ -381,7 +381,9 @@ class GitContentConfig:
                 return gitlab_hostname, gitlab_id
             logger.debug("Could not access GitLab api in `_search_gitlab_repo`.")
             if res:
-                logger.debug(f"status code={res.status_code}. reason={res.reason}. {res=}")
+                logger.debug(
+                    f"status code={res.status_code}. reason={res.reason}. {res=}"
+                    )
             return None
 
         except (

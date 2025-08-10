@@ -93,13 +93,8 @@ class ValidateManager:
                         in filtered_content_objects_for_validator
                     ]
                 try:
-                    # check if any of the validators error code appears in ALWAYS_RUN_ON_ERROR_CODE
-                    if any(
-                        error_code in ALWAYS_RUN_ON_ERROR_CODE
-                        for error_code in {
-                            validator.error_code for validator in self.validators
-                        }
-                    ):
+                    # check if the validators error code appears in ALWAYS_RUN_ON_ERROR_CODE
+                    if validator.error_code in ALWAYS_RUN_ON_ERROR_CODE:
                         validation_results = self.filter_validation_results(
                             validation_results
                         )
@@ -174,8 +169,7 @@ class ValidateManager:
         self, validation_results: List[ValidationResult]
     ) -> List[ValidationResult]:
         """
-        Filters out validation results for error codes that are both in ALWAYS_RUN_ON_ERROR_CODE
-        and in the content object's ignored_errors list.
+        Filters out validation results for error codes that are in the content object's ignored_errors list.
         This addresses unique cases where a validation must run first, then filter the relevant results afterward based on the results.
 
         Returns:
@@ -184,8 +178,5 @@ class ValidateManager:
         return [
             result
             for result in validation_results
-            if not (
-                result.validator.error_code in ALWAYS_RUN_ON_ERROR_CODE
-                and result.validator.error_code in result.content_object.ignored_errors
-            )
+            if result.validator.error_code not in result.content_object.ignored_errors
         ]

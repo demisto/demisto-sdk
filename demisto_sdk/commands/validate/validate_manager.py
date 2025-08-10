@@ -93,7 +93,7 @@ class ValidateManager:
                         in filtered_content_objects_for_validator
                     ]
                 try:
-                    # check if the validators error code appears in ALWAYS_RUN_ON_ERROR_CODE
+                    # check if the validator error code appears in ALWAYS_RUN_ON_ERROR_CODE
                     if validator.error_code in ALWAYS_RUN_ON_ERROR_CODE:
                         validation_results = self.filter_validation_results(
                             validation_results

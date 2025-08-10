@@ -1,4 +1,4 @@
 changes:
-- description: enter description about this PR
+- description: handle demisto-sdk error requests.exceptions.JSONDecodeError
   type: fix
 pr_number: 5029

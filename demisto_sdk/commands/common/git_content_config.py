@@ -368,7 +368,7 @@ class GitContentConfig:
                 )
                 if not res.ok:
                     return None
-                logger.debug(res)
+
                 search_results = res.json()
                 assert (
                     search_results
@@ -381,7 +381,7 @@ class GitContentConfig:
                 return gitlab_hostname, gitlab_id
             logger.debug("Could not access GitLab api in `_search_gitlab_repo`.")
             if res:
-                logger.debug(f"status code={res.status_code}. reason={res.reason}")
+                logger.debug(f"status code={res.status_code}. reason={res.reason}. {res=}")
             return None
 
         except (

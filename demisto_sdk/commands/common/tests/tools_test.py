@@ -2519,6 +2519,7 @@ class TestMarketplaceTagParser:
 
         assert result == expected_result
 
+
 @pytest.mark.parametrize(
     "data, answer",
     [

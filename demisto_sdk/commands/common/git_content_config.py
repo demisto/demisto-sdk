@@ -381,9 +381,7 @@ class GitContentConfig:
                 return gitlab_hostname, gitlab_id
             logger.debug("Could not access GitLab api in `_search_gitlab_repo`.")
             if res:
-                logger.debug(
-                    f"status code={res.status_code}. reason={res.reason}. {res=}"
-                    )
+                logger.debug(f"status code={res.status_code}. reason={res.reason}.")
             return None
 
         except (
@@ -394,4 +392,6 @@ class GitContentConfig:
             requests.exceptions.JSONDecodeError,
         ) as e:
             logger.debug(str(e), exc_info=True)
+            if res:
+                logger.debug(f"{res}")
             return None

@@ -7,7 +7,7 @@
 * Updated the ***doc-review*** command to fail on malformed files regardless of whether the **--always-true** argument is set (the always-true argument ignores only spelling errors). [#5024](https://github.com/demisto/demisto-sdk/pull/5024)
 * Fixed an issue where `display filters` were missing in layout container's schemas. [#5014](https://github.com/demisto/demisto-sdk/pull/5014)
 * Fixed an issue in *GR107* where only on direction of deprecated items usage was validated. [#4983](https://github.com/demisto/demisto-sdk/pull/4983)
-* handle demisto-sdk error requests.exceptions.JSONDecodeError [#5029](https://github.com/demisto/demisto-sdk/pull/5029)
+* Fixed an issue in demisto-sdk related to error JSONDecodeError. [#5029](https://github.com/demisto/demisto-sdk/pull/5029)
 * Added .ps1 support to related files detection in pre-commit to ensure PowerShell integrations are validated correctly. [#5007](https://github.com/demisto/demisto-sdk/pull/5007)
 
 ### Internal

@@ -1,4 +1,0 @@
-changes:
-- description: Added AgentixAction to the BA101 validation. Added display field support to AgentixAction.
-  type: internal
-pr_number: 5022

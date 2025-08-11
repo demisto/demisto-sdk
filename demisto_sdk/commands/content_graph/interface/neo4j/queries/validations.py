@@ -429,3 +429,38 @@ def get_supported_modules_mismatch_dependencies(
         )
         for item in run_query(tx, query)
     }
+
+def get_supported_modules_mismatch_commands(
+    tx: Transaction,
+    content_item_ids: List[str],
+):
+    """
+    Identifies content items that have commands with supportedModules not included in the parent item.
+
+    This function finds content items (like integrations) that have commands with supportedModules
+    that are not included in the supportedModules of the parent content item.
+
+    Args:
+        tx (Transaction): The Neo4j transaction object.
+        content_item_ids (List[str]): List of content item IDs to check. If empty, all items are checked.
+
+    Returns:
+        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
+    """
+    query = f""" // Check if any module in command's supportedModules is NOT in parent item's supportedModules
+    MATCH (contentItem{{deprecated: false}})-[r:{RelationshipType.HAS_COMMAND}]->(command:Command)
+    WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItem.object_id IN {content_item_ids})
+      AND command.supportedModules IS NOT NULL AND contentItem.supportedModules IS NOT NULL
+      AND 'platform' IN contentItem.marketplaces
+      AND NOT ALL(module IN command.supportedModules WHERE module IN contentItem.supportedModules)
+    RETURN contentItem, collect(r) AS relationships, collect(command) AS nodes_to
+    """
+    return {
+        item.get("contentItem").element_id: Neo4jRelationshipResult(
+            node_from=item.get("contentItem"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }
+

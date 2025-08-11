@@ -106,6 +106,9 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             self.graph.find_content_items_with_module_mismatch_dependencies(
                 target_content_item_ids
             )
+            + self.graph.find_content_items_with_module_mismatch_commands(
+                target_content_item_ids
+            )
         )
 
         results: List[ValidationResult] = []

@@ -1,6 +1,0 @@
-changes:
-- description: Fixed an issue in *GR107* where only on direction of deprecated items usage was validated.
-  type: fix
-- description: Added support for cases where certain validations must always run first, and filter the relevant results afterward based on each validated content item's ignore list.
-  type: internal
-pr_number: 4983

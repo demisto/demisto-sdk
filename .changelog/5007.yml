@@ -1,4 +1,0 @@
-changes:
-- description: Add .ps1 support to related files detection in pre-commit to ensure PowerShell integrations are validated correctly.
-  type: fix
-pr_number: 5007

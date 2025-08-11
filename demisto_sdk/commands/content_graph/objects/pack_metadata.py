@@ -659,9 +659,6 @@ def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersion
     """
     Checks whether content item should be ignored from metadata
     """
-    if content_item.name == "SearchIndicatorAgentix":
-        logger.debug("Running on SearchIndicatorAgentix")
-        logger.debug(f"object params: {content_item.__dict__}")
     if content_item.is_test:
         logger.debug(
             f"Skipping {content_item.name} in metadata creation: item is test playbook/script."
@@ -683,7 +680,7 @@ def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersion
         )
     elif content_item.content_type == ContentType.SCRIPT and content_item.is_llm:
         logger.info(
-            f"Skipping {content_item.name} in metadata creation: item is under Agentix {content_item.content_type.value} and is_llm={content_item.is_llm}. -s"
+            f"Skipping {content_item.name} in metadata creation: item is under Agentix {content_item.content_type.value} and is_llm={content_item.is_llm}."
         )
     elif content_item.content_type == ContentType.SCRIPT and content_item.is_internal:
         logger.info(f"Skipping {content_item.name} in metadata creation: item is an internal script.")

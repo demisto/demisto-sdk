@@ -8,7 +8,7 @@
 * Fixed an issue where `display filters` were missing in layout container's schemas. [#5014](https://github.com/demisto/demisto-sdk/pull/5014)
 * Fixed an issue in *GR107* where only on direction of deprecated items usage was validated. [#4983](https://github.com/demisto/demisto-sdk/pull/4983)
 * handle demisto-sdk error requests.exceptions.JSONDecodeError [#5029](https://github.com/demisto/demisto-sdk/pull/5029)
-* Add .ps1 support to related files detection in pre-commit to ensure PowerShell integrations are validated correctly. [#5007](https://github.com/demisto/demisto-sdk/pull/5007)
+* Added .ps1 support to related files detection in pre-commit to ensure PowerShell integrations are validated correctly. [#5007](https://github.com/demisto/demisto-sdk/pull/5007)
 
 ### Internal
 * Added the *SC101* validation. The validation ensures the existence of the verbose and brands arguments for aggregated scripts. [#5020](https://github.com/demisto/demisto-sdk/pull/5020)

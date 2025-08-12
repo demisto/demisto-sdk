@@ -40,6 +40,7 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
                     or (
                         content_item.content_type == "Script"
                         and (not content_item.is_llm)  # type: ignore
+                        and (not content_item.is_internal) # type: ignore
                     )
                 )
                 and (not content_item.readme.exist)

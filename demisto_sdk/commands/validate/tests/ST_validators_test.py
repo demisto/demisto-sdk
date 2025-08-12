@@ -704,7 +704,7 @@ def test_SchemaValidator_triggers_section__valid(pack: Pack):
         ),
         pytest.param(
             {
-                "conditions": [{"name": "engine", "operator": "equals", "value": 123}],
+                "conditions": [{"name": "engine", "operator": "equal", "value": 123}],
                 "effects": [
                     {
                         "name": "effect1",

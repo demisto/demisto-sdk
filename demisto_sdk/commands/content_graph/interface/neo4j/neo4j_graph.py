@@ -637,7 +637,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def find_content_items_with_module_mismatch_commands(
         self, content_item_ids: List[str]
-    ) -> List[BaseNode]:
+    ) -> List[dict]:
         """
         Retrieves content items with invalid command relationships based on supported modules.
 
@@ -656,7 +656,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
-            return [self._id_to_obj[result] for result in results]
+            return [{"content_item": self._id_to_obj[result], "relationships": results[result].relationships} for result in results]
 
     def find_unused_test_playbook(
         self, test_playbook_ids: List[str], test_playbooks_ids_to_skip: List[str]

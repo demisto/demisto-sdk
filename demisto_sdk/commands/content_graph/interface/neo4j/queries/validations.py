@@ -455,12 +455,17 @@ def get_supported_modules_mismatch_commands(
       AND NOT ALL(module IN r.supportedModules WHERE module IN contentItem.supportedModules)
     RETURN contentItem, collect(r) AS relationships, collect(command) AS nodes_to
     """
-    return {
-        item.get("contentItem").element_id: Neo4jRelationshipResult(
-            node_from=item.get("contentItem"),
-            relationships=item.get("relationships"),
-            nodes_to=item.get("nodes_to"),
+    items = run_query(tx, query)
+    results = {}
+    for item in items:
+        node_from = item.get("contentItem")
+        relationships = item.get("relationships")
+        nodes_to = item.get("nodes_to")
+        neo_res =  Neo4jRelationshipResult(
+            node_from,
+            relationships,
+            nodes_to,
         )
-        for item in run_query(tx, query)
-    }
+        results[item.get("contentItem").element_id] = neo_res
+    return results
 

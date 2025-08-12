@@ -93,6 +93,34 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     is_auto_fixable = False
     related_file_type = [RelatedFileType.SCHEMA]
 
+    def append_invalid_dependencies(self, invalid_item, results):
+        missing_modules_by_dependency = {}
+        for dependency in invalid_item.uses:
+            missing_modules = [
+                module
+                for module in invalid_item.supportedModules
+                or [sm.value for sm in PlatformSupportedModules]
+                if module not in dependency.content_item_to.supportedModules
+            ]
+            if missing_modules:
+                missing_modules_by_dependency[
+                    dependency.content_item_to.object_id
+                ] = missing_modules
+
+        return missing_modules_by_dependency
+    def append_invalid_commands(self, invalid_item, results):
+        for command in invalid_item.commands:
+            missing_modules_by_item = {}
+            missing_modules = [
+                module for module in command.supportedModules
+                if module not in invalid_item.supportedSupportedModules
+            ]
+            
+            if missing_modules:
+                missing_modules_by_item[invalid_item.object_id] = missing_modules
+                
+            return missing_modules_by_item
+
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
@@ -102,31 +130,22 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             else [content_item.object_id for content_item in content_items]
         )
 
-        invalid_content_items = (
+        mismatched_dependencies = (
             self.graph.find_content_items_with_module_mismatch_dependencies(
                 target_content_item_ids
             )
-            + self.graph.find_content_items_with_module_mismatch_commands(
+        )
+
+        mismatched_commands = (
+            self.graph.find_content_items_with_module_mismatch_commands(
                 target_content_item_ids
             )
         )
 
         results: List[ValidationResult] = []
 
-        for invalid_item in invalid_content_items:
-            missing_modules_by_dependency = {}
-            for dependency in invalid_item.uses:
-                missing_modules = [
-                    module
-                    for module in invalid_item.supportedModules
-                    or [sm.value for sm in PlatformSupportedModules]
-                    if module not in dependency.content_item_to.supportedModules
-                ]
-                if missing_modules:
-                    missing_modules_by_dependency[
-                        dependency.content_item_to.object_id
-                    ] = missing_modules
-
+        for invalid_item in mismatched_dependencies:
+            missing_modules_by_dependency = self.append_invalid_dependencies(invalid_item, results)
             if missing_modules_by_dependency:
                 formatted_messages = []
                 for name, modules in missing_modules_by_dependency.items():
@@ -143,4 +162,25 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                         content_object=invalid_item,
                     )
                 )
+
+        for invalid_item in mismatched_commands:
+            missing_modules_by_item = self.append_invalid_commands(invalid_item, results)
+            if missing_modules_by_item:
+                formatted_messages = []
+                for name, modules in missing_modules_by_item.items():
+                    formatted_messages.append(
+                        f"{name} is missing: [{', '.join(modules)}]"
+                    )
+
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
+                            ", ".join(formatted_messages)
+                        ),
+                        content_object=invalid_item,
+                    )
+                )
+
+
         return results

@@ -450,9 +450,9 @@ def get_supported_modules_mismatch_commands(
     query = f""" // Check if any module in command's supportedModules is NOT in parent item's supportedModules
     MATCH (contentItem{{deprecated: false}})-[r:{RelationshipType.HAS_COMMAND}]->(command:Command)
     WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItem.object_id IN {content_item_ids})
-      AND command.supportedModules IS NOT NULL AND contentItem.supportedModules IS NOT NULL
+      AND r.supportedModules IS NOT NULL AND contentItem.supportedModules IS NOT NULL and size(r.supportedModules) > 0
       AND 'platform' IN contentItem.marketplaces
-      AND NOT ALL(module IN command.supportedModules WHERE module IN contentItem.supportedModules)
+      AND NOT ALL(module IN r.supportedModules WHERE module IN contentItem.supportedModules)
     RETURN contentItem, collect(r) AS relationships, collect(command) AS nodes_to
     """
     return {

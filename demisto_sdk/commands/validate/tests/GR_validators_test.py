@@ -1549,3 +1549,100 @@ def test_SupportedModulesCompatibility_supported_module_none_in_content_item_a(
         == "The following mandatory dependencies missing required modules: SearchIncidents is missing: [C1, C3, X1, X3, X5, ENT_PLUS, agentix, asm, exposure_management]"
     )
     assert results[0].content_object.object_id == "Script1"
+
+@pytest.fixture
+def repo_for_test_gr_109_mismatch_command(graph_repo: Repo):
+    """
+    Creates a test repository with a single pack to test the command mismatch part of GR109 validation.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains Script1, which contain command_x.
+              Script1 is configured with `supportedModules: ["module_x"]`.
+              command_x is used in the script and configured with `supportedModules: ["module_x", "module_y"]`.
+    """
+    yml = {
+        "commonfields": {"id": "Integration1", "version": -1},
+        "name": "Integration1",
+        "display": "Integration1",
+        "description": "this is an integration Integration1",
+        "category": "category",
+        "supportedModules": ["module_x"],
+        "script": {
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "command_x",
+                    "description": "description",
+                    "arguments": [],
+                    "supportedModules": ["module_x", "module_y"],
+                }
+            ],
+            "dockerimage": None,
+        },
+        "configuration": [],
+    }
+
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    pack_a.create_integration("Integration1", yml=yml)
+
+    return graph_repo
+
+def test_SupportedModulesCompatibility_invalid_all_files_mismatch_command(
+    repo_for_test_gr_109_mismatch_command: Repo,
+):
+    """
+    Given:
+        A repository where "command_x" (with `supportedModules: ['module_x', 'module_y']`)
+        is included in "Integration1" (with `supportedModules: ['module_x']`).
+    When:
+        Running the IsSupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should identify "Integration1" as invalid, reporting that it is missing "module_y".
+    """
+    graph_interface = repo_for_test_gr_109_mismatch_command.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following mandatory dependencies missing required modules: Integration1 is missing: [module_y]"
+    )
+    assert results[0].content_object.object_id == "Integration1"
+
+
+def test_SupportedModulesCompatibility_invalid_list_files_mismatch_command(
+    repo_for_test_gr_109_mismatch_command: Repo,
+):
+    """
+    Given:
+        A repository where "Script1" (with `supportedModules: ['module_x']`)
+        depends on "SearchIncidents", which does not support "module_x".
+    When:
+        The IsSupportedModulesCompatibility validator runs specifically on "Script1".
+    Then:
+        The validator should identify "Script1" as invalid, reporting that "SearchIncidents"
+        is missing the required "module_x".
+    """
+    graph_interface = repo_for_test_gr_109_mismatch_command.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsSupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+        [repo_for_test_gr_109_mismatch_command.packs[0].integrations[0].object]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following mandatory dependencies missing required modules: Integration1 is missing: [module_y]"
+    )
+    assert results[0].content_object.object_id == "Script1"

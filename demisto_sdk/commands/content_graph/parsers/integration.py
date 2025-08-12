@@ -128,7 +128,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                     outputs=outputs,
                     quickaction=quickaction,
                     compliantpolicies=compliantpolicies,
-                    supportedModules=supported_modules
+                    supportedModules=supported_modules,
                 )
             )
 

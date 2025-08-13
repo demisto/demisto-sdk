@@ -1607,7 +1607,7 @@ def test_SupportedModulesCompatibility_invalid_all_files_mismatch_command(
     When:
         Running the IsSupportedModulesCompatibility validator on all files.
     Then:
-        The validator should identify "Integration1" as invalid, reporting that it is missing "module_y".
+        The validator should identify "Integration1" as invalid, reporting that it is missing the required"module_y".
     """
     graph_interface = repo_for_test_gr_109_mismatch_command.create_graph()
     BaseValidator.graph_interface = graph_interface
@@ -1629,10 +1629,9 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_command(
         A repository where "Script1" (with `supportedModules: ['module_x']`)
         depends on "SearchIncidents", which does not support "module_x".
     When:
-        The IsSupportedModulesCompatibility validator runs specifically on "Script1".
+        The IsSupportedModulesCompatibility validator runs specifically on "Integration1".
     Then:
-        The validator should identify "Script1" as invalid, reporting that "SearchIncidents"
-        is missing the required "module_x".
+        The validator should identify "Integration1" as invalid, reporting it is missing the required "module_y".
     """
     graph_interface = repo_for_test_gr_109_mismatch_command.create_graph()
     BaseValidator.graph_interface = graph_interface
@@ -1645,4 +1644,4 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_command(
         results[0].message
         == "The following mandatory dependencies missing required modules: Integration1 is missing: [module_y]"
     )
-    assert results[0].content_object.object_id == "Script1"
+    assert results[0].content_object.object_id == "Integration1"

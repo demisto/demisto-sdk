@@ -93,12 +93,21 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     is_auto_fixable = False
     related_file_type = [RelatedFileType.SCHEMA]
 
-    def append_invalid_dependencies(self, invalid_item, results):
+    def get_missing_modules_by_dependency(self, content_item):
+        """Get missing modules for each dependency of a content item.
+        
+        Args:
+            content_item: The content item to check dependencies for
+            
+        Returns:
+            dict: A dictionary mapping dependency IDs to lists of missing modules
+        """
         missing_modules_by_dependency = {}
-        for dependency in invalid_item.uses:
+        for dependency in content_item.uses:
+            # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module
-                for module in invalid_item.supportedModules
+                for module in content_item.supportedModules
                 or [sm.value for sm in PlatformSupportedModules]
                 if module not in dependency.content_item_to.supportedModules
             ]
@@ -108,18 +117,47 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 ] = missing_modules
 
         return missing_modules_by_dependency
-    def append_invalid_commands(self, invalid_item, results):
-        for command in invalid_item.commands:
-            missing_modules_by_item = {}
+
+    def get_missing_modules_by_command(self, content_item):
+        """Get missing modules for each command of a content item.
+        
+        Args:
+            content_item: The content item to check commands for
+            
+        Returns:
+            dict: A dictionary mapping the content item ID to lists of missing modules per command
+        """
+        missing_modules_by_item = {}
+        
+        for command in content_item.commands:
+            # Get modules supported by the command but not by the content item
             missing_modules = [
                 module for module in command.supportedModules
-                if module not in invalid_item.supportedSupportedModules
+                if module not in content_item.supportedModules
             ]
             
             if missing_modules:
-                missing_modules_by_item[invalid_item.object_id] = missing_modules
+                if content_item.object_id not in missing_modules_by_item:
+                    missing_modules_by_item[content_item.object_id] = []
+                missing_modules_by_item[content_item.object_id].extend(missing_modules)
                 
-            return missing_modules_by_item
+        return missing_modules_by_item
+
+    def format_error_messages(self, missing_modules_dict):
+        """Format error messages for missing modules.
+        
+        Args:
+            missing_modules_dict: Dictionary mapping object IDs to lists of missing modules
+            
+        Returns:
+            list: Formatted error messages
+        """
+        formatted_messages = []
+        for object_id, modules in missing_modules_dict.items():
+            formatted_messages.append(
+                f"{object_id} is missing: [{', '.join(modules)}]"
+            )
+        return formatted_messages
 
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
@@ -144,15 +182,11 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
 
         results: List[ValidationResult] = []
 
+        # Process items with mismatched dependencies
         for invalid_item in mismatched_dependencies:
-            missing_modules_by_dependency = self.append_invalid_dependencies(invalid_item, results)
+            missing_modules_by_dependency = self.get_missing_modules_by_dependency(invalid_item)
             if missing_modules_by_dependency:
-                formatted_messages = []
-                for name, modules in missing_modules_by_dependency.items():
-                    formatted_messages.append(
-                        f"{name} is missing: [{', '.join(modules)}]"
-                    )
-
+                formatted_messages = self.format_error_messages(missing_modules_by_dependency)
                 results.append(
                     ValidationResult(
                         validator=self,
@@ -163,15 +197,11 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                     )
                 )
 
+        # Process items with mismatched commands
         for invalid_item in mismatched_commands:
-            missing_modules_by_item = self.append_invalid_commands(invalid_item, results)
+            missing_modules_by_item = self.get_missing_modules_by_command(invalid_item)
             if missing_modules_by_item:
-                formatted_messages = []
-                for name, modules in missing_modules_by_item.items():
-                    formatted_messages.append(
-                        f"{name} is missing: [{', '.join(modules)}]"
-                    )
-
+                formatted_messages = self.format_error_messages(missing_modules_by_item)
                 results.append(
                     ValidationResult(
                         validator=self,
@@ -181,6 +211,5 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                         content_object=invalid_item,
                     )
                 )
-
 
         return results

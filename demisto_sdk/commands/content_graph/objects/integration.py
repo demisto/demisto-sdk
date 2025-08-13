@@ -141,6 +141,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 marketplaces=self.marketplaces,
                 deprecated=r.deprecated,
                 description=r.description,
+                supportedModules=r.supportedModules,
             )
             for r in self.relationships_data[RelationshipType.HAS_COMMAND]
         ]

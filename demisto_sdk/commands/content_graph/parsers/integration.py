@@ -30,6 +30,7 @@ class CommandParser:
     supportedModules: List[PlatformSupportedModules]
 
 
+
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
     def __init__(
         self,
@@ -105,7 +106,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             outputs = command_data.get("outputs") or []
             quickaction = command_data.get("quickaction", False)
             compliantpolicies: list[str] = command_data.get("compliantpolicies") or []
-            supported_modules: list[str] = command_data.get("supportedModules") or []
+            supported_modules: list[PlatformSupportedModules] = command_data.get("supportedModules") or []
 
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,

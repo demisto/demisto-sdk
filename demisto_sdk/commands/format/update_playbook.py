@@ -250,6 +250,80 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                     if not script_args[key]:  # if value is empty
                         script_args.pop(key)
 
+    def update_for_silent_playbook(self):
+        """
+        Formats the playbook as a silent playbook.
+        This includes:
+        - Adding "silent-" to the playbook's id and name.
+        - Adding `issilent: true` to the playbook's data.
+        - Ensuring `fromversion` is at least '8.9.0'.
+        """
+        logger.info("<green>Formatting playbook as a silent playbook.</green>")
+
+        # Add "silent-" to the playbook name and id
+        playbook_name = self.data.get("name")
+        if playbook_name and not playbook_name.startswith("silent-"):
+            self.data["name"] = f"silent-{playbook_name}"
+
+        playbook_id = self.data.get("id")
+        if playbook_id and not playbook_id.startswith("silent-"):
+            self.data["id"] = f"silent-{playbook_id}"
+
+        # Add issilent: true
+        self.data["issilent"] = True
+
+        # Ensure fr omversion is at least 8.9.0
+        current_from_version = self.data.get("fromversion", "0.0.0")
+        if current_from_version < "8.9.0":
+            self.data["fromversion"] = "8.9.0"
+
+    def revert_silent_playbook(self):
+        """
+        Reverts a silent playbook back to a standard playbook.
+        This includes:
+        - Removing "silent-" from the playbook's id and name.
+        - Setting `issilent: false` in the playbook's data.
+        - The `fromversion` is not reverted, as downgrading a version
+          could potentially cause unexpected issues.
+        """
+        logger.info("<green>Reverting playbook from silent to non-silent...</green>")
+
+        # Remove "silent-" from the playbook name and id if it exists
+        playbook_name = self.data.get("name")
+        if playbook_name and playbook_name.startswith("silent-"):
+            # Remove the prefix
+            self.data["name"] = playbook_name.replace("silent-", "", 1)
+
+        playbook_id = self.data.get("id")
+        if playbook_id and playbook_id.startswith("silent-"):
+            # Remove the prefix
+            self.data["id"] = playbook_id.replace("silent-", "", 1)
+
+        # Set issilent to false
+        self.data["issilent"] = False
+
+    def ask_for_silent_playbook(self) -> bool:
+        """
+        Asks the user if they want to make the current playbook a silent playbook.
+        Returns:
+            bool: True if the user answers 'yes', False otherwise.
+        """
+        if not self.interactive:
+            # If not in interactive mode, default to 'no'
+            return False
+
+        logger.info(
+            f"\n<blue>Do you want to make '{self.data.get('name')}' a silent playbook? [Y/n]</blue>"
+        )
+        while True:
+            user_input = input()
+            if user_input in ["y", "Y", "yes", "Yes"]:
+                return True
+            elif user_input in ["n", "N", "no", "No"]:
+                return False
+            else:
+                logger.info("<red>Invalid input. Please enter 'Y' or 'n'.</red>")
+
     def run_format(self) -> int:
         try:
             logger.info(
@@ -261,6 +335,12 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             self.update_conf_json("playbook")
             self.delete_sourceplaybookid()
             self.remove_empty_fields_from_scripts()
+
+            if self.ask_for_silent_playbook():
+                self.update_for_silent_playbook()
+            else:
+                self.revert_silent_playbook()
+
             super().run_format()
             return SUCCESS_RETURN_CODE
         except Exception as err:

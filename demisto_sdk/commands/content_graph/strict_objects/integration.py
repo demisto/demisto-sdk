@@ -156,8 +156,8 @@ CommonFieldsIntegration = create_model(
 class ConditionOperator(StrEnum):
     EXISTS = "exists"
     NOT_EXISTS = "not_exists"
-    EQUALS = "equals"
-    NOT_EQUALS = "not_equals"
+    EQUAL = "equal"
+    NOT_EQUAL = "not_equal"
 
 
 class Condition(BaseStrictModel):

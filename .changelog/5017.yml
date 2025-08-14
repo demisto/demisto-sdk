@@ -1,0 +1,4 @@
+changes:
+- description: Added auto_enabled key to the Trigger schema.
+  type: feature
+pr_number: 5017

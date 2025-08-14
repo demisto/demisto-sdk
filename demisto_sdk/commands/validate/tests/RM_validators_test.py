@@ -23,9 +23,6 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM101_is_image_path_
 from demisto_sdk.commands.validate.validators.RM_validators.RM102_is_missing_context_output import (
     IsMissingContextOutputValidator,
 )
-from demisto_sdk.commands.validate.validators.RM_validators.RM103_is_using_brands_section_exists import (
-    IsUsingBrandsSectionExistsValidator,
-)
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
 )
@@ -1180,39 +1177,3 @@ def test_ImagePathIntegrationValidator_content_assets():
         content_items
     )
     assert result[0].message == expected
-
-
-@pytest.mark.parametrize(
-    "readme_content,should_fail",
-    [
-        (
-            """# Some Header\n\n## Using commands\nHere are the commands used...\n""",
-            False,
-        ),
-        ("""# Some Header\n\nNo such section here\n""", True),
-        ("""# Another\n\n## Using commands\nExtra\n""", False),
-        ("""# Another\n\n## Not using commands\nExtra\n""", True),
-    ],
-)
-def test_IsUsingBrandsSectionExistsValidator_obtain_invalid_content_items(
-    readme_content, should_fail
-):
-    """
-    Given:
-        - A script object with a README file.
-        - README may or may not contain the section '## Using commands'.
-    When:
-        - Running IsUsingBrandsSectionExistsValidator.obtain_invalid_content_items on the script.
-    Then:
-        - If the README contains '## Using commands', the validator should not fail.
-        - If the README does not contain '## Using commands', the validator should return a ValidationResult with the expected error message.
-    """
-    script = create_script_object(readme_content=readme_content)
-    results = IsUsingBrandsSectionExistsValidator().obtain_invalid_content_items(
-        [script]
-    )
-    if should_fail:
-        assert len(results) == 1
-        assert IsUsingBrandsSectionExistsValidator.error_message in results[0].message
-    else:
-        assert not results

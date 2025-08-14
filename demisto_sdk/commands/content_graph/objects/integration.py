@@ -70,7 +70,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
     deprecated: bool = Field(False)
     hidden: bool = Field(False)
     description: Optional[str] = Field("")
-    supportedModules: Optional[List[str]] = None
+    supportedModules: Optional[List[str]] = []
 
     # missing attributes in DB
     node_id: str = Field("", exclude=True)

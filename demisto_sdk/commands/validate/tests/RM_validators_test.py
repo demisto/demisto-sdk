@@ -1185,14 +1185,14 @@ def test_ImagePathIntegrationValidator_content_assets():
 @pytest.mark.parametrize(
     "pack_name, readme_content, should_fail",
     [
-        ("AggregatedScripts", "# Some README\nNo using commands section", True),
-        ("AggregatedScripts", "# Some README\n## Using commands\nDetails", False),
+        ("Aggregated Scripts", "# Some README\nNo using commands section", True),
+        ("Aggregated Scripts", "# Some README\n## Using commands\nDetails", False),
         ("NotAggregated", "# Some README\nNo using commands section", False),
         ("NotAggregated", "# Some README\n## Using commands\nDetails", False),
     ],
 )
 def test_IsUsingBrandsSectionExistsValidator_obtain_invalid_content_items(
-    pack_name, readme_content, should_fail, monkeypatch
+    pack_name, readme_content, should_fail
 ):
     """
     given:
@@ -1220,15 +1220,13 @@ def test_IsUsingBrandsSectionExistsValidator_obtain_invalid_content_items(
         case 4:
             - No validation error should be returned.
     """
-    script = create_script_object(readme_content=readme_content)
-    monkeypatch.setattr(script.pack, "name", pack_name)
-    monkeypatch.setattr(
-        "demisto_sdk.commands.validate.validators.RM_validators.RM103_is_using_brands_section_exists.AGGREGATED_SCRIPTS_PACK",
-        "AggregatedScripts",
-    )
-    results = IsUsingBrandsSectionExistsValidator().obtain_invalid_content_items(
-        [script]
-    )
+    with ChangeCWD(REPO.path):
+        script = create_script_object(
+            readme_content=readme_content, pack_info={"name": pack_name}
+        )
+        results = IsUsingBrandsSectionExistsValidator().obtain_invalid_content_items(
+            [script]
+        )
     if should_fail:
         assert results, "Expected a validation error but got none."
         assert "using commands" in results[0].message.lower()

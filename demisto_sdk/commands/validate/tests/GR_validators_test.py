@@ -1550,6 +1550,7 @@ def test_SupportedModulesCompatibility_supported_module_none_in_content_item_a(
     )
     assert results[0].content_object.object_id == "Script1"
 
+
 @pytest.fixture
 def repo_for_test_gr_109_mismatch_command(graph_repo: Repo):
     """
@@ -1596,6 +1597,7 @@ def repo_for_test_gr_109_mismatch_command(graph_repo: Repo):
     pack_a.create_integration("Integration1", yml=yml)
 
     return graph_repo
+
 
 def test_SupportedModulesCompatibility_invalid_all_files_mismatch_command(
     repo_for_test_gr_109_mismatch_command: Repo,

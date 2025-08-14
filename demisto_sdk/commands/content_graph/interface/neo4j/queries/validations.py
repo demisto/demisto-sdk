@@ -430,6 +430,7 @@ def get_supported_modules_mismatch_dependencies(
         for item in run_query(tx, query)
     }
 
+
 def get_supported_modules_mismatch_commands(
     tx: Transaction,
     content_item_ids: List[str],
@@ -461,11 +462,10 @@ def get_supported_modules_mismatch_commands(
         node_from = item.get("contentItem")
         relationships = item.get("relationships")
         nodes_to = item.get("nodes_to")
-        neo_res =  Neo4jRelationshipResult(
+        neo_res = Neo4jRelationshipResult(
             node_from,
             relationships,
             nodes_to,
         )
         results[item.get("contentItem").element_id] = neo_res
     return results
-

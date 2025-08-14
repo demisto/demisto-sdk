@@ -3,7 +3,10 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions, PlatformSupportedModules
+from demisto_sdk.commands.common.constants import (
+    MarketplaceVersions,
+    PlatformSupportedModules,
+)
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
@@ -28,7 +31,6 @@ class CommandParser:
     quickaction: bool
     compliantpolicies: List[str]
     supportedModules: List[PlatformSupportedModules]
-
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
@@ -106,7 +108,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             outputs = command_data.get("outputs") or []
             quickaction = command_data.get("quickaction", False)
             compliantpolicies: list[str] = command_data.get("compliantpolicies") or []
-            supported_modules: list[PlatformSupportedModules] = command_data.get("supportedModules") or []
+            supported_modules: list[PlatformSupportedModules] = (
+                command_data.get("supportedModules") or []
+            )
 
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,

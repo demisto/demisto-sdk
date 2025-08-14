@@ -65,8 +65,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_items_using_deprecated,
-    get_supported_modules_mismatch_dependencies,
     get_supported_modules_mismatch_commands,
+    get_supported_modules_mismatch_dependencies,
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,

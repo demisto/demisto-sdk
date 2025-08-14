@@ -102,7 +102,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         Returns:
             dict: A dictionary mapping dependency IDs to lists of missing modules
         """
-        missing_modules_by_dependency = {}
+        missing_modules_by_dependency: dict[str, list[str]] = {}
         for dependency in content_item.uses:
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
@@ -127,7 +127,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         Returns:
             dict: A dictionary mapping the content item ID to lists of missing modules per command
         """
-        missing_modules_by_item = {}
+        missing_modules_by_item: dict[str, list[str]] = {}
 
         for command in content_item.commands:
             # Get modules supported by the command but not by the content item

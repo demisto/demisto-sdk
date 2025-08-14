@@ -1,0 +1,4 @@
+changes:
+- description: Add graph support for the supportedModules field in commands. Also, add command mismatch validation to GR109.
+  type: feature
+pr_number: 5028

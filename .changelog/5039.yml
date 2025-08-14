@@ -1,0 +1,4 @@
+changes:
+- description: Added the RM103 validation - the validation ensures that the script README.md file contains a 'using commands' section for aggregated scripts.
+  type: internal
+pr_number: 5036

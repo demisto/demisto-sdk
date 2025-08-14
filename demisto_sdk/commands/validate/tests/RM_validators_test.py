@@ -23,6 +23,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM101_is_image_path_
 from demisto_sdk.commands.validate.validators.RM_validators.RM102_is_missing_context_output import (
     IsMissingContextOutputValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM103_is_using_brands_section_exists import (
+    IsUsingBrandsSectionExistsValidator,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
 )
@@ -1177,3 +1180,55 @@ def test_ImagePathIntegrationValidator_content_assets():
         content_items
     )
     assert result[0].message == expected
+
+
+@pytest.mark.parametrize(
+    "pack_name, readme_content, should_fail",
+    [
+        ("Aggregated Scripts", "# Some README\nNo using commands section", True),
+        ("Aggregated Scripts", "# Some README\n## Using commands\nDetails", False),
+        ("NotAggregated", "# Some README\nNo using commands section", False),
+        ("NotAggregated", "# Some README\n## Using commands\nDetails", False),
+    ],
+)
+def test_IsUsingBrandsSectionExistsValidator_obtain_invalid_content_items(
+    pack_name, readme_content, should_fail
+):
+    """
+    given:
+        case 1:
+            - A script object in the AggregatedScripts pack.
+            - The README does NOT contain the '## Using commands' section.
+        case 2:
+            - A script object in the AggregatedScripts pack.
+            - The README DOES contain the '## Using commands' section.
+        case 3:
+            - A script object NOT in the AggregatedScripts pack.
+            - The README does NOT contain the '## Using commands' section.
+        case 4:
+            - A script object NOT in the AggregatedScripts pack.
+            - The README DOES contain the '## Using commands' section.
+    when:
+        - Running IsUsingBrandsSectionExistsValidator.obtain_invalid_content_items.
+    then:
+        case 1:
+            - A validation error should be returned.
+        case 2:
+            - No validation error should be returned.
+        case 3:
+            - No validation error should be returned.
+        case 4:
+            - No validation error should be returned.
+    """
+    with ChangeCWD(REPO.path):
+        script = create_script_object(
+            readme_content=readme_content, pack_info={"name": pack_name}
+        )
+        results = IsUsingBrandsSectionExistsValidator().obtain_invalid_content_items(
+            [script]
+        )
+    if should_fail:
+        assert results, "Expected a validation error but got none."
+        assert "using commands" in results[0].message.lower()
+    else:
+        assert not results, f"Expected no error, but got: {results}"

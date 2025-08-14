@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import (
+    AGGREGATED_SCRIPTS_MANDATORY_ARGUMENTS,
+    AGGREGATED_SCRIPTS_PACK,
+)
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -9,9 +13,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Script
-
-AGGREGATED_SCRIPTS_NAME = "Aggregated Scripts"
-AGGREGATED_SCRIPTS_MANDATORY_ARGUMENTS = ["verbose", "brands"]
 
 
 class MandatoryGenericArgumentsAggregatedScriptValidator(BaseValidator[ContentTypes]):
@@ -28,7 +29,7 @@ class MandatoryGenericArgumentsAggregatedScriptValidator(BaseValidator[ContentTy
     ) -> List[ValidationResult]:
         invalid_content_items = []
         for script in content_items:
-            if script.pack.name == AGGREGATED_SCRIPTS_NAME:
+            if script.pack.name == AGGREGATED_SCRIPTS_PACK:
                 missing_args = []
                 for marg in AGGREGATED_SCRIPTS_MANDATORY_ARGUMENTS:
                     if not any(arg.name == marg for arg in script.args):

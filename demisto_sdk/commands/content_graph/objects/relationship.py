@@ -28,7 +28,7 @@ class RelationshipData(BaseModel):
     # HAS_COMMAND relationship properties
     description: Optional[str] = None
     deprecated: bool = False
-    supportedModules: Optional[list[str]] = []
+    supportedModules: Optional[list[str]] = None
 
     def __hash__(self):
         """This is the unique identifier of the relationship"""

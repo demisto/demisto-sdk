@@ -57,8 +57,7 @@ class IsCorrectSMValidator(BaseValidator[ContentTypes]):
             current_supportedModules = (
                 content_item.supportedModules if content_item.supportedModules else []
             )
-            return (
-                len(current_supportedModules) == 0
-                or not set(current_supportedModules).issubset(self.agentix_modules)
-            )
+            return len(current_supportedModules) == 0 or not set(
+                current_supportedModules
+            ).issubset(self.agentix_modules)
         return False

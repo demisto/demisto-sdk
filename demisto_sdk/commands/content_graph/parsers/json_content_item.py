@@ -30,7 +30,11 @@ class JSONContentItemParser(ContentItemParser):
             pack_supported_modules=pack_supported_modules,
             git_sha=git_sha,
         )
-        self.path = self.get_path_with_suffix(".json") if not git_sha else self.path
+        self.path = (
+            self.get_path_with_suffix(".json")
+            if not (git_sha and self.path.suffix)
+            else self.path
+        )
         self.original_json_data: Dict[str, Any] = self.json_data
         self.structure_errors = self.validate_structure()
         self.supportedModules: List[str] = self.json_data.get(

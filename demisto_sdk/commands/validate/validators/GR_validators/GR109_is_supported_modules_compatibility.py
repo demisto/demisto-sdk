@@ -113,11 +113,14 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         for invalid_item in invalid_content_items:
             missing_modules_by_dependency = {}
             for dependency in invalid_item.uses:
+                supportedModules = []
+                if hasattr(dependency.content_item_to, "supportedModules"):
+                    supportedModules = dependency.content_item_to.supportedModules
                 missing_modules = [
                     module
                     for module in invalid_item.supportedModules
                     or [sm.value for sm in PlatformSupportedModules]
-                    if module not in dependency.content_item_to.supportedModules
+                    if module not in supportedModules
                 ]
                 if missing_modules:
                     missing_modules_by_dependency[

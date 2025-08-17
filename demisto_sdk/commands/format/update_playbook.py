@@ -276,6 +276,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
         current_from_version = self.data.get("fromversion", "0.0.0")
         if current_from_version < "8.9.0":
             self.data["fromversion"] = "8.9.0"
+        self.is_playbook_id_changed_by_user = True
 
     def revert_silent_playbook(self):
         """
@@ -301,6 +302,8 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
         # Set issilent to false
         self.data["issilent"] = False
+        self.is_playbook_id_changed_by_user = True
+
 
     def ask_for_silent_playbook(self) -> bool:
         """

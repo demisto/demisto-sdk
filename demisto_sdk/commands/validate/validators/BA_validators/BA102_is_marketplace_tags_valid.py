@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import re
@@ -19,6 +18,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Union[Pack, Integration]
 
+
 class MarketplaceTagsValidator(BaseValidator[ContentTypes]):
     error_code = "BA102"
     description = (
@@ -31,10 +31,15 @@ class MarketplaceTagsValidator(BaseValidator[ContentTypes]):
     )
     error_message = "Found malformed marketplace tags in the following files:\n{}"
     is_auto_fixable = False
-    related_file_type = [RelatedFileType.README, RelatedFileType.DESCRIPTION_File, RelatedFileType.RELEASE_NOTE]
+    related_file_type = [
+        RelatedFileType.README,
+        RelatedFileType.DESCRIPTION_File,
+        RelatedFileType.RELEASE_NOTE,
+    ]
 
-
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         return [
             ValidationResult(
                 validator=self,
@@ -74,14 +79,18 @@ class MarketplaceTagsValidator(BaseValidator[ContentTypes]):
         Checks for unmatched, mismatched, or improperly nested <~...> and </~...> tags.
         Returns an error message if there’s an issue, or None if all tags are matched correctly.
         """
-        tag_pattern = re.compile(rf"<(?P<closing>/)?~(?P<name>{MARKETPLACE_LIST_PATTERN})>")
+        tag_pattern = re.compile(
+            rf"<(?P<closing>/)?~(?P<name>{MARKETPLACE_LIST_PATTERN})>"
+        )
         stack = []
 
         for match in tag_pattern.finditer(text):
             tag_name = match.group("name")
             is_closing = bool(match.group("closing"))
 
-            invalid_tags = [tag for tag in tag_name.split(',') if tag not in VALID_MARKETPLACE_TAGS]
+            invalid_tags = [
+                tag for tag in tag_name.split(",") if tag not in VALID_MARKETPLACE_TAGS
+            ]
             if invalid_tags:
                 return f"Invalid marketplace tag(s) found: {', '.join(invalid_tags)}. Allowed tags: {', '.join(VALID_MARKETPLACE_TAGS)}"
 

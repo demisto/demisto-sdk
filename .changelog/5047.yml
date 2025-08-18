@@ -1,0 +1,4 @@
+changes:
+- description: Updated the ***doc-review*** command to not print information related to spelling errors if the **--always-true** argument is set. 
+  type: fix
+pr_number: 5047

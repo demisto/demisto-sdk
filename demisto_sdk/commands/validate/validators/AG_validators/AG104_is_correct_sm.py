@@ -21,7 +21,7 @@ class IsCorrectSMValidator(BaseValidator[ContentTypes]):
     rationale = (
         "These types of items should be uploaded to agentix supported modules only."
     )
-    error_message = "The following Agentix related content item '{0}' should have only 'agentix' type supportedModules."
+    error_message = "The following Agentix related content item '{0}' should have only 'agentix' type supportedModules. Valid modules - {1}"
     expected_git_statuses = [
         GitStatuses.ADDED,
         GitStatuses.MODIFIED,
@@ -39,7 +39,7 @@ class IsCorrectSMValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.display_name),
+                message=self.error_message.format(content_item.display_name, self.agentix_modules),
                 content_object=content_item,
             )
             for content_item in content_items

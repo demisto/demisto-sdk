@@ -1194,6 +1194,15 @@ class UpdateRN:
                     _type, content_name, from_version
                 )
                 rn_desc += self.generate_rn_list_new_commands(changed_content_object)
+
+                if isinstance(changed_content_object, Playbook):
+                    if changed_content_object.data.get("issilent"):
+                        rn_desc += (
+                            f"<!-- Converted {content_name} to silent playbook -->\n"
+                        )
+                    else:
+                        rn_desc += f"<!-- Converted {content_name} to non silent playbook -->\n"
+
             else:
                 # Updated content items
                 rn_desc = f"##### {content_name}\n\n"
@@ -1202,29 +1211,6 @@ class UpdateRN:
                 else:
                     current_rn = ""
                     if changed_content_object:
-                        # # Check for silent playbook status
-                        # if isinstance(changed_content_object, Playbook) and changed_content_object.is_silent:
-                        #     rn_desc += f"<!-- Converted {content_name} to silent playbook -->\n"
-
-                        # # Check for non-silent playbook conversion
-                        # if (isinstance(changed_content_object, Playbook) and not changed_content_object.is_silent):
-                        #     rn_desc += f"<!-- Converted {content_name} to non silent playbook -->\n"
-                        # Check for a change in silent playbook status
-                        if (
-                            isinstance(changed_content_object, Playbook)
-                            and changed_content_object.old_base_content_object is not None
-                            and isinstance(changed_content_object.old_base_content_object, Playbook)):
-                            current_is_silent = changed_content_object.is_silent
-                            previous_is_silent = changed_content_object.old_base_content_object.is_silent
-
-                            if current_is_silent != previous_is_silent:
-                                if current_is_silent:
-                                    # Converted to silent
-                                    rn_desc += f"<!-- Converted {content_name} to silent playbook -->\n"
-                                else:
-                                    # Converted to non-silent
-                                    rn_desc += f"<!-- Converted {content_name} to non silent playbook -->\n"
-
                         current_rn = generate_rn_for_updated_content_items(
                             changed_content_object
                         )

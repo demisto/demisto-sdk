@@ -276,7 +276,6 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
         current_from_version = self.data.get("fromversion", None)
         if not current_from_version or current_from_version < "8.9.0":
             self.data["fromversion"] = "8.9.0"
-        self.is_playbook_id_changed_by_user = True
 
     def revert_silent_playbook(self):
         """
@@ -314,6 +313,8 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
         if not self.interactive:
             # If not in interactive mode, default to 'no'
             return False
+        if self.assume_answer:
+            return True
 
         logger.info(
             f"\n<blue>Do you want to make '{self.data.get('name')}' a silent playbook? [Y/n]</blue>"
@@ -339,10 +340,12 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             self.delete_sourceplaybookid()
             self.remove_empty_fields_from_scripts()
 
-            if self.ask_for_silent_playbook():
-                self.update_for_silent_playbook()
-            else:
-                self.revert_silent_playbook()
+            # Update silent playbook for new files only
+            if not self.old_file:
+                if self.ask_for_silent_playbook():
+                    self.update_for_silent_playbook()
+                else:
+                    self.revert_silent_playbook()
 
             super().run_format()
             return SUCCESS_RETURN_CODE

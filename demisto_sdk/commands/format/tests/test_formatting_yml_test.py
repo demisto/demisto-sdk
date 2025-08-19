@@ -984,12 +984,11 @@ class TestFormatting:
         "initial_fromversion, is_existing_file, is_silent, expected_fromversion",
         [
             ("5.0.0", False, True, "8.9.0"),
-            ("5.0.0", True, True, "8.9.0"),
-            ("8.10.0", True, True, "8.9.0"),
+            ("5.0.0", True, True, "5.0.0"),
             ("3.0.0", False, False, GENERAL_DEFAULT_FROMVERSION),
-            ("3.0.0", True, False, GENERAL_DEFAULT_FROMVERSION),
+            ("3.0.0", True, False, "3.0.0"),
             (None, False, True, "8.9.0"),
-            (None, True, False, GENERAL_DEFAULT_FROMVERSION),
+            (None, True, False, None),
         ],
     )
     def test_format_valid_fromversion_for_playbook(
@@ -1008,6 +1007,7 @@ class TestFormatting:
             - Run run_format()
         Then
             - Ensure that the formatted fromversion equals `expected_fromversion`.
+            - Ensure that the playbook is correctly sddigned to silent and non-silent.
         """
         pack: Pack = repo.create_pack("pack")
         playbook: Playbook = pack.create_playbook("DummyPlaybook")
@@ -1025,8 +1025,7 @@ class TestFormatting:
 
         with ChangeCWD(repo.path):
             formatter = PlaybookYMLFormat(
-                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH, assume_answer=True
-            )
+                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH)
             formatter.run_format()
             assert formatter.data.get("fromversion") == expected_fromversion
 

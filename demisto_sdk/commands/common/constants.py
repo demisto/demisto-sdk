@@ -2002,7 +2002,6 @@ class PlatformSupportedModules(StrEnum):
     X5 = "X5"
     ENT_PLUS = "ENT_PLUS"
     AGENTIX = "agentix"
-    AGENTIX_XSIAM = "agentix_xsiam"
     ASM = "asm"
     EXPOSURE_MANAGEMENT = "exposure_management"
     AGENTIX_XSIAM = "agentix_xsiam"

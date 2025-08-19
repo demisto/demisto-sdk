@@ -39,7 +39,9 @@ class IsCorrectSMValidator(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(content_item.display_name, self.agentix_modules),
+                message=self.error_message.format(
+                    content_item.display_name, self.agentix_modules
+                ),
                 content_object=content_item,
             )
             for content_item in content_items

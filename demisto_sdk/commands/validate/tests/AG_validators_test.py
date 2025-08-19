@@ -356,8 +356,9 @@ def test_is_correct_supportedModules():
         ),
     ]
     results = IsCorrectSMValidator().obtain_invalid_content_items(content_items)
+    expected_valid_modules = {"agentix", "agentix_xsiam"}
 
     assert len(results) == 4
     assert results[0].message == (
-        "The following Agentix related content item 'test' should have only 'agentix' type supportedModules. Valid modules - {'agentix_xsiam', 'agentix'}"
+        f"The following Agentix related content item 'test' should have only 'agentix' type supportedModules. Valid modules - {{{expected_valid_modules}}}"
     )

@@ -14,7 +14,7 @@ exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
 
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.38.8"
+version = "1.38.9"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -89,7 +89,7 @@ ordered-set = "^4.1.0"
 paramiko = ">=3.4.1,<4.0"
 neo4j = "^5.14.0"
 pydantic = "^1.10"
-typer = {extras = ["all"], version = "^0.13.0"}
+typer = {extras = ["all"], version = "^0.16.0"}
 packaging = "^24.0"
 orjson = "^3.8.3"
 more-itertools = "^10.0.0"

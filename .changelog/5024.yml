@@ -1,4 +1,0 @@
-changes:
-- description: Updated the ***doc-review*** command to fail on malformed files regardless of whether the **--always-true** argument is set (the always-true argument ignores only spelling errors).
-  type: fix
-pr_number: '5024'

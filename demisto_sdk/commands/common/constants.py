@@ -2004,6 +2004,7 @@ class PlatformSupportedModules(StrEnum):
     AGENTIX = "agentix"
     ASM = "asm"
     EXPOSURE_MANAGEMENT = "exposure_management"
+    AGENTIX_XSIAM = "agentix_xsiam"
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {

@@ -360,5 +360,5 @@ def test_is_correct_supportedModules():
 
     assert len(results) == 4
     assert results[0].message == (
-        f"The following Agentix related content item 'test' should have only 'agentix' type supportedModules. Valid modules - {{{expected_valid_modules}}}"
+        f"The following Agentix related content item 'test' should have only 'agentix' type supportedModules. Valid modules - {expected_valid_modules}"
     )

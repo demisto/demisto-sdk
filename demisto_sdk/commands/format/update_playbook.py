@@ -302,7 +302,6 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
         # Set issilent to false
         self.data["issilent"] = False
         self.data["fromversion"] = "6.10.0"  # default from version
-        self.is_playbook_id_changed_by_user = True
 
     def ask_for_silent_playbook(self) -> bool:
         """
@@ -318,6 +317,30 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
         logger.info(
             f"\n<blue>Do you want to make '{self.data.get('name')}' a silent playbook? [Y/n]</blue>"
+        )
+        while True:
+            user_input = input().lower()
+            if user_input in ["y", "yes"]:
+                return True
+            elif user_input in ["n", "no"]:
+                return False
+            else:
+                logger.info("<red>Invalid input. Please enter 'Y' or 'n'.</red>")
+
+    def ask_for_non_silent_playbook(self) -> bool:
+        """
+        Asks the user if they want to revert the existing silent playbook to a non-silent.
+        Returns:
+            bool: True if the user answers 'yes', False otherwise.
+        """
+        if not self.interactive:
+            # If not in interactive mode, default to 'no'
+            return False
+        if self.assume_answer:
+            return True
+
+        logger.info(
+            f"\n<blue>Do you want to make '{self.data.get('name')}' a non-silent playbook? [Y/n]</blue>"
         )
         while True:
             user_input = input().lower()
@@ -345,6 +368,13 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                 if self.ask_for_silent_playbook():
                     self.update_for_silent_playbook()
                 else:
+                    self.revert_silent_playbook()
+
+            # Revert existing silent playbook to non silent
+            else:
+                if self.data["issilent"] and self.ask_for_non_silent_playbook():
+                    # flag that makes sure the id changewill be vaild later on
+                    self.is_silent_playbook_revert_to_non_silent = True
                     self.revert_silent_playbook()
 
             super().run_format()

@@ -1,4 +1,4 @@
 changes:
 - description: Format new playbooks as silent playbooks.
-  type: <breaking|feature|fix|internal>
+  type: feature
 pr_number: 5037

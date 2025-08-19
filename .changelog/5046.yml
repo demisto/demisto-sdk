@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where pre-commit failed when run on new docker image.
+  type: fix
+pr_number: 5046

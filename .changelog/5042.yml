@@ -1,4 +1,4 @@
 changes:
-- description: Fix AG104 validation not accepting the agentix_xsiam module.
+- description: Added support for the agentix_xsiam module in the AG104 validation.
   type: internal
 pr_number: 5042

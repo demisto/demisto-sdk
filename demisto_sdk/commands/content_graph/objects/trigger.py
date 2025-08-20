@@ -6,7 +6,11 @@ from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
 )
 
 
-class Trigger(ContentItemXSIAM, content_type=ContentType.TRIGGER):  # type: ignore[call-arg]
+class Trigger(
+    ContentItemXSIAM, content_type=ContentType.TRIGGER
+):  # type: ignore[call-arg]
+    is_auto_enabled: bool = False
+
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         if "trigger_id" in _dict and path.suffix == ".json":

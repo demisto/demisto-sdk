@@ -18,6 +18,7 @@ class _StrictTrigger(BaseStrictModel):
     description: str
     suggestion_reason: str
     alerts_filter: Optional[AlertsFilter] = None
+    is_auto_enabled: Optional[bool] = False
 
 
 StrictTrigger = create_model(

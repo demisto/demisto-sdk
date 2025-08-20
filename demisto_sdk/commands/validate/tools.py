@@ -283,7 +283,7 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
     """
     if isinstance(content_item, (TestPlaybook, TestScript)):
         return True
-    if content_item.is_silent or content_item.is_auto_enabled:
+    if content_item.is_silent:
         return True
     if isinstance(content_item, Integration):
         return (

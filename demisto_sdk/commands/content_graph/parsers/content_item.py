@@ -199,11 +199,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def is_silent(self) -> bool:
         pass
 
-    @property
-    @abstractmethod
-    def is_auto_enabled(self) -> bool:
-        pass
-
     def get_marketplaces(self, data: dict) -> List[MarketplaceVersions]:
         if file_marketplaces := [
             MarketplaceVersions(mp) for mp in data.get("marketplaces", [])

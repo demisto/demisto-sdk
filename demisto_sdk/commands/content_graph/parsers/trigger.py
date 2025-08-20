@@ -8,6 +8,7 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
 from demisto_sdk.commands.content_graph.strict_objects.trigger import StrictTrigger
+from demisto_sdk.commands.common.tools import get_value
 
 
 class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
@@ -45,3 +46,8 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
     @property
     def strict_object(self):
         return StrictTrigger
+
+
+    @property
+    def is_auto_enabled(self) -> bool:
+        return get_value(self.json_data, "is_auto_enabled", False)

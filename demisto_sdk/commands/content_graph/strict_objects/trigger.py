@@ -1,5 +1,7 @@
 from typing import Optional
 
+from pydantic import Field
+
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     AlertsFilter,
     BaseOptionalVersionJson,
@@ -18,7 +20,7 @@ class _StrictTrigger(BaseStrictModel):
     description: str
     suggestion_reason: str
     alerts_filter: Optional[AlertsFilter] = None
-    is_auto_enabled: Optional[bool] = False
+    is_auto_enabled: bool = Field(alias="is_auto_enabled")
 
 
 StrictTrigger = create_model(

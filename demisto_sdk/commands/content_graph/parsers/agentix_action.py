@@ -42,7 +42,7 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update({"display": "name"})
+        super().field_mapping.update({"display": "display"})
         return super().field_mapping
 
     @property

@@ -2484,6 +2484,41 @@ class TestMarketplaceTagParser:
 
         assert result == expected_result
 
+    @pytest.mark.parametrize(
+        "dummy_text, expected_result",
+        [
+            ("<~XSIAM>Content</~XSIAM>", False),
+            ("<~XSIAM>Unclosed", True),
+            ("Content only</~XSIAM>", True),
+            ("<~XSOAR>Wrong close</~XSIAM>", True),
+            ("<~XSOAR><~XSIAM>Content</~XSIAM></~XSOAR>", False),
+            ("<~XSOAR><~XSIAM></~XSOAR></~XSIAM>", True),
+            ("<~XSOAR,XSIAM>Shared content</~XSOAR,XSIAM>", False),
+            ("<~XSOAR,XSIAM>Oops</~XSOAR>", True),
+            ("<~XSOAR>Part 1</~XSOAR> and <~XSIAM>Part 2</~XSIAM>", False),
+            ("Just some plain text with no tags", False),
+            ("<~XSOAR>Some text</~XSOAR></~XSIAM>", True),
+            ("<~XSOAR><~XSIAM>Some text</~XSIAM>", True),
+        ],
+    )
+    def test_has_unmatched_tags(self, dummy_text, expected_result):
+        """
+        Test case to validate the `_has_unmatched_tags` method's ability to detect
+        structural issues in marketplace-specific tags within a text.
+
+        Given:
+            - A text string that may contain properly or improperly structured
+            <~...> and </~...> tags, including nested and comma-separated tags.
+        When:
+            - The `_has_unmatched_tags` method is called on the given text.
+        Then:
+            - The result should indicate whether there are any unmatched,
+            improperly nested, or misaligned opening/closing tags.
+        """
+        result = self.MARKETPLACE_TAG_PARSER._has_unmatched_tags(dummy_text)
+
+        assert result == expected_result
+
 
 @pytest.mark.parametrize(
     "data, answer",

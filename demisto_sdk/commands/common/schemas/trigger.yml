@@ -18,7 +18,7 @@ mapping:
     required: true
   issilent:
     type: bool
-  auto_enabled:
+  is_auto_enabled:
     type: bool
   suggestion_reason:
     type: str

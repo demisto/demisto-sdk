@@ -682,6 +682,11 @@ def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersion
         logger.info(
             f"Skipping {content_item.name} in metadata creation: item is under Agentix {content_item.content_type.value} and is_llm={content_item.is_llm}."
         )
+    elif content_item.content_type == ContentType.SCRIPT and content_item.is_internal:
+        logger.info(
+            f"Skipping {content_item.name} in metadata creation: item is an internal script."
+        )
+
     else:
         return False
     return True

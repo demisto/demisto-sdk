@@ -201,7 +201,7 @@ mapping:
                     required: true
                   operator:
                     type: str
-                    enum: ["exists", "not_exists", "equals", "not_equals"]
+                    enum: ["exists", "not_exists", "equal", "not_equal"]
                     required: true
                   value:
                     type: str

@@ -59,6 +59,7 @@ class ContentItem(BaseContent):
     support: str = ""
     is_silent: bool = False
     upload_path: Optional[Path] = None
+    is_auto_enabled: bool = False
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:

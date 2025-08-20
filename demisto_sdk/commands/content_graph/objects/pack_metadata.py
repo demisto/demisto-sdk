@@ -667,6 +667,12 @@ def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersion
         logger.debug(
             f"Skipping {content_item.name} in metadata creation: item is silent playbook/trigger."
         )
+
+    elif content_item.is_auto_enabled:
+        logger.debug(
+            f"Skipping {content_item.name} in metadata creation: item is auto_enabled trigger."
+        )
+
     elif marketplace not in content_item.marketplaces:
         logger.debug(
             f"Skipping {content_item.name} in metadata creation: item is not supported in {marketplace=}."

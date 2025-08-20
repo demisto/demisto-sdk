@@ -3,12 +3,12 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
 from demisto_sdk.commands.content_graph.strict_objects.trigger import StrictTrigger
-from demisto_sdk.commands.common.tools import get_value
 
 
 class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
@@ -46,7 +46,6 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
     @property
     def strict_object(self):
         return StrictTrigger
-
 
     @property
     def is_auto_enabled(self) -> bool:

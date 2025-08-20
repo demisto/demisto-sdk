@@ -8,7 +8,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
+
 ContentTypes = Union[AgentixAction]
+
 
 class DisplayNameValidValidator(BaseValidator[ContentTypes]):
     error_code = "BA129"
@@ -23,7 +25,7 @@ class DisplayNameValidValidator(BaseValidator[ContentTypes]):
     AGENTIX_ACTION_DISPLAY_NAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_\- ]*$")
 
     def obtain_invalid_content_items(
-        self, content_items: Iterable[ContentTypes]
+            self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         validation_results = []
         for content_item in content_items:

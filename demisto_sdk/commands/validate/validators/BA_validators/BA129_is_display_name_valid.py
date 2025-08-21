@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Union
 import re
+from abc import ABC
+
+from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -9,14 +11,14 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[AgentixAction]
+ContentTypes = AgentixAction
 
 
-class DisplayNameValidValidator(BaseValidator[ContentTypes]):
+class IsDisplayNameValid(BaseValidator[ContentTypes], ABC):
     error_code = "BA129"
-    description = "Ensure display starts with a letter and contains only allowed characters."
+    description = "Ensure that the display field is in the required format."
     rationale = "Display names must be user-friendly and conform to standards."
-    error_message = "The following display_name values are invalid: {0}"
+    error_message = "The following display name values are invalid: {0}"
     related_field = "display"
     is_auto_fixable = False
 
@@ -24,9 +26,7 @@ class DisplayNameValidValidator(BaseValidator[ContentTypes]):
     # the following characters: lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.
     AGENTIX_ACTION_DISPLAY_NAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_\- ]*$")
 
-    def obtain_invalid_content_items(
-            self, content_items: Iterable[ContentTypes]
-    ) -> List[ValidationResult]:
+    def obtain_invalid_content_items_using_graph(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         validation_results = []
         for content_item in content_items:
             valid = True
@@ -49,5 +49,4 @@ class DisplayNameValidValidator(BaseValidator[ContentTypes]):
                         content_object=content_item,
                     )
                 )
-
         return validation_results

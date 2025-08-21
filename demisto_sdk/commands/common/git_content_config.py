@@ -368,6 +368,7 @@ class GitContentConfig:
                 )
                 if not res.ok:
                     return None
+
                 search_results = res.json()
                 assert (
                     search_results
@@ -388,6 +389,9 @@ class GitContentConfig:
             requests.exceptions.ReadTimeout,
             json.JSONDecodeError,
             AssertionError,
+            requests.exceptions.JSONDecodeError,
         ) as e:
             logger.debug(str(e), exc_info=True)
+            if res:
+                logger.debug(f"{res}")
             return None

@@ -1,4 +1,4 @@
-from typing import Callable, List, Set
+from typing import Callable, List, Optional, Set, Union
 
 import demisto_client
 from pydantic import DirectoryPath, Field
@@ -34,6 +34,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
     runas: str = ""
     args: List[Argument] = Field([], exclude=True)
     outputs: List[Output] = Field([], exclude=True)
+    compliantpolicies: Optional[list[str]] = Field([])
 
     def metadata_fields(self) -> Set[str]:
         return (
@@ -99,7 +100,9 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             except FileNotFoundError as e:
                 logger.warning(f"Failed to dump {obj.path} to {dir}: {e}")
 
-    def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+    def is_incident_to_alert(
+        self, marketplace: Union[List[MarketplaceVersions], MarketplaceVersions]
+    ) -> bool:
         """
         Checks whether the script needs the preparation
         of an `incident to alert`,
@@ -111,9 +114,12 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
         Returns:
             bool: True if all conditions are true otherwise False
         """
+        if not isinstance(marketplace, list):
+            marketplace = [marketplace]
         return all(
             (
-                marketplace == MarketplaceVersions.MarketplaceV2,
+                MarketplaceVersions.MarketplaceV2 in marketplace
+                or MarketplaceVersions.PLATFORM in marketplace,
                 "incident" in self.name.lower(),
                 SKIP_PREPARE_SCRIPT_NAME not in self.skip_prepare,
             )

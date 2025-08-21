@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Iterable, List, Optional, Tuple, Union
 
 import demisto_client
-import typer
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
 from tabulate import tabulate
@@ -74,6 +73,7 @@ class Uploader:
         zip: bool = False,
         tpb: bool = False,
         destination_zip_dir: Optional[Path] = None,
+        private_pack_path: Optional[Path] = None,
         **kwargs,
     ):
         self.path = None if input is None else Path(input)
@@ -103,6 +103,9 @@ class Uploader:
         self.zip = zip  # -z flag
         self.tpb = tpb  # -tpb flag
         self.destination_zip_dir = destination_zip_dir
+        self.private_pack_path = (
+            None if not private_pack_path else Path(private_pack_path)
+        )
 
     def _upload_zipped(self, path: Path) -> bool:
         """
@@ -199,11 +202,11 @@ class Uploader:
             logger.info(
                 "<red>Could not connect to the server. Try checking your connection configurations.</red>"
             )
-            raise typer.Exit(ERROR_RETURN_CODE)
+            return ERROR_RETURN_CODE
 
         if not self.path or not self.path.exists():
             logger.error(f"<red>input path: {self.path} does not exist</red>")
-            raise typer.Exit(ERROR_RETURN_CODE)
+            return ERROR_RETURN_CODE
 
         if self.should_detach_files:
             item_detacher = ItemDetacher(
@@ -226,9 +229,9 @@ class Uploader:
             elif self.path.is_dir() and is_uploadable_dir(self.path):
                 success = self._upload_entity_dir(self.path)
             else:
-                success = self._upload_single(self.path)
+                success = self._upload_single(self.path, self.private_pack_path)
         except KeyboardInterrupt:
-            raise typer.Exit(ABORTED_RETURN_CODE)
+            return ABORTED_RETURN_CODE
 
         if self.failed_parsing and not any(
             (
@@ -250,16 +253,14 @@ class Uploader:
                     )
                 )
             )
-            raise typer.Exit(ERROR_RETURN_CODE)
+            return ERROR_RETURN_CODE
 
         self.print_summary()
-        raise (
-            typer.Exit(SUCCESS_RETURN_CODE)
-            if success
-            else typer.Exit(ERROR_RETURN_CODE)
-        )
+        return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
 
-    def _upload_single(self, path: Path) -> bool:
+    def _upload_single(
+        self, path: Path, private_pack_path: Optional[Path] = None
+    ) -> bool:
         """
         Upload a content item, a pack, or a zip containing packs.
 
@@ -271,7 +272,9 @@ class Uploader:
             NotIndivitudallyUploadedException (see exception class)
             NotUploadableException
         """
-        content_item: Union[ContentItem, Pack] = BaseContent.from_path(path)  # type:ignore[assignment]
+        content_item: Union[ContentItem, Pack] = BaseContent.from_path(
+            path, private_pack_path=private_pack_path
+        )  # type:ignore[assignment]
         if content_item is None:
             reason = (
                 "Deprecated type - use LayoutContainer instead"

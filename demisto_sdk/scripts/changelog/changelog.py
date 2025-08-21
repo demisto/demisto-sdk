@@ -1,3 +1,6 @@
+import os
+
+os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "true"
 import re
 import sys
 from datetime import datetime
@@ -10,6 +13,7 @@ from github import Github
 from more_itertools import bucket
 from pydantic import ValidationError
 
+from demisto_sdk.commands.common.constants import DEMISTO_GIT_UPSTREAM
 from demisto_sdk.commands.common.files.yml_file import YmlFile
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import (
@@ -36,6 +40,25 @@ GIT_UTIL = GitUtil(".")
 yaml = DEFAULT_YAML_HANDLER
 json = DEFAULT_JSON_HANDLER
 sys.tracebacklimit = 0
+
+
+def warn_if_not_in_sdk_repo():
+    try:
+        git_repo = GitUtil().repo
+        remote_urls = list(git_repo.remote(name=DEMISTO_GIT_UPSTREAM).urls)
+        if not any("demisto-sdk" in url for url in remote_urls):
+            logger.info(
+                "This command should only be run inside the demisto-sdk repository."
+            )
+            sys.exit(1)
+    except Exception:
+        logger.info(
+            "Could not determine repository. This command should only run inside the demisto-sdk repo."
+        )
+        sys.exit(1)
+
+
+warn_if_not_in_sdk_repo()
 
 
 class Changelog:

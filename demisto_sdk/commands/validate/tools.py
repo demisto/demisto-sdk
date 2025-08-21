@@ -16,6 +16,8 @@ from demisto_sdk.commands.common.tools import (
     filter_out_falsy_values,
     get_approved_tags_from_branch,
 )
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import (
     Command,
@@ -25,6 +27,7 @@ from demisto_sdk.commands.content_graph.objects.integration import (
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.test_script import TestScript
 
@@ -294,4 +297,8 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
         )
     if content_item.git_status == GitStatuses.RENAMED:
         return not is_pack_move(content_item)
+    if isinstance(content_item, (AgentixAction, AgentixAgent)) or (
+        isinstance(content_item, Script) and content_item.is_llm
+    ):
+        return True
     return content_item.git_status is None

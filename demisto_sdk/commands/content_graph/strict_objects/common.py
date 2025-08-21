@@ -73,7 +73,7 @@ class BaseStrictModel(BaseModel, ABC):
             # The assertion is caught by pydantic and converted to a pydantic.ValidationError
             assert (
                 value is not None
-            ), f"The field {field.name} is not required, but should not be None if it exists"
+            ), f"The field {field.alias or field.name} is not required, but should not be None if it exists"
         return value
 
 

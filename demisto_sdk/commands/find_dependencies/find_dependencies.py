@@ -8,6 +8,7 @@ from typing import Any, Iterable, Optional, Set, Tuple, Union
 
 import networkx as nx
 from packaging.version import Version
+from pebble import ProcessPool
 from requests import RequestException
 
 from demisto_sdk.commands.common import constants
@@ -3157,15 +3158,15 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
 
     # Generating one graph with dependencies for all packs
     dependency_graph = get_all_packs_dependency_graph(id_set, packs)
-
+    pool: ProcessPool
     with ProcessPoolHandler() as pool:
         futures = []
         for pack in dependency_graph:
             futures.append(
                 pool.schedule(
                     calculate_single_pack_dependencies,
-                    args=(pack, dependency_graph),
-                )
+                    args=[pack, dependency_graph],
+                )  # type: ignore[attr-defined]
             )
         wait_futures_complete(futures=futures, done_fn=add_pack_metadata_results)
         logger.info(
@@ -3229,14 +3230,15 @@ def get_packs_dependent_on_given_packs(
     reverse_dependency_graph = nx.DiGraph.reverse(dependency_graph)
 
     pack_names = [get_pack_name(pack_path) for pack_path in packs]
+    pool: ProcessPool
     with ProcessPoolHandler() as pool:
         futures = []
         for pack in pack_names:
             futures.append(
                 pool.schedule(
                     calculate_single_pack_depends_on,
-                    args=(str(pack), reverse_dependency_graph),
-                )
+                    args=[str(pack), reverse_dependency_graph],
+                )  # type: ignore[attr-defined]
             )
         wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
         # finished iteration over pack folders

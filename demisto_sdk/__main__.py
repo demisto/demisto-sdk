@@ -1,10 +1,10 @@
+import importlib.metadata
 import os
 import platform
 import sys
 
 import typer
 from dotenv import load_dotenv
-from pkg_resources import DistributionNotFound, get_distribution
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -77,8 +77,8 @@ def main(
 def get_version_info():
     """Retrieve version and latest release information."""
     try:
-        current_version = get_distribution("demisto-sdk").version
-    except DistributionNotFound:
+        current_version = importlib.metadata.version("demisto-sdk")
+    except importlib.metadata.PackageNotFoundError:
         current_version = "dev"
         typer.echo(
             "Could not find the version of demisto-sdk. Running in development mode."
@@ -139,7 +139,10 @@ def register_commands(_args: list[str] = []):  # noqa: C901
         _args (list[str]): The list of command-line arguments.
     """
 
-    register_nothing = (
+    # Command name would be the first non-flag/option argument.
+    command_name: str = next((arg for arg in _args if not arg.startswith("-")), "")
+
+    register_nothing = not command_name and (
         "-v" in _args
         or "--version" in _args
         or "-rn" in _args
@@ -152,8 +155,6 @@ def register_commands(_args: list[str] = []):  # noqa: C901
     is_help = "-h" in _args or "--help" in _args
     register_all = any([is_test, is_help])
 
-    # Command name would be the first non-flag/option argument.
-    command_name: str = next((arg for arg in _args if not arg.startswith("-")), "")
     # Pre-commit runs a few commands as hooks.
     is_pre_commit = "pre-commit" == command_name
 
@@ -447,15 +448,6 @@ def register_commands(_args: list[str] = []):  # noqa: C901
         app.command(name="generate-modeling-rules", help="Generated modeling-rules.")(
             generate_modeling_rules
         )
-
-    if command_name == "lint" or register_all:
-        from demisto_sdk.commands.lint.lint_setup import lint
-
-        app.command(
-            name="lint",
-            help="Deprecated, use demisto-sdk pre-commit instead.",
-            hidden=True,
-        )(lint)
 
     if command_name == "create-id-set" or register_all:
         from demisto_sdk.commands.create_id_set.create_id_set_setup import create_id_set

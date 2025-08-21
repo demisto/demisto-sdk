@@ -871,7 +871,15 @@ def test_rearranging_before_conversion_indicator_and_incident_fields(repo: Repo)
     "input_script, output_version",
     [
         (
+            "This is a test script\n the script contains a pack version\n demisto.debug('pack id = id, pack version = 3.4.5')  TEST TEST",
+            "3.4.5",
+        ),
+        (
             "This is a test script\n the script contains a pack version\n ### pack version: 3.4.5  TEST TEST",
+            "3.4.5",
+        ),
+        (
+            "This is a test script\n the script contains a pack version\ndemisto.debug('pack id = id, pack version = 3.4.5')\n  TEST TEST",
             "3.4.5",
         ),
         (
@@ -1502,6 +1510,7 @@ class TestReadmes:
             create_new=True,
             working_dir_path=str(contribution_temp_dir),
             base_dir=git_repo.path,
+            pack_readme=readme,
         )
 
         # Convert the contribution to a pack
@@ -1509,6 +1518,10 @@ class TestReadmes:
 
         # Check new Pack README exists
         assert Path(contrib_converter.working_dir_path, PACKS_README_FILE_NAME).exists()
+        content_pack_readme = Path(
+            contrib_converter.working_dir_path, PACKS_README_FILE_NAME
+        ).read_text()
+        assert content_pack_readme == readme
 
         # Check new Integration README exists
         assert Path(contrib_converter.readme_files[0]).exists()

@@ -329,7 +329,15 @@ class DocReviewer:
                 self.files_without_misspells.add(file)
 
         self.print_file_report()
-        if (self.found_misspelled or self.malformed_rn_files) and not self.no_failure:
+        if self.malformed_rn_files:
+            logger.info(
+                f"\n<red> - Malformed release notes were found in {self.malformed_rn_files}</red>"
+            )
+            return False
+        if self.files_with_misspells and not self.no_failure:
+            logger.info(
+                f"\n<red> - Words that might be misspelled were found in {self.files_with_misspells}</red>"
+            )
             return False
 
         return True

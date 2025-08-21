@@ -884,6 +884,8 @@ class BuildContext:
             "Server 6.10": "6.10.0",
             "Server 6.11": "6.11.0",
             "Server 6.12": "6.12.0",
+            "Server 6.13": "6.13.0",
+            "Server 6.14": "6.14.0",
             "Server Master": default_version,
             "XSIAM 1.2": "6.9.0",
             "XSIAM Master": default_version,
@@ -2513,7 +2515,7 @@ class TestContext:
             self.playbook.close_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
         elif self.incident_id and test_passed:
-            self.playbook.delete_incident(self.client, self.incident_id)
+            self.playbook.close_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
 
     def _run_docker_threshold_test(self):

@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     GENERAL_DEFAULT_FROMVERSION,
     MarketplaceVersions,
+    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
@@ -119,7 +120,29 @@ def get_items_using_deprecated(
 def get_items_using_deprecated_commands(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[graph.Node]]]:
-    files_filter = f"AND p.path IN {file_paths}" if file_paths else ""
+    """
+    Retrieves non-deprecated content items that are using deprecated commands.
+
+    This function queries the Neo4j graph database to find relationships where a non-deprecated
+    content item (`p`) uses a command (`c`) that is marked as deprecated (`deprecated: true`).
+    It also ensures that the deprecated command is not also provided by a non-deprecated integration.
+    Results can be filtered by specific file paths.
+
+    Args:
+        tx (Transaction): The Neo4j transaction object to execute the query within.
+        file_paths (List[str]): A list of file paths to filter the results. If the list is empty,
+                                 no file path filtering is applied.
+
+    Returns:
+        List[Tuple[str, List[graph.Node]]]: A list of tuples, where each tuple contains:
+                                            - The object ID of the deprecated command (str).
+                                            - A list of Neo4j graph nodes representing the
+                                              content item objects that use the deprecated command.
+    """
+    # find items for both sides of the relationship where a non-deprecated item uses deprecated item.
+    files_filter = (
+        f"AND p.path IN {file_paths} OR c.path IN {file_paths}" if file_paths else ""
+    )
 
     command_query = f"""// Returning all the items which using deprecated commands
 MATCH (p{{deprecated: false}})-[:USES]->(c:Command)<-[:HAS_COMMAND{{deprecated: true}}]-(i:Integration) WHERE NOT p.is_test
@@ -141,7 +164,29 @@ RETURN c.object_id AS deprecated_command, collect(p) AS object_using_deprecated"
 def get_items_using_deprecated_content_items(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[graph.Node]]]:
-    files_filter = f"AND p.path IN {file_paths}" if file_paths else ""
+    """
+    Retrieves non-deprecated items that are using other deprecated content items.
+
+    This function queries the Neo4j graph database to find relationships where a non-deprecated
+    content item (`p`) uses another content item (`d`) that is marked as deprecated (`deprecated: true`).
+    It specifically excludes cases where the 'USES' relationship is to a command, as commands are handled
+    by a dedicated query. Results can be filtered by specific file paths.
+
+    Args:
+        tx (Transaction): The Neo4j transaction object to execute the query within.
+        file_paths (List[str]): A list of file paths to filter the results. If the list is empty,
+                                 no file path filtering is applied.
+
+    Returns:
+        List[Tuple[str, List[graph.Node]]]: A list of tuples, where each tuple contains:
+                                            - The object ID of the deprecated content item (str).
+                                            - A list of Neo4j graph nodes representing the
+                                              content item objects that use the deprecated content item.
+    """
+    # find items for both sides of the relationship where a non-deprecated item uses deprecated item.
+    files_filter = (
+        f"AND p.path IN {file_paths} OR d.path IN {file_paths}" if file_paths else ""
+    )
 
     query = f"""
     MATCH (p{{deprecated: false}})-[:USES]->(d{{deprecated: true}}) WHERE not p.is_test
@@ -345,3 +390,42 @@ RETURN collect(tp) AS content_items
         filter(None, (item.get("content_items") for item in run_query(tx, query))),
         default=[],
     )
+
+
+def validate_playbook_tests_in_repository(
+    tx: Transaction, playbook_paths: List[str]
+) -> Dict[str, Neo4jRelationshipResult]:
+    query = f"""
+    MATCH (content_item_from: Playbook)-[r:{RelationshipType.TESTED_BY}]->(n{{not_in_repository: true}})
+    {f'WHERE content_item_from.path in {playbook_paths}' if playbook_paths else ''}
+    RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
+    """
+    return {
+        item.get("content_item_from").element_id: Neo4jRelationshipResult(
+            node_from=item.get("content_item_from"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }
+
+
+def get_supported_modules_mismatch_dependencies(
+    tx: Transaction,
+    content_item_ids: List[str],
+):
+    query = f""" // Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
+    MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(contentItemB)
+    WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItemA.object_id IN {content_item_ids})
+      AND contentItemB.supportedModules IS NOT NULL AND 'platform' IN contentItemA.marketplaces
+      AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {[sm.value for sm in PlatformSupportedModules]}) WHERE module IN contentItemB.supportedModules)
+    RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
+    """
+    return {
+        item.get("contentItemA").element_id: Neo4jRelationshipResult(
+            node_from=item.get("contentItemA"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }

@@ -29,6 +29,10 @@ mapping:
     sequence:
     - type: str
       enum: ['marketplacev2']
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str
   edit:
     type: map
     mapping:

@@ -1,0 +1,13 @@
+{
+    "docs": "doc1",
+    "images": {
+        "test1": {
+            "image": ".....",
+            "type": "image"
+        },
+        "test2": {
+            "image": ".....",
+            "type": "image"
+        }
+    }
+}

@@ -1,0 +1,4 @@
+changes:
+- description: Added Agentix XSIAM to supported modules const.
+  type: internal
+pr_number: 5040

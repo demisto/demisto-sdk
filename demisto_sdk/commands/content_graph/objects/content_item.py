@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Union
 
 import demisto_client
 from packaging.version import Version
@@ -34,6 +34,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     RelationshipType,
+    append_supported_modules,
     replace_marketplace_references,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
@@ -57,6 +58,7 @@ class ContentItem(BaseContent):
     pack: Any = Field(None, exclude=True, repr=False)
     support: str = ""
     is_silent: bool = False
+    upload_path: Optional[Path] = None
 
     @validator("path", always=True)
     def validate_path(cls, v: Path, values) -> Path:
@@ -170,6 +172,10 @@ class ContentItem(BaseContent):
         return self.in_pack.pack_version if self.in_pack else None
 
     @property
+    def pack_path(self) -> Optional[Path]:
+        return self.in_pack.path if self.in_pack else None
+
+    @property
     def uses(self) -> List["RelationshipData"]:
         """
         This returns the content items which this content item uses.
@@ -273,10 +279,15 @@ class ContentItem(BaseContent):
         if not self.path.exists():
             raise FileNotFoundError(f"Could not find file {self.path}")
         data = self.data
-        logger.debug(f"preparing {self.path}")
-
         # Replace incorrect marketplace references
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
+        if current_marketplace == MarketplaceVersions.PLATFORM:
+            data = append_supported_modules(
+                data, self.supportedModules, self.pack.supportedModules
+            )
+        else:
+            if "supportedModules" in data:
+                del data["supportedModules"]
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(
@@ -291,7 +302,15 @@ class ContentItem(BaseContent):
         Returns:
             dict: Dictionary representation of the summary content item.
         """
-        summary_res = self.dict(include=self.metadata_fields(), by_alias=True)
+
+        exclude_fields: Dict[Union[int, str], Any] = {}
+        if not self.supportedModules:
+            exclude_fields["supportedModules"] = True
+
+        summary_res = self.dict(
+            include=self.metadata_fields(), by_alias=True, exclude=exclude_fields
+        )
+
         if marketplace and marketplace != MarketplaceVersions.XSOAR:
             data = self.data
             if "id" in summary_res:
@@ -322,6 +341,7 @@ class ContentItem(BaseContent):
             "fromversion",
             "toversion",
             "deprecated",
+            "supportedModules",
         }
 
     @property
@@ -360,6 +380,7 @@ class ContentItem(BaseContent):
                 data=self.prepare_for_upload(current_marketplace=marketplace),
                 handler=self.handler,
             )
+            logger.debug(f"path to dumped file: {str(dir / self.normalize_name)}")
         except FileNotFoundError as e:
             logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
 
@@ -376,7 +397,9 @@ class ContentItem(BaseContent):
         id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity
 
-    def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+    def is_incident_to_alert(
+        self, marketplace: Union[List[MarketplaceVersions], MarketplaceVersions]
+    ) -> bool:
         """
         As long as the content item does not have an implementation of the `is_incident_to_alert` function,
         the return value will always be false,

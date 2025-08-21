@@ -1,0 +1,4 @@
+changes:
+- description: Fix wrong operator name in ST110 structure validation.
+  type: fix
+pr_number: 5034

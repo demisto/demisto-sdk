@@ -159,74 +159,6 @@ def safe_update_markdown_images_file_links(
         )
 
 
-def collect_images_from_markdown_and_replace_with_storage_path(
-    markdown_path: Path,
-    pack_name: str,
-    marketplace: MarketplaceVersions,
-    file_type: ImagesFolderNames,
-) -> list:
-    """
-    Replaces inplace all images links in the pack README.md with their new gcs location
-
-    Args:
-        markdown_path (str): A path to the pack README file.
-        pack_name (str): A string of the pack name.
-        marketplace (str): The marketplace this pack is going to be uploaded to.
-
-    Returns:
-        A dict of the pack name and all the image urls found in the README.md file with all related data
-        (original_url - The original url as found in the README.md file.
-         final_dst_image_path - The destination where the image will be stored on gcp.
-         relative_image_path - The relative path (from the pack name root) in the gcp.
-         image_name - the image name)
-    """
-    google_api_markdown_images_url = (
-        f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/{MarketplaceVersionToMarketplaceName.get(marketplace)}"
-        f"/content/packs/{pack_name}"
-    )
-    if marketplace in [
-        MarketplaceVersions.XSOAR_SAAS,
-        MarketplaceVersions.MarketplaceV2,
-        MarketplaceVersions.XPANSE,
-    ]:
-        to_replace = f"{SERVER_API_TO_STORAGE}/{pack_name}"
-    else:
-        to_replace = google_api_markdown_images_url
-
-    urls_list = []
-
-    with open(markdown_path, "r") as file:
-        lines = file.readlines()
-
-    for i, line in enumerate(lines):
-        if res := re.search(URL_IMAGE_LINK_REGEX, line):
-            url = res["url"]
-            parse_url = urlparse(url)
-            url_path = Path(parse_url.path)
-            image_name = url_path.name
-            new_replace_url = os.path.join(to_replace, file_type.value, image_name)
-            lines[i] = line.replace(url, new_replace_url)
-            logger.debug(f"Replacing {url=} with new url {new_replace_url=}")
-
-            image_gcp_path = (
-                f"{google_api_markdown_images_url}/{file_type.value}/{image_name}"
-            )
-            relative_image_path = f"{pack_name}/{file_type.value}/{image_name}"
-            urls_list.append(
-                {
-                    "original_markdown_url": url,
-                    "final_dst_image_path": image_gcp_path,
-                    "relative_image_path": relative_image_path,
-                    "image_name": image_name,
-                }
-            )
-
-    with open(markdown_path, "w") as file:
-        file.writelines(lines)
-
-    return urls_list
-
-
 def init_json_file(markdown_images_file_name: str):
     """Initialize a json file at with the given file name if doesn't exist.
 
@@ -294,35 +226,37 @@ def update_markdown_images_file_links(
         )
 
 
-def collect_images_relative_paths_from_markdown_and_replace_with_storage_path(
+def process_markdown_images(
     markdown_path: Path,
     pack_name: str,
     marketplace: MarketplaceVersions,
     file_type: ImagesFolderNames,
+    is_url: bool,
 ) -> List[dict]:
     """
-    Replaces inplace all images relative paths in the pack README.md with their new gcs location
+    Generic function to process images in markdown and replace with storage path
 
     Args:
-        markdown_path (str): A path to the pack README file.
+        markdown_path (Path): A path to the pack README file.
         pack_name (str): A string of the pack name.
-        marketplace (str): The marketplace this pack is going to be uploaded to.
+        marketplace (MarketplaceVersions): The marketplace this pack is going to be uploaded to.
+        file_type (ImagesFolderNames): The type of file to process.
+        is_url (bool): True if processing URL images, False if processing relative paths
 
     Returns:
-        A dict of the pack name and all the image urls found in the README.md file with all related data
-        (original_url - The original url as found in the README.md file.
-         final_dst_image_path - The destination where the image will be stored on gcp.
-         relative_image_path - The relative path (from the pack name root) in the gcp.
-         image_name - the image name)
+        A list of dicts with all the image data found in the README.md file
     """
-    google_api_markdown_images_url = (
-        f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/{MarketplaceVersionToMarketplaceName.get(marketplace)}"
-        f"/content/packs/{pack_name}"
-    )
+    bucket_path = MarketplaceVersionToMarketplaceName.get(marketplace)
+    if bucket_path and marketplace == MarketplaceVersions.PLATFORM.value:
+        bucket_path += "/april-content"  # CIAC-13208
+
+    google_api_markdown_images_url = f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/{bucket_path}/content/packs/{pack_name}"
+
     if marketplace in [
         MarketplaceVersions.XSOAR_SAAS,
         MarketplaceVersions.MarketplaceV2,
         MarketplaceVersions.XPANSE,
+        MarketplaceVersions.PLATFORM,
     ]:
         to_replace = f"{SERVER_API_TO_STORAGE}/{pack_name}"
     else:
@@ -333,28 +267,95 @@ def collect_images_relative_paths_from_markdown_and_replace_with_storage_path(
     with open(markdown_path, "r") as file:
         lines = file.readlines()
 
+    pattern = URL_IMAGE_LINK_REGEX if is_url else DOC_FILE_IMAGE_REGEX
+
     for i, line in enumerate(lines):
-        if res := re.search(DOC_FILE_IMAGE_REGEX, line):
-            rel_path = res.group()
-            image_path = Path(rel_path)
-            image_name = image_path.name
+        if res := re.search(pattern, line):
+            # Extract the path based on the type of image reference
+            if is_url:
+                original_path = res["url"]
+                parse_url = urlparse(original_path)
+                path_obj = Path(parse_url.path)
+            else:
+                original_path = res.group()
+                path_obj = Path(original_path)
+
+            image_name = path_obj.name
             new_replace_url = os.path.join(to_replace, file_type.value, image_name)
-            lines[i] = line.replace(rel_path, new_replace_url)
-            logger.debug(f"Replacing {rel_path=} with new url {new_replace_url=}")
+            lines[i] = line.replace(original_path, new_replace_url)
+            logger.debug(f"Replacing {original_path=} with new url {new_replace_url=}")
 
             image_gcp_path = (
                 f"{google_api_markdown_images_url}/{file_type.value}/{image_name}"
             )
             relative_image_path = f"{pack_name}/{file_type.value}/{image_name}"
-            images_list.append(
-                {
-                    "final_dst_image_path": image_gcp_path,
-                    "relative_image_path": relative_image_path,
-                    "image_name": image_name,
-                }
-            )
+
+            image_data = {
+                "final_dst_image_path": image_gcp_path,
+                "relative_image_path": relative_image_path,
+                "image_name": image_name,
+            }
+
+            if is_url:
+                image_data["original_markdown_url"] = original_path
+
+            images_list.append(image_data)
 
     with open(markdown_path, "w") as file:
         file.writelines(lines)
 
     return images_list
+
+
+def collect_images_from_markdown_and_replace_with_storage_path(
+    markdown_path: Path,
+    pack_name: str,
+    marketplace: MarketplaceVersions,
+    file_type: ImagesFolderNames,
+) -> list:
+    """
+    Replaces inplace all images links in the pack README.md with their new gcs location
+
+    Args:
+        markdown_path (Path): A path to the pack README file.
+        pack_name (str): A string of the pack name.
+        marketplace (MarketplaceVersions): The marketplace this pack is going to be uploaded to.
+        file_type (ImagesFolderNames): The type of file to process.
+
+    Returns:
+        A list of dicts with all the image URLs found in the README.md file with all related data
+    """
+    return process_markdown_images(
+        markdown_path=markdown_path,
+        pack_name=pack_name,
+        marketplace=marketplace,
+        file_type=file_type,
+        is_url=True,
+    )
+
+
+def collect_images_relative_paths_from_markdown_and_replace_with_storage_path(
+    markdown_path: Path,
+    pack_name: str,
+    marketplace: MarketplaceVersions,
+    file_type: ImagesFolderNames,
+) -> List[dict]:
+    """
+    Replaces inplace all images relative paths in the pack README.md with their new gcs location
+
+    Args:
+        markdown_path (Path): A path to the pack README file.
+        pack_name (str): A string of the pack name.
+        marketplace (MarketplaceVersions): The marketplace this pack is going to be uploaded to.
+        file_type (ImagesFolderNames): The type of file to process.
+
+    Returns:
+        A list of dicts with all the relative image paths found in the README.md file with all related data
+    """
+    return process_markdown_images(
+        markdown_path=markdown_path,
+        pack_name=pack_name,
+        marketplace=marketplace,
+        file_type=file_type,
+        is_url=False,
+    )

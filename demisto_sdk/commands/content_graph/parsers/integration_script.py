@@ -20,10 +20,13 @@ class IntegrationScriptParser(YAMLContentItemParser):
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules,
         git_sha: Optional[str] = None,
     ) -> None:
         self.is_unified = YAMLContentItemParser.is_unified_file(path)
-        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
+        )
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.connect_to_api_modules()
 
@@ -68,6 +71,8 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     def connect_to_api_modules(self) -> None:
         """Creates IMPORTS relationships with the API modules used in the integration."""
+        if self.content_type == ContentType.SCRIPT and self.is_llm:  # type: ignore
+            return None
         code = self.code
         if not code:
             raise ValueError(

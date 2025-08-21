@@ -5,6 +5,7 @@ If you have several Generic Export Indicators Service integration instances, mak
 Note: After a successful configuration of an instance, if the 'test button' is clicked again, it may result in a failure due to an incorrect assumption that the port is already in use. Nevertheless, it is important to highlight that despite this issue, the instance will continue to function correctly.
 
 
+
 ### Access the Generic Export Indicators Service by Instance Name (HTTPS)
 
 
@@ -20,6 +21,7 @@ curl -v -u test:password https://edl-my-xsiam-subdomain.us.paloaltonetworks.com/
 ```
 
 **Note**: The External Dynamic List is not accessible via web browsers and you will receive an unauthorized error if accessing the External Dynamic List via a browser.
+
 
 
 

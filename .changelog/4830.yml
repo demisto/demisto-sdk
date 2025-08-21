@@ -1,4 +1,0 @@
-changes:
-- description: Update Graph objects to support the new quick action properties.
-  type: internal
-pr_number: 4830

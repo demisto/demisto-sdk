@@ -7,6 +7,7 @@ from demisto_sdk.commands.content_graph.objects.pack_content_items import (
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_playbook_object,
+    create_test_use_case_file_object,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.PB_validators.PB100_is_no_rolename import (
@@ -79,6 +80,13 @@ from demisto_sdk.commands.validate.validators.PB_validators.PB131_is_silent_play
 from demisto_sdk.commands.validate.validators.PB_validators.PB132_no_readme_for_silent_playbook import (
     NoReadmeForSilentPlaybook,
 )
+from demisto_sdk.commands.validate.validators.PB_validators.PB133_playbook_tests_exist import (
+    PlaybookTestsExistValidator,
+)
+from demisto_sdk.commands.validate.validators.PB_validators.PB134_playbook_test_use_case_config import (
+    PlaybookTestUseCaseConfigValidator,
+)
+from TestSuite.pack import Pack as TestSuitePack
 from TestSuite.repo import Repo
 
 
@@ -2603,3 +2611,171 @@ def test_NoReadmeForSilentPlaybook():
         [playbook]
     )
     assert len(invalid_content_items) == 0
+
+
+def test_PlaybookTestsExistValidator_valid(graph_repo: Repo):
+    """
+    Given:
+    - A playbook that correctly refrences a test playbook and test use case that exist.
+
+    When:
+    - Calling PlaybookTestsExistValidator.obtain_invalid_content_items_using_graph.
+
+    Then:
+    - Ensure no validation errors.
+    """
+    playbook_id = "Generic Remediation"
+    test_playbook_id = "Remediation Test"
+    test_use_case_name = "Remediation_use_case_test"
+
+    pack: TestSuitePack = graph_repo.create_pack("Incident Remediation Pack")
+    pack.create_playbook(
+        "playbook-GenericRemediation",
+        yml={
+            "id": playbook_id,
+            "name": playbook_id,
+            # Referenced PB tests are valid and defined below
+            "tests": [test_playbook_id, test_use_case_name],
+        },
+    )
+    pack.create_test_playbook(
+        "playbook-RemediationTest",
+        yml={
+            "id": test_playbook_id,
+            "name": test_playbook_id,
+        },
+    )
+    pack.create_test_use_case(
+        test_use_case_name,
+        content="import pytest\n...",
+    )
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+    validation_results = (
+        PlaybookTestsExistValidator().obtain_invalid_content_items_using_graph(
+            content_items=[], validate_all_files=True
+        )
+    )
+
+    assert len(validation_results) == 0
+
+
+def test_PlaybookTestsExistValidator_invalid(graph_repo: Repo):
+    """
+    Given:
+    - A playbook that refrences a test playbook that does not exist.
+
+    When:
+    - Calling PlaybookTestsExistValidator.obtain_invalid_content_items_using_graph.
+
+    Then:
+    - Ensure a validation error is returned with the expected message (missing test playbook).
+    """
+    playbook_id = "Extract Indicators"
+    test_playbook_id = "Extraction & Enrichment Test"
+
+    pack: TestSuitePack = graph_repo.create_pack("Indcator Extraction Pack")
+    pack.create_playbook(
+        "playbook-ExtractIndicators",
+        yml={
+            "id": playbook_id,
+            "name": playbook_id,
+            # Referenced PB tests do not exist!
+            "tests": [test_playbook_id],
+        },
+    )
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+    validation_results = (
+        PlaybookTestsExistValidator().obtain_invalid_content_items_using_graph(
+            content_items=[], validate_all_files=True
+        )
+    )
+
+    expected_message = f"Playbook '{playbook_id}' references the following missing test playbooks: {test_playbook_id}."
+    assert validation_results[0].message == expected_message
+
+
+def test_PlaybookTestUseCaseConfigValidator_valid():
+    """
+    Given:
+    - A pack that contains a test use case with a valid configuration docstring.
+
+    When:
+    - Calling PlaybookTestUseCaseConfigValidator.obtain_invalid_content_items.
+
+    Then:
+    - Ensure no validation errors.
+    """
+    config = '{"additional_needed_packs": {"TestPack": "pack_instance_1"}}'
+    test_use_case_name = "CloudInfra_use_case_test"
+    playbook = create_playbook_object(
+        paths=["tests"],
+        values=[[test_use_case_name]],
+    )
+    create_test_use_case_file_object(
+        playbook_path=playbook.path,
+        test_use_case_name=test_use_case_name,
+        test_use_case_content=f"'''\n{config}\n'''\nimport pytest",
+    )
+
+    validation_results = (
+        PlaybookTestUseCaseConfigValidator().obtain_invalid_content_items(
+            content_items=[playbook]
+        )
+    )
+    assert validation_results == []
+
+
+@pytest.mark.parametrize(
+    "config, expected_invalid_reason",
+    [
+        pytest.param(
+            '{"additional"_"needed_packs": /dkfg.})',
+            "Invalid JSON object",
+            id="Invalid JSON",
+        ),
+        pytest.param(
+            '{"additional_needed_packs": 123}',
+            "Invalid object schema",
+            id="Invalid Schema",
+        ),
+        pytest.param(
+            '{"additional_needed_packs": {"BlahBlah": "hello_instance"}}',
+            "Unknown packs: BlahBlah",
+            id="Invalid Pack",
+        ),
+    ],
+)
+def test_PlaybookTestUseCaseConfigValidator_invalid(
+    config: str,
+    expected_invalid_reason: str,
+):
+    """
+    Given:
+    - A pack that contains a test use case with an invalid configuration docstring.
+
+    When:
+    - Calling PlaybookTestUseCaseConfigValidator.obtain_invalid_content_items.
+
+    Then:
+    - Ensure a validation error is returned with the expected message.
+    """
+    test_use_case_name = "Generic_use_case_test"
+    playbook = create_playbook_object(
+        paths=["tests"],
+        values=[[test_use_case_name]],
+    )
+    create_test_use_case_file_object(
+        playbook_path=playbook.path,
+        test_use_case_name=test_use_case_name,
+        test_use_case_content=f"'''\n{config}\n'''\nimport pytest",
+    )
+
+    validation_results = (
+        PlaybookTestUseCaseConfigValidator().obtain_invalid_content_items(
+            content_items=[playbook]
+        )
+    )
+    expected_message = f"Invalid configuration in test use case: {test_use_case_name}. {expected_invalid_reason}."
+    assert validation_results[0].message == expected_message

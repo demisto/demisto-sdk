@@ -124,6 +124,7 @@ def upload_zip(
 
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     path: Path
+    supportedModules: Optional[List[str]] = None
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
@@ -284,6 +285,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         )
         # Replace incorrect marketplace references
         metadata = replace_marketplace_references(metadata, marketplace, str(self.path))
+        if "supportedModules" in metadata and not metadata["supportedModules"]:
+            del metadata["supportedModules"]
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
@@ -371,9 +374,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 # The content structure is different from the server
                 if folder == "CaseLayouts":
                     folder = "Layouts"
-
+                dir = path / folder
+                content_item.upload_path = dir / content_item.normalize_name
                 content_item.dump(
-                    dir=path / folder,
+                    dir=dir,
                     marketplace=marketplace,
                 )
             self.dump_metadata(path / "metadata.json", marketplace)
@@ -525,7 +529,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 )
                 uploaded_successfully.append(item)
             except NotIndivitudallyUploadableException:
-                if marketplace == MarketplaceVersions.MarketplaceV2:
+                if marketplace in [
+                    MarketplaceVersions.MarketplaceV2,
+                    MarketplaceVersions.PLATFORM,
+                ]:
                     raise  # many XSIAM content types must be uploaded zipped.
                 logger.warning(
                     f"Not uploading pack {self.object_id}: {item.content_type} {item.object_id} as it was not indivudally uploaded"

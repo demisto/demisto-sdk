@@ -48,7 +48,7 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
     r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"
 )
 
-TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "lint" / "resources"
+TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "pre_commit" / "resources"
 DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT") or 300)
 
 
@@ -128,13 +128,16 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         docker_pass = os.getenv(
             "DEMISTO_SDK_CR_PASSWORD", os.getenv("DOCKERHUB_PASSWORD")
         )
-        logger.debug(f"init_global_docker_client | {docker_user=}, {docker_pass=}")
         if docker_user and docker_pass:
             logger.debug(f"{log_prompt} - logging in to docker registry")
             try:
                 docker_login(DOCKER_CLIENT)
             except Exception:
                 logger.exception(f"{log_prompt} - failed to login to docker registry")
+        else:
+            logger.debug(
+                "One of docker_user or docker_pass is missing, skipping docker login"
+            )
     else:
         msg = "docker client already available, using current DOCKER_CLIENT"
         logger.debug(f"{log_prompt} - {msg}" if log_prompt else msg)
@@ -142,6 +145,12 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
 
 
 def is_custom_registry():
+    global DOCKER_REGISTRY_URL
+    DOCKER_REGISTRY_URL = os.getenv(  # get the value from .env in runtime
+        "DEMISTO_SDK_CONTAINER_REGISTRY",
+        os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
+    )
+
     return (
         not IS_CONTENT_GITLAB_CI and DOCKER_REGISTRY_URL != DEFAULT_DOCKER_REGISTRY_URL
     )
@@ -233,12 +242,21 @@ class DockerBase:
     """
 
     def __init__(self):
+        global DOCKER_REGISTRY_URL
+        DOCKER_REGISTRY_URL = os.getenv(  # get the value from .env in runtime
+            "DEMISTO_SDK_CONTAINER_REGISTRY",
+            os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
+        )
+
         self.tmp_dir_name = tempfile.TemporaryDirectory(
             prefix=os.path.join(os.getcwd(), "tmp")
         )
         self.tmp_dir = Path(self.tmp_dir_name.name)
         installation_scripts = (
-            Path(__file__).parent.parent / "lint" / "resources" / "installation_scripts"
+            Path(__file__).parent.parent
+            / "pre_commit"
+            / "resources"
+            / "installation_scripts"
         )
         self.installation_scripts = {
             TYPE_PYTHON: installation_scripts / "python_image.sh",

@@ -17,8 +17,8 @@ ContentTypes = Integration
 
 class IsMissingDisplayFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IN118"
-    description = "Validate that the integration parameter has a display field if it's not of type 17."
-    rationale = "Integration parameters should have a 'display' field for clear user understanding, except for type 17 parameters."
+    description = "Validate that integration parameters have a display field unless they are of type 17 or 23."
+    rationale = "Integration parameters should have a 'display' field for clear user understanding, except for types 17 and 23."
     error_message = "The following params doesn't have a display field, please make sure to add one: {0}."
     related_field = "display, displaypassowrd"
     is_auto_fixable = False
@@ -45,12 +45,17 @@ class IsMissingDisplayFieldValidator(BaseValidator[ContentTypes]):
         Returns:
             List[str]: The list of the names of the params that are not valid.
         """
+        excluded_types = (
+            ParameterType.EXPIRATION_FIELD.value,
+            ParameterType.ENGINE_PLACEHOLDER.value,
+        )
+        excluded_names = ("feedExpirationPolicy", "feedExpirationInterval")
         return [
             param.name
             for param in params
-            if param.type != ParameterType.EXPIRATION_FIELD.value
+            if param.type not in excluded_types
             and not param.hidden
             and not param.display
             and not param.displaypassword
-            and param.name not in ("feedExpirationPolicy", "feedExpirationInterval")
+            and param.name not in excluded_names
         ]

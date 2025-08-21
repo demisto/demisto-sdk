@@ -21,6 +21,7 @@ class _StrictParsingRule(BaseStrictModel):
     samples: Optional[str] = None
     comment: Optional[str] = None
     deprecated: Optional[bool] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictParsingRule = create_model(

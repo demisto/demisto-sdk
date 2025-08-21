@@ -102,7 +102,6 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
     source_repo: str = "content"
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
-
     relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False
     )
@@ -171,19 +170,20 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             for name, value in inspect.getmembers(self.__class__)
             if isinstance(value, cached_property)
         }
-        json_dct = json.loads(
-            self.json(
-                exclude={
-                    "commands",
-                    "database_id",
-                }
-                | cached_properties
-            )
+        json_dct = self.dict(
+            exclude={
+                "commands",
+                "database_id",
+            }
+            | cached_properties
         )
-        if "path" in json_dct and Path(json_dct["path"]).is_absolute():
+        content_item_path = json_dct.get("path")
+        if content_item_path and isinstance(content_item_path, Path):
             json_dct["path"] = (
-                Path(json_dct["path"]).relative_to(CONTENT_PATH)
-            ).as_posix()  # type: ignore
+                content_item_path.relative_to(CONTENT_PATH).as_posix()
+                if content_item_path.is_absolute()
+                else str(content_item_path)
+            )
         json_dct["content_type"] = self.content_type
         return json_dct
 
@@ -204,6 +204,7 @@ class BaseContent(BaseNode):
     old_base_content_object: Optional["BaseContent"] = None
     related_content_dict: dict = Field({}, exclude=True)
     structure_errors: List[StructureError] = Field(default_factory=list, exclude=True)
+    supportedModules: Optional[List[str]] = None
 
     def _save(
         self,
@@ -285,6 +286,7 @@ class BaseContent(BaseNode):
         git_sha: Optional[str] = None,
         raise_on_exception: bool = False,
         metadata_only: bool = False,
+        private_pack_path: Optional[Path] = None,
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from {path}")
 
@@ -295,7 +297,12 @@ class BaseContent(BaseNode):
         ):  # if the path given is a pack
             try:
                 return CONTENT_TYPE_TO_MODEL[ContentType.PACK].from_orm(
-                    PackParser(path, git_sha=git_sha, metadata_only=metadata_only)
+                    PackParser(
+                        path,
+                        git_sha=git_sha,
+                        metadata_only=metadata_only,
+                        private_pack_path=private_pack_path,
+                    )
                 )
             except InvalidContentItemException:
                 logger.error(f"Could not parse content from {path}")

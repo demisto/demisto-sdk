@@ -26,29 +26,9 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
     TRIGGER_DIR,
-    XPANSE_INLINE_PREFIX_TAG,
-    XPANSE_INLINE_SUFFIX_TAG,
-    XPANSE_PREFIX_TAG,
-    XPANSE_SUFFIX_TAG,
     XSIAM_DASHBOARDS_DIR,
-    XSIAM_INLINE_PREFIX_TAG,
-    XSIAM_INLINE_SUFFIX_TAG,
-    XSIAM_PREFIX_TAG,
     XSIAM_REPORTS_DIR,
-    XSIAM_SUFFIX_TAG,
     XSOAR_CONFIG_FILE,
-    XSOAR_INLINE_PREFIX_TAG,
-    XSOAR_INLINE_SUFFIX_TAG,
-    XSOAR_ON_PREM_INLINE_PREFIX_TAG,
-    XSOAR_ON_PREM_INLINE_SUFFIX_TAG,
-    XSOAR_ON_PREM_PREFIX_TAG,
-    XSOAR_ON_PREM_SUFFIX_TAG,
-    XSOAR_PREFIX_TAG,
-    XSOAR_SAAS_INLINE_PREFIX_TAG,
-    XSOAR_SAAS_INLINE_SUFFIX_TAG,
-    XSOAR_SAAS_PREFIX_TAG,
-    XSOAR_SAAS_SUFFIX_TAG,
-    XSOAR_SUFFIX_TAG,
     FileType,
     MarketplaceVersions,
 )
@@ -69,7 +49,6 @@ from demisto_sdk.commands.common.logger import (
 )
 from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
-    TagParser,
     arg_to_list,
     check_timestamp_format,
     compare_context_path_in_yml_and_readme,
@@ -2370,98 +2349,23 @@ class TestGetItemMarketplaces:
         assert "marketplacev2" in marketplaces
 
 
-class TestTagParser:
-    def test_no_text_to_remove(self):
-        """
-        Given:
-            - prefix <>
-            - suffix </>
-            - text with no prefix / suffix
-        When:
-            - Calling TagParser.parse()
-        Then:
-            - Text shouldn't change
-        """
-        prefix = "<>"
-        suffix = "</>"
-        text = "some text"
-        tag_parser = TagParser("FAKE_LABEL")
-        for tag in (prefix, suffix):
-            assert tag_parser.parse(text + tag) == text + tag
-
-    def test_remove_text(self):
-        """
-        Given:
-            - prefix <>
-            - suffix </>
-            - text with prefix + suffix
-        When:
-            - Calling TagParser.parse() with text removal
-        Then:
-            - Text shouldn't have tags or their text
-        """
-        text = "some text<~>more text</~>"
-        expected_text = "some text"
-        tag_parser = TagParser("")
-        assert tag_parser.parse(text, True) == expected_text
-
-    def test_remove_tags_only(self):
-        """
-        Given:
-            - prefix <>
-            - suffix </>
-            - text with prefix + suffix
-        When:
-            - Calling TagParser.parse() without text removal
-        Then:
-            - Text shouldn't have tags, but keep the text
-        """
-        text = "some text <~>tag text</~>"
-        expected_text = "some text tag text"
-        tag_parser = TagParser("")
-        assert tag_parser.parse(text) == expected_text
-
-
 class TestMarketplaceTagParser:
     MARKETPLACE_TAG_PARSER = MarketplaceTagParser()
-    XSOAR_PREFIX = XSOAR_PREFIX_TAG
-    XSOAR_SUFFIX = XSOAR_SUFFIX_TAG
-    XSOAR_INLINE_PREFIX = XSOAR_INLINE_PREFIX_TAG
-    XSOAR_INLINE_SUFFIX = XSOAR_INLINE_SUFFIX_TAG
 
-    XSIAM_PREFIX = XSIAM_PREFIX_TAG
-    XSIAM_SUFFIX = XSIAM_SUFFIX_TAG
-    XSIAM_INLINE_PREFIX = XSIAM_INLINE_PREFIX_TAG
-    XSIAM_INLINE_SUFFIX = XSIAM_INLINE_SUFFIX_TAG
-
-    XPANSE_PREFIX = XPANSE_PREFIX_TAG
-    XPANSE_SUFFIX = XPANSE_SUFFIX_TAG
-    XPANSE_INLINE_PREFIX = XPANSE_INLINE_PREFIX_TAG
-    XPANSE_INLINE_SUFFIX = XPANSE_INLINE_SUFFIX_TAG
-
-    XSOAR_SAAS_PREFIX = XSOAR_SAAS_PREFIX_TAG
-    XSOAR_SAAS_SUFFIX = XSOAR_SAAS_SUFFIX_TAG
-    XSOAR_SAAS_INLINE_PREFIX = XSOAR_SAAS_INLINE_PREFIX_TAG
-    XSOAR_SAAS_INLINE_SUFFIX = XSOAR_SAAS_INLINE_SUFFIX_TAG
-
-    XSOAR_ON_PREM_PREFIX = XSOAR_ON_PREM_PREFIX_TAG
-    XSOAR_ON_PREM_SUFFIX = XSOAR_ON_PREM_SUFFIX_TAG
-    XSOAR_ON_PREM_INLINE_PREFIX = XSOAR_ON_PREM_INLINE_PREFIX_TAG
-    XSOAR_ON_PREM_INLINE_SUFFIX = XSOAR_ON_PREM_INLINE_SUFFIX_TAG
-
-    TEXT_WITH_TAGS = f"""
-### Sections:
-{XSOAR_PREFIX} - ALL XSOAR MARKETPLACE PARAGRAPH {XSOAR_SUFFIX}
-{XSIAM_PREFIX} - XSIAM PARAGRAPH {XSIAM_SUFFIX}
-{XPANSE_PREFIX} - XPANSE PARAGRAPH {XPANSE_SUFFIX}
-{XSOAR_SAAS_PREFIX} - ONLY XSOAR_SAAS PARAGRAPH {XSOAR_SAAS_SUFFIX}
-{XSOAR_ON_PREM_PREFIX} - ONLY XSOAR_ON_PREM PARAGRAPH {XSOAR_ON_PREM_SUFFIX}
-### Inline:
-{XSOAR_INLINE_PREFIX} all xsoar marketplaces inline text {XSOAR_INLINE_SUFFIX}
-{XSIAM_INLINE_PREFIX} xsiam inline text {XSIAM_INLINE_SUFFIX}
-{XPANSE_INLINE_PREFIX} xpanse inline text {XPANSE_INLINE_SUFFIX}
-{XSOAR_SAAS_INLINE_PREFIX} xsoar_saas inline test {XSOAR_SAAS_INLINE_SUFFIX}
-{XSOAR_ON_PREM_INLINE_PREFIX} xsoar_on_prem inline test {XSOAR_ON_PREM_INLINE_SUFFIX}"""
+    TEXT_WITH_TAGS = (
+        "#### Integrations "
+        "Some text outside. "
+        "<~XSIAM>XSIAM content. </~XSIAM>"
+        "<~XSIAM_ONLY>XSIAM specific content. </~XSIAM_ONLY>"
+        "More text. "
+        "<~PLATFORM,XPANSE>PLATFORM and XPANSE only. </~PLATFORM,XPANSE>"
+        "<~XSOAR,XSIAM>Content for XSOAR and XSIAM. </~XSOAR,XSIAM>"
+        "<~XSOAR>XSOAR specific content. </~XSOAR>"
+        "<~XSOAR_SAAS>XSOAR_SAAS specific content. </~XSOAR_SAAS>"
+        "<~XSOAR_ON_PREM>XSOAR_ON_PREM specific content. </~XSOAR_ON_PREM>"
+        "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
+        "End text."
+    )
 
     @pytest.mark.parametrize(
         "res_file, marketplace_version",
@@ -2495,177 +2399,125 @@ class TestMarketplaceTagParser:
 
         assert actual == res
 
-    def check_prefix_not_in_text(self, actual):
-        assert self.XSOAR_PREFIX not in actual
-        assert self.XSIAM_PREFIX not in actual
-        assert self.XPANSE_PREFIX not in actual
-        assert self.XSOAR_SAAS_PREFIX not in actual
-        assert self.XSOAR_ON_PREM_PREFIX not in actual
-
-    def check_xsiam_not_in_text(self, actual):
-        assert "XSIAM" not in actual
-        assert "xsiam" not in actual
-
-    def check_xpanse_not_in_text(self, actual):
-        assert "XPANSE" not in actual
-        assert "xpanse" not in actual
-
-    def check_xsoar_saas_not_in_text(self, actual):
-        assert "XSOAR_SAAS" not in actual
-        assert "XSOAR saas" not in actual
-
-    def check_xsoar_on_prem_not_in_text(self, actual):
-        assert "XSOAR_ON_PREM" not in actual
-        assert "xsoar_on_prem" not in actual
-
-    def check_all_xsoar_not_in_text(self, actual):
-        assert "ALL XSOAR MARKETPLACE PARAGRAPH" not in actual
-        assert "all xsoar marketplaces inline text" not in actual
-
-    def test_invalid_marketplace_version(self):
+    @pytest.mark.parametrize(
+        "upload_marketplace, expected_result",
+        [
+            (
+                MarketplaceVersions.MarketplaceV2.value,  # Uploading to XSIAM marketplace
+                "#### Integrations "
+                "Some text outside. "
+                "XSIAM content. "
+                "XSIAM specific content. "
+                "More text. "
+                "Content for XSOAR and XSIAM. "
+                "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
+                "End text.",
+            ),
+            (
+                MarketplaceVersions.XSOAR.value,  # Uploading to XSOAR marketplace
+                "#### Integrations "
+                "Some text outside. "
+                "More text. "
+                "Content for XSOAR and XSIAM. "
+                "XSOAR specific content. "
+                "XSOAR_ON_PREM specific content. "
+                "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
+                "End text.",
+            ),
+            (
+                MarketplaceVersions.XPANSE.value,  # Uploading to XPANSE marketplace
+                "#### Integrations "
+                "Some text outside. "
+                "More text. "
+                "PLATFORM and XPANSE only. "
+                "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
+                "End text.",
+            ),
+            (
+                MarketplaceVersions.XSOAR_SAAS.value,  # Uploading to XSOAR_SAAS marketplace
+                "#### Integrations "
+                "Some text outside. "
+                "More text. "
+                "Content for XSOAR and XSIAM. "
+                "XSOAR specific content. "
+                "XSOAR_SAAS specific content. "
+                "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
+                "End text.",
+            ),
+            (
+                MarketplaceVersions.XSOAR_ON_PREM.value,  # Uploading to XSOAR_ON_PREM marketplace
+                "#### Integrations "
+                "Some text outside. "
+                "More text. "
+                "XSOAR_ON_PREM specific content. "
+                "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
+                "End text.",
+            ),
+            (
+                MarketplaceVersions.PLATFORM.value,  # Uploading to PLATFORM marketplace
+                "#### Integrations "
+                "Some text outside. "
+                "XSIAM content. "
+                "More text. "
+                "PLATFORM and XPANSE only. "
+                "Content for XSOAR and XSIAM. "
+                "<~INVALID_TAG>block untouched due to invalid marketplace tag. </~INVALID_TAG>"
+                "End text.",
+            ),
+        ],
+    )
+    def test_filter_by_tags_precise_match(self, upload_marketplace, expected_result):
         """
+        Test case to verify the `filter_release_notes_by_tags` function with precisely
+        formatted input and expected output, ensuring exact string matching.
+
         Given:
-            - Invalid marketplace version
-            - Text with XSOAR, XPANSE and XSIAM tags
+            - A release notes string with various marketplace-specific tags (single and comma-separated).
         When:
-            - Calling MarketplaceTagParser.parse_text()
+            - The `filter_release_notes_by_tags` method is called with a specific `upload_marketplace`.
         Then:
-            - Remove all tags and their text
+            - The returned filtered release notes string must exactly match the pre-calculated `expected_result`,
+              demonstrating correct removal of irrelevant tagged sections and preservation of relevant ones.
         """
-        self.MARKETPLACE_TAG_PARSER.marketplace = "invalid"
-        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
-        assert "### Sections:" in actual
-        assert "### Inline:" in actual
-        self.check_prefix_not_in_text(actual)
-        self.check_xsiam_not_in_text(actual)
-        self.check_xpanse_not_in_text(actual)
-        self.check_xsoar_saas_not_in_text(actual)
-        self.check_xsoar_on_prem_not_in_text(actual)
-        self.check_all_xsoar_not_in_text(actual)
+        self.MARKETPLACE_TAG_PARSER.marketplace = upload_marketplace
+        result = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
 
-    def test_xsoar_marketplace_version(self):
+        assert result == expected_result
+
+    @pytest.mark.parametrize(
+        "dummy_text, expected_result",
+        [
+            ("<~XSIAM>Content</~XSIAM>", False),
+            ("<~XSIAM>Unclosed", True),
+            ("Content only</~XSIAM>", True),
+            ("<~XSOAR>Wrong close</~XSIAM>", True),
+            ("<~XSOAR><~XSIAM>Content</~XSIAM></~XSOAR>", False),
+            ("<~XSOAR><~XSIAM></~XSOAR></~XSIAM>", True),
+            ("<~XSOAR,XSIAM>Shared content</~XSOAR,XSIAM>", False),
+            ("<~XSOAR,XSIAM>Oops</~XSOAR>", True),
+            ("<~XSOAR>Part 1</~XSOAR> and <~XSIAM>Part 2</~XSIAM>", False),
+            ("Just some plain text with no tags", False),
+            ("<~XSOAR>Some text</~XSOAR></~XSIAM>", True),
+            ("<~XSOAR><~XSIAM>Some text</~XSIAM>", True),
+        ],
+    )
+    def test_has_unmatched_tags(self, dummy_text, expected_result):
         """
+        Test case to validate the `_has_unmatched_tags` method's ability to detect
+        structural issues in marketplace-specific tags within a text.
+
         Given:
-            - xsoar marketplace version
-            - Text with XSOAR tags and XSIAM tags
+            - A text string that may contain properly or improperly structured
+            <~...> and </~...> tags, including nested and comma-separated tags.
         When:
-            - Calling MarketplaceTagParser.parse_text()
+            - The `_has_unmatched_tags` method is called on the given text.
         Then:
-            - Remove all XSIAM and XPANSE tags and their text, and keep XSOAR text with tags
+            - The result should indicate whether there are any unmatched,
+            improperly nested, or misaligned opening/closing tags.
         """
-        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XSOAR.value
-        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
-        assert "### Sections:" in actual
-        assert "### Inline:" in actual
-        assert "ALL XSOAR MARKETPLACE PARAGRAPH" in actual
-        assert "all xsoar marketplaces inline text" in actual
-        assert "xsoar_on_prem" in actual
-        assert "XSOAR_ON_PREM" in actual
-        self.check_prefix_not_in_text(actual)
-        self.check_xsiam_not_in_text(actual)
-        self.check_xpanse_not_in_text(actual)
-        self.check_xsoar_saas_not_in_text(actual)
+        result = self.MARKETPLACE_TAG_PARSER._has_unmatched_tags(dummy_text)
 
-    def test_xsiam_marketplace_version(self):
-        """
-        Given:
-            - xsiam marketplace version
-            - Text with XSOAR, XPANSE and XSIAM tags
-        When:
-            - Calling MarketplaceTagParser.parse_text()
-        Then:
-            - Remove all XSOAR and XPANSE tags and their text, and keep XSIAM text with tags
-        """
-        self.MARKETPLACE_TAG_PARSER.marketplace = (
-            MarketplaceVersions.MarketplaceV2.value
-        )
-        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
-        assert "### Sections:" in actual
-        assert "### Inline:" in actual
-        assert "XSIAM" in actual
-        assert "xsiam" in actual
-        self.check_all_xsoar_not_in_text(actual)
-        self.check_xpanse_not_in_text(actual)
-        self.check_xsoar_on_prem_not_in_text(actual)
-        self.check_xsoar_saas_not_in_text(actual)
-        self.check_prefix_not_in_text(actual)
-
-    def test_xpanse_marketplace_version(self):
-        """
-        Given:
-            - xpanse marketplace version
-            - Text with XSOAR, XPANSE and XSIAM tags
-        When:
-            - Calling MarketplaceTagParser.parse_text()
-        Then:
-            - Remove all XSOAR and XSIAM tags and their text, and keep XPANSE text with tags
-        """
-        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XPANSE.value
-        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
-        assert "### Sections:" in actual
-        assert "### Inline:" in actual
-        assert "XPANSE" in actual
-        assert "xpanse" in actual
-        self.check_prefix_not_in_text(actual)
-        self.check_all_xsoar_not_in_text(actual)
-        self.check_xsiam_not_in_text(actual)
-        self.check_xsoar_on_prem_not_in_text(actual)
-        self.check_xsoar_saas_not_in_text(actual)
-
-    def test_xsoar_saas_marketplace_version(self):
-        """
-        Check that xsoar_saas text and xsoar text is in text
-        """
-        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XSOAR_SAAS.value
-        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
-        assert "### Sections:" in actual
-        assert "### Inline:" in actual
-        assert "xsoar_saas" in actual
-        assert "XSOAR_SAAS" in actual
-        assert "ALL XSOAR MARKETPLACE PARAGRAPH" in actual
-        assert "all xsoar marketplaces inline text" in actual
-        self.check_prefix_not_in_text(actual)
-        self.check_xsiam_not_in_text(actual)
-        self.check_xpanse_not_in_text(actual)
-        self.check_xsoar_on_prem_not_in_text(actual)
-
-    def test_xsoar_on_prem_marketplace_version(self):
-        """
-        Check that xsoar_saas text and xsoar text is in text
-        """
-        self.MARKETPLACE_TAG_PARSER.marketplace = (
-            MarketplaceVersions.XSOAR_ON_PREM.value
-        )
-        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
-        assert "### Sections:" in actual
-        assert "### Inline:" in actual
-        assert "xsoar_on_prem" in actual
-        assert "XSOAR_ON_PREM" in actual
-        assert "ALL XSOAR MARKETPLACE PARAGRAPH" in actual
-        assert "all xsoar marketplaces inline text" in actual
-        self.check_prefix_not_in_text(actual)
-        self.check_xsiam_not_in_text(actual)
-        self.check_xpanse_not_in_text(actual)
-        self.check_xsoar_saas_not_in_text(actual)
-
-    def test_xsoar_should_remove_text(self):
-        """
-        Check that if xsoar tag is specified all the xsoar-saas marketplaces will be should removed true.
-        """
-        mtp = MarketplaceTagParser(MarketplaceVersions.XSOAR.value)
-        assert mtp._should_remove_xsoar_text is False
-        assert mtp._should_remove_xsoar_on_prem_text is False
-        assert mtp._should_remove_xsoar_saas_text is True
-        mtp = MarketplaceTagParser(MarketplaceVersions.XSOAR_SAAS.value)
-        assert mtp._should_remove_xsoar_text is False
-        assert mtp._should_remove_xsoar_on_prem_text is True
-        assert mtp._should_remove_xsoar_saas_text is False
-        mtp = MarketplaceTagParser(MarketplaceVersions.XSOAR_ON_PREM.value)
-        assert mtp._should_remove_xsoar_text is False
-        assert mtp._should_remove_xsoar_on_prem_text is False
-        assert mtp._should_remove_xsoar_saas_text is True
-        mtp = MarketplaceTagParser(MarketplaceVersions.MarketplaceV2.value)
-        assert mtp._should_remove_xsoar_text is True
+        assert result == expected_result
 
 
 @pytest.mark.parametrize(

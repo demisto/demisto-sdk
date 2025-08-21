@@ -26,6 +26,7 @@ class CommandParser:
     args: List[dict]
     outputs: List[dict]
     quickaction: bool
+    compliantpolicies: List[str]
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
@@ -33,9 +34,12 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: List[str],
         git_sha: Optional[str] = None,
     ) -> None:
-        super().__init__(path, pack_marketplaces, git_sha=git_sha)
+        super().__init__(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
+        )
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
         self.is_beta = self.yml_data.get("beta", False)
@@ -50,9 +54,11 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch_samples = self.script_info.get("isFetchSamples", False)
         self.is_feed = self.script_info.get("feed", False)
         self.long_running = self.script_info.get("longRunning", False)
-        self.supports_quick_actions = self.script_info.get(
-            "supportsquickactions", False
+        self.supports_quick_actions = self.yml_data.get("supportsquickactions", False)
+        self.is_cloud_provider_integration = self.yml_data.get(
+            "isCloudProviderIntegration", False
         )
+
         self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
@@ -97,6 +103,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             args = command_data.get("arguments") or []
             outputs = command_data.get("outputs") or []
             quickaction = command_data.get("quickaction", False)
+            compliantpolicies: list[str] = command_data.get("compliantpolicies") or []
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
                 target=name,
@@ -105,6 +112,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 deprecated=deprecated,
                 description=description,
                 quickaction=quickaction,
+                compliantpolicies=compliantpolicies,
             )
             self.commands.append(
                 CommandParser(
@@ -115,6 +123,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                     args=args,
                     outputs=outputs,
                     quickaction=quickaction,
+                    compliantpolicies=compliantpolicies,
                 )
             )
 

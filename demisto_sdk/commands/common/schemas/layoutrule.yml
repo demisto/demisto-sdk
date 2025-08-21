@@ -35,7 +35,10 @@ mapping:
             - include: filter_schema
             - include: or_schema
             - include: and_schema
-
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str
 
   description:xsoar:
     type: str

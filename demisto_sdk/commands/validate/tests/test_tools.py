@@ -51,7 +51,10 @@ from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
     ParsingRuleParser,
 )
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
-from demisto_sdk.commands.content_graph.parsers.related_files import ImageRelatedFile
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    ImageRelatedFile,
+    TestUseCaseRelatedFile,
+)
 from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.file import File
@@ -123,7 +126,9 @@ def create_parsing_rule_object(
     update_keys(yml_content, paths, values)
     pack = REPO.create_pack()
     parsing_rule = pack.create_parsing_rule("TestParsingRule", yml_content)
-    parser = ParsingRuleParser(Path(parsing_rule.path), list(MarketplaceVersions))
+    parser = ParsingRuleParser(
+        Path(parsing_rule.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
     return ParsingRule.from_orm(parser)
 
 
@@ -181,7 +186,9 @@ def create_playbook_object(
     playbook = pack.create_playbook(**additional_params)
     playbook.create_default_playbook(name="sample")
     playbook.yml.update(yml_content)
-    parser = PlaybookParser(Path(playbook.path), list(MarketplaceVersions))
+    parser = PlaybookParser(
+        Path(playbook.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
     return Playbook.from_orm(parser)
 
 
@@ -214,7 +221,9 @@ def create_test_playbook_object(
     playbook = pack.create_test_playbook(**additional_params)
     playbook.create_default_test_playbook(name="sample")
     playbook.yml.update(yml_content)
-    parser = TestPlaybookParser(Path(playbook.path), list(MarketplaceVersions))
+    parser = TestPlaybookParser(
+        Path(playbook.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
     return TestPlaybook.from_orm(parser)
 
 
@@ -234,6 +243,29 @@ def create_doc_file_object(
     with open(doc_path, "wb") as f:
         f.write(b"")
     return ImageRelatedFile(doc_path)
+
+
+def create_test_use_case_file_object(
+    playbook_path: Path,
+    test_use_case_name: str,
+    test_use_case_content: str,
+) -> TestUseCaseRelatedFile:
+    """Creating test use case file object.
+
+    Args:
+        playbook_path (Path): The path to the playbook that is tested by the test use case.
+        test_use_case_name (str): The name of the test use case (without the `.py` extension).
+        test_use_case_content (str): The contents of the test use case file.
+    Returns:
+        TestUseCaseRelatedFile: The test use case file object.
+    """
+    test_use_case_path = (
+        playbook_path.parent.parent / "TestUseCases" / f"{test_use_case_name}.py"
+    )
+    test_use_case_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(test_use_case_path, "w") as f:
+        f.write(test_use_case_content)
+    return TestUseCaseRelatedFile(playbook_path, test_use_case_name)
 
 
 def create_modeling_rule_object(

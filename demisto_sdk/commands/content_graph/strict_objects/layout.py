@@ -2,7 +2,9 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     ID_DYNAMIC_MODEL,
@@ -52,6 +54,7 @@ class _Section(BaseStrictModel):
     query_type: Optional[str] = Field(None, alias="queryType")
     sort_values: Optional[str] = Field(None, alias="sortValues")
     fields: Optional[List[SectionField]] = None  # type:ignore[valid-type]
+    filters: Optional[List[ArgFilters]] = None
 
 
 Section = create_model(
@@ -109,6 +112,7 @@ class _StrictLayout(BaseStrictModel):
     details: Optional[Mapping] = None
     details_v2: Optional[Mapping] = Field(None, alias="detailsV2")
     mobile: Optional[Mapping] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictLayout = create_model(

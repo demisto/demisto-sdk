@@ -13,6 +13,9 @@ from demisto_sdk.commands.validate.validators.SC_validators import (
 from demisto_sdk.commands.validate.validators.SC_validators.SC100_script_has_invalid_version import (
     ScriptNameIsVersionedCorrectlyValidator,
 )
+from demisto_sdk.commands.validate.validators.SC_validators.SC101_script_arguments_aggregated_not_exists_validator import (
+    MandatoryGenericArgumentsAggregatedScriptValidator,
+)
 from demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator_core_packs import (
     IsScriptArgumentsContainIncidentWordValidatorCorePacks,
 )
@@ -63,6 +66,82 @@ def test_ScriptNameIsVersionCorrectlyValidator():
         results[0].content_object
     )
     assert fix_result.content_object.name == "TestV2"
+
+
+def test_MandatoryGenericArgumentsAggregatedScriptValidator(mocker):
+    """
+    Given:
+     - 1 Aggregated script with argument "verbose" does not exist.
+     - 1 Aggregated script with argument "brands" does not exist.
+     - 1 Aggregated script with argument "brands" and "verbose".
+     - 1 Regular Script without "verbose" or "brands".
+
+    When:
+     - Running the MandatoryGenericArgumentsAggregatedScriptValidator validator.
+
+    Then:
+     - Make sure the first two scripts fails with missing arguments.
+    """
+
+    with ChangeCWD(REPO.path):
+        mocker.patch(
+            "demisto_sdk.commands.validate.validators.SC_validators.SC101_script_arguments_aggregated_not_exists_validator",
+            return_value=["PackWithInvalidScript"],
+        )
+
+        content_items = (
+            create_script_object(
+                paths=["name", "args"],
+                values=[
+                    "InvalidScript1",
+                    [
+                        {
+                            "name": "brands",
+                            "description": "test",
+                        }
+                    ],
+                ],
+                pack_info={"name": "Aggregated Scripts"},
+            ),
+            create_script_object(
+                paths=["name", "args"],
+                values=[
+                    "InvalidScript2",
+                    [
+                        {
+                            "name": "verbose",
+                            "description": "test",
+                        }
+                    ],
+                ],
+                pack_info={"name": "Aggregated Scripts"},
+            ),
+            create_script_object(
+                paths=["name", "args"],
+                values=[
+                    "ValidScript",
+                    [
+                        {
+                            "name": "verbose",
+                            "description": "test",
+                        },
+                        {
+                            "name": "brands",
+                            "description": "test",
+                        },
+                    ],
+                ],
+                pack_info={"name": "Aggregated Scripts"},
+            ),
+            create_script_object(),
+        )
+
+        results = MandatoryGenericArgumentsAggregatedScriptValidator().obtain_invalid_content_items(
+            content_items
+        )
+    assert len(results) == 2
+    assert results[0].content_object.name == "InvalidScript1"
+    assert results[1].content_object.name == "InvalidScript2"
 
 
 def test_IsScriptArgumentsContainIncidentWordValidatorCorePacks_obtain_invalid_content_items(

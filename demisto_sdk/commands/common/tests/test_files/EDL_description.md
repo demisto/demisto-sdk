@@ -5,8 +5,8 @@ Use one of the following methods to access the Generic Export Indicators Service
 
 If you have several Generic Export Indicators Service integration instances, make sure to use **different listening ports** to separate the outbound feeds.
 Note: After a successful configuration of an instance, if the 'test button' is clicked again, it may result in a failure due to an incorrect assumption that the port is already in use. Nevertheless, it is important to highlight that despite this issue, the instance will continue to function correctly.
-<~XSOAR>
 
+<~XSOAR>
 ### Access the Generic Export Indicators Service by URL and Port (HTTP)
 In a web browser, go to **http://<cortex-xsoar-server-address>:<listen_port>**.
 
@@ -28,9 +28,8 @@ curl -v -u test:password https://edl-my-xsiam-subdomain.us.paloaltonetworks.com/
 ```
 
 **Note**: The External Dynamic List is not accessible via web browsers and you will receive an unauthorized error if accessing the External Dynamic List via a browser.
-
-
 </~XSIAM>
+
 <~XSOAR>
 **Note**: By default, the route to access the Generic Export Indicators Service by instance name will be open without security hardening and might expose you to network risks. Cortex XSOAR recommends that you use the service with a username and password. Click **Switch to username and password** and provide the credentials that must be used to access the service.
 
@@ -47,7 +46,6 @@ To access the Generic Export Indicators Service by instance name, make sure *Ins
 
 
    In Multi Tenant environments, go to `https://<cortex-xsoar-address>/acc-<account name>/instance/execute/<instance_name>/`
-
 </~XSOAR>
 
 #### Note:

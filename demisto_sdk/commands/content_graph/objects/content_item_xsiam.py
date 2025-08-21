@@ -58,6 +58,7 @@ class ContentItemXSIAM(ContentItem, ABC):
 
         for file in output_paths:
             write_dict(file, data=data, handler=self.handler)
+        self.upload_path = output_paths[0]
 
     def _upload(
         self,

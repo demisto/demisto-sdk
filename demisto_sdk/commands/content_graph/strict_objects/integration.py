@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Annotated, Any, List, Optional
 
 from pydantic import Field, conlist, validator
 
@@ -6,6 +6,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
     TYPE_PYTHON3,
     MarketplaceVersions,
+    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
@@ -37,6 +38,14 @@ IS_FETCH_EVENTS_DYNAMIC_MODEL = create_dynamic_model(
     type_=Optional[bool],
     default=None,
 )
+
+
+class SectionOrderValues(StrEnum):
+    CONNECT = "Connect"
+    COLLECT = "Collect"
+    OPTIMIZE = "Optimize"
+    MIRRORING = "Mirroring"
+    RESULT = "Result"
 
 
 class _Configuration(BaseStrictModel):
@@ -86,6 +95,10 @@ class _Command(BaseStrictModel):
     polling: Optional[bool] = None
     prettyname: Optional[str] = None
     quickaction: Optional[bool] = None
+    compliantpolicies: Optional[List[str]] = None
+    supportedModules: Optional[
+        Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
+    ]
 
 
 Command = create_model(
@@ -113,7 +126,6 @@ class _Script(BaseStrictModel):
     is_mappable: Optional[bool] = Field(None, alias="ismappable")
     is_remote_sync_in: Optional[bool] = Field(None, alias="isremotesyncin")
     is_remote_sync_out: Optional[bool] = Field(None, alias="isremotesyncout")
-    supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
     commands: Optional[List[Command]] = None  # type:ignore[valid-type]
     run_once: Optional[bool] = Field(None, alias="runonce")
     sub_type: Optional[str] = Field([TYPE_PYTHON2, TYPE_PYTHON3], alias="subtype")
@@ -141,11 +153,32 @@ CommonFieldsIntegration = create_model(
 )
 
 
-class SectionOrderValues(StrEnum):
-    CONNECT = "Connect"
-    COLLECT = "Collect"
-    OPTIMIZE = "Optimize"
-    MIRRORING = "Mirroring"
+class ConditionOperator(StrEnum):
+    EXISTS = "exists"
+    NOT_EXISTS = "not_exists"
+    EQUAL = "equal"
+    NOT_EQUAL = "not_equal"
+
+
+class Condition(BaseStrictModel):
+    name: str
+    operator: ConditionOperator
+    value: Optional[str] = None
+
+
+class TriggerEffectAction(BaseStrictModel):
+    hidden: Optional[bool] = None
+    required: Optional[bool] = None
+
+
+class TriggerEffect(BaseStrictModel):
+    name: str
+    action: TriggerEffectAction
+
+
+class Trigger(BaseStrictModel):
+    conditions: List[Condition]
+    effects: List[TriggerEffect]
 
 
 class _StrictIntegration(BaseStrictModel):
@@ -153,7 +186,7 @@ class _StrictIntegration(BaseStrictModel):
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=4)] = (  # type:ignore[valid-type]
+    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=5)] = (  # type:ignore[valid-type]
         Field(alias="sectionorder")
     )
     configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]
@@ -172,6 +205,14 @@ class _StrictIntegration(BaseStrictModel):
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
     hybrid: Optional[bool] = None
+    supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
+    is_cloud_provider_integration: Optional[bool] = Field(
+        False, alias="isCloudProviderIntegration"
+    )
+    triggers: Optional[List[Trigger]] = None
+    supportedModules: Optional[
+        Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
+    ]
 
     def __init__(self, **data):
         """

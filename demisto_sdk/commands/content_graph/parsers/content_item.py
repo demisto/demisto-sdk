@@ -82,9 +82,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions] = PACK_DEFAULT_MARKETPLACES,
+        pack_supported_modules: Optional[List[str]] = None,
         git_sha: Optional[str] = None,
     ) -> None:
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
+        self.pack_supported_modules: Optional[List[str]] = pack_supported_modules
         super().__init__(path)
         self.relationships: Relationships = Relationships()
         self.git_sha: Optional[str] = git_sha
@@ -93,6 +95,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def from_path(
         path: Path,
         pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
+        pack_supported_modules: Optional[List[str]] = None,
         git_sha: Optional[str] = None,
     ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
@@ -119,11 +122,16 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 return ContentItemParser.parse(
-                    parser_cls, path, pack_marketplaces, git_sha
+                    parser_cls, path, pack_marketplaces, pack_supported_modules, git_sha
                 )
             except IncorrectParserException as e:
                 return ContentItemParser.parse(
-                    e.correct_parser, path, pack_marketplaces, git_sha, **e.kwargs
+                    e.correct_parser,
+                    path,
+                    pack_marketplaces,
+                    pack_supported_modules,
+                    git_sha,
+                    **e.kwargs,
                 )
             except NotAContentItemException:
                 logger.debug(f"{path} is not a content item, skipping")
@@ -139,10 +147,13 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         parser_cls: Type["ContentItemParser"],
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
+        pack_supported_modules: Optional[List[str]] = [],
         git_sha: Optional[str] = None,
         **kwargs,
     ) -> "ContentItemParser":
-        parser = parser_cls(path, pack_marketplaces, git_sha=git_sha, **kwargs)
+        parser = parser_cls(
+            path, pack_marketplaces, pack_supported_modules, git_sha=git_sha, **kwargs
+        )
         logger.debug(f"Parsed {parser.node_id}")
         return parser
 

@@ -75,6 +75,8 @@ repos:
             --python-version=3.10,
           ]
         exclude: "test_data|tests_data|.venv|.*_test.py$|infrastructure_tests"
+        skip: true
+        skip:validate_content: false
 
       # enable with --test
       - id: run-unit-tests

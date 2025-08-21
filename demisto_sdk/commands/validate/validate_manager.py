@@ -1,7 +1,10 @@
 from pathlib import Path
 from typing import List, Optional, Set
 
-from demisto_sdk.commands.common.constants import ExecutionMode
+from demisto_sdk.commands.common.constants import (
+    ALWAYS_RUN_ON_ERROR_CODE,
+    ExecutionMode,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.validate.config_reader import (
@@ -90,6 +93,12 @@ class ValidateManager:
                         in filtered_content_objects_for_validator
                     ]
                 try:
+                    # check if the validator error code appears in ALWAYS_RUN_ON_ERROR_CODE
+                    if validator.error_code in ALWAYS_RUN_ON_ERROR_CODE:
+                        validation_results = self.filter_validation_results(
+                            validation_results
+                        )
+
                     if self.allow_autofix and validator.is_auto_fixable:
                         for validation_result in validation_results:
                             try:
@@ -155,3 +164,19 @@ class ValidateManager:
                 for invalid_path in self.invalid_items
             ]
         )
+
+    def filter_validation_results(
+        self, validation_results: List[ValidationResult]
+    ) -> List[ValidationResult]:
+        """
+        Filters out validation results for error codes that are in the content object's ignored_errors list.
+        This addresses unique cases where a validation must run first, then filter the relevant results afterward based on the results.
+
+        Returns:
+        List[ValidationResult]: Filtered validation results excluding ignored error codes
+        """
+        return [
+            result
+            for result in validation_results
+            if result.validator.error_code not in result.content_object.ignored_errors
+        ]

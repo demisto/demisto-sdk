@@ -1,6 +1,6 @@
 import os
 import re
-from enum import Enum
+from enum import Enum, IntEnum
 from functools import reduce
 from pathlib import Path
 from typing import Dict, List
@@ -120,6 +120,8 @@ ASSETS_MODELING_RULES_DIR = "AssetsModelingRules"
 CASE_LAYOUT_RULES_DIR = "CaseLayoutRules"
 CASE_LAYOUTS_DIR = "CaseLayouts"
 CASE_FIELDS_DIR = "CaseFields"
+AGENTIX_ACTIONS_DIR = "AgentixActions"
+AGENTIX_AGENTS_DIR = "AgentixAgents"
 
 # NAMES OF ENTITIES
 
@@ -178,6 +180,8 @@ DEMISTO_SDK_MARKETPLACE_XSIAM_DIST = "marketplace-v2-dist"
 DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
+DEMISTO_SDK_MARKETPLACE_PLATFORM_INTERNAL_PROD = "marketplace-cortex-content-dev"
+
 
 # Server Types
 XSOAR_SERVER_TYPE = "XSOAR"
@@ -275,6 +279,8 @@ class FileType(StrEnum):
     CASE_FIELD = "casefield"
     CASE_LAYOUT = "caselayout"
     VERSION_CONFIG = "version_config"
+    AGENTIX_AGENT = "agentixagent"
+    AGENTIX_ACTION = "agentixaction"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -422,6 +428,8 @@ CONTENT_ENTITIES_DIRS = [
     CASE_LAYOUT_RULES_DIR,
     CASE_FIELDS_DIR,
     CASE_LAYOUTS_DIR,
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -946,6 +954,7 @@ PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 PACKS_VERSION_CONFIG_FILE_NAME = "version_config.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
+PRIVATE_PACKS_FOLDER = "PrivatePacks"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
 CONF_JSON_FILE_NAME = "conf.json"
@@ -1277,6 +1286,10 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     ".secrets-ignore",
     "version_config.json",  # TODO: remove and validate this file CIAC-12331
 )
+
+# A list of validation error codes that must always execute, regardless of ignore settings.
+# This addresses unique cases where validation must run first, then filter the relevant results afterward.
+ALWAYS_RUN_ON_ERROR_CODE = ["GR107"]
 
 
 class GitStatuses(StrEnum):
@@ -1962,11 +1975,12 @@ class MarketplaceVersions(StrEnum):
     PLATFORM = "platform"
 
 
-MarketplaceVersionToMarketplaceName = {
+MarketplaceVersionToMarketplaceName: Dict[str, str] = {
     MarketplaceVersions.XSOAR.value: DEMISTO_SDK_MARKETPLACE_XSOAR_DIST,
     MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
     MarketplaceVersions.XPANSE.value: DEMISTO_SDK_MARKETPLACE_XPANSE_DIST,
     MarketplaceVersions.XSOAR_SAAS.value: DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST,
+    MarketplaceVersions.PLATFORM.value: DEMISTO_SDK_MARKETPLACE_PLATFORM_INTERNAL_PROD,
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
@@ -1977,6 +1991,20 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
     MarketplaceVersions.PLATFORM: "Config/core_packs_platform_list.json",
 }
+
+
+class PlatformSupportedModules(StrEnum):
+    C1 = "C1"
+    C3 = "C3"
+    XO = "X0"
+    X1 = "X1"
+    X3 = "X3"
+    X5 = "X5"
+    ENT_PLUS = "ENT_PLUS"
+    AGENTIX = "agentix"
+    ASM = "asm"
+    EXPOSURE_MANAGEMENT = "exposure_management"
+    AGENTIX_XSIAM = "agentix_xsiam"
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
@@ -2072,6 +2100,8 @@ class ParameterType(Enum):
     INTERVAL = 19
     BOLD_TITLE = 20
     DAY_DROPDOWN = 21
+    RESULT_LINK = 22  # A placeholder; the front-end will fill this with dynamically generated text.
+    ENGINE_PLACEHOLDER = 23  # A signal to the front-end; the 'engine' dropdown's position in the UI will match the order of this parameter.
 
 
 class IncidentFieldType(
@@ -2127,30 +2157,35 @@ URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>https://[a-zA-Z_/\.0-9\- :%]*?)\)(
 
 HTML_IMAGE_LINK_REGEX = r'(<img.*?src\s*=\s*"(https://.*?)")'
 
-XSOAR_PREFIX_TAG = "<~XSOAR>\n"
-XSOAR_SUFFIX_TAG = "\n</~XSOAR>\n"
-XSOAR_INLINE_PREFIX_TAG = "<~XSOAR>"
-XSOAR_INLINE_SUFFIX_TAG = "</~XSOAR>"
+MARKETPLACE_LIST_PATTERN = r"[A-Z_]+(?:,[A-Z_]+)*"
+TAG_CONTENT_PATTERN = r"(?:.|\s)*?"
 
-XSOAR_SAAS_PREFIX_TAG = "<~XSOAR_SAAS>\n"
-XSOAR_SAAS_SUFFIX_TAG = "\n</~XSOAR_SAAS>\n"
-XSOAR_SAAS_INLINE_PREFIX_TAG = "<~XSOAR_SAAS>"
-XSOAR_SAAS_INLINE_SUFFIX_TAG = "</~XSOAR_SAAS>"
+MARKETPLACE_TAG_MAPPING = {
+    MarketplaceVersions.PLATFORM.value: ["PLATFORM", "XSIAM"],
+    MarketplaceVersions.MarketplaceV2.value: ["XSIAM", "XSIAM_ONLY"],
+    MarketplaceVersions.XPANSE.value: ["XPANSE"],
+    MarketplaceVersions.XSOAR.value: [
+        "XSOAR",
+        "XSOAR_ON_PREM",
+    ],  # If uploading to XSOAR, keep XSOAR and XSOAR_ON_PREM tags
+    MarketplaceVersions.XSOAR_SAAS.value: [
+        "XSOAR_SAAS",
+        "XSOAR",
+    ],  # If uploading to XSOAR_SAAS, keep XSOAR_SAAS and XSOAR tags
+    MarketplaceVersions.XSOAR_ON_PREM.value: [
+        "XSOAR_ON_PREM"
+    ],  # If uploading to XSOAR_ON_PREM, keep XSOAR_ON_PREM tags
+}
 
-XSOAR_ON_PREM_PREFIX_TAG = "<~XSOAR_ON_PREM>\n"
-XSOAR_ON_PREM_SUFFIX_TAG = "\n</~XSOAR_ON_PREM>\n"
-XSOAR_ON_PREM_INLINE_PREFIX_TAG = "<~XSOAR_ON_PREM>"
-XSOAR_ON_PREM_INLINE_SUFFIX_TAG = "</~XSOAR_ON_PREM>"
-
-XSIAM_PREFIX_TAG = "<~XSIAM>\n"
-XSIAM_SUFFIX_TAG = "\n</~XSIAM>\n"
-XSIAM_INLINE_PREFIX_TAG = "<~XSIAM>"
-XSIAM_INLINE_SUFFIX_TAG = "</~XSIAM>"
-
-XPANSE_PREFIX_TAG = "<~XPANSE>\n"
-XPANSE_SUFFIX_TAG = "\n</~XPANSE>\n"
-XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
-XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
+VALID_MARKETPLACE_TAGS = {
+    "XSOAR",
+    "XSOAR_SAAS",
+    "XSOAR_ON_PREM",
+    "XPANSE",
+    "XSIAM",
+    "XSIAM_ONLY",
+    "PLATFORM",
+}
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
 MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME = "markdown_relatve_path_images.json"
@@ -2191,11 +2226,20 @@ class InvestigationPlaybookState(StrEnum):
     WAITING = "waiting"  # indicates that playbook currently stopped and waiting for user input on manual task
 
 
-class IncidentState(StrEnum):
-    NEW = "NEW"
-    IN_PROGRESS = "IN_PROGRESS"
-    CLOSED = "CLOSED"
-    ACKNOWLEDGED = "ACKNOWLEDGED"
+class XsoarIncidentState(IntEnum):
+    NEW = 0
+    IN_PROGRESS = 1
+    CLOSED = 2
+    ACKNOWLEDGED = 3
+
+
+class XsiamAlertState(IntEnum):
+    NEW = 0
+    UNDER_INVESTIGATION = 1
+    RESOLVED = 2
+
+
+IncidentState = XsoarIncidentState  # To avoid breaking imports in other repos where SDK is installed
 
 
 class PlaybookTaskType(StrEnum):
@@ -2249,5 +2293,3 @@ MIRRORING_COMMANDS: list[str] = [
     "get-modified-remote-data",
     "update-remote-system",
 ]
-
-DEFAULT_PLATFORM_MODULES: list[str] = []

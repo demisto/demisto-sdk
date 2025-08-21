@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from abc import ABC
 
 from typing import Iterable, List
 
@@ -14,7 +13,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = AgentixAction
 
 
-class IsDisplayNameValid(BaseValidator[ContentTypes], ABC):
+class IsDisplayNameValid(BaseValidator[ContentTypes]):
     error_code = "BA129"
     description = "Ensure that the display field is in the required format."
     rationale = "Display names must be user-friendly and conform to standards."
@@ -37,13 +36,11 @@ class IsDisplayNameValid(BaseValidator[ContentTypes], ABC):
             if isinstance(content_item, AgentixAction):
                 if not self.AGENTIX_ACTION_DISPLAY_NAME_PATTERN.match(display_name):
                     valid = False
-                    content_type = "Agentix Action"
             if not valid:
                 validation_results.append(
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
-                            content_type,
                             display_name,
                         ),
                         content_object=content_item,

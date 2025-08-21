@@ -26,7 +26,7 @@ class IsDisplayNameValid(BaseValidator[ContentTypes], ABC):
     # the following characters: lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.
     AGENTIX_ACTION_DISPLAY_NAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_\- ]*$")
 
-    def obtain_invalid_content_items_using_graph(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
         validation_results = []
         for content_item in content_items:
             valid = True

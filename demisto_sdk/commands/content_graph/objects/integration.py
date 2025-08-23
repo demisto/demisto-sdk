@@ -75,7 +75,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
     # missing attributes in DB
     node_id: str = Field("", exclude=True)
     object_id: str = Field("", alias="id", exclude=True)
-    marketplaces: List[MarketplaceVersions] = Field([])
+    marketplaces: List[MarketplaceVersions] = Field([], exclude=True)
 
     @property
     def integrations(self) -> List["Integration"]:

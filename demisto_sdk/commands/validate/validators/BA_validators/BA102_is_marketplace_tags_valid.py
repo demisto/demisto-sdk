@@ -82,7 +82,7 @@ class MarketplaceTagsValidator(BaseValidator[ContentTypes]):
         tag_pattern = re.compile(
             rf"<(?P<closing>/)?~(?P<name>{MARKETPLACE_LIST_PATTERN})>"
         )
-        stack = []
+        stack: List[str] = []
 
         for match in tag_pattern.finditer(text):
             tag_name = match.group("name")

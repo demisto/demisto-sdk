@@ -449,13 +449,50 @@ def get_supported_modules_mismatch_commands(
         Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
     """
     query = f""" // Check if any module in command's supportedModules is NOT in parent item's supportedModules
-    MATCH (contentItem{{deprecated: false}})-[r:{RelationshipType.HAS_COMMAND}]->(command:Command)
+    MATCH (contentItem{{deprecated: false}})-[r:{RelationshipType.HAS_COMMAND}]->(command:{ContentType.COMMAND})
     WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItem.object_id IN {content_item_ids})
       AND r.supportedModules IS NOT NULL AND contentItem.supportedModules IS NOT NULL and size(r.supportedModules) > 0
       AND 'platform' IN contentItem.marketplaces
       AND NOT ALL(module IN r.supportedModules WHERE module IN contentItem.supportedModules)
     RETURN contentItem, collect(r) AS relationships, collect(command) AS nodes_to
     """
+    items = run_query(tx, query)
+    results = {}
+    for item in items:
+        node_from = item.get("contentItem")
+        relationships = item.get("relationships")
+        nodes_to = item.get("nodes_to")
+        neo_res = Neo4jRelationshipResult(
+            node_from,
+            relationships,
+            nodes_to,
+        )
+        results[item.get("contentItem").element_id] = neo_res
+    return results
+
+def get_supported_modules_mismatch_playbooks(
+    tx: Transaction,
+    content_item_ids: List[str],
+):
+    """
+    Identifies playbooks that is supported by more modules than (at least) one of their commands.
+
+    This function finds content items (like integrations) that have commands with supportedModules
+    that are not included in the supportedModules of the parent content item.
+
+    Args:
+        tx (Transaction): The Neo4j transaction object.
+        content_item_ids (List[str]): List of content item IDs to check. If empty, all items are checked.
+
+    Returns:
+        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
+    """
+    query = f"""
+    MATCH (p:{ContentType.PLAYBOOK})-[:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()
+    WHERE any(module IN p.supportedModules WHERE NOT module in r.supportedModules)
+    AND (size(r.supportedModules) > 0 and size(p.supportedModules) > 0) 
+    RETURN p, c"""
+
     items = run_query(tx, query)
     results = {}
     for item in items:

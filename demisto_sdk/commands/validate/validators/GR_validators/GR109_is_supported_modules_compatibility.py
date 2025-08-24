@@ -179,6 +179,12 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             )
         )
 
+        mismatched_playbooks = (
+            self.graph.find_content_items_with_module_mismatch_playbooks(
+                target_content_item_ids
+            )
+        )
+
         results: List[ValidationResult] = []
 
         # Process items with mismatched dependencies

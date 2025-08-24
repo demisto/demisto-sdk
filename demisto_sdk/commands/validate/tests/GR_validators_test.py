@@ -1647,3 +1647,50 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_command(
         == "The following mandatory dependencies missing required modules: Integration1 is missing: [module_y]"
     )
     assert results[0].content_object.object_id == "Integration1"
+
+@pytest.fixture
+def repo_for_test_gr_109_mismatch_playbook(graph_repo: Repo):
+    """
+    Creates a test repository with a single pack to test the command mismatch part of GR109 validation.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains Script1, which contain command_x.
+              Script1 is configured with `supportedModules: ["module_x"]`.
+              command_x is used in the script and configured with `supportedModules: ["module_x", "module_y"]`.
+    """
+    yml = {
+        "commonfields": {"id": "Integration1", "version": -1},
+        "name": "Playbook1",
+        "display": "Integration1",
+        "description": "this is an integration Integration1",
+        "category": "category",
+        "supportedModules": ["module_x"],
+        "script": {
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "command_x",
+                    "description": "description",
+                    "arguments": [],
+                    "supportedModules": ["module_x", "module_y"],
+                }
+            ],
+            "dockerimage": None,
+        },
+        "configuration": [],
+    }
+
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    pack_a.create_integration("Integration1", yml=yml)
+
+    return graph_repo

@@ -43,6 +43,8 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_xdrc_template_object,
     create_xsiam_dashboard_object,
     create_xsiam_report_object,
+    create_agentix_action_object
+
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA100_is_valid_version import (
     IsValidVersionValidator,
@@ -114,6 +116,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_conte
 from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_script_name_starts_with_digit import (
     IsCommandOrScriptNameStartsWithDigitValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA129_is_display_name_valid import IsDisplayNameValid
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
@@ -2727,3 +2730,68 @@ def test_integration_compliant_policy_name_validator(
         content_item, policy_names
     )
     assert results == sorted(expected_failures)
+
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        # Case 1: All valid AgentixAction display_names
+        (
+            [
+                create_agentix_action_object(paths=["display_name"], values=["ValidName"]),
+                create_agentix_action_object(paths=["display_name"], values=["Valid_Name"]),
+                create_agentix_action_object(paths=["display_name"], values=["Valid-Name"]),
+                create_agentix_action_object(paths=["display_name"], values=["Valid Name"]),
+                create_agentix_action_object(paths=["display_name"], values=["A123"]),
+                create_agentix_action_object(paths=["display_name"], values=["A_1-2 3"]),
+            ],
+            0,
+            [],
+        ),
+        # Case 2: One invalid (starts with digit), one valid
+        (
+            [
+                create_agentix_action_object(paths=["display_name"], values=["1Invalid"]),
+                create_agentix_action_object(paths=["display_name"], values=["ValidName"]),
+            ],
+            1,
+            ["The following display name values are invalid: 1Invalid"],
+        ),
+        # Case 3: Invalid (contains forbidden character)
+        (
+            [create_agentix_action_object(paths=["display_name"], values=["Invalid!"])],
+            1,
+            ["The following display name values are invalid: Invalid!"],
+        ),
+        # Case 4: Multiple invalid
+        (
+            [
+                create_agentix_action_object(paths=["display_name"], values=["1Invalid"]),
+                create_agentix_action_object(paths=["display_name"], values=["Invalid!"]),
+                create_agentix_action_object(paths=["display_name"], values=["ValidName"]),
+            ],
+            1,
+            ["The following display name values are invalid: 1Invalid, Invalid!"],
+        ),
+    ]
+)
+def test_IsDisplayNameValid_obtain_invalid_content_items(content_items, expected_number_of_failures, expected_msgs):
+    """
+    Given
+    - AgentixAction content_items with various display_name values.
+    When
+    - Calling the IsDisplayNameValid.obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failures return and that the error msg is correct.
+    """
+    results = IsDisplayNameValid().obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )
+
+

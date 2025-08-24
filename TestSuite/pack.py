@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
     TRIGGER_DIR,
     XDRC_TEMPLATE_DIR,
     XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR,
+    XSIAM_REPORTS_DIR, AGENTIX_ACTIONS_DIR,
 )
 from TestSuite.case_field import CaseField
 from TestSuite.case_layout import CaseLayout
@@ -53,6 +53,7 @@ from TestSuite.xdrc_template import XDRCTemplate
 from TestSuite.xsiam_dashboard import XSIAMDashboard
 from TestSuite.xsiam_report import XSIAMReport
 from TestSuite.yml import YAML
+from TestSuite.agentix_action import AgentixAction
 
 
 class Pack(TestSuiteBase):
@@ -117,6 +118,7 @@ class Pack(TestSuiteBase):
         self.case_fields: List[CaseField] = list()
         self.case_layouts: List[CaseLayout] = list()
         self.case_layout_rules: List[CaseLayoutRule] = list()
+        self.agentix_actions: List[AgentixAction] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -257,22 +259,24 @@ class Pack(TestSuiteBase):
         self._assets_modeling_rules_path = self._pack_path / ASSETS_MODELING_RULES_DIR
         self._assets_modeling_rules_path.mkdir(exist_ok=True)
 
+        self._agentix_actions_path = self._pack_path / AGENTIX_ACTIONS_DIR
+
         super().__init__(self._pack_path)
 
     def create_integration(
-        self,
-        name: Optional[str] = None,
-        code: Optional[str] = None,
-        yml: Optional[dict] = None,
-        readme: Optional[str] = None,
-        description: Optional[str] = None,
-        changelog: Optional[str] = None,
-        image: Optional[bytes] = None,
-        docker_image: Optional[str] = None,
-        create_unified=False,
-        commands_txt: Optional[str] = None,
-        test: Optional[str] = None,
-        unit_test_name: Optional[str] = None,
+            self,
+            name: Optional[str] = None,
+            code: Optional[str] = None,
+            yml: Optional[dict] = None,
+            readme: Optional[str] = None,
+            description: Optional[str] = None,
+            changelog: Optional[str] = None,
+            image: Optional[bytes] = None,
+            docker_image: Optional[str] = None,
+            create_unified=False,
+            commands_txt: Optional[str] = None,
+            test: Optional[str] = None,
+            unit_test_name: Optional[str] = None,
     ) -> Integration:
         if name is None:
             name = f"integration_{len(self.integrations)}"
@@ -294,7 +298,7 @@ class Pack(TestSuiteBase):
             }
         if image is None:
             with open(
-                suite_join_path("assets/default_integration", "sample_image.png"), "rb"
+                    suite_join_path("assets/default_integration", "sample_image.png"), "rb"
             ) as image_file:
                 image = image_file.read()
         integration = Integration(
@@ -312,17 +316,17 @@ class Pack(TestSuiteBase):
         return integration
 
     def create_script(
-        self,
-        name: Optional[str] = None,
-        yml: Optional[dict] = None,
-        code: Optional[str] = None,
-        readme: str = "",
-        description: str = "",
-        changelog: str = "",
-        image: bytes = b"",
-        docker_image: Optional[str] = None,
-        create_unified=False,
-        skip_prepare=[],
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            code: Optional[str] = None,
+            readme: str = "",
+            description: str = "",
+            changelog: str = "",
+            image: bytes = b"",
+            docker_image: Optional[str] = None,
+            create_unified=False,
+            skip_prepare=[],
     ) -> Script:
         if name is None:
             name = f"script{len(self.scripts)}"
@@ -354,7 +358,7 @@ class Pack(TestSuiteBase):
         return script
 
     def _create_json_based(
-        self, name, prefix: str, content: dict = None, dir_path: Path = None
+            self, name, prefix: str, content: dict = None, dir_path: Path = None
     ) -> JSONBased:
         if content is None:
             content = {}
@@ -366,10 +370,10 @@ class Pack(TestSuiteBase):
         return obj
 
     def _create_yaml_based(
-        self,
-        name,
-        dir_path,
-        content: dict = {},
+            self,
+            name,
+            dir_path,
+            content: dict = {},
     ) -> YAML:
         yaml_name = f"{name}.yml"
         yaml_path = Path(dir_path, yaml_name)
@@ -378,7 +382,7 @@ class Pack(TestSuiteBase):
         return obj
 
     def _create_text_based(
-        self, name, content: str = "", dir_path: Path = None
+            self, name, content: str = "", dir_path: Path = None
     ) -> TextBased:
         if dir_path:
             obj = TextBased(dir_path, name)
@@ -409,7 +413,7 @@ class Pack(TestSuiteBase):
         return dashboard
 
     def create_incident_field(
-        self, name: str = None, content: dict = None
+            self, name: str = None, content: dict = None
     ) -> IncidentField:
         if not name:
             name = f"incidentfield{len(self.incident_fields)}"
@@ -419,7 +423,7 @@ class Pack(TestSuiteBase):
         return incident_field
 
     def create_incident_type(
-        self, name: str = None, content: dict = None
+            self, name: str = None, content: dict = None
     ) -> IncidentType:
         if not name:
             name = f"incidenttype{len(self.incident_types)}"
@@ -428,7 +432,7 @@ class Pack(TestSuiteBase):
         return incident_type
 
     def create_indicator_field(
-        self, name: str = None, content: dict = None
+            self, name: str = None, content: dict = None
     ) -> IndicatorField:
         if not name:
             name = f"indicatorfield{len(self.indicator_fields)}"
@@ -437,7 +441,7 @@ class Pack(TestSuiteBase):
         return indicator_field
 
     def create_indicator_type(
-        self, name: str = None, content: dict = None
+            self, name: str = None, content: dict = None
     ) -> IndicatorType:
         if not name:
             name = f"reputation{len(self.indicator_types)}"
@@ -460,7 +464,7 @@ class Pack(TestSuiteBase):
         return generic_type
 
     def create_generic_module(
-        self, name: str = None, content: dict = None
+            self, name: str = None, content: dict = None
     ) -> GenericModule:
         if not name:
             name = f"genericmodule{len(self.generic_modules)}"
@@ -470,7 +474,7 @@ class Pack(TestSuiteBase):
         return generic_module
 
     def create_generic_definition(
-        self, name: str = None, content: dict = None
+            self, name: str = None, content: dict = None
     ) -> GenericDefinition:
         if not name:
             name = f"genericdefinition{len(self.generic_definitions)}"
@@ -481,11 +485,11 @@ class Pack(TestSuiteBase):
         return generic_definition
 
     def create_job(
-        self,
-        is_feed: bool,
-        name: Optional[str] = None,
-        selected_feeds: Optional[List[str]] = None,
-        details: str = "",
+            self,
+            is_feed: bool,
+            name: Optional[str] = None,
+            selected_feeds: Optional[List[str]] = None,
+            details: str = "",
     ) -> Job:
         job = Job(
             pure_name=name or f"job{len(self.jobs)}",
@@ -533,12 +537,12 @@ class Pack(TestSuiteBase):
         return widget
 
     def create_wizard(
-        self,
-        name: str = None,
-        categories_to_packs: Optional[Dict[str, List[dict]]] = None,
-        fetching_integrations: Optional[List[str]] = None,
-        set_playbooks: Optional[List[dict]] = None,
-        supporting_integrations: Optional[List[str]] = None,
+            self,
+            name: str = None,
+            categories_to_packs: Optional[Dict[str, List[dict]]] = None,
+            fetching_integrations: Optional[List[str]] = None,
+            set_playbooks: Optional[List[dict]] = None,
+            supporting_integrations: Optional[List[str]] = None,
     ) -> Wizard:
         if name is None:
             name = f"wizard{len(self.wizards)}"
@@ -551,12 +555,12 @@ class Pack(TestSuiteBase):
             supporting_integrations=supporting_integrations,
         )
         if not all(
-            [
-                categories_to_packs,
-                fetching_integrations,
-                set_playbooks,
-                supporting_integrations,
-            ]
+                [
+                    categories_to_packs,
+                    fetching_integrations,
+                    set_playbooks,
+                    supporting_integrations,
+                ]
         ):
             wizard.set_default_wizard_values()
         wizard.create_wizard()
@@ -571,10 +575,10 @@ class Pack(TestSuiteBase):
         return content_list
 
     def create_playbook(
-        self,
-        name: Optional[str] = None,
-        yml: Optional[dict] = None,
-        readme: Optional[str] = None,
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            readme: Optional[str] = None,
     ) -> Playbook:
         if name is None:
             name = f"playbook-{len(self.playbooks)}"
@@ -587,11 +591,11 @@ class Pack(TestSuiteBase):
         return playbook
 
     def create_test_playbook(
-        self,
-        name: Optional[str] = None,
-        yml: Optional[dict] = None,
-        readme: Optional[str] = None,
-        changelog: Optional[str] = None,
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            readme: Optional[str] = None,
+            changelog: Optional[str] = None,
     ) -> Playbook:
         if name is None:
             name = f"playbook-{len(self.test_playbooks)}"
@@ -613,7 +617,7 @@ class Pack(TestSuiteBase):
         return pb_test_use_case
 
     def create_release_notes(
-        self, version: str, content: str = "", is_bc: bool = False
+            self, version: str, content: str = "", is_bc: bool = False
     ):
         rn = self._create_text_based(
             f"{version}.md", content, dir_path=self._release_notes
@@ -641,11 +645,11 @@ class Pack(TestSuiteBase):
         return contributors
 
     def create_parsing_rule(
-        self,
-        name: Optional[str] = None,
-        yml: Optional[dict] = None,
-        rules: Optional[str] = None,
-        samples: Optional[list] = None,
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            rules: Optional[str] = None,
+            samples: Optional[list] = None,
     ) -> Rule:
         if not name:
             name = f"parsingrule_{len(self.parsing_rules)}"
@@ -675,11 +679,11 @@ class Pack(TestSuiteBase):
         return rule
 
     def create_modeling_rule(
-        self,
-        name: Optional[str] = None,
-        yml: Optional[dict] = None,
-        rules: Optional[str] = None,
-        schema: Optional[dict] = None,
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            rules: Optional[str] = None,
+            schema: Optional[dict] = None,
     ) -> Rule:
         if not name:
             name = f"modelingrule_{len(self.modeling_rules)}"
@@ -708,11 +712,11 @@ class Pack(TestSuiteBase):
         return rule
 
     def create_assets_modeling_rule(
-        self,
-        name: Optional[str] = None,
-        yml: Optional[dict] = None,
-        rules: Optional[str] = None,
-        schema: Optional[dict] = None,
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            rules: Optional[str] = None,
+            schema: Optional[dict] = None,
     ) -> Rule:
         if not name:
             name = f"assetsmodelingrule_{len(self.assets_modeling_rules)}"
@@ -743,7 +747,7 @@ class Pack(TestSuiteBase):
         return rule
 
     def create_correlation_rule(
-        self, name: str = None, content: dict = None
+            self, name: str = None, content: dict = None
     ) -> CorrelationRule:
         if not name:
             name = f"correlationrule{len(self.correlation_rules)}"
@@ -754,7 +758,7 @@ class Pack(TestSuiteBase):
         return correlation_rule
 
     def create_xsiam_dashboard(
-        self, name: str = None, content: dict = None
+            self, name: str = None, content: dict = None
     ) -> XSIAMDashboard:
         if not name:
             name = f"XSIAMDashboard{len(self.xsiam_dashboards)}"
@@ -763,7 +767,7 @@ class Pack(TestSuiteBase):
         return xsiam_dashboard
 
     def create_xsiam_report(
-        self, name: str = None, content: dict = None
+            self, name: str = None, content: dict = None
     ) -> XSIAMReport:
         if not name:
             name = f"XSIAMReport{len(self.xsiam_reports)}"
@@ -779,7 +783,7 @@ class Pack(TestSuiteBase):
         return trigger
 
     def create_xdrc_template(
-        self, name, json_content: dict = None, yaml_content: dict = None
+            self, name, json_content: dict = None, yaml_content: dict = None
     ) -> XDRCTemplate:
         xdrc_template_dir: Path = self._xdrc_templates_path / f"{self.name}_{name}"
         xdrc_template_dir.mkdir()
@@ -797,7 +801,7 @@ class Pack(TestSuiteBase):
         return layout_rule
 
     def create_case_layout_rule(
-        self, name: str = None, content: dict = None
+            self, name: str = None, content: dict = None
     ) -> CaseLayoutRule:
         if not name:
             name = f"case_layout_rule{len(self.case_layout_rules)}"
@@ -822,3 +826,17 @@ class Pack(TestSuiteBase):
 
     def set_data(self, **key_path_to_val):
         self.pack_metadata.set_data(**key_path_to_val)
+
+    def create_agentix_action(
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+    ) -> AgentixAction:
+        if name is None:
+            name = f"agentix_action-{len(self.agentix_actions)}"
+        agentix_action = AgentixAction(self._agentix_actions_path, name, self._repo)
+        agentix_action.build(
+            yml,
+        )
+        self.agentix_actions.append(agentix_action)
+        return agentix_action

@@ -29,7 +29,6 @@ class IsDisplayNameValid(BaseValidator[ContentTypes]):
         validation_results = []
         for content_item in content_items:
             valid = True
-            content_type = ""
             display_name = getattr(content_item, "display_name", None)
             if not display_name:
                 continue

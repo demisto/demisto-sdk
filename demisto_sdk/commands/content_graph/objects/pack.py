@@ -295,7 +295,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         metadata.update(
             self._format_metadata(marketplace, self.content_items, self.depends_on)
         )
-        self._clean_empty_supportedModuels_from_commands(metadata.get("contentItems"))
+        self._clean_empty_supportedModuels_from_commands(metadata.get("contentItems", {}))
         # Replace incorrect marketplace references
         metadata = replace_marketplace_references(metadata, marketplace, str(self.path))
         if "supportedModules" in metadata and not metadata["supportedModules"]:

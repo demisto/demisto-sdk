@@ -20,7 +20,7 @@ ContentTypes = Union[Pack, Integration]
 
 
 class MarketplaceTagsValidator(BaseValidator[ContentTypes]):
-    error_code = "BA102"
+    error_code = "BA104"
     description = (
         "Ensures that all marketplace tags (e.g. <~xsiam></~xsiam>) are valid, "
         "properly matched, and not nested incorrectly."

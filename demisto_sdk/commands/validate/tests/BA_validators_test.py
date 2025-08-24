@@ -50,11 +50,11 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA100_is_valid_versi
 from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equal_name import (
     IDNameValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA102_is_marketplace_tags_valid import (
-    MarketplaceTagsValidator,
-)
 from demisto_sdk.commands.validate.validators.BA_validators.BA103_is_tests_section_valid import (
     IsTestsSectionValidValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA104_is_marketplace_tags_valid import (
+    MarketplaceTagsValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA105_id_contain_slashes import (
     IDContainSlashesValidator,

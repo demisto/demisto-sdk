@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     # avoid circular imports
     from demisto_sdk.commands.content_graph.objects.script import Script
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, root_validator
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
@@ -70,12 +70,28 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
     deprecated: bool = Field(False)
     hidden: bool = Field(False)
     description: Optional[str] = Field("")
-    supportedModules: Optional[List[str]] = Field([])
+    supportedModules: Optional[List[str]]
 
     # missing attributes in DB
     node_id: str = Field("", exclude=True)
     object_id: str = Field("", alias="id", exclude=True)
     marketplaces: List[MarketplaceVersions] = Field([], exclude=True)
+
+    @root_validator(pre=False)
+    def remove_empty_supported_modules(cls, values: dict) -> dict:
+        """
+        This root validator inspects the dictionary of validated fields.
+        """
+        # Get the value from the dictionary
+        modules = values.get('supportedModules')
+
+        # If the value is None or an empty list, remove it from the dictionary
+        if not modules:
+            # The .pop() method removes the key from the dictionary
+            values.pop('supportedModules', None)
+
+        # Always return the final values dictionary
+        return values
 
     @property
     def integrations(self) -> List["Integration"]:
@@ -146,7 +162,6 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             for r in self.relationships_data[RelationshipType.HAS_COMMAND]
         ]
         self.commands = commands
-
     def summary(
         self,
         marketplace: Optional[MarketplaceVersions] = None,

@@ -19,17 +19,29 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 )
 
 
-@dataclass
 class CommandParser:
-    name: str
-    deprecated: bool
-    hidden: bool
-    description: str
-    args: List[dict]
-    outputs: List[dict]
-    quickaction: bool
-    compliantpolicies: List[str]
-    supportedModules: List[str]
+    def __init__(
+        self,
+        name: str,
+        deprecated: bool,
+        hidden: bool,
+        description: str,
+        args: List[dict],
+        outputs: List[dict],
+        quickaction: bool,
+        compliantpolicies: List[str],
+        supported_modules: List[str] = None,
+    ):
+        self.name = name
+        self.deprecated = deprecated
+        self.hidden = hidden
+        self.description = description
+        self.args = args
+        self.outputs = outputs
+        self.quickaction = quickaction
+        self.compliantpolicies = compliantpolicies
+        if supported_modules:
+            self.supportedModules = supported_modules
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
@@ -118,8 +130,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 description=description,
                 quickaction=quickaction,
                 compliantpolicies=compliantpolicies,
-                supportedModules=supported_modules,
+                supported_modules=supported_modules,
             )
+
             self.commands.append(
                 CommandParser(
                     name=name,
@@ -130,7 +143,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                     outputs=outputs,
                     quickaction=quickaction,
                     compliantpolicies=compliantpolicies,
-                    supportedModules=supported_modules,
+                    supported_modules=supported_modules,
                 )
             )
 

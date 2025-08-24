@@ -92,6 +92,9 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     related_field = "supportedModules"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.SCHEMA]
+    playbook_error_message = (
+        "The following mandatory commands missing required modules: {0}"
+    )
 
     def get_missing_modules_by_dependency(self, content_item) -> dict[str, list[str]]:
         """Get missing modules for each dependency of a content item.
@@ -143,6 +146,26 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 missing_modules_by_item[content_item.object_id].extend(missing_modules)
 
         return missing_modules_by_item
+
+    def get_commands_with_missing_modules_by_playbook(
+        self, playbook, commands_with_missing_modules_by_playbook: dict
+    ):
+        """Get missing modules for commands used by a playbook.
+
+        Args:
+            playbook: The playbook content item to check commands for
+
+        Returns:
+            dict: A dictionary mapping command IDs to lists of missing modules
+        """
+
+        for rel in playbook.uses:
+            command = rel.content_item_to
+            if playbook.object_id not in commands_with_missing_modules_by_playbook:
+                commands_with_missing_modules_by_playbook[playbook.object_id] = []
+            commands_with_missing_modules_by_playbook[playbook.object_id].append(
+                command.object_id
+            )
 
     def format_error_messages(self, missing_modules_dict):
         """Format error messages for missing modules.
@@ -221,4 +244,19 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                     )
                 )
 
+        # Process items with mismatched playbooks
+        for invalid_item in mismatched_playbooks:
+            commands_with_missing_modules = {}
+            self.get_commands_with_missing_modules_by_playbook(
+                invalid_item, commands_with_missing_modules
+            )
+            if commands_with_missing_modules:
+                commands = commands_with_missing_modules[invalid_item.object_id]
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.playbook_error_message.format(", ".join(commands)),
+                        content_object=invalid_item,
+                    )
+                )
         return results

@@ -470,6 +470,7 @@ def get_supported_modules_mismatch_commands(
         results[item.get("contentItem").element_id] = neo_res
     return results
 
+
 def get_supported_modules_mismatch_playbooks(
     tx: Transaction,
     content_item_ids: List[str],
@@ -477,26 +478,27 @@ def get_supported_modules_mismatch_playbooks(
     """
     Identifies playbooks that is supported by more modules than (at least) one of their commands.
 
-    This function finds content items (like integrations) that have commands with supportedModules
-    that are not included in the supportedModules of the parent content item.
+    This function finds commands that are used in playbooks with supportedModules that are not included in the
+    supportedModules of the parent command.
 
     Args:
         tx (Transaction): The Neo4j transaction object.
         content_item_ids (List[str]): List of content item IDs to check. If empty, all items are checked.
 
     Returns:
-        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
+        Dict[str, Neo4jRelationshipResult]: Dictionary mapping playbook IDs to relationship results.
     """
     query = f"""
-    MATCH (p:{ContentType.PLAYBOOK})-[:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()
-    WHERE any(module IN p.supportedModules WHERE NOT module in r.supportedModules)
-    AND (size(r.supportedModules) > 0 and size(p.supportedModules) > 0) 
-    RETURN p, c"""
+    MATCH (p:{ContentType.PLAYBOOK})-[u:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()
+    WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR p.object_id IN {content_item_ids})
+    AND any(module IN p.supportedModules WHERE NOT module in r.supportedModules)
+    AND (size(r.supportedModules) > 0 and size(p.supportedModules) > 0)
+    RETURN p, collect(u) AS relationships, collect(c) AS nodes_to"""
 
     items = run_query(tx, query)
     results = {}
     for item in items:
-        node_from = item.get("contentItem")
+        node_from = item.get("p")
         relationships = item.get("relationships")
         nodes_to = item.get("nodes_to")
         neo_res = Neo4jRelationshipResult(
@@ -504,5 +506,5 @@ def get_supported_modules_mismatch_playbooks(
             relationships,
             nodes_to,
         )
-        results[item.get("contentItem").element_id] = neo_res
+        results[item.get("p").element_id] = neo_res
     return results

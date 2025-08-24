@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     # avoid circular imports
     from demisto_sdk.commands.content_graph.objects.script import Script
 
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
@@ -146,6 +146,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             for r in self.relationships_data[RelationshipType.HAS_COMMAND]
         ]
         self.commands = commands
+
     def summary(
         self,
         marketplace: Optional[MarketplaceVersions] = None,

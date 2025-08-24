@@ -257,7 +257,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         for integration in content_items.get("integration", []):
             if "commands" in integration:
                 for command in integration["commands"]:
-                    if "supportedModules" in command and not command["supportedModules"]:
+                    if (
+                        "supportedModules" in command
+                        and not command["supportedModules"]
+                    ):
                         del command["supportedModules"]
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:

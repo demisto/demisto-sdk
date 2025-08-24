@@ -18,6 +18,7 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
 
+
 @dataclass
 class CommandParser:
     name: str
@@ -29,6 +30,7 @@ class CommandParser:
     quickaction: bool
     compliantpolicies: List[str]
     supportedModules: List[str]
+
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
     def __init__(

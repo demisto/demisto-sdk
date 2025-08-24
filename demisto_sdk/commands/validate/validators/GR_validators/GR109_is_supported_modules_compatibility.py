@@ -246,7 +246,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
 
         # Process items with mismatched playbooks
         for invalid_item in mismatched_playbooks:
-            commands_with_missing_modules = {}
+            commands_with_missing_modules: dict[str, list[str]] = {}
             self.get_commands_with_missing_modules_by_playbook(
                 invalid_item, commands_with_missing_modules
             )

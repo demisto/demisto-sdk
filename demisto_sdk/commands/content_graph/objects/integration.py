@@ -70,28 +70,12 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
     deprecated: bool = Field(False)
     hidden: bool = Field(False)
     description: Optional[str] = Field("")
-    supportedModules: Optional[List[str]]
+    supportedModules: Optional[List[str]] = Field([])
 
     # missing attributes in DB
     node_id: str = Field("", exclude=True)
     object_id: str = Field("", alias="id", exclude=True)
     marketplaces: List[MarketplaceVersions] = Field([], exclude=True)
-
-    @root_validator(pre=False)
-    def remove_empty_supported_modules(cls, values: dict) -> dict:
-        """
-        This root validator inspects the dictionary of validated fields.
-        """
-        # Get the value from the dictionary
-        modules = values.get('supportedModules')
-
-        # If the value is None or an empty list, remove it from the dictionary
-        if not modules:
-            # The .pop() method removes the key from the dictionary
-            values.pop('supportedModules', None)
-
-        # Always return the final values dictionary
-        return values
 
     @property
     def integrations(self) -> List["Integration"]:

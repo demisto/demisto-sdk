@@ -1,0 +1,4 @@
+changes:
+- description: Added support for the agentix_xsiam module in the AG104 validation.
+  type: internal
+pr_number: 5042

@@ -55,6 +55,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equa
 from demisto_sdk.commands.validate.validators.BA_validators.BA103_is_tests_section_valid import (
     IsTestsSectionValidValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA104_is_marketplace_tags_valid import (
+    MarketplaceTagsValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA105_id_contain_slashes import (
     IDContainSlashesValidator,
 )
@@ -2730,6 +2733,136 @@ def test_integration_compliant_policy_name_validator(
         content_item, policy_names
     )
     assert results == sorted(expected_failures)
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_pack_object(
+                    readme_text="# Test Pack\n\n<~XSOAR>This is for XSOAR</~XSOAR>\n\n<~XSIAM>This is for XSIAM</~XSIAM>"
+                ),
+                create_integration_object(
+                    description_content="<~XSOAR_SAAS>XSOAR SaaS only content</~XSOAR_SAAS>"
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="<~INVALID_TAG>This is invalid</~INVALID_TAG>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/pack_313/README.md: Invalid marketplace tag(s) found: INVALID_TAG. Allowed tags:",
+            ],
+        ),
+        (
+            [
+                create_integration_object(
+                    description_content="<~XSOAR>This is mismatched</~XSIAM>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/pack_314/Integrations/integration_0/integration_0_description.md: Mismatched marketplace tags: opened with 'XSOAR' but closed with 'XSIAM'",
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="<~XSOAR>This tag is never closed"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/pack_315/README.md: Unclosed marketplace tag: 'XSOAR' is missing its closing tag",
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="This closing tag has no opening </~XSOAR>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/pack_316/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="<~XSOAR>Outer tag <~XSIAM>Inner tag</~XSIAM></~XSOAR>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/pack_317/README.md: Nested marketplace tags are not allowed. Tag 'XSIAM' cannot be placed inside tag 'XSOAR'",
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="<~INVALID,INVALID_B>Multiple invalid tags</~NVALID,INVALID_B>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/pack_318/README.md: Invalid marketplace tag(s) found: INVALID, INVALID_B. Allowed tags:",
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="<~XSOAR,XSIAM>Content for both platforms</~XSOAR,XSIAM>"
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="This closing tag has no opening </~XSOAR>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/pack_320/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
+            ],
+        ),
+    ],
+)
+def test_MarketplaceTagsValidator_obtain_invalid_content_items(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    - Content items with various marketplace tag scenarios.
+    When
+    - Calling the MarketplaceTagsValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failures is returned and that the error msg is correct.
+
+    Test cases:
+    - Valid marketplace tags in pack README and integration description
+    - Invalid marketplace tag name in pack README
+    - Mismatched opening and closing tags in integration description
+    - Unclosed marketplace tag in pack README
+    - Closing tag without corresponding opening tag in pack README
+    - Nested marketplace tags (not allowed) in pack README
+    - Multiple invalid tags in comma-separated format in pack README
+    - Valid multiple tags in comma-separated format in pack README
+    - Duplicate case - closing tag without corresponding opening tag
+    """
+    results = MarketplaceTagsValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures
+    if expected_msgs:
+        result_messages = [result.message for result in results]
+        assert expected_msgs[0] in result_messages[0]
 
 
 

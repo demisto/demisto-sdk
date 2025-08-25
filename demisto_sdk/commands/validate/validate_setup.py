@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.constants import (
     SDK_OFFLINE_ERROR_MESSAGE,
     ExecutionMode,
 )
-from demisto_sdk.commands.common.logger import logger, logging_setup_decorator
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     is_external_repository,
     is_sdk_defined_working_offline,
@@ -21,7 +21,7 @@ from demisto_sdk.commands.validate.old_validate_manager import OldValidateManage
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.utils.utils import update_command_args_from_config_file
-
+from demisto_sdk.commands.common.logger import logging_setup
 
 def validate_paths(value: Optional[str]) -> Optional[str]:
     if not value:  # If no input is provided, just return None
@@ -36,7 +36,7 @@ def validate_paths(value: Optional[str]) -> Optional[str]:
     return value
 
 
-@logging_setup_decorator
+
 def validate(
     ctx: typer.Context,
     file_paths: str = typer.Argument(None, exists=True, resolve_path=True),
@@ -159,21 +159,34 @@ def validate(
         None, help="An error code to not run. Can be repeated."
     ),
     console_log_threshold: str = typer.Option(
-        None,
+        "INFO",
+        "-clt",
         "--console-log-threshold",
-        help="Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR.",
+        help="Minimum logging threshold for the console logger.",
     ),
     file_log_threshold: str = typer.Option(
-        None, "--file-log-threshold", help="Minimum logging threshold for file output."
+        "DEBUG",
+        "-flt",
+        "--file-log-threshold",
+        help="Minimum logging threshold for the file logger.",
     ),
-    log_file_path: str = typer.Option(
-        None, "--log-file-path", help="Path to save log files."
+    log_file_path: Optional[str] = typer.Option(
+        None,
+        "-lp",
+        "--log-file-path",
+        help="Path to save log files onto.",
     ),
 ):
     """
     This command ensures that the content repository files are valid and are able to be processed by the platform.
     This is used in our validation process both locally and in Gitlab.
     """
+    logging_setup(
+        console_threshold=console_log_threshold,
+        file_threshold=file_log_threshold,
+        path=log_file_path,
+        calling_function="validate",
+    )
     if is_sdk_defined_working_offline():
         typer.echo(SDK_OFFLINE_ERROR_MESSAGE, err=True)
         raise typer.Exit(1)

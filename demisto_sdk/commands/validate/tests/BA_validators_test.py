@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
+    create_agentix_action_object,
     create_assets_modeling_rule_object,
     create_classifier_object,
     create_correlation_rule_object,
@@ -43,8 +44,6 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_xdrc_template_object,
     create_xsiam_dashboard_object,
     create_xsiam_report_object,
-    create_agentix_action_object
-
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA100_is_valid_version import (
     IsValidVersionValidator,
@@ -119,7 +118,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_conte
 from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_script_name_starts_with_digit import (
     IsCommandOrScriptNameStartsWithDigitValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA129_is_display_name_valid import IsDisplayNameValid
+from demisto_sdk.commands.validate.validators.BA_validators.BA129_is_display_name_valid import (
+    IsDisplayNameValid,
+)
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
@@ -2865,7 +2866,6 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
         assert expected_msgs[0] in result_messages[0]
 
 
-
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
@@ -2907,9 +2907,11 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
             1,
             ["The following display name values are invalid: 1Invalid, Invalid!"],
         ),
-    ]
+    ],
 )
-def test_IsDisplayNameValid_obtain_invalid_content_items(content_items, expected_number_of_failures, expected_msgs):
+def test_IsDisplayNameValid_obtain_invalid_content_items(
+    content_items, expected_number_of_failures, expected_msgs
+):
     """
     Given
     - AgentixAction content_items with various display values.
@@ -2926,5 +2928,3 @@ def test_IsDisplayNameValid_obtain_invalid_content_items(content_items, expected
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
-
-

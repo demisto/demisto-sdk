@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-
 from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
@@ -25,7 +24,9 @@ class IsDisplayNameValid(BaseValidator[ContentTypes]):
     # the following characters: lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.
     AGENTIX_ACTION_DISPLAY_NAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_\- ]*$")
 
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
         validation_results = []
         for content_item in content_items:
             valid = True

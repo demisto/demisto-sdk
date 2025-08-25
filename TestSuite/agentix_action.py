@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Optional
 
-from TestSuite.yml import YAML, yaml
 from TestSuite.test_tools import suite_join_path
+from TestSuite.yml import YAML, yaml
 
 
 class AgentixAction(YAML):
@@ -18,7 +18,6 @@ class AgentixAction(YAML):
     def yml(self):
         # for backward compatible
         return self
-
 
     def build(
         self,

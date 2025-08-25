@@ -937,6 +937,7 @@ def update_keys(dict_obj, paths, values):
         for path, value in zip(paths, values):
             set_value(dict_obj, path, value)
 
+
 def create_agentix_action_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
@@ -965,5 +966,7 @@ def create_agentix_action_object(
     agentix_action = pack.create_agentix_action(**additional_params)
     agentix_action.create_default_agentix_action("sample")
     agentix_action.yml.update(yml_content)
-    parser = AgentixActionParser(Path(agentix_action.path), list(MarketplaceVersions), pack_supported_modules=[])
+    parser = AgentixActionParser(
+        Path(agentix_action.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
     return AgentixAction.from_orm(parser)

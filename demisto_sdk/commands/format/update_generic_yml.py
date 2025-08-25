@@ -122,7 +122,9 @@ class BaseUpdateYML(BaseUpdate):
         else:
             current_id = self.id_and_version_location.get("id")
             old_id = self.get_id_and_version_for_data(self.old_file).get("id")
-            if current_id != old_id:
+            if current_id != old_id and not getattr(
+                self, "is_silent_playbook_revert_to_non_silent", False
+            ):
                 logger.info(
                     f"The modified YML file corresponding to the path: {self.relative_content_path} ID does not match the ID in remote YML file."
                     f" Changing the YML ID from {current_id} back to {old_id}."

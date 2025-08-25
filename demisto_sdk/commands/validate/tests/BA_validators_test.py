@@ -2736,15 +2736,15 @@ def test_integration_compliant_policy_name_validator(
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
-        # Case 1: All valid AgentixAction display_names
+        # Case 1: All valid AgentixAction displays
         (
             [
-                create_agentix_action_object(paths=["display_name"], values=["ValidName"]),
-                create_agentix_action_object(paths=["display_name"], values=["Valid_Name"]),
-                create_agentix_action_object(paths=["display_name"], values=["Valid-Name"]),
-                create_agentix_action_object(paths=["display_name"], values=["Valid Name"]),
-                create_agentix_action_object(paths=["display_name"], values=["A123"]),
-                create_agentix_action_object(paths=["display_name"], values=["A_1-2 3"]),
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+                create_agentix_action_object(paths=["display"], values=["Valid_Name"]),
+                create_agentix_action_object(paths=["display"], values=["Valid-Name"]),
+                create_agentix_action_object(paths=["display"], values=["Valid Name"]),
+                create_agentix_action_object(paths=["display"], values=["A123"]),
+                create_agentix_action_object(paths=["display"], values=["A_1-2 3"]),
             ],
             0,
             [],
@@ -2752,24 +2752,24 @@ def test_integration_compliant_policy_name_validator(
         # Case 2: One invalid (starts with digit), one valid
         (
             [
-                create_agentix_action_object(paths=["display_name"], values=["1Invalid"]),
-                create_agentix_action_object(paths=["display_name"], values=["ValidName"]),
+                create_agentix_action_object(paths=["display"], values=["1Invalid"]),
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
             ],
             1,
             ["The following display name values are invalid: 1Invalid"],
         ),
         # Case 3: Invalid (contains forbidden character)
         (
-            [create_agentix_action_object(paths=["display_name"], values=["Invalid!"])],
+            [create_agentix_action_object(paths=["display"], values=["Invalid!"])],
             1,
             ["The following display name values are invalid: Invalid!"],
         ),
         # Case 4: Multiple invalid
         (
             [
-                create_agentix_action_object(paths=["display_name"], values=["1Invalid"]),
-                create_agentix_action_object(paths=["display_name"], values=["Invalid!"]),
-                create_agentix_action_object(paths=["display_name"], values=["ValidName"]),
+                create_agentix_action_object(paths=["display"], values=["1Invalid"]),
+                create_agentix_action_object(paths=["display"], values=["Invalid!"]),
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
             ],
             1,
             ["The following display name values are invalid: 1Invalid, Invalid!"],
@@ -2779,7 +2779,7 @@ def test_integration_compliant_policy_name_validator(
 def test_IsDisplayNameValid_obtain_invalid_content_items(content_items, expected_number_of_failures, expected_msgs):
     """
     Given
-    - AgentixAction content_items with various display_name values.
+    - AgentixAction content_items with various display values.
     When
     - Calling the IsDisplayNameValid.obtain_invalid_content_items function.
     Then

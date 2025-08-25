@@ -97,7 +97,10 @@ class _Command(BaseStrictModel):
     quickaction: Optional[bool] = None
     compliantpolicies: Optional[List[str]] = None
     supportedModules: Optional[
-        Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
+        Annotated[
+            List[PlatformSupportedModules],
+            Field(min_length=1, max_length=len(PlatformSupportedModules)),
+        ]
     ]
 
 

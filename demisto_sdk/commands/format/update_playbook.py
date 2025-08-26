@@ -373,7 +373,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             # Revert existing silent playbook to non silent
             else:
                 if self.data["issilent"] and self.ask_for_non_silent_playbook():
-                    # flag that makes sure the id changewill be vaild later on
+                    # flag that makes sure the id change will be valid later on
                     self.is_silent_playbook_revert_to_non_silent = True
                     self.revert_silent_playbook()
 

@@ -1195,13 +1195,13 @@ class UpdateRN:
                 )
                 rn_desc += self.generate_rn_list_new_commands(changed_content_object)
 
-                if isinstance(changed_content_object, Playbook):
-                    if changed_content_object.data.get("issilent"):
-                        rn_desc += (
-                            f"<!-- Converted {content_name} to silent playbook -->\n"
-                        )
-                    else:
-                        rn_desc += f"<!-- Converted {content_name} to non silent playbook -->\n"
+                # if isinstance(changed_content_object, Playbook):
+                #     if changed_content_object.data.get("issilent"):
+                #         rn_desc += (
+                #             f"<!-- Converted {content_name} to silent playbook -->\n"
+                #         )
+                #     else:
+                #         rn_desc += f"<!-- Converted {content_name} to non silent playbook -->\n"
 
             else:
                 # Updated content items

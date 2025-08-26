@@ -957,7 +957,7 @@ def test_format_playbook_without_fromversion_with_preset_flag_silent(
     assert "silent-" in playbook.yml.read_dict().get("name")
     assert "silent-" in playbook.yml.read_dict().get("id")
     assert playbook.yml.read_dict().get("issilent") is True
-    assert playbook.yml.read_dict().get("fromversion") == "6.0.0"
+    assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
 
 
 def test_format_playbook_without_fromversion_with_preset_flag_manual_non_silent(

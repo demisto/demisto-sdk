@@ -2904,8 +2904,8 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                 create_agentix_action_object(paths=["display"], values=["Invalid!"]),
                 create_agentix_action_object(paths=["display"], values=["ValidName"]),
             ],
-            1,
-            ["The following display name values are invalid: 1Invalid, Invalid!"],
+            2,
+            ["The following display name values are invalid: 1Invalid", "The following display name values are invalid: Invalid!"],
         ),
     ],
 )

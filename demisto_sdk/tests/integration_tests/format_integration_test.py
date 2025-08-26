@@ -144,7 +144,7 @@ def test_integration_format_yml_with_no_test_positive(
     with ChangeCWD(tmp_path):
         first_run_result = runner.invoke(
             app,
-            [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at", "-ngr"],
+            [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at", "-y", "-ngr"],
             input="Y",
         )
     assert not first_run_result.exception

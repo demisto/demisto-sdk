@@ -272,7 +272,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
         # Add issilent: true
         self.data["issilent"] = True
 
-        # Ensure fr omversion is at least 8.9.0
+        # Ensure fr from_version is at least 8.9.0
         current_from_version = self.data.get("fromversion", None)
         if not current_from_version or current_from_version < "8.9.0":
             self.data["fromversion"] = "8.9.0"

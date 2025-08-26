@@ -1025,7 +1025,8 @@ class TestFormatting:
 
         with ChangeCWD(repo.path):
             formatter = PlaybookYMLFormat(
-                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH)
+                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH
+            )
             formatter.run_format()
             assert formatter.data.get("fromversion") == expected_fromversion
 

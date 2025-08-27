@@ -12,8 +12,8 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = AgentixAction
 
 
-class IsDisplayNameValid(BaseValidator[ContentTypes]):
-    error_code = "BA129"
+class IsDisplayNameValidValidator(BaseValidator[ContentTypes]):
+    error_code = "AG105"
     description = "Ensure that the display field is in the required format."
     rationale = "Display names must be user-friendly and conform to standards."
     error_message = "The following display name values are invalid: {0}"

@@ -118,8 +118,8 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_conte
 from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_script_name_starts_with_digit import (
     IsCommandOrScriptNameStartsWithDigitValidator,
 )
-from demisto_sdk.commands.validate.validators.BA_validators.BA129_is_display_name_valid import (
-    IsDisplayNameValid,
+from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_display_name_valid import (
+    IsDisplayNameValidValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -2920,7 +2920,7 @@ def test_IsDisplayNameValid_obtain_invalid_content_items(
     Then
     - Make sure the right amount of failures return and that the error msg is correct.
     """
-    results = IsDisplayNameValid().obtain_invalid_content_items(content_items)
+    results = IsDisplayNameValidValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(
         [

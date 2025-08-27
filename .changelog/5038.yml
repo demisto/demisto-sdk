@@ -1,4 +1,0 @@
-changes:
-- description: Added BA104 validation to ensure marketplace tags are valid, properly matched, and not nested incorrectly.
-  type: feature
-pr_number: 5038

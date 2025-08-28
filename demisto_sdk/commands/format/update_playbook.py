@@ -272,19 +272,19 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
         # Add issilent: true
         self.data["issilent"] = True
 
-        # Ensure fr from_version is at least 8.9.0
+        # Ensuring `fromversion` is at least '8.9.0'
         current_from_version = self.data.get("fromversion", None)
         if not current_from_version or current_from_version < "8.9.0":
             self.data["fromversion"] = "8.9.0"
 
     def revert_silent_playbook(self):
         """
-        Reverts a silent playbook back to a standard playbook.
-        This includes:
-        - Removing "silent-" from the playbook's id and name.
-        - Setting `issilent: false` in the playbook's data.
-        - The `fromversion` is not reverted, as downgrading a version
-          could potentially cause unexpected issues.
+        Reverts a silent playbook to a standard playbook.
+
+        This process includes:
+        - Removing the "silent-" prefix from the playbook's ID and name.
+        - Setting the `issilent` field to `False`.
+        - Updating the `fromversion` to a default value - "6.10.0".
         """
         logger.info("<green>Reverting playbook from silent to non-silent...</green>")
 
@@ -368,13 +368,6 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                 if self.ask_for_silent_playbook():
                     self.update_for_silent_playbook()
                 else:
-                    self.revert_silent_playbook()
-
-            # Revert existing silent playbook to non silent
-            else:
-                if self.data["issilent"] and self.ask_for_non_silent_playbook():
-                    # flag that makes sure the id change will be valid later on
-                    self.is_silent_playbook_revert_to_non_silent = True
                     self.revert_silent_playbook()
 
             super().run_format()

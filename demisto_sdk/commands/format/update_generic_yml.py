@@ -122,9 +122,7 @@ class BaseUpdateYML(BaseUpdate):
         else:
             current_id = self.id_and_version_location.get("id")
             old_id = self.get_id_and_version_for_data(self.old_file).get("id")
-            if current_id != old_id and not getattr(
-                self, "is_silent_playbook_revert_to_non_silent", False
-            ):
+            if current_id != old_id:
                 logger.info(
                     f"The modified YML file corresponding to the path: {self.relative_content_path} ID does not match the ID in remote YML file."
                     f" Changing the YML ID from {current_id} back to {old_id}."
@@ -155,6 +153,7 @@ class BaseUpdateYML(BaseUpdate):
         self.adds_period_to_description()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
+        # If the playbook is not silent (i.e., 'issilent' is False or missing), set the 'fromVersion'.
         if "issilent" not in self.data or not self.data["issilent"]:
             self.set_fromVersion(
                 default_from_version=default_from_version, file_type=file_type

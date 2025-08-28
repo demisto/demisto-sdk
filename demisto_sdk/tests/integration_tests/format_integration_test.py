@@ -1248,9 +1248,10 @@ def test_format_incident_type_layout_id(repo, mocker):
 
     runner = CliRunner(mix_stderr=False)
     with ChangeCWD(repo.path):
+        mocker.patch("builtins.input", return_value="n")
         format_result = runner.invoke(
             app,
-            [FORMAT_CMD, "-i", str(pack.path), "-y", "-ngr"],
+            [FORMAT_CMD, "-i", str(pack.path), "-ngr"],
             catch_exceptions=False,
         )
 

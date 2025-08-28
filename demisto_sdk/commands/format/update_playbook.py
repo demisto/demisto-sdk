@@ -286,7 +286,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
         - Setting the `issilent` field to `False`.
         - Updating the `fromversion` to a default value - "6.10.0".
         """
-        logger.info("<green>Reverting playbook from silent to non-silent...</green>")
+        logger.info("<green>Formatting playbook as a non-silent playbook.</green>")
 
         # Remove "silent-" from the playbook name and id if it exists
         playbook_name = self.data.get("name")

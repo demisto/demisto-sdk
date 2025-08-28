@@ -17,7 +17,7 @@ class IsDisplayNameValidValidator(BaseValidator[ContentTypes]):
     error_code = "AG105"
     description = "AgentixAction display value must start with a letter (either lower or upper case) and contain only the following characters: lowercase letters, uppercase letters, digits, underscores, hyphens, spaces."
     rationale = "Display names must be user-friendly and conform to standards."
-    error_message = "The following Agentix action display value is invalid: {0}. \n AgentixAction display value must start with a letter (either lower or upper case) and contain only the following characters: lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.""
+    error_message = "The following Agentix action display value is invalid: {0}. \n AgentixAction display value must start with a letter (either lower or upper case) and contain only the following characters: lowercase letters, uppercase letters, digits, underscores, hyphens, spaces."
 
     related_field = "display"
     is_auto_fixable = False

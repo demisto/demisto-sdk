@@ -45,6 +45,9 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_xsiam_dashboard_object,
     create_xsiam_report_object,
 )
+from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_display_name_valid import (
+    IsDisplayNameValidValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA100_is_valid_version import (
     IsValidVersionValidator,
 )
@@ -117,9 +120,6 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_conte
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_script_name_starts_with_digit import (
     IsCommandOrScriptNameStartsWithDigitValidator,
-)
-from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_display_name_valid import (
-    IsDisplayNameValidValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -2905,7 +2905,10 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                 create_agentix_action_object(paths=["display"], values=["ValidName"]),
             ],
             2,
-            ["The following display name values are invalid: 1Invalid", "The following display name values are invalid: Invalid!"],
+            [
+                "The following display name values are invalid: 1Invalid",
+                "The following display name values are invalid: Invalid!",
+            ],
         ),
     ],
 )

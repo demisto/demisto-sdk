@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -14,14 +15,19 @@ ContentTypes = AgentixAction
 
 class IsDisplayNameValidValidator(BaseValidator[ContentTypes]):
     error_code = "AG105"
-    description = "Ensure that the display field is in the required format."
+    description = "AgentixAction display value must start with a letter (either lower or upper case) and contain only the following characters: lowercase letters, uppercase letters, digits, underscores, hyphens, spaces."
     rationale = "Display names must be user-friendly and conform to standards."
-    error_message = "The following display name values are invalid: {0}"
+    error_message = "The following Agentix action display value is invalid: {0}. \n AgentixAction display value must start with a letter (either lower or upper case) and contain only the following characters: lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.""
+
     related_field = "display"
     is_auto_fixable = False
 
-    # AgentixAction display_name must start with a letter (either lower or upper case) and contain only
-    # the following characters: lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
+
     AGENTIX_ACTION_DISPLAY_NAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_\- ]*$")
 
     def obtain_invalid_content_items(

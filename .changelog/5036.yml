@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the ***demisto-sdk --help*** command failed due to dependency conflicts between the `typer` and `click` packages.
-  type: fix
-pr_number: 5036

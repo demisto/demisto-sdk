@@ -1,15 +1,4 @@
 changes:
-- description: >
-    This feature introduces an interactive process for formatting new playbooks. When a user
-    runs the format command on a new playbook, the tool will now ask if they wish to create it as a silent playbook.
-
-    - If the user answers **yes**:
-      - The playbook's `name` and `id` are automatically prefixed with "silent-".
-      - The `issilent: true` field is added to the playbook's YAML.
-      - The `fromversion` is set to a minimum of **8.9.0**.
-
-    - If the user answers **no**:
-      - The `issilent: false` field is explicitly set in the YAML.
-      - The `fromversion` is set to the default of **6.10.0**.
+- description: Format new playbooks as silent playbooks.
   type: feature
 pr_number: 5037

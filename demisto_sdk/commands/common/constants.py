@@ -2001,7 +2001,7 @@ class PlatformSupportedModules(StrEnum):
     X3 = "X3"
     X5 = "X5"
     ENT_PLUS = "ENT_PLUS"
-    # new licenses - all values above this line needs to be removed as part of batch 4.
+    # new licenses - TODO all values above this line needs to be removed as part of batch 4.
     CLOUD_POSTURE = "cloud_posture"
     CLOUD = "cloud"
     CLOUD_RUNTIME_SECURITY = "cloud_runtime_security"

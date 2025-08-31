@@ -29,6 +29,10 @@ def test_is_forbidden_content_item():
     content_items = [
         AgentixAgent(
             color="red",
+            actionids=["test_action"],
+            systeminstructions="Test system instructions",
+            conversationstarters=["Test conversation starter"],
+            autoenablenewactions=False,
             description="",
             display="display Name",
             path=Path("test.yml"),
@@ -67,6 +71,10 @@ def test_is_correct_marketplace():
     content_items = [
         AgentixAgent(
             color="red",
+            actionids=[""],
+            systeminstructions="",
+            conversationstarters=[""],
+            autoenablenewactions=False,
             description="",
             display="",
             path=Path("test.yml"),
@@ -81,6 +89,10 @@ def test_is_correct_marketplace():
         ),
         AgentixAgent(
             color="red",
+            actionids=[""],
+            systeminstructions="",
+            conversationstarters=[""],
+            autoenablenewactions=False,
             description="",
             display="",
             path=Path("test.yml"),
@@ -236,6 +248,10 @@ def test_is_correct_supportedModules():
     content_items = [
         AgentixAgent(
             color="red",
+            actionids=[""],
+            systeminstructions="",
+            conversationstarters=[""],
+            autoenablenewactions=False,
             description="",
             display="",
             path=Path("test.yml"),
@@ -251,6 +267,10 @@ def test_is_correct_supportedModules():
         ),
         AgentixAgent(
             color="red",
+            actionids=[""],
+            systeminstructions="",
+            conversationstarters=[""],
+            autoenablenewactions=False,
             description="",
             display="",
             path=Path("test.yml"),

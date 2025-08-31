@@ -6,6 +6,10 @@ from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
 
 class AgentixAgent(AgentixBase, content_type=ContentType.AGENTIX_AGENT):
     color: str
+    actionids: list[str]
+    systeminstructions: str
+    conversationstarters: list[str]
+    autoenablenewactions: bool
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

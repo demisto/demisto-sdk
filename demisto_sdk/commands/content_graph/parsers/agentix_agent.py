@@ -20,6 +20,10 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.color: str = self.yml_data.get("color")  # type: ignore
+        self.actionids: list[str] = self.yml_data.get("actionids")  # type: ignore
+        self.systeminstructions: str = self.yml_data.get("systeminstructions", "")
+        self.conversationstarters: list[str] = self.yml_data.get("conversationstarters", [])
+        self.autoenablenewactions: bool = self.yml_data.get("autoenablenewactions", False)
 
     @cached_property
     def field_mapping(self):

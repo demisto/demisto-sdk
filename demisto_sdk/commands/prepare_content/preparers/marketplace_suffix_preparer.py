@@ -30,21 +30,25 @@ class MarketplaceSuffixPreparer:
         if current_marketplace == MarketplaceVersions.XSOAR_SAAS:
             suffixes.append(f"{SEPARATOR}{MarketplaceVersions.XSOAR.value}")
 
-        def fix_recursively(datum: Any, parent_key: str = None) -> Any:
+        def fix_recursively(datum: Any) -> Any:
             if isinstance(datum, list):
-                return [fix_recursively(item, parent_key) for item in datum]
+                return [fix_recursively(item) for item in datum]
 
             elif isinstance(datum, dict):
-                for key in tuple(datum.keys()):
+                for key in tuple(
+                    datum.keys()
+                ):  # deliberately not iterating over .items(), as the dict changes during iteration
                     value = datum[key]
                     if isinstance(value, (list, dict)):
-                        fix_recursively(value, key if parent_key is None else parent_key)
+                        fix_recursively(value)
                     if SEPARATOR not in key:
                         continue
                     for suffix in suffixes:
+                        # iterate each suffix to see if it's relevant for the key.
+                        # the order of the suffixes matter, as XSOAR_SAAS and XSOAR_ON_PREM are more specific
                         suffix_len = len(suffix)
                         if isinstance(key, str) and key.casefold().endswith(suffix):
-                            clean_key = key[:-suffix_len]
+                            clean_key = key[:-suffix_len]  # without suffix
                             if clean_key not in datum:
                                 logger.info(
                                     "Deleting field %s as it has no counterpart without suffix",
@@ -59,15 +63,11 @@ class MarketplaceSuffixPreparer:
                             datum.pop(key, None)
                             break
                     else:
-                        # Only preserve colon-containing keys if we are under 'keyTypeMap'
-                        if parent_key == 'keyTypeMap':
-                            pass  # Do nothing, preserve keys like 'Policy: EUC' or 'string:string' under keyTypeMap
-                        else:
-                            logger.debug(
-                                f"Field {key} does not end with any relevant suffix, deleting"
-                            )
-                            datum.pop(key, None)
-                return datum
+                        logger.debug(
+                            f"Field {key} does not end with any relevant suffix, deleting"
+                        )
+                        datum.pop(key, None)
+            return datum
 
         if not isinstance(result := fix_recursively(data), dict):  # to calm mypy
             raise ValueError(

@@ -288,9 +288,7 @@ class ContentItem(BaseContent):
         else:
             if "supportedModules" in data:
                 del data["supportedModules"]
-        if self.content_type in (ContentType.INTEGRATION, ContentType.SCRIPT):
-            return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
-        return data
+        return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
 
     def summary(
         self,

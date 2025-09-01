@@ -63,10 +63,17 @@ class MarketplaceSuffixPreparer:
                             datum.pop(key, None)
                             break
                     else:
-                        logger.debug(
-                            f"Field {key} does not end with any relevant suffix, deleting"
-                        )
-                        datum.pop(key, None)
+                        all_marketplace_suffixes = {f"{SEPARATOR}{mp.value}" for mp in MarketplaceVersions}
+                        key_suffix = key[key.rfind(SEPARATOR):] if SEPARATOR in key else None
+                        if key_suffix and key_suffix in algitl_marketplace_suffixes and key_suffix not in suffixes:
+                            logger.debug(
+                                f"Field {key} ends with a marketplace suffix ({key_suffix}) that is not the current marketplace, deleting"
+                            )
+                            datum.pop(key, None)
+                        else:
+                            logger.debug(
+                                f"Field {key} does not end with any relevant suffix, keeping"
+                            )
             return datum
 
         if not isinstance(result := fix_recursively(data), dict):  # to calm mypy

@@ -65,7 +65,7 @@ class MarketplaceSuffixPreparer:
                     else:
                         all_marketplace_suffixes = {f"{SEPARATOR}{mp.value}" for mp in MarketplaceVersions}
                         key_suffix = key[key.rfind(SEPARATOR):] if SEPARATOR in key else None
-                        if key_suffix and key_suffix in algitl_marketplace_suffixes and key_suffix not in suffixes:
+                        if key_suffix and key_suffix in all_marketplace_suffixes and key_suffix not in suffixes:
                             logger.debug(
                                 f"Field {key} ends with a marketplace suffix ({key_suffix}) that is not the current marketplace, deleting"
                             )

@@ -981,14 +981,14 @@ class TestFormatting:
         os.rmdir(TEST_PLAYBOOK_PATH)
 
     @pytest.mark.parametrize(
-        "initial_fromversion, is_existing_file, expected_fromversion",
+        "initial_fromversion, is_existing_file, is_silent, expected_fromversion",
         [
-            ("5.0.0", False, GENERAL_DEFAULT_FROMVERSION),
-            ("5.0.0", True, "5.0.0"),
-            ("3.0.0", False, GENERAL_DEFAULT_FROMVERSION),
-            ("3.0.0", True, "3.0.0"),
-            (None, False, GENERAL_DEFAULT_FROMVERSION),
-            (None, True, GENERAL_DEFAULT_FROMVERSION),
+            ("5.0.0", False, True, "8.9.0"),
+            ("5.0.0", True, True, "5.0.0"),
+            ("3.0.0", False, False, GENERAL_DEFAULT_FROMVERSION),
+            ("3.0.0", True, False, "3.0.0"),
+            (None, False, True, "8.9.0"),
+            (None, True, False, None),
         ],
     )
     def test_format_valid_fromversion_for_playbook(
@@ -997,6 +997,7 @@ class TestFormatting:
         repo: Repo,
         initial_fromversion: str,
         is_existing_file: bool,
+        is_silent: bool,
         expected_fromversion: str,
     ):
         """
@@ -1006,6 +1007,7 @@ class TestFormatting:
             - Run run_format()
         Then
             - Ensure that the formatted fromversion equals `expected_fromversion`.
+            - Ensure that the playbook is correctly sddigned to silent and non-silent.
         """
         pack: Pack = repo.create_pack("pack")
         playbook: Playbook = pack.create_playbook("DummyPlaybook")
@@ -1016,9 +1018,14 @@ class TestFormatting:
         if is_existing_file:
             mocker.patch.object(BaseUpdate, "is_old_file", return_value=playbook_data)
 
+        if is_silent:
+            mocker.patch("builtins.input", return_value="y")
+        else:
+            mocker.patch("builtins.input", return_value="n")
+
         with ChangeCWD(repo.path):
             formatter = PlaybookYMLFormat(
-                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH, assume_answer=True
+                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH
             )
             formatter.run_format()
             assert formatter.data.get("fromversion") == expected_fromversion

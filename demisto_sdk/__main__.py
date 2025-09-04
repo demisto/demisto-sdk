@@ -211,7 +211,7 @@ def register_commands(_args: list[str] = []):  # noqa: C901
 
         app.command(
             name="doc-review",
-            help="Checks the spelling in Markdown and YAML files and compares release note files to our release note standards.",
+            help="Deprecated, use demisto-sdk pre-commit instead.",
         )(doc_review)
 
     if command_name == "integration-diff" or register_all:

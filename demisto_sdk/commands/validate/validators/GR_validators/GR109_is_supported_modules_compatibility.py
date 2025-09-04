@@ -92,9 +92,6 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     related_field = "supportedModules"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.SCHEMA]
-    playbook_error_message = (
-        "The following mandatory commands missing required modules: {0}"
-    )
 
     def get_missing_modules_by_dependency(self, content_item) -> dict[str, list[str]]:
         """Get missing modules for each dependency of a content item.
@@ -147,23 +144,25 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
 
         return missing_modules_by_item
 
-    def get_commands_with_missing_modules_by_playbook(
-        self, playbook, commands_with_missing_modules_by_playbook: dict
+    def get_commands_with_missing_modules_by_content_item(
+        self, item, commands_with_missing_modules_by_content_item: dict
     ):
-        """Get missing modules for commands used by a playbook.
+        """Get commands with missing modules for a content item.
 
         Args:
-            playbook: The playbook content item to check commands for
+            item: The content item to check commands for
+            commands_with_missing_modules_by_content_item: Dictionary to populate with commands that have missing modules
 
         Returns:
-            dict: A dictionary mapping command IDs to lists of missing modules
+            dict: A dictionary mapping content item IDs to lists of command IDs
         """
-
-        for rel in playbook.uses:
+        for rel in item.uses:
             command = rel.content_item_to
-            if playbook.object_id not in commands_with_missing_modules_by_playbook:
-                commands_with_missing_modules_by_playbook[playbook.object_id] = []
-            commands_with_missing_modules_by_playbook[playbook.object_id].append(
+            # At this point, we assume the mismatch is already established
+            if item.object_id not in commands_with_missing_modules_by_content_item:
+                commands_with_missing_modules_by_content_item[item.object_id] = []
+            # Add the command ID to the list
+            commands_with_missing_modules_by_content_item[item.object_id].append(
                 command.object_id
             )
 
@@ -180,6 +179,22 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         for object_id, modules in missing_modules_dict.items():
             formatted_messages.append(f"{object_id} is missing: [{', '.join(modules)}]")
         return formatted_messages
+
+    def format_commands_error_message(self, commands_with_missing_modules: dict) -> str:
+        """Format error message for commands with missing modules.
+
+        Args:
+            commands_with_missing_modules: Dictionary mapping content item IDs to lists of command IDs
+
+        Returns:
+            str: Formatted error message
+        """
+        formatted_messages = []
+        for content_item_id, commands in commands_with_missing_modules.items():
+            formatted_messages.append(
+                f"Content item '{content_item_id}' has incompatible commands: [{', '.join(commands)}]"
+            )
+        return ", ".join(formatted_messages)
 
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
@@ -202,8 +217,8 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             )
         )
 
-        mismatched_playbooks = (
-            self.graph.find_content_items_with_module_mismatch_playbooks(
+        mismatched_content_items = (
+            self.graph.find_content_items_with_module_mismatch_content_items(
                 target_content_item_ids
             )
         )
@@ -244,18 +259,20 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                     )
                 )
 
-        # Process items with mismatched playbooks
-        for invalid_item in mismatched_playbooks:
+        # Process items with mismatched content_items
+        for invalid_item in mismatched_content_items:
             commands_with_missing_modules: dict[str, list[str]] = {}
-            self.get_commands_with_missing_modules_by_playbook(
+            self.get_commands_with_missing_modules_by_content_item(
                 invalid_item, commands_with_missing_modules
             )
             if commands_with_missing_modules:
-                commands = commands_with_missing_modules[invalid_item.object_id]
+                formatted_message = self.format_commands_error_message(
+                    commands_with_missing_modules
+                )
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=self.playbook_error_message.format(", ".join(commands)),
+                        message=f"Module compatibility issue detected: {formatted_message}. Make sure the commands used are supported by the same modules as the content item.",
                         content_object=invalid_item,
                     )
                 )

@@ -481,7 +481,7 @@ def get_supported_modules_mismatch_commands(
     return results
 
 
-def get_supported_modules_mismatch_playbooks(
+def get_supported_modules_mismatch_content_items(
     tx: Transaction,
     content_item_ids: List[str],
 ):
@@ -495,7 +495,7 @@ def get_supported_modules_mismatch_playbooks(
         content_item_ids (List[str]): List of content item IDs to check. If empty, all items are checked.
 
     Returns:
-        Dict[str, Neo4jRelationshipResult]: Dictionary mapping playbook IDs to relationship results.
+        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
     """
     query = f"""
     MATCH (content_item{{deprecated: false, is_test: false}})-[u:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()

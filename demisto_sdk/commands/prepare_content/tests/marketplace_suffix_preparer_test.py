@@ -29,6 +29,7 @@ DATA = {
         "gh:xsoar_saas": "xsoar_saas",
         "ij": "test5",
         "ij:marketplacev2": "marketplacev2",
+        "ty:bla": "bla",
     },
     "inputs": {
         "description": "Test",
@@ -98,6 +99,7 @@ def test_remove_xsoar():
             "ef": "test3",
             "gh": "test4",
             "ij": "test5",
+            "ty:bla": "bla",
         },
         "1": {"id": "1"},
         "inputs": {
@@ -134,6 +136,7 @@ def test_remove_marketplacev2():
             "ef": "test3",
             "gh": "test4",
             "ij": "marketplacev2",
+            "ty:bla": "bla",
         },
         "inputs": {
             "description": "Test",
@@ -190,6 +193,7 @@ def test_remove_xpanse():
             "ef": "test3",
             "gh": "test4",
             "ij": "test5",
+            "ty:bla": "bla",
         },
         "inputs": {
             "description": "xpanse desc",
@@ -248,6 +252,7 @@ def test_remove_xsoar_saas():
             "ef": "test3",
             "gh": "xsoar_saas",
             "ij": "test5",
+            "ty:bla": "bla",
         },
         "1": {"id": "1"},
         "inputs": {
@@ -284,6 +289,7 @@ def test_remove_xsoar_on_prem():
             "ef": "xsoar_on_prem",
             "gh": "test4",
             "ij": "test5",
+            "ty:bla": "bla",
         },
         "1": {"id": "1"},
         "inputs": {

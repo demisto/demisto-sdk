@@ -2001,8 +2001,15 @@ class PlatformSupportedModules(StrEnum):
     X3 = "X3"
     X5 = "X5"
     ENT_PLUS = "ENT_PLUS"
+    # new licenses - TODO all values above this line needs to be removed as part of batch 4.
+    CLOUD_POSTURE = "cloud_posture"
+    CLOUD = "cloud"
+    CLOUD_RUNTIME_SECURITY = "cloud_runtime_security"
+    EDR = "edr"
+    CLOUD_APPSEC = "cloud_appsec"
     AGENTIX = "agentix"
     ASM = "asm"
+    XSIAM = "xsiam"
     EXPOSURE_MANAGEMENT = "exposure_management"
     AGENTIX_XSIAM = "agentix_xsiam"
 

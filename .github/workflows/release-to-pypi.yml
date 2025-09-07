@@ -17,7 +17,7 @@ jobs:
           git fetch --tags
           git checkout tags/v${{ github.event.pull_request.head.ref }}
 
-      - uses: tj-actions/branch-names@v8.0.1
+      - uses: tj-actions/branch-names@v9.0.0
         id: branch-name
 
       - name: Check branch name is a release branch

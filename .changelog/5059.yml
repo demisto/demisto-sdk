@@ -1,4 +1,4 @@
 changes:
 - description: Added a deprecation message to the `demisto-sdk doc-review` command.
-  type: <fix>
+  type: fix
 pr_number: 5059

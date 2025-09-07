@@ -1,4 +1,14 @@
 # Changelog
+## 1.38.11 (2025-09-07)
+### Fix
+* Fixed an issue in marketplace suffix preparer. [#5055](https://github.com/demisto/demisto-sdk/pull/5055)
+
+### Internal
+* Add actions to Pack Metadata. [#5058](https://github.com/demisto/demisto-sdk/pull/5058)
+* Added a deprecation message to the `demisto-sdk doc-review` command. [#5059](https://github.com/demisto/demisto-sdk/pull/5059)
+* Added licenses to supported modules const. [#5053](https://github.com/demisto/demisto-sdk/pull/5053)
+
+
 ## 1.38.10 (2025-08-26)
 ### Feature
 * Added BA104 validation to ensure marketplace tags are valid, properly matched, and not nested incorrectly. [#5038](https://github.com/demisto/demisto-sdk/pull/5038)

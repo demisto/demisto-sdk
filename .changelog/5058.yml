@@ -1,0 +1,4 @@
+changes:
+- description: Add actions to Pack Metadata.
+  type: internal
+pr_number: 5058

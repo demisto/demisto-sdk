@@ -1379,6 +1379,80 @@ class TestRNUpdate:
             == "##### Integration test\n\n- Deprecated the **test-command** command. Use %%% instead.\n- text for test\n"
         )
 
+    def test_build_rn_desc_silent_playbook(self):
+        """
+        Given:
+            - A silent playbook (issilent: true)
+        When:
+            - Running the build_rn_desc function for a new silent playbook
+        Then:
+            - Validate that the original release notes are commented out with HTML syntax
+            - Validate that a generic "Documentation and metadata improvements" note is added
+        """
+
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorld",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorld"},
+            added_files=set(),
+        )
+
+        # Create a mock silent playbook object
+        silent_playbook = create_playbook_object(paths=["issilent"], values=[True])
+
+        desc = update_rn.build_rn_desc(
+            _type=FileType.PLAYBOOK,
+            content_name="Silent Playbook",
+            desc="This is a test silent playbook description",
+            is_new_file=True,
+            changed_content_object=silent_playbook,
+        )
+
+        # Verify the original description is commented out
+        assert "<!-- ##### New: Silent Playbook" in desc
+        assert "This is a test silent playbook description" in desc
+        assert "-->" in desc
+        # Verify the generic note is added
+        assert "- Documentation and metadata improvements." in desc
+
+    def test_build_rn_desc_non_silent_playbook(self):
+        """
+        Given:
+            - A non-silent playbook (issilent: false or not set)
+        When:
+            - Running the build_rn_desc function for a new playbook
+        Then:
+            - Validate that the release notes are NOT commented out
+            - Validate that no generic note is added
+        """
+
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorld",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorld"},
+            added_files=set(),
+        )
+
+        # Create a mock non-silent playbook object
+        non_silent_playbook = create_playbook_object(paths=["issilent"], values=[False])
+
+        desc = update_rn.build_rn_desc(
+            _type=FileType.PLAYBOOK,
+            content_name="Regular Playbook",
+            desc="This is a test regular playbook description",
+            is_new_file=True,
+            changed_content_object=non_silent_playbook,
+        )
+
+        # Verify the description is NOT commented out
+        assert "<!--" not in desc
+        assert "-->" not in desc
+        # Verify no generic note is added
+        assert "- Documentation and metadata improvements." not in desc
+        # Verify the normal description is present
+        assert "##### New: Regular Playbook" in desc
+        assert "This is a test regular playbook description" in desc
+
     def test_deprecated_rn_integration_command(self, mocker):
         """
         Given:

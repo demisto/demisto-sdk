@@ -273,7 +273,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
         self.data["issilent"] = True
 
         # Ensuring `fromversion` is at least '8.9.0'
-        current_from_version = self.data.get("fromversion", None)
+        current_from_version = self.data.get("fromversion")
         if not current_from_version or current_from_version < "8.9.0":
             self.data["fromversion"] = "8.9.0"
 
@@ -317,30 +317,6 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
         logger.info(
             f"\n<blue>Do you want to make '{self.data.get('name')}' a silent playbook? [Y/n]</blue>"
-        )
-        while True:
-            user_input = input().lower()
-            if user_input in ["y", "yes"]:
-                return True
-            elif user_input in ["n", "no"]:
-                return False
-            else:
-                logger.info("<red>Invalid input. Please enter 'Y' or 'n'.</red>")
-
-    def ask_for_non_silent_playbook(self) -> bool:
-        """
-        Asks the user if they want to revert the existing silent playbook to a non-silent.
-        Returns:
-            bool: True if the user answers 'yes', False otherwise.
-        """
-        if not self.interactive:
-            # If not in interactive mode, default to 'no'
-            return False
-        if self.assume_answer:
-            return True
-
-        logger.info(
-            f"\n<blue>Do you want to make '{self.data.get('name')}' a non-silent playbook? [Y/n]</blue>"
         )
         while True:
             user_input = input().lower()

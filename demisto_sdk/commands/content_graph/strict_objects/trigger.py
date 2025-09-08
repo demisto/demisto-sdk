@@ -24,7 +24,6 @@ class _StrictTrigger(BaseStrictModel):
     automation_id: Optional[str] = Field(alias="automation_type")
 
 
-
 StrictTrigger = create_model(
     model_name="StrictTrigger",
     base_models=(

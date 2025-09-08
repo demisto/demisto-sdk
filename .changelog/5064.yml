@@ -1,0 +1,4 @@
+changes:
+- description: Fixed RN111 validator integration name matching bug by replacing startswith() with exact string matching to prevent order-dependent validation failures
+  type: fix
+pr_number: 5064

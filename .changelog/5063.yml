@@ -1,4 +1,4 @@
 changes:
 - description: Added automation_id and automation_type keys to the Trigger schema.
   type: feature
-pr_number: 5050
+pr_number: 5063

@@ -1,4 +1,5 @@
 from typing import Optional
+from pydantic import Field
 
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     AlertsFilter,
@@ -18,6 +19,9 @@ class _StrictTrigger(BaseStrictModel):
     description: str
     suggestion_reason: str
     alerts_filter: Optional[AlertsFilter] = None
+    automation_type: Optional[str] = Field(alias="automation_type")
+    automation_id: Optional[str] = Field(alias="automation_type")
+
 
 
 StrictTrigger = create_model(

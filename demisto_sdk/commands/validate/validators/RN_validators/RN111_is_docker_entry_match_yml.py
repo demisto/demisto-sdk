@@ -54,7 +54,7 @@ def get_docker_image_entry(rn: str, content_item_name: str) -> str:
     docker = NO_DOCKER_ENTRY_FOUND
     for item in rn_items:
         # Extract the integration name from the item (first line)
-        lines = item.split('\n')
+        lines = item.split("\n")
         if lines and lines[0].strip() == content_item_name:
             for entry in item.split("- "):
                 if entry.startswith("Updated the Docker image to: "):
@@ -136,7 +136,7 @@ class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):
         rn_items = content_item.pack.release_note.file_content.split("##### ")
         for item in rn_items:
             # Extract the integration name from the item (first line) for exact matching
-            lines = item.split('\n')
+            lines = item.split("\n")
             if not (lines and lines[0].strip() == content_item.name):
                 continue
             for entry in item.split("\n"):

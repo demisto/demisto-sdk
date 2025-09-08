@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue in marketplace suffix preparer.
-  type: fix
-pr_number: 5055

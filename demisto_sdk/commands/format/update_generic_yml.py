@@ -144,6 +144,16 @@ class BaseUpdateYML(BaseUpdate):
             if not self.data.get("tests", "") and self.old_file.get("tests", ""):
                 self.data["tests"] = self.old_file["tests"]
 
+    def section_order_to_lower(self):
+        """
+        Converts 'sectionOrder' field to lowercase 'sectionorder' and removes the original camelCase field.
+        This ensures compliance with the expected lowercase field naming convention.
+        """
+        if "sectionOrder" in self.data:
+            section_order_value = self.data["sectionOrder"]
+            self.data["sectionorder"] = section_order_value
+            self.data.pop("sectionOrder", None)
+
     def update_yml(
         self, default_from_version: Optional[str] = "", file_type: str = ""
     ) -> None:
@@ -160,6 +170,7 @@ class BaseUpdateYML(BaseUpdate):
             self.update_id_to_equal_name()
             self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
+        self.section_order_to_lower()
         if self.deprecate:
             if (
                 self.source_file_type.value == "integration"

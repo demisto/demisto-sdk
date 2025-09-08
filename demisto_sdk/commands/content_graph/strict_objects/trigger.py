@@ -20,8 +20,8 @@ class _StrictTrigger(BaseStrictModel):
     description: str
     suggestion_reason: str
     alerts_filter: Optional[AlertsFilter] = None
-    automation_type: Optional[str] = Field(alias="automation_type")
-    automation_id: Optional[str] = Field(alias="automation_type")
+    automation_type: Optional[str] = Field(default=None, alias="automation_type")
+    automation_id: Optional[str] = Field(default=None, alias="automation_id")
 
 
 StrictTrigger = create_model(

@@ -33,9 +33,23 @@ class StrictSchemaValidator(BaseValidator[ContentTypes]):
         return invalid_content_items
 
     def is_missing_section_fields(self, content_item: ContentTypes) -> str:
-        section_order = content_item.data.get("sectionorder") or content_item.data.get(
-            "sectionOrder"
-        )
+        """
+        Validates section-related fields in content items.
+
+        Returns specific error if 'sectionOrder' (camelCase) is used instead of 'sectionorder' (lowercase).
+        Returns missing field error if neither 'sectionorder' nor 'sectionOrder' exists.
+        Validates that all configuration parameters have required section fields.
+
+        Returns:
+            str: Error message if validation fails, empty string if validation passes.
+        """
+        section_order_lowercase = content_item.data.get("sectionorder")
+        section_order_camelcase = content_item.data.get("sectionOrder")
+
+        if section_order_camelcase and not section_order_lowercase:
+            return "Found 'sectionOrder' field. Please use 'sectionorder' (lowercase) instead of 'sectionOrder'."
+
+        section_order = section_order_lowercase or section_order_camelcase
         if not section_order:
             return (
                 "Missing sectionorder key. Add sectionorder to the top of your YAML file and specify the order"

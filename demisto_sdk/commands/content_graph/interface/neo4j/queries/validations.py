@@ -429,3 +429,102 @@ def get_supported_modules_mismatch_dependencies(
         )
         for item in run_query(tx, query)
     }
+
+
+def get_supported_modules_mismatch_commands(
+    tx: Transaction,
+    content_item_ids: List[str],
+):
+    """
+    Identifies content items that have commands with supportedModules not included in the parent item.
+
+    This function finds content items (like integrations) that have commands with supportedModules
+    that are not included in the supportedModules of the parent content item.
+
+    Args:
+        tx (Transaction): The Neo4j transaction object.
+        content_item_ids (List[str]): List of content item IDs to check. If empty, all items are checked.
+
+    Returns:
+        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
+    """
+    query = f""" // Check if any module in command's supportedModules is NOT in parent item's supportedModules
+    MATCH (content_item{{deprecated: false}})-[r:{RelationshipType.HAS_COMMAND}]->(command:{ContentType.COMMAND})
+    WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR content_item.object_id IN {content_item_ids})
+        AND 'platform' IN content_item.marketplaces
+        // An incompatibility is only possible if the content item has a specific module list.
+        // If its list is empty/null, it supports everything and can't be incompatible.
+        AND (content_item.supportedModules IS NOT NULL AND size(content_item.supportedModules) > 0)
+        AND
+        (
+            // CASE 1: The command supports all modules, creating a mismatch with the content item that uses it.
+            (r.supportedModules IS NULL OR size(r.supportedModules) = 0)
+            OR
+            // CASE 2: The command has a specific list, and we find at least one of its
+            // supported modules is NOT in the content item's supported module list.
+            (any(module IN r.supportedModules WHERE NOT module IN content_item.supportedModules))
+        )
+    RETURN content_item, collect(r) AS relationships, collect(command) AS nodes_to
+    """
+    items = run_query(tx, query)
+    results = {}
+    for item in items:
+        node_from = item.get("content_item")
+        relationships = item.get("relationships")
+        nodes_to = item.get("nodes_to")
+        neo_res = Neo4jRelationshipResult(
+            node_from,
+            relationships,
+            nodes_to,
+        )
+        results[item.get("content_item").element_id] = neo_res
+    return results
+
+
+def get_supported_modules_mismatch_content_items(
+    tx: Transaction,
+    content_item_ids: List[str],
+):
+    """
+    Fetches all content items that use at least one command with a module support incompatibility.
+    This occurs when a content item is supported by a module that the command is not.
+    The query assumes an empty or NULL `supportedModules` list on either entity is universal support for all modules.
+
+    Args:
+        tx (Transaction): The Neo4j transaction object.
+        content_item_ids (List[str]): List of content item IDs to check. If empty, all items are checked.
+
+    Returns:
+        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
+    """
+    query = f"""
+    MATCH (content_item{{deprecated: false, is_test: false}})-[u:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()
+    WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR content_item.object_id IN {content_item_ids})
+        AND 'platform' IN content_item.marketplaces
+        // An incompatibility is only possible if the command has a specific module list.
+        // If its list is empty/null, it supports everything and can't be incompatible.
+        AND (r.supportedModules IS NOT NULL AND size(r.supportedModules) > 0)
+        AND
+        (
+            // CASE 1: The ContentItem supports all modules, creating a mismatch with the specific command.
+            (content_item.supportedModules IS NULL OR size(content_item.supportedModules) = 0)
+            OR
+            // CASE 2: The ContentItem has a specific list, and we find at least one of its
+            // supported modules is NOT in the command's supported module list.
+            (any(module IN content_item.supportedModules WHERE NOT module IN r.supportedModules))
+        )
+    RETURN content_item, collect(u) AS relationships, collect(c) AS nodes_to"""
+
+    items = run_query(tx, query)
+    results = {}
+    for item in items:
+        node_from = item.get("content_item")
+        relationships = item.get("relationships")
+        nodes_to = item.get("nodes_to")
+        neo_res = Neo4jRelationshipResult(
+            node_from,
+            relationships,
+            nodes_to,
+        )
+        results[item.get("content_item").element_id] = neo_res
+    return results

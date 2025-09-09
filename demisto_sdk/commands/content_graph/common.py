@@ -350,6 +350,7 @@ class Relationship(BaseModel):
     name: Optional[str] = None
     quickaction: Optional[bool] = None
     compliantpolicies: Optional[list[str]] = None
+    supportedModules: Optional[list[str]] = None
 
 
 class Relationships(dict):

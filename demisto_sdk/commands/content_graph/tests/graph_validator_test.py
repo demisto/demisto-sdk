@@ -105,6 +105,7 @@ def repository(mocker) -> ContentDTO:
                 description="",
                 deprecated=False,
                 quickaction=False,
+                supportedModules=[],
             ),
             mock_relationship(
                 "SampleIntegration",
@@ -119,6 +120,7 @@ def repository(mocker) -> ContentDTO:
                 description="",
                 deprecated=True,
                 quickaction=False,
+                supportedModules=[],
             ),
         ],
         RelationshipType.IMPORTS: [

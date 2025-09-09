@@ -1,4 +1,4 @@
 changes:
 - description: "Added ST111 validation for sectionOrder: if the 'O' is uppercase, it is converted to lowercase; additionally, the format check enforces automatic conversion of uppercase 'O' to lowercase."
-  type: <internal>
+  type: internal
 pr_number: 5065

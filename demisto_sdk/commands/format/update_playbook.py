@@ -319,10 +319,10 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             f"\n<blue>Do you want to make '{self.data.get('name')}' a silent playbook? [Y/n]</blue>"
         )
         while True:
-            user_input = input().lower()
-            if user_input in ["y", "yes"]:
+            user_input = input()
+            if user_input in ["y", "yes", "Y", "Yes"]:
                 return True
-            elif user_input in ["n", "no"]:
+            elif user_input in ["n", "no", "N", "No"]:
                 return False
             else:
                 logger.info("<red>Invalid input. Please enter 'Y' or 'n'.</red>")

@@ -390,6 +390,73 @@ class TestRNUpdate:
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
+    @mock.patch.object(UpdateRN, "get_master_version")
+    def test_build_rn_template_silent_playbook_with_html_comments(self, mock_master):
+        """
+        Given:
+            - a dict of changed items containing both an integration and a silent playbook
+        When:
+            - we want to produce a release notes template for new files
+        Then:
+            - return a markdown string where the silent playbook content is wrapped in HTML comments
+            and followed by the generic documentation note, while other items remain unchanged
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        mock_master.return_value = "1.0.0"
+
+        # Create mock playbook objects
+        mock_silent_playbook = create_playbook_object(paths=["issilent"], values=[True])
+        mock_regular_playbook = create_playbook_object(
+            paths=["issilent"], values=[False]
+        )
+
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorld",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorld"},
+            added_files=set(),
+        )
+
+        changed_items = {
+            ("SAP Cloud For Customer (C4C)", FileType.INTEGRATION): {
+                "description": "Updated the SAPCloudForCustomerC4C integration to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.",
+                "is_new_file": False,
+                "changed_content_object": None,
+            },
+            ("silent-Proactive Threat Hunting - Block Indicators", FileType.PLAYBOOK): {
+                "description": 'This playbook will be executed from the "Proactive Threat Hunting" layout button with the objective of blocking indicators specified by the analyst.<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>',
+                "is_new_file": True,
+                "path": "Packs/HelloWorld/Playbooks/silent-Proactive.yml",
+                "changed_content_object": mock_silent_playbook,
+            },
+            ("regular-playbook", FileType.PLAYBOOK): {
+                "description": "This is a regular playbook description.",
+                "is_new_file": True,
+                "path": "Packs/HelloWorld/Playbooks/regular-playbook.yml",
+                "changed_content_object": mock_regular_playbook,
+            },
+        }
+
+        release_notes = update_rn.build_rn_template(changed_items)
+
+        # Verify that the silent playbook content is wrapped in HTML comments
+        assert (
+            "<!-- ##### New: silent-Proactive Threat Hunting - Block Indicators"
+            in release_notes
+        )
+        assert "This playbook will be executed from the" in release_notes
+        assert " -->" in release_notes
+        assert "- Documentation and metadata improvements." in release_notes
+
+        # Verify that the regular playbook is not wrapped in comments
+        assert "##### New: regular-playbook" in release_notes
+        assert "<!-- ##### New: regular-playbook" not in release_notes
+
+        # Verify that the integration remains unchanged
+        assert "##### SAP Cloud For Customer (C4C)" in release_notes
+        assert "<!-- ##### SAP Cloud For Customer (C4C)" not in release_notes
+
     def test_build_rn_template_when_only_pack_metadata_changed(self, mocker):
         """
         Given:

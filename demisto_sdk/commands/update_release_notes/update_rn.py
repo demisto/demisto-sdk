@@ -1018,26 +1018,31 @@ class UpdateRN:
             new_version = ".".join(version)
         elif self.update_type == "minor":
             version = current_version.split(".")
-            version[1] = str(int(version[1]) + 1)
-            if int(version[1]) > 99:
-                raise ValueError(
-                    f"Version number is greater than 99 for the {self.pack} pack. "
-                    f"Please verify the currentVersion is correct. If it is, "
-                    f"then consider bumping to a new Major version."
-                )
+            minor = int(version[1]) + 1
+            major = int(version[0])
+            if minor > 99:
+                major += 1
+                minor = 0
+            version[0] = str(major)
+            version[1] = str(minor)
             version[2] = "0"
             new_version = ".".join(version)
         # We validate the input via click
 
         elif self.update_type in ["revision", "documentation"]:
             version = current_version.split(".")
-            version[2] = str(int(version[2]) + 1)
-            if int(version[2]) > 99:
-                raise ValueError(
-                    f"Version number is greater than 99 for the {self.pack} pack. "
-                    f"Please verify the currentVersion is correct. If it is, "
-                    f"then consider bumping to a new Minor version."
-                )
+            revision = int(version[2]) + 1
+            minor = int(version[1])
+            major = int(version[0])
+            if revision > 99:
+                revision = 0
+                minor += 1
+                if minor > 99:
+                    minor = 0
+                    major += 1
+            version[0] = str(major)
+            version[1] = str(minor)
+            version[2] = str(revision)
             new_version = ".".join(version)
         elif self.update_type == "maintenance":
             raise ValueError(

@@ -153,8 +153,9 @@ class BaseUpdateYML(BaseUpdate):
         self.adds_period_to_description()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
-        # If the playbook is not silent (i.e., 'issilent' is False or missing), set the 'fromVersion'.
-        if "issilent" not in self.data or not self.data["issilent"]:
+        # If the playbook has a fromversion flag larger than 8.9.0 or
+        # is not silent (i.e., 'issilent' is False or missing), set the 'fromVersion'.
+        if self.from_version > '8.9.0' or "issilent" not in self.data or not self.data["issilent"]:
             self.set_fromVersion(
                 default_from_version=default_from_version, file_type=file_type
             )

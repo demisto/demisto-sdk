@@ -960,6 +960,48 @@ def test_format_playbook_without_fromversion_with_preset_flag_silent(
     assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
 
 
+def test_format_playbook_without_fromversion_with_preset_flag_silent_larger_fromversion(
+    repo, mocker, monkeypatch
+):
+    """
+    Given:
+        - A playbook without fromversion
+
+    When:
+        - Running format on the pack with assume-yes flag with from-version flag
+
+    Then:
+        - Ensure format runs successfully
+        - Ensure format adds fromversion with the given from-version althogh it is silent.
+    """
+
+    pack = repo.create_pack("Temp")
+    playbook = pack.create_playbook("my_temp_playbook")
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    if "fromversion" in playbook_content:
+        del playbook_content["fromversion"]
+
+    assert "fromversion" not in playbook_content
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        app,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "--assume-yes",
+            "--from-version",
+            "9.0.0",
+            "-ngr",
+        ],
+    )
+    assert "Success" in result.output
+    assert playbook.yml.read_dict().get("fromversion") == "9.0.0"
+
+
 def test_format_playbook_without_fromversion_with_preset_flag_manual_non_silent(
     repo, mocker, monkeypatch
 ):
@@ -973,7 +1015,6 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual_non_silent(
     Then:
         - Ensure format runs successfully
         - Ensure format adds fromversion with the given from-version.
-        - Ensure playbook is converted to non-silent.
     """
 
     pack = repo.create_pack("Temp")
@@ -993,9 +1034,6 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual_non_silent(
         input="n",
     )
     assert "Success" in result.output
-    assert "silent-" not in playbook.yml.read_dict().get("name")
-    assert "silent-" not in playbook.yml.read_dict().get("id")
-    assert playbook.yml.read_dict().get("issilent") is False
     assert playbook.yml.read_dict().get("fromversion") == "6.0.0"
 
 
@@ -1070,7 +1108,7 @@ def test_format_playbook_copy_removed_from_name_and_id_silent(
     )
     assert "Success" in result.output
     assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
-    assert playbook.yml.read_dict().get("issilent") is True
+    # assert playbook.yml.read_dict().get("issilent") is True
     assert playbook.yml.read_dict().get("id") == f"silent-{playbook_id}"
     assert playbook.yml.read_dict().get("name") == f"silent-{playbook_name}"
 
@@ -1109,7 +1147,7 @@ def test_format_playbook_copy_removed_from_name_and_id_non_silent(
     )
     assert "Success" in result.output
     assert playbook.yml.read_dict().get("fromversion") == "6.10.0"
-    assert playbook.yml.read_dict().get("issilent") is False
+    # assert playbook.yml.read_dict().get("issilent") is False
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name
 

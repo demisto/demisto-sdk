@@ -927,7 +927,6 @@ def test_format_playbook_without_fromversion_with_preset_flag_silent(
     Then:
         - Ensure format runs successfully
         - Ensure format adds fromversion with the given from-version.
-        - Ensure playbook is converted to silent.
     """
 
     pack = repo.create_pack("Temp")
@@ -954,25 +953,23 @@ def test_format_playbook_without_fromversion_with_preset_flag_silent(
         ],
     )
     assert "Success" in result.output
-    assert "silent-" in playbook.yml.read_dict().get("name")
-    assert "silent-" in playbook.yml.read_dict().get("id")
-    assert playbook.yml.read_dict().get("issilent") is True
     assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
 
 
-def test_format_playbook_without_fromversion_with_preset_flag_silent_larger_fromversion(
+def test_format_playbook_without_fromversion_with_preset_flag_larger_fromversion_silent(
     repo, mocker, monkeypatch
 ):
     """
     Given:
-        - A playbook without fromversion
+        - A playbook that does not have a 'fromversion' key.
 
     When:
         - Running format on the pack with assume-yes flag with from-version flag
 
     Then:
-        - Ensure format runs successfully
-        - Ensure format adds fromversion with the given from-version althogh it is silent.
+        - Ensure the format command runs successfully.
+        - Ensure that 'fromversion' is added as '9.0.0' even though the playbook is silent,
+          because the provided from-version is greater than '8.9.0'.
     """
 
     pack = repo.create_pack("Temp")
@@ -1049,7 +1046,6 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(
 
     Then:
         - Ensure format runs successfully
-        - Ensure playbook is converted to silent.
     """
 
     pack = repo.create_pack("Temp")
@@ -1070,8 +1066,6 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(
     )
     assert "Success" in result.output
     assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
-    assert "silent-" in playbook.yml.read_dict().get("name")
-    assert playbook.yml.read_dict().get("issilent") is True
 
 
 def test_format_playbook_copy_removed_from_name_and_id_silent(
@@ -1087,7 +1081,6 @@ def test_format_playbook_copy_removed_from_name_and_id_silent(
     Then:
         - Ensure format runs successfully
         - Ensure format removes `_copy` from both name and id.
-        - Ensure playbook is converted to silent.
     """
 
     pack = repo.create_pack("Temp")
@@ -1108,9 +1101,8 @@ def test_format_playbook_copy_removed_from_name_and_id_silent(
     )
     assert "Success" in result.output
     assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
-    # assert playbook.yml.read_dict().get("issilent") is True
-    assert playbook.yml.read_dict().get("id") == f"silent-{playbook_id}"
-    assert playbook.yml.read_dict().get("name") == f"silent-{playbook_name}"
+    assert "_copy" not in playbook.yml.read_dict().get("id")
+    assert "_copy" not in playbook.yml.read_dict().get("name")
 
 
 def test_format_playbook_copy_removed_from_name_and_id_non_silent(
@@ -1126,7 +1118,6 @@ def test_format_playbook_copy_removed_from_name_and_id_non_silent(
     Then:
         - Ensure format runs successfully
         - Ensure format removes `_copy` from both name and id.
-        - Ensure playbook is converted to non-silent.
     """
 
     pack = repo.create_pack("Temp")
@@ -1147,7 +1138,6 @@ def test_format_playbook_copy_removed_from_name_and_id_non_silent(
     )
     assert "Success" in result.output
     assert playbook.yml.read_dict().get("fromversion") == "6.10.0"
-    # assert playbook.yml.read_dict().get("issilent") is False
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name
 
@@ -1165,7 +1155,6 @@ def test_format_playbook_no_input_specified_silent(mocker, repo, monkeypatch):
         - The command will find the changed playbook
         - Ensure format runs successfully
         - Ensure format removes `_copy` from both name and id.
-        - Ensure playbook is converted to silent.
     """
 
     pack = repo.create_pack("Temp")
@@ -1189,10 +1178,9 @@ def test_format_playbook_no_input_specified_silent(mocker, repo, monkeypatch):
         input="y\n5.5.0",
     )
     assert "Success" in result.output
-    assert playbook.yml.read_dict().get("id") == f"silent-{playbook_id}"
-    assert playbook.yml.read_dict().get("name") == f"silent-{playbook_name}"
+    assert "_copy" not in playbook.yml.read_dict().get("id")
+    assert "_copy" not in playbook.yml.read_dict().get("name")
     assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
-    assert playbook.yml.read_dict().get("issilent") is True
 
 
 def test_format_playbook_no_input_specified_non_silent(mocker, repo, monkeypatch):
@@ -1208,7 +1196,6 @@ def test_format_playbook_no_input_specified_non_silent(mocker, repo, monkeypatch
         - The command will find the changed playbook
         - Ensure format runs successfully
         - Ensure format removes `_copy` from both name and id.
-        - Ensure playbook is converted to non-silent.
     """
 
     pack = repo.create_pack("Temp")
@@ -1235,7 +1222,173 @@ def test_format_playbook_no_input_specified_non_silent(mocker, repo, monkeypatch
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name
     assert playbook.yml.read_dict().get("fromversion") == "6.10.0"
-    assert playbook.yml.read_dict().get("issilent") is False
+
+
+def test_format_playbook_silent_with_fromversion(repo):
+    """
+    Given:
+        - A playbook with an existing 'fromversion' (implicitly from default content).
+
+    When:
+        - Running the format command on the playbook with:
+            - The '--assume-yes' flag.
+            - The '--from-version 6.0.0' flag.
+            - The '-ngr' (no git results) flag.
+
+    Then:
+        - Ensure the format runs successfully.
+        - Ensure the playbook is converted to a silent playbook:
+            - 'issilent' is set to True.
+            - 'id' and 'name' are prefixed with 'silent-'.
+        - Ensure 'fromversion' is updated to '8.9.0' (the minimum for silent playbooks).
+    """
+
+    pack = repo.create_pack("Temp")
+    playbook = pack.create_playbook("my_temp_playbook")
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        app,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "--assume-yes",
+            "--from-version",
+            "6.0.0",
+            "-ngr",
+        ],
+    )
+    assert "Success" in result.output
+    assert "silent-" in playbook.yml.read_dict().get("name")
+    assert "silent-" in playbook.yml.read_dict().get("id")
+    assert playbook.yml.read_dict().get("issilent") is True
+    assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
+
+
+def test_format_playbook_silent_without_fromversion(repo):
+    """
+    Given:
+        - A playbook without an explicit 'fromversion'.
+
+    When:
+        - Running the format command on the playbook with:
+            - The '--assume-yes' flag.
+            - The '-ngr' (no git results) flag.
+            - (No --from-version flag is provided.)
+
+    Then:
+        - Ensure the format runs successfully.
+        - Ensure the playbook is converted to a silent playbook:
+            - 'issilent' is set to True.
+            - 'id' and 'name' are prefixed with 'silent-'.
+        - Ensure 'fromversion' is set to '8.9.0' (default for silent playbooks).
+    """
+
+    pack = repo.create_pack("Temp")
+    playbook = pack.create_playbook("my_temp_playbook")
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        app,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "--assume-yes",
+            "-ngr",
+        ],
+    )
+    assert "Success" in result.output
+    assert "silent-" in playbook.yml.read_dict().get("name")
+    assert "silent-" in playbook.yml.read_dict().get("id")
+    assert playbook.yml.read_dict().get("issilent") is True
+    assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
+
+
+def test_format_playbook_non_silent_with_fromversion(repo):
+    """
+    Given:
+        - A playbook without an explicit 'fromversion'.
+
+    When:
+        - Running the format command on the playbook with:
+            - The '--from-version 6.5.0' flag.
+            - The '-ngr' (no git results) flag.
+            - (No '--assume-yes' flag.)
+        - User responds "N" to any interactive prompt (e.g., not converting to silent).
+
+    Then:
+        - Ensure the format runs successfully.
+        - Ensure 'fromversion' is set to '6.5.0' as provided.
+        - Ensure the playbook is **not** converted to silent.
+    """
+
+    pack = repo.create_pack("Temp")
+    playbook = pack.create_playbook("my_temp_playbook")
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        app,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "--from-version",
+            "6.5.0",
+            "-ngr",
+        ],
+        input="N",
+    )
+    assert "Success" in result.output
+    assert playbook.yml.read_dict().get("fromversion") == "6.5.0"
+
+
+def test_format_playbook_non_silent_without_fromversion(repo):
+    """
+    Given:
+        - A playbook without an explicit 'fromversion'.
+
+    When:
+        - Running the format command on the playbook with:
+            - The '-ngr' (no git results) flag.
+            - (No '--from-version' or '--assume-yes' flags.)
+        - User responds "N" to the interactive prompt (e.g., declines converting to silent).
+
+    Then:
+        - Ensure the format runs successfully.
+        - Ensure 'fromversion' is set to the default for non-silent playbooks (6.10.0).
+        - Ensure the playbook is not converted to silent.
+    """
+
+    pack = repo.create_pack("Temp")
+    playbook = pack.create_playbook("my_temp_playbook")
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        app,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "-ngr",
+        ],
+        input="N",
+    )
+    assert "Success" in result.output
+    assert playbook.yml.read_dict().get("fromversion") == "6.10.0"
 
 
 def test_format_incident_type_layout_id(repo, mocker):

@@ -1,0 +1,4 @@
+changes:
+- description: Changed the *generatable* field of *AgentixActionArgument* to *iseneratable* to match server.
+  type: internal
+pr_number: 5069

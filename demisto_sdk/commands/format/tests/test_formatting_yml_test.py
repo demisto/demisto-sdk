@@ -862,78 +862,56 @@ class TestFormatting:
         configuration_params = base_yml.data.get("configuration", [])
         assert "defaultvalue" in configuration_params[0]
 
-    def test_section_order_to_lower_converts_camelcase(self):
+    @pytest.mark.parametrize(
+        "original_key, expected_value",
+        [
+            ("sectionOrder", ["Collect", "Connect"]),  # camelCase
+            ("SectionOrder", ["Optimize", "Collect"]),  # PascalCase
+            ("SECTIONORDER", ["Collect", "Optimize", "Mirroring"]),  # UPPERCASE
+            ("SectIonOrder", ["Collect", "Connect"]),  # Mixed case
+            (
+                "sectionorder",
+                ["Connect", "Collect", "Optimize", "Mirroring", "Result"],
+            ),  # already lowercase
+            ("Sectionorder", ["Connect", "Mirroring", "Result"]),  # Title case
+            ("SECTIONorder", ["Connect"]),  # Mixed upper/lower
+            (
+                "sectionORDER",
+                ["Connect", "Collect", "Optimize", "Mirroring", "Result"],
+            ),  # Mixed lower/upper
+        ],
+    )
+    def test_section_order_to_lower_converts_various_cases(
+        self, original_key, expected_value
+    ):
         """
         Given:
-            - A YAML data structure with 'sectionOrder' field in camelCase
+            - A YAML data structure with 'sectionorder' field in various case combinations
         When:
             - Running section_order_to_lower method
         Then:
-            - The 'sectionOrder' field should be converted to 'sectionorder' (lowercase)
-            - The original 'sectionOrder' field should be removed
+            - The field should be converted to 'sectionorder' (lowercase)
+            - The original field should be removed (unless it was already lowercase)
             - The field value should be preserved
         """
         base_yml = BaseUpdateYML("dummy_path")
         base_yml.data = OrderedDict(
             [
                 ("name", "test"),
-                ("sectionOrder", ["Collect", "Connect"]),
+                (original_key, expected_value),
                 ("version", "1.0.0"),
             ]
         )
 
         base_yml.section_order_to_lower()
 
-        # Assert the camelCase field is removed
-        assert "sectionOrder" not in base_yml.data
+        # Assert the original field is removed (unless it was already lowercase)
+        if original_key != "sectionorder":
+            assert original_key not in base_yml.data
+
         # Assert the lowercase field exists with correct value
         assert "sectionorder" in base_yml.data
-        assert base_yml.data["sectionorder"] == ["Collect", "Connect"]
-
-    def test_section_order_to_lower_with_existing_lowercase_field(self):
-        """
-        Given:
-            - A YAML data structure with both 'sectionOrder' and 'sectionorder' fields
-        When:
-            - Running section_order_to_lower method
-        Then:
-            - The 'sectionOrder' field should be removed
-            - The existing 'sectionorder' field should be overwritten with the camelCase value
-        """
-        base_yml = BaseUpdateYML("dummy_path")
-        base_yml.data = OrderedDict(
-            [
-                ("name", "test"),
-                ("sectionorder", ["Collect", "Connect", "Optimize"]),
-                ("sectionOrder", ["Collect", "Mirroring"]),
-                ("version", "1.0.0"),
-            ]
-        )
-
-        base_yml.section_order_to_lower()
-
-        # Assert camelCase field is removed
-        assert "sectionOrder" not in base_yml.data
-        # Assert lowercase field has the camelCase value
-        assert base_yml.data["sectionorder"] == ["Collect", "Mirroring"]
-
-    def test_section_order_to_lower_single_field(self):
-        """
-        Given:
-            - A YAML data structure with only 'sectionOrder' field
-        When:
-            - Running section_order_to_lower method
-        Then:
-            - The field should be converted to lowercase correctly
-        """
-        base_yml = BaseUpdateYML("dummy_path")
-        base_yml.data = OrderedDict([("sectionOrder", ["Collect"])])
-
-        base_yml.section_order_to_lower()
-
-        assert "sectionOrder" not in base_yml.data
-        assert base_yml.data["sectionorder"] == ["Collect"]
-        assert list(base_yml.data.keys()) == ["sectionorder"]
+        assert base_yml.data["sectionorder"] == expected_value
 
     def test_format_on_feed_integration_adds_feed_parameters(self):
         """

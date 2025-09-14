@@ -36,23 +36,18 @@ class StrictSchemaValidator(BaseValidator[ContentTypes]):
         """
         Validates section-related fields in content items.
 
-        Returns specific error if 'sectionOrder' (camelCase) is used instead of 'sectionorder' (lowercase).
-        Returns missing field error if neither 'sectionorder' nor 'sectionOrder' exists.
+        Checks if 'sectionorder' key exists in the content item's data;
+        if missing, returns an error message instructing to add 'sectionorder'.
         Validates that all configuration parameters have required section fields.
 
         Returns:
             str: Error message if validation fails, empty string if validation passes.
         """
-        section_order_lowercase = content_item.data.get("sectionorder")
-        section_order_camelcase = content_item.data.get("sectionOrder")
+        section_order = content_item.data.get("sectionorder")
 
-        if section_order_camelcase and not section_order_lowercase:
-            return "Found 'sectionOrder' field. Please use 'sectionorder' (lowercase) instead of 'sectionOrder'."
-
-        section_order = section_order_lowercase or section_order_camelcase
         if not section_order:
             return (
-                "Missing sectionorder key. Add sectionorder to the top of your YAML file and specify the order"
+                "Missing sectionorder key. Please add 'sectionorder' (lowercase) to the top of your YAML file and specify the order"
                 f" of the {', '.join(ALLOWED_SECTIONS)} sections (at least one is required)."
             )
         configuration_parameters = content_item.data.get("configuration")

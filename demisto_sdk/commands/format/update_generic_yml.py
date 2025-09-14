@@ -146,13 +146,20 @@ class BaseUpdateYML(BaseUpdate):
 
     def section_order_to_lower(self):
         """
-        Converts 'sectionOrder' field to lowercase 'sectionorder' and removes the original camelCase field.
-        This ensures compliance with the expected lowercase field naming convention.
+        Converts any 'sectionorder' key variant (e.g., 'sectionOrder', 'SectionOrder', 'Sectionorder')
+        to lowercase 'sectionorder' and removes the original key to ensure consistent field naming.
+
+        If 'sectionorder' already exists, no changes are made.
         """
-        if "sectionOrder" in self.data:
-            section_order_value = self.data["sectionOrder"]
-            self.data["sectionorder"] = section_order_value
-            self.data.pop("sectionOrder", None)
+        if "sectionorder" in self.data:
+            return  # already normalized
+
+        any_form_sectionorder = next(
+            (key for key in self.data if key.lower() == "sectionorder"), None
+        )
+        if any_form_sectionorder:
+            self.data["sectionorder"] = self.data[any_form_sectionorder]
+            self.data.pop(any_form_sectionorder, None)
 
     def update_yml(
         self, default_from_version: Optional[str] = "", file_type: str = ""

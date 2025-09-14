@@ -1,4 +1,30 @@
 # Changelog
+## 1.38.11 (2025-09-07)
+### Fix
+* Fixed an issue in marketplace suffix preparer. [#5055](https://github.com/demisto/demisto-sdk/pull/5055)
+
+### Internal
+* Add actions to Pack Metadata. [#5058](https://github.com/demisto/demisto-sdk/pull/5058)
+* Added a deprecation message to the `demisto-sdk doc-review` command. [#5059](https://github.com/demisto/demisto-sdk/pull/5059)
+* Added licenses to supported modules const. [#5053](https://github.com/demisto/demisto-sdk/pull/5053)
+
+
+## 1.38.10 (2025-08-26)
+### Feature
+* Added BA104 validation to ensure marketplace tags are valid, properly matched, and not nested incorrectly. [#5038](https://github.com/demisto/demisto-sdk/pull/5038)
+
+### Fix
+* Fix wrong operator name in ST110 structure validation. [#5034](https://github.com/demisto/demisto-sdk/pull/5034)
+* Fixed an issue where the ***demisto-sdk --help*** command failed due to dependency conflicts between the `typer` and `click` packages. [#5036](https://github.com/demisto/demisto-sdk/pull/5036)
+* Fixed an issue where pre-commit failed when run on new docker image. [#5046](https://github.com/demisto/demisto-sdk/pull/5046)
+* Fixed an issue where validate didn't manage to parse old objects for XDRC templates. [#5041](https://github.com/demisto/demisto-sdk/pull/5041)
+
+### Internal
+* Added support for internal scripts. [#5025](https://github.com/demisto/demisto-sdk/pull/5025)
+* Added Agentix XSIAM to supported modules const. [#5040](https://github.com/demisto/demisto-sdk/pull/5040)
+* Added support for the agentix_xsiam module in the AG104 validation. [#5042](https://github.com/demisto/demisto-sdk/pull/5042)
+
+
 ## 1.38.9 (2025-08-10)
 ### Feature
 * Improved tag filtering to detect and ignore incorrectly formatted or unmatched marketplace tags. [#5026](https://github.com/demisto/demisto-sdk/pull/5026)

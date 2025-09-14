@@ -438,7 +438,7 @@ def test_IsDisplayNameValid_obtain_invalid_content_items(
     When
     - Calling the IsDisplayNameValid.obtain_invalid_content_items function.
     Then
-    - Make sure the right amount of failures return and that the error msg is correct.
+    - Make sure the right amount of failure return and that the error msg is correct.
     """
     results = IsDisplayNameValidValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures

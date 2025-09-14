@@ -22,12 +22,6 @@ class IsDisplayNameValidValidator(BaseValidator[ContentTypes]):
     related_field = "display"
     is_auto_fixable = False
 
-    expected_git_statuses = [
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-        GitStatuses.RENAMED,
-    ]
-
     AGENTIX_ACTION_DISPLAY_NAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_\- ]*$")
 
     def obtain_invalid_content_items(

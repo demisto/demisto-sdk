@@ -262,10 +262,19 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
         # Add "silent-" to the playbook name and id
         playbook_name = self.data.get("name")
+        playbook_id = self.data.get("id")
+
+        if (
+            (playbook_name and playbook_name.startswith("silent-"))
+            and (playbook_id and playbook_id.startswith("silent-"))
+            and self.data.get("issilent", False)
+        ):
+            logger.info("Already silent playbook. No changes made.")
+            return
+
         if playbook_name and not playbook_name.startswith("silent-"):
             self.data["name"] = f"silent-{playbook_name}"
 
-        playbook_id = self.data.get("id")
         if playbook_id and not playbook_id.startswith("silent-"):
             self.data["id"] = f"silent-{playbook_id}"
 
@@ -284,7 +293,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
         This process includes:
         - Removing the "silent-" prefix from the playbook's ID and name.
         - Setting the `issilent` field to `False`.
-        - Updating the `fromversion` to a default value - "6.10.0".
+        - Updating the `fromversion` to a default value - "6.10.0" if it was lower than that.
         """
         logger.info("<green>Formatting playbook as a non-silent playbook.</green>")
 
@@ -299,9 +308,12 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             # Remove the prefix
             self.data["id"] = playbook_id.replace("silent-", "", 1)
 
-        # Set issilent to false
-        self.data["issilent"] = False
-        self.data["fromversion"] = "6.10.0"  # default from version
+        # Set issilent to false only if it was silent before
+        if self.data.get("issilent", False):
+            self.data["issilent"] = False
+        # If the fromversion was higher it will not downgrade the version.
+        if self.data.get("fromversion", "") < "6.10.0":
+            self.data["fromversion"] = "6.10.0"  # default from version
 
     def ask_for_silent_playbook(self) -> bool:
         """

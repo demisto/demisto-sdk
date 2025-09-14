@@ -36,7 +36,9 @@ class IsDisplayNameValidValidator(BaseValidator[ContentTypes]):
         validation_results = []
         for content_item in content_items:
             display_name = getattr(content_item, "display_name", None)
-            if not display_name or not self.AGENTIX_ACTION_DISPLAY_NAME_PATTERN.match(display_name):
+            if not display_name or not self.AGENTIX_ACTION_DISPLAY_NAME_PATTERN.match(
+                display_name
+            ):
                 validation_results.append(
                     ValidationResult(
                         validator=self,

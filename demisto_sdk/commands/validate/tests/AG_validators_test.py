@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -373,59 +375,63 @@ def test_is_correct_supportedModules():
     [
         # Case 1: All valid AgentixAction displays
         (
-                [
-                    create_agentix_action_object(paths=["display"], values=["ValidName"]),
-                    create_agentix_action_object(paths=["display"], values=["Valid_Name"]),
-                    create_agentix_action_object(paths=["display"], values=["Valid-Name"]),
-                    create_agentix_action_object(paths=["display"], values=["Valid Name"]),
-                    create_agentix_action_object(paths=["display"], values=["A123"]),
-                    create_agentix_action_object(paths=["display"], values=["A_1-2 3"]),
-                ],
-                0,
-                [],
+            [
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+                create_agentix_action_object(paths=["display"], values=["Valid_Name"]),
+                create_agentix_action_object(paths=["display"], values=["Valid-Name"]),
+                create_agentix_action_object(paths=["display"], values=["Valid Name"]),
+                create_agentix_action_object(paths=["display"], values=["A123"]),
+                create_agentix_action_object(paths=["display"], values=["A_1-2 3"]),
+            ],
+            0,
+            [],
         ),
         # Case 2: One invalid (starts with digit), one valid
         (
-                [
-                    create_agentix_action_object(paths=["display"], values=["1Invalid"]),
-                    create_agentix_action_object(paths=["display"], values=["ValidName"]),
-                ],
-                1,
-                ["The following Agentix action display value is invalid: 1Invalid. \n AgentixAction display value "
-                    "must start with a letter (either lower or upper case) and contain only the following characters: "
-                    "lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.",],
+            [
+                create_agentix_action_object(paths=["display"], values=["1Invalid"]),
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+            ],
+            1,
+            [
+                "The following Agentix action display value is invalid: 1Invalid. \n AgentixAction display value "
+                "must start with a letter (either lower or upper case) and contain only the following characters: "
+                "lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.",
+            ],
         ),
         # Case 3: Invalid (contains forbidden character)
         (
-                [create_agentix_action_object(paths=["display"], values=["Invalid!"])],
-                1,
-                ["The following Agentix action display value is invalid: Invalid!. \n AgentixAction display value "
-                    "must start with a letter (either lower or upper case) and contain only the following characters: "
-                    "lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.",],
+            [create_agentix_action_object(paths=["display"], values=["Invalid!"])],
+            1,
+            [
+                "The following Agentix action display value is invalid: Invalid!. \n AgentixAction display value "
+                "must start with a letter (either lower or upper case) and contain only the following characters: "
+                "lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.",
+            ],
         ),
         # Case 4: Multiple invalid
         (
-                [
-                    create_agentix_action_object(paths=["display"], values=["1Invalid"]),
-                    create_agentix_action_object(paths=["display"], values=["Invalid!"]),
-                    create_agentix_action_object(paths=["display"], values=["ValidName"]),
-                ],
-                2,
-                [
-                    "The following Agentix action display value is invalid: 1Invalid. \n AgentixAction display value "
-                    "must start with a letter (either lower or upper case) and contain only the following characters: "
-                    "lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.",
-                    "The following Agentix action display value is invalid: Invalid!. \n AgentixAction display value "
-                    "must start with a"
-                    "letter (either lower or upper case) and contain only the following characters: lowercase "
-                    "letters, uppercase letters,"
-                    "digits, underscores, hyphens, spaces."
-                ],
+            [
+                create_agentix_action_object(paths=["display"], values=["1Invalid"]),
+                create_agentix_action_object(paths=["display"], values=["Invalid!"]),
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+            ],
+            2,
+            [
+                "The following Agentix action display value is invalid: 1Invalid. \n AgentixAction display value "
+                "must start with a letter (either lower or upper case) and contain only the following characters: "
+                "lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.",
+                "The following Agentix action display value is invalid: Invalid!. \n AgentixAction display value "
+                "must start with a"
+                "letter (either lower or upper case) and contain only the following characters: lowercase "
+                "letters, uppercase letters,"
+                "digits, underscores, hyphens, spaces.",
+            ],
         ),
     ],
 )
 def test_IsDisplayNameValid_obtain_invalid_content_items(
-        content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures, expected_msgs
 ):
     """
     Given

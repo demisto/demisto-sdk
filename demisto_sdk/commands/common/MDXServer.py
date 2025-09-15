@@ -141,7 +141,7 @@ def start_local_MDX_server(
     process = subprocess.Popen(
         ["node", str(server_script_path())], stdout=subprocess.PIPE, text=True
     )
-    line = process.stdout.readline()  # type: ignore
+    line = process.stdout.readline()
     if EXPECTED_SUCCESS_MESSAGE not in line:
         logger.error(f"MDX local server couldnt be started: {line}")
         terminate_process(process)

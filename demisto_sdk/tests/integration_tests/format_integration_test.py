@@ -1366,7 +1366,7 @@ def test_format_playbook_non_silent_without_fromversion(repo):
 
     Then:
         - Ensure the format runs successfully.
-        - Ensure 'fromversion' is set to the default for non-silent playbooks (6.10.0).
+        - Ensure 'fromversion' is set to the default (5.0.0).
         - Ensure the playbook is not converted to silent.
     """
 

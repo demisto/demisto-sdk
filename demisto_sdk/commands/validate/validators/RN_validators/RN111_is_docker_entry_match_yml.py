@@ -79,7 +79,7 @@ def release_notes_mismatch_error(content_item: IntegrationScript):
         content_item.display_name or content_item.name,
     )
     if should_be_entry and (
-        should_be_entry not in image_entry or image_entry == NO_DOCKER_ENTRY_FOUND
+        should_be_entry != image_entry or image_entry == NO_DOCKER_ENTRY_FOUND
     ):
         return f"Docker version in release notes should be {should_be_entry}, found: {image_entry}"
     if not should_be_entry and image_entry and not image_entry == NO_DOCKER_ENTRY_FOUND:

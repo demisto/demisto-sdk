@@ -1,4 +1,4 @@
 changes:
-- description: Fixed RN111 validator integration name matching bug by replacing startswith() with exact string matching to prevent order-dependent validation failures
+- description: Fixed RN111 validator to use exact matching instead of partial matching for integration names and docker images.
   type: fix
 pr_number: 5064

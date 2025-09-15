@@ -2040,7 +2040,7 @@ class TestFormatWithoutAddTestsFlag:
                 "--console-log-threshold",
                 "DEBUG",
             ],
-            input="N",
+            input="n\n5.5.0",
         )
         message = f'Formatting {playbooks_path} with "No tests"'
         assert not result.exception

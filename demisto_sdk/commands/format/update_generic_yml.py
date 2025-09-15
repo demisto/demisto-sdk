@@ -157,8 +157,10 @@ class BaseUpdateYML(BaseUpdate):
         # Handle fromVersion based on whether playbook is silent
         is_silent = self.data.get("issilent", False)
 
-        # Set fromVersion if not silent, or if silent but from_version exists and is greater than 8.9.0
-        if not is_silent or (self.from_version and self.from_version > "8.9.0"):
+        # Set fromVersion if not silent, or if silent and from_version exists and is greater than 8.9.0
+        if not is_silent or (
+            is_silent and self.from_version and self.from_version > "8.9.0"
+        ):
             self.set_fromVersion(
                 default_from_version=default_from_version, file_type=file_type
             )

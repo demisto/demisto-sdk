@@ -309,11 +309,12 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             self.data["id"] = playbook_id.replace("silent-", "", 1)
 
         # Set issilent to false only if it was silent before
+        # If the fromversion was higher it will not downgrade the version.
         if self.data.get("issilent", False):
             self.data["issilent"] = False
-        # If the fromversion was higher it will not downgrade the version.
-        if self.data.get("fromversion", "") < "6.10.0":
-            self.data["fromversion"] = "6.10.0"  # default from version
+            # If the fromversion was higher it will not downgrade the version.
+            if self.data.get("fromversion", "") == "8.9.0":
+                self.data["fromversion"] = "6.10.0"  # default from version
 
     def ask_for_silent_playbook(self) -> bool:
         """

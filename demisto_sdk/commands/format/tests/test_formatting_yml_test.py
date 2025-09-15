@@ -862,6 +862,99 @@ class TestFormatting:
         configuration_params = base_yml.data.get("configuration", [])
         assert "defaultvalue" in configuration_params[0]
 
+    def test_revert_silent_playbook_issilent_and_fromversion(self):
+        """
+        Given
+        - A playbook with 'issilent' set to True,
+        - 'fromversion' set to "8.9.0",
+        - and the playbook name and id prefixed with "silent-".
+
+        When
+        - Running the revert_silent_playbook method.
+
+        Then
+        - The 'issilent' field should be set to False,
+        - The 'fromversion' should be downgraded to "6.10.0",
+        - The "silent-" prefix should be removed from the playbook's name and id.
+        """
+
+        playbook_data = {
+            "name": "silent-TestPlaybook",
+            "id": "silent-TestPlaybook",
+            "issilent": True,
+            "fromversion": "8.9.0",
+        }
+        formatter = PlaybookYMLFormat("dummy_path")
+        formatter.data = playbook_data
+        formatter.revert_silent_playbook()
+
+        assert formatter.data["issilent"] is False
+        assert formatter.data["fromversion"] == "6.10.0"
+        assert formatter.data["name"] == "TestPlaybook"
+        assert formatter.data["id"] == "TestPlaybook"
+
+    def test_revert_silent_playbook_not_silent(self):
+        """
+        Given
+        - A playbook with 'issilent' set to False,
+        - 'fromversion' set to a value below "8.9.0",
+        - and no "silent-" prefix on the playbook name and id.
+
+        When
+        - Running the revert_silent_playbook method.
+
+        Then
+        - The 'issilent' field should remain False,
+        - The 'fromversion' should remain unchanged,
+        - The playbook name and id should remain unchanged.
+        """
+
+        playbook_data = {
+            "name": "TestPlaybook",
+            "id": "TestPlaybook",
+            "issilent": False,
+            "fromversion": "6.9.0",
+        }
+        formatter = PlaybookYMLFormat("dummy_path")
+        formatter.data = playbook_data
+        formatter.revert_silent_playbook()
+
+        assert formatter.data["issilent"] is False
+        assert formatter.data["fromversion"] == "6.9.0"
+        assert formatter.data["name"] == "TestPlaybook"
+        assert formatter.data["id"] == "TestPlaybook"
+
+    def test_revert_silent_playbook_issilent_and_different_fromversion(self):
+        """
+        Given
+        - A playbook with 'issilent' set to True,
+        - 'fromversion' set to a value higher than "8.9.0",
+        - and the playbook name and id prefixed with "silent-".
+
+        When
+        - Running the revert_silent_playbook method.
+
+        Then
+        - The 'issilent' field should be set to False,
+        - The 'fromversion' should remain unchanged,
+        - The "silent-" prefix should be removed from the playbook's name and id.
+        """
+
+        playbook_data = {
+            "name": "silent-AnotherPlaybook",
+            "id": "silent-AnotherPlaybook",
+            "issilent": True,
+            "fromversion": "9.0.0",  # higher than 8.9.0, should not downgrade
+        }
+        formatter = PlaybookYMLFormat("dummy_path")
+        formatter.data = playbook_data
+        formatter.revert_silent_playbook()
+
+        assert formatter.data["issilent"] is False
+        assert formatter.data["fromversion"] == "9.0.0"  # Should remain unchanged
+        assert formatter.data["name"] == "AnotherPlaybook"
+        assert formatter.data["id"] == "AnotherPlaybook"
+
     def test_format_on_feed_integration_adds_feed_parameters(self):
         """
         Given

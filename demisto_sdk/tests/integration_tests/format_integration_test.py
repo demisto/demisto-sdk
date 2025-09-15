@@ -1137,7 +1137,7 @@ def test_format_playbook_copy_removed_from_name_and_id_non_silent(
         input="n\n5.5.0",
     )
     assert "Success" in result.output
-    assert playbook.yml.read_dict().get("fromversion") == "6.10.0"
+    assert playbook.yml.read_dict().get("fromversion") == "5.0.0"
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name
 
@@ -1221,7 +1221,7 @@ def test_format_playbook_no_input_specified_non_silent(mocker, repo, monkeypatch
     assert "Success" in result.output
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name
-    assert playbook.yml.read_dict().get("fromversion") == "6.10.0"
+    assert playbook.yml.read_dict().get("fromversion") == "5.0.0"
 
 
 def test_format_playbook_silent_with_fromversion(repo):
@@ -1385,10 +1385,10 @@ def test_format_playbook_non_silent_without_fromversion(repo):
             str(playbook.yml.path),
             "-ngr",
         ],
-        input="N",
+        input="N\n5.5.0",
     )
     assert "Success" in result.output
-    assert playbook.yml.read_dict().get("fromversion") == "6.10.0"
+    assert playbook.yml.read_dict().get("fromversion") == "5.0.0"
 
 
 def test_format_incident_type_layout_id(repo, mocker):

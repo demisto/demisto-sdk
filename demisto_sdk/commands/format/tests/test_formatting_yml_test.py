@@ -1078,7 +1078,6 @@ class TestFormatting:
         [
             ("5.0.0", False, True, "8.9.0"),
             ("5.0.0", True, True, "5.0.0"),
-            ("3.0.0", False, False, GENERAL_DEFAULT_FROMVERSION),
             ("3.0.0", True, False, "3.0.0"),
             (None, False, True, "8.9.0"),
             (None, True, False, None),

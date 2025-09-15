@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,

@@ -919,6 +919,27 @@ class OpenAPIIntegration:
         extracted_arguments: list = []
         for arg in arguments:
             refs = []
+            
+            # Handle direct parameter references like #/components/parameters/paramName
+            if "$ref" in arg:
+                ref_path = arg["$ref"]
+                
+                # Parse the reference path
+                if ref_path.startswith("#/components/parameters/"):
+                    param_name = ref_path.split("/")[-1]
+                    param_def = self.components.get("parameters", {}).get(param_name, {})
+                    if param_def:
+                        # Use the parameter definition directly
+                        extracted_arguments.append(self.init_arg(param_def))
+                        continue
+                elif ref_path.startswith("#/definitions/"):
+                    ref_name = ref_path.split("/")[-1]
+                    ref_def = self.definitions.get(ref_name, {})
+                    if ref_def:
+                        extracted_arguments.append(self.init_arg(ref_def))
+                        continue
+            
+            # Handle schema references
             if "schema" in arg:
                 refs = self.extract_values(arg["schema"], "$ref")
                 for ref in refs:
@@ -975,7 +996,7 @@ class OpenAPIIntegration:
                                 new_ref_arg.update(v)
                             new_ref_arg["ref"] = ref
                             extracted_arguments.append(self.init_arg(new_ref_arg))
-            if not refs:
+            if not refs and "$ref" not in arg:
                 if arg.get("schema", {}).get("type"):
                     arg["type"] = arg["schema"]["type"]
                 extracted_arguments.append(self.init_arg(arg))

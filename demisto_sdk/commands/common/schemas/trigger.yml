@@ -1,5 +1,9 @@
 type: map
 mapping:
+  automation_type:
+    type: str
+  automation_id:
+    type: str
   trigger_id:
     type: str
     required: true

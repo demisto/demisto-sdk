@@ -97,6 +97,7 @@ def repository(mocker) -> ContentDTO:
                 description="",
                 deprecated=False,
                 quickaction=False,
+                supportedModules=[],
             )
         ],
         RelationshipType.IMPORTS: [
@@ -457,6 +458,7 @@ def _testcase4__new_integration_with_existing_command(
             description="",
             deprecated=False,
             quickaction=False,
+            supportedModules=[],
         )
     )
     return [pack]

@@ -144,7 +144,7 @@ class BaseUpdateYML(BaseUpdate):
             if not self.data.get("tests", "") and self.old_file.get("tests", ""):
                 self.data["tests"] = self.old_file["tests"]
 
-    def section_order_to_lower(self):
+    def section_order_to_lowercase(self):
         """
         Converts any 'sectionorder' key variant (e.g., 'sectionOrder', 'SectionOrder', 'Sectionorder')
         to lowercase 'sectionorder' and removes the original key to ensure consistent field naming.
@@ -152,6 +152,7 @@ class BaseUpdateYML(BaseUpdate):
         If 'sectionorder' already exists, no changes are made.
         """
         if "sectionorder" in self.data:
+            logger.info("'sectionorder' key exists, no changes were made.")
             return  # already normalized
 
         any_form_sectionorder = next(
@@ -177,7 +178,7 @@ class BaseUpdateYML(BaseUpdate):
             self.update_id_to_equal_name()
             self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
-        self.section_order_to_lower()
+        self.section_order_to_lowercase()
         if self.deprecate:
             if (
                 self.source_file_type.value == "integration"

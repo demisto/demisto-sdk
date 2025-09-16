@@ -881,14 +881,14 @@ class TestFormatting:
             ),  # Mixed lower/upper
         ],
     )
-    def test_section_order_to_lower_converts_various_cases(
+    def test_section_order_to_lowercase_converts_various_cases(
         self, original_key, expected_value
     ):
         """
         Given:
             - A YAML data structure with 'sectionorder' field in various case combinations
         When:
-            - Running section_order_to_lower method
+            - Running section_order_to_lowercase method
         Then:
             - The field should be converted to 'sectionorder' (lowercase)
             - The original field should be removed (unless it was already lowercase)
@@ -903,7 +903,7 @@ class TestFormatting:
             ]
         )
 
-        base_yml.section_order_to_lower()
+        base_yml.section_order_to_lowercase()
 
         # Assert the original field is removed (unless it was already lowercase)
         if original_key != "sectionorder":

@@ -465,7 +465,7 @@ class TestST111:
 
         assert len(results) == 1
         assert results[0].message == (
-            "Missing sectionorder key. Please add 'sectionorder' (lowercase) to the top of your YAML file and specify the order of the "
+            "Missing 'sectionorder' key. Please add 'sectionorder' (lowercase) to the top of your YAML file and specify the order of the "
             "Connect, Collect, Optimize, Mirroring, Result sections (at least one is required)."
         )
 

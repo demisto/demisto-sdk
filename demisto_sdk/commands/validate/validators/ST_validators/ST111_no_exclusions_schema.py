@@ -47,7 +47,7 @@ class StrictSchemaValidator(BaseValidator[ContentTypes]):
 
         if not section_order:
             return (
-                "Missing sectionorder key. Please add 'sectionorder' (lowercase) to the top of your YAML file and specify the order"
+                "Missing 'sectionorder' key. Please add 'sectionorder' (lowercase) to the top of your YAML file and specify the order"
                 f" of the {', '.join(ALLOWED_SECTIONS)} sections (at least one is required)."
             )
         configuration_parameters = content_item.data.get("configuration")

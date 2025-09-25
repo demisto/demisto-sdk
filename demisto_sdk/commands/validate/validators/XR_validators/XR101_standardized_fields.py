@@ -46,7 +46,9 @@ class XSIAMReportStandardizedFieldsValidator(BaseValidator[ContentTypes]):
             has_standard_name = "name" in template
 
             # Invalid if it has old fields but not the corresponding new standard fields
-            if (has_global_id and not has_standard_id) or (has_report_name and not has_standard_name):
+            if (has_global_id and not has_standard_id) or (
+                has_report_name and not has_standard_name
+            ):
                 return True
 
         return False

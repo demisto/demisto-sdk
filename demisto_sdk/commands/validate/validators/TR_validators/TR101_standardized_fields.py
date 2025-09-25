@@ -43,4 +43,6 @@ class TriggerStandardizedFieldsValidator(BaseValidator[ContentTypes]):
         has_standard_name = "name" in data
 
         # Invalid if it has old fields but not the corresponding new standard fields
-        return (has_trigger_id and not has_standard_id) or (has_trigger_name and not has_standard_name)
+        return (has_trigger_id and not has_standard_id) or (
+            has_trigger_name and not has_standard_name
+        )

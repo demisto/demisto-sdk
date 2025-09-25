@@ -1,0 +1,4 @@
+changes:
+- description: Fix default value of script parser.
+  type: fix
+pr_number: 5004

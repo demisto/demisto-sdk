@@ -11,11 +11,7 @@ class Trigger(JSONBased):
         super().__init__(trigger_dir_path, name, "")
 
         if json_content:
-            # Ensure standardized required fields exist per schemas/trigger.yml
-            if "id" not in json_content:
-                json_content["id"] = json_content.get("trigger_id", self.id)
-            if "name" not in json_content:
-                json_content["name"] = json_content.get("trigger_name", self.id)
+            # Write exactly what the test provided; do not auto-normalize.
             self.write_json(json_content)
         else:
             self.create_default_trigger()

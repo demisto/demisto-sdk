@@ -24,7 +24,7 @@ schema;templates_data_schema:
       required: true
     global_id:
       type: str
-      required: false
+      required: true
       # DEPRECATED: Use 'id' field instead. This field is kept for backward compatibility with existing content items.
     name:
       type: str

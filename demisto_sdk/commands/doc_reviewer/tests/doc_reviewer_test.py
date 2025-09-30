@@ -498,14 +498,18 @@ class TestDocReviewPrinting:
         BOTH_INVALID_AND_VALID = "invalid_and_valid"
         INVALID_RELEASE_NOTES = "invalid_release_notes"
 
-    def get_file_report_mocker(self, files_type):
+    def get_file_report_mocker(
+        self, files_type, no_failure: bool = False, release_notes_only: bool = False
+    ):
         """
         Returns a mock of the file report.
 
         Args:
             files_type (str): whether mock misspelled files or valid spelled files or both are required.
         """
-        doc_reviewer = DocReviewer()
+        doc_reviewer = DocReviewer(
+            no_failure=no_failure, release_notes_only=release_notes_only
+        )
 
         if files_type == self.SpelledFileType.VALID:
             doc_reviewer.files_without_misspells = self.MOCKED_FILES
@@ -519,7 +523,18 @@ class TestDocReviewPrinting:
 
         doc_reviewer.print_file_report()
 
-    def test_printing_of_valid_spelled_files(self, mocker, caplog):
+    @pytest.mark.parametrize(
+        "no_failure, release_notes_only",
+        [
+            (False, False),
+            (True, False),
+            (False, True),
+            (True, True),
+        ],
+    )
+    def test_printing_of_valid_spelled_files(
+        self, mocker, caplog, no_failure, release_notes_only
+    ):
         """
         Given -
             Files reported as valid spelled files.
@@ -531,21 +546,47 @@ class TestDocReviewPrinting:
             Ensure only the files without misspells are printed.
         """
 
-        self.get_file_report_mocker(files_type=self.SpelledFileType.VALID)
-
-        assert all(
-            [
-                current_str in caplog.text
-                for current_str in [
-                    "Files Without Misspells",
-                    "file1\nfile2",
-                ]
-            ]
+        self.get_file_report_mocker(
+            files_type=self.SpelledFileType.VALID,
+            no_failure=no_failure,
+            release_notes_only=release_notes_only,
         )
 
-        assert "Files With Misspells" not in caplog.text
+        if no_failure:
+            assert not all(
+                [
+                    current_str in caplog.text
+                    for current_str in [
+                        "Files Without Misspells",
+                        "file1\nfile2",
+                    ]
+                ]
+            )
+        else:
+            assert all(
+                [
+                    current_str in caplog.text
+                    for current_str in [
+                        "Files Without Misspells",
+                        "file1\nfile2",
+                    ]
+                ]
+            )
 
-    def test_printing_invalid_spelled_files(self, caplog):
+            assert "Files With Misspells" not in caplog.text
+
+    @pytest.mark.parametrize(
+        "no_failure, release_notes_only",
+        [
+            (False, False),
+            (True, False),
+            (False, True),
+            (True, True),
+        ],
+    )
+    def test_printing_invalid_spelled_files(
+        self, caplog, no_failure, release_notes_only
+    ):
         """
         Given -
             Files reported as invalid spelled files.
@@ -557,21 +598,46 @@ class TestDocReviewPrinting:
             Ensure only the files with misspells are printed.
         """
 
-        self.get_file_report_mocker(files_type=self.SpelledFileType.INVALID)
-
-        assert all(
-            [
-                current_str in caplog.text
-                for current_str in [
-                    "Files With Misspells",
-                    "file1\nfile2",
-                ]
-            ]
+        self.get_file_report_mocker(
+            files_type=self.SpelledFileType.INVALID,
+            no_failure=no_failure,
+            release_notes_only=release_notes_only,
         )
+        if no_failure:
+            assert not all(
+                [
+                    current_str in caplog.text
+                    for current_str in [
+                        "Files With Misspells",
+                        "file1\nfile2",
+                    ]
+                ]
+            )
+        else:
+            assert all(
+                [
+                    current_str in caplog.text
+                    for current_str in [
+                        "Files With Misspells",
+                        "file1\nfile2",
+                    ]
+                ]
+            )
 
-        assert "Files Without Misspells" not in caplog.text
+            assert "Files Without Misspells" not in caplog.text
 
-    def test_printing_malformed_release_notes(self, caplog):
+    @pytest.mark.parametrize(
+        "no_failure, release_notes_only",
+        [
+            (False, False),
+            (True, False),
+            (False, True),
+            (True, True),
+        ],
+    )
+    def test_printing_malformed_release_notes(
+        self, caplog, no_failure, release_notes_only
+    ):
         """
         Given -
             Malformed release-note.
@@ -584,7 +650,9 @@ class TestDocReviewPrinting:
         """
 
         self.get_file_report_mocker(
-            files_type=self.SpelledFileType.INVALID_RELEASE_NOTES
+            files_type=self.SpelledFileType.INVALID_RELEASE_NOTES,
+            no_failure=no_failure,
+            release_notes_only=release_notes_only,
         )
 
         assert all(
@@ -597,7 +665,16 @@ class TestDocReviewPrinting:
             ]
         )
 
-    def test_printing_mixed_report(self, caplog):
+    @pytest.mark.parametrize(
+        "no_failure, release_notes_only",
+        [
+            (False, False),
+            (True, False),
+            (False, True),
+            (True, True),
+        ],
+    )
+    def test_printing_mixed_report(self, caplog, no_failure, release_notes_only):
         """
         Given -
             Files reported as both valid/invalid spelled files.
@@ -610,20 +687,35 @@ class TestDocReviewPrinting:
         """
 
         self.get_file_report_mocker(
-            files_type=self.SpelledFileType.BOTH_INVALID_AND_VALID
+            files_type=self.SpelledFileType.BOTH_INVALID_AND_VALID,
+            no_failure=no_failure,
+            release_notes_only=release_notes_only,
         )
 
-        assert all(
-            [
-                current_str in caplog.text
-                for current_str in [
-                    "Files Without Misspells",
-                    "file1\nfile2",
-                    "Files With Misspells",
-                    "file1\nfile2",
+        if no_failure:
+            assert not all(
+                [
+                    current_str in caplog.text
+                    for current_str in [
+                        "Files Without Misspells",
+                        "file1\nfile2",
+                        "Files With Misspells",
+                        "file1\nfile2",
+                    ]
                 ]
-            ]
-        )
+            )
+        else:
+            assert all(
+                [
+                    current_str in caplog.text
+                    for current_str in [
+                        "Files Without Misspells",
+                        "file1\nfile2",
+                        "Files With Misspells",
+                        "file1\nfile2",
+                    ]
+                ]
+            )
 
     def test_printing_skip_non_xsoar_supported_file(
         self, mix_invalid_packs: List[Pack], mocker

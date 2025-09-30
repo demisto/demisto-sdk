@@ -1,15 +1,23 @@
 type: map
 mapping:
+  id:
+    type: str
+    required: false
   trigger_id:
     type: str
-    required: true
+    required: false
+    # DEPRECATED: Use 'id' field instead. This field is kept for backward compatibility with existing content items.
   fromVersion:
     type: str
   toVersion:
     type: str
+  name:
+    type: str
+    required: false
   trigger_name:
     type: str
-    required: true
+    required: false
+    # DEPRECATED: Use 'name' field instead. This field is kept for backward compatibility with existing content items.
   playbook_id:
     type: str
     required: true

@@ -1682,6 +1682,8 @@ FEED_REQUIRED_PARAMS = [
             "type": 15,
             "required": True,
             "options": [
+                "A++ - Reputation script",
+                "A+ - 3rd party enrichment",
                 "A - Completely reliable",
                 "B - Usually reliable",
                 "C - Fairly reliable",

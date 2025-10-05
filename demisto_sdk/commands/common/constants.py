@@ -1701,7 +1701,7 @@ FEED_REQUIRED_PARAMS = [
                     "D - Not usually reliable",
                     "E - Unreliable",
                     "F - Reliability cannot be judged",
-                ]
+                ],
             ],
         },
         "must_contain": {

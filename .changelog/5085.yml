@@ -1,4 +1,4 @@
 changes:
-- description: Add new reliability options to feed configuration validator (IN122). 
+- description: Add new reliability options to feed configuration validator (IN122).
   type: feature
 pr_number: 5085

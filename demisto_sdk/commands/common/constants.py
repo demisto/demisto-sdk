@@ -1681,6 +1681,8 @@ FEED_REQUIRED_PARAMS = [
             "display": "Source Reliability",
             "type": 15,
             "required": True,
+        },
+        "must_be_one_of": {
             "options": [
                 # First list is for backward compatibility with old reliability options
                 [
@@ -1707,7 +1709,6 @@ FEED_REQUIRED_PARAMS = [
         "must_contain": {
             "additionalinfo": "Reliability of the source providing the intelligence data"
         },
-        "must_be_one_of": {},
     },
     {
         "name": "feedExpirationInterval",

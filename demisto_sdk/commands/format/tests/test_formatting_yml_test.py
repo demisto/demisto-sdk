@@ -955,6 +955,57 @@ class TestFormatting:
         assert formatter.data["name"] == "AnotherPlaybook"
         assert formatter.data["id"] == "AnotherPlaybook"
 
+    @pytest.mark.parametrize(
+        "original_key, expected_value",
+        [
+            ("sectionOrder", ["Collect", "Connect"]),  # camelCase
+            ("SectionOrder", ["Optimize", "Collect"]),  # PascalCase
+            ("SECTIONORDER", ["Collect", "Optimize", "Mirroring"]),  # UPPERCASE
+            ("SectIonOrder", ["Collect", "Connect"]),  # Mixed case
+            (
+                "sectionorder",
+                ["Connect", "Collect", "Optimize", "Mirroring", "Result"],
+            ),  # already lowercase
+            ("Sectionorder", ["Connect", "Mirroring", "Result"]),  # Title case
+            ("SECTIONorder", ["Connect"]),  # Mixed upper/lower
+            (
+                "sectionORDER",
+                ["Connect", "Collect", "Optimize", "Mirroring", "Result"],
+            ),  # Mixed lower/upper
+        ],
+    )
+    def test_section_order_to_lowercase_converts_various_cases(
+        self, original_key, expected_value
+    ):
+        """
+        Given:
+            - A YAML data structure with 'sectionorder' field in various case combinations
+        When:
+            - Running section_order_to_lowercase method
+        Then:
+            - The field should be converted to 'sectionorder' (lowercase)
+            - The original field should be removed (unless it was already lowercase)
+            - The field value should be preserved
+        """
+        base_yml = BaseUpdateYML("dummy_path")
+        base_yml.data = OrderedDict(
+            [
+                ("name", "test"),
+                (original_key, expected_value),
+                ("version", "1.0.0"),
+            ]
+        )
+
+        base_yml.section_order_to_lowercase()
+
+        # Assert the original field is removed (unless it was already lowercase)
+        if original_key != "sectionorder":
+            assert original_key not in base_yml.data
+
+        # Assert the lowercase field exists with correct value
+        assert "sectionorder" in base_yml.data
+        assert base_yml.data["sectionorder"] == expected_value
+
     def test_format_on_feed_integration_adds_feed_parameters(self):
         """
         Given

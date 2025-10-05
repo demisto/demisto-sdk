@@ -31,8 +31,6 @@ configuration:
   type: 15
   required: true
   options:
-  - A++ - Reputation script
-  - A+ - 3rd party enrichment
   - A - Completely reliable
   - B - Usually reliable
   - C - Fairly reliable

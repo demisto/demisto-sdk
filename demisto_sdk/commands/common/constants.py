@@ -1682,14 +1682,26 @@ FEED_REQUIRED_PARAMS = [
             "type": 15,
             "required": True,
             "options": [
-                "A++ - Reputation script",
-                "A+ - 3rd party enrichment",
-                "A - Completely reliable",
-                "B - Usually reliable",
-                "C - Fairly reliable",
-                "D - Not usually reliable",
-                "E - Unreliable",
-                "F - Reliability cannot be judged",
+                # First list is for backward compatibility with old reliability options
+                [
+                    "A - Completely reliable",
+                    "B - Usually reliable",
+                    "C - Fairly reliable",
+                    "D - Not usually reliable",
+                    "E - Unreliable",
+                    "F - Reliability cannot be judged",
+                ],
+                # Second list is for new reliability options
+                [
+                    "A++ - Reputation script",
+                    "A+ - 3rd party enrichment",
+                    "A - Completely reliable",
+                    "B - Usually reliable",
+                    "C - Fairly reliable",
+                    "D - Not usually reliable",
+                    "E - Unreliable",
+                    "F - Reliability cannot be judged",
+                ]
             ],
         },
         "must_contain": {

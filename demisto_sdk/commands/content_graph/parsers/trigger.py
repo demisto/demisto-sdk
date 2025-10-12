@@ -23,6 +23,8 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.connect_to_dependencies()
+        self.automation_type = get_value(self.json_data, "automation_type", "")
+        self.automation_id = get_value(self.json_data, "automation_type", "")
 
     @cached_property
     def field_mapping(self):
@@ -50,10 +52,3 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
     def strict_object(self):
         return StrictTrigger
 
-    @property
-    def automation_type(self) -> str:
-        return get_value(self.json_data, "automation_type", "")
-
-    @property
-    def automation_id(self) -> str:
-        return get_value(self.json_data, "automation_id", "")

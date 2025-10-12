@@ -22,6 +22,7 @@ class _StrictTrigger(BaseStrictModel):
     alerts_filter: Optional[AlertsFilter] = None
     automation_type: Optional[str] = Field(default=None)
     automation_id: Optional[str] = Field(default=None)
+    supportedModules: Optional[list[str]] = Field(None, alias="supportedModules")
 
     @root_validator
     def validate_automation_playbook_logic(cls, values):
@@ -29,10 +30,15 @@ class _StrictTrigger(BaseStrictModel):
         automation_type = values.get("automation_type")
         playbook_id = values.get("playbook_id")
 
+        if automation_type is not None and automation_type not in ["command", "playbook"]:
+            raise ValueError(
+                "automation_type must be one of: command, playbook."
+            )
+
         # Check if automation fields are provided together
         if bool(automation_id) != bool(automation_type):
             raise ValueError(
-                "automation_id and automation_type must be provided together"
+                "automation_id and automation_type must be provided together."
             )
 
         # Check mutual exclusivity

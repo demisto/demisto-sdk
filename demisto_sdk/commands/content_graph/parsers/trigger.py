@@ -47,6 +47,11 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
         """Collects the playbook used in the trigger as a mandatory dependency."""
         if playbook := self.json_data.get("playbook_id"):
             self.add_dependency_by_id(playbook, ContentType.PLAYBOOK)
+        elif automation := self.json_data.get("automation_id"):
+            if self.json_data.get("automation_type") == "playbook":
+                self.add_dependency_by_id(automation, ContentType.PLAYBOOK)
+            else:
+                self.add_dependency_by_id(automation, ContentType.COMMAND)
 
     @property
     def strict_object(self):

@@ -9,8 +9,8 @@ from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
 
 
 class Trigger(ContentItemXSIAM, content_type=ContentType.TRIGGER):  # type: ignore[call-arg]
-    automation_type: str = Field(default=None, alias="automation_type")
-    automation_id: str = Field(default=None, alias="automation_id")
+    automation_type: str = Field(default=None)
+    automation_id: str = Field(default=None)
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import Field
+from pydantic import Field, root_validator
 
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     AlertsFilter,
@@ -20,9 +20,30 @@ class _StrictTrigger(BaseStrictModel):
     description: str
     suggestion_reason: str
     alerts_filter: Optional[AlertsFilter] = None
-    automation_type: Optional[str] = Field(default=None, alias="automation_type")
-    automation_id: Optional[str] = Field(default=None, alias="automation_id")
+    automation_type: Optional[str] = Field(default=None)
+    automation_id: Optional[str] = Field(default=None)
 
+    @root_validator
+    def validate_automation_playbook_logic(cls, values):
+        automation_id = values.get('automation_id')
+        automation_type = values.get('automation_type')
+        playbook_id = values.get('playbook_id')
+
+        # Check if automation fields are provided together
+        if bool(automation_id) != bool(automation_type):
+            raise ValueError("automation_id and automation_type must be provided together")
+
+        # Check mutual exclusivity
+        has_automation = automation_id and automation_type
+        has_playbook = playbook_id is not None
+
+        if has_automation and has_playbook:
+            raise ValueError("Cannot provide both automation fields and playbook_id")
+
+        if not has_automation and not has_playbook:
+            raise ValueError("Must provide either automation fields or playbook_id")
+
+        return values
 
 StrictTrigger = create_model(
     model_name="StrictTrigger",

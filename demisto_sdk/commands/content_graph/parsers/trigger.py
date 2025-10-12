@@ -51,4 +51,3 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
     @property
     def strict_object(self):
         return StrictTrigger
-

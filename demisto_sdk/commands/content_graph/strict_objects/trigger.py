@@ -33,7 +33,7 @@ class _StrictTrigger(BaseStrictModel):
         if bool(automation_id) != bool(automation_type):
             raise ValueError(
                 "automation_id and automation_type must be provided together"
-                )
+            )
 
         # Check mutual exclusivity
         has_automation = automation_id and automation_type

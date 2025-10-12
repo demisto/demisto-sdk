@@ -2,7 +2,6 @@ from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
-    Trigger,
     AgentixAgent,
     AssetsModelingRule,
     CaseField,
@@ -29,6 +28,7 @@ from demisto_sdk.commands.content_graph.objects import (
     Playbook,
     PreProcessRule,
     Report,
+    Trigger,
     Widget,
     Wizard,
     XDRCTemplate,

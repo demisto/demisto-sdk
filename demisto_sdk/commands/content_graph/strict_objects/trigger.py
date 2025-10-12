@@ -40,14 +40,10 @@ class _StrictTrigger(BaseStrictModel):
         has_playbook = playbook_id is not None
 
         if has_automation and has_playbook:
-            raise ValueError(
-                "Cannot provide both automation fields and playbook_id"
-                )
+            raise ValueError("Cannot provide both automation fields and playbook_id.")
 
         if not has_automation and not has_playbook:
-            raise ValueError(
-                "Must provide either automation fields or playbook_id"
-                )
+            raise ValueError("Must provide either automation fields or playbook_id.")
 
         return values
 

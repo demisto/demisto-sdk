@@ -25,23 +25,29 @@ class _StrictTrigger(BaseStrictModel):
 
     @root_validator
     def validate_automation_playbook_logic(cls, values):
-        automation_id = values.get('automation_id')
-        automation_type = values.get('automation_type')
-        playbook_id = values.get('playbook_id')
+        automation_id = values.get("automation_id")
+        automation_type = values.get("automation_type")
+        playbook_id = values.get("playbook_id")
 
         # Check if automation fields are provided together
         if bool(automation_id) != bool(automation_type):
-            raise ValueError("automation_id and automation_type must be provided together")
+            raise ValueError(
+                "automation_id and automation_type must be provided together"
+                )
 
         # Check mutual exclusivity
         has_automation = automation_id and automation_type
         has_playbook = playbook_id is not None
 
         if has_automation and has_playbook:
-            raise ValueError("Cannot provide both automation fields and playbook_id")
+            raise ValueError(
+                "Cannot provide both automation fields and playbook_id"
+                )
 
         if not has_automation and not has_playbook:
-            raise ValueError("Must provide either automation fields or playbook_id")
+            raise ValueError(
+                "Must provide either automation fields or playbook_id"
+                )
 
         return values
 

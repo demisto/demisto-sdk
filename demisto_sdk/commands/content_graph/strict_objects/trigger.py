@@ -47,6 +47,7 @@ class _StrictTrigger(BaseStrictModel):
 
         return values
 
+
 StrictTrigger = create_model(
     model_name="StrictTrigger",
     base_models=(

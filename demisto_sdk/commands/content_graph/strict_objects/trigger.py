@@ -30,10 +30,11 @@ class _StrictTrigger(BaseStrictModel):
         automation_type = values.get("automation_type")
         playbook_id = values.get("playbook_id")
 
-        if automation_type is not None and automation_type not in ["command", "playbook"]:
-            raise ValueError(
-                "automation_type must be one of: command, playbook."
-            )
+        if automation_type is not None and automation_type not in [
+            "command",
+            "playbook",
+        ]:
+            raise ValueError("automation_type must be one of: command, playbook.")
 
         # Check if automation fields are provided together
         if bool(automation_id) != bool(automation_type):

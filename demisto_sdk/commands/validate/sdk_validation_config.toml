@@ -162,7 +162,6 @@ select = [
   "AG101",
   "AG102",
   "AG103",
-  "AG104",
   "DS100",
   "DS101",
   "DS105",
@@ -254,7 +253,8 @@ select = [
   "BC115"
 ]
 warning = [
-  "RM108"
+  "RM108",
+  "AG104"
 ]
 
 [support_level]
@@ -324,7 +324,6 @@ select = [
   "AG101",
   "AG102",
   "AG103",
-  "AG104",
   "PA100",
   "PA101",
   "PA102",
@@ -541,5 +540,6 @@ select = [
   "BA112"
 ]
 warning = [
-  "GR109"
+  "GR109",
+  "AG104"
 ]

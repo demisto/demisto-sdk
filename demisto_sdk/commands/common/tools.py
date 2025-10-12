@@ -225,7 +225,7 @@ class MarketplaceTagParser:
             logger.warning(
                 "<red>[parse_text] Unmatched tags detected. Returning text unmodified.</red>"
             )
-            return "release_notes"
+            return text
 
         regex_for_any_tag_block = (
             rf"<~({MARKETPLACE_LIST_PATTERN})>({TAG_CONTENT_PATTERN})</~\1>"

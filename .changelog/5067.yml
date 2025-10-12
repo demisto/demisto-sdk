@@ -1,4 +1,4 @@
 changes:
-- description: Added automation_id and automation_type keys to the Trigger schema.
+- description: Added the *automation_id* and *automation_type* fields to the **Trigger** Content type schema to support automation recommendations.
   type: feature
 pr_number: 5067

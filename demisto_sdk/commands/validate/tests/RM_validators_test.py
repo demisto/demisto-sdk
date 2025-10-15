@@ -59,6 +59,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM116_missing_playbo
 from demisto_sdk.commands.validate.validators.RM_validators.RM117_readme_not_to_short import (
     NotToShortReadmeValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM118_no_readme_internal_scripts import (
+    NoReadmeInternalScripts,
+)
 from TestSuite.repo import ChangeCWD
 
 
@@ -1177,3 +1180,26 @@ def test_ImagePathIntegrationValidator_content_assets():
         content_items
     )
     assert result[0].message == expected
+
+
+def test_NoReadmeInternalScriptsValidator():
+    """
+    Given:
+        - Script object that is internal and one that is not internal
+    When:
+        - run obtain_invalid_content_items method from NoReadmeInternalScriptsValidator
+    Then:
+        - Ensure that the internal script returns a ValidationResult with the correct message
+        - Ensure that no error is returned for normal script and internal script without README
+    """
+    internal_script = create_script_object(["isInternal"], ["true"], readme_content="readme")
+    normal_script = create_script_object(readme_content="readme")
+    expected_message = "The Script 'myScript' is an internal script. Please remove the README.md file in the content item's directory."
+
+    results = NoReadmeInternalScripts().obtain_invalid_content_items([internal_script])
+    assert len(results) == 1
+    assert results[0].message == expected_message
+
+    internal_script.readme.exist = False
+    results = NoReadmeInternalScripts().obtain_invalid_content_items([internal_script, normal_script])
+    assert len(results) == 0

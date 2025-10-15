@@ -10,7 +10,10 @@ class AgentixAction(YAML):
         self.name = name
         self._repo = repo
         self.repo_path = repo.path
+        # Create paths
+        tmpdir.parent.mkdir(parents=True, exist_ok=True)
         self.path = str(tmpdir)
+
         super().__init__(tmp_path=tmpdir / f"{self.name}.yml", repo_path=str(repo.path))
 
     @property

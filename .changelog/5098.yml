@@ -1,0 +1,3 @@
+changes:
+- description: Extended GR110 validator to validate Agentix action inputs and outputs against underlying content items.
+  type: feature

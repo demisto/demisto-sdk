@@ -11,7 +11,6 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp 
 )
 
 
-
 def test_is_forbidden_content_item():
     """
     Given
@@ -216,4 +215,3 @@ def test_is_correct_marketplace():
     assert results[0].message == (
         "The following Agentix related content item 'test' should have only marketplace 'platform'."
     )
-

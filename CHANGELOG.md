@@ -1,4 +1,8 @@
 # Changelog
+## 1.38.13 (2025-10-15)
+### Internal
+* Removed BA101 for actions. [#5090](https://github.com/demisto/demisto-sdk/pull/5090)
+
 ## 1.38.11 (2025-09-07)
 ### Fix
 * Fixed an issue in marketplace suffix preparer. [#5055](https://github.com/demisto/demisto-sdk/pull/5055)

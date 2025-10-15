@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Union
 
-from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
@@ -15,7 +14,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equa
 )
 
 ContentTypes = Union[
-    Integration, Layout, Mapper, Playbook, Script, Wizard, Job, AgentixAction
+    Integration, Layout, Mapper, Playbook, Script, Wizard, Job
 ]
 
 

@@ -946,14 +946,14 @@ def create_agentix_action_object(
     pack_info: Optional[Dict[str, Any]] = None,
     action_name: Optional[str] = None,
 ) -> AgentixAction:
-    """Creating a playbook object with altered fields from a default playbook yml structure.
+    """Creating an agentix action object with altered fields from a default agentix action yml structure.
     Args:
         paths (Optional[List[str]]): The keys to update.
         values (Optional[List[Any]]): The values to update.
         pack_info (Optional[List[str]]): The actions's pack name.
         action_name (Optional[List[Any]]): The action's name.
     Returns:
-        The playbook object.
+        The agentix action object.
     """
     yml_content = load_yaml("agentix_action.yml")
     update_keys(yml_content, paths, values)

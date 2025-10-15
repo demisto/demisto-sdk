@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from TestSuite.agentix_action import AgentixAction
 from demisto_sdk.commands.common.constants import (
+    AGENTIX_ACTIONS_DIR,
     ASSETS_MODELING_RULES_DIR,
     CASE_FIELDS_DIR,
     CASE_LAYOUT_RULES_DIR,
@@ -15,8 +15,9 @@ from demisto_sdk.commands.common.constants import (
     TRIGGER_DIR,
     XDRC_TEMPLATE_DIR,
     XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR, AGENTIX_ACTIONS_DIR,
+    XSIAM_REPORTS_DIR,
 )
+from TestSuite.agentix_action import AgentixAction
 from TestSuite.case_field import CaseField
 from TestSuite.case_layout import CaseLayout
 from TestSuite.case_layout_rule import CaseLayoutRule
@@ -827,7 +828,6 @@ class Pack(TestSuiteBase):
 
     def set_data(self, **key_path_to_val):
         self.pack_metadata.set_data(**key_path_to_val)
-
 
     def create_agentix_action(
         self,

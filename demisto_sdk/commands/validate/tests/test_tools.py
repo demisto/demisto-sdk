@@ -11,10 +11,10 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
-from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
@@ -47,6 +47,9 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+    AgentixActionParser,
+)
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
     ParsingRuleParser,
@@ -57,7 +60,6 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     TestUseCaseRelatedFile,
 )
 from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
-from demisto_sdk.commands.content_graph.parsers.agentix_action import AgentixActionParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.file import File
 from TestSuite.repo import Repo

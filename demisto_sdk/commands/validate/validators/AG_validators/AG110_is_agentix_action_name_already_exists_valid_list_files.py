@@ -4,10 +4,10 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.validate.validators.AG_validators.AG110_is_agentix_action_name_already_exists_valid import \
-    IsAgentixActionNameAlreadyExistsValidator
+from demisto_sdk.commands.validate.validators.AG_validators.AG110_is_agentix_action_name_already_exists_valid import (
+    IsAgentixActionNameAlreadyExistsValidator,
+)
 from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
-
 
 ContentTypes = Integration
 

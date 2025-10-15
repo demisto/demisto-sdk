@@ -40,12 +40,13 @@ class IsAgentixActionUsingExistingContentItemValidator(
 ):
     error_code = "GR110"
     description = (
-        "Agentix actions must wrap existing commands/scripts and reference "
-        "valid inputs/outputs. Input UI names must match underlying names."
+        "Validates that Agentix actions reference existing commands/scripts "
+        "with valid inputs/outputs, and that input UI names match the "
+        "underlying argument names."
     )
     rationale = (
-        "Ensures Agentix actions reference existing content and prevents "
-        "input/output mismatches."
+        "Prevents runtime errors by ensuring Agentix actions only reference "
+        "existing content items and their valid inputs/outputs."
     )
     error_message = ""
     related_field = ""

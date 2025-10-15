@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Optional
 
-from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML, yaml
 
 
@@ -27,17 +26,20 @@ class AgentixAction(YAML):
         if yml is not None:
             self.write_dict(yml)
 
-    def create_default_agentix_action(self, name: str = "sample_agentix_action"):
+    def create_default_agentix_action(
+        self,
+        name: str = "sample_agentix_action",
+        action_id: str = "sample_agentix_action_id",
+    ):
         """Creates a new agentix action with basic data.
 
         Args:
             name: The name and ID of the new agentix action, default is "sample_agentix_action".
-
+            action_id: The ID of the new agentix action, default is "sample_agentix_action_id".
         """
-        default_agentix_action_dir = "assets/default_agentix_action"
-        with open(
-            suite_join_path(default_agentix_action_dir, "agentix_action-sample.yml")
-        ) as yml_file:
+        default_agentix_action_dir = Path("assets") / "default_agentix_action"
+        with open(default_agentix_action_dir / "agentix_action-sample.yml") as yml_file:
             yml = yaml.load(yml_file)
-            yml["id"] = yml["name"] = name
+            yml["id"] = action_id
+            yml["name"] = name
             self.build(yml=yml)

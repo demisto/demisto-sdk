@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
-from demisto_sdk.commands.content_graph.objects import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
@@ -47,7 +47,9 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.content_graph.parsers import AgentixActionParser
+from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+    AgentixActionParser,
+)
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
     ParsingRuleParser,
@@ -942,17 +944,11 @@ def create_agentix_action_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
-    file_name: Optional[str] = None,
+    action_name: Optional[str] = None,
 ) -> AgentixAction:
-    """Creating a playbook object with altered fields from a default playbook yml structure.
-
-    Args:
-        paths (Optional[List[str]]): The keys to update.
-        values (Optional[List[Any]]): The values to update.
-        pack_info (Optional[List[str]]): The actions's pack name.
-        file_name (Optional[List[Any]]): The action's file name.
+    """Creating an agentix action object with altered fields from a default agentix action yml structure.
     Returns:
-        The playbook object.
+        The agentix action object.
     """
     yml_content = load_yaml("agentix_action.yml")
     update_keys(yml_content, paths, values)
@@ -960,11 +956,11 @@ def create_agentix_action_object(
     if pack_info:
         pack.set_data(**pack_info)
     additional_params = {}
-    if file_name:
-        additional_params["name"] = file_name
+    if action_name:
+        additional_params["name"] = action_name
 
     agentix_action = pack.create_agentix_action(**additional_params)
-    agentix_action.create_default_agentix_action("sample")
+    agentix_action.create_default_agentix_action()
     agentix_action.yml.update(yml_content)
     parser = AgentixActionParser(
         Path(agentix_action.path), list(MarketplaceVersions), pack_supported_modules=[]

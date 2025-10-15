@@ -14,6 +14,7 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
+    create_agentix_action_object,
     create_incident_field_object,
     create_incident_type_object,
     create_incoming_mapper_object,
@@ -67,6 +68,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC114_is_changed_or_
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC115_is_supported_module_removed import (
     IsSupportedModulesRemoved,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC116_is_breaking_agentix_action_output_backwards import (
+    IsBreakingAgentixActionOutputBackwardsValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -859,6 +863,67 @@ def test_IsBreakingContextOutputBackwardsValidator_obtain_invalid_content_items(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+
+
+@pytest.mark.parametrize(
+    "content_items, old_content_items, expected_number_of_failures, expected_msgs",
+    [
+        # Case 1: No changes
+        (
+            [create_agentix_action_object(paths=["outputs"], values=[[{"name": "Test.Output1", "description": "desc1", "type": "string", "underlyingoutputcontextpath": "Test.Output1"}]])],
+            [create_agentix_action_object(paths=["outputs"], values=[[{"name": "Test.Output1", "description": "desc1", "type": "string", "underlyingoutputcontextpath": "Test.Output1"}]])],
+            0,
+            [],
+        ),
+        # Case 2: Output removed
+        (
+            [create_agentix_action_object(paths=["outputs"], values=[[{"name": "Test.Output1", "description": "desc1", "type": "string", "underlyingoutputcontextpath": "Test.Output1"}]])],
+            [create_agentix_action_object(paths=["outputs"], values=[[{"name": "Test.Output1", "description": "desc1", "type": "string", "underlyingoutputcontextpath": "Test.Output1"}, {"name": "Test.Output2", "description": "desc2", "type": "string", "underlyingoutputcontextpath": "Test.Output2"}]])],
+            1,
+            ["The following output keys: Test.Output2 have been removed, please undo."],
+        ),
+        # Case 3: Output added
+        (
+            [create_agentix_action_object(paths=["outputs"], values=[[{"name": "Test.Output1", "description": "desc1", "type": "string", "underlyingoutputcontextpath": "Test.Output1"}, {"name": "Test.Output2", "description": "desc2", "type": "string", "underlyingoutputcontextpath": "Test.Output2"}]])],
+            [create_agentix_action_object(paths=["outputs"], values=[[{"name": "Test.Output1", "description": "desc1", "type": "string", "underlyingoutputcontextpath": "Test.Output1"}]])],
+            0,
+            [],
+        ),
+        # Case 4: No outputs
+        (
+            [create_agentix_action_object(paths=["outputs"], values=[[]])],
+            [create_agentix_action_object(paths=["outputs"], values=[[]])],
+            0,
+            [],
+        ),
+    ],
+)
+def test_IsBreakingAgentixActionOutputBackwardsValidator_obtain_invalid_content_items(
+    content_items, old_content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+        - Case 1: No changes to outputs.
+        - Case 2: An output was removed.
+        - Case 3: An output was added.
+        - Case 4: No outputs in both versions.
+    When
+        - Calling the IsBreakingAgentixActionOutputBackwardsValidator's is_valid function.
+    Then
+        - Make sure the right amount of failures return and that the right message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail.
+        - Case 3: Shouldn't fail.
+        - Case 4: Shouldn't fail.
+    """
+    create_old_file_pointers(content_items, old_content_items)
+    results = IsBreakingAgentixActionOutputBackwardsValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(results) == expected_number_of_failures
+    if expected_number_of_failures > 0:
+        assert results[0].message == expected_msgs[0]
+
 
 
 @pytest.mark.parametrize(

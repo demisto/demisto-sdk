@@ -39,7 +39,7 @@ class AgentixAction(YAML):
         """
         default_agentix_action_dir = Path("assets") / "default_agentix_action"
         with open(
-            suite_join_path(default_agentix_action_dir, "agentix_action-sample.yml")
+            default_agentix_action_dir / "agentix_action-sample.yml"
         ) as yml_file:
             yml = yaml.load(yml_file)
             yml["id"] = action_id

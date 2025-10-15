@@ -262,6 +262,7 @@ class Pack(TestSuiteBase):
         self._assets_modeling_rules_path.mkdir(exist_ok=True)
 
         self._agentix_actions_path = self._pack_path / AGENTIX_ACTIONS_DIR
+        self._agentix_actions_path.mkdir(exist_ok=True)
 
         super().__init__(self._pack_path)
 

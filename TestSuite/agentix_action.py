@@ -10,12 +10,8 @@ class AgentixAction(YAML):
         self.name = name
         self._repo = repo
         self.repo_path = repo.path
-        # Create paths
-        self._tmpdir_action_path = tmpdir / f"{self.name}"
-        self._tmpdir_action_path.mkdir()
-        self.path = str(self._tmpdir_action_path)
-
-        super().__init__(tmp_path=self._tmpdir_action_path, repo_path=str(repo.path))
+        self.path = str(tmpdir)
+        super().__init__(tmp_path=tmpdir / f"{self.name}.yml", repo_path=str(repo.path))
 
     @property
     def yml(self):

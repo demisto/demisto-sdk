@@ -1,0 +1,4 @@
+changes:
+- description: Added AG105 validation.
+  type: feature
+pr_number: 5095

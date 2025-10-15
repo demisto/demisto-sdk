@@ -12,6 +12,12 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp 
 from demisto_sdk.commands.validate.validators.AG_validators.AG104_is_correct_sm import (
     IsCorrectSMValidator,
 )
+from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_valid_types import (
+    IsTypeValid,
+)
+from demisto_sdk.commands.content_graph.objects.agentix_action import (
+    AgentixActionArgument,
+)
 
 
 def test_is_forbidden_content_item():
@@ -361,3 +367,123 @@ def test_is_correct_supportedModules():
     assert (
         "The following Agentix related content item 'test' should have only 'agentix' type supportedModules. Valid modules"
     ) in results[0].message
+
+
+def test_is_type_valid():
+    """
+    Given
+    - One AgentixAction with valid argument and output types.
+    - One AgentixAction with invalid argument and output types.
+    - One AgentixAction with mixed valid and invalid types.
+
+    When
+    - Calling the IsTypeValid obtain_invalid_content_items function.
+
+    Then
+    - Ensure that 2 validation failures are returned.
+    - Make sure the error messages include the invalid argument and output names,
+      and list the valid type options.
+    """
+    # Valid content item
+    valid_action = AgentixAction(
+        color="red",
+        description="",
+        display="",
+        path=Path("test_valid.yml"),
+        marketplaces=["platform"],
+        name="valid_action",
+        fromversion="",
+        toversion="",
+        display_name="ValidAction",
+        deprecated=False,
+        id="",
+        node_id="",
+        underlying_content_item_id="test",
+        underlying_content_item_name="test",
+        underlying_content_item_type="script",
+        underlying_content_item_version=-1,
+        agent_id="test",
+        args=[
+            AgentixActionArgument(name="arg1", type="string"),
+            AgentixActionArgument(name="arg2", type="boolean"),
+        ],
+        outputs=[
+            AgentixActionArgument(name="output1", type="json"),
+            AgentixActionArgument(name="output2", type="number"),
+        ],
+    )
+
+    # Invalid types for both args and outputs
+    invalid_action = AgentixAction(
+        color="red",
+        description="",
+        display="",
+        path=Path("test_invalid.yml"),
+        marketplaces=["platform"],
+        name="invalid_action",
+        fromversion="",
+        toversion="",
+        display_name="InvalidAction",
+        deprecated=False,
+        id="",
+        node_id="",
+        underlying_content_item_id="test",
+        underlying_content_item_name="test",
+        underlying_content_item_type="script",
+        underlying_content_item_version=-1,
+        agent_id="test",
+        args=[
+            AgentixActionArgument(name="arg_invalid", type="InvalidType"),
+        ],
+        outputs=[
+            AgentixActionArgument(name="output_invalid", type="Object"),
+        ],
+    )
+
+    # Mixed valid and invalid
+    mixed_action = AgentixAction(
+        color="red",
+        description="",
+        display="",
+        path=Path("test_mixed.yml"),
+        marketplaces=["platform"],
+        name="mixed_action",
+        fromversion="",
+        toversion="",
+        display_name="MixedAction",
+        deprecated=False,
+        id="",
+        node_id="",
+        underlying_content_item_id="test",
+        underlying_content_item_name="test",
+        underlying_content_item_type="script",
+        underlying_content_item_version=-1,
+        agent_id="test",
+        args=[
+            AgentixActionArgument(name="arg_ok", type="number"),
+            AgentixActionArgument(name="arg_bad", type="Blob"),
+        ],
+        outputs=[
+            AgentixActionArgument(name="output_ok", type="string"),
+            AgentixActionArgument(name="output_bad", type="Array"),
+        ],
+    )
+
+    content_items = [valid_action, invalid_action, mixed_action]
+
+    results = IsTypeValid().obtain_invalid_content_items(content_items)
+
+    # We expect 2 invalid results: invalid_action and mixed_action
+    assert len(results) == 2
+
+    # Validate first message content
+    assert "invalid_action" in results[0].message
+    assert "arg_invalid" in results[0].message
+    assert "output_invalid" in results[0].message
+    assert "Possible argument types" in results[0].message
+    assert "Possible output types" in results[0].message
+
+    # Validate second message content
+    assert "mixed_action" in results[1].message
+    assert "arg_bad" in results[1].message
+    assert "output_bad" in results[1].message

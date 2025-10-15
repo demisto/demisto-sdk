@@ -1,7 +1,8 @@
 # Changelog
 ## 1.38.12 (2025-10-15)
 ### Internal
-* Removed AG104 validation.
+* Removed AG104 validation. [#5089]
+(https://github.com/demisto/demisto-sdk/pull/5089)
 
 ## 1.38.11 (2025-09-07)
 ### Fix

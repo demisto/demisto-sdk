@@ -12,6 +12,9 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp 
 from demisto_sdk.commands.validate.validators.AG_validators.AG104_is_correct_sm import (
     IsCorrectSMValidator,
 )
+from demisto_sdk.commands.validate.validators.AG_validators.AG108_is_valid_rgb_color import (
+    IsValidColorValidator,
+)
 
 
 def test_is_forbidden_content_item():
@@ -361,3 +364,91 @@ def test_is_correct_supportedModules():
     assert (
         "The following Agentix related content item 'test' should have only 'agentix' type supportedModules. Valid modules"
     ) in results[0].message
+
+
+def test_is_valid_color():
+    """
+    Given:
+    - Two AgentixAgent items, one with a valid color and one with an invalid color.
+
+    When:
+    - Calling the IsValidColorValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure one failure is returned for the invalid color and the error message is correct.
+    """
+    content_items = [
+        AgentixAgent(
+            color="#FF0000",
+            description="",
+            display="display Name",
+            path=Path("test.yml"),
+            marketplaces=["platform"],
+            name="valid_color_agent",
+            fromversion="",
+            toversion="",
+            display_name="Valid Color Agent",
+            deprecated=False,
+            id="",
+            node_id="",
+        ),
+        AgentixAgent(
+            color="invalid_color",
+            description="",
+            display="display Name",
+            path=Path("test.yml"),
+            marketplaces=["platform"],
+            name="invalid_color_agent",
+            fromversion="",
+            toversion="",
+            display_name="Invalid Color Agent",
+            deprecated=False,
+            id="",
+            node_id="",
+        ),
+        AgentixAgent(
+            color="#12345G",
+            description="",
+            display="display Name",
+            path=Path("test.yml"),
+            marketplaces=["platform"],
+            name="invalid_hex_agent",
+            fromversion="",
+            toversion="",
+            display_name="Invalid Hex Agent",
+            deprecated=False,
+            id="",
+            node_id="",
+        ),
+        AgentixAgent(
+            color="#FFF",
+            description="",
+            display="display Name",
+            path=Path("test.yml"),
+            marketplaces=["platform"],
+            name="short_hex_agent",
+            fromversion="",
+            toversion="",
+            display_name="Short Hex Agent",
+            deprecated=False,
+            id="",
+            node_id="",
+        ),
+    ]
+
+    results = IsValidColorValidator().obtain_invalid_content_items(content_items)
+
+    assert len(results) == 3
+    error_messages = [result.message for result in results]
+    assert (
+        "The Agentix-agent 'Invalid Color Agent' color 'invalid_color' is not a valid RGB hex color.\n"
+        "Please make sure that the color is a valid 6-digit hex color string, starting with '#'. For example: '#FFFFFF'."
+    ) in error_messages
+    assert (
+        "The Agentix-agent 'Invalid Hex Agent' color '#12345G' is not a valid RGB hex color.\n"
+        "Please make sure that the color is a valid 6-digit hex color string, starting with '#'. For example: '#FFFFFF'."
+    ) in error_messages
+    assert (
+        "The Agentix-agent 'Short Hex Agent' color '#FFF' is not a valid RGB hex color.\n"
+        "Please make sure that the color is a valid 6-digit hex color string, starting with '#'. For example: '#FFFFFF'."
+    ) in error_messages

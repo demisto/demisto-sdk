@@ -1,8 +1,11 @@
 from pathlib import Path
 
+import pytest
+
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.validate.tests.test_tools import create_agentix_action_object
 from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_content_item import (
     IsForbiddenContentItemValidator,
 )
@@ -12,6 +15,8 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp 
 from demisto_sdk.commands.validate.validators.AG_validators.AG104_is_correct_sm import (
     IsCorrectSMValidator,
 )
+from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_display_name_valid import \
+    IsDisplayNameValidValidator
 
 
 def test_is_forbidden_content_item():
@@ -361,3 +366,84 @@ def test_is_correct_supportedModules():
     assert (
         "The following Agentix related content item 'test' should have only 'agentix' type supportedModules. Valid modules"
     ) in results[0].message
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        # Case 1: All valid AgentixAction displays
+        (
+            [
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+                create_agentix_action_object(paths=["display"], values=["Valid_Name"]),
+                create_agentix_action_object(paths=["display"], values=["Valid-Name"]),
+                create_agentix_action_object(paths=["display"], values=["Valid Name"]),
+                create_agentix_action_object(paths=["display"], values=["A123"]),
+                create_agentix_action_object(paths=["display"], values=["A_1-2 3"]),
+            ],
+            0,
+            [],
+        ),
+        # Case 2: One invalid (starts with digit), one valid
+        (
+            [
+                create_agentix_action_object(paths=["display"], values=["1Invalid"]),
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+            ],
+            1,
+            [
+                "The following Agentix action display value is invalid: 1Invalid. \n AgentixAction display value "
+                "must start with a letter (either lower or upper case) and contain only the following characters: "
+                "lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.",
+            ],
+        ),
+        # Case 3: Invalid (contains forbidden character)
+        (
+            [create_agentix_action_object(paths=["display"], values=["Invalid!"])],
+            1,
+            [
+                "The following Agentix action display value is invalid: Invalid!. \n AgentixAction display value "
+                "must start with a letter (either lower or upper case) and contain only the following characters: "
+                "lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.",
+            ],
+        ),
+        # Case 4: Multiple invalid
+        (
+            [
+                create_agentix_action_object(paths=["display"], values=["1Invalid"]),
+                create_agentix_action_object(paths=["display"], values=["Invalid!"]),
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+            ],
+            2,
+            [
+                "The following Agentix action display value is invalid: 1Invalid. \n AgentixAction display value "
+                "must start with a letter (either lower or upper case) and contain only the following characters: "
+                "lowercase letters, uppercase letters, digits, underscores, hyphens, spaces.",
+                "The following Agentix action display value is invalid: Invalid!. \n AgentixAction display value "
+                "must start with a"
+                "letter (either lower or upper case) and contain only the following characters: lowercase "
+                "letters, uppercase letters,"
+                "digits, underscores, hyphens, spaces.",
+            ],
+        ),
+    ],
+)
+def test_IsDisplayNameValid_obtain_invalid_content_items(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    - AgentixAction content_items with various display values.
+    When
+    - Calling the IsDisplayNameValid.obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failure return and that the error msg is correct.
+    """
+    results = IsDisplayNameValidValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

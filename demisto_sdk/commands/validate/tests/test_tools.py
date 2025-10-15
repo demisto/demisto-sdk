@@ -947,11 +947,6 @@ def create_agentix_action_object(
     action_name: Optional[str] = None,
 ) -> AgentixAction:
     """Creating an agentix action object with altered fields from a default agentix action yml structure.
-    Args:
-        paths (Optional[List[str]]): The keys to update.
-        values (Optional[List[Any]]): The values to update.
-        pack_info (Optional[List[str]]): The actions's pack name.
-        action_name (Optional[List[Any]]): The action's name.
     Returns:
         The agentix action object.
     """
@@ -965,7 +960,7 @@ def create_agentix_action_object(
         additional_params["name"] = action_name
 
     agentix_action = pack.create_agentix_action(**additional_params)
-    agentix_action.create_default_agentix_action("sample")
+    agentix_action.create_default_agentix_action()
     agentix_action.yml.update(yml_content)
     parser = AgentixActionParser(
         Path(agentix_action.path), list(MarketplaceVersions), pack_supported_modules=[]

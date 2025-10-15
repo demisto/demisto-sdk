@@ -1,4 +1,8 @@
 # Changelog
+## 1.38.12 (2025-10-15)
+### Internal
+* Removed AG104 validation.
+
 ## 1.38.11 (2025-09-07)
 ### Fix
 * Fixed an issue in marketplace suffix preparer. [#5055](https://github.com/demisto/demisto-sdk/pull/5055)

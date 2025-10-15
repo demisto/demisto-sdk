@@ -47,7 +47,7 @@ def validate_unknown_content(tx: Transaction, file_paths: List[str]):
 
 
 def validate_fromversion(
-        tx: Transaction, file_paths: List[str], for_supported_versions: bool
+    tx: Transaction, file_paths: List[str], for_supported_versions: bool
 ):
     op = ">=" if for_supported_versions else "<"
     query = f"""// Returning all the USES relationships with where the target's fromversion is higher than the source's
@@ -79,7 +79,7 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
 
 
 def validate_toversion(
-        tx: Transaction, file_paths: List[str], for_supported_versions: bool
+    tx: Transaction, file_paths: List[str], for_supported_versions: bool
 ):
     op = ">=" if for_supported_versions else "<"
     query = f"""// Returning all the USES relationships with where the target's toversion is lower than the source's
@@ -110,7 +110,7 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
 
 
 def get_items_using_deprecated(
-        tx: Transaction, file_paths: List[str]
+    tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[graph.Node]]]:
     return get_items_using_deprecated_commands(
         tx, file_paths
@@ -118,7 +118,7 @@ def get_items_using_deprecated(
 
 
 def get_items_using_deprecated_commands(
-        tx: Transaction, file_paths: List[str]
+    tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[graph.Node]]]:
     """
     Retrieves non-deprecated content items that are using deprecated commands.
@@ -162,7 +162,7 @@ RETURN c.object_id AS deprecated_command, collect(p) AS object_using_deprecated"
 
 
 def get_items_using_deprecated_content_items(
-        tx: Transaction, file_paths: List[str]
+    tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[graph.Node]]]:
     """
     Retrieves non-deprecated items that are using other deprecated content items.
@@ -238,7 +238,7 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
 
 
 def validate_multiple_packs_with_same_display_name(
-        tx: Transaction, file_paths: List[str]
+    tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[str]]]:
     query = f"""// Returns all the packs that have the same name but different id
 MATCH (a:{ContentType.PACK}), (b:{ContentType.PACK})
@@ -257,7 +257,7 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
 
 
 def validate_multiple_agentix_actions_with_same_display_name(
-        tx: Transaction, file_paths: List[str]
+    tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[str]]]:
     query = f"""// Returns all the Agentix Actions that have the same display name but different id
 MATCH (a:{ContentType.AGENTIX_ACTION}), (b:{ContentType.AGENTIX_ACTION})
@@ -276,7 +276,7 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
 
 
 def validate_multiple_agentix_actions_with_same_name(
-        tx: Transaction, file_paths: List[str]
+    tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[str]]]:
     query = f"""// Returns all the Agentix Actions that have the same name but different id
 MATCH (a:{ContentType.AGENTIX_ACTION}), (b:{ContentType.AGENTIX_ACTION})
@@ -295,7 +295,7 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
 
 
 def validate_multiple_script_with_same_name(
-        tx: Transaction, file_paths: List[str]
+    tx: Transaction, file_paths: List[str]
 ) -> Dict[str, str]:
     query = f"""// Returns all scripts that have the word 'alert' in their name
 MATCH (a:{ContentType.SCRIPT})
@@ -328,10 +328,10 @@ RETURN b.name AS b_name
 
 
 def validate_core_packs_dependencies(
-        tx: Transaction,
-        pack_ids: List[str],
-        marketplace: MarketplaceVersions,
-        core_pack_list: List[str],
+    tx: Transaction,
+    pack_ids: List[str],
+    marketplace: MarketplaceVersions,
+    core_pack_list: List[str],
 ):
     query = f"""// Returns DEPENDS_ON relationships to content items who are not core packs
     MATCH (pack1)-[r:DEPENDS_ON{{mandatorily:true}}]->(pack2)
@@ -353,8 +353,8 @@ def validate_core_packs_dependencies(
 
 
 def validate_packs_with_hidden_mandatory_dependencies(
-        tx: Transaction,
-        pack_ids: List[str],
+    tx: Transaction,
+    pack_ids: List[str],
 ) -> Dict[str, Neo4jRelationshipResult]:
     """
     Identifies non-hidden packs that have mandatory dependencies on hidden packs.
@@ -388,7 +388,7 @@ def validate_packs_with_hidden_mandatory_dependencies(
 
 
 def validate_duplicate_ids(
-        tx: Transaction, file_paths: List[str]
+    tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[graph.Node, List[graph.Node]]]:
     query = f"""// Returns duplicate content items with same id
     MATCH (content_item)
@@ -407,7 +407,7 @@ def validate_duplicate_ids(
 
 
 def validate_test_playbook_in_use(
-        tx: Transaction, test_playbook_ids: List[str], test_playbooks_ids_to_skip
+    tx: Transaction, test_playbook_ids: List[str], test_playbooks_ids_to_skip
 ) -> List[graph.Node]:
     query = """
 MATCH (tp:TestPlaybook) WHERE
@@ -431,7 +431,7 @@ RETURN collect(tp) AS content_items
 
 
 def validate_playbook_tests_in_repository(
-        tx: Transaction, playbook_paths: List[str]
+    tx: Transaction, playbook_paths: List[str]
 ) -> Dict[str, Neo4jRelationshipResult]:
     query = f"""
     MATCH (content_item_from: Playbook)-[r:{RelationshipType.TESTED_BY}]->(n{{not_in_repository: true}})
@@ -449,8 +449,8 @@ def validate_playbook_tests_in_repository(
 
 
 def get_supported_modules_mismatch_dependencies(
-        tx: Transaction,
-        content_item_ids: List[str],
+    tx: Transaction,
+    content_item_ids: List[str],
 ):
     query = f""" // Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
     MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(contentItemB)
@@ -470,8 +470,8 @@ def get_supported_modules_mismatch_dependencies(
 
 
 def get_supported_modules_mismatch_commands(
-        tx: Transaction,
-        content_item_ids: List[str],
+    tx: Transaction,
+    content_item_ids: List[str],
 ):
     """
     Identifies content items that have commands with supportedModules not included in the parent item.
@@ -520,8 +520,8 @@ def get_supported_modules_mismatch_commands(
 
 
 def get_supported_modules_mismatch_content_items(
-        tx: Transaction,
-        content_item_ids: List[str],
+    tx: Transaction,
+    content_item_ids: List[str],
 ):
     """
     Fetches all content items that use at least one command with a module support incompatibility.

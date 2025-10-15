@@ -72,14 +72,15 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_duplicate_ids,
     validate_fromversion,
     validate_marketplaces,
+    validate_multiple_agentix_actions_with_same_display_name,
+    validate_multiple_agentix_actions_with_same_name,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
     validate_packs_with_hidden_mandatory_dependencies,
     validate_playbook_tests_in_repository,
     validate_test_playbook_in_use,
     validate_toversion,
-    validate_unknown_content, validate_multiple_agentix_actions_with_same_display_name,
-    validate_multiple_agentix_actions_with_same_name,
+    validate_unknown_content,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     CONTENT_TYPE_TO_MODEL,

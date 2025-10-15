@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC
-
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -16,7 +15,9 @@ ContentTypes = AgentixAction
 
 class IsAgentixActionNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR112"
-    description = "Validate that there are no duplicate names of Agentix Actions in the repo."
+    description = (
+        "Validate that there are no duplicate names of Agentix Actions in the repo."
+    )
     rationale = "Prevent confusion between Agentix Actions."
     error_message = (
         "Agentix Action '{content_id}' has a duplicate name as: {duplicate_name_ids}."
@@ -25,7 +26,7 @@ class IsAgentixActionNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC
     is_auto_fixable = False
 
     def obtain_invalid_content_items_using_graph(
-            self, content_items: Iterable[ContentTypes], validate_all_files: bool
+        self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
         file_paths_to_objects = {
             str(content_item.path.relative_to(CONTENT_PATH)): content_item
@@ -49,6 +50,3 @@ class IsAgentixActionNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC
             for content_id, duplicate_name_ids in query_results
             if content_id in content_id_to_objects
         ]
-
-
-

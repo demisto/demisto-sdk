@@ -1,0 +1,4 @@
+changes:
+- description: Remove BA101 validation for actions.
+  type: internal
+pr_number: 5091

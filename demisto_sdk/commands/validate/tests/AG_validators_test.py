@@ -12,9 +12,10 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_c
 from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp import (
     IsCorrectMPValidator,
 )
+from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_display_name_valid import (
+    IsDisplayNameValidValidator,
+)
 
-from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_display_name_valid import \
-    IsDisplayNameValidValidator
 
 def test_is_forbidden_content_item():
     """

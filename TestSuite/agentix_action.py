@@ -36,7 +36,9 @@ class AgentixAction(YAML):
             name: The name and ID of the new agentix action, default is "sample_agentix_action".
             action_id: The ID of the new agentix action, default is "sample_agentix_action_id".
         """
-        default_agentix_action_dir = Path(__file__).parent / "assets" / "default_agentix_action"
+        default_agentix_action_dir = (
+            Path(__file__).parent / "assets" / "default_agentix_action"
+        )
         with open(default_agentix_action_dir / "agentix_action-sample.yml") as yml_file:
             yml = yaml.load(yml_file)
             yml["id"] = action_id

@@ -1192,7 +1192,9 @@ def test_NoReadmeInternalScriptsValidator():
         - Ensure that the internal script returns a ValidationResult with the correct message
         - Ensure that no error is returned for normal script and internal script without README
     """
-    internal_script = create_script_object(["isInternal"], ["true"], readme_content="readme")
+    internal_script = create_script_object(
+        ["isInternal"], ["true"], readme_content="readme"
+    )
     normal_script = create_script_object(readme_content="readme")
     expected_message = "The Script 'myScript' is an internal script. Please remove the README.md file in the content item's directory."
 
@@ -1201,5 +1203,7 @@ def test_NoReadmeInternalScriptsValidator():
     assert results[0].message == expected_message
 
     internal_script.readme.exist = False
-    results = NoReadmeInternalScripts().obtain_invalid_content_items([internal_script, normal_script])
+    results = NoReadmeInternalScripts().obtain_invalid_content_items(
+        [internal_script, normal_script]
+    )
     assert len(results) == 0

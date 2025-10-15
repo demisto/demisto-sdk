@@ -78,7 +78,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_playbook_tests_in_repository,
     validate_test_playbook_in_use,
     validate_toversion,
-    validate_unknown_content,
+    validate_unknown_content, validate_multiple_agentix_actions_with_same_display_name,
+    validate_multiple_agentix_actions_with_same_name,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     CONTENT_TYPE_TO_MODEL,
@@ -481,6 +482,24 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             dups = [self._id_to_obj[duplicate.element_id] for duplicate in dups]
             duplicate_models.append((self._id_to_obj[content_item.element_id], dups))
         return duplicate_models
+
+    def validate_duplicate_agentix_action_display_names(
+        self, file_paths: List[str]
+    ) -> List[Tuple[str, List[str]]]:
+        with self.driver.session() as session:
+            results = session.execute_read(
+                validate_multiple_agentix_actions_with_same_display_name, file_paths
+            )
+            return results
+
+    def validate_duplicate_agentix_action_names(
+        self, file_paths: List[str]
+    ) -> List[Tuple[str, List[str]]]:
+        with self.driver.session() as session:
+            results = session.execute_read(
+                validate_multiple_agentix_actions_with_same_name, file_paths
+            )
+            return results
 
     def find_uses_paths_with_invalid_fromversion(
         self, file_paths: List[str], for_supported_versions=False

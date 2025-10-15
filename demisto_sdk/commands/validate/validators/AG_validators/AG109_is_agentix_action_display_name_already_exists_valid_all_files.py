@@ -4,16 +4,16 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.validate.validators.AG_validators.AG109_is_agentix_action_display_name_already_exists_valid import \
+    IsAgentixActionDisplayNameAlreadyExistsValidator
 from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
-from demisto_sdk.commands.validate.validators.GR_validators.GR112_is_agentix_action_name_already_exists_valid import (
-    IsAgentixActionNameAlreadyExistsValidator,
-)
+
 
 ContentTypes = Integration
 
 
-class IsAgentixActionNameAlreadyExistsValidatorAllFiles(
-    IsAgentixActionNameAlreadyExistsValidator
+class IsAgentixActionDisplayNameAlreadyExistsValidatorAllFiles(
+    IsAgentixActionDisplayNameAlreadyExistsValidator
 ):
     expected_execution_mode = [ExecutionMode.ALL_FILES]
 

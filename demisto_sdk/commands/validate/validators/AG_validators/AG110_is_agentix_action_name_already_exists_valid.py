@@ -14,7 +14,7 @@ ContentTypes = AgentixAction
 
 
 class IsAgentixActionNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC):
-    error_code = "GR112"
+    error_code = "AG110"
     description = (
         "Validate that there are no duplicate names of Agentix Actions in the repo."
     )

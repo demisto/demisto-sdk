@@ -13,9 +13,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equa
     IDNameValidator,
 )
 
-ContentTypes = Union[
-    Integration, Layout, Mapper, Playbook, Script, Wizard, Job
-]
+ContentTypes = Union[Integration, Layout, Mapper, Playbook, Script, Wizard, Job]
 
 
 class IDNameAllStatusesValidator(IDNameValidator[ContentTypes]):

@@ -13,6 +13,8 @@ from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.generic_definition import (
     GenericDefinition,
 )
+
+from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
 from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
 from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
@@ -43,6 +45,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Union[
+    AgentixAgent,
     Integration,
     Script,
     Playbook,

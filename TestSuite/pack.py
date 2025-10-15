@@ -121,8 +121,6 @@ class Pack(TestSuiteBase):
         self.case_layout_rules: List[CaseLayoutRule] = list()
         self.agentix_actions: List[AgentixAction] = list()
 
-        self.agentix_actions: List[AgentixAction] = list()
-
         # Create base pack
         self._pack_path = packs_dir / self.name
         self._pack_path.mkdir(exist_ok=True)

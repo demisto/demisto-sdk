@@ -27,7 +27,11 @@ class AgentixAction(YAML):
         if yml is not None:
             self.write_dict(yml)
 
-    def create_default_agentix_action(self, name: str = "sample_agentix_action", action_id: str = "sample_agentix_action_id"):
+    def create_default_agentix_action(
+        self,
+        name: str = "sample_agentix_action",
+        action_id: str = "sample_agentix_action_id",
+    ):
         """Creates a new agentix action with basic data.
         Args:
             name: The name and ID of the new agentix action, default is "sample_agentix_action".

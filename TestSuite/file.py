@@ -8,7 +8,6 @@ class File:
         self._repo_path = repo_path
         self.path = str(self._tmp_path)
         self.rel_path = os.path.relpath(self.path, self._repo_path)
-        self._tmp_path.parent.mkdir(parents=True, exist_ok=True)
         self.write(txt)
 
     def write(self, txt: str):

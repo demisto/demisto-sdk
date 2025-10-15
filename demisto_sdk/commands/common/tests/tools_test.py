@@ -2544,7 +2544,7 @@ def test_get_display_name(data, answer, tmpdir):
     Then
        - Returned name determined by the key of the data loaded from the file
     """
-    file = File(Path(tmpdir / "test_file.json"), "", json.dumps(data))
+    file = File(tmpdir / "test_file.json", "", json.dumps(data))
     assert get_display_name(file.path) == answer
 
 

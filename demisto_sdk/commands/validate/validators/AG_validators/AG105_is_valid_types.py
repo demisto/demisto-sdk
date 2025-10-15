@@ -1,4 +1,4 @@
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
@@ -72,7 +72,7 @@ class IsTypeValid(BaseValidator[ContentTypes]):
         return validation_results
 
     def is_invalid_type(
-        self, elements: List[AgentixActionArgument], valid_types: List[str]
+        self, elements: Optional[List[AgentixActionArgument]], valid_types: List[str]
     ) -> set[str]:
         invalid_element_names = set()
         for element in elements:

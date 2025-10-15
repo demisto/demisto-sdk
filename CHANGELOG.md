@@ -1,7 +1,7 @@
 # Changelog
 ## 1.38.13 (2025-10-15)
 ### Internal
-* Removed BA101 for actions. [#5090](https://github.com/demisto/demisto-sdk/pull/5090)
+* Removed BA101 for actions. [#5091](https://github.com/demisto/demisto-sdk/pull/5091)
 
 ## 1.38.11 (2025-09-07)
 ### Fix

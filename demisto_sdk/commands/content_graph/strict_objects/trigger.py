@@ -23,6 +23,7 @@ class _StrictTrigger(BaseStrictModel):
     automation_type: Optional[str] = Field(default=None)
     automation_id: Optional[str] = Field(default=None)
     supportedModules: Optional[list[str]] = Field(None, alias="supportedModules")
+    issilent: Optional[bool] = Field(default=None)
 
     @root_validator
     def validate_automation_playbook_logic(cls, values):

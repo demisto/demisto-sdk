@@ -13,6 +13,11 @@ mapping:
   color:
     type: str
     required: true
+  actionids:
+    type: seq
+    sequence:
+    - type: str
+    required: true
   tags:
     type: seq
     sequence:
@@ -21,10 +26,20 @@ mapping:
     type: str
   name:
     type: str
+    required: true
   display:
     type: str
   description:
     type: str
+    required: true
+  systeminstructions:
+    type: str
+  conversationstarters:
+    type: seq
+    sequence:
+    - type: str
+  autoenablenewactions:
+    type: bool
   marketplaces:
     type: seq
     sequence:

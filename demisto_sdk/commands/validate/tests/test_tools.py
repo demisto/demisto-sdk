@@ -944,14 +944,14 @@ def create_agentix_action_object(
     paths: Optional[List[str]] = None,
     values: Optional[List[Any]] = None,
     pack_info: Optional[Dict[str, Any]] = None,
-    file_name: Optional[str] = None,
+    action_name: Optional[str] = None,
 ) -> AgentixAction:
     """Creating a playbook object with altered fields from a default playbook yml structure.
     Args:
         paths (Optional[List[str]]): The keys to update.
         values (Optional[List[Any]]): The values to update.
         pack_info (Optional[List[str]]): The actions's pack name.
-        file_name (Optional[List[Any]]): The action's file name.
+        action_name (Optional[List[Any]]): The action's name.
     Returns:
         The playbook object.
     """
@@ -961,8 +961,8 @@ def create_agentix_action_object(
     if pack_info:
         pack.set_data(**pack_info)
     additional_params = {}
-    if file_name:
-        additional_params["name"] = file_name
+    if action_name:
+        additional_params["name"] = action_name
 
     agentix_action = pack.create_agentix_action(**additional_params)
     agentix_action.create_default_agentix_action("sample")

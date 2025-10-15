@@ -14,8 +14,10 @@ ContentTypes = AgentixAction
 
 class IsActionNameValidValidator(BaseValidator[ContentTypes]):
     error_code = "AG106"
-    description = ("AgentixAction name value may contain only letters (uppercase or lowercase), digits, "
-                   "or underscores. Spaces and special characters are not allowed.")
+    description = (
+        "AgentixAction name value may contain only letters (uppercase or lowercase), digits, "
+        "or underscores. Spaces and special characters are not allowed."
+    )
     rationale = "Action names must be user-friendly and conform to standards."
     error_message = (
         "The following AgentixAction name value is invalid: {0}.\n"
@@ -26,7 +28,7 @@ class IsActionNameValidValidator(BaseValidator[ContentTypes]):
     related_field = "name"
     is_auto_fixable = False
 
-    AGENTIX_ACTION_NAME_PATTERN = re.compile(r'^[a-z0-9_]+$', re.IGNORECASE)
+    AGENTIX_ACTION_NAME_PATTERN = re.compile(r"^[a-z0-9_]+$", re.IGNORECASE)
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

@@ -1,0 +1,4 @@
+changes:
+- description: Add agentix actions and agentix agents to the BC105 validator
+  type: internal
+pr_number: 5097

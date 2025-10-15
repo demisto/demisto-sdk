@@ -12,7 +12,6 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_c
 from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp import (
     IsCorrectMPValidator,
 )
-
 from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_display_name_valid import (
     IsDisplayNameValidValidator,
 )
@@ -222,6 +221,7 @@ def test_is_correct_marketplace():
     assert results[0].message == (
         "The following Agentix related content item 'test' should have only marketplace 'platform'."
     )
+
 
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",

@@ -27,15 +27,17 @@ class AgentixAction(YAML):
         if yml is not None:
             self.write_dict(yml)
 
-    def create_default_agentix_action(self, name: str = "sample_agentix_action"):
+    def create_default_agentix_action(self, name: str = "sample_agentix_action", id: str = "sample_agentix_action_id"):
         """Creates a new agentix action with basic data.
         Args:
             name: The name and ID of the new agentix action, default is "sample_agentix_action".
+            id: The ID of the new agentix action, default is "sample_agentix_action_id".
         """
         default_agentix_action_dir = "assets/default_agentix_action"
         with open(
             suite_join_path(default_agentix_action_dir, "agentix_action-sample.yml")
         ) as yml_file:
             yml = yaml.load(yml_file)
-            yml["id"] = yml["name"] = name
+            yml["id"] = id
+            yml["name"] = name
             self.build(yml=yml)

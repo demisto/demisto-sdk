@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Dict, Iterable, List, Union, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -75,6 +77,8 @@ ContentTypes = Union[
     CaseField,
     CaseLayout,
     CaseLayoutRule,
+    AgentixAgent,
+    AgentixAction,
 ]
 
 

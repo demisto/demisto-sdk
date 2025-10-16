@@ -11,6 +11,7 @@ class Trigger(JSONBased):
         super().__init__(trigger_dir_path, name, "")
 
         if json_content:
+            # Write exactly what the test provided; do not auto-normalize.
             self.write_json(json_content)
         else:
             self.create_default_trigger()
@@ -18,7 +19,9 @@ class Trigger(JSONBased):
     def create_default_trigger(self):
         self.write_json(
             {
+                "id": self.id,
                 "trigger_id": self.id,
+                "name": self.id,
                 "playbook_id": "mock playbook",
                 "suggestion_reason": "mock reason",
                 "description": "desc",

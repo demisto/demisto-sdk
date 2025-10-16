@@ -17,6 +17,7 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_display_nam
 )
 
 
+
 def test_is_forbidden_content_item():
     """
     Given

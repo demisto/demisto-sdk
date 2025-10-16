@@ -1,13 +1,19 @@
 from pathlib import Path
 
+import pytest
+
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.validate.tests.test_tools import create_agentix_action_object
 from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_content_item import (
     IsForbiddenContentItemValidator,
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp import (
     IsCorrectMPValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG106_is_action_name_valid import (
+    IsActionNameValidValidator,
 )
 
 
@@ -215,3 +221,42 @@ def test_is_correct_marketplace():
     assert results[0].message == (
         "The following Agentix related content item 'test' should have only marketplace 'platform'."
     )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        # Case 1: All valid AgentixAction names
+        (
+            [
+                create_agentix_action_object(paths=["name"], values=["ValidName"]),
+                create_agentix_action_object(paths=["name"], values=["Valid_Name"]),
+                create_agentix_action_object(paths=["name"], values=["A123"]),
+            ],
+            0,
+        ),
+        # Case 2: One invalid (contains space), one valid
+        (
+            [
+                create_agentix_action_object(paths=["name"], values=["Invalid Name"]),
+                create_agentix_action_object(paths=["name"], values=["ValidName"]),
+            ],
+            1,
+        ),
+        # Case 3: Invalid (contains forbidden character)
+        ([create_agentix_action_object(paths=["name"], values=["Invalid!"])], 1),
+    ],
+)
+def test_IsActionNameValid_obtain_invalid_content_items(
+    content_items, expected_number_of_failures
+):
+    """
+    Given
+    - AgentixAction content_items with various name values.
+    When
+    - Calling the IsActionNameValidValidator.obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failure return.
+    """
+    results = IsActionNameValidValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures

@@ -12,7 +12,9 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_c
 from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp import (
     IsCorrectMPValidator,
 )
-from demisto_sdk.commands.validate.validators.AG_validators.AG106_is_action_name_valid import IsActionNameValidValidator
+from demisto_sdk.commands.validate.validators.AG_validators.AG106_is_action_name_valid import (
+    IsActionNameValidValidator,
+)
 
 
 def test_is_forbidden_content_item():
@@ -220,6 +222,7 @@ def test_is_correct_marketplace():
         "The following Agentix related content item 'test' should have only marketplace 'platform'."
     )
 
+
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
@@ -241,9 +244,9 @@ def test_is_correct_marketplace():
             ],
             1,
             [
-                        "The following AgentixAction name value is invalid: Invalid Name.\n"
-        "AgentixAction name value may contain only letters (uppercase or lowercase), digits, or underscores. "
-        "Spaces and special characters are not allowed.",
+                "The following AgentixAction name value is invalid: Invalid Name.\n"
+                "AgentixAction name value may contain only letters (uppercase or lowercase), digits, or underscores. "
+                "Spaces and special characters are not allowed.",
             ],
         ),
         # Case 3: Invalid (contains forbidden character)
@@ -253,8 +256,7 @@ def test_is_correct_marketplace():
             [
                 "The following AgentixAction name value is invalid: Invalid!.\n"
                 "AgentixAction name value may contain only letters (uppercase or lowercase), digits, or underscores. "
-                "Spaces and special characters are not allowed."
-                ,
+                "Spaces and special characters are not allowed.",
             ],
         ),
     ],

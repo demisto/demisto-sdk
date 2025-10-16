@@ -35,11 +35,20 @@ class IsBreakingAgentixActionOutputBackwardsValidator(BaseValidator[ContentTypes
         ]
 
     def get_removed_outputs(self, content_item: ContentTypes) -> List[str]:
-        current_outputs: Set[str] = {
-            output.content_item_output_name for output in content_item.outputs if content_item.outputs
-        }
+        current_outputs: Set[str] = set()
+        if content_item.outputs:
+            current_outputs = {
+                output.content_item_output_name for output in content_item.outputs
+            }
+
         old_outputs: Set[str] = set()
-        if content_item.old_base_content_object and content_item.old_base_content_object.outputs: # type: ignore[attr-defined]
-            old_outputs = {output.content_item_output_name for output in content_item.old_base_content_object.outputs} # type: ignore[attr-defined]
+        if (
+            content_item.old_base_content_object
+            and content_item.old_base_content_object.outputs  # type: ignore[attr-defined]
+        ):
+            old_outputs = {
+                output.content_item_output_name
+                for output in content_item.old_base_content_object.outputs  # type: ignore[attr-defined]
+            }
 
         return list(old_outputs - current_outputs)

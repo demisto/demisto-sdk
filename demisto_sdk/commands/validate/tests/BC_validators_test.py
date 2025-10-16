@@ -870,22 +870,118 @@ def test_IsBreakingContextOutputBackwardsValidator_obtain_invalid_content_items(
     [
         # Case 1: No changes
         (
-            [create_agentix_action_object(paths=["outputs"], values=[[{"name": "Test.Output1", "description": "desc1", "type": "string", "underlyingoutputcontextpath": "Test.Output1"}]])],
-            [create_agentix_action_object(paths=["outputs"], values=[[{"name": "Test.Output1", "description": "desc1", "type": "string", "underlyingoutputcontextpath": "Test.Output1"}]])],
+            [
+                create_agentix_action_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {
+                                "name": "Test.Output1",
+                                "description": "desc1",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output1",
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_agentix_action_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {
+                                "name": "Test.Output1",
+                                "description": "desc1",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output1",
+                            }
+                        ]
+                    ],
+                )
+            ],
             0,
             [],
         ),
         # Case 2: Output removed
         (
-            [create_agentix_action_object(paths=["outputs"], values=[[{"name": "Test.Output1", "description": "desc1", "type": "string", "underlyingoutputcontextpath": "Test.Output1"}]])],
-            [create_agentix_action_object(paths=["outputs"], values=[[{"name": "Test.Output1", "description": "desc1", "type": "string", "underlyingoutputcontextpath": "Test.Output1"}, {"name": "Test.Output2", "description": "desc2", "type": "string", "underlyingoutputcontextpath": "Test.Output2"}]])],
+            [
+                create_agentix_action_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {
+                                "name": "Test.Output1",
+                                "description": "desc1",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output1",
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_agentix_action_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {
+                                "name": "Test.Output1",
+                                "description": "desc1",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output1",
+                            },
+                            {
+                                "name": "Test.Output2",
+                                "description": "desc2",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output2",
+                            },
+                        ]
+                    ],
+                )
+            ],
             1,
             ["The following output keys: Test.Output2 have been removed, please undo."],
         ),
         # Case 3: Output added
         (
-            [create_agentix_action_object(paths=["outputs"], values=[[{"name": "Test.Output1", "description": "desc1", "type": "string", "underlyingoutputcontextpath": "Test.Output1"}, {"name": "Test.Output2", "description": "desc2", "type": "string", "underlyingoutputcontextpath": "Test.Output2"}]])],
-            [create_agentix_action_object(paths=["outputs"], values=[[{"name": "Test.Output1", "description": "desc1", "type": "string", "underlyingoutputcontextpath": "Test.Output1"}]])],
+            [
+                create_agentix_action_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {
+                                "name": "Test.Output1",
+                                "description": "desc1",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output1",
+                            },
+                            {
+                                "name": "Test.Output2",
+                                "description": "desc2",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output2",
+                            },
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_agentix_action_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {
+                                "name": "Test.Output1",
+                                "description": "desc1",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output1",
+                            }
+                        ]
+                    ],
+                )
+            ],
             0,
             [],
         ),
@@ -917,13 +1013,14 @@ def test_IsBreakingAgentixActionOutputBackwardsValidator_obtain_invalid_content_
         - Case 4: Shouldn't fail.
     """
     create_old_file_pointers(content_items, old_content_items)
-    results = IsBreakingAgentixActionOutputBackwardsValidator().obtain_invalid_content_items(
-        content_items
+    results = (
+        IsBreakingAgentixActionOutputBackwardsValidator().obtain_invalid_content_items(
+            content_items
+        )
     )
     assert len(results) == expected_number_of_failures
     if expected_number_of_failures > 0:
         assert results[0].message == expected_msgs[0]
-
 
 
 @pytest.mark.parametrize(

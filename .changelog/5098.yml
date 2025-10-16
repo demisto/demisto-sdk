@@ -1,9 +1,4 @@
 changes:
-- description: |
-    Enhanced GR110 validator for Agentix Actions:
-    - Fixed error messages to show command names instead of integration/pack names
-    - Fixed error messages to display both AgentixAction input name and underlying argument name for better debugging
-    - Validator now runs bidirectionally: validates actions when changed, and also validates dependent actions when underlying integrations/scripts change
-    - Refactored code for better maintainability: extracted helper methods, reduced duplication (~35% code reduction)
-    - Improved validation to check both missing references AND UI name mismatches independently
-  type: fix
+- description: Enhanced GR110 validation to ensure Agentix Actions reference valid underlying content items with matching inputs and outputs.
+  type: feature
+pr_number: 5098

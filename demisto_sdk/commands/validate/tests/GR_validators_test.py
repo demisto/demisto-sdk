@@ -1810,6 +1810,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorAllFiles_valid_action(
         "args": [
             {
                 "name": "arg1",
+                "description": "First argument",
                 "underlyingargname": "arg1",
                 "required": True,
                 "type": "string",
@@ -1818,6 +1819,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorAllFiles_valid_action(
         "outputs": [
             {
                 "name": "Output1",
+                "description": "First output",
                 "underlyingoutputcontextpath": "Test.Output1",
                 "type": "string",
             },
@@ -1829,6 +1831,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorAllFiles_valid_action(
             "command": "test-command",
             "version": -1,
         },
+        "requiresuserapproval": False,
     }
     pack.create_agentix_action("TestAction", yml=agentix_action_yml)
 
@@ -1891,6 +1894,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorAllFiles_missing_argume
         "args": [
             {
                 "name": "missing_arg",
+                "description": "Missing argument",
                 "underlyingargname": "missing_arg",
                 "required": True,
                 "type": "string",
@@ -1904,6 +1908,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorAllFiles_missing_argume
             "command": "test-command",
             "version": -1,
         },
+        "requiresuserapproval": False,
     }
     pack.create_agentix_action("TestAction", yml=agentix_action_yml)
 
@@ -1968,6 +1973,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorListFiles_mismatched_ui
         "args": [
             {
                 "name": "wrong_name",
+                "description": "Test argument",
                 "underlyingargname": "correct_name",
                 "required": True,
                 "type": "string",
@@ -1981,6 +1987,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorListFiles_mismatched_ui
             "command": "test-command",
             "version": -1,
         },
+        "requiresuserapproval": False,
     }
     pack.create_agentix_action("TestAction", yml=agentix_action_yml)
 
@@ -2043,6 +2050,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorListFiles_bidirectional
         "args": [
             {
                 "name": "arg1",
+                "description": "Test argument",
                 "underlyingargname": "arg1",
                 "required": True,
                 "type": "string",
@@ -2056,6 +2064,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorListFiles_bidirectional
             "command": "test-command",
             "version": -1,
         },
+        "requiresuserapproval": False,
     }
     pack.create_agentix_action("TestAction", yml=agentix_action_yml)
 

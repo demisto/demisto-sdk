@@ -223,6 +223,7 @@ def test_is_correct_marketplace():
         "The following Agentix related content item 'test' should have only marketplace 'platform'."
     )
 
+
 def test_is_type_valid():
     """
     Given

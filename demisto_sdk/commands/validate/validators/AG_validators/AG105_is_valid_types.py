@@ -1,10 +1,11 @@
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Set
 
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
 )
 from demisto_sdk.commands.content_graph.objects.agentix_action import (
     AgentixActionArgument,
+    AgentixActionOutput,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -40,18 +41,18 @@ class IsTypeValid(BaseValidator[ContentTypes]):
             final_message = ""
 
             # Check invalid arguments types
-            if invalid_args_types := self.is_invalid_type(
+            if invalid_args_types := self.is_invalid_args_type(
                 content_item.args, args_valid_types
-            ):  # type: ignore
+            ):
                 final_message += (
                     f"Arguments with invalid types: {', '.join(invalid_args_types)}. "
                     f"Possible argument types: {', '.join(args_valid_types)}.\n"
                 )
 
             # Check invalid outputs types
-            if invalid_outputs_types := self.is_invalid_type(
+            if invalid_outputs_types := self.is_invalid_outputs_type(
                 content_item.outputs, outputs_valid_types
-            ):  # type: ignore
+            ):
                 final_message += (
                     f"Outputs with invalid types: {', '.join(invalid_outputs_types)}. "
                     f"Possible output types: {', '.join(outputs_valid_types)}."
@@ -71,10 +72,30 @@ class IsTypeValid(BaseValidator[ContentTypes]):
 
         return validation_results
 
-    def is_invalid_type(
-        self, elements: Optional[List[AgentixActionArgument]], valid_types: List[str]
-    ) -> set[str]:
-        invalid_element_names = set()
+    def is_invalid_args_type(
+        self,
+        elements: Optional[List[AgentixActionArgument]],
+        valid_types: List[str],
+    ) -> Set[str]:
+        invalid_element_names: Set[str] = set()
+        if elements is None:
+            return invalid_element_names
+
+        for element in elements:
+            if element.type.lower() not in valid_types:
+                invalid_element_names.add(element.name)
+
+        return invalid_element_names
+
+    def is_invalid_outputs_type(
+        self,
+        elements: Optional[List[AgentixActionOutput]],
+        valid_types: List[str],
+    ) -> Set[str]:
+        invalid_element_names: Set[str] = set()
+        if elements is None:
+            return invalid_element_names
+
         for element in elements:
             if element.type.lower() not in valid_types:
                 invalid_element_names.add(element.name)

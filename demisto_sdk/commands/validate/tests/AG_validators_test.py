@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_action import (
+    AgentixAction,
+    AgentixActionArgument,
+    AgentixActionOutput,
+)
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_content_item import (
@@ -14,9 +18,6 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG104_is_correct_sm 
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_valid_types import (
     IsTypeValid,
-)
-from demisto_sdk.commands.content_graph.objects.agentix_action import (
-    AgentixActionArgument,
 )
 
 
@@ -404,12 +405,29 @@ def test_is_type_valid():
         underlying_content_item_version=-1,
         agent_id="test",
         args=[
-            AgentixActionArgument(name="arg1", type="string"),
-            AgentixActionArgument(name="arg2", type="boolean"),
+            AgentixActionArgument(
+                name="arg1", description="arg1", type="string", underlyingargname="arg1"
+            ),
+            AgentixActionArgument(
+                name="arg2",
+                description="arg2",
+                type="boolean",
+                underlyingargname="arg2",
+            ),
         ],
         outputs=[
-            AgentixActionArgument(name="output1", type="json"),
-            AgentixActionArgument(name="output2", type="number"),
+            AgentixActionOutput(
+                name="output1",
+                type="json",
+                description="output1",
+                underlyingoutputcontextpath="output1",
+            ),
+            AgentixActionOutput(
+                name="output2",
+                type="number",
+                description="output2",
+                underlyingoutputcontextpath="output2",
+            ),
         ],
     )
 
@@ -433,10 +451,20 @@ def test_is_type_valid():
         underlying_content_item_version=-1,
         agent_id="test",
         args=[
-            AgentixActionArgument(name="arg_invalid", type="InvalidType"),
+            AgentixActionArgument(
+                name="arg_invalid",
+                type="InvalidType",
+                description="arg_invalid",
+                underlyingargname="arg_invalid",
+            ),
         ],
         outputs=[
-            AgentixActionArgument(name="output_invalid", type="Object"),
+            AgentixActionOutput(
+                name="output_invalid",
+                type="Object",
+                description="output_invalid",
+                underlyingoutputcontextpath="output_invalid",
+            ),
         ],
     )
 
@@ -460,12 +488,32 @@ def test_is_type_valid():
         underlying_content_item_version=-1,
         agent_id="test",
         args=[
-            AgentixActionArgument(name="arg_ok", type="number"),
-            AgentixActionArgument(name="arg_bad", type="Blob"),
+            AgentixActionArgument(
+                name="arg_ok",
+                type="number",
+                description="arg_ok",
+                underlyingargname="arg_ok",
+            ),
+            AgentixActionArgument(
+                name="arg_bad",
+                type="Blob",
+                description="arg_bad",
+                underlyingargname="arg_bad",
+            ),
         ],
         outputs=[
-            AgentixActionArgument(name="output_ok", type="string"),
-            AgentixActionArgument(name="output_bad", type="Array"),
+            AgentixActionOutput(
+                name="output_ok",
+                type="string",
+                description="output_ok",
+                underlyingoutputcontextpath="output_ok",
+            ),
+            AgentixActionOutput(
+                name="output_bad",
+                type="Array",
+                description="output_bad",
+                underlyingoutputcontextpath="output_bad",
+            ),
         ],
     )
 
@@ -477,13 +525,15 @@ def test_is_type_valid():
     assert len(results) == 2
 
     # Validate first message content
-    assert "invalid_action" in results[0].message
-    assert "arg_invalid" in results[0].message
-    assert "output_invalid" in results[0].message
-    assert "Possible argument types" in results[0].message
-    assert "Possible output types" in results[0].message
+    assert (
+        "The following Agentix action 'InvalidAction' contains invalid types:\n"
+        "Arguments with invalid types: arg_invalid. Possible argument types: unknown, keyValue, textArea, string, number, date, boolean.\nOutputs with invalid types: output_invalid. "
+        "Possible output types: unknown, string, number, date, boolean, json."
+    ) in results[0].message
 
     # Validate second message content
-    assert "mixed_action" in results[1].message
-    assert "arg_bad" in results[1].message
-    assert "output_bad" in results[1].message
+    assert (
+        "The following Agentix action 'MixedAction' contains invalid types:\n"
+        "Arguments with invalid types: arg_bad. Possible argument types: unknown, keyValue, textArea, string, number, date, boolean.\n"
+        "Outputs with invalid types: output_bad. Possible output types: unknown, string, number, date, boolean, json."
+    ) in results[1].message

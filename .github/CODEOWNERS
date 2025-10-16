@@ -26,3 +26,5 @@ demisto_sdk/commands/test_content/test_modeling_rule/ @AradCarmi
 
 # Misc
 demisto_sdk/__main__.py @samuelFain
+
+

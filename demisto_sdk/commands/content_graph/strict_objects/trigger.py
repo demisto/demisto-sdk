@@ -16,14 +16,14 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 class _StrictTrigger(BaseStrictModel):
     trigger_id: str
     trigger_name: str
-    playbook_id: str
+    playbook_id: Optional[str]
     description: str
     suggestion_reason: str
     alerts_filter: Optional[AlertsFilter] = None
-    automation_type: Optional[str] = Field(default=None)
-    automation_id: Optional[str] = Field(default=None)
+    automation_type: Optional[str]
+    automation_id: Optional[str]
     supportedModules: Optional[list[str]] = Field(None, alias="supportedModules")
-    issilent: Optional[bool] = Field(default=None)
+    issilent: Optional[bool] = Field(default=False)
 
     @root_validator
     def validate_automation_playbook_logic(cls, values):

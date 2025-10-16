@@ -16,7 +16,6 @@ mapping:
     required: true
   playbook_id:
     type: str
-    required: true
   description:
     type: str
     required: true

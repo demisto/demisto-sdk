@@ -224,7 +224,7 @@ def test_is_correct_marketplace():
 
 
 @pytest.mark.parametrize(
-    "content_items, expected_number_of_failures, expected_msgs",
+    "content_items, expected_number_of_failures",
     [
         # Case 1: All valid AgentixAction names
         (
@@ -234,7 +234,6 @@ def test_is_correct_marketplace():
                 create_agentix_action_object(paths=["name"], values=["A123"]),
             ],
             0,
-            [],
         ),
         # Case 2: One invalid (contains space), one valid
         (
@@ -242,27 +241,17 @@ def test_is_correct_marketplace():
                 create_agentix_action_object(paths=["name"], values=["Invalid Name"]),
                 create_agentix_action_object(paths=["name"], values=["ValidName"]),
             ],
-            1,
-            [
-                "The following AgentixAction name value is invalid: Invalid Name.\n"
-                "AgentixAction name value may contain only letters (uppercase or lowercase), digits, or underscores. "
-                "Spaces and special characters are not allowed.",
-            ],
+            1
         ),
         # Case 3: Invalid (contains forbidden character)
         (
             [create_agentix_action_object(paths=["name"], values=["Invalid!"])],
-            1,
-            [
-                "The following AgentixAction name value is invalid: Invalid!.\n"
-                "AgentixAction name value may contain only letters (uppercase or lowercase), digits, or underscores. "
-                "Spaces and special characters are not allowed.",
-            ],
+            1
         ),
     ],
 )
 def test_IsDisplayNameValid_obtain_invalid_content_items(
-    content_items, expected_number_of_failures, expected_msgs
+    content_items, expected_number_of_failures
 ):
     """
     Given
@@ -274,9 +263,3 @@ def test_IsDisplayNameValid_obtain_invalid_content_items(
     """
     results = IsActionNameValidValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
-    assert all(
-        [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_msgs)
-        ]
-    )

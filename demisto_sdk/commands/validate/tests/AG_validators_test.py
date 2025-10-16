@@ -5,13 +5,12 @@ import pytest
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.validate.tests.test_tools import create_agentix_action_object
 from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_content_item import (
     IsForbiddenContentItemValidator,
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp import (
     IsCorrectMPValidator,
-)
-from demisto_sdk.commands.validate.validators.AG_validators.AG104_is_correct_sm import (
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG106_is_action_name_valid import IsActionNameValidValidator
 

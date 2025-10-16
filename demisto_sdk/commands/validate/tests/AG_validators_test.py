@@ -241,13 +241,10 @@ def test_is_correct_marketplace():
                 create_agentix_action_object(paths=["name"], values=["Invalid Name"]),
                 create_agentix_action_object(paths=["name"], values=["ValidName"]),
             ],
-            1
+            1,
         ),
         # Case 3: Invalid (contains forbidden character)
-        (
-            [create_agentix_action_object(paths=["name"], values=["Invalid!"])],
-            1
-        ),
+        ([create_agentix_action_object(paths=["name"], values=["Invalid!"])], 1),
     ],
 )
 def test_IsDisplayNameValid_obtain_invalid_content_items(

@@ -39,6 +39,7 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         self.requires_user_approval: Optional[bool] = self.yml_data.get(
             "requiresuserapproval"
         )
+        self.connect_to_dependencies()
 
     @cached_property
     def field_mapping(self):
@@ -60,3 +61,23 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
     @property
     def few_shots(self) -> Optional[list[str]]:
         return self.yml_data.get("fewshots", [])
+
+    def connect_to_dependencies(self) -> None:
+        """Create USES relationship to the underlying content item."""
+        # Determine the target content type based on underlying item type
+        if self.underlying_content_item_type == "command":
+            # For commands, use USES_COMMAND_OR_SCRIPT with the command name
+            if self.underlying_content_item_command:
+                self.add_command_or_script_dependency(
+                    self.underlying_content_item_command, is_mandatory=True
+                )
+        elif self.underlying_content_item_type == "script":
+            # For scripts, use USES_BY_ID with the script ID
+            self.add_dependency_by_id(
+                self.underlying_content_item_id, ContentType.SCRIPT, is_mandatory=True
+            )
+        # elif self.underlying_content_item_type == "playbook":
+        #     # For playbooks, use USES_BY_ID with the playbook ID
+        #     self.add_dependency_by_id(
+        #         self.underlying_content_item_id, ContentType.PLAYBOOK, is_mandatory=True
+        #     )

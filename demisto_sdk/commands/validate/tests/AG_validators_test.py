@@ -237,7 +237,7 @@ def test_is_correct_marketplace():
                 create_agentix_action_object(paths=["display"], values=["A123"]),
                 create_agentix_action_object(paths=["display"], values=["A_1-2 3"]),
             ],
-            0
+            0,
         ),
         # Case 2: One invalid (starts with digit), one valid
         (
@@ -245,13 +245,10 @@ def test_is_correct_marketplace():
                 create_agentix_action_object(paths=["display"], values=["1Invalid"]),
                 create_agentix_action_object(paths=["display"], values=["ValidName"]),
             ],
-            1
+            1,
         ),
         # Case 3: Invalid (contains forbidden character)
-        (
-            [create_agentix_action_object(paths=["display"], values=["Invalid!"])],
-            1
-        ),
+        ([create_agentix_action_object(paths=["display"], values=["Invalid!"])], 1),
         # Case 4: Multiple invalid
         (
             [
@@ -259,7 +256,7 @@ def test_is_correct_marketplace():
                 create_agentix_action_object(paths=["display"], values=["Invalid!"]),
                 create_agentix_action_object(paths=["display"], values=["ValidName"]),
             ],
-            2
+            2,
         ),
     ],
 )

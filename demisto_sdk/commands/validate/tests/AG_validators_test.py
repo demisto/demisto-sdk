@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -12,6 +14,7 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp 
 from demisto_sdk.commands.validate.validators.AG_validators.AG104_is_correct_sm import (
     IsCorrectSMValidator,
 )
+from demisto_sdk.commands.validate.validators.AG_validators.AG106_is_action_name_valid import IsActionNameValidValidator
 
 
 def test_is_forbidden_content_item():
@@ -361,3 +364,63 @@ def test_is_correct_supportedModules():
     assert (
         "The following Agentix related content item 'test' should have only 'agentix' type supportedModules. Valid modules"
     ) in results[0].message
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        # Case 1: All valid AgentixAction names
+        (
+            [
+                create_agentix_action_object(paths=["name"], values=["ValidName"]),
+                create_agentix_action_object(paths=["name"], values=["Valid_Name"]),
+                create_agentix_action_object(paths=["name"], values=["A123"]),
+            ],
+            0,
+            [],
+        ),
+        # Case 2: One invalid (contains space), one valid
+        (
+            [
+                create_agentix_action_object(paths=["name"], values=["Invalid Name"]),
+                create_agentix_action_object(paths=["name"], values=["ValidName"]),
+            ],
+            1,
+            [
+                        "The following AgentixAction name value is invalid: Invalid Name.\n"
+        "AgentixAction name value may contain only letters (uppercase or lowercase), digits, or underscores. "
+        "Spaces and special characters are not allowed.",
+            ],
+        ),
+        # Case 3: Invalid (contains forbidden character)
+        (
+            [create_agentix_action_object(paths=["name"], values=["Invalid!"])],
+            1,
+            [
+                "The following AgentixAction name value is invalid: Invalid!.\n"
+                "AgentixAction name value may contain only letters (uppercase or lowercase), digits, or underscores. "
+                "Spaces and special characters are not allowed."
+                ,
+            ],
+        ),
+    ],
+)
+def test_IsDisplayNameValid_obtain_invalid_content_items(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    - AgentixAction content_items with various display values.
+    When
+    - Calling the IsDisplayNameValid.obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failure return and that the error msg is correct.
+    """
+    results = IsActionNameValidValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

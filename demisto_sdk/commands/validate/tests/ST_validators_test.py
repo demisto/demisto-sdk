@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.parsers import (
     ScriptParser,
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+from demisto_sdk.commands.content_graph.strict_objects.trigger import _StrictTrigger
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_integration_object,
@@ -740,3 +741,71 @@ def test_SchemaValidator_triggers_section__invalid(
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
     assert len(results) == 1
     assert expected_error_substring in results[0].message
+
+
+def test_validate_automation_playbook_logic_valid_with_automation_pair():
+    """
+    Given:
+        - A trigger with both automation_id and automation_type provided.
+    When:
+        - Instantiating StrictTrigger.
+    Then:
+        - Validation passes (no exception) and fields are set.
+    """
+    values = {
+        "trigger_id": "t1",
+        "trigger_name": "Test Trigger",
+        "description": "desc",
+        "suggestion_reason": "reason",
+        "automation_type": "command",
+        "automation_id": "Auto123",
+    }
+    returned = _StrictTrigger.validate_automation_playbook_logic(values=values)
+    assert returned["automation_id"] == "Auto123"
+    assert returned["automation_type"] == "command"
+
+
+def test_validate_automation_playbook_logic_invalid_both_automation_and_playbook():
+    """
+    Given:
+        - A trigger that provides both playbook_id and automation fields.
+    When:
+        - Instantiating StrictTrigger.
+    Then:
+        - ValidationError is raised with an appropriate message.
+    """
+    values = {
+        "trigger_id": "t2",
+        "trigger_name": "Bad Trigger",
+        "description": "desc",
+        "suggestion_reason": "reason",
+        "playbook_id": "Playbook123",
+        "automation_type": "playbook",
+        "automation_id": "Auto456",
+    }
+    with pytest.raises(ValueError) as exc:
+        _StrictTrigger.validate_automation_playbook_logic(values=values)
+    assert "Cannot provide both automation fields and playbook_id." in str(exc.value)
+
+
+def test_validate_automation_playbook_logic_invalid_partial_automation_fields():
+    """
+    Given:
+        - A trigger that provides only automation_type without automation_id.
+    When:
+        - Instantiating StrictTrigger.
+    Then:
+        - ValidationError is raised indicating both must be provided together.
+    """
+    values = {
+        "trigger_id": "t3",
+        "trigger_name": "Partial Trigger",
+        "description": "desc",
+        "suggestion_reason": "reason",
+        "automation_type": "command",
+    }
+    with pytest.raises(ValueError) as exc:
+        _StrictTrigger.validate_automation_playbook_logic(values=values)
+    assert "automation_id and automation_type must be provided together." in str(
+        exc.value
+    )

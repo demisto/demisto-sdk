@@ -45,7 +45,7 @@ class _StrictTrigger(BaseStrictModel):
 
         # Check mutual exclusivity
         has_automation = automation_id and automation_type
-        has_playbook = playbook_id is not None
+        has_playbook = bool(playbook_id)
 
         if has_automation and has_playbook:
             raise ValueError("Cannot provide both automation fields and playbook_id.")

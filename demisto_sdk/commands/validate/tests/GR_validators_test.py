@@ -1786,6 +1786,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorAllFiles_valid_action(
             "commands": [
                 {
                     "name": "test-command",
+                    "description": "Test command",
                     "arguments": [
                         {
                             "name": "arg1",
@@ -1872,6 +1873,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorAllFiles_missing_argume
             "commands": [
                 {
                     "name": "test-command",
+                    "description": "Test command",
                     "arguments": [
                         {
                             "name": "valid_arg",
@@ -1951,6 +1953,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorListFiles_mismatched_ui
             "commands": [
                 {
                     "name": "test-command",
+                    "description": "Test command",
                     "arguments": [
                         {
                             "name": "correct_name",
@@ -2032,6 +2035,7 @@ def test_IsAgentixActionUsingExistingContentItemValidatorListFiles_bidirectional
             "commands": [
                 {
                     "name": "test-command",
+                    "description": "Test command",
                     "arguments": [
                         {"name": "arg1", "description": "Argument", "required": True}
                     ],

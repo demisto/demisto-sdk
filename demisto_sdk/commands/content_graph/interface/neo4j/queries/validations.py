@@ -528,3 +528,49 @@ def get_supported_modules_mismatch_content_items(
         )
         results[item.get("content_item").element_id] = neo_res
     return results
+
+
+def get_agentix_actions_using_content_items(
+    tx: Transaction, content_item_ids: List[str]
+) -> List[graph.Node]:
+    """
+    Query graph to return all AgentixActions that use the specified
+    Integration or Script IDs.
+
+    This function finds AgentixActions that depend on the given Integrations
+    or Scripts, either directly (for Scripts) or through commands
+    (for Integrations).
+
+    When an Integration/Script is modified, we need to validate ALL
+    AgentixActions that depend on it, regardless of pack, since a breaking
+    change affects all dependents.
+
+    Args:
+        tx: The Transaction to contact the graph with.
+        content_item_ids: List of Integration or Script object IDs to find
+            dependent AgentixActions for.
+
+    Returns:
+        List of AgentixAction nodes that use the specified content items.
+    """
+    if not content_item_ids:
+        return []
+
+    query = f"""
+    // Find AgentixActions using commands from specified Integrations
+    OPTIONAL MATCH (agentix_action_cmd:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[:{RelationshipType.HAS_COMMAND}]-(content_item_int:{ContentType.INTEGRATION})
+    WHERE content_item_int.object_id IN {content_item_ids}
+    WITH collect(DISTINCT agentix_action_cmd) AS actions_via_commands
+
+    // Find AgentixActions using Scripts directly
+    OPTIONAL MATCH (agentix_action_script:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item_script:{ContentType.SCRIPT})
+    WHERE content_item_script.object_id IN {content_item_ids}
+    WITH actions_via_commands, collect(DISTINCT agentix_action_script) AS actions_via_scripts
+
+    // Combine and return all unique AgentixActions
+    WITH [action IN actions_via_commands + actions_via_scripts WHERE action IS NOT NULL] AS all_actions
+    UNWIND all_actions AS agentix_action
+    RETURN DISTINCT agentix_action
+    """
+    items = run_query(tx, query)
+    return [item.get("agentix_action") for item in items]

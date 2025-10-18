@@ -1,0 +1,4 @@
+changes:
+- description: Enhanced GR110 validation to ensure Agentix Actions reference valid underlying content items with matching inputs and outputs.
+  type: feature
+pr_number: 5098

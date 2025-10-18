@@ -6,6 +6,10 @@ from typing import Iterable, List, Optional, Union
 
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_action import (
+    AgentixActionArgument,
+    AgentixActionOutput,
+)
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -58,16 +62,19 @@ class IsAgentixActionUsingExistingContentItemValidator(
 
         agentix_actions_to_validate = set()
 
+        integration_script_ids = []
         for content_item in content_items:
             if isinstance(content_item, AgentixAction):
                 agentix_actions_to_validate.add(content_item)
-
-            # If it's an Integration, Script, find dependent AgentixActions
             elif isinstance(content_item, (Integration, Script)):
-                for relationship_data in content_item.used_by:
-                    dependent_item = relationship_data.content_item_to
-                    if dependent_item.content_type == ContentType.AGENTIX_ACTION:
-                        agentix_actions_to_validate.add(dependent_item)  # type: ignore[arg-type]
+                integration_script_ids.append(content_item.object_id)
+
+        # Query graph for AgentixActions that depend on the Integration/Script items
+        if integration_script_ids:
+            dependent_actions = self.graph.get_agentix_actions_using_content_items(
+                integration_script_ids
+            )
+            agentix_actions_to_validate.update(dependent_actions)
 
         for content_item in agentix_actions_to_validate:
             content_item_type = content_item.underlying_content_item_type
@@ -142,25 +149,22 @@ class IsAgentixActionUsingExistingContentItemValidator(
                         )
                     )
                 else:
-                    # Validate inputs and outputs
-                    if content_item.args:
-                        results.extend(
-                            self.validate_inputs(
-                                content_item,
-                                underlying_item,
-                                content_item_type,
-                                item_name=command_or_script_name,
-                            )
+                    results.extend(
+                        self.validate_inputs(
+                            content_item,
+                            underlying_item,
+                            content_item_type,
+                            item_name=command_or_script_name,
                         )
-                    if content_item.outputs:
-                        results.extend(
-                            self.validate_outputs(
-                                content_item,
-                                underlying_item,
-                                content_item_type,
-                                item_name=command_or_script_name,
-                            )
+                    )
+                    results.extend(
+                        self.validate_outputs(
+                            content_item,
+                            underlying_item,
+                            content_item_type,
+                            item_name=command_or_script_name,
                         )
+                    )
 
         return results
 
@@ -210,7 +214,9 @@ class IsAgentixActionUsingExistingContentItemValidator(
 
         # script
         if isinstance(underlying_item, Script):
-            return {arg.name: arg for arg in (underlying_item.args or [])}  # type: ignore[union-attr]
+            if hasattr(underlying_item, "data"):
+                args = underlying_item.data.get("args", [])
+                return {arg["name"]: arg for arg in args}
         return {}
 
     def _get_underlying_outputs(
@@ -232,11 +238,15 @@ class IsAgentixActionUsingExistingContentItemValidator(
             }
 
         # script
-        return {
-            out.contextPath: out  # type: ignore[union-attr]
-            for out in (underlying_item.outputs or [])  # type: ignore[union-attr]
-            if hasattr(out, "contextPath")
-        }
+        if isinstance(underlying_item, Script):
+            if hasattr(underlying_item, "data"):
+                outputs = underlying_item.data.get("outputs", [])
+                return {
+                    out.get("contextPath"): out
+                    for out in outputs
+                    if out.get("contextPath")
+                }
+        return {}
 
     def _create_validation_error(
         self, content_item: AgentixAction, message: str
@@ -299,9 +309,15 @@ class IsAgentixActionUsingExistingContentItemValidator(
         underlying_args = self._get_underlying_arguments(
             underlying_item, content_item_type, item_name
         )
+
+        action_args = content_item.args
+        if not action_args and hasattr(content_item, "data"):
+            args_data = content_item.data.get("args", [])
+            action_args = [AgentixActionArgument(**arg) for arg in args_data]
+
         return self._validate_references(
             content_item,
-            content_item.args or [],
+            action_args or [],
             underlying_args,
             "input",
             content_item_type,
@@ -319,9 +335,15 @@ class IsAgentixActionUsingExistingContentItemValidator(
         underlying_outputs = self._get_underlying_outputs(
             underlying_item, content_item_type, item_name
         )
+
+        action_outputs = content_item.outputs
+        if not action_outputs and hasattr(content_item, "data"):
+            outputs_data = content_item.data.get("outputs", [])
+            action_outputs = [AgentixActionOutput(**out) for out in outputs_data]
+
         return self._validate_references(
             content_item,
-            content_item.outputs or [],
+            action_outputs or [],
             underlying_outputs,
             "output",
             content_item_type,

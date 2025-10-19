@@ -31,7 +31,7 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
         self.connect_to_dependencies()
 
     def connect_to_dependencies(self) -> None:
-        """Collects the playbook used in the trigger as a mandatory dependency."""
+        """Collects the actions used in the agent as a mandatory dependency."""
         if actions_ids := self.yml_data.get("actionIds"):
             for id in actions_ids:
                 self.add_dependency_by_id(id, ContentType.AGENTIX_ACTION)

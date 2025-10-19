@@ -942,7 +942,7 @@ def test_IsBreakingContextOutputBackwardsValidator_obtain_invalid_content_items(
                 )
             ],
             1,
-            ["The following output keys: Test.Output2 have been removed, please undo."],
+            ["The following output keys have been removed, please undo: Test.Output2"],
         ),
         # Case 3: Output added
         (

@@ -16,7 +16,7 @@ class IsBreakingAgentixActionOutputBackwardsValidator(BaseValidator[ContentTypes
     error_code = "BC116"
     description = "Validate that no context output keys were removed from the Agentix action's output section."
     rationale = "To ensure we don't break backward compatibility."
-    error_message = "The following output keys: {0} have been removed, please undo."
+    error_message = "The following output keys have been removed, please undo: {0}"
     related_field = "outputs"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.MODIFIED]

@@ -20,7 +20,7 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.color: str = self.yml_data.get("color")  # type: ignore
-        self.actionids: list[str] = self.yml_data.get("actionids")  # type: ignore
+        self.actionids: list[str] = self.yml_data.get("actionIds")  # type: ignore
         self.systeminstructions: str = self.yml_data.get("systeminstructions", "")
         self.conversationstarters: list[str] = self.yml_data.get(
             "conversationstarters", []
@@ -32,7 +32,7 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
 
     def connect_to_dependencies(self) -> None:
         """Collects the playbook used in the trigger as a mandatory dependency."""
-        if actions_ids := self.yml_data.get("actionids"):
+        if actions_ids := self.yml_data.get("actionIds"):
             for id in actions_ids:
                 self.add_dependency_by_id(id, ContentType.AGENTIX_ACTION)
 

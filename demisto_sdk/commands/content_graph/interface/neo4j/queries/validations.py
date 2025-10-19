@@ -558,19 +558,16 @@ def get_agentix_actions_using_content_items(
 
     query = f"""
     // Find AgentixActions using commands from specified Integrations
-    OPTIONAL MATCH (agentix_action_cmd:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[:{RelationshipType.HAS_COMMAND}]-(content_item_int:{ContentType.INTEGRATION})
-    WHERE content_item_int.object_id IN {content_item_ids}
-    WITH collect(DISTINCT agentix_action_cmd) AS actions_via_commands
+    MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[:{RelationshipType.HAS_COMMAND}]-(content_item:{ContentType.INTEGRATION})
+    WHERE content_item.object_id IN {content_item_ids}
+    RETURN agentix_action
+
+    UNION
 
     // Find AgentixActions using Scripts directly
-    OPTIONAL MATCH (agentix_action_script:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item_script:{ContentType.SCRIPT})
-    WHERE content_item_script.object_id IN {content_item_ids}
-    WITH actions_via_commands, collect(DISTINCT agentix_action_script) AS actions_via_scripts
-
-    // Combine and return all unique AgentixActions
-    WITH [action IN actions_via_commands + actions_via_scripts WHERE action IS NOT NULL] AS all_actions
-    UNWIND all_actions AS agentix_action
-    RETURN DISTINCT agentix_action
+    MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item:{ContentType.SCRIPT})
+    WHERE content_item.object_id IN {content_item_ids}
+    RETURN agentix_action
     """
     items = run_query(tx, query)
     return [item.get("agentix_action") for item in items]

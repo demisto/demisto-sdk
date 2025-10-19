@@ -1,5 +1,5 @@
 # Infra team
-* @marketplace-infra-team-managers
+* @demisto/marketplace-infra-team-managers
 # Validations
 demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk @YuvHayun @yedidyacohenpalo
 demisto_sdk/commands/common/hook_validations/ @idovandijk @YuvHayun @yedidyacohenpalo

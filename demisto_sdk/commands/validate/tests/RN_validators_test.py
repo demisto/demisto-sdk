@@ -30,6 +30,7 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN108_is_rn_added_to
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN111_is_docker_entry_match_yml import (
     IsDockerEntryMatchYmlValidator,
+    get_docker_image_entry,
 )
 from demisto_sdk.commands.validate.validators.RN_validators.RN112_is_bc_rn_exist import (
     IsBCRNExistValidator,
@@ -760,6 +761,53 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items(
     assert len(results) == expected_number_of_failures
     assert all(
         [res_msg in expected_msgs for res_msg in [result.message for result in results]]
+    )
+
+
+def test_IsDockerEntryMatchYmlValidator_integration_name_prefix_matching():
+    """
+    Given:
+    - Two integrations with similar names where one is a prefix of the other
+      (e.g., "Netskope Event Collector" and "Netskope Event Collector v2")
+    - Release notes containing docker updates for both integrations
+
+    When:
+    - Calling get_docker_image_entry function for each integration
+
+    Then:
+    - Should correctly identify the docker image for each integration
+    - Should not incorrectly match prefix names regardless of order
+    """
+    release_notes = """#### Integrations
+        ##### Netskope Event Collector
+        - Updated the Docker image to: *demisto/python3:3.12.11.4508456*.
+        ##### Netskope Event Collector v2
+        - Updated the Docker image to: *demisto/auth-utils:1.0.0.4578605*."""
+
+    # Test exact matching works correctly
+    assert (
+        get_docker_image_entry(release_notes, "Netskope Event Collector")
+        == "demisto/python3:3.12.11.4508456"
+    )
+    assert (
+        get_docker_image_entry(release_notes, "Netskope Event Collector v2")
+        == "demisto/auth-utils:1.0.0.4578605"
+    )
+
+    # Test with reversed order to ensure order independence
+    release_notes_reversed = """#### Integrations
+        ##### Netskope Event Collector v2
+        - Updated the Docker image to: *demisto/auth-utils:1.0.0.4578605*.
+        ##### Netskope Event Collector
+        - Updated the Docker image to: *demisto/python3:3.12.11.4508456*."""
+
+    assert (
+        get_docker_image_entry(release_notes_reversed, "Netskope Event Collector")
+        == "demisto/python3:3.12.11.4508456"
+    )
+    assert (
+        get_docker_image_entry(release_notes_reversed, "Netskope Event Collector v2")
+        == "demisto/auth-utils:1.0.0.4578605"
     )
 
 

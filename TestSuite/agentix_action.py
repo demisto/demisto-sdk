@@ -44,3 +44,8 @@ class AgentixAction(YAML):
             yml["id"] = action_id
             yml["name"] = name
             self.build(yml=yml)
+
+    def set_agentix_action_name(self, name: str):
+        self.yml.update({"name": name})
+
+

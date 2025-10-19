@@ -28,9 +28,6 @@ class NoReadmeInternalScripts(BaseValidator[Script]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                content_item.is_internal
-                or content_item.is_llm
-            )
+            if (content_item.is_internal or content_item.is_llm)
             and content_item.readme.exist
         ]

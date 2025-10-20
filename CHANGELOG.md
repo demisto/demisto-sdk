@@ -1,4 +1,22 @@
 # Changelog
+## 1.38.12 (2025-10-20)
+### Feature
+* Add graph support for the supportedModules field in commands. Also, add command mismatch validation to GR109. [#5028](https://github.com/demisto/demisto-sdk/pull/5028)
+* Format new playbooks as silent playbooks. [#5037](https://github.com/demisto/demisto-sdk/pull/5037)
+* Added the *automation_id* and *automation_type* fields to the **Trigger** Content type schema to support automation recommendations. [#5067](https://github.com/demisto/demisto-sdk/pull/5067)
+* Add new reliability options to feed configuration validator (IN122). [#5085](https://github.com/demisto/demisto-sdk/pull/5085)
+
+### Fix
+* Changed the file name from "secrets_ignore" to "secrets-ignore" in pack files validator PA128 to be consistent with actual file names [#5070](https://github.com/demisto/demisto-sdk/pull/5070)
+* Fixed RN111 validator to use exact matching instead of partial matching for integration names and docker images. [#5064](https://github.com/demisto/demisto-sdk/pull/5064)
+
+### Internal
+* Remove AG104 validation. [#5089](https://github.com/demisto/demisto-sdk/pull/5089)
+* Modified the ***validate*** and ***format*** commands to enforce that the 'sectionorder' key in YAML files must be lowercase. [#5065](https://github.com/demisto/demisto-sdk/pull/5065)
+* Added AgentixAction to test tools. [#5088](https://github.com/demisto/demisto-sdk/pull/5088)
+* Remove BA101 validation for actions. [#5091](https://github.com/demisto/demisto-sdk/pull/5091)
+
+
 ## 1.38.11 (2025-09-07)
 ### Fix
 * Fixed an issue in marketplace suffix preparer. [#5055](https://github.com/demisto/demisto-sdk/pull/5055)

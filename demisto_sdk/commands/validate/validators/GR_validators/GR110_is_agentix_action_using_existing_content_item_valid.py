@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.objects.agentix_action import (
     AgentixActionOutput,
 )
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -18,7 +19,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[AgentixAction, Integration, Script]
+ContentTypes = Union[AgentixAction, Integration, Script, Playbook]
 
 
 def replace_alerts_with_incidents(text: str) -> str:
@@ -62,17 +63,17 @@ class IsAgentixActionUsingExistingContentItemValidator(
 
         agentix_actions_to_validate = set()
 
-        integration_script_ids = []
+        integration_script_playbook_ids = []
         for content_item in content_items:
             if isinstance(content_item, AgentixAction):
                 agentix_actions_to_validate.add(content_item)
-            elif isinstance(content_item, (Integration, Script)):
-                integration_script_ids.append(content_item.object_id)
+            elif isinstance(content_item, (Integration, Script, Playbook)):
+                integration_script_playbook_ids.append(content_item.object_id)
 
-        # Query graph for AgentixActions that depend on the Integration/Script items
-        if integration_script_ids:
+        # Query graph for AgentixActions that depend on the Integration/Script/Playbook items
+        if integration_script_playbook_ids:
             dependent_actions = self.graph.get_agentix_actions_using_content_items(
-                integration_script_ids
+                integration_script_playbook_ids
             )
             agentix_actions_to_validate.update(dependent_actions)
 
@@ -89,7 +90,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
                         validator=self,
                         message=(
                             f"The action '{content_item.name}' wraps a content type '{content_item_type}', "
-                            "which is currently unsupported in Agentix. Only 'command' and 'script' types are allowed."
+                            "which is currently unsupported in Agentix. Only 'command', 'script', and 'playbook' types are allowed."
                         ),
                         content_object=content_item,
                     )
@@ -170,7 +171,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
 
     def _get_correct_item(
         self, graph_result: List, item_type: str, integration_or_script_id: str
-    ) -> Optional[Integration | Script]:
+    ) -> Optional[Integration | Script | Playbook]:
         """Get the correct item from graph_result based on type and integration.
 
         For commands, returns the Integration since args/outputs are only in Integration.data.
@@ -196,13 +197,18 @@ class IsAgentixActionUsingExistingContentItemValidator(
 
     def _get_underlying_arguments(
         self,
-        underlying_item: Integration | Script,
+        underlying_item: Integration | Script | Playbook,
         content_item_type: str,
         item_name: str,
     ) -> dict:
         """Extract underlying arguments/inputs based on content type."""
         if content_item_type == "playbook":
-            # Playbook not currently supported, return empty dict
+            # Extract inputs from playbook
+            if isinstance(underlying_item, Playbook):
+                if hasattr(underlying_item, "data"):
+                    inputs = underlying_item.data.get("inputs", [])
+                    # Playbook inputs use 'key' instead of 'name'
+                    return {inp.get("key"): inp for inp in inputs if inp.get("key")}
             return {}
 
         if content_item_type == "command":
@@ -221,13 +227,22 @@ class IsAgentixActionUsingExistingContentItemValidator(
 
     def _get_underlying_outputs(
         self,
-        underlying_item: Integration | Script,
+        underlying_item: Integration | Script | Playbook,
         content_item_type: str,
         item_name: str,
     ) -> dict:
         """Extract underlying outputs based on content type."""
         if content_item_type == "playbook":
-            # Playbook not currently supported, return empty dict
+            # Extract outputs from playbook
+            if isinstance(underlying_item, Playbook):
+                if hasattr(underlying_item, "data"):
+                    outputs = underlying_item.data.get("outputs", [])
+                    # Playbook outputs use 'contextPath' like scripts/commands
+                    return {
+                        out.get("contextPath"): out
+                        for out in outputs
+                        if out.get("contextPath")
+                    }
             return {}
 
         if content_item_type == "command":
@@ -301,7 +316,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
     def validate_inputs(
         self,
         content_item: AgentixAction,
-        underlying_item: Integration | Script,
+        underlying_item: Integration | Script | Playbook,
         content_item_type: str,
         item_name: str,
     ) -> List[ValidationResult]:
@@ -327,7 +342,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
     def validate_outputs(
         self,
         content_item: AgentixAction,
-        underlying_item: Integration | Script,
+        underlying_item: Integration | Script | Playbook,
         content_item_type: str,
         item_name: str,
     ) -> List[ValidationResult]:

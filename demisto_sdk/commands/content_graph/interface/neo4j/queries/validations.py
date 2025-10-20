@@ -535,19 +535,19 @@ def get_agentix_actions_using_content_items(
 ) -> List[graph.Node]:
     """
     Query graph to return all AgentixActions that use the specified
-    Integration or Script IDs.
+    Integration, Script, or Playbook IDs.
 
-    This function finds AgentixActions that depend on the given Integrations
-    or Scripts, either directly (for Scripts) or through commands
+    This function finds AgentixActions that depend on the given Integrations,
+    Scripts, or Playbooks, either directly (for Scripts/Playbooks) or through commands
     (for Integrations).
 
-    When an Integration/Script is modified, we need to validate ALL
+    When an Integration/Script/Playbook is modified, we need to validate ALL
     AgentixActions that depend on it, regardless of pack, since a breaking
     change affects all dependents.
 
     Args:
         tx: The Transaction to contact the graph with.
-        content_item_ids: List of Integration or Script object IDs to find
+        content_item_ids: List of Integration, Script, or Playbook object IDs to find
             dependent AgentixActions for.
 
     Returns:
@@ -566,6 +566,13 @@ def get_agentix_actions_using_content_items(
 
     // Find AgentixActions using Scripts directly
     MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item:{ContentType.SCRIPT})
+    WHERE content_item.object_id IN {content_item_ids}
+    RETURN agentix_action
+
+    UNION
+
+    // Find AgentixActions using Playbooks directly
+    MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item:{ContentType.PLAYBOOK})
     WHERE content_item.object_id IN {content_item_ids}
     RETURN agentix_action
     """

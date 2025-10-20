@@ -12,7 +12,7 @@
 
 ### Internal
 * Remove AG104 validation. [#5089](https://github.com/demisto/demisto-sdk/pull/5089)
-* Modified the ***validate*** and ***format*** commands to enforce that the 'sectionorder' key in YAML files must be lowercase. [#5065](https://github.com/demisto/demisto-sdk/pull/5065)
+* Updated the ***validate*** and ***format*** commands to enforce lowercase usage for the "sectionorder" key in YAML files. [#5065](https://github.com/demisto/demisto-sdk/pull/5065)
 * Added AgentixAction to test tools. [#5088](https://github.com/demisto/demisto-sdk/pull/5088)
 * Removed BA101 validation for actions. [#5091](https://github.com/demisto/demisto-sdk/pull/5091)
 

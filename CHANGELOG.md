@@ -7,7 +7,7 @@
 * Add new reliability options to feed configuration validator (IN122). [#5085](https://github.com/demisto/demisto-sdk/pull/5085)
 
 ### Fix
-* Changed the file name from "secrets_ignore" to "secrets-ignore" in pack files validator PA128 to be consistent with actual file names [#5070](https://github.com/demisto/demisto-sdk/pull/5070)
+* Updated the pack files validator (PA128) to expect "secrets-ignore" instead of "secrets_ignore", ensuring consistency with actual file names. [#5070](https://github.com/demisto/demisto-sdk/pull/5070)
 * Fixed the RN111 validator to use exact matching instead of partial matching for integration names and Docker images. [#5064](https://github.com/demisto/demisto-sdk/pull/5064)
 
 ### Internal

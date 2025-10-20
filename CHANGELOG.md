@@ -11,7 +11,7 @@
 * Fixed RN111 validator to use exact matching instead of partial matching for integration names and docker images. [#5064](https://github.com/demisto/demisto-sdk/pull/5064)
 
 ### Internal
-* Remove AG104 validation. [#5089](https://github.com/demisto/demisto-sdk/pull/5089)
+* Removed AG104 validation. [#5089](https://github.com/demisto/demisto-sdk/pull/5089)
 * Updated the ***validate*** and ***format*** commands to enforce lowercase usage for the "sectionorder" key in YAML files. [#5065](https://github.com/demisto/demisto-sdk/pull/5065)
 * Added AgentixAction to test tools. [#5088](https://github.com/demisto/demisto-sdk/pull/5088)
 * Removed BA101 validation for actions. [#5091](https://github.com/demisto/demisto-sdk/pull/5091)

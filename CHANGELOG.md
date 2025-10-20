@@ -2,7 +2,7 @@
 ## 1.38.12 (2025-10-20)
 ### Feature
 * Added graph support for the supportedModules field in commands, along with command mismatch validation in GR109. [#5028](https://github.com/demisto/demisto-sdk/pull/5028)
-* Format new playbooks as silent playbooks. [#5037](https://github.com/demisto/demisto-sdk/pull/5037)
+* Format command is now support silent playbooks. [#5037](https://github.com/demisto/demisto-sdk/pull/5037)
 * Added the *automation_id* and *automation_type* fields to the **Trigger** Content type schema to support automation recommendations. [#5067](https://github.com/demisto/demisto-sdk/pull/5067)
 * Add new reliability options to feed configuration validator (IN122). [#5085](https://github.com/demisto/demisto-sdk/pull/5085)
 

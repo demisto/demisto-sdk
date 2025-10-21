@@ -1,29 +1,9 @@
 # Infra team
 * @demisto/marketplace-infra-team-managers
 # Validations
-demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk @YuvHayun @yedidyacohenpalo
-demisto_sdk/commands/common/hook_validations/ @idovandijk @YuvHayun @yedidyacohenpalo
-demisto_sdk/commands/validate/default_config.toml @YuvHayun @yedidyacohenpalo
-
-# VS Code plugin
-.vscode/ @shmuel44
-.devcontainer/ @shmuel44
-
-# Github Actions
-.github/workflows @samuelFain
-
-# Dependencies
-Pipfile* @samuelFain
-pyproject.toml @samuelFain
-
-# Pytest.ini
-pytest.ini @samuelFain
+demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @yedidyacohenpalo
+demisto_sdk/commands/common/hook_validations/ @yedidyacohenpalo
+demisto_sdk/commands/validate/default_config.toml @yedidyacohenpalo
 
 # Content graph
-demisto_sdk/commands/content_graph/** @dantavori @RosenbergYehuda
-
-# Modeling rules
-demisto_sdk/commands/test_content/test_modeling_rule/ @AradCarmi
-
-# Misc
-demisto_sdk/__main__.py @samuelFain
+demisto_sdk/commands/content_graph/**  @RosenbergYehuda

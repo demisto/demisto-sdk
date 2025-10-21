@@ -3,11 +3,15 @@ from pathlib import Path
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.validate.tests.test_tools import create_agentix_agent_object
 from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_content_item import (
     IsForbiddenContentItemValidator,
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp import (
     IsCorrectMPValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG104_is_valid_rgb_color import (
+    IsValidColorValidator,
 )
 
 
@@ -215,3 +219,51 @@ def test_is_correct_marketplace():
     assert results[0].message == (
         "The following Agentix related content item 'test' should have only marketplace 'platform'."
     )
+
+
+def test_is_valid_color():
+    """
+    Given:
+    - Two AgentixAgent items, one with a valid color and one with an invalid color.
+
+    When:
+    - Calling the IsValidColorValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure one failure is returned for the invalid color and the error message is correct.
+    """
+    content_items = [
+        create_agentix_agent_object(
+            paths=["color", "display"],
+            values=["#FF0000", "Valid Color Agent"],
+        ),
+        create_agentix_agent_object(
+            paths=["color", "display"],
+            values=["invalid_color", "Invalid Color Agent"],
+        ),
+        create_agentix_agent_object(
+            paths=["color", "display"],
+            values=["#12345G", "Invalid Hex Agent"],
+        ),
+        create_agentix_agent_object(
+            paths=["color", "display"],
+            values=["#FFF", "Short Hex Agent"],
+        ),
+    ]
+
+    results = IsValidColorValidator().obtain_invalid_content_items(content_items)
+
+    assert len(results) == 3
+    error_messages = [result.message for result in results]
+    assert (
+        "The Agentix-agent 'Invalid Color Agent' color 'invalid_color' is not a valid RGB hex color.\n"
+        "Please make sure that the color is a valid 6-digit hex color string, starting with '#'. For example: '#FFFFFF'."
+    ) in error_messages
+    assert (
+        "The Agentix-agent 'Invalid Hex Agent' color '#12345G' is not a valid RGB hex color.\n"
+        "Please make sure that the color is a valid 6-digit hex color string, starting with '#'. For example: '#FFFFFF'."
+    ) in error_messages
+    assert (
+        "The Agentix-agent 'Short Hex Agent' color '#FFF' is not a valid RGB hex color.\n"
+        "Please make sure that the color is a valid 6-digit hex color string, starting with '#'. For example: '#FFFFFF'."
+    ) in error_messages

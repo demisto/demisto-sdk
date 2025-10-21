@@ -1,5 +1,9 @@
 type: map
 mapping:
+  automation_type:
+    type: str
+  automation_id:
+    type: str
   trigger_id:
     type: str
     required: true
@@ -12,7 +16,6 @@ mapping:
     required: true
   playbook_id:
     type: str
-    required: true
   description:
     type: str
     required: true

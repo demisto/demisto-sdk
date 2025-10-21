@@ -1,0 +1,4 @@
+changes:
+- description: Added the BC116 backwards-compatibility validator, which verifies that output keys are not removed from AgentixAction items.
+  type: feature
+pr_number: 5100

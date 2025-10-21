@@ -67,6 +67,9 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_m
 from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_compatibility_list_files import (
     IsSupportedModulesCompatibilityListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid_all_files import (
+    IsAgentixActionUsingExistingContentItemValidatorAllFiles,
+)
 from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
@@ -1757,3 +1760,80 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
         == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
+
+
+def test_IsAgentixActionUsingExistingContentItemValidatorAllFiles_valid_action(
+    graph_repo: Repo,
+):
+    """
+    Given
+        - A valid agentix action with correct inputs/outputs matching the underlying command.
+    When
+        - Running IsAgentixActionUsingExistingContentItemValidatorAllFiles validator.
+    Then
+        - No validation errors should be returned.
+    """
+    pack = graph_repo.create_pack("TestPack")
+
+    integration_yml = {
+        "commonfields": {"id": "TestIntegration", "version": -1},
+        "name": "TestIntegration",
+        "display": "Test Integration",
+        "category": "Utilities",
+        "description": "Test integration for GR110 validation",
+        "configuration": [],
+        "script": {
+            "type": "python",
+            "commands": [
+                {
+                    "name": "test-command",
+                    "description": "Test command",
+                    "arguments": [{"name": "arg1", "required": True}],
+                    "outputs": [{"contextPath": "Test.Output1"}],
+                }
+            ],
+        },
+    }
+    pack.create_integration("TestIntegration", yml=integration_yml)
+
+    agentix_action_yml = {
+        "commonfields": {"id": "TestAction", "version": -1},
+        "name": "TestAction",
+        "display": "Test Action",
+        "description": "Test action description",
+        "category": "Utilities",
+        "args": [
+            {
+                "name": "arg1",
+                "description": "First argument",
+                "underlyingargname": "arg1",
+                "required": True,
+                "type": "string",
+            },
+        ],
+        "outputs": [
+            {
+                "name": "Output1",
+                "description": "First output",
+                "underlyingoutputcontextpath": "Test.Output1",
+                "type": "string",
+            },
+        ],
+        "underlyingcontentitem": {
+            "id": "TestIntegration",
+            "name": "TestIntegration",
+            "type": "command",
+            "command": "test-command",
+            "version": -1,
+        },
+        "requiresuserapproval": False,
+    }
+    pack.create_agentix_action("TestAction", yml=agentix_action_yml)
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionUsingExistingContentItemValidatorAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 0

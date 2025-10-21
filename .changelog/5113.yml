@@ -1,0 +1,4 @@
+changes:
+- description: Added AgentixAgent to test tools.
+  type: internal
+pr_number: 5113

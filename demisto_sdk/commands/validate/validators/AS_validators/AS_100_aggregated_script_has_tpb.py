@@ -29,5 +29,5 @@ class AggregatedScriptHasTPBValidator(BaseValidator[Script]):
 
     def is_missing_tpb(self, content_item: Script) -> str:
         if not content_item.tests:
-            return "Script {content_item.name} is missing a TPB"
+            return f"Script {content_item.name} is missing a TPB"
         return  ""

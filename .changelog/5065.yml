@@ -1,4 +1,0 @@
-changes:
-- description: "Modified the ***validate*** and ***format*** commands to enforce that the 'sectionorder' key in YAML files must be lowercase."
-  type: internal
-pr_number: 5065

@@ -250,7 +250,7 @@ select = [
   "TR100",
   "VC100",
   "VC101",
-  "BC115",
+  "BC115"
 ]
 warning = [
   "RM108"

@@ -1,0 +1,4 @@
+changes:
+- description: Added the AS100 validator, which verifies that aggregated scripts are tested by a test playbook.
+  type: feature
+pr_number: 5116

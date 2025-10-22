@@ -8,6 +8,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 NO_TESTS_FORMAT: Final[list[str]] = ["No tests (auto formatted)"]
 MISSING_TPB_MESSAGE: Final[str] = "Script {name} is missing a TPB"
+AGGREGATED_SCRIPTS_PACK_NAME: Final[str] = "AggregatedScripts"
 
 class AggregatedScriptHasTPBValidator(BaseValidator[Script]):
     error_code: ClassVar[str] = "AS100"
@@ -20,6 +21,8 @@ class AggregatedScriptHasTPBValidator(BaseValidator[Script]):
     ) -> List[ValidationResult]:
         invalid_content_items = []
         for content_item in content_items:
+            if content_item.pack_name != AGGREGATED_SCRIPTS_PACK_NAME:
+                continue
             if error_message := self.is_missing_tpb(content_item):
                 invalid_content_items.append(
                     ValidationResult(

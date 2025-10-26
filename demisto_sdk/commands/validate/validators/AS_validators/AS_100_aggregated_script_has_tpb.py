@@ -8,7 +8,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 NO_TESTS_FORMAT: Final[list[str]] = ["No tests (auto formatted)"]
 MISSING_TPB_MESSAGE: Final[str] = "Script {name} is missing a TPB"
-AGGREGATED_SCRIPTS_PACK_NAME: Final[str] = "AggregatedScripts"
+AGGREGATED_SCRIPTS_PACK_NAME: Final[str] = "Aggregated Scripts"
 
 class AggregatedScriptHasTPBValidator(BaseValidator[Script]):
     error_code: ClassVar[str] = "AS100"

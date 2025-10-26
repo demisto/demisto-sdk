@@ -1,12 +1,18 @@
 import pytest
+
 from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
     create_script_object,
 )
+
 from demisto_sdk.commands.validate.validators.AS_validators.AS_100_aggregated_script_has_tpb import (
     AggregatedScriptHasTPBValidator,
     MISSING_TPB_MESSAGE,
     NO_TESTS_FORMAT,
+    AGGREGATED_SCRIPTS_PACK_NAME,
 )
+
+from TestSuite.repo import ChangeCWD, Repo
 
 class TestAggregatedScriptHasTPBValidator:
     """Test suite for AggregatedScriptHasTPBValidator."""
@@ -16,42 +22,50 @@ class TestAggregatedScriptHasTPBValidator:
         """Return an instance of the validator for testing."""
         return AggregatedScriptHasTPBValidator()
 
+
+
     def test_valid_script_with_tpb(self, validator: AggregatedScriptHasTPBValidator) -> None:
         """
-        Given: A script with a test playbook
+        Given: A script with a test playbook in the AggregatedScripts pack
         When: Validating the script
         Then: No validation errors should be returned
         """
         # Arrange
-        content_items = [create_script_object()]  # example script has a testing tpb
+        with ChangeCWD(REPO.path):
 
-        # Act
-        results = validator.obtain_invalid_content_items(content_items)
+            content_items = [
+                create_script_object(pack_info={"name": AGGREGATED_SCRIPTS_PACK_NAME})
+            ]  # example script has a testing tpb
 
-        # Assert
-        assert len(results) == 0
+            # Act
+            results = validator.obtain_invalid_content_items(content_items)
+
+            # Assert
+            assert len(results) == 0
 
     def test_script_without_tests(self, validator: AggregatedScriptHasTPBValidator) -> None:
         """
-        Given: A script with no test playbooks
+        Given: A script with no test playbooks in the AggregatedScripts pack
         When: Validating the script
         Then: A validation error should be returned
         """
         # Arrange
-        script_name = "test_script"
-        content_items = [
-            create_script_object(
-                paths=["tests", "name"],
-                values=[[], script_name],
-            )
-        ]
+        with ChangeCWD(REPO.path):
+            script_name = "test_script"
+            content_items = [
+                create_script_object(
+                    paths=["tests", "name"],
+                    values=[[], script_name],
+                    pack_info={"name": AGGREGATED_SCRIPTS_PACK_NAME}
+                )
+            ]
 
-        # Act
-        results = validator.obtain_invalid_content_items(content_items)
+            # Act
+            results = validator.obtain_invalid_content_items(content_items)
 
-        # Assert
-        assert len(results) == 1
-        assert results[0].message == MISSING_TPB_MESSAGE.format(name=script_name)
+            # Assert
+            assert len(results) == 1
+            assert results[0].message == MISSING_TPB_MESSAGE.format(name=script_name)
 
     @pytest.mark.parametrize(
         "test_value,expected_errors",
@@ -69,15 +83,36 @@ class TestAggregatedScriptHasTPBValidator:
         expected_errors: int,
     ) -> None:
         """
-        Given: A script with various test playbook conditions
+        Given: A script in the AggregatedScripts pack with various test playbook conditions
         When: Validating the script
         Then: The appropriate number of validation errors should be returned
+        """
+        # Arrange
+        with ChangeCWD(REPO.path):
+            script = create_script_object(
+                paths=["tests"],
+                values=[test_value],
+                pack_info={"name": AGGREGATED_SCRIPTS_PACK_NAME}
+            )
+            content_items = [script]
+
+            # Act
+            results = validator.obtain_invalid_content_items(content_items)
+
+            # Assert
+            assert len(results) == expected_errors
+
+    def test_script_in_different_pack(self, validator: AggregatedScriptHasTPBValidator) -> None:
+        """
+        Given: A script in a different pack than AggregatedScripts
+        When: Validating the script
+        Then: No validation errors should be returned
         """
         # Arrange
         content_items = [
             create_script_object(
                 paths=["tests"],
-                values=[test_value],
+                values=[[]]
             )
         ]
 
@@ -85,25 +120,29 @@ class TestAggregatedScriptHasTPBValidator:
         results = validator.obtain_invalid_content_items(content_items)
 
         # Assert
-        assert len(results) == expected_errors
+        assert len(results) == 0
 
     def test_multiple_scripts_validation(self, validator: AggregatedScriptHasTPBValidator) -> None:
         """
-        Given: Multiple scripts with different test conditions
+        Given: Multiple scripts in the AggregatedScripts pack with different test conditions
         When: Validating all scripts
         Then: Only scripts without test playbooks should be marked as invalid
         """
         # Arrange
-        valid_script = create_script_object()
-        invalid_script = create_script_object(
-            paths=["tests", "name"],
-            values=[[], "invalid_script"],
-        )
-        content_items = [valid_script, invalid_script]
+        with ChangeCWD(REPO.path):
+            valid_script = create_script_object(
+                pack_info={"name": AGGREGATED_SCRIPTS_PACK_NAME}
+            )
+            invalid_script = create_script_object(
+                paths=["tests", "name"],
+                values=[[], "invalid_script"],
+                pack_info={"name": AGGREGATED_SCRIPTS_PACK_NAME}
+            )
+            content_items = [valid_script, invalid_script]
 
-        # Act
-        results = validator.obtain_invalid_content_items(content_items)
+            # Act
+            results = validator.obtain_invalid_content_items(content_items)
 
-        # Assert
-        assert len(results) == 1
-        assert results[0].content_object == invalid_script
+            # Assert
+            assert len(results) == 1
+            assert results[0].content_object == invalid_script

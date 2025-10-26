@@ -4,15 +4,14 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_script_object,
 )
-
 from demisto_sdk.commands.validate.validators.AS_validators.AS_100_aggregated_script_has_tpb import (
-    AggregatedScriptHasTPBValidator,
+    AGGREGATED_SCRIPTS_PACK_NAME,
     MISSING_TPB_MESSAGE,
     NO_TESTS_FORMAT,
-    AGGREGATED_SCRIPTS_PACK_NAME,
+    AggregatedScriptHasTPBValidator,
 )
+from TestSuite.repo import ChangeCWD
 
-from TestSuite.repo import ChangeCWD, Repo
 
 class TestAggregatedScriptHasTPBValidator:
     """Test suite for AggregatedScriptHasTPBValidator."""
@@ -22,9 +21,9 @@ class TestAggregatedScriptHasTPBValidator:
         """Return an instance of the validator for testing."""
         return AggregatedScriptHasTPBValidator()
 
-
-
-    def test_valid_script_with_tpb(self, validator: AggregatedScriptHasTPBValidator) -> None:
+    def test_valid_script_with_tpb(
+        self, validator: AggregatedScriptHasTPBValidator
+    ) -> None:
         """
         Given: A script with a test playbook in the AggregatedScripts pack
         When: Validating the script
@@ -32,7 +31,6 @@ class TestAggregatedScriptHasTPBValidator:
         """
         # Arrange
         with ChangeCWD(REPO.path):
-
             content_items = [
                 create_script_object(pack_info={"name": AGGREGATED_SCRIPTS_PACK_NAME})
             ]  # example script has a testing tpb
@@ -43,7 +41,9 @@ class TestAggregatedScriptHasTPBValidator:
             # Assert
             assert len(results) == 0
 
-    def test_script_without_tests(self, validator: AggregatedScriptHasTPBValidator) -> None:
+    def test_script_without_tests(
+        self, validator: AggregatedScriptHasTPBValidator
+    ) -> None:
         """
         Given: A script with no test playbooks in the AggregatedScripts pack
         When: Validating the script
@@ -56,7 +56,7 @@ class TestAggregatedScriptHasTPBValidator:
                 create_script_object(
                     paths=["tests", "name"],
                     values=[[], script_name],
-                    pack_info={"name": AGGREGATED_SCRIPTS_PACK_NAME}
+                    pack_info={"name": AGGREGATED_SCRIPTS_PACK_NAME},
                 )
             ]
 
@@ -92,7 +92,7 @@ class TestAggregatedScriptHasTPBValidator:
             script = create_script_object(
                 paths=["tests"],
                 values=[test_value],
-                pack_info={"name": AGGREGATED_SCRIPTS_PACK_NAME}
+                pack_info={"name": AGGREGATED_SCRIPTS_PACK_NAME},
             )
             content_items = [script]
 
@@ -102,19 +102,16 @@ class TestAggregatedScriptHasTPBValidator:
             # Assert
             assert len(results) == expected_errors
 
-    def test_script_in_different_pack(self, validator: AggregatedScriptHasTPBValidator) -> None:
+    def test_script_in_different_pack(
+        self, validator: AggregatedScriptHasTPBValidator
+    ) -> None:
         """
         Given: A script in a different pack than AggregatedScripts
         When: Validating the script
         Then: No validation errors should be returned
         """
         # Arrange
-        content_items = [
-            create_script_object(
-                paths=["tests"],
-                values=[[]]
-            )
-        ]
+        content_items = [create_script_object(paths=["tests"], values=[[]])]
 
         # Act
         results = validator.obtain_invalid_content_items(content_items)
@@ -122,7 +119,9 @@ class TestAggregatedScriptHasTPBValidator:
         # Assert
         assert len(results) == 0
 
-    def test_multiple_scripts_validation(self, validator: AggregatedScriptHasTPBValidator) -> None:
+    def test_multiple_scripts_validation(
+        self, validator: AggregatedScriptHasTPBValidator
+    ) -> None:
         """
         Given: Multiple scripts in the AggregatedScripts pack with different test conditions
         When: Validating all scripts
@@ -136,7 +135,7 @@ class TestAggregatedScriptHasTPBValidator:
             invalid_script = create_script_object(
                 paths=["tests", "name"],
                 values=[[], "invalid_script"],
-                pack_info={"name": AGGREGATED_SCRIPTS_PACK_NAME}
+                pack_info={"name": AGGREGATED_SCRIPTS_PACK_NAME},
             )
             content_items = [valid_script, invalid_script]
 

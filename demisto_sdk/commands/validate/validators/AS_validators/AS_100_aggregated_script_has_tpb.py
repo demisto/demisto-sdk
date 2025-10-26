@@ -10,6 +10,7 @@ NO_TESTS_FORMAT: Final[list[str]] = ["No tests (auto formatted)"]
 MISSING_TPB_MESSAGE: Final[str] = "Script {name} is missing a TPB"
 AGGREGATED_SCRIPTS_PACK_NAME: Final[str] = "Aggregated Scripts"
 
+
 class AggregatedScriptHasTPBValidator(BaseValidator[Script]):
     error_code: ClassVar[str] = "AS100"
     description: ClassVar[str] = "Validates that the aggregated script has a TPB"
@@ -44,6 +45,6 @@ class AggregatedScriptHasTPBValidator(BaseValidator[Script]):
             str: Error message if the script is missing a TPB, empty string otherwise.
         """
         if not content_item.tests or content_item.tests == NO_TESTS_FORMAT:
-            script_name = getattr(content_item, 'name', 'Unknown')
+            script_name = getattr(content_item, "name", "Unknown")
             return MISSING_TPB_MESSAGE.format(name=script_name)
         return ""

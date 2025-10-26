@@ -73,6 +73,7 @@ VALIDATION_CATEGORIES = {
     "TR": "Trigger",
     "VC": "Version Config",
     "AG": "Agentix",
+    "AS": "Aggregated Scripts"
 }
 
 

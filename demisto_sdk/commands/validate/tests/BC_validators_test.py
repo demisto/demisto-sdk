@@ -1942,9 +1942,7 @@ def test_IsSupportedModulesRemoved_pack_modules_reduced():
     - Return a ValidationResult indicating which modules were removed at pack level.
     """
     with ChangeCWD(REPO.path):
-        new_item = create_playbook_object(
-            pack_info={"supportedModules": ["C1", "C3"]}
-        )
+        new_item = create_playbook_object(pack_info={"supportedModules": ["C1", "C3"]})
         new_item.supportedModules = None
 
         old_item = create_playbook_object(
@@ -1976,7 +1974,7 @@ def test_IsSupportedModulesRemoved_mixed_explicit_and_fallback():
         new_item = create_integration_object(
             paths=["supportedModules"],
             values=[["C1", "C3"]],
-            pack_info={"supportedModules": ["C1", "C3", "X0", "X1"]}
+            pack_info={"supportedModules": ["C1", "C3", "X0", "X1"]},
         )
 
         old_item = create_integration_object(

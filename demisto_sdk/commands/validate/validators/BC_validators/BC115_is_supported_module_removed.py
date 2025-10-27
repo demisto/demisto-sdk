@@ -113,7 +113,9 @@ class IsSupportedModulesRemoved(BaseValidator[ContentTypes]):
             )
         ]
 
-    def removed_parameters(self, old_item: ContentTypes, new_item: ContentTypes) -> set[str]:
+    def removed_parameters(
+        self, old_item: ContentTypes, new_item: ContentTypes
+    ) -> set[str]:
         """
         Calculates the set of supported modules that were removed from the old item
         compared to the new item.

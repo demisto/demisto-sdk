@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Iterable, List, cast
+from typing import Iterable, List
 
 from git import Union
 
-from demisto_sdk.commands.common.constants import GitStatuses, PlatformSupportedModules
+from demisto_sdk.commands.common.constants import PlatformSupportedModules
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
@@ -27,7 +27,6 @@ from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
-from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.report import Report
@@ -47,7 +46,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[
     Integration,
     Script,
-    Pack,
     Playbook,
     Dashboard,
     Classifier,
@@ -81,16 +79,16 @@ ContentTypes = Union[
 ]
 
 
-class IsSupportedModulesRemoved(BaseValidator[ContentTypes]):
-    error_code = "BC115"
-    description = (
-        "Ensure that no support module are removed from an existing content item."
+class IsSupportedModulesSubsetOfPack(BaseValidator[ContentTypes]):
+    error_code = "ST114"
+    description = "Ensure that all supported modules of a content item are a subset of its Content Pack’s supported modules."
+    rationale = "Declaring supported modules that are not allowed by the Content Pack can lead to unsupported behavior."
+    error_message = (
+        "The following supported modules are defined for the item but not allowed by its pack: {}. "
+        "Please ensure the item's supportedModules are a subset of the pack's supportedModules."
     )
-    rationale = "Removing a support module for content item can break functionality for customers."
-    error_message = "The following support modules have been removed from the integration {}. Removing supported modules is not allowed, Please undo."
     related_field = "supportedModules"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
     related_file_type = [RelatedFileType.SCHEMA]
 
     def obtain_invalid_content_items(
@@ -99,41 +97,25 @@ class IsSupportedModulesRemoved(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(
-                    ", ".join(map(repr, sorted(difference)))
-                ),
+                message=self.error_message.format(", ".join(map(repr, sorted(diff)))),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                difference := self.removed_parameters(
-                    cast(ContentTypes, content_item.old_base_content_object),
-                    content_item,
-                )
-            )
+            if (diff := self._item_modules_not_in_pack_modules(content_item))
         ]
 
-    def removed_parameters(
-        self, old_item: ContentTypes, new_item: ContentTypes
-    ) -> set[str]:
+    def _item_modules_not_in_pack_modules(self, item: ContentTypes) -> set[str]:
         """
-        Calculates the set of supported modules that were removed from the old item
-        compared to the new item.
+        Returns the set of modules that the item declares in supportedModules but are not
+        included in its pack's supportedModules. If the item does not declare supportedModules,
+        it inherits the pack's, which is considered valid (returns empty set).
         """
         default_modules = [sm.value for sm in PlatformSupportedModules]
+        pack_modules = set(
+            (item.pack.supportedModules or default_modules)
+            if getattr(item, "pack", None)
+            else default_modules
+        )
+        item_modules = set(item.supportedModules or [])
 
-        def get_modules(item: ContentTypes) -> set:
-            """
-            Resolves the definitive list of supported modules for an item,
-            falling back to its pack's modules or the platform defaults.
-            """
-            modules = item.supportedModules
-            if not modules and not isinstance(item, Pack):
-                modules = item.pack.supportedModules
-
-            return set(modules or default_modules)
-
-        old_params = get_modules(old_item)
-        new_params = get_modules(new_item)
-
-        return old_params.difference(new_params)
+        return item_modules.difference(pack_modules)

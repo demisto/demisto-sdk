@@ -7,7 +7,6 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     GitStatuses,
     MarketplaceVersions,
-    PlatformSupportedModules,
 )
 from demisto_sdk.commands.content_graph.objects import Integration
 from demisto_sdk.commands.content_graph.objects.integration import Command, Output

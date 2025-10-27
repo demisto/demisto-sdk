@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     GitStatuses,
     MarketplaceVersions,
+    PlatformSupportedModules,
 )
 from demisto_sdk.commands.content_graph.objects import Integration
 from demisto_sdk.commands.content_graph.objects.integration import Command, Output
@@ -22,6 +23,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_modeling_rule_object,
     create_old_file_pointers,
     create_pack_object,
+    create_playbook_object,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC100_breaking_backwards_subtype import (
@@ -1864,3 +1866,152 @@ def test_IsSupportedModulesRemoved_without_removed_modules():
     res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
 
     assert len(res) == 0
+
+
+def test_IsSupportedModulesRemoved_with_pack_fallback():
+    """
+    Given
+    - A content item with no 'supportedModules' defined, but its pack has supportedModules.
+    - The old version had explicit supportedModules that included modules not in the pack.
+
+    When
+    - Running IsSupportedModulesRemoved.obtain_invalid_content_items.
+
+    Then
+    - Return a ValidationResult indicating which modules were removed due to pack fallback.
+    """
+    with ChangeCWD(REPO.path):
+        new_item = create_integration_object(
+            pack_info={"supportedModules": ["C1", "C3"]}
+        )
+
+        new_item.old_base_content_object = create_integration_object(
+            paths=["supportedModules"],
+            values=[["C1", "C3", "X1", "X3"]],
+        )
+
+        res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
+
+        assert len(res) == 1
+        assert (
+            res[0].message
+            == "The following support modules have been removed from the integration 'X1', 'X3'. Removing supported modules is not allowed, Please undo."
+        )
+        assert res[0].validator.error_code == "BC115"
+
+
+def test_IsSupportedModulesRemoved_both_fallback_to_pack():
+    """
+    Given
+    - Both old and new content items have no 'supportedModules', both fall back to pack modules.
+    - Pack modules are the same for both.
+
+    When
+    - Running IsSupportedModulesRemoved.obtain_invalid_content_items.
+
+    Then
+    - Return an empty list since no modules were actually removed.
+    """
+    with ChangeCWD(REPO.path):
+        new_item = create_script_object(
+            pack_info={"supportedModules": ["C1", "C3", "X0"]}
+        )
+        new_item.supportedModules = None
+
+        old_item = create_script_object(
+            pack_info={"supportedModules": ["C1", "C3", "X0"]}
+        )
+        old_item.supportedModules = None
+        new_item.old_base_content_object = old_item
+
+        res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
+
+        assert len(res) == 0
+
+
+def test_IsSupportedModulesRemoved_pack_modules_reduced():
+    """
+    Given
+    - Both old and new content items have no 'supportedModules', both fall back to pack modules.
+    - New pack has fewer modules than old pack.
+
+    When
+    - Running IsSupportedModulesRemoved.obtain_invalid_content_items.
+
+    Then
+    - Return a ValidationResult indicating which modules were removed at pack level.
+    """
+    with ChangeCWD(REPO.path):
+        new_item = create_playbook_object(
+            pack_info={"supportedModules": ["C1", "C3"]}
+        )
+        new_item.supportedModules = None
+
+        old_item = create_playbook_object(
+            pack_info={"supportedModules": ["C1", "C3", "X1", "X3"]}
+        )
+        old_item.supportedModules = None
+        new_item.old_base_content_object = old_item
+
+        res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
+
+        assert len(res) == 1
+        assert "'X1', 'X3'" in res[0].message
+        assert res[0].validator.error_code == "BC115"
+
+
+def test_IsSupportedModulesRemoved_mixed_explicit_and_fallback():
+    """
+    Given
+    - New content item has explicit 'supportedModules'.
+    - Old content item has no 'supportedModules', falls back to pack modules.
+
+    When
+    - Running IsSupportedModulesRemoved.obtain_invalid_content_items.
+
+    Then
+    - Compare explicit modules vs pack fallback modules correctly.
+    """
+    with ChangeCWD(REPO.path):
+        new_item = create_integration_object(
+            paths=["supportedModules"],
+            values=[["C1", "C3"]],
+            pack_info={"supportedModules": ["C1", "C3", "X0", "X1"]}
+        )
+
+        old_item = create_integration_object(
+            pack_info={"supportedModules": ["C1", "C3", "X0", "X1", "X3"]}
+        )
+        old_item.supportedModules = None
+        new_item.old_base_content_object = old_item
+
+        res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
+
+        assert len(res) == 1
+        assert "'X0', 'X1', 'X3'" in res[0].message
+        assert res[0].validator.error_code == "BC115"
+
+
+def test_IsSupportedModulesRemoved_pack_content_type():
+    """
+    Given
+    - A Pack content item (not an integration) with reduced supportedModules.
+
+    When
+    - Running IsSupportedModulesRemoved.obtain_invalid_content_items.
+
+    Then
+    - Validate that Pack items don't fall back to pack.supportedModules (since they ARE the pack).
+    """
+    new_pack = create_pack_object()
+    new_pack.supportedModules = ["C1", "C3"]
+
+    old_pack = create_pack_object()
+    old_pack.supportedModules = ["C1", "C3", "X1", "X3"]
+    new_pack.old_base_content_object = old_pack
+
+    res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_pack])
+
+    assert len(res) == 1
+    assert "'X1', 'X3'" in res[0].message
+    assert res[0].validator.error_code == "BC115"

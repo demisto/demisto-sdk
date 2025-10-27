@@ -8,9 +8,10 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 NO_TESTS_FORMAT: Final[list[str]] = ["No tests (auto formatted)"]
 AGGREGATED_SCRIPTS_PACK_NAME: Final[str] = "Aggregated Scripts"
+ContentTypes = Script
 
 
-class AggregatedScriptHasTPBValidator(BaseValidator[Script]):
+class AggregatedScriptHasTPBValidator(BaseValidator[ContentTypes]):
     error_code: ClassVar[str] = "SC102"
     description: ClassVar[str] = "Validates that the aggregated script has a TPB"
     rationale: ClassVar[str] = "Make sure aggregated scripts are tested thoroughly"

@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.parsers import (
     IntegrationParser,
@@ -15,8 +14,8 @@ from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_integration_object,
-    create_script_object,
     create_playbook_object,
+    create_script_object,
 )
 from demisto_sdk.commands.validate.validators.ST_validators.ST110_is_valid_scheme import (
     SchemaValidator,
@@ -34,6 +33,7 @@ from demisto_sdk.commands.validate.validators.ST_validators.ST114_is_supported_m
     IsSupportedModulesSubsetOfPack,
 )
 from TestSuite.pack import Pack
+from TestSuite.test_tools import ChangeCWD
 
 
 def test_sanity_SchemaValidator():
@@ -828,11 +828,14 @@ def test_IsSupportedModulesSubsetOfPack_invalid_modules():
     """
     with ChangeCWD(REPO.path):
         integration = create_integration_object(
-            paths=["supportedModules"], values=[["C1", "X0"]],
-            pack_info={"supportedModules": ["C1", "C3"]}
+            paths=["supportedModules"],
+            values=[["C1", "X0"]],
+            pack_info={"supportedModules": ["C1", "C3"]},
         )
 
-        results = IsSupportedModulesSubsetOfPack().obtain_invalid_content_items([integration])
+        results = IsSupportedModulesSubsetOfPack().obtain_invalid_content_items(
+            [integration]
+        )
         assert len(results) == 1
         assert "'X0'" in results[0].message
         assert results[0].validator.error_code == "ST114"
@@ -849,11 +852,14 @@ def test_IsSupportedModulesSubsetOfPack_valid_subset():
     """
     with ChangeCWD(REPO.path):
         script = create_script_object(
-            paths=["supportedModules"], values=[["C1", "X0"]],
-            pack_info={"supportedModules": ["C1", "C3", "X0"]}
+            paths=["supportedModules"],
+            values=[["C1", "X0"]],
+            pack_info={"supportedModules": ["C1", "C3", "X0"]},
         )
 
-        results = IsSupportedModulesSubsetOfPack().obtain_invalid_content_items([script])
+        results = IsSupportedModulesSubsetOfPack().obtain_invalid_content_items(
+            [script]
+        )
         assert len(results) == 0
 
 
@@ -871,5 +877,7 @@ def test_IsSupportedModulesSubsetOfPack_inherit_pack_when_missing():
         playbook = create_playbook_object(pack_info={"supportedModules": ["C1", "C3"]})
         playbook.supportedModules = None
 
-        results = IsSupportedModulesSubsetOfPack().obtain_invalid_content_items([playbook])
+        results = IsSupportedModulesSubsetOfPack().obtain_invalid_content_items(
+            [playbook]
+        )
         assert len(results) == 0

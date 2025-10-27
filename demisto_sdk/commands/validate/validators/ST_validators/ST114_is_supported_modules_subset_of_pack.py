@@ -97,15 +97,11 @@ class IsSupportedModulesSubsetOfPack(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(
-                    ", ".join(map(repr, sorted(diff)))
-                ),
+                message=self.error_message.format(", ".join(map(repr, sorted(diff)))),
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                diff := self._item_modules_not_in_pack_modules(content_item)
-            )
+            if (diff := self._item_modules_not_in_pack_modules(content_item))
         ]
 
     def _item_modules_not_in_pack_modules(self, item: ContentTypes) -> set[str]:
@@ -115,7 +111,11 @@ class IsSupportedModulesSubsetOfPack(BaseValidator[ContentTypes]):
         it inherits the pack's, which is considered valid (returns empty set).
         """
         default_modules = [sm.value for sm in PlatformSupportedModules]
-        pack_modules = set((item.pack.supportedModules or default_modules) if getattr(item, "pack", None) else default_modules)
+        pack_modules = set(
+            (item.pack.supportedModules or default_modules)
+            if getattr(item, "pack", None)
+            else default_modules
+        )
         item_modules = set(item.supportedModules or [])
 
         return item_modules.difference(pack_modules)

@@ -7,14 +7,14 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 NO_TESTS_FORMAT: Final[list[str]] = ["No tests (auto formatted)"]
-MISSING_TPB_MESSAGE: Final[str] = "Script {name} is missing a TPB"
 AGGREGATED_SCRIPTS_PACK_NAME: Final[str] = "Aggregated Scripts"
 
 
 class AggregatedScriptHasTPBValidator(BaseValidator[Script]):
-    error_code: ClassVar[str] = "AS100"
+    error_code: ClassVar[str] = "SC102"
     description: ClassVar[str] = "Validates that the aggregated script has a TPB"
     rationale: ClassVar[str] = "Make sure aggregated scripts are tested thoroughly"
+    error_message: ClassVar[str] = "Script {name} is missing a TPB"
 
     def obtain_invalid_content_items(
         self,
@@ -34,8 +34,7 @@ class AggregatedScriptHasTPBValidator(BaseValidator[Script]):
                 )
         return invalid_content_items
 
-    @staticmethod
-    def is_missing_tpb(content_item: Script) -> str:
+    def is_missing_tpb(self, content_item: Script) -> str:
         """Check if the script is missing a test playbook.
 
         Args:
@@ -46,5 +45,5 @@ class AggregatedScriptHasTPBValidator(BaseValidator[Script]):
         """
         if not content_item.tests or content_item.tests == NO_TESTS_FORMAT:
             script_name = getattr(content_item, "name", "Unknown")
-            return MISSING_TPB_MESSAGE.format(name=script_name)
+            return self.error_message.format(name=script_name)
         return ""

@@ -8,11 +8,6 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_script_object,
 )
-from demisto_sdk.commands.validate.validators.SC_validators.SC102_aggregated_script_has_tpb import (
-    AGGREGATED_SCRIPTS_PACK_NAME,
-    NO_TESTS_FORMAT,
-    AggregatedScriptHasTPBValidator,
-)
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.SC_validators import (
     SC109_script_name_is_not_unique_validator,
@@ -22,6 +17,11 @@ from demisto_sdk.commands.validate.validators.SC_validators.SC100_script_has_inv
 )
 from demisto_sdk.commands.validate.validators.SC_validators.SC101_script_arguments_aggregated_not_exists_validator import (
     MandatoryGenericArgumentsAggregatedScriptValidator,
+)
+from demisto_sdk.commands.validate.validators.SC_validators.SC102_aggregated_script_has_tpb import (
+    AGGREGATED_SCRIPTS_PACK_NAME,
+    NO_TESTS_FORMAT,
+    AggregatedScriptHasTPBValidator,
 )
 from demisto_sdk.commands.validate.validators.SC_validators.SC105_incident_not_in_args_validator_core_packs import (
     IsScriptArgumentsContainIncidentWordValidatorCorePacks,
@@ -326,6 +326,7 @@ def test_DuplicatedScriptNameValidatorAllFiles_obtain_invalid_content_items(
     assert len(results) == 1
     assert "test_alert_1.yml" == results[0].content_object.path.name
 
+
 class TestAggregatedScriptHasTPBValidator:
     """Test suite for AggregatedScriptHasTPBValidator."""
 
@@ -378,7 +379,9 @@ class TestAggregatedScriptHasTPBValidator:
 
             # Assert
             assert len(results) == 1
-            assert results[0].message == validator.error_message.format(name=script_name)
+            assert results[0].message == validator.error_message.format(
+                name=script_name
+            )
 
     @pytest.mark.parametrize(
         "test_value,expected_errors",

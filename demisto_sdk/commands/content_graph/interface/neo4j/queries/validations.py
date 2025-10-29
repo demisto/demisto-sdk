@@ -256,6 +256,44 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
     ]
 
 
+def validate_multiple_agentix_actions_with_same_display_name(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, List[str]]]:
+    query = f"""// Returns all the Agentix Actions that have the same display name but different id
+MATCH (a:{ContentType.AGENTIX_ACTION}), (b:{ContentType.AGENTIX_ACTION})
+WHERE a.display = b.display
+"""
+    if file_paths:
+        query += f"AND a.path in {file_paths}"
+    query += """
+AND elementId(a) <> elementId(b)
+RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
+"""
+    return [
+        (item.get("a_object_id"), item.get("b_object_ids"))
+        for item in run_query(tx, query)
+    ]
+
+
+def validate_multiple_agentix_actions_with_same_name(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, List[str]]]:
+    query = f"""// Returns all the Agentix Actions that have the same name but different id
+MATCH (a:{ContentType.AGENTIX_ACTION}), (b:{ContentType.AGENTIX_ACTION})
+WHERE a.name = b.name
+"""
+    if file_paths:
+        query += f"AND a.path in {file_paths}"
+    query += """
+AND elementId(a) <> elementId(b)
+RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
+"""
+    return [
+        (item.get("a_object_id"), item.get("b_object_ids"))
+        for item in run_query(tx, query)
+    ]
+
+
 def validate_multiple_script_with_same_name(
     tx: Transaction, file_paths: List[str]
 ) -> Dict[str, str]:

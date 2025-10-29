@@ -1194,6 +1194,14 @@ class UpdateRN:
                     _type, content_name, from_version
                 )
                 rn_desc += self.generate_rn_list_new_commands(changed_content_object)
+
+                # The original release notes are commented out with HTML syntax
+                # to hide them from users in the UI, ensuring only a generic note is displayed.
+                # The full notes are preserved here for historical context and debugging.
+                if isinstance(changed_content_object, Playbook):
+                    if changed_content_object.data.get("issilent"):
+                        rn_desc = f"<!-- {rn_desc} -->\n"
+                        rn_desc += "- Documentation and metadata improvements.\n"
             else:
                 # Updated content items
                 rn_desc = f"##### {content_name}\n\n"

@@ -390,6 +390,73 @@ class TestRNUpdate:
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
+    @mock.patch.object(UpdateRN, "get_master_version")
+    def test_build_rn_template_silent_playbook_with_html_comments(self, mock_master):
+        """
+        Given:
+            - a dict of changed items containing both an integration and a silent playbook
+        When:
+            - we want to produce a release notes template for new files
+        Then:
+            - return a markdown string where the silent playbook content is wrapped in HTML comments
+            and followed by the generic documentation note, while other items remain unchanged
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        mock_master.return_value = "1.0.0"
+
+        # Create mock playbook objects
+        mock_silent_playbook = create_playbook_object(paths=["issilent"], values=[True])
+        mock_regular_playbook = create_playbook_object(
+            paths=["issilent"], values=[False]
+        )
+
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorld",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorld"},
+            added_files=set(),
+        )
+
+        changed_items = {
+            ("SAP Cloud For Customer (C4C)", FileType.INTEGRATION): {
+                "description": "Updated the SAPCloudForCustomerC4C integration to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.",
+                "is_new_file": False,
+                "changed_content_object": None,
+            },
+            ("silent-Proactive Threat Hunting - Block Indicators", FileType.PLAYBOOK): {
+                "description": 'This playbook will be executed from the "Proactive Threat Hunting" layout button with the objective of blocking indicators specified by the analyst.<~XSIAM> (Available from Cortex XSIAM %%XSIAM_VERSION%%).</~XSIAM>',
+                "is_new_file": True,
+                "path": "Packs/HelloWorld/Playbooks/silent-Proactive.yml",
+                "changed_content_object": mock_silent_playbook,
+            },
+            ("regular-playbook", FileType.PLAYBOOK): {
+                "description": "This is a regular playbook description.",
+                "is_new_file": True,
+                "path": "Packs/HelloWorld/Playbooks/regular-playbook.yml",
+                "changed_content_object": mock_regular_playbook,
+            },
+        }
+
+        release_notes = update_rn.build_rn_template(changed_items)
+
+        # Verify that the silent playbook content is wrapped in HTML comments
+        assert (
+            "<!-- ##### New: silent-Proactive Threat Hunting - Block Indicators"
+            in release_notes
+        )
+        assert "This playbook will be executed from the" in release_notes
+        assert " -->" in release_notes
+        assert "- Documentation and metadata improvements." in release_notes
+
+        # Verify that the regular playbook is not wrapped in comments
+        assert "##### New: regular-playbook" in release_notes
+        assert "<!-- ##### New: regular-playbook" not in release_notes
+
+        # Verify that the integration remains unchanged
+        assert "##### SAP Cloud For Customer (C4C)" in release_notes
+        assert "<!-- ##### SAP Cloud For Customer (C4C)" not in release_notes
+
     def test_build_rn_template_when_only_pack_metadata_changed(self, mocker):
         """
         Given:
@@ -1378,6 +1445,80 @@ class TestRNUpdate:
             desc
             == "##### Integration test\n\n- Deprecated the **test-command** command. Use %%% instead.\n- text for test\n"
         )
+
+    def test_build_rn_desc_silent_playbook(self):
+        """
+        Given:
+            - A silent playbook (issilent: true)
+        When:
+            - Running the build_rn_desc function for a new silent playbook
+        Then:
+            - Validate that the original release notes are commented out with HTML syntax
+            - Validate that a generic "Documentation and metadata improvements" note is added
+        """
+
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorld",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorld"},
+            added_files=set(),
+        )
+
+        # Create a mock silent playbook object
+        silent_playbook = create_playbook_object(paths=["issilent"], values=[True])
+
+        desc = update_rn.build_rn_desc(
+            _type=FileType.PLAYBOOK,
+            content_name="Silent Playbook",
+            desc="This is a test silent playbook description",
+            is_new_file=True,
+            changed_content_object=silent_playbook,
+        )
+
+        # Verify the original description is commented out
+        assert "<!-- ##### New: Silent Playbook" in desc
+        assert "This is a test silent playbook description" in desc
+        assert "-->" in desc
+        # Verify the generic note is added
+        assert "- Documentation and metadata improvements." in desc
+
+    def test_build_rn_desc_non_silent_playbook(self):
+        """
+        Given:
+            - A non-silent playbook (issilent: false or not set)
+        When:
+            - Running the build_rn_desc function for a new playbook
+        Then:
+            - Validate that the release notes are NOT commented out
+            - Validate that no generic note is added
+        """
+
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorld",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorld"},
+            added_files=set(),
+        )
+
+        # Create a mock non-silent playbook object
+        non_silent_playbook = create_playbook_object(paths=["issilent"], values=[False])
+
+        desc = update_rn.build_rn_desc(
+            _type=FileType.PLAYBOOK,
+            content_name="Regular Playbook",
+            desc="This is a test regular playbook description",
+            is_new_file=True,
+            changed_content_object=non_silent_playbook,
+        )
+
+        # Verify the description is NOT commented out
+        assert "<!--" not in desc
+        assert "-->" not in desc
+        # Verify no generic note is added
+        assert "- Documentation and metadata improvements." not in desc
+        # Verify the normal description is present
+        assert "##### New: Regular Playbook" in desc
+        assert "This is a test regular playbook description" in desc
 
     def test_deprecated_rn_integration_command(self, mocker):
         """

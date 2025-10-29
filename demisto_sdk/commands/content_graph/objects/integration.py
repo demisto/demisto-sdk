@@ -70,6 +70,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
     deprecated: bool = Field(False)
     hidden: bool = Field(False)
     description: Optional[str] = Field("")
+    supportedModules: Optional[List[str]] = Field([])
 
     # missing attributes in DB
     node_id: str = Field("", exclude=True)
@@ -140,6 +141,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 marketplaces=self.marketplaces,
                 deprecated=r.deprecated,
                 description=r.description,
+                supportedModules=r.supportedModules,
             )
             for r in self.relationships_data[RelationshipType.HAS_COMMAND]
         ]

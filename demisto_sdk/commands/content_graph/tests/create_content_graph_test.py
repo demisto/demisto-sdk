@@ -411,6 +411,7 @@ def build_in_pack_relationship(
                     description="",
                     deprecated=False,
                     quickaction=False,
+                    supportedModules=[],
                 ),
             )
 

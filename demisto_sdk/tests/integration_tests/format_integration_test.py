@@ -144,7 +144,7 @@ def test_integration_format_yml_with_no_test_positive(
     with ChangeCWD(tmp_path):
         first_run_result = runner.invoke(
             app,
-            [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at", "-ngr"],
+            [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at", "-y", "-ngr"],
             input="Y",
         )
     assert not first_run_result.exception
@@ -185,6 +185,7 @@ def test_integration_format_yml_with_no_test_negative(
     mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
 
     runner = CliRunner()
+    mocker.patch("builtins.input", return_value="y")
     with ChangeCWD(tmp_path):
         result = runner.invoke(
             app,
@@ -209,7 +210,7 @@ def test_integration_format_yml_with_no_test_negative(
 
 @pytest.mark.parametrize("source_yml", BASIC_YML_CONTENTS)
 def test_integration_format_yml_with_no_test_no_interactive_positive(
-    tmp_path: PosixPath, source_yml: str
+    mocker, tmp_path: PosixPath, source_yml: str
 ):
     """
     Given
@@ -340,6 +341,7 @@ def test_integration_format_configuring_conf_json_positive(
                 source_path,
                 "-o",
                 saved_file_path,
+                "--assume-yes",
                 "-ngr",
             ],
             input="Y",
@@ -461,7 +463,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     playbook_path = str(tmp_path / "format_new_playbook_copy.yml")
     runner = CliRunner()
     mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
-
+    mocker.patch("builtins.input", return_value="y")
     with ChangeCWD(tmp_path):
         result = runner.invoke(
             app,
@@ -909,10 +911,10 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo, mocker, monkey
         [FORMAT_CMD, "-i", str(playbook.yml.path), "--assume-yes", "-ngr"],
     )
     assert "Success" in result.output
-    assert playbook.yml.read_dict().get("fromversion") == GENERAL_DEFAULT_FROMVERSION
+    assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
 
 
-def test_format_playbook_without_fromversion_with_preset_flag(
+def test_format_playbook_without_fromversion_with_preset_flag_silent(
     repo, mocker, monkeypatch
 ):
     """
@@ -951,10 +953,53 @@ def test_format_playbook_without_fromversion_with_preset_flag(
         ],
     )
     assert "Success" in result.output
-    assert playbook.yml.read_dict().get("fromversion") == "6.0.0"
+    assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
 
 
-def test_format_playbook_without_fromversion_with_preset_flag_manual(
+def test_format_playbook_without_fromversion_with_preset_flag_larger_fromversion_silent(
+    repo, mocker, monkeypatch
+):
+    """
+    Given:
+        - A playbook that does not have a 'fromversion' key.
+
+    When:
+        - Running format on the pack with assume-yes flag with from-version flag
+
+    Then:
+        - Ensure the format command runs successfully.
+        - Ensure that 'fromversion' is added as '9.0.0' even though the playbook is silent,
+          because the provided from-version is greater than '8.9.0'.
+    """
+
+    pack = repo.create_pack("Temp")
+    playbook = pack.create_playbook("my_temp_playbook")
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    if "fromversion" in playbook_content:
+        del playbook_content["fromversion"]
+
+    assert "fromversion" not in playbook_content
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        app,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "--assume-yes",
+            "--from-version",
+            "9.0.0",
+            "-ngr",
+        ],
+    )
+    assert "Success" in result.output
+    assert playbook.yml.read_dict().get("fromversion") == "9.0.0"
+
+
+def test_format_playbook_without_fromversion_with_preset_flag_manual_non_silent(
     repo, mocker, monkeypatch
 ):
     """
@@ -983,7 +1028,7 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual(
     result = runner.invoke(
         app,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "--from-version", "6.0.0", "-ngr"],
-        input="y",
+        input="n",
     )
     assert "Success" in result.output
     assert playbook.yml.read_dict().get("fromversion") == "6.0.0"
@@ -1020,10 +1065,12 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(
         input="y",
     )
     assert "Success" in result.output
-    assert playbook.yml.read_dict().get("fromversion") == GENERAL_DEFAULT_FROMVERSION
+    assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
 
 
-def test_format_playbook_copy_removed_from_name_and_id(repo, mocker, monkeypatch):
+def test_format_playbook_copy_removed_from_name_and_id_silent(
+    repo, mocker, monkeypatch
+):
     """
     Given:
         - A playbook with name and id ending in `_copy`
@@ -1053,11 +1100,49 @@ def test_format_playbook_copy_removed_from_name_and_id(repo, mocker, monkeypatch
         input="y\n5.5.0",
     )
     assert "Success" in result.output
+    assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
+    assert "_copy" not in playbook.yml.read_dict().get("id")
+    assert "_copy" not in playbook.yml.read_dict().get("name")
+
+
+def test_format_playbook_copy_removed_from_name_and_id_non_silent(
+    repo, mocker, monkeypatch
+):
+    """
+    Given:
+        - A playbook with name and id ending in `_copy`
+
+    When:
+        - Running format on the pack
+
+    Then:
+        - Ensure format runs successfully
+        - Ensure format removes `_copy` from both name and id.
+    """
+
+    pack = repo.create_pack("Temp")
+    playbook = pack.create_playbook("my_temp_playbook")
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    playbook_id = playbook_content["id"]
+    playbook_name = playbook_content["name"]
+    playbook_content["id"] = playbook_id + "_copy"
+    playbook_content["name"] = playbook_name + "_copy"
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        app,
+        [FORMAT_CMD, "-i", str(playbook.yml.path), "-ngr"],
+        input="n\n5.5.0",
+    )
+    assert "Success" in result.output
+    assert playbook.yml.read_dict().get("fromversion") == "5.0.0"
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name
 
 
-def test_format_playbook_no_input_specified(mocker, repo, monkeypatch):
+def test_format_playbook_no_input_specified_silent(mocker, repo, monkeypatch):
     """
     Given:
         - A playbook with name and id ending in `_copy`
@@ -1093,8 +1178,217 @@ def test_format_playbook_no_input_specified(mocker, repo, monkeypatch):
         input="y\n5.5.0",
     )
     assert "Success" in result.output
+    assert "_copy" not in playbook.yml.read_dict().get("id")
+    assert "_copy" not in playbook.yml.read_dict().get("name")
+    assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
+
+
+def test_format_playbook_no_input_specified_non_silent(mocker, repo, monkeypatch):
+    """
+    Given:
+        - A playbook with name and id ending in `_copy`
+
+    When:
+        - Running format on the pack
+        - The path of the playbook was not provided
+
+    Then:
+        - The command will find the changed playbook
+        - Ensure format runs successfully
+        - Ensure format removes `_copy` from both name and id.
+    """
+
+    pack = repo.create_pack("Temp")
+    playbook = pack.create_playbook("my_temp_playbook")
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    playbook_id = playbook_content["id"]
+    playbook_name = playbook_content["name"]
+    playbook_content["id"] = playbook_id + "_copy"
+    playbook_content["name"] = playbook_name + "_copy"
+    playbook.yml.write_dict(playbook_content)
+    mocker.patch.object(
+        format_module,
+        "get_files_to_format_from_git",
+        return_value=[str(playbook.yml.path)],
+    )
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        app,
+        [FORMAT_CMD, "-ngr"],
+        input="n\n5.5.0",
+    )
+    assert "Success" in result.output
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name
+    assert playbook.yml.read_dict().get("fromversion") == "5.0.0"
+
+
+def test_format_playbook_silent_with_fromversion(repo):
+    """
+    Given:
+        - A playbook with an existing 'fromversion' (implicitly from default content).
+
+    When:
+        - Running the format command on the playbook with:
+            - The '--assume-yes' flag.
+            - The '--from-version 6.0.0' flag.
+            - The '-ngr' (no git results) flag.
+
+    Then:
+        - Ensure the format runs successfully.
+        - Ensure the playbook is converted to a silent playbook:
+            - 'issilent' is set to True.
+            - 'id' and 'name' are prefixed with 'silent-'.
+        - Ensure 'fromversion' is updated to '8.9.0' (the minimum for silent playbooks).
+    """
+
+    pack = repo.create_pack("Temp")
+    playbook = pack.create_playbook("my_temp_playbook")
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        app,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "--assume-yes",
+            "--from-version",
+            "6.0.0",
+            "-ngr",
+        ],
+    )
+    assert "Success" in result.output
+    assert "silent-" in playbook.yml.read_dict().get("name")
+    assert "silent-" in playbook.yml.read_dict().get("id")
+    assert playbook.yml.read_dict().get("issilent") is True
+    assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
+
+
+def test_format_playbook_silent_without_fromversion(repo):
+    """
+    Given:
+        - A playbook without an explicit 'fromversion'.
+
+    When:
+        - Running the format command on the playbook with:
+            - The '--assume-yes' flag.
+            - The '-ngr' (no git results) flag.
+            - (No --from-version flag is provided.)
+
+    Then:
+        - Ensure the format runs successfully.
+        - Ensure the playbook is converted to a silent playbook:
+            - 'issilent' is set to True.
+            - 'id' and 'name' are prefixed with 'silent-'.
+        - Ensure 'fromversion' is set to '8.9.0' (default for silent playbooks).
+    """
+
+    pack = repo.create_pack("Temp")
+    playbook = pack.create_playbook("my_temp_playbook")
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        app,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "--assume-yes",
+            "-ngr",
+        ],
+    )
+    assert "Success" in result.output
+    assert "silent-" in playbook.yml.read_dict().get("name")
+    assert "silent-" in playbook.yml.read_dict().get("id")
+    assert playbook.yml.read_dict().get("issilent") is True
+    assert playbook.yml.read_dict().get("fromversion") == "8.9.0"
+
+
+def test_format_playbook_non_silent_with_fromversion(repo):
+    """
+    Given:
+        - A playbook without an explicit 'fromversion'.
+
+    When:
+        - Running the format command on the playbook with:
+            - The '--from-version 6.5.0' flag.
+            - The '-ngr' (no git results) flag.
+            - (No '--assume-yes' flag.)
+        - User responds "N" to any interactive prompt (e.g., not converting to silent).
+
+    Then:
+        - Ensure the format runs successfully.
+        - Ensure 'fromversion' is set to '6.5.0' as provided.
+        - Ensure the playbook is **not** converted to silent.
+    """
+
+    pack = repo.create_pack("Temp")
+    playbook = pack.create_playbook("my_temp_playbook")
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        app,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "--from-version",
+            "6.5.0",
+            "-ngr",
+        ],
+        input="N",
+    )
+    assert "Success" in result.output
+    assert playbook.yml.read_dict().get("fromversion") == "6.5.0"
+
+
+def test_format_playbook_non_silent_without_fromversion(repo):
+    """
+    Given:
+        - A playbook without an explicit 'fromversion'.
+
+    When:
+        - Running the format command on the playbook with:
+            - The '-ngr' (no git results) flag.
+            - (No '--from-version' or '--assume-yes' flags.)
+        - User responds "N" to the interactive prompt (e.g., declines converting to silent).
+
+    Then:
+        - Ensure the format runs successfully.
+        - Ensure 'fromversion' is set to the default (5.0.0).
+        - Ensure the playbook is not converted to silent.
+    """
+
+    pack = repo.create_pack("Temp")
+    playbook = pack.create_playbook("my_temp_playbook")
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+
+    playbook.yml.write_dict(playbook_content)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        app,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "-ngr",
+        ],
+        input="N\n5.5.0",
+    )
+    assert "Success" in result.output
+    assert playbook.yml.read_dict().get("fromversion") == "5.0.0"
 
 
 def test_format_incident_type_layout_id(repo, mocker):
@@ -1145,9 +1439,10 @@ def test_format_incident_type_layout_id(repo, mocker):
 
     runner = CliRunner(mix_stderr=False)
     with ChangeCWD(repo.path):
+        mocker.patch("builtins.input", return_value="n")
         format_result = runner.invoke(
             app,
-            [FORMAT_CMD, "-i", str(pack.path), "-y", "-ngr"],
+            [FORMAT_CMD, "-i", str(pack.path), "-ngr"],
             catch_exceptions=False,
         )
 
@@ -1745,7 +2040,7 @@ class TestFormatWithoutAddTestsFlag:
                 "--console-log-threshold",
                 "DEBUG",
             ],
-            input="N",
+            input="n\n5.5.0",
         )
         message = f'Formatting {playbooks_path} with "No tests"'
         assert not result.exception

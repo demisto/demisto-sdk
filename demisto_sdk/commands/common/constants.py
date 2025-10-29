@@ -1681,19 +1681,34 @@ FEED_REQUIRED_PARAMS = [
             "display": "Source Reliability",
             "type": 15,
             "required": True,
+        },
+        "must_be_one_of": {
             "options": [
-                "A - Completely reliable",
-                "B - Usually reliable",
-                "C - Fairly reliable",
-                "D - Not usually reliable",
-                "E - Unreliable",
-                "F - Reliability cannot be judged",
+                # First list is for backward compatibility with old reliability options
+                [
+                    "A - Completely reliable",
+                    "B - Usually reliable",
+                    "C - Fairly reliable",
+                    "D - Not usually reliable",
+                    "E - Unreliable",
+                    "F - Reliability cannot be judged",
+                ],
+                # Second list is for new reliability options
+                [
+                    "A++ - Reputation script",
+                    "A+ - 3rd party enrichment",
+                    "A - Completely reliable",
+                    "B - Usually reliable",
+                    "C - Fairly reliable",
+                    "D - Not usually reliable",
+                    "E - Unreliable",
+                    "F - Reliability cannot be judged",
+                ],
             ],
         },
         "must_contain": {
             "additionalinfo": "Reliability of the source providing the intelligence data"
         },
-        "must_be_one_of": {},
     },
     {
         "name": "feedExpirationInterval",
@@ -2001,8 +2016,15 @@ class PlatformSupportedModules(StrEnum):
     X3 = "X3"
     X5 = "X5"
     ENT_PLUS = "ENT_PLUS"
+    # new licenses - TODO all values above this line needs to be removed as part of batch 4.
+    CLOUD_POSTURE = "cloud_posture"
+    CLOUD = "cloud"
+    CLOUD_RUNTIME_SECURITY = "cloud_runtime_security"
+    EDR = "edr"
+    CLOUD_APPSEC = "cloud_appsec"
     AGENTIX = "agentix"
     ASM = "asm"
+    XSIAM = "xsiam"
     EXPOSURE_MANAGEMENT = "exposure_management"
     AGENTIX_XSIAM = "agentix_xsiam"
 

@@ -862,6 +862,150 @@ class TestFormatting:
         configuration_params = base_yml.data.get("configuration", [])
         assert "defaultvalue" in configuration_params[0]
 
+    def test_revert_silent_playbook_issilent_and_fromversion(self):
+        """
+        Given
+        - A playbook with 'issilent' set to True,
+        - 'fromversion' set to "8.9.0",
+        - and the playbook name and id prefixed with "silent-".
+
+        When
+        - Running the revert_silent_playbook method.
+
+        Then
+        - The 'issilent' field should be set to False,
+        - The 'fromversion' should be downgraded to "6.10.0",
+        - The "silent-" prefix should be removed from the playbook's name and id.
+        """
+
+        playbook_data = {
+            "name": "silent-TestPlaybook",
+            "id": "silent-TestPlaybook",
+            "issilent": True,
+            "fromversion": "8.9.0",
+        }
+        formatter = PlaybookYMLFormat("dummy_path")
+        formatter.data = playbook_data
+        formatter.revert_silent_playbook()
+
+        assert formatter.data["issilent"] is False
+        assert formatter.data["fromversion"] == "6.10.0"
+        assert formatter.data["name"] == "TestPlaybook"
+        assert formatter.data["id"] == "TestPlaybook"
+
+    def test_revert_silent_playbook_not_silent(self):
+        """
+        Given
+        - A playbook with 'issilent' set to False,
+        - 'fromversion' set to a value below "8.9.0",
+        - and no "silent-" prefix on the playbook name and id.
+
+        When
+        - Running the revert_silent_playbook method.
+
+        Then
+        - The 'issilent' field should remain False,
+        - The 'fromversion' should remain unchanged,
+        - The playbook name and id should remain unchanged.
+        """
+
+        playbook_data = {
+            "name": "TestPlaybook",
+            "id": "TestPlaybook",
+            "issilent": False,
+            "fromversion": "6.9.0",
+        }
+        formatter = PlaybookYMLFormat("dummy_path")
+        formatter.data = playbook_data
+        formatter.revert_silent_playbook()
+
+        assert formatter.data["issilent"] is False
+        assert formatter.data["fromversion"] == "6.9.0"
+        assert formatter.data["name"] == "TestPlaybook"
+        assert formatter.data["id"] == "TestPlaybook"
+
+    def test_revert_silent_playbook_issilent_and_different_fromversion(self):
+        """
+        Given
+        - A playbook with 'issilent' set to True,
+        - 'fromversion' set to a value higher than "8.9.0",
+        - and the playbook name and id prefixed with "silent-".
+
+        When
+        - Running the revert_silent_playbook method.
+
+        Then
+        - The 'issilent' field should be set to False,
+        - The 'fromversion' should remain unchanged,
+        - The "silent-" prefix should be removed from the playbook's name and id.
+        """
+
+        playbook_data = {
+            "name": "silent-AnotherPlaybook",
+            "id": "silent-AnotherPlaybook",
+            "issilent": True,
+            "fromversion": "9.0.0",  # higher than 8.9.0, should not downgrade
+        }
+        formatter = PlaybookYMLFormat("dummy_path")
+        formatter.data = playbook_data
+        formatter.revert_silent_playbook()
+
+        assert formatter.data["issilent"] is False
+        assert formatter.data["fromversion"] == "9.0.0"  # Should remain unchanged
+        assert formatter.data["name"] == "AnotherPlaybook"
+        assert formatter.data["id"] == "AnotherPlaybook"
+
+    @pytest.mark.parametrize(
+        "original_key, expected_value",
+        [
+            ("sectionOrder", ["Collect", "Connect"]),  # camelCase
+            ("SectionOrder", ["Optimize", "Collect"]),  # PascalCase
+            ("SECTIONORDER", ["Collect", "Optimize", "Mirroring"]),  # UPPERCASE
+            ("SectIonOrder", ["Collect", "Connect"]),  # Mixed case
+            (
+                "sectionorder",
+                ["Connect", "Collect", "Optimize", "Mirroring", "Result"],
+            ),  # already lowercase
+            ("Sectionorder", ["Connect", "Mirroring", "Result"]),  # Title case
+            ("SECTIONorder", ["Connect"]),  # Mixed upper/lower
+            (
+                "sectionORDER",
+                ["Connect", "Collect", "Optimize", "Mirroring", "Result"],
+            ),  # Mixed lower/upper
+        ],
+    )
+    def test_section_order_to_lowercase_converts_various_cases(
+        self, original_key, expected_value
+    ):
+        """
+        Given:
+            - A YAML data structure with 'sectionorder' field in various case combinations
+        When:
+            - Running section_order_to_lowercase method
+        Then:
+            - The field should be converted to 'sectionorder' (lowercase)
+            - The original field should be removed (unless it was already lowercase)
+            - The field value should be preserved
+        """
+        base_yml = BaseUpdateYML("dummy_path")
+        base_yml.data = OrderedDict(
+            [
+                ("name", "test"),
+                (original_key, expected_value),
+                ("version", "1.0.0"),
+            ]
+        )
+
+        base_yml.section_order_to_lowercase()
+
+        # Assert the original field is removed (unless it was already lowercase)
+        if original_key != "sectionorder":
+            assert original_key not in base_yml.data
+
+        # Assert the lowercase field exists with correct value
+        assert "sectionorder" in base_yml.data
+        assert base_yml.data["sectionorder"] == expected_value
+
     def test_format_on_feed_integration_adds_feed_parameters(self):
         """
         Given
@@ -981,14 +1125,13 @@ class TestFormatting:
         os.rmdir(TEST_PLAYBOOK_PATH)
 
     @pytest.mark.parametrize(
-        "initial_fromversion, is_existing_file, expected_fromversion",
+        "initial_fromversion, is_existing_file, is_silent, expected_fromversion",
         [
-            ("5.0.0", False, GENERAL_DEFAULT_FROMVERSION),
-            ("5.0.0", True, "5.0.0"),
-            ("3.0.0", False, GENERAL_DEFAULT_FROMVERSION),
-            ("3.0.0", True, "3.0.0"),
-            (None, False, GENERAL_DEFAULT_FROMVERSION),
-            (None, True, GENERAL_DEFAULT_FROMVERSION),
+            ("5.0.0", False, True, "8.9.0"),
+            ("5.0.0", True, True, "5.0.0"),
+            ("3.0.0", True, False, "3.0.0"),
+            (None, False, True, "8.9.0"),
+            (None, True, False, None),
         ],
     )
     def test_format_valid_fromversion_for_playbook(
@@ -997,6 +1140,7 @@ class TestFormatting:
         repo: Repo,
         initial_fromversion: str,
         is_existing_file: bool,
+        is_silent: bool,
         expected_fromversion: str,
     ):
         """
@@ -1006,6 +1150,7 @@ class TestFormatting:
             - Run run_format()
         Then
             - Ensure that the formatted fromversion equals `expected_fromversion`.
+            - Ensure that the playbook is correctly sddigned to silent and non-silent.
         """
         pack: Pack = repo.create_pack("pack")
         playbook: Playbook = pack.create_playbook("DummyPlaybook")
@@ -1016,9 +1161,14 @@ class TestFormatting:
         if is_existing_file:
             mocker.patch.object(BaseUpdate, "is_old_file", return_value=playbook_data)
 
+        if is_silent:
+            mocker.patch("builtins.input", return_value="y")
+        else:
+            mocker.patch("builtins.input", return_value="n")
+
         with ChangeCWD(repo.path):
             formatter = PlaybookYMLFormat(
-                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH, assume_answer=True
+                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH
             )
             formatter.run_format()
             assert formatter.data.get("fromversion") == expected_fromversion

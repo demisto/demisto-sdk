@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where validate didn't manage to parse old objects for XDRC templates.
-  type: fix
-pr_number: 5041

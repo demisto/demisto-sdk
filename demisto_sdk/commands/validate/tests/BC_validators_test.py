@@ -303,6 +303,23 @@ def test_BreakingBackwardsSubtypeValidator_fix(
             {},
             [],
         ),
+        (
+            [
+                create_agentix_action_object(
+                    paths=["commonfields.id"], values=["id_2"]
+                ),
+            ],
+            [
+                create_agentix_action_object(
+                    paths=["commonfields.id"], values=["id_1"]
+                ),
+            ],
+            1,
+            {"TestAgentixAction": "id_1"},
+            [
+                "ID of content item was changed from id_1 to id_2, please undo.",
+            ],
+        ),
     ],
 )
 def test_IdChangedValidator(
@@ -315,6 +332,7 @@ def test_IdChangedValidator(
         - Case 2: content_items with 1 integration that has its id changed, and one script with no id changed.
         - Case 3: content_items with 1 integration that has its id changed, and one script that has its id changed.
         - Case 4: content_items with 1 integration and 1 script, both with no changes.
+        - Case 5: content_items with 1 agentix action that has its id changed.
     When
     - Calling the IdChangedValidator is valid function.
     Then
@@ -323,6 +341,7 @@ def test_IdChangedValidator(
         - Case 2: Should fail 1 script.
         - Case 3: Should fail both the integration and the script
         - Case 4: Shouldn't fail any content item.
+        - Case 5: Should fail 1 agentix action.
     """
     create_old_file_pointers(content_items, old_content_items)
     validator = IdChangedValidator()

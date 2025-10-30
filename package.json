@@ -23,6 +23,6 @@
     "commander": "^5.0.0",
     "fs-extra": "^8.1.0",
     "markdownlint": "^0.30.0",
-    "markdownlint-rule-helpers": "^0.24.0"
+    "markdownlint-rule-helpers": "^0.30.0"
   }
 }

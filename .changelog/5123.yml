@@ -1,0 +1,4 @@
+changes:
+- description: Add ST114 validator to enforce content item supportedModules are a subset of the Content Pack's supported modules.
+  type: feature
+pr_number: 5123

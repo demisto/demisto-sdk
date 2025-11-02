@@ -1,0 +1,4 @@
+changes:
+- description: Updated NPM package dependencies to their latest versions for improved security and performance.
+  type: internal
+pr_number: 5071

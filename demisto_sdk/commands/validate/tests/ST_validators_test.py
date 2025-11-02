@@ -854,7 +854,9 @@ def test_IsSupportedModulesSubsetOfPack_valid_subset():
         script = create_script_object(
             paths=["supportedModules"],
             values=[["cloud_posture", "edr"]],
-            pack_info={"supportedModules": ["cloud_posture", "cloud_runtime_security", "edr"]},
+            pack_info={
+                "supportedModules": ["cloud_posture", "cloud_runtime_security", "edr"]
+            },
         )
 
         results = IsSupportedModulesSubsetOfPack().obtain_invalid_content_items(
@@ -874,7 +876,9 @@ def test_IsSupportedModulesSubsetOfPack_inherit_pack_when_missing():
         - The validation should pass (item inherits pack modules).
     """
     with ChangeCWD(REPO.path):
-        playbook = create_playbook_object(pack_info={"supportedModules": ["cloud_posture", "cloud_runtime_security"]})
+        playbook = create_playbook_object(
+            pack_info={"supportedModules": ["cloud_posture", "cloud_runtime_security"]}
+        )
         playbook.supportedModules = None
 
         results = IsSupportedModulesSubsetOfPack().obtain_invalid_content_items(

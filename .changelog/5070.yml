@@ -1,4 +1,0 @@
-changes:
-- description: Changed the file name from "secrets_ignore" to "secrets-ignore" in pack files validator PA128 to be consistent with actual file names
-  type: fix
-pr_number: 5070

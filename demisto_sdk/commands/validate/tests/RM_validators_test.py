@@ -23,6 +23,9 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM101_is_image_path_
 from demisto_sdk.commands.validate.validators.RM_validators.RM102_is_missing_context_output import (
     IsMissingContextOutputValidator,
 )
+from demisto_sdk.commands.validate.validators.RM_validators.RM103_no_readme_internal_scripts import (
+    NoReadmeInternalScripts,
+)
 from demisto_sdk.commands.validate.validators.RM_validators.RM104_empty_readme import (
     EmptyReadmeValidator,
 )
@@ -58,9 +61,6 @@ from demisto_sdk.commands.validate.validators.RM_validators.RM116_missing_playbo
 )
 from demisto_sdk.commands.validate.validators.RM_validators.RM117_readme_not_to_short import (
     NotToShortReadmeValidator,
-)
-from demisto_sdk.commands.validate.validators.RM_validators.RM118_no_readme_internal_scripts import (
-    NoReadmeInternalScripts,
 )
 from TestSuite.repo import ChangeCWD
 

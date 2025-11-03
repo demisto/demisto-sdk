@@ -11,6 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Script
 
+
 class NoReadmeInternalScripts(BaseValidator[ContentTypes]):
     error_code = "RM103"
     description = "Validates that there's no readme file for internal scripts."

@@ -22,4 +22,3 @@ pytest.ini @samuelFain @demisto/marketplace-infra-tls
 
 # Content graph
 demisto_sdk/commands/content_graph/** @RosenbergYehuda @demisto/marketplace-infra-tls
-

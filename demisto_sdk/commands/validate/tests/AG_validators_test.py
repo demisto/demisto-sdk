@@ -222,7 +222,7 @@ def test_is_correct_marketplace():
     )
 
 
-def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items(
+def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
     mocker, graph_repo: Repo
 ):
     """
@@ -248,7 +248,7 @@ def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items(
     BaseValidator.graph_interface = graph_repo.create_graph()
 
     results = (
-        IsAgentixActionNameAlreadyExistsValidator().obtain_invalid_content_items(
+        IsAgentixActionNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
             [graph_repo.packs[0], graph_repo.packs[2]]
         )
     )

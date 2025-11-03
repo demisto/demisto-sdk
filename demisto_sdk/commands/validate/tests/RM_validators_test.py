@@ -1182,27 +1182,44 @@ def test_ImagePathIntegrationValidator_content_assets():
     assert result[0].message == expected
 
 
-def test_NoReadmeInternalScriptsValidator():
+def test_NoReadmeInternalScriptsValidator_readme_exists():
     """
     Given:
-        - Script object that is internal and one that is not internal
+        - Internal script object with existing readme file
     When:
         - run obtain_invalid_content_items method from NoReadmeInternalScriptsValidator
     Then:
-        - Ensure that the internal script returns a ValidationResult with the correct message
-        - Ensure that no error is returned for normal script and internal script without README
+        - The internal script returns a ValidationResult with the correct message
     """
     internal_script = create_script_object(
-        ["isInternal"], ["true"], readme_content="readme"
+        paths=["isInternal"], values=["true"], readme_content="readme"
     )
     normal_script = create_script_object(readme_content="readme")
     expected_message = "The script 'myScript' is an internal script. Please remove the README.md file in the content item's directory."
 
-    results = NoReadmeInternalScripts().obtain_invalid_content_items([internal_script])
+    results = NoReadmeInternalScripts().obtain_invalid_content_items(
+        [internal_script, normal_script]
+    )
     assert len(results) == 1
     assert results[0].message == expected_message
 
+
+def test_NoReadmeInternalScriptsValidator_no_readme():
+    """
+    Given:
+        - Internal script with no readme file
+    When:
+        - run obtain_invalid_content_items method from NoReadmeInternalScriptsValidator
+    Then:
+        - No error is returned for either script
+    """
+    internal_script = create_script_object(
+        paths=["isInternal"], values=["true"], readme_content="readme"
+    )
     internal_script.readme.exist = False
+
+    normal_script = create_script_object(readme_content="readme")
+
     results = NoReadmeInternalScripts().obtain_invalid_content_items(
         [internal_script, normal_script]
     )

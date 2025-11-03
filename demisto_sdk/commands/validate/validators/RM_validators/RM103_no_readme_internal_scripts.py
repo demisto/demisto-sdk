@@ -9,8 +9,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
+ContentTypes = Script
 
-class NoReadmeInternalScripts(BaseValidator[Script]):
+class NoReadmeInternalScripts(BaseValidator[ContentTypes]):
     error_code = "RM118"
     description = "Validates that there's no readme file for internal scripts."
     rationale = "Internal scripts should not have a visible readme in xsoar.pan.dev."
@@ -19,7 +20,7 @@ class NoReadmeInternalScripts(BaseValidator[Script]):
     related_file_type = [RelatedFileType.README]
 
     def obtain_invalid_content_items(
-        self, content_items: Iterable[Script]
+        self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         return [
             ValidationResult(

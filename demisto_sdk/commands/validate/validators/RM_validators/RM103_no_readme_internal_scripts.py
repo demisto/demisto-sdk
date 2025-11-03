@@ -12,7 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Script
 
 class NoReadmeInternalScripts(BaseValidator[ContentTypes]):
-    error_code = "RM118"
+    error_code = "RM103"
     description = "Validates that there's no readme file for internal scripts."
     rationale = "Internal scripts should not have a visible readme in xsoar.pan.dev."
     error_message = "The script '{0}' is an internal script. Please remove the README.md file in the content item's directory."

@@ -239,9 +239,9 @@ def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items(
         "CONTENT_PATH",
         new=graph_repo.path,
     )
-    graph_repo.create_pack(name="pack1")
-    graph_repo.create_pack(name="pack2")
-    graph_repo.create_pack(name="pack3")
+    graph_repo.setup_one_pack(name="pack1")
+    graph_repo.setup_one_pack(name="pack2")
+    graph_repo.setup_one_pack(name="pack3")
     graph_repo.packs[1].agentix_actions[0].set_agentix_action_name("test")
     graph_repo.packs[2].agentix_actions[0].set_agentix_action_name("test")
 

@@ -1,4 +1,0 @@
-changes:
-- description: Removed the GR106 validation from the xsoar_best_practices section so it does not execute when running the ValidateContent script in Cortex.
-  type: feature
-pr_number: 5125

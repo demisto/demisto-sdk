@@ -254,7 +254,8 @@ select = [
   "BC115"
 ]
 warning = [
-  "RM108"
+  "RM108",
+  "BC117"
 ]
 
 [support_level]
@@ -542,5 +543,6 @@ select = [
   "BA112"
 ]
 warning = [
-  "GR109"
+  "GR109",
+  "BC117"
 ]

@@ -90,7 +90,7 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
     )
     rationale = "Adding a support module for a content item requires a PM approval."
     error_message = (
-        "The following support modules have been added from the {} {}."
+        "The following support modules {} have been added to the {} {}."
         " Adding supported modules requires a PM approval."
     )
     related_field = "supportedModules"
@@ -105,7 +105,7 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.type, ", ".join(map(repr, sorted(difference)))
+                    ", ".join(map(repr, sorted(difference))), content_item.display_name, content_item.content_type
                 ),
                 content_object=content_item,
             )

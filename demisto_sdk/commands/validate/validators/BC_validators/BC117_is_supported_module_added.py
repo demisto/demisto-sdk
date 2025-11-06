@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import Iterable, List, cast, Union, Tuple, Set
-from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from typing import Iterable, List, Union, cast
+
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -21,6 +22,7 @@ from demisto_sdk.commands.content_graph.objects.incident_field import IncidentFi
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
@@ -36,8 +38,6 @@ from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -89,8 +89,10 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
         "Checks whether supported modules have been added to the existing content item."
     )
     rationale = "Adding a support module for a content item requires a PM approval."
-    error_message = "The following support modules have been added from the {} {}." \
-                    " Adding supported modules requires a PM approval."
+    error_message = (
+        "The following support modules have been added from the {} {}."
+        " Adding supported modules requires a PM approval."
+    )
     related_field = "supportedModules"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
@@ -103,8 +105,7 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.type,
-                    ", ".join(map(repr, sorted(difference)))
+                    content_item.type, ", ".join(map(repr, sorted(difference)))
                 ),
                 content_object=content_item,
             )

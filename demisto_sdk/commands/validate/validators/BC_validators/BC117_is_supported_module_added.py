@@ -95,7 +95,7 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
     )
     related_field = "supportedModules"
     is_auto_fixable = False
-    # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.SCHEMA]
 
     def obtain_invalid_content_items(

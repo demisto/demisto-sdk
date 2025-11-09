@@ -120,5 +120,12 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
 
     def added_parameters(self, old_item: ContentTypes, new_item: ContentTypes) -> set:
         old_params = set(old_item.supportedModules or [])
+
+        # When a new content is added and contains supportedModules, the validation should warn
+        if old_params and old_item.git_status == GitStatuses.ADDED:
+            return old_params
+
         new_params = set(new_item.supportedModules or [])
+
+        # Otherwise, when a new content is modified and contains more supportedModules, the validation should warn too
         return new_params.difference(old_params)

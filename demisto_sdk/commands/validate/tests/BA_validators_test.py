@@ -2755,7 +2755,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_313/README.md: Invalid marketplace tag(s) found: INVALID_TAG. Allowed tags:",
+                "Invalid marketplace tag(s) found: INVALID_TAG. Allowed tags:",
             ],
         ),
         (
@@ -2766,7 +2766,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_314/Integrations/integration_0/integration_0_description.md: Mismatched marketplace tags: opened with 'XSOAR' but closed with 'XSIAM'",
+                "Mismatched marketplace tags: opened with 'XSOAR' but closed with 'XSIAM'",
             ],
         ),
         (
@@ -2775,7 +2775,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_315/README.md: Unclosed marketplace tag: 'XSOAR' is missing its closing tag",
+                "Unclosed marketplace tag: 'XSOAR' is missing its closing tag",
             ],
         ),
         (
@@ -2786,7 +2786,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_316/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
+                "Closing tag 'XSOAR' found without corresponding opening tag",
             ],
         ),
         (
@@ -2797,7 +2797,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_317/README.md: Nested marketplace tags are not allowed. Tag 'XSIAM' cannot be placed inside tag 'XSOAR'",
+                "Nested marketplace tags are not allowed. Tag 'XSIAM' cannot be placed inside tag 'XSOAR'",
             ],
         ),
         (
@@ -2808,7 +2808,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_318/README.md: Invalid marketplace tag(s) found: INVALID, INVALID_B. Allowed tags:",
+                "Invalid marketplace tag(s) found: INVALID, INVALID_B. Allowed tags:",
             ],
         ),
         (
@@ -2828,7 +2828,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_320/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
+                "Closing tag 'XSOAR' found without corresponding opening tag",
             ],
         ),
     ],

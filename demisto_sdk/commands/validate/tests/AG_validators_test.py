@@ -247,16 +247,16 @@ def test_is_correct_marketplace():
         ([create_agentix_action_object(paths=["name"], values=["Invalid!"])], 1),
     ],
 )
-def test_IsDisplayNameValid_obtain_invalid_content_items(
+def test_IsActionNameValid_obtain_invalid_content_items(
     content_items, expected_number_of_failures
 ):
     """
     Given
-    - AgentixAction content_items with various display values.
+    - AgentixAction content_items with various name values.
     When
-    - Calling the IsDisplayNameValid.obtain_invalid_content_items function.
+    - Calling the IsActionNameValidValidator.obtain_invalid_content_items function.
     Then
-    - Make sure the right amount of failure return and that the error msg is correct.
+    - Make sure the right amount of failure return.
     """
     results = IsActionNameValidValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures

@@ -1,7 +1,10 @@
+# Infra team
+* @demisto/marketplace-infra-team-managers
 # Validations
 demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk @YuvHayun @yedidyacohenpalo
 demisto_sdk/commands/common/hook_validations/ @idovandijk @YuvHayun @yedidyacohenpalo
 demisto_sdk/commands/validate/default_config.toml @YuvHayun @yedidyacohenpalo
+demisto_sdk/commands/validate/sdk_validation_config.toml @yedidyacohenpalo @demisto/marketplace-infra-team-managers
 
 # VS Code plugin
 .vscode/ @shmuel44

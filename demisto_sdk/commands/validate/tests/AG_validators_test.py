@@ -249,7 +249,7 @@ def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_
 
     results = (
         IsAgentixActionNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
-            [graph_repo.packs[0], graph_repo.packs[2]]
+            [graph_repo.packs[0].agentix_actions[0], graph_repo.packs[2].agentix_actions[0]], validate_all_files=False
         )
     )
 

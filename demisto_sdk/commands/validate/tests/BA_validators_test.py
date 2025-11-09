@@ -120,7 +120,7 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
-FOUND_INTERNAL_TERMS_ERROR = "Found internal terms in a customer-facing documentation: found test-module in"
+
 
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
@@ -1626,34 +1626,34 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
         pytest.param(
             [create_integration_object(readme_content="test-module")],
             1,
-            FOUND_INTERNAL_TERMS_ERROR,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_233/Integrations/integration_0/README.md",
             id="invalid: integration readme",
         ),
         pytest.param(
             [create_integration_object(description_content="test-module")],
             1,
-            FOUND_INTERNAL_TERMS_ERROR,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_234/Integrations/integration_0/integration_0_description.md",
             id="invalid: integration description",
         ),
         pytest.param([create_script_object()], 0, "", id="valid: script"),
         pytest.param(
             [create_script_object(readme_content="test-module ")],
             1,
-            FOUND_INTERNAL_TERMS_ERROR,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_236/Scripts/script0/README.md",
             id="invalid: script readme",
         ),
         pytest.param([create_playbook_object()], 0, "", id="valid: playbook"),
         pytest.param(
             [create_playbook_object(readme_content="test-module ")],
             1,
-            FOUND_INTERNAL_TERMS_ERROR,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_238/Playbooks/playbook-0_README.md",
             id="invalid: playbook readme",
         ),
         pytest.param([create_pack_object()], 0, "", id="valid: pack"),
         pytest.param(
             [create_pack_object(readme_text="test-module ")],
             1,
-            FOUND_INTERNAL_TERMS_ERROR,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_240/README.md",
             id="invalid: pack readme",
         ),
         pytest.param(
@@ -1663,7 +1663,7 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
                 )
             ],
             1,
-            FOUND_INTERNAL_TERMS_ERROR,
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_241/ReleaseNotes/1_0_1.md",
             id="invalid: pack release note",
         ),
     ],
@@ -1686,7 +1686,7 @@ def test_CustomerFacingDocsDisallowedTermsValidator(
     )
     assert len(results) == expected_number_of_failures
     if results:
-        assert str(expected_error_message) in results[0].message
+        assert results[0].message == expected_error_message
 
 
 @pytest.mark.parametrize(
@@ -2755,7 +2755,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Invalid marketplace tag(s) found: INVALID_TAG. Allowed tags:",
+                "Found malformed marketplace tags in the following files:\nPacks/pack_313/README.md: Invalid marketplace tag(s) found: INVALID_TAG. Allowed tags:",
             ],
         ),
         (
@@ -2766,7 +2766,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Mismatched marketplace tags: opened with 'XSOAR' but closed with 'XSIAM'",
+                "Found malformed marketplace tags in the following files:\nPacks/pack_314/Integrations/integration_0/integration_0_description.md: Mismatched marketplace tags: opened with 'XSOAR' but closed with 'XSIAM'",
             ],
         ),
         (
@@ -2775,7 +2775,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Unclosed marketplace tag: 'XSOAR' is missing its closing tag",
+                "Found malformed marketplace tags in the following files:\nPacks/pack_315/README.md: Unclosed marketplace tag: 'XSOAR' is missing its closing tag",
             ],
         ),
         (
@@ -2786,7 +2786,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Closing tag 'XSOAR' found without corresponding opening tag",
+                "Found malformed marketplace tags in the following files:\nPacks/pack_316/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
             ],
         ),
         (
@@ -2797,7 +2797,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Nested marketplace tags are not allowed. Tag 'XSIAM' cannot be placed inside tag 'XSOAR'",
+                "Found malformed marketplace tags in the following files:\nPacks/pack_317/README.md: Nested marketplace tags are not allowed. Tag 'XSIAM' cannot be placed inside tag 'XSOAR'",
             ],
         ),
         (
@@ -2808,7 +2808,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Invalid marketplace tag(s) found: INVALID, INVALID_B. Allowed tags:",
+                "Found malformed marketplace tags in the following files:\nPacks/pack_318/README.md: Invalid marketplace tag(s) found: INVALID, INVALID_B. Allowed tags:",
             ],
         ),
         (
@@ -2828,7 +2828,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Closing tag 'XSOAR' found without corresponding opening tag",
+                "Found malformed marketplace tags in the following files:\nPacks/pack_320/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
             ],
         ),
     ],

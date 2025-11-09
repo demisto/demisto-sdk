@@ -142,7 +142,8 @@ class ValidateManager:
         return [
             validator
             for validator in get_all_validators()
-            if validator.error_code in self.configured_validations.select + self.configured_validations.warning
+            if validator.error_code in self.configured_validations.select
+            # if validator.error_code in self.configured_validations.select + self.configured_validations.warning
         ]
 
     def add_invalid_content_items(self):

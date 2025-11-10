@@ -1,4 +1,0 @@
-changes:
-- description: Fixed trigger parser bug where automation_type was incorrectly mapped to self.automation_id. 
-  type: fix
-pr_number: 9875

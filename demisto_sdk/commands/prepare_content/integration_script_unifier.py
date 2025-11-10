@@ -17,7 +17,6 @@ from demisto_sdk.commands.common.constants import (
     COMMUNITY_SUPPORT,
     CONTRIBUTORS_LIST,
     DEFAULT_IMAGE_PREFIX,
-    DEVELOPER_SUPPORT,
     MIRRORING_COMMANDS,
     PARTNER_SUPPORT,
     SUPPORT_LEVEL_HEADER,
@@ -686,7 +685,7 @@ class IntegrationScriptUnifier(Unifier):
 
         if contributor_type == COMMUNITY_SUPPORT:
             contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)
-        elif contributor_type in (PARTNER_SUPPORT, DEVELOPER_SUPPORT):
+        elif contributor_type in (PARTNER_SUPPORT):
             contributor_description = CONTRIBUTOR_DETAILED_DESC.format(
                 contributor_type.capitalize(), author
             )

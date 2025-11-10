@@ -7,7 +7,6 @@ from demisto_sdk.commands.common.constants import (
     COMMON_PARAMS_DISPLAY_NAME,
     COMMUNITY_SUPPORT,
     DEFAULT_MAX_FETCH,
-    DEVELOPER_SUPPORT,
     ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
     FEED_RELIABILITY,
     FIRST_FETCH_PARAM,
@@ -4953,7 +4952,6 @@ def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__
         content_items = [
             create_integration_object(pack_info={"support": XSOAR_SUPPORT}),
             create_integration_object(pack_info={"support": PARTNER_SUPPORT}),
-            create_integration_object(pack_info={"support": DEVELOPER_SUPPORT}),
             create_integration_object(pack_info={"support": COMMUNITY_SUPPORT}),
             create_integration_object(
                 paths=["configuration"],
@@ -5023,7 +5021,7 @@ def test_IsContainingFromLicenseInParamsValidator_obtain_invalid_content_items__
                         }
                     ]
                 ],
-                pack_info={"support": DEVELOPER_SUPPORT},
+                pack_info={"support": COMMUNITY_SUPPORT},
             ),
             create_integration_object(
                 paths=["configuration"],
@@ -5160,7 +5158,7 @@ def test_IsAPITokenInCredentialTypeValidator_obtain_invalid_content_items__all_v
                         },
                     ]
                 ],
-                pack_info={"support": DEVELOPER_SUPPORT},
+                pack_info={"support": PARTNER_SUPPORT},
             ),
             create_integration_object(
                 paths=["configuration"],

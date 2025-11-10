@@ -14,7 +14,6 @@ class PackSupportOption(StrEnum):
     XSOAR_SUPPORT = "xsoar"
     PARTNER_SUPPORT = "partner"
     COMMUNITY_SUPPORT = "community"
-    DEVELOPER_SUPPORT = "developer"
 
 
 class StrictPackMetadata(BaseStrictModel):

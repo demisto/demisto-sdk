@@ -1,0 +1,4 @@
+changes:
+- description: This fix updates the schema and formatter to recognize and retain the runScriptAfterUpdate key during formatting.
+  type: <fix>
+pr_number: 5129

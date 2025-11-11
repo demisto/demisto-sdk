@@ -51,8 +51,6 @@ mapping:
     type: bool
   runScriptAfterIncUpdate:
     type: bool
-  runScriptAfterUpdate:
-    type: bool
   group:
     type: number
   hidden:

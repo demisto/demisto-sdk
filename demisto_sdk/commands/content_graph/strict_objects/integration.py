@@ -25,7 +25,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     create_dynamic_model,
-    create_model,
+    create_model, QUICK_ACTION_DYNAMIC_MODEL, HIDDEN_DYNAMIC_MODEL,
 )
 
 IS_FETCH_DYNAMIC_MODEL = create_dynamic_model(
@@ -91,10 +91,8 @@ class _Command(BaseStrictModel):
     outputs: Optional[List[IntegrationOutput]] = None
     important: Optional[List[Important]] = None  # type:ignore[valid-type]
     timeout: Optional[int] = None
-    hidden: Optional[bool] = None
     polling: Optional[bool] = None
     prettyname: Optional[str] = None
-    quickaction: Optional[bool] = None
     compliantpolicies: Optional[List[str]] = None
     supportedModules: Optional[
         Annotated[
@@ -111,6 +109,8 @@ Command = create_model(
         DEPRECATED_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,
         NAME_DYNAMIC_MODEL,
+        QUICK_ACTION_DYNAMIC_MODEL,
+        HIDDEN_DYNAMIC_MODEL
     ),
 )
 

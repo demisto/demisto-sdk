@@ -1,6 +1,7 @@
 """
 Unit tests for the runScriptAfterUpdate field preservation in IncidentField strict object.
 """
+
 from pathlib import Path
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions

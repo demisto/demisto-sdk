@@ -105,7 +105,9 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    ", ".join(map(repr, sorted(difference))), content_item.display_name, content_item.content_type
+                    ", ".join(map(repr, sorted(difference))),
+                    content_item.display_name,
+                    content_item.content_type,
                 ),
                 content_object=content_item,
             )

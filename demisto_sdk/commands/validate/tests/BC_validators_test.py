@@ -2,8 +2,6 @@ from copy import deepcopy
 from typing import List
 
 import pytest
-from demisto_sdk.commands.validate.validators.BC_validators.BC117_is_supported_module_added import \
-    IsSupportedModulesAdded
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
@@ -73,6 +71,9 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC115_is_supported_m
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC116_is_breaking_agentix_action_output_backwards import (
     IsBreakingAgentixActionOutputBackwardsValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC117_is_supported_module_added import (
+    IsSupportedModulesAdded,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -1880,12 +1881,10 @@ def test_IsSupportedModulesAdded_with_added_modules():
     - Return a ValidationResult indicating which modules were added and explanation it requires a PM approval.
     """
     new_item = create_integration_object(
-        paths=["supportedModules"],
-        values=[["C1", "C3", "X0", "X1", "X3"]]
+        paths=["supportedModules"], values=[["C1", "C3", "X0", "X1", "X3"]]
     )
     new_item.old_base_content_object = create_integration_object(
-        paths=["supportedModules"],
-        values=[["C1", "C3", "X0"]]
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
     )
 
     res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
@@ -1894,7 +1893,7 @@ def test_IsSupportedModulesAdded_with_added_modules():
     assert (
         res[0].message
         == "The following support modules 'X1', 'X3' have been added to the TestIntegration Integration."
-           " Adding supported modules requires a PM approval."
+        " Adding supported modules requires a PM approval."
     )
     assert res[0].validator.error_code == "BC117"
 
@@ -1911,12 +1910,10 @@ def test_IsSupportedModulesAdded_without_added_modules():
     - Return an empty list, indicating no validation issues.
     """
     new_item = create_integration_object(
-        paths=["supportedModules"],
-        values=[["C1", "C3", "X0"]]
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
     )
     new_item.old_base_content_object = create_integration_object(
-        paths=["supportedModules"],
-        values=[["C1", "C3", "X0"]]
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
     )
 
     res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
@@ -1937,12 +1934,10 @@ def test_IsSupportedModulesAdded_with_removed_modules():
     - BC117 should warn just in case of added 'supportedModules', when removing some modules BC115 should fail.
     """
     new_item = create_integration_object(
-        paths=["supportedModules"],
-        values=[["C1", "C3"]]
+        paths=["supportedModules"], values=[["C1", "C3"]]
     )
     new_item.old_base_content_object = create_integration_object(
-        paths=["supportedModules"],
-        values=[["C1", "C3", "X0"]]
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
     )
 
     res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])

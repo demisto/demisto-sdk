@@ -1,0 +1,4 @@
+changes:
+- description: Added a new validation, BC117, which issues a warning when additional modules are added to the supportedModules list of any item.
+  type: feature
+pr_number: 5128

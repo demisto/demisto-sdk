@@ -18,7 +18,7 @@ ignorable_errors = [
 
 [Custom_Categories]
 select = []
-warning = ["BC117"]
+warning = []
 
 [path_based_validations]
 select = [
@@ -38,9 +38,7 @@ select = [
   "PA130",
   "RP101"
 ]
-warning = [
-  "BC117"
-]
+warning = []
 
 [use_git]
 select = [
@@ -60,9 +58,7 @@ select = [
   "PA130",
   "RP101"
 ]
-warning = [
-  "BC117"
-]
+warning = []
 
 [xsoar_best_practices_path_based_validations]
 select = [
@@ -162,9 +158,7 @@ select = [
   "IM108",
   "RP101"
 ]
-warning = [
-  "BC117"
-]
+warning = []
 
 [xsoar_best_practices_use_git]
 select = [
@@ -278,6 +272,4 @@ select = [
   "IM109",
   "RP101"
 ]
-warning = [
-  "BC117"
-]
+warning = []

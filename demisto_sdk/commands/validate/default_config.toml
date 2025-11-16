@@ -38,7 +38,9 @@ select = [
   "PA130",
   "RP101"
 ]
-warning = []
+warning = [
+"BC117"
+]
 
 [use_git]
 select = [
@@ -58,7 +60,9 @@ select = [
   "PA130",
   "RP101"
 ]
-warning = []
+warning = [
+"BC117"
+]
 
 [xsoar_best_practices_path_based_validations]
 select = [

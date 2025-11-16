@@ -1,0 +1,4 @@
+changes:
+- description: Added the ismcp field to the integration schema to support MCP configuration flag.
+  type: internal
+pr_number: 5133

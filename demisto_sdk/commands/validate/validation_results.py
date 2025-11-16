@@ -147,8 +147,6 @@ class ResultWriter:
         if warning_error_codes:
             warning_msg = f"The following errors were reported as warnings: {', '.join(warning_error_codes)}.\n"
             msg = f"{msg}{warning_msg}"
-            if "BC117" in warning_error_codes:
-                msg = f"{msg}BC117 validation requires PM review due to changes to supportedModules.\n"
         if ignorable_errors:
             error_msg += (
                 f"The following errors can be ignored: {', '.join(ignorable_errors)}.\n"

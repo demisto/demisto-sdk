@@ -39,7 +39,7 @@ select = [
   "RP101"
 ]
 warning = [
-"BC117"
+  "BC117"
 ]
 
 [use_git]
@@ -61,7 +61,7 @@ select = [
   "RP101"
 ]
 warning = [
-"BC117"
+  "BC117"
 ]
 
 [xsoar_best_practices_path_based_validations]

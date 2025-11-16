@@ -103,6 +103,8 @@ mapping:
         type: bool
       isfetchassets:
         type: bool
+      ismcp:
+        type: bool
       longRunning:
         type: bool
       longRunningPort:

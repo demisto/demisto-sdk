@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the schema formatter would remove the runScriptAfterUpdate key during formatting instead of retaining it.
+  type: fix
+pr_number: 5129

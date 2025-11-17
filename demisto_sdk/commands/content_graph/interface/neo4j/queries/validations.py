@@ -556,10 +556,18 @@ def get_agentix_actions_using_content_items(
     if not content_item_ids:
         return []
 
+    from demisto_sdk.commands.common.logger import logger
+
+    logger.debug(
+        f"[GR110] Querying for AgentixActions using content items: {content_item_ids}"
+    )
+
     query = f"""
     // Find AgentixActions using commands from specified Integrations
     MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[:{RelationshipType.HAS_COMMAND}]-(content_item:{ContentType.INTEGRATION})
     WHERE content_item.object_id IN {content_item_ids}
+    AND 'platform' IN content_item.marketplaces
+    AND content_item.toversion = '99.99.99'
     RETURN agentix_action
 
     UNION
@@ -567,6 +575,8 @@ def get_agentix_actions_using_content_items(
     // Find AgentixActions using Scripts directly
     MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item:{ContentType.SCRIPT})
     WHERE content_item.object_id IN {content_item_ids}
+    AND 'platform' IN content_item.marketplaces
+    AND content_item.toversion = '99.99.99'
     RETURN agentix_action
 
     UNION
@@ -574,7 +584,13 @@ def get_agentix_actions_using_content_items(
     // Find AgentixActions using Playbooks directly
     MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item:{ContentType.PLAYBOOK})
     WHERE content_item.object_id IN {content_item_ids}
+    AND 'platform' IN content_item.marketplaces
+    AND content_item.toversion = '99.99.99'
     RETURN agentix_action
     """
     items = run_query(tx, query)
-    return [item.get("agentix_action") for item in items]
+    result = [item.get("agentix_action") for item in items]
+    logger.debug(
+        f"[GR110] Found {len(result)} AgentixActions: {[r.get('object_id') for r in result]}"
+    )
+    return result

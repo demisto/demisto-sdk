@@ -43,13 +43,10 @@ class IsAgentixActionUsingExistingContentItemValidator(
 ):
     error_code = "GR110"
     description = (
-        "Validates that Agentix actions reference existing commands/scripts "
-        "with valid inputs/outputs, and that input UI names match the "
-        "underlying argument names."
-    )
+        "Validates that Agentix actions reference existing commands/scripts/playbooks " "and use valid inputs/outputs with matching UI names.")
     rationale = (
         "Prevents runtime errors by ensuring Agentix actions only reference "
-        "existing content items and their valid inputs/outputs."
+        "existing content items and valid inputs/outputs."
     )
     error_message = ""
     related_field = ""
@@ -59,133 +56,143 @@ class IsAgentixActionUsingExistingContentItemValidator(
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
+        """
+        Main entry point: validate AgentixActions and their underlying content.
+        Handles changed actions and changed Integrations/Scripts/Playbooks.
+        """
         results: List[ValidationResult] = []
 
         agentix_actions_to_validate = set()
+        changed_underlying_items = []
 
-        integration_script_playbook_ids = []
-        for content_item in content_items:
-            if isinstance(content_item, AgentixAction):
-                agentix_actions_to_validate.add(content_item)
-            elif isinstance(content_item, (Integration, Script, Playbook)):
-                integration_script_playbook_ids.append(content_item.object_id)
+        for item in content_items:
+            if isinstance(item, AgentixAction):
+                agentix_actions_to_validate.add(item)
+            elif isinstance(item, (Integration, Script, Playbook)):
+                changed_underlying_items.append(item)
 
-        # Query graph for AgentixActions that depend on the Integration/Script/Playbook items
-        if integration_script_playbook_ids:
+        # Add dependent actions if underlying content changed
+        if changed_underlying_items:
             dependent_actions = self.graph.get_agentix_actions_using_content_items(
-                integration_script_playbook_ids
+                [u.object_id for u in changed_underlying_items]
             )
             agentix_actions_to_validate.update(dependent_actions)
 
-        for content_item in agentix_actions_to_validate:
-            content_item_type = content_item.underlying_content_item_type
+        for action in agentix_actions_to_validate:
+            action_type = action.underlying_content_item_type
 
-            if content_item_type not in {
-                "command",
-                "script",
-                "playbook",
-            }:  # Validate when the action wraps a command, a script or a playbook
+            if action_type not in {"command", "script", "playbook"}:
                 results.append(
                     ValidationResult(
                         validator=self,
                         message=(
-                            f"The action '{content_item.name}' wraps a content type '{content_item_type}', "
+                            f"The action '{action.name}' wraps a content type '{action_type}', "
                             "which is currently unsupported in Agentix. Only 'command', 'script', and 'playbook' types are allowed."
                         ),
-                        content_object=content_item,
+                        content_object=action,
                     )
                 )
                 continue
-            elif content_item_type == "command":
-                command_or_script_name = content_item.underlying_content_item_command
-            else:  # script or playbook
-                command_or_script_name = content_item.underlying_content_item_id
 
-            integration_or_script_id = content_item.underlying_content_item_id
+            item_name = (
+                action.underlying_content_item_command
+                if action_type == "command"
+                else action.underlying_content_item_id
+            )
+            integration_or_script_id = action.underlying_content_item_id
 
             if integration_or_script_id in {"_any_", "_builtin_"}:
                 # Actions that wrap built-in or enrich commands are not validated
                 continue
 
-            graph_result = self.graph.search(object_id=command_or_script_name)
+            # Resolve the underlying content item
+            underlying_item = self._get_underlying_item(
+                action, item_name, action_type, changed_underlying_items
+            )
 
-            replaced_name = replace_alerts_with_incidents(command_or_script_name)  # type: ignore
+            # Try replacing "alerts" with "incidents" if not found
+            if not underlying_item:
+                replaced_name = replace_alerts_with_incidents(item_name)
+                if replaced_name != item_name:
+                    item_name = replaced_name
+                    underlying_item = self._get_underlying_item(
+                        action, item_name, action_type, changed_underlying_items
+                    )
 
-            # Check again with incident/s instead of alert/s if some content items appear in a few names
-            if not graph_result and command_or_script_name != replaced_name:
-                command_or_script_name = replaced_name
-                graph_result = self.graph.search(object_id=command_or_script_name)
+            # Still not found? search the graph
+            if not underlying_item:
+                graph_result = self.graph.search(object_id=item_name)
+                underlying_item = self._get_underlying_item(
+                    action,
+                    item_name,
+                    action_type,
+                    changed_underlying_items,
+                    graph_result,
+                )
 
-            if (
-                not graph_result
-            ):  # the command or the script does not exist in the Content repo
+            if not underlying_item:
                 results.append(
                     ValidationResult(
                         validator=self,
                         message=(
-                            f"The content item '{command_or_script_name}' could not be found in the Content repository. "
+                            f"The content item '{item_name}' could not be found in the Content repository. "
                             "Ensure the referenced command or script exists."
                         ),
-                        content_object=content_item,
+                        content_object=action,
                     )
                 )
+                continue
 
-            else:
-                # Get the correct item (Integration for commands, or Script/Playbook directly)
-                if not integration_or_script_id or not command_or_script_name:
-                    continue
-                underlying_item = self._get_correct_item(
-                    graph_result, content_item_type, integration_or_script_id
-                )
-
-                if not underlying_item:
-                    results.append(
-                        ValidationResult(
-                            validator=self,
-                            message=(
-                                f"The command '{command_or_script_name}' is not correctly related to integration ID "
-                                f"'{integration_or_script_id}'. Please verify the correct integration ID."
-                            ),
-                            content_object=content_item,
-                        )
-                    )
-                else:
-                    results.extend(
-                        self.validate_inputs(
-                            content_item,
-                            underlying_item,
-                            content_item_type,
-                            item_name=command_or_script_name,
-                        )
-                    )
-                    results.extend(
-                        self.validate_outputs(
-                            content_item,
-                            underlying_item,
-                            content_item_type,
-                            item_name=command_or_script_name,
-                        )
-                    )
+            # Validate inputs and outputs
+            results.extend(
+                self.validate_inputs(action, underlying_item, action_type, item_name)
+            )
+            results.extend(
+                self.validate_outputs(action, underlying_item, action_type, item_name)
+            )
 
         return results
 
-    def _get_correct_item(
-        self, graph_result: List, item_type: str, integration_or_script_id: str
+    def _get_underlying_item(
+        self,
+        action: AgentixAction,
+        item_name: str,
+        action_type: str,
+        changed_underlying: list,
+        graph_result: Optional[List] = None,
     ) -> Optional[Integration | Script | Playbook]:
-        """Get the correct item from graph_result based on type and integration.
-
-        For commands, returns the Integration since args/outputs are only in Integration.data.
-        For scripts/playbooks, returns the item directly which already has args/outputs.
         """
-        if item_type == "command":
-            for item in graph_result:
-                if item.content_type == ContentType.COMMAND:
-                    # Find the integration that has this command
-                    for integration in item.integrations:
-                        if integration.object_id == integration_or_script_id:
-                            return integration
-        else:  # script or playbook
-            return graph_result[0] if graph_result else None
+        Resolve underlying content item for an Agentix action.
+        Priority:
+        1. Check in changed_underlying items to avoid graph queries.
+        2. If graph_result provided, pick correct item from search results.
+        Handles:
+        - Commands: return Integration containing the command.
+        - Scripts/Playbooks: return item directly.
+        """
+        # Check in changed items first
+        for item in changed_underlying:
+            if action_type in {"script", "playbook"} and item.object_id == item_name:
+                return item
+            elif action_type == "command" and isinstance(item, Integration):
+                commands = item.data.get("script", {}).get("commands", [])
+                if any(c.get("name") == item_name for c in commands):
+                    return item
+
+        # Check graph result if provided
+        if graph_result:
+            if action_type == "command":
+                for item in graph_result:
+                    if item.content_type == ContentType.COMMAND:
+                        for integration in item.integrations:
+                            if (
+                                integration.object_id
+                                == action.underlying_content_item_id
+                            ):
+                                return integration
+            else:  # script/playbook
+                return graph_result[0] if graph_result else None
+
         return None
 
     def _get_command_data(self, underlying_item: Integration, item_name: str) -> dict:

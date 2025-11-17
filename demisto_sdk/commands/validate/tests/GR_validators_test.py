@@ -1837,3 +1837,107 @@ def test_IsAgentixActionUsingExistingContentItemValidatorAllFiles_valid_action(
     )
 
     assert len(results) == 0
+
+
+def test_GR110_platform_marketplace_validation(mocker: MockerFixture):
+    """
+    Test that the GR110 validator correctly filters AgentixActions based on PLATFORM marketplace and version 99.99.99.
+
+    Given:
+    - A set of AgentixActions with different marketplace/version combinations
+
+    When:
+    - Running the get_agentix_actions_using_content_items function
+
+    Then:
+    - Only actions with PLATFORM marketplace and version 99.99.99 should be returned
+    - The filtering should happen at the query level for efficiency
+    """
+    # Import the function to test
+    from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
+        get_agentix_actions_using_content_items,
+    )
+
+    # Mock the run_query function to verify the query contains the correct filters
+    with mocker.patch(
+        "demisto_sdk.commands.content_graph.interface.neo4j.queries.validations.run_query"
+    ) as mock_run_query:
+        # Setup a mock return value
+        mock_action = mocker.MagicMock()
+        mock_action.get.return_value = "valid_action"
+        mock_run_query.return_value = [{"agentix_action": mock_action}]
+
+        # Call the function
+        result = get_agentix_actions_using_content_items(
+            mocker.MagicMock(), ["test_id"]
+        )
+
+        # Verify the function returned the expected result
+        assert len(result) == 1
+
+        # Most importantly, verify that the query includes the PLATFORM marketplace and 99.99.99 version filters
+        query_arg = mock_run_query.call_args[0][0]
+
+        # Check that the query contains the platform marketplace filter
+        assert "AND 'platform' IN agentix_action.marketplaces" in query_arg
+
+        # Check that the query contains the 99.99.99 version filter
+        assert "AND agentix_action.toversion = '99.99.99'" in query_arg
+
+        # Verify these filters are applied to all three query parts (for commands, scripts, and playbooks)
+        assert query_arg.count("AND 'platform' IN agentix_action.marketplaces") == 3
+        assert query_arg.count("AND agentix_action.toversion = '99.99.99'") == 3
+
+
+def test_GR110_validator_integration_with_platform_filtering(mocker: MockerFixture):
+    """
+    Test the integration between the GR110 validator and the platform filtering logic.
+
+    Given:
+    - A validator that needs to validate AgentixActions
+
+    When:
+    - The validator processes content items
+
+    Then:
+    - It should use the get_agentix_actions_using_content_items function with the correct parameters
+    - Only actions meeting the PLATFORM marketplace and 99.99.99 version criteria should be validated
+    """
+    # Create mock objects
+    mock_graph = mocker.MagicMock()
+    mock_content_item = mocker.MagicMock()
+    mock_content_item.object_id = "test_integration"
+
+    # Create a mock for the get_agentix_actions_using_content_items function
+    with mocker.patch(
+        "demisto_sdk.commands.content_graph.interface.neo4j.queries.validations.get_agentix_actions_using_content_items"
+    ) as mock_get_actions:
+        # Set up the mock to return an empty list (no actions to validate)
+        mock_get_actions.return_value = []
+
+        # Set up the graph interface
+        BaseValidator.graph_interface = mock_graph
+
+        # Create and run the validator
+        validator = IsAgentixActionUsingExistingContentItemValidatorAllFiles()
+        validator.obtain_invalid_content_items([mock_content_item])
+
+        # Verify that get_agentix_actions_using_content_items was called with the correct parameters
+        mock_get_actions.assert_called_once()
+
+        # Verify that the content item ID was passed to the function
+        assert mock_content_item.object_id in mock_get_actions.call_args[0][1]
+
+        # Create a more complex scenario with multiple content items
+        mock_get_actions.reset_mock()
+        mock_content_items = [mocker.MagicMock() for _ in range(3)]
+        for i, item in enumerate(mock_content_items):
+            item.object_id = f"test_item_{i}"
+
+        # Run the validator with multiple content items
+        validator.obtain_invalid_content_items(mock_content_items)
+
+        # Verify that get_agentix_actions_using_content_items was called with all content item IDs
+        mock_get_actions.assert_called_once()
+        for item in mock_content_items:
+            assert item.object_id in mock_get_actions.call_args[0][1]

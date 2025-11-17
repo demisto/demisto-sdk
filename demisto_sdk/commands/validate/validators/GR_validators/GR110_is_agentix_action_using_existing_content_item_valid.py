@@ -313,9 +313,9 @@ class IsAgentixActionUsingExistingContentItemValidator(
                 )
                 results.append(self._create_validation_error(content_item, message))
 
-            if reference_type == "input" and ref_name != underlying_name:
+            if ref_name != underlying_name:
                 message = (
-                    f"Action '{content_item.name}' input UI name '{ref_name}' "
+                    f"Action '{content_item.name}' {reference_type} UI name '{ref_name}' "
                     f"must match underlying name '{underlying_name}'."
                 )
                 results.append(self._create_validation_error(content_item, message))

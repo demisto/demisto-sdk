@@ -70,6 +70,9 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_m
 from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid_all_files import (
     IsAgentixActionUsingExistingContentItemValidatorAllFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid_list_files import (
+    IsAgentixActionUsingExistingContentItemValidatorListFiles,
+)
 from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
@@ -1837,6 +1840,305 @@ def test_IsAgentixActionUsingExistingContentItemValidatorAllFiles_valid_action(
     )
 
     assert len(results) == 0
+
+
+def test_IsAgentixActionUsingExistingContentItemValidatorListFiles_valid_action(
+    graph_repo: Repo,
+):
+    """
+    Given
+        - A valid agentix action with correct inputs/outputs matching the underlying command.
+    When
+        - Running IsAgentixActionUsingExistingContentItemValidatorListFiles validator.
+    Then
+        - No validation errors should be returned.
+    """
+    pack = graph_repo.create_pack("TestPack")
+
+    integration_yml = {
+        "commonfields": {"id": "TestIntegration", "version": -1},
+        "name": "TestIntegration",
+        "display": "Test Integration",
+        "category": "Utilities",
+        "description": "Test integration for GR110 validation",
+        "configuration": [],
+        "script": {
+            "type": "python",
+            "commands": [
+                {
+                    "name": "test-command",
+                    "description": "Test command",
+                    "arguments": [{"name": "arg1", "required": True}],
+                    "outputs": [{"contextPath": "Test.Output1"}],
+                }
+            ],
+        },
+    }
+    pack.create_integration("TestIntegration", yml=integration_yml)
+
+    agentix_action_yml = {
+        "commonfields": {"id": "TestAction", "version": -1},
+        "name": "TestAction",
+        "display": "Test Action",
+        "description": "Test action description",
+        "category": "Utilities",
+        "args": [
+            {
+                "name": "arg1",
+                "description": "First argument",
+                "underlyingargname": "arg1",
+                "required": True,
+                "type": "string",
+            },
+        ],
+        "outputs": [
+            {
+                "name": "Output1",
+                "description": "First output",
+                "underlyingoutputcontextpath": "Test.Output1",
+                "type": "string",
+            },
+        ],
+        "underlyingcontentitem": {
+            "id": "TestIntegration",
+            "name": "TestIntegration",
+            "type": "command",
+            "command": "test-command",
+            "version": -1,
+        },
+        "requiresuserapproval": False,
+    }
+    action = pack.create_agentix_action("TestAction", yml=agentix_action_yml)
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionUsingExistingContentItemValidatorListFiles().obtain_invalid_content_items(
+        [action.get_graph_object(BaseValidator.graph_interface)]
+    )
+
+    assert len(results) == 0
+
+
+def test_IsAgentixActionUsingExistingContentItemValidatorListFiles_invalid_input(
+    graph_repo: Repo,
+):
+    """
+    Given
+        - An agentix action with an input that references a non-existent argument in the underlying command.
+    When
+        - Running IsAgentixActionUsingExistingContentItemValidatorListFiles validator.
+    Then
+        - A validation error should be returned indicating the missing argument.
+    """
+    pack = graph_repo.create_pack("TestPack")
+
+    integration_yml = {
+        "commonfields": {"id": "TestIntegration", "version": -1},
+        "name": "TestIntegration",
+        "display": "Test Integration",
+        "category": "Utilities",
+        "description": "Test integration for GR110 validation",
+        "configuration": [],
+        "script": {
+            "type": "python",
+            "commands": [
+                {
+                    "name": "test-command",
+                    "description": "Test command",
+                    "arguments": [{"name": "arg1", "required": True}],
+                    "outputs": [{"contextPath": "Test.Output1"}],
+                }
+            ],
+        },
+    }
+    pack.create_integration("TestIntegration", yml=integration_yml)
+
+    # Create action with invalid input (non-existent argument)
+    agentix_action_yml = {
+        "commonfields": {"id": "TestAction", "version": -1},
+        "name": "TestAction",
+        "display": "Test Action",
+        "description": "Test action description",
+        "category": "Utilities",
+        "args": [
+            {
+                "name": "invalid_arg",
+                "description": "Invalid argument",
+                "underlyingargname": "non_existent_arg",
+                "required": True,
+                "type": "string",
+            },
+        ],
+        "outputs": [
+            {
+                "name": "Output1",
+                "description": "First output",
+                "underlyingoutputcontextpath": "Test.Output1",
+                "type": "string",
+            },
+        ],
+        "underlyingcontentitem": {
+            "id": "TestIntegration",
+            "name": "TestIntegration",
+            "type": "command",
+            "command": "test-command",
+            "version": -1,
+        },
+        "requiresuserapproval": False,
+    }
+    action = pack.create_agentix_action("TestAction", yml=agentix_action_yml)
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionUsingExistingContentItemValidatorListFiles().obtain_invalid_content_items(
+        [action.get_graph_object(BaseValidator.graph_interface)]
+    )
+
+    assert len(results) == 1
+    assert (
+        "input 'invalid_arg' references underlying argument 'non_existent_arg'"
+        in results[0].message
+    )
+
+
+def test_IsAgentixActionUsingExistingContentItemValidatorListFiles_invalid_output(
+    graph_repo: Repo,
+):
+    """
+    Given
+        - An agentix action with an output that references a non-existent output in the underlying command.
+    When
+        - Running IsAgentixActionUsingExistingContentItemValidatorListFiles validator.
+    Then
+        - A validation error should be returned indicating the missing output.
+    """
+    pack = graph_repo.create_pack("TestPack")
+
+    integration_yml = {
+        "commonfields": {"id": "TestIntegration", "version": -1},
+        "name": "TestIntegration",
+        "display": "Test Integration",
+        "category": "Utilities",
+        "description": "Test integration for GR110 validation",
+        "configuration": [],
+        "script": {
+            "type": "python",
+            "commands": [
+                {
+                    "name": "test-command",
+                    "description": "Test command",
+                    "arguments": [{"name": "arg1", "required": True}],
+                    "outputs": [{"contextPath": "Test.Output1"}],
+                }
+            ],
+        },
+    }
+    pack.create_integration("TestIntegration", yml=integration_yml)
+
+    # Create action with invalid output (non-existent output)
+    agentix_action_yml = {
+        "commonfields": {"id": "TestAction", "version": -1},
+        "name": "TestAction",
+        "display": "Test Action",
+        "description": "Test action description",
+        "category": "Utilities",
+        "args": [
+            {
+                "name": "arg1",
+                "description": "First argument",
+                "underlyingargname": "arg1",
+                "required": True,
+                "type": "string",
+            },
+        ],
+        "outputs": [
+            {
+                "name": "InvalidOutput",
+                "description": "Invalid output",
+                "underlyingoutputcontextpath": "Test.NonExistentOutput",
+                "type": "string",
+            },
+        ],
+        "underlyingcontentitem": {
+            "id": "TestIntegration",
+            "name": "TestIntegration",
+            "type": "command",
+            "command": "test-command",
+            "version": -1,
+        },
+        "requiresuserapproval": False,
+    }
+    action = pack.create_agentix_action("TestAction", yml=agentix_action_yml)
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionUsingExistingContentItemValidatorListFiles().obtain_invalid_content_items(
+        [action.get_graph_object(BaseValidator.graph_interface)]
+    )
+
+    assert len(results) == 1
+    assert (
+        "output 'InvalidOutput' references underlying output 'Test.NonExistentOutput'"
+        in results[0].message
+    )
+
+
+def test_IsAgentixActionUsingExistingContentItemValidatorListFiles_non_existent_content_item(
+    graph_repo: Repo,
+):
+    """
+    Given
+        - An agentix action that references a non-existent content item.
+    When
+        - Running IsAgentixActionUsingExistingContentItemValidatorListFiles validator.
+    Then
+        - A validation error should be returned indicating the missing content item.
+    """
+    pack = graph_repo.create_pack("TestPack")
+
+    # Create action with reference to non-existent content item
+    agentix_action_yml = {
+        "commonfields": {"id": "TestAction", "version": -1},
+        "name": "TestAction",
+        "display": "Test Action",
+        "description": "Test action description",
+        "category": "Utilities",
+        "args": [
+            {
+                "name": "arg1",
+                "description": "First argument",
+                "underlyingargname": "arg1",
+                "required": True,
+                "type": "string",
+            },
+        ],
+        "outputs": [
+            {
+                "name": "Output1",
+                "description": "First output",
+                "underlyingoutputcontextpath": "Test.Output1",
+                "type": "string",
+            },
+        ],
+        "underlyingcontentitem": {
+            "id": "NonExistentIntegration",
+            "name": "NonExistentIntegration",
+            "type": "command",
+            "command": "non-existent-command",
+            "version": -1,
+        },
+        "requiresuserapproval": False,
+    }
+    action = pack.create_agentix_action("TestAction", yml=agentix_action_yml)
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionUsingExistingContentItemValidatorListFiles().obtain_invalid_content_items(
+        [action.get_graph_object(BaseValidator.graph_interface)]
+    )
+
+    assert len(results) == 1
+    assert "could not be found in the Content repository" in results[0].message
 
 
 def test_GR110_platform_marketplace_validation(mocker: MockerFixture):

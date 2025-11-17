@@ -16,6 +16,9 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp 
 from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_valid_types import (
     IsTypeValid,
 )
+from demisto_sdk.commands.validate.tests.test_tools import (
+    create_agentix_action_object,
+)
 
 
 def test_is_forbidden_content_item():
@@ -240,135 +243,102 @@ def test_is_type_valid():
       and list the valid type options.
     """
     # Valid content item
-    valid_action = AgentixAction(
-        color="red",
-        description="",
-        display="",
-        path=Path("test_valid.yml"),
-        marketplaces=["platform"],
-        name="valid_action",
-        fromversion="",
-        toversion="",
-        display_name="ValidAction",
-        deprecated=False,
-        id="",
-        node_id="",
-        underlying_content_item_id="test",
-        underlying_content_item_name="test",
-        underlying_content_item_type="script",
-        underlying_content_item_version=-1,
-        agent_id="test",
-        args=[
-            AgentixActionArgument(
-                name="arg1", description="arg1", type="string", underlyingargname="arg1"
-            ),
-            AgentixActionArgument(
-                name="arg2",
-                description="arg2",
-                type="boolean",
-                underlyingargname="arg2",
-            ),
+    valid_action = create_agentix_action_object(
+        paths=["display", "args", "outputs"],
+        values=[
+            "ValidAction",
+            [
+                {
+                    "name": "arg1",
+                    "description": "arg1", 
+                    "type": "string",
+                    "underlyingargname": "arg1"
+                },
+                {
+                    "name": "arg2",
+                    "description": "arg2", 
+                    "type": "boolean",
+                    "underlyingargname": "arg2"
+                }
+            ],
+            [
+                {
+                    "name": "output1",
+                    "type": "json",
+                    "description": "output1",
+                    "underlyingoutputcontextpath": "output1"
+                },
+                {
+                    "name": "output2",
+                    "type": "number",
+                    "description": "output2",
+                    "underlyingoutputcontextpath": "output2"
+                }
+            ]
         ],
-        outputs=[
-            AgentixActionOutput(
-                name="output1",
-                type="json",
-                description="output1",
-                underlyingoutputcontextpath="output1",
-            ),
-            AgentixActionOutput(
-                name="output2",
-                type="number",
-                description="output2",
-                underlyingoutputcontextpath="output2",
-            ),
-        ],
+        action_name="valid_action"
     )
 
     # Invalid types for both args and outputs
-    invalid_action = AgentixAction(
-        color="red",
-        description="",
-        display="",
-        path=Path("test_invalid.yml"),
-        marketplaces=["platform"],
-        name="invalid_action",
-        fromversion="",
-        toversion="",
-        display_name="InvalidAction",
-        deprecated=False,
-        id="",
-        node_id="",
-        underlying_content_item_id="test",
-        underlying_content_item_name="test",
-        underlying_content_item_type="script",
-        underlying_content_item_version=-1,
-        agent_id="test",
-        args=[
-            AgentixActionArgument(
-                name="arg_invalid",
-                type="InvalidType",
-                description="arg_invalid",
-                underlyingargname="arg_invalid",
-            ),
+    invalid_action = create_agentix_action_object(
+        paths=["display", "args", "outputs"],
+        values=[
+            "InvalidAction",
+            [
+                {
+                    "name": "arg_invalid",
+                    "type": "InvalidType",
+                    "description": "arg_invalid",
+                    "underlyingargname": "arg_invalid"
+                }
+            ],
+            [
+                {
+                    "name": "output_invalid",
+                    "type": "Object",
+                    "description": "output_invalid",
+                    "underlyingoutputcontextpath": "output_invalid"
+                }
+            ]
         ],
-        outputs=[
-            AgentixActionOutput(
-                name="output_invalid",
-                type="Object",
-                description="output_invalid",
-                underlyingoutputcontextpath="output_invalid",
-            ),
-        ],
+        action_name="invalid_action"
     )
 
     # Mixed valid and invalid
-    mixed_action = AgentixAction(
-        color="red",
-        description="",
-        display="",
-        path=Path("test_mixed.yml"),
-        marketplaces=["platform"],
-        name="mixed_action",
-        fromversion="",
-        toversion="",
-        display_name="MixedAction",
-        deprecated=False,
-        id="",
-        node_id="",
-        underlying_content_item_id="test",
-        underlying_content_item_name="test",
-        underlying_content_item_type="script",
-        underlying_content_item_version=-1,
-        agent_id="test",
-        args=[
-            AgentixActionArgument(
-                name="arg_ok",
-                type="number",
-                description="arg_ok",
-                underlyingargname="arg_ok",
-            ),
-            AgentixActionArgument(
-                name="arg_bad",
-                type="Blob",
-                description="arg_bad",
-                underlyingargname="arg_bad",
-            ),
+    mixed_action = create_agentix_action_object(
+        paths=["display", "args", "outputs"],
+        values=[
+            "MixedAction",
+            [
+                {
+                    "name": "arg_ok",
+                    "type": "number",
+                    "description": "arg_ok",
+                    "underlyingargname": "arg_ok"
+                },
+                {
+                    "name": "arg_bad",
+                    "type": "Blob",
+                    "description": "arg_bad",
+                    "underlyingargname": "arg_bad"
+                }
+            ],
+            [
+                {
+                    "name": "output_ok",
+                    "type": "string",
+                    "description": "output_ok",
+                    "underlyingoutputcontextpath": "output_ok"
+                },
+                {
+                    "name": "output_bad",
+                    "type": "Array",
+                    "description": "output_bad",
+                    "underlyingoutputcontextpath": "output_bad"
+                }
+            ]
         ],
-        outputs=[
-            AgentixActionOutput(
-                name="output_ok",
-                type="string",
-                description="output_ok",
-                underlyingoutputcontextpath="output_ok",
-            ),
-            AgentixActionOutput(
-                name="output_bad",
-                type="Array",
-                description="output_bad",
-                underlyingoutputcontextpath="output_bad",
-            ),
-        ],
+        action_name="mixed_action"
     )
 
     content_items = [valid_action, invalid_action, mixed_action]
@@ -377,7 +347,6 @@ def test_is_type_valid():
 
     # We expect 2 invalid results: invalid_action and mixed_action
     assert len(results) == 2
-
     # Validate first message content
     assert (
         "The following Agentix action 'InvalidAction' contains invalid types:\n"

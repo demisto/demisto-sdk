@@ -24,7 +24,7 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
         )
         self.connect_to_dependencies()
         self.automation_type = get_value(self.json_data, "automation_type", "")
-        self.automation_id = get_value(self.json_data, "automation_type", "")
+        self.automation_id = get_value(self.json_data, "automation_id", "")
 
     @cached_property
     def field_mapping(self):

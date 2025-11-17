@@ -2243,3 +2243,85 @@ def test_GR110_validator_integration_with_platform_filtering(mocker: MockerFixtu
         mock_get_actions.assert_called_once()
         for item in mock_content_items:
             assert item.object_id in mock_get_actions.call_args[0][1]
+
+
+def test_IsAgentixActionUsingExistingContentItemValidatorListFiles_output_name_mismatch(
+    graph_repo: Repo,
+):
+    """
+    Given
+        - An agentix action with an output that has a different UI name than the underlying output name.
+    When
+        - Running IsAgentixActionUsingExistingContentItemValidatorListFiles validator.
+    Then
+        - A validation error should be returned indicating the output name mismatch.
+    """
+    pack = graph_repo.create_pack("TestPack")
+
+    integration_yml = {
+        "commonfields": {"id": "TestIntegration", "version": -1},
+        "name": "TestIntegration",
+        "display": "Test Integration",
+        "category": "Utilities",
+        "description": "Test integration for GR110 validation",
+        "configuration": [],
+        "script": {
+            "type": "python",
+            "commands": [
+                {
+                    "name": "test-command",
+                    "description": "Test command",
+                    "arguments": [{"name": "arg1", "required": True}],
+                    "outputs": [{"contextPath": "Test.Output1"}],
+                }
+            ],
+        },
+    }
+    pack.create_integration("TestIntegration", yml=integration_yml)
+
+    # Create action with output name mismatch
+    agentix_action_yml = {
+        "commonfields": {"id": "TestAction", "version": -1},
+        "name": "TestAction",
+        "display": "Test Action",
+        "description": "Test action description",
+        "category": "Utilities",
+        "args": [
+            {
+                "name": "arg1",
+                "description": "First argument",
+                "underlyingargname": "arg1",
+                "required": True,
+                "type": "string",
+            },
+        ],
+        "outputs": [
+            {
+                "name": "DifferentOutputName",  # Different from Test.Output1
+                "description": "Output with mismatched name",
+                "underlyingoutputcontextpath": "Test.Output1",
+                "type": "string",
+            },
+        ],
+        "underlyingcontentitem": {
+            "id": "TestIntegration",
+            "name": "TestIntegration",
+            "type": "command",
+            "command": "test-command",
+            "version": -1,
+        },
+        "requiresuserapproval": False,
+    }
+    action = pack.create_agentix_action("TestAction", yml=agentix_action_yml)
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionUsingExistingContentItemValidatorListFiles().obtain_invalid_content_items(
+        [action.get_graph_object(BaseValidator.graph_interface)]
+    )
+
+    assert len(results) == 1
+    assert (
+        "output UI name 'DifferentOutputName' must match underlying name 'Test.Output1'"
+        in results[0].message
+    )

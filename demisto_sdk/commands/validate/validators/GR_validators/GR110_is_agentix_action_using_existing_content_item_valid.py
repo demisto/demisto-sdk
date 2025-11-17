@@ -96,12 +96,12 @@ class IsAgentixActionUsingExistingContentItemValidator(
                 )
                 continue
 
-            item_name = (
-                action.underlying_content_item_command
+            item_name: str = (
+                action.underlying_content_item_command or ""
                 if action_type == "command"
-                else action.underlying_content_item_id
+                else action.underlying_content_item_id or ""
             )
-            integration_or_script_id = action.underlying_content_item_id
+            integration_or_script_id = action.underlying_content_item_id or ""
 
             if integration_or_script_id in {"_any_", "_builtin_"}:
                 # Actions that wrap built-in or enrich commands are not validated

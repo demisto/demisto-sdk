@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue in the **Trigger** parser where the *automation_type* field was incorrectly mapped to *automation_id*.
+  type: fix
+pr_number: 5130

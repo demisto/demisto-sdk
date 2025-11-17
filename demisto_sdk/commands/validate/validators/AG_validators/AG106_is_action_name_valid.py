@@ -28,7 +28,7 @@ class IsActionNameValidValidator(BaseValidator[ContentTypes]):
     related_field = "name"
     is_auto_fixable = False
 
-    AGENTIX_ACTION_NAME_PATTERN = re.compile(r"^[a-z0-9_]+$", re.IGNORECASE)
+    AGENTIX_ACTION_NAME_PATTERN = re.compile(r"^[a-zA-Z]\w*$", re.IGNORECASE)
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

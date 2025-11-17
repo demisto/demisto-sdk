@@ -1,6 +1,6 @@
 import copy
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import List
 
 import pytest
@@ -128,7 +128,7 @@ def normalize_pack_name(message: str) -> str:
     Normalizes dynamically generated pack directory names like 'pack_123'
     into a static placeholder 'PACK_NAME' so tests remain deterministic.
     """
-    return re.sub(r"pack_\d+", "PACK_NAME", message, flags=re.IGNORECASE)
+    return re.sub(r"pack_\d+", "PACK_NAME", message)
 
 
 @pytest.mark.parametrize(

@@ -138,7 +138,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
                         validator=self,
                         message=(
                             f"The content item '{item_name}' could not be found in the Content repository. "
-                            "Ensure the referenced command or script exists."
+                            "Ensure the referenced command, playbook, or script exists."
                         ),
                         content_object=action,
                     )

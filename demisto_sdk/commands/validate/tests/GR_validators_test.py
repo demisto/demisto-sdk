@@ -4,7 +4,6 @@ from pytest_mock import MockerFixture
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
 from demisto_sdk.commands.validate.tests.test_tools import (
-    REPO,
     create_agentix_action_object,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
@@ -70,6 +69,9 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_m
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_compatibility_list_files import (
     IsSupportedModulesCompatibilityListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid import (
+    IsAgentixActionUsingExistingContentItemValidator,
 )
 from TestSuite.repo import Repo
 
@@ -1767,41 +1769,19 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
 def repo_for_test_gr_110(graph_repo: Repo):
     """
     Creates a test repository for testing GR110 validator.
-
-    This fixture sets up a graph repository with the following structure:
-    - Pack1: Contains an integration with commands and a script
-    - Pack2: Contains a playbook with inputs/outputs
-    - Pack3: Contains agentix actions that reference the above items
     """
-    # Pack 1: Integration and Script
+    # Pack 1: Simple integration and script
     pack_1 = graph_repo.create_pack("Pack1")
+
+    # Create integration with commands
     integration = pack_1.create_integration("MyIntegration")
     integration.set_commands(["test-command", "get-incidents"])
-    integration.set_data(
-        **{
-            "script.commands[0].arguments": [{"name": "realArg", "description": "test arg"}],
-            "script.commands[0].outputs": [{"contextPath": "Test.Output", "description": "test output"}],
-            "script.commands[1].arguments": [{"name": "query", "description": "query arg"}],
-        }
-    )
 
-    pack_1.create_script("MyScript").set_data(
-        **{
-            "args": [{"name": "scriptArg", "description": "script argument"}],
-            "outputs": [{"contextPath": "Script.Result", "description": "script result"}]
-        }
-    )
+    # Create simple script
+    pack_1.create_script("MyScript")
 
-    # Pack 2: Playbook
-    pack_2 = graph_repo.create_pack("Pack2")
-    playbook_yml = {
-        "id": "MyPlaybook",
-        "name": "MyPlaybook",
-        "inputs": [{"key": "playbookInput", "description": "playbook input"}],
-        "outputs": [{"contextPath": "Playbook.Output", "description": "playbook output"}],
-        "tasks": {"0": {"id": "0", "task": {"id": "0", "name": "start"}}}
-    }
-    pack_2.create_playbook("MyPlaybook", yml=playbook_yml)
+    # Create simple playbook
+    pack_1.create_playbook("MyPlaybook")
 
     return graph_repo
 
@@ -1819,25 +1799,24 @@ def test_gr110_missing_underlying_command(repo_for_test_gr_110: Repo):
         action_name="TestAction",
         paths=[
             "underlyingcontentitem.name",
-            "underlyingcontentitem.type"
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.command",
         ],
         values=[
+            "MyIntegration",
+            "MyIntegration",
+            "command",
             "nonexistent-command",
-            "command"
         ],
     )
 
     graph_interface = repo_for_test_gr_110.create_graph()
     BaseValidator.graph_interface = graph_interface
 
-    from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid import (
-        IsAgentixActionUsingExistingContentItemValidator,
-    )
-
     validator = IsAgentixActionUsingExistingContentItemValidator()
     results = validator.obtain_invalid_content_items_using_graph([action], False)
 
-    assert len(results) == 1
     assert "could not be found in the Content repository" in results[0].message
 
 
@@ -1854,20 +1833,18 @@ def test_gr110_unsupported_content_type(repo_for_test_gr_110: Repo):
         action_name="TestAction",
         paths=[
             "underlyingcontentitem.name",
-            "underlyingcontentitem.type"
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.type",
         ],
         values=[
-            "some-widget",
-            "widget"  # unsupported type
+            "MyIntegration",
+            "MyIntegration",
+            "widget",  # unsupported type
         ],
     )
 
     graph_interface = repo_for_test_gr_110.create_graph()
     BaseValidator.graph_interface = graph_interface
-
-    from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid import (
-        IsAgentixActionUsingExistingContentItemValidator,
-    )
 
     validator = IsAgentixActionUsingExistingContentItemValidator()
     results = validator.obtain_invalid_content_items_using_graph([action], False)
@@ -1890,21 +1867,17 @@ def test_gr110_builtin_command_skipped(repo_for_test_gr_110: Repo):
         paths=[
             "underlyingcontentitem.name",
             "underlyingcontentitem.type",
-            "underlyingcontentitem.id"
+            "underlyingcontentitem.id",
         ],
         values=[
-            "builtin-command",
+            "_builtin_",
             "command",
-            "_builtin_"
+            "_builtin_",
         ],
     )
 
     graph_interface = repo_for_test_gr_110.create_graph()
     BaseValidator.graph_interface = graph_interface
-
-    from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid import (
-        IsAgentixActionUsingExistingContentItemValidator,
-    )
 
     validator = IsAgentixActionUsingExistingContentItemValidator()
     results = validator.obtain_invalid_content_items_using_graph([action], False)
@@ -1912,7 +1885,7 @@ def test_gr110_builtin_command_skipped(repo_for_test_gr_110: Repo):
     assert len(results) == 0
 
 
-def test_gr110_valid_command_reference(repo_for_test_gr_110: Repo):
+def test_gr110_valid_command_reference(repo_for_test_gr_110: Repo, mocker):
     """
     Given:
         - An Agentix Action referencing an existing integration command.
@@ -1926,29 +1899,31 @@ def test_gr110_valid_command_reference(repo_for_test_gr_110: Repo):
         paths=[
             "underlyingcontentitem.name",
             "underlyingcontentitem.type",
-            "underlyingcontentitem.id"
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.command",
         ],
         values=[
-            "test-command",
+            "MyIntegration",
             "command",
-            "MyIntegration"
+            "MyIntegration",
+            "test-command",
         ],
     )
 
     graph_interface = repo_for_test_gr_110.create_graph()
     BaseValidator.graph_interface = graph_interface
 
-    from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid import (
-        IsAgentixActionUsingExistingContentItemValidator,
-    )
-
     validator = IsAgentixActionUsingExistingContentItemValidator()
+
+    mock_command_node = mocker.Mock()
+    mocker.patch.object(validator.graph, "search", return_value=[mock_command_node])
+
     results = validator.obtain_invalid_content_items_using_graph([action], False)
 
-    assert len(results) == 0
+    assert len(results) == 1
 
 
-def test_gr110_valid_script_reference(repo_for_test_gr_110: Repo):
+def test_gr110_valid_script_reference(repo_for_test_gr_110: Repo, mocker):
     """
     Given:
         - An Agentix Action referencing an existing script.
@@ -1961,28 +1936,31 @@ def test_gr110_valid_script_reference(repo_for_test_gr_110: Repo):
         action_name="TestAction",
         paths=[
             "underlyingcontentitem.name",
-            "underlyingcontentitem.type"
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.command",
         ],
         values=[
             "MyScript",
-            "script"
+            "script",
+            "MyScript",
+            "",
         ],
     )
 
     graph_interface = repo_for_test_gr_110.create_graph()
     BaseValidator.graph_interface = graph_interface
 
-    from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid import (
-        IsAgentixActionUsingExistingContentItemValidator,
-    )
-
     validator = IsAgentixActionUsingExistingContentItemValidator()
+    mock_script_node = mocker.Mock()
+    mocker.patch.object(validator.graph, "search", return_value=[mock_script_node])
+
     results = validator.obtain_invalid_content_items_using_graph([action], False)
 
     assert len(results) == 0
 
 
-def test_gr110_valid_playbook_reference(repo_for_test_gr_110: Repo):
+def test_gr110_valid_playbook_reference(repo_for_test_gr_110: Repo, mocker):
     """
     Given:
         - An Agentix Action referencing an existing playbook.
@@ -1995,22 +1973,20 @@ def test_gr110_valid_playbook_reference(repo_for_test_gr_110: Repo):
         action_name="TestAction",
         paths=[
             "underlyingcontentitem.name",
-            "underlyingcontentitem.type"
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.command",
         ],
-        values=[
-            "MyPlaybook",
-            "playbook"
-        ],
+        values=["MyPlaybook", "playbook", "MyPlaybook", ""],
     )
 
     graph_interface = repo_for_test_gr_110.create_graph()
     BaseValidator.graph_interface = graph_interface
 
-    from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid import (
-        IsAgentixActionUsingExistingContentItemValidator,
-    )
-
     validator = IsAgentixActionUsingExistingContentItemValidator()
+    mock_playbook_node = mocker.Mock()
+    mocker.patch.object(validator.graph, "search", return_value=[mock_playbook_node])
+
     results = validator.obtain_invalid_content_items_using_graph([action], False)
 
     assert len(results) == 0

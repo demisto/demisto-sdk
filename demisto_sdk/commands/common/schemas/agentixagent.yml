@@ -13,11 +13,13 @@ mapping:
   color:
     type: str
     required: true
+  visibility:
+    type: str
+    required: true
   actionids:
     type: seq
     sequence:
     - type: str
-    required: true
   tags:
     type: seq
     sequence:
@@ -27,8 +29,6 @@ mapping:
   name:
     type: str
     required: true
-  display:
-    type: str
   description:
     type: str
     required: true
@@ -38,8 +38,20 @@ mapping:
     type: seq
     sequence:
     - type: str
+  builtinactions:
+    type: seq
+    sequence:
+    - type: str
   autoenablenewactions:
     type: bool
+  roles:
+    type: seq
+    sequence:
+    - type: str
+  sharedwithroles:
+    type: seq
+    sequence:
+    - type: str
   marketplaces:
     type: seq
     sequence:

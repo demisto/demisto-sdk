@@ -2,11 +2,12 @@ from pathlib import Path
 
 from demisto_sdk.commands.content_graph.objects.agentix_action import (
     AgentixAction,
-    AgentixActionArgument,
-    AgentixActionOutput,
 )
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.validate.tests.test_tools import (
+    create_agentix_action_object,
+)
 from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_content_item import (
     IsForbiddenContentItemValidator,
 )
@@ -15,9 +16,6 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp 
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_valid_types import (
     IsTypeValid,
-)
-from demisto_sdk.commands.validate.tests.test_tools import (
-    create_agentix_action_object,
 )
 
 
@@ -250,33 +248,33 @@ def test_is_type_valid():
             [
                 {
                     "name": "arg1",
-                    "description": "arg1", 
+                    "description": "arg1",
                     "type": "string",
-                    "underlyingargname": "arg1"
+                    "underlyingargname": "arg1",
                 },
                 {
                     "name": "arg2",
-                    "description": "arg2", 
+                    "description": "arg2",
                     "type": "boolean",
-                    "underlyingargname": "arg2"
-                }
+                    "underlyingargname": "arg2",
+                },
             ],
             [
                 {
                     "name": "output1",
                     "type": "json",
                     "description": "output1",
-                    "underlyingoutputcontextpath": "output1"
+                    "underlyingoutputcontextpath": "output1",
                 },
                 {
                     "name": "output2",
                     "type": "number",
                     "description": "output2",
-                    "underlyingoutputcontextpath": "output2"
-                }
-            ]
+                    "underlyingoutputcontextpath": "output2",
+                },
+            ],
         ],
-        action_name="valid_action"
+        action_name="valid_action",
     )
 
     # Invalid types for both args and outputs
@@ -289,7 +287,7 @@ def test_is_type_valid():
                     "name": "arg_invalid",
                     "type": "InvalidType",
                     "description": "arg_invalid",
-                    "underlyingargname": "arg_invalid"
+                    "underlyingargname": "arg_invalid",
                 }
             ],
             [
@@ -297,11 +295,11 @@ def test_is_type_valid():
                     "name": "output_invalid",
                     "type": "Object",
                     "description": "output_invalid",
-                    "underlyingoutputcontextpath": "output_invalid"
+                    "underlyingoutputcontextpath": "output_invalid",
                 }
-            ]
+            ],
         ],
-        action_name="invalid_action"
+        action_name="invalid_action",
     )
 
     # Mixed valid and invalid
@@ -314,31 +312,31 @@ def test_is_type_valid():
                     "name": "arg_ok",
                     "type": "number",
                     "description": "arg_ok",
-                    "underlyingargname": "arg_ok"
+                    "underlyingargname": "arg_ok",
                 },
                 {
                     "name": "arg_bad",
                     "type": "Blob",
                     "description": "arg_bad",
-                    "underlyingargname": "arg_bad"
-                }
+                    "underlyingargname": "arg_bad",
+                },
             ],
             [
                 {
                     "name": "output_ok",
                     "type": "string",
                     "description": "output_ok",
-                    "underlyingoutputcontextpath": "output_ok"
+                    "underlyingoutputcontextpath": "output_ok",
                 },
                 {
                     "name": "output_bad",
                     "type": "Array",
                     "description": "output_bad",
-                    "underlyingoutputcontextpath": "output_bad"
-                }
-            ]
+                    "underlyingoutputcontextpath": "output_bad",
+                },
+            ],
         ],
-        action_name="mixed_action"
+        action_name="mixed_action",
     )
 
     content_items = [valid_action, invalid_action, mixed_action]

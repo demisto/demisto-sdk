@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
@@ -22,11 +23,16 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.connect_to_dependencies()
+        self.automation_type = get_value(self.json_data, "automation_type", "")
+        self.automation_id = get_value(self.json_data, "automation_id", "")
 
     @cached_property
     def field_mapping(self):
         super().field_mapping.update(
-            {"object_id": "trigger_id", "name": "trigger_name"}
+            {
+                "object_id": "trigger_id",
+                "name": "trigger_name",
+            }
         )
         return super().field_mapping
 
@@ -41,6 +47,11 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
         """Collects the playbook used in the trigger as a mandatory dependency."""
         if playbook := self.json_data.get("playbook_id"):
             self.add_dependency_by_id(playbook, ContentType.PLAYBOOK)
+        elif automation := self.json_data.get("automation_id"):
+            if self.json_data.get("automation_type") == "playbook":
+                self.add_dependency_by_id(automation, ContentType.PLAYBOOK)
+            else:
+                self.add_dependency_by_id(automation, ContentType.COMMAND)
 
     @property
     def strict_object(self):

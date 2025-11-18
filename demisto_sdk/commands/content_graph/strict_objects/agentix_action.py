@@ -17,7 +17,7 @@ class AgentixActionArgument(BaseStrictModel):
     hidden: bool = False
     disabled: bool = False
     content_item_arg_name: str = Field(..., alias="underlyingargname")
-    generatable: bool = False
+    isgeneratable: bool = False
 
 
 class AgentixActionOutput(BaseStrictModel):

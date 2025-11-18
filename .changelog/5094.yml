@@ -1,0 +1,4 @@
+changes:
+- description: Added RM103 to validate that internal scripts do not have a readme file.
+  type: internal
+pr_number: 5094

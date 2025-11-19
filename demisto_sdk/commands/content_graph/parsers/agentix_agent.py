@@ -20,7 +20,7 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.color: str = self.yml_data.get("color")  # type: ignore
-        self.visibility: str = self.yml_data.get("visibility") # type: ignore
+        self.visibility: str = self.yml_data.get("visibility")  # type: ignore
         self.actionids: list[str] = self.yml_data.get("actionids", [])
         self.systeminstructions: str = self.yml_data.get("systeminstructions", "")
         self.conversationstarters: list[str] = self.yml_data.get(

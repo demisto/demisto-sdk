@@ -1,0 +1,20 @@
+commonfields:
+  id: sample_agentix_agent
+  version: -1
+display: Sample Agentix Agent
+name: Sample Agentix Agent
+tags:
+  - gpt
+  - llm
+category: AI & Machine Learning
+description: |-
+    A sample agent for testing purposes.
+color: "#FF0000"
+conversationstarters:
+  - "What can you do?"
+actionids:
+  - SampleAction
+marketplaces:
+- platform
+supportedModules:
+- agentix

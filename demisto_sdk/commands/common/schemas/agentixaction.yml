@@ -84,7 +84,7 @@ schema;args_schema:
       type: bool
     underlyingargname:
       type: str
-    generatable:
+    isgeneratable:
       type: bool
     disabled:
       type: bool

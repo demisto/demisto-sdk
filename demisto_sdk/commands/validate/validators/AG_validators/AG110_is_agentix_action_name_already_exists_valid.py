@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC
-from pathlib import Path
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH

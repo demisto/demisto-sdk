@@ -12,9 +12,8 @@ class AgentixAction(TestSuiteBase):
         self._repo = repo
         self.repo_path = repo.path
         self.path = tmpdir / f"{self.name}.yml"
-        self.yaml = YAML(tmp_path= self.path, repo_path=str(repo.path))
+        self.yaml = YAML(tmp_path=self.path, repo_path=str(repo.path))
         super().__init__(self.path)
-
 
     @property
     def yml(self):

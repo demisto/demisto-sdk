@@ -1,21 +1,25 @@
 from pathlib import Path
 from typing import Optional
 
+from TestSuite.test_suite_base import TestSuiteBase
 from TestSuite.yml import YAML, yaml
 
 
-class AgentixAction(YAML):
-    def __init__(self, tmpdir: Path, name: str, repo):
+class AgentixAction(TestSuiteBase):
+    def __init__(self, tmpdir: Path, name: str, repo, path: Path):
         # Save entities
         self.name = name
         self._repo = repo
         self.repo_path = repo.path
-        super().__init__(tmp_path=tmpdir / f"{self.name}.yml", repo_path=str(repo.path))
+        self.path = tmpdir / f"{self.name}.yml"
+        self.yaml = YAML(tmp_path= self.path, repo_path=str(repo.path))
+        super().__init__(self.path)
+
 
     @property
     def yml(self):
         # for backward compatible
-        return self
+        return self.yaml
 
     def build(
         self,
@@ -23,7 +27,7 @@ class AgentixAction(YAML):
     ):
         """Writes not None objects to files."""
         if yml is not None:
-            self.write_dict(yml)
+            self.yaml.write_dict(yml)
 
     def create_default_agentix_action(
         self,

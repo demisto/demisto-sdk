@@ -43,7 +43,7 @@ class IsAgentixActionNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC
                 validator=self,
                 message=self.error_message.format(
                     content_id=content_id,
-                    duplicate_display_name_ids=(", ".join(duplicate_name_ids)),
+                    duplicate_name_ids=(", ".join(duplicate_name_ids)),
                 ),
                 content_object=content_id_to_objects[content_id],
             )

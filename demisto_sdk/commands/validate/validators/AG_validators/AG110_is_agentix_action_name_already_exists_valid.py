@@ -30,7 +30,7 @@ class IsAgentixActionNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
         file_paths_to_objects = {
-            str(Path(content_item.path).relative_to(CONTENT_PATH)): content_item
+            str(content_item.path.relative_to(CONTENT_PATH)): content_item
             for content_item in content_items
         }
         content_id_to_objects = {item.object_id: item for item in content_items}  # type: ignore[attr-defined]

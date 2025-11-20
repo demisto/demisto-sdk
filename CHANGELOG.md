@@ -1,4 +1,15 @@
 # Changelog
+## 1.38.13 (2025-11-05)
+### Feature
+* Removed the GR106 validation from the xsoar_best_practices section so it does not execute when running the ValidateContent script in Cortex. [#5125](https://github.com/demisto/demisto-sdk/pull/5125)
+* Add ST114 validator to enforce content item supportedModules are a subset of the Content Pack's supported modules. [#5123](https://github.com/demisto/demisto-sdk/pull/5123)
+* Added the BC116 backwards-compatibility validator, which verifies that output keys are not removed from AgentixAction items. [#5100](https://github.com/demisto/demisto-sdk/pull/5100)
+
+### Internal
+* Changed the *generatable* field of *AgentixActionArgument* to *iseneratable* to match server. [#5069](https://github.com/demisto/demisto-sdk/pull/5069)
+* Updated NPM package dependencies to their latest versions for improved security and performance. [#5071](https://github.com/demisto/demisto-sdk/pull/5071)
+
+
 ## 1.38.12 (2025-10-20)
 ### Feature
 * Added graph support for the supportedModules field in commands, along with command mismatch validation in GR109. [#5028](https://github.com/demisto/demisto-sdk/pull/5028)

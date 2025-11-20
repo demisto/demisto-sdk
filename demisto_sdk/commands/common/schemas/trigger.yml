@@ -6,7 +6,7 @@ mapping:
     type: str
   id:
     type: str
-    required: false
+    required: true
   trigger_id:
     type: str
     required: false
@@ -17,7 +17,7 @@ mapping:
     type: str
   name:
     type: str
-    required: false
+    required: true
   trigger_name:
     type: str
     required: false

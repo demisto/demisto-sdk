@@ -1,11 +1,10 @@
 from pathlib import Path
 
+import pytest
+
 from demisto_sdk.commands.content_graph.objects.agentix_action import (
     AgentixAction,
 )
-import pytest
-
-from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from pathlib import Path
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -29,7 +30,7 @@ class IsAgentixActionNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
         file_paths_to_objects = {
-            str(content_item.path.relative_to(CONTENT_PATH)): content_item
+            str(Path(content_item.path).relative_to(CONTENT_PATH)): content_item
             for content_item in content_items
         }
         content_id_to_objects = {item.object_id: item for item in content_items}  # type: ignore[attr-defined]

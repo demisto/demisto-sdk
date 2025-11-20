@@ -126,6 +126,7 @@ class _Script(BaseStrictModel):
     is_fetch: Optional[bool] = Field(None, alias="isfetch")
     is_fetch_events: Optional[bool] = Field(None, alias="isfetchevents")
     is_fetch_assets: Optional[bool] = Field(None, alias="isfetchassets")
+    is_mcp: Optional[bool] = Field(None, alias="ismcp")
     long_running: Optional[bool] = Field(None, alias="longRunning")
     long_running_port: Optional[bool] = Field(None, alias="longRunningPort")
     is_mappable: Optional[bool] = Field(None, alias="ismappable")

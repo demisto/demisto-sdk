@@ -321,6 +321,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
     FileType.CASE_FIELD: "Case Fields",
     FileType.CASE_LAYOUT: "Case Layouts",
+    FileType.AGENTIX_AGENT: "Agents",
+    FileType.AGENTIX_ACTION: "Actions",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -1681,19 +1683,34 @@ FEED_REQUIRED_PARAMS = [
             "display": "Source Reliability",
             "type": 15,
             "required": True,
+        },
+        "must_be_one_of": {
             "options": [
-                "A - Completely reliable",
-                "B - Usually reliable",
-                "C - Fairly reliable",
-                "D - Not usually reliable",
-                "E - Unreliable",
-                "F - Reliability cannot be judged",
+                # First list is for backward compatibility with old reliability options
+                [
+                    "A - Completely reliable",
+                    "B - Usually reliable",
+                    "C - Fairly reliable",
+                    "D - Not usually reliable",
+                    "E - Unreliable",
+                    "F - Reliability cannot be judged",
+                ],
+                # Second list is for new reliability options
+                [
+                    "A++ - Reputation script",
+                    "A+ - 3rd party enrichment",
+                    "A - Completely reliable",
+                    "B - Usually reliable",
+                    "C - Fairly reliable",
+                    "D - Not usually reliable",
+                    "E - Unreliable",
+                    "F - Reliability cannot be judged",
+                ],
             ],
         },
         "must_contain": {
             "additionalinfo": "Reliability of the source providing the intelligence data"
         },
-        "must_be_one_of": {},
     },
     {
         "name": "feedExpirationInterval",

@@ -1,5 +1,9 @@
 type: map
 mapping:
+  automation_type:
+    type: str
+  automation_id:
+    type: str
   id:
     type: str
     required: false
@@ -20,7 +24,6 @@ mapping:
     # DEPRECATED: Use 'name' field instead. This field is kept for backward compatibility with existing content items.
   playbook_id:
     type: str
-    required: true
   description:
     type: str
     required: true

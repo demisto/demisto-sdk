@@ -9,6 +9,7 @@ from TestSuite.yml import YAML, yaml
 class AgentixAction(TestSuiteBase):
     def __init__(self, tmpdir: Path, name: str, repo):
         # Save entities
+        self.object_id = name
         self.name = name
         self._repo = repo
         self.repo_path = repo.path

@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Optional
 
+from demisto_sdk.commands.common.tools import set_value
 from TestSuite.test_suite_base import TestSuiteBase
 from TestSuite.yml import YAML, yaml
-from demisto_sdk.commands.common.tools import set_value
 
 
 class AgentixAction(TestSuiteBase):

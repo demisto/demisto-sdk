@@ -11,7 +11,6 @@ class AgentixAction(YAML):
         self._repo = repo
         self.repo_path = repo.path
         super().__init__(tmp_path=tmpdir / f"{self.name}.yml", repo_path=str(repo.path))
-        self.path = Path(self.path)
 
     @property
     def yml(self):

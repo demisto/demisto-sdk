@@ -47,5 +47,3 @@ class AgentixAction(YAML):
 
     def set_agentix_action_name(self, name: str):
         self.yml.update({"name": name})
-
-

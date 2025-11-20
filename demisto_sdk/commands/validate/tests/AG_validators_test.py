@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from TestSuite.repo import Repo
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.content_graph.objects.agentix_action import (
     AgentixAction,
@@ -10,7 +9,9 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_agentix_action_object,
 )
-from demisto_sdk.commands.validate.validators.AG_validators import AG110_is_agentix_action_name_already_exists_valid
+from demisto_sdk.commands.validate.validators.AG_validators import (
+    AG110_is_agentix_action_name_already_exists_valid,
+)
 from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_content_item import (
     IsForbiddenContentItemValidator,
 )
@@ -20,8 +21,10 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp 
 from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_valid_types import (
     IsTypeValid,
 )
-from demisto_sdk.commands.validate.validators.AG_validators.AG110_is_agentix_action_name_already_exists_valid import \
-    IsAgentixActionNameAlreadyExistsValidator
+from demisto_sdk.commands.validate.validators.AG_validators.AG110_is_agentix_action_name_already_exists_valid import (
+    IsAgentixActionNameAlreadyExistsValidator,
+)
+from TestSuite.repo import Repo
 
 
 def test_is_forbidden_content_item():
@@ -377,8 +380,7 @@ def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_
         - Validate that we got the error messages for the duplicate name.
     """
     mocker.patch.object(
-        AG110_is_agentix_action_name_already_exists_valid
-        ,
+        AG110_is_agentix_action_name_already_exists_valid,
         "CONTENT_PATH",
         new=graph_repo.path,
     )
@@ -390,10 +392,12 @@ def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_
 
     BaseValidator.graph_interface = graph_repo.create_graph()
 
-    results = (
-        IsAgentixActionNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
-            [graph_repo.packs[0].agentix_actions[0], graph_repo.packs[2].agentix_actions[0]], validate_all_files=False
-        )
+    results = IsAgentixActionNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
+        [
+            graph_repo.packs[0].agentix_actions[0],
+            graph_repo.packs[2].agentix_actions[0],
+        ],
+        validate_all_files=False,
     )
 
     assert len(results) == 1

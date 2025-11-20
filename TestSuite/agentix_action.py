@@ -3,10 +3,11 @@ from typing import Optional
 
 from TestSuite.test_suite_base import TestSuiteBase
 from TestSuite.yml import YAML, yaml
+from demisto_sdk.commands.common.tools import set_value
 
 
 class AgentixAction(TestSuiteBase):
-    def __init__(self, tmpdir: Path, name: str, repo, path: Path):
+    def __init__(self, tmpdir: Path, name: str, repo):
         # Save entities
         self.name = name
         self._repo = repo
@@ -49,3 +50,10 @@ class AgentixAction(TestSuiteBase):
 
     def set_agentix_action_name(self, name: str):
         self.yml.update({"name": name})
+
+    def set_data(self, **key_path_to_val):
+        yml_contents = self.yml.read_dict()
+        for key_path, val in key_path_to_val.items():
+            set_value(yml_contents, key_path, val)
+        self.yml.write_dict(yml_contents)
+        self.clear_from_path_cache()

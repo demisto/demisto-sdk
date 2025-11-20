@@ -32,13 +32,13 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
         )
         self.roles: list[str] = self.yml_data.get("roles", [])
         self.sharedwithroles: list[str] = self.yml_data.get("sharedwithroles", [])
-        self.connect_to_dependencies()
+        self.add_action_dependencies()
 
-    def connect_to_dependencies(self) -> None:
-        """Collects the actions used in the agent as a mandatory dependency."""
+    def add_action_dependencies(self) -> None:
+        """Collects the actions used in the agent as optional dependencies."""
         if actions_ids := self.yml_data.get("actionids"):
             for id in actions_ids:
-                self.add_dependency_by_id(id, ContentType.AGENTIX_ACTION)
+                self.add_dependency_by_id(id, ContentType.AGENTIX_ACTION, is_mandatory=False)
 
     @cached_property
     def field_mapping(self):

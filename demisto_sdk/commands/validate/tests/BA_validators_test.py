@@ -2844,6 +2844,80 @@ def test_integration_compliant_policy_name_validator(
                 "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
             ],
         ),
+        (
+            [
+                create_pack_object(readme_text="Text <~> invalid"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: Tag name cannot be empty."
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~xsoar>invalid</~xsoar>"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'xsoar'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="Text <~XSOAR-SAAS>invalid</~XSOAR-SAAS>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'XSOAR-SAAS'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~XSOAR,>bad</~XSOAR,>"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'XSOAR,'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~,XSOAR>bad</~,XSOAR>"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: ',XSOAR'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="Text <~XSOAR, XSIAM>bad</~XSOAR, XSIAM>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'XSOAR, XSIAM'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~XSoar>bad</~XSoar>"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'XSoar'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
     ],
 )
 def test_MarketplaceTagsValidator_obtain_invalid_content_items(

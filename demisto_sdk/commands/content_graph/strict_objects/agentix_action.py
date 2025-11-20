@@ -37,6 +37,7 @@ class UnderlyingContentItem(BaseStrictModel):
 
 
 class AgentixAction(AgentixBase):
+    display: str
     args: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None
     underlying_content_item: UnderlyingContentItem = Field(

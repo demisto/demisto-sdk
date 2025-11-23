@@ -898,6 +898,7 @@ def test_IsSupportedModulesSubsetOfPack_inherit_pack_when_missing():
         )
         assert len(results) == 0
 
+
 class TestStandardizedIdAndNameFields:
     """
     Test class to validate the existence of standardized 'id' and 'name' fields
@@ -913,7 +914,7 @@ class TestStandardizedIdAndNameFields:
         Then:
             - Validation passes (no exception) and fields are set correctly.
         """
-        trigger = _StrictTrigger( # type: ignore[call-arg]
+        trigger = _StrictTrigger(  # type: ignore[call-arg]
             id="test_trigger",
             name="Test Trigger",
             description="desc",
@@ -933,7 +934,7 @@ class TestStandardizedIdAndNameFields:
             - ValidationError is raised indicating 'id' field is required.
         """
         with pytest.raises(ValueError) as exc:
-            _StrictTrigger( # type: ignore[call-arg]
+            _StrictTrigger(  # type: ignore[call-arg]
                 trigger_id="test_trigger",
                 trigger_name="Test Trigger",
                 name="Test Trigger",
@@ -942,7 +943,6 @@ class TestStandardizedIdAndNameFields:
                 playbook_id="Playbook123",
             )
         assert "id" in str(exc.value).lower() and "required" in str(exc.value).lower()
-
 
     def test_validate_xsiam_report_with_standardized_id_and_name_in_templates_data(
         self,
@@ -991,7 +991,11 @@ class TestStandardizedIdAndNameFields:
                 time_offset=0,
                 layout=[],
             )
-        assert "id" in str(exc.value).lower() and "name" in str(exc.value).lower() and "required" in str(exc.value).lower()
+        assert (
+            "id" in str(exc.value).lower()
+            and "name" in str(exc.value).lower()
+            and "required" in str(exc.value).lower()
+        )
 
     def test_validate_xsiam_dashboard_with_standardized_id_and_name_in_dashboards_data(
         self,
@@ -1054,7 +1058,7 @@ class TestStandardizedIdAndNameFields:
         Then:
             - Validation passes (no exception) and fields are set correctly.
         """
-        layout_rule = _StrictLayoutRule( # type: ignore[call-arg]
+        layout_rule = _StrictLayoutRule(  # type: ignore[call-arg]
             id="test_layout_rule",
             rule_id="test_layout_rule",
             name="Test Layout Rule",
@@ -1081,7 +1085,11 @@ class TestStandardizedIdAndNameFields:
                 layout_id="layout123",
                 fromVersion="6.0.0",
             )
-        assert "id" in str(exc.value).lower() and "name" in str(exc.value).lower() and "required" in str(exc.value).lower()
+        assert (
+            "id" in str(exc.value).lower()
+            and "name" in str(exc.value).lower()
+            and "required" in str(exc.value).lower()
+        )
 
     def test_validate_xdrc_template_with_standardized_id_and_name_valid(self):
         """
@@ -1123,4 +1131,3 @@ class TestStandardizedIdAndNameFields:
                 yaml_template="template_content",
             )
         assert "id" in str(exc.value).lower() and "required" in str(exc.value).lower()
-

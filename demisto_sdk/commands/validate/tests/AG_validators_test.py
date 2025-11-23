@@ -8,7 +8,6 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_agentix_action_object,
 )
-
 from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_content_item import (
     IsForbiddenContentItemValidator,
 )

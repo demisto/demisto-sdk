@@ -2,12 +2,13 @@ import pytest
 from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
-from demisto_sdk.commands.validate.validators.GR_validators.GR111_is_agentix_action_display_name_already_exists_valid import \
-    IsAgentixActionDisplayNameAlreadyExistsValidator
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
-    GR104_is_pack_display_name_already_exists, GR111_is_agentix_action_display_name_already_exists_valid,
+    GR104_is_pack_display_name_already_exists,
+    GR111_is_agentix_action_display_name_already_exists_valid,
+    GR112_is_agentix_action_name_already_exists_valid,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
     MarketplacesFieldValidatorAllFiles,
@@ -69,11 +70,8 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_m
 from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_compatibility_list_files import (
     IsSupportedModulesCompatibilityListFiles,
 )
-
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-
-from demisto_sdk.commands.validate.validators.GR_validators import (
-    GR112_is_agentix_action_name_already_exists_valid,
+from demisto_sdk.commands.validate.validators.GR_validators.GR111_is_agentix_action_display_name_already_exists_valid import (
+    IsAgentixActionDisplayNameAlreadyExistsValidator,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR112_is_agentix_action_name_already_exists_valid import (
     IsAgentixActionNameAlreadyExistsValidator,
@@ -1769,6 +1767,7 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
     )
     assert results[0].content_object.object_id == "playbook1"
 
+
 def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
     mocker, graph_repo: Repo
 ):
@@ -1803,7 +1802,8 @@ def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_
 
     assert len(results) == 1
 
-def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
+
+def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
     mocker, graph_repo: Repo
 ):
     """

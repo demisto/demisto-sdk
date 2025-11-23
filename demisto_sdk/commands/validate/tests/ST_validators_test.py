@@ -885,3 +885,43 @@ def test_IsSupportedModulesSubsetOfPack_inherit_pack_when_missing():
             [playbook]
         )
         assert len(results) == 0
+
+
+def test_validate_trigger_with_standardized_id_and_name_valid():
+    """
+    Given:
+        - A trigger with standardized 'id' and 'name' fields.
+    When:
+        - Instantiating _StrictTrigger.
+    Then:
+        - Validation passes (no exception) and fields are set correctly.
+    """
+    trigger = _StrictTrigger(
+        id="test_trigger",
+        name="Test Trigger",
+        description="desc",
+        suggestion_reason="reason",
+        playbook_id="Playbook123",
+    )
+    assert trigger.id == "test_trigger"
+    assert trigger.name == "Test Trigger"
+
+
+def test_validate_trigger_missing_required_id_field():
+    """
+    Given:
+        - A trigger missing the required 'id' field (using only old 'trigger_id').
+    When:
+        - Instantiating _StrictTrigger.
+    Then:
+        - ValidationError is raised indicating 'id' field is required.
+    """
+    with pytest.raises(ValueError) as exc:
+        _StrictTrigger(
+            trigger_id="test_trigger",
+            name="Test Trigger",
+            description="desc",
+            suggestion_reason="reason",
+            playbook_id="Playbook123",
+        )
+    assert "id" in str(exc.value).lower() and "required" in str(exc.value).lower()

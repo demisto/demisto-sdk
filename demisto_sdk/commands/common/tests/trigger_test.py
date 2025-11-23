@@ -111,7 +111,6 @@ def test_is_not_valid_file_complicated_schema(repo):
             "suggestion_reason": "Reason",
             "description": "Description",
             "name": "trigger_name",
-            "trigger_name": "trigger_name",
             "alerts_filter": {
                 "filter": {
                     "OR": [

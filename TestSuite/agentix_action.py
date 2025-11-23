@@ -11,6 +11,7 @@ class AgentixAction(TestSuiteBase):
         # Save entities
         self.object_id = name
         self.name = name
+        self.node_id = name
         self._repo = repo
         self.repo_path = repo.path
         self.path = tmpdir / f"{self.name}.yml"

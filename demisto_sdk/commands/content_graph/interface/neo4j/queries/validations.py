@@ -528,3 +528,69 @@ def get_supported_modules_mismatch_content_items(
         )
         results[item.get("content_item").element_id] = neo_res
     return results
+
+
+def get_agentix_actions_using_content_items(
+    tx: Transaction, content_item_ids: List[str]
+) -> List[graph.Node]:
+    """
+    Query graph to return all AgentixActions that use the specified
+    Integration, Script, or Playbook IDs.
+
+    This function finds AgentixActions that depend on the given Integrations,
+    Scripts, or Playbooks, either directly (for Scripts/Playbooks) or through commands
+    (for Integrations).
+
+    When an Integration/Script/Playbook is modified, we need to validate ALL
+    AgentixActions that depend on it, regardless of pack, since a breaking
+    change affects all dependents.
+
+    Args:
+        tx: The Transaction to contact the graph with.
+        content_item_ids: List of Integration, Script, or Playbook object IDs to find
+            dependent AgentixActions for.
+
+    Returns:
+        List of AgentixAction nodes that use the specified content items.
+    """
+    if not content_item_ids:
+        return []
+
+    from demisto_sdk.commands.common.logger import logger
+
+    logger.debug(
+        f"[GR110] Querying for AgentixActions using content items: {content_item_ids}"
+    )
+
+    query = f"""
+    // Find AgentixActions using commands from specified Integrations
+    MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[:{RelationshipType.HAS_COMMAND}]-(content_item:{ContentType.INTEGRATION})
+    WHERE content_item.object_id IN {content_item_ids}
+    AND 'platform' IN content_item.marketplaces
+    AND content_item.toversion = '99.99.99'
+    RETURN agentix_action
+
+    UNION
+
+    // Find AgentixActions using Scripts directly
+    MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item:{ContentType.SCRIPT})
+    WHERE content_item.object_id IN {content_item_ids}
+    AND 'platform' IN content_item.marketplaces
+    AND content_item.toversion = '99.99.99'
+    RETURN agentix_action
+
+    UNION
+
+    // Find AgentixActions using Playbooks directly
+    MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item:{ContentType.PLAYBOOK})
+    WHERE content_item.object_id IN {content_item_ids}
+    AND 'platform' IN content_item.marketplaces
+    AND content_item.toversion = '99.99.99'
+    RETURN agentix_action
+    """
+    items = run_query(tx, query)
+    result = [item.get("agentix_action") for item in items]
+    logger.debug(
+        f"[GR110] Found {len(result)} AgentixActions: {[r.get('object_id') for r in result]}"
+    )
+    return result

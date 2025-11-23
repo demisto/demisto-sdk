@@ -22,9 +22,7 @@ class LayoutRule(JSONBased):
         self.write_json(
             {
                 "id": self.rule_id,
-                "rule_id": self.rule_id,
                 "name": self.name,
-                "rule_name": self.name,
                 "layout_id": "test_layout",
                 "description": "",
                 "alerts_filter": {

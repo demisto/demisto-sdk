@@ -107,7 +107,6 @@ def test_is_not_valid_file_complicated_schema(repo):
         "MyTrigger",
         {
             "id": "trigger_id",
-            "trigger_id": "trigger_id",
             "playbook_id": "playbook_id",
             "suggestion_reason": "Reason",
             "description": "Description",

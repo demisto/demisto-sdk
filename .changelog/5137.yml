@@ -1,0 +1,4 @@
+changes:
+- description: Added new AG105 and AG106 validations.
+  type: internal
+pr_number: 5137

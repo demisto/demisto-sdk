@@ -21,7 +21,8 @@ class IsActionNameValidValidator(BaseValidator[ContentTypes]):
     rationale = "Action names must be user-friendly and conform to standards."
     error_message = (
         "The following AgentixAction name value is invalid: {0}.\n"
-        "AgentixAction name value may contain only letters (uppercase or lowercase), digits, or underscores. "
+        "AgentixAction name value must start with a letter and may contain only letters (uppercase or lowercase), "
+        "digits, or underscores."
         "Spaces and special characters are not allowed."
     )
 

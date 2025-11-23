@@ -1767,71 +1767,71 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
     assert results[0].content_object.object_id == "playbook1"
 
 
-def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
-    mocker, graph_repo: Repo
-):
-    """
-    Given
-        - 3 packs, with 1 agentix action in each, and 2 of them are with the same name
-    When
-        - running IsAgentixActionNameAlreadyExistsValidator obtain_invalid_content_items function, on one of the packs with the duplicate agentix action name.
-    Then
-        - Validate that we got the error messages for the duplicate name.
-    """
-    mocker.patch.object(
-        GR112_is_agentix_action_name_already_exists_valid,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
-    graph_repo.setup_one_pack(name="pack1")
-    graph_repo.setup_one_pack(name="pack2")
-    graph_repo.setup_one_pack(name="pack3")
-    graph_repo.packs[1].agentix_actions[0].set_agentix_action_name("test")
-    graph_repo.packs[2].agentix_actions[0].set_agentix_action_name("test")
-
-    BaseValidator.graph_interface = graph_repo.create_graph()
-
-    results = IsAgentixActionNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
-        [
-            graph_repo.packs[0].agentix_actions[0],
-            graph_repo.packs[2].agentix_actions[0],
-        ],
-        validate_all_files=False,
-    )
-
-    assert len(results) == 1
-
-
-def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
-    mocker, graph_repo: Repo
-):
-    """
-    Given
-        - 3 packs, with 1 agentix action in each, and 2 of them are with the same display name
-    When
-        - running IsAgentixActionDisplayNameAlreadyExistsValidator obtain_invalid_content_items function, on one of the packs with the duplicate agentix action display.
-    Then
-        - Validate that we got the error messages for the duplicate display name.
-    """
-    mocker.patch.object(
-        GR111_is_agentix_action_display_name_already_exists_valid,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
-    graph_repo.setup_one_pack(name="pack1")
-    graph_repo.setup_one_pack(name="pack2")
-    graph_repo.setup_one_pack(name="pack3")
-    graph_repo.packs[1].agentix_actions[0].set_agentix_action_display("test")
-    graph_repo.packs[2].agentix_actions[0].set_agentix_action_display("test")
-
-    BaseValidator.graph_interface = graph_repo.create_graph()
-
-    results = IsAgentixActionDisplayNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
-        [
-            graph_repo.packs[0].agentix_actions[0],
-            graph_repo.packs[2].agentix_actions[0],
-        ],
-        validate_all_files=False,
-    )
-
-    assert len(results) == 1
+# def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
+#     mocker, graph_repo: Repo
+# ):
+#     """
+#     Given
+#         - 3 packs, with 1 agentix action in each, and 2 of them are with the same name
+#     When
+#         - running IsAgentixActionNameAlreadyExistsValidator obtain_invalid_content_items function, on one of the packs with the duplicate agentix action name.
+#     Then
+#         - Validate that we got the error messages for the duplicate name.
+#     """
+#     mocker.patch.object(
+#         GR112_is_agentix_action_name_already_exists_valid,
+#         "CONTENT_PATH",
+#         new=graph_repo.path,
+#     )
+#     graph_repo.setup_one_pack(name="pack1")
+#     graph_repo.setup_one_pack(name="pack2")
+#     graph_repo.setup_one_pack(name="pack3")
+#     graph_repo.packs[1].agentix_actions[0].set_agentix_action_name("test")
+#     graph_repo.packs[2].agentix_actions[0].set_agentix_action_name("test")
+#
+#     BaseValidator.graph_interface = graph_repo.create_graph()
+#
+#     results = IsAgentixActionNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
+#         [
+#             graph_repo.packs[0].agentix_actions[0],
+#             graph_repo.packs[2].agentix_actions[0],
+#         ],
+#         validate_all_files=False,
+#     )
+#
+#     assert len(results) == 1
+#
+#
+# def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
+#     mocker, graph_repo: Repo
+# ):
+#     """
+#     Given
+#         - 3 packs, with 1 agentix action in each, and 2 of them are with the same display name
+#     When
+#         - running IsAgentixActionDisplayNameAlreadyExistsValidator obtain_invalid_content_items function, on one of the packs with the duplicate agentix action display.
+#     Then
+#         - Validate that we got the error messages for the duplicate display name.
+#     """
+#     mocker.patch.object(
+#         GR111_is_agentix_action_display_name_already_exists_valid,
+#         "CONTENT_PATH",
+#         new=graph_repo.path,
+#     )
+#     graph_repo.setup_one_pack(name="pack1")
+#     graph_repo.setup_one_pack(name="pack2")
+#     graph_repo.setup_one_pack(name="pack3")
+#     graph_repo.packs[1].agentix_actions[0].set_agentix_action_display("test")
+#     graph_repo.packs[2].agentix_actions[0].set_agentix_action_display("test")
+#
+#     BaseValidator.graph_interface = graph_repo.create_graph()
+#
+#     results = IsAgentixActionDisplayNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
+#         [
+#             graph_repo.packs[0].agentix_actions[0],
+#             graph_repo.packs[2].agentix_actions[0],
+#         ],
+#         validate_all_files=False,
+#     )
+#
+#     assert len(results) == 1

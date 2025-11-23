@@ -16,6 +16,9 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_c
 from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp import (
     IsCorrectMPValidator,
 )
+from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_display_name_valid import (
+    IsDisplayNameValidValidator,
+)
 from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_valid_types import (
     IsTypeValid,
 )
@@ -363,6 +366,57 @@ def test_is_type_valid():
         "Arguments with invalid types: arg_bad. Possible argument types: unknown, keyValue, textArea, string, number, date, boolean.\n"
         "Outputs with invalid types: output_bad. Possible output types: unknown, string, number, date, boolean, json."
     ) in results[1].message
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        # Case 1: All valid AgentixAction displays
+        (
+            [
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+                create_agentix_action_object(paths=["display"], values=["Valid_Name"]),
+                create_agentix_action_object(paths=["display"], values=["Valid-Name"]),
+                create_agentix_action_object(paths=["display"], values=["Valid Name"]),
+                create_agentix_action_object(paths=["display"], values=["A123"]),
+                create_agentix_action_object(paths=["display"], values=["A_1-2 3"]),
+            ],
+            0,
+        ),
+        # Case 2: One invalid (starts with digit), one valid
+        (
+            [
+                create_agentix_action_object(paths=["display"], values=["1Invalid"]),
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+            ],
+            1,
+        ),
+        # Case 3: Invalid (contains forbidden character)
+        ([create_agentix_action_object(paths=["display"], values=["Invalid!"])], 1),
+        # Case 4: Multiple invalid
+        (
+            [
+                create_agentix_action_object(paths=["display"], values=["1Invalid"]),
+                create_agentix_action_object(paths=["display"], values=["Invalid!"]),
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+            ],
+            2,
+        ),
+    ],
+)
+def test_IsDisplayNameValid_obtain_invalid_content_items(
+    content_items, expected_number_of_failures
+):
+    """
+    Given
+    - AgentixAction content_items with various display values.
+    When
+    - Calling the IsDisplayNameValid.obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failure return.
+    """
+    results = IsDisplayNameValidValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures
 
 
 @pytest.mark.parametrize(

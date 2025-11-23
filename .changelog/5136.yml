@@ -1,0 +1,4 @@
+changes:
+- description: Updated BA104 validation to ensure marketplace tag names are non-empty and follow the required uppercase, comma-separated format.
+  type: internal
+pr_number: 5136

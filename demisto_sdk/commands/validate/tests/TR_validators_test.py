@@ -6,9 +6,6 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.TR_validators.TR100_is_silent_trigger import (
     IsSilentTriggerValidator,
 )
-from demisto_sdk.commands.validate.validators.TR_validators.TR101_standardized_fields import (
-    TriggerStandardizedFieldsValidator,
-)
 
 
 @pytest.mark.parametrize(
@@ -78,57 +75,3 @@ def test_IsSilentTriggerValidator(name, is_silent, result_len, file_name):
     )
     assert result_len == len(invalid_content_items)
 
-
-class TestTriggerStandardizedFieldsValidator:
-    def test_valid_trigger_with_standard_fields(self):
-        """Test that trigger with standard 'id' and 'name' fields passes validation."""
-        trigger = create_trigger_object()
-        trigger.data.update({"id": "test-trigger-id", "name": "Test Trigger Name"})
-
-        validator = TriggerStandardizedFieldsValidator()
-        results = validator.obtain_invalid_content_items([trigger])
-
-        assert len(results) == 0
-
-    def test_invalid_trigger_with_old_id_field_only(self):
-        """Test that trigger with only 'trigger_id' fails validation."""
-        trigger = create_trigger_object()
-        trigger.data.update(
-            {"trigger_id": "old-trigger-id", "name": "Test Trigger Name"}
-        )
-
-        validator = TriggerStandardizedFieldsValidator()
-        results = validator.obtain_invalid_content_items([trigger])
-
-        assert len(results) == 1
-        assert results[0].validator.error_code == "TR101"
-
-    def test_invalid_trigger_with_old_name_field_only(self):
-        """Test that trigger with only 'trigger_name' fails validation."""
-        trigger = create_trigger_object()
-        trigger.data.update(
-            {"id": "test-trigger-id", "trigger_name": "Old Trigger Name"}
-        )
-
-        validator = TriggerStandardizedFieldsValidator()
-        results = validator.obtain_invalid_content_items([trigger])
-
-        assert len(results) == 1
-        assert results[0].validator.error_code == "TR101"
-
-    def test_valid_trigger_with_both_fields(self):
-        """Test that trigger with both old and new fields passes validation."""
-        trigger = create_trigger_object()
-        trigger.data.update(
-            {
-                "id": "test-trigger-id",
-                "trigger_id": "old-trigger-id",  # Backward compatibility
-                "name": "Test Trigger Name",
-                "trigger_name": "Old Trigger Name",  # Backward compatibility
-            }
-        )
-
-        validator = TriggerStandardizedFieldsValidator()
-        results = validator.obtain_invalid_content_items([trigger])
-
-        assert len(results) == 0

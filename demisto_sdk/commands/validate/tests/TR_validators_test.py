@@ -74,4 +74,3 @@ def test_IsSilentTriggerValidator(name, is_silent, result_len, file_name):
         [trigger]
     )
     assert result_len == len(invalid_content_items)
-

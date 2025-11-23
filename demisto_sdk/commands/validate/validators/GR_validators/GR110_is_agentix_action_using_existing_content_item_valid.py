@@ -67,18 +67,24 @@ class IsAgentixActionUsingExistingContentItemValidator(
         agentix_actions_to_validate = set()
         changed_underlying_items = []
 
-        for item in content_items:
-            if isinstance(item, AgentixAction):
-                agentix_actions_to_validate.add(item)
-            elif isinstance(item, (Integration, Script, Playbook)):
-                changed_underlying_items.append(item)
+        # When validate_all_files=True, get all AgentixActions from graph
+        if validate_all_files:
+            all_actions = self.graph.get_agentix_actions_using_content_items([])
+            agentix_actions_to_validate.update(all_actions)
+        else:
+            # Only validate specific items from content_items
+            for item in content_items:
+                if isinstance(item, AgentixAction):
+                    agentix_actions_to_validate.add(item)
+                elif isinstance(item, (Integration, Script, Playbook)):
+                    changed_underlying_items.append(item)
 
-        # Add dependent actions if underlying content changed
-        if changed_underlying_items:
-            dependent_actions = self.graph.get_agentix_actions_using_content_items(
-                [u.object_id for u in changed_underlying_items]
-            )
-            agentix_actions_to_validate.update(dependent_actions)
+            # Add dependent actions if underlying content changed
+            if changed_underlying_items:
+                dependent_actions = self.graph.get_agentix_actions_using_content_items(
+                    [u.object_id for u in changed_underlying_items]
+                )
+                agentix_actions_to_validate.update(dependent_actions)
 
         for action in agentix_actions_to_validate:
             action_type = action.underlying_content_item_type

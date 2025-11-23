@@ -22,6 +22,9 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_display_nam
 from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_valid_types import (
     IsTypeValid,
 )
+from demisto_sdk.commands.validate.validators.AG_validators.AG106_is_action_name_valid import (
+    IsActionNameValidValidator,
+)
 
 
 def test_is_forbidden_content_item():
@@ -413,4 +416,43 @@ def test_IsDisplayNameValid_obtain_invalid_content_items(
     - Make sure the right amount of failure return.
     """
     results = IsDisplayNameValidValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        # Case 1: All valid AgentixAction names
+        (
+            [
+                create_agentix_action_object(paths=["name"], values=["ValidName"]),
+                create_agentix_action_object(paths=["name"], values=["Valid_Name"]),
+                create_agentix_action_object(paths=["name"], values=["A123"]),
+            ],
+            0,
+        ),
+        # Case 2: One invalid (contains space), one valid
+        (
+            [
+                create_agentix_action_object(paths=["name"], values=["Invalid Name"]),
+                create_agentix_action_object(paths=["name"], values=["ValidName"]),
+            ],
+            1,
+        ),
+        # Case 3: Invalid (contains forbidden character)
+        ([create_agentix_action_object(paths=["name"], values=["Invalid!"])], 1),
+    ],
+)
+def test_IsActionNameValid_obtain_invalid_content_items(
+    content_items, expected_number_of_failures
+):
+    """
+    Given
+    - AgentixAction content_items with various name values.
+    When
+    - Calling the IsActionNameValidValidator.obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failure return.
+    """
+    results = IsActionNameValidValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures

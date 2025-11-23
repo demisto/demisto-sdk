@@ -35,11 +35,14 @@ class AgentixAction(TestSuiteBase):
         self,
         name: str = "sample_agentix_action",
         action_id: str = "sample_agentix_action_id",
+        display: str = "sample agentix action",
     ):
         """Creates a new agentix action with basic data.
         Args:
             name: The name and ID of the new agentix action, default is "sample_agentix_action".
             action_id: The ID of the new agentix action, default is "sample_agentix_action_id".
+            display: The display name of the new agentix action, default is "sample agentix action".
+
         """
         default_agentix_action_dir = (
             Path(__file__).parent / "assets" / "default_agentix_action"
@@ -48,10 +51,14 @@ class AgentixAction(TestSuiteBase):
             yml = yaml.load(yml_file)
             yml["id"] = action_id
             yml["name"] = name
+            yml["display"] = display
             self.build(yml=yml)
 
     def set_agentix_action_name(self, name: str):
         self.yml.update({"name": name})
+
+    def set_agentix_action_display(self, display: str):
+        self.yml.update({"display": display})
 
     def set_data(self, **key_path_to_val):
         yml_contents = self.yml.read_dict()

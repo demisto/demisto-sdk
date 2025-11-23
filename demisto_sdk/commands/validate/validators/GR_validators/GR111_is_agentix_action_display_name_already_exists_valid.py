@@ -16,7 +16,7 @@ ContentTypes = AgentixAction
 class IsAgentixActionDisplayNameAlreadyExistsValidator(
     BaseValidator[ContentTypes], ABC
 ):
-    error_code = "AG109"
+    error_code = "GR111"
     description = "Validate that there are no duplicate display names of Agentix Actions in the repo."
     rationale = "Prevent confusion between Agentix Actions."
     error_message = "Agentix Action '{content_id}' has a duplicate display name as: {duplicate_display_name_ids}."

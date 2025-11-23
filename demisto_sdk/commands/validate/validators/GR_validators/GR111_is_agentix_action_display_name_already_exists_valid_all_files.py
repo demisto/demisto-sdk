@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import ExecutionMode
-from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.validate.validators.AG_validators.AG109_is_agentix_action_display_name_already_exists_valid import (
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.validate.validators.GR_validators.GR111_is_agentix_action_display_name_already_exists_valid import (
     IsAgentixActionDisplayNameAlreadyExistsValidator,
 )
 from demisto_sdk.commands.validate.validators.base_validator import ValidationResult
 
-ContentTypes = Integration
+ContentTypes = AgentixAction
 
 
 class IsAgentixActionDisplayNameAlreadyExistsValidatorAllFiles(

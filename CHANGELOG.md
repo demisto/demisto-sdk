@@ -1,4 +1,23 @@
 # Changelog
+## 1.38.14 (2025-11-23)
+### Feature
+* Added a new validation, BC117, which issues a warning when additional modules are added to the supportedModules list of any item. [#5128](https://github.com/demisto/demisto-sdk/pull/5128)
+* Improved implementation of the ST110 validation by expanding support to include additional fields for integration commands. [#5132](https://github.com/demisto/demisto-sdk/pull/5132)
+
+### Fix
+* Fixed an issue where the schema formatter would remove the runScriptAfterUpdate key during formatting instead of retaining it. [#5129](https://github.com/demisto/demisto-sdk/pull/5129)
+* Fixed an issue in the **Trigger** parser where the *automation_type* field was incorrectly mapped to *automation_id*. [#5130](https://github.com/demisto/demisto-sdk/pull/5130)
+* Added the missing release note headers for the *AgentixAction* and *AgentixAgent* content types. [#5131](https://github.com/demisto/demisto-sdk/pull/5131)
+
+### Internal
+* Added new AG105 and AG106 validations. [#5137](https://github.com/demisto/demisto-sdk/pull/5137)
+* Added AG105 to validate that the types of arguments and outputs are valid. [#5095](https://github.com/demisto/demisto-sdk/pull/5095)
+* Updated BA104 validation to ensure marketplace tag names are non-empty and follow the required uppercase, comma-separated format. [#5136](https://github.com/demisto/demisto-sdk/pull/5136)
+* Updated the schema for Agentix agents. [#5054](https://github.com/demisto/demisto-sdk/pull/5054)
+* Added RM103 to validate that internal scripts do not have a readme file. [#5094](https://github.com/demisto/demisto-sdk/pull/5094)
+* Added the ismcp field to the integration schema to support MCP configuration flag. [#5133](https://github.com/demisto/demisto-sdk/pull/5133)
+
+
 ## 1.38.13 (2025-11-05)
 ### Feature
 * Removed the GR106 validation from the xsoar_best_practices section so it does not execute when running the ValidateContent script in Cortex. [#5125](https://github.com/demisto/demisto-sdk/pull/5125)

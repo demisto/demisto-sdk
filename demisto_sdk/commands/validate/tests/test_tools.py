@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
@@ -50,6 +51,7 @@ from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 from demisto_sdk.commands.content_graph.parsers.agentix_action import (
     AgentixActionParser,
 )
+from demisto_sdk.commands.content_graph.parsers.agentix_agent import AgentixAgentParser
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
     ParsingRuleParser,
@@ -966,3 +968,31 @@ def create_agentix_action_object(
         Path(agentix_action.path), list(MarketplaceVersions), pack_supported_modules=[]
     )
     return AgentixAction.from_orm(parser)
+
+
+def create_agentix_agent_object(
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
+    agent_name: Optional[str] = None,
+) -> AgentixAgent:
+    """Creating an agentix agent object with altered fields from a default agentix agent yml structure.
+    Returns:
+        The agentix agent object.
+    """
+    yml_content = load_yaml("agentix_agent.yml")
+    update_keys(yml_content, paths, values)
+    pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
+    additional_params = {}
+    if agent_name:
+        additional_params["name"] = agent_name
+
+    agentix_agent = pack.create_agentix_agent(**additional_params)
+    agentix_agent.create_default_agentix_agent()
+    agentix_agent.yml.update(yml_content)
+    parser = AgentixAgentParser(
+        Path(agentix_agent.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+    return AgentixAgent.from_orm(parser)

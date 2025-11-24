@@ -1,0 +1,4 @@
+changes:
+- description: Added validation IN165 for MCP integrations to ensure required commands are present.
+  type: feature
+pr_number: 5142

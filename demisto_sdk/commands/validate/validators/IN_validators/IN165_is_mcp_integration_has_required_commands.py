@@ -21,8 +21,10 @@ class IsMCPIntegrationHasRequiredCommandsValidator(BaseValidator[ContentTypes]):
     is_auto_fixable = False
     related_file_type = [RelatedFileType.YML]
 
-    def obtain_invalid_content_items(self, content_items: Iterable[ContentTypes]) -> List[ValidationResult]:
-        mcp_required_commands = {'list-tools', 'call-tool'}
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
+        mcp_required_commands = {"list-tools", "call-tool"}
 
         results: List[ValidationResult] = []
         for content_item in content_items:
@@ -33,7 +35,9 @@ class IsMCPIntegrationHasRequiredCommandsValidator(BaseValidator[ContentTypes]):
                     results.append(
                         ValidationResult(
                             validator=self,
-                            message=self.error_message.format(", ".join(sorted(missing_commands))),
+                            message=self.error_message.format(
+                                ", ".join(sorted(missing_commands))
+                            ),
                             content_object=content_item,
                         )
                     )

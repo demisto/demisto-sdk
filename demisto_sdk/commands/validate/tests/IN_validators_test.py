@@ -6408,7 +6408,9 @@ def test_IsNewRequiredParamNoDefaultIntegrationValidator_parameter_requirement_c
                 ),
             ],
             1,
-            ["The integration is marked as MCP (ismcp: true) but is missing the following required commands: list-tools."],
+            [
+                "The integration is marked as MCP (ismcp: true) but is missing the following required commands: list-tools."
+            ],
         ),
         (
             [
@@ -6418,7 +6420,9 @@ def test_IsNewRequiredParamNoDefaultIntegrationValidator_parameter_requirement_c
                 ),
             ],
             1,
-            ["The integration is marked as MCP (ismcp: true) but is missing the following required commands: call-tool."],
+            [
+                "The integration is marked as MCP (ismcp: true) but is missing the following required commands: call-tool."
+            ],
         ),
         (
             [
@@ -6428,7 +6432,9 @@ def test_IsNewRequiredParamNoDefaultIntegrationValidator_parameter_requirement_c
                 ),
             ],
             1,
-            ["The integration is marked as MCP (ismcp: true) but is missing the following required commands: call-tool, list-tools."],
+            [
+                "The integration is marked as MCP (ismcp: true) but is missing the following required commands: call-tool, list-tools."
+            ],
         ),
     ],
 )
@@ -6459,8 +6465,10 @@ def test_IsMCPIntegrationHasRequiredCommandsValidator_obtain_invalid_content_ite
         IsMCPIntegrationHasRequiredCommandsValidator,
     )
 
-    results = IsMCPIntegrationHasRequiredCommandsValidator().obtain_invalid_content_items(
-        content_items
+    results = (
+        IsMCPIntegrationHasRequiredCommandsValidator().obtain_invalid_content_items(
+            content_items
+        )
     )
     assert len(results) == expected_number_of_failures
     assert all(

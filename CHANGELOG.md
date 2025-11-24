@@ -10,7 +10,7 @@
 * Added the missing release note headers for the *AgentixAction* and *AgentixAgent* content types. [#5131](https://github.com/demisto/demisto-sdk/pull/5131)
 
 ### Internal
-* Added new AG105 and AG106 validations. [#5137](https://github.com/demisto/demisto-sdk/pull/5137)
+* Added new AG106 and AG107 validations. [#5137](https://github.com/demisto/demisto-sdk/pull/5137)
 * Added AG105 to validate that the types of arguments and outputs are valid. [#5095](https://github.com/demisto/demisto-sdk/pull/5095)
 * Updated BA104 validation to ensure marketplace tag names are non-empty and follow the required uppercase, comma-separated format. [#5136](https://github.com/demisto/demisto-sdk/pull/5136)
 * Updated the schema for Agentix agents. [#5054](https://github.com/demisto/demisto-sdk/pull/5054)

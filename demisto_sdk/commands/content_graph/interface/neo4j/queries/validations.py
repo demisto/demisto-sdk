@@ -555,7 +555,9 @@ def get_agentix_actions_using_content_items(
     """
 
     # Build filter clause - only filter by IDs if list is provided
-    id_filter = f"content_item.object_id IN {content_item_ids} AND " if content_item_ids else ""
+    id_filter = (
+        f"content_item.object_id IN {content_item_ids} AND " if content_item_ids else ""
+    )
 
     query = f"""
     // Find AgentixActions using commands from specified Integrations

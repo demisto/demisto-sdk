@@ -6381,3 +6381,89 @@ def test_IsNewRequiredParamNoDefaultIntegrationValidator_parameter_requirement_c
         assert "test_param" in results[0].message
     else:
         assert len(results) == 0
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["script.ismcp", "script.commands"],
+                    values=[True, [{"name": "list-tools"}, {"name": "call-tool"}]],
+                ),
+                create_integration_object(
+                    paths=["script.ismcp", "script.commands"],
+                    values=[False, []],
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.ismcp", "script.commands"],
+                    values=[True, [{"name": "call-tool"}]],
+                ),
+            ],
+            1,
+            ["The integration is marked as MCP (ismcp: true) but is missing the following required commands: list-tools."],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.ismcp", "script.commands"],
+                    values=[True, [{"name": "list-tools"}]],
+                ),
+            ],
+            1,
+            ["The integration is marked as MCP (ismcp: true) but is missing the following required commands: call-tool."],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.ismcp", "script.commands"],
+                    values=[True, []],
+                ),
+            ],
+            1,
+            ["The integration is marked as MCP (ismcp: true) but is missing the following required commands: call-tool, list-tools."],
+        ),
+    ],
+)
+def test_IsMCPIntegrationHasRequiredCommandsValidator_obtain_invalid_content_items(
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Two valid integrations:
+            - One MCP integration with both 'list-tools' and 'call-tool' commands.
+            - One non-MCP integration without any commands.
+        - Case 2: One invalid MCP integration missing 'list-tools' command.
+        - Case 3: One invalid MCP integration missing 'call-tool' command.
+        - Case 4: One invalid MCP integration missing both 'list-tools' and 'call-tool' commands.
+    When
+    - Calling the IsMCPIntegrationHasRequiredCommandsValidator is valid function.
+    Then
+        - Make sure the validation fails when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail, indicating 'list-tools' is missing.
+        - Case 3: Should fail, indicating 'call-tool' is missing.
+        - Case 4: Should fail, indicating both 'list-tools' and 'call-tool' are missing.
+    """
+    from demisto_sdk.commands.validate.validators.IN_validators.IN165_is_mcp_integration_has_required_commands import (
+        IsMCPIntegrationHasRequiredCommandsValidator,
+    )
+
+    results = IsMCPIntegrationHasRequiredCommandsValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(results) == expected_number_of_failures
+    assert all(
+        result.message == expected_msg
+        for result, expected_msg in zip(results, expected_msgs)
+    )

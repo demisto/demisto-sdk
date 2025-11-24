@@ -548,35 +548,33 @@ def get_agentix_actions_using_content_items(
     Args:
         tx: The Transaction to contact the graph with.
         content_item_ids: List of Integration, Script, or Playbook object IDs to find
-            dependent AgentixActions for.
+            dependent AgentixActions for. If empty, returns ALL AgentixActions.
 
     Returns:
         List of AgentixAction nodes that use the specified content items.
     """
-    if not content_item_ids:
-        return []
+
+    # Build filter clause - only filter by IDs if list is provided
+    id_filter = f"content_item.object_id IN {content_item_ids} AND " if content_item_ids else ""
 
     query = f"""
     // Find AgentixActions using commands from specified Integrations
     MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[:{RelationshipType.HAS_COMMAND}]-(content_item:{ContentType.INTEGRATION})
-    WHERE content_item.object_id IN {content_item_ids}
-    AND {is_target_available("agentix_action", "content_item")}
+    WHERE {id_filter}{is_target_available("agentix_action", "content_item")}
     RETURN agentix_action
 
     UNION
 
     // Find AgentixActions using Scripts directly
     MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item:{ContentType.SCRIPT})
-    WHERE content_item.object_id IN {content_item_ids}
-    AND {is_target_available("agentix_action", "content_item")}
+    WHERE {id_filter}{is_target_available("agentix_action", "content_item")}
     RETURN agentix_action
 
     UNION
 
     // Find AgentixActions using Playbooks directly
     MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item:{ContentType.PLAYBOOK})
-    WHERE content_item.object_id IN {content_item_ids}
-    AND {is_target_available("agentix_action", "content_item")}
+    WHERE {id_filter}{is_target_available("agentix_action", "content_item")}
     RETURN agentix_action
     """
     items = run_query(tx, query)

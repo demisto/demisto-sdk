@@ -166,6 +166,9 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN163_is_valid_feed_
 from demisto_sdk.commands.validate.validators.IN_validators.IN164_is_new_required_param_no_default import (
     IsNewRequiredParamNoDefaultIntegrationValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN166_is_mcp_call_tool_has_required_args import (
+    IsMCPCallToolHasRequiredArgsValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 MARKETPLACE_VALUES = [mp.value for mp in MarketplaceVersions]
@@ -6469,6 +6472,131 @@ def test_IsMCPIntegrationHasRequiredCommandsValidator_obtain_invalid_content_ite
         IsMCPIntegrationHasRequiredCommandsValidator().obtain_invalid_content_items(
             content_items
         )
+    )
+    assert len(results) == expected_number_of_failures
+    assert all(
+        result.message == expected_msg
+        for result, expected_msg in zip(results, expected_msgs)
+    )
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["script.ismcp", "script.commands"],
+                    values=[
+                        True,
+                        [
+                            {
+                                "name": "call-tool",
+                                "arguments": [{"name": "name"}, {"name": "arguments"}],
+                            }
+                        ],
+                    ],
+                ),
+                create_integration_object(
+                    paths=["script.ismcp", "script.commands"],
+                    values=[False, []],
+                ),
+                create_integration_object(
+                    paths=["script.ismcp", "script.commands"],
+                    values=[True, [{"name": "list-tools"}]],  # No call-tool command
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.ismcp", "script.commands"],
+                    values=[
+                        True,
+                        [
+                            {
+                                "name": "call-tool",
+                                "arguments": [{"name": "arguments"}],
+                            }
+                        ],
+                    ],
+                ),
+            ],
+            1,
+            [
+                "The integration is marked as MCP (ismcp: true) but its 'call-tool' command is missing the following required arguments: name."
+            ],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.ismcp", "script.commands"],
+                    values=[
+                        True,
+                        [
+                            {
+                                "name": "call-tool",
+                                "arguments": [{"name": "name"}],
+                            }
+                        ],
+                    ],
+                ),
+            ],
+            1,
+            [
+                "The integration is marked as MCP (ismcp: true) but its 'call-tool' command is missing the following required arguments: arguments."
+            ],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["script.ismcp", "script.commands"],
+                    values=[
+                        True,
+                        [
+                            {
+                                "name": "call-tool",
+                                "arguments": [],
+                            }
+                        ],
+                    ],
+                ),
+            ],
+            1,
+            [
+                "The integration is marked as MCP (ismcp: true) but its 'call-tool' command is missing the following required arguments: arguments, name."
+            ],
+        ),
+    ],
+)
+def test_IsMCPCallToolHasRequiredArgsValidator_obtain_invalid_content_items(
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Valid integrations:
+            - One MCP integration with 'call-tool' command having both 'name' and 'arguments'.
+            - One non-MCP integration.
+            - One MCP integration without 'call-tool' command (covered by IN165).
+        - Case 2: Invalid MCP integration with 'call-tool' command missing 'name' argument.
+        - Case 3: Invalid MCP integration with 'call-tool' command missing 'arguments' argument.
+        - Case 4: Invalid MCP integration with 'call-tool' command missing both 'name' and 'arguments' arguments.
+    When
+    - Calling the IsMCPCallToolHasRequiredArgsValidator obtain_invalid_content_items function.
+    Then
+        - Make sure the validation fails when it needs to and the right error message is returned.
+        - Case 1: Should pass all.
+        - Case 2: Should fail, indicating 'name' is missing.
+        - Case 3: Should fail, indicating 'arguments' is missing.
+        - Case 4: Should fail, indicating both 'name' and 'arguments' are missing.
+    """
+    results = IsMCPCallToolHasRequiredArgsValidator().obtain_invalid_content_items(
+        content_items
     )
     assert len(results) == expected_number_of_failures
     assert all(

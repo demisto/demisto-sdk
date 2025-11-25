@@ -1,4 +1,0 @@
-changes:
-- description: Added AG105 to validate that the types of arguments and outputs are valid.
-  type: internal
-pr_number: 5095

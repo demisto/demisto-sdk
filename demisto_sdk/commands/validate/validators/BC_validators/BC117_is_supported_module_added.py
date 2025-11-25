@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from abc import ABC
-from typing import Iterable, List, Union
+from typing import Iterable, List, Union, cast
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.content_graph.objects import Job
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
@@ -22,7 +23,6 @@ from demisto_sdk.commands.content_graph.objects.incident_type import IncidentTyp
 from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
@@ -38,19 +38,20 @@ from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
 ContentTypes = Union[
-    AgentixAgent,
     Integration,
     Script,
-    Playbook,
     Pack,
+    Playbook,
     Dashboard,
     Classifier,
+    IncidentType,
     Job,
     Layout,
     Mapper,
@@ -77,46 +78,56 @@ ContentTypes = Union[
     CaseField,
     CaseLayout,
     CaseLayoutRule,
+    AgentixAction,
+    AgentixAgent,
 ]
 
 
-class IsUsingUnknownContentValidator(BaseValidator[ContentTypes], ABC):
-    error_code = "GR103"
-    description = "Validates that there is no usage of unknown content items"
-    rationale = "Content items should only use existing content items."
-    error_message = "Content item '{0}' is using content items: {1} which cannot be found in the repository."
+class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
+    error_code = "BC117"
+    description = (
+        "Checks whether supported modules have been added to the existing content item."
+    )
+    rationale = "Adding a support module for a content item requires a PM approval."
+    error_message = (
+        "The following support modules {} have been added to the {} {}."
+        " Adding supported modules requires a PM approval."
+    )
+    related_field = "supportedModules"
     is_auto_fixable = False
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
+    related_file_type = [RelatedFileType.SCHEMA]
 
-    def obtain_invalid_content_items_using_graph(
-        self, content_items: Iterable[ContentTypes], validate_all_files: bool = False
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        results: List[ValidationResult] = []
-        file_paths_to_validate = (
-            [
-                str(content_item.path.relative_to(CONTENT_PATH))
-                for content_item in content_items
-            ]
-            if not validate_all_files
-            else []
-        )
-        uses_unknown_content = self.graph.get_unknown_content_uses(
-            file_paths_to_validate
-        )
-
-        for content_item in uses_unknown_content:
-            names_of_unknown_items = [
-                relationship.content_item_to.object_id
-                or relationship.content_item_to.name
-                for relationship in content_item.uses
-            ]
-            results.append(
-                ValidationResult(
-                    validator=self,
-                    message=self.error_message.format(
-                        content_item.name,
-                        ", ".join(f"'{name}'" for name in names_of_unknown_items),
-                    ),
-                    content_object=content_item,
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    ", ".join(map(repr, sorted(difference))),
+                    content_item.display_name,
+                    content_item.content_type,
+                ),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if (
+                difference := self.added_parameters(
+                    cast(ContentTypes, content_item.old_base_content_object),
+                    content_item,
                 )
             )
-        return results
+        ]
+
+    def added_parameters(self, old_item: ContentTypes, new_item: ContentTypes) -> set:
+        old_params = set(old_item.supportedModules or [])
+
+        # When a new content is added and contains supportedModules, the validation should warn
+        if old_params and old_item.git_status == GitStatuses.ADDED:
+            return old_params
+
+        new_params = set(new_item.supportedModules or [])
+
+        # Otherwise, when a new content is modified and contains more supportedModules, the validation should warn too
+        return new_params.difference(old_params)

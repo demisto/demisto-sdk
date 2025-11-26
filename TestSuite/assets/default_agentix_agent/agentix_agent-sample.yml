@@ -10,10 +10,15 @@ category: AI & Machine Learning
 description: |-
     A sample agent for testing purposes.
 color: "#FF0000"
+visibility: public
+systeminstructions: ""
 conversationstarters:
   - "What can you do?"
 actionids:
   - SampleAction
+builtinactions: []
+roles: []
+sharedwithroles: []
 marketplaces:
 - platform
 supportedModules:

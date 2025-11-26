@@ -38,8 +38,10 @@ class TimeFrame(BaseStrictModel):
 
 class TemplatesData(BaseStrictModel):
     metadata: Optional[str] = None
-    global_id: str
-    report_name: str
+    global_id: Optional[str] = None
+    id: str
+    report_name: Optional[str] = None
+    name: str
     report_description: Optional[str] = None
     default_template_id: Optional[int] = None
     time_frame: Optional[TimeFrame] = None

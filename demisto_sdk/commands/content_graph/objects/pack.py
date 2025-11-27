@@ -14,7 +14,6 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    DEFAULT_SUPPORTED_MODULES,
     MANDATORY_PACK_METADATA_FIELDS,
     MARKETPLACE_MIN_VERSION,
     ImagesFolderNames,
@@ -125,7 +124,7 @@ def upload_zip(
 
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     path: Path
-    supportedModules: List[str] = DEFAULT_SUPPORTED_MODULES
+    supportedModules: Optional[List[str]] = None
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
     deprecated: bool = False
@@ -252,6 +251,18 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         self.server_min_version = self.server_min_version or min_content_items_version
         self.content_items = PackContentItems(**content_item_dct)
 
+    def _clean_empty_supportedModuels_from_commands(self, content_items: dict):
+        if not content_items:
+            return
+        for integration in content_items.get("integration", []):
+            if "commands" in integration:
+                for command in integration["commands"]:
+                    if (
+                        "supportedModules" in command
+                        and not command["supportedModules"]
+                    ):
+                        del command["supportedModules"]
+
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         """Dumps the pack metadata file.
 
@@ -284,8 +295,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         metadata.update(
             self._format_metadata(marketplace, self.content_items, self.depends_on)
         )
+        self._clean_empty_supportedModuels_from_commands(
+            metadata.get("contentItems", {})
+        )
         # Replace incorrect marketplace references
         metadata = replace_marketplace_references(metadata, marketplace, str(self.path))
+        if "supportedModules" in metadata and not metadata["supportedModules"]:
+            del metadata["supportedModules"]
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:

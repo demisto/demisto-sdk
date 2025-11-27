@@ -14,6 +14,7 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
+    create_agentix_action_object,
     create_incident_field_object,
     create_incident_type_object,
     create_incoming_mapper_object,
@@ -64,6 +65,15 @@ from demisto_sdk.commands.validate.validators.BC_validators.BC113_is_changed_inc
 )
 from demisto_sdk.commands.validate.validators.BC_validators.BC114_is_changed_or_removed_fields import (
     IsChangedOrRemovedFieldsValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC115_is_supported_module_removed import (
+    IsSupportedModulesRemoved,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC116_is_breaking_agentix_action_output_backwards import (
+    IsBreakingAgentixActionOutputBackwardsValidator,
+)
+from demisto_sdk.commands.validate.validators.BC_validators.BC117_is_supported_module_added import (
+    IsSupportedModulesAdded,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -859,6 +869,164 @@ def test_IsBreakingContextOutputBackwardsValidator_obtain_invalid_content_items(
 
 
 @pytest.mark.parametrize(
+    "content_items, old_content_items, expected_number_of_failures, expected_msgs",
+    [
+        # Case 1: No changes
+        (
+            [
+                create_agentix_action_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {
+                                "name": "Test.Output1",
+                                "description": "desc1",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output1",
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_agentix_action_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {
+                                "name": "Test.Output1",
+                                "description": "desc1",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output1",
+                            }
+                        ]
+                    ],
+                )
+            ],
+            0,
+            [],
+        ),
+        # Case 2: Output removed
+        (
+            [
+                create_agentix_action_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {
+                                "name": "Test.Output1",
+                                "description": "desc1",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output1",
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_agentix_action_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {
+                                "name": "Test.Output1",
+                                "description": "desc1",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output1",
+                            },
+                            {
+                                "name": "Test.Output2",
+                                "description": "desc2",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output2",
+                            },
+                        ]
+                    ],
+                )
+            ],
+            1,
+            ["The following output keys have been removed, please undo: Test.Output2"],
+        ),
+        # Case 3: Output added
+        (
+            [
+                create_agentix_action_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {
+                                "name": "Test.Output1",
+                                "description": "desc1",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output1",
+                            },
+                            {
+                                "name": "Test.Output2",
+                                "description": "desc2",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output2",
+                            },
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_agentix_action_object(
+                    paths=["outputs"],
+                    values=[
+                        [
+                            {
+                                "name": "Test.Output1",
+                                "description": "desc1",
+                                "type": "string",
+                                "underlyingoutputcontextpath": "Test.Output1",
+                            }
+                        ]
+                    ],
+                )
+            ],
+            0,
+            [],
+        ),
+        # Case 4: No outputs
+        (
+            [create_agentix_action_object(paths=["outputs"], values=[[]])],
+            [create_agentix_action_object(paths=["outputs"], values=[[]])],
+            0,
+            [],
+        ),
+    ],
+)
+def test_IsBreakingAgentixActionOutputBackwardsValidator_obtain_invalid_content_items(
+    content_items, old_content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+        - Case 1: No changes to outputs.
+        - Case 2: An output was removed.
+        - Case 3: An output was added.
+        - Case 4: No outputs in both versions.
+    When
+        - Calling the IsBreakingAgentixActionOutputBackwardsValidator's is_valid function.
+    Then
+        - Make sure the right amount of failures return and that the right message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail.
+        - Case 3: Shouldn't fail.
+        - Case 4: Shouldn't fail.
+    """
+    create_old_file_pointers(content_items, old_content_items)
+    results = (
+        IsBreakingAgentixActionOutputBackwardsValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
+    assert len(results) == expected_number_of_failures
+    if expected_number_of_failures > 0:
+        assert results[0].message == expected_msgs[0]
+
+
+@pytest.mark.parametrize(
     "content_items, old_content_items",
     [
         pytest.param(
@@ -1647,3 +1815,131 @@ def test_IsChangedOrRemovedFieldsValidator_obtain_invalid_content_items_fail():
         invalid_results[0].message
         == "The following fields were modified/removed from the integration, please undo:\nThe following fields were removed: ismappable.\nThe following fields were modified: feed."
     )
+
+
+def test_IsSupportedModulesRemoved_with_removed_modules():
+    """
+    Given
+    - A content item whose 'supportedModules' list had modules removed compared to the previous version.
+
+    When
+    - Running IsSupportedModulesRemoved.obtain_invalid_content_items.
+
+    Then
+    - Return a ValidationResult inicdating which modules were removed.
+    """
+    new_item = create_integration_object(
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=["supportedModules"],
+        values=[["C1", "C3", "X0", "X1", "X3"]],
+    )
+
+    res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 1
+    assert (
+        res[0].message
+        == "The following support modules have been removed from the integration 'X1', 'X3'. Removing supported modules is not allowed, Please undo."
+    )
+    assert res[0].validator.error_code == "BC115"
+
+
+def test_IsSupportedModulesRemoved_without_removed_modules():
+    """
+    Given
+    - A content item whose 'supportedModules' list has not changed.
+
+    When
+    - Running IsSupportedModulesRemoved.obtain_invalid_content_items.
+
+    Then
+    - Return an empty list, indicating no validation issues.
+    """
+    new_item = create_integration_object(
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+    )
+
+    res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 0
+
+
+def test_IsSupportedModulesAdded_with_added_modules():
+    """
+    Given
+    - A content item whose 'supportedModules' list had modules added compared to the previous version.
+
+    When
+    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
+
+    Then
+    - Return a ValidationResult indicating which modules were added and explanation it requires a PM approval.
+    """
+    new_item = create_integration_object(
+        paths=["supportedModules"], values=[["C1", "C3", "X0", "X1", "X3"]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+    )
+
+    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 1
+    assert (
+        res[0].message
+        == "The following support modules 'X1', 'X3' have been added to the TestIntegration Integration."
+        " Adding supported modules requires a PM approval."
+    )
+    assert res[0].validator.error_code == "BC117"
+
+
+def test_IsSupportedModulesAdded_without_added_modules():
+    """
+    Given
+    - A content item whose 'supportedModules' list has not changed.
+
+    When
+    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
+
+    Then
+    - Return an empty list, indicating no validation issues.
+    """
+    new_item = create_integration_object(
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+    )
+
+    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 0
+
+
+def test_IsSupportedModulesAdded_with_removed_modules():
+    """
+    Given
+    - A content item whose 'supportedModules' list had modules removed compared to the previous version.
+
+    When
+    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
+
+    Then
+    - Return an empty list, indicating no validation issues.
+    - BC117 should warn just in case of added 'supportedModules', when removing some modules BC115 should fail.
+    """
+    new_item = create_integration_object(
+        paths=["supportedModules"], values=[["C1", "C3"]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+    )
+
+    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 0

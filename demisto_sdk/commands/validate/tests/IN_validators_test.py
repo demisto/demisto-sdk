@@ -163,6 +163,9 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN163_is_valid_feed_
     REDUNDANT_SUDDEN_DEATH_ERROR_MESSAGE,
     IsValidFeedExpirationPolicyValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN164_is_new_required_param_no_default import (
+    IsNewRequiredParamNoDefaultIntegrationValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 MARKETPLACE_VALUES = [mp.value for mp in MarketplaceVersions]
@@ -4179,8 +4182,8 @@ def test_IsMissingReputationOutputValidator_obtain_invalid_content_items(
             ],
             2,
             [
-                "The integration is a feed integration with malformed params: The param 'feedReliability' should be in the following structure: \n\tThe field 'display' must be equal 'Source Reliability'.\n\tThe field 'type' must be equal '15'.\n\tThe field 'required' must be equal 'True'.\n\tThe field 'options' must be equal '['A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable', 'E - Unreliable', 'F - Reliability cannot be judged']'.\n\tThe field 'additionalinfo' must appear and contain 'Reliability of the source providing the intelligence data'.",
-                "The integration is a feed integration with malformed params: The param 'feed' should be in the following structure: \n\tThe field 'defaultvalue' must be equal 'true'.\n\tThe field 'display' must be equal 'Fetch indicators'.\n\tThe field 'type' must be equal '8'.\nThe param 'feedReputation' should be in the following structure: \n\tThe field 'display' must be equal 'Indicator Reputation'.\n\tThe field 'type' must be equal '18'.\n\tThe field 'options' must be equal '['None', 'Good', 'Suspicious', 'Bad']'.\n\tThe field 'additionalinfo' must appear and contain 'Indicators from this integration instance will be marked with this reputation'.\nThe param 'feedReliability' should be in the following structure: \n\tThe field 'display' must be equal 'Source Reliability'.\n\tThe field 'type' must be equal '15'.\n\tThe field 'required' must be equal 'True'.\n\tThe field 'options' must be equal '['A - Completely reliable', 'B - Usually reliable', 'C - Fairly reliable', 'D - Not usually reliable', 'E - Unreliable', 'F - Reliability cannot be judged']'.\n\tThe field 'additionalinfo' must appear and contain 'Reliability of the source providing the intelligence data'.",
+                "The integration is a feed integration with malformed params: The param 'feedReliability' should be in the following structure: \n\tThe field 'display' must be equal 'Source Reliability'.\n\tThe field 'type' must be equal '15'.\n\tThe field 'required' must be equal 'True'.\n\tThe field 'additionalinfo' must appear and contain 'Reliability of the source providing the intelligence data'.\n\tThe field 'options' must be one of the following lists: A - Completely reliable, B - Usually reliable, C - Fairly reliable, D - Not usually reliable, E - Unreliable, F - Reliability cannot be judged or A++ - Reputation script, A+ - 3rd party enrichment, A - Completely reliable, B - Usually reliable, C - Fairly reliable, D - Not usually reliable, E - Unreliable, F - Reliability cannot be judged.",
+                "The integration is a feed integration with malformed params: The param 'feed' should be in the following structure: \n\tThe field 'defaultvalue' must be equal 'true'.\n\tThe field 'display' must be equal 'Fetch indicators'.\n\tThe field 'type' must be equal '8'.\nThe param 'feedReputation' should be in the following structure: \n\tThe field 'display' must be equal 'Indicator Reputation'.\n\tThe field 'type' must be equal '18'.\n\tThe field 'options' must be equal '['None', 'Good', 'Suspicious', 'Bad']'.\n\tThe field 'additionalinfo' must appear and contain 'Indicators from this integration instance will be marked with this reputation'.\nThe param 'feedReliability' should be in the following structure: \n\tThe field 'display' must be equal 'Source Reliability'.\n\tThe field 'type' must be equal '15'.\n\tThe field 'required' must be equal 'True'.\n\tThe field 'additionalinfo' must appear and contain 'Reliability of the source providing the intelligence data'.\n\tThe field 'options' must be one of the following lists: A - Completely reliable, B - Usually reliable, C - Fairly reliable, D - Not usually reliable, E - Unreliable, F - Reliability cannot be judged or A++ - Reputation script, A+ - 3rd party enrichment, A - Completely reliable, B - Usually reliable, C - Fairly reliable, D - Not usually reliable, E - Unreliable, F - Reliability cannot be judged.",
             ],
         ),
     ],
@@ -5963,3 +5966,418 @@ def test_IsValidFeedExpirationPolicy_fully_fetched_feed_with_suddenDeath():
         IsValidFeedExpirationPolicyValidator().obtain_invalid_content_items([feed])
     )
     assert len(validation_results) == 0
+
+
+## -------------------------  IsNewRequiredParamNoDefaultIntegrationValidator IN164 Tests ------------------------- ##
+@pytest.mark.parametrize(
+    "content_items, old_content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            }
+                        ]
+                    ],
+                )
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "new_default_value",
+                            },
+                            {
+                                "name": "param2",
+                                "required": True,
+                                "defaultvalue": "default2",
+                            },
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            }
+                        ]
+                    ],
+                )
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            },
+                            {"name": "param2", "required": False},
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            }
+                        ]
+                    ],
+                )
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {"name": "param1", "required": True},
+                            {
+                                "name": "param2",
+                                "required": True,
+                                "defaultvalue": "default2",
+                            },
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {"name": "param1", "required": True},
+                            {"name": "param2", "required": True},
+                        ]
+                    ],
+                )
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {"name": "param1", "required": False},
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {"name": "param1", "required": True},
+                        ]
+                    ],
+                )
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            },
+                            {
+                                "name": "param2",
+                                "required": True,
+                                "defaultvalue": "safe_default",
+                            },
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            },
+                            {"name": "param2", "required": False},
+                        ]
+                    ],
+                )
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            },
+                            {
+                                "name": "newparam",
+                                "required": True,
+                            },
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            }
+                        ]
+                    ],
+                )
+            ],
+            1,
+            [
+                "Possible backward compatibility break: You have added the following new *required* parameters: newparam. Please undo the changes or provide "
+                "default values. If cannot give default value, please make the parameter not "
+                "required and check in code implementation that it was configured."
+            ],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            },
+                            {
+                                "name": "param2",
+                                "required": True,
+                            },
+                            {
+                                "name": "param3",
+                                "required": True,
+                            },
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            }
+                        ]
+                    ],
+                )
+            ],
+            1,
+            [
+                "Possible backward compatibility break: You have added the following new *required* parameters: param2, param3. Please undo the changes or provide "
+                "default values. If cannot give default value, please make the parameter not "
+                "required and check in code implementation that it was configured."
+            ],
+        ),
+        (
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            },
+                            {
+                                "name": "param2",
+                                "required": True,
+                            },
+                        ]
+                    ],
+                )
+            ],
+            [
+                create_integration_object(
+                    paths=["configuration"],
+                    values=[
+                        [
+                            {
+                                "name": "param1",
+                                "required": True,
+                                "defaultvalue": "default",
+                            },
+                            {"name": "param2", "required": False},
+                        ]
+                    ],
+                )
+            ],
+            1,
+            [
+                "Possible backward compatibility break: You have added the following new *required* parameters: param2. Please undo the changes or provide "
+                "default values. If cannot give default value, please make the parameter not "
+                "required and check in code implementation that it was configured."
+            ],
+        ),
+    ],
+)
+def test_IsNewRequiredParamNoDefaultIntegrationValidator_obtain_invalid_content_items(
+    content_items, old_content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    - content_items and old_content_items to test backward compatibility.
+        - Case 1: An existing integration with no changes to its parameters.
+        - Case 2: An existing integration with a new required parameter that has a default value.
+        - Case 3: An existing integration with a new non-required parameter.
+        - Case 4: An existing integration where a default value is added to a pre-existing required parameter.
+        - Case 5: An existing integration where a parameter is changed from required to not required.
+        - Case 6: An existing integration where a parameter is changed from non-required to required and given a default.
+        - Case 7: An existing integration with a new required parameter that does NOT have a default value.
+        - Case 8: An existing integration with multiple new required parameters that do NOT have default values.
+        - Case 9: An existing integration where a parameter is changed from non-required to required without a default.
+
+    When
+    - Calling the IsNewRequiredParamNoDefaultIntegrationValidator's obtain_invalid_content_items function.
+
+    Then
+    - Ensure the validator returns the correct number of failures and the expected error messages.
+        - Cases 1-6: Should pass validation, returning 0 failures.
+        - Cases 7-9: Should fail validation, returning 1 failure each with the appropriate error message.
+    """
+    create_old_file_pointers(content_items, old_content_items)
+    results = (
+        IsNewRequiredParamNoDefaultIntegrationValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
+    assert len(results) == expected_number_of_failures
+    actual_messages = [result.message for result in results]
+    assert actual_messages == expected_msgs
+
+
+@pytest.mark.parametrize(
+    "param_required, param_default, old_param_required, should_fail",
+    [
+        (True, None, True, False),  # Was required, still required - OK
+        (
+            True,
+            "default",
+            True,
+            False,
+        ),  # Was required, still required with default - OK
+        (True, None, False, True),  # Was optional, now required without default - FAIL
+        (True, "default", False, False),  # Was optional, now required with default - OK
+        (False, None, True, False),  # Was required, now optional - OK
+        (False, None, False, False),  # Was optional, still optional - OK
+    ],
+)
+def test_IsNewRequiredParamNoDefaultIntegrationValidator_parameter_requirement_changes(
+    param_required, param_default, old_param_required, should_fail
+):
+    """
+    Given:
+        - Various combinations of parameter requirement changes between old and new versions.
+    When:
+        - The IsNewRequiredParamNoDefaultIntegrationValidator is invoked.
+    Then:
+        - The validation should only fail when a parameter becomes required without a default value.
+    """
+    new_config = {"name": "test_param", "required": param_required}
+    if param_default:
+        new_config["defaultvalue"] = param_default
+
+    old_config = {"name": "test_param", "required": old_param_required}
+
+    new_content_item = create_integration_object(
+        paths=["configuration"],
+        values=[[new_config]],
+    )
+    old_content_item = create_integration_object(
+        paths=["configuration"], values=[[old_config]]
+    )
+
+    create_old_file_pointers([new_content_item], [old_content_item])
+    results = (
+        IsNewRequiredParamNoDefaultIntegrationValidator().obtain_invalid_content_items(
+            [new_content_item]
+        )
+    )
+
+    if should_fail:
+        assert len(results) == 1
+        assert "test_param" in results[0].message
+    else:
+        assert len(results) == 0

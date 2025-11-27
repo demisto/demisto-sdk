@@ -34,5 +34,16 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (not content_item.readme.exist) and (not content_item.is_silent)
+            if (
+                (
+                    content_item.content_type != "Script"
+                    or (
+                        content_item.content_type == "Script"
+                        and (not getattr(content_item, "is_llm", False))
+                        and (not getattr(content_item, "is_internal", False))
+                    )
+                )
+                and (not content_item.readme.exist)
+                and (not content_item.is_silent)
+            )
         ]

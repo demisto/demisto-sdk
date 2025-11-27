@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Annotated, Any, List, Optional
 
 from pydantic import Field, conlist, validator
 
@@ -6,6 +6,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
     TYPE_PYTHON3,
     MarketplaceVersions,
+    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
@@ -21,7 +22,9 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DEFAULT_DYNAMIC_MODEL_LOWER_CASE,
     DEPRECATED_DYNAMIC_MODEL,
     DESCRIPTION_DYNAMIC_MODEL,
+    HIDDEN_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
+    QUICK_ACTION_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     create_dynamic_model,
     create_model,
@@ -37,6 +40,14 @@ IS_FETCH_EVENTS_DYNAMIC_MODEL = create_dynamic_model(
     type_=Optional[bool],
     default=None,
 )
+
+
+class SectionOrderValues(StrEnum):
+    CONNECT = "Connect"
+    COLLECT = "Collect"
+    OPTIMIZE = "Optimize"
+    MIRRORING = "Mirroring"
+    RESULT = "Result"
 
 
 class _Configuration(BaseStrictModel):
@@ -82,10 +93,15 @@ class _Command(BaseStrictModel):
     outputs: Optional[List[IntegrationOutput]] = None
     important: Optional[List[Important]] = None  # type:ignore[valid-type]
     timeout: Optional[int] = None
-    hidden: Optional[bool] = None
     polling: Optional[bool] = None
     prettyname: Optional[str] = None
-    quickaction: Optional[bool] = None
+    compliantpolicies: Optional[List[str]] = None
+    supportedModules: Optional[
+        Annotated[
+            List[PlatformSupportedModules],
+            Field(min_length=1, max_length=len(PlatformSupportedModules)),
+        ]
+    ]
 
 
 Command = create_model(
@@ -95,6 +111,8 @@ Command = create_model(
         DEPRECATED_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,
         NAME_DYNAMIC_MODEL,
+        QUICK_ACTION_DYNAMIC_MODEL,
+        HIDDEN_DYNAMIC_MODEL,
     ),
 )
 
@@ -108,6 +126,7 @@ class _Script(BaseStrictModel):
     is_fetch: Optional[bool] = Field(None, alias="isfetch")
     is_fetch_events: Optional[bool] = Field(None, alias="isfetchevents")
     is_fetch_assets: Optional[bool] = Field(None, alias="isfetchassets")
+    is_mcp: Optional[bool] = Field(None, alias="ismcp")
     long_running: Optional[bool] = Field(None, alias="longRunning")
     long_running_port: Optional[bool] = Field(None, alias="longRunningPort")
     is_mappable: Optional[bool] = Field(None, alias="ismappable")
@@ -143,8 +162,8 @@ CommonFieldsIntegration = create_model(
 class ConditionOperator(StrEnum):
     EXISTS = "exists"
     NOT_EXISTS = "not_exists"
-    EQUALS = "equals"
-    NOT_EQUALS = "not_equals"
+    EQUAL = "equal"
+    NOT_EQUAL = "not_equal"
 
 
 class Condition(BaseStrictModel):
@@ -166,14 +185,6 @@ class TriggerEffect(BaseStrictModel):
 class Trigger(BaseStrictModel):
     conditions: List[Condition]
     effects: List[TriggerEffect]
-
-
-class SectionOrderValues(StrEnum):
-    CONNECT = "Connect"
-    COLLECT = "Collect"
-    OPTIMIZE = "Optimize"
-    MIRRORING = "Mirroring"
-    RESULT = "Result"
 
 
 class _StrictIntegration(BaseStrictModel):
@@ -205,6 +216,9 @@ class _StrictIntegration(BaseStrictModel):
         False, alias="isCloudProviderIntegration"
     )
     triggers: Optional[List[Trigger]] = None
+    supportedModules: Optional[
+        Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
+    ]
 
     def __init__(self, **data):
         """

@@ -6,7 +6,6 @@ from packaging.version import Version
 from pydantic import Field
 
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_SUPPORTED_MODULES,
     MARKETPLACE_MIN_VERSION,
     PACK_DEFAULT_MARKETPLACES,
     MarketplaceVersions,
@@ -83,11 +82,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self,
         path: Path,
         pack_marketplaces: List[MarketplaceVersions] = PACK_DEFAULT_MARKETPLACES,
-        pack_supported_modules: List[str] = DEFAULT_SUPPORTED_MODULES,
+        pack_supported_modules: Optional[List[str]] = None,
         git_sha: Optional[str] = None,
     ) -> None:
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
-        self.pack_supported_modules: List[str] = pack_supported_modules
+        self.pack_supported_modules: Optional[List[str]] = pack_supported_modules
         super().__init__(path)
         self.relationships: Relationships = Relationships()
         self.git_sha: Optional[str] = git_sha
@@ -96,7 +95,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def from_path(
         path: Path,
         pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
-        pack_supported_modules: List[str] = DEFAULT_SUPPORTED_MODULES,
+        pack_supported_modules: Optional[List[str]] = None,
         git_sha: Optional[str] = None,
     ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
@@ -148,7 +147,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         parser_cls: Type["ContentItemParser"],
         path: Path,
         pack_marketplaces: List[MarketplaceVersions],
-        pack_supported_modules: List[str] = DEFAULT_SUPPORTED_MODULES,
+        pack_supported_modules: Optional[List[str]] = [],
         git_sha: Optional[str] = None,
         **kwargs,
     ) -> "ContentItemParser":

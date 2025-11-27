@@ -1,6 +1,8 @@
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects import (
+    AgentixAction,
+    AgentixAgent,
     AssetsModelingRule,
     CaseField,
     CaseLayout,
@@ -26,6 +28,7 @@ from demisto_sdk.commands.content_graph.objects import (
     Playbook,
     PreProcessRule,
     Report,
+    Trigger,
     Widget,
     Wizard,
     XDRCTemplate,
@@ -72,8 +75,11 @@ ContentTypes = Union[
     CaseLayout,
     CaseLayoutRule,
     Pack,
+    Trigger,
     ModelingRule,
     AssetsModelingRule,
+    AgentixAgent,
+    AgentixAction,
 ]
 
 

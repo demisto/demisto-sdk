@@ -636,6 +636,8 @@ def test_insert_pack_version_and_script_to_yml_python_script(
 ):
     """
     Test that the pack version is correctly inserted into the Python script.
+    # If there is an update requires the change of the expected_version_str format,
+    # update the ymlsplitter and the contribution managememt flow accordingly.
     """
     updated_script = IntegrationScriptUnifier.insert_pack_version(
         ".py", dummy_script, pack_data[1], pack_data[0]
@@ -1350,6 +1352,7 @@ PREPARE_CONTENT_MARKETPLACE_MIRRORING = (
     pytest.param(MarketplaceVersions.XSOAR_ON_PREM, 2, True, id="XSOAR ON-PREM"),
     pytest.param(MarketplaceVersions.MarketplaceV2, 1, False, id="XSIAM"),
     pytest.param(MarketplaceVersions.XPANSE, 1, False, id="XPANSE"),
+    pytest.param(MarketplaceVersions.PLATFORM, 1, False, id="PLATFORM"),
 )
 
 

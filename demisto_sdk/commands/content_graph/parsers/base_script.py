@@ -26,6 +26,7 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         pack_supported_modules: List[str],
         is_test_script: bool = False,
         git_sha: Optional[str] = None,
+        compliantpolicies: Optional[List[str]] = [],
     ) -> None:
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
@@ -33,6 +34,9 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         self.is_test: bool = is_test_script
         self.tags: List[str] = self.yml_data.get("tags", [])
         self.skip_prepare: List[str] = self.yml_data.get("skipprepare", [])
+        self.compliantpolicies: Optional[List[str]] = self.yml_data.get(
+            "compliantpolicies", []
+        )
         self.connect_to_dependencies()
         self.connect_to_tests()
 
@@ -58,6 +62,8 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         """Creates USES_COMMAND_OR_SCRIPT mandatory relationships with the commands/scripts used.
         At this stage, we can't determine whether the dependencies are commands or scripts.
         """
+        if self.content_type == ContentType.SCRIPT and self.is_llm:  # type: ignore
+            return None
         for cmd in self.get_depends_on():
             self.add_command_or_script_dependency(cmd)
 
@@ -81,6 +87,8 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
         Returns:
             str: The script code.
         """
+        if self.content_type == ContentType.SCRIPT and self.is_llm:  # type: ignore
+            return None
         if self.is_unified or self.yml_data.get("script") not in ["-", ""]:
             return self.yml_data.get("script")
         if not self.git_sha:
@@ -93,11 +101,20 @@ class BaseScriptParser(IntegrationScriptParser, content_type=ContentType.BASE_SC
             )[1]
 
     def get_depends_on(self) -> Set[str]:
+        if self.content_type == ContentType.SCRIPT and self.is_llm:  # type: ignore
+            return set()
         depends_on: List[str] = self.yml_data.get("dependson", {}).get("must", [])
         return {cmd.split("|")[-1] for cmd in depends_on}
 
     def get_command_executions(self) -> Set[str]:
+        if self.content_type == ContentType.SCRIPT and self.is_llm:  # type: ignore
+            return set()
         code = self.code
-        if not code:
+        if not code and (
+            self.content_type != ContentType.SCRIPT
+            or (self.content_type == ContentType.SCRIPT and not self.is_llm)  # type: ignore
+        ):
             raise ValueError("Script code is not available")
-        return set(EXECUTE_CMD_PATTERN.findall(code))
+        if code:
+            return set(EXECUTE_CMD_PATTERN.findall(code))
+        return set()

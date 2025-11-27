@@ -31,17 +31,34 @@ class MockProcessValid:
     stderr = b""
 
 
-def test_build_xsoar_linter_command():
+@pytest.mark.parametrize(
+    "support_level, expected_loaded_checkers",
+    [
+        pytest.param(
+            "base",
+            "base_checker",
+            id="Base support",
+        ),
+        pytest.param(
+            "developer",
+            "base_checker,community_level_checker",
+            id="Developer support",
+        ),
+    ],
+)
+def test_build_xsoar_linter_command_valid_support_level(
+    support_level: str,
+    expected_loaded_checkers: str,
+):
     """
     Given:
-        None.
+        A valid pack support level.
 
     When:
-        Calling build_xsoar_linter_command function.
+        Calling `build_xsoar_linter_command` function.
 
     Then:
         Assert that the command was built correctly.
-
     """
     expected = [
         f"{Path(sys.executable).parent}/pylint",
@@ -50,10 +67,10 @@ def test_build_xsoar_linter_command():
         "--fail-on=E",
         "--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'",
         "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011,E9012,W9013",
-        "--load-plugins=base_checker",
+        f"--load-plugins={expected_loaded_checkers}",
     ]
 
-    output = build_xsoar_linter_command("base")
+    output = build_xsoar_linter_command(support_level)
     assert len(output) == len(expected)
     assert output == expected
 

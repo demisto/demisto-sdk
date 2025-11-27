@@ -4,6 +4,8 @@ from more_itertools import map_reduce
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
@@ -103,6 +105,10 @@ class PackContentItems(BaseModel):
     assets_modeling_rule: List[AssetsModelingRule] = Field(
         [], alias=ContentType.ASSETS_MODELING_RULE.value
     )
+    agentix_action: List[AgentixAction] = Field(
+        [], alias=ContentType.AGENTIX_ACTION.value
+    )
+    agentix_agent: List[AgentixAgent] = Field([], alias=ContentType.AGENTIX_AGENT.value)
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""

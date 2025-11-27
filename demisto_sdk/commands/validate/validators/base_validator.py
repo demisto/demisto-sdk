@@ -14,7 +14,11 @@ from typing import (
 
 from pydantic import BaseModel
 
-from demisto_sdk.commands.common.constants import ExecutionMode, GitStatuses
+from demisto_sdk.commands.common.constants import (
+    ALWAYS_RUN_ON_ERROR_CODE,
+    ExecutionMode,
+    GitStatuses,
+)
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import is_abstract_class
@@ -68,6 +72,7 @@ VALIDATION_CATEGORIES = {
     "GR": "Graph",
     "TR": "Trigger",
     "VC": "Version Config",
+    "AG": "Agentix",
 }
 
 
@@ -260,6 +265,7 @@ def is_error_ignored(
 ) -> bool:
     """
     Check if the given validation error code is ignored by the current item ignored error list.
+    Note: If the validation's error code is in ALWAYS_RUN_ON_ERROR_CODE, the function will always return False.
 
     Args:
         err_code (str): The validation's error code.
@@ -269,7 +275,7 @@ def is_error_ignored(
     Returns:
         bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
     """
-    if err_code not in ignorable_errors:
+    if (err_code not in ignorable_errors) or (err_code in ALWAYS_RUN_ON_ERROR_CODE):
         return False
     if related_file_type:
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.

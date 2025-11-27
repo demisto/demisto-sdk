@@ -9,9 +9,12 @@ from demisto_sdk.commands.content_graph.parsers import (
     ScriptParser,
 )
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+from demisto_sdk.commands.content_graph.strict_objects.trigger import _StrictTrigger
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.tests.test_tools import (
+    REPO,
     create_integration_object,
+    create_playbook_object,
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.ST_validators.ST110_is_valid_scheme import (
@@ -20,7 +23,17 @@ from demisto_sdk.commands.validate.validators.ST_validators.ST110_is_valid_schem
 from demisto_sdk.commands.validate.validators.ST_validators.ST111_no_exclusions_schema import (
     StrictSchemaValidator,
 )
+from demisto_sdk.commands.validate.validators.ST_validators.ST112_is_quickaction_supported import (
+    IsQuickactionSupported,
+)
+from demisto_sdk.commands.validate.validators.ST_validators.ST113_supported_modules_is_not_empty import (
+    SupportedModulesIsNotEmpty,
+)
+from demisto_sdk.commands.validate.validators.ST_validators.ST114_is_supported_modules_subset_of_pack import (
+    IsSupportedModulesSubsetOfPack,
+)
 from TestSuite.pack import Pack
+from TestSuite.test_tools import ChangeCWD
 
 
 def test_sanity_SchemaValidator():
@@ -459,7 +472,7 @@ class TestST111:
 
         assert len(results) == 1
         assert results[0].message == (
-            "Missing sectionorder key. Add sectionorder to the top of your YAML file and specify the order of the "
+            "Missing 'sectionorder' key. Please add 'sectionorder' (lowercase) to the top of your YAML file and specify the order of the "
             "Connect, Collect, Optimize, Mirroring, Result sections (at least one is required)."
         )
 
@@ -526,6 +539,120 @@ class TestST111:
         assert len(results) == 0
 
 
+def test_missing_IsQuickactionSupported():
+    """
+    Given:
+        - an integration with a command that has 'quickaction: true'
+        - the integration is missing the 'supportsquickactions: true' field at the top level
+    When:
+        - execute the IsQuickactionSupported (ST112 validation) on the invalid integration
+    Then:
+        - Ensure the validation fails with the appropriate error message
+    """
+    integration = create_integration_object()
+
+    integration.supports_quick_actions = False
+    integration.commands[0].quickaction = True
+
+    results = IsQuickactionSupported().obtain_invalid_content_items([integration])
+    assert len(results) == 1
+    assert results[0].message == (
+        "The following commands are using quickaction without the integrations support: test-command. "
+        "Remove quickaction or add supportsquickactions: true at the top level yml."
+    )
+    assert results[0].validator.error_code == "ST112"
+
+
+def test_IsQuickactionSupported_with_supportsquickactions():
+    """
+    Given:
+        - an integration with a command that has 'quickaction: true'
+        - the integration also has 'supportsquickactions: true' at the top level
+    When:
+        - execute the IsQuickactionSupported (ST112 validation) on the valid integration
+    Then:
+        - Ensure the validation passes without any errors
+    """
+    integration = create_integration_object()
+
+    integration.supports_quick_actions = True
+    integration.commands[0].quickaction = True
+
+    results = IsQuickactionSupported().obtain_invalid_content_items([integration])
+    assert len(results) == 0
+
+
+def test_IsQuickactionSupported_no_quickaction_commands():
+    """
+    Given:
+        - an integration without any quickaction commands
+        - the integration is missing 'supportsquickactions' (which is fine in this case)
+    When:
+        - execute the IsQuickactionSupported (ST112 validation) on the integration
+    Then:
+        - Ensure the validation passes without any errors
+    """
+    integration = create_integration_object()
+
+    integration.supports_quick_actions = False
+    integration.commands[0].quickaction = False
+
+    results = IsQuickactionSupported().obtain_invalid_content_items([integration])
+    assert len(results) == 0
+
+
+def test_SupportedModulesIsNotEmpty_empty(pack: Pack):
+    """
+    Given:
+        - A content item (integration) with an empty 'supportedModules' list.
+    When:
+        - Running the SupportedModulesIsNotEmpty validator.
+    Then:
+        - Ensure the validation fails with the correct error message.
+    """
+    integration = create_integration_object()
+    integration.supportedModules = []
+
+    results = SupportedModulesIsNotEmpty().obtain_invalid_content_items([integration])
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "supportedModules cannot be an empty list. To allow all modules, omit the field instead."
+    )
+    assert results[0].validator.error_code == "ST113"
+
+
+def test_SupportedModulesIsNotEmpty_not_empty(pack: Pack):
+    """
+    Given:
+        - A content item (integration) with a non-empty 'supportedModules' list.
+    When:
+        - Running the SupportedModulesIsNotEmpty validator.
+    Then:
+        - Ensure the validation passes without any errors.
+    """
+    integration = create_integration_object()
+
+    results = SupportedModulesIsNotEmpty().obtain_invalid_content_items([integration])
+    assert len(results) == 0
+
+
+def test_SupportedModulesIsNotEmpty_missing_field(pack: Pack):
+    """
+    Given:
+        - A content item (script) with the 'supportedModules' field missing.
+    When:
+        - Running the SupportedModulesIsNotEmpty validator.
+    Then:
+        - Ensure the validation passes without any errors (missing field is allowed).
+    """
+    script = create_script_object()
+    script.supportedModules = ["C3", "X0", "X1", "X3"]
+
+    results = SupportedModulesIsNotEmpty().obtain_invalid_content_items([script])
+    assert len(results) == 0
+
+
 def test_SchemaValidator_triggers_section__valid(pack: Pack):
     """
     Given:
@@ -584,7 +711,7 @@ def test_SchemaValidator_triggers_section__valid(pack: Pack):
         ),
         pytest.param(
             {
-                "conditions": [{"name": "engine", "operator": "equals", "value": 123}],
+                "conditions": [{"name": "engine", "operator": "equal", "value": 123}],
                 "effects": [
                     {
                         "name": "effect1",
@@ -620,3 +747,141 @@ def test_SchemaValidator_triggers_section__invalid(
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
     assert len(results) == 1
     assert expected_error_substring in results[0].message
+
+
+def test_validate_automation_playbook_logic_valid_with_automation_pair():
+    """
+    Given:
+        - A trigger with both automation_id and automation_type provided.
+    When:
+        - Instantiating StrictTrigger.
+    Then:
+        - Validation passes (no exception) and fields are set.
+    """
+    values = {
+        "trigger_id": "t1",
+        "trigger_name": "Test Trigger",
+        "description": "desc",
+        "suggestion_reason": "reason",
+        "automation_type": "command",
+        "automation_id": "Auto123",
+    }
+    returned = _StrictTrigger.validate_automation_playbook_logic(values=values)
+    assert returned["automation_id"] == "Auto123"
+    assert returned["automation_type"] == "command"
+
+
+def test_validate_automation_playbook_logic_invalid_both_automation_and_playbook():
+    """
+    Given:
+        - A trigger that provides both playbook_id and automation fields.
+    When:
+        - Instantiating StrictTrigger.
+    Then:
+        - ValidationError is raised with an appropriate message.
+    """
+    values = {
+        "trigger_id": "t2",
+        "trigger_name": "Bad Trigger",
+        "description": "desc",
+        "suggestion_reason": "reason",
+        "playbook_id": "Playbook123",
+        "automation_type": "playbook",
+        "automation_id": "Auto456",
+    }
+    with pytest.raises(ValueError) as exc:
+        _StrictTrigger.validate_automation_playbook_logic(values=values)
+    assert "Cannot provide both automation fields and playbook_id." in str(exc.value)
+
+
+def test_validate_automation_playbook_logic_invalid_partial_automation_fields():
+    """
+    Given:
+        - A trigger that provides only automation_type without automation_id.
+    When:
+        - Instantiating StrictTrigger.
+    Then:
+        - ValidationError is raised indicating both must be provided together.
+    """
+    values = {
+        "trigger_id": "t3",
+        "trigger_name": "Partial Trigger",
+        "description": "desc",
+        "suggestion_reason": "reason",
+        "automation_type": "command",
+    }
+    with pytest.raises(ValueError) as exc:
+        _StrictTrigger.validate_automation_playbook_logic(values=values)
+    assert "automation_id and automation_type must be provided together." in str(
+        exc.value
+    )
+
+
+def test_IsSupportedModulesSubsetOfPack_invalid_modules():
+    """
+    Given:
+        - A content item (integration) whose 'supportedModules' includes modules not allowed by its Content Pack.
+    When:
+        - Running the IsSupportedModulesSubsetOfPack (ST114) validator.
+    Then:
+        - The validation should fail with the appropriate error message and error code ST114.
+    """
+    with ChangeCWD(REPO.path):
+        integration = create_integration_object(
+            paths=["supportedModules"],
+            values=[["cloud_posture", "edr"]],
+            pack_info={"supportedModules": ["cloud_posture", "cloud_runtime_security"]},
+        )
+
+        results = IsSupportedModulesSubsetOfPack().obtain_invalid_content_items(
+            [integration]
+        )
+        assert len(results) == 1
+        assert "edr" in results[0].message
+        assert results[0].validator.error_code == "ST114"
+
+
+def test_IsSupportedModulesSubsetOfPack_valid_subset():
+    """
+    Given:
+        - A content item (script) whose 'supportedModules' are a subset of its Content Pack's supported modules.
+    When:
+        - Running the IsSupportedModulesSubsetOfPack (ST114) validator.
+    Then:
+        - The validation should pass.
+    """
+    with ChangeCWD(REPO.path):
+        script = create_script_object(
+            paths=["supportedModules"],
+            values=[["cloud_posture", "edr"]],
+            pack_info={
+                "supportedModules": ["cloud_posture", "cloud_runtime_security", "edr"]
+            },
+        )
+
+        results = IsSupportedModulesSubsetOfPack().obtain_invalid_content_items(
+            [script]
+        )
+        assert len(results) == 0
+
+
+def test_IsSupportedModulesSubsetOfPack_inherit_pack_when_missing():
+    """
+    Given:
+        - A content item (playbook) with no 'supportedModules' defined.
+        - Its Content Pack defines supportedModules.
+    When:
+        - Running the IsSupportedModulesSubsetOfPack (ST114) validator.
+    Then:
+        - The validation should pass (item inherits pack modules).
+    """
+    with ChangeCWD(REPO.path):
+        playbook = create_playbook_object(
+            pack_info={"supportedModules": ["cloud_posture", "cloud_runtime_security"]}
+        )
+        playbook.supportedModules = None
+
+        results = IsSupportedModulesSubsetOfPack().obtain_invalid_content_items(
+            [playbook]
+        )
+        assert len(results) == 0

@@ -144,6 +144,24 @@ class BaseUpdateYML(BaseUpdate):
             if not self.data.get("tests", "") and self.old_file.get("tests", ""):
                 self.data["tests"] = self.old_file["tests"]
 
+    def section_order_to_lowercase(self):
+        """
+        Converts any 'sectionorder' key variant (e.g., 'sectionOrder', 'SectionOrder', 'Sectionorder')
+        to lowercase 'sectionorder' and removes the original key to ensure consistent field naming.
+
+        If 'sectionorder' already exists, no changes are made.
+        """
+        if "sectionorder" in self.data:
+            logger.info("'sectionorder' key exists, no changes were made.")
+            return  # already normalized
+
+        any_form_sectionorder = next(
+            (key for key in self.data if key.lower() == "sectionorder"), None
+        )
+        if any_form_sectionorder:
+            self.data["sectionorder"] = self.data[any_form_sectionorder]
+            self.data.pop(any_form_sectionorder, None)
+
     def update_yml(
         self, default_from_version: Optional[str] = "", file_type: str = ""
     ) -> None:
@@ -153,13 +171,23 @@ class BaseUpdateYML(BaseUpdate):
         self.adds_period_to_description()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
-        self.set_fromVersion(
-            default_from_version=default_from_version, file_type=file_type
-        )
+
+        # Handle fromVersion based on whether playbook is silent
+        is_silent = self.data.get("issilent", False)
+
+        # Set fromVersion if not silent, or if silent and from_version exists and is greater than 8.9.0
+        if not is_silent or (
+            is_silent and self.from_version and self.from_version > "8.9.0"
+        ):
+            self.set_fromVersion(
+                default_from_version=default_from_version, file_type=file_type
+            )
+
         if self.id_and_version_location:
             self.update_id_to_equal_name()
             self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
+        self.section_order_to_lowercase()
         if self.deprecate:
             if (
                 self.source_file_type.value == "integration"

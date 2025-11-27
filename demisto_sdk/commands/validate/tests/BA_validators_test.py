@@ -1,4 +1,5 @@
 import copy
+import re
 from pathlib import Path
 from typing import List
 
@@ -53,6 +54,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA101_id_should_equa
 from demisto_sdk.commands.validate.validators.BA_validators.BA103_is_tests_section_valid import (
     IsTestsSectionValidValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA104_is_marketplace_tags_valid import (
+    MarketplaceTagsValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA105_id_contain_slashes import (
     IDContainSlashesValidator,
 )
@@ -77,6 +81,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA110_is_entity_type
 from demisto_sdk.commands.validate.validators.BA_validators.BA111_is_entity_name_contain_excluded_word import (
     ERROR_MSG_TEMPLATE,
     IsEntityNameContainExcludedWordValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA112_is_valid_compliant_policy_name import (
+    IsValidCompliantPolicyNameValidator,
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA113_is_content_item_name_contain_trailing_spaces import (
     ContentTypes as ContentTypes113,
@@ -114,6 +121,14 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
+
+
+def normalize_pack_name(message: str) -> str:
+    """
+    Normalizes dynamically generated pack directory names like 'pack_123'
+    into a static placeholder 'PACK_NAME' so tests remain deterministic.
+    """
+    return re.sub(r"pack_\d+", "PACK_NAME", message)
 
 
 @pytest.mark.parametrize(
@@ -1278,14 +1293,14 @@ def test_IsEntityNameContainExcludedWordValidator(
             [create_pack_object(), create_pack_object()],
             1,
             [
-                "Pack for content item '/newPackName' and all related files were changed from 'pack_171' to 'newPackName', please undo."
+                "Pack for content item '/newPackName' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
             [create_integration_object(), create_integration_object()],
             1,
             [
-                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_173' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1295,7 +1310,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/ParsingRules/TestParsingRule/TestParsingRule.yml' and all related files were changed from 'pack_175' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/ParsingRules/TestParsingRule/TestParsingRule.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1305,7 +1320,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/CorrelationRules/correlation_rule.yml' and all related files were changed from 'pack_177' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/CorrelationRules/correlation_rule.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1315,7 +1330,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Playbooks/playbook-0.yml' and all related files were changed from 'pack_179' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Playbooks/playbook-0.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1325,7 +1340,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/ModelingRules/modelingrule_0/modelingrule_0.yml' and all related files were changed from 'pack_181' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/ModelingRules/modelingrule_0/modelingrule_0.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1335,7 +1350,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_183' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1345,7 +1360,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Scripts/script0/script0.yml' and all related files were changed from 'pack_185' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Scripts/script0/script0.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1355,7 +1370,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Classifiers/classifier-test_classifier.json' and all related files were changed from 'pack_187' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Classifiers/classifier-test_classifier.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1365,7 +1380,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Lists/list-list.json' and all related files were changed from 'pack_189' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Lists/list-list.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1375,7 +1390,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Jobs/job-job.json' and all related files were changed from 'pack_191' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Jobs/job-job.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1385,7 +1400,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Dashboards/dashboard-dashboard.json' and all related files were changed from 'pack_193' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Dashboards/dashboard-dashboard.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1395,7 +1410,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/IncidentTypes/incidenttype-incident_type.json' and all related files were changed from 'pack_195' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/IncidentTypes/incidenttype-incident_type.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1405,7 +1420,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/IncidentFields/incidentfield-incident_field.json' and all related files were changed from 'pack_197' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/IncidentFields/incidentfield-incident_field.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1415,7 +1430,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Reports/report-report.json' and all related files were changed from 'pack_199' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Reports/report-report.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1425,7 +1440,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/XSIAMReports/xsiam_report.json' and all related files were changed from 'pack_201' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/XSIAMReports/xsiam_report.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1435,7 +1450,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/XSIAMDashboards/xsiam_dashboard.json' and all related files were changed from 'pack_203' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/XSIAMDashboards/xsiam_dashboard.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1445,7 +1460,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/XDRCTemplates/pack_205_xdrc_template/xdrc_template.json' and all related files were changed from 'pack_205' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/XDRCTemplates/PACK_NAME_xdrc_template/xdrc_template.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1455,7 +1470,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/AssetsModelingRules/assets_modeling_rule/assets_modeling_rule.yml' and all related files were changed from 'pack_207' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/AssetsModelingRules/assets_modeling_rule/assets_modeling_rule.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1465,7 +1480,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Triggers/trigger.json' and all related files were changed from 'pack_209' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Triggers/trigger.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1475,7 +1490,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Layouts/layout-layout.json' and all related files were changed from 'pack_211' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Layouts/layout-layout.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1485,7 +1500,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Widgets/widget-widget.json' and all related files were changed from 'pack_213' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Widgets/widget-widget.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1495,7 +1510,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/IndicatorFields/indicatorfield-indicator_field.json' and all related files were changed from 'pack_215' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/IndicatorFields/indicatorfield-indicator_field.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1505,7 +1520,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Wizards/wizard-test_wizard.json' and all related files were changed from 'pack_217' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Wizards/wizard-test_wizard.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1515,7 +1530,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/GenericDefinitions/genericdefinition-generic_definition.json' and all related files were changed from 'pack_219' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/GenericDefinitions/genericdefinition-generic_definition.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1525,7 +1540,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/GenericFields/generic_field/genericfield-generic_field.json' and all related files were changed from 'pack_221' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/GenericFields/generic_field/genericfield-generic_field.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1535,7 +1550,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/GenericTypes/generic_type/generictype-generic_type.json' and all related files were changed from 'pack_223' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/GenericTypes/generic_type/generictype-generic_type.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1545,7 +1560,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/GenericModules/genericmodule-generic_module.json' and all related files were changed from 'pack_225' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/GenericModules/genericmodule-generic_module.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1555,7 +1570,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Classifiers/classifier-mapper-incoming_mapper.json' and all related files were changed from 'pack_227' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-incoming_mapper.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1565,7 +1580,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Classifiers/classifier-mapper-outgoing_mapper.json' and all related files were changed from 'pack_229' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-outgoing_mapper.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1575,7 +1590,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/IndicatorTypes/reputation-indicator_type.json' and all related files were changed from 'pack_231' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/IndicatorTypes/reputation-indicator_type.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
     ],
@@ -1604,11 +1619,13 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
     new_path = Path(*content_item_parts)
     content_items[1].path = new_path
     results = PackNameValidator().obtain_invalid_content_items(content_items)
-    assert len(results) == expected_number_of_failures
+    result_messages = [normalize_pack_name(result.message) for result in results]
+
+    assert len(result_messages) == expected_number_of_failures
     assert all(
         [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_msgs)
+            message == expected_msg
+            for message, expected_msg in zip(result_messages, expected_msgs)
         ]
     )
 
@@ -1620,34 +1637,34 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
         pytest.param(
             [create_integration_object(readme_content="test-module")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_233/Integrations/integration_0/README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Integrations/integration_0/README.md",
             id="invalid: integration readme",
         ),
         pytest.param(
             [create_integration_object(description_content="test-module")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_234/Integrations/integration_0/integration_0_description.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Integrations/integration_0/integration_0_description.md",
             id="invalid: integration description",
         ),
         pytest.param([create_script_object()], 0, "", id="valid: script"),
         pytest.param(
             [create_script_object(readme_content="test-module ")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_236/Scripts/script0/README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Scripts/script0/README.md",
             id="invalid: script readme",
         ),
         pytest.param([create_playbook_object()], 0, "", id="valid: playbook"),
         pytest.param(
             [create_playbook_object(readme_content="test-module ")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_238/Playbooks/playbook-0_README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Playbooks/playbook-0_README.md",
             id="invalid: playbook readme",
         ),
         pytest.param([create_pack_object()], 0, "", id="valid: pack"),
         pytest.param(
             [create_pack_object(readme_text="test-module ")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_240/README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/README.md",
             id="invalid: pack readme",
         ),
         pytest.param(
@@ -1657,7 +1674,7 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
                 )
             ],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_241/ReleaseNotes/1_0_1.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/ReleaseNotes/1_0_1.md",
             id="invalid: pack release note",
         ),
     ],
@@ -1678,9 +1695,11 @@ def test_CustomerFacingDocsDisallowedTermsValidator(
     results = CustomerFacingDocsDisallowedTermsValidator().obtain_invalid_content_items(
         content_items=content_items
     )
-    assert len(results) == expected_number_of_failures
+    result_messages = [normalize_pack_name(result.message) for result in results]
+
+    assert len(result_messages) == expected_number_of_failures
     if results:
-        assert results[0].message == expected_error_message
+        assert result_messages[0] == expected_error_message
 
 
 @pytest.mark.parametrize(
@@ -2503,3 +2522,429 @@ def test_is_command_or_script_name_starts_with_digit_valid():
     )
 
     assert len(results) == 0
+
+
+@pytest.mark.parametrize(
+    "content_item, policy_names, expected_failures",
+    [
+        pytest.param(
+            create_script_object(
+                paths=["compliantpolicies"], values=[["valid_policy_1"]]
+            ),
+            {"valid_policy_1"},
+            [],
+            id="valid_policy_name",
+        ),
+        pytest.param(
+            create_script_object(
+                paths=["compliantpolicies"], values=[["invalid_policy"]]
+            ),
+            {"valid_policy_1", "valid_policy_2"},
+            ["invalid_policy"],
+            id="invalid_policy_name",
+        ),
+        pytest.param(
+            create_script_object(
+                paths=["compliantpolicies"],
+                values=[["valid_policy_1", "valid_policy_2"]],
+            ),
+            {"valid_policy_1", "valid_policy_2"},
+            [],
+            id="multiple_valid_policies",
+        ),
+        pytest.param(
+            create_script_object(
+                paths=["compliantpolicies"],
+                values=[["valid_policy_1", "invalid_policy"]],
+            ),
+            {"valid_policy_1", "valid_policy_2"},
+            ["invalid_policy"],
+            id="mixed_valid_and_invalid_policies",
+        ),
+        pytest.param(
+            create_script_object(paths=["compliantpolicies"], values=[[]]),
+            {"valid_policy_1"},
+            [],
+            id="empty_policy_list",
+        ),
+        pytest.param(
+            create_script_object(
+                paths=["compliantpolicies"],
+                values=[["invalid_policy_1", "invalid_policy_2"]],
+            ),
+            {"valid_policy_1", "valid_policy_2"},
+            ["invalid_policy_1", "invalid_policy_2"],
+            id="multiple_invalid_policies",
+        ),
+    ],
+)
+def test_script_compliant_policy_name_validator(
+    content_item, policy_names, expected_failures
+):
+    """
+    Given
+    - A Script object with compliant policies.
+    When
+    - Calling the IsValidCompliantPolicyNameValidator content_contains_invalid_compliant_policy_name function.
+    Then
+    - Make sure the expected sorted list of failures is returned.
+
+    Test cases:
+    - A script with valid policy name
+    - A script with invalid policy name
+    - A script with multiple valid policies
+    - A script with a mix of valid and invalid policies
+    - A script with empty policy list
+    - A script with multiple invalid policies
+    """
+    results = IsValidCompliantPolicyNameValidator().get_invalid_compliant_policies(
+        content_item, policy_names
+    )
+    assert results == sorted(expected_failures)
+
+
+@pytest.mark.parametrize(
+    "content_item, policy_names, expected_failures",
+    [
+        pytest.param(
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [{"name": "test-command", "compliantpolicies": ["valid_policy_1"]}]
+                ],
+            ),
+            {"valid_policy_1"},
+            [],
+            id="integration_with_valid_policy",
+        ),
+        pytest.param(
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [{"name": "test-command", "compliantpolicies": ["invalid_policy"]}]
+                ],
+            ),
+            {"valid_policy_1", "valid_policy_2"},
+            ["invalid_policy"],
+            id="integration_with_invalid_policy",
+        ),
+        pytest.param(
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "test-command",
+                            "compliantpolicies": ["valid_policy_1", "valid_policy_2"],
+                        }
+                    ]
+                ],
+            ),
+            {"valid_policy_1", "valid_policy_2"},
+            [],
+            id="integration_with_multiple_valid_policies",
+        ),
+        pytest.param(
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "test-command",
+                            "compliantpolicies": ["valid_policy_1", "invalid_policy"],
+                        }
+                    ]
+                ],
+            ),
+            {"valid_policy_1", "valid_policy_2"},
+            ["invalid_policy"],
+            id="integration_with_mixed_valid_and_invalid_policies",
+        ),
+        pytest.param(
+            create_integration_object(
+                paths=["script.commands"],
+                values=[[{"name": "test-command", "compliantpolicies": []}]],
+            ),
+            {"valid_policy_1"},
+            [],
+            id="integration_with_empty_policy_list",
+        ),
+        pytest.param(
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {
+                            "name": "test-command",
+                            "compliantpolicies": [
+                                "invalid_policy_2",
+                                "invalid_policy_1",
+                            ],
+                        }
+                    ]
+                ],
+            ),
+            {"valid_policy_1", "valid_policy_2"},
+            ["invalid_policy_1", "invalid_policy_2"],
+            id="integration_with_multiple_invalid_policies",
+        ),
+        pytest.param(
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {"name": "command1", "compliantpolicies": ["valid_policy_1"]},
+                        {"name": "command2", "compliantpolicies": ["invalid_policy"]},
+                    ]
+                ],
+            ),
+            {"valid_policy_1", "valid_policy_2"},
+            ["invalid_policy"],
+            id="integration_with_multiple_commands_one_invalid_policy",
+        ),
+        pytest.param(
+            create_integration_object(
+                paths=["script.commands"],
+                values=[
+                    [
+                        {"name": "command1", "compliantpolicies": ["invalid_policy_1"]},
+                        {"name": "command2", "compliantpolicies": ["invalid_policy_2"]},
+                    ]
+                ],
+            ),
+            {"valid_policy_1", "valid_policy_2"},
+            ["invalid_policy_1", "invalid_policy_2"],
+            id="integration_with_multiple_commands_multiple_invalid_policies",
+        ),
+    ],
+)
+def test_integration_compliant_policy_name_validator(
+    content_item, policy_names, expected_failures
+):
+    """
+    Given
+    - An integration with commands containing compliant policies.
+    When
+    - Calling the IsValidCompliantPolicyNameValidator content_contains_invalid_compliant_policy_name function.
+    Then
+    - Make sure the expected sorted list of failures is returned.
+
+    Test cases:
+    - An integration with valid policy name
+    - An integration with invalid policy name
+    - An integration with multiple valid policies
+    - An integration with a mix of valid and invalid policies
+    - An integration with empty policy list
+    - An integration with multiple invalid policies
+    - An integration with multiple commands where one has invalid policy
+    - An integration with multiple commands where multiple have invalid policies
+    """
+    results = IsValidCompliantPolicyNameValidator().get_invalid_compliant_policies(
+        content_item, policy_names
+    )
+    assert results == sorted(expected_failures)
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_pack_object(
+                    readme_text="# Test Pack\n\n<~XSOAR>This is for XSOAR</~XSOAR>\n\n<~XSIAM>This is for XSIAM</~XSIAM>"
+                ),
+                create_integration_object(
+                    description_content="<~XSOAR_SAAS>XSOAR SaaS only content</~XSOAR_SAAS>"
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="<~INVALID_TAG>This is invalid</~INVALID_TAG>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Invalid marketplace tag(s) found: INVALID_TAG. Allowed tags:",
+            ],
+        ),
+        (
+            [
+                create_integration_object(
+                    description_content="<~XSOAR>This is mismatched</~XSIAM>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/Integrations/integration_0/integration_0_description.md: Mismatched marketplace tags: opened with 'XSOAR' but closed with 'XSIAM'",
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="<~XSOAR>This tag is never closed"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Unclosed marketplace tag: 'XSOAR' is missing its closing tag",
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="This closing tag has no opening </~XSOAR>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="<~XSOAR>Outer tag <~XSIAM>Inner tag</~XSIAM></~XSOAR>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Nested marketplace tags are not allowed. Tag 'XSIAM' cannot be placed inside tag 'XSOAR'",
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="<~INVALID,INVALID_B>Multiple invalid tags</~NVALID,INVALID_B>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Invalid marketplace tag(s) found: INVALID, INVALID_B. Allowed tags:",
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="<~XSOAR,XSIAM>Content for both platforms</~XSOAR,XSIAM>"
+                ),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="This closing tag has no opening </~XSOAR>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~> invalid"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: Tag name cannot be empty."
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~xsoar>invalid</~xsoar>"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'xsoar'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="Text <~XSOAR-SAAS>invalid</~XSOAR-SAAS>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'XSOAR-SAAS'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~XSOAR,>bad</~XSOAR,>"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'XSOAR,'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~,XSOAR>bad</~,XSOAR>"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: ',XSOAR'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="Text <~XSOAR, XSIAM>bad</~XSOAR, XSIAM>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'XSOAR, XSIAM'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~XSoar>bad</~XSoar>"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'XSoar'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+    ],
+)
+def test_MarketplaceTagsValidator_obtain_invalid_content_items(
+    content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Given
+    - Content items with various marketplace tag scenarios.
+    When
+    - Calling the MarketplaceTagsValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failures is returned and that the error msg is correct.
+
+    Test cases:
+    - Valid marketplace tags in pack README and integration description
+    - Invalid marketplace tag name in pack README
+    - Mismatched opening and closing tags in integration description
+    - Unclosed marketplace tag in pack README
+    - Closing tag without corresponding opening tag in pack README
+    - Nested marketplace tags (not allowed) in pack README
+    - Multiple invalid tags in comma-separated format in pack README
+    - Valid multiple tags in comma-separated format in pack README
+    - Duplicate case - closing tag without corresponding opening tag
+    """
+    results = MarketplaceTagsValidator().obtain_invalid_content_items(content_items)
+    result_messages = [normalize_pack_name(result.message) for result in results]
+
+    assert len(result_messages) == expected_number_of_failures
+    if expected_msgs:
+        assert expected_msgs[0] in result_messages[0]

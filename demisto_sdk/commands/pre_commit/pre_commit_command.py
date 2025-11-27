@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     PACKS_FOLDER,
     SCRIPTS_DIR,
+    TESTS_DIRECTORIES,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
@@ -34,6 +35,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.pre_commit.hooks.docker import DockerHook
 from demisto_sdk.commands.pre_commit.hooks.hook import GeneratedHooks, Hook, join_files
+from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.hooks.sourcery import SourceryHook
@@ -77,6 +79,7 @@ class PreCommitRunner:
             "sourcery": SourceryHook,
             "validate": ValidateFormatHook,
             "format": ValidateFormatHook,
+            "mypy": MypyHook,
         }
 
         for hook_id in hooks.copy():
@@ -660,7 +663,7 @@ def pre_commit_manager(
 def add_related_files(file: Path) -> Set[Path]:
     """This returns the related files set, including the original file
     If the file is `.yml`, it will add the `.py` file and the test file.
-    If the file is `.py` or `.ps1`, it will add the tests file.
+    If the file is `.py` or `.ps1` or in 'test_data' folder, it will add the tests file.
 
     Args:
         file (Path): The file to add related files for.
@@ -669,25 +672,52 @@ def add_related_files(file: Path) -> Set[Path]:
         Set[Path]: The set of related files.
     """
     files_to_run = {file}
+    test_data_changed = False
     if ".yml" in file.suffix:
         py_file_path = file.with_suffix(".py")
+        ps1_file_path = file.with_suffix(".ps1")
         if py_file_path.exists():
             files_to_run.add(py_file_path)
+        elif ps1_file_path.exists():
+            files_to_run.add(ps1_file_path)
 
-    # Identifying test files by their suffix.
-    if not {".py", ".ps1"}.intersection({file.suffix for file in files_to_run}):
+    # Identifying test files
+
+    # if the file in some test directory:
+    # find the integration_iter directory and then test_files
+    for test_dir in TESTS_DIRECTORIES:
+        if test_dir in file.parts and file.parts[0] == PACKS_FOLDER:
+            test_data_index = file.parts.index(test_dir)
+            path_to_test_data_folder_parts = Path(*file.parts[: test_data_index + 1])
+            test_data_changed = True
+            break  # Stop after the first matching test directory
+
+    # Check if source code file change
+    has_python_related_file = any(".py" in f.suffix for f in files_to_run)
+    has_pwrshell_related_file = any(".ps1" in f.suffix for f in files_to_run)
+
+    # Early exit if no relevant test files are expected
+    if not (has_python_related_file or has_pwrshell_related_file or test_data_changed):
         return files_to_run
 
+    # Determine the test file suffix
     test_file_suffix = (
         PY_TEST_FILE_SUFFIX
-        if ".py" in (file.suffix for file in files_to_run)
+        if has_python_related_file or test_data_changed
         else PS1_TEST_FILE_SUFFIX
     )
+
+    # Determine the path to start search for test files
+    if test_data_changed:
+        path_file = path_to_test_data_folder_parts
+    else:
+        path_file = file
+
     test_files = []
-    if file.parent.exists():
+    if path_file.parent.exists():
         test_files = [
             _file
-            for _file in file.parent.iterdir()
+            for _file in path_file.parent.iterdir()
             if _file.name.endswith(test_file_suffix)
         ]
         files_to_run.update(test_files)
@@ -761,5 +791,6 @@ def preprocess_files(
         file.relative_to(CONTENT_PATH) if file.is_absolute() else file
         for file in files_to_run
     }
+
     # filter out files that are not in the content git repo (e.g in .gitignore)
     return relative_paths & all_git_files

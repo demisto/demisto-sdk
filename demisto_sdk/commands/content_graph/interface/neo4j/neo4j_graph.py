@@ -65,6 +65,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_items_using_deprecated,
+    get_supported_modules_mismatch_commands,
+    get_supported_modules_mismatch_content_items,
+    get_supported_modules_mismatch_dependencies,
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
@@ -72,6 +75,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
     validate_packs_with_hidden_mandatory_dependencies,
+    validate_playbook_tests_in_repository,
     validate_test_playbook_in_use,
     validate_toversion,
     validate_unknown_content,
@@ -432,6 +436,19 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
+    def get_unknown_playbook_tests(
+        self,
+        file_paths: List[str],
+    ) -> List[BaseNode]:
+        with self.driver.session() as session:
+            results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
+                validate_playbook_tests_in_repository,
+                file_paths,
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
     def get_duplicate_pack_display_name(
         self, file_paths: List[str]
     ) -> List[Tuple[str, List[str]]]:
@@ -590,6 +607,76 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             results = session.execute_read(
                 validate_packs_with_hidden_mandatory_dependencies, pack_ids
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_content_items_with_module_mismatch_dependencies(
+        self, content_item_ids: List[str]
+    ) -> List[BaseNode]:
+        """
+        Retrieves content items with invalid dependency relationships based on supported modules.
+
+        This method identifies content items where a dependent item's `supportedModules`
+        are not fully included in the `supportedModules` of the item it depends on.
+
+        Args:
+            content_item_ids (List[str]): List of content item IDs to check for invalid dependencies.
+                                        If empty, all relevant content items will be checked.
+        Returns:
+            List[BaseNode]: Content items that have invalid supported module dependencies, if any exist.
+
+        """
+        with self.driver.session() as session:
+            results = session.execute_read(
+                get_supported_modules_mismatch_dependencies, content_item_ids
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_content_items_with_module_mismatch_commands(
+        self, content_item_ids: List[str]
+    ) -> List[BaseNode]:
+        """
+        Retrieves content items with invalid command relationships based on supported modules.
+
+        This method identifies content items where a command's `supportedModules`
+        are not fully included in the `supportedModules` of the parent content item.
+
+        Args:
+            content_item_ids (List[str]): List of content item IDs to check for invalid commands.
+                                        If empty, all relevant content items will be checked.
+        Returns:
+            List[BaseNode]: Content items that have invalid supported module commands, if any exist.
+        """
+        with self.driver.session() as session:
+            results = session.execute_read(
+                get_supported_modules_mismatch_commands, content_item_ids
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_content_items_with_module_mismatch_content_items(
+        self, content_item_ids: List[str]
+    ) -> List[BaseNode]:
+        """
+        Retrieves content items with invalid command relationships based on supported modules.
+
+        This method identifies content items where a command's `supportedModules`
+        are not fully included in the `supportedModules` of the parent content item.
+
+        Args:
+            content_item_ids (List[str]): List of content item IDs to check for invalid commands.
+                                        If empty, all relevant content items will be checked.
+        Returns:
+            List[BaseNode]: Content items that have invalid supported module commands, if any exist.
+        """
+        with self.driver.session() as session:
+            results = session.execute_read(
+                get_supported_modules_mismatch_content_items, content_item_ids
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Annotated, Any, List, Literal, Optional, Tuple, Union
 
 import more_itertools
 from pydantic import BaseModel, Field
@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     Auto,
     MarketplaceVersions,
+    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.common import (
@@ -52,6 +53,9 @@ class _Argument(BaseStrictModel):
     deprecated: Optional[bool] = None
     type: Optional[str] = None
     hidden: Optional[bool] = None
+    supportedModules: Optional[
+        Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
+    ]
 
 
 HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL = create_dynamic_model(
@@ -233,3 +237,14 @@ Or.update_forward_refs()
 
 class AlertsFilter(BaseStrictModel):
     filter: Optional[Union[Or, And]] = None
+
+
+class AgentixBase(BaseStrictModel):
+    common_fields: CommonFields = Field(..., alias="commonfields")  # type:ignore[valid-type]
+    tags: Optional[list[str]] = None
+    category: Optional[str] = None
+    name: str
+    description: str
+    disabled: bool = False
+    marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
+    supportedModules: Optional[List[str]] = None

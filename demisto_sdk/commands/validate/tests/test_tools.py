@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
+from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
@@ -46,12 +47,18 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+    AgentixActionParser,
+)
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
     ParsingRuleParser,
 )
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
-from demisto_sdk.commands.content_graph.parsers.related_files import ImageRelatedFile
+from demisto_sdk.commands.content_graph.parsers.related_files import (
+    ImageRelatedFile,
+    TestUseCaseRelatedFile,
+)
 from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.file import File
@@ -240,6 +247,29 @@ def create_doc_file_object(
     with open(doc_path, "wb") as f:
         f.write(b"")
     return ImageRelatedFile(doc_path)
+
+
+def create_test_use_case_file_object(
+    playbook_path: Path,
+    test_use_case_name: str,
+    test_use_case_content: str,
+) -> TestUseCaseRelatedFile:
+    """Creating test use case file object.
+
+    Args:
+        playbook_path (Path): The path to the playbook that is tested by the test use case.
+        test_use_case_name (str): The name of the test use case (without the `.py` extension).
+        test_use_case_content (str): The contents of the test use case file.
+    Returns:
+        TestUseCaseRelatedFile: The test use case file object.
+    """
+    test_use_case_path = (
+        playbook_path.parent.parent / "TestUseCases" / f"{test_use_case_name}.py"
+    )
+    test_use_case_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(test_use_case_path, "w") as f:
+        f.write(test_use_case_content)
+    return TestUseCaseRelatedFile(playbook_path, test_use_case_name)
 
 
 def create_modeling_rule_object(
@@ -908,3 +938,31 @@ def update_keys(dict_obj, paths, values):
     if paths and values:
         for path, value in zip(paths, values):
             set_value(dict_obj, path, value)
+
+
+def create_agentix_action_object(
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
+    action_name: Optional[str] = None,
+) -> AgentixAction:
+    """Creating an agentix action object with altered fields from a default agentix action yml structure.
+    Returns:
+        The agentix action object.
+    """
+    yml_content = load_yaml("agentix_action.yml")
+    update_keys(yml_content, paths, values)
+    pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
+    additional_params = {}
+    if action_name:
+        additional_params["name"] = action_name
+
+    agentix_action = pack.create_agentix_action(**additional_params)
+    agentix_action.create_default_agentix_action()
+    agentix_action.yml.update(yml_content)
+    parser = AgentixActionParser(
+        Path(agentix_action.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+    return AgentixAction.from_orm(parser)

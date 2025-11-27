@@ -9,6 +9,8 @@ from tqdm import tqdm
 from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import (
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
     AUTHOR_IMAGE_FILE_NAME,
     CASE_FIELDS_DIR,
     CASE_LAYOUTS_DIR,
@@ -113,6 +115,8 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         WIDGETS_DIR,
         WIZARDS_DIR,
         LAYOUT_RULES_DIR,
+        AGENTIX_AGENTS_DIR,
+        AGENTIX_ACTIONS_DIR,
         *TESTS_AND_DOC_DIRECTORIES,
     )
 )
@@ -286,8 +290,8 @@ def _validate(path: Path) -> None:
     if depth == 0:  # file is directly under pack
         if path.name not in ZERO_DEPTH_FILES:
             raise InvalidDepthZeroFile
-        return  # following checks assume the depth>0, so we stop here
 
+        return  # following checks assume the depth>0, so we stop here
     if (first_level_folder := parts_inside_pack[0]) not in DEPTH_ONE_FOLDERS:
         raise InvalidDepthOneFolder
 

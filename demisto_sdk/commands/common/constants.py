@@ -120,6 +120,8 @@ ASSETS_MODELING_RULES_DIR = "AssetsModelingRules"
 CASE_LAYOUT_RULES_DIR = "CaseLayoutRules"
 CASE_LAYOUTS_DIR = "CaseLayouts"
 CASE_FIELDS_DIR = "CaseFields"
+AGENTIX_ACTIONS_DIR = "AgentixActions"
+AGENTIX_AGENTS_DIR = "AgentixAgents"
 
 # NAMES OF ENTITIES
 
@@ -277,6 +279,8 @@ class FileType(StrEnum):
     CASE_FIELD = "casefield"
     CASE_LAYOUT = "caselayout"
     VERSION_CONFIG = "version_config"
+    AGENTIX_AGENT = "agentixagent"
+    AGENTIX_ACTION = "agentixaction"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -317,6 +321,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
     FileType.CASE_FIELD: "Case Fields",
     FileType.CASE_LAYOUT: "Case Layouts",
+    FileType.AGENTIX_AGENT: "Agents",
+    FileType.AGENTIX_ACTION: "Actions",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -424,6 +430,8 @@ CONTENT_ENTITIES_DIRS = [
     CASE_LAYOUT_RULES_DIR,
     CASE_FIELDS_DIR,
     CASE_LAYOUTS_DIR,
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -948,6 +956,7 @@ PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 PACKS_VERSION_CONFIG_FILE_NAME = "version_config.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
+PRIVATE_PACKS_FOLDER = "PrivatePacks"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
 CONF_JSON_FILE_NAME = "conf.json"
@@ -1279,6 +1288,10 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     ".secrets-ignore",
     "version_config.json",  # TODO: remove and validate this file CIAC-12331
 )
+
+# A list of validation error codes that must always execute, regardless of ignore settings.
+# This addresses unique cases where validation must run first, then filter the relevant results afterward.
+ALWAYS_RUN_ON_ERROR_CODE = ["GR107"]
 
 
 class GitStatuses(StrEnum):
@@ -1670,19 +1683,34 @@ FEED_REQUIRED_PARAMS = [
             "display": "Source Reliability",
             "type": 15,
             "required": True,
+        },
+        "must_be_one_of": {
             "options": [
-                "A - Completely reliable",
-                "B - Usually reliable",
-                "C - Fairly reliable",
-                "D - Not usually reliable",
-                "E - Unreliable",
-                "F - Reliability cannot be judged",
+                # First list is for backward compatibility with old reliability options
+                [
+                    "A - Completely reliable",
+                    "B - Usually reliable",
+                    "C - Fairly reliable",
+                    "D - Not usually reliable",
+                    "E - Unreliable",
+                    "F - Reliability cannot be judged",
+                ],
+                # Second list is for new reliability options
+                [
+                    "A++ - Reputation script",
+                    "A+ - 3rd party enrichment",
+                    "A - Completely reliable",
+                    "B - Usually reliable",
+                    "C - Fairly reliable",
+                    "D - Not usually reliable",
+                    "E - Unreliable",
+                    "F - Reliability cannot be judged",
+                ],
             ],
         },
         "must_contain": {
             "additionalinfo": "Reliability of the source providing the intelligence data"
         },
-        "must_be_one_of": {},
     },
     {
         "name": "feedExpirationInterval",
@@ -1990,11 +2018,18 @@ class PlatformSupportedModules(StrEnum):
     X3 = "X3"
     X5 = "X5"
     ENT_PLUS = "ENT_PLUS"
+    # new licenses - TODO all values above this line needs to be removed as part of batch 4.
+    CLOUD_POSTURE = "cloud_posture"
+    CLOUD = "cloud"
+    CLOUD_RUNTIME_SECURITY = "cloud_runtime_security"
+    EDR = "edr"
+    CLOUD_APPSEC = "cloud_appsec"
+    AGENTIX = "agentix"
+    ASM = "asm"
+    XSIAM = "xsiam"
+    EXPOSURE_MANAGEMENT = "exposure_management"
+    AGENTIX_XSIAM = "agentix_xsiam"
 
-
-DEFAULT_SUPPORTED_MODULES: list[str] = [
-    product_code.value for product_code in PlatformSupportedModules
-]
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
     "html": Version("6.1.0"),
@@ -2146,30 +2181,35 @@ URL_IMAGE_LINK_REGEX = r"(\!\[.*?\])\((?P<url>https://[a-zA-Z_/\.0-9\- :%]*?)\)(
 
 HTML_IMAGE_LINK_REGEX = r'(<img.*?src\s*=\s*"(https://.*?)")'
 
-XSOAR_PREFIX_TAG = "<~XSOAR>\n"
-XSOAR_SUFFIX_TAG = "\n</~XSOAR>\n"
-XSOAR_INLINE_PREFIX_TAG = "<~XSOAR>"
-XSOAR_INLINE_SUFFIX_TAG = "</~XSOAR>"
+MARKETPLACE_LIST_PATTERN = r"[A-Z_]+(?:,[A-Z_]+)*"
+TAG_CONTENT_PATTERN = r"(?:.|\s)*?"
 
-XSOAR_SAAS_PREFIX_TAG = "<~XSOAR_SAAS>\n"
-XSOAR_SAAS_SUFFIX_TAG = "\n</~XSOAR_SAAS>\n"
-XSOAR_SAAS_INLINE_PREFIX_TAG = "<~XSOAR_SAAS>"
-XSOAR_SAAS_INLINE_SUFFIX_TAG = "</~XSOAR_SAAS>"
+MARKETPLACE_TAG_MAPPING = {
+    MarketplaceVersions.PLATFORM.value: ["PLATFORM", "XSIAM"],
+    MarketplaceVersions.MarketplaceV2.value: ["XSIAM", "XSIAM_ONLY"],
+    MarketplaceVersions.XPANSE.value: ["XPANSE"],
+    MarketplaceVersions.XSOAR.value: [
+        "XSOAR",
+        "XSOAR_ON_PREM",
+    ],  # If uploading to XSOAR, keep XSOAR and XSOAR_ON_PREM tags
+    MarketplaceVersions.XSOAR_SAAS.value: [
+        "XSOAR_SAAS",
+        "XSOAR",
+    ],  # If uploading to XSOAR_SAAS, keep XSOAR_SAAS and XSOAR tags
+    MarketplaceVersions.XSOAR_ON_PREM.value: [
+        "XSOAR_ON_PREM"
+    ],  # If uploading to XSOAR_ON_PREM, keep XSOAR_ON_PREM tags
+}
 
-XSOAR_ON_PREM_PREFIX_TAG = "<~XSOAR_ON_PREM>\n"
-XSOAR_ON_PREM_SUFFIX_TAG = "\n</~XSOAR_ON_PREM>\n"
-XSOAR_ON_PREM_INLINE_PREFIX_TAG = "<~XSOAR_ON_PREM>"
-XSOAR_ON_PREM_INLINE_SUFFIX_TAG = "</~XSOAR_ON_PREM>"
-
-XSIAM_PREFIX_TAG = "<~XSIAM>\n"
-XSIAM_SUFFIX_TAG = "\n</~XSIAM>\n"
-XSIAM_INLINE_PREFIX_TAG = "<~XSIAM>"
-XSIAM_INLINE_SUFFIX_TAG = "</~XSIAM>"
-
-XPANSE_PREFIX_TAG = "<~XPANSE>\n"
-XPANSE_SUFFIX_TAG = "\n</~XPANSE>\n"
-XPANSE_INLINE_PREFIX_TAG = "<~XPANSE>"
-XPANSE_INLINE_SUFFIX_TAG = "</~XPANSE>"
+VALID_MARKETPLACE_TAGS = {
+    "XSOAR",
+    "XSOAR_SAAS",
+    "XSOAR_ON_PREM",
+    "XPANSE",
+    "XSIAM",
+    "XSIAM_ONLY",
+    "PLATFORM",
+}
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"
 MARKDOWN_RELATIVE_PATH_IMAGES_ARTIFACT_FILE_NAME = "markdown_relatve_path_images.json"

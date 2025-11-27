@@ -71,6 +71,8 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     def connect_to_api_modules(self) -> None:
         """Creates IMPORTS relationships with the API modules used in the integration."""
+        if self.content_type == ContentType.SCRIPT and self.is_llm:  # type: ignore
+            return None
         code = self.code
         if not code:
             raise ValueError(

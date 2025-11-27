@@ -103,6 +103,8 @@ mapping:
         type: bool
       isfetchassets:
         type: bool
+      ismcp:
+        type: bool
       longRunning:
         type: bool
       longRunningPort:
@@ -201,7 +203,7 @@ mapping:
                     required: true
                   operator:
                     type: str
-                    enum: ["exists", "not_exists", "equals", "not_equals"]
+                    enum: ["exists", "not_exists", "equal", "not_equal"]
                     required: true
                   value:
                     type: str
@@ -364,6 +366,10 @@ schema;command_schema:
       type: bool
     quickaction:
       type: bool
+    compliantpolicies:
+      type: seq
+      sequence:
+      - type: str
 # int
     name:xsoar:
       type: str

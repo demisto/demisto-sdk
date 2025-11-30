@@ -13,11 +13,6 @@ class AgentixAgent(YAML):
         self.path = str(tmpdir)
         super().__init__(tmp_path=tmpdir / f"{self.name}.yml", repo_path=str(repo.path))
 
-    @property
-    def yml(self):
-        # for backward compatible
-        return self
-
     def build(
         self,
         yml: Optional[dict] = None,

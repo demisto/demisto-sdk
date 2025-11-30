@@ -991,7 +991,7 @@ def create_agentix_agent_object(
 
     agentix_agent = pack.create_agentix_agent(**additional_params)
     agentix_agent.create_default_agentix_agent()
-    agentix_agent.yml.update(yml_content)
+    agentix_agent.update(yml_content)
     parser = AgentixAgentParser(
         Path(agentix_agent.path), list(MarketplaceVersions), pack_supported_modules=[]
     )

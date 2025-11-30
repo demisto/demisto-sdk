@@ -32,7 +32,7 @@ def create_content_graph(
     """This function creates a new content graph database in neo4j from the content path
 
     Args:
-        content_graph_interface (ContentGraphInterface): The content graph interface.
+        content_graph_interface (ContentGraphInterface): The content graph interface. test
         marketplace (MarketplaceVersions): The marketplace to update.
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.

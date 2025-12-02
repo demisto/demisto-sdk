@@ -1,0 +1,4 @@
+changes:
+- description: Add an `is_beta` field to the `contentItems.integration` entry within the metadata file.
+  type: internal
+pr_number: 5147

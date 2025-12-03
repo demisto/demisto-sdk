@@ -2598,6 +2598,9 @@ def test_string_to_bool_error(value: str):
         ("Packs/myPack/ReleaseNotes/1_0_0.md", FileType.RELEASE_NOTES),
         ("Packs/myPack/ReleaseNotes/1_0_0.json", FileType.RELEASE_NOTES_CONFIG),
         ("Packs/myPack/Lists/list.json", FileType.LISTS),
+        # Regression test: Filename-based detection must happen before directory-based.
+        # Directory substring matching can false-positive when path contains type names.
+        ("Packs/myListsPack/pack_metadata.json", FileType.METADATA),
         ("Packs/myPack/Jobs/job.json", FileType.JOB),
         (f"Packs/myPack/{INDICATOR_TYPES_DIR}/indicator.json", FileType.REPUTATION),
         (

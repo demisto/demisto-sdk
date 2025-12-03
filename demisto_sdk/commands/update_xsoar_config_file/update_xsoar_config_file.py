@@ -42,7 +42,10 @@ class XSOARConfigFileUpdater:
         self.add_custom_pack = add_custom_pack
         self.add_all_marketplace_packs = add_all_marketplace_packs
         self.insecure = insecure
-        self.file_path = file_path
+        if file_path:
+            self.file_path = file_path
+        else:
+            self.file_path = XSOAR_CONFIG_FILE_JSON
         self.client = None
 
     def update(self) -> int:

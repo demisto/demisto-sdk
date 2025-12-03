@@ -36,6 +36,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_indicator_type_data,
     get_layout_data,
     get_layout_rule_data,
+    get_list_data,
     get_mapper_data,
     get_modeling_rule_data,
     get_pack_metadata_data,
@@ -4151,3 +4152,71 @@ def test_add_item_to_exclusion_dict():
     add_item_to_exclusion_dict(excluded_items_from_id_set, file_path, "Cortex XDR")
 
     assert IsEqualFunctions.is_dicts_equal(expected_result, excluded_items_from_id_set)
+
+
+def test_get_list_data_with_separate_metadata_and_data_files():
+    """
+    Given:
+    - A unified list file with 'id' field
+    - A list metadata file with 'id' field
+    - A list data file without 'id' field
+
+    When:
+    - Calling get_list_data() on each file
+
+    Then:
+    - Unified list returns dict with id and metadata
+    - List metadata file returns dict with id and metadata
+    - List data file returns empty dict (skipped as it has no 'id')
+
+    This test ensures that list data files (which contain only data, no metadata)
+    are correctly skipped during id_set generation, preventing errors.
+    """
+
+    # Test data
+    unified_list_data = {
+        "id": "test-list-unified",
+        "name": "Test List Unified",
+        "type": "plain_text",
+        "data": "item1\nitem2\nitem3"
+    }
+
+    list_metadata_data = {
+        "id": "test-list-with-separate-data",
+        "name": "Test List With Separate Data",
+        "type": "plain_text",
+        "data": "-"  # Placeholder when data is in separate file
+    }
+
+    # Data file - contains only data, no 'id' field
+    list_data_file_content = {
+        "data": ["item1", "item2", "item3"]
+    }
+    
+    # Create temp files for testing
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Test unified list
+        unified_list_path = os.path.join(temp_dir, "UnifiedList.json")
+        with open(unified_list_path, "w") as f:
+            json.dump(unified_list_data, f)
+        
+        unified_result = get_list_data(unified_list_path)
+        assert "test-list-unified" in unified_result
+        assert unified_result["test-list-unified"]["name"] == "Test List Unified"
+        
+        # Test list metadata file (has 'id')
+        metadata_path = os.path.join(temp_dir, "ListWithSeparateData.json")
+        with open(metadata_path, "w") as f:
+            json.dump(list_metadata_data, f)
+
+        metadata_result = get_list_data(metadata_path)
+        assert "test-list-with-separate-data" in metadata_result
+        assert metadata_result["test-list-with-separate-data"]["name"] == "Test List With Separate Data"
+
+        # Test list data file (no 'id' - should be skipped)
+        data_path = os.path.join(temp_dir, "ListWithSeparateData_data.json")
+        with open(data_path, "w") as f:
+            json.dump(list_data_file_content, f)
+
+        data_result = get_list_data(data_path)
+        assert data_result == {}  # Should return empty dict for files without 'id'

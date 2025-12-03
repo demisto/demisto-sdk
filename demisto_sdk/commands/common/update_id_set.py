@@ -2170,7 +2170,10 @@ def process_general_items(
                     return [], excluded_items_from_id_set
                 if print_logs:
                     logger.info(f"adding {file_path} to id_set")
-                res.append(data_extraction_func(file_path, packs=packs))
+                data = data_extraction_func(file_path, packs=packs)
+                # Only add non-empty results (e.g., skip list data files without 'id')
+                if data:
+                    res.append(data)
         else:
             package_name = Path(file_path).name
             file_path = os.path.join(file_path, f"{package_name}.{suffix}")
@@ -2187,7 +2190,10 @@ def process_general_items(
                     return [], excluded_items_from_id_set
                 if print_logs:
                     logger.info(f"adding {file_path} to id_set")
-                res.append(data_extraction_func(file_path, packs=packs))
+                data = data_extraction_func(file_path, packs=packs)
+                # Only add non-empty results (e.g., skip list data files without 'id')
+                if data:
+                    res.append(data)
     except Exception as exp:
         logger.info(f"<red>failed to process {file_path}, Error: {str(exp)}</red>")
         raise
@@ -2457,6 +2463,17 @@ def get_generic_module_data(path, packs: Dict[str, Dict] = None):
 
 def get_list_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
+
+    # Skip list data files (e.g., ListName_data.json) without 'id' field.
+    # Lists can store metadata and data separately:
+    #   - ListName.json: metadata file with 'id' field
+    #   - ListName_data.{txt|json|etc}: data-only file
+    # For id_set generation, we only need the metadata file.
+    list_id = json_data.get("id")
+    if not list_id:
+        logger.debug(f"Skipping file without 'id' field (likely list data file): {path}")
+        return {}
+
     marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     data = create_common_entity_data(
         path=path,
@@ -2468,7 +2485,7 @@ def get_list_data(path: str, packs: Dict[str, Dict] = None):
         marketplaces=marketplaces,
     )
 
-    return {json_data.get("id"): data}
+    return {list_id: data}
 
 
 def get_wizard_data(path: str, packs: Dict[str, Dict] = None):

@@ -1,0 +1,9 @@
+changes:
+- description: |
+    Fixed id_set generation crash when processing lists with separate metadata
+    and data files. Lists can store metadata (with 'id' field) and data in
+    separate files. The fix skips data-only files that lack the 'id' field,
+    preventing AttributeError during sorting while correctly including list
+    metadata files in the id_set.
+  type: fix
+pr_number: 5150

@@ -1675,6 +1675,12 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     if path.suffix == ".json":
         if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES_CONFIG
+        # Check filename-based types (like pack_metadata.json) before directory-based checks.
+        # Directory substring matching (e.g., LISTS_DIR in dirname) can false-positive on any
+        # JSON file in a directory with "Lists" in the path, causing the formatter to apply
+        # wrong transformations and corrupt files by stripping required fields.
+        elif path.name == PACKS_PACK_META_FILE_NAME:
+            return FileType.METADATA
         elif LISTS_DIR in os.path.dirname(path):
             return FileType.LISTS
         elif path.parent.name == JOBS_DIR:
@@ -1689,8 +1695,6 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.XSIAM_REPORT
         elif TRIGGER_DIR in path.parts:
             return FileType.TRIGGER
-        elif path.name == PACKS_PACK_META_FILE_NAME:
-            return FileType.METADATA
         elif path.name == VERSION_CONFIG_FILE_NAME:
             return FileType.VERSION_CONFIG
         elif path.name.endswith(XSOAR_CONFIG_FILE):

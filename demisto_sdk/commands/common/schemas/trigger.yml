@@ -4,16 +4,24 @@ mapping:
     type: str
   automation_id:
     type: str
-  trigger_id:
+  id:
     type: str
     required: true
+  trigger_id:
+    type: str
+    required: false
+    # DEPRECATED: Use 'id' field instead. This field is kept for backward compatibility with existing content items.
   fromVersion:
     type: str
   toVersion:
     type: str
-  trigger_name:
+  name:
     type: str
     required: true
+  trigger_name:
+    type: str
+    required: false
+    # DEPRECATED: Use 'name' field instead. This field is kept for backward compatibility with existing content items.
   playbook_id:
     type: str
   description:

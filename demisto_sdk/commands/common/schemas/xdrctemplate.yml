@@ -9,9 +9,13 @@ mapping:
   name:
     type: str
     required: true
-  content_global_id:
+  id:
     type: str
     required: true
+  content_global_id:
+    type: str
+    required: false
+    # DEPRECATED: Use 'id' field instead. This field is kept for backward compatibility with existing content items.
   from_xdr_version:
     type: str
     required: true

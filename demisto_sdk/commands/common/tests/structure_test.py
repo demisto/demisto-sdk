@@ -945,17 +945,17 @@ class TestXSIAMStructureValidator(TestStructureValidator):
         validator = StructureValidator(xsiam_report.path)
         assert validator.is_valid_scheme()
 
-    def test_invalid_xsiam_report_missing_global_id(self, pack: Pack):
+    def test_invalid_xsiam_report_missing_id(self, pack: Pack):
         """
         Given:
-            An invalid XSIAM report with a missing global_id field
+            An invalid XSIAM report with a missing id field
         When:
             Running schema validation.
         Then:
             Make sure the schema is invalid.
         """
         xsiam_report = pack.create_xsiam_report("xsiam_report")
-        xsiam_report.remove_field_by_path("templates_data.[0].global_id")
+        xsiam_report.remove_field_by_path("templates_data.[0].id")
         validator = StructureValidator(xsiam_report.path)
         assert not validator.is_valid_scheme()
 

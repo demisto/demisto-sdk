@@ -34,7 +34,8 @@ Layout = create_model(
 
 
 class _DashboardsData(BaseStrictModel):
-    global_id: str
+    global_id: Optional[str] = None
+    id: str
     status: str
     name: str
     description: Optional[str] = None

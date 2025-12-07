@@ -10,7 +10,7 @@ jobs:
     if: ${{ contains(github.event.pull_request.labels.*.name, 'release-sdk-to-pypi') }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Fetch and checkout release tag ${{ github.event.pull_request.head.ref }}
         run: |

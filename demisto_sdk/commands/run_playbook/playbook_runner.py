@@ -70,7 +70,8 @@ class PlaybookRunner:
         if self.should_wait:
             logger.info(
                 f"Waiting for the playbook to finish running.. \n"
-                f"To see the playbook run in real-time, visit: {work_plan_link}"
+                f"To see the playbook run in real-time, visit: {work_plan_link}\n"
+                f"Or for the web console: {work_plan_link.replace('/#/', '/').replace('//api-', '//')}"
             )
             try:
                 playbook_state_raw_response = (

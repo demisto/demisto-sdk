@@ -18,11 +18,11 @@ class Trigger(JSONBased):
     def create_default_trigger(self):
         self.write_json(
             {
-                "id": self.id,
-                "name": self.id,
+                "trigger_id": self.id,
                 "playbook_id": "mock playbook",
                 "suggestion_reason": "mock reason",
                 "description": "desc",
+                "trigger_name": self.id,
                 "alerts_filter": {
                     "filter": {
                         "AND": [

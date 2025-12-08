@@ -14,10 +14,8 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 
 
 class _StrictLayoutRule(BaseStrictModel):
-    rule_id: Optional[str] = None
-    id: str
-    rule_name: Optional[str] = None
-    name: str
+    rule_id: str
+    rule_name: str
     layout_id: str
     from_version: str = Field(
         alias="fromVersion"

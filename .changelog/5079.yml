@@ -1,4 +1,0 @@
-changes:
-- description: Updated the content item structure to adopt standardized id and name fields.
-  type: internal
-pr_number: 5079

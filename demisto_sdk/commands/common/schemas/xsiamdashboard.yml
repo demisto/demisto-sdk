@@ -27,13 +27,9 @@ mapping:
 schema;dashboards_data_schema:
   type: map
   mapping:
-    id:
-      type: str
-      required: true
     global_id:
       type: str
-      required: false
-      # DEPRECATED: Use 'id' field instead. This field is kept for backward compatibility with existing content items.
+      required: true
     status:
       type: str
       required: true

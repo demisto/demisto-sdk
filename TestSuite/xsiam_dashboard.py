@@ -17,7 +17,6 @@ class XSIAMDashboard(JSONBased):
             {
                 "dashboards_data": [
                     {
-                        "id": self.id,
                         "name": self.id,
                         "description": "mock dashboard desc",
                         "status": "ENABLED",

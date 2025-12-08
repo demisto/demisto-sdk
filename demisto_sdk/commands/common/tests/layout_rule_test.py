@@ -14,10 +14,10 @@ def test_is_valid_file(repo):
     dummy_layout_rule = pack.create_layout_rule(
         "MyRule",
         {
-            "id": "test_rule",
+            "rule_id": "test_rule",
             "layout_id": "test_layout_id",
             "description": "This trigger is test",
-            "name": "test rule name",
+            "rule_name": "test rule name",
             "alerts_filter": {
                 "filter": {
                     "AND": [
@@ -50,10 +50,10 @@ def test_is_valid_file_complicated_schema(repo):
     dummy_layout_rule = pack.create_layout_rule(
         "MyRule",
         {
-            "id": "test_rule",
+            "rule_id": "test_rule",
             "layout_id": "test_layout_id",
             "description": "This trigger is test",
-            "name": "test rule name",
+            "rule_name": "test rule name",
             "alerts_filter": {
                 "filter": {
                     "OR": [
@@ -109,10 +109,10 @@ def test_is_not_valid_file_complicated_schema(repo):
     dummy_layout_rule = pack.create_layout_rule(
         "MyRule",
         {
-            "id": "test_rule",
+            "rule_id": "test_rule",
             "layout_id": "test_layout_id",
             "description": "This trigger is test",
-            "name": "test rule name",
+            "rule_name": "test rule name",
             "alerts_filter": {
                 "filter": {
                     "OR": [

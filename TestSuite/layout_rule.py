@@ -21,9 +21,7 @@ class LayoutRule(JSONBased):
     def create_default_layout_rule(self):
         self.write_json(
             {
-                "id": self.rule_id,
                 "rule_id": self.rule_id,
-                "name": self.name,
                 "rule_name": self.name,
                 "layout_id": "test_layout",
                 "description": "",

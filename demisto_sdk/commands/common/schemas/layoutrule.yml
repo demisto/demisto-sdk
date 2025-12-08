@@ -1,19 +1,11 @@
 type: map
 mapping:
-  id:
-    type: str
-    required: true
   rule_id:
-    type: str
-    required: false
-    # DEPRECATED: Use 'id' field instead. This field is kept for backward compatibility with existing content items.
-  name:
     type: str
     required: true
   rule_name:
     type: str
-    required: false
-    # DEPRECATED: Use 'name' field instead. This field is kept for backward compatibility with existing content items.
+    required: true
   layout_id:
     type: str
     required: true

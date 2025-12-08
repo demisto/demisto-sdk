@@ -171,6 +171,8 @@ class TestPlaybookRunner:
         elapsed_time = 0
         start_time = time.time()
 
+        time.sleep(1)
+
         while elapsed_time < self.timeout:
             test_playbook_result = self.get_test_playbook_results_dict(incident_id)
             if test_playbook_result["state"] == "inprogress":

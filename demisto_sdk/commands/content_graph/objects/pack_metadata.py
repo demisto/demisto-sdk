@@ -303,6 +303,11 @@ class PackMetadata(BaseModel):
             )
             else set()
         )
+        tags |= (
+            {PackTags.MCP} if
+            any(integration.is_mcp for integration in content_items.integration)
+            else set()
+        )
         tags |= {PackTags.USE_CASE} if self.use_cases else set()
         tags |= (
             {PackTags.TRANSFORMER}

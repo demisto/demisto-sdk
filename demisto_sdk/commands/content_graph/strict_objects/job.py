@@ -107,6 +107,7 @@ class _StrictJob(BaseStrictModel):
     is_all_feeds: bool = Field(alias="isAllFeeds")
     locked: Optional[bool] = None
     system: Optional[bool] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictJob = create_model(

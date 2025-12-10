@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from pydantic import Field
 
@@ -36,6 +36,7 @@ class _StrictCorrelationRule(BaseStrictModel):
     xql_query: str
     investigation_query_link: Optional[str] = None
     mapping_strategy: Optional[str] = None
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictCorrelationRule = create_model(

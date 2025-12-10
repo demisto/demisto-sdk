@@ -413,6 +413,7 @@ class PackTags:
     FILTER = "Filter"
     COLLECTION = "Collection"
     DATA_SOURCE = "Data Source"
+    MCP = "MCP"
 
 
 class LazyProperty(property):

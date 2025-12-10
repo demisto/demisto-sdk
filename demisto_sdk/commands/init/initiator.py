@@ -2,6 +2,7 @@ import glob
 import os
 import re
 import shutil
+from datetime import datetime
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
@@ -29,6 +30,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATION_CATEGORIES,
     INTEGRATIONS_DIR,
     INTEGRATIONS_DIR_REGEX,
+    ISO_TIMESTAMP_FORMAT,
     JOBS_DIR,
     LAYOUTS_DIR,
     MARKETPLACE_LIVE_DISCUSSIONS,
@@ -68,6 +70,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 ANALYTICS_AND_SIEM_CATEGORY = "Analytics & SIEM"
+NOW = datetime.now().strftime(ISO_TIMESTAMP_FORMAT)
 
 
 def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):
@@ -690,6 +693,7 @@ class Initiator:
             "useCases": [],
             "keywords": [],
             "marketplaces": MARKETPLACES,
+            "firstCreated": NOW,
         }
 
         if data:

@@ -560,31 +560,32 @@ class TestGetRemoteFile:
         assert hello_world_yml
         assert hello_world_yml["commonfields"]["id"] == "HelloWorld"
 
-    def test_get_remote_file_tag(self):
-        gmail_yml = tools.get_remote_file(
-            "Integrations/Gmail/Gmail.yml",
-            "19.10.0",
-            git_content_config=GitContentConfig(repo_name=self.content_repo),
-        )
-        assert gmail_yml
-        assert gmail_yml["commonfields"]["id"] == "Gmail"
+    # The 19.10.0 branch has been deleted.
+    # def test_get_remote_file_tag(self):
+    #     gmail_yml = tools.get_remote_file(
+    #         "Integrations/Gmail/Gmail.yml",
+    #         "19.10.0",
+    #         git_content_config=GitContentConfig(repo_name=self.content_repo),
+    #     )
+    #     assert gmail_yml
+    #     assert gmail_yml["commonfields"]["id"] == "Gmail"
 
-    def test_get_remote_file_origin_tag(self):
-        gmail_yml = tools.get_remote_file(
-            "Integrations/Gmail/Gmail.yml",
-            "origin/19.10.0",
-            git_content_config=GitContentConfig(repo_name=self.content_repo),
-        )
-        assert gmail_yml
-        assert gmail_yml["commonfields"]["id"] == "Gmail"
+    # def test_get_remote_file_origin_tag(self):
+    #     gmail_yml = tools.get_remote_file(
+    #         "Integrations/Gmail/Gmail.yml",
+    #         "origin/19.10.0",
+    #         git_content_config=GitContentConfig(repo_name=self.content_repo),
+    #     )
+    #     assert gmail_yml
+    #     assert gmail_yml["commonfields"]["id"] == "Gmail"
 
-    def test_get_remote_file_invalid(self):
-        invalid_yml = tools.get_remote_file(
-            "Integrations/File/File.yml",
-            "19.10.0",
-            git_content_config=GitContentConfig(repo_name=self.content_repo),
-        )
-        assert not invalid_yml
+    # def test_get_remote_file_invalid(self):
+    #     invalid_yml = tools.get_remote_file(
+    #         "Integrations/File/File.yml",
+    #         "19.10.0",
+    #         git_content_config=GitContentConfig(repo_name=self.content_repo),
+    #     )
+    #     assert not invalid_yml
 
     def test_get_remote_file_invalid_branch(self):
         invalid_yml = tools.get_remote_file(

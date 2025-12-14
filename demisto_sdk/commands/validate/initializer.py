@@ -319,12 +319,16 @@ class Initializer:
 
         if self.handling_private_repositories:
             artifacts_folder = os.getenv("ARTIFACTS_FOLDER", "")
-            logs_dir = os.path.join(artifacts_folder, "logs") if artifacts_folder else "logs"
+            logs_dir = (
+                os.path.join(artifacts_folder, "logs") if artifacts_folder else "logs"
+            )
 
             status_files = [
                 os.path.join(logs_dir, "content_private_files_relative_paths.txt"),
                 os.path.join(logs_dir, "content_test_conf_files_relative_paths.txt"),
-                os.path.join(logs_dir, "content_configuration_files_relative_paths.txt")
+                os.path.join(
+                    logs_dir, "content_configuration_files_relative_paths.txt"
+                ),
             ]
 
             logger.info("Handling private repositories - checking for status files...")

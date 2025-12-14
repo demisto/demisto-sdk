@@ -320,68 +320,75 @@ class Initializer:
         if self.handling_private_repositories:
             artifacts_folder = os.getenv("ARTIFACTS_FOLDER", "")
             logs_dir = (
-                os.path.join(artifacts_folder, "logs") if artifacts_folder else "logs"
+                Path(artifacts_folder) / "logs" if artifacts_folder else Path("logs")
             )
 
             status_files = [
-                os.path.join(logs_dir, "content_private_files_relative_paths.txt"),
-                os.path.join(logs_dir, "content_test_conf_files_relative_paths.txt"),
-                os.path.join(
-                    logs_dir, "content_configuration_files_relative_paths.txt"
-                ),
+                logs_dir / "content_private_files_relative_paths.txt",
+                logs_dir / "content_test_conf_files_relative_paths.txt",
+                logs_dir / "content_configuration_files_relative_paths.txt",
             ]
 
-            logger.info("Handling private repositories - checking for status files...")
+            logger.info(
+                f"Handling private repositories - checking for status files in {logs_dir}..."
+            )
 
             for status_file in status_files:
                 try:
-                    if os.path.exists(status_file):
+                    if status_file.exists():
                         with open(status_file, "r") as f:
                             file_statuses = json.load(f)
                             modified_count = 0
                             renamed_count = 0
 
                             for file_path_str, status_info in file_statuses.items():
-                                # Handle renamed files
-                                logger.info(
-                                    f"$$$ {file_path_str=} $$$\n"
-                                    f"$$$ {status_info.get('status')=} $$$\n"
-                                    f"$$$ {added_files=} $$$\n"
-                                    f"$$$ {file_path_str in added_files} $$$"
-                                )
-                                if (
-                                    status_info.get("status") == "renamed"
-                                    and file_path_str in added_files
-                                ):
-                                    added_files.remove(file_path_str)
-                                    renamed_files.add(file_path_str)
-                                    renamed_count += 1
+                                if not file_path_str:
+                                    continue
 
-                                # Handle modified files
+                                file_path = Path(file_path_str)
+
+                                logger.info(
+                                    f"$$$$$ {added_files}\n{modified_files}\n{renamed_files}\n"
+                                    f"{file_path_str}:{status_info}\n"
+                                    f"{file_path in added_files} $$$$$$$"
+                                )
+                                # Handle renamed files
+                                if (
+                                    status_info == "renamed"
+                                    and file_path in added_files
+                                ):
+                                    added_files.discard(file_path)
+                                    renamed_files.add((Path(""), file_path))  # type: ignore[arg-type]
+                                    renamed_count += 1
+                                    break
+
+                                # Handle modified status
                                 elif (
                                     status_info == "modified"
-                                    and file_path_str in added_files
+                                    and file_path in added_files
                                 ):
-                                    added_files.remove(file_path_str)
-                                    modified_files.add(file_path_str)
+                                    added_files.discard(file_path)
+                                    modified_files.add(file_path)
                                     modified_count += 1
+
                                 # Files marked as "added" remain in added_files
 
                             logger.info(
-                                f"Processed {status_file}: "
-                                f"Moved {modified_count} files to modified, "
-                                f"Handled {renamed_count} renames.\n"
+                                f"Processed {status_file.name}: "
+                                f"Moved {modified_count} to modified, "
+                                f"Handled {renamed_count} renames"
                             )
                             logger.debug(
                                 f"Current counts - Modified: {len(modified_files)}, "
                                 f"Added: {len(added_files)}, "
-                                f"Renamed: {len(renamed_files)}\n"
+                                f"Renamed: {len(renamed_files)}"
                             )
 
                 except json.JSONDecodeError as e:
                     logger.warning(f"Invalid JSON format in {status_file}: {str(e)}")
                 except Exception as e:
                     logger.warning(f"Error processing {status_file}: {str(e)}")
+                    logger.debug("Full traceback:", exc_info=True)
                     continue
 
         return modified_files, added_files, renamed_files

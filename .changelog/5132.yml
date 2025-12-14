@@ -1,4 +1,0 @@
-changes:
-- description: Improved implementation of the ST110 validation by expanding support to include additional fields for integration commands.
-  type: feature
-pr_number: 5132

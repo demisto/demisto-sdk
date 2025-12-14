@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from demisto_sdk.commands.content_graph.objects.agentix_action import (
     AgentixAction,
 )
@@ -16,6 +18,12 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp 
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_valid_types import (
     IsTypeValid,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG106_is_action_name_valid import (
+    IsActionNameValidValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG107_is_display_name_valid import (
+    IsDisplayNameValidValidator,
 )
 
 
@@ -34,6 +42,11 @@ def test_is_forbidden_content_item():
     content_items = [
         AgentixAgent(
             color="red",
+            visibility="public",
+            actionids=["test_action"],
+            systeminstructions="Test system instructions",
+            conversationstarters=["Test conversation starter"],
+            autoenablenewactions=False,
             description="",
             display="display Name",
             path=Path("test.yml"),
@@ -72,6 +85,11 @@ def test_is_correct_marketplace():
     content_items = [
         AgentixAgent(
             color="red",
+            visibility="public",
+            actionids=[""],
+            systeminstructions="",
+            conversationstarters=[""],
+            autoenablenewactions=False,
             description="",
             display="",
             path=Path("test.yml"),
@@ -86,6 +104,11 @@ def test_is_correct_marketplace():
         ),
         AgentixAgent(
             color="red",
+            visibility="public",
+            actionids=[""],
+            systeminstructions="",
+            conversationstarters=[""],
+            autoenablenewactions=False,
             description="",
             display="",
             path=Path("test.yml"),
@@ -358,3 +381,93 @@ def test_is_type_valid():
         "Arguments with invalid types: arg_bad. Possible argument types: unknown, keyValue, textArea, string, number, date, boolean.\n"
         "Outputs with invalid types: output_bad. Possible output types: unknown, string, number, date, boolean, json."
     ) in results[1].message
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        # Case 1: All valid AgentixAction displays
+        (
+            [
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+                create_agentix_action_object(paths=["display"], values=["Valid_Name"]),
+                create_agentix_action_object(paths=["display"], values=["Valid-Name"]),
+                create_agentix_action_object(paths=["display"], values=["Valid Name"]),
+                create_agentix_action_object(paths=["display"], values=["A123"]),
+                create_agentix_action_object(paths=["display"], values=["A_1-2 3"]),
+            ],
+            0,
+        ),
+        # Case 2: One invalid (starts with digit), one valid
+        (
+            [
+                create_agentix_action_object(paths=["display"], values=["1Invalid"]),
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+            ],
+            1,
+        ),
+        # Case 3: Invalid (contains forbidden character)
+        ([create_agentix_action_object(paths=["display"], values=["Invalid!"])], 1),
+        # Case 4: Multiple invalid
+        (
+            [
+                create_agentix_action_object(paths=["display"], values=["1Invalid"]),
+                create_agentix_action_object(paths=["display"], values=["Invalid!"]),
+                create_agentix_action_object(paths=["display"], values=["ValidName"]),
+            ],
+            2,
+        ),
+    ],
+)
+def test_IsDisplayNameValid_obtain_invalid_content_items(
+    content_items, expected_number_of_failures
+):
+    """
+    Given
+    - AgentixAction content_items with various display values.
+    When
+    - Calling the IsDisplayNameValid.obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failure return.
+    """
+    results = IsDisplayNameValidValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        # Case 1: All valid AgentixAction names
+        (
+            [
+                create_agentix_action_object(paths=["name"], values=["ValidName"]),
+                create_agentix_action_object(paths=["name"], values=["Valid_Name"]),
+                create_agentix_action_object(paths=["name"], values=["A123"]),
+            ],
+            0,
+        ),
+        # Case 2: One invalid (contains space), one valid
+        (
+            [
+                create_agentix_action_object(paths=["name"], values=["Invalid Name"]),
+                create_agentix_action_object(paths=["name"], values=["ValidName"]),
+            ],
+            1,
+        ),
+        # Case 3: Invalid (contains forbidden character)
+        ([create_agentix_action_object(paths=["name"], values=["Invalid!"])], 1),
+    ],
+)
+def test_IsActionNameValid_obtain_invalid_content_items(
+    content_items, expected_number_of_failures
+):
+    """
+    Given
+    - AgentixAction content_items with various name values.
+    When
+    - Calling the IsActionNameValidValidator.obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failure return.
+    """
+    results = IsActionNameValidValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures

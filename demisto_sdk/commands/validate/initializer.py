@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
-
+import json
 from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
@@ -60,12 +60,14 @@ class Initializer:
         prev_ver=None,
         file_path=None,
         execution_mode: Optional[ExecutionMode] = None,
+        handling_private_repositories: bool = False
     ):
         self.staged = staged
         self.file_path = file_path
         self.committed_only = committed_only
         self.prev_ver = prev_ver
         self.execution_mode = execution_mode
+        self.handling_private_repositories = handling_private_repositories
 
     def validate_git_installed(self):
         """Initialize git util."""
@@ -286,6 +288,85 @@ class Initializer:
                     " of files in the contribution_files_relative_paths.txt file."
                     " This indicates that there are untracked files. Unable to proceed."
                 )
+
+        """
+        Handles private repositories' file statuses when enabled.
+
+        When handling_private_repositories is True, the system processes status files from private repositories
+        to maintain accurate git status information. This is particularly useful in CI/CD pipelines where
+        private repositories are involved.
+
+        The system looks for the following status files in order:
+        1. content_private_files_relative_paths.txt
+        2. content_test_conf_files_relative_paths.txt
+        3. content_configuration_files_relative_paths.txt
+
+        Each file should contain a JSON object where:
+        - Keys are file paths
+        - Values are status strings: "modified", "added", or a dict with "status": "renamed" and "old_path"
+
+        The system will:
+        1. Check for each status file's existence
+        2. Parse the JSON content
+        3. For each file:
+           - If status is "modified", move from added_files to modified_files
+           - If status is "added", keep in added_files
+           - If status is "renamed", move from added_files to renamed_files with old_path
+        4. Log any processing errors without failing
+        5. Continue with validation even if no status files are found
+        """
+
+        if self.handling_private_repositories:
+            logger.info("Handling private repositories - checking for status files...")
+
+            status_files = [
+                "content_private_files_relative_paths.txt",
+                "content_test_conf_files_relative_paths.txt",
+                "content_configuration_files_relative_paths.txt"
+            ]
+
+            for status_file in status_files:
+                try:
+                    if os.path.exists(status_file):
+                        with open(status_file, 'r') as f:
+                            file_statuses = json.load(f)
+                            modified_count = 0
+                            renamed_count = 0
+
+                            for file_path_str, status_info in file_statuses.items():
+                                # Handle renamed files
+                                logger.info(f"$$$ {file_path_str=} $$$\n"
+                                            f"$$$ {status_info.get('status')=} $$$\n"
+                                            f"$$$ {added_files=} $$$\n"
+                                            f"$$$ {file_path_str in added_files} $$$")
+                                if status_info.get("status") == "renamed" and file_path_str in added_files:
+                                    added_files.remove(file_path_str)
+                                    renamed_files.add(file_path_str)
+                                    renamed_count += 1
+
+                                # Handle modified files
+                                elif status_info == "modified" and file_path_str in added_files:
+                                    added_files.remove(file_path_str)
+                                    modified_files.add(file_path_str)
+                                    modified_count += 1
+                                # Files marked as "added" remain in added_files
+
+                            logger.info(
+                                f"Processed {status_file}: "
+                                f"Moved {modified_count} files to modified, "
+                                f"Handled {renamed_count} renames.\n"
+                            )
+                            logger.debug(
+                                f"Current counts - Modified: {len(modified_files)}, "
+                                f"Added: {len(added_files)}, "
+                                f"Renamed: {len(renamed_files)}\n"
+                            )
+
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Invalid JSON format in {status_file}: {str(e)}")
+                except Exception as e:
+                    logger.warning(f"Error processing {status_file}: {str(e)}")
+                    continue
 
         return modified_files, added_files, renamed_files
 

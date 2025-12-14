@@ -331,7 +331,9 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         prev_ver=kwargs["prev_ver"],
         file_path=file_path,
         execution_mode=execution_mode,
-        handling_private_repositories=kwargs.get("handling_private_repositories", False)
+        handling_private_repositories=kwargs.get(
+            "handling_private_repositories", False
+        ),
     )
     validator_v2 = ValidateManager(
         file_path=file_path,

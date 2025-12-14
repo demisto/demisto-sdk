@@ -1,7 +1,8 @@
+import json
 import os
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
-import json
+
 from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
@@ -60,7 +61,7 @@ class Initializer:
         prev_ver=None,
         file_path=None,
         execution_mode: Optional[ExecutionMode] = None,
-        handling_private_repositories: bool = False
+        handling_private_repositories: bool = False,
     ):
         self.staged = staged
         self.file_path = file_path
@@ -322,30 +323,38 @@ class Initializer:
             status_files = [
                 "content_private_files_relative_paths.txt",
                 "content_test_conf_files_relative_paths.txt",
-                "content_configuration_files_relative_paths.txt"
+                "content_configuration_files_relative_paths.txt",
             ]
 
             for status_file in status_files:
                 try:
                     if os.path.exists(status_file):
-                        with open(status_file, 'r') as f:
+                        with open(status_file, "r") as f:
                             file_statuses = json.load(f)
                             modified_count = 0
                             renamed_count = 0
 
                             for file_path_str, status_info in file_statuses.items():
                                 # Handle renamed files
-                                logger.info(f"$$$ {file_path_str=} $$$\n"
-                                            f"$$$ {status_info.get('status')=} $$$\n"
-                                            f"$$$ {added_files=} $$$\n"
-                                            f"$$$ {file_path_str in added_files} $$$")
-                                if status_info.get("status") == "renamed" and file_path_str in added_files:
+                                logger.info(
+                                    f"$$$ {file_path_str=} $$$\n"
+                                    f"$$$ {status_info.get('status')=} $$$\n"
+                                    f"$$$ {added_files=} $$$\n"
+                                    f"$$$ {file_path_str in added_files} $$$"
+                                )
+                                if (
+                                    status_info.get("status") == "renamed"
+                                    and file_path_str in added_files
+                                ):
                                     added_files.remove(file_path_str)
                                     renamed_files.add(file_path_str)
                                     renamed_count += 1
 
                                 # Handle modified files
-                                elif status_info == "modified" and file_path_str in added_files:
+                                elif (
+                                    status_info == "modified"
+                                    and file_path_str in added_files
+                                ):
                                     added_files.remove(file_path_str)
                                     modified_files.add(file_path_str)
                                     modified_count += 1

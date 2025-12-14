@@ -1,4 +1,3 @@
-import json
 import os
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
@@ -29,6 +28,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
@@ -337,7 +337,7 @@ class Initializer:
                 try:
                     if status_file.exists():
                         with open(status_file, "r") as f:
-                            file_statuses = json.load(f)
+                            file_statuses = DEFAULT_JSON_HANDLER.load(f)
                             modified_count = 0
                             renamed_count = 0
 
@@ -347,11 +347,6 @@ class Initializer:
 
                                 file_path = Path(file_path_str)
 
-                                logger.info(
-                                    f"$$$$$ {added_files}\n{modified_files}\n{renamed_files}\n"
-                                    f"{file_path_str}:{status_info}\n"
-                                    f"{file_path in added_files} $$$$$$$"
-                                )
                                 # Handle renamed files
                                 if (
                                     status_info == "renamed"
@@ -384,13 +379,14 @@ class Initializer:
                                 f"Renamed: {len(renamed_files)}"
                             )
 
-                except json.JSONDecodeError as e:
+                except DEFAULT_JSON_HANDLER.JSONDecodeError as e:
                     logger.warning(f"Invalid JSON format in {status_file}: {str(e)}")
                 except Exception as e:
                     logger.warning(f"Error processing {status_file}: {str(e)}")
                     logger.debug("Full traceback:", exc_info=True)
                     continue
 
+        logger.info(f"{modified_files=}\n{added_files=}\n{renamed_files=}\n")
         return modified_files, added_files, renamed_files
 
     def specify_files_by_status(

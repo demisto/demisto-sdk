@@ -12,6 +12,7 @@ import giturlparse
 
 # dirs
 import requests
+from dotenv import load_dotenv
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_SDK_CI_SERVER_HOST,
@@ -33,6 +34,8 @@ class GitCredentials:
     ENV_GITLAB_TOKEN_NAME = "DEMISTO_SDK_GITLAB_TOKEN"
 
     def __init__(self):
+        # This is required, because this is called before any command is run, and before any other dotenv load.
+        load_dotenv(".env", override=True)
         self.github_token = os.getenv(self.ENV_GITHUB_TOKEN_NAME, "")
         self.gitlab_token = os.getenv(self.ENV_GITLAB_TOKEN_NAME, "")
 
@@ -291,6 +294,9 @@ class GitContentConfig:
             )
             if r.ok:
                 return github_hostname, repo_name
+            if r.status_code == 403 and GitContentConfig.CREDENTIALS.github_token:
+                logger.error(f"Access forbidden to the repository {repo_name} on {api_host}. Error message: {r.text}")
+                exit(1)
             r = requests.get(
                 f"https://api.{api_host}/repos/{repo_name}",
                 verify=False,

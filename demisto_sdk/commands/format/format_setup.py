@@ -124,11 +124,12 @@ def format(
             no_validate=no_validate,
             update_docker=update_docker,
             assume_answer=assume_yes,
+            interactive=False if assume_yes is None else True,
             deprecate=deprecate,
             use_git=use_git,
             prev_ver=prev_ver,
             include_untracked=include_untracked,
             add_tests=add_tests,
             id_set_path=str(id_set_path) if id_set_path else None,
-            use_graph=graph,
+            use_graph=graph
         )

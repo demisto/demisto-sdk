@@ -1,0 +1,4 @@
+changes:
+- description: Fixes an issue with the formatting command where the interactive flag is not set correctly. 
+  type: fix
+pr_number: 5164

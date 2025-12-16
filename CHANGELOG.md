@@ -1,4 +1,6 @@
 # Changelog
+
+
 ## 1.38.15 (2025-12-16)
 ### Feature
 * Added the `provider` field to the integration schema. [#5155](https://github.com/demisto/demisto-sdk/pull/5155)

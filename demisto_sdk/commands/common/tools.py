@@ -965,9 +965,26 @@ def get_yaml(
 ):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(
+    
+    # Add logging for AgentixAction files
+    if "AgentixActions" in str(file_path):
+        logger.info(f"[get_yaml Debug] Loading YAML file: {file_path}")
+        logger.info(f"[get_yaml Debug] git_sha: {git_sha}")
+        logger.info(f"[get_yaml Debug] File exists: {Path(file_path).exists()}")
+    
+    result = get_file(
         file_path, clear_cache=cache_clear, keep_order=keep_order, git_sha=git_sha
     )
+    
+    # Add logging for AgentixAction files
+    if "AgentixActions" in str(file_path):
+        logger.info(f"[get_yaml Debug] Result type: {type(result)}")
+        logger.info(f"[get_yaml Debug] Result value: {result}")
+        logger.info(f"[get_yaml Debug] Result is dict: {isinstance(result, dict)}")
+        if isinstance(result, dict):
+            logger.info(f"[get_yaml Debug] Result keys: {list(result.keys())}")
+    
+    return result
 
 
 def get_json(file_path: str | Path, cache_clear=False, git_sha: Optional[str] = None):

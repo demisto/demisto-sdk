@@ -85,19 +85,15 @@ class Initializer:
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ""
 
-    def setup_prev_ver(self, prev_ver: Optional[str]) -> Optional[str]:
+    def setup_prev_ver(self, prev_ver: Optional[str]) -> str:
         """Calculate the prev_ver to set
 
         Args:
             prev_ver (Optional[str]): Previous branch or SHA1 commit to run checks against.
 
         Returns:
-            Optional[str]: The prev_ver to set, or None if handling private repositories.
+            str: The prev_ver to set.
         """
-        # If handling private repositories, return None to use local files
-        if self.handling_private_repositories:
-            return None
-
         # if prev_ver parameter is set, use it
         if prev_ver:
             return prev_ver
@@ -110,7 +106,7 @@ class Initializer:
 
             # Otherwise, use git to get the primary branch
             _, branch = self.git_util.handle_prev_ver()
-            return f"{DEMISTO_GIT_UPSTREAM}/{branch}"
+            return f"{DEMISTO_GIT_UPSTREAM}/" + branch
 
         # Default to 'origin/master'
         return f"{DEMISTO_GIT_UPSTREAM}/master"
@@ -170,10 +166,6 @@ class Initializer:
             else self.branch_name
         )
 
-        # Skip git param setup if handling private repositories (prev_ver is None)
-        if self.prev_ver is None:
-            return
-
         # check remote validity
         if "/" in self.prev_ver and not self.git_util.check_if_remote_exists(
             self.prev_ver
@@ -205,26 +197,22 @@ class Initializer:
         logger.info(
             f"\n<cyan>================= Running on branch {self.branch_name} =================</cyan>"
         )
+        logger.info(f"Running against {self.prev_ver}")
 
-        if self.prev_ver is None:
-            logger.info("Running against local files (handling private repositories)")
+        if self.branch_name in [
+            self.prev_ver,
+            self.prev_ver.replace(f"{DEMISTO_GIT_UPSTREAM}/", ""),
+        ]:  # pragma: no cover
+            logger.info("Running only on last commit")
+
+        elif self.committed_only:
+            logger.info("Running only on committed files")
+
+        elif self.staged:
+            logger.info("Running only on staged files")
+
         else:
-            logger.info(f"Running against {self.prev_ver}")
-
-            if self.branch_name in [
-                self.prev_ver,
-                self.prev_ver.replace(f"{DEMISTO_GIT_UPSTREAM}/", ""),
-            ]:  # pragma: no cover
-                logger.info("Running only on last commit")
-
-            elif self.committed_only:
-                logger.info("Running only on committed files")
-
-            elif self.staged:
-                logger.info("Running only on staged files")
-
-            else:
-                logger.info("Running on committed and staged files")
+            logger.info("Running on committed and staged files")
 
     def get_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
         """Get the added and modified files.

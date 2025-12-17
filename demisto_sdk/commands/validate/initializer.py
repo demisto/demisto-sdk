@@ -85,15 +85,19 @@ class Initializer:
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ""
 
-    def setup_prev_ver(self, prev_ver: Optional[str]) -> str:
+    def setup_prev_ver(self, prev_ver: Optional[str]) -> Optional[str]:
         """Calculate the prev_ver to set
 
         Args:
             prev_ver (Optional[str]): Previous branch or SHA1 commit to run checks against.
 
         Returns:
-            str: The prev_ver to set.
+            Optional[str]: The prev_ver to set, or None if handling private repositories.
         """
+        # If handling private repositories, return None to use local files
+        if self.handling_private_repositories:
+            return None
+
         # if prev_ver parameter is set, use it
         if prev_ver:
             return prev_ver
@@ -106,7 +110,7 @@ class Initializer:
 
             # Otherwise, use git to get the primary branch
             _, branch = self.git_util.handle_prev_ver()
-            return f"{DEMISTO_GIT_UPSTREAM}/" + branch
+            return f"{DEMISTO_GIT_UPSTREAM}/{branch}"
 
         # Default to 'origin/master'
         return f"{DEMISTO_GIT_UPSTREAM}/master"

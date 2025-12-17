@@ -425,7 +425,7 @@ def format_output(
     input: str,
     format_res: int,
     validate_res: int,
-) -> Tuple[List[str], List[str], List[str]]:
+) -> Tuple[List[str | None], List[str | None], List[str | None]]:
     """Generate formatted output messages based on format and validation results.
 
     Args:
@@ -437,11 +437,10 @@ def format_output(
     Returns:
         Tuple of (info_list, error_list, skipped_list) containing status messages
     """
-    info_list: list[str] = []
-    error_list: list[str] = []
-    skipped_list: list[str] = []
+    info_list: list[str | None] = []
+    error_list: list[str | None] = []
+    skipped_list: list[str | None] = []
 
-    # Helper function to create status messages
     def _create_status_msg(operation: str, status: str) -> str:
         return f"{operation} Status on file: {input} - {status}"
 

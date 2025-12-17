@@ -120,7 +120,7 @@ class Initializer:
         # Skip prev_ver setup when handling private repositories - keep it as-is
         if not self.handling_private_repositories:
             if self.prev_ver and not self.prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
-                self.prev_ver = f"{DEMISTO_GIT_UPSTREAM}/" + self.prev_ver
+                self.prev_ver = f"{DEMISTO_GIT_UPSTREAM}/{self.prev_ver}"
             self.prev_ver = self.setup_prev_ver(self.prev_ver)
 
     def collect_files_to_run(self, file_path: str) -> Tuple[Set, Set, Set, Set]:
@@ -640,12 +640,8 @@ class Initializer:
                         )
                     ):
                         try:
-                            git_sha_to_use = None if self.handling_private_repositories else prev_ver
-                            logger.debug(
-                                f"Loading old version of {old_path} with git_sha={git_sha_to_use} (handling_private_repositories={self.handling_private_repositories})"
-                            )
                             obj.old_base_content_object = BaseContent.from_path(
-                                old_path, git_sha=git_sha_to_use, raise_on_exception=True
+                                old_path, git_sha=prev_ver, raise_on_exception=True
                             )
                         except (NotAContentItemException, InvalidContentItemException):
                             logger.debug(

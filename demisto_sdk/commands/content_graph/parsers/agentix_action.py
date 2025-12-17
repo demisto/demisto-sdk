@@ -23,18 +23,26 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         
-        # Log the yml_data for debugging
-        logger.debug(f"Parsing AgentixAction from {path}")
-        logger.debug(f"yml_data keys: {list(self.yml_data.keys()) if self.yml_data else 'yml_data is None'}")
+        # Log detailed information for debugging
+        logger.debug(f"Parsing AgentixAction from path: {path}")
+        logger.debug(f"Resolved YAML path: {self.path}")
+        logger.debug(f"File exists: {self.path.exists()}")
+        logger.debug(f"File is file: {self.path.is_file()}")
+        if self.path.exists():
+            logger.debug(f"File size: {self.path.stat().st_size} bytes")
+        logger.debug(f"yml_data type: {type(self.yml_data)}")
+        logger.debug(f"yml_data value: {self.yml_data}")
+        logger.debug(f"yml_data keys: {list(self.yml_data.keys()) if isinstance(self.yml_data, dict) else 'Not a dict'}")
         
         underlying_content_item = self.yml_data.get("underlyingcontentitem")
         if underlying_content_item is None:
             logger.error(
                 f"Missing 'underlyingcontentitem' field in {path}. "
-                f"Available fields: {list(self.yml_data.keys())}"
+                f"Available fields: {list(self.yml_data.keys()) if isinstance(self.yml_data, dict) else self.yml_data}"
             )
             raise ValueError(
-                f"AgentixAction at {path} is missing required 'underlyingcontentitem' field"
+                f"AgentixAction at {path} is missing required 'underlyingcontentitem' field. "
+                f"File path: {self.path}, exists: {self.path.exists()}"
             )
         
         logger.debug(f"underlyingcontentitem keys: {list(underlying_content_item.keys())}")

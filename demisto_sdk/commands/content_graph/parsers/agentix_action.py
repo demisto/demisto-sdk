@@ -23,29 +23,18 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         
-        # Log detailed information for debugging
-        logger.info(f"[AgentixAction Debug] Parsing from path: {path}")
-        logger.info(f"[AgentixAction Debug] Resolved YAML path: {self.path}")
-        logger.info(f"[AgentixAction Debug] File exists: {self.path.exists()}")
-        logger.info(f"[AgentixAction Debug] File is file: {self.path.is_file()}")
-        if self.path.exists():
-            logger.info(f"[AgentixAction Debug] File size: {self.path.stat().st_size} bytes")
-        logger.info(f"[AgentixAction Debug] yml_data type: {type(self.yml_data)}")
-        logger.info(f"[AgentixAction Debug] yml_data value: {self.yml_data}")
-        logger.info(f"[AgentixAction Debug] yml_data keys: {list(self.yml_data.keys()) if isinstance(self.yml_data, dict) else 'Not a dict'}")
+        # Log essential debug information
+        logger.info(f"[AgentixAction] Parsing {self.path} (exists: {self.path.exists()}, size: {self.path.stat().st_size if self.path.exists() else 'N/A'} bytes)")
+        logger.info(f"[AgentixAction] yml_data: type={type(self.yml_data).__name__}, keys={list(self.yml_data.keys()) if isinstance(self.yml_data, dict) else self.yml_data}")
         
         underlying_content_item = self.yml_data.get("underlyingcontentitem")
         if underlying_content_item is None:
             logger.error(
-                f"Missing 'underlyingcontentitem' field in {path}. "
-                f"Available fields: {list(self.yml_data.keys()) if isinstance(self.yml_data, dict) else self.yml_data}"
+                f"Missing 'underlyingcontentitem' in {path}. Available fields: {list(self.yml_data.keys()) if isinstance(self.yml_data, dict) else self.yml_data}"
             )
             raise ValueError(
-                f"AgentixAction at {path} is missing required 'underlyingcontentitem' field. "
-                f"File path: {self.path}, exists: {self.path.exists()}"
+                f"AgentixAction at {path} is missing required 'underlyingcontentitem' field"
             )
-        
-        logger.info(f"[AgentixAction Debug] underlyingcontentitem keys: {list(underlying_content_item.keys())}")
         
         self.underlying_content_item_id: str = underlying_content_item.get("id")  # type: ignore
         self.underlying_content_item_name: str = underlying_content_item.get("name")  # type: ignore

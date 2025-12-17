@@ -197,7 +197,6 @@ class Initializer:
         logger.info(
             f"\n<cyan>================= Running on branch {self.branch_name} =================</cyan>"
         )
-        self.prev_ver = "master"  # TODO
         logger.info(f"Running against {self.prev_ver}")
 
         if self.branch_name in [

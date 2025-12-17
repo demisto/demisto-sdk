@@ -968,9 +968,7 @@ def get_yaml(
     
     # Add logging for AgentixAction files
     if "AgentixActions" in str(file_path):
-        logger.info(f"[get_yaml Debug] Loading YAML file: {file_path}")
-        logger.info(f"[get_yaml Debug] git_sha: {git_sha}")
-        logger.info(f"[get_yaml Debug] File exists: {Path(file_path).exists()}")
+        logger.info(f"[get_yaml] Loading {file_path} (git_sha={git_sha})")
     
     result = get_file(
         file_path, clear_cache=cache_clear, keep_order=keep_order, git_sha=git_sha
@@ -978,11 +976,7 @@ def get_yaml(
     
     # Add logging for AgentixAction files
     if "AgentixActions" in str(file_path):
-        logger.info(f"[get_yaml Debug] Result type: {type(result)}")
-        logger.info(f"[get_yaml Debug] Result value: {result}")
-        logger.info(f"[get_yaml Debug] Result is dict: {isinstance(result, dict)}")
-        if isinstance(result, dict):
-            logger.info(f"[get_yaml Debug] Result keys: {list(result.keys())}")
+        logger.info(f"[get_yaml] Result: type={type(result).__name__}, keys={list(result.keys()) if isinstance(result, dict) else result}")
     
     return result
 

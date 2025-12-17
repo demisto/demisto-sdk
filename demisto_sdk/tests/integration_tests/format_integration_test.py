@@ -2542,3 +2542,133 @@ def test_format_on_layout_no_graph_flag(mocker, monkeypatch, repo):
     # the second is the type of the file.
     file_content = get_dict_from_file(layout.path)[0]
     assert file_content == layout_content
+
+def test_format_pack_metadata_with_lists_in_name(repo, mocker):
+    """
+    Given:
+        - A pack with "Lists" in its name (e.g., MyListsPack)
+        - pack_metadata.json with all required fields (support, currentVersion, author, etc.)
+
+    When:
+        - Running format on the pack
+
+    Then:
+        - Ensure pack_metadata.json is correctly detected as FileType.METADATA (not FileType.LISTS)
+        - Ensure all metadata fields are preserved after formatting
+        - Regression test for bug where directory substring matching caused JSON files
+          to be misdetected and corrupted by the formatter applying wrong transformations
+    """
+    mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
+    
+    pack_name = "MyListsPack"  # Pack name contains "Lists"
+    pack = repo.create_pack(pack_name)
+    
+    # Create pack_metadata.json with all required fields
+    metadata_content = {
+        "name": "My Lists Pack",
+        "description": "A pack for managing lists",
+        "support": "community",
+        "currentVersion": "1.0.0",
+        "author": "Test Author",
+        "url": "https://example.com",
+        "email": "test@example.com",
+        "created": "2024-01-01T00:00:00Z",
+        "categories": ["Utilities"],
+        "tags": ["lists", "data"],
+        "useCases": [],
+        "keywords": [],
+        "marketplaces": ["xsoar"],
+        "dependencies": {}
+    }
+    
+    # Write the metadata file
+    pack_metadata_path = pack.path / "pack_metadata.json"
+    with open(pack_metadata_path, "w") as f:
+        json.dump(metadata_content, f, indent=4)
+    
+    # Run format
+    runner = CliRunner()
+    result = runner.invoke(
+        app, [FORMAT_CMD, "-i", str(pack.path), "-ngr"], catch_exceptions=False
+    )
+    
+    assert result.exit_code == 0, f"Format command failed: {result.output}"
+    assert "Success" in result.output or "complete" in result.output.lower()
+    
+    # Read the formatted pack_metadata.json
+    formatted_metadata = get_dict_from_file(str(pack_metadata_path))[0]
+    
+    # Verify all critical fields are preserved
+    assert formatted_metadata.get("support") == "community", "support field was stripped"
+    assert formatted_metadata.get("currentVersion") == "1.0.0", "currentVersion field was stripped"
+    assert formatted_metadata.get("author") == "Test Author", "author field was stripped"
+    assert formatted_metadata.get("categories") == ["Utilities"], "categories field was stripped"
+    assert formatted_metadata.get("name") == "My Lists Pack", "name field was modified"
+    assert formatted_metadata.get("description") == "A pack for managing lists", "description field was modified"
+
+
+def test_format_split_list_files(repo, mocker):
+    """
+    Given:
+        - A pack with split List format (separate data and schema JSON files)
+
+    When:
+        - Running format on the pack
+
+    Then:
+        - Ensure formatter doesn't corrupt the split list files
+        - Documents current behavior (may fail if split lists aren't supported)
+    """
+    mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
+    
+    pack = repo.create_pack("TestPack")
+    lists_dir = pack.path / "Lists"
+    lists_dir.mkdir(exist_ok=True)
+    
+    # Create split list: data file
+    data_file = lists_dir / "mylist-data.json"
+    data_content = {
+        "data": ["item1", "item2", "item3"]
+    }
+    
+    # Create split list: schema file
+    schema_file = lists_dir / "mylist-schema.json"
+    schema_content = {
+        "id": "mylist",
+        "name": "My List",
+        "type": "plain_text",
+        "fromVersion": "6.5.0"
+    }
+    
+    with open(data_file, "w") as f:
+        json.dump(data_content, f, indent=4)
+    
+    with open(schema_file, "w") as f:
+        json.dump(schema_content, f, indent=4)
+    
+    # Run format
+    runner = CliRunner()
+    result = runner.invoke(
+        app, [FORMAT_CMD, "-i", str(pack.path), "-ngr"], catch_exceptions=False
+    )
+
+    # Check if formatter processed these files
+    data_in_output = "mylist-data.json" in result.output
+    schema_in_output = "mylist-schema.json" in result.output
+
+    # Verify files still exist and haven't been corrupted
+    assert data_file.exists(), "Data file was deleted"
+    assert schema_file.exists(), "Schema file was deleted"
+    
+    # Read back the files
+    data_after = get_dict_from_file(str(data_file))[0]
+    schema_after = get_dict_from_file(str(schema_file))[0]
+    
+    # Verify critical fields preserved (may need adjustment based on actual behavior)
+    assert "data" in data_after, "Data file structure corrupted"
+    assert schema_after.get("id") == "mylist", "Schema id corrupted"
+    assert schema_after.get("name") == "My List", "Schema name corrupted"
+
+    # Note: The formatter processes split list files individually but doesn't corrupt them.
+    # However, id_set generation doesn't properly merge split lists (separate issue).
+    # This test verifies the formatter doesn't break the files themselves.

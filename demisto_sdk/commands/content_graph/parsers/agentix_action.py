@@ -26,7 +26,8 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         # Log essential debug information
         logger.info(f"[AgentixAction] Parsing {self.path} (exists: {self.path.exists()}, size: {self.path.stat().st_size if self.path.exists() else 'N/A'} bytes)")
         logger.info(f"[AgentixAction] yml_data: type={type(self.yml_data).__name__}, keys={list(self.yml_data.keys()) if isinstance(self.yml_data, dict) else self.yml_data}")
-        
+        logger.info(f"$$$$$$$$$ [AgentixAction] display: {self.yml_data['display']} $$$$$$$$")
+
         underlying_content_item = self.yml_data.get("underlyingcontentitem")
         if underlying_content_item is None:
             logger.error(

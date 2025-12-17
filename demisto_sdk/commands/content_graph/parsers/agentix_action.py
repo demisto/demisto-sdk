@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.agentix_base import AgentixBaseParser
 from demisto_sdk.commands.content_graph.strict_objects.agentix_action import (
@@ -21,21 +22,28 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
-        self.underlying_content_item_id: str = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("id")  # type: ignore
-        self.underlying_content_item_name: str = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("name")  # type: ignore
-        self.underlying_content_item_type: str = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("type")  # type: ignore
-        self.underlying_content_item_command: str = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("command")  # type: ignore
-        self.underlying_content_item_version: int = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("version")  # type: ignore
+        
+        # Log the yml_data for debugging
+        logger.debug(f"Parsing AgentixAction from {path}")
+        logger.debug(f"yml_data keys: {list(self.yml_data.keys()) if self.yml_data else 'yml_data is None'}")
+        
+        underlying_content_item = self.yml_data.get("underlyingcontentitem")
+        if underlying_content_item is None:
+            logger.error(
+                f"Missing 'underlyingcontentitem' field in {path}. "
+                f"Available fields: {list(self.yml_data.keys())}"
+            )
+            raise ValueError(
+                f"AgentixAction at {path} is missing required 'underlyingcontentitem' field"
+            )
+        
+        logger.debug(f"underlyingcontentitem keys: {list(underlying_content_item.keys())}")
+        
+        self.underlying_content_item_id: str = underlying_content_item.get("id")  # type: ignore
+        self.underlying_content_item_name: str = underlying_content_item.get("name")  # type: ignore
+        self.underlying_content_item_type: str = underlying_content_item.get("type")  # type: ignore
+        self.underlying_content_item_command: str = underlying_content_item.get("command")  # type: ignore
+        self.underlying_content_item_version: int = underlying_content_item.get("version")  # type: ignore
         self.requires_user_approval: Optional[bool] = self.yml_data.get(
             "requiresuserapproval"
         )

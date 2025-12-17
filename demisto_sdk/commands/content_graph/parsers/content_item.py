@@ -137,7 +137,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 logger.debug(f"{path} is not a content item, skipping")
                 raise
             except Exception as e:
-                logger.error(f"Failed to parse {path}: {e}")
+                logger.error(f"Failed to parse {path}: {e}", exc_info=True)
                 raise InvalidContentItemException from e
         logger.warning(f"Could not find parser for {content_type} of {path}")
         raise NotAContentItemException

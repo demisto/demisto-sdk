@@ -197,7 +197,9 @@ class Initializer:
         logger.info(
             f"\n<cyan>================= Running on branch {self.branch_name} =================</cyan>"
         )
-        self.prev_ver = "HEAD"
+
+        self.prev_ver = "HEAD" if self.handling_private_repositories else self.prev_ver
+
         logger.info(f"Running against {self.prev_ver}")
 
         if self.branch_name in [

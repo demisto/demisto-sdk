@@ -24,15 +24,15 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         )
         
         # Log detailed information for debugging
-        logger.debug(f"Parsing AgentixAction from path: {path}")
-        logger.debug(f"Resolved YAML path: {self.path}")
-        logger.debug(f"File exists: {self.path.exists()}")
-        logger.debug(f"File is file: {self.path.is_file()}")
+        logger.info(f"[AgentixAction Debug] Parsing from path: {path}")
+        logger.info(f"[AgentixAction Debug] Resolved YAML path: {self.path}")
+        logger.info(f"[AgentixAction Debug] File exists: {self.path.exists()}")
+        logger.info(f"[AgentixAction Debug] File is file: {self.path.is_file()}")
         if self.path.exists():
-            logger.debug(f"File size: {self.path.stat().st_size} bytes")
-        logger.debug(f"yml_data type: {type(self.yml_data)}")
-        logger.debug(f"yml_data value: {self.yml_data}")
-        logger.debug(f"yml_data keys: {list(self.yml_data.keys()) if isinstance(self.yml_data, dict) else 'Not a dict'}")
+            logger.info(f"[AgentixAction Debug] File size: {self.path.stat().st_size} bytes")
+        logger.info(f"[AgentixAction Debug] yml_data type: {type(self.yml_data)}")
+        logger.info(f"[AgentixAction Debug] yml_data value: {self.yml_data}")
+        logger.info(f"[AgentixAction Debug] yml_data keys: {list(self.yml_data.keys()) if isinstance(self.yml_data, dict) else 'Not a dict'}")
         
         underlying_content_item = self.yml_data.get("underlyingcontentitem")
         if underlying_content_item is None:
@@ -45,7 +45,7 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
                 f"File path: {self.path}, exists: {self.path.exists()}"
             )
         
-        logger.debug(f"underlyingcontentitem keys: {list(underlying_content_item.keys())}")
+        logger.info(f"[AgentixAction Debug] underlyingcontentitem keys: {list(underlying_content_item.keys())}")
         
         self.underlying_content_item_id: str = underlying_content_item.get("id")  # type: ignore
         self.underlying_content_item_name: str = underlying_content_item.get("name")  # type: ignore

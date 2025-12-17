@@ -376,7 +376,7 @@ def update_content_entity_ids(files: List[str]):
 def run_format_on_file(
     input: str, file_type: str, from_version: str, interactive: bool, **kwargs
 ) -> Tuple[List[str], List[str], List[str]]:
-    """Run the relevent format of file type.
+    """Run the relevant format of file type.
     Args:
         input (str): The input file path.
         file_type (str): The type of input file
@@ -425,7 +425,7 @@ def format_output(
     input: str,
     format_res: int,
     validate_res: int,
-) -> Tuple[List[str | None], List[str | None], List[str | None]]:
+) -> Tuple[List[str], List[str], List[str]]:
     """Generate formatted output messages based on format and validation results.
 
     Args:
@@ -437,9 +437,9 @@ def format_output(
     Returns:
         Tuple of (info_list, error_list, skipped_list) containing status messages
     """
-    info_list: list[str | None] = []
-    error_list: list[str | None] = []
-    skipped_list: list[str | None] = []
+    info_list = []
+    error_list = []
+    skipped_list = []
 
     def _create_status_msg(operation: str, status: str) -> str:
         return f"{operation} Status on file: {input} - {status}"

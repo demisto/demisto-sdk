@@ -427,24 +427,24 @@ def format_output(
     validate_res: int,
 ) -> Tuple[List[str], List[str], List[str]]:
     """Generate formatted output messages based on format and validation results.
-    
+
     Args:
         input: The file path that was formatted
         format_res: Format result code (0 = success, SKIP_RETURN_CODE = skipped, other = failed)
         validate_res: Validation result code (0 = success, VALIDATE_RES_SKIPPED_CODE = skipped,
                       VALIDATE_RES_FAILED_CODE = failed without validation, other = failed)
-    
+
     Returns:
         Tuple of (info_list, error_list, skipped_list) containing status messages
     """
     info_list = []
     error_list = []
     skipped_list = []
-    
+
     # Helper function to create status messages
     def _create_status_msg(operation: str, status: str) -> str:
         return f"{operation} Status on file: {input} - {status}"
-    
+
     # Determine format status
     if format_res == SUCCESS_RETURN_CODE:
         format_status = "success"
@@ -455,7 +455,7 @@ def format_output(
     else:
         format_status = "failed"
         format_msg = _create_status_msg("Format", "Failed")
-    
+
     # Determine validation status
     if validate_res == SUCCESS_RETURN_CODE:
         validate_status = "success"
@@ -469,7 +469,7 @@ def format_output(
     else:
         validate_status = "failed"
         validate_msg = _create_status_msg("Validate", "Failed")
-    
+
     # Add format message to appropriate list
     if format_status == "success":
         info_list.append(format_msg)
@@ -477,7 +477,7 @@ def format_output(
         skipped_list.append(format_msg)
     else:  # failed
         error_list.append(format_msg)
-    
+
     # Add validation message to appropriate list
     if validate_status == "success":
         info_list.append(validate_msg)
@@ -491,7 +491,7 @@ def format_output(
                 f"For more information run: `demisto-sdk validate -i {input}`"
             )
     # For "failed_no_validation", no validate message is added
-    
+
     return info_list, error_list, skipped_list
 
 

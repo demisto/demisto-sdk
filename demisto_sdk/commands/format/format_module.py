@@ -437,9 +437,9 @@ def format_output(
     Returns:
         Tuple of (info_list, error_list, skipped_list) containing status messages
     """
-    info_list = []
-    error_list = []
-    skipped_list = []
+    info_list: list[str] = []
+    error_list: list[str] = []
+    skipped_list: list[str] = []
 
     # Helper function to create status messages
     def _create_status_msg(operation: str, status: str) -> str:

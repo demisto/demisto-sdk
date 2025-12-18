@@ -487,7 +487,7 @@ def get_local_remote_file(
     repo_git_util = GitUtil()
     
     # Check if handling private repositories
-    is_handling_private_repo = os.getenv("DEMISTO_SDK_SKIP_REPO_FALLBACK") == "true"
+    is_handling_private_repo = os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE") == "true"
     
     if is_handling_private_repo:
         # For private repositories: try local first, then fall back to remote

@@ -70,9 +70,9 @@ class Initializer:
         self.execution_mode = execution_mode
         self.handling_private_repositories = handling_private_repositories
         
-        # Set environment variable to skip repo fallback when handling private repositories
+        # Set environment variable to enable private repo mode when handling private repositories
         if handling_private_repositories:
-            os.environ["DEMISTO_SDK_SKIP_REPO_FALLBACK"] = "true"
+            os.environ["DEMISTO_SDK_PRIVATE_REPO_MODE"] = "true"
 
     def validate_git_installed(self):
         """Initialize git util."""

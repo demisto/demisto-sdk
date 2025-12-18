@@ -61,7 +61,7 @@ class GitContentConfig:
     )
 
     ENV_REPO_HOSTNAME_NAME = "DEMISTO_SDK_REPO_HOSTNAME"
-    ENV_SKIP_REPO_FALLBACK_NAME = "DEMISTO_SDK_SKIP_REPO_FALLBACK"
+    ENV_PRIVATE_REPO_MODE_NAME = "DEMISTO_SDK_PRIVATE_REPO_MODE"
 
     GITHUB_TO_USERCONTENT = {GITHUB: GITHUB_USER_CONTENT}
     USERCONTENT_TO_GITHUB = {GITHUB_USER_CONTENT: GITHUB}
@@ -94,13 +94,13 @@ class GitContentConfig:
             project_id: The project id, relevant for gitlab.
             skip_repo_fallback: If True, skip defaulting to demisto/content when repo is not found.
                                Useful for private repositories where local files should be used.
-                               Can also be controlled via DEMISTO_SDK_SKIP_REPO_FALLBACK environment variable.
+                               Can also be controlled via DEMISTO_SDK_PRIVATE_REPO_MODE environment variable.
         """
         self.current_repository = repo_name if repo_name else None
         self.project_id: Optional[int] = None
         # Check environment variable or use the provided value
         self.skip_repo_fallback = skip_repo_fallback or os.getenv(
-            GitContentConfig.ENV_SKIP_REPO_FALLBACK_NAME, ""
+            GitContentConfig.ENV_PRIVATE_REPO_MODE_NAME, ""
         ).lower() in ("true", "1", "yes")
         if project_id:
             git_provider = GitProvider.GitLab

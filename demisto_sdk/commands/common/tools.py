@@ -488,19 +488,25 @@ def get_local_remote_file(
     
     repo_git_util = GitUtil()
     
-    # For external/private repos, use local branch instead of remote origin
-    # This allows fetching files that exist locally but not yet pushed to remote
-    from_remote = not is_external_repository()
-    
-    if "AgentixActions" in full_file_path:
-        logger.info(f"[get_local_remote_file] Is external repo: {is_external_repository()}, from_remote={from_remote}")
-    
-    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=from_remote)
+    # Try to get from remote first (default behavior)
+    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=True)
     
     if "AgentixActions" in full_file_path:
         logger.info(f"[get_local_remote_file] Git path resolved to: {git_path}")
     
     file_content = repo_git_util.get_local_remote_file_content(git_path)
+    
+    # If file not found in remote, try local branch
+    if not file_content:
+        if "AgentixActions" in full_file_path:
+            logger.info(f"[get_local_remote_file] File not found in remote, trying local branch")
+        
+        git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=False)
+        
+        if "AgentixActions" in full_file_path:
+            logger.info(f"[get_local_remote_file] Local git path resolved to: {git_path}")
+        
+        file_content = repo_git_util.get_local_remote_file_content(git_path)
     
     if "AgentixActions" in full_file_path:
         logger.info(f"[get_local_remote_file] File content retrieved: {bool(file_content)} (length={len(file_content) if file_content else 0})")

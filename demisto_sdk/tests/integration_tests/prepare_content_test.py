@@ -96,7 +96,9 @@ class TestPrepareContentIntegration:
         """
         name = "test"
         description = f"this is an integration {name}"
-        pack.pack_metadata.update({"support": "partner"})
+        pack.pack_metadata.update(
+            {"support": "partner", "created": "2023-10-24T11:49:45Z"}
+        )
         yml = {
             "commonfields": {"id": name, "version": -1},
             "name": name,

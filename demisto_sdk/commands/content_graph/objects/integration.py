@@ -110,6 +110,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = Field(False, alias="isfetchassets")
+    is_mcp: Optional[bool] = Field(None, alias="ismcp")
     supports_quick_actions: bool = Field(False, alias="supportsquickactions")
     is_fetch_events_and_assets: bool = False
     is_fetch_samples: bool = False
@@ -177,6 +178,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "is_fetch": True,
                     "is_fetch_events": True,
                     "is_fetch_assets": True,
+                    "is_beta": True,
                 }
             )
         )

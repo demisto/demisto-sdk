@@ -482,45 +482,51 @@ def get_local_remote_file(
     tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
 ):
-    # Add logging for AgentixAction files
-    if "AgentixActions" in full_file_path:
-        logger.info(f"[get_local_remote_file] Fetching {full_file_path} from local git (tag={tag})")
-    
+    logger.info(f"[get_local_remote_file] Fetching {full_file_path} (tag={tag})")
+
     repo_git_util = GitUtil()
-    
-    # Try fetching from local branch first (from_remote=False)
-    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=False)
-    
-    if "AgentixActions" in full_file_path:
+
+    # Check if handling private repositories
+    is_handling_private_repo = os.getenv("DEMISTO_SDK_SKIP_REPO_FALLBACK") == "true"
+
+    if is_handling_private_repo:
+        # For private repositories: only try local branch
+        logger.info(
+            "[get_local_remote_file] Private repo mode - fetching from local branch only"
+        )
+
+        git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=False)
         logger.info(f"[get_local_remote_file] Git path (local) resolved to: {git_path}")
-    
-    file_content = repo_git_util.get_local_remote_file_content(git_path)
-    
-    # If not found in local branch, try remote
-    if not file_content:
-        if "AgentixActions" in full_file_path:
-            logger.info(f"[get_local_remote_file] File not found in local branch, trying remote...")
-        
-        git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=True)
-        
-        if "AgentixActions" in full_file_path:
-            logger.info(f"[get_local_remote_file] Git path (remote) resolved to: {git_path}")
-        
+
         file_content = repo_git_util.get_local_remote_file_content(git_path)
-    
-    if "AgentixActions" in full_file_path:
-        logger.info(f"[get_local_remote_file] File content retrieved: {bool(file_content)} (length={len(file_content) if file_content else 0})")
-    
+    else:
+        # For public repositories: try remote first (original behavior), then fall back to local
+        logger.info("[get_local_remote_file] Public repo mode - trying remote first")
+
+        git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=True)
+        logger.info(f"[get_local_remote_file] Git path (remote) resolved to: {git_path}")
+
+        file_content = repo_git_util.get_local_remote_file_content(git_path)
+
+        # If not found in remote, try local branch as fallback
+        if not file_content:
+            logger.info(
+                "[get_local_remote_file] File not found in remote, trying local branch..."
+            )
+
+            git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=False)
+            logger.info(f"[get_local_remote_file] Git path (local) resolved to: {git_path}")
+
+            file_content = repo_git_util.get_local_remote_file_content(git_path)
+
+    logger.info(f"[get_local_remote_file] File content retrieved: {bool(file_content)} (length={len(file_content) if file_content else 0})")
+
     if return_content:
-        if file_content:
-            return file_content.encode()
-        return file_content
-    
+        return file_content.encode() if file_content else file_content
+
     result = get_file_details(file_content, full_file_path)
-    
-    if "AgentixActions" in full_file_path:
-        logger.info(f"[get_local_remote_file] Parsed result: type={type(result).__name__}, keys={list(result.keys()) if isinstance(result, dict) else 'N/A'}")
-    
+    logger.info(f"[get_local_remote_file] Parsed result: type={type(result).__name__}, keys={list(result.keys()) if isinstance(result, dict) else 'N/A'}")
+
     return result
 
 
@@ -997,20 +1003,13 @@ def get_yaml(
 ):
     if cache_clear:
         get_file.cache_clear()
-    
-    # Add logging for AgentixAction files
-    if "AgentixActions" in str(file_path):
-        logger.info(f"[get_yaml] Loading {file_path} (git_sha={git_sha})")
-    
-    result = get_file(
-        file_path, clear_cache=cache_clear, keep_order=keep_order, git_sha=git_sha
+
+    return get_file(
+        file_path,
+        clear_cache=cache_clear,
+        keep_order=keep_order,
+        git_sha=git_sha,
     )
-    
-    # Add logging for AgentixAction files
-    if "AgentixActions" in str(file_path):
-        logger.info(f"[get_yaml] Result: type={type(result).__name__}, keys={list(result.keys()) if isinstance(result, dict) else result}")
-    
-    return result
 
 
 def get_json(file_path: str | Path, cache_clear=False, git_sha: Optional[str] = None):

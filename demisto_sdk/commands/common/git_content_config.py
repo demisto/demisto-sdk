@@ -61,6 +61,7 @@ class GitContentConfig:
     )
 
     ENV_REPO_HOSTNAME_NAME = "DEMISTO_SDK_REPO_HOSTNAME"
+    ENV_SKIP_REPO_FALLBACK_NAME = "DEMISTO_SDK_SKIP_REPO_FALLBACK"
 
     GITHUB_TO_USERCONTENT = {GITHUB: GITHUB_USER_CONTENT}
     USERCONTENT_TO_GITHUB = {GITHUB_USER_CONTENT: GITHUB}
@@ -83,6 +84,7 @@ class GitContentConfig:
         git_provider: Optional[GitProvider] = GitProvider.GitHub,
         repo_hostname: Optional[str] = None,
         project_id: Optional[int] = None,
+        skip_repo_fallback: bool = False,
     ):
         """
         Args:
@@ -90,9 +92,16 @@ class GitContentConfig:
             git_provider: The git provider to use (e.g GitProvider.GitHub, GitProvider.GitLab)
             repo_hostname: The hostname to use (e.g "code.pan.run", "gitlab.com", "my-hostename.com")
             project_id: The project id, relevant for gitlab.
+            skip_repo_fallback: If True, skip defaulting to demisto/content when repo is not found.
+                               Useful for private repositories where local files should be used.
+                               Can also be controlled via DEMISTO_SDK_SKIP_REPO_FALLBACK environment variable.
         """
         self.current_repository = repo_name if repo_name else None
         self.project_id: Optional[int] = None
+        # Check environment variable or use the provided value
+        self.skip_repo_fallback = skip_repo_fallback or os.getenv(
+            GitContentConfig.ENV_SKIP_REPO_FALLBACK_NAME, ""
+        ).lower() in ("true", "1", "yes")
         if project_id:
             git_provider = GitProvider.GitLab
             self.project_id = int(project_id)
@@ -197,10 +206,11 @@ class GitContentConfig:
         )
 
         if self.git_provider == GitProvider.GitLab and gitlab_id is None:
-            self._print_private_repo_warning_if_needed()
-            self.git_provider = GitProvider.GitHub
-            self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
-            self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
+            if not self.skip_repo_fallback:
+                self._print_private_repo_warning_if_needed()
+                self.git_provider = GitProvider.GitHub
+                self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
             return
 
         if gitlab_id is not None:
@@ -220,9 +230,10 @@ class GitContentConfig:
             )
             self.git_provider = GitProvider.GitHub
             if not github_hostname or not github_repo:  # github was not found.
-                self._print_private_repo_warning_if_needed()
-                self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
-                self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
+                if not self.skip_repo_fallback:
+                    self._print_private_repo_warning_if_needed()
+                    self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                    self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
             else:
                 self.repo_hostname = github_hostname
                 self.current_repository = github_repo

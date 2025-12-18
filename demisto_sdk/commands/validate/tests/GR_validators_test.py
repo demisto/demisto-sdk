@@ -2063,7 +2063,7 @@ def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content
 
     results = IsAgentixActionDisplayNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
         [
-            graph_repo.packs[0].agentix_actions[0],
+            graph_repo.packs[1].agentix_actions[0],
             graph_repo.packs[2].agentix_actions[0],
         ],
         validate_all_files=False,

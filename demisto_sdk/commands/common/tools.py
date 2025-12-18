@@ -488,23 +488,23 @@ def get_local_remote_file(
     
     repo_git_util = GitUtil()
     
-    # Try to get from remote first (default behavior)
-    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=True)
+    # Try fetching from local branch first (from_remote=False)
+    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=False)
     
     if "AgentixActions" in full_file_path:
-        logger.info(f"[get_local_remote_file] Git path resolved to: {git_path}")
+        logger.info(f"[get_local_remote_file] Git path (local) resolved to: {git_path}")
     
     file_content = repo_git_util.get_local_remote_file_content(git_path)
     
-    # If file not found in remote, try local branch
+    # If not found in local branch, try remote
     if not file_content:
         if "AgentixActions" in full_file_path:
-            logger.info(f"[get_local_remote_file] File not found in remote, trying local branch")
+            logger.info(f"[get_local_remote_file] File not found in local branch, trying remote...")
         
-        git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=False)
+        git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=True)
         
         if "AgentixActions" in full_file_path:
-            logger.info(f"[get_local_remote_file] Local git path resolved to: {git_path}")
+            logger.info(f"[get_local_remote_file] Git path (remote) resolved to: {git_path}")
         
         file_content = repo_git_util.get_local_remote_file_content(git_path)
     

@@ -155,6 +155,10 @@ class Initializer:
             staged_only=self.staged,
         )
 
+        # Handle deleted files for private repositories
+        if self.handling_private_repositories:
+            deleted_files = self.handle_private_repo_deleted_files(added_files, deleted_files)
+
         return (
             modified_files,
             added_files,
@@ -394,6 +398,73 @@ class Initializer:
 
         logger.info(f"{modified_files=}\n{added_files=}\n{renamed_files=}\n")
         return modified_files, added_files, renamed_files
+
+    def handle_private_repo_deleted_files(self, added_files: Set, deleted_files: Set) -> Set:
+        """
+        Handle deleted files for private repositories by reading status files.
+
+        Args:
+            added_files (Set): The set of added files (to remove false positives from).
+            deleted_files (Set): The initial set of deleted files from git.
+
+        Returns:
+            Set: The updated set of deleted files including those from status files.
+        """
+        artifacts_folder = os.getenv("ARTIFACTS_FOLDER", "")
+        logs_dir = (
+            Path(artifacts_folder) / "logs" if artifacts_folder else Path("logs")
+        )
+
+        status_files = [
+            logs_dir / "content_private_files_relative_paths.txt",
+            logs_dir / "content_test_conf_files_relative_paths.txt",
+            logs_dir / "content_configuration_files_relative_paths.txt",
+        ]
+
+        logger.info(
+            "Handling private repositories - checking for deleted files in status files..."
+        )
+
+        for status_file in status_files:
+            try:
+                if status_file.exists():
+                    with open(status_file, "r") as f:
+                        file_statuses = DEFAULT_JSON_HANDLER.load(f)
+                        deleted_count = 0
+
+                        for file_path_str, status_info in file_statuses.items():
+                            if not file_path_str:
+                                continue
+
+                            file_path = Path(file_path_str)
+
+                            # Handle deleted files
+                            if (
+                                status_info == "deleted"
+                                and file_path in added_files
+                            ):
+                                added_files.discard(file_path)
+                                deleted_files.add(file_path)
+                                deleted_count += 1
+
+                        if deleted_count > 0:
+                            logger.info(
+                                f"Processed {status_file.name}: "
+                                f"Added {deleted_count} deleted files"
+                            )
+                            logger.debug(
+                                f"Current deleted files count: {len(deleted_files)}"
+                            )
+
+            except DEFAULT_JSON_HANDLER.JSONDecodeError as e:
+                logger.warning(f"Invalid JSON format in {status_file}: {str(e)}")
+            except Exception as e:
+                logger.warning(f"Error processing {status_file}: {str(e)}")
+                logger.debug("Full traceback:", exc_info=True)
+                continue
+
+        logger.info(f"Total deleted files: {len(deleted_files)}")
+        return deleted_files
 
     def specify_files_by_status(
         self,

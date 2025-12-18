@@ -482,14 +482,32 @@ def get_local_remote_file(
     tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
 ):
+    # Add logging for AgentixAction files
+    if "AgentixActions" in full_file_path:
+        logger.info(f"[get_local_remote_file] Fetching {full_file_path} from local git (tag={tag})")
+    
     repo_git_util = GitUtil()
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+    
+    if "AgentixActions" in full_file_path:
+        logger.info(f"[get_local_remote_file] Git path resolved to: {git_path}")
+    
     file_content = repo_git_util.get_local_remote_file_content(git_path)
+    
+    if "AgentixActions" in full_file_path:
+        logger.info(f"[get_local_remote_file] File content retrieved: {bool(file_content)} (length={len(file_content) if file_content else 0})")
+    
     if return_content:
         if file_content:
             return file_content.encode()
         return file_content
-    return get_file_details(file_content, full_file_path)
+    
+    result = get_file_details(file_content, full_file_path)
+    
+    if "AgentixActions" in full_file_path:
+        logger.info(f"[get_local_remote_file] Parsed result: type={type(result).__name__}, keys={list(result.keys()) if isinstance(result, dict) else 'N/A'}")
+    
+    return result
 
 
 def get_remote_file_from_api(
@@ -885,29 +903,12 @@ def get_file(
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)  # type: ignore[arg-type]
-    
-    # Add logging for AgentixAction files
-    if "AgentixActions" in str(file_path):
-        logger.info(f"[get_file] Processing {file_path} (git_sha={git_sha})")
-    
-    # Check if file exists locally first, even when git_sha is provided
-    local_file_path = file_path if file_path.exists() else Path(get_content_path()) / file_path
-    
     if git_sha:
-        # If file exists locally, read it from local filesystem instead of git
-        if local_file_path.exists():
-            if "AgentixActions" in str(file_path):
-                logger.info(f"[get_file] File exists locally, reading from local filesystem instead of git reference '{git_sha}'")
-            file_path = local_file_path
-        else:
-            # File doesn't exist locally, try to get it from git
-            if "AgentixActions" in str(file_path):
-                logger.info(f"[get_file] File not found locally, attempting to fetch from git reference '{git_sha}'")
-            if file_path.is_absolute():
-                file_path = file_path.relative_to(get_content_path())
-            return get_remote_file(
-                str(file_path), tag=git_sha, return_content=return_content
-            )
+        if file_path.is_absolute():
+            file_path = file_path.relative_to(get_content_path())
+        return get_remote_file(
+            str(file_path), tag=git_sha, return_content=return_content
+        )
 
     type_of_file = file_path.suffix.lower()
 

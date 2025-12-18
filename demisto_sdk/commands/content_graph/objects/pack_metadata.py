@@ -34,7 +34,7 @@ class PackMetadata(BaseModel):
     name: str
     display_name: str
     description: Optional[str]
-    created: Optional[str]
+    created: Optional[str] = Field(alias="firstCreated")
     updated: Optional[str] = Field("")
     legacy: Optional[bool]
     support: str = Field("")
@@ -670,10 +670,6 @@ def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersion
     elif marketplace not in content_item.marketplaces:
         logger.debug(
             f"Skipping {content_item.name} in metadata creation: item is not supported in {marketplace=}."
-        )
-    elif content_item.content_type == ContentType.AGENTIX_AGENT:
-        logger.info(
-            f"Skipping {content_item.name} in metadata creation: item is under Agentix {content_item.content_type.value}."
         )
     elif content_item.content_type == ContentType.SCRIPT and content_item.is_llm:
         logger.info(

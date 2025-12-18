@@ -487,7 +487,15 @@ def get_local_remote_file(
         logger.info(f"[get_local_remote_file] Fetching {full_file_path} from local git (tag={tag})")
     
     repo_git_util = GitUtil()
-    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+    
+    # For external/private repos, use local branch instead of remote origin
+    # This allows fetching files that exist locally but not yet pushed to remote
+    from_remote = not is_external_repository()
+    
+    if "AgentixActions" in full_file_path:
+        logger.info(f"[get_local_remote_file] Is external repo: {is_external_repository()}, from_remote={from_remote}")
+    
+    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=from_remote)
     
     if "AgentixActions" in full_file_path:
         logger.info(f"[get_local_remote_file] Git path resolved to: {git_path}")

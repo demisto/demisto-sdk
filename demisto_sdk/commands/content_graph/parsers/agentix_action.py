@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.agentix_base import AgentixBaseParser
 from demisto_sdk.commands.content_graph.strict_objects.agentix_action import (
@@ -22,21 +21,21 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
-
-        underlying_content_item = self.yml_data.get("underlyingcontentitem")
-        if underlying_content_item is None:
-            logger.error(
-                f"Missing 'underlyingcontentitem' in {path}. Available fields: {list(self.yml_data.keys()) if isinstance(self.yml_data, dict) else self.yml_data}"
-            )
-            raise ValueError(
-                f"AgentixAction at {path} is missing required 'underlyingcontentitem' field"
-            )
-        
-        self.underlying_content_item_id: str = underlying_content_item.get("id")  # type: ignore
-        self.underlying_content_item_name: str = underlying_content_item.get("name")  # type: ignore
-        self.underlying_content_item_type: str = underlying_content_item.get("type")  # type: ignore
-        self.underlying_content_item_command: str = underlying_content_item.get("command")  # type: ignore
-        self.underlying_content_item_version: int = underlying_content_item.get("version")  # type: ignore
+        self.underlying_content_item_id: str = self.yml_data.get(
+            "underlyingcontentitem"
+        ).get("id")  # type: ignore
+        self.underlying_content_item_name: str = self.yml_data.get(
+            "underlyingcontentitem"
+        ).get("name")  # type: ignore
+        self.underlying_content_item_type: str = self.yml_data.get(
+            "underlyingcontentitem"
+        ).get("type")  # type: ignore
+        self.underlying_content_item_command: str = self.yml_data.get(
+            "underlyingcontentitem"
+        ).get("command")  # type: ignore
+        self.underlying_content_item_version: int = self.yml_data.get(
+            "underlyingcontentitem"
+        ).get("version")  # type: ignore
         self.requires_user_approval: Optional[bool] = self.yml_data.get(
             "requiresuserapproval"
         )

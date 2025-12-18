@@ -157,7 +157,7 @@ class Initializer:
 
         # Handle deleted files for private repositories
         if self.handling_private_repositories:
-            deleted_files = self.handle_private_repo_deleted_files(added_files, deleted_files)
+            deleted_files = self.handle_private_repo_deleted_files(deleted_files)
 
         return (
             modified_files,
@@ -359,7 +359,6 @@ class Initializer:
 
                                 # Handle renamed files
                                 if (
-                                    isinstance(status_info, dict) and
                                     status_info.get("status") == "renamed"
                                     and file_path in added_files
                                 ):
@@ -372,7 +371,7 @@ class Initializer:
 
                                 # Handle modified status
                                 elif (
-                                    status_info == "modified"
+                                    status_info.get("status") == "modified"
                                     and file_path in added_files
                                 ):
                                     added_files.discard(file_path)
@@ -402,12 +401,11 @@ class Initializer:
         logger.info(f"{modified_files=}\n{added_files=}\n{renamed_files=}\n")
         return modified_files, added_files, renamed_files
 
-    def handle_private_repo_deleted_files(self, added_files: Set, deleted_files: Set) -> Set:
+    def handle_private_repo_deleted_files(self, deleted_files: Set) -> Set:
         """
         Handle deleted files for private repositories by reading status files.
 
         Args:
-            added_files (Set): The set of added files (to remove false positives from).
             deleted_files (Set): The initial set of deleted files from git.
 
         Returns:
@@ -443,7 +441,7 @@ class Initializer:
 
                             # Handle deleted files
                             if (
-                                status_info == "deleted"
+                                status_info.get("status") == "deleted"
                             ):
                                 deleted_files.add(file_path)
                                 deleted_count += 1

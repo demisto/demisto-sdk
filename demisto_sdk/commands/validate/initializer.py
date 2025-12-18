@@ -359,11 +359,14 @@ class Initializer:
 
                                 # Handle renamed files
                                 if (
-                                    status_info == "renamed"
+                                    isinstance(status_info, dict) and
+                                    status_info.get("status") == "renamed"
                                     and file_path in added_files
                                 ):
                                     added_files.discard(file_path)
-                                    renamed_files.add((Path(""), file_path))  # type: ignore[arg-type]
+                                    logger.info(f"The old path = {status_info.get('old_path')}\n"
+                                                f"The new path = {file_path}")
+                                    renamed_files.add((Path(status_info.get("old_path")), file_path))
                                     renamed_count += 1
                                     break
 
@@ -441,9 +444,7 @@ class Initializer:
                             # Handle deleted files
                             if (
                                 status_info == "deleted"
-                                and file_path in added_files
                             ):
-                                added_files.discard(file_path)
                                 deleted_files.add(file_path)
                                 deleted_count += 1
 
@@ -463,7 +464,8 @@ class Initializer:
                 logger.debug("Full traceback:", exc_info=True)
                 continue
 
-        logger.info(f"Total deleted files: {len(deleted_files)}")
+        logger.info(f"{deleted_files=}\nTotal deleted files: {len(deleted_files)}")
+
         return deleted_files
 
     def specify_files_by_status(

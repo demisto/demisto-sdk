@@ -440,7 +440,7 @@ def format_output(
     info_list = []
     error_list = []
     skipped_list = []
-    format_succeeded: bool
+    format_succeeded = False
 
     def _create_status_msg(operation: str, status: str) -> str:
         return f"{operation} Status on file: {input} - {status}"
@@ -451,10 +451,8 @@ def format_output(
         format_succeeded = True
     elif format_res == SKIP_RETURN_CODE:
         skipped_list.append(_create_status_msg("Format", "Skipped"))
-        format_succeeded = False
     else:
         error_list.append(_create_status_msg("Format", "Failed"))
-        format_succeeded = False
 
     # Handle validation status
     if validate_res == SUCCESS_RETURN_CODE:

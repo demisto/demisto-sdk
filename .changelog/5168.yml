@@ -1,0 +1,4 @@
+changes:
+- description: Adds a new ignorable validation (BA129) that ensures commands/scripts declare the appropriate compliantpolicies when using arguments associated with specific compliance standards (defined in compliant_policies.json).
+  type: feature
+pr_number: 5168

@@ -118,6 +118,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_conte
 from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_script_name_starts_with_digit import (
     IsCommandOrScriptNameStartsWithDigitValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA129_missing_compliant_policies import (
+    MissingCompliantPoliciesValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
@@ -2948,3 +2951,215 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
     assert len(result_messages) == expected_number_of_failures
     if expected_msgs:
         assert expected_msgs[0] in result_messages[0]
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        # Case 1: Valid Integration (IP Blockage)
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "block-ip",
+                                "arguments": [{"name": "ip_list"}],
+                                "compliantpolicies": ["IP Blockage"],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            0,
+            [],
+        ),
+        # Case 2: Invalid Integration (Missing IP Blockage)
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "block-ip",
+                                "arguments": [{"name": "ip_list"}],
+                                "compliantpolicies": [],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            1,
+            [
+                "Command block-ip uses the arguments {'ip_list'}, which are associated with one or more compliance policies, but does not declare any of the required options. Missing policies (at least one required per argument): {'IP Blockage'}."
+            ],
+        ),
+        # Case 3: Valid Script (User Soft Remediation)
+        (
+            [
+                create_script_object(
+                    paths=["args", "compliantpolicies"],
+                    values=[
+                        [{"name": "username"}],
+                        ["User Soft Remediation"],
+                    ],
+                )
+            ],
+            0,
+            [],
+        ),
+        # Case 4: Invalid Script (Missing EndPoint Isolation)
+        (
+            [
+                create_script_object(
+                    name="IsolateEndpoint",
+                    paths=["args", "compliantpolicies"],
+                    values=[
+                        [{"name": "endpoint_id"}],
+                        [],
+                    ],
+                )
+            ],
+            1,
+            [
+                "IsolateEndpoint uses the arguments {'endpoint_id'}, which are associated with one or more compliance policies, but does not declare any of the required options. Missing policies (at least one required per argument): {'EndPoint Isolation'}."
+            ],
+        ),
+        # Case 5: Partial Failure (Multiple Policies)
+        # 'ip_list' is satisfied by 'IP Blockage', but 'username' is missing its policy.
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "mixed-action",
+                                "arguments": [{"name": "ip_list"}, {"name": "username"}],
+                                "compliantpolicies": ["IP Blockage"],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            1,
+            [
+                "Command mixed-action uses the arguments {'username'}, which are associated with one or more compliance policies, but does not declare any of the required options. Missing policies (at least one required per argument): {'User Hard Remediation', 'User Soft Remediation'}."
+            ],
+        ),
+        # Case 6: No Policy Required
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "simple-command",
+                                "arguments": [{"name": "verbose"}],
+                                "compliantpolicies": [],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            0,
+            [],
+        ),
+        # Case 7: Edge Case Valid - One of Two Policies Present
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "hard-rem-command",
+                                "arguments": [{"name": "username"}],
+                                "compliantpolicies": ["User Hard Remediation"],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            0,
+            [],
+        ),
+        # Case 8: Edge Case Invalid - Neither Policy Present
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "missing-both-command",
+                                "arguments": [{"name": "username"}],
+                                "compliantpolicies": [],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            1,
+            [
+                "Command missing-both-command uses the arguments {'username'}, which are associated with one or more compliance policies, but does not declare any of the required options. Missing policies (at least one required per argument): {'User Hard Remediation', 'User Soft Remediation'}."
+            ],
+        ),
+    ],
+)
+def test_MissingCompliantPoliciesValidator_obtain_invalid_content_items(
+    mocker, content_items, expected_number_of_failures, expected_msgs
+):
+    """
+    Tests BA129 with support for arguments that map to multiple policy options.
+    """
+    mock_policies_content = {
+        "policies": [
+            {
+                "name": "User Soft Remediation",
+                "category": "IAM",
+                "arguments": ["username", "user_id"],
+            },
+            {
+                "name": "User Hard Remediation",
+                "category": "IAM",
+                "arguments": ["username"], 
+            },
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip_list", "ip_address"],
+            },
+            {
+                "name": "EndPoint Isolation",
+                "category": "EndPoint",
+                "arguments": ["endpoint_id"],
+            },
+        ]
+    }
+
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", 
+        return_value=False
+    )
+
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_compliant_polices",
+        return_value=mock_policies_content["policies"],
+    )
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items(content_items)
+
+    assert len(results) == expected_number_of_failures
+
+    for result, expected_msg in zip(results, expected_msgs):
+        pass
+
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

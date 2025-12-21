@@ -440,56 +440,37 @@ def format_output(
     info_list = []
     error_list = []
     skipped_list = []
+    format_succeeded: bool
 
     def _create_status_msg(operation: str, status: str) -> str:
         return f"{operation} Status on file: {input} - {status}"
 
-    # Determine format status
+    # Handle format status
     if format_res == SUCCESS_RETURN_CODE:
-        format_status = "success"
-        format_msg = _create_status_msg("Format", "Success")
+        info_list.append(_create_status_msg("Format", "Success"))
+        format_succeeded = True
     elif format_res == SKIP_RETURN_CODE:
-        format_status = "skipped"
-        format_msg = _create_status_msg("Format", "Skipped")
+        skipped_list.append(_create_status_msg("Format", "Skipped"))
+        format_succeeded = False
     else:
-        format_status = "failed"
-        format_msg = _create_status_msg("Format", "Failed")
+        error_list.append(_create_status_msg("Format", "Failed"))
+        format_succeeded = False
 
-    # Determine validation status
+    # Handle validation status
     if validate_res == SUCCESS_RETURN_CODE:
-        validate_status = "success"
-        validate_msg = _create_status_msg("Validate", "Success")
+        info_list.append(_create_status_msg("Validate", "Success"))
     elif validate_res == SKIP_RETURN_CODE:
-        validate_status = "skipped"
-        validate_msg = _create_status_msg("Validate", "Skipped")
+        skipped_list.append(_create_status_msg("Validate", "Skipped"))
     elif validate_res == VALIDATE_RES_FAILED_CODE:
-        validate_status = "failed_no_validation"
-        validate_msg = None  # No validation message when validation wasn't run
+        # No validation message when validation wasn't run
+        pass
     else:
-        validate_status = "failed"
-        validate_msg = _create_status_msg("Validate", "Failed")
-
-    # Add format message to appropriate list
-    if format_status == "success":
-        info_list.append(format_msg)
-    elif format_status == "skipped":
-        skipped_list.append(format_msg)
-    else:  # failed
-        error_list.append(format_msg)
-
-    # Add validation message to appropriate list
-    if validate_status == "success":
-        info_list.append(validate_msg)
-    elif validate_status == "skipped":
-        skipped_list.append(validate_msg)
-    elif validate_status == "failed":
-        error_list.append(validate_msg)
+        error_list.append(_create_status_msg("Validate", "Failed"))
         # Only add help message if format succeeded and validation failed
-        if format_status == "success":
+        if format_succeeded:
             error_list.append(
                 f"For more information run: `demisto-sdk validate -i {input}`"
             )
-    # For "failed_no_validation", no validate message is added
 
     return info_list, error_list, skipped_list
 

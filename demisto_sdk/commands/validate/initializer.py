@@ -339,10 +339,6 @@ class Initializer:
                 logs_dir / "content_configuration_files_relative_paths.txt",
             ]
 
-            logger.info(
-                f"Handling private repositories - checking for status files in {logs_dir}..."
-            )
-
             for status_file in status_files:
                 try:
                     if status_file.exists():
@@ -364,9 +360,6 @@ class Initializer:
                                 ):
                                     added_files.discard(file_path)
                                     old_path = status_info.get("old_path")
-                                    logger.info(
-                                        f"Renamed file detected - old: {old_path}, new: {file_path}"
-                                    )
                                     renamed_files.add((Path(old_path), file_path))  # type: ignore[arg-type]
                                     renamed_count += 1
                                     continue  # Use continue instead of break to process remaining files
@@ -381,17 +374,6 @@ class Initializer:
                                     modified_count += 1
 
                                 # Files marked as "added" remain in added_files
-
-                            logger.info(
-                                f"Processed {status_file.name}: "
-                                f"Moved {modified_count} to modified, "
-                                f"Handled {renamed_count} renames"
-                            )
-                            logger.debug(
-                                f"Current counts - Modified: {len(modified_files)}, "
-                                f"Added: {len(added_files)}, "
-                                f"Renamed: {len(renamed_files)}"
-                            )
 
                 except DEFAULT_JSON_HANDLER.JSONDecodeError as e:
                     logger.warning(f"Invalid JSON format in {status_file}: {str(e)}")
@@ -422,10 +404,6 @@ class Initializer:
             logs_dir / "content_configuration_files_relative_paths.txt",
         ]
 
-        logger.info(
-            "Handling private repositories - checking for deleted files in status files..."
-        )
-
         for status_file in status_files:
             try:
                 if status_file.exists():
@@ -445,10 +423,6 @@ class Initializer:
                                 deleted_count += 1
 
                         if deleted_count > 0:
-                            logger.info(
-                                f"Processed {status_file.name}: "
-                                f"Added {deleted_count} deleted files"
-                            )
                             logger.debug(
                                 f"Current deleted files count: {len(deleted_files)}"
                             )

@@ -19,9 +19,8 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
     error_code = "BA129"
     description = "Ensures that commands declare the appropriate compliantpolicies when using policy arguments."
     rationale = "Certain command arguments are associated with compliance policies. This validation ensures that commands using such arguments explicitly declare the relevant policies in their YAML definition."
-    error_message = "{0} uses the arguments {1}, which are associated with one or more compliance policies, but does not declare the required compliantpolicies: {2}."
+    error_message = "{0} uses the arguments: {1}, which are associated with one or more compliance policies, but does not declare the required compliantpolicies: {2}."
     related_field = "compliantpolicies"
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     is_auto_fixable = False
 
     def obtain_invalid_content_items(
@@ -71,8 +70,8 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
                             validator=self,
                             message=self.error_message.format(
                                 f"Command {command.name}" if isinstance(content_item, Integration) else command.name,
-                                problematic_arguments,
-                                missing_policy_options,
+                                sorted(problematic_arguments),
+                                sorted(missing_policy_options),
                             ),
                             content_object=content_item,
                             related_field=f"commands.{command.name}.compliantpolicies",

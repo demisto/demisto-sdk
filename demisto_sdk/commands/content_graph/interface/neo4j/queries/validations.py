@@ -261,7 +261,7 @@ def validate_multiple_agentix_actions_with_same_display_name(
 ) -> List[Tuple[str, List[str]]]:
     query = f"""// Returns all the Agentix Actions that have the same display name but different id
 MATCH (a:{ContentType.AGENTIX_ACTION}), (b:{ContentType.AGENTIX_ACTION})
-WHERE a.display = b.display
+WHERE a.display_name = b.display_name
 """
     if file_paths:
         query += f"AND a.path in {file_paths}"

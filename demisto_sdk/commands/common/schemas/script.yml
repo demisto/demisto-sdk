@@ -143,6 +143,14 @@ mapping:
     type: str
   fewshots:
     type: str
+  temperature:
+    type: number
+  maxOutputTokens:
+    type: int
+  systemInstruction:
+    type: str
+  webSearch:
+    type: bool
 
   compliantpolicies:
     type: seq

@@ -95,6 +95,10 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     user_prompt: Optional[str] = Field(None, alias="userprompt")
     system_prompt: Optional[str] = Field(None, alias="systemprompt")
     few_shots: Optional[str] = Field(None, alias="fewshots")
+    temperature: Optional[float] = None
+    max_output_tokens: Optional[int] = Field(None, alias="maxOutputTokens")
+    system_instruction: Optional[str] = Field(None, alias="systemInstruction")
+    web_search: Optional[bool] = Field(None, alias="webSearch")
 
     @root_validator
     def validate_llm_constraints(cls, values):
@@ -125,6 +129,16 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
                 errors.append("When 'isllm' is True, 'model' must be provided.")
             if not values.get("user_prompt"):
                 errors.append("When 'isllm' is True, 'userprompt' must be provided.")
+
+            # Apply defaults for LLM configuration fields if not provided
+            llm_defaults = {
+                "temperature": 0.1,
+                "max_output_tokens": 12000,
+                "web_search": False,
+            }
+            for field, default in llm_defaults.items():
+                if values.get(field) is None:
+                    values[field] = default
         else:
             # Enforce non-LLM mode: all LLM-related fields must be None or empty
             llm_fields = [
@@ -132,6 +146,10 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
                 ("user_prompt", values.get("user_prompt")),
                 ("system_prompt", values.get("system_prompt")),
                 ("few_shots", values.get("few_shots")),
+                ("temperature", values.get("temperature")),
+                ("max_output_tokens", values.get("max_output_tokens")),
+                ("system_instruction", values.get("system_instruction")),
+                ("web_search", values.get("web_search")),
             ]
             errors.extend(
                 f"Field '{field_name}' must be empty when 'isllm' is False."

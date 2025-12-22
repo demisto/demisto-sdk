@@ -22,10 +22,14 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
             is_test_script=False,
             git_sha=git_sha,
         )
-        self.model: str = self.yml_data.get("model", False)
+        self.model: str = self.yml_data.get("model", "")
         self.user_prompt: str = self.yml_data.get("userprompt", "")
         self.system_prompt: str = self.yml_data.get("systemprompt", "")
         self.few_shots: Optional[str] = self.yml_data.get("fewshots", "")
+        self.temperature: Optional[float] = self.yml_data.get("temperature")
+        self.max_output_tokens: Optional[int] = self.yml_data.get("maxOutputTokens")
+        self.system_instruction: Optional[str] = self.yml_data.get("systemInstruction")
+        self.web_search: Optional[bool] = self.yml_data.get("webSearch")
         self.is_internal: bool = self.yml_data.get("isInternal", False)
 
     @property

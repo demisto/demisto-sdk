@@ -1,0 +1,4 @@
+changes:
+- description: Added LLM configuration fields (temperature, maxOutputTokens, systemInstruction, webSearch) to Script schemas for AI Tasks with automatic defaults.
+  type: feature
+pr_number: 5170

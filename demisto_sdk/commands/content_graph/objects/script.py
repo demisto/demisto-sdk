@@ -19,6 +19,10 @@ class Script(BaseScript, content_type=ContentType.SCRIPT):  # type: ignore[call-
     user_prompt: Optional[str] = Field(None, alias="userprompt")
     system_prompt: Optional[str] = Field(None, alias="systemprompt")
     few_shots: Optional[str] = Field(None, alias="fewshots")
+    temperature: Optional[float] = None
+    max_output_tokens: Optional[int] = Field(None, alias="maxOutputTokens")
+    system_instruction: Optional[str] = Field(None, alias="systemInstruction")
+    web_search: Optional[bool] = Field(None, alias="webSearch")
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

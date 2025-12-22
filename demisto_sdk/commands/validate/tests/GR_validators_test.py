@@ -2061,6 +2061,8 @@ def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content
 
     BaseValidator.graph_interface = graph_repo.create_graph()
 
+    print(graph_repo.packs[1].agentix_actions[0])
+    print(graph_repo.packs[2].agentix_actions[0])
     results = IsAgentixActionDisplayNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
         [
             graph_repo.packs[1].agentix_actions[0],

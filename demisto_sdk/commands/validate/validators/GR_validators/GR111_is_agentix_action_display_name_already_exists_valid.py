@@ -32,6 +32,8 @@ class IsAgentixActionDisplayNameAlreadyExistsValidator(
         }
         content_id_to_objects = {item.object_id: item for item in content_items}  # type: ignore[attr-defined]
 
+        print(f"Validating content items... {content_items}")
+
         query_list = list(file_paths_to_objects) if not validate_all_files else []
 
         query_results = self.graph.validate_duplicate_agentix_action_display_names(

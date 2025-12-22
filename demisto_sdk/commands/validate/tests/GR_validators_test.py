@@ -3,7 +3,6 @@ import pytest
 from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_agentix_action_object,
@@ -2061,8 +2060,6 @@ def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content
 
     BaseValidator.graph_interface = graph_repo.create_graph()
 
-    print(graph_repo.packs[1].agentix_actions[0])
-    print(graph_repo.packs[2].agentix_actions[0])
     results = IsAgentixActionDisplayNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
         [
             graph_repo.packs[0].agentix_actions[0],

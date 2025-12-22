@@ -482,58 +482,59 @@ def get_local_remote_file(
     tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
 ):
+    """
+    Fetch a file from either local or remote repository.
+    
+    For private repositories, tries local first then remote.
+    For public repositories, tries remote first then local.
+    
+    Args:
+        full_file_path: Path to the file to fetch
+        tag: Git tag/branch to fetch from
+        return_content: Whether to return raw content or parsed file details
+        
+    Returns:
+        File content (encoded bytes if return_content=True) or parsed file details (dict)
+    """
     logger.debug(f"[get_local_remote_file] Fetching {full_file_path} (tag={tag})")
 
     repo_git_util = GitUtil()
-    
+
     # Check if handling private repositories
     is_handling_private_repo = os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE") == "true"
-    
-    if is_handling_private_repo:
-        # For private repositories: try local first, then fall back to remote
-        logger.debug(f"[get_local_remote_file] Private repo mode - trying local branch first")
-        
-        git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=False)
-        logger.debug(f"[get_local_remote_file] Git path (local) resolved to: {git_path}")
-        
+
+    # Determine the order: private repos try local first, public repos try remote first
+    try_remote_first = not is_handling_private_repo
+
+    # Define the two sources to try in order
+    sources = [
+        ("remote", True) if try_remote_first else ("local", False),
+        ("local", False) if try_remote_first else ("remote", True)
+    ]
+
+    file_content = None
+    for source_name, from_remote in sources:
+        logger.debug(f"[get_local_remote_file] Trying {source_name}...")
+
+        git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=from_remote)
+        logger.debug(f"[get_local_remote_file] Git path ({source_name}) resolved to: {git_path}")
+
         file_content = repo_git_util.get_local_remote_file_content(git_path)
-        
-        # If not found locally, try remote as fallback
-        if not file_content:
-            logger.debug(f"[get_local_remote_file] File not found locally, trying remote (origin)...")
-            
-            git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=True)
-            logger.debug(f"[get_local_remote_file] Git path (remote) resolved to: {git_path}")
-            
-            file_content = repo_git_util.get_local_remote_file_content(git_path)
-    else:
-        # For public repositories: try remote first (original behavior), then fall back to local
-        logger.debug(f"[get_local_remote_file] Public repo mode - trying remote first")
-        
-        git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=True)
-        logger.debug(f"[get_local_remote_file] Git path (remote) resolved to: {git_path}")
-        
-        file_content = repo_git_util.get_local_remote_file_content(git_path)
-        
-        # If not found in remote, try local branch as fallback
-        if not file_content:
-            logger.debug(f"[get_local_remote_file] File not found in remote, trying local branch...")
-            
-            git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag, from_remote=False)
-            logger.debug(f"[get_local_remote_file] Git path (local) resolved to: {git_path}")
-            
-            file_content = repo_git_util.get_local_remote_file_content(git_path)
-    
-    logger.debug(f"[get_local_remote_file] File content retrieved: {bool(file_content)} (length={len(file_content) if file_content else 0})")
-    
-    if return_content:
+
         if file_content:
-            return file_content.encode()
-        return file_content
-    
+            logger.debug(f"[get_local_remote_file] File found in {source_name}")
+            break
+        else:
+            logger.debug(f"[get_local_remote_file] File not found in {source_name}, trying fallback...")
+
+    logger.debug(f"[get_local_remote_file] File content retrieved: {bool(file_content)} (length={len(file_content) if file_content else 0})")
+
+    if return_content:
+        return file_content.encode() if file_content else file_content
+
     result = get_file_details(file_content, full_file_path)
     logger.debug(f"[get_local_remote_file] Parsed result: type={type(result).__name__}, keys={list(result.keys()) if isinstance(result, dict) else 'N/A'}")
-    
+
     return result
 
 

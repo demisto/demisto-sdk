@@ -363,14 +363,16 @@ class Initializer:
                                     and file_path in added_files
                                 ):
                                     added_files.discard(file_path)
-                                    logger.info(f"The old path = {status_info.get('old_path')}\n"
-                                                f"The new path = {file_path}")
-                                    renamed_files.add((Path(status_info.get("old_path")), file_path))
+                                    old_path = status_info.get("old_path")
+                                    logger.info(
+                                        f"Renamed file detected - old: {old_path}, new: {file_path}"
+                                    )
+                                    renamed_files.add((Path(old_path), file_path))
                                     renamed_count += 1
-                                    break
+                                    continue  # Use continue instead of break to process remaining files
 
                                 # Handle modified status
-                                elif (
+                                if (
                                     status_info.get("status") == "modified"
                                     and file_path in added_files
                                 ):

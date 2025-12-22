@@ -257,9 +257,7 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
 
 
 def _validate_duplicate_agentix_action_field(
-        tx: Transaction,
-        file_paths: List[str],
-        field_name: str
+    tx: Transaction, file_paths: List[str], field_name: str
 ) -> List[Tuple[str, List[str]]]:
     """Generic validator for duplicate Agentix Action fields.
 
@@ -288,17 +286,18 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
 
 
 def validate_multiple_agentix_actions_with_same_display_name(
-        tx: Transaction, file_paths: List[str]
+    tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[str]]]:
     """Query graph to return Agentix Actions with duplicate display names."""
     return _validate_duplicate_agentix_action_field(tx, file_paths, "display_name")
 
 
 def validate_multiple_agentix_actions_with_same_name(
-        tx: Transaction, file_paths: List[str]
+    tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[str]]]:
     """Query graph to return Agentix Actions with duplicate names."""
     return _validate_duplicate_agentix_action_field(tx, file_paths, "name")
+
 
 def validate_multiple_script_with_same_name(
     tx: Transaction, file_paths: List[str]

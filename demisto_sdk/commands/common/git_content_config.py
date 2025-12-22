@@ -232,7 +232,9 @@ class GitContentConfig:
             if not github_hostname or not github_repo:  # github was not found.
                 if not self.skip_repo_fallback:
                     self._print_private_repo_warning_if_needed()
-                    self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                    self.current_repository = (
+                        GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                    )
                     self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
             else:
                 self.repo_hostname = github_hostname

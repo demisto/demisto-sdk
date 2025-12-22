@@ -69,7 +69,7 @@ class Initializer:
         self.prev_ver = prev_ver
         self.execution_mode = execution_mode
         self.handling_private_repositories = handling_private_repositories
-        
+
         # Set environment variable to enable private repo mode when handling private repositories
         if handling_private_repositories:
             os.environ["DEMISTO_SDK_PRIVATE_REPO_MODE"] = "true"
@@ -243,7 +243,7 @@ class Initializer:
             3 sets:
             - The unfiltered modified files
             - The unfiltered added files
-            - The unfiltered renamed files
+            - The unfiltered renamed files (Set of tuples: (old_path, new_path))
         """
         # get files from git by status identification against prev-ver
         modified_files = self.git_util.modified_files(
@@ -367,7 +367,7 @@ class Initializer:
                                     logger.info(
                                         f"Renamed file detected - old: {old_path}, new: {file_path}"
                                     )
-                                    renamed_files.add((Path(old_path), file_path))
+                                    renamed_files.add((Path(old_path), file_path))  # type: ignore[arg-type]
                                     renamed_count += 1
                                     continue  # Use continue instead of break to process remaining files
 
@@ -414,9 +414,7 @@ class Initializer:
             Set: The updated set of deleted files including those from status files.
         """
         artifacts_folder = os.getenv("ARTIFACTS_FOLDER", "")
-        logs_dir = (
-            Path(artifacts_folder) / "logs" if artifacts_folder else Path("logs")
-        )
+        logs_dir = Path(artifacts_folder) / "logs" if artifacts_folder else Path("logs")
 
         status_files = [
             logs_dir / "content_private_files_relative_paths.txt",
@@ -442,9 +440,7 @@ class Initializer:
                             file_path = Path(file_path_str)
 
                             # Handle deleted files
-                            if (
-                                status_info.get("status") == "deleted"
-                            ):
+                            if status_info.get("status") == "deleted":
                                 deleted_files.add(file_path)
                                 deleted_count += 1
 

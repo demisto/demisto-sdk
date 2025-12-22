@@ -1,4 +1,4 @@
 changes:
-- description: Implement MCP Tagging for Marketplace Packs that contain MCP Integrations.
+- description: Content packs containing MCP integrations are now automatically tagged as MCP packs.
   type: internal
 pr_number: 5156

@@ -1,4 +1,0 @@
-changes:
-- description: Added the `provider` field to the integration schema.
-  type: feature
-pr_number: 5155

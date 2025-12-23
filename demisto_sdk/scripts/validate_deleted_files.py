@@ -69,7 +69,7 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
     """
     git_util = GitUtil.from_content_path()
     deleted_files = handle_private_repo_deleted_files(
-        git_util.deleted_files(DEMISTO_GIT_PRIMARY_BRANCH)
+        git_util.deleted_files(DEMISTO_GIT_PRIMARY_BRANCH), show_deleted_files=False
     )
 
     deleted_files_in_protected_dirs = [

@@ -49,13 +49,13 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 )
 
 
-def handle_private_repo_deleted_files(deleted_files: Set) -> Set:
+def handle_private_repo_deleted_files(deleted_files: Set, show_deleted_files: bool = True) -> Set:
     """
     Handle deleted files for private repositories by reading status files.
 
     Args:
         deleted_files (Set): The initial set of deleted files from git.
-
+        show_deleted_files: if print to the logs the deleted files or not.
     Returns:
         Set: The updated set of deleted files including those from status files.
     """
@@ -99,7 +99,7 @@ def handle_private_repo_deleted_files(deleted_files: Set) -> Set:
             continue
 
     # Log files in a more readable format
-    if deleted_files:
+    if deleted_files and show_deleted_files:
         logger.info("\n######## Deleted files:")
         for file in sorted(deleted_files):
             logger.info(f"  - {file}")

@@ -3087,9 +3087,7 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                                 "name": "cmd-ok",
                                 "description": "ok",
                                 "deprecated": False,
-                                "arguments": [
-                                    {"name": "ip_list", "description": "ip"}
-                                ],
+                                "arguments": [{"name": "ip_list", "description": "ip"}],
                                 "outputs": [],
                                 "compliantpolicies": ["IP Blockage"],
                             },
@@ -3159,7 +3157,10 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                                 "description": "bad 2",
                                 "deprecated": False,
                                 "arguments": [
-                                    {"name": "endpoint_id", "description": "endpoint id"}
+                                    {
+                                        "name": "endpoint_id",
+                                        "description": "endpoint id"
+                                    }
                                 ],
                                 "outputs": [],
                                 "compliantpolicies": [],

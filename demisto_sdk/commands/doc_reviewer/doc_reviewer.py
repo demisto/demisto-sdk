@@ -250,14 +250,14 @@ class DocReviewer:
         )
 
     def print_file_report(self):
-        if self.files_without_misspells:
+        if self.files_without_misspells and not self.no_failure:
             logger.info(
                 "\n<green>================= Files Without Misspells =================</green>"
             )
             no_misspells_string = "\n".join(self.files_without_misspells)
             logger.info(f"<green>{no_misspells_string}</green>")
 
-        if self.files_with_misspells:
+        if self.files_with_misspells and not self.no_failure:
             logger.info(
                 "\n<red>================= Files With Misspells =================</red>"
             )
@@ -316,17 +316,20 @@ class DocReviewer:
             elif file.endswith(".yml"):
                 self.check_yaml(file)
 
-            if self.unknown_words:
-                logger.info(
-                    f"\n<red> - Words that might be misspelled were found in {file}:</red>"
-                )
-                self.print_unknown_words(unknown_words=self.unknown_words)
-                self.found_misspelled = True
-                self.files_with_misspells.add(file)
+            if not self.no_failure:
+                if self.unknown_words:
+                    logger.info(
+                        f"\n<red> - Words that might be misspelled were found in {file}:</red>"
+                    )
+                    self.print_unknown_words(unknown_words=self.unknown_words)
+                    self.found_misspelled = True
+                    self.files_with_misspells.add(file)
 
-            else:
-                logger.info(f"<green> - No misspelled words found in {file}</green>")
-                self.files_without_misspells.add(file)
+                else:
+                    logger.info(
+                        f"<green> - No misspelled words found in {file}</green>"
+                    )
+                    self.files_without_misspells.add(file)
 
         self.print_file_report()
         if self.malformed_rn_files:

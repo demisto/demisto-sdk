@@ -382,7 +382,23 @@ class Initializer:
                     logger.debug("Full traceback:", exc_info=True)
                     continue
 
-        logger.info(f"{modified_files=}\n{added_files=}\n{renamed_files=}\n")
+        # Log files in a more readable format
+        logger.info("\n######## The final lists after union with the private repositories files:")
+        if modified_files:
+            logger.info("\n######## Modified files:")
+            for file in sorted(modified_files):
+                logger.info(f"  - {file}")
+
+        if added_files:
+            logger.info("\n######## Added files:")
+            for file in sorted(added_files):
+                logger.info(f"  - {file}")
+
+        if renamed_files:
+            logger.info("\n######## Renamed files:")
+            for old_path, new_path in sorted(renamed_files):
+                logger.info(f"  - {old_path} → {new_path}")
+
         return modified_files, added_files, renamed_files
 
     def handle_private_repo_deleted_files(self, deleted_files: Set) -> Set:
@@ -434,7 +450,11 @@ class Initializer:
                 logger.debug("Full traceback:", exc_info=True)
                 continue
 
-        logger.info(f"{deleted_files=}\nTotal deleted files: {len(deleted_files)}")
+        # Log files in a more readable format
+        if deleted_files:
+            logger.info("\n######## Deleted files:")
+            for file in sorted(deleted_files):
+                logger.info(f"  - {file}")
 
         return deleted_files
 

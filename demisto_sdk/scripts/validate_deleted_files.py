@@ -31,7 +31,7 @@ def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
             file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH
         )
     except (FileReadError, FileNotFoundError):
-        logger.warning(
+        logger.debug(
             f"Could not retrieve {file_path} in remote branch {DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}"
         )
         logger.debug(

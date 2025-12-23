@@ -2967,7 +2967,9 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                                 "name": "block-ip",
                                 "description": "block ip",
                                 "deprecated": False,
-                                "arguments": [{"name": "ip_list", "description": "ip list"}],
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip list"}
+                                ],
                                 "outputs": [],
                                 "compliantpolicies": ["IP Blockage"],
                             }
@@ -2988,7 +2990,9 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                                 "name": "block-ip",
                                 "description": "block ip",
                                 "deprecated": False,
-                                "arguments": [{"name": "ip_list", "description": "ip list"}],
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip list"}
+                                ],
                                 "outputs": [],
                                 "compliantpolicies": [],
                             }
@@ -3037,7 +3041,9 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                                 "name": "simple-command",
                                 "description": "simple command",
                                 "deprecated": False,
-                                "arguments": [{"name": "verbose", "description": "verbose"}],
+                                "arguments": [
+                                    {"name": "verbose", "description": "verbose"}
+                                ],
                                 "outputs": [],
                                 "compliantpolicies": [],
                             }
@@ -3058,7 +3064,9 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                                 "name": "hard-rem-command",
                                 "description": "hard remediation",
                                 "deprecated": False,
-                                "arguments": [{"name": "username", "description": "username"}],
+                                "arguments": [
+                                    {"name": "username", "description": "username"}
+                                ],
                                 "outputs": [],
                                 "compliantpolicies": ["User Hard Remediation"],
                             }
@@ -3079,7 +3087,9 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                                 "name": "cmd-ok",
                                 "description": "ok",
                                 "deprecated": False,
-                                "arguments": [{"name": "ip_list", "description": "ip"}],
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip"}
+                                ],
                                 "outputs": [],
                                 "compliantpolicies": ["IP Blockage"],
                             },
@@ -3087,7 +3097,9 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                                 "name": "cmd-bad",
                                 "description": "bad",
                                 "deprecated": False,
-                                "arguments": [{"name": "endpoint_id", "description": "id"}],
+                                "arguments": [
+                                    {"name": "endpoint_id", "description": "id"}
+                                ],
                                 "outputs": [],
                                 "compliantpolicies": [],
                             },
@@ -3136,7 +3148,9 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                                 "name": "cmd-bad-1",
                                 "description": "bad 1",
                                 "deprecated": False,
-                                "arguments": [{"name": "ip_list", "description": "ip list"}],
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip list"}
+                                ],
                                 "outputs": [],
                                 "compliantpolicies": [],
                             },
@@ -3144,7 +3158,9 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                                 "name": "cmd-bad-2",
                                 "description": "bad 2",
                                 "deprecated": False,
-                                "arguments": [{"name": "endpoint_id", "description": "endpoint id"}],
+                                "arguments": [
+                                    {"name": "endpoint_id", "description": "endpoint id"}
+                                ],
                                 "outputs": [],
                                 "compliantpolicies": [],
                             },
@@ -3281,7 +3297,9 @@ def test_MissingCompliantPoliciesValidator_obtain_invalid_content_items(
         ]
     }
 
-    mocker.patch("demisto_sdk.commands.common.tools.is_external_repository", return_value=False)
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
 
     mocker.patch(
         "demisto_sdk.commands.common.tools.get_dict_from_file",

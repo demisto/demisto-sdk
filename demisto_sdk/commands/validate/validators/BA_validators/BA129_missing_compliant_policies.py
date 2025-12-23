@@ -3,13 +3,12 @@ from __future__ import annotations
 
 from typing import Iterable, List, Set, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses,PARTNER_SUPPORT,COMMUNITY_SUPPORT
 from demisto_sdk.commands.common.tools import get_compliant_polices
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
-        BaseValidator,
-        ValidationResult,
+    BaseValidator,
+    ValidationResult,
 )
 
 ContentTypes = Union[Integration, Script]
@@ -69,7 +68,9 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
                         ValidationResult(
                             validator=self,
                             message=self.error_message.format(
-                                f"Command {command.name}" if isinstance(content_item, Integration) else command.name,
+                                f"Command {command.name}"
+                                if isinstance(content_item, Integration)
+                                else command.name,
                                 sorted(problematic_arguments),
                                 sorted(missing_policy_options),
                             ),

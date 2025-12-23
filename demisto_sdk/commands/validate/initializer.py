@@ -49,7 +49,9 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 )
 
 
-def handle_private_repo_deleted_files(deleted_files: Set, show_deleted_files: bool = True) -> Set:
+def handle_private_repo_deleted_files(
+    deleted_files: Set, show_deleted_files: bool = True
+) -> Set:
     """
     Handle deleted files for private repositories by reading status files.
 

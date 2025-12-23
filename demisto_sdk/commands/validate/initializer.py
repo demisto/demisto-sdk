@@ -383,7 +383,9 @@ class Initializer:
                     continue
 
         # Log files in a more readable format
-        logger.info("\n######## The final lists after union with the private repositories files:")
+        logger.info(
+            "\n######## The final lists after union with the private repositories files:"
+        )
         if modified_files:
             logger.info("\n######## Modified files:")
             for file in sorted(modified_files):
@@ -396,8 +398,15 @@ class Initializer:
 
         if renamed_files:
             logger.info("\n######## Renamed files:")
-            for old_path, new_path in sorted(renamed_files):
-                logger.info(f"  - {old_path} → {new_path}")
+            for renamed_tuple in sorted(
+                renamed_files,
+                key=lambda x: str(x[1]) if isinstance(x, tuple) else str(x),
+            ):
+                if isinstance(renamed_tuple, tuple) and len(renamed_tuple) == 2:
+                    old_path, new_path = renamed_tuple
+                    logger.info(f"  - {old_path} → {new_path}")
+                else:
+                    logger.info(f"  - {renamed_tuple}")
 
         return modified_files, added_files, renamed_files
 

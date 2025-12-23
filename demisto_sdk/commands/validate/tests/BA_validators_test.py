@@ -3159,7 +3159,7 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
                                 "arguments": [
                                     {
                                         "name": "endpoint_id",
-                                        "description": "endpoint id"
+                                        "description": "endpoint id",
                                     }
                                 ],
                                 "outputs": [],

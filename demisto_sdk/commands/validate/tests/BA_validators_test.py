@@ -3311,3 +3311,72 @@ def test_MissingCompliantPoliciesValidator_obtain_invalid_content_items(
     results = validator.obtain_invalid_content_items(content_items)
 
     assert [r.message for r in results] == expected_msgs
+
+
+def test_MissingCompliantPoliciesValidator_unchanged_command_is_ignored(mocker):
+    """
+    Given:
+    - An Integration content item with a command 'block-ip' that uses argument 'ip_list'.
+    - The command is technically INVALID (it is missing the 'IP Blockage' policy).
+    - However, an 'old_base_content_object' exists with the EXACT same command structure.
+
+    When:
+    - Calling obtain_invalid_content_items.
+
+    Then:
+    - The validator should detect that the command has not changed compared to the old version.
+    - It should return an empty list (ignoring the missing policy error for legacy/unchanged commands).
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip_list"],
+            },
+        ]
+    }
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    current_integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "block-ip",
+                    "description": "block ip",
+                    "arguments": [{"name": "ip_list", "description": "ip list"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                }
+            ]
+        ],
+    )
+
+    old_integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "block-ip",
+                    "description": "block ip",
+                    "arguments": [{"name": "ip_list", "description": "ip list"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                }
+            ]
+        ],
+    )
+
+    current_integration.old_base_content_object = old_integration
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items([current_integration])
+
+    assert results == []

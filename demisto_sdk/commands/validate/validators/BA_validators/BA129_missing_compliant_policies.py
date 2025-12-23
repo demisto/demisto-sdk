@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Set, Union
+from typing import Iterable, List, Set, Union, Optional
 
 from demisto_sdk.commands.common.tools import get_compliant_polices
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -28,23 +28,22 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
         """
         Identify commands that use arguments associated with compliance policies
         but do not declare the required compliantpolicies.
-
-        Args:
-            content_items (Iterable[Integration | Script]):
-                Content graph items to validate.
-            validate_all_files (bool):
-                Indicates whether validation is running on all files or only on
-                files affected by the current git diff.
-
-        Returns:
-            List[ValidationResult]:
-                Validation results for commands missing required compliantpolicies.
+        Only validates new or modified commands.
         """
         results: list[ValidationResult] = []
         argument_to_policies = self._get_argument_to_policies_map()
 
         for content_item in content_items:
             for command in self._get_commands(content_item):
+                
+                # Check if command is new or modified
+                old_command = self._get_old_command(content_item, command.name)
+                
+                # If the command existed before and hasn't changed relevant fields, skip validation
+                if old_command and not self._has_command_changed(old_command, command):
+                    continue
+
+                # Validation Logic
                 argument_names: Set[str] = {
                     arg.name for arg in (command.args or []) if arg.name
                 }
@@ -58,6 +57,7 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
 
                     if not valid_policy_options:
                         continue
+                    # Check if the declared policies cover the requirements for this arg
                     if valid_policy_options.isdisjoint(declared_policies):
                         problematic_arguments.add(arg)
                         missing_policy_options.update(valid_policy_options)
@@ -79,6 +79,43 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
                     )
 
         return results
+
+    def _get_old_command(self, content_item: ContentTypes, command_name: str) -> Optional[object]:
+        """
+        Retrieves the corresponding command object from the old content item.
+        """
+        old_content_item = content_item.old_base_content_object
+        if not old_content_item:
+            return None
+
+        if isinstance(old_content_item, Script):
+            # For Scripts, the content item itself acts as the command
+            return old_content_item if old_content_item.name == command_name else None
+        # For Integrations, search through the list of commands
+        if isinstance(old_content_item, Integration):
+            for command in old_content_item.commands:
+                if command.name == command_name:
+                    return command
+        return None
+
+    @staticmethod
+    def _has_command_changed(old_command, new_command) -> bool:
+        """
+        Checks if relevant fields (arguments or compliantpolicies) have changed between versions.
+        """
+        # Compare Arguments (by name)
+        old_args = {arg.name for arg in (old_command.args or [])}
+        new_args = {arg.name for arg in (new_command.args or [])}
+        if old_args != new_args:
+            return True
+
+        # Compare Compliant Policies
+        old_policies = set(old_command.compliantpolicies or [])
+        new_policies = set(new_command.compliantpolicies or [])
+        if old_policies != new_policies:
+            return True
+
+        return False
 
     @staticmethod
     def _get_commands(content_item: ContentTypes):

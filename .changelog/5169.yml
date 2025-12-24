@@ -1,4 +1,4 @@
 changes:
-- description: test
+- description: ignore gr110 validate
   type: internal
 pr_number: 5169

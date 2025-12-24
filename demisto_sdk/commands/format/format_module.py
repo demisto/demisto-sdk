@@ -59,7 +59,6 @@ from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 
-TEST = "test"
 FILE_TYPE_AND_LINKED_CLASS = {
     "integration": IntegrationYMLFormat,
     "script": ScriptYMLFormat,

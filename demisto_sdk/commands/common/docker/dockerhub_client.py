@@ -592,7 +592,7 @@ def get_registry_api_url(registry: str, default_registry: str) -> str:
                 f"Could not parse a valid API URL from the DOCKER_IO environment variable, Error: {str(e)} "
             )
 
-    logger.debug(f"using provided or default registry, {default_registry=}")
+    logger.debug(f"using provided or default registry, {default_registry=} {registry=}")
     return registry or default_registry
 
 

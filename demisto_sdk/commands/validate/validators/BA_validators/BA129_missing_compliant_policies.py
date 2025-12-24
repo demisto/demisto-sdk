@@ -10,6 +10,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
+
 ContentTypes = Union[Integration, Script]
 
 
@@ -40,7 +41,9 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
             else:
                 for command in self._get_commands(content_item):
                     old_command = self._get_old_command(content_item, command.name)
-                    if not old_command or self._has_command_arguments_changed(old_command, command):
+                    if not old_command or self._has_command_arguments_changed(
+                        old_command, command
+                    ):
                         commands_to_validate.append(command)
 
             for command in commands_to_validate:
@@ -56,12 +59,14 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
         self,
         command,
         content_item: ContentTypes,
-        argument_to_policies: dict[str, set[str]]
+        argument_to_policies: dict[str, set[str]],
     ) -> Optional[ValidationResult]:
         """
         Helper method to validate a single command against the policy map.
         """
-        argument_names: Set[str] = {arg.name for arg in (command.args or []) if arg.name}
+        argument_names: Set[str] = {
+            arg.name for arg in (command.args or []) if arg.name
+        }
         declared_policies = set(command.compliantpolicies or [])
 
         problematic_arguments: Set[str] = set()
@@ -81,7 +86,9 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
             return ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    f"Command {command.name}" if isinstance(content_item, Integration) else command.name,
+                    f"Command {command.name}"
+                    if isinstance(content_item, Integration)
+                    else command.name,
                     sorted(problematic_arguments),
                     sorted(missing_policy_options),
                 ),
@@ -90,7 +97,9 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
             )
         return None
 
-    def _get_old_command(self, content_item: ContentTypes, command_name: str) -> Optional[object]:
+    def _get_old_command(
+        self, content_item: ContentTypes, command_name: str
+    ) -> Optional[object]:
         """
         Retrieves the corresponding command object from the old content item.
         """

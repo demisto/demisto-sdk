@@ -146,16 +146,16 @@ def update_content_graph(
                 )
                 return
     if use_git and (commit := content_graph_interface.commit) and not is_external_repo:
-        try:
-            git_util.get_all_changed_pack_ids(commit)
-        except Exception as e:
-            logger.warning(
-                f"Failed to get changed packs from git. Creating from scratch. Error: {e}"
-            )
-            create_content_graph(
-                content_graph_interface, marketplace, dependencies, output_path
-            )
-            return
+        # try:
+        #     git_util.get_all_changed_pack_ids(commit)
+        # except Exception as e:
+        logger.warning(
+            f"Failed to get changed packs from git. Creating from scratch. Error: {e}"
+        )
+        create_content_graph(
+            content_graph_interface, marketplace, dependencies, output_path
+        )
+        return
         packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))
 
     packs_str = "\n".join([f"- {p}" for p in sorted(packs_to_update)])

@@ -1,4 +1,4 @@
 changes:
-- description: ignore gr110 validate
+- description: Ignore gr110 when validating all in the github action.
   type: internal
 pr_number: 5169

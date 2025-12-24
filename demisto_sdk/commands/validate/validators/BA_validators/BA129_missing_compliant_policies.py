@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Set, Union, Optional
+from typing import Iterable, List, Optional, Set, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.tools import get_compliant_polices

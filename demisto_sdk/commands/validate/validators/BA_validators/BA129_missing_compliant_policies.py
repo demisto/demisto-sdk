@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Optional, Set, Union
+from typing import Any, Iterable, List, Optional, Set, Union
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.tools import get_compliant_polices
@@ -112,7 +112,7 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
 
     def _get_old_command(
         self, content_item: ContentTypes, command_name: str
-    ) -> Optional[object]:
+    ) -> Optional[Any]:
         """
         Retrieves the corresponding command object from the old content item.
         Args:
@@ -120,7 +120,7 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
             command_name (str): The name of the command to look up.
 
         Returns:
-            Optional[object]: The old command object if found, otherwise None.
+            Optional[Any]: The old command object if found, otherwise None.
         """
         old_content_item = content_item.old_base_content_object
         if not old_content_item:
@@ -155,7 +155,7 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
         return False
 
     @staticmethod
-    def _get_commands(content_item: ContentTypes) -> List[object]:
+    def _get_commands(content_item: ContentTypes) -> List[Any]:
         """
         Extracts the list of command objects from the content item.
 
@@ -166,7 +166,7 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
             content_item (ContentTypes): The Integration or Script object.
 
         Returns:
-            List[object]: A list of command objects to be validated.
+            List[Any]: A list of command objects to be validated.
         """
         if isinstance(content_item, Integration):
             return content_item.commands or []

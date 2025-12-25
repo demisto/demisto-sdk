@@ -46,10 +46,7 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
                 commands_to_validate = self._get_commands(content_item)
             else:
                 for command in self._get_commands(content_item):
-                    old_command = self._get_old_command(content_item, command.name)
-                    if not old_command or self._has_command_arguments_changed(
-                        old_command, command
-                    ):
+                    if self._is_new_command(content_item, command.name):
                         commands_to_validate.append(command)
 
             for command in commands_to_validate:
@@ -110,49 +107,31 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
             )
         return None
 
-    def _get_old_command(
+    def _is_new_command(
         self, content_item: ContentTypes, command_name: str
-    ) -> Optional[Any]:
+    ) -> bool:
         """
-        Retrieves the corresponding command object from the old content item.
+        Check if the given command is new command.
         Args:
             content_item (ContentTypes): The current content item.
             command_name (str): The name of the command to look up.
 
         Returns:
-            Optional[Any]: The old command object if found, otherwise None.
+            bool: wether the command is new.
         """
         old_content_item = content_item.old_base_content_object
         if not old_content_item:
-            return None
+            return True
 
         if isinstance(old_content_item, Script):
-            return old_content_item
+            return old_content_item.name != command_name
 
         if isinstance(old_content_item, Integration):
             for command in old_content_item.commands:
                 if command.name == command_name:
-                    return command
+                    return False
 
-        return None
-
-    @staticmethod
-    def _has_command_arguments_changed(old_command, new_command) -> bool:
-        """
-        Checks if arguments have changed.
-        Args:
-            old_command: The command object from the previous version.
-            new_command: The current command object.
-
-        Returns:
-            bool: True if the set of argument names differs, False otherwise.
-        """
-        old_args = {arg.name for arg in (old_command.args or [])}
-        new_args = {arg.name for arg in (new_command.args or [])}
-        if old_args != new_args:
-            return True
-
-        return False
+        return True
 
     @staticmethod
     def _get_commands(content_item: ContentTypes) -> List[Any]:

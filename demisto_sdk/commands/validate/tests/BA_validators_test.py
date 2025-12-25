@@ -3313,12 +3313,12 @@ def test_MissingCompliantPoliciesValidator_obtain_invalid_content_items(
     assert [r.message for r in results] == expected_msgs
 
 
-def test_MissingCompliantPoliciesValidator_unchanged_command_is_ignored(mocker):
+def test_MissingCompliantPoliciesValidator_old_command_is_ignored(mocker):
     """
     Given:
     - An Integration content item with a command 'block-ip' that uses argument 'ip_list'.
     - The command is technically INVALID (it is missing the 'IP Blockage' policy).
-    - However, an 'old_base_content_object' exists with the EXACT same command structure.
+    - However, an 'old_base_content_object' exists with the EXACT same command name.
 
     When:
     - Calling obtain_invalid_content_items.
@@ -3366,7 +3366,7 @@ def test_MissingCompliantPoliciesValidator_unchanged_command_is_ignored(mocker):
                 {
                     "name": "block-ip",
                     "description": "block ip",
-                    "arguments": [{"name": "ip_list", "description": "ip list"}],
+                    "arguments": [{"name": "ip", "description": "ip list"}],
                     "outputs": [],
                     "compliantpolicies": [],
                 }
@@ -3380,3 +3380,90 @@ def test_MissingCompliantPoliciesValidator_unchanged_command_is_ignored(mocker):
     results = validator.obtain_invalid_content_items([current_integration])
 
     assert results == []
+
+
+def test_MissingCompliantPoliciesValidator_only_new_command_is_reported(mocker):
+    """
+    Given:
+    - An Integration content item with TWO commands:
+        1) 'old-cmd' (exists in old_base_content_object) - INVALID but should be ignored.
+        2) 'new-cmd' (does NOT exist in old_base_content_object) - INVALID and should be reported.
+    - Both commands use args that require compliantpolicies, and both are missing them.
+
+    When:
+    - Calling obtain_invalid_content_items.
+
+    Then:
+    - Only the NEW command should produce a ValidationResult.
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip_list"],
+            },
+            {
+                "name": "EndPoint Isolation",
+                "category": "EndPoint",
+                "arguments": ["endpoint_id"],
+            },
+        ]
+    }
+
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    current_integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "old-cmd",
+                    "description": "old cmd",
+                    "deprecated": False,
+                    "arguments": [{"name": "ip_list", "description": "ip list"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # INVALID, but should be ignored (old command)
+                },
+                {
+                    "name": "new-cmd",
+                    "description": "new cmd",
+                    "deprecated": False,
+                    "arguments": [{"name": "endpoint_id", "description": "endpoint id"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # INVALID, and should be reported (new command)
+                },
+            ]
+        ],
+    )
+
+    old_integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "old-cmd",
+                    "description": "old cmd",
+                    "deprecated": False,
+                    "arguments": [{"name": "ip_list", "description": "ip list"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Still invalid, but existence is what matters here
+                }
+            ]
+        ],
+    )
+
+    current_integration.old_base_content_object = old_integration
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items([current_integration])
+
+    assert [r.message for r in results] == [
+        "Command new-cmd uses the arguments: ['endpoint_id'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation']."
+    ]

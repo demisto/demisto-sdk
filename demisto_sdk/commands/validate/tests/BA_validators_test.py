@@ -3435,7 +3435,9 @@ def test_MissingCompliantPoliciesValidator_only_new_command_is_reported(mocker):
                     "name": "new-cmd",
                     "description": "new cmd",
                     "deprecated": False,
-                    "arguments": [{"name": "endpoint_id", "description": "endpoint id"}],
+                    "arguments": [
+                        {"name": "endpoint_id", "description": "endpoint id"}
+                    ],
                     "outputs": [],
                     "compliantpolicies": [],  # INVALID, and should be reported (new command)
                 },

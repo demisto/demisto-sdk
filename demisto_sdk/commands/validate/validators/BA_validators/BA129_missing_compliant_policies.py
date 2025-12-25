@@ -107,9 +107,7 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
             )
         return None
 
-    def _is_new_command(
-        self, content_item: ContentTypes, command_name: str
-    ) -> bool:
+    def _is_new_command(self, content_item: ContentTypes, command_name: str) -> bool:
         """
         Check if the given command is new command.
         Args:

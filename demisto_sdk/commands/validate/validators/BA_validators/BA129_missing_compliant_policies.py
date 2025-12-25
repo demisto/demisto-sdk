@@ -29,7 +29,13 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
         """
         Identify commands that use arguments associated with compliance policies
         but do not declare the required compliantpolicies.
-        Only validates new or modified commands.
+        Only identify newly commands, or commands with arguments change.
+
+        Args:
+            content_items (Iterable[ContentTypes]): A list of Integration or Script objects to validate.
+
+        Returns:
+            List[ValidationResult]: A list of validation results for any commands failing the policy check.
         """
         results: list[ValidationResult] = []
         argument_to_policies = self._get_argument_to_policies_map()
@@ -63,6 +69,13 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
     ) -> Optional[ValidationResult]:
         """
         Helper method to validate a single command against the policy map.
+        Args:
+            command: The command object to validate.
+            content_item (ContentTypes): The parent Integration or Script object.
+            argument_to_policies (dict[str, set[str]]): A map with argument names to their required policies.
+
+        Returns:
+            Optional[ValidationResult]: A ValidationResult if the command is non-compliant, otherwise None.
         """
         argument_names: Set[str] = {
             arg.name for arg in (command.args or []) if arg.name
@@ -102,10 +115,16 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
     ) -> Optional[object]:
         """
         Retrieves the corresponding command object from the old content item.
+        Args:
+            content_item (ContentTypes): The current content item.
+            command_name (str): The name of the command to look up.
+
+        Returns:
+            Optional[object]: The old command object if found, otherwise None.
         """
         old_content_item = content_item.old_base_content_object
         if not old_content_item:
-            return None  # Changed from False to None for correct typing
+            return None
 
         if isinstance(old_content_item, Script):
             return old_content_item
@@ -121,6 +140,12 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
     def _has_command_arguments_changed(old_command, new_command) -> bool:
         """
         Checks if arguments have changed.
+        Args:
+            old_command: The command object from the previous version.
+            new_command: The current command object.
+
+        Returns:
+            bool: True if the set of argument names differs, False otherwise.
         """
         old_args = {arg.name for arg in (old_command.args or [])}
         new_args = {arg.name for arg in (new_command.args or [])}
@@ -130,7 +155,19 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
         return False
 
     @staticmethod
-    def _get_commands(content_item: ContentTypes):
+    def _get_commands(content_item: ContentTypes) -> List[object]:
+        """
+        Extracts the list of command objects from the content item.
+
+        For Integrations, this returns the list of defined commands.
+        For Scripts, which act as a single command, this returns a list containing the script object itself.
+
+        Args:
+            content_item (ContentTypes): The Integration or Script object.
+
+        Returns:
+            List[object]: A list of command objects to be validated.
+        """
         if isinstance(content_item, Integration):
             return content_item.commands or []
         elif isinstance(content_item, Script):
@@ -139,6 +176,16 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
 
     @staticmethod
     def _get_argument_to_policies_map() -> dict[str, set[str]]:
+        """
+        Builds a lookup mapping of argument names to their associated compliance policies.
+
+        It iterates through the compliant policies configuration (retrieved via `get_compliant_polices`)
+        and maps every argument listed in a policy to the policy's name. This allows for easy
+        lookup to check if an argument requires specific compliance policies.
+
+        Returns:
+            dict[str, set[str]]: A dictionary where keys are argument names and values are sets of policy names associated with that argument.
+        """
         argument_to_policies: dict[str, set[str]] = {}
         for policy in get_compliant_polices():
             policy_name = policy.get("name")

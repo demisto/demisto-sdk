@@ -482,14 +482,60 @@ def get_local_remote_file(
     tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
     return_content: bool = False,
 ):
+    """
+    Fetch a file from either local or remote repository.
+
+    For private repositories, tries local first then remote.
+    For public repositories, tries remote first then local.
+
+    Args:
+        full_file_path: Path to the file to fetch
+        tag: Git tag/branch to fetch from
+        return_content: Whether to return raw content or parsed file details
+
+    Returns:
+        File content (encoded bytes if return_content=True) or parsed file details (dict)
+    """
+    logger.debug(f"[get_local_remote_file] Fetching {full_file_path} (tag={tag})")
+
     repo_git_util = GitUtil()
-    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
-    file_content = repo_git_util.get_local_remote_file_content(git_path)
-    if return_content:
+
+    # Check if handling private repositories
+    is_handling_private_repo = string_to_bool(
+        os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
+    )
+
+    # Determine the order: private repos try local first, public repos try remote first
+    try_remote_first = not is_handling_private_repo
+
+    # Define the two sources to try in order
+    sources = ("remote", "local") if try_remote_first else ("local", "remote")
+
+    file_content = None
+    for source_name in sources:
+        git_path = repo_git_util.get_local_remote_file_path(
+            full_file_path, tag, from_remote=source_name == "remote"
+        )
+        logger.debug(
+            f"[get_local_remote_file] Trying {source_name}, git_path={git_path}"
+        )
+
+        file_content = repo_git_util.get_local_remote_file_content(git_path)
+
         if file_content:
-            return file_content.encode()
-        return file_content
-    return get_file_details(file_content, full_file_path)
+            logger.debug(f"[get_local_remote_file] File found in {source_name}")
+            break
+
+    logger.debug(
+        f"[get_local_remote_file] File content retrieved: {bool(file_content)} (length={len(file_content) if file_content else 0})"
+    )
+
+    if return_content:
+        return file_content.encode() if file_content else file_content
+
+    result = get_file_details(file_content, full_file_path)
+
+    return result
 
 
 def get_remote_file_from_api(
@@ -588,6 +634,8 @@ def get_file_details(
     file_content,
     full_file_path: str,
 ) -> Dict:
+    if not file_content:
+        return {}
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
@@ -965,8 +1013,12 @@ def get_yaml(
 ):
     if cache_clear:
         get_file.cache_clear()
+
     return get_file(
-        file_path, clear_cache=cache_clear, keep_order=keep_order, git_sha=git_sha
+        file_path,
+        clear_cache=cache_clear,
+        keep_order=keep_order,
+        git_sha=git_sha,
     )
 
 

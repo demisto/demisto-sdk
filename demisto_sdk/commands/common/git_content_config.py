@@ -100,9 +100,8 @@ class GitContentConfig:
         self.current_repository = repo_name if repo_name else None
         self.project_id: Optional[int] = None
         # Check environment variable or use the provided value
-        env_value = os.getenv(GitContentConfig.ENV_PRIVATE_REPO_MODE_NAME, "")
         self.skip_repo_fallback = skip_repo_fallback or (
-            string_to_bool(env_value, default_when_empty=False) if env_value else False
+            string_to_bool(os.getenv(GitContentConfig.ENV_PRIVATE_REPO_MODE_NAME, ""), default_when_empty=False)
         )
         if project_id:
             git_provider = GitProvider.GitLab

@@ -19,6 +19,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_WHITELIST_FILE_NAME,
     PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
+    PRIVATE_REPO_STATUS_FILE_CONFIGURATION,
+    PRIVATE_REPO_STATUS_FILE_PRIVATE,
+    PRIVATE_REPO_STATUS_FILE_TEST_CONF,
     RELEASE_NOTES_DIR,
     SCRIPTS_DIR,
     ExecutionMode,
@@ -49,6 +52,101 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 )
 
 
+def _process_status_file(
+    status_file: Path, modified_files: Set, added_files: Set, renamed_files: Set
+) -> Tuple[int, int]:
+    """
+    Process a single status file and update file sets accordingly.
+
+    Args:
+        status_file: Path to the status file to process
+        modified_files: Set of modified files to update
+        added_files: Set of added files to update
+        renamed_files: Set of renamed files to update
+
+    Returns:
+        Tuple of (modified_count, renamed_count)
+    """
+    modified_count = 0
+    renamed_count = 0
+
+    try:
+        if status_file.exists():
+            with open(status_file, "r") as f:
+                file_statuses = DEFAULT_JSON_HANDLER.load(f)
+
+                for file_path_str, status_info in file_statuses.items():
+                    if not file_path_str:
+                        continue
+
+                    file_path = Path(file_path_str)
+
+                    # Handle renamed files
+                    if (
+                        status_info.get("status") == "renamed"
+                        and file_path in added_files
+                    ):
+                        added_files.discard(file_path)
+                        old_path = status_info.get("old_path")
+                        renamed_files.add((Path(old_path), file_path))  # type: ignore[arg-type]
+                        renamed_count += 1
+                        continue
+
+                    # Handle modified status
+                    if (
+                        status_info.get("status") == "modified"
+                        and file_path in added_files
+                    ):
+                        added_files.discard(file_path)
+                        modified_files.add(file_path)
+                        modified_count += 1
+
+    except DEFAULT_JSON_HANDLER.JSONDecodeError as e:
+        logger.warning(f"Invalid JSON format in {status_file}: {str(e)}")
+    except Exception as e:
+        logger.warning(f"Error processing {status_file}: {str(e)}")
+        logger.debug("Full traceback:", exc_info=True)
+
+    return modified_count, renamed_count
+
+
+def _log_file_changes(
+    modified_files: Set, added_files: Set, renamed_files: Set
+) -> None:
+    """
+    Log the final lists of modified, added, and renamed files.
+
+    Args:
+        modified_files: Set of modified files
+        added_files: Set of added files
+        renamed_files: Set of renamed files (tuples of old_path, new_path)
+    """
+    logger.info(
+        "\n######## The final lists after union with the private repositories files:"
+    )
+    if modified_files:
+        logger.info("\n######## Modified files:")
+        for file in sorted(modified_files):
+            logger.info(f"  - {file}")
+
+    if added_files:
+        logger.info("\n######## Added files:")
+        for file in sorted(added_files):
+            logger.info(f"  - {file}")
+
+    if renamed_files:
+        logger.info("\n######## Renamed files:")
+        for renamed_tuple in sorted(
+            renamed_files,
+            key=lambda x: str(x[1]) if isinstance(x, tuple) else str(x),
+        ):
+            if isinstance(renamed_tuple, tuple) and len(renamed_tuple) == 2:
+                old_path, new_path = renamed_tuple
+                logger.info(f"  - {old_path} → {new_path}")
+            else:
+                logger.info(f"  - {renamed_tuple}")
+
+
 def handle_private_repo_deleted_files(
     deleted_files: Set, show_deleted_files: bool = True
 ) -> Set:
@@ -65,9 +163,9 @@ def handle_private_repo_deleted_files(
     logs_dir = Path(artifacts_folder) / "logs" if artifacts_folder else Path("logs")
 
     status_files = [
-        logs_dir / "content_private_files_relative_paths.txt",
-        logs_dir / "content_test_conf_files_relative_paths.txt",
-        logs_dir / "content_configuration_files_relative_paths.txt",
+        logs_dir / PRIVATE_REPO_STATUS_FILE_PRIVATE,
+        logs_dir / PRIVATE_REPO_STATUS_FILE_TEST_CONF,
+        logs_dir / PRIVATE_REPO_STATUS_FILE_CONFIGURATION,
     ]
 
     for status_file in status_files:
@@ -394,79 +492,18 @@ class Initializer:
             )
 
             status_files = [
-                logs_dir / "content_private_files_relative_paths.txt",
-                logs_dir / "content_test_conf_files_relative_paths.txt",
-                logs_dir / "content_configuration_files_relative_paths.txt",
+                logs_dir / PRIVATE_REPO_STATUS_FILE_PRIVATE,
+                logs_dir / PRIVATE_REPO_STATUS_FILE_TEST_CONF,
+                logs_dir / PRIVATE_REPO_STATUS_FILE_CONFIGURATION,
             ]
 
             for status_file in status_files:
-                try:
-                    if status_file.exists():
-                        with open(status_file, "r") as f:
-                            file_statuses = DEFAULT_JSON_HANDLER.load(f)
-                            modified_count = 0
-                            renamed_count = 0
-
-                            for file_path_str, status_info in file_statuses.items():
-                                if not file_path_str:
-                                    continue
-
-                                file_path = Path(file_path_str)
-
-                                # Handle renamed files
-                                if (
-                                    status_info.get("status") == "renamed"
-                                    and file_path in added_files
-                                ):
-                                    added_files.discard(file_path)
-                                    old_path = status_info.get("old_path")
-                                    renamed_files.add((Path(old_path), file_path))  # type: ignore[arg-type]
-                                    renamed_count += 1
-                                    continue  # Use continue instead of break to process remaining files
-
-                                # Handle modified status
-                                if (
-                                    status_info.get("status") == "modified"
-                                    and file_path in added_files
-                                ):
-                                    added_files.discard(file_path)
-                                    modified_files.add(file_path)
-                                    modified_count += 1
-
-                                # Files marked as "added" remain in added_files
-
-                except DEFAULT_JSON_HANDLER.JSONDecodeError as e:
-                    logger.warning(f"Invalid JSON format in {status_file}: {str(e)}")
-                except Exception as e:
-                    logger.warning(f"Error processing {status_file}: {str(e)}")
-                    logger.debug("Full traceback:", exc_info=True)
-                    continue
+                _process_status_file(
+                    status_file, modified_files, added_files, renamed_files
+                )
 
         # Log files in a more readable format
-        logger.info(
-            "\n######## The final lists after union with the private repositories files:"
-        )
-        if modified_files:
-            logger.info("\n######## Modified files:")
-            for file in sorted(modified_files):
-                logger.info(f"  - {file}")
-
-        if added_files:
-            logger.info("\n######## Added files:")
-            for file in sorted(added_files):
-                logger.info(f"  - {file}")
-
-        if renamed_files:
-            logger.info("\n######## Renamed files:")
-            for renamed_tuple in sorted(
-                renamed_files,
-                key=lambda x: str(x[1]) if isinstance(x, tuple) else str(x),
-            ):
-                if isinstance(renamed_tuple, tuple) and len(renamed_tuple) == 2:
-                    old_path, new_path = renamed_tuple
-                    logger.info(f"  - {old_path} → {new_path}")
-                else:
-                    logger.info(f"  - {renamed_tuple}")
+        _log_file_changes(modified_files, added_files, renamed_files)
 
         return modified_files, added_files, renamed_files
 

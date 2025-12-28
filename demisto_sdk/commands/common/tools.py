@@ -501,26 +501,26 @@ def get_local_remote_file(
     repo_git_util = GitUtil()
 
     # Check if handling private repositories
-    is_handling_private_repo = os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE") == "true"
+    is_handling_private_repo = string_to_bool(
+        os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
+    )
 
     # Determine the order: private repos try local first, public repos try remote first
     try_remote_first = not is_handling_private_repo
 
     # Define the two sources to try in order
     sources = [
-        ("remote", True) if try_remote_first else ("local", False),
-        ("local", False) if try_remote_first else ("remote", True),
+        "remote" if try_remote_first else "local",
+        "local" if try_remote_first else "remote",
     ]
 
     file_content = None
-    for source_name, from_remote in sources:
-        logger.debug(f"[get_local_remote_file] Trying {source_name}...")
-
+    for source_name in sources:
         git_path = repo_git_util.get_local_remote_file_path(
-            full_file_path, tag, from_remote=from_remote
+            full_file_path, tag, from_remote=source_name == "remote"
         )
         logger.debug(
-            f"[get_local_remote_file] Git path ({source_name}) resolved to: {git_path}"
+            f"[get_local_remote_file] Trying {source_name}, git_path={git_path}"
         )
 
         file_content = repo_git_util.get_local_remote_file_content(git_path)
@@ -528,10 +528,6 @@ def get_local_remote_file(
         if file_content:
             logger.debug(f"[get_local_remote_file] File found in {source_name}")
             break
-        else:
-            logger.debug(
-                f"[get_local_remote_file] File not found in {source_name}, trying fallback..."
-            )
 
     logger.debug(
         f"[get_local_remote_file] File content retrieved: {bool(file_content)} (length={len(file_content) if file_content else 0})"
@@ -541,9 +537,6 @@ def get_local_remote_file(
         return file_content.encode() if file_content else file_content
 
     result = get_file_details(file_content, full_file_path)
-    logger.debug(
-        f"[get_local_remote_file] Parsed result: type={type(result).__name__}, keys={list(result.keys()) if isinstance(result, dict) else 'N/A'}"
-    )
 
     return result
 
@@ -644,6 +637,8 @@ def get_file_details(
     file_content,
     full_file_path: str,
 ) -> Dict:
+    if not file_content:
+        return {}
     if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
     elif full_file_path.endswith(("yml", "yaml")):

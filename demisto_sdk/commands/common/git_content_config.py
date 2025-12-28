@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.string_to_bool import string_to_bool
 
 
 class GitProvider(enum.Enum):
@@ -99,9 +100,10 @@ class GitContentConfig:
         self.current_repository = repo_name if repo_name else None
         self.project_id: Optional[int] = None
         # Check environment variable or use the provided value
-        self.skip_repo_fallback = skip_repo_fallback or os.getenv(
-            GitContentConfig.ENV_PRIVATE_REPO_MODE_NAME, ""
-        ).lower() in ("true", "1", "yes")
+        env_value = os.getenv(GitContentConfig.ENV_PRIVATE_REPO_MODE_NAME, "")
+        self.skip_repo_fallback = skip_repo_fallback or (
+            string_to_bool(env_value, default_when_empty=False) if env_value else False
+        )
         if project_id:
             git_provider = GitProvider.GitLab
             self.project_id = int(project_id)

@@ -1,4 +1,0 @@
-changes:
-- description: Adding support for handling private repositories.
-  type: feature
-pr_number: 5159

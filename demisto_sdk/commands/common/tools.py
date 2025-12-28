@@ -509,7 +509,7 @@ def get_local_remote_file(
     try_remote_first = not is_handling_private_repo
 
     # Define the two sources to try in order
-    sources = ("remote", "local") if try_remote_first else ("local", "remote"),
+    sources = (("remote", "local") if try_remote_first else ("local", "remote"),)
 
     file_content = None
     for source_name in sources:

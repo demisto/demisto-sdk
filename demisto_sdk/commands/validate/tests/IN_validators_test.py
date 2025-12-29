@@ -6389,40 +6389,75 @@ def test_IsNewRequiredParamNoDefaultIntegrationValidator_parameter_requirement_c
 
 ## -------------------------  IsMcpIntegrationValidMarketplaceValidator IN168 Tests ------------------------- ##
 
+
 @pytest.mark.parametrize(
     "name, is_mcp, integration_marketplaces, pack_marketplaces, expected_failure",
     [
         # --- PASS Cases (is_mcp: True and Valid Marketplaces) ---
         (
-            "McpValidIntegration", True, [MarketplaceVersions.PLATFORM], None, False
+            "McpValidIntegration",
+            True,
+            [MarketplaceVersions.PLATFORM],
+            None,
+            False,
         ),  # Case 1: is_mcp=True, marketplaces=['platform'] explicitly set in integration.
         (
-            "McpValidPackMarketplace", True, [], [MarketplaceVersions.PLATFORM], False
+            "McpValidPackMarketplace",
+            True,
+            [],
+            [MarketplaceVersions.PLATFORM],
+            False,
         ),  # Case 2: is_mcp=True, marketplaces inherited from pack=['platform'].
         (
-            "McpValidBothMarketplaces", True, [MarketplaceVersions.PLATFORM], [MarketplaceVersions.XSOAR, MarketplaceVersions.PLATFORM], False
+            "McpValidBothMarketplaces",
+            True,
+            [MarketplaceVersions.PLATFORM],
+            [MarketplaceVersions.XSOAR, MarketplaceVersions.PLATFORM],
+            False,
         ),  # Case 3: is_mcp=True, marketplaces=['platform'] set in integration (overrides pack).
-
         # --- FAIL Cases (is_mcp: True and Invalid Marketplaces) ---
         (
-            "McpInvalidNoMarketplace", True, None, None, True
+            "McpInvalidNoMarketplace",
+            True,
+            None,
+            None,
+            True,
         ),  # Case 4: is_mcp=True, marketplaces is empty (neither in integration nor pack).
         (
-            "McpInvalidXsoar", True, [MarketplaceVersions.XSOAR], None, True
+            "McpInvalidXsoar",
+            True,
+            [MarketplaceVersions.XSOAR],
+            None,
+            True,
         ),  # Case 5: is_mcp=True, marketplaces=['xsoar'].
         (
-            "McpInvalidMultiple", True, [MarketplaceVersions.PLATFORM, MarketplaceVersions.XSOAR], None, True
+            "McpInvalidMultiple",
+            True,
+            [MarketplaceVersions.PLATFORM, MarketplaceVersions.XSOAR],
+            None,
+            True,
         ),  # Case 6: is_mcp=True, marketplaces=['platform', 'xsoar'].
         (
-            "McpInvalidPackOnly", True, [], [MarketplaceVersions.XSOAR], True
+            "McpInvalidPackOnly",
+            True,
+            [],
+            [MarketplaceVersions.XSOAR],
+            True,
         ),  # Case 7: is_mcp=True, marketplaces inherited from pack=['xsoar'].
-
         # --- PASS Cases (is_mcp: False and Any Marketplaces) ---
         (
-            "NotMcpValidXsoar", False, [MarketplaceVersions.XSOAR], None, False
+            "NotMcpValidXsoar",
+            False,
+            [MarketplaceVersions.XSOAR],
+            None,
+            False,
         ),  # Case 8: is_mcp=False, marketplaces=['xsoar'].
         (
-            "NotMcpValidMultiple", False, [MarketplaceVersions.PLATFORM, MarketplaceVersions.XSOAR], None, False
+            "NotMcpValidMultiple",
+            False,
+            [MarketplaceVersions.PLATFORM, MarketplaceVersions.XSOAR],
+            None,
+            False,
         ),  # Case 9: is_mcp=False, marketplaces=['platform', 'xsoar'].
     ],
 )
@@ -6452,14 +6487,25 @@ def test_IsMcpIntegrationValidMarketplaceValidator_obtain_invalid_content_items(
 
     if integration_marketplaces is not None:
         paths.append("marketplaces")
-        values.append([mp.value if hasattr(mp, "value") else mp for mp in integration_marketplaces])
+        values.append(
+            [
+                mp.value if hasattr(mp, "value") else mp
+                for mp in integration_marketplaces
+            ]
+        )
 
     with ChangeCWD(REPO.path):
         content_item = create_integration_object(
             name=name,
             paths=paths,
             values=values,
-            pack_info={"marketplaces": [mp.value if hasattr(mp, "value") else mp for mp in pack_marketplaces]} if pack_marketplaces else {}
+            pack_info={
+                "marketplaces": [
+                    mp.value if hasattr(mp, "value") else mp for mp in pack_marketplaces
+                ]
+            }
+            if pack_marketplaces
+            else {},
         )
 
     validator = IsMcpIntegrationValidMarketplaceValidator()
@@ -6469,7 +6515,10 @@ def test_IsMcpIntegrationValidMarketplaceValidator_obtain_invalid_content_items(
         assert len(results) == 1
         assert results[0].validator.error_code == validator.error_code
         # Check that the error message is correctly formatted
-        assert validator.error_message.format(content_item.display_name) in results[0].message
+        assert (
+            validator.error_message.format(content_item.display_name)
+            in results[0].message
+        )
     else:
         assert len(results) == 0
 
@@ -6486,18 +6535,22 @@ def test_IsMcpIntegrationValidMarketplaceValidator_fix():
     # Create an invalid item: is_mcp=True, marketplaces=['xsoar']
     invalid_content_item = create_integration_object(
         paths=["script.ismcp", "marketplaces"],
-        values=[True, [MarketplaceVersions.XSOAR.value]]
+        values=[True, [MarketplaceVersions.XSOAR.value]],
     )
-    
+
     # Verify pre-condition
-    assert invalid_content_item.data.get("marketplaces") == [MarketplaceVersions.XSOAR.value]
+    assert invalid_content_item.data.get("marketplaces") == [
+        MarketplaceVersions.XSOAR.value
+    ]
 
     validator = IsMcpIntegrationValidMarketplaceValidator()
     fix_result = validator.fix(invalid_content_item)
 
     # Check the result object
     assert fix_result.validator == validator
-    assert fix_result.message == validator.fix_message.format(invalid_content_item.display_name)
+    assert fix_result.message == validator.fix_message.format(
+        invalid_content_item.display_name
+    )
 
     # Check that the object was fixed correctly in its raw data
     assert invalid_content_item.data.get("marketplaces") == [REQUIRED_MARKETPLACE]

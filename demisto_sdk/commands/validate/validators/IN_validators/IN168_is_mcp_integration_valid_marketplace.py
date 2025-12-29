@@ -15,12 +15,14 @@ ContentTypes = Integration
 
 REQUIRED_MARKETPLACE = MarketplaceVersions.PLATFORM.value
 
+
 class IsMcpIntegrationValidMarketplaceValidator(BaseValidator[ContentTypes]):
     """
     Validate that an integration marked with ismcp: true has
     MarketplaceVersions.PLATFORM as its only marketplace, checking both
     the integration file and the parent pack (if the integration field is empty).
     """
+
     error_code = "IN168"
     description = "Validate that an integration with ismcp: true has only PLATFORM in its marketplaces list."
     rationale = (
@@ -31,9 +33,7 @@ class IsMcpIntegrationValidMarketplaceValidator(BaseValidator[ContentTypes]):
         "The marketplaces field of the integration is incorrect for an ismcp: true integration.\n"
         "This field should have only the 'platform' value."
     )
-    fix_message = (
-        "Set the integration's marketplaces list to contain only 'platform'."
-    )
+    fix_message = "Set the integration's marketplaces list to contain only 'platform'."
     related_field = "ismcp, marketplaces"
     is_auto_fixable = True
 
@@ -74,7 +74,9 @@ class IsMcpIntegrationValidMarketplaceValidator(BaseValidator[ContentTypes]):
                     invalid_items.append(
                         ValidationResult(
                             validator=self,
-                            message=self.error_message.format(content_item.display_name),
+                            message=self.error_message.format(
+                                content_item.display_name
+                            ),
                             content_object=content_item,
                         )
                     )

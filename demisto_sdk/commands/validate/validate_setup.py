@@ -142,6 +142,11 @@ def validate(
     category_to_run: str = typer.Option(
         None, help="Run specific validations by stating category."
     ),
+    handling_private_repositories: bool = typer.Option(
+        False,
+        "--handling-private-repositories",
+        help="Enable handling of private repositories when looking for status files.",
+    ),
     fix: bool = typer.Option(
         False, "-f", "--fix", help="Whether to autofix failing validations."
     ),
@@ -326,6 +331,9 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         prev_ver=kwargs["prev_ver"],
         file_path=file_path,
         execution_mode=execution_mode,
+        handling_private_repositories=kwargs.get(
+            "handling_private_repositories", False
+        ),
     )
     validator_v2 = ValidateManager(
         file_path=file_path,

@@ -959,6 +959,13 @@ PACKS_FOLDER = "Packs"
 PRIVATE_PACKS_FOLDER = "PrivatePacks"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
+# Private Repository Status Files
+PRIVATE_REPO_STATUS_FILE_PRIVATE = "content_private_files_relative_paths.txt"
+PRIVATE_REPO_STATUS_FILE_TEST_CONF = "content_test_conf_files_relative_paths.txt"
+PRIVATE_REPO_STATUS_FILE_CONFIGURATION = (
+    "content_configuration_files_relative_paths.txt"
+)
+
 CONF_JSON_FILE_NAME = "conf.json"
 VERSION_CONFIG_FILE_NAME = "version_config.json"
 

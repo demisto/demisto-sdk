@@ -5,6 +5,7 @@ import pytest
 from typer.testing import CliRunner
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, TESTS_DIR
+from demisto_sdk.commands.common.files.errors import FileReadError
 from demisto_sdk.commands.common.git_util import Repo as GitRepo
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -325,3 +326,186 @@ def test_validate_deleted_files_without_protected_dirs():
         catch_exceptions=False,
     )
     assert "Missing argument" in result.stdout
+
+
+def test_is_file_allowed_to_be_deleted_logging_fallback_to_local(
+    git_repo: Repo, mocker
+):
+    """
+    Given:
+        - A deleted file that cannot be read from remote branch
+        - The file can be read from local branch
+
+    When:
+        - running is_file_allowed_to_be_deleted_by_file_type function
+
+    Then:
+        - Verify that debug messages are logged (not warnings)
+        - Verify the file content is successfully read from local branch
+    """
+    from demisto_sdk.commands.common.constants import FileType
+    from demisto_sdk.scripts.validate_deleted_files import (
+        is_file_allowed_to_be_deleted_by_file_type,
+    )
+
+    # Mock File.read_from_git_path to fail on first call (remote) and succeed on second (local)
+    mock_read_from_git = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.File.read_from_git_path"
+    )
+    mock_read_from_git.side_effect = [
+        FileReadError(
+            "Remote read failed", Exception("Mock error")
+        ),  # First call fails (remote)
+        {"name": "TestPlaybook"},  # Second call succeeds (local)
+    ]
+
+    # Mock find_type to return a file type
+    mock_find_type = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.find_type"
+    )
+    mock_find_type.return_value = FileType.PLAYBOOK
+
+    mock_logger_debug = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.logger.debug"
+    )
+    mock_logger_warning = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.logger.warning"
+    )
+
+    file_path = Path("Packs/Test/TestPlaybooks/TestPlaybook.yml")
+
+    with ChangeCWD(git_repo.path):
+        result = is_file_allowed_to_be_deleted_by_file_type(file_path)
+
+    # Verify debug was called (not warning) for the fallback messages
+    assert mock_logger_debug.call_count == 2
+    assert "Could not retrieve" in mock_logger_debug.call_args_list[0][0][0]
+    assert "Retrieving" in mock_logger_debug.call_args_list[1][0][0]
+
+    # Verify warning was NOT called for the first fallback
+    assert mock_logger_warning.call_count == 0
+
+    # Verify the function succeeded (playbook is not in FileType_ALLOWED_TO_DELETE)
+    assert result is False
+
+
+def test_is_file_allowed_to_be_deleted_logging_fallback_to_github(
+    git_repo: Repo, mocker
+):
+    """
+    Given:
+        - A deleted file that cannot be read from remote or local branch
+        - The file can be read from GitHub API
+
+    When:
+        - running is_file_allowed_to_be_deleted_by_file_type function
+
+    Then:
+        - Verify that debug messages are logged for first fallback
+        - Verify that warning message is logged for second fallback to GitHub
+        - Verify the file content is successfully read from GitHub API
+    """
+    from demisto_sdk.commands.common.constants import FileType
+    from demisto_sdk.scripts.validate_deleted_files import (
+        is_file_allowed_to_be_deleted_by_file_type,
+    )
+
+    # Mock File.read_from_git_path to fail on both calls
+    mock_read_from_git = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.File.read_from_git_path"
+    )
+    mock_read_from_git.side_effect = [
+        FileReadError(
+            "Remote read failed", Exception("Mock error")
+        ),  # First call fails (remote)
+        FileReadError(
+            "Local read failed", Exception("Mock error")
+        ),  # Second call fails (local)
+    ]
+
+    # Mock File.read_from_github_api to succeed
+    mock_read_from_github = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.File.read_from_github_api"
+    )
+    mock_read_from_github.return_value = {"name": "TestPlaybook"}
+
+    # Mock find_type to return a file type
+    mock_find_type = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.find_type"
+    )
+    mock_find_type.return_value = FileType.PLAYBOOK
+
+    mock_logger_debug = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.logger.debug"
+    )
+    mock_logger_warning = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.logger.warning"
+    )
+
+    file_path = Path("Packs/Test/TestPlaybooks/TestPlaybook.yml")
+
+    with ChangeCWD(git_repo.path):
+        result = is_file_allowed_to_be_deleted_by_file_type(file_path)
+
+    # Verify debug was called for the first fallback
+    assert mock_logger_debug.call_count == 2
+    assert "Could not retrieve" in mock_logger_debug.call_args_list[0][0][0]
+    assert "Retrieving" in mock_logger_debug.call_args_list[1][0][0]
+
+    # Verify warning was called for the second fallback to GitHub
+    assert mock_logger_warning.call_count == 1
+    assert "Could not read file" in mock_logger_warning.call_args_list[0][0][0]
+    assert "trying to read" in mock_logger_warning.call_args_list[0][0][0]
+    assert "from github" in mock_logger_warning.call_args_list[0][0][0]
+
+    # Verify the function succeeded (playbook is not in FileType_ALLOWED_TO_DELETE)
+    assert result is False
+
+
+def test_is_file_allowed_to_be_deleted_no_fallback_needed(git_repo: Repo, mocker):
+    """
+    Given:
+        - A deleted file that can be read from remote branch on first attempt
+
+    When:
+        - running is_file_allowed_to_be_deleted_by_file_type function
+
+    Then:
+        - Verify that no debug or warning messages are logged
+        - Verify the file content is successfully read from remote branch
+    """
+    from demisto_sdk.commands.common.constants import FileType
+    from demisto_sdk.scripts.validate_deleted_files import (
+        is_file_allowed_to_be_deleted_by_file_type,
+    )
+
+    # Mock File.read_from_git_path to succeed on first call
+    mock_read_from_git = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.File.read_from_git_path"
+    )
+    mock_read_from_git.return_value = {"name": "TestPlaybook"}
+
+    # Mock find_type to return a file type
+    mock_find_type = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.find_type"
+    )
+    mock_find_type.return_value = FileType.PLAYBOOK
+
+    mock_logger_debug = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.logger.debug"
+    )
+    mock_logger_warning = mocker.patch(
+        "demisto_sdk.scripts.validate_deleted_files.logger.warning"
+    )
+
+    file_path = Path("Packs/Test/TestPlaybooks/TestPlaybook.yml")
+
+    with ChangeCWD(git_repo.path):
+        result = is_file_allowed_to_be_deleted_by_file_type(file_path)
+
+    # Verify no fallback logging occurred
+    assert mock_logger_debug.call_count == 0
+    assert mock_logger_warning.call_count == 0
+
+    # Verify the function succeeded (playbook is not in FileType_ALLOWED_TO_DELETE)
+    assert result is False

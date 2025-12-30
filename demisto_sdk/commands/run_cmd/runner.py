@@ -180,9 +180,9 @@ class Runner:
             if entry.contents:
                 logger.info("<yellow>## Readable Output</yellow>")
                 if entry.type == self.ERROR_ENTRY_TYPE:
-                    logger.info("{}", f"<red>{entry.contents}</red>\n")  # noqa: PLE1205
+                    logger.info("{}", f"<red>{entry.contents.replace('<', '\\<')}</red>\n")  # noqa: PLE1205
                 else:
-                    logger.info(f"{entry.contents}\n")
+                    logger.info(f"{entry.contents.replace('<', '\\<')}\n")
 
             # and entries with `file_id`s defined, that is the fileID of the debug log file
             if entry.type == self.DEBUG_FILE_ENTRY_TYPE:

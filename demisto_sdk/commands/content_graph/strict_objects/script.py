@@ -50,6 +50,13 @@ class EngineInfo(BaseStrictModel):
     engine: Optional[str] = None
 
 
+class PromptConfig(BaseStrictModel):
+    """Configuration for LLM prompt settings."""
+    temperature: Optional[float] = None
+    max_output_tokens: Optional[int] = Field(None, alias="maxOutputTokens")
+    web_search: Optional[bool] = Field(None, alias="webSearch")
+
+
 class ContentItemFields(BaseStrictModel):
     from_server_version: Optional[str] = Field(None, alias="fromServerVersion")
 
@@ -95,10 +102,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     user_prompt: Optional[str] = Field(None, alias="userprompt")
     system_prompt: Optional[str] = Field(None, alias="systemprompt")
     few_shots: Optional[str] = Field(None, alias="fewshots")
-    temperature: Optional[float] = None
-    max_output_tokens: Optional[int] = Field(None, alias="maxOutputTokens")
-    system_instruction: Optional[str] = Field(None, alias="systemInstruction")
-    web_search: Optional[bool] = Field(None, alias="webSearch")
+    prompt_config: Optional[PromptConfig] = Field(None, alias="promptConfig")
 
     @root_validator
     def validate_llm_constraints(cls, values):
@@ -146,10 +150,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
                 ("user_prompt", values.get("user_prompt")),
                 ("system_prompt", values.get("system_prompt")),
                 ("few_shots", values.get("few_shots")),
-                ("temperature", values.get("temperature")),
-                ("max_output_tokens", values.get("max_output_tokens")),
-                ("system_instruction", values.get("system_instruction")),
-                ("web_search", values.get("web_search")),
+                ("prompt_config", values.get("prompt_config")),
             ]
             errors.extend(
                 f"Field '{field_name}' must be empty when 'isllm' is False."

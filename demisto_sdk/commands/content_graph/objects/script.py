@@ -18,7 +18,6 @@ class Script(BaseScript, content_type=ContentType.SCRIPT):  # type: ignore[call-
 
     is_llm: bool = Field(False, alias="isllm")
     is_internal: bool = Field(False, alias="isInternal")
-    model: Optional[str] = None
     user_prompt: Optional[str] = Field(None, alias="userprompt")
     system_prompt: Optional[str] = Field(None, alias="systemprompt")
     few_shots: Optional[str] = Field(None, alias="fewshots")

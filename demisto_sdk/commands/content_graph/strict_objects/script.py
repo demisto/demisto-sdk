@@ -98,7 +98,6 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     compliantpolicies: Optional[List[str]] = Field(None, alias="compliantpolicies")
     is_llm: bool = Field(False, alias="isllm")
     is_internal: bool = Field(False, alias="isInternal")
-    model: Optional[str] = None
     user_prompt: Optional[str] = Field(None, alias="userprompt")
     system_prompt: Optional[str] = Field(None, alias="systemprompt")
     few_shots: Optional[str] = Field(None, alias="fewshots")
@@ -111,13 +110,13 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
 
         - If 'is_llm' is True:
             - 'script' must be empty.
-            - 'model' must be provided.
             - 'user_prompt' must be provided.
             - 'system_prompt' and 'few_shots' are optional.
+            - 'prompt_config' is automatically created with defaults if not provided.
 
         - If 'is_llm' is False:
-            - All LLM-related fields ('model', 'pre_script', 'post_script',
-              'user_prompt', 'system_prompt', 'few_shots') must be None or empty.
+            - All LLM-related fields ('user_prompt', 'system_prompt',
+              'few_shots', 'prompt_config') must be None or empty.
 
         Raises:
             ValueError: If one or more validation conditions are not met.
@@ -129,24 +128,30 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
                 errors.append(
                     "When 'isllm' is True, 'script' should not appear in yml."
                 )
-            if not values.get("model"):
-                errors.append("When 'isllm' is True, 'model' must be provided.")
             if not values.get("user_prompt"):
-                errors.append("When 'isllm' is True, 'userprompt' must be provided.")
+                errors.append(
+                    "When 'isllm' is True, 'userprompt' must be provided."
+                )
 
-            # Apply defaults for LLM configuration fields if not provided
-            llm_defaults = {
-                "temperature": 0.1,
-                "max_output_tokens": 12000,
-                "web_search": False,
-            }
-            for field, default in llm_defaults.items():
-                if values.get(field) is None:
-                    values[field] = default
+            # Apply defaults for promptConfig if not provided
+            if values.get("prompt_config") is None:
+                values["prompt_config"] = PromptConfig(
+                    temperature=0.1,
+                    max_output_tokens=12000,
+                    web_search=False
+                )
+            else:
+                # Apply defaults to any missing fields in existing promptConfig
+                prompt_config = values["prompt_config"]
+                if prompt_config.temperature is None:
+                    prompt_config.temperature = 0.1
+                if prompt_config.max_output_tokens is None:
+                    prompt_config.max_output_tokens = 12000
+                if prompt_config.web_search is None:
+                    prompt_config.web_search = False
         else:
-            # Enforce non-LLM mode: all LLM-related fields must be None or empty
+            # Enforce non-LLM mode: all LLM-related fields must be None/empty
             llm_fields = [
-                ("model", values.get("model")),
                 ("user_prompt", values.get("user_prompt")),
                 ("system_prompt", values.get("system_prompt")),
                 ("few_shots", values.get("few_shots")),

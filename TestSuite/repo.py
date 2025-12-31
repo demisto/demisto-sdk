@@ -88,6 +88,7 @@ class Repo:
                 "GenericDefinitions": [],
                 "Jobs": [],
                 "Wizards": [],
+                "AgentixActions": [],
             }
         )
         self.graph_interface: Optional[ContentGraphInterface] = None
@@ -115,6 +116,12 @@ class Repo:
         """
         pack = self.create_pack(name)
         pack.pack_metadata.update({"marketplaces": marketplaces})
+
+        agentix_action = pack.create_agentix_action(f"{name}_agentix_action")
+        agentix_action.create_default_agentix_action()
+        agentix_action.yml.update({"commonfields": {"id": f"{name}_agentix_action"}})
+        agentix_action.yml.update({"name": f"{name}_agentix_action"})
+        agentix_action.yml.update({"display": f"{name}_agentix_action"})
 
         script = pack.create_script(f"{name}_script")
         script.create_default_script()

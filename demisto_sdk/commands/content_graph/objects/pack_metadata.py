@@ -305,7 +305,7 @@ class PackMetadata(BaseModel):
         )
         tags |= (
             {PackTags.MCP}
-            if any(integration.is_mcp for integration in content_items.integration)
+            if any(integration.mcp for integration in content_items.integration)
             else set()
         )
         tags |= {PackTags.USE_CASE} if self.use_cases else set()

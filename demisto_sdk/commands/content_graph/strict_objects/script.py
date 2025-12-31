@@ -52,6 +52,7 @@ class EngineInfo(BaseStrictModel):
 
 class PromptConfig(BaseStrictModel):
     """Configuration for LLM prompt settings."""
+
     temperature: Optional[float] = None
     max_output_tokens: Optional[int] = Field(None, alias="maxOutputTokens")
     web_search: Optional[bool] = Field(None, alias="webSearch")
@@ -129,16 +130,12 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
                     "When 'isllm' is True, 'script' should not appear in yml."
                 )
             if not values.get("user_prompt"):
-                errors.append(
-                    "When 'isllm' is True, 'userprompt' must be provided."
-                )
+                errors.append("When 'isllm' is True, 'userprompt' must be provided.")
 
             # Apply defaults for promptConfig if not provided
             if values.get("prompt_config") is None:
                 values["prompt_config"] = PromptConfig(
-                    temperature=0.1,
-                    max_output_tokens=12000,
-                    web_search=False
+                    temperature=0.1, max_output_tokens=12000, web_search=False
                 )
             else:
                 # Apply defaults to any missing fields in existing promptConfig

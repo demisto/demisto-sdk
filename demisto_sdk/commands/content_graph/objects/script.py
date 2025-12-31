@@ -8,9 +8,6 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_script import (
     BaseScript,
 )
-from demisto_sdk.commands.content_graph.strict_objects.script import (
-    PromptConfig,
-)
 
 
 class Script(BaseScript, content_type=ContentType.SCRIPT):  # type: ignore[call-arg]
@@ -21,7 +18,6 @@ class Script(BaseScript, content_type=ContentType.SCRIPT):  # type: ignore[call-
     user_prompt: Optional[str] = Field(None, alias="userprompt")
     system_prompt: Optional[str] = Field(None, alias="systemprompt")
     few_shots: Optional[str] = Field(None, alias="fewshots")
-    prompt_config: Optional[PromptConfig] = Field(None, alias="promptConfig")
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

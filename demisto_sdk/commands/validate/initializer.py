@@ -958,8 +958,11 @@ class Initializer:
         Returns:
             bool: True if the item is unrelated. Otherwise, return False.
         """
-        return "Packs" not in path or any(
-            file in path.lower()
+        # Normalize the path to be relative to Packs directory
+        relative_path = get_relative_path_from_packs_dir(path)
+        
+        return "Packs" not in relative_path or any(
+            file in relative_path.lower()
             for file in (
                 "commands_example.txt",
                 "commands_examples.txt",

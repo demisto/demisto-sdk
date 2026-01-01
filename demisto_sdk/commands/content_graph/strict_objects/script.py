@@ -110,16 +110,18 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
         """
         Validates LLM-related field constraints based on the 'is_llm' flag.
 
+        Supports two formats:
+        1. Legacy format: Uses 'model' field at root level
+        2. New format: Uses 'promptConfig' object
+
         - If 'is_llm' is True:
             - 'script' must be empty.
-            - 'model' must be provided.
             - 'user_prompt' must be provided.
-            - 'system_prompt' and 'few_shots' are optional.
-            - 'prompt_config' is automatically created with defaults if not provided.
+            - Either 'model' (legacy) or 'promptConfig' (new) should be used.
+            - If using new format without 'model', promptConfig defaults apply.
 
         - If 'is_llm' is False:
-            - All LLM-related fields ('model', 'pre_script', 'post_script',
-              'user_prompt', 'system_prompt', 'few_shots') must be None or empty.
+            - All LLM-related fields must be None or empty.
 
         Raises:
             ValueError: If one or more validation conditions are not met.
@@ -131,25 +133,19 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
                 errors.append(
                     "When 'isllm' is True, 'script' should not appear in yml."
                 )
-            if not values.get("model"):
-                errors.append("When 'isllm' is True, 'model' must be provided.")
             if not values.get("user_prompt"):
                 errors.append("When 'isllm' is True, 'userprompt' must be provided.")
 
-            # Apply defaults for promptConfig if not provided
-            if values.get("prompt_config") is None:
-                values["prompt_config"] = PromptConfig(
-                    temperature=0.1, max_output_tokens=12000, web_search=False
-                )
-            else:
-                # Apply defaults to any missing fields in existing promptConfig
-                prompt_config = values["prompt_config"]
+            # Support both legacy (model field) and new (promptConfig) formats
+            if not values.get("model"):
+                prompt_config = values.get("prompt_config") or PromptConfig()
                 if prompt_config.temperature is None:
                     prompt_config.temperature = 0.1
                 if prompt_config.max_output_tokens is None:
                     prompt_config.max_output_tokens = 12000
                 if prompt_config.web_search is None:
                     prompt_config.web_search = False
+                values["prompt_config"] = prompt_config
         else:
             # Enforce non-LLM mode: all LLM-related fields must be None/empty
             llm_fields = [

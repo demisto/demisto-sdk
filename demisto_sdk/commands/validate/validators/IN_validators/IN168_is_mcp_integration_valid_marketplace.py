@@ -18,23 +18,23 @@ REQUIRED_MARKETPLACE = MarketplaceVersions.PLATFORM.value
 
 class IsMcpIntegrationValidMarketplaceValidator(BaseValidator[ContentTypes]):
     """
-    Validate that an integration marked with ismcp: true has
+    Validate that an integration marked with mcp: true has
     MarketplaceVersions.PLATFORM as its only marketplace, checking both
     the integration file and the parent pack (if the integration field is empty).
     """
 
     error_code = "IN168"
-    description = "Validate that an integration with ismcp: true has only PLATFORM in its marketplaces list."
+    description = "Validate that an integration with mcp: true has only PLATFORM in its marketplaces list."
     rationale = (
-        "Integrations marked with 'ismcp: true' are designed exclusively for the "
+        "Integrations marked with 'mcp: true' are designed exclusively for the "
         "Platform platform and must only be available on 'platform'."
     )
     error_message = (
-        "The marketplaces field of the integration is incorrect for an ismcp: true integration.\n"
+        "The marketplaces field of the integration is incorrect for an mcp: true integration.\n"
         "This field should have only the 'platform' value."
     )
     fix_message = "Set the integration's marketplaces list to contain only 'platform'."
-    related_field = "ismcp, marketplaces"
+    related_field = "mcp, marketplaces"
     is_auto_fixable = True
 
     def _get_effective_marketplaces(self, content_item: ContentTypes) -> List[str]:
@@ -61,7 +61,7 @@ class IsMcpIntegrationValidMarketplaceValidator(BaseValidator[ContentTypes]):
     ) -> List[ValidationResult]:
         invalid_items: List[ValidationResult] = []
         for content_item in content_items:
-            if content_item.is_mcp:
+            if content_item.mcp:
                 effective_marketplaces = self._get_effective_marketplaces(content_item)
 
                 # The effective marketplaces list must be exactly ['platform']

@@ -6391,98 +6391,98 @@ def test_IsNewRequiredParamNoDefaultIntegrationValidator_parameter_requirement_c
 
 
 @pytest.mark.parametrize(
-    "name, is_mcp, integration_marketplaces, pack_marketplaces, expected_failure",
+    "name, mcp, integration_marketplaces, pack_marketplaces, expected_failure",
     [
-        # --- PASS Cases (is_mcp: True and Valid Marketplaces) ---
+        # --- PASS Cases (mcp: True and Valid Marketplaces) ---
         (
             "McpValidIntegration",
             True,
             [MarketplaceVersions.PLATFORM],
             None,
             False,
-        ),  # Case 1: is_mcp=True, marketplaces=['platform'] explicitly set in integration.
+        ),  # Case 1: mcp=True, marketplaces=['platform'] explicitly set in integration.
         (
             "McpValidPackMarketplace",
             True,
             [],
             [MarketplaceVersions.PLATFORM],
             False,
-        ),  # Case 2: is_mcp=True, marketplaces inherited from pack=['platform'].
+        ),  # Case 2: mcp=True, marketplaces inherited from pack=['platform'].
         (
             "McpValidBothMarketplaces",
             True,
             [MarketplaceVersions.PLATFORM],
             [MarketplaceVersions.XSOAR, MarketplaceVersions.PLATFORM],
             False,
-        ),  # Case 3: is_mcp=True, marketplaces=['platform'] set in integration (overrides pack).
-        # --- FAIL Cases (is_mcp: True and Invalid Marketplaces) ---
+        ),  # Case 3: mcp=True, marketplaces=['platform'] set in integration (overrides pack).
+        # --- FAIL Cases (mcp: True and Invalid Marketplaces) ---
         (
             "McpInvalidNoMarketplace",
             True,
             None,
             None,
             True,
-        ),  # Case 4: is_mcp=True, marketplaces is empty (neither in integration nor pack).
+        ),  # Case 4: mcp=True, marketplaces is empty (neither in integration nor pack).
         (
             "McpInvalidXsoar",
             True,
             [MarketplaceVersions.XSOAR],
             None,
             True,
-        ),  # Case 5: is_mcp=True, marketplaces=['xsoar'].
+        ),  # Case 5: mcp=True, marketplaces=['xsoar'].
         (
             "McpInvalidMultiple",
             True,
             [MarketplaceVersions.PLATFORM, MarketplaceVersions.XSOAR],
             None,
             True,
-        ),  # Case 6: is_mcp=True, marketplaces=['platform', 'xsoar'].
+        ),  # Case 6: mcp=True, marketplaces=['platform', 'xsoar'].
         (
             "McpInvalidPackOnly",
             True,
             [],
             [MarketplaceVersions.XSOAR],
             True,
-        ),  # Case 7: is_mcp=True, marketplaces inherited from pack=['xsoar'].
-        # --- PASS Cases (is_mcp: False and Any Marketplaces) ---
+        ),  # Case 7: mcp=True, marketplaces inherited from pack=['xsoar'].
+        # --- PASS Cases (mcp: False and Any Marketplaces) ---
         (
             "NotMcpValidXsoar",
             False,
             [MarketplaceVersions.XSOAR],
             None,
             False,
-        ),  # Case 8: is_mcp=False, marketplaces=['xsoar'].
+        ),  # Case 8: mcp=False, marketplaces=['xsoar'].
         (
             "NotMcpValidMultiple",
             False,
             [MarketplaceVersions.PLATFORM, MarketplaceVersions.XSOAR],
             None,
             False,
-        ),  # Case 9: is_mcp=False, marketplaces=['platform', 'xsoar'].
+        ),  # Case 9: mcp=False, marketplaces=['platform', 'xsoar'].
     ],
 )
 def test_IsMcpIntegrationValidMarketplaceValidator_obtain_invalid_content_items(
     name: str,
-    is_mcp: bool,
+    mcp: bool,
     integration_marketplaces,
     pack_marketplaces,
     expected_failure: bool,
 ):
     """
     Given:
-        - An integration object with various combinations of is_mcp and marketplace values
+        - An integration object with various combinations of mcp and marketplace values
           (either explicitly set or inherited from the pack).
     When:
         - Calling the IsMcpIntegrationValidMarketplaceValidator's obtain_invalid_content_items function.
     Then:
-        - Ensure validation fails only when is_mcp is True, but the effective marketplaces list is not exactly ['platform'].
+        - Ensure validation fails only when mcp is True, but the effective marketplaces list is not exactly ['platform'].
     """
     # Construct the paths and values for create_integration_object
     paths = []
     values = []
 
-    if is_mcp:
-        paths.append("script.ismcp")
+    if mcp:
+        paths.append("script.mcp")
         values.append(True)
 
     if integration_marketplaces is not None:
@@ -6526,15 +6526,15 @@ def test_IsMcpIntegrationValidMarketplaceValidator_obtain_invalid_content_items(
 def test_IsMcpIntegrationValidMarketplaceValidator_fix():
     """
     Given:
-        - An invalid integration object where is_mcp is True and marketplaces is wrong.
+        - An invalid integration object where mcp is True and marketplaces is wrong.
     When:
         - Calling the IsMcpIntegrationValidMarketplaceValidator's fix function.
     Then:
         - Ensure the integration's data["marketplaces"] is correctly set to ['platform'].
     """
-    # Create an invalid item: is_mcp=True, marketplaces=['xsoar']
+    # Create an invalid item: mcp=True, marketplaces=['xsoar']
     invalid_content_item = create_integration_object(
-        paths=["script.ismcp", "marketplaces"],
+        paths=["script.mcp", "marketplaces"],
         values=[True, [MarketplaceVersions.XSOAR.value]],
     )
 

@@ -30,11 +30,11 @@ app = typer.Typer()
 def should_update_graph(
     content_graph_interface: ContentGraphInterface,
     use_git: bool,
-    git_util: GitUtil,
+    git_util: Optional[GitUtil],
     imported_path: Optional[Path] = None,
     packs_to_update: Optional[List[str]] = None,
 ):
-    if content_graph_interface.commit:
+    if content_graph_interface.commit and git_util:
         try:
             changed_pack_ids = git_util.get_all_changed_pack_ids(
                 content_graph_interface.commit
@@ -97,14 +97,25 @@ def update_content_graph(
         logger.info("A path to import the graph from was not provided, using git")
         use_git = True
 
-    git_util = GitUtil()
-    is_external_repo = is_external_repository()
+    try:
+        git_util = GitUtil()
+        is_external_repo = is_external_repository()
+    except Exception as e:
+        logger.debug(
+            f"Could not initialize GitUtil: {e}. Assuming external repo and skipping git operations."
+        )
+        # If git is not available, we can't use git-based updates
+        # This can happen in CI/CD environments where the working directory is not a git repo
+        use_git = False
+        git_util = None  # type: ignore[assignment]
+        is_external_repo = True
 
     if is_external_repo:
         packs_to_update = get_all_repo_pack_ids()
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
-    if not should_update_graph(
+    # If git_util is None, we can't check if we should update, so assume we should not
+    if git_util and not should_update_graph(
         content_graph_interface, use_git, git_util, imported_path, packs_to_update
     ):
         logger.info(
@@ -145,7 +156,7 @@ def update_content_graph(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-    if use_git and (commit := content_graph_interface.commit) and not is_external_repo:
+    if use_git and git_util and (commit := content_graph_interface.commit) and not is_external_repo:
         try:
             git_util.get_all_changed_pack_ids(commit)
         except Exception as e:

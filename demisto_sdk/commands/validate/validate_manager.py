@@ -64,11 +64,8 @@ class ValidateManager:
             int: the exit code to obtained from the calculations of post_results.
         """
         logger.info("Starting validate items.")
-        logger.info(f"Running {len(self.validators)} validators on {len(self.objects_to_run)} content items")
         for validator in self.validators:
-            # Escape marketplace tags in description to prevent logger color parsing errors
-            safe_description = validator.description.replace("<", r"\<").replace(">", r"\>")
-            logger.info(f"Running validator {validator.error_code}: {safe_description}")
+            logger.debug(f"Starting execution for {validator.error_code} validator.")
             if filtered_content_objects_for_validator := list(
                 filter(
                     lambda content_object: validator.should_run(
@@ -80,16 +77,11 @@ class ValidateManager:
                     self.objects_to_run,
                 )
             ):
-                logger.info(f"  → Validator {validator.error_code} will run on {len(filtered_content_objects_for_validator)} items")
                 validation_results: List[ValidationResult] = (
                     validator.obtain_invalid_content_items(
                         filtered_content_objects_for_validator
                     )
                 )  # type: ignore
-                if validation_results:
-                    logger.info(f"  → Validator {validator.error_code} found {len(validation_results)} issues")
-                else:
-                    logger.info(f"  → Validator {validator.error_code} passed")
                 if (
                     validator.expected_execution_mode == [ExecutionMode.ALL_FILES]
                     and self.initializer.execution_mode == ExecutionMode.ALL_FILES

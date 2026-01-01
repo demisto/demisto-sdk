@@ -1,4 +1,4 @@
 changes:
-- description: Fixe an issue with updating the graph twice when handling private repositories.
+- description: Fixed an issue with updating the graph twice when handling private repositories.
   type: fix
 pr_number: 14938

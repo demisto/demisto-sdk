@@ -133,21 +133,15 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
                 errors.append(
                     "When 'isllm' is True, 'script' should not appear in yml."
                 )
+            if not values.get("model") and not values.get("prompt_config"):
+                errors.append(
+                    "When 'isllm' is True, either 'model' (legacy format with toversion: 8.12.0) "
+                    "or 'promptConfig' (new format with fromversion: 8.13.0) must be provided."
+                )
             if not values.get("user_prompt"):
                 errors.append("When 'isllm' is True, 'userprompt' must be provided.")
-
-            # Support both legacy (model field) and new (promptConfig) formats
-            if not values.get("model"):
-                prompt_config = values.get("prompt_config") or PromptConfig()
-                if prompt_config.temperature is None:
-                    prompt_config.temperature = 0.1
-                if prompt_config.max_output_tokens is None:
-                    prompt_config.max_output_tokens = 12000
-                if prompt_config.web_search is None:
-                    prompt_config.web_search = False
-                values["prompt_config"] = prompt_config
         else:
-            # Enforce non-LLM mode: all LLM-related fields must be None/empty
+            # Enforce non-LLM mode: all LLM-related fields must be None or empty
             llm_fields = [
                 ("model", values.get("model")),
                 ("user_prompt", values.get("user_prompt")),

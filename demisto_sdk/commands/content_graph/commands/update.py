@@ -101,7 +101,9 @@ def update_content_graph(
         git_util = GitUtil()
         is_external_repo = is_external_repository()
     except Exception as e:
-        logger.debug(f"Could not initialize GitUtil: {e}. Assuming external repo and skipping git operations.")
+        logger.debug(
+            f"Could not initialize GitUtil: {e}. Assuming external repo and skipping git operations."
+        )
         # If git is not available, we can't use git-based updates
         # This can happen in CI/CD environments where the working directory is not a git repo
         use_git = False
@@ -154,7 +156,12 @@ def update_content_graph(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-    if use_git and git_util and (commit := content_graph_interface.commit) and not is_external_repo:
+    if (
+        use_git
+        and git_util
+        and (commit := content_graph_interface.commit)
+        and not is_external_repo
+    ):
         try:
             git_util.get_all_changed_pack_ids(commit)
         except Exception as e:

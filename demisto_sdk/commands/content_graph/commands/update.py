@@ -114,7 +114,8 @@ def update_content_graph(
         packs_to_update = get_all_repo_pack_ids()
     packs_to_update = list(packs_to_update) if packs_to_update else []
     builder = ContentGraphBuilder(content_graph_interface)
-    if not should_update_graph(
+    # If git_util is None, we can't check if we should update, so assume we should not
+    if git_util and not should_update_graph(
         content_graph_interface, use_git, git_util, imported_path, packs_to_update
     ):
         logger.info(

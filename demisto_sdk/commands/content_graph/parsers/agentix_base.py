@@ -41,7 +41,7 @@ class AgentixBaseParser(YAMLContentItemParser):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return set(MarketplaceVersions)
+        return {MarketplaceVersions.PLATFORM}
 
     @property
     def name(self) -> Optional[str]:

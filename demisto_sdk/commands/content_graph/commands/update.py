@@ -158,9 +158,9 @@ def update_content_graph(
                 return
     if (
         use_git
+        and git_util
         and (commit := content_graph_interface.commit)
         and not is_external_repo
-        and git_util
     ):
         try:
             git_util.get_all_changed_pack_ids(commit)

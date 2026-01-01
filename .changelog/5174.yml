@@ -1,0 +1,4 @@
+changes:
+- description: Added IN168 validator to ensure MCP integrations have only PLATFORM marketplace.
+  type: feature
+pr_number: 5174

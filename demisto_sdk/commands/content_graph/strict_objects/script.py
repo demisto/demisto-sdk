@@ -99,6 +99,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     compliantpolicies: Optional[List[str]] = Field(None, alias="compliantpolicies")
     is_llm: bool = Field(False, alias="isllm")
     is_internal: bool = Field(False, alias="isInternal")
+    model: Optional[str] = None
     user_prompt: Optional[str] = Field(None, alias="userprompt")
     system_prompt: Optional[str] = Field(None, alias="systemprompt")
     few_shots: Optional[str] = Field(None, alias="fewshots")
@@ -111,13 +112,14 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
 
         - If 'is_llm' is True:
             - 'script' must be empty.
+            - 'model' must be provided.
             - 'user_prompt' must be provided.
             - 'system_prompt' and 'few_shots' are optional.
             - 'prompt_config' is automatically created with defaults if not provided.
 
         - If 'is_llm' is False:
-            - All LLM-related fields ('user_prompt', 'system_prompt',
-              'few_shots', 'prompt_config') must be None or empty.
+            - All LLM-related fields ('model', 'pre_script', 'post_script',
+              'user_prompt', 'system_prompt', 'few_shots') must be None or empty.
 
         Raises:
             ValueError: If one or more validation conditions are not met.
@@ -129,6 +131,8 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
                 errors.append(
                     "When 'isllm' is True, 'script' should not appear in yml."
                 )
+            if not values.get("model"):
+                errors.append("When 'isllm' is True, 'model' must be provided.")
             if not values.get("user_prompt"):
                 errors.append("When 'isllm' is True, 'userprompt' must be provided.")
 
@@ -149,6 +153,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
         else:
             # Enforce non-LLM mode: all LLM-related fields must be None/empty
             llm_fields = [
+                ("model", values.get("model")),
                 ("user_prompt", values.get("user_prompt")),
                 ("system_prompt", values.get("system_prompt")),
                 ("few_shots", values.get("few_shots")),

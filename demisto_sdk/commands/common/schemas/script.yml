@@ -135,6 +135,8 @@ mapping:
     type: bool
   isInternal:
     type: bool
+  model:
+    type: str
   userprompt:
     type: str
   systemprompt:

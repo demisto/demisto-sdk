@@ -30,11 +30,11 @@ app = typer.Typer()
 def should_update_graph(
     content_graph_interface: ContentGraphInterface,
     use_git: bool,
-    git_util: GitUtil,
+    git_util: Optional[GitUtil],
     imported_path: Optional[Path] = None,
     packs_to_update: Optional[List[str]] = None,
 ):
-    if content_graph_interface.commit:
+    if content_graph_interface.commit and git_util:
         try:
             changed_pack_ids = git_util.get_all_changed_pack_ids(
                 content_graph_interface.commit

@@ -743,7 +743,7 @@ class Initializer:
                 old_path = file_path
                 if isinstance(file_path, tuple):
                     file_path, old_path = file_path
-                obj = BaseContent.from_path(file_path, raise_on_exception=True)
+                obj = BaseContent.from_path(file_path, git_sha=None, raise_on_exception=True)
                 if obj:
                     obj.git_sha = current_git_sha
                     obj.git_status = git_status
@@ -958,11 +958,8 @@ class Initializer:
         Returns:
             bool: True if the item is unrelated. Otherwise, return False.
         """
-        # Normalize the path to be relative to Packs directory
-        relative_path = get_relative_path_from_packs_dir(path)
-        
-        return "Packs" not in relative_path or any(
-            file in relative_path.lower()
+        return "Packs" not in path or any(
+            file in path.lower()
             for file in (
                 "commands_example.txt",
                 "commands_examples.txt",

@@ -78,16 +78,16 @@ class ValidateManager:
                     self.objects_to_run,
                 )
             ):
-                logger.info(f"  → Validator {validator.error_code} will run on {len(filtered_content_objects_for_validator)} items")
+                logger.info(f"Validator {validator.error_code} will run on {len(filtered_content_objects_for_validator)} items")
                 validation_results: List[ValidationResult] = (
                     validator.obtain_invalid_content_items(
                         filtered_content_objects_for_validator
                     )
                 )  # type: ignore
                 if validation_results:
-                    logger.info(f"  → Validator {validator.error_code} found {len(validation_results)} issues")
+                    logger.info(f"Validator {validator.error_code} found {len(validation_results)} issues")
                 else:
-                    logger.debug(f"  → Validator {validator.error_code} passed")
+                    logger.info(f"Validator {validator.error_code} passed")
                 if (
                     validator.expected_execution_mode == [ExecutionMode.ALL_FILES]
                     and self.initializer.execution_mode == ExecutionMode.ALL_FILES

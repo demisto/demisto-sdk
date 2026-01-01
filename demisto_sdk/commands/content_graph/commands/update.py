@@ -97,8 +97,18 @@ def update_content_graph(
         logger.info("A path to import the graph from was not provided, using git")
         use_git = True
 
-    git_util = GitUtil()
-    is_external_repo = is_external_repository()
+    try:
+        git_util = GitUtil()
+        is_external_repo = is_external_repository()
+    except Exception as e:
+        logger.debug(
+            f"Could not initialize GitUtil: {e}. Assuming external repo and skipping git operations."
+        )
+        # If git is not available, we can't use git-based updates
+        # This can happen in CI/CD environments where the working directory is not a git repo
+        use_git = False
+        git_util = None  # type: ignore[assignment]
+        is_external_repo = True
 
     if is_external_repo:
         packs_to_update = get_all_repo_pack_ids()

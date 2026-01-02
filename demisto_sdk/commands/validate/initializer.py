@@ -743,9 +743,7 @@ class Initializer:
                 old_path = file_path
                 if isinstance(file_path, tuple):
                     file_path, old_path = file_path
-                obj = BaseContent.from_path(
-                    file_path, git_sha=None, raise_on_exception=True
-                )
+                obj = BaseContent.from_path(file_path, raise_on_exception=True)
                 if obj:
                     obj.git_sha = current_git_sha
                     obj.git_status = git_status

@@ -176,13 +176,10 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         if not self.graph_interface:
             logger.info("Graph validations were selected, will init graph")
             BaseValidator.graph_interface = ContentGraphInterface()
-            # Only update the graph if it's not already alive/initialized
-            # This prevents re-running git operations that may fail in CI/CD environments
-            if not BaseValidator.graph_interface.is_alive():
-                update_content_graph(
-                    BaseValidator.graph_interface,
-                    use_git=True,
-                )
+            update_content_graph(
+                BaseValidator.graph_interface,
+                use_git=True,
+            )
         return self.graph_interface
 
     def __dir__(self):

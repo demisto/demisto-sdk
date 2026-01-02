@@ -103,7 +103,7 @@ mapping:
         type: bool
       isfetchassets:
         type: bool
-      ismcp:
+      mcp:
         type: bool
       longRunning:
         type: bool

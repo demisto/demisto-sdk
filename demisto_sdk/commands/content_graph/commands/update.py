@@ -156,7 +156,7 @@ def update_content_graph(
                 content_graph_interface, marketplace, dependencies, output_path
             )
             return
-        packs_to_update.extend(git_util.get_all_changed_pack_ids(commit)) # type: ignore[arg-type]
+        packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))  # type: ignore[arg-type]
 
     packs_str = "\n".join([f"- {p}" for p in sorted(packs_to_update)])
     logger.info(f"Updating the following packs:\n{packs_str}")

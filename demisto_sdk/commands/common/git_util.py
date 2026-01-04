@@ -283,6 +283,7 @@ class GitUtil:
             Set: A set of Paths to the modified files.
         """
         remote, branch = self.handle_prev_ver(prev_ver)
+        logger.info(f"{remote=}, {branch=}")
         current_branch_or_hash = self.get_current_git_branch_or_hash()
         logger.info(f"{current_branch_or_hash=}")
 
@@ -334,13 +335,18 @@ class GitUtil:
                     .diff(current_branch_or_hash)
                     .iter_change_type("M")
                 }.union(untrue_rename_committed)
+            logger.info(f"{committed=}")
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed modified files.
             all_branch_changed_files = self._get_all_changed_files(prev_ver)
+            logger.info(f"{all_branch_changed_files=}")
             committed = committed.intersection(all_branch_changed_files)
+            logger.info(f"{committed=}")
 
         # remove the renamed and deleted files from the committed
+        logger.info(f"{renamed=}")
+        logger.info(f"{deleted=}")
         committed = committed - renamed - deleted
 
         if committed_only:
@@ -382,6 +388,7 @@ class GitUtil:
                 .diff(current_branch_or_hash)
                 .iter_change_type("A")
             }
+        logger.info(f"{committed_added=}")
 
         staged = staged - committed_added - renamed - deleted
 
@@ -416,6 +423,7 @@ class GitUtil:
             Set: A set of Paths to the added files.
         """
         remote, branch = self.handle_prev_ver(prev_ver)
+        logger.info(f"{remote=}, {branch=}")
         current_branch_or_hash = self.get_current_git_branch_or_hash()
         logger.info(f"{current_branch_or_hash=}")
 
@@ -531,6 +539,7 @@ class GitUtil:
             Set: A set of Paths to the deleted files.
         """
         remote, branch = self.handle_prev_ver(prev_ver)
+        logger.info(f"{remote=}, {branch=}")
         current_branch_or_hash = self.get_current_git_branch_or_hash()
         logger.info(f"{current_branch_or_hash=}")
 
@@ -608,6 +617,7 @@ class GitUtil:
             first element being the old file path and the second is the new.
         """
         remote, branch = self.handle_prev_ver(prev_ver)
+        logger.info(f"{remote=}, {branch=}")
         current_branch_or_hash = self.get_current_git_branch_or_hash()
         logger.info(f"{current_branch_or_hash=}")
 
@@ -761,6 +771,7 @@ class GitUtil:
 
         self.fetch()
         remote, branch = self.handle_prev_ver(prev_ver)
+        logger.info(f"{remote=}, {branch=}")
         current_hash = self.get_current_commit_hash()
 
         if remote:

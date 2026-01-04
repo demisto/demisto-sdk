@@ -335,18 +335,13 @@ class GitUtil:
                     .diff(current_branch_or_hash)
                     .iter_change_type("M")
                 }.union(untrue_rename_committed)
-            logger.info(f"{committed=}")
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed modified files.
             all_branch_changed_files = self._get_all_changed_files(prev_ver)
-            logger.info(f"{all_branch_changed_files=}")
             committed = committed.intersection(all_branch_changed_files)
-            logger.info(f"{committed=}")
 
         # remove the renamed and deleted files from the committed
-        logger.info(f"{renamed=}")
-        logger.info(f"{deleted=}")
         committed = committed - renamed - deleted
 
         if committed_only:
@@ -388,7 +383,6 @@ class GitUtil:
                 .diff(current_branch_or_hash)
                 .iter_change_type("A")
             }
-        logger.info(f"{committed_added=}")
 
         staged = staged - committed_added - renamed - deleted
 
@@ -888,8 +882,6 @@ class GitUtil:
                     raise Exception(
                         "Unable to find main or master branch from current working directory - aborting."
                     )
-        logger.info(f"{remote=}")
-        logger.info(f"{branch=}")
         return remote, branch
 
     def get_current_git_branch_or_hash(self) -> str:

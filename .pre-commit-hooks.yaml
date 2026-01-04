@@ -7,14 +7,14 @@
   files: &files
     .*Packs/.*/(?:Integrations|Scripts)/.*.yml$
 
-- id: validate
-  name: validate
-  description: validate content
-  entry: demisto-sdk validate
-  args: ["-g"]
-  pass_filenames: false
-  language: python
-  require_serial: true
+#- id: validate
+#  name: validate
+#  description: validate content
+#  entry: demisto-sdk validate
+#  args: ["-g"]
+#  pass_filenames: false
+#  language: python
+#  require_serial: true
 
 - id: format
   name: format

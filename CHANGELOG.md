@@ -1,4 +1,15 @@
 # Changelog
+## 1.38.16 (2025-12-28)
+### Feature
+* Added support for handling private repositories. [#5159](https://github.com/demisto/demisto-sdk/pull/5159)
+
+### Fix
+* Fixed an issue where the ***format*** command attempted to format list data files when it should only format list metadata files. [#5166](https://github.com/demisto/demisto-sdk/pull/5166)
+
+### Internal
+* Ignore Gr110 when validating all in the Github action. [#5169](https://github.com/demisto/demisto-sdk/pull/5169)
+
+
 ## 1.38.15 (2025-12-16)
 ### Feature
 * Added the `provider` field to the integration schema. [#5155](https://github.com/demisto/demisto-sdk/pull/5155)

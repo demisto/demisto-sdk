@@ -96,6 +96,11 @@ def update_release_notes(
         "--breaking-changes",
         help="If new version contains breaking changes.",
     ),
+    private_content_path: Path = typer.Option(
+        None,
+        "--private-content-path",
+        help="Path to a directory of private content repo. Use this when you want to include private packs in the release notes.",
+    ),
     console_log_threshold: str = typer.Option(
         None,
         "--console-log-threshold",
@@ -150,6 +155,7 @@ def update_release_notes(
             prev_ver=prev_ver,
             is_force=force,
             is_bc=breaking_changes,
+            private_content_path=private_content_path,
         )
         rn_mng.manage_rn_update()
 

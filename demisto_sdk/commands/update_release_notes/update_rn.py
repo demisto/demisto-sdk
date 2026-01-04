@@ -42,6 +42,7 @@ from demisto_sdk.commands.common.content.objects_factory import (
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    chdir,
     find_type,
     get_api_module_dependencies_from_graph,
     get_api_module_ids,
@@ -523,7 +524,9 @@ class UpdateRN:
         is_force: bool = False,
         is_bc: bool = False,
         prev_ver: Optional[str] = "",
+        private_content_path: Optional[Path] = None,
     ):
+        self.private_content_path = private_content_path
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_path = pack_path
@@ -536,7 +539,9 @@ class UpdateRN:
         for file_path in modified_files_in_pack:
             self.modified_files_in_pack.add(
                 self.change_image_or_desc_file_path(
-                    (self.CONTENT_PATH / file_path).as_posix()
+                    (
+                        (self.private_content_path or self.CONTENT_PATH) / file_path
+                    ).as_posix()
                 )
             )
 
@@ -634,43 +639,47 @@ class UpdateRN:
         self.rn_path = rn_path
         self.find_added_pack_files()
         changed_files = {}
-        for packfile in self.modified_files_in_pack:
-            file_name, file_type = self.get_changed_file_name_and_type(packfile)
-            if file_type == FileType.METADATA:
-                self.pack_metadata_only = True
-                continue
-            is_new_file = packfile in self.added_files
-            content_item_object = (
-                create_content_item_object(packfile, self.prev_ver, is_new_file)
-                if file_type
-                in [
-                    FileType.INTEGRATION,
-                    FileType.BETA_INTEGRATION,
-                    FileType.SCRIPT,
-                    FileType.PLAYBOOK,
-                ]
-                else None
-            )
-            name, description = (
-                (
-                    get_name(content_item_object),
-                    get_description(content_item_object),
+
+        with chdir(self.private_content_path):
+            for packfile in self.modified_files_in_pack:
+                file_name, file_type = self.get_changed_file_name_and_type(packfile)
+                if file_type == FileType.METADATA:
+                    self.pack_metadata_only = True
+                    continue
+                is_new_file = packfile in self.added_files
+                content_item_object = (
+                    create_content_item_object(packfile, self.prev_ver, is_new_file)
+                    if file_type
+                    in [
+                        FileType.INTEGRATION,
+                        FileType.BETA_INTEGRATION,
+                        FileType.SCRIPT,
+                        FileType.PLAYBOOK,
+                    ]
+                    else None
                 )
-                if content_item_object and isinstance(content_item_object, ContentItem)
-                else (get_content_item_details(packfile, file_type))
-            )
-            changed_files[(file_name, file_type)] = {
-                "description": description,
-                "is_new_file": packfile in self.added_files,
-                "fromversion": get_from_version_at_update_rn(packfile),
-                "dockerimage": self.get_docker_image_if_changed(
-                    content_item_object, packfile
-                ),
-                "path": packfile,
-                "name": name,
-                "changed_content_object": content_item_object,
-            }
-        self.pack_metadata_only = (not changed_files) and self.pack_metadata_only
+                name, description = (
+                    (
+                        get_name(content_item_object),
+                        get_description(content_item_object),
+                    )
+                    if content_item_object
+                    and isinstance(content_item_object, ContentItem)
+                    else (get_content_item_details(packfile, file_type))
+                )
+                changed_files[(file_name, file_type)] = {
+                    "description": description,
+                    "is_new_file": packfile in self.added_files,
+                    "fromversion": get_from_version_at_update_rn(packfile),
+                    "dockerimage": self.get_docker_image_if_changed(
+                        content_item_object, packfile
+                    ),
+                    "path": packfile,
+                    "name": name,
+                    "changed_content_object": content_item_object,
+                }
+            self.pack_metadata_only = (not changed_files) and self.pack_metadata_only
+
         return self.create_pack_rn(rn_path, changed_files, new_metadata, new_version)
 
     def get_docker_image_if_changed(

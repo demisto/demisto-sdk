@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    chdir,
     filter_files_by_type,
     filter_files_on_pack,
     get_pack_name,
@@ -37,7 +38,9 @@ class UpdateReleaseNotesManager:
         prev_ver: Optional[str] = None,
         is_force: bool = False,
         is_bc: bool = False,
+        private_content_path: Optional[Path] = None,
     ):
+        self.private_content_path = private_content_path
         self.given_pack = user_input
         self.changed_packs_from_git: set = set()
         self.update_type = update_type
@@ -66,8 +69,10 @@ class UpdateReleaseNotesManager:
         if self.given_pack and "/" in self.given_pack:
             self.given_pack = get_pack_name(self.given_pack)  # extract pack from path
 
-        # Find which files were changed from git
-        modified_files, added_files, old_format_files = self.get_git_changed_files()
+        with chdir(self.private_content_path):
+            # Find which files were changed from git
+            modified_files, added_files, old_format_files = self.get_git_changed_files()
+
         self.changed_packs_from_git = (
             get_pack_names_from_files(modified_files)
             .union(get_pack_names_from_files(added_files))
@@ -78,6 +83,7 @@ class UpdateReleaseNotesManager:
 
         self.handle_api_module_change(modified_files, added_files)
         self.create_release_notes(modified_files, added_files, old_format_files)
+
         if len(self.total_updated_packs) > 1:
             logger.info(
                 "\n<green>Successfully updated the following packs:\n"
@@ -245,7 +251,10 @@ class UpdateReleaseNotesManager:
             self.total_updated_packs = self.total_updated_packs.union(updated_packs)
 
     def create_release_notes(
-        self, modified_files: set, added_files: set, old_format_files: set
+        self,
+        modified_files: set,
+        added_files: set,
+        old_format_files: set,
     ):
         """Iterates over the packs which needs an update and creates a release notes for them.
 
@@ -318,6 +327,7 @@ class UpdateReleaseNotesManager:
         # Checks if update is required
         if pack_modified or pack_added or pack_old or self.is_force:
             pack_path = pack_name_to_path(pack)
+
             update_pack_rn = UpdateRN(
                 pack_path=pack_path,
                 update_type=self.update_type,
@@ -330,6 +340,7 @@ class UpdateReleaseNotesManager:
                 existing_rn_version_path=existing_rn_version,
                 is_bc=self.is_bc,
                 prev_ver=self.prev_ver,
+                private_content_path=self.private_content_path,
             )
             logger.info(
                 "Creating release notes is in progress... It may take about minute."

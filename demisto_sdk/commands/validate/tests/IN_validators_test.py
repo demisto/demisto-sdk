@@ -166,6 +166,10 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN163_is_valid_feed_
 from demisto_sdk.commands.validate.validators.IN_validators.IN164_is_new_required_param_no_default import (
     IsNewRequiredParamNoDefaultIntegrationValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN168_is_mcp_integration_valid_marketplace import (
+    REQUIRED_MARKETPLACE,
+    IsMcpIntegrationValidMarketplaceValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 MARKETPLACE_VALUES = [mp.value for mp in MarketplaceVersions]
@@ -6381,3 +6385,172 @@ def test_IsNewRequiredParamNoDefaultIntegrationValidator_parameter_requirement_c
         assert "test_param" in results[0].message
     else:
         assert len(results) == 0
+
+
+## -------------------------  IsMcpIntegrationValidMarketplaceValidator IN168 Tests ------------------------- ##
+
+
+@pytest.mark.parametrize(
+    "name, mcp, integration_marketplaces, pack_marketplaces, expected_failure",
+    [
+        # --- PASS Cases (mcp: True and Valid Marketplaces) ---
+        (
+            "McpValidIntegration",
+            True,
+            [MarketplaceVersions.PLATFORM],
+            None,
+            False,
+        ),  # Case 1: mcp=True, marketplaces=['platform'] explicitly set in integration.
+        (
+            "McpValidPackMarketplace",
+            True,
+            [],
+            [MarketplaceVersions.PLATFORM],
+            False,
+        ),  # Case 2: mcp=True, marketplaces inherited from pack=['platform'].
+        (
+            "McpValidBothMarketplaces",
+            True,
+            [MarketplaceVersions.PLATFORM],
+            [MarketplaceVersions.XSOAR, MarketplaceVersions.PLATFORM],
+            False,
+        ),  # Case 3: mcp=True, marketplaces=['platform'] set in integration (overrides pack).
+        # --- FAIL Cases (mcp: True and Invalid Marketplaces) ---
+        (
+            "McpInvalidNoMarketplace",
+            True,
+            None,
+            None,
+            True,
+        ),  # Case 4: mcp=True, marketplaces is empty (neither in integration nor pack).
+        (
+            "McpInvalidXsoar",
+            True,
+            [MarketplaceVersions.XSOAR],
+            None,
+            True,
+        ),  # Case 5: mcp=True, marketplaces=['xsoar'].
+        (
+            "McpInvalidMultiple",
+            True,
+            [MarketplaceVersions.PLATFORM, MarketplaceVersions.XSOAR],
+            None,
+            True,
+        ),  # Case 6: mcp=True, marketplaces=['platform', 'xsoar'].
+        (
+            "McpInvalidPackOnly",
+            True,
+            [],
+            [MarketplaceVersions.XSOAR],
+            True,
+        ),  # Case 7: mcp=True, marketplaces inherited from pack=['xsoar'].
+        # --- PASS Cases (mcp: False and Any Marketplaces) ---
+        (
+            "NotMcpValidXsoar",
+            False,
+            [MarketplaceVersions.XSOAR],
+            None,
+            False,
+        ),  # Case 8: mcp=False, marketplaces=['xsoar'].
+        (
+            "NotMcpValidMultiple",
+            False,
+            [MarketplaceVersions.PLATFORM, MarketplaceVersions.XSOAR],
+            None,
+            False,
+        ),  # Case 9: mcp=False, marketplaces=['platform', 'xsoar'].
+    ],
+)
+def test_IsMcpIntegrationValidMarketplaceValidator_obtain_invalid_content_items(
+    name: str,
+    mcp: bool,
+    integration_marketplaces,
+    pack_marketplaces,
+    expected_failure: bool,
+):
+    """
+    Given:
+        - An integration object with various combinations of mcp and marketplace values
+          (either explicitly set or inherited from the pack).
+    When:
+        - Calling the IsMcpIntegrationValidMarketplaceValidator's obtain_invalid_content_items function.
+    Then:
+        - Ensure validation fails only when mcp is True, but the effective marketplaces list is not exactly ['platform'].
+    """
+    # Construct the paths and values for create_integration_object
+    paths = []
+    values = []
+
+    if mcp:
+        paths.append("script.mcp")
+        values.append(True)
+
+    if integration_marketplaces is not None:
+        paths.append("marketplaces")
+        values.append(
+            [
+                mp.value if hasattr(mp, "value") else mp
+                for mp in integration_marketplaces
+            ]
+        )
+
+    with ChangeCWD(REPO.path):
+        content_item = create_integration_object(
+            name=name,
+            paths=paths,
+            values=values,
+            pack_info={
+                "marketplaces": [
+                    mp.value if hasattr(mp, "value") else mp for mp in pack_marketplaces
+                ]
+            }
+            if pack_marketplaces
+            else {},
+        )
+
+    validator = IsMcpIntegrationValidMarketplaceValidator()
+    results = validator.obtain_invalid_content_items([content_item])
+
+    if expected_failure:
+        assert len(results) == 1
+        assert results[0].validator.error_code == validator.error_code
+        # Check that the error message is correctly formatted
+        assert (
+            validator.error_message.format(content_item.display_name)
+            in results[0].message
+        )
+    else:
+        assert len(results) == 0
+
+
+def test_IsMcpIntegrationValidMarketplaceValidator_fix():
+    """
+    Given:
+        - An invalid integration object where mcp is True and marketplaces is wrong.
+    When:
+        - Calling the IsMcpIntegrationValidMarketplaceValidator's fix function.
+    Then:
+        - Ensure the integration's data["marketplaces"] is correctly set to ['platform'].
+    """
+    # Create an invalid item: mcp=True, marketplaces=['xsoar']
+    invalid_content_item = create_integration_object(
+        paths=["script.mcp", "marketplaces"],
+        values=[True, [MarketplaceVersions.XSOAR.value]],
+    )
+
+    # Verify pre-condition
+    assert invalid_content_item.data.get("marketplaces") == [
+        MarketplaceVersions.XSOAR.value
+    ]
+
+    validator = IsMcpIntegrationValidMarketplaceValidator()
+    fix_result = validator.fix(invalid_content_item)
+
+    # Check the result object
+    assert fix_result.validator == validator
+    assert fix_result.message == validator.fix_message.format(
+        invalid_content_item.display_name
+    )
+
+    # Check that the object was fixed correctly in its raw data
+    assert invalid_content_item.data.get("marketplaces") == [REQUIRED_MARKETPLACE]

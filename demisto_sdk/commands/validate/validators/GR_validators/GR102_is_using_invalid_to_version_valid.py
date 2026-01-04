@@ -5,6 +5,8 @@ from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.tools import get_all_content_objects_paths_in_dir
 from demisto_sdk.commands.content_graph.objects import (
+    AgentixAction,
+    AgentixAgent,
     CaseField,
     CaseLayout,
     CaseLayoutRule,
@@ -75,6 +77,8 @@ ContentTypes = Union[
     CaseField,
     CaseLayout,
     CaseLayoutRule,
+    AgentixAction,
+    AgentixAgent,
 ]
 
 

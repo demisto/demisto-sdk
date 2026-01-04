@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_FOLDER,
 )
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.string_to_bool import string_to_bool
 
 
 class CommitOrBranchNotFoundError(GitError):
@@ -283,6 +284,7 @@ class GitUtil:
         """
         remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
+        logger.info(f"{current_branch_or_hash=}")
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status="M")
@@ -415,6 +417,7 @@ class GitUtil:
         """
         remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
+        logger.info(f"{current_branch_or_hash=}")
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status="A")
@@ -529,6 +532,7 @@ class GitUtil:
         """
         remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
+        logger.info(f"{current_branch_or_hash=}")
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status="D")
@@ -605,6 +609,7 @@ class GitUtil:
         """
         remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
+        logger.info(f"{current_branch_or_hash=}")
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status="R")
@@ -847,6 +852,8 @@ class GitUtil:
         return ""
 
     def handle_prev_ver(self, prev_ver: Optional[str] = None):
+        if string_to_bool(os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False):
+            return "", prev_ver
         # check for sha1 in regex
         sha1_pattern = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
         if prev_ver and sha1_pattern.match(prev_ver):
@@ -870,6 +877,8 @@ class GitUtil:
                     raise Exception(
                         "Unable to find main or master branch from current working directory - aborting."
                     )
+        logger.info(f"{remote=}")
+        logger.info(f"{branch=}")
         return remote, branch
 
     def get_current_git_branch_or_hash(self) -> str:
@@ -939,6 +948,7 @@ class GitUtil:
             Set: of Paths to non 100% renamed files which are of a given status.
         """
         current_branch_or_hash = self.get_current_git_branch_or_hash()
+        logger.info(f"{current_branch_or_hash=}")
 
         if staged_only:
             return {

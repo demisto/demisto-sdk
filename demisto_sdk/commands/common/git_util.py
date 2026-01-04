@@ -283,9 +283,7 @@ class GitUtil:
             Set: A set of Paths to the modified files.
         """
         remote, branch = self.handle_prev_ver(prev_ver)
-        logger.info(f"{remote=}, {branch=}")
         current_branch_or_hash = self.get_current_git_branch_or_hash()
-        logger.info(f"{current_branch_or_hash=}")
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status="M")

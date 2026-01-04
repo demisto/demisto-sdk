@@ -224,7 +224,7 @@ class Initializer:
         self.staged = staged
         self.file_path = file_path
         self.committed_only = committed_only
-        self.prev_ver = prev_ver
+        self.prev_ver = "master" if handling_private_repositories else prev_ver
         self.execution_mode = execution_mode
         self.handling_private_repositories = handling_private_repositories
 
@@ -485,25 +485,25 @@ class Initializer:
         5. Continue with validation even if no status files are found
         """
 
-        if self.handling_private_repositories:
-            artifacts_folder = os.getenv("ARTIFACTS_FOLDER", "")
-            logs_dir = (
-                Path(artifacts_folder) / "logs" if artifacts_folder else Path("logs")
-            )
-
-            status_files = [
-                logs_dir / PRIVATE_REPO_STATUS_FILE_PRIVATE,
-                logs_dir / PRIVATE_REPO_STATUS_FILE_TEST_CONF,
-                logs_dir / PRIVATE_REPO_STATUS_FILE_CONFIGURATION,
-            ]
-
-            for status_file in status_files:
-                _process_status_file(
-                    status_file, modified_files, added_files, renamed_files
-                )
-
-        # Log files in a more readable format
-        _log_file_changes(modified_files, added_files, renamed_files)
+        # if self.handling_private_repositories:
+        #     artifacts_folder = os.getenv("ARTIFACTS_FOLDER", "")
+        #     logs_dir = (
+        #         Path(artifacts_folder) / "logs" if artifacts_folder else Path("logs")
+        #     )
+        #
+        #     status_files = [
+        #         logs_dir / PRIVATE_REPO_STATUS_FILE_PRIVATE,
+        #         logs_dir / PRIVATE_REPO_STATUS_FILE_TEST_CONF,
+        #         logs_dir / PRIVATE_REPO_STATUS_FILE_CONFIGURATION,
+        #     ]
+        #
+        #     for status_file in status_files:
+        #         _process_status_file(
+        #             status_file, modified_files, added_files, renamed_files
+        #         )
+        #
+        # # Log files in a more readable format
+        # _log_file_changes(modified_files, added_files, renamed_files)
 
         return modified_files, added_files, renamed_files
 

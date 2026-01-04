@@ -848,6 +848,7 @@ class GitUtil:
         return ""
 
     def handle_prev_ver(self, prev_ver: Optional[str] = None):
+        logger.info(f'the env var {os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE")}')
         if string_to_bool(os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False):
             return "", prev_ver
         # check for sha1 in regex

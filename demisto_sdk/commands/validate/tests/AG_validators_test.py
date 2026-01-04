@@ -471,3 +471,45 @@ def test_IsActionNameValid_obtain_invalid_content_items(
     """
     results = IsActionNameValidValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
+
+
+def test_is_valid_agent_visibility():
+    """
+    Given
+    - Three AgentixAgent items with different visibility values.
+
+    When
+    - Calling the IsValidAgentVisibilityValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure only invalid visibility values are flagged.
+    """
+    from demisto_sdk.commands.validate.tests.test_tools import (
+        create_agentix_agent_object,
+    )
+    from demisto_sdk.commands.validate.validators.AG_validators.AG104_is_valid_agent_visibility import (
+        IsValidAgentVisibilityValidator,
+    )
+
+    # Valid visibility values
+    valid_public_agent = create_agentix_agent_object(
+        paths=["visibility"], values=["public"]
+    )
+    valid_private_agent = create_agentix_agent_object(
+        paths=["visibility"], values=["private"]
+    )
+
+    # Invalid visibility value
+    invalid_agent = create_agentix_agent_object(
+        paths=["visibility"], values=["internal"]
+    )
+
+    content_items = [valid_public_agent, valid_private_agent, invalid_agent]
+
+    results = IsValidAgentVisibilityValidator().obtain_invalid_content_items(
+        content_items
+    )
+
+    assert len(results) == 1
+    assert "internal" in results[0].message
+    assert "public, private" in results[0].message

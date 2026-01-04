@@ -417,9 +417,7 @@ class GitUtil:
             Set: A set of Paths to the added files.
         """
         remote, branch = self.handle_prev_ver(prev_ver)
-        logger.info(f"{remote=}, {branch=}")
         current_branch_or_hash = self.get_current_git_branch_or_hash()
-        logger.info(f"{current_branch_or_hash=}")
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status="A")
@@ -533,9 +531,7 @@ class GitUtil:
             Set: A set of Paths to the deleted files.
         """
         remote, branch = self.handle_prev_ver(prev_ver)
-        logger.info(f"{remote=}, {branch=}")
         current_branch_or_hash = self.get_current_git_branch_or_hash()
-        logger.info(f"{current_branch_or_hash=}")
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status="D")
@@ -611,9 +607,7 @@ class GitUtil:
             first element being the old file path and the second is the new.
         """
         remote, branch = self.handle_prev_ver(prev_ver)
-        logger.info(f"{remote=}, {branch=}")
         current_branch_or_hash = self.get_current_git_branch_or_hash()
-        logger.info(f"{current_branch_or_hash=}")
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status="R")
@@ -765,7 +759,6 @@ class GitUtil:
 
         self.fetch()
         remote, branch = self.handle_prev_ver(prev_ver)
-        logger.info(f"{remote=}, {branch=}")
         current_hash = self.get_current_commit_hash()
 
         if remote:
@@ -951,7 +944,6 @@ class GitUtil:
             Set: of Paths to non 100% renamed files which are of a given status.
         """
         current_branch_or_hash = self.get_current_git_branch_or_hash()
-        logger.info(f"{current_branch_or_hash=}")
 
         if staged_only:
             return {

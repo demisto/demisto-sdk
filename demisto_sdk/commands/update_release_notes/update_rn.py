@@ -525,6 +525,7 @@ class UpdateRN:
         is_bc: bool = False,
         prev_ver: Optional[str] = "",
         private_content_path: Optional[Path] = None,
+        private_content_files: Optional[Path] = set(),
     ):
         self.private_content_path = private_content_path
         self.pack = pack if pack else get_pack_name(pack_path)
@@ -537,12 +538,13 @@ class UpdateRN:
         }
         self.modified_files_in_pack = set()
         for file_path in modified_files_in_pack:
+            base_path = (
+                self.private_content_path
+                if file_path in private_content_files
+                else self.CONTENT_PATH
+            )
             self.modified_files_in_pack.add(
-                self.change_image_or_desc_file_path(
-                    (
-                        (self.private_content_path or self.CONTENT_PATH) / file_path
-                    ).as_posix()
-                )
+                self.change_image_or_desc_file_path((base_path / file_path).as_posix())
             )
 
         self.added_files = added_files
@@ -640,8 +642,15 @@ class UpdateRN:
         self.find_added_pack_files()
         changed_files = {}
 
-        with chdir(self.private_content_path):
-            for packfile in self.modified_files_in_pack:
+        for packfile in self.modified_files_in_pack:
+            if self.private_content_path and str(packfile).startswith(
+                str(self.private_content_path)
+            ):
+                chdir_path = self.private_content_path
+            else:
+                chdir_path = self.CONTENT_PATH
+
+            with chdir(chdir_path):
                 file_name, file_type = self.get_changed_file_name_and_type(packfile)
                 if file_type == FileType.METADATA:
                     self.pack_metadata_only = True
@@ -678,7 +687,7 @@ class UpdateRN:
                     "name": name,
                     "changed_content_object": content_item_object,
                 }
-            self.pack_metadata_only = (not changed_files) and self.pack_metadata_only
+        self.pack_metadata_only = (not changed_files) and self.pack_metadata_only
 
         return self.create_pack_rn(rn_path, changed_files, new_metadata, new_version)
 

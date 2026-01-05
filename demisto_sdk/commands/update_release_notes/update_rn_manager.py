@@ -59,6 +59,7 @@ class UpdateReleaseNotesManager:
             raise ValueError("Please remove the -g flag when specifying only one pack.")
         self.rn_path: list = list()
         self.is_bc = is_bc
+        self.private_content_files = set()
 
     def manage_rn_update(self):
         """
@@ -69,9 +70,21 @@ class UpdateReleaseNotesManager:
         if self.given_pack and "/" in self.given_pack:
             self.given_pack = get_pack_name(self.given_pack)  # extract pack from path
 
-        with chdir(self.private_content_path):
-            # Find which files were changed from git
-            modified_files, added_files, old_format_files = self.get_git_changed_files()
+        modified_files, added_files, old_format_files = self.get_git_changed_files()
+
+        if self.private_content_path:
+            with chdir(self.private_content_path):
+                # Find which files were changed from git
+                priv_modified_files, priv_added_files, priv_old_format_files = (
+                    self.get_git_changed_files()
+                )
+                self.private_content_files = priv_modified_files.union(
+                    priv_added_files
+                ).union(priv_old_format_files)
+
+            modified_files = modified_files.union(priv_modified_files)
+            added_files = added_files.union(priv_added_files)
+            old_format_files = old_format_files.union(priv_old_format_files)
 
         self.changed_packs_from_git = (
             get_pack_names_from_files(modified_files)
@@ -341,6 +354,7 @@ class UpdateReleaseNotesManager:
                 is_bc=self.is_bc,
                 prev_ver=self.prev_ver,
                 private_content_path=self.private_content_path,
+                private_content_files=self.private_content_files,
             )
             logger.info(
                 "Creating release notes is in progress... It may take about minute."

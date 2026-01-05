@@ -17,7 +17,14 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Union[
-    Integration, Script, Mapper, IncidentType, IncidentField, CaseField, AgentixAction, AgentixAgent
+    Integration,
+    Script,
+    Mapper,
+    IncidentType,
+    IncidentField,
+    CaseField,
+    AgentixAction,
+    AgentixAgent,
 ]
 
 

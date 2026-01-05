@@ -1,0 +1,4 @@
+changes:
+- description: Moved Agentix Agents system instructions to separate file.
+  type: internal
+pr_number: 5180

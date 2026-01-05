@@ -848,10 +848,9 @@ class GitUtil:
         return ""
 
     def handle_prev_ver(self, prev_ver: Optional[str] = None):
-        logger.info(f'the env var {os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE")}')
         if string_to_bool(os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False):
             logger.info(f"{prev_ver=}")
-            return ("", prev_ver or "master")
+            return "", prev_ver or "master"
         # check for sha1 in regex
         sha1_pattern = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
         if prev_ver and sha1_pattern.match(prev_ver):

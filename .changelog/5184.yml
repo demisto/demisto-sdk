@@ -1,0 +1,4 @@
+changes:
+- description: Reverted the changes were made when handling the graph and private repositories together.
+  type: breaking
+pr_number: 5184

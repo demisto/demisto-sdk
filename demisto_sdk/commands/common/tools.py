@@ -3274,6 +3274,22 @@ def suppress_stdout():
             sys.stdout = old_stdout
 
 
+@contextmanager
+def chdir(path: Path):
+    """
+    Temporarily changes the current working directory.
+    """
+    if not path:
+        yield
+        return
+    prev_cwd = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(prev_cwd)
+
+
 def get_definition_name(path: str, pack_path: str) -> Optional[str]:
     r"""
     param:

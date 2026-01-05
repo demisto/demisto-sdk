@@ -525,7 +525,7 @@ class UpdateRN:
         is_bc: bool = False,
         prev_ver: Optional[str] = "",
         private_content_path: Optional[Path] = None,
-        private_content_files: Optional[Path] = set(),
+        private_content_files: set[Path] = set(),
     ):
         self.private_content_path = private_content_path
         self.pack = pack if pack else get_pack_name(pack_path)

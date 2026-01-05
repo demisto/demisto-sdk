@@ -104,7 +104,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.XDRC_TEMPLATE: XDRCTemplate,
     FileType.LAYOUT_RULE: LayoutRule,
     FileType.AGENTIX_ACTION: AgentixAction,
-    FileType.AGENTIX_AGENT: AgentixAgent
+    FileType.AGENTIX_AGENT: AgentixAgent,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

@@ -59,7 +59,7 @@ class UpdateReleaseNotesManager:
             raise ValueError("Please remove the -g flag when specifying only one pack.")
         self.rn_path: list = list()
         self.is_bc = is_bc
-        self.private_content_files = set()
+        self.private_content_files: set[Path] = set()
 
     def manage_rn_update(self):
         """

@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import (
-    MarketplaceVersions,
     DEFAULT_AGENTIX_ITEM_FROM_VERSION,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (

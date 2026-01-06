@@ -1,15 +1,10 @@
 # Changelog
 ## 1.38.17 (2026-01-05)
-### Breaking
-* Reverted the changes were made when handling the graph and private repositories together. [#5184](https://github.com/demisto/demisto-sdk/pull/5184)
 
 ### Feature
 * Added IN168 validator to ensure MCP integrations have only PLATFORM marketplace. [#5174](https://github.com/demisto/demisto-sdk/pull/5174)
 * Added LLM configuration fields under promptConfig object (temperature, maxOutputTokens, webSearch) to Script schemas for AI Tasks with automatic defaults. [#5170](https://github.com/demisto/demisto-sdk/pull/5170)
 * Updated the update release notes command to support --private-content-path. [#5176](https://github.com/demisto/demisto-sdk/pull/5176)
-
-### Fix
-* Fixed an issue with updating the graph twice when handling private repositories. [#14938](https://github.com/demisto/demisto-sdk/pull/14938)
 
 ### Internal
 * Content packs containing MCP integrations are now automatically tagged as MCP packs. [#5156](https://github.com/demisto/demisto-sdk/pull/5156)

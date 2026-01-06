@@ -77,7 +77,8 @@ class AgentixAgentUnifier(Unifier):
 
         # Build the expected system instructions file path
         instructions_file = (
-            package_path / f"{folder_name}{AgentixAgentUnifier.SYSTEM_INSTRUCTIONS_SUFFIX}"
+            package_path
+            / f"{folder_name}{AgentixAgentUnifier.SYSTEM_INSTRUCTIONS_SUFFIX}"
         )
 
         if instructions_file.exists():
@@ -99,7 +100,9 @@ class AgentixAgentUnifier(Unifier):
         Returns:
             Updated YAML dict with systeminstructions field
         """
-        instructions_file = AgentixAgentUnifier.get_system_instructions_file(package_path)
+        instructions_file = AgentixAgentUnifier.get_system_instructions_file(
+            package_path
+        )
 
         if instructions_file:
             try:
@@ -113,9 +116,7 @@ class AgentixAgentUnifier(Unifier):
                     f"Failed to read system instructions file '{instructions_file}': {e}"
                 )
         else:
-            logger.debug(
-                f"No system instructions file found in '{package_path}'"
-            )
+            logger.debug(f"No system instructions file found in '{package_path}'")
 
         return yml_unified
 
@@ -133,7 +134,9 @@ class AgentixAgentUnifier(Unifier):
         Returns:
             The system instructions content, or empty string if not found
         """
-        instructions_file = AgentixAgentUnifier.get_system_instructions_file(package_path)
+        instructions_file = AgentixAgentUnifier.get_system_instructions_file(
+            package_path
+        )
 
         if instructions_file:
             try:
@@ -162,7 +165,8 @@ class AgentixAgentUnifier(Unifier):
         # Build the expected system instructions file path
         folder_name = yml_path.parent.name
         instructions_file_path = str(
-            yml_path.parent / f"{folder_name}{AgentixAgentUnifier.SYSTEM_INSTRUCTIONS_SUFFIX}"
+            yml_path.parent
+            / f"{folder_name}{AgentixAgentUnifier.SYSTEM_INSTRUCTIONS_SUFFIX}"
         )
 
         try:

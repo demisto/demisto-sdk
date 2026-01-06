@@ -46,3 +46,7 @@ class AgentixBaseParser(YAMLContentItemParser):
     @property
     def name(self) -> Optional[str]:
         return get_value(self.yml_data, self.field_mapping.get("name", ""))
+
+    @property
+    def fromversion(self) -> str:
+        return str(get_value(self.yml_data, self.field_mapping.get("fromversion", ""), "8.12.0"))

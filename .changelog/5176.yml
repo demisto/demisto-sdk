@@ -1,0 +1,4 @@
+changes:
+- description: Updated the update release notes command to support --private-content-path.
+  type: feature
+pr_number: 5176

@@ -2,7 +2,10 @@ from functools import cached_property
 from pathlib import Path
 from typing import List, Optional, Set
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions, DEFAULT_AGENTIX_ITEM_FROM_VERSION
+from demisto_sdk.commands.common.constants import (
+    MarketplaceVersions,
+    DEFAULT_AGENTIX_ITEM_FROM_VERSION,
+)
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
@@ -49,4 +52,10 @@ class AgentixBaseParser(YAMLContentItemParser):
 
     @property
     def fromversion(self) -> str:
-        return str(get_value(self.yml_data, self.field_mapping.get("fromversion", ""), DEFAULT_AGENTIX_ITEM_FROM_VERSION))
+        return str(
+            get_value(
+                self.yml_data,
+                self.field_mapping.get("fromversion", ""),
+                DEFAULT_AGENTIX_ITEM_FROM_VERSION,
+            )
+        )

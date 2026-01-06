@@ -1,4 +1,41 @@
 # Changelog
+## 1.38.17 (2026-01-05)
+
+### Feature
+* Added IN168 validator to ensure MCP integrations have only PLATFORM marketplace. [#5174](https://github.com/demisto/demisto-sdk/pull/5174)
+* Added LLM configuration fields under promptConfig object (temperature, maxOutputTokens, webSearch) to Script schemas for AI Tasks with automatic defaults. [#5170](https://github.com/demisto/demisto-sdk/pull/5170)
+* Updated the update release notes command to support --private-content-path. [#5176](https://github.com/demisto/demisto-sdk/pull/5176)
+
+### Internal
+* Content packs containing MCP integrations are now automatically tagged as MCP packs. [#5156](https://github.com/demisto/demisto-sdk/pull/5156)
+* Added new GR111 and GR112 validations. [#5093](https://github.com/demisto/demisto-sdk/pull/5093)
+
+
+## 1.38.16 (2025-12-28)
+### Feature
+* Added support for handling private repositories. [#5159](https://github.com/demisto/demisto-sdk/pull/5159)
+
+### Fix
+* Fixed an issue where the ***format*** command attempted to format list data files when it should only format list metadata files. [#5166](https://github.com/demisto/demisto-sdk/pull/5166)
+
+### Internal
+* Ignore Gr110 when validating all in the Github action. [#5169](https://github.com/demisto/demisto-sdk/pull/5169)
+
+
+## 1.38.15 (2025-12-16)
+### Feature
+* Added the `provider` field to the integration schema. [#5155](https://github.com/demisto/demisto-sdk/pull/5155)
+* Enhanced GR110 validation to ensure Agentix Actions reference valid underlying content items (commands, scripts, and playbooks) with matching inputs and outputs. [#5134](https://github.com/demisto/demisto-sdk/pull/5134)
+* Add supportedModules for missing content items that are supported in the "platform" marketplace. [#5158](https://github.com/demisto/demisto-sdk/pull/5158)
+
+### Fix
+* Fixed an issue where the created date would conflict with the new XSOAR system field with the same name, by introducing a new field named `firstCreated`. [#4707](https://github.com/demisto/demisto-sdk/pull/4707)
+
+### Internal
+* Add an `is_beta` field to the `contentItems.integration` entry within the metadata file. [#5147](https://github.com/demisto/demisto-sdk/pull/5147)
+* Added Agentix Agents to metadata creation [#5145](https://github.com/demisto/demisto-sdk/pull/5145)
+
+
 ## 1.38.14 (2025-11-23)
 ### Feature
 * Added a new validation, BC117, which issues a warning when additional modules are added to the supportedModules list of any item. [#5128](https://github.com/demisto/demisto-sdk/pull/5128)

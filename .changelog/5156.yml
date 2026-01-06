@@ -1,4 +1,0 @@
-changes:
-- description: Content packs containing MCP integrations are now automatically tagged as MCP packs.
-  type: internal
-pr_number: 5156

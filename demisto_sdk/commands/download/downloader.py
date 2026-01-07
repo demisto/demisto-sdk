@@ -1007,7 +1007,7 @@ class Downloader:
             )
             return False
 
-        elif not output_path.parent.name == "Packs":
+        elif not output_path.parent.name in ("Packs", "SystemPacks"):
             logger.error(
                 f"Error: Path '{output_path.absolute()}' is invalid.\n"
                 f"The provided output path for the download must be inside a 'Packs' folder. e.g., 'Packs/MyPack'."

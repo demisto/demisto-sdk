@@ -49,9 +49,7 @@ ContentTypes = Union[
     Playbook,
     Dashboard,
     Classifier,
-    IncidentType,
     Job,
-    Layout,
     Mapper,
     Wizard,
     CorrelationRule,
@@ -81,7 +79,7 @@ ContentTypes = Union[
 
 class IsSupportedModulesSubsetOfPack(BaseValidator[ContentTypes]):
     error_code = "ST114"
-    description = "Ensure that all supported modules of a content item are a subset of its Content Pack’s supported modules."
+    description = "Ensure that all supported modules of a content item are a subset of its Content Pack's supported modules."
     rationale = "Declaring supported modules that are not allowed by the Content Pack can lead to unsupported behavior."
     error_message = (
         "The following supported modules are defined for the item but not allowed by its pack: {}. "
@@ -97,7 +95,7 @@ class IsSupportedModulesSubsetOfPack(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(", ".join(map(repr, sorted(diff)))),
+                message=self.error_message.format(", ".join(sorted(diff))),
                 content_object=content_item,
             )
             for content_item in content_items

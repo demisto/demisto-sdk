@@ -64,6 +64,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     get_targets_by_path,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
+    get_agentix_actions_using_content_items,
     get_items_using_deprecated,
     get_supported_modules_mismatch_commands,
     get_supported_modules_mismatch_content_items,
@@ -72,6 +73,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_duplicate_ids,
     validate_fromversion,
     validate_marketplaces,
+    validate_multiple_agentix_actions_with_same_display_name,
+    validate_multiple_agentix_actions_with_same_name,
     validate_multiple_packs_with_same_display_name,
     validate_multiple_script_with_same_name,
     validate_packs_with_hidden_mandatory_dependencies,
@@ -449,6 +452,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
+    def get_agentix_actions_using_content_items(
+        self, content_item_ids: List[str]
+    ) -> List[BaseNode]:
+        with self.driver.session() as session:
+            agentix_action_nodes = session.execute_read(
+                get_agentix_actions_using_content_items,
+                content_item_ids,
+            )
+            self._add_nodes_to_mapping(agentix_action_nodes)
+            return [self._id_to_obj[node.element_id] for node in agentix_action_nodes]
+
     def get_duplicate_pack_display_name(
         self, file_paths: List[str]
     ) -> List[Tuple[str, List[str]]]:
@@ -481,6 +495,24 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             dups = [self._id_to_obj[duplicate.element_id] for duplicate in dups]
             duplicate_models.append((self._id_to_obj[content_item.element_id], dups))
         return duplicate_models
+
+    def validate_duplicate_agentix_action_display_names(
+        self, file_paths: List[str]
+    ) -> List[Tuple[str, List[str]]]:
+        with self.driver.session() as session:
+            results = session.execute_read(
+                validate_multiple_agentix_actions_with_same_display_name, file_paths
+            )
+            return results
+
+    def validate_duplicate_agentix_action_names(
+        self, file_paths: List[str]
+    ) -> List[Tuple[str, List[str]]]:
+        with self.driver.session() as session:
+            results = session.execute_read(
+                validate_multiple_agentix_actions_with_same_name, file_paths
+            )
+            return results
 
     def find_uses_paths_with_invalid_fromversion(
         self, file_paths: List[str], for_supported_versions=False

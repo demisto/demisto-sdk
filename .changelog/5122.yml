@@ -1,6 +1,4 @@
 changes:
-- description: |
-    - Update BC115 validation to support default supportedModules handling.
-    - Add ST114 validator to enforce content item supportedModules are a subset of the Content Pack's supported modules.
+- description: Update BC115 validation to support default supportedModules handling.
   type: feature
 pr_number: 5122

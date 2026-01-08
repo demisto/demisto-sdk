@@ -321,6 +321,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
     FileType.CASE_FIELD: "Case Fields",
     FileType.CASE_LAYOUT: "Case Layouts",
+    FileType.AGENTIX_AGENT: "Agents",
+    FileType.AGENTIX_ACTION: "Actions",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -956,6 +958,13 @@ AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
 PRIVATE_PACKS_FOLDER = "PrivatePacks"
 GIT_IGNORE_FILE_NAME = ".gitignore"
+
+# Private Repository Status Files
+PRIVATE_REPO_STATUS_FILE_PRIVATE = "content_private_files_relative_paths.txt"
+PRIVATE_REPO_STATUS_FILE_TEST_CONF = "content_test_conf_files_relative_paths.txt"
+PRIVATE_REPO_STATUS_FILE_CONFIGURATION = (
+    "content_configuration_files_relative_paths.txt"
+)
 
 CONF_JSON_FILE_NAME = "conf.json"
 VERSION_CONFIG_FILE_NAME = "version_config.json"

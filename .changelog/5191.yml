@@ -1,0 +1,4 @@
+changes:
+- description: Delete Link PR to Jira github actions
+  type: internal
+pr_number: 5191

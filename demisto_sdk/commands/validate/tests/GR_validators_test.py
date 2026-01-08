@@ -3,9 +3,14 @@ from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
+from demisto_sdk.commands.validate.tests.test_tools import (
+    create_agentix_action_object,
+)
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
     GR104_is_pack_display_name_already_exists,
+    GR111_is_agentix_action_display_name_already_exists_valid,
+    GR112_is_agentix_action_name_already_exists_valid,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
     MarketplacesFieldValidatorAllFiles,
@@ -66,6 +71,15 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_m
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_compatibility_list_files import (
     IsSupportedModulesCompatibilityListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid import (
+    IsAgentixActionUsingExistingContentItemValidator,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR111_is_agentix_action_display_name_already_exists_valid import (
+    IsAgentixActionDisplayNameAlreadyExistsValidator,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR112_is_agentix_action_name_already_exists_valid import (
+    IsAgentixActionNameAlreadyExistsValidator,
 )
 from TestSuite.repo import Repo
 
@@ -1757,3 +1771,300 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
         == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
+
+
+@pytest.fixture
+def repo_for_test_gr_110(graph_repo: Repo):
+    """
+    Creates a test repository for testing GR110 validator.
+    """
+    # Pack 1: Simple integration and script
+    pack_1 = graph_repo.create_pack("Pack1")
+
+    # Create integration with commands
+    integration = pack_1.create_integration("MyIntegration")
+    integration.set_commands(["test-command", "get-incidents"])
+
+    # Create simple script
+    pack_1.create_script("MyScript")
+
+    # Create simple playbook
+    pack_1.create_playbook("MyPlaybook")
+
+    return graph_repo
+
+
+def test_gr110_missing_underlying_command(repo_for_test_gr_110: Repo):
+    """
+    Given:
+        - An Agentix Action referencing a non-existing command.
+    When:
+        - Running the GR110 validator.
+    Then:
+        - A validation error should be returned indicating the content item was not found.
+    """
+    action = create_agentix_action_object(
+        action_name="TestAction",
+        paths=[
+            "underlyingcontentitem.name",
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.command",
+        ],
+        values=[
+            "MyIntegration",
+            "MyIntegration",
+            "command",
+            "nonexistent-command",
+        ],
+    )
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert "could not be found in the Content repository" in results[0].message
+
+
+def test_gr110_unsupported_content_type(repo_for_test_gr_110: Repo):
+    """
+    Given:
+        - An Agentix Action referencing an unsupported content type (widget).
+    When:
+        - Running the GR110 validator.
+    Then:
+        - A validation error should be returned about unsupported content type.
+    """
+    action = create_agentix_action_object(
+        action_name="TestAction",
+        paths=[
+            "underlyingcontentitem.name",
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.type",
+        ],
+        values=[
+            "MyIntegration",
+            "MyIntegration",
+            "widget",  # unsupported type
+        ],
+    )
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert len(results) == 1
+    assert "unsupported in Agentix" in results[0].message
+
+
+def test_gr110_builtin_command_skipped(repo_for_test_gr_110: Repo):
+    """
+    Given:
+        - An Agentix Action referencing a built-in command.
+    When:
+        - Running the GR110 validator.
+    Then:
+        - No validation errors should be reported (built-in commands are skipped).
+    """
+    action = create_agentix_action_object(
+        action_name="TestAction",
+        paths=[
+            "underlyingcontentitem.name",
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.id",
+        ],
+        values=[
+            "_builtin_",
+            "command",
+            "_builtin_",
+        ],
+    )
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert len(results) == 0
+
+
+def test_gr110_valid_command_reference(repo_for_test_gr_110: Repo, mocker):
+    """
+    Given:
+        - An Agentix Action referencing an existing integration command.
+    When:
+        - Running the GR110 validator.
+    Then:
+        - No validation errors should be reported.
+    """
+    action = create_agentix_action_object(
+        action_name="TestAction",
+        paths=[
+            "underlyingcontentitem.name",
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.command",
+        ],
+        values=[
+            "MyIntegration",
+            "command",
+            "MyIntegration",
+            "test-command",
+        ],
+    )
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+
+    mock_command_node = mocker.Mock()
+    mocker.patch.object(validator.graph, "search", return_value=[mock_command_node])
+
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert len(results) == 1
+
+
+def test_gr110_valid_script_reference(repo_for_test_gr_110: Repo, mocker):
+    """
+    Given:
+        - An Agentix Action referencing an existing script.
+    When:
+        - Running the GR110 validator.
+    Then:
+        - No validation errors should be reported.
+    """
+    action = create_agentix_action_object(
+        action_name="TestAction",
+        paths=[
+            "underlyingcontentitem.name",
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.command",
+        ],
+        values=[
+            "MyScript",
+            "script",
+            "MyScript",
+            "",
+        ],
+    )
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+    mock_script_node = mocker.Mock()
+    mocker.patch.object(validator.graph, "search", return_value=[mock_script_node])
+
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert len(results) == 0
+
+
+def test_gr110_valid_playbook_reference(repo_for_test_gr_110: Repo, mocker):
+    """
+    Given:
+        - An Agentix Action referencing an existing playbook.
+    When:
+        - Running the GR110 validator.
+    Then:
+        - No validation errors should be reported.
+    """
+    action = create_agentix_action_object(
+        action_name="TestAction",
+        paths=[
+            "underlyingcontentitem.name",
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.command",
+        ],
+        values=["MyPlaybook", "playbook", "MyPlaybook", ""],
+    )
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+    mock_playbook_node = mocker.Mock()
+    mocker.patch.object(validator.graph, "search", return_value=[mock_playbook_node])
+
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert len(results) == 0
+
+
+def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
+    mocker, graph_repo: Repo
+):
+    """
+    Given
+        - 3 packs, with 1 agentix action in each, and 2 of them are with the same name
+    When
+        - running IsAgentixActionNameAlreadyExistsValidator obtain_invalid_content_items function, on one of the packs with the duplicate agentix action name.
+    Then
+        - Validate that we got the error messages for the duplicate name.
+    """
+    mocker.patch.object(
+        GR112_is_agentix_action_name_already_exists_valid,
+        "CONTENT_PATH",
+        new=graph_repo.path,
+    )
+    graph_repo.setup_one_pack(name="pack1")
+    graph_repo.setup_one_pack(name="pack2")
+    graph_repo.setup_one_pack(name="pack3")
+    graph_repo.packs[1].agentix_actions[0].set_agentix_action_name("test")
+    graph_repo.packs[2].agentix_actions[0].set_agentix_action_name("test")
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
+        [
+            graph_repo.packs[0].agentix_actions[0],
+            graph_repo.packs[2].agentix_actions[0],
+        ],
+        validate_all_files=False,
+    )
+
+    assert len(results) == 1
+
+
+def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
+    mocker, graph_repo: Repo
+):
+    """
+    Given
+        - 3 packs, with 1 agentix action in each, and 2 of them are with the same display name
+    When
+        - running IsAgentixActionDisplayNameAlreadyExistsValidator obtain_invalid_content_items function, on one of the packs with the duplicate agentix action display.
+    Then
+        - Validate that we got the error messages for the duplicate display name.
+    """
+    mocker.patch.object(
+        GR111_is_agentix_action_display_name_already_exists_valid,
+        "CONTENT_PATH",
+        new=graph_repo.path,
+    )
+    graph_repo.setup_one_pack(name="pack1")
+    graph_repo.setup_one_pack(name="pack2")
+    graph_repo.setup_one_pack(name="pack3")
+    graph_repo.packs[1].agentix_actions[0].set_agentix_action_display("test")
+    graph_repo.packs[2].agentix_actions[0].set_agentix_action_display("test")
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionDisplayNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
+        [
+            graph_repo.packs[0].agentix_actions[0],
+            graph_repo.packs[2].agentix_actions[0],
+        ],
+        validate_all_files=False,
+    )
+
+    assert len(results) == 1

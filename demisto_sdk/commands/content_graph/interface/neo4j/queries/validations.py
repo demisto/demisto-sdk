@@ -256,6 +256,49 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
     ]
 
 
+def _validate_duplicate_agentix_action_field(
+    tx: Transaction, file_paths: List[str], field_name: str
+) -> List[Tuple[str, List[str]]]:
+    """Generic validator for duplicate Agentix Action fields.
+
+    Args:
+        tx: The Neo4j transaction object.
+        file_paths: List of file paths to filter results.
+        field_name: The field to check for duplicates ('name' or 'display').
+
+    Returns:
+        List of tuples (action_id, list_of_duplicate_ids).
+    """
+    query = f"""// Returns Agentix Actions with duplicate {field_name}
+MATCH (a:{ContentType.AGENTIX_ACTION}), (b:{ContentType.AGENTIX_ACTION})
+WHERE a.{field_name} = b.{field_name}
+"""
+    if file_paths:
+        query += f"AND a.path in {file_paths}"
+    query += """
+AND elementId(a) <> elementId(b)
+RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
+"""
+    return [
+        (item.get("a_object_id"), item.get("b_object_ids"))
+        for item in run_query(tx, query)
+    ]
+
+
+def validate_multiple_agentix_actions_with_same_display_name(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, List[str]]]:
+    """Query graph to return Agentix Actions with duplicate display names."""
+    return _validate_duplicate_agentix_action_field(tx, file_paths, "display_name")
+
+
+def validate_multiple_agentix_actions_with_same_name(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, List[str]]]:
+    """Query graph to return Agentix Actions with duplicate names."""
+    return _validate_duplicate_agentix_action_field(tx, file_paths, "name")
+
+
 def validate_multiple_script_with_same_name(
     tx: Transaction, file_paths: List[str]
 ) -> Dict[str, str]:
@@ -528,3 +571,56 @@ def get_supported_modules_mismatch_content_items(
         )
         results[item.get("content_item").element_id] = neo_res
     return results
+
+
+def get_agentix_actions_using_content_items(
+    tx: Transaction, content_item_ids: List[str]
+) -> List[graph.Node]:
+    """
+    Query graph to return all AgentixActions that use the specified
+    Integration, Script, or Playbook IDs.
+
+    This function finds AgentixActions that depend on the given Integrations,
+    Scripts, or Playbooks, either directly (for Scripts/Playbooks) or through commands
+    (for Integrations).
+
+    When an Integration/Script/Playbook is modified, we need to validate ALL
+    AgentixActions that depend on it, regardless of pack, since a breaking
+    change affects all dependents.
+
+    Args:
+        tx: The Transaction to contact the graph with.
+        content_item_ids: List of Integration, Script, or Playbook object IDs to find
+            dependent AgentixActions for. If empty, returns ALL AgentixActions.
+
+    Returns:
+        List of AgentixAction nodes that use the specified content items.
+    """
+
+    # Build filter clause - only filter by IDs if list is provided
+    id_filter = (
+        f"content_item.object_id IN {content_item_ids} AND " if content_item_ids else ""
+    )
+
+    query = f"""
+    // Find AgentixActions using commands from specified Integrations
+    MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[:{RelationshipType.HAS_COMMAND}]-(content_item:{ContentType.INTEGRATION})
+    WHERE {id_filter}{is_target_available("agentix_action", "content_item")}
+    RETURN agentix_action
+
+    UNION
+
+    // Find AgentixActions using Scripts directly
+    MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item:{ContentType.SCRIPT})
+    WHERE {id_filter}{is_target_available("agentix_action", "content_item")}
+    RETURN agentix_action
+
+    UNION
+
+    // Find AgentixActions using Playbooks directly
+    MATCH (agentix_action:{ContentType.AGENTIX_ACTION})-[:{RelationshipType.USES}]->(content_item:{ContentType.PLAYBOOK})
+    WHERE {id_filter}{is_target_available("agentix_action", "content_item")}
+    RETURN agentix_action
+    """
+    items = run_query(tx, query)
+    return [item.get("agentix_action") for item in items]

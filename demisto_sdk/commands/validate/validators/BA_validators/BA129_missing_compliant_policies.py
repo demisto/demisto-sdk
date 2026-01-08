@@ -87,11 +87,10 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
 
             if not valid_policy_options:
                 continue
-            # Check if and which required policies for this argument are missing
-            missing_for_arg = valid_policy_options - declared_policies
-            if missing_for_arg:
+            # Check if the declared policies cover the requirements for this arg
+            if valid_policy_options.isdisjoint(declared_policies):
                 problematic_arguments.add(arg)
-                missing_policy_options.update(missing_for_arg)
+                missing_policy_options.update(valid_policy_options)
 
         if problematic_arguments:
             return ValidationResult(

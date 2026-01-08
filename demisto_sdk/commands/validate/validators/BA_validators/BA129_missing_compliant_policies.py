@@ -29,7 +29,7 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
         """
         Identify commands that use arguments associated with compliance policies
         but do not declare the required compliantpolicies.
-        Only identify newly commands, or commands with arguments change.
+        Only identify newly commands.
 
         Args:
             content_items (Iterable[ContentTypes]): A list of Integration or Script objects to validate.
@@ -87,10 +87,11 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
 
             if not valid_policy_options:
                 continue
-            # Check if the declared policies cover the requirements for this arg
-            if valid_policy_options.isdisjoint(declared_policies):
+            # Check if and which required policies for this argument are missing
+            missing_for_arg = valid_policy_options - declared_policies
+            if missing_for_arg:
                 problematic_arguments.add(arg)
-                missing_policy_options.update(valid_policy_options)
+                missing_policy_options.update(missing_for_arg)
 
         if problematic_arguments:
             return ValidationResult(

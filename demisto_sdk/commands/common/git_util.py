@@ -528,20 +528,34 @@ class GitUtil:
         Returns:
             Set: A set of Paths to the deleted files.
         """
+        logger.info("=" * 80)
+        logger.info("GIT_UTIL: DETECTING DELETED FILES")
+        logger.info("=" * 80)
+        logger.info(f"Parameters: prev_ver={prev_ver}, committed_only={committed_only}, staged_only={staged_only}, include_untracked={include_untracked}")
+        
         remote, branch = self.handle_prev_ver(prev_ver)
+        logger.info(f"Resolved remote: {remote}, branch: {branch}")
+        
         current_branch_or_hash = self.get_current_git_branch_or_hash()
+        logger.info(f"Current branch/hash: {current_branch_or_hash}")
 
         # when checking branch against itself only return the last commit.
+        logger.info("Checking if comparing branch against itself (last commit only)")
         last_commit = self._only_last_commit(prev_ver, requested_status="D")
         if last_commit:
+            logger.info(f"Comparing branch against itself - returning last commit deleted files: {len(last_commit)} files")
+            logger.info(f"Last commit deleted files: {[str(f) for f in last_commit]}")
             return last_commit
+        logger.info("Not comparing branch against itself, proceeding with full detection")
 
         committed = set()
 
         if not staged_only:
+            logger.info("Getting committed deleted files")
             # get all committed files identified as added which are changed from prev_ver.
             # this can result in extra files identified which were not touched on this branch.
             if remote:
+                logger.info(f"Using remote: {remote}, branch: {branch}")
                 committed = {
                     Path(os.path.join(item.a_path))
                     for item in self.repo.remote(name=remote)
@@ -549,39 +563,60 @@ class GitUtil:
                     .commit.diff(current_branch_or_hash)
                     .iter_change_type("D")
                 }
+                logger.info(f"Found {len(committed)} committed deleted files from remote")
 
             # if remote does not exist we are checking against the commit sha1
             else:
+                logger.info(f"Using commit SHA: {branch}")
                 committed = {
                     Path(os.path.join(item.a_path))  # type: ignore
                     for item in self.repo.commit(rev=branch)
                     .diff(current_branch_or_hash)
                     .iter_change_type("D")
                 }
+                logger.info(f"Found {len(committed)} committed deleted files from commit")
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed added files.
+            logger.info("Getting all changed files on branch to filter committed deleted files")
             all_branch_changed_files = self._get_all_changed_files(prev_ver)
+            logger.info(f"All branch changed files: {len(all_branch_changed_files)}")
+            
             committed = committed.intersection(all_branch_changed_files)
+            logger.info(f"Committed deleted files after intersection: {len(committed)}")
+            logger.info(f"Committed deleted files: {[str(f) for f in committed]}")
 
         if committed_only:
+            logger.info(f"Returning committed_only deleted files: {len(committed)} files")
             return committed
 
         untracked: Set = set()
         if include_untracked:
+            logger.info("Getting untracked deleted files")
             # get all untracked deleted files
             untracked = self._get_untracked_files("D")
+            logger.info(f"Found {len(untracked)} untracked deleted files")
 
         # get all the files that are staged on the branch and identified as added.
+        logger.info("Getting staged deleted files")
         staged = {
             Path(os.path.join(item.a_path))  # type: ignore
             for item in self.repo.head.commit.diff().iter_change_type("D")
         }.union(untracked)
+        logger.info(f"Found {len(staged)} staged deleted files (including untracked)")
+        logger.info(f"Staged deleted files: {[str(f) for f in staged]}")
 
         if staged_only:
+            logger.info(f"Returning staged_only deleted files: {len(staged)} files")
             return staged
 
-        return staged.union(committed)
+        final_deleted = staged.union(committed)
+        logger.info("=" * 80)
+        logger.info(f"TOTAL DELETED FILES: {len(final_deleted)}")
+        logger.info(f"Files: {[str(f) for f in final_deleted]}")
+        logger.info("=" * 80)
+        
+        return final_deleted
 
     def renamed_files(
         self,
@@ -738,11 +773,14 @@ class GitUtil:
         Returns:
             Set[Path]: The staged files to return
         """
-        return {
+        logger.info("Getting staged files from git")
+        staged_files = {
             Path(item)
             for item in self.repo.git.diff("--cached", "--name-only").split("\n")
             if item
         }
+        logger.info(f"Found {len(staged_files)} staged files: {[str(f) for f in staged_files]}")
+        return staged_files
 
     def _get_all_changed_files(self, prev_ver: Optional[str] = None) -> Set[Path]:
         """
@@ -754,29 +792,38 @@ class GitUtil:
         Returns:
             Set[Path]: of Paths to files changed in the current branch.
         """
-
+        logger.info(f"Getting all changed files for prev_ver: {prev_ver}")
+        
         self.fetch()
         remote, branch = self.handle_prev_ver(prev_ver)
         current_hash = self.get_current_commit_hash()
+        
+        logger.info(f"Comparing: remote={remote}, branch={branch}, current_hash={current_hash}")
 
         if remote:
-            return {
+            logger.info(f"Using remote comparison: {remote}/{branch}...{current_hash}")
+            changed_files = {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
                     "--name-only", f"{remote}/{branch}...{current_hash}"
                 ).split("\n")
                 if item
             }
+            logger.info(f"Found {len(changed_files)} changed files from remote")
+            return changed_files
 
         # if remote does not exist we are checking against the commit sha1
         else:
-            return {
+            logger.info(f"Using commit comparison: {branch}...{current_hash}")
+            changed_files = {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
                     "--name-only", f"{branch}...{current_hash}"
                 ).split("\n")
                 if item
             }
+            logger.info(f"Found {len(changed_files)} changed files from commit")
+            return changed_files
 
     def _only_last_commit(
         self, prev_ver: str, requested_status: Lit_change_type

@@ -136,11 +136,18 @@ class PreCommitRunner:
         Returns:
             int: return code - 0 if hook passed, 1 if failed
         """
-        logger.debug(f"Running hook {hook_id}")
+        logger.info(f"=" * 60)
+        logger.info(f"STARTING HOOK: {hook_id}")
+        logger.info(f"=" * 60)
+        logger.info(f"Hook ID: {hook_id}")
+        logger.info(f"Verbose mode: {verbose}")
+        logger.info(f"JSON output path: {json_output_path}")
 
         if json_output_path and json_output_path.is_dir():
             json_output_path = json_output_path / f"{hook_id}.json"
+            logger.info(f"JSON output will be saved to: {json_output_path}")
 
+        logger.info(f"Executing pre-commit process for hook: {hook_id}")
         process = PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
@@ -150,10 +157,18 @@ class PreCommitRunner:
             json_output_path=json_output_path,
         )
 
+        logger.info(f"Hook {hook_id} completed with return code: {process.returncode}")
+        
         if process.stdout:
+            logger.info(f"Hook {hook_id} stdout:")
             logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
         if process.stderr:
+            logger.info(f"Hook {hook_id} stderr:")
             logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
+        
+        logger.info(f"=" * 60)
+        logger.info(f"FINISHED HOOK: {hook_id} (exit code: {process.returncode})")
+        logger.info(f"=" * 60)
         return process.returncode
 
     @staticmethod
@@ -230,6 +245,10 @@ class PreCommitRunner:
         Returns:
             int: The exit code - 0 if everything is valid.
         """
+        logger.info("=" * 80)
+        logger.info("PRE-COMMIT RUNNER - STARTING EXECUTION")
+        logger.info("=" * 80)
+        
         if pre_commit_context.mode:
             logger.info(
                 f"<yellow>Running pre-commit hooks in `{pre_commit_context.mode}` mode.</yellow>"
@@ -237,11 +256,13 @@ class PreCommitRunner:
         if pre_commit_context.run_hook:
             logger.info(f"<yellow>Running hook {pre_commit_context.run_hook}</yellow>")
 
+        logger.info(f"Writing pre-commit config to: {PRECOMMIT_CONFIG_MAIN_PATH}")
         write_dict(PRECOMMIT_CONFIG_MAIN_PATH, pre_commit_context.precommit_template)
         # we don't need the context anymore, we can clear it to free up memory for the pre-commit checks
         del pre_commit_context
 
         # install dependencies of all hooks in advance
+        logger.info("Installing pre-commit hook dependencies...")
         PreCommitRunner._run_pre_commit_process(
             PRECOMMIT_CONFIG_MAIN_PATH,
             precommit_env,
@@ -251,21 +272,29 @@ class PreCommitRunner:
             if not json_output_path or json_output_path.is_file()
             else json_output_path / "install-hooks.json",
         )
+        logger.info("Hook dependencies installed successfully")
 
         num_processes = cpu_count()
+        logger.info(f"Using {num_processes} processes for parallel execution")
+        
         all_hooks_exit_codes = []
         hooks_to_run = PreCommitRunner.original_hook_id_to_generated_hook_ids.items()
-        logger.debug(f"run {hooks_to_run=}")
+        logger.info(f"Total hooks to run: {len(list(hooks_to_run))}")
+        logger.info(f"Hooks: {[hook_id for hook_id, _ in PreCommitRunner.original_hook_id_to_generated_hook_ids.items()]}")
 
-        for original_hook_id, generated_hooks in hooks_to_run:
+        for original_hook_id, generated_hooks in PreCommitRunner.original_hook_id_to_generated_hook_ids.items():
             if generated_hooks:
-                logger.debug(f"Running hook {original_hook_id} with {generated_hooks}")
+                logger.info(f"Processing hook: {original_hook_id}")
+                logger.info(f"Generated hooks: {generated_hooks}")
                 hook_ids = generated_hooks.hook_ids
+                logger.info(f"Hook IDs to execute: {hook_ids}")
+                
                 if (
                     generated_hooks.parallel
                     and len(hook_ids) > 1
                     and not should_disable_multiprocessing()
                 ):
+                    logger.info(f"Running {len(hook_ids)} hooks in PARALLEL mode")
                     # We shall not write results to the same file if running hooks in parallel, therefore,
                     # writing the results to a parallel directory.
                     if json_output_path and not json_output_path.is_dir():
@@ -273,6 +302,8 @@ class PreCommitRunner:
                             json_output_path.parent / json_output_path.stem
                         )
                         json_output_path.mkdir(exist_ok=True)
+                        logger.info(f"Created parallel output directory: {json_output_path}")
+                    
                     with ThreadPool(num_processes) as pool:
                         current_hooks_exit_codes = pool.map(
                             partial(
@@ -285,6 +316,7 @@ class PreCommitRunner:
                             hook_ids,
                         )
                 else:
+                    logger.info(f"Running {len(hook_ids)} hooks in SEQUENTIAL mode")
                     current_hooks_exit_codes = [
                         PreCommitRunner.run_hook(
                             hook_id,
@@ -295,14 +327,18 @@ class PreCommitRunner:
                         for hook_id in hook_ids
                     ]
 
+                logger.info(f"Hook {original_hook_id} exit codes: {current_hooks_exit_codes}")
                 all_hooks_exit_codes.extend(current_hooks_exit_codes)
 
             else:
-                logger.debug(
+                logger.info(
                     f"Skipping hook {original_hook_id} as it does not have any generated-hook-ids"
                 )
 
+        logger.info(f"All hooks exit codes: {all_hooks_exit_codes}")
         return_code = int(any(all_hooks_exit_codes))
+        logger.info(f"Final return code: {return_code} ({'FAILED' if return_code else 'SUCCESS'})")
+        
         if return_code and show_diff_on_failure:
             logger.info(
                 "Pre-Commit changed the following. If you experience this in CI, please run `demisto-sdk pre-commit`"
@@ -315,6 +351,10 @@ class PreCommitRunner:
             logger.info(  # noqa: PLE1205
                 "{}", git_diff.stdout
             )
+        
+        logger.info("=" * 80)
+        logger.info(f"PRE-COMMIT RUNNER - EXECUTION {'FAILED' if return_code else 'COMPLETED SUCCESSFULLY'}")
+        logger.info("=" * 80)
         return return_code
 
     @staticmethod
@@ -749,18 +789,49 @@ def preprocess_files(
     Returns:
         Set[Path]: The set of files to run pre-commit on.
     """
+    logger.info("=" * 80)
+    logger.info("PREPROCESSING FILES FOR PRE-COMMIT")
+    logger.info("=" * 80)
+    logger.info(f"Input parameters:")
+    logger.info(f"  - input_files: {list(input_files) if input_files else None}")
+    logger.info(f"  - staged_only: {staged_only}")
+    logger.info(f"  - commited_only: {commited_only}")
+    logger.info(f"  - use_git: {use_git}")
+    logger.info(f"  - all_files: {all_files}")
+    logger.info(f"  - prev_version: {prev_version}")
+    
+    logger.info("Initializing GitUtil")
     git_util = GitUtil()
+    
+    logger.info("Getting staged files from git")
     staged_files = git_util._get_staged_files()
+    logger.info(f"Found {len(staged_files)} staged files")
+    
+    logger.info("Getting all git files")
     all_git_files = git_util.get_all_files().union(staged_files)
+    logger.info(f"Total git files: {len(all_git_files)}")
+    
     contribution_flow = os.getenv("CONTRIB_BRANCH")
+    logger.info(f"CONTRIB_BRANCH environment variable: {contribution_flow}")
+    
     if input_files:
+        logger.info("Using input_files parameter")
         raw_files = set(input_files)
+        logger.info(f"Input files count: {len(raw_files)}")
     elif staged_only:
+        logger.info("Using staged_only mode")
         raw_files = staged_files
+        logger.info(f"Staged files count: {len(raw_files)}")
     elif use_git:
+        logger.info(f"Using git mode with prev_version: {prev_version}")
         raw_files = git_util._get_all_changed_files(prev_version)
+        logger.info(f"Changed files from git: {len(raw_files)}")
+        
         if not commited_only:
+            logger.info("Adding staged files to changed files (not commited_only)")
             raw_files = raw_files.union(staged_files)
+            logger.info(f"Total files after adding staged: {len(raw_files)}")
+        
         if contribution_flow:
             """
             If this command runs on a build triggered by an external contribution PR,
@@ -774,23 +845,53 @@ def preprocess_files(
                 "on files staged by Utils/update_contribution_pack_in_base_branch.py (Infra repository)</cyan>"
             )
     elif all_files:
+        logger.info("Using all_files mode")
         raw_files = all_git_files
+        logger.info(f"All files count: {len(raw_files)}")
     else:
+        logger.error("No files were given to run pre-commit on, and no flags were given")
         raise ValueError(
             "No files were given to run pre-commit on, and no flags were given."
         )
 
+    logger.info(f"Raw files to process: {len(raw_files)}")
+    logger.info("Processing files and adding related files...")
+    
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():
-            files_to_run.update({path for path in file.rglob("*") if path.is_file()})
+            logger.info(f"Processing directory: {file}")
+            dir_files = {path for path in file.rglob("*") if path.is_file()}
+            logger.info(f"  Found {len(dir_files)} files in directory")
+            files_to_run.update(dir_files)
         else:
-            files_to_run.update(add_related_files(file))
+            related = add_related_files(file)
+            if len(related) > 1:
+                logger.info(f"File {file} has {len(related)} related files: {related}")
+            files_to_run.update(related)
+    
+    logger.info(f"Total files after adding related files: {len(files_to_run)}")
+    
     # convert to relative file to content path
+    logger.info("Converting to relative paths")
     relative_paths = {
         file.relative_to(CONTENT_PATH) if file.is_absolute() else file
         for file in files_to_run
     }
+    logger.info(f"Relative paths count: {len(relative_paths)}")
 
     # filter out files that are not in the content git repo (e.g in .gitignore)
-    return relative_paths & all_git_files
+    logger.info("Filtering files that are in git repo")
+    final_files = relative_paths & all_git_files
+    logger.info(f"Final files to run pre-commit on: {len(final_files)}")
+    
+    if final_files:
+        logger.info("Files to process:")
+        for f in sorted(final_files):
+            logger.info(f"  - {f}")
+    
+    logger.info("=" * 80)
+    logger.info(f"PREPROCESSING COMPLETE - {len(final_files)} FILES TO PROCESS")
+    logger.info("=" * 80)
+    
+    return final_files

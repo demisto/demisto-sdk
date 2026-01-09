@@ -789,6 +789,8 @@ def preprocess_files(
     Returns:
         Set[Path]: The set of files to run pre-commit on.
     """
+    from demisto_sdk.commands.common.string_to_bool import string_to_bool
+    
     logger.info("=" * 80)
     logger.info("PREPROCESSING FILES FOR PRE-COMMIT")
     logger.info("=" * 80)
@@ -799,6 +801,13 @@ def preprocess_files(
     logger.info(f"  - use_git: {use_git}")
     logger.info(f"  - all_files: {all_files}")
     logger.info(f"  - prev_version: {prev_version}")
+    
+    # Auto-enable committed_only for private repos to avoid getting all diverged files
+    is_private_repo = string_to_bool(os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False)
+    if is_private_repo and use_git and not commited_only and not staged_only and not all_files:
+        logger.info("<yellow>DEMISTO_SDK_PRIVATE_REPO_MODE detected - automatically enabling committed_only mode</yellow>")
+        logger.info("<yellow>This prevents including all diverged files from master in private repos</yellow>")
+        commited_only = True
     
     logger.info("Initializing GitUtil")
     git_util = GitUtil()
@@ -823,11 +832,25 @@ def preprocess_files(
         raw_files = staged_files
         logger.info(f"Staged files count: {len(raw_files)}")
     elif use_git:
-        logger.info(f"Using git mode with prev_version: {prev_version}")
-        raw_files = git_util._get_all_changed_files(prev_version)
-        logger.info(f"Changed files from git: {len(raw_files)}")
+        logger.info(f"Using git mode with prev_version: {prev_version}, commited_only: {commited_only}")
         
-        if not commited_only:
+        if commited_only:
+            # For committed_only mode, get files from actual commits using get_all_changed_files
+            # which properly filters by commit status
+            logger.info("Getting committed files only (using get_all_changed_files with committed_only=True)")
+            raw_files = git_util.get_all_changed_files(
+                prev_ver=prev_version or "",
+                committed_only=True,
+                staged_only=False,
+                include_untracked=False
+            )
+            logger.info(f"Committed files from git: {len(raw_files)}")
+        else:
+            # For non-committed_only mode, use the internal method
+            logger.info("Getting all changed files (including uncommitted)")
+            raw_files = git_util._get_all_changed_files(prev_version)
+            logger.info(f"Changed files from git: {len(raw_files)}")
+            
             logger.info("Adding staged files to changed files (not commited_only)")
             raw_files = raw_files.union(staged_files)
             logger.info(f"Total files after adding staged: {len(raw_files)}")

@@ -93,8 +93,9 @@ class PlaybookRunner:
             playbook_state = playbook_state_raw_response.get("state")
             if playbook_state == InvestigationPlaybookState.FAILED:
                 logger.error(
-                    f"<red>The playbook finished running with status: {InvestigationPlaybookState.FAILED}"
+                    f"<red>The playbook finished running with status: {InvestigationPlaybookState.FAILED}</red>"
                 )
+                return 1
             else:
                 logger.info(
                     f"<green>The playbook {self.playbook_id} has completed its run successfully</green>"

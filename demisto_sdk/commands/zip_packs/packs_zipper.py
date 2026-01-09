@@ -204,6 +204,7 @@ def PacksDirsHandler(artifact_manager: PacksManager):
         delete_dirs(artifact_manager)
         artifact_manager.exit_code = EX_FAIL
         logger.error(e)
+        logger.error("There were errors during the packs zipping process. Fix them and try again.")
         exit(EX_FAIL)
     else:
         if artifact_manager.zip_all:

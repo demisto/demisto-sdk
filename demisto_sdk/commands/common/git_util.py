@@ -800,30 +800,47 @@ class GitUtil:
         
         logger.info(f"Comparing: remote={remote}, branch={branch}, current_hash={current_hash}")
 
-        if remote:
-            logger.info(f"Using remote comparison: {remote}/{branch}...{current_hash}")
-            changed_files = {
-                Path(os.path.join(item))
-                for item in self.repo.git.diff(
-                    "--name-only", f"{remote}/{branch}...{current_hash}"
-                ).split("\n")
-                if item
-            }
-            logger.info(f"Found {len(changed_files)} changed files from remote")
-            return changed_files
+        # For private repos (no remote), use merge-base to get only actual changes in current branch
+        # This prevents including all historical commits when branch diverged long ago
+        if not remote:
+            try:
+                # Get the merge-base (common ancestor) between branch and current
+                merge_base = self.repo.git.merge_base(branch, current_hash).strip()
+                logger.info(f"Using merge-base comparison for private repo: {merge_base}..{current_hash}")
+                changed_files = {
+                    Path(os.path.join(item))
+                    for item in self.repo.git.diff(
+                        "--name-only", f"{merge_base}..{current_hash}"
+                    ).split("\n")
+                    if item
+                }
+                logger.info(f"Found {len(changed_files)} changed files from merge-base")
+                return changed_files
+            except Exception as e:
+                logger.warning(f"Failed to get merge-base, falling back to direct comparison: {e}")
+                # Fallback to two-dot diff if merge-base fails
+                logger.info(f"Using commit comparison: {branch}..{current_hash}")
+                changed_files = {
+                    Path(os.path.join(item))
+                    for item in self.repo.git.diff(
+                        "--name-only", f"{branch}..{current_hash}"
+                    ).split("\n")
+                    if item
+                }
+                logger.info(f"Found {len(changed_files)} changed files from commit")
+                return changed_files
 
-        # if remote does not exist we are checking against the commit sha1
-        else:
-            logger.info(f"Using commit comparison: {branch}...{current_hash}")
-            changed_files = {
-                Path(os.path.join(item))
-                for item in self.repo.git.diff(
-                    "--name-only", f"{branch}...{current_hash}"
-                ).split("\n")
-                if item
-            }
-            logger.info(f"Found {len(changed_files)} changed files from commit")
-            return changed_files
+        # For repos with remote, use three-dot diff to get changes in current branch
+        logger.info(f"Using remote comparison: {remote}/{branch}...{current_hash}")
+        changed_files = {
+            Path(os.path.join(item))
+            for item in self.repo.git.diff(
+                "--name-only", f"{remote}/{branch}...{current_hash}"
+            ).split("\n")
+            if item
+        }
+        logger.info(f"Found {len(changed_files)} changed files from remote")
+        return changed_files
 
     def _only_last_commit(
         self, prev_ver: str, requested_status: Lit_change_type

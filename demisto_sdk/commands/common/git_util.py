@@ -528,23 +528,12 @@ class GitUtil:
         Returns:
             Set: A set of Paths to the deleted files.
         """
-        logger.info(
-            f"[DELETED-DEBUG] deleted_files called with prev_ver='{prev_ver}', committed_only={committed_only}, staged_only={staged_only}"
-        )
-
         remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
-
-        logger.info(
-            f"[DELETED-DEBUG] After handle_prev_ver: remote='{remote}', branch='{branch}', current={current_branch_or_hash}"
-        )
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status="D")
         if last_commit:
-            logger.info(
-                f"[DELETED-DEBUG] Returning last_commit: {len(last_commit)} files"
-            )
             return last_commit
 
         committed = set()
@@ -560,9 +549,6 @@ class GitUtil:
                     .commit.diff(current_branch_or_hash)
                     .iter_change_type("D")
                 }
-                logger.info(
-                    f"[DELETED-DEBUG] Committed deleted (with remote): {len(committed)} files: {sorted([str(f) for f in committed])}"
-                )
 
             # if remote does not exist we are checking against the commit sha1
             else:
@@ -572,9 +558,6 @@ class GitUtil:
                     .diff(current_branch_or_hash)
                     .iter_change_type("D")
                 }
-                logger.info(
-                    f"[DELETED-DEBUG] Committed deleted (no remote): {len(committed)} files: {sorted([str(f) for f in committed])}"
-                )
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed deleted files.
@@ -585,49 +568,28 @@ class GitUtil:
 
             if not is_private_repo:
                 all_branch_changed_files = self._get_all_changed_files(prev_ver)
-                logger.info(
-                    f"[DELETED-DEBUG] All branch changed files: {len(all_branch_changed_files)}"
-                )
                 committed = committed.intersection(all_branch_changed_files)
-                logger.info(
-                    f"[DELETED-DEBUG] After intersection with all_branch_changed_files: {len(committed)} files: {sorted([str(f) for f in committed])}"
-                )
             else:
-                logger.info(
-                    f"[DELETED-DEBUG] Private repo mode - skipping intersection, keeping all {len(committed)} committed deleted files"
-                )
                 # Filter out .gitkeep files and files under AssetsModelingRules
                 committed = {
                     f
                     for f in committed
                     if f.name != ".gitkeep" and "AssetsModelingRules" not in str(f)
                 }
-                logger.info(
-                    f"[DELETED-DEBUG] After filtering .gitkeep and AssetsModelingRules: {len(committed)} files: {sorted([str(f) for f in committed])}"
-                )
 
         if committed_only:
-            logger.info(
-                f"[DELETED-DEBUG] Returning committed_only: {len(committed)} files"
-            )
             return committed
 
         untracked: Set = set()
         if include_untracked:
             # get all untracked deleted files
             untracked = self._get_untracked_files("D")
-            logger.info(
-                f"[DELETED-DEBUG] Untracked deleted: {len(untracked)} files: {sorted([str(f) for f in untracked])}"
-            )
 
         # get all the files that are staged on the branch and identified as deleted.
         staged = {
             Path(os.path.join(item.a_path))  # type: ignore
             for item in self.repo.head.commit.diff().iter_change_type("D")
         }.union(untracked)
-        logger.info(
-            f"[DELETED-DEBUG] Staged deleted: {len(staged)} files: {sorted([str(f) for f in staged])}"
-        )
 
         # Also get unstaged deleted files (working directory deletions not yet staged)
         # This ensures we catch all deletions when committed_only=False
@@ -635,24 +597,12 @@ class GitUtil:
             Path(os.path.join(item.a_path))  # type: ignore
             for item in self.repo.head.commit.diff(None).iter_change_type("D")
         }
-        logger.info(
-            f"[DELETED-DEBUG] Unstaged deleted: {len(unstaged_deleted)} files: {sorted([str(f) for f in unstaged_deleted])}"
-        )
-
         staged = staged.union(unstaged_deleted)
-        logger.info(
-            f"[DELETED-DEBUG] Total staged (staged + unstaged): {len(staged)} files: {sorted([str(f) for f in staged])}"
-        )
 
         if staged_only:
-            logger.info(f"[DELETED-DEBUG] Returning staged_only: {len(staged)} files")
             return staged
 
-        final_result = staged.union(committed)
-        logger.info(
-            f"[DELETED-DEBUG] Final result (staged + committed): {len(final_result)} files: {sorted([str(f) for f in final_result])}"
-        )
-        return final_result
+        return staged.union(committed)
 
     def renamed_files(
         self,
@@ -770,13 +720,7 @@ class GitUtil:
     def get_all_changed_pack_ids(self, prev_ver: str) -> Set[str]:
         # Handle case where prev_ver might be a boolean or invalid value
         # If prev_ver is True/False or not a string, use empty string (will use default branch)
-        print(
-            f"DEBUG get_all_changed_pack_ids: prev_ver={prev_ver}, type={type(prev_ver)}"
-        )
         if not isinstance(prev_ver, str) or prev_ver in ("True", "False"):
-            print(
-                f"DEBUG: Invalid prev_ver value: {prev_ver}, using empty string for default behavior"
-            )
             prev_ver = ""
 
         # In private repos, ignore the graph's old commit and use actual branch changes
@@ -786,9 +730,6 @@ class GitUtil:
         )
 
         if is_private_repo:
-            print(
-                "DEBUG: Private repo mode - getting changed files with committed_only=True"
-            )
             # Get only files changed in the current branch, not all diverged files
             changed_files = (
                 self.get_all_changed_files(prev_ver="", committed_only=True)
@@ -799,12 +740,9 @@ class GitUtil:
                 self._get_all_changed_files(prev_ver) | self._get_staged_files()
             )
 
-        print(f"DEBUG: Total changed files: {len(changed_files)}")
-
         pack_ids = {
             file.parts[1] for file in changed_files if file.parts[0] == PACKS_FOLDER
         }
-        print(f"DEBUG: Changed pack IDs: {sorted(pack_ids)}")
         return pack_ids
 
     def _get_untracked_files(self, requested_status: str) -> set:
@@ -867,10 +805,6 @@ class GitUtil:
         sha1_pattern = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
         is_commit_hash = bool(sha1_pattern.match(branch))
 
-        print(
-            f"DEBUG _get_all_changed_files: remote='{remote}', branch='{branch}', is_commit_hash={is_commit_hash}, current_hash={current_hash}"
-        )
-
         if remote:
             changed_files = {
                 Path(os.path.join(item))
@@ -891,13 +825,9 @@ class GitUtil:
             if is_private_repo:
                 try:
                     merge_base = self.repo.git.merge_base(branch, current_hash).strip()
-                    print(f"DEBUG: Private repo - using merge-base {merge_base}")
                     compare_from = merge_base
                     diff_operator = ".."
-                except Exception as e:
-                    print(
-                        f"DEBUG: merge-base failed ({e}), falling back to two-dot diff"
-                    )
+                except Exception:
                     compare_from = branch
                     diff_operator = ".."
             else:
@@ -914,9 +844,6 @@ class GitUtil:
                 ).split("\n")
                 if item
             }
-            print(
-                f"DEBUG: Found {len(changed_files)} files using {compare_from}{diff_operator}{current_hash}"
-            )
         return changed_files
 
     def _only_last_commit(

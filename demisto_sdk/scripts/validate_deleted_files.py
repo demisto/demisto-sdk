@@ -69,18 +69,9 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
         staged_only=False,
     )
 
-    logger.info(
-        f"[DELETED-FILES-DEBUG] Raw deleted files ({len(raw_deleted_files)}): {sorted([str(f) for f in raw_deleted_files])}"
-    )
-
     deleted_files = handle_private_repo_deleted_files(
         raw_deleted_files, show_deleted_files=False
     )
-
-    logger.info(
-        f"[DELETED-FILES-DEBUG] After handle_private_repo ({len(deleted_files)}): {sorted([str(f) for f in deleted_files])}"
-    )
-    logger.info(f"[DELETED-FILES-DEBUG] Protected dirs: {protected_dirs}")
 
     deleted_files_in_protected_dirs = [
         file_path
@@ -88,20 +79,10 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
         if set(file_path.absolute().parts).intersection(protected_dirs)
     ]
 
-    logger.info(
-        f"[DELETED-FILES-DEBUG] In protected dirs ({len(deleted_files_in_protected_dirs)}): {sorted([str(f) for f in deleted_files_in_protected_dirs])}"
-    )
-
     forbidden_files = []
     for file_path in deleted_files_in_protected_dirs:
-        is_allowed = is_file_allowed_to_be_deleted_by_file_type(file_path)
-        logger.info(f"[DELETED-FILES-DEBUG] Checking {file_path}: allowed={is_allowed}")
-        if not is_allowed:
+        if not is_file_allowed_to_be_deleted_by_file_type(file_path):
             forbidden_files.append(str(file_path))
-
-    logger.info(
-        f"[DELETED-FILES-DEBUG] Forbidden files ({len(forbidden_files)}): {forbidden_files}"
-    )
 
     return forbidden_files
 

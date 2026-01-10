@@ -50,6 +50,14 @@ class EngineInfo(BaseStrictModel):
     engine: Optional[str] = None
 
 
+class PromptConfig(BaseStrictModel):
+    """Configuration for LLM prompt settings."""
+
+    temperature: Optional[float] = None
+    max_output_tokens: Optional[int] = Field(None, alias="maxOutputTokens")
+    web_search: Optional[bool] = Field(None, alias="webSearch")
+
+
 class ContentItemFields(BaseStrictModel):
     from_server_version: Optional[str] = Field(None, alias="fromServerVersion")
 
@@ -95,21 +103,25 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     user_prompt: Optional[str] = Field(None, alias="userprompt")
     system_prompt: Optional[str] = Field(None, alias="systemprompt")
     few_shots: Optional[str] = Field(None, alias="fewshots")
+    prompt_config: Optional[PromptConfig] = Field(None, alias="promptConfig")
 
     @root_validator
     def validate_llm_constraints(cls, values):
         """
         Validates LLM-related field constraints based on the 'is_llm' flag.
 
+        Supports two formats:
+        1. Legacy format: Uses 'model' field at root level
+        2. New format: Uses 'promptConfig' object
+
         - If 'is_llm' is True:
             - 'script' must be empty.
-            - 'model' must be provided.
             - 'user_prompt' must be provided.
-            - 'system_prompt' and 'few_shots' are optional.
+            - Either 'model' (legacy) or 'promptConfig' (new) should be used.
+            - If using new format without 'model', promptConfig defaults apply.
 
         - If 'is_llm' is False:
-            - All LLM-related fields ('model', 'pre_script', 'post_script',
-              'user_prompt', 'system_prompt', 'few_shots') must be None or empty.
+            - All LLM-related fields must be None or empty.
 
         Raises:
             ValueError: If one or more validation conditions are not met.
@@ -121,8 +133,11 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
                 errors.append(
                     "When 'isllm' is True, 'script' should not appear in yml."
                 )
-            if not values.get("model"):
-                errors.append("When 'isllm' is True, 'model' must be provided.")
+            if not values.get("model") and not values.get("prompt_config"):
+                errors.append(
+                    "When 'isllm' is True, either 'model' (legacy format with toversion: 8.12.0) "
+                    "or 'promptConfig' (new format with fromversion: 8.13.0) must be provided."
+                )
             if not values.get("user_prompt"):
                 errors.append("When 'isllm' is True, 'userprompt' must be provided.")
         else:
@@ -132,6 +147,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
                 ("user_prompt", values.get("user_prompt")),
                 ("system_prompt", values.get("system_prompt")),
                 ("few_shots", values.get("few_shots")),
+                ("prompt_config", values.get("prompt_config")),
             ]
             errors.extend(
                 f"Field '{field_name}' must be empty when 'isllm' is False."

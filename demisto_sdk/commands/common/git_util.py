@@ -528,12 +528,23 @@ class GitUtil:
         Returns:
             Set: A set of Paths to the deleted files.
         """
+        logger.info(
+            f"[DELETED-DEBUG] deleted_files called with prev_ver='{prev_ver}', committed_only={committed_only}, staged_only={staged_only}"
+        )
+
         remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
+
+        logger.info(
+            f"[DELETED-DEBUG] After handle_prev_ver: remote='{remote}', branch='{branch}', current={current_branch_or_hash}"
+        )
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status="D")
         if last_commit:
+            logger.info(
+                f"[DELETED-DEBUG] Returning last_commit: {len(last_commit)} files"
+            )
             return last_commit
 
         committed = set()
@@ -549,6 +560,9 @@ class GitUtil:
                     .commit.diff(current_branch_or_hash)
                     .iter_change_type("D")
                 }
+                logger.info(
+                    f"[DELETED-DEBUG] Committed deleted (with remote): {len(committed)} files: {sorted([str(f) for f in committed])}"
+                )
 
             # if remote does not exist we are checking against the commit sha1
             else:
@@ -558,25 +572,43 @@ class GitUtil:
                     .diff(current_branch_or_hash)
                     .iter_change_type("D")
                 }
+                logger.info(
+                    f"[DELETED-DEBUG] Committed deleted (no remote): {len(committed)} files: {sorted([str(f) for f in committed])}"
+                )
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed deleted files.
             all_branch_changed_files = self._get_all_changed_files(prev_ver)
+            logger.info(
+                f"[DELETED-DEBUG] All branch changed files: {len(all_branch_changed_files)}"
+            )
             committed = committed.intersection(all_branch_changed_files)
+            logger.info(
+                f"[DELETED-DEBUG] After intersection with all_branch_changed_files: {len(committed)} files: {sorted([str(f) for f in committed])}"
+            )
 
         if committed_only:
+            logger.info(
+                f"[DELETED-DEBUG] Returning committed_only: {len(committed)} files"
+            )
             return committed
 
         untracked: Set = set()
         if include_untracked:
             # get all untracked deleted files
             untracked = self._get_untracked_files("D")
+            logger.info(
+                f"[DELETED-DEBUG] Untracked deleted: {len(untracked)} files: {sorted([str(f) for f in untracked])}"
+            )
 
         # get all the files that are staged on the branch and identified as deleted.
         staged = {
             Path(os.path.join(item.a_path))  # type: ignore
             for item in self.repo.head.commit.diff().iter_change_type("D")
         }.union(untracked)
+        logger.info(
+            f"[DELETED-DEBUG] Staged deleted: {len(staged)} files: {sorted([str(f) for f in staged])}"
+        )
 
         # Also get unstaged deleted files (working directory deletions not yet staged)
         # This ensures we catch all deletions when committed_only=False
@@ -584,12 +616,24 @@ class GitUtil:
             Path(os.path.join(item.a_path))  # type: ignore
             for item in self.repo.head.commit.diff(None).iter_change_type("D")
         }
+        logger.info(
+            f"[DELETED-DEBUG] Unstaged deleted: {len(unstaged_deleted)} files: {sorted([str(f) for f in unstaged_deleted])}"
+        )
+
         staged = staged.union(unstaged_deleted)
+        logger.info(
+            f"[DELETED-DEBUG] Total staged (staged + unstaged): {len(staged)} files: {sorted([str(f) for f in staged])}"
+        )
 
         if staged_only:
+            logger.info(f"[DELETED-DEBUG] Returning staged_only: {len(staged)} files")
             return staged
 
-        return staged.union(committed)
+        final_result = staged.union(committed)
+        logger.info(
+            f"[DELETED-DEBUG] Final result (staged + committed): {len(final_result)} files: {sorted([str(f) for f in final_result])}"
+        )
+        return final_result
 
     def renamed_files(
         self,
@@ -716,7 +760,26 @@ class GitUtil:
             )
             prev_ver = ""
 
-        changed_files = self._get_all_changed_files(prev_ver) | self._get_staged_files()
+        # In private repos, ignore the graph's old commit and use actual branch changes
+        # This prevents updating all packs that diverged since the old graph commit
+        is_private_repo = string_to_bool(
+            os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
+        )
+
+        if is_private_repo:
+            print(
+                "DEBUG: Private repo mode - getting changed files with committed_only=True"
+            )
+            # Get only files changed in the current branch, not all diverged files
+            changed_files = (
+                self.get_all_changed_files(prev_ver="", committed_only=True)
+                | self._get_staged_files()
+            )
+        else:
+            changed_files = (
+                self._get_all_changed_files(prev_ver) | self._get_staged_files()
+            )
+
         print(f"DEBUG: Total changed files: {len(changed_files)}")
 
         pack_ids = {
@@ -798,30 +861,30 @@ class GitUtil:
                 if item
             }
 
-        # if remote does not exist we are checking against the commit sha1
+        # if remote does not exist we are checking against the commit sha1 or branch
         else:
-            # For commit hashes in private repos, use merge-base to find the common ancestor
-            # then do a two-dot diff from that point
-            if is_commit_hash and string_to_bool(
+            is_private_repo = string_to_bool(
                 os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
-            ):
-                # Find the merge base (common ancestor) between the two commits
+            )
+
+            # In private repos, always use merge-base to find common ancestor
+            # This prevents including all diverged commits
+            if is_private_repo:
                 try:
                     merge_base = self.repo.git.merge_base(branch, current_hash).strip()
-                    print(
-                        f"DEBUG: Using merge-base {merge_base} for private repo commit hash comparison"
-                    )
-                    diff_operator = ".."
+                    print(f"DEBUG: Private repo - using merge-base {merge_base}")
                     compare_from = merge_base
+                    diff_operator = ".."
                 except Exception as e:
                     print(
                         f"DEBUG: merge-base failed ({e}), falling back to two-dot diff"
                     )
-                    diff_operator = ".."
                     compare_from = branch
+                    diff_operator = ".."
             else:
-                # For branches, use three-dot diff to get changes in the current branch
-                # For commit hashes in non-private repos, use two-dot diff
+                # For non-private repos:
+                # - Use two-dot diff for commit hashes
+                # - Use three-dot diff for branches
                 diff_operator = ".." if is_commit_hash else "..."
                 compare_from = branch
 

@@ -539,7 +539,7 @@ class GitUtil:
         committed = set()
 
         if not staged_only:
-            # get all committed files identified as added which are changed from prev_ver.
+            # get all committed files identified as deleted which are changed from prev_ver.
             # this can result in extra files identified which were not touched on this branch.
             if remote:
                 committed = {
@@ -560,7 +560,7 @@ class GitUtil:
                 }
 
             # identify all files that were touched on this branch regardless of status
-            # intersect these with all the committed files to identify the committed added files.
+            # intersect these with all the committed files to identify the committed deleted files.
             all_branch_changed_files = self._get_all_changed_files(prev_ver)
             committed = committed.intersection(all_branch_changed_files)
 
@@ -572,11 +572,22 @@ class GitUtil:
             # get all untracked deleted files
             untracked = self._get_untracked_files("D")
 
-        # get all the files that are staged on the branch and identified as added.
+        # get all the files that are staged on the branch and identified as deleted.
         staged = {
             Path(os.path.join(item.a_path))  # type: ignore
             for item in self.repo.head.commit.diff().iter_change_type("D")
         }.union(untracked)
+
+        # In private repo mode, also get unstaged deleted files (working directory deletions not yet staged)
+        # This is important because in private repos, pre-commit may run on unstaged changes
+        if string_to_bool(
+            os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
+        ):
+            unstaged_deleted = {
+                Path(os.path.join(item.a_path))  # type: ignore
+                for item in self.repo.head.commit.diff(None).iter_change_type("D")
+            }
+            staged = staged.union(unstaged_deleted)
 
         if staged_only:
             return staged
@@ -699,17 +710,23 @@ class GitUtil:
     def get_all_changed_pack_ids(self, prev_ver: str) -> Set[str]:
         # Handle case where prev_ver might be a boolean or invalid value
         # If prev_ver is True/False or not a string, use empty string (will use default branch)
+        print(
+            f"DEBUG get_all_changed_pack_ids: prev_ver={prev_ver}, type={type(prev_ver)}"
+        )
         if not isinstance(prev_ver, str) or prev_ver in ("True", "False"):
-            logger.debug(
-                f"Invalid prev_ver value: {prev_ver}, using empty string for default behavior"
+            print(
+                f"DEBUG: Invalid prev_ver value: {prev_ver}, using empty string for default behavior"
             )
             prev_ver = ""
 
-        return {
-            file.parts[1]
-            for file in self._get_all_changed_files(prev_ver) | self._get_staged_files()
-            if file.parts[0] == PACKS_FOLDER
+        changed_files = self._get_all_changed_files(prev_ver) | self._get_staged_files()
+        print(f"DEBUG: Total changed files: {len(changed_files)}")
+
+        pack_ids = {
+            file.parts[1] for file in changed_files if file.parts[0] == PACKS_FOLDER
         }
+        print(f"DEBUG: Changed pack IDs: {sorted(pack_ids)}")
+        return pack_ids
 
     def _get_untracked_files(self, requested_status: str) -> set:
         """return all untracked files of the given requested status.

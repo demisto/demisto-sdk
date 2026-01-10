@@ -698,12 +698,11 @@ class GitUtil:
 
     def get_all_changed_pack_ids(self, prev_ver: str) -> Set[str]:
         # Handle case where prev_ver might be a boolean or invalid value
-        # If prev_ver is True (boolean), it means "use current commit" - convert to actual commit hash
-        if prev_ver is True or prev_ver == "True":
-            logger.debug("prev_ver is True, using current commit hash")
-            prev_ver = self.get_current_commit_hash()
-        elif prev_ver is False or prev_ver == "False" or not isinstance(prev_ver, str):
-            logger.debug(f"Invalid prev_ver value: {prev_ver}, using empty string")
+        # If prev_ver is True/False or not a string, use empty string (will use default branch)
+        if not isinstance(prev_ver, str) or prev_ver in ("True", "False"):
+            logger.debug(
+                f"Invalid prev_ver value: {prev_ver}, using empty string for default behavior"
+            )
             prev_ver = ""
 
         return {

@@ -121,6 +121,11 @@ def validate_forbidden_deleted_files(
 
     logging_setup(calling_function=__name__)
 
+    logger.info("=" * 80)
+    logger.info("VALIDATE-DELETED-FILES HOOK STARTED")
+    logger.info(f"Protected directories: {protected_dirs}")
+    logger.info("=" * 80)
+
     try:
         forbidden_deleted_files = get_forbidden_deleted_files(set(protected_dirs))
     except Exception as error:
@@ -135,3 +140,7 @@ def validate_forbidden_deleted_files(
             f'The following file(s) {", ".join(forbidden_deleted_files)} cannot be deleted, restore them'
         )
         raise SystemExit(1)
+
+    logger.info("=" * 80)
+    logger.info("VALIDATE-DELETED-FILES HOOK PASSED - No forbidden deletions found")
+    logger.info("=" * 80)

@@ -30,29 +30,23 @@ def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
         file_content = File.read_from_git_path(
             file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH
         )
-    except (FileReadError, FileNotFoundError) as remote_error:
-        logger.debug(
-            f"Could not retrieve {file_path} in remote branch {DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}, error: {remote_error}"
-        )
+    except (FileReadError, FileNotFoundError):
         try:
             file_content = File.read_from_git_path(
                 file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH, from_remote=False
             )
-        except (FileReadError, FileNotFoundError) as error:
-            logger.debug(
-                f"Could not read file {file_path} from local git, error: {error}"
-            )
+        except (FileReadError, FileNotFoundError):
             file_content = File.read_from_github_api(
                 str(file_path),
                 tag=DEMISTO_GIT_PRIMARY_BRANCH,
                 verify_ssl=True if os.getenv("CI") else False,
             )
-
+    
     is_silent = check_if_content_item_is_silent(file_content)
-
+    
     if file_type := find_type(str(file_path), file_content):
         return file_type in FileType_ALLOWED_TO_DELETE or is_silent
-
+    
     return True
 
 

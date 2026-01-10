@@ -147,6 +147,11 @@ class PreCommitRunner:
             command=["run", "-a", hook_id],
             json_output_path=json_output_path,
         )
+
+        if process.stdout:
+            logger.info("{}", process.stdout)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
+        if process.stderr:
+            logger.error("{}", process.stderr)  # noqa: PLE1205 see https://github.com/astral-sh/ruff/issues/13390
         return process.returncode
 
     @staticmethod

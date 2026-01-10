@@ -763,6 +763,10 @@ class GitUtil:
         # This prevents including all historical commits when branch diverged long ago
         if not remote:
             try:
+                # Validate that branch is a valid git reference (not a boolean or invalid value)
+                if not isinstance(branch, str) or not branch:
+                    raise ValueError(f"Invalid branch value: {branch}")
+                
                 # Get the merge-base (common ancestor) between branch and current
                 merge_base = self.repo.git.merge_base(branch, current_hash).strip()
                 changed_files = {
@@ -775,17 +779,22 @@ class GitUtil:
                 return changed_files
             except Exception as e:
                 logger.warning(
-                    f"Failed to get merge-base, falling back to direct comparison: {e}"
+                    f"Failed to get merge-base (branch={branch}, current={current_hash}), falling back to direct comparison: {e}"
                 )
                 # Fallback to two-dot diff if merge-base fails
-                changed_files = {
-                    Path(os.path.join(item))
-                    for item in self.repo.git.diff(
-                        "--name-only", f"{branch}..{current_hash}"
-                    ).split("\n")
-                    if item
-                }
-                return changed_files
+                try:
+                    changed_files = {
+                        Path(os.path.join(item))
+                        for item in self.repo.git.diff(
+                            "--name-only", f"{branch}..{current_hash}"
+                        ).split("\n")
+                        if item
+                    }
+                    return changed_files
+                except Exception as e2:
+                    logger.error(f"Failed to get changed files with two-dot diff: {e2}")
+                    # Last resort: return empty set
+                    return set()
 
         # For repos with remote, use three-dot diff to get changes in current branch
         changed_files = {

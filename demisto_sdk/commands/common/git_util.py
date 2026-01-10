@@ -578,16 +578,13 @@ class GitUtil:
             for item in self.repo.head.commit.diff().iter_change_type("D")
         }.union(untracked)
 
-        # In private repo mode, also get unstaged deleted files (working directory deletions not yet staged)
-        # This is important because in private repos, pre-commit may run on unstaged changes
-        if string_to_bool(
-            os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
-        ):
-            unstaged_deleted = {
-                Path(os.path.join(item.a_path))  # type: ignore
-                for item in self.repo.head.commit.diff(None).iter_change_type("D")
-            }
-            staged = staged.union(unstaged_deleted)
+        # Also get unstaged deleted files (working directory deletions not yet staged)
+        # This ensures we catch all deletions when committed_only=False
+        unstaged_deleted = {
+            Path(os.path.join(item.a_path))  # type: ignore
+            for item in self.repo.head.commit.diff(None).iter_change_type("D")
+        }
+        staged = staged.union(unstaged_deleted)
 
         if staged_only:
             return staged

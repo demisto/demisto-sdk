@@ -781,6 +781,10 @@ class GitUtil:
         remote, branch = self.handle_prev_ver(prev_ver)
         current_hash = self.get_current_commit_hash()
 
+        # Check if branch is a commit hash (40-char hex string)
+        sha1_pattern = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
+        is_commit_hash = bool(sha1_pattern.match(branch))
+
         if remote:
             changed_files = {
                 Path(os.path.join(item))
@@ -792,10 +796,13 @@ class GitUtil:
 
         # if remote does not exist we are checking against the commit sha1
         else:
+            # For commit hashes, use two-dot diff to get only the changes between the two commits
+            # For branches, use three-dot diff to get changes in the current branch
+            diff_operator = ".." if is_commit_hash else "..."
             changed_files = {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
-                    "--name-only", f"{branch}...{current_hash}"
+                    "--name-only", f"{branch}{diff_operator}{current_hash}"
                 ).split("\n")
                 if item
             }

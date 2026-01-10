@@ -767,53 +767,24 @@ class GitUtil:
         remote, branch = self.handle_prev_ver(prev_ver)
         current_hash = self.get_current_commit_hash()
 
-        # For private repos (no remote), use merge-base to get only actual changes in current branch
-        # This prevents including all historical commits when branch diverged long ago
-        if not remote:
-            try:
-                # Validate that branch is a valid git reference (not a boolean or invalid value)
-                if not isinstance(branch, str) or not branch:
-                    raise ValueError(f"Invalid branch value: {branch}")
+        if remote:
+            changed_files = {
+                Path(os.path.join(item))
+                for item in self.repo.git.diff(
+                    "--name-only", f"{remote}/{branch}...{current_hash}"
+                ).split("\n")
+                if item
+            }
 
-                # Get the merge-base (common ancestor) between branch and current
-                merge_base = self.repo.git.merge_base(branch, current_hash).strip()
-                changed_files = {
-                    Path(os.path.join(item))
-                    for item in self.repo.git.diff(
-                        "--name-only", f"{merge_base}..{current_hash}"
-                    ).split("\n")
-                    if item
-                }
-                return changed_files
-            except Exception as e:
-                logger.warning(
-                    f"Failed to get merge-base (branch={branch}, current={current_hash}), falling back to direct comparison"
-                )
-                logger.debug(f"Error details: {e}")
-                # Fallback to two-dot diff if merge-base fails
-                try:
-                    changed_files = {
-                        Path(os.path.join(item))
-                        for item in self.repo.git.diff(
-                            "--name-only", f"{branch}..{current_hash}"
-                        ).split("\n")
-                        if item
-                    }
-                    return changed_files
-                except Exception as e2:
-                    logger.error("Failed to get changed files with two-dot diff")
-                    logger.debug(f"Error details: {e2}")
-                    # Last resort: return empty set
-                    return set()
-
-        # For repos with remote, use three-dot diff to get changes in current branch
-        changed_files = {
-            Path(os.path.join(item))
-            for item in self.repo.git.diff(
-                "--name-only", f"{remote}/{branch}...{current_hash}"
-            ).split("\n")
-            if item
-        }
+        # if remote does not exist we are checking against the commit sha1
+        else:
+            changed_files = {
+                Path(os.path.join(item))
+                for item in self.repo.git.diff(
+                    "--name-only", f"{branch}...{current_hash}"
+                ).split("\n")
+                if item
+            }
         return changed_files
 
     def _only_last_commit(

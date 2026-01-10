@@ -63,25 +63,33 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
     git_util = GitUtil.from_content_path()
 
     # Get deleted files - don't use committed_only to ensure we catch all deletions
-    print(f"Getting deleted files with prev_ver={DEMISTO_GIT_PRIMARY_BRANCH}, committed_only=False")
+    print(
+        f"Getting deleted files with prev_ver={DEMISTO_GIT_PRIMARY_BRANCH}, committed_only=False"
+    )
     raw_deleted_files = git_util.deleted_files(
         prev_ver=DEMISTO_GIT_PRIMARY_BRANCH,
         committed_only=False,  # Get both staged and committed to catch all deletions
         staged_only=False,
     )
-    print(f"Found {len(raw_deleted_files)} raw deleted files: {sorted([str(f) for f in raw_deleted_files])}")
+    print(
+        f"Found {len(raw_deleted_files)} raw deleted files: {sorted([str(f) for f in raw_deleted_files])}"
+    )
 
     deleted_files = handle_private_repo_deleted_files(
         raw_deleted_files, show_deleted_files=False
     )
-    print(f"After handle_private_repo_deleted_files: {len(deleted_files)} files: {sorted([str(f) for f in deleted_files])}")
+    print(
+        f"After handle_private_repo_deleted_files: {len(deleted_files)} files: {sorted([str(f) for f in deleted_files])}"
+    )
 
     deleted_files_in_protected_dirs = [
         file_path
         for file_path in deleted_files
         if set(file_path.absolute().parts).intersection(protected_dirs)
     ]
-    print(f"Deleted files in protected dirs: {len(deleted_files_in_protected_dirs)} files: {sorted([str(f) for f in deleted_files_in_protected_dirs])}")
+    print(
+        f"Deleted files in protected dirs: {len(deleted_files_in_protected_dirs)} files: {sorted([str(f) for f in deleted_files_in_protected_dirs])}"
+    )
 
     forbidden_files = []
     for file_path in deleted_files_in_protected_dirs:
@@ -112,7 +120,7 @@ def validate_forbidden_deleted_files(
         raise ValueError("Provide at least one protected dir")
 
     logging_setup(calling_function=__name__)
-    
+
     # Use print to ensure output is visible even if pre-commit suppresses logs
     print("=" * 80)
     print("VALIDATE-DELETED-FILES HOOK STARTED")
@@ -135,7 +143,7 @@ def validate_forbidden_deleted_files(
             f'The following file(s) {", ".join(forbidden_deleted_files)} cannot be deleted, restore them'
         )
         raise SystemExit(1)
-    
+
     print("=" * 80)
     print("VALIDATE-DELETED-FILES HOOK PASSED - No forbidden deletions found")
     print("=" * 80)

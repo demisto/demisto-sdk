@@ -159,8 +159,15 @@ def handle_private_repo_deleted_files(
     Returns:
         Set: The updated set of deleted files including those from status files.
     """
+    logger.info(
+        f"[PRIVATE-REPO-DEBUG] Input deleted_files count: {len(deleted_files)}, files: {sorted([str(f) for f in deleted_files])}"
+    )
+
     artifacts_folder = os.getenv("ARTIFACTS_FOLDER", "")
     logs_dir = Path(artifacts_folder) / "logs" if artifacts_folder else Path("logs")
+
+    logger.info(f"[PRIVATE-REPO-DEBUG] Looking for status files in: {logs_dir}")
+    logger.info(f"[PRIVATE-REPO-DEBUG] logs_dir exists: {logs_dir.exists()}")
 
     status_files = [
         logs_dir / PRIVATE_REPO_STATUS_FILE_PRIVATE,
@@ -169,11 +176,17 @@ def handle_private_repo_deleted_files(
     ]
 
     for status_file in status_files:
+        logger.info(
+            f"[PRIVATE-REPO-DEBUG] Checking status file: {status_file}, exists: {status_file.exists()}"
+        )
         try:
             if status_file.exists():
                 with open(status_file, "r") as f:
                     file_statuses = DEFAULT_JSON_HANDLER.load(f)
                     deleted_count = 0
+                    logger.info(
+                        f"[PRIVATE-REPO-DEBUG] Status file has {len(file_statuses)} entries"
+                    )
 
                     for file_path_str, status_info in file_statuses.items():
                         if not file_path_str:
@@ -183,6 +196,9 @@ def handle_private_repo_deleted_files(
 
                         # Handle deleted files
                         if status_info.get("status") == "deleted":
+                            logger.info(
+                                f"[PRIVATE-REPO-DEBUG] Adding deleted file from status file: {file_path}"
+                            )
                             deleted_files.add(file_path)
                             deleted_count += 1
 
@@ -203,6 +219,10 @@ def handle_private_repo_deleted_files(
         logger.info("\n######## Deleted files:")
         for file in sorted(deleted_files):
             logger.info(f"  - {file}")
+
+    logger.info(
+        f"[PRIVATE-REPO-DEBUG] Returning {len(deleted_files)} deleted files: {sorted([str(f) for f in deleted_files])}"
+    )
 
     return deleted_files
 

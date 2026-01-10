@@ -785,6 +785,10 @@ class GitUtil:
         sha1_pattern = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
         is_commit_hash = bool(sha1_pattern.match(branch))
 
+        print(
+            f"DEBUG _get_all_changed_files: remote='{remote}', branch='{branch}', is_commit_hash={is_commit_hash}, current_hash={current_hash}"
+        )
+
         if remote:
             changed_files = {
                 Path(os.path.join(item))
@@ -796,16 +800,41 @@ class GitUtil:
 
         # if remote does not exist we are checking against the commit sha1
         else:
-            # For commit hashes, use two-dot diff to get only the changes between the two commits
-            # For branches, use three-dot diff to get changes in the current branch
-            diff_operator = ".." if is_commit_hash else "..."
+            # For commit hashes in private repos, use merge-base to find the common ancestor
+            # then do a two-dot diff from that point
+            if is_commit_hash and string_to_bool(
+                os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
+            ):
+                # Find the merge base (common ancestor) between the two commits
+                try:
+                    merge_base = self.repo.git.merge_base(branch, current_hash).strip()
+                    print(
+                        f"DEBUG: Using merge-base {merge_base} for private repo commit hash comparison"
+                    )
+                    diff_operator = ".."
+                    compare_from = merge_base
+                except Exception as e:
+                    print(
+                        f"DEBUG: merge-base failed ({e}), falling back to two-dot diff"
+                    )
+                    diff_operator = ".."
+                    compare_from = branch
+            else:
+                # For branches, use three-dot diff to get changes in the current branch
+                # For commit hashes in non-private repos, use two-dot diff
+                diff_operator = ".." if is_commit_hash else "..."
+                compare_from = branch
+
             changed_files = {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
-                    "--name-only", f"{branch}{diff_operator}{current_hash}"
+                    "--name-only", f"{compare_from}{diff_operator}{current_hash}"
                 ).split("\n")
                 if item
             }
+            print(
+                f"DEBUG: Found {len(changed_files)} files using {compare_from}{diff_operator}{current_hash}"
+            )
         return changed_files
 
     def _only_last_commit(

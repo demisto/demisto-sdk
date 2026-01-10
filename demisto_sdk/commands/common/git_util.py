@@ -766,7 +766,7 @@ class GitUtil:
                 # Validate that branch is a valid git reference (not a boolean or invalid value)
                 if not isinstance(branch, str) or not branch:
                     raise ValueError(f"Invalid branch value: {branch}")
-                
+
                 # Get the merge-base (common ancestor) between branch and current
                 merge_base = self.repo.git.merge_base(branch, current_hash).strip()
                 changed_files = {

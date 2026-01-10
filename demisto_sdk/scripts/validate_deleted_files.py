@@ -8,7 +8,6 @@ import typer
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
-    DEMISTO_GIT_UPSTREAM,
     FileType_ALLOWED_TO_DELETE,
 )
 from demisto_sdk.commands.common.files.errors import FileReadError
@@ -41,12 +40,12 @@ def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
                 tag=DEMISTO_GIT_PRIMARY_BRANCH,
                 verify_ssl=True if os.getenv("CI") else False,
             )
-    
+
     is_silent = check_if_content_item_is_silent(file_content)
-    
+
     if file_type := find_type(str(file_path), file_content):
         return file_type in FileType_ALLOWED_TO_DELETE or is_silent
-    
+
     return True
 
 

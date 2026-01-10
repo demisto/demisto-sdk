@@ -578,14 +578,33 @@ class GitUtil:
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed deleted files.
-            all_branch_changed_files = self._get_all_changed_files(prev_ver)
-            logger.info(
-                f"[DELETED-DEBUG] All branch changed files: {len(all_branch_changed_files)}"
+            # EXCEPT in private repo mode - we want to catch ALL deletions, not just those in changed files
+            is_private_repo = string_to_bool(
+                os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
             )
-            committed = committed.intersection(all_branch_changed_files)
-            logger.info(
-                f"[DELETED-DEBUG] After intersection with all_branch_changed_files: {len(committed)} files: {sorted([str(f) for f in committed])}"
-            )
+
+            if not is_private_repo:
+                all_branch_changed_files = self._get_all_changed_files(prev_ver)
+                logger.info(
+                    f"[DELETED-DEBUG] All branch changed files: {len(all_branch_changed_files)}"
+                )
+                committed = committed.intersection(all_branch_changed_files)
+                logger.info(
+                    f"[DELETED-DEBUG] After intersection with all_branch_changed_files: {len(committed)} files: {sorted([str(f) for f in committed])}"
+                )
+            else:
+                logger.info(
+                    f"[DELETED-DEBUG] Private repo mode - skipping intersection, keeping all {len(committed)} committed deleted files"
+                )
+                # Filter out .gitkeep files and files under AssetsModelingRules
+                committed = {
+                    f
+                    for f in committed
+                    if f.name != ".gitkeep" and "AssetsModelingRules" not in str(f)
+                }
+                logger.info(
+                    f"[DELETED-DEBUG] After filtering .gitkeep and AssetsModelingRules: {len(committed)} files: {sorted([str(f) for f in committed])}"
+                )
 
         if committed_only:
             logger.info(

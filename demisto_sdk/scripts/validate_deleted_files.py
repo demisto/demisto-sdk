@@ -63,44 +63,36 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
     git_util = GitUtil.from_content_path()
 
     # Get deleted files - don't use committed_only to ensure we catch all deletions
-    logger.info(
-        f"Getting deleted files with prev_ver={DEMISTO_GIT_PRIMARY_BRANCH}, committed_only=False"
-    )
+    print(f"Getting deleted files with prev_ver={DEMISTO_GIT_PRIMARY_BRANCH}, committed_only=False")
     raw_deleted_files = git_util.deleted_files(
         prev_ver=DEMISTO_GIT_PRIMARY_BRANCH,
         committed_only=False,  # Get both staged and committed to catch all deletions
         staged_only=False,
     )
-    logger.info(
-        f"Found {len(raw_deleted_files)} raw deleted files: {sorted([str(f) for f in raw_deleted_files])}"
-    )
+    print(f"Found {len(raw_deleted_files)} raw deleted files: {sorted([str(f) for f in raw_deleted_files])}")
 
     deleted_files = handle_private_repo_deleted_files(
         raw_deleted_files, show_deleted_files=False
     )
-    logger.info(
-        f"After handle_private_repo_deleted_files: {len(deleted_files)} files: {sorted([str(f) for f in deleted_files])}"
-    )
+    print(f"After handle_private_repo_deleted_files: {len(deleted_files)} files: {sorted([str(f) for f in deleted_files])}")
 
     deleted_files_in_protected_dirs = [
         file_path
         for file_path in deleted_files
         if set(file_path.absolute().parts).intersection(protected_dirs)
     ]
-    logger.info(
-        f"Deleted files in protected dirs: {len(deleted_files_in_protected_dirs)} files: {sorted([str(f) for f in deleted_files_in_protected_dirs])}"
-    )
+    print(f"Deleted files in protected dirs: {len(deleted_files_in_protected_dirs)} files: {sorted([str(f) for f in deleted_files_in_protected_dirs])}")
 
     forbidden_files = []
     for file_path in deleted_files_in_protected_dirs:
-        logger.info(f"Checking if {file_path} is allowed to be deleted")
+        print(f"Checking if {file_path} is allowed to be deleted")
         if not is_file_allowed_to_be_deleted_by_file_type(file_path):
-            logger.info(f"File {file_path} is FORBIDDEN")
+            print(f"File {file_path} is FORBIDDEN")
             forbidden_files.append(str(file_path))
         else:
-            logger.info(f"File {file_path} is allowed")
+            print(f"File {file_path} is allowed")
 
-    logger.info(f"Total forbidden files: {len(forbidden_files)}: {forbidden_files}")
+    print(f"Total forbidden files: {len(forbidden_files)}: {forbidden_files}")
     return forbidden_files
 
 
@@ -120,15 +112,17 @@ def validate_forbidden_deleted_files(
         raise ValueError("Provide at least one protected dir")
 
     logging_setup(calling_function=__name__)
-
-    logger.info("=" * 80)
-    logger.info("VALIDATE-DELETED-FILES HOOK STARTED")
-    logger.info(f"Protected directories: {protected_dirs}")
-    logger.info("=" * 80)
+    
+    # Use print to ensure output is visible even if pre-commit suppresses logs
+    print("=" * 80)
+    print("VALIDATE-DELETED-FILES HOOK STARTED")
+    print(f"Protected directories: {protected_dirs}")
+    print("=" * 80)
 
     try:
         forbidden_deleted_files = get_forbidden_deleted_files(set(protected_dirs))
     except Exception as error:
+        print(f"ERROR: {error}")
         logger.error(
             f"Unexpected error occurred while validating deleted files: {error}"
         )
@@ -136,11 +130,12 @@ def validate_forbidden_deleted_files(
         raise
 
     if forbidden_deleted_files:
+        print(f'FORBIDDEN DELETIONS FOUND: {", ".join(forbidden_deleted_files)}')
         logger.error(
             f'The following file(s) {", ".join(forbidden_deleted_files)} cannot be deleted, restore them'
         )
         raise SystemExit(1)
-
-    logger.info("=" * 80)
-    logger.info("VALIDATE-DELETED-FILES HOOK PASSED - No forbidden deletions found")
-    logger.info("=" * 80)
+    
+    print("=" * 80)
+    print("VALIDATE-DELETED-FILES HOOK PASSED - No forbidden deletions found")
+    print("=" * 80)

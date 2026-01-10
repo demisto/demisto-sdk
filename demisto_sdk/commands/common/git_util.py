@@ -697,6 +697,11 @@ class GitUtil:
         return all_renamed_files
 
     def get_all_changed_pack_ids(self, prev_ver: str) -> Set[str]:
+        # Handle case where prev_ver might be a boolean or invalid value
+        if not isinstance(prev_ver, str) or prev_ver in ("True", "False"):
+            logger.debug(f"Invalid prev_ver value: {prev_ver}, using default")
+            prev_ver = ""
+
         return {
             file.parts[1]
             for file in self._get_all_changed_files(prev_ver) | self._get_staged_files()
@@ -779,8 +784,9 @@ class GitUtil:
                 return changed_files
             except Exception as e:
                 logger.warning(
-                    f"Failed to get merge-base (branch={branch}, current={current_hash}), falling back to direct comparison: {e}"
+                    f"Failed to get merge-base (branch={branch}, current={current_hash}), falling back to direct comparison"
                 )
+                logger.debug(f"Error details: {e}")
                 # Fallback to two-dot diff if merge-base fails
                 try:
                     changed_files = {
@@ -792,7 +798,8 @@ class GitUtil:
                     }
                     return changed_files
                 except Exception as e2:
-                    logger.error(f"Failed to get changed files with two-dot diff: {e2}")
+                    logger.error("Failed to get changed files with two-dot diff")
+                    logger.debug(f"Error details: {e2}")
                     # Last resort: return empty set
                     return set()
 

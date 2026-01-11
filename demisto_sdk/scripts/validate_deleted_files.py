@@ -52,7 +52,8 @@ def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
             )
     is_silent = check_if_content_item_is_silent(file_content)
     if file_type := find_type(str(file_path), file_content):
-        return True if file_type in FileType_ALLOWED_TO_DELETE or is_silent else False
+        return file_type in FileType_ALLOWED_TO_DELETE or is_silent
+
     return True
 
 
@@ -68,8 +69,16 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
     Returns all the file paths which cannot be deleted
     """
     git_util = GitUtil.from_content_path()
+
+    # Get deleted files - don't use committed_only to ensure we catch all deletions
+    raw_deleted_files = git_util.deleted_files(
+        prev_ver=DEMISTO_GIT_PRIMARY_BRANCH,
+        committed_only=False,  # Get both staged and committed to catch all deletions
+        staged_only=False,
+    )
+
     deleted_files = handle_private_repo_deleted_files(
-        git_util.deleted_files(DEMISTO_GIT_PRIMARY_BRANCH), show_deleted_files=False
+        raw_deleted_files, show_deleted_files=False
     )
 
     deleted_files_in_protected_dirs = [

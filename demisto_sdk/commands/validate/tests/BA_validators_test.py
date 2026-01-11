@@ -118,6 +118,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_conte
 from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_script_name_starts_with_digit import (
     IsCommandOrScriptNameStartsWithDigitValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA129_missing_compliant_policies import (
+    MissingCompliantPoliciesValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
@@ -2948,3 +2951,521 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
     assert len(result_messages) == expected_number_of_failures
     if expected_msgs:
         assert expected_msgs[0] in result_messages[0]
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_msgs",
+    [
+        # I1: Valid Integration (IP Blockage)
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "block-ip",
+                                "description": "block ip",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip list"}
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": ["IP Blockage"],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [],
+        ),
+        # I2: Invalid Integration (Missing IP Blockage)
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "block-ip",
+                                "description": "block ip",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip list"}
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": [],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [
+                "Command block-ip uses the arguments: ['ip_list'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['IP Blockage']."
+            ],
+        ),
+        # I3: Partial Failure (Multiple Policies) - one arg satisfied, one not
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "mixed-action",
+                                "description": "mixed action",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip list"},
+                                    {"name": "username", "description": "username"},
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": ["IP Blockage"],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [
+                "Command mixed-action uses the arguments: ['username'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['User Hard Remediation', 'User Soft Remediation']."
+            ],
+        ),
+        # I4: No Policy Required (arg not in mapping)
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "simple-command",
+                                "description": "simple command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "verbose", "description": "verbose"}
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": [],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [],
+        ),
+        # I5: Edge Valid - One of two policies present (username)
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "hard-rem-command",
+                                "description": "hard remediation",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "username", "description": "username"}
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": ["User Hard Remediation"],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [],
+        ),
+        # I6: Multi-command integration: one passes, one fails
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "cmd-ok",
+                                "description": "ok",
+                                "deprecated": False,
+                                "arguments": [{"name": "ip_list", "description": "ip"}],
+                                "outputs": [],
+                                "compliantpolicies": ["IP Blockage"],
+                            },
+                            {
+                                "name": "cmd-bad",
+                                "description": "bad",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "endpoint_id", "description": "id"}
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": [],
+                            },
+                        ]
+                    ],
+                )
+            ],
+            [
+                "Command cmd-bad uses the arguments: ['endpoint_id'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation']."
+            ],
+        ),
+        # I7: Multiple problematic args in a single command (union policies + both args)
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "double-bad",
+                                "description": "double bad",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip"},
+                                    {"name": "endpoint_id", "description": "id"},
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": [],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [
+                "Command double-bad uses the arguments: ['endpoint_id', 'ip_list'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation', 'IP Blockage']."
+            ],
+        ),
+        # I8: Multiple problematic commands
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "cmd-bad-1",
+                                "description": "bad 1",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip list"}
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": [],
+                            },
+                            {
+                                "name": "cmd-bad-2",
+                                "description": "bad 2",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "endpoint_id",
+                                        "description": "endpoint id",
+                                    }
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": [],
+                            },
+                        ]
+                    ],
+                )
+            ],
+            [
+                "Command cmd-bad-1 uses the arguments: ['ip_list'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['IP Blockage'].",
+                "Command cmd-bad-2 uses the arguments: ['endpoint_id'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation'].",
+            ],
+        ),
+        # S1: Valid Script (User Soft Remediation)
+        (
+            [
+                create_script_object(
+                    paths=["args", "compliantpolicies"],
+                    values=[
+                        [{"name": "username", "description": "username"}],
+                        ["User Soft Remediation"],
+                    ],
+                )
+            ],
+            [],
+        ),
+        # S2: Invalid Script (Missing EndPoint Isolation)
+        (
+            [
+                create_script_object(
+                    paths=["args", "compliantpolicies"],
+                    values=[
+                        [{"name": "endpoint_id", "description": "endpoint id"}],
+                        [],
+                    ],
+                )
+            ],
+            [
+                "myScript uses the arguments: ['endpoint_id'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation']."
+            ],
+        ),
+        # S3: Script multi-policy valid (one-of set)
+        (
+            [
+                create_script_object(
+                    paths=["args", "compliantpolicies"],
+                    values=[
+                        [{"name": "username", "description": "username"}],
+                        ["User Hard Remediation"],
+                    ],
+                )
+            ],
+            [],
+        ),
+        # S4: Script multi-policy invalid (none present)
+        (
+            [
+                create_script_object(
+                    paths=["args", "compliantpolicies"],
+                    values=[
+                        [{"name": "username", "description": "username"}],
+                        [],
+                    ],
+                )
+            ],
+            [
+                "myScript uses the arguments: ['username'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['User Hard Remediation', 'User Soft Remediation']."
+            ],
+        ),
+        # S5: Script no-policy-required arg only
+        (
+            [
+                create_script_object(
+                    paths=["args", "compliantpolicies"],
+                    values=[
+                        [{"name": "verbose", "description": "verbose"}],
+                        [],
+                    ],
+                )
+            ],
+            [],
+        ),
+    ],
+)
+def test_MissingCompliantPoliciesValidator_obtain_invalid_content_items(
+    mocker, content_items, expected_msgs
+):
+    """
+    Given
+    - A list of content items (Integrations and Scripts) that may define commands/arguments which are associated with compliance policies.
+    When
+    - Calling the MissingCompliantPoliciesValidator.obtain_invalid_content_items function.
+    Then
+    - Make sure the returned ValidationResult messages match the expected failures for each scenario.
+
+    Test cases (Integrations):
+    - Valid integration command where the required compliantpolicies are declared for a policy-associated argument.
+    - Invalid integration command missing required compliantpolicies for a policy-associated argument.
+    - Integration command with multiple arguments where one argument is satisfied by declared policies and another is missing required policies.
+    - Integration command using an argument that is not associated with any compliance policy (no failure expected).
+    - Integration command where the argument maps to multiple valid policies and declaring one of them is sufficient (no failure expected).
+    - Integration with multiple commands where one command is valid and another command is missing required compliantpolicies (single failure expected).
+    - Integration command with multiple policy-associated arguments where none of the required policies are declared (union of missing policies and args in the failure).
+    - Integration with multiple commands where multiple commands are missing required compliantpolicies (multiple failures expected).
+
+    Test cases (Scripts):
+    - Valid script where the required compliantpolicies are declared for a policy-associated argument.
+    - Invalid script missing required compliantpolicies for a policy-associated argument.
+    - Script where the argument maps to multiple valid policies and declaring one of them is sufficient (no failure expected).
+    - Script where the argument maps to multiple valid policies and none are declared (failure expected).
+    - Script using an argument that is not associated with any compliance policy (no failure expected).
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "User Soft Remediation",
+                "category": "IAM",
+                "arguments": ["username", "user_id"],
+            },
+            {
+                "name": "User Hard Remediation",
+                "category": "IAM",
+                "arguments": ["username"],
+            },
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip_list", "ip_address"],
+            },
+            {
+                "name": "EndPoint Isolation",
+                "category": "EndPoint",
+                "arguments": ["endpoint_id"],
+            },
+        ]
+    }
+
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items(content_items)
+
+    assert [r.message for r in results] == expected_msgs
+
+
+def test_MissingCompliantPoliciesValidator_old_command_is_ignored(mocker):
+    """
+    Given:
+    - An Integration content item with a command 'block-ip' that uses argument 'ip_list'.
+    - The command is technically INVALID (it is missing the 'IP Blockage' policy).
+    - However, an 'old_base_content_object' exists with the EXACT same command name.
+
+    When:
+    - Calling obtain_invalid_content_items.
+
+    Then:
+    - The validator should detect that the command has not changed compared to the old version.
+    - It should return an empty list (ignoring the missing policy error for legacy/unchanged commands).
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip_list"],
+            },
+        ]
+    }
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    current_integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "block-ip",
+                    "description": "block ip",
+                    "arguments": [{"name": "ip_list", "description": "ip list"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                }
+            ]
+        ],
+    )
+
+    old_integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "block-ip",
+                    "description": "block ip",
+                    "arguments": [{"name": "ip", "description": "ip list"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                }
+            ]
+        ],
+    )
+
+    current_integration.old_base_content_object = old_integration
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items([current_integration])
+
+    assert results == []
+
+
+def test_MissingCompliantPoliciesValidator_only_new_command_is_reported(mocker):
+    """
+    Given:
+    - An Integration content item with TWO commands:
+        1) 'old-cmd' (exists in old_base_content_object) - INVALID but should be ignored.
+        2) 'new-cmd' (does NOT exist in old_base_content_object) - INVALID and should be reported.
+    - Both commands use args that require compliantpolicies, and both are missing them.
+
+    When:
+    - Calling obtain_invalid_content_items.
+
+    Then:
+    - Only the NEW command should produce a ValidationResult.
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip_list"],
+            },
+            {
+                "name": "EndPoint Isolation",
+                "category": "EndPoint",
+                "arguments": ["endpoint_id"],
+            },
+        ]
+    }
+
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    current_integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "old-cmd",
+                    "description": "old cmd",
+                    "deprecated": False,
+                    "arguments": [{"name": "ip_list", "description": "ip list"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # INVALID, but should be ignored (old command)
+                },
+                {
+                    "name": "new-cmd",
+                    "description": "new cmd",
+                    "deprecated": False,
+                    "arguments": [
+                        {"name": "endpoint_id", "description": "endpoint id"}
+                    ],
+                    "outputs": [],
+                    "compliantpolicies": [],  # INVALID, and should be reported (new command)
+                },
+            ]
+        ],
+    )
+
+    old_integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "old-cmd",
+                    "description": "old cmd",
+                    "deprecated": False,
+                    "arguments": [{"name": "ip_list", "description": "ip list"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Still invalid, but existence is what matters here
+                }
+            ]
+        ],
+    )
+
+    current_integration.old_base_content_object = old_integration
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items([current_integration])
+
+    assert [r.message for r in results] == [
+        "Command new-cmd uses the arguments: ['endpoint_id'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation']."
+    ]

@@ -1,0 +1,11 @@
+changes:
+- description: |
+    Fixed file type detection to prioritize filename checks over directory path checks.
+    This prevents the formatter from corrupting JSON files (like pack_metadata.json) when
+    they exist in directories whose names contain content type keywords (e.g., "Lists", "Jobs").
+
+    Previously, directory substring matching would misdetect files, causing the formatter
+    to strip required fields. This fix ensures pack_metadata.json and other specific files
+    are correctly identified regardless of their parent directory name.
+  type: fix
+pr_number: 5149

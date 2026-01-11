@@ -22,6 +22,7 @@ from demisto_sdk.commands.content_graph.objects import (
     Layout,
     LayoutRule,
     Mapper,
+    ModelingRule,
     Pack,
     ParsingRule,
     Playbook,

@@ -3333,3 +3333,100 @@ def test_layout_parser_group():
         layout_path, list(MarketplaceVersions), pack_supported_modules=[]
     )
     assert layout_parser_instance.group == "incident"
+
+
+class TestAgentixBaseParser:
+    """Tests for AgentixBaseParser fromversion and marketplace behavior."""
+
+    def test_agentix_action_parser_default_fromversion(self, pack: Pack):
+        """
+        Given:
+            - An agentix action without an explicit fromversion.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify the default fromversion is DEFAULT_AGENTIX_ITEM_FROM_VERSION (8.12.0).
+        """
+        from demisto_sdk.commands.common.constants import (
+            DEFAULT_AGENTIX_ITEM_FROM_VERSION,
+        )
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixAction", load_yaml("agentix_action.yml")
+        )
+        agentix_action_path = Path(agentix_action.path)
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.fromversion == DEFAULT_AGENTIX_ITEM_FROM_VERSION
+
+    def test_agentix_action_parser_custom_fromversion(self, pack: Pack):
+        """
+        Given:
+            - An agentix action with an explicit fromversion.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify the custom fromversion is used.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action_data = load_yaml("agentix_action.yml")
+        agentix_action_data["fromversion"] = "8.15.0"
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixActionCustomVersion", agentix_action_data
+        )
+        agentix_action_path = Path(agentix_action.path)
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.fromversion == "8.15.0"
+
+    def test_agentix_action_parser_supported_marketplaces(self, pack: Pack):
+        """
+        Given:
+            - An agentix action.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify supported_marketplaces returns only PLATFORM.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixAction", load_yaml("agentix_action.yml")
+        )
+        agentix_action_path = Path(agentix_action.path)
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.supported_marketplaces == {MarketplaceVersions.PLATFORM}
+
+    def test_agentix_action_parser_toversion_default(self, pack: Pack):
+        """
+        Given:
+            - An agentix action without an explicit toversion.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify the default toversion is DEFAULT_CONTENT_ITEM_TO_VERSION.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixAction", load_yaml("agentix_action.yml")
+        )
+        agentix_action_path = Path(agentix_action.path)
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.toversion == DEFAULT_CONTENT_ITEM_TO_VERSION

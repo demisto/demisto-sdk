@@ -1,0 +1,4 @@
+changes:
+- description: Improved handling private repositories.
+  type: feature
+pr_number: 5185

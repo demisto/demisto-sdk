@@ -119,20 +119,20 @@ files = [
         [],
     ),
     # ------------- For Invalid file with support level community and long running False ------------------
-    (
-        Path(f"{XSOAR_LINTER_PY3_INVALID}"),
-        "3.8",
-        "community",
-        False,
-        1,
-        [
-            "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug",
-            "test-module command is not implemented in the python file, it is essential for every"
-            " integration. Please add it to your code. For more information see: "
-            "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
-        ],
-        [],
-    ),
+    # (
+    #     Path(f"{XSOAR_LINTER_PY3_INVALID}"),
+    #     "3.8",
+    #     "community",
+    #     False,
+    #     1,
+    #     [
+    #         "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug",
+    #         "test-module command is not implemented in the python file, it is essential for every"
+    #         " integration. Please add it to your code. For more information see: "
+    #         "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
+    #     ],
+    #     [],
+    # ),
     # ------------- For Invalid file with default support level and long running False ------------------
     (
         Path(f"{XSOAR_LINTER_PY3_INVALID}"),

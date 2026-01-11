@@ -145,8 +145,7 @@ def update_content_graph(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-    if use_git and content_graph_interface.commit and not is_external_repo:
-        commit = content_graph_interface.commit
+    if use_git and (commit := content_graph_interface.commit and not is_external_repo):
         try:
             git_util.get_all_changed_pack_ids(commit)  # type: ignore[arg-type]
         except Exception as e:

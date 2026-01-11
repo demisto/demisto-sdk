@@ -8,6 +8,7 @@ import typer
 
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
+    DEMISTO_GIT_UPSTREAM,
     FileType_ALLOWED_TO_DELETE,
 )
 from demisto_sdk.commands.common.files.errors import FileReadError
@@ -30,19 +31,26 @@ def is_file_allowed_to_be_deleted_by_file_type(file_path: Path) -> bool:
             file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH
         )
     except (FileReadError, FileNotFoundError):
+        logger.debug(
+            f"Could not retrieve {file_path} in remote branch {DEMISTO_GIT_UPSTREAM}/{DEMISTO_GIT_PRIMARY_BRANCH}"
+        )
+        logger.debug(
+            f"Retrieving {file_path} content from local branch {DEMISTO_GIT_PRIMARY_BRANCH}"
+        )
         try:
             file_content = File.read_from_git_path(
                 file_path, tag=DEMISTO_GIT_PRIMARY_BRANCH, from_remote=False
             )
-        except (FileReadError, FileNotFoundError):
+        except (FileReadError, FileNotFoundError) as error:
+            logger.warning(
+                f"Could not read file {file_path} from git, error: {error}\ntrying to read {file_path} from github"
+            )
             file_content = File.read_from_github_api(
                 str(file_path),
                 tag=DEMISTO_GIT_PRIMARY_BRANCH,
                 verify_ssl=True if os.getenv("CI") else False,
             )
-
     is_silent = check_if_content_item_is_silent(file_content)
-
     if file_type := find_type(str(file_path), file_content):
         return file_type in FileType_ALLOWED_TO_DELETE or is_silent
 
@@ -79,12 +87,11 @@ def get_forbidden_deleted_files(protected_dirs: Set[str]) -> List[str]:
         if set(file_path.absolute().parts).intersection(protected_dirs)
     ]
 
-    forbidden_files = []
-    for file_path in deleted_files_in_protected_dirs:
-        if not is_file_allowed_to_be_deleted_by_file_type(file_path):
-            forbidden_files.append(str(file_path))
-
-    return forbidden_files
+    return [
+        str(file_path)
+        for file_path in deleted_files_in_protected_dirs
+        if not is_file_allowed_to_be_deleted_by_file_type(file_path)
+    ]
 
 
 main = typer.Typer(
@@ -101,16 +108,13 @@ def validate_forbidden_deleted_files(
 ):
     if not protected_dirs:
         raise ValueError("Provide at least one protected dir")
-
     logging_setup(calling_function=__name__)
-
     try:
         forbidden_deleted_files = get_forbidden_deleted_files(set(protected_dirs))
     except Exception as error:
         logger.error(
-            f"Unexpected error occurred while validating deleted files: {error}"
+            f"Unexpected error occurred while validating deleted files {error}"
         )
-        logger.exception("Full traceback:")
         raise
 
     if forbidden_deleted_files:

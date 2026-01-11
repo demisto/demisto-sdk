@@ -591,14 +591,6 @@ class GitUtil:
             for item in self.repo.head.commit.diff().iter_change_type("D")
         }.union(untracked)
 
-        # Also get unstaged deleted files (working directory deletions not yet staged)
-        # This ensures we catch all deletions when committed_only=False
-        unstaged_deleted = {
-            Path(os.path.join(item.a_path))  # type: ignore
-            for item in self.repo.head.commit.diff(None).iter_change_type("D")
-        }
-        staged = staged.union(unstaged_deleted)
-
         if staged_only:
             return staged
 

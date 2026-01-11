@@ -136,6 +136,8 @@ class PreCommitRunner:
         Returns:
             int: return code - 0 if hook passed, 1 if failed
         """
+        logger.debug(f"Running hook {hook_id}")
+
         if json_output_path and json_output_path.is_dir():
             json_output_path = json_output_path / f"{hook_id}.json"
 
@@ -252,14 +254,13 @@ class PreCommitRunner:
 
         num_processes = cpu_count()
         all_hooks_exit_codes = []
+        hooks_to_run = PreCommitRunner.original_hook_id_to_generated_hook_ids.items()
+        logger.debug(f"run {hooks_to_run=}")
 
-        for (
-            original_hook_id,
-            generated_hooks,
-        ) in PreCommitRunner.original_hook_id_to_generated_hook_ids.items():
+        for original_hook_id, generated_hooks in hooks_to_run:
             if generated_hooks:
+                logger.debug(f"Running hook {original_hook_id} with {generated_hooks}")
                 hook_ids = generated_hooks.hook_ids
-
                 if (
                     generated_hooks.parallel
                     and len(hook_ids) > 1
@@ -272,7 +273,6 @@ class PreCommitRunner:
                             json_output_path.parent / json_output_path.stem
                         )
                         json_output_path.mkdir(exist_ok=True)
-
                     with ThreadPool(num_processes) as pool:
                         current_hooks_exit_codes = pool.map(
                             partial(
@@ -297,8 +297,12 @@ class PreCommitRunner:
 
                 all_hooks_exit_codes.extend(current_hooks_exit_codes)
 
-        return_code = int(any(all_hooks_exit_codes))
+            else:
+                logger.debug(
+                    f"Skipping hook {original_hook_id} as it does not have any generated-hook-ids"
+                )
 
+        return_code = int(any(all_hooks_exit_codes))
         if return_code and show_diff_on_failure:
             logger.info(
                 "Pre-Commit changed the following. If you experience this in CI, please run `demisto-sdk pre-commit`"
@@ -311,7 +315,6 @@ class PreCommitRunner:
             logger.info(  # noqa: PLE1205
                 "{}", git_diff.stdout
             )
-
         return return_code
 
     @staticmethod

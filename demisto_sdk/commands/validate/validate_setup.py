@@ -151,6 +151,9 @@ def validate(
         False, "-f", "--fix", help="Whether to autofix failing validations."
     ),
     config_path: Path = typer.Option(None, help="Path for a config file to run."),
+    private_content_path: Path = typer.Option(
+        None, help="Path to the private content repository."
+    ),
     ignore_support_level: bool = typer.Option(
         False, help="Skip validations based on support level."
     ),
@@ -334,6 +337,7 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         handling_private_repositories=kwargs.get(
             "handling_private_repositories", False
         ),
+        private_content_path=kwargs.get("private_content_path"),
     )
     validator_v2 = ValidateManager(
         file_path=file_path,

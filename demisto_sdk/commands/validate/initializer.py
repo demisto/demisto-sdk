@@ -34,6 +34,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
+    chdir,
     detect_file_level,
     find_type_by_path,
     get_file_by_status,
@@ -220,6 +221,7 @@ class Initializer:
         file_path=None,
         execution_mode: Optional[ExecutionMode] = None,
         handling_private_repositories: bool = False,
+        private_content_path: Optional[Path] = None,
     ):
         self.staged = staged
         self.file_path = file_path
@@ -227,6 +229,8 @@ class Initializer:
         self.prev_ver = prev_ver
         self.execution_mode = execution_mode
         self.handling_private_repositories = handling_private_repositories
+        self.private_content_path = private_content_path
+        self.private_content_files = set()
 
         # Set environment variable to enable private repo mode when handling private repositories
         if handling_private_repositories:
@@ -301,6 +305,18 @@ class Initializer:
             renamed_files,
         ) = self.get_unfiltered_changed_files_from_git()
 
+        if self.private_content_path:
+            (
+                private_modified_files,
+                private_added_files,
+                private_renamed_files,
+            ) = self.get_unfiltered_changed_files_from_git(self.private_content_path)
+            self.private_content_files = private_modified_files.union(private_added_files).union(private_renamed_files)
+
+            modified_files = modified_files.union(private_modified_files)
+            added_files = added_files.union(private_added_files)
+            renamed_files = renamed_files.union(private_renamed_files)
+
         # filter to only specified paths if given
         if file_path:
             (modified_files, added_files, renamed_files) = self.specify_files_by_status(
@@ -312,6 +328,16 @@ class Initializer:
             committed_only=self.committed_only,
             staged_only=self.staged,
         )
+
+        if self.private_content_path:
+            private_git_util = GitUtil(self.private_content_path)
+            private_deleted_files = private_git_util.deleted_files(
+                prev_ver=self.prev_ver,
+                committed_only=self.committed_only,
+                staged_only=self.staged,
+            )
+            self.private_content_files.update(private_deleted_files)
+            deleted_files = deleted_files.union(private_deleted_files)
 
         # Handle deleted files for private repositories
         if self.handling_private_repositories:
@@ -393,7 +419,9 @@ class Initializer:
 
         return self.get_unfiltered_changed_files_from_git()
 
-    def get_unfiltered_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
+    def get_unfiltered_changed_files_from_git(
+        self, repo_path: Optional[Path] = None
+    ) -> Tuple[Set, Set, Set]:
         """
         Get the added and modified before file filtration to only relevant files
 
@@ -403,20 +431,21 @@ class Initializer:
             - The unfiltered added files
             - The unfiltered renamed files (Set of tuples: (old_path, new_path))
         """
+        git_util = GitUtil(repo_path) if repo_path else self.git_util
         # get files from git by status identification against prev-ver
-        modified_files = self.git_util.modified_files(
+        modified_files = git_util.modified_files(
             prev_ver=self.prev_ver,
             committed_only=self.committed_only,
             staged_only=self.staged,
             debug=True,
         )
-        added_files = self.git_util.added_files(
+        added_files = git_util.added_files(
             prev_ver=self.prev_ver,
             committed_only=self.committed_only,
             staged_only=self.staged,
             debug=True,
         )
-        renamed_files = self.git_util.renamed_files(
+        renamed_files = git_util.renamed_files(
             prev_ver=self.prev_ver,
             committed_only=self.committed_only,
             staged_only=self.staged,
@@ -743,34 +772,47 @@ class Initializer:
                 old_path = file_path
                 if isinstance(file_path, tuple):
                     file_path, old_path = file_path
-                obj = BaseContent.from_path(file_path, raise_on_exception=True)
-                if obj:
-                    obj.git_sha = current_git_sha
-                    obj.git_status = git_status
-                    # Check if the file exists
-                    if (
-                        git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED)
-                        or (
-                            not git_status  # Always collect the origin version of the metadata.
-                            and find_type_by_path(file_path) == FileType.METADATA
-                        )
-                    ):
-                        try:
-                            obj.old_base_content_object = BaseContent.from_path(
-                                old_path, git_sha=prev_ver, raise_on_exception=True
+
+                if file_path in self.private_content_files:
+                    chdir_path = self.private_content_path
+                else:
+                    chdir_path = os.getcwd()
+
+                with chdir(chdir_path):
+
+                    obj = BaseContent.from_path(
+                        file_path,
+                        raise_on_exception=True,
+                    )
+                    if obj:
+                        obj.git_sha = current_git_sha
+                        obj.git_status = git_status
+                        # Check if the file exists
+                        if (
+                            git_status in (GitStatuses.MODIFIED, GitStatuses.RENAMED)
+                            or (
+                                not git_status  # Always collect the origin version of the metadata.
+                                and find_type_by_path(file_path) == FileType.METADATA
                             )
-                        except (NotAContentItemException, InvalidContentItemException):
-                            logger.debug(
-                                f"Could not parse the old_base_content_object for {obj.path}, setting a copy of the object as the old_base_content_object."
-                            )
+                        ):
+                            try:
+                                obj.old_base_content_object = BaseContent.from_path(
+                                    old_path,
+                                    git_sha=prev_ver,
+                                    raise_on_exception=True,
+                                )
+                            except (NotAContentItemException, InvalidContentItemException):
+                                logger.debug(
+                                    f"Could not parse the old_base_content_object for {obj.path}, setting a copy of the object as the old_base_content_object."
+                                )
+                                obj.old_base_content_object = obj.copy(deep=True)
+                        else:
                             obj.old_base_content_object = obj.copy(deep=True)
-                    else:
-                        obj.old_base_content_object = obj.copy(deep=True)
-                    if obj.old_base_content_object:
-                        obj.old_base_content_object.git_sha = prev_ver
-                    basecontent_with_path_set.add(obj)
-                elif obj is None:
-                    invalid_content_items.add(file_path)
+                        if obj.old_base_content_object:
+                            obj.old_base_content_object.git_sha = prev_ver
+                        basecontent_with_path_set.add(obj)
+                    elif obj is None:
+                        invalid_content_items.add(file_path)
             except NotAContentItemException:
                 non_content_items.add(file_path)  # type: ignore[arg-type]
             except InvalidContentItemException:

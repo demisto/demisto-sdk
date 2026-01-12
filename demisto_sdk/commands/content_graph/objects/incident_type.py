@@ -49,8 +49,8 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
                 json.dump([self.prepare_for_upload(marketplace=marketplace)], f)
             response = client.import_incident_types_handler(str(file_path))
         parse_upload_response(
-                response, path=self.path, content_type=self.content_type
-            )  # raises on error
+            response, path=self.path, content_type=self.content_type
+        )  # raises on error
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

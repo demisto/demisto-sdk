@@ -38,8 +38,8 @@ class IndicatorIncidentField(ContentItem):
             file.seek(0)
             response = client.import_incident_fields(file=file.name)
             parse_upload_response(
-                    response, path=self.path, content_type=self.content_type
-                )  # raises on error
+                response, path=self.path, content_type=self.content_type
+            )  # raises on error
             return response
 
     def metadata_fields(self) -> Set[str]:

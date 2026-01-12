@@ -32,6 +32,7 @@ class Job(ContentItem, content_type=ContentType.JOB):  # type: ignore[call-arg]
                 response, path=self.path, content_type=self.content_type
             )  # raises on error
             return response
+
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         if (

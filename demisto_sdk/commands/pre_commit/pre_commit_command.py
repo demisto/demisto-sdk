@@ -780,7 +780,7 @@ def preprocess_files(
     elif staged_only:
         raw_files = staged_files
     elif use_git:
-        if commited_only:
+        if commited_only and is_private_repo:
             # For committed_only mode, get files from actual commits using get_all_changed_files
             # which properly filters by commit status
             raw_files = git_util.get_all_changed_files(

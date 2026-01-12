@@ -21,7 +21,11 @@ from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_UPSTREAM,
     ISO_TIMESTAMP_FORMAT,
     PACKS_FOLDER,
+    PRIVATE_REPO_STATUS_FILE_CONFIGURATION,
+    PRIVATE_REPO_STATUS_FILE_PRIVATE,
+    PRIVATE_REPO_STATUS_FILE_TEST_CONF,
 )
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
 from demisto_sdk.commands.common.logger import logger
 
 
@@ -696,11 +700,82 @@ class GitUtil:
         return all_renamed_files
 
     def get_all_changed_pack_ids(self, prev_ver: str) -> Set[str]:
-        return {
+        """Get all pack IDs that have been changed.
+        
+        This includes packs with modified, added, or renamed files from both
+        the content repository and private repositories (if status files exist).
+        For renamed files, both the source and destination packs are included
+        to ensure proper graph updates when items are moved between packs.
+        
+        Args:
+            prev_ver: The base branch/commit to compare against
+            
+        Returns:
+            Set of pack IDs that have changes
+        """
+        # Get pack IDs from modified and added files
+        changed_pack_ids = {
             file.parts[1]
             for file in self._get_all_changed_files(prev_ver) | self._get_staged_files()
             if file.parts[0] == PACKS_FOLDER
         }
+        
+        # Get renamed files with both old and new paths from content repo
+        renamed_files: Set[Tuple[Path, Path]] = self.renamed_files(  # type: ignore[assignment]
+            prev_ver=prev_ver,
+            committed_only=False,
+            staged_only=False,
+            get_only_current_file_names=False,
+        )
+        
+        # Add pack IDs from both old and new paths of renamed files
+        for renamed_tuple in renamed_files:
+            if isinstance(renamed_tuple, tuple) and len(renamed_tuple) == 2:
+                old_path, new_path = renamed_tuple
+                if old_path.parts[0] == PACKS_FOLDER:
+                    changed_pack_ids.add(old_path.parts[1])
+                if new_path.parts[0] == PACKS_FOLDER:
+                    changed_pack_ids.add(new_path.parts[1])
+        
+        # Process private repository status files if they exist
+        artifacts_folder = os.getenv("ARTIFACTS_FOLDER", "")
+        logs_dir = Path(artifacts_folder) / "logs" if artifacts_folder else Path("logs")
+        
+        status_files = [
+            logs_dir / PRIVATE_REPO_STATUS_FILE_PRIVATE,
+            logs_dir / PRIVATE_REPO_STATUS_FILE_TEST_CONF,
+            logs_dir / PRIVATE_REPO_STATUS_FILE_CONFIGURATION,
+        ]
+        
+        for status_file in status_files:
+            try:
+                if status_file.exists():
+                    with open(status_file, "r") as f:
+                        file_statuses = DEFAULT_JSON_HANDLER.load(f)
+                        
+                        for file_path_str, status_info in file_statuses.items():
+                            if not file_path_str:
+                                continue
+                            
+                            # Only process renamed files
+                            if status_info.get("status") == "renamed":
+                                old_path_str = status_info.get("old_path")
+                                if old_path_str:
+                                    old_path = Path(old_path_str)
+                                    new_path = Path(file_path_str)
+                                    
+                                    # Add pack IDs from both old and new paths
+                                    if old_path.parts and old_path.parts[0] == PACKS_FOLDER and len(old_path.parts) > 1:
+                                        changed_pack_ids.add(old_path.parts[1])
+                                    if new_path.parts and new_path.parts[0] == PACKS_FOLDER and len(new_path.parts) > 1:
+                                        changed_pack_ids.add(new_path.parts[1])
+                                        
+            except DEFAULT_JSON_HANDLER.JSONDecodeError as e:
+                logger.debug(f"Invalid JSON format in {status_file}: {str(e)}")
+            except Exception as e:
+                logger.debug(f"Error processing {status_file}: {str(e)}")
+        
+        return changed_pack_ids
 
     def _get_untracked_files(self, requested_status: str) -> set:
         """return all untracked files of the given requested status.

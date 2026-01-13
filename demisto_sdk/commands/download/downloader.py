@@ -1498,7 +1498,14 @@ class Downloader:
                 output_path / content_item_entity_directory / content_item_file_name
             )
             content_item_download_path.parent.mkdir(parents=True, exist_ok=True)
-            content_item_download_path.write_text(content_item_file_data.getvalue())
+            value = content_item_file_data.getvalue()
+            if value.startswith("{") or value.startswith("["):
+                # JSON file
+                content_item_download_path.write_text(
+                    json.dumps(json.loads(value), indent=4)
+                )
+            else:
+                content_item_download_path.write_text(value)
 
             downloaded_files.append(content_item_download_path)
 

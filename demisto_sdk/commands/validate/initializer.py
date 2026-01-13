@@ -729,7 +729,7 @@ class Initializer:
                 if isinstance(file_path, tuple):
                     file_path, old_path = file_path
 
-                if file_path in self.private_content_files:
+                if file_path in self.private_content_files and self.private_content_path:
                     chdir_path = self.private_content_path
                 else:
                     chdir_path = Path(get_content_path())

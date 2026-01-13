@@ -37,6 +37,7 @@ from demisto_sdk.commands.common.tools import (
     chdir,
     detect_file_level,
     find_type_by_path,
+    get_content_path,
     get_file_by_status,
     get_relative_path_from_packs_dir,
     is_external_repo,
@@ -230,7 +231,7 @@ class Initializer:
         self.execution_mode = execution_mode
         self.handling_private_repositories = handling_private_repositories
         self.private_content_path = private_content_path
-        self.private_content_files = set()
+        self.private_content_files: set[Path] = set()
 
         # Set environment variable to enable private repo mode when handling private repositories
         if handling_private_repositories:
@@ -311,7 +312,9 @@ class Initializer:
                 private_added_files,
                 private_renamed_files,
             ) = self.get_unfiltered_changed_files_from_git(self.private_content_path)
-            self.private_content_files = private_modified_files.union(private_added_files).union(private_renamed_files)
+            self.private_content_files = private_modified_files.union(
+                private_added_files
+            ).union(private_renamed_files)
 
             modified_files = modified_files.union(private_modified_files)
             added_files = added_files.union(private_added_files)
@@ -776,10 +779,9 @@ class Initializer:
                 if file_path in self.private_content_files:
                     chdir_path = self.private_content_path
                 else:
-                    chdir_path = os.getcwd()
+                    chdir_path = Path(get_content_path())
 
                 with chdir(chdir_path):
-
                     obj = BaseContent.from_path(
                         file_path,
                         raise_on_exception=True,
@@ -801,7 +803,10 @@ class Initializer:
                                     git_sha=prev_ver,
                                     raise_on_exception=True,
                                 )
-                            except (NotAContentItemException, InvalidContentItemException):
+                            except (
+                                NotAContentItemException,
+                                InvalidContentItemException,
+                            ):
                                 logger.debug(
                                     f"Could not parse the old_base_content_object for {obj.path}, setting a copy of the object as the old_base_content_object."
                                 )

@@ -1830,11 +1830,11 @@ def test_IsSupportedModulesRemoved_with_removed_modules():
     - Return a ValidationResult inicdating which modules were removed.
     """
     new_item = create_integration_object(
-        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+        paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]
     )
     new_item.old_base_content_object = create_integration_object(
         paths=["supportedModules"],
-        values=[["C1", "C3", "X0", "X1", "X3"]],
+        values=[["Cloud", "asm", "agentix", "edr", "cloud_posture"]],
     )
 
     res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
@@ -1842,7 +1842,7 @@ def test_IsSupportedModulesRemoved_with_removed_modules():
     assert len(res) == 1
     assert (
         res[0].message
-        == "The following support modules have been removed from the integration 'X1', 'X3'. Removing supported modules is not allowed, Please undo."
+        == "The following support modules have been removed from the integration 'cloud_posture', 'edr'. Removing supported modules is not allowed, Please undo."
     )
     assert res[0].validator.error_code == "BC115"
 
@@ -1859,89 +1859,13 @@ def test_IsSupportedModulesRemoved_without_removed_modules():
     - Return an empty list, indicating no validation issues.
     """
     new_item = create_integration_object(
-        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+        paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]
     )
     new_item.old_base_content_object = create_integration_object(
-        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
+        paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]
     )
 
     res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
-
-    assert len(res) == 0
-
-
-def test_IsSupportedModulesAdded_with_added_modules():
-    """
-    Given
-    - A content item whose 'supportedModules' list had modules added compared to the previous version.
-
-    When
-    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
-
-    Then
-    - Return a ValidationResult indicating which modules were added and explanation it requires a PM approval.
-    """
-    new_item = create_integration_object(
-        paths=["supportedModules"], values=[["C1", "C3", "X0", "X1", "X3"]]
-    )
-    new_item.old_base_content_object = create_integration_object(
-        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
-    )
-
-    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
-
-    assert len(res) == 1
-    assert (
-        res[0].message
-        == "The following support modules 'X1', 'X3' have been added to the TestIntegration Integration."
-        " Adding supported modules requires a PM approval."
-    )
-    assert res[0].validator.error_code == "BC117"
-
-
-def test_IsSupportedModulesAdded_without_added_modules():
-    """
-    Given
-    - A content item whose 'supportedModules' list has not changed.
-
-    When
-    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
-
-    Then
-    - Return an empty list, indicating no validation issues.
-    """
-    new_item = create_integration_object(
-        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
-    )
-    new_item.old_base_content_object = create_integration_object(
-        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
-    )
-
-    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
-
-    assert len(res) == 0
-
-
-def test_IsSupportedModulesAdded_with_removed_modules():
-    """
-    Given
-    - A content item whose 'supportedModules' list had modules removed compared to the previous version.
-
-    When
-    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
-
-    Then
-    - Return an empty list, indicating no validation issues.
-    - BC117 should warn just in case of added 'supportedModules', when removing some modules BC115 should fail.
-    """
-    new_item = create_integration_object(
-        paths=["supportedModules"], values=[["C1", "C3"]]
-    )
-    new_item.old_base_content_object = create_integration_object(
-        paths=["supportedModules"], values=[["C1", "C3", "X0"]]
-    )
-
-    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
 
     assert len(res) == 0
 
@@ -1960,12 +1884,12 @@ def test_IsSupportedModulesRemoved_with_pack_fallback():
     """
     with ChangeCWD(REPO.path):
         new_item = create_integration_object(
-            pack_info={"supportedModules": ["C1", "C3"]}
+            pack_info={"supportedModules": ["Cloud", "asm"]}
         )
 
         new_item.old_base_content_object = create_integration_object(
             paths=["supportedModules"],
-            values=[["C1", "C3", "X1", "X3"]],
+            values=[["Cloud", "asm", "edr", "cloud_posture"]],
         )
 
         res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
@@ -1973,7 +1897,7 @@ def test_IsSupportedModulesRemoved_with_pack_fallback():
         assert len(res) == 1
         assert (
             res[0].message
-            == "The following support modules have been removed from the integration 'X1', 'X3'. Removing supported modules is not allowed, Please undo."
+            == "The following support modules have been removed from the integration 'cloud_posture', 'edr'. Removing supported modules is not allowed, Please undo."
         )
         assert res[0].validator.error_code == "BC115"
 
@@ -1992,12 +1916,12 @@ def test_IsSupportedModulesRemoved_both_fallback_to_pack():
     """
     with ChangeCWD(REPO.path):
         new_item = create_script_object(
-            pack_info={"supportedModules": ["C1", "C3", "X0"]}
+            pack_info={"supportedModules": ["Cloud", "asm", "agentix"]}
         )
         new_item.supportedModules = None
 
         old_item = create_script_object(
-            pack_info={"supportedModules": ["C1", "C3", "X0"]}
+            pack_info={"supportedModules": ["Cloud", "asm", "agentix"]}
         )
         old_item.supportedModules = None
         new_item.old_base_content_object = old_item
@@ -2020,11 +1944,11 @@ def test_IsSupportedModulesRemoved_pack_modules_reduced():
     - Return a ValidationResult indicating which modules were removed at pack level.
     """
     with ChangeCWD(REPO.path):
-        new_item = create_playbook_object(pack_info={"supportedModules": ["C1", "C3"]})
+        new_item = create_playbook_object(pack_info={"supportedModules": ["Cloud", "asm"]})
         new_item.supportedModules = None
 
         old_item = create_playbook_object(
-            pack_info={"supportedModules": ["C1", "C3", "X1", "X3"]}
+            pack_info={"supportedModules": ["Cloud", "asm", "edr", "cloud_posture"]}
         )
         old_item.supportedModules = None
         new_item.old_base_content_object = old_item
@@ -2032,7 +1956,7 @@ def test_IsSupportedModulesRemoved_pack_modules_reduced():
         res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
 
         assert len(res) == 1
-        assert "'X1', 'X3'" in res[0].message
+        assert "'cloud_posture', 'edr'" in res[0].message
         assert res[0].validator.error_code == "BC115"
 
 
@@ -2051,12 +1975,12 @@ def test_IsSupportedModulesRemoved_mixed_explicit_and_fallback():
     with ChangeCWD(REPO.path):
         new_item = create_integration_object(
             paths=["supportedModules"],
-            values=[["C1", "C3"]],
-            pack_info={"supportedModules": ["C1", "C3", "X0", "X1"]},
+            values=[["Cloud", "asm"]],
+            pack_info={"supportedModules": ["Cloud", "asm", "agentix", "edr"]},
         )
 
         old_item = create_integration_object(
-            pack_info={"supportedModules": ["C1", "C3", "X0", "X1", "X3"]}
+            pack_info={"supportedModules": ["Cloud", "asm", "agentix", "edr", "cloud_posture"]}
         )
         old_item.supportedModules = None
         new_item.old_base_content_object = old_item
@@ -2064,7 +1988,7 @@ def test_IsSupportedModulesRemoved_mixed_explicit_and_fallback():
         res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
 
         assert len(res) == 1
-        assert "'X0', 'X1', 'X3'" in res[0].message
+        assert "'agentix', 'cloud_posture', 'edr'" in res[0].message
         assert res[0].validator.error_code == "BC115"
 
 
@@ -2080,14 +2004,90 @@ def test_IsSupportedModulesRemoved_pack_content_type():
     - Validate that Pack items don't fall back to pack.supportedModules (since they ARE the pack).
     """
     new_pack = create_pack_object()
-    new_pack.supportedModules = ["C1", "C3"]
+    new_pack.supportedModules = ["Cloud", "asm"]
 
     old_pack = create_pack_object()
-    old_pack.supportedModules = ["C1", "C3", "X1", "X3"]
+    old_pack.supportedModules = ["Cloud", "asm", "edr", "cloud_posture"]
     new_pack.old_base_content_object = old_pack
 
     res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_pack])
 
     assert len(res) == 1
-    assert "'X1', 'X3'" in res[0].message
+    assert "'cloud_posture', 'edr'" in res[0].message
     assert res[0].validator.error_code == "BC115"
+
+
+def test_IsSupportedModulesAdded_with_added_modules():
+    """
+    Given
+    - A content item whose 'supportedModules' list had modules added compared to the previous version.
+
+    When
+    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
+
+    Then
+    - Return a ValidationResult indicating which modules were added and explanation it requires a PM approval.
+    """
+    new_item = create_integration_object(
+        paths=["supportedModules"], values=[["Cloud", "asm", "agentix", "edr", "cloud_posture"]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]
+    )
+
+    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 1
+    assert (
+        res[0].message
+        == "The following support modules 'cloud_posture', 'edr' have been added to the TestIntegration Integration."
+        " Adding supported modules requires a PM approval."
+    )
+    assert res[0].validator.error_code == "BC117"
+
+
+def test_IsSupportedModulesAdded_without_added_modules():
+    """
+    Given
+    - A content item whose 'supportedModules' list has not changed.
+
+    When
+    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
+
+    Then
+    - Return an empty list, indicating no validation issues.
+    """
+    new_item = create_integration_object(
+        paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]
+    )
+
+    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 0
+
+
+def test_IsSupportedModulesAdded_with_removed_modules():
+    """
+    Given
+    - A content item whose 'supportedModules' list had modules removed compared to the previous version.
+
+    When
+    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
+
+    Then
+    - Return an empty list, indicating no validation issues.
+    - BC117 should warn just in case of added 'supportedModules', when removing some modules BC115 should fail.
+    """
+    new_item = create_integration_object(
+        paths=["supportedModules"], values=[["Cloud", "asm"]]
+    )
+    new_item.old_base_content_object = create_integration_object(
+        paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]
+    )
+
+    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 0

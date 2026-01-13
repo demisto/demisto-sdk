@@ -37,12 +37,16 @@ mapping:
   promptConfig:
     type: map
     mapping:
+      model:
+        type: str
       temperature:
         type: number
       maxOutputTokens:
         type: int
       webSearch:
         type: bool
+      systemInstruction:
+        type: str
   preScript:
     type: str
   postScript:
@@ -95,10 +99,6 @@ mapping:
     - type: str
       enum: ['platform']
   supportedModules:
-    type: seq
-    sequence:
-    - type: str
-  tests:
     type: seq
     sequence:
     - type: str

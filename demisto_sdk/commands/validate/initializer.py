@@ -227,7 +227,7 @@ class Initializer:
         self.staged = staged
         self.file_path = file_path
         self.committed_only = committed_only
-        self.prev_ver = prev_ver
+        self.prev_ver = "master" if handling_private_repositories else prev_ver
         self.execution_mode = execution_mode
         self.handling_private_repositories = handling_private_repositories
         self.private_content_path = private_content_path
@@ -489,53 +489,6 @@ class Initializer:
                     " of files in the contribution_files_relative_paths.txt file."
                     " This indicates that there are untracked files. Unable to proceed."
                 )
-
-        """
-        Handles private repositories' file statuses when enabled.
-
-        When handling_private_repositories is True, the system processes status files from private repositories
-        to maintain accurate git status information. This is particularly useful in CI/CD pipelines where
-        private repositories are involved.
-
-        The system looks for the following status files in order:
-        1. content_private_files_relative_paths.txt
-        2. content_test_conf_files_relative_paths.txt
-        3. content_configuration_files_relative_paths.txt
-
-        Each file should contain a JSON object where:
-        - Keys are file paths
-        - Values are status strings: "modified", "added", or a dict with "status": "renamed" and "old_path"
-
-        The system will:
-        1. Check for each status file's existence
-        2. Parse the JSON content
-        3. For each file:
-           - If status is "modified", move from added_files to modified_files
-           - If status is "added", keep in added_files
-           - If status is "renamed", move from added_files to renamed_files with old_path
-        4. Log any processing errors without failing
-        5. Continue with validation even if no status files are found
-        """
-
-        if self.handling_private_repositories:
-            artifacts_folder = os.getenv("ARTIFACTS_FOLDER", "")
-            logs_dir = (
-                Path(artifacts_folder) / "logs" if artifacts_folder else Path("logs")
-            )
-
-            status_files = [
-                logs_dir / PRIVATE_REPO_STATUS_FILE_PRIVATE,
-                logs_dir / PRIVATE_REPO_STATUS_FILE_TEST_CONF,
-                logs_dir / PRIVATE_REPO_STATUS_FILE_CONFIGURATION,
-            ]
-
-            for status_file in status_files:
-                _process_status_file(
-                    status_file, modified_files, added_files, renamed_files
-                )
-
-        # Log files in a more readable format
-        _log_file_changes(modified_files, added_files, renamed_files)
 
         return modified_files, added_files, renamed_files
 

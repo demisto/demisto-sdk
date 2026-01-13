@@ -1197,7 +1197,7 @@ def test_uuids_replacement_in_content_items(mocker):
         ):
             changed_uuids_count += 1
 
-    assert changed_uuids_count == 7
+    assert changed_uuids_count == 6
 
 
 @pytest.mark.parametrize("content_item_name", ("Test: Test", "[Test] Test"))
@@ -1287,6 +1287,77 @@ def test_uuids_replacement_in_content_items_with_quoted_id_field(
     assert (
         file_object["file"].getvalue().splitlines()[0] == f"id: '{file_object['name']}'"
     )
+
+
+def test_playbook_task_uuids_preserved_during_uuid_replacement(repo):
+    """
+    Given:
+        A playbook with tasks that have taskid and task.id UUIDs, and a playbook ID that is also a UUID.
+    When:
+        Calling 'replace_uuid_ids' method with a mapping that includes the playbook ID.
+    Then:
+        - Ensure the playbook ID is replaced with the playbook name.
+        - Ensure the taskid and task.id UUIDs are NOT replaced and remain as-is.
+        This prevents the format command from regenerating new UUIDs for every task on each download.
+    """
+    playbook_uuid = "d470522f-0a68-43c7-a62f-224f04b2e0c9"
+    task_uuid = "a1234567-1234-1234-1234-123456789012"
+    playbook_name = "Test Playbook"
+
+    repo = repo.create_pack()
+    playbook_data = {
+        "name": playbook_name,
+        "id": playbook_uuid,
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": task_uuid,
+                "type": "start",
+                "task": {
+                    "id": task_uuid,
+                    "version": -1,
+                    "name": "",
+                },
+            }
+        },
+    }
+    playbook: Playbook = repo.create_playbook(yml=playbook_data)
+
+    downloader = Downloader(
+        all_custom_content=True,
+        auto_replace_uuids=True,
+    )
+
+    file_name = playbook.obj_path.name
+    playbook_content = playbook.obj_path.read_bytes()
+    file_object = downloader.create_content_item_object(
+        file_name=file_name,
+        file_data=StringIO(safe_read_unicode(playbook_content)),
+        _loaded_data=playbook_data,
+    )
+    custom_content_objects = {file_name: file_object}
+
+    # Create a uuid_mapping that includes both the playbook ID and task ID
+    uuid_mapping = {
+        playbook_uuid: playbook_name,
+        task_uuid: "Should Not Be Replaced",  # This should NOT be used for task UUIDs
+    }
+
+    downloader.replace_uuid_ids(
+        custom_content_objects=custom_content_objects, uuid_mapping=uuid_mapping
+    )
+
+    updated_content = file_object["file"].getvalue()
+    updated_data = file_object["data"]
+
+    # Assert the playbook ID was replaced
+    assert f"id: '{playbook_name}'" in updated_content
+    assert file_object["id"] == playbook_name
+
+    # Assert the task UUIDs were NOT replaced (should remain as the original UUID)
+    assert task_uuid in updated_content
+    assert updated_data["tasks"]["0"]["taskid"] == task_uuid
+    assert updated_data["tasks"]["0"]["task"]["id"] == task_uuid
 
 
 def test_get_system_playbooks(mocker):

@@ -109,6 +109,7 @@ class ContentType(StrEnum):
     CASE_LAYOUT = "CaseLayout"
     AGENTIX_AGENT = "AgentixAgent"
     AGENTIX_ACTION = "AgentixAction"
+    AIPROMPT = "AIPrompt"
 
     @property
     def labels(self) -> List[str]:

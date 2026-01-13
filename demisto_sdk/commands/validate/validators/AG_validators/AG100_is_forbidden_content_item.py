@@ -5,6 +5,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
     AgentixAgent,
+    AIPrompt,
     Script,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -12,7 +13,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[AgentixAgent, AgentixAction, Script]
+ContentTypes = Union[AgentixAgent, AgentixAction, AIPrompt, Script]
 
 
 class IsForbiddenContentItemValidator(BaseValidator[ContentTypes]):
@@ -44,4 +45,5 @@ class IsForbiddenContentItemValidator(BaseValidator[ContentTypes]):
         return content_item.content_type in [
             ContentType.AGENTIX_AGENT,
             ContentType.AGENTIX_ACTION,
+            ContentType.AIPROMPT,
         ] or (content_item.content_type == ContentType.SCRIPT and content_item.is_llm)  # type: ignore

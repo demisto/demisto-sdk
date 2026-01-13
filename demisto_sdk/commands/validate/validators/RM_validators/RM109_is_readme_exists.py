@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.content_graph.objects.ai_prompt import AIPrompt
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -11,7 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Integration, Script, Playbook]
+ContentTypes = Union[Integration, Script, Playbook, AIPrompt]
 
 
 class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
@@ -36,7 +37,7 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
             for content_item in content_items
             if (
                 (
-                    content_item.content_type != "Script"
+                    content_item.content_type not in ["Script", "AIPrompt"]
                     or (
                         content_item.content_type == "Script"
                         and (not getattr(content_item, "is_llm", False))

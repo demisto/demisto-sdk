@@ -1944,7 +1944,9 @@ def test_IsSupportedModulesRemoved_pack_modules_reduced():
     - Return a ValidationResult indicating which modules were removed at pack level.
     """
     with ChangeCWD(REPO.path):
-        new_item = create_playbook_object(pack_info={"supportedModules": ["Cloud", "asm"]})
+        new_item = create_playbook_object(
+            pack_info={"supportedModules": ["Cloud", "asm"]}
+        )
         new_item.supportedModules = None
 
         old_item = create_playbook_object(
@@ -1980,7 +1982,9 @@ def test_IsSupportedModulesRemoved_mixed_explicit_and_fallback():
         )
 
         old_item = create_integration_object(
-            pack_info={"supportedModules": ["Cloud", "asm", "agentix", "edr", "cloud_posture"]}
+            pack_info={
+                "supportedModules": ["Cloud", "asm", "agentix", "edr", "cloud_posture"]
+            }
         )
         old_item.supportedModules = None
         new_item.old_base_content_object = old_item
@@ -2029,7 +2033,8 @@ def test_IsSupportedModulesAdded_with_added_modules():
     - Return a ValidationResult indicating which modules were added and explanation it requires a PM approval.
     """
     new_item = create_integration_object(
-        paths=["supportedModules"], values=[["Cloud", "asm", "agentix", "edr", "cloud_posture"]]
+        paths=["supportedModules"],
+        values=[["Cloud", "asm", "agentix", "edr", "cloud_posture"]],
     )
     new_item.old_base_content_object = create_integration_object(
         paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]

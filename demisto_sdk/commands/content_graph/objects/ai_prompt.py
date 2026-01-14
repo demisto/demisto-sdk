@@ -34,6 +34,7 @@ class AIPrompt(ContentItem, content_type=ContentType.AIPROMPT):  # type: ignore[
 
     user_prompt: str = Field(..., alias="userprompt")
     system_prompt: Optional[str] = Field(None, alias="systemprompt")
+    few_shots: Optional[str] = Field(None, alias="fewshots")
     model: Optional[str] = None
     pre_script: Optional[str] = Field(None, alias="prescript")
     post_script: Optional[str] = Field(None, alias="postscript")
@@ -43,7 +44,7 @@ class AIPrompt(ContentItem, content_type=ContentType.AIPROMPT):  # type: ignore[
     arguments: Optional[list[AIPromptArgument]] = Field(None, exclude=True)
     password: Optional[str] = Field(None, exclude=True)
     private: bool = False
-    source_script_id: Optional[str] = Field(None, alias="sourcescriptid")
+    source_script_id: Optional[str] = Field(None, alias="sourcescripid")
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

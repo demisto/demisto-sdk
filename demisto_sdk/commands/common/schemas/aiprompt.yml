@@ -13,7 +13,7 @@ mapping:
   name:
     type: str
     required: true
-  prettyName:
+  prettyname:
     type: str
   type:
     type: str
@@ -47,9 +47,9 @@ mapping:
         type: bool
       systemInstruction:
         type: str
-  preScript:
+  prescript:
     type: str
-  postScript:
+  postscript:
     type: str
   arguments:
     type: seq
@@ -61,7 +61,7 @@ mapping:
     - include: output_schema
   isInternal:
     type: bool
-  isAnonymous:
+  isanonymous:
     type: bool
   enabled:
     type: bool
@@ -77,13 +77,13 @@ mapping:
     type: bool
   private:
     type: bool
-  runAs:
+  runas:
     type: str
   timeout:
     type: text
   pswd:
     type: str
-  sourceScripID:
+  sourcescripid:
     type: str
   compliantpolicies:
     type: seq
@@ -117,17 +117,17 @@ schema;argument_schema:
       required: true
     required:
       type: bool
-    defaultvalue:
+    defaultValue:
       type: str
     hidden:
-      type: bool
-    disabled:
       type: bool
 
 schema;output_schema:
   type: map
   mapping:
     contextPath:
+      type: str
+    contentPath:
       type: str
     description:
       type: str

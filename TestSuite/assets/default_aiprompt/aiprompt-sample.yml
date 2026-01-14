@@ -29,7 +29,7 @@ arguments:
     description: Whether to include full incident context
     type: boolean
     required: false
-    defaultvalue: true
+    defaultValue: true
 outputs:
   - contextPath: AIPrompt.Summary
     description: The generated summary of the incident

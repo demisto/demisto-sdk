@@ -46,6 +46,10 @@ class AIPromptParser(YAMLContentItemParser, content_type=ContentType.AIPROMPT):
         return self.yml_data.get("systemprompt")
 
     @property
+    def few_shots(self) -> Optional[str]:
+        return self.yml_data.get("fewshots")
+
+    @property
     def model(self) -> Optional[str]:
         return self.yml_data.get("model")
 
@@ -71,7 +75,7 @@ class AIPromptParser(YAMLContentItemParser, content_type=ContentType.AIPROMPT):
 
     @property
     def source_script_id(self) -> Optional[str]:
-        return self.yml_data.get("sourcescriptid")
+        return self.yml_data.get("sourcescripid")
 
     def connect_to_dependencies(self) -> None:
         """Create relationships to scripts used in pre/post processing.

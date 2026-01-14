@@ -46,6 +46,7 @@ class _AIPrompt(BaseStrictModel):
     description: str
     user_prompt: str = Field(..., alias="userprompt")  # Required field
     system_prompt: Optional[str] = Field(None, alias="systemprompt")
+    few_shots: Optional[str] = Field(None, alias="fewshots")
     model: Optional[str] = None
     pre_script: Optional[str] = Field(None, alias="prescript")
     post_script: Optional[str] = Field(None, alias="postscript")
@@ -53,7 +54,7 @@ class _AIPrompt(BaseStrictModel):
     arguments: Optional[list[AIPromptArgument]] = None
     password: Optional[str] = None
     private: bool = False
-    source_script_id: Optional[str] = Field(None, alias="sourcescriptid")
+    source_script_id: Optional[str] = Field(None, alias="sourcescripid")
     tags: Optional[list[str]] = None
     deprecated: Optional[bool] = None
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None

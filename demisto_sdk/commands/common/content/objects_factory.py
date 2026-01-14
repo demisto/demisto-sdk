@@ -7,6 +7,8 @@ from demisto_sdk.commands.common.content.objects.abstract_objects.general_object
     GeneralObject,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects import (
+    AgentixAction,
+    AgentixAgent,
     AgentTool,
     AuthorImage,
     ChangeLog,
@@ -101,6 +103,8 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.WIZARD: Wizard,
     FileType.XDRC_TEMPLATE: XDRCTemplate,
     FileType.LAYOUT_RULE: LayoutRule,
+    FileType.AGENTIX_ACTION: AgentixAction,
+    FileType.AGENTIX_AGENT: AgentixAgent,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

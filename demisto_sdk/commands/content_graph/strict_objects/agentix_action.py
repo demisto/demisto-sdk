@@ -17,7 +17,7 @@ class AgentixActionArgument(BaseStrictModel):
     hidden: bool = False
     disabled: bool = False
     content_item_arg_name: str = Field(..., alias="underlyingargname")
-    generatable: bool = False
+    isgeneratable: bool = False
 
 
 class AgentixActionOutput(BaseStrictModel):
@@ -37,6 +37,7 @@ class UnderlyingContentItem(BaseStrictModel):
 
 
 class AgentixAction(AgentixBase):
+    display: str
     args: Optional[list[AgentixActionArgument]] = None
     outputs: Optional[list[AgentixActionOutput]] = None
     underlying_content_item: UnderlyingContentItem = Field(

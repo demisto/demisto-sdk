@@ -321,6 +321,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CASE_LAYOUT_RULE: "Case Layout Rules",
     FileType.CASE_FIELD: "Case Fields",
     FileType.CASE_LAYOUT: "Case Layouts",
+    FileType.AGENTIX_AGENT: "Agents",
+    FileType.AGENTIX_ACTION: "Actions",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -956,6 +958,13 @@ AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 PACKS_FOLDER = "Packs"
 PRIVATE_PACKS_FOLDER = "PrivatePacks"
 GIT_IGNORE_FILE_NAME = ".gitignore"
+
+# Private Repository Status Files
+PRIVATE_REPO_STATUS_FILE_PRIVATE = "content_private_files_relative_paths.txt"
+PRIVATE_REPO_STATUS_FILE_TEST_CONF = "content_test_conf_files_relative_paths.txt"
+PRIVATE_REPO_STATUS_FILE_CONFIGURATION = (
+    "content_configuration_files_relative_paths.txt"
+)
 
 CONF_JSON_FILE_NAME = "conf.json"
 VERSION_CONFIG_FILE_NAME = "version_config.json"
@@ -1620,6 +1629,8 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.CASE_LAYOUT_RULE: "8.7.0",
     FileType.CASE_FIELD: "8.7.0",
     FileType.CASE_LAYOUT: "8.7.0",
+    FileType.AGENTIX_ACTION: "8.12.0",
+    FileType.AGENTIX_AGENT: "8.12.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"
@@ -1632,6 +1643,7 @@ DEFAULT_CONTENT_ITEM_FROM_VERSION = "0.0.0"
 DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"
 MARKETPLACE_MIN_VERSION = "6.0.0"
 MINIMUM_XSOAR_SAAS_VERSION = "8.0.0"
+DEFAULT_AGENTIX_ITEM_FROM_VERSION = "8.12.0"
 
 OLDEST_SUPPORTED_VERSION = "5.0.0"
 OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION = GENERAL_DEFAULT_FROMVERSION

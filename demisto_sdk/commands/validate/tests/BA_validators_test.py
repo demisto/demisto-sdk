@@ -1,4 +1,5 @@
 import copy
+import re
 from pathlib import Path
 from typing import List
 
@@ -117,9 +118,20 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA127_is_valid_conte
 from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_script_name_starts_with_digit import (
     IsCommandOrScriptNameStartsWithDigitValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA129_missing_compliant_policies import (
+    MissingCompliantPoliciesValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
+
+
+def normalize_pack_name(message: str) -> str:
+    """
+    Normalizes dynamically generated pack directory names like 'pack_123'
+    into a static placeholder 'PACK_NAME' so tests remain deterministic.
+    """
+    return re.sub(r"pack_\d+", "PACK_NAME", message)
 
 
 @pytest.mark.parametrize(
@@ -1284,14 +1296,14 @@ def test_IsEntityNameContainExcludedWordValidator(
             [create_pack_object(), create_pack_object()],
             1,
             [
-                "Pack for content item '/newPackName' and all related files were changed from 'pack_171' to 'newPackName', please undo."
+                "Pack for content item '/newPackName' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
             [create_integration_object(), create_integration_object()],
             1,
             [
-                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_173' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1301,7 +1313,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/ParsingRules/TestParsingRule/TestParsingRule.yml' and all related files were changed from 'pack_175' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/ParsingRules/TestParsingRule/TestParsingRule.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1311,7 +1323,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/CorrelationRules/correlation_rule.yml' and all related files were changed from 'pack_177' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/CorrelationRules/correlation_rule.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1321,7 +1333,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Playbooks/playbook-0.yml' and all related files were changed from 'pack_179' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Playbooks/playbook-0.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1331,7 +1343,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/ModelingRules/modelingrule_0/modelingrule_0.yml' and all related files were changed from 'pack_181' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/ModelingRules/modelingrule_0/modelingrule_0.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1341,7 +1353,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'pack_183' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Integrations/integration_0/integration_0.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1351,7 +1363,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Scripts/script0/script0.yml' and all related files were changed from 'pack_185' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Scripts/script0/script0.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1361,7 +1373,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Classifiers/classifier-test_classifier.json' and all related files were changed from 'pack_187' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Classifiers/classifier-test_classifier.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1371,7 +1383,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Lists/list-list.json' and all related files were changed from 'pack_189' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Lists/list-list.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1381,7 +1393,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Jobs/job-job.json' and all related files were changed from 'pack_191' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Jobs/job-job.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1391,7 +1403,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Dashboards/dashboard-dashboard.json' and all related files were changed from 'pack_193' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Dashboards/dashboard-dashboard.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1401,7 +1413,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/IncidentTypes/incidenttype-incident_type.json' and all related files were changed from 'pack_195' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/IncidentTypes/incidenttype-incident_type.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1411,7 +1423,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/IncidentFields/incidentfield-incident_field.json' and all related files were changed from 'pack_197' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/IncidentFields/incidentfield-incident_field.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1421,7 +1433,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Reports/report-report.json' and all related files were changed from 'pack_199' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Reports/report-report.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1431,7 +1443,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/XSIAMReports/xsiam_report.json' and all related files were changed from 'pack_201' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/XSIAMReports/xsiam_report.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1441,7 +1453,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/XSIAMDashboards/xsiam_dashboard.json' and all related files were changed from 'pack_203' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/XSIAMDashboards/xsiam_dashboard.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1451,7 +1463,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/XDRCTemplates/pack_205_xdrc_template/xdrc_template.json' and all related files were changed from 'pack_205' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/XDRCTemplates/PACK_NAME_xdrc_template/xdrc_template.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1461,7 +1473,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/AssetsModelingRules/assets_modeling_rule/assets_modeling_rule.yml' and all related files were changed from 'pack_207' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/AssetsModelingRules/assets_modeling_rule/assets_modeling_rule.yml' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1471,7 +1483,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Triggers/trigger.json' and all related files were changed from 'pack_209' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Triggers/trigger.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1481,7 +1493,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Layouts/layout-layout.json' and all related files were changed from 'pack_211' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Layouts/layout-layout.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1491,7 +1503,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Widgets/widget-widget.json' and all related files were changed from 'pack_213' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Widgets/widget-widget.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1501,7 +1513,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/IndicatorFields/indicatorfield-indicator_field.json' and all related files were changed from 'pack_215' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/IndicatorFields/indicatorfield-indicator_field.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1511,7 +1523,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Wizards/wizard-test_wizard.json' and all related files were changed from 'pack_217' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Wizards/wizard-test_wizard.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1521,7 +1533,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/GenericDefinitions/genericdefinition-generic_definition.json' and all related files were changed from 'pack_219' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/GenericDefinitions/genericdefinition-generic_definition.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1531,7 +1543,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/GenericFields/generic_field/genericfield-generic_field.json' and all related files were changed from 'pack_221' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/GenericFields/generic_field/genericfield-generic_field.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1541,7 +1553,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/GenericTypes/generic_type/generictype-generic_type.json' and all related files were changed from 'pack_223' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/GenericTypes/generic_type/generictype-generic_type.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1551,7 +1563,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/GenericModules/genericmodule-generic_module.json' and all related files were changed from 'pack_225' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/GenericModules/genericmodule-generic_module.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1561,7 +1573,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Classifiers/classifier-mapper-incoming_mapper.json' and all related files were changed from 'pack_227' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-incoming_mapper.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1571,7 +1583,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/Classifiers/classifier-mapper-outgoing_mapper.json' and all related files were changed from 'pack_229' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/Classifiers/classifier-mapper-outgoing_mapper.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
         (
@@ -1581,7 +1593,7 @@ def test_IsEntityNameContainExcludedWordValidator(
             ],
             1,
             [
-                "Pack for content item '/newPackName/IndicatorTypes/reputation-indicator_type.json' and all related files were changed from 'pack_231' to 'newPackName', please undo."
+                "Pack for content item '/newPackName/IndicatorTypes/reputation-indicator_type.json' and all related files were changed from 'PACK_NAME' to 'newPackName', please undo."
             ],
         ),
     ],
@@ -1610,11 +1622,13 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
     new_path = Path(*content_item_parts)
     content_items[1].path = new_path
     results = PackNameValidator().obtain_invalid_content_items(content_items)
-    assert len(results) == expected_number_of_failures
+    result_messages = [normalize_pack_name(result.message) for result in results]
+
+    assert len(result_messages) == expected_number_of_failures
     assert all(
         [
-            result.message == expected_msg
-            for result, expected_msg in zip(results, expected_msgs)
+            message == expected_msg
+            for message, expected_msg in zip(result_messages, expected_msgs)
         ]
     )
 
@@ -1626,34 +1640,34 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
         pytest.param(
             [create_integration_object(readme_content="test-module")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_233/Integrations/integration_0/README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Integrations/integration_0/README.md",
             id="invalid: integration readme",
         ),
         pytest.param(
             [create_integration_object(description_content="test-module")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_234/Integrations/integration_0/integration_0_description.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Integrations/integration_0/integration_0_description.md",
             id="invalid: integration description",
         ),
         pytest.param([create_script_object()], 0, "", id="valid: script"),
         pytest.param(
             [create_script_object(readme_content="test-module ")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_236/Scripts/script0/README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Scripts/script0/README.md",
             id="invalid: script readme",
         ),
         pytest.param([create_playbook_object()], 0, "", id="valid: playbook"),
         pytest.param(
             [create_playbook_object(readme_content="test-module ")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_238/Playbooks/playbook-0_README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Playbooks/playbook-0_README.md",
             id="invalid: playbook readme",
         ),
         pytest.param([create_pack_object()], 0, "", id="valid: pack"),
         pytest.param(
             [create_pack_object(readme_text="test-module ")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_240/README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/README.md",
             id="invalid: pack readme",
         ),
         pytest.param(
@@ -1663,7 +1677,7 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
                 )
             ],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/pack_241/ReleaseNotes/1_0_1.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/ReleaseNotes/1_0_1.md",
             id="invalid: pack release note",
         ),
     ],
@@ -1684,9 +1698,11 @@ def test_CustomerFacingDocsDisallowedTermsValidator(
     results = CustomerFacingDocsDisallowedTermsValidator().obtain_invalid_content_items(
         content_items=content_items
     )
-    assert len(results) == expected_number_of_failures
+    result_messages = [normalize_pack_name(result.message) for result in results]
+
+    assert len(result_messages) == expected_number_of_failures
     if results:
-        assert results[0].message == expected_error_message
+        assert result_messages[0] == expected_error_message
 
 
 @pytest.mark.parametrize(
@@ -2755,7 +2771,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_313/README.md: Invalid marketplace tag(s) found: INVALID_TAG. Allowed tags:",
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Invalid marketplace tag(s) found: INVALID_TAG. Allowed tags:",
             ],
         ),
         (
@@ -2766,7 +2782,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_314/Integrations/integration_0/integration_0_description.md: Mismatched marketplace tags: opened with 'XSOAR' but closed with 'XSIAM'",
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/Integrations/integration_0/integration_0_description.md: Mismatched marketplace tags: opened with 'XSOAR' but closed with 'XSIAM'",
             ],
         ),
         (
@@ -2775,7 +2791,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_315/README.md: Unclosed marketplace tag: 'XSOAR' is missing its closing tag",
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Unclosed marketplace tag: 'XSOAR' is missing its closing tag",
             ],
         ),
         (
@@ -2786,7 +2802,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_316/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
             ],
         ),
         (
@@ -2797,7 +2813,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_317/README.md: Nested marketplace tags are not allowed. Tag 'XSIAM' cannot be placed inside tag 'XSOAR'",
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Nested marketplace tags are not allowed. Tag 'XSIAM' cannot be placed inside tag 'XSOAR'",
             ],
         ),
         (
@@ -2808,7 +2824,7 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_318/README.md: Invalid marketplace tag(s) found: INVALID, INVALID_B. Allowed tags:",
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Invalid marketplace tag(s) found: INVALID, INVALID_B. Allowed tags:",
             ],
         ),
         (
@@ -2828,7 +2844,81 @@ def test_integration_compliant_policy_name_validator(
             ],
             1,
             [
-                "Found malformed marketplace tags in the following files:\nPacks/pack_320/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
+                "Found malformed marketplace tags in the following files:\nPacks/PACK_NAME/README.md: Closing tag 'XSOAR' found without corresponding opening tag",
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~> invalid"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: Tag name cannot be empty."
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~xsoar>invalid</~xsoar>"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'xsoar'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="Text <~XSOAR-SAAS>invalid</~XSOAR-SAAS>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'XSOAR-SAAS'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~XSOAR,>bad</~XSOAR,>"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'XSOAR,'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~,XSOAR>bad</~,XSOAR>"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: ',XSOAR'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(
+                    readme_text="Text <~XSOAR, XSIAM>bad</~XSOAR, XSIAM>"
+                ),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'XSOAR, XSIAM'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
+            ],
+        ),
+        (
+            [
+                create_pack_object(readme_text="Text <~XSoar>bad</~XSoar>"),
+            ],
+            1,
+            [
+                "Found malformed marketplace tags in the following files:\n"
+                "Packs/PACK_NAME/README.md: Invalid tag format: 'XSoar'. Tag must be a comma-separated list of uppercase tags (A-Z, _)."
             ],
         ),
     ],
@@ -2856,7 +2946,526 @@ def test_MarketplaceTagsValidator_obtain_invalid_content_items(
     - Duplicate case - closing tag without corresponding opening tag
     """
     results = MarketplaceTagsValidator().obtain_invalid_content_items(content_items)
-    assert len(results) == expected_number_of_failures
+    result_messages = [normalize_pack_name(result.message) for result in results]
+
+    assert len(result_messages) == expected_number_of_failures
     if expected_msgs:
-        result_messages = [result.message for result in results]
         assert expected_msgs[0] in result_messages[0]
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_msgs",
+    [
+        # I1: Valid Integration (IP Blockage)
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "block-ip",
+                                "description": "block ip",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip list"}
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": ["IP Blockage"],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [],
+        ),
+        # I2: Invalid Integration (Missing IP Blockage)
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "block-ip",
+                                "description": "block ip",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip list"}
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": [],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [
+                "Command block-ip uses the arguments: ['ip_list'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['IP Blockage']."
+            ],
+        ),
+        # I3: Partial Failure (Multiple Policies) - one arg satisfied, one not
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "mixed-action",
+                                "description": "mixed action",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip list"},
+                                    {"name": "username", "description": "username"},
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": ["IP Blockage"],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [
+                "Command mixed-action uses the arguments: ['username'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['User Hard Remediation', 'User Soft Remediation']."
+            ],
+        ),
+        # I4: No Policy Required (arg not in mapping)
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "simple-command",
+                                "description": "simple command",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "verbose", "description": "verbose"}
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": [],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [],
+        ),
+        # I5: Edge Valid - One of two policies present (username)
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "hard-rem-command",
+                                "description": "hard remediation",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "username", "description": "username"}
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": ["User Hard Remediation"],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [],
+        ),
+        # I6: Multi-command integration: one passes, one fails
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "cmd-ok",
+                                "description": "ok",
+                                "deprecated": False,
+                                "arguments": [{"name": "ip_list", "description": "ip"}],
+                                "outputs": [],
+                                "compliantpolicies": ["IP Blockage"],
+                            },
+                            {
+                                "name": "cmd-bad",
+                                "description": "bad",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "endpoint_id", "description": "id"}
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": [],
+                            },
+                        ]
+                    ],
+                )
+            ],
+            [
+                "Command cmd-bad uses the arguments: ['endpoint_id'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation']."
+            ],
+        ),
+        # I7: Multiple problematic args in a single command (union policies + both args)
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "double-bad",
+                                "description": "double bad",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip"},
+                                    {"name": "endpoint_id", "description": "id"},
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": [],
+                            }
+                        ]
+                    ],
+                )
+            ],
+            [
+                "Command double-bad uses the arguments: ['endpoint_id', 'ip_list'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation', 'IP Blockage']."
+            ],
+        ),
+        # I8: Multiple problematic commands
+        (
+            [
+                create_integration_object(
+                    paths=["script.commands"],
+                    values=[
+                        [
+                            {
+                                "name": "cmd-bad-1",
+                                "description": "bad 1",
+                                "deprecated": False,
+                                "arguments": [
+                                    {"name": "ip_list", "description": "ip list"}
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": [],
+                            },
+                            {
+                                "name": "cmd-bad-2",
+                                "description": "bad 2",
+                                "deprecated": False,
+                                "arguments": [
+                                    {
+                                        "name": "endpoint_id",
+                                        "description": "endpoint id",
+                                    }
+                                ],
+                                "outputs": [],
+                                "compliantpolicies": [],
+                            },
+                        ]
+                    ],
+                )
+            ],
+            [
+                "Command cmd-bad-1 uses the arguments: ['ip_list'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['IP Blockage'].",
+                "Command cmd-bad-2 uses the arguments: ['endpoint_id'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation'].",
+            ],
+        ),
+        # S1: Valid Script (User Soft Remediation)
+        (
+            [
+                create_script_object(
+                    paths=["args", "compliantpolicies"],
+                    values=[
+                        [{"name": "username", "description": "username"}],
+                        ["User Soft Remediation"],
+                    ],
+                )
+            ],
+            [],
+        ),
+        # S2: Invalid Script (Missing EndPoint Isolation)
+        (
+            [
+                create_script_object(
+                    paths=["args", "compliantpolicies"],
+                    values=[
+                        [{"name": "endpoint_id", "description": "endpoint id"}],
+                        [],
+                    ],
+                )
+            ],
+            [
+                "myScript uses the arguments: ['endpoint_id'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation']."
+            ],
+        ),
+        # S3: Script multi-policy valid (one-of set)
+        (
+            [
+                create_script_object(
+                    paths=["args", "compliantpolicies"],
+                    values=[
+                        [{"name": "username", "description": "username"}],
+                        ["User Hard Remediation"],
+                    ],
+                )
+            ],
+            [],
+        ),
+        # S4: Script multi-policy invalid (none present)
+        (
+            [
+                create_script_object(
+                    paths=["args", "compliantpolicies"],
+                    values=[
+                        [{"name": "username", "description": "username"}],
+                        [],
+                    ],
+                )
+            ],
+            [
+                "myScript uses the arguments: ['username'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['User Hard Remediation', 'User Soft Remediation']."
+            ],
+        ),
+        # S5: Script no-policy-required arg only
+        (
+            [
+                create_script_object(
+                    paths=["args", "compliantpolicies"],
+                    values=[
+                        [{"name": "verbose", "description": "verbose"}],
+                        [],
+                    ],
+                )
+            ],
+            [],
+        ),
+    ],
+)
+def test_MissingCompliantPoliciesValidator_obtain_invalid_content_items(
+    mocker, content_items, expected_msgs
+):
+    """
+    Given
+    - A list of content items (Integrations and Scripts) that may define commands/arguments which are associated with compliance policies.
+    When
+    - Calling the MissingCompliantPoliciesValidator.obtain_invalid_content_items function.
+    Then
+    - Make sure the returned ValidationResult messages match the expected failures for each scenario.
+
+    Test cases (Integrations):
+    - Valid integration command where the required compliantpolicies are declared for a policy-associated argument.
+    - Invalid integration command missing required compliantpolicies for a policy-associated argument.
+    - Integration command with multiple arguments where one argument is satisfied by declared policies and another is missing required policies.
+    - Integration command using an argument that is not associated with any compliance policy (no failure expected).
+    - Integration command where the argument maps to multiple valid policies and declaring one of them is sufficient (no failure expected).
+    - Integration with multiple commands where one command is valid and another command is missing required compliantpolicies (single failure expected).
+    - Integration command with multiple policy-associated arguments where none of the required policies are declared (union of missing policies and args in the failure).
+    - Integration with multiple commands where multiple commands are missing required compliantpolicies (multiple failures expected).
+
+    Test cases (Scripts):
+    - Valid script where the required compliantpolicies are declared for a policy-associated argument.
+    - Invalid script missing required compliantpolicies for a policy-associated argument.
+    - Script where the argument maps to multiple valid policies and declaring one of them is sufficient (no failure expected).
+    - Script where the argument maps to multiple valid policies and none are declared (failure expected).
+    - Script using an argument that is not associated with any compliance policy (no failure expected).
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "User Soft Remediation",
+                "category": "IAM",
+                "arguments": ["username", "user_id"],
+            },
+            {
+                "name": "User Hard Remediation",
+                "category": "IAM",
+                "arguments": ["username"],
+            },
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip_list", "ip_address"],
+            },
+            {
+                "name": "EndPoint Isolation",
+                "category": "EndPoint",
+                "arguments": ["endpoint_id"],
+            },
+        ]
+    }
+
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items(content_items)
+
+    assert [r.message for r in results] == expected_msgs
+
+
+def test_MissingCompliantPoliciesValidator_old_command_is_ignored(mocker):
+    """
+    Given:
+    - An Integration content item with a command 'block-ip' that uses argument 'ip_list'.
+    - The command is technically INVALID (it is missing the 'IP Blockage' policy).
+    - However, an 'old_base_content_object' exists with the EXACT same command name.
+
+    When:
+    - Calling obtain_invalid_content_items.
+
+    Then:
+    - The validator should detect that the command has not changed compared to the old version.
+    - It should return an empty list (ignoring the missing policy error for legacy/unchanged commands).
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip_list"],
+            },
+        ]
+    }
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    current_integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "block-ip",
+                    "description": "block ip",
+                    "arguments": [{"name": "ip_list", "description": "ip list"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                }
+            ]
+        ],
+    )
+
+    old_integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "block-ip",
+                    "description": "block ip",
+                    "arguments": [{"name": "ip", "description": "ip list"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                }
+            ]
+        ],
+    )
+
+    current_integration.old_base_content_object = old_integration
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items([current_integration])
+
+    assert results == []
+
+
+def test_MissingCompliantPoliciesValidator_only_new_command_is_reported(mocker):
+    """
+    Given:
+    - An Integration content item with TWO commands:
+        1) 'old-cmd' (exists in old_base_content_object) - INVALID but should be ignored.
+        2) 'new-cmd' (does NOT exist in old_base_content_object) - INVALID and should be reported.
+    - Both commands use args that require compliantpolicies, and both are missing them.
+
+    When:
+    - Calling obtain_invalid_content_items.
+
+    Then:
+    - Only the NEW command should produce a ValidationResult.
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip_list"],
+            },
+            {
+                "name": "EndPoint Isolation",
+                "category": "EndPoint",
+                "arguments": ["endpoint_id"],
+            },
+        ]
+    }
+
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    current_integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "old-cmd",
+                    "description": "old cmd",
+                    "deprecated": False,
+                    "arguments": [{"name": "ip_list", "description": "ip list"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # INVALID, but should be ignored (old command)
+                },
+                {
+                    "name": "new-cmd",
+                    "description": "new cmd",
+                    "deprecated": False,
+                    "arguments": [
+                        {"name": "endpoint_id", "description": "endpoint id"}
+                    ],
+                    "outputs": [],
+                    "compliantpolicies": [],  # INVALID, and should be reported (new command)
+                },
+            ]
+        ],
+    )
+
+    old_integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "old-cmd",
+                    "description": "old cmd",
+                    "deprecated": False,
+                    "arguments": [{"name": "ip_list", "description": "ip list"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Still invalid, but existence is what matters here
+                }
+            ]
+        ],
+    )
+
+    current_integration.old_base_content_object = old_integration
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items([current_integration])
+
+    assert [r.message for r in results] == [
+        "Command new-cmd uses the arguments: ['endpoint_id'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation']."
+    ]

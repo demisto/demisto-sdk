@@ -44,7 +44,10 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
                         and (not getattr(content_item, "is_internal", False))
                     )
                 )
-                and (not content_item.readme.exist)
+                and (
+                    not hasattr(content_item, "readme")
+                    or not getattr(content_item, "readme").exist
+                )
                 and (not content_item.is_silent)
             )
         ]

@@ -56,9 +56,7 @@ class _AIPrompt(BaseStrictModel):
     source_script_id: Optional[str] = Field(None, alias="sourcescriptid")
     tags: Optional[list[str]] = None
     deprecated: Optional[bool] = None
-    marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = (
-        None
-    )
+    marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
     supportedModules: Optional[List[str]] = None
 
 

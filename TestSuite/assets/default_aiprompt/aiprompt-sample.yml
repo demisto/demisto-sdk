@@ -6,10 +6,10 @@ type: aiprompt
 comment: A sample AI prompt for testing purposes
 userprompt: |
   You are a helpful security analyst assistant.
-  
+
   Analyze the following incident and provide a summary:
   ${incident.details}
-  
+
   Focus on:
   - Key indicators of compromise
   - Recommended actions

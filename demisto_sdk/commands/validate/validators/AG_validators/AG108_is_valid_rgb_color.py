@@ -13,7 +13,7 @@ ContentTypes = AgentixAgent
 
 
 class IsValidColorValidator(BaseValidator[ContentTypes]):
-    error_code = "AG104"
+    error_code = "AG108"
     description = "Validate that the Agentix-agent color is a valid RGB hex color."
     rationale = "The color field must be a valid RGB hex color string to be displayed correctly in the UI."
     error_message = (

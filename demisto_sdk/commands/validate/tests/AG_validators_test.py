@@ -17,7 +17,7 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_c
 from demisto_sdk.commands.validate.validators.AG_validators.AG101_is_correct_mp import (
     IsCorrectMPValidator,
 )
-from demisto_sdk.commands.validate.validators.AG_validators.AG104_is_valid_rgb_color import (
+from demisto_sdk.commands.validate.validators.AG_validators.AG108_is_valid_rgb_color import (
     IsValidColorValidator,
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG105_is_valid_types import (

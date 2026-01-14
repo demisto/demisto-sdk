@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -31,7 +30,7 @@ class IsValidColorValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.display_name,
+                    content_item.name,
                     content_item.color,
                 ),
                 content_object=content_item,

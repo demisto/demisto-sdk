@@ -265,19 +265,19 @@ def test_is_valid_color():
     """
     content_items = [
         create_agentix_agent_object(
-            paths=["color", "display"],
+            paths=["color", "name"],
             values=["#FF0000", "Valid Color Agent"],
         ),
         create_agentix_agent_object(
-            paths=["color", "display"],
+            paths=["color", "name"],
             values=["invalid_color", "Invalid Color Agent"],
         ),
         create_agentix_agent_object(
-            paths=["color", "display"],
+            paths=["color", "name"],
             values=["#12345G", "Invalid Hex Agent"],
         ),
         create_agentix_agent_object(
-            paths=["color", "display"],
+            paths=["color", "name"],
             values=["#FFF", "Short Hex Agent"],
         ),
     ]

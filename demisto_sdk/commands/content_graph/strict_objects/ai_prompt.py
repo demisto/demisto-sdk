@@ -18,8 +18,10 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 class PromptConfig(BaseStrictModel):
     """Configuration for LLM prompt settings."""
 
+    model: Optional[str] = None
     temperature: Optional[float] = None
     max_output_tokens: Optional[int] = Field(None, alias="maxOutputTokens")
+    system_instruction: Optional[str] = Field(None, alias="systemInstruction")
     web_search: Optional[bool] = Field(None, alias="webSearch")
 
 
@@ -29,7 +31,7 @@ class AIPromptArgument(BaseStrictModel):
     name: str
     description: str
     required: bool = False
-    default: Optional[str] = None
+    defaultvalue: Optional[str] = None
 
 
 class _AIPrompt(BaseStrictModel):
@@ -46,7 +48,6 @@ class _AIPrompt(BaseStrictModel):
     user_prompt: str = Field(..., alias="userprompt")  # Required field
     system_prompt: Optional[str] = Field(None, alias="systemprompt")
     few_shots: Optional[str] = Field(None, alias="fewshots")
-    model: Optional[str] = None
     pre_script: Optional[str] = Field(None, alias="prescript")
     post_script: Optional[str] = Field(None, alias="postscript")
     prompt_config: Optional[PromptConfig] = Field(None, alias="promptConfig")

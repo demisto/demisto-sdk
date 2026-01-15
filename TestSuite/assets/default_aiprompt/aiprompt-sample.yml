@@ -40,7 +40,6 @@ outputs:
 tags:
   - ai
   - analysis
-category: Utilities
 fromversion: 8.12.0
 marketplaces:
   - platform

@@ -1581,6 +1581,7 @@ def repo_for_test_gr_109_mismatch_command(graph_repo: Repo):
         "display": "Integration1",
         "description": "this is an integration Integration1",
         "category": "category",
+        "provider": "Integration1",
         "supportedModules": ["module_x"],
         "script": {
             "type": "python",

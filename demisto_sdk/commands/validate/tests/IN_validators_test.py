@@ -170,6 +170,9 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN168_is_mcp_integra
     REQUIRED_MARKETPLACE,
     IsMcpIntegrationValidMarketplaceValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN169_is_valid_provider_field import (
+    IsValidProviderFieldValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 MARKETPLACE_VALUES = [mp.value for mp in MarketplaceVersions]
@@ -6554,3 +6557,62 @@ def test_IsMcpIntegrationValidMarketplaceValidator_fix():
 
     # Check that the object was fixed correctly in its raw data
     assert invalid_content_item.data.get("marketplaces") == [REQUIRED_MARKETPLACE]
+
+
+## -------------------------  IsValidProviderFieldValidator IN169 Tests ------------------------- ##
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        (
+            [
+                create_integration_object(paths=["provider"], values=["Twilio"]),
+                create_integration_object(paths=["provider"], values=["AWS"]),
+            ],
+            0,
+            [],
+        ),
+        (
+            [
+                create_integration_object(),
+                create_integration_object(paths=["provider"], values=[""]),
+                create_integration_object(paths=["provider"], values=["  "]),
+            ],
+            2,
+            [
+                "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
+                "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
+                "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
+            ],
+        ),
+    ],
+)
+def test_IsValidProviderFieldValidator_obtain_invalid_content_items(
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Two valid integrations with provider field set to valid values.
+        - Case 2: Three invalid integrations:
+            - One integration without provider field.
+            - One integration with empty provider field.
+            - One integration with whitespace-only provider field.
+    When
+    - Calling the IsValidProviderFieldValidator obtain_invalid_content_items function.
+    Then
+        - Make sure the right amount of integrations failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail all three integrations.
+    """
+    results = IsValidProviderFieldValidator().obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

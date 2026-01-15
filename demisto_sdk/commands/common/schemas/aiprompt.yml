@@ -25,8 +25,6 @@ mapping:
     type: seq
     sequence:
     - type: str
-  category:
-    type: str
   userprompt:
     type: str
     required: true
@@ -83,8 +81,6 @@ mapping:
     type: text
   pswd:
     type: str
-  sourcescripid:
-    type: str
   compliantpolicies:
     type: seq
     sequence:
@@ -111,16 +107,28 @@ schema;argument_schema:
       required: true
     description:
       type: str
-      required: true
-    type:
-      type: str
-      required: true
     required:
+      type: bool
+    deprecated:
+      type: bool
+    hidden:
+      type: bool
+    default:
+      type: bool
+    secret:
+      type: bool
+    auto:
+      type: str
+    predefined:
+      type: seq
+      sequence:
+      - type: str
+    isArray:
       type: bool
     defaultValue:
       type: str
-    hidden:
-      type: bool
+    type:
+      type: str
 
 schema;output_schema:
   type: map

@@ -1,8 +1,7 @@
-from typing import List, Optional, Union
+from typing import Optional
 
 from pydantic import Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseOptionalVersionYaml,
     CommonFields,
@@ -54,11 +53,8 @@ class _AIPrompt(BaseStrictModel):
     arguments: Optional[list[AIPromptArgument]] = None
     password: Optional[str] = None
     private: bool = False
-    source_script_id: Optional[str] = Field(None, alias="sourcescripid")
     tags: Optional[list[str]] = None
     deprecated: Optional[bool] = None
-    marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
-    supportedModules: Optional[List[str]] = None
 
 
 AIPrompt = create_model(

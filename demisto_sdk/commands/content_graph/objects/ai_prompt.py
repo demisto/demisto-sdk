@@ -1,27 +1,24 @@
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    Argument,
+    Output,
+)
 
 
 class PromptConfig(BaseModel):
     """Configuration for LLM prompt settings."""
 
+    model: Optional[str] = None
     temperature: Optional[float] = None
     max_output_tokens: Optional[int] = Field(None, alias="maxOutputTokens")
+    system_instruction: Optional[str] = Field(None, alias="systemInstruction")
     web_search: Optional[bool] = Field(None, alias="webSearch")
-
-
-class AIPromptArgument(BaseModel):
-    """Argument definition for AIPrompt."""
-
-    name: str
-    description: str
-    required: bool = False
-    default: Optional[str] = None
 
 
 class AIPrompt(ContentItem, content_type=ContentType.AIPROMPT):  # type: ignore[call-arg]
@@ -32,19 +29,43 @@ class AIPrompt(ContentItem, content_type=ContentType.AIPROMPT):  # type: ignore[
     Unlike Scripts with isllm=true, AIPrompts are dedicated content items.
     """
 
+    # Core prompt fields
     user_prompt: str = Field(..., alias="userprompt")
     system_prompt: Optional[str] = Field(None, alias="systemprompt")
     few_shots: Optional[str] = Field(None, alias="fewshots")
-    model: Optional[str] = None
     pre_script: Optional[str] = Field(None, alias="prescript")
     post_script: Optional[str] = Field(None, alias="postscript")
     prompt_config: Optional[PromptConfig] = Field(
         None, alias="promptConfig", exclude=True
     )
-    arguments: Optional[list[AIPromptArgument]] = Field(None, exclude=True)
-    password: Optional[str] = Field(None, exclude=True)
+
+    # Arguments and outputs
+    arguments: Optional[List[Argument]] = Field(None, exclude=True)
+    outputs: Optional[List[Output]] = Field(None, exclude=True)
+
+    # Metadata fields from schema
+    version: int = -1
+    tags: Optional[List[str]] = None
+    pretty_name: Optional[str] = Field(None, alias="prettyname")
+    comment: Optional[str] = None
+
+    # Boolean flags
     private: bool = False
-    source_script_id: Optional[str] = Field(None, alias="sourcescripid")
+    is_internal: bool = Field(False, alias="isInternal")
+    is_anonymous: bool = Field(False, alias="isanonymous")
+    enabled: bool = True
+    system: bool = False
+    locked: bool = False
+    sensitive: bool = False
+    hidden: bool = False
+
+    # Execution settings
+    run_as: Optional[str] = Field(None, alias="runas")
+    timeout: Optional[str] = None
+    password: Optional[str] = Field(None, alias="pswd", exclude=True)
+    compliant_policies: Optional[List[str]] = Field(
+        None, alias="compliantpolicies"
+    )
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
@@ -58,8 +79,8 @@ class AIPrompt(ContentItem, content_type=ContentType.AIPROMPT):  # type: ignore[
         fields = super().metadata_fields()
         fields.update(
             {
-                "model",
                 "private",
+                "tags",
             }
         )
         return fields

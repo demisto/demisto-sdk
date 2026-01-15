@@ -6608,7 +6608,9 @@ def test_IsValidProviderFieldValidator_obtain_invalid_content_items(
         - Case 1: Shouldn't fail.
         - Case 2: Should fail all three integrations.
     """
-    results = IsValidProviderFieldValidator().obtain_invalid_content_items(content_items)
+    results = IsValidProviderFieldValidator().obtain_invalid_content_items(
+        content_items
+    )
     assert len(results) == expected_number_of_failures
     assert all(
         [

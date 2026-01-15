@@ -14,9 +14,7 @@ ContentTypes = Integration
 class IsValidProviderFieldValidator(BaseValidator[ContentTypes]):
     error_code = "IN169"
     description = "Validate that the Integration has a provider field with a value."
-    rationale = (
-        "The provider field is required to identify the service provider for the integration."
-    )
+    rationale = "The provider field is required to identify the service provider for the integration."
     error_message = "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name."
     related_field = "provider"
     is_auto_fixable = False

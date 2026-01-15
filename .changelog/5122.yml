@@ -1,4 +1,0 @@
-changes:
-- description: Update BC115 validation to support default supportedModules handling.
-  type: feature
-pr_number: 5122

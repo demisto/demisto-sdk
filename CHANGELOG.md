@@ -1,4 +1,17 @@
 # Changelog
+## 1.38.18 (2026-01-14)
+### Feature
+* Update BC115 validation to support default supportedModules handling. [#5122](https://github.com/demisto/demisto-sdk/pull/5122)
+* Adds a new validation (BA129) that ensures commands/scripts declare the appropriate compliantpolicies when using arguments associated with specific compliance standards (defined in compliant_policies.json). [#5168](https://github.com/demisto/demisto-sdk/pull/5168)
+* Improved handling private repositories. [#5185](https://github.com/demisto/demisto-sdk/pull/5185)
+
+### Internal
+* Added AgentixAgent to test tools. [#5143](https://github.com/demisto/demisto-sdk/pull/5143)
+* Delete Link PR to Jira github actions [#5191](https://github.com/demisto/demisto-sdk/pull/5191)
+* Added support for the fromversion and toversion fields for Agentix items. [#5180](https://github.com/demisto/demisto-sdk/pull/5180)
+* Updated Agentix items default marketplaces to platform only. [#5180](https://github.com/demisto/demisto-sdk/pull/5180)
+
+
 ## 1.38.17 (2026-01-05)
 
 ### Feature

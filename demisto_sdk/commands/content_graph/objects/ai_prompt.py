@@ -63,9 +63,7 @@ class AIPrompt(ContentItem, content_type=ContentType.AIPROMPT):  # type: ignore[
     run_as: Optional[str] = Field(None, alias="runas")
     timeout: Optional[str] = None
     password: Optional[str] = Field(None, alias="pswd", exclude=True)
-    compliant_policies: Optional[List[str]] = Field(
-        None, alias="compliantpolicies"
-    )
+    compliant_policies: Optional[List[str]] = Field(None, alias="compliantpolicies")
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

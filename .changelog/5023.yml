@@ -1,0 +1,4 @@
+changes:
+- description: Modified the ***validate*** command to enforce that the 'provider' field in integration YAML files must be valid.
+  type: feature
+pr_number: 5023

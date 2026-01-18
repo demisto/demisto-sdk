@@ -36,10 +36,10 @@ mapping:
     type: bool
   category:
     type: str
-    required: false
+    required: true
   provider:
     type: str
-    required: true
+    required: false
   sectionOrder:
     type: seq
     sequence:

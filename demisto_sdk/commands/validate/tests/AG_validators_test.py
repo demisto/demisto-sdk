@@ -604,7 +604,7 @@ def test_is_system_instructions_valid():
     # Ignored: No instructions
     ignored_agent_no_instructions = create_agentix_agent_object(
         paths=["systeminstructions", "name"],
-        values=["", "invalid_agent"],
+        values=["", "ignored_agent_no_instructions"],
         pack_info={"name": "AI Agents"},
         agent_name="ignored_agent_no_instructions",
     )

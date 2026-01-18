@@ -26,11 +26,11 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG106_is_action_name
 from demisto_sdk.commands.validate.validators.AG_validators.AG107_is_display_name_valid import (
     IsDisplayNameValidValidator,
 )
-from demisto_sdk.commands.validate.validators.AG_validators.AG109_is_system_instructions_valid import (
-    IsSystemInstructionsValidValidator,
-)
 from demisto_sdk.commands.validate.validators.AG_validators.AG108_is_valid_rgb_color import (
     IsValidColorValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG109_is_system_instructions_valid import (
+    IsSystemInstructionsValidValidator,
 )
 
 

@@ -11,6 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = AgentixAgent
 LIMIT = 65535
 
+
 class IsSystemInstructionsValidValidator(BaseValidator[ContentTypes]):
     error_code = "AG109"
     description = f"AgentixAgent system instructions must not exceed {LIMIT} bytes."
@@ -37,9 +38,7 @@ class IsSystemInstructionsValidValidator(BaseValidator[ContentTypes]):
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
-                            content_item.name,
-                            size_in_bytes,
-                            LIMIT
+                            content_item.name, size_in_bytes, LIMIT
                         ),
                         content_object=content_item,
                     )

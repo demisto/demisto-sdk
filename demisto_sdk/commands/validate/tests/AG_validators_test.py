@@ -29,6 +29,9 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG107_is_display_nam
 from demisto_sdk.commands.validate.validators.AG_validators.AG108_is_valid_rgb_color import (
     IsValidColorValidator,
 )
+from demisto_sdk.commands.validate.validators.AG_validators.AG109_is_system_instructions_valid import (
+    IsSystemInstructionsValidValidator,
+)
 
 
 def test_is_forbidden_content_item():
@@ -565,3 +568,60 @@ def test_is_valid_agent_visibility():
     assert len(results) == 1
     assert "internal" in results[0].message
     assert "public, private" in results[0].message
+
+
+def test_is_system_instructions_valid():
+    """
+    Given
+    - AgentixAgent items with various system instructions lengths and pack names.
+
+    When
+    - Calling the IsSystemInstructionsValidValidator obtain_invalid_content_items function.
+
+    Then
+    - Ensure that only the item with system instructions exceeding the limit and in 'AI Agents' pack is flagged.
+    """
+    limit = 65535
+    long_instructions = "a" * (limit + 1)
+    valid_instructions = "valid instructions"
+
+    # Valid: Short instructions, correct pack
+    valid_agent = create_agentix_agent_object(
+        paths=["systeminstructions", "name"],
+        values=[valid_instructions, "valid_agent"],
+        pack_info={"name": "AI Agents"},
+        agent_name="valid_agent",
+    )
+
+    # Invalid: Long instructions, correct pack
+    invalid_agent = create_agentix_agent_object(
+        paths=["systeminstructions", "name"],
+        values=[long_instructions, "invalid_agent"],
+        pack_info={"name": "AI Agents"},
+        agent_name="invalid_agent",
+    )
+
+    # Ignored: No instructions
+    ignored_agent_no_instructions = create_agentix_agent_object(
+        paths=["systeminstructions", "name"],
+        values=["", "ignored_agent_no_instructions"],
+        pack_info={"name": "AI Agents"},
+        agent_name="ignored_agent_no_instructions",
+    )
+
+    content_items = [
+        valid_agent,
+        invalid_agent,
+        ignored_agent_no_instructions,
+    ]
+
+    results = IsSystemInstructionsValidValidator().obtain_invalid_content_items(
+        content_items
+    )
+
+    assert len(results) == 1
+    assert results[0].content_object.name == "invalid_agent"
+    assert (
+        f"The system instructions for Agentix Agent 'invalid_agent' exceed the maximum allowed size of {limit} bytes"
+        in results[0].message
+    )

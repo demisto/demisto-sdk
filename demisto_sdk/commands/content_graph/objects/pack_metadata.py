@@ -684,6 +684,10 @@ def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersion
         logger.info(
             f"Skipping {content_item.name} in metadata creation: item is an internal script."
         )
+    elif content_item.content_type == ContentType.AIPROMPT:
+        logger.info(
+            f"Skipping {content_item.name} in metadata creation: AIPrompt items are not included in pack metadata."
+        )
 
     else:
         return False

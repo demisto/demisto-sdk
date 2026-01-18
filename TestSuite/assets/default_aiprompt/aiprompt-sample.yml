@@ -1,0 +1,45 @@
+commonfields:
+  id: SampleAIPrompt
+  version: 1
+name: Sample AI Prompt
+type: aiprompt
+comment: A sample AI prompt for testing purposes
+userprompt: |
+  You are a helpful security analyst assistant.
+
+  Analyze the following incident and provide a summary:
+  ${incident.details}
+
+  Focus on:
+  - Key indicators of compromise
+  - Recommended actions
+  - Severity assessment
+systemprompt: You are an expert cybersecurity analyst with deep knowledge of threat intelligence and incident response.
+promptConfig:
+  model: gpt-4
+  temperature: 0.7
+  maxOutputTokens: 2000
+  webSearch: false
+arguments:
+  - name: incident_id
+    description: The ID of the incident to analyze
+    type: string
+    required: true
+  - name: include_context
+    description: Whether to include full incident context
+    type: boolean
+    required: false
+    defaultValue: true
+outputs:
+  - contextPath: AIPrompt.Summary
+    description: The generated summary of the incident
+    type: string
+  - contextPath: AIPrompt.Severity
+    description: The assessed severity level
+    type: string
+tags:
+  - ai
+  - analysis
+fromversion: 8.12.0
+marketplaces:
+  - platform

@@ -109,6 +109,7 @@ class ContentType(StrEnum):
     CASE_LAYOUT = "CaseLayout"
     AGENTIX_AGENT = "AgentixAgent"
     AGENTIX_ACTION = "AgentixAction"
+    AIPROMPT = "AIPrompt"
 
     @property
     def labels(self) -> List[str]:
@@ -308,6 +309,8 @@ class ContentType(StrEnum):
             return "Modules"
         elif self == ContentType.CASE_LAYOUT:
             return "Layouts"
+        elif self == ContentType.AIPROMPT:
+            return "AI Prompts"
         separated_str = pascalToSpace(self)
         return f"{separated_str}s"
 
@@ -330,6 +333,8 @@ class ContentType(StrEnum):
             return ContentType.GENERIC_TYPE
         elif header == "Object Fields":
             return ContentType.GENERIC_FIELD
+        elif header == "AI Prompts":
+            return ContentType.AIPROMPT
         normalized_header = header.rstrip("s").replace(" ", "_").upper()
         return ContentType[normalized_header]
 

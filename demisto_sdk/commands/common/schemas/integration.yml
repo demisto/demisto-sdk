@@ -37,6 +37,9 @@ mapping:
   category:
     type: str
     required: true
+  provider:
+    type: str
+    required: false
   sectionOrder:
     type: seq
     sequence:

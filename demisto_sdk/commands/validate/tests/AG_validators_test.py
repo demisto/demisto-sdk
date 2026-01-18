@@ -587,24 +587,24 @@ def test_is_system_instructions_valid():
 
     # Valid: Short instructions, correct pack
     valid_agent = create_agentix_agent_object(
-        paths=["systeminstructions"],
-        values=[valid_instructions],
+        paths=["systeminstructions", "name"],
+        values=[valid_instructions, "valid_agent"],
         pack_info={"name": "AI Agents"},
         agent_name="valid_agent",
     )
 
     # Invalid: Long instructions, correct pack
     invalid_agent = create_agentix_agent_object(
-        paths=["systeminstructions"],
-        values=[long_instructions],
+        paths=["systeminstructions", "name"],
+        values=[long_instructions, "invalid_agent"],
         pack_info={"name": "AI Agents"},
         agent_name="invalid_agent",
     )
 
     # Ignored: No instructions
     ignored_agent_no_instructions = create_agentix_agent_object(
-        paths=["systeminstructions"],
-        values=[""],
+        paths=["systeminstructions", "name"],
+        values=["", "invalid_agent"],
         pack_info={"name": "AI Agents"},
         agent_name="ignored_agent_no_instructions",
     )

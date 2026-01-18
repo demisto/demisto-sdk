@@ -1,0 +1,4 @@
+changes:
+- description: Added the AG108 validator to ensure that Agentix Agent system instructions do not exceed the maximum allowed size of 65535 bytes.
+  type: feature
+pr_number: 5205

@@ -36,7 +36,7 @@ mapping:
     type: bool
   category:
     type: str
-    required: true
+    required: false
   provider:
     type: str
     required: true

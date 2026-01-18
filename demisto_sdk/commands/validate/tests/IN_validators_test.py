@@ -6565,24 +6565,92 @@ def test_IsMcpIntegrationValidMarketplaceValidator_fix():
 @pytest.mark.parametrize(
     "content_items, expected_number_of_failures, expected_msgs",
     [
+        # Case 1: Valid integrations in platform packs with provider field
         (
             [
-                create_integration_object(paths=["provider"], values=["Twilio"]),
-                create_integration_object(paths=["provider"], values=["AWS"]),
+                create_integration_object(
+                    paths=["provider"],
+                    values=["Twilio"],
+                    pack_info={"marketplaces": ["platform"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=["AWS"],
+                    pack_info={"marketplaces": ["platform", "xsoar"]},
+                ),
             ],
             0,
             [],
         ),
+        # Case 2: Invalid integrations in platform packs without provider field
         (
             [
-                create_integration_object(),
-                create_integration_object(paths=["provider"], values=[""]),
-                create_integration_object(paths=["provider"], values=["  "]),
+                create_integration_object(
+                    paths=["provider"],
+                    values=[""],
+                    pack_info={"marketplaces": ["platform"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=[""],
+                    pack_info={"marketplaces": ["platform"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=["  "],
+                    pack_info={"marketplaces": ["platform", "xsoar"]},
+                ),
             ],
-            2,
+            3,
             [
                 "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
                 "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
+                "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
+            ],
+        ),
+        # Case 3: Integrations in non-platform packs without provider field (should pass)
+        (
+            [
+                create_integration_object(
+                    paths=["provider"],
+                    values=[""],
+                    pack_info={"marketplaces": ["xsoar"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=[""],
+                    pack_info={"marketplaces": ["marketplacev2"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=["  "],
+                    pack_info={"marketplaces": ["xsoar", "marketplacev2"]},
+                ),
+            ],
+            0,
+            [],
+        ),
+        # Case 4: Mixed - some in platform packs, some not
+        (
+            [
+                create_integration_object(
+                    paths=["provider"],
+                    values=["ValidProvider"],
+                    pack_info={"marketplaces": ["platform"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=[""],
+                    pack_info={"marketplaces": ["xsoar"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=[""],
+                    pack_info={"marketplaces": ["platform"]},
+                ),
+            ],
+            1,
+            [
                 "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
             ],
         ),
@@ -6596,21 +6664,26 @@ def test_IsValidProviderFieldValidator_obtain_invalid_content_items(
     """
     Given
     content_items iterables.
-        - Case 1: Two valid integrations with provider field set to valid values.
-        - Case 2: Three invalid integrations:
+        - Case 1: Two valid integrations in platform packs with provider field set to valid values.
+        - Case 2: Three invalid integrations in platform packs:
             - One integration without provider field.
             - One integration with empty provider field.
             - One integration with whitespace-only provider field.
+        - Case 3: Three integrations in non-platform packs without provider field (should pass).
+        - Case 4: Mixed case with one valid platform integration, one non-platform integration without provider, and one platform integration without provider.
     When
     - Calling the IsValidProviderFieldValidator obtain_invalid_content_items function.
     Then
         - Make sure the right amount of integrations failed, and that the right error message is returned.
         - Case 1: Shouldn't fail.
         - Case 2: Should fail all three integrations.
+        - Case 3: Shouldn't fail (validation only applies to platform packs).
+        - Case 4: Should fail only the platform integration without provider.
     """
-    results = IsValidProviderFieldValidator().obtain_invalid_content_items(
-        content_items
-    )
+    with ChangeCWD(REPO.path):
+        results = IsValidProviderFieldValidator().obtain_invalid_content_items(
+            content_items
+        )
     assert len(results) == expected_number_of_failures
     assert all(
         [

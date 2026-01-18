@@ -12,7 +12,7 @@ ContentTypes = AgentixAgent
 LIMIT = 65535
 
 class IsSystemInstructionsValidValidator(BaseValidator[ContentTypes]):
-    error_code = "AG108"
+    error_code = "AG109"
     description = f"AgentixAgent system instructions must not exceed {LIMIT} bytes."
     rationale = f"System instructions have a size limit of {LIMIT} bytes."
     error_message = "The system instructions for Agentix Agent '{0}' exceed the maximum allowed size of {2} bytes (current size: {1} bytes)."

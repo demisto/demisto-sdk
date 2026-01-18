@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.list_unifier import ListUnifier
+from demisto_sdk.commands.upload.tools import parse_upload_response
 
 json = JSON_Handler()
 
@@ -27,12 +28,16 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
             dir_path = Path(f)
             self.dump(dir_path, marketplace=marketplace)
 
-            client.generic_request(
+            response = client.generic_request(
                 method="POST",
                 path="lists/save",
                 body=json.loads((dir_path / self.normalize_name).read_text()),
                 response_type="object",
             )
+            parse_upload_response(
+                response, path=self.path, content_type=self.content_type
+            )  # raises on error
+            return response
 
     def prepare_for_upload(
         self,

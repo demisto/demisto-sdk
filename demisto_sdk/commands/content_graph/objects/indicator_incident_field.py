@@ -7,6 +7,7 @@ from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.upload.tools import parse_upload_response
 
 
 class IndicatorIncidentField(ContentItem):
@@ -35,7 +36,11 @@ class IndicatorIncidentField(ContentItem):
             )
             file.flush()
             file.seek(0)
-            return client.import_incident_fields(file=file.name)
+            response = client.import_incident_fields(file=file.name)
+            parse_upload_response(
+                response, path=self.path, content_type=self.content_type
+            )  # raises on error
+            return response
 
     def metadata_fields(self) -> Set[str]:
         return super().metadata_fields().union({"field_type"})

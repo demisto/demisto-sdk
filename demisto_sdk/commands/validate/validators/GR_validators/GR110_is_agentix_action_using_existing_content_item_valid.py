@@ -181,7 +181,10 @@ class IsAgentixActionUsingExistingContentItemValidator(
         """
         # Check in changed items first
         for item in changed_underlying:
-            if action_type in {"script", "playbook", "prompt"} and item.object_id == item_name:
+            if (
+                action_type in {"script", "playbook", "prompt"}
+                and item.object_id == item_name
+            ):
                 return item
             elif action_type == "command" and isinstance(item, Integration):
                 commands = item.data.get("script", {}).get("commands", [])

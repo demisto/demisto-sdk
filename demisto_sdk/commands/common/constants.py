@@ -2335,6 +2335,7 @@ class DetachableItemType(StrEnum):
     PLAYBOOKS = "Playbooks"
     SCRIPTS = "Scripts"
 
+
 DETACH_ITEM_TYPE_TO_ENDPOINT: dict[str, str] = {
     DetachableItemType.INCIDENT_TYPES.value: "/incidenttype/detach/:id",
     DetachableItemType.LAYOUTS.value: "/layout/:id/detach",

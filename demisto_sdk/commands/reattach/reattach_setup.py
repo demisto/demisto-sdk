@@ -1,13 +1,11 @@
-from enum import Enum
 from typing import List
 
 import typer
 
+from demisto_sdk.commands.common.constants import DetachableItemType
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.reattach.reattach import reattach_content_items
 
-
-from demisto_sdk.commands.common.constants import DetachableItemType
 
 @logging_setup_decorator
 def reattach(
@@ -50,14 +48,19 @@ def reattach(
     ** Reattach content items to Cortex XSOAR/XSIAM.**
     """
     if not reattach_all and not input:
-        typer.echo("Error: Missing option '--input' / '-i' or '--all' / '-a'.", err=True)
+        typer.echo(
+            "Error: Missing option '--input' / '-i' or '--all' / '-a'.", err=True
+        )
         raise typer.Exit(code=1)
     if reattach_all and input:
         typer.echo("Error: Cannot use '--input' / '-i' with '--all' / '-a'.", err=True)
         raise typer.Exit(code=1)
-    
+
     if input and not item_type:
-        typer.echo("Error: Missing option '--item-type' / '-it' when using '--input'.", err=True)
+        typer.echo(
+            "Error: Missing option '--item-type' / '-it' when using '--input'.",
+            err=True,
+        )
         raise typer.Exit(code=1)
 
     reattach_content_items(

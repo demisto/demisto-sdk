@@ -545,7 +545,6 @@ class ItemDetacher:
         self.client = client
         self.marketplace = marketplace
 
-
     def detach_item(self, file_id, file_path):
         endpoint: str = ""
         for file_type, file_endpoint in DETACH_ITEM_TYPE_TO_ENDPOINT.items():
@@ -628,7 +627,6 @@ class ItemReattacher:
     def __init__(self, client, file_path: str = ""):
         self.file_path = file_path
         self.client = client
-
 
     def get_all_detachable_items(self) -> dict:
         all_detachable_items: dict = {}

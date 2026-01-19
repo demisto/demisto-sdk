@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgen
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_agentix_action_object,
+    create_agentix_agent_object,
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_content_item import (
     IsForbiddenContentItemValidator,
@@ -24,6 +25,9 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG106_is_action_name
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG107_is_display_name_valid import (
     IsDisplayNameValidValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG108_is_valid_rgb_color import (
+    IsValidColorValidator,
 )
 
 
@@ -246,6 +250,54 @@ def test_is_correct_marketplace():
     assert results[0].message == (
         "The following Agentix related content item 'test' should have only marketplace 'platform'."
     )
+
+
+def test_is_valid_color():
+    """
+    Given:
+    - Two AgentixAgent items, one with a valid color and one with an invalid color.
+
+    When:
+    - Calling the IsValidColorValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure one failure is returned for the invalid color and the error message is correct.
+    """
+    content_items = [
+        create_agentix_agent_object(
+            paths=["color", "name"],
+            values=["#FF0000", "Valid Color Agent"],
+        ),
+        create_agentix_agent_object(
+            paths=["color", "name"],
+            values=["invalid_color", "Invalid Color Agent"],
+        ),
+        create_agentix_agent_object(
+            paths=["color", "name"],
+            values=["#12345G", "Invalid Hex Agent"],
+        ),
+        create_agentix_agent_object(
+            paths=["color", "name"],
+            values=["#FFF", "Short Hex Agent"],
+        ),
+    ]
+
+    results = IsValidColorValidator().obtain_invalid_content_items(content_items)
+
+    assert len(results) == 3
+    error_messages = [result.message for result in results]
+    assert (
+        "The Agentix-agent 'Invalid Color Agent' color 'invalid_color' is not a valid RGB hex color.\n"
+        "Please make sure that the color is a valid 6-digit hex color string, starting with '#'. For example: '#FFFFFF'."
+    ) in error_messages
+    assert (
+        "The Agentix-agent 'Invalid Hex Agent' color '#12345G' is not a valid RGB hex color.\n"
+        "Please make sure that the color is a valid 6-digit hex color string, starting with '#'. For example: '#FFFFFF'."
+    ) in error_messages
+    assert (
+        "The Agentix-agent 'Short Hex Agent' color '#FFF' is not a valid RGB hex color.\n"
+        "Please make sure that the color is a valid 6-digit hex color string, starting with '#'. For example: '#FFFFFF'."
+    ) in error_messages
 
 
 def test_is_type_valid():
@@ -471,3 +523,45 @@ def test_IsActionNameValid_obtain_invalid_content_items(
     """
     results = IsActionNameValidValidator().obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
+
+
+def test_is_valid_agent_visibility():
+    """
+    Given
+    - Three AgentixAgent items with different visibility values.
+
+    When
+    - Calling the IsValidAgentVisibilityValidator obtain_invalid_content_items function.
+
+    Then
+    - Make sure only invalid visibility values are flagged.
+    """
+    from demisto_sdk.commands.validate.tests.test_tools import (
+        create_agentix_agent_object,
+    )
+    from demisto_sdk.commands.validate.validators.AG_validators.AG104_is_valid_agent_visibility import (
+        IsValidAgentVisibilityValidator,
+    )
+
+    # Valid visibility values
+    valid_public_agent = create_agentix_agent_object(
+        paths=["visibility"], values=["public"]
+    )
+    valid_private_agent = create_agentix_agent_object(
+        paths=["visibility"], values=["private"]
+    )
+
+    # Invalid visibility value
+    invalid_agent = create_agentix_agent_object(
+        paths=["visibility"], values=["internal"]
+    )
+
+    content_items = [valid_public_agent, valid_private_agent, invalid_agent]
+
+    results = IsValidAgentVisibilityValidator().obtain_invalid_content_items(
+        content_items
+    )
+
+    assert len(results) == 1
+    assert "internal" in results[0].message
+    assert "public, private" in results[0].message

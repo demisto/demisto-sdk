@@ -51,6 +51,10 @@ mapping:
         required: false
   requiresuserapproval:
     type: bool
+  fromversion:
+    type: str
+  toversion:
+    type: str
   marketplaces:
     type: seq
     sequence:

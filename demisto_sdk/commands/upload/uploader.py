@@ -13,9 +13,12 @@ from tabulate import tabulate
 
 from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS,
+    DETACH_ITEM_TYPE_TO_ENDPOINT,
     INTEGRATIONS_DIR,
     LISTS_DIR,
+    REATTACH_ITEM_TYPE_TO_ENDPOINT,
     SCRIPTS_DIR,
+    DetachableItemType,
     FileType,
     MarketplaceVersions,
 )
@@ -542,18 +545,10 @@ class ItemDetacher:
         self.client = client
         self.marketplace = marketplace
 
-    DETACH_ITEM_TYPE_TO_ENDPOINT: dict = {
-        "IncidentTypes": "/incidenttype/detach/:id/",
-        "Layouts": "/layout/:id/detach/",
-        "Playbooks": "/playbook/detach/:id/",
-        "Scripts": "/automation/detach/:id/",
-    }
-
-    VALID_FILES_FOR_DETACH = ["Playbooks", "Scripts", "IncidentTypes", "Layouts"]
 
     def detach_item(self, file_id, file_path):
         endpoint: str = ""
-        for file_type, file_endpoint in self.DETACH_ITEM_TYPE_TO_ENDPOINT.items():
+        for file_type, file_endpoint in DETACH_ITEM_TYPE_TO_ENDPOINT.items():
             if file_type in file_path:
                 endpoint = file_endpoint
                 break
@@ -585,7 +580,7 @@ class ItemDetacher:
         return detach_files_list
 
     def is_valid_file_for_detach(self, file_path: str) -> bool:
-        for file in self.VALID_FILES_FOR_DETACH:
+        for file in [content_item.value for content_item in DetachableItemType]:
             if file in file_path and (
                 file_path.endswith("yml") or file_path.endswith("json")
             ):
@@ -634,44 +629,39 @@ class ItemReattacher:
         self.file_path = file_path
         self.client = client
 
-    REATTACH_ITEM_TYPE_TO_ENDPOINT: dict = {
-        "IncidentType": "/incidenttype/attach/:id",
-        "Layouts": "/layout/:id/attach",
-        "Playbooks": "/playbook/attach/:id",
-        "Automations": "/automation/attach/:id",
-    }
 
-    def download_all_detach_supported_items(self) -> dict:
-        all_detach_supported_items: dict = {}
+    def get_all_detachable_items(self) -> dict:
+        all_detachable_items: dict = {}
         yml_req_body = {"query": "system:T"}
 
         for endpoint in ["/playbook/search", "/automation/search"]:
             res = self.client.generic_request(endpoint, "POST", body=yml_req_body)
             res_result = ast.literal_eval(res[0])
             if "playbook" in endpoint:
-                all_detach_supported_items["Playbooks"] = res_result.get("playbooks")
+                all_detachable_items["Playbooks"] = res_result.get("playbooks")
             else:
-                all_detach_supported_items["Automations"] = res_result.get("scripts")
+                all_detachable_items["Scripts"] = res_result.get("scripts")
 
         for item_type in ["IncidentType", "Layouts"]:
             endpoint = item_type.lower()
             res = self.client.generic_request(endpoint, "GET")
-            all_detach_supported_items[item_type] = ast.literal_eval(res[0])
+            all_detachable_items[item_type] = ast.literal_eval(res[0])
 
-        return all_detach_supported_items
+        return all_detachable_items
 
     def reattach_item(self, item_id, item_type):
-        endpoint: str = self.REATTACH_ITEM_TYPE_TO_ENDPOINT[item_type]
+        endpoint: str = REATTACH_ITEM_TYPE_TO_ENDPOINT[item_type]
         endpoint = endpoint.replace(":id", item_id)
         try:
+            logger.info(f"Reattaching {item_type} with ID: {item_id}")
             self.client.generic_request(endpoint, "POST")
-            logger.debug(f"\n<green>{item_type}: {item_id} was reattached</green>")
+            logger.info(f"\n<green>{item_type}: {item_id} was reattached</green>")
         except Exception as e:
-            raise Exception(f"Exception raised when fetching custom content:\n{e}")
+            logger.error(f"Exception raised when fetching custom content:\n{e}")
 
     def reattach(self, detached_files_ids=None):
         if not self.file_path and detached_files_ids:
-            all_files: dict = self.download_all_detach_supported_items()
+            all_files: dict = self.get_all_detachable_items()
             for item_type, item_list in all_files.items():
                 for item in item_list:
                     detached = item.get("detached", "")

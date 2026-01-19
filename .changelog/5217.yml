@@ -1,0 +1,6 @@
+changes:
+- description: Added the `detach` command, which allows detaching content items (Incident Types, Layouts, Playbooks, Scripts) in a Cortex XSOAR/XSIAM instance.
+  type: feature
+- description: Added the `reattach` command, which allows reattaching previously detached content items in a Cortex XSOAR/XSIAM instance.
+  type: feature
+pr_number: 5217

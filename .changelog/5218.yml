@@ -1,0 +1,4 @@
+changes:
+- description: Excluded parsing test data file in AssetsModelingRuleParser.
+  type: feature
+pr_number: 5218

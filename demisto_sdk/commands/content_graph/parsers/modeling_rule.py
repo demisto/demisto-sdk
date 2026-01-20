@@ -71,7 +71,7 @@ class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELIN
         directory = self.path if self.path.is_dir() else self.path.parent
         for file in directory.iterdir():
             # Skip testdata.json files as they have a different structure
-            if file.name.endswith("testdata.json"):
+            if "testdata.json" in file.name:
                 continue
             try:
                 if file.suffix == ".yml":

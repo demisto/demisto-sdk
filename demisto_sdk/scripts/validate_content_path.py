@@ -45,7 +45,7 @@ from demisto_sdk.commands.common.constants import (
     RELEASE_NOTES_DIR,
     REPORTS_DIR,
     TEST_PLAYBOOKS_DIR,
-    TEST_USE_CASES,
+    TEST_USE_CASES_DIR,
     TESTS_AND_DOC_DIRECTORIES,
     TESTS_DIRECTORIES,
     TRIGGER_DIR,
@@ -73,7 +73,7 @@ ZERO_DEPTH_FILES = frozenset(
 DEPTH_ONE_FOLDERS = (
     set(ContentType.folders())
     | set(TESTS_AND_DOC_DIRECTORIES)
-    | {RELEASE_NOTES_DIR, TEST_USE_CASES}
+    | {RELEASE_NOTES_DIR, TEST_USE_CASES_DIR}
 ).difference(
     (
         "Packs",
@@ -120,7 +120,7 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         LAYOUT_RULES_DIR,
         AGENTIX_AGENTS_DIR,
         AGENTIX_ACTIONS_DIR,
-        TEST_USE_CASES,
+        TEST_USE_CASES_DIR,
         *TESTS_AND_DOC_DIRECTORIES,
     )
 )

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import yaml
 
 from demisto_sdk.commands.content_graph.objects.agentix_action import (
     AgentixAction,
@@ -28,6 +29,9 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG107_is_display_nam
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG108_is_valid_rgb_color import (
     IsValidColorValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG109_is_valid_agentix_test_file import (
+    IsValidAgentixTestFileValidator,
 )
 
 
@@ -565,3 +569,124 @@ def test_is_valid_agent_visibility():
     assert len(results) == 1
     assert "internal" in results[0].message
     assert "public, private" in results[0].message
+
+
+def test_is_valid_agentix_test_file(tmp_path):
+    """
+    Given:
+    - An AgentixAction with various test files in its test_data directory:
+        1. A valid test file.
+        2. A test file with invalid YAML syntax.
+        3. A test file with missing 'tests' key.
+        4. A test file with a prompt not ending with a period.
+        5. A test file with multiple evaluation modes.
+        6. A test file with expected_error and action in the same outcome.
+
+    When:
+    - Calling the IsValidAgentixTestFileValidator obtain_invalid_content_items function.
+
+    Then:
+    - Ensure that the correct number of failures are returned with appropriate error messages.
+    """
+    # Create a mock AgentixAction path structure
+    pack_dir = tmp_path / "Packs" / "TestPack"
+    actions_dir = pack_dir / "AgentixActions"
+    action_dir = actions_dir / "TestAction"
+    test_data_dir = action_dir / "test_data"
+    test_data_dir.mkdir(parents=True)
+
+    action_yml = action_dir / "TestAction.yml"
+    action_yml.touch()
+
+    # 1. Valid test file
+    valid_file = test_data_dir / "valid.yaml"
+    valid_file.write_text(
+        yaml.dump(
+            {
+                "tests": [
+                    {
+                        "name": "Valid Test",
+                        "prompt": "This is a valid prompt.",
+                        "agent_id": "agent1",
+                        "expected_outcomes": [{"action": "some_action"}],
+                    }
+                ]
+            }
+        )
+    )
+
+    # 2. Invalid YAML syntax
+    invalid_yaml = test_data_dir / "invalid_yaml.yaml"
+    invalid_yaml.write_text("tests: [missing_bracket")
+
+    # 3. Missing 'tests' key
+    missing_tests = test_data_dir / "missing_tests.yaml"
+    missing_tests.write_text(yaml.dump({"not_tests": []}))
+
+    # 4. Prompt not ending with period
+    bad_prompt = test_data_dir / "bad_prompt.yaml"
+    bad_prompt.write_text(
+        yaml.dump(
+            {
+                "tests": [
+                    {
+                        "name": "Bad Prompt",
+                        "prompt": "No period here",
+                        "expected_outcomes": [{"action": "act"}],
+                    }
+                ]
+            }
+        )
+    )
+
+    # 5. Multiple evaluation modes
+    multi_modes = test_data_dir / "multi_modes.yaml"
+    multi_modes.write_text(
+        yaml.dump(
+            {
+                "tests": [
+                    {
+                        "name": "Multi Modes",
+                        "prompt": "Prompt.",
+                        "expected_outcomes": [],
+                        "any_of": [],
+                    }
+                ]
+            }
+        )
+    )
+
+    # 6. expected_error and action together
+    error_and_action = test_data_dir / "error_and_action.yaml"
+    error_and_action.write_text(
+        yaml.dump(
+            {
+                "tests": [
+                    {
+                        "name": "Error and Action",
+                        "prompt": "Prompt.",
+                        "expected_outcomes": [
+                            {"expected_error": "err", "action": "act"}
+                        ],
+                    }
+                ]
+            }
+        )
+    )
+
+    action_obj = create_agentix_action_object()
+    action_obj.path = action_yml
+
+    results = IsValidAgentixTestFileValidator().obtain_invalid_content_items(
+        [action_obj]
+    )
+
+    # We expect 5 invalid files (2, 3, 4, 5, 6)
+    assert len(results) == 5
+    messages = [r.message for r in results]
+
+    assert any("Invalid YAML syntax" in m for m in messages)
+    assert any("Root structure must be a dictionary" in m for m in messages)
+    assert any("Prompt must end with a period" in m for m in messages)
+    assert any("multiple evaluation modes" in m for m in messages)
+    assert any("'expected_error' cannot be used with 'action' or 'actions'" in m for m in messages)

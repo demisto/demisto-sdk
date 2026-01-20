@@ -47,6 +47,7 @@ from demisto_sdk.commands.common.constants import (
     TEST_PLAYBOOKS_DIR,
     TESTS_AND_DOC_DIRECTORIES,
     TESTS_DIRECTORIES,
+    TEST_USE_CASES,
     TRIGGER_DIR,
     WIDGETS_DIR,
     WIZARDS_DIR,
@@ -70,7 +71,9 @@ ZERO_DEPTH_FILES = frozenset(
 )
 
 DEPTH_ONE_FOLDERS = (
-    set(ContentType.folders()) | set(TESTS_AND_DOC_DIRECTORIES) | {RELEASE_NOTES_DIR}
+    set(ContentType.folders())
+    | set(TESTS_AND_DOC_DIRECTORIES)
+    | {RELEASE_NOTES_DIR, TEST_USE_CASES}
 ).difference(
     (
         "Packs",
@@ -117,6 +120,7 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         LAYOUT_RULES_DIR,
         AGENTIX_AGENTS_DIR,
         AGENTIX_ACTIONS_DIR,
+        TEST_USE_CASES,
         *TESTS_AND_DOC_DIRECTORIES,
     )
 )
@@ -133,6 +137,7 @@ ALLOWED_SUFFIXES = frozenset(
         ".js",
         ".xif",
         ".ps1",
+        ".gitkeep",
         "",
     )
 )
@@ -357,6 +362,7 @@ def _validate(path: Path) -> None:
                 and path.stem.endswith(("_schema", "_testdata"))
                 and path.suffix == ".json"
             )
+            or path.name == ".gitkeep"
         ):
             raise InvalidModelingRuleFileName
 

@@ -282,14 +282,37 @@ def does_dict_have_alternative_key(data: dict) -> bool:
     return False
 
 
-def should_skip_code_isllm_scripts(file_path: str) -> tuple[bool, str]:
+def should_skip_code_retrieval(file_path: str) -> tuple[bool, str, str]:
+    """
+    Determines if code retrieval should be skipped for a script.
+
+    Args:
+        file_path: Path to the script package directory.
+
+    Returns:
+        A tuple of (should_skip, yml_path, reason) where:
+        - should_skip: True if code retrieval should be skipped
+        - yml_path: Path to the YML file
+        - reason: The reason for skipping ('isllm', 'unified', or empty string if not skipping)
+    """
     _, yml_path = get_yml_paths_in_dir(str(file_path))
     if not yml_path:
         raise Exception(
             f"No yml files found in package path: {file_path}. "
             "Is this really a package dir?"
         )
-    return str2bool(get_yaml(yml_path, keep_order=False).get("isllm", False)), yml_path
+    yml_data = get_yaml(yml_path, keep_order=False)
+
+    # Check if it's an LLM script
+    if str2bool(yml_data.get("isllm", False)):
+        return True, yml_path, "isllm"
+
+    # Check if the script is already unified (has code embedded in the YML)
+    script_content = yml_data.get("script", "")
+    if isinstance(script_content, str) and script_content not in ("", "-"):
+        return True, yml_path, "unified"
+
+    return False, yml_path, ""
 
 
 def should_skip_item_by_mp(
@@ -1858,14 +1881,18 @@ def process_script(
         else:
             code = None
             # package script
-            llm_script, yml_path = should_skip_code_isllm_scripts(file_path)
-            if not llm_script:
+            skip_code, yml_path, skip_reason = should_skip_code_retrieval(file_path)
+            if not skip_code:
                 logger.info("Should retrieve script.")
                 (
                     yml_path,
                     code,
                 ) = IntegrationScriptUnifier.get_script_or_integration_package_data(
                     Path(file_path)
+                )
+            elif skip_reason == "unified":
+                logger.info(
+                    f"Script {file_path} is already unified, skipping code retrieval."
                 )
             if should_skip_item_by_mp(
                 yml_path,
@@ -1877,9 +1904,14 @@ def process_script(
                 return [], excluded_items_from_id_set
             if print_logs:
                 logger.info(f"adding {file_path} to id_set")
+            # Skip code analysis for LLM scripts and unified scripts
+            skip_code_analysis = skip_code and skip_reason in ("isllm", "unified")
             res.append(
                 get_script_data(
-                    yml_path, script_code=code, packs=packs, llm_script=llm_script
+                    yml_path,
+                    script_code=code,
+                    packs=packs,
+                    llm_script=skip_code_analysis,
                 )
             )
     except Exception as exp:

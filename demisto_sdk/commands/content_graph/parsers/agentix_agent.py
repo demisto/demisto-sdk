@@ -5,9 +5,6 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.agentix_base import AgentixBaseParser
-from demisto_sdk.commands.content_graph.parsers.related_files import (
-    SystemInstructionsRelatedFile,
-)
 from demisto_sdk.commands.content_graph.strict_objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.prepare_content.agentix_agent_unifier import (
     AgentixAgentUnifier,
@@ -68,11 +65,6 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
     def field_mapping(self):
         super().field_mapping.update({"display": "name"})
         return super().field_mapping
-
-    @cached_property
-    def system_instructions_file(self) -> SystemInstructionsRelatedFile:
-        """Get the system instructions related file."""
-        return SystemInstructionsRelatedFile(self.path, git_sha=self.git_sha)
 
     @property
     def strict_object(self):

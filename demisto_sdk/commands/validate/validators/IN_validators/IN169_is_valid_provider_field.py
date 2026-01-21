@@ -37,7 +37,8 @@ class IsValidProviderFieldValidator(BaseValidator[ContentTypes]):
     def _should_validate_provider(self, content_item: ContentTypes) -> bool:
         """
         Check if the provider field validation should be enforced for this integration.
-        Only enforce for integrations in packs that support the platform marketplace.
+        Only enforce for integrations in packs that support the platform marketplace
+        AND the integration itself either has no marketplace field or explicitly specifies platform.
 
         Args:
             content_item: The integration to check
@@ -52,4 +53,16 @@ class IsValidProviderFieldValidator(BaseValidator[ContentTypes]):
 
         # Check if the pack supports the platform marketplace
         pack_marketplaces = getattr(pack, "marketplaces", [])
-        return MarketplaceVersions.PLATFORM in pack_marketplaces
+        if MarketplaceVersions.PLATFORM not in pack_marketplaces:
+            return False
+
+        # Check the integration's marketplaces field
+        integration_marketplaces = getattr(content_item, "marketplaces", [])
+
+        # Validate if:
+        # 1. The integration has no marketplace field (empty list), OR
+        # 2. The integration explicitly specifies platform marketplace
+        return (
+            not integration_marketplaces
+            or MarketplaceVersions.PLATFORM in integration_marketplaces
+        )

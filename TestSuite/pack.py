@@ -2,6 +2,8 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
     ASSETS_MODELING_RULES_DIR,
     CASE_FIELDS_DIR,
     CASE_LAYOUT_RULES_DIR,
@@ -16,6 +18,8 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
 )
+from TestSuite.agentix_action import AgentixAction
+from TestSuite.agentix_agent import AgentixAgent
 from TestSuite.case_field import CaseField
 from TestSuite.case_layout import CaseLayout
 from TestSuite.case_layout_rule import CaseLayoutRule
@@ -117,6 +121,9 @@ class Pack(TestSuiteBase):
         self.case_fields: List[CaseField] = list()
         self.case_layouts: List[CaseLayout] = list()
         self.case_layout_rules: List[CaseLayoutRule] = list()
+
+        self.agentix_actions: List[AgentixAction] = list()
+        self.agentix_agents: List[AgentixAgent] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -256,6 +263,12 @@ class Pack(TestSuiteBase):
 
         self._assets_modeling_rules_path = self._pack_path / ASSETS_MODELING_RULES_DIR
         self._assets_modeling_rules_path.mkdir(exist_ok=True)
+
+        self._agentix_actions_path = self._pack_path / AGENTIX_ACTIONS_DIR
+        self._agentix_actions_path.mkdir(exist_ok=True)
+
+        self._agentix_agents_path = self._pack_path / AGENTIX_AGENTS_DIR
+        self._agentix_agents_path.mkdir(exist_ok=True)
 
         super().__init__(self._pack_path)
 
@@ -822,3 +835,31 @@ class Pack(TestSuiteBase):
 
     def set_data(self, **key_path_to_val):
         self.pack_metadata.set_data(**key_path_to_val)
+
+    def create_agentix_action(
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+    ) -> AgentixAction:
+        if name is None:
+            name = f"agentix_action-{len(self.agentix_actions)}"
+        agentix_action = AgentixAction(self._agentix_actions_path, name, self._repo)
+        agentix_action.build(
+            yml,
+        )
+        self.agentix_actions.append(agentix_action)
+        return agentix_action
+
+    def create_agentix_agent(
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+    ) -> AgentixAgent:
+        if name is None:
+            name = f"agentix_agent-{len(self.agentix_agents)}"
+        agentix_agent = AgentixAgent(self._agentix_agents_path, name, self._repo)
+        agentix_agent.build(
+            yml,
+        )
+        self.agentix_agents.append(agentix_agent)
+        return agentix_agent

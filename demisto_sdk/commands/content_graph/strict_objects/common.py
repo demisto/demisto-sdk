@@ -204,6 +204,20 @@ IS_CONTEXT_DYNAMIC_MODEL = create_dynamic_model(
     include_without_suffix=True,
 )
 
+QUICK_ACTION_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="quickaction",
+    type_=Optional[bool],
+    default=None,
+    include_without_suffix=True,
+)
+
+HIDDEN_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="hidden",
+    type_=Optional[bool],
+    default=None,
+    include_without_suffix=True,
+)
+
 
 class _LeftOrRight(BaseStrictModel):
     value: Any  # VALUE_DYNAMIC_MODEL doesn't have the raw 'value', only its variations

@@ -184,6 +184,7 @@ class TestIntegrationScriptUnifier:
             - make sure the nativeImage was key was added with the native-images.
         """
         pack = repo.create_pack("PackName")
+        pack.pack_metadata.update({"created": "2023-10-24T11:49:45Z"})
         integration = pack.create_integration("dummy-integration")
         integration.create_default_integration()
 
@@ -242,6 +243,7 @@ class TestIntegrationScriptUnifier:
             - make sure the nativeimage was key was added with the native-images.
         """
         pack = repo.create_pack("PackName")
+        pack.pack_metadata.update({"created": "2023-10-24T11:49:45Z"})
         script = pack.create_script("dummy-script")
         script.create_default_script()
 
@@ -267,6 +269,7 @@ class TestIntegrationScriptUnifier:
             - make sure the nativeimage key is not added to the integration unified yml.
         """
         pack = repo.create_pack("PackName")
+        pack.pack_metadata.update({"created": "2023-10-24T11:49:45Z"})
         integration = pack.create_integration("dummy-integration")
         integration.create_default_integration()
 
@@ -295,6 +298,7 @@ class TestIntegrationScriptUnifier:
             - make sure the nativeImage key is not added to the script unified yml.
         """
         pack = repo.create_pack("PackName")
+        pack.pack_metadata.update({"created": "2023-10-24T11:49:45Z"})
         script = pack.create_script("dummy-script")
         script.create_default_script()
 

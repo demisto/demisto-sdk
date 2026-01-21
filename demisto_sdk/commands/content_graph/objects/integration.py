@@ -70,6 +70,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
     deprecated: bool = Field(False)
     hidden: bool = Field(False)
     description: Optional[str] = Field("")
+    supportedModules: Optional[List[str]] = Field([])
 
     # missing attributes in DB
     node_id: str = Field("", exclude=True)
@@ -109,6 +110,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = Field(False, alias="isfetchassets")
+    mcp: Optional[bool] = Field(None, alias="mcp")
     supports_quick_actions: bool = Field(False, alias="supportsquickactions")
     is_fetch_events_and_assets: bool = False
     is_fetch_samples: bool = False
@@ -140,6 +142,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 marketplaces=self.marketplaces,
                 deprecated=r.deprecated,
                 description=r.description,
+                supportedModules=r.supportedModules,
             )
             for r in self.relationships_data[RelationshipType.HAS_COMMAND]
         ]
@@ -175,6 +178,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "is_fetch": True,
                     "is_fetch_events": True,
                     "is_fetch_assets": True,
+                    "is_beta": True,
                 }
             )
         )

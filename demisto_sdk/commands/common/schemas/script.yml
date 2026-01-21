@@ -133,6 +133,8 @@ mapping:
       type: str
   isllm:
     type: bool
+  isInternal:
+    type: bool
   model:
     type: str
   userprompt:
@@ -141,6 +143,15 @@ mapping:
     type: str
   fewshots:
     type: str
+  promptConfig:
+    type: map
+    mapping:
+      temperature:
+        type: number
+      maxOutputTokens:
+        type: int
+      webSearch:
+        type: bool
 
   compliantpolicies:
     type: seq

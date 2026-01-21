@@ -160,6 +160,12 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def get_agentix_actions_using_content_items(
+        self, content_item_ids: List[str]
+    ) -> List[BaseNode]:
+        pass
+
+    @abstractmethod
     def get_duplicate_pack_display_name(
         self, file_paths: List[str]
     ) -> List[Tuple[str, List[str]]]:

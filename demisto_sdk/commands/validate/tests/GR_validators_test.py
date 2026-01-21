@@ -3,9 +3,14 @@ from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
+from demisto_sdk.commands.validate.tests.test_tools import (
+    create_agentix_action_object,
+)
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
     GR104_is_pack_display_name_already_exists,
+    GR111_is_agentix_action_display_name_already_exists_valid,
+    GR112_is_agentix_action_name_already_exists_valid,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
     MarketplacesFieldValidatorAllFiles,
@@ -66,6 +71,15 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_m
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_modules_compatibility_list_files import (
     IsSupportedModulesCompatibilityListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid import (
+    IsAgentixActionUsingExistingContentItemValidator,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR111_is_agentix_action_display_name_already_exists_valid import (
+    IsAgentixActionDisplayNameAlreadyExistsValidator,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR112_is_agentix_action_name_already_exists_valid import (
+    IsAgentixActionNameAlreadyExistsValidator,
 )
 from TestSuite.repo import Repo
 
@@ -777,7 +791,7 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid_script(
     assert len(validation_results) == 0
 
 
-def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid_playbook(
+def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_used_deprecated_item(
     repo_for_test_gr_107: Repo,
 ):
     """
@@ -791,8 +805,8 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid_playbook(
     - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific playbook.
 
     Then:
-    - Verify that the validator correctly identifies that no deprecated content items are used.
-    - Assert that the validation results are empty.
+    - Verify that the validator correctly identifies that a deprecated playbook is used by the integration.
+    - Assert that the validation results contains exactly one item.
     """
     graph_interface = repo_for_test_gr_107.create_graph()
     BaseValidator.graph_interface = graph_interface
@@ -804,7 +818,163 @@ def test_GR107_IsDeprecatedContentItemInUsageValidatorListFiles_valid_playbook(
         pack_objects
     )
 
+    assert len(validation_results) == 1
+
+
+def test_GR107_deprecated_collected_used_by_deprecated(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for deprecated item using deprecated item.
+
+    Given:
+    - A repository with a deprecated script that uses another deprecated script.
+      Both scripts are deprecated, so this relationship should be acceptable.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the deprecated script that uses deprecated content.
+
+    Then:
+    - Verify that the validator correctly identifies that deprecated-to-deprecated usage is acceptable.
+    - Assert that the validation results are empty since deprecated items can use other deprecated items.
+    """
+    # Create a deprecated script that uses the existing deprecated script
+    repo_for_test_gr_107.packs[1].create_script(
+        name="DeprecatedUsingDeprecated",
+        code='demisto.execute_command("DeprecatedScript", dArgs)',
+    ).set_data(deprecated="true")
+
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1]
+        .scripts[3]
+        .get_graph_object(graph_interface),  # DeprecatedUsingDeprecated
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
     assert len(validation_results) == 0
+
+
+def test_GR107_not_deprecated_collected_uses_deprecated(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for non-deprecated item using deprecated item.
+
+    Given:
+    - A repository with a non-deprecated script that uses a deprecated script.
+      The non-deprecated script uses deprecated content items.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific non-deprecated script.
+
+    Then:
+    - Verify that the validator correctly identifies that the non-deprecated script uses deprecated content.
+    - Assert that the validation results contains exactly one item.
+    """
+    # Add non-deprecated script that uses the existing deprecated script
+    repo_for_test_gr_107.packs[1].create_script(
+        name="NonDeprecatedUsingDeprecated",
+        code='demisto.execute_command("DeprecatedScript", dArgs)',
+    )
+
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1].scripts[3].get_graph_object(graph_interface),
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
+    assert len(validation_results) == 1
+
+
+def test_GR107_not_deprecated_collected_uses_not_deprecated(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for non-deprecated item using non-deprecated item.
+
+    Given:
+    - A repository with a non-deprecated script that uses a non-deprecated script.
+      The non-deprecated script does not use any deprecated content items.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific non-deprecated script.
+
+    Then:
+    - Verify that the validator correctly identifies that no deprecated content items are used.
+    - Assert that the validation results are empty.
+    """
+    # Add non-deprecated script that uses the existing non-deprecated script
+    repo_for_test_gr_107.packs[1].create_script(
+        name="NonDeprecatedUsingNonDeprecated",
+        code='demisto.execute_command("SampleScript", dArgs)',
+    )
+
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1].scripts[3].get_graph_object(graph_interface),
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
+    assert len(validation_results) == 0
+
+
+def test_GR107_not_being_deprecated_with_complex_chain(
+    repo_for_test_gr_107: Repo,
+):
+    """
+    Test the GR107_IsDeprecatedContentItemInUsageValidatorListFiles validator for script using deprecated content in complex chain.
+
+    Given:
+    - A repository with a non-deprecated script that uses deprecated content items.
+      The script uses multiple deprecated content items in a complex chain.
+
+    When:
+    - Running the GR107_IsDeprecatedContentItemInUsageValidatorListFiles on the specific non-deprecated script.
+
+    Then:
+    - Verify that the validator correctly identifies that the script uses deprecated content items.
+    - Assert that the validation results contains exactly one item.
+    """
+    # Add another deprecated script for complex chain
+    repo_for_test_gr_107.packs[1].create_script(
+        name="AnotherDeprecatedScript"
+    ).set_data(deprecated="true")
+
+    # Add non-deprecated script that uses deprecated scripts
+    repo_for_test_gr_107.packs[1].create_script(
+        name="NonDeprecatedUsingMultipleDeprecated",
+        code="""
+demisto.execute_command("DeprecatedScript", dArgs)
+demisto.execute_command("AnotherDeprecatedScript", dArgs)
+        """,
+    )
+
+    graph_interface = repo_for_test_gr_107.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    pack_objects = [
+        repo_for_test_gr_107.packs[1]
+        .scripts[4]
+        .get_graph_object(graph_interface),  # NonDeprecatedUsingMultipleDeprecated
+    ]
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        pack_objects
+    )
+
+    assert len(validation_results) == 1
 
 
 def test_GR107_IsDeprecatedContentItemInUsageValidatorAllFiles_is_invalid(
@@ -1390,6 +1560,511 @@ def test_SupportedModulesCompatibility_supported_module_none_in_content_item_a(
     assert len(results) == 1
     assert (
         results[0].message
-        == "The following mandatory dependencies missing required modules: SearchIncidents is missing: [C1, C3, X1, X3, X5, ENT_PLUS, agentix]"
+        == "The following mandatory dependencies missing required modules: SearchIncidents is missing: [C1, C3, X1, X3, X5, ENT_PLUS, cloud_posture, cloud, cloud_runtime_security, edr, cloud_appsec, agentix, asm, xsiam, exposure_management, agentix_xsiam]"
     )
     assert results[0].content_object.object_id == "Script1"
+
+
+@pytest.fixture
+def repo_for_test_gr_109_mismatch_command(graph_repo: Repo):
+    """
+    Creates a test repository with a single pack to test the command mismatch part of GR109 validation.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains Script1, which contain command_x.
+              Script1 is configured with `supportedModules: ["module_x"]`.
+              command_x is used in the script and configured with `supportedModules: ["module_x", "module_y"]`.
+    """
+    yml = {
+        "commonfields": {"id": "Integration1", "version": -1},
+        "name": "Integration1",
+        "display": "Integration1",
+        "description": "this is an integration Integration1",
+        "category": "category",
+        "supportedModules": ["module_x"],
+        "script": {
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "command_x",
+                    "description": "description",
+                    "arguments": [],
+                    "supportedModules": ["module_x", "module_y"],
+                }
+            ],
+            "dockerimage": None,
+        },
+        "configuration": [],
+    }
+
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    pack_a.create_integration("Integration1", yml=yml)
+
+    return graph_repo
+
+
+def test_SupportedModulesCompatibility_invalid_all_files_mismatch_command(
+    repo_for_test_gr_109_mismatch_command: Repo,
+):
+    """
+    Given:
+        A repository where "command_x" (with `supportedModules: ['module_x', 'module_y']`)
+        is included in "Integration1" (with `supportedModules: ['module_x']`).
+    When:
+        Running the IsSupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should identify "Integration1" as invalid, reporting that it is missing the required"module_y".
+    """
+    graph_interface = repo_for_test_gr_109_mismatch_command.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following mandatory dependencies missing required modules: Integration1 is missing: [module_y]"
+    )
+    assert results[0].content_object.object_id == "Integration1"
+
+
+def test_SupportedModulesCompatibility_invalid_list_files_mismatch_command(
+    repo_for_test_gr_109_mismatch_command: Repo,
+):
+    """
+    Given:
+        A repository where "Script1" (with `supportedModules: ['module_x']`)
+        depends on "SearchIncidents", which does not support "module_x".
+    When:
+        The IsSupportedModulesCompatibility validator runs specifically on "Integration1".
+    Then:
+        The validator should identify "Integration1" as invalid, reporting it is missing the required "module_y".
+    """
+    graph_interface = repo_for_test_gr_109_mismatch_command.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsSupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+        [repo_for_test_gr_109_mismatch_command.packs[0].integrations[0].object]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following mandatory dependencies missing required modules: Integration1 is missing: [module_y]"
+    )
+    assert results[0].content_object.object_id == "Integration1"
+
+
+@pytest.fixture
+def repo_for_test_gr_109_mismatch_playbook(graph_repo: Repo):
+    """
+    Creates a test repository with a single pack to test the playbook mismatch part of GR109 validation.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains a playbook named playbook1 and a command named command_x.
+              playbook1 uses command_x.
+              playbook1 is configured with `supportedModules: ["module_x"]`.
+              command_x does not support "module_x".
+    """
+    # Create the pack
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.set_data(marketplaces=[MarketplaceVersions.PLATFORM.value])
+    integration1 = pack_a.create_integration(name="integration1")
+    integration1.set_data(
+        script={
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "command_x",
+                    "description": "description",
+                    "arguments": [],
+                    "supportedModules": ["module_x"],
+                }
+            ],
+            "dockerimage": None,
+        }
+    )
+
+    # Create the playbook that uses command_x with supportedModules
+    playbook_yml = {
+        "id": "playbook1",
+        "name": "playbook1",
+        "supportedModules": ["module_x", "module_y"],
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "0",
+                "type": "regular",
+                "task": {
+                    "id": "0",
+                    "name": "run command_x",
+                    "description": "Uses command_x",
+                    "script": "command_x",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "Integration1",
+                },
+            }
+        },
+    }
+    pack_a.create_playbook("playbook1", yml=playbook_yml)
+
+    return graph_repo
+
+
+def test_SupportedModulesCompatibility_invalid_all_files_mismatch_playbook(
+    repo_for_test_gr_109_mismatch_playbook: Repo,
+):
+    """
+    Given:
+        A repository where "playbook1" (with `supportedModules: ['module_x']`)
+        depends on "command_x", which does not support "module_x".
+    When:
+        Running the IsSupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should identify "playbook1" as invalid, reporting that "command_x" is missing "module_x".
+    """
+    graph_interface = repo_for_test_gr_109_mismatch_playbook.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+    )
+    assert results[0].content_object.object_id == "playbook1"
+
+
+def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
+    repo_for_test_gr_109_mismatch_playbook: Repo,
+):
+    """
+    Given:
+        A repository where "playbook1" (with `supportedModules: ['module_x']`)
+        depends on "command_x", which does not support "module_x".
+    When:
+        The IsSupportedModulesCompatibility validator runs specifically on "playbook1".
+    Then:
+        The validator should identify "playbook1" as invalid, reporting that "command_x"
+        is missing the required "module_x".
+    """
+    graph_interface = repo_for_test_gr_109_mismatch_playbook.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsSupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+        [repo_for_test_gr_109_mismatch_playbook.packs[0].playbooks[0].object]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+    )
+    assert results[0].content_object.object_id == "playbook1"
+
+
+@pytest.fixture
+def repo_for_test_gr_110(graph_repo: Repo):
+    """
+    Creates a test repository for testing GR110 validator.
+    """
+    # Pack 1: Simple integration and script
+    pack_1 = graph_repo.create_pack("Pack1")
+
+    # Create integration with commands
+    integration = pack_1.create_integration("MyIntegration")
+    integration.set_commands(["test-command", "get-incidents"])
+
+    # Create simple script
+    pack_1.create_script("MyScript")
+
+    # Create simple playbook
+    pack_1.create_playbook("MyPlaybook")
+
+    return graph_repo
+
+
+def test_gr110_missing_underlying_command(repo_for_test_gr_110: Repo):
+    """
+    Given:
+        - An Agentix Action referencing a non-existing command.
+    When:
+        - Running the GR110 validator.
+    Then:
+        - A validation error should be returned indicating the content item was not found.
+    """
+    action = create_agentix_action_object(
+        action_name="TestAction",
+        paths=[
+            "underlyingcontentitem.name",
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.command",
+        ],
+        values=[
+            "MyIntegration",
+            "MyIntegration",
+            "command",
+            "nonexistent-command",
+        ],
+    )
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert "could not be found in the Content repository" in results[0].message
+
+
+def test_gr110_unsupported_content_type(repo_for_test_gr_110: Repo):
+    """
+    Given:
+        - An Agentix Action referencing an unsupported content type (widget).
+    When:
+        - Running the GR110 validator.
+    Then:
+        - A validation error should be returned about unsupported content type.
+    """
+    action = create_agentix_action_object(
+        action_name="TestAction",
+        paths=[
+            "underlyingcontentitem.name",
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.type",
+        ],
+        values=[
+            "MyIntegration",
+            "MyIntegration",
+            "widget",  # unsupported type
+        ],
+    )
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert len(results) == 1
+    assert "unsupported in Agentix" in results[0].message
+
+
+def test_gr110_builtin_command_skipped(repo_for_test_gr_110: Repo):
+    """
+    Given:
+        - An Agentix Action referencing a built-in command.
+    When:
+        - Running the GR110 validator.
+    Then:
+        - No validation errors should be reported (built-in commands are skipped).
+    """
+    action = create_agentix_action_object(
+        action_name="TestAction",
+        paths=[
+            "underlyingcontentitem.name",
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.id",
+        ],
+        values=[
+            "_builtin_",
+            "command",
+            "_builtin_",
+        ],
+    )
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert len(results) == 0
+
+
+def test_gr110_valid_command_reference(repo_for_test_gr_110: Repo, mocker):
+    """
+    Given:
+        - An Agentix Action referencing an existing integration command.
+    When:
+        - Running the GR110 validator.
+    Then:
+        - No validation errors should be reported.
+    """
+    action = create_agentix_action_object(
+        action_name="TestAction",
+        paths=[
+            "underlyingcontentitem.name",
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.command",
+        ],
+        values=[
+            "MyIntegration",
+            "command",
+            "MyIntegration",
+            "test-command",
+        ],
+    )
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+
+    mock_command_node = mocker.Mock()
+    mocker.patch.object(validator.graph, "search", return_value=[mock_command_node])
+
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert len(results) == 1
+
+
+def test_gr110_valid_script_reference(repo_for_test_gr_110: Repo, mocker):
+    """
+    Given:
+        - An Agentix Action referencing an existing script.
+    When:
+        - Running the GR110 validator.
+    Then:
+        - No validation errors should be reported.
+    """
+    action = create_agentix_action_object(
+        action_name="TestAction",
+        paths=[
+            "underlyingcontentitem.name",
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.command",
+        ],
+        values=[
+            "MyScript",
+            "script",
+            "MyScript",
+            "",
+        ],
+    )
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+    mock_script_node = mocker.Mock()
+    mocker.patch.object(validator.graph, "search", return_value=[mock_script_node])
+
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert len(results) == 0
+
+
+def test_gr110_valid_playbook_reference(repo_for_test_gr_110: Repo, mocker):
+    """
+    Given:
+        - An Agentix Action referencing an existing playbook.
+    When:
+        - Running the GR110 validator.
+    Then:
+        - No validation errors should be reported.
+    """
+    action = create_agentix_action_object(
+        action_name="TestAction",
+        paths=[
+            "underlyingcontentitem.name",
+            "underlyingcontentitem.type",
+            "underlyingcontentitem.id",
+            "underlyingcontentitem.command",
+        ],
+        values=["MyPlaybook", "playbook", "MyPlaybook", ""],
+    )
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+    mock_playbook_node = mocker.Mock()
+    mocker.patch.object(validator.graph, "search", return_value=[mock_playbook_node])
+
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert len(results) == 0
+
+
+def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
+    mocker, graph_repo: Repo
+):
+    """
+    Given
+        - 3 packs, with 1 agentix action in each, and 2 of them are with the same name
+    When
+        - running IsAgentixActionNameAlreadyExistsValidator obtain_invalid_content_items function, on one of the packs with the duplicate agentix action name.
+    Then
+        - Validate that we got the error messages for the duplicate name.
+    """
+    mocker.patch.object(
+        GR112_is_agentix_action_name_already_exists_valid,
+        "CONTENT_PATH",
+        new=graph_repo.path,
+    )
+    graph_repo.setup_one_pack(name="pack1")
+    graph_repo.setup_one_pack(name="pack2")
+    graph_repo.setup_one_pack(name="pack3")
+    graph_repo.packs[1].agentix_actions[0].set_agentix_action_name("test")
+    graph_repo.packs[2].agentix_actions[0].set_agentix_action_name("test")
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
+        [
+            graph_repo.packs[0].agentix_actions[0],
+            graph_repo.packs[2].agentix_actions[0],
+        ],
+        validate_all_files=False,
+    )
+
+    assert len(results) == 1
+
+
+def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
+    mocker, graph_repo: Repo
+):
+    """
+    Given
+        - 3 packs, with 1 agentix action in each, and 2 of them are with the same display name
+    When
+        - running IsAgentixActionDisplayNameAlreadyExistsValidator obtain_invalid_content_items function, on one of the packs with the duplicate agentix action display.
+    Then
+        - Validate that we got the error messages for the duplicate display name.
+    """
+    mocker.patch.object(
+        GR111_is_agentix_action_display_name_already_exists_valid,
+        "CONTENT_PATH",
+        new=graph_repo.path,
+    )
+    graph_repo.setup_one_pack(name="pack1")
+    graph_repo.setup_one_pack(name="pack2")
+    graph_repo.setup_one_pack(name="pack3")
+    graph_repo.packs[1].agentix_actions[0].set_agentix_action_display("test")
+    graph_repo.packs[2].agentix_actions[0].set_agentix_action_display("test")
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionDisplayNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
+        [
+            graph_repo.packs[0].agentix_actions[0],
+            graph_repo.packs[2].agentix_actions[0],
+        ],
+        validate_all_files=False,
+    )
+
+    assert len(results) == 1

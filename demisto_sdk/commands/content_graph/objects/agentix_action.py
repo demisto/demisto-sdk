@@ -3,6 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
 
@@ -16,7 +17,7 @@ class AgentixActionArgument(BaseModel):
     hidden: bool = False
     disabled: bool = False
     content_item_arg_name: str = Field(..., alias="underlyingargname")
-    generatable: bool = False
+    isgeneratable: bool = False
 
 
 class AgentixActionOutput(BaseModel):
@@ -43,3 +44,12 @@ class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
         if "underlyingcontentitem" in _dict and path.suffix == ".yml":
             return True
         return False
+
+    def summary(
+        self,
+        marketplace: Optional[MarketplaceVersions] = None,
+        incident_to_alert: bool = False,
+    ) -> dict:
+        summary_res = super().summary(marketplace, incident_to_alert)
+        summary_res["underlyingContentItemType"] = self.underlying_content_item_type
+        return summary_res

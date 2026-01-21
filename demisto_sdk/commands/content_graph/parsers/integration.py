@@ -3,7 +3,9 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
@@ -27,6 +29,7 @@ class CommandParser:
     outputs: List[dict]
     quickaction: bool
     compliantpolicies: List[str]
+    supportedModules: List[str]
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
@@ -49,6 +52,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch_events_and_assets = self.script_info.get(
             "isfetcheventsandassets", False
         )
+        self.mcp = self.script_info.get("mcp", False)
         self.is_mappable = self.script_info.get("ismappable", False)
         self.is_remote_sync_in = self.script_info.get("isremotesyncin", False)
         self.is_fetch_samples = self.script_info.get("isFetchSamples", False)
@@ -104,6 +108,8 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             outputs = command_data.get("outputs") or []
             quickaction = command_data.get("quickaction", False)
             compliantpolicies: list[str] = command_data.get("compliantpolicies") or []
+            supported_modules: list[str] = command_data.get("supportedModules") or []
+
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
                 target=name,
@@ -113,7 +119,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 description=description,
                 quickaction=quickaction,
                 compliantpolicies=compliantpolicies,
+                supportedModules=supported_modules,
             )
+
             self.commands.append(
                 CommandParser(
                     name=name,
@@ -124,6 +132,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                     outputs=outputs,
                     quickaction=quickaction,
                     compliantpolicies=compliantpolicies,
+                    supportedModules=supported_modules,
                 )
             )
 

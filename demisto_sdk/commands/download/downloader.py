@@ -1501,11 +1501,19 @@ class Downloader:
             value = content_item_file_data.getvalue()
             if value.startswith("{") or value.startswith("["):
                 # JSON file
-                content_item_download_path.write_text(
-                    json.dumps(json.loads(value), indent=4)
+                write_dict(
+                    content_item_download_path,
+                    data=json.loads(value),
+                    handler=json,
+                    indent=4,
+                    sort_keys=True,
                 )
             else:
-                content_item_download_path.write_text(value)
+                write_dict(
+                    content_item_download_path,
+                    data=yaml.load(value),
+                    sort_keys=True,
+                )
 
             downloaded_files.append(content_item_download_path)
 

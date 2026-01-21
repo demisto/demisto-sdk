@@ -1904,8 +1904,9 @@ def process_script(
                 return [], excluded_items_from_id_set
             if print_logs:
                 logger.info(f"adding {file_path} to id_set")
-            # Skip code analysis for LLM scripts and unified scripts
-            skip_code_analysis = skip_code and skip_reason in ("isllm", "unified")
+            # Skip code analysis only for LLM scripts (they have no executable code)
+            # For unified scripts, code is in the YML and will be analyzed by get_script_data
+            skip_code_analysis = skip_code and skip_reason == "isllm"
             res.append(
                 get_script_data(
                     yml_path,

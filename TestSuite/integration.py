@@ -1,4 +1,6 @@
+import os
 import shutil
+import sys
 from pathlib import Path
 from typing import List, Optional
 
@@ -82,6 +84,16 @@ class Integration(TestSuiteBase):
         test: Optional[str] = None,
     ):
         """Writes not None objects to files."""
+        # DIAGNOSTIC LOGGING: Track build process to debug race conditions
+        print(  # noqa: T201
+            f"[DIAGNOSTIC] Integration.build() called for: {self.path}",
+            file=sys.stderr,
+        )
+        print(  # noqa: T201
+            f"[DIAGNOSTIC] Directory exists: {os.path.exists(self.path)}",
+            file=sys.stderr,
+        )
+        
         if code is not None:
             self.code.write(code)
         else:
@@ -103,7 +115,20 @@ class Integration(TestSuiteBase):
         if changelog is not None:
             self.changelog.write(changelog)
         if image is not None:
+            # DIAGNOSTIC LOGGING: Track image write
+            print(  # noqa: T201
+                f"[DIAGNOSTIC] About to write image to: {self.image.path}",
+                file=sys.stderr,
+            )
+            print(  # noqa: T201
+                f"[DIAGNOSTIC] Parent dir exists: {os.path.exists(os.path.dirname(self.image.path))}",
+                file=sys.stderr,
+            )
             self.image.write_bytes(image)
+            print(  # noqa: T201
+                f"[DIAGNOSTIC] Image written successfully to: {self.image.path}",
+                file=sys.stderr,
+            )
         if commands_txt is not None:
             self.commands_txt.write(commands_txt)
         if test is not None:

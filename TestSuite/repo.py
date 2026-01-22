@@ -1,5 +1,7 @@
 import os
 import shutil
+import sys
+import traceback
 from pathlib import Path
 from typing import List, Optional
 from unittest.mock import MagicMock
@@ -97,6 +99,16 @@ class Repo:
             self.init_git()
 
     def __del__(self):
+        # DIAGNOSTIC LOGGING: Track when __del__ is called to debug race conditions
+        # This helps identify if garbage collection is deleting the repo while tests are still running
+        print(  # noqa: T201
+            f"[DIAGNOSTIC] Repo.__del__ called for path: {self.path}",
+            file=sys.stderr,
+        )
+        print(  # noqa: T201
+            f"[DIAGNOSTIC] Stack trace:\n{''.join(traceback.format_stack())}",
+            file=sys.stderr,
+        )
         shutil.rmtree(self.path, ignore_errors=True)
         if self.graph_interface:
             self.graph_interface.close()

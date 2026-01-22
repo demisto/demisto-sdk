@@ -16,7 +16,6 @@ This command allows you to reattach content items (Incident Types, Layouts, Play
 | --- | --- | --- |
 | -i | --input | The ID of the content item to reattach. Can be used multiple times. |
 | -it | --item-type | The type of the content items to reattach. Required when using `--input`. Possible values: `IncidentTypes`, `Layouts`, `Playbooks`, `Scripts`. |
-| -a | --all | Reattach all detached items for all content types in the XSOAR instance. Cannot be used with `--input`. |
 | | --insecure | Skip certificate validation. |
 | | --console-log-threshold | Minimum logging threshold for console output. Possible values: DEBUG, INFO, SUCCESS, WARNING, ERROR. |
 | | --file-log-threshold | Minimum logging threshold for file output. |
@@ -37,12 +36,4 @@ demisto-sdk reattach -i "MyAutomation" -it Scripts
 
 ```sh
 demisto-sdk reattach -i Access -i Authentication -i "Policy Violation" --item-type IncidentTypes
-```
-
-### Reattach all items
-
-Reattach all detached items in the instance:
-
-```bash
-demisto-sdk reattach --all
 ```

@@ -43,6 +43,7 @@ runs:
           cp demisto_sdk/commands/validate/sdk_validation_config.toml content/
           cd content
           git status
+          find . -path '*/AgentixActions/*' -type f
           mkdir -p ${{ inputs.artifacts-path-dir }}
           demisto-sdk validate ${{inputs.validate-arguments}}
         shell: bash

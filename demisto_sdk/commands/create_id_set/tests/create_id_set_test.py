@@ -588,3 +588,79 @@ class TestAddCommandToImplementingIntegrationsMapping:
 
         playbook = id_set_creator.id_set["playbooks"][0]["Playbook"]
         assert playbook["command_to_integration"]["send-notification"] == "Slack"
+
+
+def test_create_id_set_with_lists_having_separate_data_files(repo):
+    """
+    Given:
+    - A pack with unified lists and lists with separate metadata/data files
+
+    When:
+    - Creating an id_set for the pack
+
+    Then:
+    - Ensure both unified lists and list metadata files are in id_set
+    - Ensure list data files (without 'id') are skipped
+    - Ensure the id_set contains the correct list IDs
+    """
+    pack = repo.create_pack("TestListPack")
+    pack.pack_metadata.write_json(METADATA)
+    
+    lists_dir = pack._lists_path
+    lists_dir.mkdir(exist_ok=True, parents=True)
+    
+    # Create unified list
+    unified_list_data = {
+        "id": "unified-test-list",
+        "name": "Unified Test List",
+        "type": "plain_text",
+        "data": "item1\nitem2\nitem3",
+        "fromVersion": "6.10.0",
+    }
+    unified_list_path = lists_dir / "UnifiedList.json"
+    with open(unified_list_path, "w") as f:
+        json.dump(unified_list_data, f)
+    
+    # Create list metadata file (data in separate file)
+    list_metadata_data = {
+        "id": "list-with-separate-data",
+        "name": "List With Separate Data",
+        "type": "plain_text",
+        "data": "-",  # Placeholder when data is in separate file
+        "fromVersion": "6.10.0",
+    }
+    list_metadata_path = lists_dir / "ListWithSeparateData.json"
+    with open(list_metadata_path, "w") as f:
+        json.dump(list_metadata_data, f)
+
+    # Create list data file (should be skipped - no 'id' field)
+    list_data_file = {
+        "data": ["data-item1", "data-item2", "data-item3"]
+    }
+    list_data_path = lists_dir / "ListWithSeparateData_data.json"
+    with open(list_data_path, "w") as f:
+        json.dump(list_data_file, f)
+    
+    # Create id_set
+    id_set_creator = IDSetCreator(output=None, input=str(pack.path))
+    id_set, _, _ = id_set_creator.create_id_set()
+    
+    # Verify unified list is in id_set
+    assert "Lists" in id_set
+    list_ids = [list(item.keys())[0] for item in id_set["Lists"]]
+    assert "unified-test-list" in list_ids, "Unified list should be in id_set"
+
+    # Verify list metadata file is in id_set
+    assert "list-with-separate-data" in list_ids, "List metadata should be in id_set"
+
+    # Verify exactly 2 lists (not 3 - data file should be skipped)
+    assert len(id_set["Lists"]) == 2, "Should have 2 lists, data file skipped"
+
+    # Verify the list entries have correct names
+    unified_entry = next((item for item in id_set["Lists"] if "unified-test-list" in item), None)
+    assert unified_entry is not None
+    assert unified_entry["unified-test-list"]["name"] == "Unified Test List"
+
+    metadata_entry = next((item for item in id_set["Lists"] if "list-with-separate-data" in item), None)
+    assert metadata_entry is not None
+    assert metadata_entry["list-with-separate-data"]["name"] == "List With Separate Data"

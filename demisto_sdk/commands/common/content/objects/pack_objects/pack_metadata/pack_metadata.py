@@ -510,12 +510,22 @@ class PackMetaData(JSONObject):
         """
         return self._source
 
+    @source.setter
+    def source(self, new_source: str):
+        """Setter for the source attribute"""
+        self._source = new_source
+
     @property
     def managed(self):
         """
         List of supported platform products & add-ons.
         """
         return self._managed
+
+    @managed.setter
+    def managed(self, is_managed: bool):
+        """Setter for the managed attribute"""
+        self._managed = is_managed
 
     def dump_metadata_file(self, dest_dir: Union[Path, str] = "") -> List[Path]:
         file_content = {

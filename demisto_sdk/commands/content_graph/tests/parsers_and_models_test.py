@@ -3430,3 +3430,33 @@ class TestAgentixBaseParser:
             agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
         )
         assert parser.toversion == DEFAULT_CONTENT_ITEM_TO_VERSION
+
+    def test_agentix_action_parser_prompt_dependency(self, pack: Pack):
+        """
+        Given:
+            - An agentix action with underlying content item type "prompt".
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify the parser creates a dependency to ContentType.AIPROMPT.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action_data = load_yaml("agentix_action.yml")
+        agentix_action_data["underlyingcontentitem"]["type"] = "prompt"
+        agentix_action_data["underlyingcontentitem"]["id"] = "test_prompt_id"
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixActionPrompt", agentix_action_data
+        )
+        agentix_action_path = Path(agentix_action.path)
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        RelationshipsVerifier.run(
+            parser.relationships,
+            dependency_ids={
+                "test_prompt_id": ContentType.AIPROMPT,
+            },
+        )

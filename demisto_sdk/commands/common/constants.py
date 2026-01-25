@@ -122,6 +122,7 @@ CASE_LAYOUTS_DIR = "CaseLayouts"
 CASE_FIELDS_DIR = "CaseFields"
 AGENTIX_ACTIONS_DIR = "AgentixActions"
 AGENTIX_AGENTS_DIR = "AgentixAgents"
+AIPROMPTS_DIR = "AIPrompts"
 
 # NAMES OF ENTITIES
 
@@ -281,6 +282,7 @@ class FileType(StrEnum):
     VERSION_CONFIG = "version_config"
     AGENTIX_AGENT = "agentixagent"
     AGENTIX_ACTION = "agentixaction"
+    AIPROMPT = "aiprompt"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -323,6 +325,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CASE_LAYOUT: "Case Layouts",
     FileType.AGENTIX_AGENT: "Agents",
     FileType.AGENTIX_ACTION: "Actions",
+    FileType.AIPROMPT: "AI Prompts",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -432,6 +435,7 @@ CONTENT_ENTITIES_DIRS = [
     CASE_LAYOUTS_DIR,
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AIPROMPTS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -1631,6 +1635,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.CASE_LAYOUT: "8.7.0",
     FileType.AGENTIX_ACTION: "8.12.0",
     FileType.AGENTIX_AGENT: "8.12.0",
+    FileType.AIPROMPT: "8.12.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"

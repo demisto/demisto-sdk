@@ -81,3 +81,8 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
             self.add_dependency_by_id(
                 self.underlying_content_item_id, ContentType.PLAYBOOK, is_mandatory=True
             )
+        elif self.underlying_content_item_type == "prompt":
+            # For prompts, use USES_BY_ID with the prompt ID
+            self.add_dependency_by_id(
+                self.underlying_content_item_id, ContentType.AIPROMPT, is_mandatory=True
+            )

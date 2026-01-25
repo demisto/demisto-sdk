@@ -3,6 +3,7 @@ from tempfile import TemporaryDirectory
 from typing import Optional
 
 import demisto_client
+from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler

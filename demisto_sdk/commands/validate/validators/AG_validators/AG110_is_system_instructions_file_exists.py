@@ -13,7 +13,7 @@ ContentTypes = AgentixAgent
 
 
 class IsSystemInstructionsFileExistsValidator(BaseValidator[ContentTypes]):
-    error_code = "AG109"
+    error_code = "AG110"
     description = "Checks if the AgentixAgent has a system instructions file."
     error_message = (
         "The AgentixAgent '{0}' is missing a system instructions file. "

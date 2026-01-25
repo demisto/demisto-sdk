@@ -99,6 +99,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     compliantpolicies: Optional[List[str]] = Field(None, alias="compliantpolicies")
     is_llm: bool = Field(False, alias="isllm")
     is_internal: bool = Field(False, alias="isInternal")
+    internal: bool = Field(False, alias="internal")
     model: Optional[str] = None
     user_prompt: Optional[str] = Field(None, alias="userprompt")
     system_prompt: Optional[str] = Field(None, alias="systemprompt")

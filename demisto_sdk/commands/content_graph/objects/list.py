@@ -17,6 +17,7 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
     type: str
     is_unified: bool
     version: Optional[int] = 0
+    internal: bool = Field(False)
 
     def _upload(
         self,

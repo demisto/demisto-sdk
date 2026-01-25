@@ -67,6 +67,8 @@ mapping:
     type: seq
     sequence:
     - type: str
+  instructions:
+    type: str
 
 schema;args_schema:
   type: map

@@ -120,7 +120,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_mappable: bool = False
     long_running: bool = False
     category: str
-    provider: str = ""
+    provider: Optional[str] = None
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
     is_cloud_provider_integration: bool = Field(

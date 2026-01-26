@@ -1,6 +1,0 @@
-changes:
-- description: Added support for the fromversion and toversion fields for Agentix items.
-  type: internal
-- description: Updated Agentix items default marketplaces to platform only.
-  type: internal
-pr_number: 5180

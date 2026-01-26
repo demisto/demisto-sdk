@@ -198,7 +198,7 @@ class _StrictIntegration(BaseStrictModel):
     configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]
     image: Optional[str] = None
     description: str
-    provider: str = ""
+    provider: Optional[str] = None
     default_mapper_in: Optional[str] = Field(None, alias="defaultmapperin")
     default_mapper_out: Optional[str] = Field(None, alias="defaultmapperout")
     default_classifier: Optional[str] = Field(None, alias="defaultclassifier")

@@ -296,6 +296,7 @@ class Pack(TestSuiteBase):
                 "display": name,
                 "description": description or f"this is an integration {name}",
                 "category": "category",
+                "provider": name,
                 "script": {
                     "type": "python",
                     "subtype": "python3",

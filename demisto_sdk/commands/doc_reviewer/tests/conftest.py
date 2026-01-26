@@ -19,7 +19,10 @@ def valid_spelled_content_pack(pack):
             version=f"release-note-{i}",
             content="\n#### Scripts\n##### ScriptName\n- Added the feature.",
         )
-        pack.create_integration(name=f"integration-{i}", yml={"category": "category"})
+        pack.create_integration(
+            name=f"integration-{i}",
+            yml={"category": "category", "provider": f"integration-{i}"},
+        )
         pack.create_incident_field(name=f"incident-field-{i}", content={"test": "test"})
         pack.create_script(name=f"script-{i}", yml={"script": "script"})
         pack.create_layout(name=f"layout-{i}", content={"test": "test"})
@@ -46,6 +49,7 @@ def invalid_spelled_content_pack(pack):
                 "display": "invalidd",
                 "description": "invalidd",
                 "category": "category",
+                "provider": f"integration-{i}",
             },
         )
         misspelled_files.add(integration.yml.path)

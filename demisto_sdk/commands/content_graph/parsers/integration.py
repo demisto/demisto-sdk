@@ -45,6 +45,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         )
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
+        self.provider = self.yml_data.get("provider", "")
         self.is_beta = self.yml_data.get("beta", False)
         self.is_fetch = self.script_info.get("isfetch", False)
         self.is_fetch_assets = self.script_info.get("isfetchassets", False)

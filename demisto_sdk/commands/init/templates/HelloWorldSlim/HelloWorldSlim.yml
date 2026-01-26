@@ -2,6 +2,7 @@ category: Utilities
 commonfields:
   id: HelloWorldSlim
   version: -1
+provider: HelloWorldSlim
 configuration:
 - defaultvalue: https://soar.monstersofhack.com
   display: Server URL (e.g. https://soar.monstersofhack.com)

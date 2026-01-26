@@ -170,6 +170,9 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN168_is_mcp_integra
     REQUIRED_MARKETPLACE,
     IsMcpIntegrationValidMarketplaceValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN169_is_valid_provider_field import (
+    IsValidProviderFieldValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 MARKETPLACE_VALUES = [mp.value for mp in MarketplaceVersions]
@@ -6554,3 +6557,203 @@ def test_IsMcpIntegrationValidMarketplaceValidator_fix():
 
     # Check that the object was fixed correctly in its raw data
     assert invalid_content_item.data.get("marketplaces") == [REQUIRED_MARKETPLACE]
+
+
+## -------------------------  IsValidProviderFieldValidator IN169 Tests ------------------------- ##
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures, expected_msgs",
+    [
+        # Case 1: Valid integrations in platform packs with provider field
+        (
+            [
+                create_integration_object(
+                    paths=["provider"],
+                    values=["Twilio"],
+                    pack_info={"marketplaces": ["platform"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=["AWS"],
+                    pack_info={"marketplaces": ["platform", "xsoar"]},
+                ),
+            ],
+            0,
+            [],
+        ),
+        # Case 2: Invalid integrations in platform packs without provider field
+        (
+            [
+                create_integration_object(
+                    paths=["provider"],
+                    values=[""],
+                    pack_info={"marketplaces": ["platform"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=[""],
+                    pack_info={"marketplaces": ["platform"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=["  "],
+                    pack_info={"marketplaces": ["platform", "xsoar"]},
+                ),
+            ],
+            3,
+            [
+                "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
+                "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
+                "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
+            ],
+        ),
+        # Case 3: Integrations in non-platform packs without provider field (should pass)
+        (
+            [
+                create_integration_object(
+                    paths=["provider"],
+                    values=[""],
+                    pack_info={"marketplaces": ["xsoar"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=[""],
+                    pack_info={"marketplaces": ["marketplacev2"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=["  "],
+                    pack_info={"marketplaces": ["xsoar", "marketplacev2"]},
+                ),
+            ],
+            0,
+            [],
+        ),
+        # Case 4: Mixed - some in platform packs, some not
+        (
+            [
+                create_integration_object(
+                    paths=["provider"],
+                    values=["ValidProvider"],
+                    pack_info={"marketplaces": ["platform"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=[""],
+                    pack_info={"marketplaces": ["xsoar"]},
+                ),
+                create_integration_object(
+                    paths=["provider"],
+                    values=[""],
+                    pack_info={"marketplaces": ["platform"]},
+                ),
+            ],
+            1,
+            [
+                "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
+            ],
+        ),
+        # Case 5: Platform pack but integration has xsoar marketplace only (should pass)
+        (
+            [
+                create_integration_object(
+                    paths=["provider", "marketplaces"],
+                    values=["", ["xsoar"]],
+                    pack_info={"marketplaces": ["platform", "xsoar"]},
+                ),
+            ],
+            0,
+            [],
+        ),
+        # Case 6: Platform pack and integration has platform marketplace (should fail without provider)
+        (
+            [
+                create_integration_object(
+                    paths=["provider", "marketplaces"],
+                    values=["", ["platform"]],
+                    pack_info={"marketplaces": ["platform", "xsoar"]},
+                ),
+            ],
+            1,
+            [
+                "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
+            ],
+        ),
+        # Case 7: Platform pack and integration has no marketplace field (should fail without provider)
+        (
+            [
+                create_integration_object(
+                    paths=["provider", "marketplaces"],
+                    values=["", []],
+                    pack_info={"marketplaces": ["platform"]},
+                ),
+            ],
+            1,
+            [
+                "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
+            ],
+        ),
+        # Case 8: Platform pack, integration has platform marketplace with valid provider (should pass)
+        (
+            [
+                create_integration_object(
+                    paths=["provider", "marketplaces"],
+                    values=["ValidProvider", ["platform"]],
+                    pack_info={"marketplaces": ["platform", "xsoar"]},
+                ),
+            ],
+            0,
+            [],
+        ),
+        # Case 9: Platform pack, integration has both platform and xsoar marketplaces without provider (should fail)
+        (
+            [
+                create_integration_object(
+                    paths=["provider", "marketplaces"],
+                    values=["", ["platform", "xsoar"]],
+                    pack_info={"marketplaces": ["platform", "xsoar"]},
+                ),
+            ],
+            1,
+            [
+                "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name.",
+            ],
+        ),
+    ],
+)
+def test_IsValidProviderFieldValidator_obtain_invalid_content_items(
+    content_items: List[Integration],
+    expected_number_of_failures: int,
+    expected_msgs: List[str],
+):
+    """
+    Given
+    content_items iterables.
+        - Case 1: Two valid integrations in platform packs with provider field set to valid values.
+        - Case 2: Three invalid integrations in platform packs:
+            - One integration without provider field.
+            - One integration with empty provider field.
+            - One integration with whitespace-only provider field.
+        - Case 3: Three integrations in non-platform packs without provider field (should pass).
+        - Case 4: Mixed case with one valid platform integration, one non-platform integration without provider, and one platform integration without provider.
+    When
+    - Calling the IsValidProviderFieldValidator obtain_invalid_content_items function.
+    Then
+        - Make sure the right amount of integrations failed, and that the right error message is returned.
+        - Case 1: Shouldn't fail.
+        - Case 2: Should fail all three integrations.
+        - Case 3: Shouldn't fail (validation only applies to platform packs).
+        - Case 4: Should fail only the platform integration without provider.
+    """
+    with ChangeCWD(REPO.path):
+        results = IsValidProviderFieldValidator().obtain_invalid_content_items(
+            content_items
+        )
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [
+            result.message == expected_msg
+            for result, expected_msg in zip(results, expected_msgs)
+        ]
+    )

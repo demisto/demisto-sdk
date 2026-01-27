@@ -144,7 +144,7 @@ class PackMetadataParser:
         self.support: str = metadata.get("support", "")
         self.created = metadata.get("firstCreated") or metadata.get("created")
         if not self.created:
-            self.created = GitUtil().get_file_creation_date(file_path=path)
+            self.created = GitUtil(path).get_file_creation_date(file_path=path)
         self.updated: str = metadata.get("updated") or NOW
         self.legacy: bool = metadata.get(
             "legacy", metadata.get("partnerId") is None
@@ -161,7 +161,7 @@ class PackMetadataParser:
         self.current_version: str = metadata.get("currentVersion", "")
         self.version_info: str = ""
         try:
-            self.commit: str = GitUtil().get_current_commit_hash() or ""
+            self.commit: str = GitUtil(path).get_current_commit_hash() or ""
         except InvalidGitRepositoryError as e:
             logger.warning(
                 f"Failed to get commit hash for pack {self.name}. Error: {e}"
@@ -360,6 +360,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
             logger.debug(f"Skipping {content_item_path} - not a content item")
         except InvalidContentItemException:
             logger.error(f"{content_item_path} - invalid content item")
+            raise
+        except Exception as e:
+            logger.error(f"Failed to parse content item {content_item_path}: {e}")
             raise
 
     def parse_content_test_conf_folders(self):

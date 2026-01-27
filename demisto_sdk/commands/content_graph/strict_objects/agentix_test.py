@@ -16,13 +16,21 @@ class EvaluationOutcome(BaseStrictModel):
 
     @root_validator(pre=True)
     def validate_action_logic(cls, values):
-        actions = values.get("actions", [])
+        actions = values.get("actions")
         # Handle both 'action' and 'actions' as seen in AG109
         action = values.get("action")
         expected_error = values.get("expected_error")
+        evaluation_mode = values.get("evaluation_mode")
 
-        if expected_error and (actions or action):
-            raise ValueError("'expected_error' cannot be used with 'action' or 'actions'.")
+        # Error Handling rule: If expected_error is present, actions should be empty
+        # unless in sequence mode for recovery.
+        if expected_error and (actions or action) and evaluation_mode != "sequence":
+            raise ValueError(
+                "expected_error requires no actions unless using 'sequence' mode for recovery."
+            )
+
+        if not expected_error and actions is None and not action:
+            raise ValueError("Either 'expected_error' or 'actions' must be provided.")
 
         return values
 

@@ -1,0 +1,4 @@
+changes:
+- description: Added validation AG104 to ensure the agent color is a valid 6-digit RGB hex format.
+  type: feature
+pr_number: 5092

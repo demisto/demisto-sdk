@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -110,6 +111,12 @@ def pre_commit(
         "--log-file-path",
         help="Path to save log files onto.",
     ),
+    handling_private_repositories: Optional[bool] = typer.Option(
+        False,
+        "-hpr",
+        "--handling-private-repositories",
+        help="Handling private repos.",
+    ),
 ):
     """
     This command enhances the content development experience, by running a variety of checks and linters.
@@ -130,6 +137,9 @@ def pre_commit(
     )
 
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
+
+    if handling_private_repositories:
+        os.environ["DEMISTO_SDK_PRIVATE_REPO_MODE"] = "true"
 
     return_code = pre_commit_manager(
         input_files,

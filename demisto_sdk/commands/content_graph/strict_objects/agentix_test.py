@@ -17,12 +17,12 @@ class EvaluationOutcome(BaseStrictModel):
     @root_validator(pre=True)
     def validate_action_logic(cls, values):
         actions = values.get("actions", [])
+        # Handle both 'action' and 'actions' as seen in AG109
+        action = values.get("action")
         expected_error = values.get("expected_error")
 
-        # Error Handling rule: If expected_error is present, actions should be empty
-        # unless in sequence mode for recovery.
-        if expected_error and actions and values.get("evaluation_mode") != "sequence":
-            raise ValueError("expected_error requires no actions unless using 'sequence' mode for recovery.")
+        if expected_error and (actions or action):
+            raise ValueError("'expected_error' cannot be used with 'action' or 'actions'.")
 
         return values
 
@@ -32,6 +32,16 @@ class AgentixTestCase(BaseStrictModel):
     prompt: str = ""
     agent_id: str = Field("", alias="agent_id")
     expected_outcomes: Optional[List[EvaluationOutcome]] = None
+    any_of: Optional[List[EvaluationOutcome]] = None
+    sequence: Optional[List[EvaluationOutcome]] = None
+
+    @root_validator(pre=True)
+    def validate_modes(cls, values):
+        modes = {"any_of", "sequence", "expected_outcomes"}
+        present_modes = modes.intersection(values.keys())
+        if len(present_modes) > 1:
+            raise ValueError(f"Multiple evaluation modes present: {', '.join(present_modes)}. Only one is allowed.")
+        return values
 
     @validator("prompt")
     def prompt_must_end_with_period(cls, v):

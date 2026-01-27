@@ -62,9 +62,11 @@ class AgentixTestParser(YAMLContentItemParser, content_type=ContentType.AGENTIX_
                 self.add_dependency_by_id(
                     agent_id, ContentType.AGENTIX_AGENT, is_mandatory=True
                 )
-            for outcome in test.get("expected_outcomes", []):
-                for action in outcome.get("actions", []):
-                    if action_id := action.get("action_id"):
-                        self.add_dependency_by_id(
-                            action_id, ContentType.AGENTIX_ACTION, is_mandatory=True
-                        )
+            # Check all possible outcome keys
+            for mode in ["expected_outcomes", "any_of", "sequence"]:
+                for outcome in test.get(mode, []):
+                    for action in outcome.get("actions", []):
+                        if action_id := action.get("action_id"):
+                            self.add_dependency_by_id(
+                                action_id, ContentType.AGENTIX_ACTION, is_mandatory=True
+                            )

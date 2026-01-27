@@ -23,11 +23,11 @@ class IsValidAgentixTestFileValidator(BaseValidator[ContentTypes]):
     error_message = "Errors found in Agentix test file '{0}':\n{1}"
     related_field = "test_data"
     is_auto_fixable = False
-    expected_git_statuses = [
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-        GitStatuses.RENAMED,
-    ]
+    # expected_git_statuses = [
+    #     GitStatuses.ADDED,
+    #     GitStatuses.MODIFIED,
+    #     GitStatuses.RENAMED,
+    # ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

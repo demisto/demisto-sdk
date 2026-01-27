@@ -122,6 +122,7 @@ CASE_LAYOUTS_DIR = "CaseLayouts"
 CASE_FIELDS_DIR = "CaseFields"
 AGENTIX_ACTIONS_DIR = "AgentixActions"
 AGENTIX_AGENTS_DIR = "AgentixAgents"
+AGENTIX_TESTS_DIR = "AgentixTests"
 
 # NAMES OF ENTITIES
 
@@ -172,6 +173,7 @@ ASSETS_MODELING_RULE = "assetsmodelingrule"
 CASE_LAYOUT_RULE = "caselayoutrule"
 CASE_FIELD = "casefield"
 CASE_LAYOUT = "caselayout"
+AGENTIX_TEST = "agentixtest"
 
 # Marketplaces
 
@@ -281,6 +283,7 @@ class FileType(StrEnum):
     VERSION_CONFIG = "version_config"
     AGENTIX_AGENT = "agentixagent"
     AGENTIX_ACTION = "agentixaction"
+    AGENTIX_TEST = "agentixtest"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -323,6 +326,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CASE_LAYOUT: "Case Layouts",
     FileType.AGENTIX_AGENT: "Agents",
     FileType.AGENTIX_ACTION: "Actions",
+    FileType.AGENTIX_TEST: "Tests",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -432,6 +436,7 @@ CONTENT_ENTITIES_DIRS = [
     CASE_LAYOUTS_DIR,
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_TESTS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -1631,6 +1636,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.CASE_LAYOUT: "8.7.0",
     FileType.AGENTIX_ACTION: "8.12.0",
     FileType.AGENTIX_AGENT: "8.12.0",
+    FileType.AGENTIX_TEST: "8.12.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"
@@ -1940,6 +1946,7 @@ class ContentItems(Enum):
     CASE_LAYOUT_RULES = "caselayoutrule"
     CASE_FIELDS = "casefield"
     CASE_LAYOUTS = "caselayout"
+    AGENTIX_TESTS = "agentixtest"
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1971,6 +1978,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     CASE_LAYOUT_RULES_DIR,
     CASE_FIELDS_DIR,
     CASE_LAYOUTS_DIR,
+    AGENTIX_TESTS_DIR,
 }
 
 
@@ -2108,6 +2116,7 @@ FileTypeToIDSetKeys = {
     FileType.XSIAM_DASHBOARD: IdSetKeys.XSIAM_DASHBOARDS.value,
     FileType.XSIAM_REPORT: IdSetKeys.XSIAM_REPORTS.value,
     FileType.TRIGGER: IdSetKeys.TRIGGERS.value,
+    FileType.AGENTIX_TEST: "AgentixTests",
 }
 
 FileType_ALLOWED_TO_DELETE = {

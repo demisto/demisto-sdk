@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_TESTS_DIR,
     ASSETS_MODELING_RULES_DIR,
     CASE_FIELDS_DIR,
     CASE_LAYOUT_RULES_DIR,
@@ -20,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from TestSuite.agentix_action import AgentixAction
 from TestSuite.agentix_agent import AgentixAgent
+from TestSuite.agentix_test import AgentixTest
 from TestSuite.case_field import CaseField
 from TestSuite.case_layout import CaseLayout
 from TestSuite.case_layout_rule import CaseLayoutRule
@@ -124,6 +126,7 @@ class Pack(TestSuiteBase):
 
         self.agentix_actions: List[AgentixAction] = list()
         self.agentix_agents: List[AgentixAgent] = list()
+        self.agentix_tests: List[AgentixTest] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -269,6 +272,8 @@ class Pack(TestSuiteBase):
 
         self._agentix_agents_path = self._pack_path / AGENTIX_AGENTS_DIR
         self._agentix_agents_path.mkdir(exist_ok=True)
+
+        self._agentix_tests_path = self._agentix_actions_path
 
         super().__init__(self._pack_path)
 
@@ -863,3 +868,19 @@ class Pack(TestSuiteBase):
         )
         self.agentix_agents.append(agentix_agent)
         return agentix_agent
+
+    def create_agentix_test(
+        self,
+        name: Optional[str] = None,
+        content: Optional[dict] = None,
+        action_id: str = "test_action",
+    ) -> AgentixTest:
+        if name is None:
+            name = f"{action_id}_test"
+        action_dir = self._agentix_actions_path / action_id
+        action_dir.mkdir(exist_ok=True)
+        agentix_test = AgentixTest(action_dir, name, self._repo)
+        if content:
+            agentix_test.write_dict(content)
+        self.agentix_tests.append(agentix_test)
+        return agentix_test

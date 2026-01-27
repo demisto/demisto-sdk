@@ -3430,3 +3430,59 @@ class TestAgentixBaseParser:
             agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
         )
         assert parser.toversion == DEFAULT_CONTENT_ITEM_TO_VERSION
+
+    def test_agentix_test_parser(self, pack: Pack):
+        """
+        Given:
+            - A pack with an agentix test.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify all relationships of the content item are collected.
+            - Verify the generic content item properties are parsed correctly.
+        """
+        from demisto_sdk.commands.content_graph.objects.agentix_test import AgentixTest
+        from demisto_sdk.commands.content_graph.parsers.agentix_test import (
+            AgentixTestParser,
+        )
+
+        agentix_test_data = {
+            "tests": [
+                {
+                    "name": "Test 1",
+                    "prompt": "Run a test.",
+                    "agent_id": "test_agent",
+                    "expected_outcomes": [
+                        {
+                            "actions": [
+                                {"action_id": "test_action"}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+        agentix_test = pack.create_agentix_test(
+            "test_action_test", agentix_test_data, action_id="test_action"
+        )
+        agentix_test_path = Path(agentix_test.path)
+        parser = AgentixTestParser(
+            agentix_test_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        RelationshipsVerifier.run(
+            parser.relationships,
+            dependency_ids={
+                "test_agent": ContentType.AGENTIX_AGENT,
+                "test_action": ContentType.AGENTIX_ACTION,
+            },
+        )
+        model = AgentixTest.from_orm(parser)
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="test_action_test",
+            expected_name="test_action_test",
+            expected_path=agentix_test_path,
+            expected_content_type=ContentType.AGENTIX_TEST,
+            expected_fromversion="8.12.0",
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )

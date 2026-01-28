@@ -131,4 +131,5 @@ def format(
             add_tests=add_tests,
             id_set_path=str(id_set_path) if id_set_path else None,
             use_graph=graph,
+            interactive=True if assume_yes is None else False,
         )

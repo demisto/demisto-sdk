@@ -1,0 +1,4 @@
+changes:
+  - description: Agentix Agents system instructions are now defined in a separate md file.
+  type: internal
+pr_number: 5188

@@ -43,6 +43,6 @@ def reattach(
     """
     reattach_content_items(
         ids=input,
-        item_type=item_type.value if item_type else None,
+        item_type=item_type.value,
         insecure=insecure,
     )

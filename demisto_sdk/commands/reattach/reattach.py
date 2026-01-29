@@ -7,7 +7,7 @@ from demisto_sdk.commands.upload.uploader import ItemReattacher
 
 def reattach_content_items(
     ids: List[str],
-    item_type: Optional[str],
+    item_type: str,
     insecure: bool = False,
 ):
     verify = (not insecure) if insecure else None

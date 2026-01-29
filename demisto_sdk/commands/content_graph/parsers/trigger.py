@@ -25,6 +25,8 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
         self.connect_to_dependencies()
         self.automation_type = get_value(self.json_data, "automation_type", "")
         self.automation_id = get_value(self.json_data, "automation_id", "")
+        self.grouping_element = get_value(self.json_data, "grouping_element", "")
+        self.is_auto_enabled = get_value(self.json_data, "is_auto_enabled", False)
 
     @cached_property
     def field_mapping(self):

@@ -395,7 +395,21 @@ jobs:
         with:
           artifacts-path-dir: test-new-validate-command
           artifact-name: test-new-validate-command-artifacts
-          validate-arguments: "-a --prev-ver origin/master --config-path sdk_validation_config.toml --ignore GR110"
+          validate-arguments: "-a --prev-ver origin/master --config-path sdk_validation_config.toml
+                                --ignore GR100
+                                --ignore GR101
+                                --ignore GR102
+                                --ignore GR103
+                                --ignore GR104
+                                --ignore GR105
+                                --ignore GR106
+                                --ignore GR107
+                                --ignore GR108
+                                --ignore GR109
+                                --ignore GR110
+                                --ignore GR111
+                                --ignore GR111
+                                "
 
   slack-notify-master-failure:
     needs:

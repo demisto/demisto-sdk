@@ -185,7 +185,7 @@ def register_commands(_args: list[str] = []):  # noqa: C901
 
         app.command(
             name="detach",
-            help="Detach content items from Cortex XSOAR or Cortex XSIAM.",
+            help="Detach content items.",
         )(detach)
 
     if command_name == "reattach" or register_all:
@@ -193,7 +193,7 @@ def register_commands(_args: list[str] = []):  # noqa: C901
 
         app.command(
             name="reattach",
-            help="Reattach content items to Cortex XSOAR or Cortex XSIAM.",
+            help="Reattach content items.",
         )(reattach)
 
     if command_name == "run" or register_all:

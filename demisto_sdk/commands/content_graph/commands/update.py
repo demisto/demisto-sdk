@@ -134,9 +134,7 @@ def update_content_graph(
             builder.init_database()
             # Import from remote if local failed
             # If the download fails and we are in external repo, we should raise an error
-            success_remote = content_graph_interface.import_graph(
-                download=True, fail_on_error=is_external_repo
-            )
+            success_remote = content_graph_interface.import_graph(download=True)
             if not success_remote and not is_external_repo:
                 logger.warning(
                     "Importing graph from bucket failed. Creating from scratch"

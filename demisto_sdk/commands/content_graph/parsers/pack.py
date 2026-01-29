@@ -190,6 +190,8 @@ class PackMetadataParser:
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
         self.supportedModules: Optional[List[str]] = metadata.get("supportedModules")
+        self.source: Optional[str] = metadata.get("source", "")
+        self.managed: Optional[bool] = metadata.get("managed", False)
 
     @property
     def url(self) -> str:

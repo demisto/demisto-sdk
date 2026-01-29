@@ -120,6 +120,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_mappable: bool = False
     long_running: bool = False
     category: str
+    internal: bool = Field(False)
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
     is_cloud_provider_integration: bool = Field(
@@ -179,6 +180,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "is_fetch_events": True,
                     "is_fetch_assets": True,
                     "is_beta": True,
+                    "internal": True,
                 }
             )
         )

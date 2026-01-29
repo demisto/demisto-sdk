@@ -62,6 +62,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_cloud_provider_integration = self.yml_data.get(
             "isCloudProviderIntegration", False
         )
+        self.internal: bool = self.yml_data.get("internal", False)
 
         self.commands: List[CommandParser] = []
         self.connect_to_commands()

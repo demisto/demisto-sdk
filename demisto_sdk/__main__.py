@@ -185,7 +185,7 @@ def register_commands(_args: list[str] = []):  # noqa: C901
 
         app.command(
             name="run",
-            help="Run integration or script commands in the Playground of a remote Cortex XSOAR/XSIAM instance and pretty print the output.",
+            help="Run integration or script commands in the Playground of a remote Cortex XSOAR/XSIAM instance and pretty print the output test build.",
         )(run)
 
     if command_name == "run-playbook" or register_all:

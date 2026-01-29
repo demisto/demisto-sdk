@@ -408,7 +408,7 @@ jobs:
                                 --ignore GR109
                                 --ignore GR110
                                 --ignore GR111
-                                --ignore GR111
+                                --ignore GR112
                                 "
 
   slack-notify-master-failure:

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 from pydantic import Field
 
@@ -11,6 +12,8 @@ from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
 class Trigger(ContentItemXSIAM, content_type=ContentType.TRIGGER):  # type: ignore[call-arg]
     automation_type: str = Field(default=None)
     automation_id: str = Field(default=None)
+    grouping_element: Optional[str] = Field(None)
+    is_auto_enabled: bool = Field(False)
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

@@ -1,0 +1,4 @@
+changes:
+- description: Added support for new schema fields (internal, isResponse, requiresIntervention, grouping_element, is_auto_enabled, source, managed)
+  type: internal
+pr_number: 5224

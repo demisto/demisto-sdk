@@ -59,7 +59,13 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
     @cached_property
     def field_mapping(self):
         super().field_mapping.update(
-            {"object_id": "id", "tasks": "tasks", "quiet": "quiet", "tests": "tests"}
+            {
+                "object_id": "id",
+                "tasks": "tasks",
+                "quiet": "quiet",
+                "tests": "tests",
+                "internal": "internal",
+            }
         )
         return super().field_mapping
 
@@ -87,6 +93,10 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
                 target_type=ContentType.PLAYBOOK,
                 mandatorily=is_mandatory,
             )
+
+    @property
+    def internal(self) -> bool:
+        return get_value(self.yml_data, self.field_mapping.get("internal", ""), False)
 
     @property
     def quiet(self) -> bool:

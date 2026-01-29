@@ -135,6 +135,8 @@ mapping:
     type: bool
   isInternal:
     type: bool
+  internal:
+    type: bool # Hidden from UI and API
   model:
     type: str
   userprompt:

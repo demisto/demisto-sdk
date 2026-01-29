@@ -32,6 +32,7 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
         self.few_shots: Optional[str] = self.yml_data.get("fewshots", "")
         self.prompt_config: Dict[str, Any] = self.yml_data.get("promptConfig", {})
         self.is_internal: bool = self.yml_data.get("isInternal", False)
+        self.internal: bool = self.yml_data.get("internal", False)
 
     @property
     def strict_object(self):

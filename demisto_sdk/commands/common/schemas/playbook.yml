@@ -40,6 +40,8 @@ mapping:
     type: bool
   issilent:
     type: bool
+  internal:
+    type: bool # Hidden from UI and API
   starttaskid:
     type: str
     required: true
@@ -289,6 +291,10 @@ mapping:
                 type: text
               id:xsoar_on_prem:
                 type: text
+              isResponse: # Is the task possible response
+                type: bool
+              requiresIntervention:
+                type: bool
           note:
             type: bool
           nexttasks:

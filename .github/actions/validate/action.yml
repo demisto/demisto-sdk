@@ -18,6 +18,12 @@ inputs:
     type: string
     description: "The validate command arguments to run."
 
+  use-last-upload-commit:
+    required: false
+    type: boolean
+    default: false
+    description: "If true, use the last upload commit from the bucket instead of origin/master for --prev-ver"
+
 
 runs:
   using: 'composite'
@@ -37,6 +43,16 @@ runs:
           repository: demisto/content
           path: content
 
+      - name: Get last upload commit
+        id: get-last-upload-commit
+        if: ${{ inputs.use-last-upload-commit == 'true' }}
+        run: |
+          source $(poetry env info --path)/bin/activate
+          LAST_UPLOAD_COMMIT=$(python -c "from demisto_sdk.commands.common.tools import get_latest_upload_flow_commit_hash; print(get_latest_upload_flow_commit_hash())")
+          echo "last_upload_commit=$LAST_UPLOAD_COMMIT" >> $GITHUB_OUTPUT
+          echo "Last upload commit: $LAST_UPLOAD_COMMIT"
+        shell: bash
+
       - name: Run Validate All
         run: |
           source $(poetry env info --path)/bin/activate
@@ -44,7 +60,16 @@ runs:
           cd content
           git status
           mkdir -p ${{ inputs.artifacts-path-dir }}
-          demisto-sdk validate ${{inputs.validate-arguments}}
+
+          VALIDATE_ARGS="${{ inputs.validate-arguments }}"
+
+          # If use-last-upload-commit is true, replace origin/master with the last upload commit
+          if [ "${{ inputs.use-last-upload-commit }}" == "true" ] && [ -n "${{ steps.get-last-upload-commit.outputs.last_upload_commit }}" ]; then
+            VALIDATE_ARGS=$(echo "$VALIDATE_ARGS" | sed "s|origin/master|${{ steps.get-last-upload-commit.outputs.last_upload_commit }}|g")
+            echo "Using last upload commit for validation: ${{ steps.get-last-upload-commit.outputs.last_upload_commit }}"
+          fi
+
+          demisto-sdk validate $VALIDATE_ARGS
         shell: bash
 
       - name: Upload artifacts

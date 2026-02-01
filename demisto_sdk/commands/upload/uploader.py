@@ -543,10 +543,10 @@ class ItemDetacher:
         self.marketplace = marketplace
 
     DETACH_ITEM_TYPE_TO_ENDPOINT: dict = {
-        "IncidentTypes": "/incidenttype/detach/:id/",
-        "Layouts": "/layout/:id/detach/",
-        "Playbooks": "/playbook/detach/:id/",
-        "Scripts": "/automation/detach/:id/",
+        "IncidentTypes": "/incidenttype/detach/:id",
+        "Layouts": "/layout/:id/detach",
+        "Playbooks": "/playbook/detach/:id",
+        "Scripts": "/automation/detach/:id",
     }
 
     VALID_FILES_FOR_DETACH = ["Playbooks", "Scripts", "IncidentTypes", "Layouts"]

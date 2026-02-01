@@ -2327,3 +2327,25 @@ MIRRORING_COMMANDS: list[str] = [
     "get-modified-remote-data",
     "update-remote-system",
 ]
+
+
+class DetachableItemType(StrEnum):
+    INCIDENT_TYPES = "IncidentTypes"
+    LAYOUTS = "Layouts"
+    PLAYBOOKS = "Playbooks"
+    SCRIPTS = "Scripts"
+
+
+DETACH_ITEM_TYPE_TO_ENDPOINT: dict[str, str] = {
+    DetachableItemType.INCIDENT_TYPES.value: "/incidenttype/detach/:id",
+    DetachableItemType.LAYOUTS.value: "/layout/:id/detach",
+    DetachableItemType.PLAYBOOKS.value: "/playbook/detach/:id",
+    DetachableItemType.SCRIPTS.value: "/automation/detach/:id",
+}
+
+REATTACH_ITEM_TYPE_TO_ENDPOINT: dict[str, str] = {
+    DetachableItemType.INCIDENT_TYPES.value: "/incidenttype/attach/:id",
+    DetachableItemType.LAYOUTS.value: "/layout/:id/attach",
+    DetachableItemType.PLAYBOOKS.value: "/playbook/attach/:id",
+    DetachableItemType.SCRIPTS.value: "/automation/attach/:id",
+}

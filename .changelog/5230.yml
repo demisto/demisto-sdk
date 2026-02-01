@@ -1,0 +1,6 @@
+changes:
+- description: Added `--create-graph-from-scratch` flag to the **validate** command to force creating the content graph from scratch instead of downloading it from the bucket.
+  type: feature
+- description: Changed PB130 and PB131 validations from errors to warnings.
+  type: internal
+pr_number: 5230

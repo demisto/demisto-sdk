@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.upload.tools import parse_upload_response
 
 json = JSON_Handler()
 
@@ -46,7 +47,10 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
             with open(file_path, "w") as f:
                 # Wrapping the dictionary with a list, as that's what the server expects
                 json.dump([self.prepare_for_upload(marketplace=marketplace)], f)
-            client.import_reputation_handler(str(file_path))
+            response = client.import_reputation_handler(str(file_path))
+            parse_upload_response(
+                response, path=self.path, content_type=self.content_type
+            )  # raises on error
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

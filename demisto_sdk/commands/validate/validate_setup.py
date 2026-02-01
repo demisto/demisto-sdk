@@ -160,6 +160,11 @@ def validate(
     skip_new_validate: bool = typer.Option(
         False, help="Whether to skip the new validate flow."
     ),
+    create_graph_from_scratch: bool = typer.Option(
+        False,
+        "--create-graph-from-scratch",
+        help="If set, creates the content graph from scratch instead of downloading it from the bucket.",
+    ),
     ignore: list[str] = typer.Option(
         None, help="An error code to not run. Can be repeated."
     ),
@@ -343,5 +348,6 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         allow_autofix=kwargs["fix"],
         ignore_support_level=kwargs["ignore_support_level"],
         ignore=kwargs["ignore"],
+        create_graph_from_scratch=kwargs.get("create_graph_from_scratch", False),
     )
     return validator_v2.run_validations()

@@ -57,7 +57,9 @@ class ValidateManager:
 
         # Set private content path on BaseValidator for graph building
         if self.initializer.private_content_path:
-            BaseValidator.set_private_content_path(self.initializer.private_content_path)
+            BaseValidator.set_private_content_path(
+                self.initializer.private_content_path
+            )
 
     def run_validations(self) -> int:
         """
@@ -70,7 +72,9 @@ class ValidateManager:
         logger.info("Starting validate items.")
         try:
             for validator in self.validators:
-                logger.debug(f"Starting execution for {validator.error_code} validator.")
+                logger.debug(
+                    f"Starting execution for {validator.error_code} validator."
+                )
                 if filtered_content_objects_for_validator := list(
                     filter(
                         lambda content_object: validator.should_run(

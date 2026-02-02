@@ -147,7 +147,9 @@ class PackMetadataParser:
             try:
                 self.created = GitUtil(path).get_file_creation_date(file_path=path)
             except InvalidGitRepositoryError:
-                logger.debug(f"Could not find git repository for {path}, using current time as creation time.")
+                logger.debug(
+                    f"Could not find git repository for {path}, using current time as creation time."
+                )
                 self.created = NOW
         self.updated: str = metadata.get("updated") or NOW
         self.legacy: bool = metadata.get(

@@ -144,7 +144,11 @@ class PackMetadataParser:
         self.support: str = metadata.get("support", "")
         self.created = metadata.get("firstCreated") or metadata.get("created")
         if not self.created:
-            self.created = GitUtil(path).get_file_creation_date(file_path=path)
+            try:
+                self.created = GitUtil(path).get_file_creation_date(file_path=path)
+            except InvalidGitRepositoryError:
+                logger.debug(f"Could not find git repository for {path}, using current time as creation time.")
+                self.created = NOW
         self.updated: str = metadata.get("updated") or NOW
         self.legacy: bool = metadata.get(
             "legacy", metadata.get("partnerId") is None

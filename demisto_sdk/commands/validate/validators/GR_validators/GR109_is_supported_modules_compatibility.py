@@ -158,13 +158,22 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         """
         for rel in item.uses:
             command = rel.content_item_to
-            # At this point, we assume the mismatch is already established
-            if item.object_id not in commands_with_missing_modules_by_content_item:
-                commands_with_missing_modules_by_content_item[item.object_id] = []
-            # Add the command ID to the list
-            commands_with_missing_modules_by_content_item[item.object_id].append(
-                command.object_id
-            )
+            # Get the command's supported modules from the relationship
+            command_supported_modules = rel.supportedModules or []
+            
+            # Only add if there's an actual mismatch:
+            # - Command has specific modules AND
+            # - Content item supports a module that the command doesn't support
+            if command_supported_modules and any(
+                module not in command_supported_modules
+                for module in (item.supportedModules or [])
+            ):
+                if item.object_id not in commands_with_missing_modules_by_content_item:
+                    commands_with_missing_modules_by_content_item[item.object_id] = []
+                # Add the command ID to the list
+                commands_with_missing_modules_by_content_item[item.object_id].append(
+                    command.object_id
+                )
 
     def format_error_messages(self, missing_modules_dict):
         """Format error messages for missing modules.

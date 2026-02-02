@@ -43,7 +43,7 @@ def should_update_graph(
             logger.debug(
                 "Failed to get changed packs from git. Setting to update graph."
             )
-            # If we can't get the changed packs, it could mean the followiing:
+            # If we can't get the changed packs, it could mean the following:
             # 1. We are not fetched from a git repository and unable to fetch
             # 2. The current graph that is running is not in the same repo as we run now
             # 3. The graph which is running is a graph that was created from unit-testing

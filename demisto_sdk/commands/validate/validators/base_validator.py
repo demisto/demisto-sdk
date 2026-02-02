@@ -185,7 +185,9 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
             # If private content path is set, sync private content before building graph
             if BaseValidator.private_content_path:
-                logger.info(f"Private content path detected: {BaseValidator.private_content_path}")
+                logger.info(
+                    f"Private content path detected: {BaseValidator.private_content_path}"
+                )
                 BaseValidator.private_content_manager = PrivateContentManager(
                     private_content_path=BaseValidator.private_content_path,
                     content_path=CONTENT_PATH,

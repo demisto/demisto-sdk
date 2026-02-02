@@ -51,6 +51,8 @@ mapping:
         required: false
   requiresuserapproval:
     type: bool
+  internal:
+    type: bool # Hidden from UI and API
   fromversion:
     type: str
   toversion:

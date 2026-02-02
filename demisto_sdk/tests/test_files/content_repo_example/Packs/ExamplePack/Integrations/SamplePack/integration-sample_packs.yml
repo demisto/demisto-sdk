@@ -1,5 +1,6 @@
 fromversion: "6.0.0"
 category: "test"
+provider: "Sample Integration"
 name: name
 name_x2: name_x2
 commonfields:

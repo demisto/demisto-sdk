@@ -1,0 +1,4 @@
+changes:
+- description: Modified the ***validate*** command to enforce that the 'provider' field in integration YAML files must exist and be non-empty for integrations supported in the platform marketplace.
+  type: feature
+pr_number: 5203

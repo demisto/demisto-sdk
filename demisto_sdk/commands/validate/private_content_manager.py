@@ -12,8 +12,6 @@ from __future__ import annotations
 import atexit
 import shutil
 import signal
-
-# from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Set
 
@@ -21,7 +19,7 @@ from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.logger import logger
 
 if TYPE_CHECKING:
-    from git import Repo
+    from demisto_sdk.commands.common.git_util import GitUtil
 
 
 class PrivateContentManager:
@@ -66,17 +64,17 @@ class PrivateContentManager:
         self.content_path = content_path
         self.copied_paths: Set[Path] = set()
         self.staged_files: List[str] = []
-        self._repo: Optional["Repo"] = None
+        self._git_util: Optional["GitUtil"] = None
         self._cleanup_done = False
 
     @property
-    def repo(self) -> "Repo":
-        """Lazy-load the Git repository."""
-        if self._repo is None:
-            from git import Repo
+    def git_util(self) -> "GitUtil":
+        """Lazy-load the GitUtil."""
+        if self._git_util is None:
+            from demisto_sdk.commands.common.git_util import GitUtil
 
-            self._repo = Repo(self.content_path)
-        return self._repo
+            self._git_util = GitUtil(self.content_path)
+        return self._git_util
 
     def _get_private_packs_path(self) -> Path:
         """Get the Packs directory from the private content path."""
@@ -87,19 +85,19 @@ class PrivateContentManager:
         return self.content_path / PACKS_DIR
 
     def _should_ignore_path(self, path: Path) -> bool:
-            """
-            Check if the file/folder should be ignored based on the pattern:
-            Packs/**/ModelingRules/**/**/*_testdata.json
-            """
-            return (
-                path.suffix == ".json" and 
-                path.name.endswith("_testdata.json") and 
-                "ModelingRules" in path.parts
-            )
+        """
+        Check if the file/folder should be ignored based on the pattern:
+        Packs/**/ModelingRules/**/**/*_testdata.json
+        """
+        return (
+            path.suffix == ".json"
+            and path.name.endswith("_testdata.json")
+            and "ModelingRules" in path.parts
+        )
 
     def copy_private_packs(self) -> Set[Path]:
         """
-        Entry point to copy private packs. 
+        Entry point to copy private packs.
         Tries to copy the highest level of 'new' content found.
         """
         private_packs_path = self._get_private_packs_path()
@@ -136,13 +134,18 @@ class PrivateContentManager:
                     shutil.copytree(
                         source,
                         destination,
-                        ignore=shutil.ignore_patterns('*_testdata.json') if "ModelingRules" in source.parts or source.name == "ModelingRules" else None
+                        ignore=shutil.ignore_patterns("*_testdata.json")
+                        if "ModelingRules" in source.parts
+                        or source.name == "ModelingRules"
+                        else None,
                     )
                 else:
                     shutil.copy2(source, destination)
 
                 self.copied_paths.add(destination)
-                logger.debug(f"Copied new content: {destination.relative_to(self.content_path)}")
+                logger.debug(
+                    f"Copied new content: {destination.relative_to(self.content_path)}"
+                )
             except Exception as e:
                 logger.error(f"Failed to copy '{source.name}' to '{destination}': {e}")
                 raise
@@ -177,7 +180,7 @@ class PrivateContentManager:
                 # Stage individual file
                 try:
                     relative_path = copied_path.relative_to(self.content_path)
-                    self.repo.git.add(str(relative_path))
+                    self.git_util.repo.git.add(str(relative_path))
                     staged_files.append(str(relative_path))
                 except Exception as e:
                     logger.error(f"Failed to stage file '{copied_path}': {e}")
@@ -187,7 +190,7 @@ class PrivateContentManager:
                     if file_path.is_file():
                         try:
                             relative_path = file_path.relative_to(self.content_path)
-                            self.repo.git.add(str(relative_path))
+                            self.git_util.repo.git.add(str(relative_path))
                             staged_files.append(str(relative_path))
                         except Exception as e:
                             logger.error(f"Failed to stage file '{file_path}': {e}")
@@ -227,7 +230,7 @@ class PrivateContentManager:
             # We need to unstage only the specific files we added
 
             try:
-                self.repo.git.reset("HEAD", "--", *self.staged_files)
+                self.git_util.repo.git.reset("HEAD", "--", *self.staged_files)
             except Exception as e:
                 # File might already be unstaged or removed
                 logger.debug(f"Could not unstage files: {e}")
@@ -345,12 +348,9 @@ class PrivateContentManager:
             self._restore_signal_handlers()
             raise
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Exit the context manager, performing cleanup."""
         try:
             self.cleanup()
         finally:
             self._restore_signal_handlers()
-
-        # Don't suppress exceptions
-        return False

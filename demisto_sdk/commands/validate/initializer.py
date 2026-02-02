@@ -740,6 +740,12 @@ class Initializer:
                         raise_on_exception=True,
                     )
                     if obj:
+                        if (
+                            file_path in self.private_content_files
+                            and self.private_content_path
+                        ):
+                            obj.path_to_read = Path(self.private_content_path) / file_path
+
                         obj.git_sha = current_git_sha
                         obj.git_status = git_status
                         # Check if the file exists

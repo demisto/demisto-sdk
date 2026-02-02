@@ -86,6 +86,17 @@ class PrivateContentManager:
         """Get the Packs directory from the main content path."""
         return self.content_path / PACKS_DIR
 
+    def _should_ignore_path(self, path: Path) -> bool:
+            """
+            Check if the file/folder should be ignored based on the pattern:
+            Packs/**/ModelingRules/**/**/*_testdata.json
+            """
+            return (
+                path.suffix == ".json" and 
+                path.name.endswith("_testdata.json") and 
+                "ModelingRules" in path.parts
+            )
+
     def copy_private_packs(self) -> Set[Path]:
         """
         Entry point to copy private packs. 
@@ -114,11 +125,19 @@ class PrivateContentManager:
         Recursively finds the first level that does not exist in the destination.
         Copies that level entirely and stops descending.
         """
+        if self._should_ignore_path(source):
+            logger.debug(f"Skipping ignored private file: {source.name}")
+            return
+
         if not destination.exists():
-            # Found the 'first dir level' that doesn't exist. Copy it as a unit.
+            # Found the 'first level' that doesn't exist.
             try:
                 if source.is_dir():
-                    shutil.copytree(source, destination)
+                    shutil.copytree(
+                        source,
+                        destination,
+                        ignore=shutil.ignore_patterns('*_testdata.json') if "ModelingRules" in source.parts or source.name == "ModelingRules" else None
+                    )
                 else:
                     shutil.copy2(source, destination)
 
@@ -127,12 +146,14 @@ class PrivateContentManager:
             except Exception as e:
                 logger.error(f"Failed to copy '{source.name}' to '{destination}': {e}")
                 raise
+
         elif source.is_dir():
             # If the folder exists, we must go deeper to find specific missing items
             for item in source.iterdir():
                 self._copy_first_missing_level(item, destination / item.name)
+
         else:
-            # File exists in destination and source; skip it
+            # File exists in both destination and source; skip it
             logger.debug(f"Skipping existing file: {destination.name}")
 
     def stage_copied_files(self) -> List[str]:
@@ -204,12 +225,12 @@ class PrivateContentManager:
         try:
             # Use git reset to unstage files without affecting working directory
             # We need to unstage only the specific files we added
-            for file_path in self.staged_files:
-                try:
-                    self.repo.git.reset("HEAD", "--", file_path)
-                except Exception as e:
-                    # File might already be unstaged or removed
-                    logger.debug(f"Could not unstage '{file_path}': {e}")
+
+            try:
+                self.repo.git.reset("HEAD", "--", *self.staged_files)
+            except Exception as e:
+                # File might already be unstaged or removed
+                logger.debug(f"Could not unstage files: {e}")
 
             logger.debug(f"Unstaged {len(self.staged_files)} file(s)")
         except Exception as e:

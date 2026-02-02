@@ -199,6 +199,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
 class BaseContent(BaseNode):
     field_mapping: dict = Field({}, exclude=True)
     path: Path
+    path_to_read: Optional[Path] = Field(None, exclude=True, repr=False)
     git_status: Optional[GitStatuses]
     git_sha: Optional[str]
     old_base_content_object: Optional["BaseContent"] = None

@@ -121,6 +121,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     long_running: bool = False
     category: str
     internal: bool = Field(False)
+    provider: Optional[str] = None
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
     is_cloud_provider_integration: bool = Field(

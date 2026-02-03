@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from abc import ABC
 from typing import Iterable, List, Union
-
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.base_content import BaseNode
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -102,8 +103,10 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         Returns:
             dict: A dictionary mapping dependency IDs to lists of missing modules
         """
+        logger.info(f"[GR109] Checking module compatibility for content item: {content_item.object_id}")
         missing_modules_by_dependency: dict[str, list[str]] = {}
         for dependency in content_item.uses:
+            logger.info(f"[GR109] Checking dependency: {dependency.content_item_to.object_id} for content item: {content_item.object_id}")
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module
@@ -112,10 +115,12 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 if module not in dependency.content_item_to.supportedModules
             ]
             if missing_modules:
+                logger.info(f"[GR109] Found missing modules for dependency {dependency.content_item_to.object_id}: {missing_modules}")
                 missing_modules_by_dependency[dependency.content_item_to.object_id] = (
                     missing_modules
                 )
 
+        logger.info(f"[GR109] Completed dependency check for {content_item.object_id}. Missing modules by dependency: {missing_modules_by_dependency}")
         return missing_modules_by_dependency
 
     def get_missing_modules_by_command(self, content_item) -> dict[str, list[str]]:
@@ -127,9 +132,11 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         Returns:
             dict: A dictionary mapping the content item ID to lists of missing modules per command
         """
+        logger.info(f"[GR109] Checking command module compatibility for content item: {content_item.object_id}")
         missing_modules_by_item: dict[str, list[str]] = {}
 
         for command in content_item.commands:
+            logger.info(f"[GR109] Checking command: {command.object_id} for content item: {content_item.object_id}")
             # Get modules supported by the command but not by the content item
             missing_modules = [
                 module
@@ -138,10 +145,12 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             ]
 
             if missing_modules:
+                logger.info(f"[GR109] Found missing modules for command {command.object_id}: {missing_modules}")
                 if content_item.object_id not in missing_modules_by_item:
                     missing_modules_by_item[content_item.object_id] = []
                 missing_modules_by_item[content_item.object_id].extend(missing_modules)
 
+        logger.info(f"[GR109] Completed command check for {content_item.object_id}. Missing modules by item: {missing_modules_by_item}")
         return missing_modules_by_item
 
     def get_commands_with_missing_modules_by_content_item(
@@ -156,24 +165,19 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         Returns:
             dict: A dictionary mapping content item IDs to lists of command IDs
         """
+        logger.info(f"[GR109] Getting commands with missing modules for content item: {item.object_id}")
         for rel in item.uses:
             command = rel.content_item_to
-            # Get the command's supported modules from the relationship
-            command_supported_modules = rel.supportedModules or []
-            
-            # Only add if there's an actual mismatch:
-            # - Command has specific modules AND
-            # - Content item supports a module that the command doesn't support
-            if command_supported_modules and any(
-                module not in command_supported_modules
-                for module in (item.supportedModules or [])
-            ):
-                if item.object_id not in commands_with_missing_modules_by_content_item:
-                    commands_with_missing_modules_by_content_item[item.object_id] = []
-                # Add the command ID to the list
-                commands_with_missing_modules_by_content_item[item.object_id].append(
-                    command.object_id
-                )
+            logger.info(f"[GR109] Checking command {command.object_id} for {item.object_id}")
+            # At this point, we assume the mismatch is already established
+            if item.object_id not in commands_with_missing_modules_by_content_item:
+                logger.info(f"[GR109] Missing modules for {item.object_id}: {command.supportedModules}")
+                commands_with_missing_modules_by_content_item[item.object_id] = []
+            # Add the command ID to the list
+            commands_with_missing_modules_by_content_item[item.object_id].append(
+                command.object_id
+            )
+        logger.info(f"[GR109] Completed commands check for {item.object_id}. Commands with missing modules: {commands_with_missing_modules_by_content_item}")
 
     def format_error_messages(self, missing_modules_dict):
         """Format error messages for missing modules.
@@ -208,34 +212,44 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
+        logger.info(f"[GR109] Starting graph-based validation. validate_all_files={validate_all_files}")
         target_content_item_ids = (
             []
             if validate_all_files
             else [content_item.object_id for content_item in content_items]
         )
+        logger.info(f"[GR109] Target content item IDs: {target_content_item_ids}")
 
+        logger.info("[GR109] Querying graph for content items with module mismatch dependencies")
         mismatched_dependencies = (
             self.graph.find_content_items_with_module_mismatch_dependencies(
                 target_content_item_ids
             )
         )
+        logger.info(f"[GR109] Found {len(mismatched_dependencies)} items with mismatched dependencies")
 
+        logger.info("[GR109] Querying graph for content items with module mismatch commands")
         mismatched_commands = (
             self.graph.find_content_items_with_module_mismatch_commands(
                 target_content_item_ids
             )
         )
+        logger.info(f"[GR109] Found {len(mismatched_commands)} items with mismatched commands")
 
+        logger.info("[GR109] Querying graph for content items with module mismatch content items")
         mismatched_content_items = (
             self.graph.find_content_items_with_module_mismatch_content_items(
                 target_content_item_ids
             )
         )
+        logger.info(f"[GR109] Found {len(mismatched_content_items)} items with mismatched content items")
 
         results: List[ValidationResult] = []
 
         # Process items with mismatched dependencies
+        logger.info("[GR109] Processing items with mismatched dependencies")
         for invalid_item in mismatched_dependencies:
+            logger.info(f"[GR109] Processing invalid item with mismatched dependency: {invalid_item.object_id}")
             missing_modules_by_dependency = self.get_missing_modules_by_dependency(
                 invalid_item
             )
@@ -243,6 +257,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 formatted_messages = self.format_error_messages(
                     missing_modules_by_dependency
                 )
+                logger.info(f"[GR109] Adding validation result for {invalid_item.object_id}: {formatted_messages}")
                 results.append(
                     ValidationResult(
                         validator=self,
@@ -254,10 +269,13 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 )
 
         # Process items with mismatched commands
+        logger.info("[GR109] Processing items with mismatched commands")
         for invalid_item in mismatched_commands:
+            logger.info(f"[GR109] Processing invalid item with mismatched command: {invalid_item.object_id}")
             missing_modules_by_item = self.get_missing_modules_by_command(invalid_item)
             if missing_modules_by_item:
                 formatted_messages = self.format_error_messages(missing_modules_by_item)
+                logger.info(f"[GR109] Adding validation result for {invalid_item.object_id}: {formatted_messages}")
                 results.append(
                     ValidationResult(
                         validator=self,
@@ -269,7 +287,9 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 )
 
         # Process items with mismatched content_items
+        logger.info("[GR109] Processing items with mismatched content items")
         for invalid_item in mismatched_content_items:
+            logger.info(f"[GR109] Processing invalid item with mismatched content item: {invalid_item.object_id}")
             commands_with_missing_modules: dict[str, list[str]] = {}
             self.get_commands_with_missing_modules_by_content_item(
                 invalid_item, commands_with_missing_modules
@@ -278,6 +298,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 formatted_message = self.format_commands_error_message(
                     commands_with_missing_modules
                 )
+                logger.info(f"[GR109] Adding validation result for {invalid_item.object_id}: {formatted_message}")
                 results.append(
                     ValidationResult(
                         validator=self,
@@ -285,4 +306,5 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                         content_object=invalid_item,
                     )
                 )
+        logger.info(f"[GR109] Validation complete. Total validation results: {len(results)}")
         return results

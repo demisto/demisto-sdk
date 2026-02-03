@@ -163,6 +163,8 @@ mapping:
     type: bool
   internal:
     type: bool # Hidden from UI and API
+  source:
+    type: str
   videos:
     type: seq
     sequence:

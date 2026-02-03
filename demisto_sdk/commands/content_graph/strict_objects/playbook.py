@@ -275,6 +275,7 @@ class StrictPlaybook(BaseStrictModel):
     description: str
     hidden: Optional[bool] = None
     internal: Optional[bool] = None
+    source: Optional[str] = None
     deprecated: Optional[bool] = None
     start_task_id: str = Field(alias="starttaskid")
     view: str

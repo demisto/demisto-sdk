@@ -42,6 +42,8 @@ mapping:
     type: bool
   internal:
     type: bool # Hidden from UI and API
+  source:
+    type: str
   starttaskid:
     type: str
     required: true

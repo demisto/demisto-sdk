@@ -181,6 +181,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     version: Optional[int] = 0
     tasks: Dict[str, TaskConfig] = Field([], exclude=True)
     internal: bool = Field(False)
+    source: str = Field("")
     quiet: bool = Field(False)
     tags: List[str] = Field([])
     tests: List[str] = Field([])

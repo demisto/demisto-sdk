@@ -181,7 +181,6 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "is_fetch_events": True,
                     "is_fetch_assets": True,
                     "is_beta": True,
-                    "internal": True,
                 }
             )
         )

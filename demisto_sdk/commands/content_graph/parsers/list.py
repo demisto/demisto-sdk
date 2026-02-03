@@ -22,6 +22,7 @@ class ListParser(JSONContentItemParser, content_type=ContentType.LIST):
         )
         self.type = self.json_data.get("type")
         self.internal: bool = self.json_data.get("internal", False)
+        self.source: str = self.json_data.get("source", "")
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

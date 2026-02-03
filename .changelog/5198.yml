@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the **upload** command incorrectly reported success when uploading system content-items failed.
-  type: fix
-pr_number: 5198

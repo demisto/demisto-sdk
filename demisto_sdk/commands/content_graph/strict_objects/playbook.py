@@ -230,6 +230,7 @@ class _TaskPlaybook(BaseStrictModel):
     )
     is_response: Optional[bool] = Field(None, alias="isResponse")
     requires_intervention: Optional[bool] = Field(None, alias="requiresIntervention")
+    display_label: Optional[str] = Field(None, alias="displayLabel")
     quiet: Optional[bool] = None
     evidence_data: Optional[EvidenceData] = Field(None, alias="evidencedata")
     task: SubTaskPlaybook  # type:ignore[valid-type]

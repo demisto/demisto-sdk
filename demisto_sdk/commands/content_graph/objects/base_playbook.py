@@ -117,6 +117,7 @@ class TaskConfig(BaseModel):
     isautoswitchedtoquietmode: Optional[bool] = None
     isResponse: Optional[bool] = None
     requiresIntervention: Optional[bool] = None
+    displayLabel: Optional[str] = None
     quiet: Optional[bool] = None
     evidencedata: Optional[dict] = None
     task: Task
@@ -158,6 +159,7 @@ class TaskConfig(BaseModel):
             "isautoswitchedtoquietmode": self.isautoswitchedtoquietmode,
             "isResponse": self.isResponse,
             "requiresIntervention": self.requiresIntervention,
+            "displayLabel": self.displayLabel,
             "quiet": self.quiet,
             "evidencedata": self.evidencedata,
             "task": self.task.to_raw_dict,

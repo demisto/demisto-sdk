@@ -297,6 +297,8 @@ mapping:
                 type: bool
               requiresIntervention:
                 type: bool
+              displayLabel:
+                type: str
           note:
             type: bool
           nexttasks:

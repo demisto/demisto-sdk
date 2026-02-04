@@ -52,9 +52,6 @@ class AgentixAgent(AgentixBase, content_type=ContentType.AGENTIX_AGENT):
         Returns:
             Unified YAML dict with systeminstructions field populated from file
         """
-        if not kwargs.get("unify_only"):
-            data = super().prepare_for_upload(current_marketplace)
-        else:
-            data = self.data
+        data = super().prepare_for_upload(current_marketplace)
         data = AgentixAgentUnifier.unify(self.path, data, current_marketplace)
         return data

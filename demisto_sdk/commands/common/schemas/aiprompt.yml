@@ -1,0 +1,144 @@
+type: map
+mapping:
+  commonfields:
+    type: map
+    required: true
+    mapping:
+      id:
+        type: str
+        required: true
+      version:
+        type: int
+        required: true
+  name:
+    type: str
+    required: true
+  prettyname:
+    type: str
+  type:
+    type: str
+    required: true
+    enum: ['aiprompt']
+  comment:
+    type: str
+  tags:
+    type: seq
+    sequence:
+    - type: str
+  userprompt:
+    type: str
+    required: true
+  systemprompt:
+    type: str
+  fewshots:
+    type: str
+  promptConfig:
+    type: map
+    mapping:
+      model:
+        type: str
+      temperature:
+        type: number
+      maxOutputTokens:
+        type: int
+      webSearch:
+        type: bool
+      systemInstruction:
+        type: str
+  prescript:
+    type: str
+  postscript:
+    type: str
+  arguments:
+    type: seq
+    sequence:
+    - include: argument_schema
+  outputs:
+    type: seq
+    sequence:
+    - include: output_schema
+  isInternal:
+    type: bool
+  isanonymous:
+    type: bool
+  enabled:
+    type: bool
+  system:
+    type: bool
+  locked:
+    type: bool
+  deprecated:
+    type: bool
+  sensitive:
+    type: bool
+  hidden:
+    type: bool
+  private:
+    type: bool
+  runas:
+    type: str
+  timeout:
+    type: text
+  pswd:
+    type: str
+  compliantpolicies:
+    type: seq
+    sequence:
+    - type: str
+  fromversion:
+    type: text
+  toversion:
+    type: text
+  marketplaces:
+    type: seq
+    sequence:
+    - type: str
+      enum: ['platform']
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str
+
+schema;argument_schema:
+  type: map
+  mapping:
+    name:
+      type: str
+      required: true
+    description:
+      type: str
+    required:
+      type: bool
+    deprecated:
+      type: bool
+    hidden:
+      type: bool
+    default:
+      type: bool
+    secret:
+      type: bool
+    auto:
+      type: str
+    predefined:
+      type: seq
+      sequence:
+      - type: str
+    isArray:
+      type: bool
+    defaultValue:
+      type: str
+    type:
+      type: str
+
+schema;output_schema:
+  type: map
+  mapping:
+    contextPath:
+      type: str
+    contentPath:
+      type: str
+    description:
+      type: str
+      required: true
+    type:
+      type: str

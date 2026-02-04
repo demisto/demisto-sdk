@@ -5,6 +5,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
     AgentixAgent,
+    AIPrompt,
 )
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -12,12 +13,12 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[AgentixAgent, AgentixAction, Script]
+ContentTypes = Union[AgentixAgent, AgentixAction, AIPrompt, Script]
 
 
 class IsCorrectMPValidator(BaseValidator[ContentTypes]):
     error_code = "AG101"
-    description = f"Content items of type {', '.join(filter(None, [ContentType.AGENTIX_AGENT, ContentType.AGENTIX_ACTION, ContentType.SCRIPT]))} with isllm=true should be uploaded to platform only."
+    description = f"Content items of type {', '.join(filter(None, [ContentType.AGENTIX_AGENT, ContentType.AGENTIX_ACTION, ContentType.AIPROMPT, ContentType.SCRIPT]))} with isllm=true should be uploaded to platform only."
     rationale = "These types of items should be uploaded to platform only."
     error_message = "The following Agentix related content item '{0}' should have only marketplace 'platform'."
     expected_git_statuses = [
@@ -46,6 +47,7 @@ class IsCorrectMPValidator(BaseValidator[ContentTypes]):
             in [
                 ContentType.AGENTIX_AGENT,
                 ContentType.AGENTIX_ACTION,
+                ContentType.AIPROMPT,
             ]
         ) or (content_item.content_type == ContentType.SCRIPT and content_item.is_llm):  # type: ignore
             return (

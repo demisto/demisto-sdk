@@ -1,0 +1,4 @@
+changes:
+- description: Added support for AIPrompt content item type with full SDK integration including parsing, validation, and schema support.
+  type: feature
+pr_number: 5199

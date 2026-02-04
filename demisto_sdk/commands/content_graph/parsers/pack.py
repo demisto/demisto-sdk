@@ -106,6 +106,7 @@ class PackContentItems:
         )
         self.agentix_action = ContentItemsList(content_type=ContentType.AGENTIX_ACTION)
         self.agentix_agent = ContentItemsList(content_type=ContentType.AGENTIX_AGENT)
+        self.ai_prompt = ContentItemsList(content_type=ContentType.AIPROMPT)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()

@@ -41,7 +41,7 @@ class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        if "underlyingcontentitem" in _dict and path.suffix == ".yml":
+        if "underlyingcontentitem" in _dict and path.suffix in (".yml", ".yaml"):
             return True
         return False
 

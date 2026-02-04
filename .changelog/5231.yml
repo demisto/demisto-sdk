@@ -1,0 +1,3 @@
+changes:
+- description: Updated AgentixActions to support nested directory structure (AgentixActions/<action_id>/<action_id>.yaml) and both .yml and .yaml file extensions
+  type: feature

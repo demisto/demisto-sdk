@@ -115,6 +115,9 @@ class TaskConfig(BaseModel):
     skipunavailable: Optional[bool] = None
     isoversize: Optional[bool] = None
     isautoswitchedtoquietmode: Optional[bool] = None
+    isResponse: Optional[bool] = None
+    requiresIntervention: Optional[bool] = None
+    displayLabel: Optional[str] = None
     quiet: Optional[bool] = None
     evidencedata: Optional[dict] = None
     task: Task
@@ -154,6 +157,9 @@ class TaskConfig(BaseModel):
             "skipunavailable": self.skipunavailable,
             "isoversize": self.isoversize,
             "isautoswitchedtoquietmode": self.isautoswitchedtoquietmode,
+            "isResponse": self.isResponse,
+            "requiresIntervention": self.requiresIntervention,
+            "displayLabel": self.displayLabel,
             "quiet": self.quiet,
             "evidencedata": self.evidencedata,
             "task": self.task.to_raw_dict,
@@ -176,6 +182,8 @@ class TaskConfig(BaseModel):
 class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
     version: Optional[int] = 0
     tasks: Dict[str, TaskConfig] = Field([], exclude=True)
+    internal: bool = Field(False)
+    source: str = Field("")
     quiet: bool = Field(False)
     tags: List[str] = Field([])
     tests: List[str] = Field([])
@@ -234,6 +242,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
             .union(
                 {
                     "tags",
+                    "internal",
                 }
             )
         )

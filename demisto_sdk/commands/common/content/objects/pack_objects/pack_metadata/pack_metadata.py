@@ -60,6 +60,8 @@ class PackMetaData(JSONObject):
         self._keywords: List[str] = []
         self._dependencies: Dict[str, Dict] = {}
         self._supported_modules: Optional[List[str]] = None
+        self._source: str = ""
+        self._managed: bool = False
 
     @property
     def name(self) -> str:
@@ -501,6 +503,30 @@ class PackMetaData(JSONObject):
         """
         return self._supported_modules
 
+    @property
+    def source(self):
+        """
+        List of supported platform products & add-ons.
+        """
+        return self._source
+
+    @source.setter
+    def source(self, new_source: str):
+        """Setter for the source attribute"""
+        self._source = new_source
+
+    @property
+    def managed(self):
+        """
+        List of supported platform products & add-ons.
+        """
+        return self._managed
+
+    @managed.setter
+    def managed(self, is_managed: bool):
+        """Setter for the managed attribute"""
+        self._managed = is_managed
+
     def dump_metadata_file(self, dest_dir: Union[Path, str] = "") -> List[Path]:
         file_content = {
             "name": self.name,
@@ -586,6 +612,8 @@ class PackMetaData(JSONObject):
             self.use_cases = user_metadata.get("useCases", [])
             self.dependencies = user_metadata.get("dependencies", {})
             self.supportedModules = user_metadata.get("supportedModules")
+            self.source = user_metadata.get("source", "")
+            self.managed = user_metadata.get("managed", False)
             if self.price > 0:
                 self.premium = True
                 self.vendor_id = user_metadata.get("vendorId", "")

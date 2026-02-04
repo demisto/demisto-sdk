@@ -73,7 +73,7 @@ VALIDATION_CATEGORIES = {
     "TR": "Trigger",
     "VC": "Version Config",
     "AG": "Agentix",
-    "AS": "Autonomous SOC"
+    "AS": "Autonomous SOC",
 }
 
 

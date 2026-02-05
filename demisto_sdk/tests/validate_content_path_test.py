@@ -223,7 +223,7 @@ def test_content_entities_dir_length():
     If this test failed, it's likely you modified either CONTENT_ENTITIES_DIRS or FOLDERS_ALLOWED_TO_CONTAIN_FILES.
     Update the test values accordingly.
     """
-    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 37
+    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 36
 
     # change this one if you added a content item folder that can't have files directly under it
     assert (
@@ -232,7 +232,7 @@ def test_content_entities_dir_length():
                 CONTENT_ENTITIES_DIRS
             )
         )
-        == 29
+        == 28
     )
 
 
@@ -655,3 +655,16 @@ def test_agentix_agent_file_invalid(file_name: str):
     folder = "TestAgent"
     with pytest.raises(InvalidAgentixAgentFileName):
         _validate(DUMMY_PACK_PATH / AGENTIX_AGENTS_DIR / folder / file_name)
+
+
+def test_agentix_agent_file_at_depth_one_invalid():
+    """
+    Given:
+        An agentix agent file placed directly under AgentixAgents folder (depth 1)
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidDepthOneFile
+    """
+    with pytest.raises(InvalidDepthOneFile):
+        _validate(DUMMY_PACK_PATH / AGENTIX_AGENTS_DIR / "TestAgent.yml")

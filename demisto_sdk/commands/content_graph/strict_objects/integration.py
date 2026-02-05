@@ -198,7 +198,7 @@ class _StrictIntegration(BaseStrictModel):
     configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]
     image: Optional[str] = None
     description: str
-    provider: str = ""
+    provider: Optional[str] = None
     default_mapper_in: Optional[str] = Field(None, alias="defaultmapperin")
     default_mapper_out: Optional[str] = Field(None, alias="defaultmapperout")
     default_classifier: Optional[str] = Field(None, alias="defaultclassifier")
@@ -207,6 +207,8 @@ class _StrictIntegration(BaseStrictModel):
     support_level_header: MarketplaceVersions = Field(None, alias="supportlevelheader")
     script: Script  # type:ignore[valid-type]
     hidden: Optional[bool] = None
+    internal: Optional[bool] = None
+    source: Optional[str] = None
     videos: Optional[List[str]] = None
     versioned_fields: dict = Field(None, alias="versionedfields")
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")

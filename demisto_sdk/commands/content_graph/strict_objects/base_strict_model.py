@@ -246,6 +246,7 @@ class AgentixBase(BaseStrictModel):
     name: str
     description: str
     disabled: bool = False
+    internal: Optional[bool] = None
     from_version: Optional[str] = Field(None, alias="fromversion")
     to_version: Optional[str] = Field(None, alias="toversion")
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None

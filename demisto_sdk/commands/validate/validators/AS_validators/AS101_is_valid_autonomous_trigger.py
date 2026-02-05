@@ -59,9 +59,9 @@ class IsValidAutonomousTriggerValidator(BaseValidator[ContentTypes]):
         Returns:
             FixResult with the fix message.
         """
-        # Update the trigger's fields in the data dict
-        content_item.data["grouping_element"] = "Cortex Autonomous Rules"
-        content_item.data["is_auto_enabled"] = True
+        # Update the trigger's attributes (these will be saved via field_mapping)
+        content_item.grouping_element = "Cortex Autonomous Rules"
+        content_item.is_auto_enabled = True
 
         return FixResult(
             validator=self,
@@ -101,8 +101,15 @@ def is_invalid_autonomous_trigger(content_item: ContentTypes) -> bool:
         return False
 
     # If the pack IS autonomous, check if the trigger has the correct fields
-    grouping_element = content_item.data.get("grouping_element", "")
-    is_auto_enabled = content_item.data.get("is_auto_enabled", False)
+    # Check both the object attributes and the data dict for compatibility
+    grouping_element = content_item.grouping_element or content_item.data.get(
+        "grouping_element", ""
+    )
+    is_auto_enabled = (
+        content_item.is_auto_enabled
+        if content_item.is_auto_enabled is not None
+        else content_item.data.get("is_auto_enabled", False)
+    )
 
     # The trigger is invalid if it's in an autonomous pack but doesn't have both required fields
     has_correct_grouping = grouping_element == "Cortex Autonomous Rules"

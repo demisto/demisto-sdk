@@ -86,6 +86,13 @@ from demisto_sdk.commands.validate.validators.AS_validators.AS101_is_valid_auton
             "autonomous",
             1,
         ),  # Autonomous pack with both fields wrong
+        (
+            None,
+            None,
+            True,
+            "autonomous",
+            1,
+        ),  # Autonomous pack with both fields missing entirely
     ],
 )
 def test_IsValidAutonomousTriggerValidator(
@@ -174,8 +181,8 @@ def test_IsValidAutonomousTriggerValidator_fix():
 
     # Verify fix was applied
     assert fix_result.message == validator.fix_message
-    assert trigger.data.get("grouping_element") == "Cortex Autonomous Rules"
-    assert trigger.data.get("is_auto_enabled") is True
+    assert trigger.grouping_element == "Cortex Autonomous Rules"
+    assert trigger.is_auto_enabled is True
 
     # Verify it's now valid
     invalid_items_after_fix = validator.obtain_invalid_content_items([trigger])

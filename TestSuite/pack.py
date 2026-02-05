@@ -854,12 +854,14 @@ class Pack(TestSuiteBase):
         self,
         name: Optional[str] = None,
         yml: Optional[dict] = None,
+        system_instructions: Optional[str] = None,
     ) -> AgentixAgent:
         if name is None:
             name = f"agentix_agent-{len(self.agentix_agents)}"
         agentix_agent = AgentixAgent(self._agentix_agents_path, name, self._repo)
         agentix_agent.build(
             yml,
+            system_instructions,
         )
         self.agentix_agents.append(agentix_agent)
         return agentix_agent

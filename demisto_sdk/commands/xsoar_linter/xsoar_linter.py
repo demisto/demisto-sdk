@@ -164,14 +164,37 @@ def process_file(file_path: Path) -> ProcessResults:
     """
     results = ProcessResults()
 
+    # DIAGNOSTIC LOGGING: Track file processing in multiprocessing context
+    print(  # noqa: T201
+        f"[DIAGNOSTIC] process_file called for: {file_path} (PID: {os.getpid()})",
+        file=sys.stderr,
+    )
+    print(  # noqa: T201
+        f"[DIAGNOSTIC] File path exists: {file_path.exists() if hasattr(file_path, 'exists') else 'N/A'}",
+        file=sys.stderr,
+    )
+
     try:
         env = ENV.copy()
+        # DIAGNOSTIC LOGGING: Check path before parsing
+        print(  # noqa: T201
+            f"[DIAGNOSTIC] About to call BaseContent.from_path for: {file_path}",
+            file=sys.stderr,
+        )
         integration_script = BaseContent.from_path(file_path)
+        print(  # noqa: T201
+            f"[DIAGNOSTIC] BaseContent.from_path returned: {type(integration_script)}",
+            file=sys.stderr,
+        )
         results = ProcessResults()
 
         if not isinstance(integration_script, IntegrationScript):
             return results
         file = integration_script.path.parent / f"{integration_script.path.stem}.py"
+        print(  # noqa: T201
+            f"[DIAGNOSTIC] Looking for Python file: {file}, exists: {file.exists()}",
+            file=sys.stderr,
+        )
         if not file.exists():
             return results
 

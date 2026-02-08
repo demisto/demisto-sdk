@@ -81,6 +81,9 @@ def is_invalid_autonomous_trigger(content_item: ContentTypes) -> bool:
         bool: True if the trigger is invalid (pack is autonomous but trigger doesn't have the right fields), False otherwise.
     """
     pack_metadata = content_item.in_pack.pack_metadata_dict  # type: ignore[union-attr]
+    if not pack_metadata:
+        # If there's no pack metadata, consider it valid (not autonomous)
+        return False
 
     # Check if the pack is autonomous (both managed is true and source is "autonomous")
     is_managed = pack_metadata.get("managed", False)

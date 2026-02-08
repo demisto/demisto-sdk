@@ -60,24 +60,25 @@ class AgentixBaseParser(YAMLContentItemParser):
         if not self.path.is_dir():
             # For non-directory paths, check if it's a test file
             if self._is_test_file(self.path):
-                raise NotAContentItemException(
-                    f"Skipping test file: {self.path}"
-                )
-            if not self.path.exists() or self.path.suffix not in (suffix, ".yml", ".yaml"):
+                raise NotAContentItemException(f"Skipping test file: {self.path}")
+            if not self.path.exists() or self.path.suffix not in (
+                suffix,
+                ".yml",
+                ".yaml",
+            ):
                 raise NotAContentItemException
             return self.path
 
         # For directories, find all YAML files and filter out test files
         yaml_extensions = [".yml", ".yaml"]
         paths = [
-            p for p in self.path.iterdir()
+            p
+            for p in self.path.iterdir()
             if p.suffix in yaml_extensions and not self._is_test_file(p)
         ]
 
         if not paths:
-            raise NotAContentItemException(
-                f"No valid YAML files found in {self.path}"
-            )
+            raise NotAContentItemException(f"No valid YAML files found in {self.path}")
 
         if len(paths) == 1:
             return paths[0]

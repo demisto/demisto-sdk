@@ -32,26 +32,63 @@ class AgentixBaseParser(YAMLContentItemParser):
         self.disabled: Optional[bool] = self.yml_data.get("disabled", False)
         self.internal: bool = self.yml_data.get("internal", False)
 
+    def _is_test_file(self, path: Path) -> bool:
+        """Check if a file is a test file based on its name pattern.
+
+        Args:
+            path (Path): The file path to check.
+
+        Returns:
+            bool: True if the file matches *_test.yaml or *_test.yml pattern.
+        """
+        stem = path.stem  # filename without extension
+        return stem.endswith("_test")
+
     def get_path_with_suffix(self, suffix: str) -> Path:
-        """Override to support both .yml and .yaml extensions for Agentix items.
+        """Override to support both .yml and .yaml extensions for Agentix items,
+        and to skip test files (*_test.yaml, *_test.yml).
 
         Args:
             suffix (str): The suffix of the content item (typically ".yml").
 
         Returns:
             Path: The path to the YAML file with either .yml or .yaml extension.
+
+        Raises:
+            NotAContentItemException: If no valid content file is found.
         """
-        # Try the requested suffix first
-        try:
-            return super().get_path_with_suffix(suffix)
-        except NotAContentItemException:
-            # If .yml was requested but not found, try .yaml
-            if suffix == ".yml":
-                return super().get_path_with_suffix(".yaml")
-            # If .yaml was requested but not found, try .yml
-            elif suffix == ".yaml":
-                return super().get_path_with_suffix(".yml")
-            raise
+        if not self.path.is_dir():
+            # For non-directory paths, check if it's a test file
+            if self._is_test_file(self.path):
+                raise NotAContentItemException(
+                    f"Skipping test file: {self.path}"
+                )
+            if not self.path.exists() or self.path.suffix not in (suffix, ".yml", ".yaml"):
+                raise NotAContentItemException
+            return self.path
+
+        # For directories, find all YAML files and filter out test files
+        yaml_extensions = [".yml", ".yaml"]
+        paths = [
+            p for p in self.path.iterdir()
+            if p.suffix in yaml_extensions and not self._is_test_file(p)
+        ]
+
+        if not paths:
+            raise NotAContentItemException(
+                f"No valid YAML files found in {self.path}"
+            )
+
+        if len(paths) == 1:
+            return paths[0]
+
+        # Prefer the file that matches the directory name
+        for path in paths:
+            if path.stem == self.path.name:
+                return path
+
+        # Fall back to the first non-test file
+        return paths[0]
 
     @cached_property
     def field_mapping(self):

@@ -6,7 +6,11 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_AGENTIX_ITEM_FROM_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_value
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    NotAContentItemException,
+)
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
@@ -28,6 +32,94 @@ class AgentixBaseParser(YAMLContentItemParser):
         self.category: Optional[str] = self.yml_data.get("category", None)
         self.disabled: Optional[bool] = self.yml_data.get("disabled", False)
         self.internal: bool = self.yml_data.get("internal", False)
+
+    def _is_test_file(self, path: Path) -> bool:
+        """Check if a file is a test file based on its name pattern or location.
+
+        Args:
+            path (Path): The file path to check.
+
+        Returns:
+            bool: True if the file matches test file patterns or is in a test_data directory.
+        """
+        stem = path.stem  # filename without extension
+        # Check for *_test.yaml/*_test.yml pattern
+        if stem.endswith("_test"):
+            return True
+        # Check for test_*.yaml/test_*.yml pattern
+        if stem.startswith("test_"):
+            return True
+        return False
+
+    def _is_in_test_data_directory(self, path: Path) -> bool:
+        """Check if a file is located in a test_data directory.
+
+        Args:
+            path (Path): The file path to check.
+
+        Returns:
+            bool: True if the file is in a test_data directory.
+        """
+        return "test_data" in path.parts
+
+    def get_path_with_suffix(self, suffix: str) -> Path:
+        """Override to support both .yml and .yaml extensions for Agentix items,
+        and to skip test files and test_data directories.
+
+        Args:
+            suffix (str): The suffix of the content item (typically ".yml").
+
+        Returns:
+            Path: The path to the YAML file with either .yml or .yaml extension.
+
+        Raises:
+            NotAContentItemException: If no valid content file is found.
+        """
+        logger.info(f"AgentixBaseParser.get_path_with_suffix called with path: {self.path}")
+        
+        # Skip files/directories in test_data directories
+        if self._is_in_test_data_directory(self.path):
+            logger.info(f"Skipping test_data path in AgentixBaseParser: {self.path}")
+            raise NotAContentItemException(
+                f"Skipping path in test_data directory: {self.path}"
+            )
+
+        if not self.path.is_dir():
+            # For non-directory paths, check if it's a test file
+            if self._is_test_file(self.path):
+                logger.info(f"Skipping test file in AgentixBaseParser: {self.path}")
+                raise NotAContentItemException(f"Skipping test file: {self.path}")
+            if not self.path.exists() or self.path.suffix not in (
+                suffix,
+                ".yml",
+                ".yaml",
+            ):
+                raise NotAContentItemException
+            return self.path
+
+        # For directories, find all YAML files and filter out test files
+        yaml_extensions = [".yml", ".yaml"]
+        paths = [
+            p
+            for p in self.path.iterdir()
+            if p.suffix in yaml_extensions
+            and not self._is_test_file(p)
+            and not self._is_in_test_data_directory(p)
+        ]
+
+        if not paths:
+            raise NotAContentItemException(f"No valid YAML files found in {self.path}")
+
+        if len(paths) == 1:
+            return paths[0]
+
+        # Prefer the file that matches the directory name
+        for path in paths:
+            if path.stem == self.path.name:
+                return path
+
+        # Fall back to the first non-test file
+        return paths[0]
 
     @cached_property
     def field_mapping(self):

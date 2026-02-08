@@ -40,8 +40,8 @@ class IsValidAutonomousTriggerValidator(BaseValidator[ContentTypes]):
             ValidationResult(
                 validator=self,
                 message=self.error_message.format(
-                    content_item.data.get("grouping_element", "N/A"),
-                    content_item.data.get("is_auto_enabled", "N/A"),
+                    content_item.grouping_element or "N/A",
+                    content_item.is_auto_enabled,
                 ),
                 content_object=content_item,
             )
@@ -80,15 +80,7 @@ def is_invalid_autonomous_trigger(content_item: ContentTypes) -> bool:
     Returns:
         bool: True if the trigger is invalid (pack is autonomous but trigger doesn't have the right fields), False otherwise.
     """
-    # First check if the pack is autonomous
-    if not content_item.in_pack:
-        # If there's no pack, we can't validate - consider it valid
-        return False
-
     pack_metadata = content_item.in_pack.pack_metadata_dict  # type: ignore[union-attr]
-    if not pack_metadata:
-        # If there's no pack metadata, consider it valid (not autonomous)
-        return False
 
     # Check if the pack is autonomous (both managed is true and source is "autonomous")
     is_managed = pack_metadata.get("managed", False)
@@ -101,18 +93,8 @@ def is_invalid_autonomous_trigger(content_item: ContentTypes) -> bool:
         return False
 
     # If the pack IS autonomous, check if the trigger has the correct fields
-    # Check both the object attributes and the data dict for compatibility
-    grouping_element = content_item.grouping_element or content_item.data.get(
-        "grouping_element", ""
-    )
-    is_auto_enabled = (
-        content_item.is_auto_enabled
-        if content_item.is_auto_enabled is not None
-        else content_item.data.get("is_auto_enabled", False)
-    )
+    has_correct_grouping = content_item.grouping_element == "Cortex Autonomous Rules"
+    has_auto_enabled = content_item.is_auto_enabled is True
 
-    # The trigger is invalid if it's in an autonomous pack but doesn't have both required fields
-    has_correct_grouping = grouping_element == "Cortex Autonomous Rules"
-    has_auto_enabled = is_auto_enabled is True
-
+    # The trigger is invalid if it doesn't have both required fields
     return not (has_correct_grouping and has_auto_enabled)

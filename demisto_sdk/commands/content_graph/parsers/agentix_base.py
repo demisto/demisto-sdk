@@ -33,20 +33,37 @@ class AgentixBaseParser(YAMLContentItemParser):
         self.internal: bool = self.yml_data.get("internal", False)
 
     def _is_test_file(self, path: Path) -> bool:
-        """Check if a file is a test file based on its name pattern.
+        """Check if a file is a test file based on its name pattern or location.
 
         Args:
             path (Path): The file path to check.
 
         Returns:
-            bool: True if the file matches *_test.yaml or *_test.yml pattern.
+            bool: True if the file matches test file patterns or is in a test_data directory.
         """
         stem = path.stem  # filename without extension
-        return stem.endswith("_test")
+        # Check for *_test.yaml/*_test.yml pattern
+        if stem.endswith("_test"):
+            return True
+        # Check for test_*.yaml/test_*.yml pattern
+        if stem.startswith("test_"):
+            return True
+        return False
+
+    def _is_in_test_data_directory(self, path: Path) -> bool:
+        """Check if a file is located in a test_data directory.
+
+        Args:
+            path (Path): The file path to check.
+
+        Returns:
+            bool: True if the file is in a test_data directory.
+        """
+        return "test_data" in path.parts
 
     def get_path_with_suffix(self, suffix: str) -> Path:
         """Override to support both .yml and .yaml extensions for Agentix items,
-        and to skip test files (*_test.yaml, *_test.yml).
+        and to skip test files and test_data directories.
 
         Args:
             suffix (str): The suffix of the content item (typically ".yml").
@@ -57,6 +74,12 @@ class AgentixBaseParser(YAMLContentItemParser):
         Raises:
             NotAContentItemException: If no valid content file is found.
         """
+        # Skip files/directories in test_data directories
+        if self._is_in_test_data_directory(self.path):
+            raise NotAContentItemException(
+                f"Skipping path in test_data directory: {self.path}"
+            )
+
         if not self.path.is_dir():
             # For non-directory paths, check if it's a test file
             if self._is_test_file(self.path):
@@ -74,7 +97,9 @@ class AgentixBaseParser(YAMLContentItemParser):
         paths = [
             p
             for p in self.path.iterdir()
-            if p.suffix in yaml_extensions and not self._is_test_file(p)
+            if p.suffix in yaml_extensions
+            and not self._is_test_file(p)
+            and not self._is_in_test_data_directory(p)
         ]
 
         if not paths:

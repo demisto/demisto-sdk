@@ -6,6 +6,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_AGENTIX_ITEM_FROM_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
@@ -74,8 +75,11 @@ class AgentixBaseParser(YAMLContentItemParser):
         Raises:
             NotAContentItemException: If no valid content file is found.
         """
+        logger.info(f"AgentixBaseParser.get_path_with_suffix called with path: {self.path}")
+        
         # Skip files/directories in test_data directories
         if self._is_in_test_data_directory(self.path):
+            logger.info(f"Skipping test_data path in AgentixBaseParser: {self.path}")
             raise NotAContentItemException(
                 f"Skipping path in test_data directory: {self.path}"
             )
@@ -83,6 +87,7 @@ class AgentixBaseParser(YAMLContentItemParser):
         if not self.path.is_dir():
             # For non-directory paths, check if it's a test file
             if self._is_test_file(self.path):
+                logger.info(f"Skipping test file in AgentixBaseParser: {self.path}")
                 raise NotAContentItemException(f"Skipping test file: {self.path}")
             if not self.path.exists() or self.path.suffix not in (
                 suffix,

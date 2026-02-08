@@ -30,13 +30,18 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update(
+        mapping = super().field_mapping
+        mapping.update(
             {
                 "object_id": "trigger_id",
                 "name": "trigger_name",
+                "grouping_element": "grouping_element",
+                "is_auto_enabled": "is_auto_enabled",
             }
         )
-        return super().field_mapping
+        # Remove version field as triggers don't have it in their JSON schema
+        mapping.pop("version", None)
+        return mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

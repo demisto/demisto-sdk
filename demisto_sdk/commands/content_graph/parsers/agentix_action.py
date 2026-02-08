@@ -62,6 +62,10 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
     def few_shots(self) -> Optional[list[str]]:
         return self.yml_data.get("fewshots", [])
 
+    @property
+    def instructions(self) -> Optional[str]:
+        return self.yml_data.get("instructions")
+
     def connect_to_dependencies(self) -> None:
         """Create USES relationship to the underlying content item."""
         # Determine the target content type based on underlying item type

@@ -39,10 +39,14 @@ class AgentixActionTestParser(
 
     @property
     def object_id(self) -> Optional[str]:
+        if self.yml_data is None:
+            return self.path.stem
         return self.yml_data.get("id") or self.path.stem
 
     @property
     def name(self) -> Optional[str]:
+        if self.yml_data is None:
+            return self.path.stem
         return self.yml_data.get("name") or self.path.stem
 
     @property
@@ -51,10 +55,14 @@ class AgentixActionTestParser(
 
     @property
     def fromversion(self) -> str:
+        if self.yml_data is None:
+            return DEFAULT_AGENTIX_ITEM_FROM_VERSION
         return self.yml_data.get("fromversion") or DEFAULT_AGENTIX_ITEM_FROM_VERSION
 
     @property
     def tests(self) -> List[dict]:
+        if self.yml_data is None:
+            return []
         return self.yml_data.get("tests", [])
 
     def connect_to_dependencies(self) -> None:

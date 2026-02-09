@@ -11,7 +11,9 @@ class ActionDetail(BaseStrictModel):
 
 
 class EvaluationOutcome(BaseStrictModel):
-    evaluation_mode: Optional[str] = Field(None, description="e.g., 'any_of' or 'sequence'")
+    evaluation_mode: Optional[str] = Field(
+        None, description="e.g., 'any_of' or 'sequence'"
+    )
     actions: List[ActionDetail] = []
     expected_error: Optional[str] = None
 
@@ -49,7 +51,9 @@ class AgentixActionTestCase(BaseStrictModel):
         modes = {"any_of", "sequence", "expected_outcomes"}
         present_modes = modes.intersection(values.keys())
         if len(present_modes) > 1:
-            raise ValueError(f"Multiple evaluation modes present: {', '.join(present_modes)}. Only one is allowed.")
+            raise ValueError(
+                f"Multiple evaluation modes present: {', '.join(present_modes)}. Only one is allowed."
+            )
         return values
 
     @validator("prompt")

@@ -14,7 +14,9 @@ from demisto_sdk.commands.content_graph.strict_objects.agentix_action_test impor
 )
 
 
-class AgentixActionTestParser(YAMLContentItemParser, content_type=ContentType.AGENTIX_ACTION_TEST):
+class AgentixActionTestParser(
+    YAMLContentItemParser, content_type=ContentType.AGENTIX_ACTION_TEST
+):
     def __init__(
         self,
         path: Path,

@@ -520,5 +520,5 @@ args = sys.argv[1:]
 register_commands(args)
 
 if __name__ == "__main__":
-    typer.echo("Running Demisto-SDK CLI Testing")
+    typer.echo("Running Demisto-SDK CLI Testing 2")
     app()  # Run the main app

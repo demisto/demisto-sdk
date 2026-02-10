@@ -52,7 +52,7 @@ def main(
     sdk = DemistoSDK()  # Initialize your SDK class
     sdk.configuration = Configuration()  # Initialize the configuration
     ctx.obj = sdk  # Pass sdk instance to context
-    typer.echo("testing")
+    typer.echo("Testing 2")
     load_dotenv(CONTENT_PATH / ".env", override=True)
     if platform.python_version_tuple()[:2] == ("3", "9"):
         message = typer.style(

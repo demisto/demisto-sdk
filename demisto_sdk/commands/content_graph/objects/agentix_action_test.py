@@ -21,10 +21,11 @@ class AgentixActionTest(AgentixBase, content_type=ContentType.AGENTIX_ACTION_TES
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        if (
-            AGENTIX_ACTIONS_DIR in path.parts
-            and path.suffix == ".yml"
-            and path.stem.endswith("_test")
-        ):
-            return True
+        if AGENTIX_ACTIONS_DIR in path.parts and path.suffix in (".yml", ".yaml"):
+            # New pattern: <action_id>_test.yml
+            if path.stem.endswith("_test"):
+                return True
+            # Old pattern: test_<action_id>.yaml (in test_data directory)
+            if path.stem.startswith("test_") and "test_data" in path.parts:
+                return True
         return False

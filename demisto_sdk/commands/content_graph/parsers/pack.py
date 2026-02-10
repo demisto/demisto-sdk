@@ -341,6 +341,9 @@ class PackParser(BaseContentParser, PackMetadataParser):
             for (
                 content_item_path
             ) in folder_path.iterdir():  # todo: consider multiprocessing
+                # Skip test_data directories (old test file structure)
+                if content_item_path.name == "test_data":
+                    continue
                 self.parse_content_item(content_item_path)
         if self.private_pack_path:
             self.parse_content_test_conf_folders()

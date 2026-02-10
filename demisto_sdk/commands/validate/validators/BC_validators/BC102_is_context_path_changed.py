@@ -30,6 +30,9 @@ def is_context_path_changed(integration: Integration) -> dict[str, Set[Optional[
     """
     result = defaultdict(set)
     old_integration = integration.old_base_content_object
+    # If old_base_content_object is None, we can't compare context paths
+    if old_integration is None:
+        return result
     old_command_outputs = {
         # Since we're sure old_integration has 'commands' attribute, we ignore it (down casting does not solve it)
         command.name: command

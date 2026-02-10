@@ -26,6 +26,9 @@ class IsChangedIncidentTypesAndFieldsValidator(BaseValidator[ContentTypes]):
     ) -> List[ValidationResult]:
         validation_results: List[ValidationResult] = []
         for content_item in content_items:
+            # If old_base_content_object is None, we can't compare mappings
+            if content_item.old_base_content_object is None:
+                continue
             (
                 removed_incident_types,
                 intersected_incident_types,

@@ -44,6 +44,9 @@ class WasMarketplaceModifiedValidator(BaseValidator[ContentTypes]):
     ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         for content_item in content_items:
+            # If old_base_content_object is None, we can't compare marketplaces
+            if content_item.old_base_content_object is None:
+                continue
             new_marketplaces = content_item.marketplaces
             old_marketplaces = content_item.old_base_content_object.marketplaces  # type: ignore
 

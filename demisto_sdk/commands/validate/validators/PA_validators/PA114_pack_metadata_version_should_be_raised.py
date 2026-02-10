@@ -149,6 +149,9 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
         if isinstance(content_item, Pack):
             if is_new_pack(content_item):
                 return False
+            # If old_base_content_object is None, we can't compare pack metadata
+            if content_item.old_base_content_object is None:
+                return False
             # If it's a pack content type check for the fields that require RNs.
             old_dict = content_item.old_base_content_object.to_dict()  # type: ignore[union-attr]
             current_dict = content_item.to_dict()  # type: ignore[union-attr]
@@ -190,6 +193,9 @@ class PackMetadataVersionShouldBeRaisedValidator(BaseValidator[ContentTypes]):
         for pack_id in content_packs_ids_to_bump:
             # Access them via the dict that was created earlier
             pack = content_packs[pack_id]
+            # If old_base_content_object is None, we can't compare versions
+            if pack.old_base_content_object is None:
+                continue
             # Check if their old version >= current version
             old_version = pack.old_base_content_object.current_version  # type: ignore[union-attr]
             current_version = pack.current_version  # type: ignore[union-attr]

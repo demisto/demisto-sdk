@@ -33,13 +33,17 @@ class IsFieldTypeChangedValidator(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
+            if content_item.old_base_content_object is not None
+            and (
                 content_item.field_type
                 != cast(ContentTypes, content_item.old_base_content_object).field_type
             )
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
+        # If old_base_content_object is None, we can't fix
+        if content_item.old_base_content_object is None:
+            raise ValueError("Cannot fix field type: old_base_content_object is None")
         content_item.field_type = cast(
             ContentTypes, content_item.old_base_content_object
         ).field_type

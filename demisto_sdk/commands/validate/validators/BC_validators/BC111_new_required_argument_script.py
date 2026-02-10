@@ -32,6 +32,10 @@ class NewRequiredArgumentScriptValidator(BaseValidator[ContentTypes]):
         for content_item in content_items:
             old_content_item = content_item.old_base_content_object
 
+            # If old_base_content_object is None, we can't compare args
+            if old_content_item is None:
+                continue
+
             arg_list = [
                 arg.name
                 for arg in content_item.args  # type: ignore

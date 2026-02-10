@@ -28,6 +28,9 @@ class ArgsNameChangeValidator(BaseValidator[ContentTypes]):
     ) -> List[ValidationResult]:
         results: List[ValidationResult] = []
         for content_item in content_items:
+            # If old_base_content_object is None, we can't compare args
+            if content_item.old_base_content_object is None:
+                continue
             current_args = [arg.name for arg in content_item.args]
             old_args = [arg.name for arg in content_item.old_base_content_object.args]  # type: ignore
             args_diff = set(old_args) - set(current_args)

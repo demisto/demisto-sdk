@@ -29,6 +29,9 @@ class IsValidContextPathDepthModifiedValidatorModified(
         for content_item in content_items:
             if content_item.support != XSOAR_SUPPORT:
                 continue
+            # If old_base_content_object is None, we can't compare context paths
+            if content_item.old_base_content_object is None:
+                continue
             message = ""
             old_content_item = content_item.old_base_content_object
             if isinstance(content_item, Script):

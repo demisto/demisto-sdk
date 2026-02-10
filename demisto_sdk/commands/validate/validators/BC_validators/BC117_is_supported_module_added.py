@@ -112,7 +112,8 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
+            if content_item.old_base_content_object is not None
+            and (
                 difference := self.added_parameters(
                     cast(ContentTypes, content_item.old_base_content_object),
                     content_item,

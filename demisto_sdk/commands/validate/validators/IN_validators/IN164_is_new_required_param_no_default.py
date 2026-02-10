@@ -41,6 +41,10 @@ class IsNewRequiredParamNoDefaultIntegrationValidator(BaseValidator[ContentTypes
         for content_item in content_items:
             old_content_item = content_item.old_base_content_object
 
+            # If old_base_content_object is None, we can't compare params
+            if old_content_item is None:
+                continue
+
             new_required_params_with_no_default = [
                 param.name
                 for param in content_item.params

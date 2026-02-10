@@ -187,6 +187,35 @@ class ContentType(StrEnum):
     def values() -> Iterator[str]:
         return (c.value for c in ContentType)
 
+    @staticmethod
+    def _is_agentix_action_test_path(path: Path) -> bool:
+        """
+        Check if the given path represents an AgentixActionTest file or directory.
+
+        Detects two patterns:
+        - New pattern: *_test.yml (e.g., EnrichIP_test.yml)
+        - Old pattern: test_*.yaml in test_data directory
+
+        Args:
+            path: The path to check
+
+        Returns:
+            True if the path represents an AgentixActionTest, False otherwise
+        """
+        # Check for test file patterns
+        if path.stem.endswith("_test") or (
+            path.stem.startswith("test_") and "test_data" in path.parts
+        ):
+            return True
+
+        # If path is a directory, check if it contains a test file
+        if path.is_dir():
+            for file in path.iterdir():
+                if file.suffix in (".yml", ".yaml") and file.stem.endswith("_test"):
+                    return True
+
+        return False
+
     @classmethod
     def by_path(cls, path: Path) -> "ContentType":
         for idx, folder in enumerate(path.parts):
@@ -197,12 +226,7 @@ class ContentType(StrEnum):
 
                 # Special handling for AgentixActionTest files
                 if content_type_dir == "AgentixActions":
-                    # Check for test file patterns:
-                    # - New pattern: *_test.yml (e.g., EnrichIP_test.yml)
-                    # - Old pattern: test_*.yaml in test_data directory
-                    if path.stem.endswith("_test") or (
-                        path.stem.startswith("test_") and "test_data" in path.parts
-                    ):
+                    if cls._is_agentix_action_test_path(path):
                         return cls.AGENTIX_ACTION_TEST
 
                 break

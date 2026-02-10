@@ -105,6 +105,9 @@ class PackContentItems:
             content_type=ContentType.ASSETS_MODELING_RULE
         )
         self.agentix_action = ContentItemsList(content_type=ContentType.AGENTIX_ACTION)
+        self.agentix_action_test = ContentItemsList(
+            content_type=ContentType.AGENTIX_ACTION_TEST
+        )
         self.agentix_agent = ContentItemsList(content_type=ContentType.AGENTIX_AGENT)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:

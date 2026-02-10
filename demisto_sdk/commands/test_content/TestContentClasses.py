@@ -2596,6 +2596,7 @@ class TestContext:
                 "number_of_executions": self.playbook.configuration.number_of_executions,
                 "number_of_successful_runs": self.playbook.configuration.number_of_successful_runs,
                 "failed_stage": failed_stage,
+                "integrations": self.playbook.integrations,
             }
         )
 

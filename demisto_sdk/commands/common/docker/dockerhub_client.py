@@ -10,6 +10,7 @@ from google.auth.transport.requests import Request
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
+from demisto_sdk.commands.common.constants import DEFAULT_DOCKER_REGISTRY_URL
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
@@ -275,18 +276,28 @@ class DockerHubClient:
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
 
+        # Determine if this is a custom (non-Docker Hub) registry
+        is_custom_registry = self.DEFAULT_REGISTRY not in self.registry_api_url
+
+        if headers:
+            _headers = {key: value for key, value in headers}
+        elif is_custom_registry:
+            # For custom registries, don't send Docker Hub bearer token.
+            # Let get_request() use Basic Auth (self.auth) if credentials are available.
+            _headers = {
+                "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
+                "application/vnd.docker.distribution.manifest.list.v2+json",
+            }
+        else:
+            _headers = {
+                "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
+                "application/vnd.docker.distribution.manifest.list.v2+json",
+                "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
+            }
+
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
-            headers=(
-                {key: value for key, value in headers}
-                if headers
-                else None
-                or {
-                    "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
-                    "application/vnd.docker.distribution.manifest.list.v2+json",
-                    "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
-                }
-            ),
+            headers=_headers,
             params={key: value for key, value in params} if params else None,
         )
 
@@ -593,7 +604,22 @@ def get_registry_api_url(registry: str, default_registry: str) -> str:
             )
 
     logger.debug(f"using provided or default registry, {default_registry=} {registry=}")
-    return registry or default_registry
+
+    if not registry or registry == DEFAULT_DOCKER_REGISTRY_URL:
+        return default_registry
+
+    # Ensure the registry URL has a scheme
+    if not registry.startswith("http://") and not registry.startswith("https://"):
+        registry = f"https://{registry}"
+
+    # Normalize trailing slashes
+    registry = registry.rstrip("/")
+
+    # Ensure the registry URL has the /v2 API path prefix
+    if not registry.endswith("/v2"):
+        registry = f"{registry}/v2"
+
+    return registry
 
 
 def get_gcloud_access_token() -> Optional[str]:

@@ -194,6 +194,17 @@ class ContentType(StrEnum):
                 if len(path.parts) <= idx + 2:
                     raise ValueError("Invalid content path.")
                 content_type_dir = path.parts[idx + 2]
+
+                # Special handling for AgentixActionTest files
+                if content_type_dir == "AgentixActions":
+                    # Check for test file patterns:
+                    # - New pattern: *_test.yml (e.g., EnrichIP_test.yml)
+                    # - Old pattern: test_*.yaml in test_data directory
+                    if path.stem.endswith("_test") or (
+                        path.stem.startswith("test_") and "test_data" in path.parts
+                    ):
+                        return cls.AGENTIX_ACTION_TEST
+
                 break
         else:
             # less safe option - will raise an exception if the path

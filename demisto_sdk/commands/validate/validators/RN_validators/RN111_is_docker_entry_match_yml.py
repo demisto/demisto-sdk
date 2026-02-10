@@ -34,11 +34,9 @@ def release_notes_shouldbe_entry(content_item: IntegrationScript):
 
     """
     old_obj: IntegrationScript = content_item.old_base_content_object  # type: ignore
-    # If old_base_content_object is None, we can't compare docker images
-    # so we assume the docker image was set in this PR
-    if old_obj is None:
-        return content_item.docker_image
-    if old_obj.docker_image == content_item.docker_image:  # Wasn't set in this PR
+    if (
+        old_obj and old_obj.docker_image == content_item.docker_image
+    ):  # Wasn't set in this PR
         return ""
     return content_item.docker_image
 

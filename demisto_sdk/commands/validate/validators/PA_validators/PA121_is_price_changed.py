@@ -50,9 +50,6 @@ class IsPriceChangedValidator(BaseValidator[ContentTypes]):
         Returns:
             bool: Wether the price was changed or not.
         """
-        # If old_base_content_object is None, we can't compare prices
-        if content_item.old_base_content_object is None:
-            return False
         old_obj = cast(ContentTypes, content_item.old_base_content_object)
         is_price_changed: bool = (
             (content_item.price and not old_obj.price)  # type: ignore[assignment]

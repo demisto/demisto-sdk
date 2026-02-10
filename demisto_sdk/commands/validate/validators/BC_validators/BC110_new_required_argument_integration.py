@@ -32,10 +32,6 @@ class NewRequiredArgumentIntegrationValidator(BaseValidator[ContentTypes]):
         for content_item in content_items:
             old_content_item = content_item.old_base_content_object
 
-            # If old_base_content_object is None, we can't compare commands
-            if old_content_item is None:
-                continue
-
             for new_command in content_item.commands:  # type: ignore
                 current_command_name = new_command.name
 

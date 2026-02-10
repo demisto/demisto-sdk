@@ -55,9 +55,6 @@ class BreakingBackwardsSubtypeValidator(BaseValidator[ContentTypes]):
         Returns:
             bool: Wether the subtype was changed or not.
         """
-        # If old_base_content_object is None, we can't compare subtypes
-        if content_item.old_base_content_object is None:
-            return False
         old_obj = cast(ContentTypes, content_item.old_base_content_object)
         is_subtype_changed = (
             content_item.type == "python" and content_item.subtype != old_obj.subtype

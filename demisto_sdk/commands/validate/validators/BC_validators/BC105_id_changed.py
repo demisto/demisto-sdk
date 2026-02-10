@@ -117,9 +117,6 @@ class IdChangedValidator(BaseValidator[ContentTypes]):
         Returns:
             bool: Wether the ID of the content item has changed or not.
         """
-        # If old_base_content_object is None, we can't compare IDs
-        if content_item.old_base_content_object is None:
-            return False
         old_obj = cast(ContentTypes, content_item.old_base_content_object)
         id_has_changed = content_item.object_id != old_obj.object_id
         if id_has_changed:

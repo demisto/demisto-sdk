@@ -53,9 +53,6 @@ class IsValidToversionOnModifiedValidator(BaseValidator[ContentTypes]):
         Returns:
             weather it's valid or not.
         """
-        # If old_base_content_object is None, we can't compare toversion
-        if modified_item.old_base_content_object is None:
-            return False
         old_file = cast(ContentTypes, modified_item.old_base_content_object)
         if modified_item.toversion != old_file.toversion:  # file toversion was updated
             if modified_item.object_id in new_items:

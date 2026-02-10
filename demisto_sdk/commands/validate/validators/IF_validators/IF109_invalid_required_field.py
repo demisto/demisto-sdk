@@ -82,9 +82,6 @@ class IsValidRequiredFieldValidator(BaseValidator[ContentTypes]):
             )
 
         if content_item.git_status == GitStatuses.MODIFIED:
-            # If old_base_content_object is None, we can't compare required fields
-            if content_item.old_base_content_object is None:
-                return None
             old_file = cast(
                 Union[IncidentField, IndicatorField],
                 content_item.old_base_content_object,

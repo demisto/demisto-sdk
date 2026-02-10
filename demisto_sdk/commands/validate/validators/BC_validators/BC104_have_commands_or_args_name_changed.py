@@ -30,10 +30,6 @@ class HaveCommandsOrArgsNameChangedValidator(BaseValidator[ContentTypes]):
         for content_item in content_items:
             old_content_item = content_item.old_base_content_object
 
-            # If old_base_content_object is None, we can't compare commands
-            if old_content_item is None:
-                continue
-
             # commands name changed
             new_commands_names = [command.name for command in content_item.commands]
             old_commands_names = [command.name for command in old_content_item.commands]  # type: ignore

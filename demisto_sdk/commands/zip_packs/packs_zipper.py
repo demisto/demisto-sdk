@@ -203,8 +203,7 @@ def PacksDirsHandler(artifact_manager: PacksManager):
     except (Exception, KeyboardInterrupt) as e:
         delete_dirs(artifact_manager)
         artifact_manager.exit_code = EX_FAIL
-        logger.error(e)
-        logger.error("There were errors during the packs zipping process. Fix them and try again.")
+        logger.error(f"There were errors during the packs zipping process. Fix them and try again. Error: {e}")
         exit(EX_FAIL)
     else:
         if artifact_manager.zip_all:

@@ -10,7 +10,7 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
 from demisto_sdk.commands.content_graph.strict_objects.agentix_action_test import (
-    AgentixActionTestFile,
+    StrictAgentixActionTest,
 )
 
 
@@ -35,7 +35,7 @@ class AgentixActionTestParser(
 
     @property
     def strict_object(self):
-        return AgentixActionTestFile
+        return StrictAgentixActionTest
 
     @property
     def object_id(self) -> Optional[str]:

@@ -63,5 +63,5 @@ class AgentixActionTestCase(BaseStrictModel):
         return v
 
 
-class AgentixActionTestFile(BaseStrictModel):
+class StrictAgentixActionTest(BaseStrictModel):
     tests: List[AgentixActionTestCase]

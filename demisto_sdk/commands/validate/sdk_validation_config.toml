@@ -560,6 +560,7 @@ select = [
   "VC100",
   "VC101",
   "AS101",
+  "AS102",
   "BA112"
 ]
 warning = [

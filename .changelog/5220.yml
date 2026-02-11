@@ -1,0 +1,6 @@
+changes:
+- description: |
+    - Fix a bug in `demisto-sdk download` where a custom content, who then became system content, would be written in a different file than initially. This was a strange behavior for when a content was "systemized" by uploading a pack in the same environment that is was created. Now, these system content use the same naming patterns as custom content.
+    - For the same reason: order JSON/YAML keys of system content. This makes git diffs much less painful to deal with.
+  type: fix
+pr_number: 5220

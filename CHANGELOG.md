@@ -1,4 +1,21 @@
 # Changelog
+## 1.38.19 (2026-02-03)
+### Feature
+* Added the AG109 validator to ensure that Agentix Agent system instructions do not exceed the maximum allowed size of 65535 bytes. [#5205](https://github.com/demisto/demisto-sdk/pull/5205)
+* Added validation AG104 to ensure the agent color is a valid 6-digit RGB hex format. [#5092](https://github.com/demisto/demisto-sdk/pull/5092)
+* Added `--create-graph-from-scratch` flag to the **validate** command to force creating the content graph from scratch instead of downloading it from the bucket. [#5230](https://github.com/demisto/demisto-sdk/pull/5230)
+* Added the ***detach*** command, which allows detaching content items (Incident Types, Layouts, Playbooks, Scripts). [#5217](https://github.com/demisto/demisto-sdk/pull/5217)
+* Added the ***reattach*** command, which allows reattaching previously detached content items. [#5217](https://github.com/demisto/demisto-sdk/pull/5217)
+* Modified the ***validate*** command to enforce that the 'provider' field in integration YAML files must exist and be non-empty for integrations supported in the platform marketplace. [#5203](https://github.com/demisto/demisto-sdk/pull/5203)
+
+### Fix
+* Fixed an issue where the **upload** command incorrectly reported success when uploading system content-items failed. [#5198](https://github.com/demisto/demisto-sdk/pull/5198)
+* Fix ID set on non py. file when content item is script. [#5003](https://github.com/demisto/demisto-sdk/pull/5003)
+
+### Internal
+* Changed PB130 and PB131 validations from errors to warnings. [#5230](https://github.com/demisto/demisto-sdk/pull/5230)
+
+
 ## 1.38.18 (2026-01-14)
 ### Feature
 * Update BC115 validation to support default supportedModules handling. [#5122](https://github.com/demisto/demisto-sdk/pull/5122)

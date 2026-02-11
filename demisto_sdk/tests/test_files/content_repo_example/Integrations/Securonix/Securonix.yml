@@ -1,4 +1,5 @@
 category: Analytics & SIEM
+provider: Securonix
 commonfields:
   id: Securonix
   version: -1

@@ -624,3 +624,45 @@ def get_agentix_actions_using_content_items(
     """
     items = run_query(tx, query)
     return [item.get("agentix_action") for item in items]
+
+
+def validate_autonomous_playbook_dependencies(
+    tx: Transaction,
+    file_paths: List[str],
+    core_pack_ids: List[str],
+) -> Dict[str, Neo4jRelationshipResult]:
+    """Query graph to find playbooks in autonomous packs that use scripts or sub-playbooks
+    from packs that are neither core packs nor autonomous packs.
+
+    Args:
+        tx: The Transaction to contact the graph with.
+        file_paths: The file paths to filter playbooks. If empty, checks all playbooks.
+        core_pack_ids: List of core pack IDs.
+
+    Returns:
+        Dict mapping element IDs to Neo4jRelationshipResult for playbooks with invalid dependencies.
+    """
+    query = f"""// Returns autonomous playbooks using scripts/sub-playbooks from non-core, non-autonomous packs
+MATCH (playbook:{ContentType.PLAYBOOK})-[:{RelationshipType.IN_PACK}]->(pack:{ContentType.PACK})
+WHERE pack.managed = true AND pack.source = "autonomous"
+{f'AND playbook.path IN {file_paths}' if file_paths else ''}
+
+// Find dependencies via USES_PLAYBOOK and USES_COMMAND_OR_SCRIPT, excluding Commands
+MATCH (playbook)-[r:{RelationshipType.USES}]->(dep)
+WHERE NOT dep.content_type = "{ContentType.COMMAND}"
+
+// Check the dependency's pack is neither core nor autonomous
+MATCH (dep)-[:{RelationshipType.IN_PACK}]->(dep_pack:{ContentType.PACK})
+WHERE NOT dep_pack.object_id IN {core_pack_ids}
+AND NOT (dep_pack.managed = true AND dep_pack.source = "autonomous")
+
+RETURN playbook AS content_item_from, collect(r) AS relationships, collect(dep) AS nodes_to
+"""
+    return {
+        item.get("content_item_from").element_id: Neo4jRelationshipResult(
+            node_from=item.get("content_item_from"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }

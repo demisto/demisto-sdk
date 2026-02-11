@@ -69,6 +69,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     get_supported_modules_mismatch_commands,
     get_supported_modules_mismatch_content_items,
     get_supported_modules_mismatch_dependencies,
+    validate_autonomous_playbook_dependencies,
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
@@ -619,6 +620,30 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
                 validate_core_packs_dependencies, pack_ids, marketplace, core_pack_list
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_autonomous_playbooks_with_invalid_dependencies(
+        self,
+        file_paths: List[str],
+        core_pack_list: List[str],
+    ) -> List[BaseNode]:
+        """Searches and retrieves playbooks in autonomous packs that use scripts or sub-playbooks
+        from packs that are neither core packs nor autonomous packs.
+
+        Args:
+            file_paths (List[str]): A list of playbook file paths to check.
+                If empty, runs the query over all playbooks.
+            core_pack_list (List[str]): A list of core pack IDs.
+
+        Returns:
+            List[BaseNode]: The playbooks with invalid (non-core, non-autonomous) dependencies.
+        """
+        with self.driver.session() as session:
+            results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
+                validate_autonomous_playbook_dependencies, file_paths, core_pack_list
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

@@ -479,32 +479,36 @@ class BaseUpdate:
             # Get the pack metadata
             pack_dir = Path(self.source_file).parent.parent
             pack_metadata_path = pack_dir / "pack_metadata.json"
-            
+
             if not pack_metadata_path.exists():
                 return
-            
+
             pack_metadata = get_dict_from_file(str(pack_metadata_path))[0]
-            
+
             # Check if pack is managed
             if not pack_metadata.get("managed", False):
                 return
-            
+
             # Get the expected source from pack metadata
             expected_source = pack_metadata.get("source", "")
             if not expected_source:
                 return
-            
+
             # Get current source from content item
             current_source = self.data.get("source", "")
-            
+
             # Add or update source field if needed
             if not current_source:
-                logger.info(f"Adding source field: '{expected_source}' (pack is managed)")
+                logger.info(
+                    f"Adding source field: '{expected_source}' (pack is managed)"
+                )
                 self.data["source"] = expected_source
             elif current_source != expected_source:
-                logger.info(f"Updating source field from '{current_source}' to '{expected_source}' (pack is managed)")
+                logger.info(
+                    f"Updating source field from '{current_source}' to '{expected_source}' (pack is managed)"
+                )
                 self.data["source"] = expected_source
-                
+
         except Exception as e:
             logger.debug(f"Could not add source field for managed pack: {e}")
 

@@ -73,6 +73,7 @@ VALIDATION_CATEGORIES = {
     "TR": "Trigger",
     "VC": "Version Config",
     "AG": "Agentix",
+    "AS": "Autonomous SOC",
 }
 
 
@@ -104,6 +105,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     graph_interface: ClassVar[ContentGraphInterface] = None
     related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
     expected_execution_mode: ClassVar[Optional[List[ExecutionMode]]] = None
+    create_graph_from_scratch: ClassVar[bool] = False
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -179,6 +181,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             update_content_graph(
                 BaseValidator.graph_interface,
                 use_git=True,
+                create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
             )
         return self.graph_interface
 

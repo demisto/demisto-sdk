@@ -2,6 +2,7 @@ category: Utilities
 commonfields:
   id: BaseIntegration
   version: -1
+provider: BaseIntegration
 configuration:
 - defaultvalue: https://example.com/
   display: Your server URL

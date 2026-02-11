@@ -20,6 +20,8 @@ from demisto_sdk.commands.format.format_constants import (
     SCHEMAS_PATH,
     SKIP_FORMATTING_DIRS,
     SKIP_FORMATTING_FILES,
+    SKIP_RETURN_CODE,
+    SUCCESS_RETURN_CODE,
     UNSKIP_FORMATTING_FILES,
 )
 from demisto_sdk.commands.format.update_classifier import (
@@ -374,7 +376,7 @@ def update_content_entity_ids(files: List[str]):
 def run_format_on_file(
     input: str, file_type: str, from_version: str, interactive: bool, **kwargs
 ) -> Tuple[List[str], List[str], List[str]]:
-    """Run the relevent format of file type.
+    """Run the relevant format of file type.
     Args:
         input (str): The input file path.
         file_type (str): The type of input file
@@ -424,36 +426,50 @@ def format_output(
     format_res: int,
     validate_res: int,
 ) -> Tuple[List[str], List[str], List[str]]:
+    """Generate formatted output messages based on format and validation results.
+
+    Args:
+        input: The file path that was formatted
+        format_res: Format result code (0 = success, SKIP_RETURN_CODE = skipped, other = failed)
+        validate_res: Validation result code (0 = success, VALIDATE_RES_SKIPPED_CODE = skipped,
+                      VALIDATE_RES_FAILED_CODE = failed without validation, other = failed)
+
+    Returns:
+        Tuple of (info_list, error_list, skipped_list) containing status messages
+    """
     info_list = []
     error_list = []
     skipped_list = []
-    if format_res and validate_res:
-        if validate_res == VALIDATE_RES_SKIPPED_CODE:
-            error_list.append(f"Format Status on file: {input} - Failed")
-            skipped_list.append(f"Validate Status on file: {input} - Skipped")
-        elif validate_res == VALIDATE_RES_FAILED_CODE:
-            error_list.append(f"Format Status on file: {input} - Failed")
-        else:
-            error_list.append(f"Format Status on file: {input} - Failed")
-            error_list.append(f"Validate Status on file: {input} - Failed")
-    elif format_res and not validate_res:
-        error_list.append(f"Format Status on file: {input} - Failed")
-        info_list.append(f"Validate Status on file: {input} - Success")
-    elif not format_res and validate_res:
-        if validate_res == VALIDATE_RES_SKIPPED_CODE:
-            info_list.append(f"Format Status on file: {input} - Success")
-            skipped_list.append(f"Validate Status on file: {input} - Skipped")
-        elif validate_res == VALIDATE_RES_FAILED_CODE:
-            info_list.append(f"Format Status on file: {input} - Success")
-        else:
-            info_list.append(f"Format Status on file: {input} - Success")
-            error_list.append(f"Validate Status on file: {input} - Failed")
+    format_succeeded = False
+
+    def _create_status_msg(operation: str, status: str) -> str:
+        return f"{operation} Status on file: {input} - {status}"
+
+    # Handle format status
+    if format_res == SUCCESS_RETURN_CODE:
+        info_list.append(_create_status_msg("Format", "Success"))
+        format_succeeded = True
+    elif format_res == SKIP_RETURN_CODE:
+        skipped_list.append(_create_status_msg("Format", "Skipped"))
+    else:
+        error_list.append(_create_status_msg("Format", "Failed"))
+
+    # Handle validation status
+    if validate_res == SUCCESS_RETURN_CODE:
+        info_list.append(_create_status_msg("Validate", "Success"))
+    elif validate_res == SKIP_RETURN_CODE:
+        skipped_list.append(_create_status_msg("Validate", "Skipped"))
+    elif validate_res == VALIDATE_RES_FAILED_CODE:
+        # No validation message when validation wasn't run
+        pass
+    else:
+        error_list.append(_create_status_msg("Validate", "Failed"))
+        # Only add help message if format succeeded and validation failed
+        if format_succeeded:
             error_list.append(
                 f"For more information run: `demisto-sdk validate -i {input}`"
             )
-    elif not format_res and not validate_res:
-        info_list.append(f"Format Status on file: {input} - Success")
-        info_list.append(f"Validate Status on file: {input} - Success")
+
     return info_list, error_list, skipped_list
 
 

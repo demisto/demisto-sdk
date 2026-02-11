@@ -19,6 +19,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_WHITELIST_FILE_NAME,
     PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
+    PRIVATE_REPO_STATUS_FILE_CONFIGURATION,
+    PRIVATE_REPO_STATUS_FILE_PRIVATE,
+    PRIVATE_REPO_STATUS_FILE_TEST_CONF,
     RELEASE_NOTES_DIR,
     SCRIPTS_DIR,
     ExecutionMode,
@@ -28,6 +31,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     detect_file_level,
@@ -48,6 +52,161 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 )
 
 
+def _process_status_file(
+    status_file: Path, modified_files: Set, added_files: Set, renamed_files: Set
+) -> Tuple[int, int]:
+    """
+    Process a single status file and update file sets accordingly.
+
+    Args:
+        status_file: Path to the status file to process
+        modified_files: Set of modified files to update
+        added_files: Set of added files to update
+        renamed_files: Set of renamed files to update
+
+    Returns:
+        Tuple of (modified_count, renamed_count)
+    """
+    modified_count = 0
+    renamed_count = 0
+
+    try:
+        if status_file.exists():
+            with open(status_file, "r") as f:
+                file_statuses = DEFAULT_JSON_HANDLER.load(f)
+
+                for file_path_str, status_info in file_statuses.items():
+                    if not file_path_str:
+                        continue
+
+                    file_path = Path(file_path_str)
+
+                    # Handle renamed files
+                    if (
+                        status_info.get("status") == "renamed"
+                        and file_path in added_files
+                    ):
+                        added_files.discard(file_path)
+                        old_path = status_info.get("old_path")
+                        renamed_files.add((Path(old_path), file_path))  # type: ignore[arg-type]
+                        renamed_count += 1
+                        continue
+
+                    # Handle modified status
+                    if (
+                        status_info.get("status") == "modified"
+                        and file_path in added_files
+                    ):
+                        added_files.discard(file_path)
+                        modified_files.add(file_path)
+                        modified_count += 1
+
+    except DEFAULT_JSON_HANDLER.JSONDecodeError as e:
+        logger.warning(f"Invalid JSON format in {status_file}: {str(e)}")
+    except Exception as e:
+        logger.warning(f"Error processing {status_file}: {str(e)}")
+        logger.debug("Full traceback:", exc_info=True)
+
+    return modified_count, renamed_count
+
+
+def _log_file_changes(
+    modified_files: Set, added_files: Set, renamed_files: Set
+) -> None:
+    """
+    Log the final lists of modified, added, and renamed files.
+
+    Args:
+        modified_files: Set of modified files
+        added_files: Set of added files
+        renamed_files: Set of renamed files (tuples of old_path, new_path)
+    """
+    logger.info(
+        "\n######## The final lists after union with the private repositories files:"
+    )
+    if modified_files:
+        logger.info("\n######## Modified files:")
+        for file in sorted(modified_files):
+            logger.info(f"  - {file}")
+
+    if added_files:
+        logger.info("\n######## Added files:")
+        for file in sorted(added_files):
+            logger.info(f"  - {file}")
+
+    if renamed_files:
+        logger.info("\n######## Renamed files:")
+        for renamed_tuple in sorted(
+            renamed_files,
+            key=lambda x: str(x[1]) if isinstance(x, tuple) else str(x),
+        ):
+            if isinstance(renamed_tuple, tuple) and len(renamed_tuple) == 2:
+                old_path, new_path = renamed_tuple
+                logger.info(f"  - {old_path} → {new_path}")
+            else:
+                logger.info(f"  - {renamed_tuple}")
+
+
+def handle_private_repo_deleted_files(
+    deleted_files: Set, show_deleted_files: bool = True
+) -> Set:
+    """
+    Handle deleted files for private repositories by reading status files.
+
+    Args:
+        deleted_files (Set): The initial set of deleted files from git.
+        show_deleted_files: if print to the logs the deleted files or not.
+    Returns:
+        Set: The updated set of deleted files including those from status files.
+    """
+    artifacts_folder = os.getenv("ARTIFACTS_FOLDER", "")
+    logs_dir = Path(artifacts_folder) / "logs" if artifacts_folder else Path("logs")
+
+    status_files = [
+        logs_dir / PRIVATE_REPO_STATUS_FILE_PRIVATE,
+        logs_dir / PRIVATE_REPO_STATUS_FILE_TEST_CONF,
+        logs_dir / PRIVATE_REPO_STATUS_FILE_CONFIGURATION,
+    ]
+
+    for status_file in status_files:
+        try:
+            if status_file.exists():
+                with open(status_file, "r") as f:
+                    file_statuses = DEFAULT_JSON_HANDLER.load(f)
+                    deleted_count = 0
+
+                    for file_path_str, status_info in file_statuses.items():
+                        if not file_path_str:
+                            continue
+
+                        file_path = Path(file_path_str)
+
+                        # Handle deleted files
+                        if status_info.get("status") == "deleted":
+                            deleted_files.add(file_path)
+                            deleted_count += 1
+
+                    if deleted_count > 0:
+                        logger.debug(
+                            f"Current deleted files count: {len(deleted_files)}"
+                        )
+
+        except DEFAULT_JSON_HANDLER.JSONDecodeError as e:
+            logger.warning(f"Invalid JSON format in {status_file}: {str(e)}")
+        except Exception as e:
+            logger.warning(f"Error processing {status_file}: {str(e)}")
+            logger.debug("Full traceback:", exc_info=True)
+            continue
+
+    # Log files in a more readable format
+    if deleted_files and show_deleted_files:
+        logger.info("\n######## Deleted files:")
+        for file in sorted(deleted_files):
+            logger.info(f"  - {file}")
+
+    return deleted_files
+
+
 class Initializer:
     """
     A class for initializing objects to run on based on given flags.
@@ -60,12 +219,18 @@ class Initializer:
         prev_ver=None,
         file_path=None,
         execution_mode: Optional[ExecutionMode] = None,
+        handling_private_repositories: bool = False,
     ):
         self.staged = staged
         self.file_path = file_path
         self.committed_only = committed_only
-        self.prev_ver = prev_ver
+        self.prev_ver = "master" if handling_private_repositories else prev_ver
         self.execution_mode = execution_mode
+        self.handling_private_repositories = handling_private_repositories
+
+        # Set environment variable to enable private repo mode when handling private repositories
+        if handling_private_repositories:
+            os.environ["DEMISTO_SDK_PRIVATE_REPO_MODE"] = "true"
 
     def validate_git_installed(self):
         """Initialize git util."""
@@ -114,9 +279,11 @@ class Initializer:
         Args:
             prev_ver (Optional[str]): Previous branch or SHA1 commit to run checks against.
         """
-        if self.prev_ver and not self.prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
-            self.prev_ver = f"{DEMISTO_GIT_UPSTREAM}/" + self.prev_ver
-        self.prev_ver = self.setup_prev_ver(self.prev_ver)
+        # Skip prev_ver setup when handling private repositories - keep it as-is
+        if not self.handling_private_repositories:
+            if self.prev_ver and not self.prev_ver.startswith(DEMISTO_GIT_UPSTREAM):
+                self.prev_ver = f"{DEMISTO_GIT_UPSTREAM}/{self.prev_ver}"
+            self.prev_ver = self.setup_prev_ver(self.prev_ver)
 
     def collect_files_to_run(self, file_path: str) -> Tuple[Set, Set, Set, Set]:
         """Collecting the files to run on divided to modified, added, and deleted.
@@ -145,6 +312,10 @@ class Initializer:
             committed_only=self.committed_only,
             staged_only=self.staged,
         )
+
+        # Handle deleted files for private repositories
+        if self.handling_private_repositories:
+            deleted_files = handle_private_repo_deleted_files(deleted_files)
 
         return (
             modified_files,
@@ -230,7 +401,7 @@ class Initializer:
             3 sets:
             - The unfiltered modified files
             - The unfiltered added files
-            - The unfiltered renamed files
+            - The unfiltered renamed files (Set of tuples: (old_path, new_path))
         """
         # get files from git by status identification against prev-ver
         modified_files = self.git_util.modified_files(

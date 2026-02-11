@@ -9,6 +9,8 @@ from demisto_sdk.commands.validate.tests.test_tools import (
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
     GR104_is_pack_display_name_already_exists,
+    GR111_is_agentix_action_display_name_already_exists_valid,
+    GR112_is_agentix_action_name_already_exists_valid,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
     MarketplacesFieldValidatorAllFiles,
@@ -72,6 +74,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR109_is_supported_m
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR110_is_agentix_action_using_existing_content_item_valid import (
     IsAgentixActionUsingExistingContentItemValidator,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR111_is_agentix_action_display_name_already_exists_valid import (
+    IsAgentixActionDisplayNameAlreadyExistsValidator,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR112_is_agentix_action_name_already_exists_valid import (
+    IsAgentixActionNameAlreadyExistsValidator,
 )
 from TestSuite.repo import Repo
 
@@ -1573,6 +1581,7 @@ def repo_for_test_gr_109_mismatch_command(graph_repo: Repo):
         "display": "Integration1",
         "description": "this is an integration Integration1",
         "category": "category",
+        "provider": "Integration1",
         "supportedModules": ["module_x"],
         "script": {
             "type": "python",
@@ -1990,3 +1999,73 @@ def test_gr110_valid_playbook_reference(repo_for_test_gr_110: Repo, mocker):
     results = validator.obtain_invalid_content_items_using_graph([action], False)
 
     assert len(results) == 0
+
+
+def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
+    mocker, graph_repo: Repo
+):
+    """
+    Given
+        - 3 packs, with 1 agentix action in each, and 2 of them are with the same name
+    When
+        - running IsAgentixActionNameAlreadyExistsValidator obtain_invalid_content_items function, on one of the packs with the duplicate agentix action name.
+    Then
+        - Validate that we got the error messages for the duplicate name.
+    """
+    mocker.patch.object(
+        GR112_is_agentix_action_name_already_exists_valid,
+        "CONTENT_PATH",
+        new=graph_repo.path,
+    )
+    graph_repo.setup_one_pack(name="pack1")
+    graph_repo.setup_one_pack(name="pack2")
+    graph_repo.setup_one_pack(name="pack3")
+    graph_repo.packs[1].agentix_actions[0].set_agentix_action_name("test")
+    graph_repo.packs[2].agentix_actions[0].set_agentix_action_name("test")
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
+        [
+            graph_repo.packs[0].agentix_actions[0],
+            graph_repo.packs[2].agentix_actions[0],
+        ],
+        validate_all_files=False,
+    )
+
+    assert len(results) == 1
+
+
+def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
+    mocker, graph_repo: Repo
+):
+    """
+    Given
+        - 3 packs, with 1 agentix action in each, and 2 of them are with the same display name
+    When
+        - running IsAgentixActionDisplayNameAlreadyExistsValidator obtain_invalid_content_items function, on one of the packs with the duplicate agentix action display.
+    Then
+        - Validate that we got the error messages for the duplicate display name.
+    """
+    mocker.patch.object(
+        GR111_is_agentix_action_display_name_already_exists_valid,
+        "CONTENT_PATH",
+        new=graph_repo.path,
+    )
+    graph_repo.setup_one_pack(name="pack1")
+    graph_repo.setup_one_pack(name="pack2")
+    graph_repo.setup_one_pack(name="pack3")
+    graph_repo.packs[1].agentix_actions[0].set_agentix_action_display("test")
+    graph_repo.packs[2].agentix_actions[0].set_agentix_action_display("test")
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionDisplayNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
+        [
+            graph_repo.packs[0].agentix_actions[0],
+            graph_repo.packs[2].agentix_actions[0],
+        ],
+        validate_all_files=False,
+    )
+
+    assert len(results) == 1

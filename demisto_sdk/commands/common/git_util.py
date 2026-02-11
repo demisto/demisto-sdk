@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional, Sequence, Set, Tuple, Union
@@ -18,9 +19,11 @@ from git.remote import Remote
 from demisto_sdk.commands.common.constants import (
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
+    ISO_TIMESTAMP_FORMAT,
     PACKS_FOLDER,
 )
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.common.string_to_bool import string_to_bool
 
 
 class CommitOrBranchNotFoundError(GitError):
@@ -536,7 +539,7 @@ class GitUtil:
         committed = set()
 
         if not staged_only:
-            # get all committed files identified as added which are changed from prev_ver.
+            # get all committed files identified as deleted which are changed from prev_ver.
             # this can result in extra files identified which were not touched on this branch.
             if remote:
                 committed = {
@@ -557,9 +560,22 @@ class GitUtil:
                 }
 
             # identify all files that were touched on this branch regardless of status
-            # intersect these with all the committed files to identify the committed added files.
-            all_branch_changed_files = self._get_all_changed_files(prev_ver)
-            committed = committed.intersection(all_branch_changed_files)
+            # intersect these with all the committed files to identify the committed deleted files.
+            # EXCEPT in private repo mode - we want to catch ALL deletions, not just those in changed files
+            is_private_repo = string_to_bool(
+                os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
+            )
+
+            if not is_private_repo:
+                all_branch_changed_files = self._get_all_changed_files(prev_ver)
+                committed = committed.intersection(all_branch_changed_files)
+            else:
+                # Filter out .gitkeep files and files under AssetsModelingRules
+                committed = {
+                    f
+                    for f in committed
+                    if f.name != ".gitkeep" and "AssetsModelingRules" not in str(f)
+                }
 
         if committed_only:
             return committed
@@ -569,7 +585,7 @@ class GitUtil:
             # get all untracked deleted files
             untracked = self._get_untracked_files("D")
 
-        # get all the files that are staged on the branch and identified as added.
+        # get all the files that are staged on the branch and identified as deleted.
         staged = {
             Path(os.path.join(item.a_path))  # type: ignore
             for item in self.repo.head.commit.diff().iter_change_type("D")
@@ -694,11 +710,32 @@ class GitUtil:
         return all_renamed_files
 
     def get_all_changed_pack_ids(self, prev_ver: str) -> Set[str]:
-        return {
-            file.parts[1]
-            for file in self._get_all_changed_files(prev_ver) | self._get_staged_files()
-            if file.parts[0] == PACKS_FOLDER
+        # Handle case where prev_ver might be a boolean or invalid value
+        # If prev_ver is True/False or not a string, use empty string (will use default branch)
+        if not isinstance(prev_ver, str) or prev_ver in ("True", "False"):
+            prev_ver = ""
+
+        # In private repos, ignore the graph's old commit and use actual branch changes
+        # This prevents updating all packs that diverged since the old graph commit
+        is_private_repo = string_to_bool(
+            os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
+        )
+
+        if is_private_repo:
+            # Get only files changed in the current branch, not all diverged files
+            changed_files = (
+                self.get_all_changed_files(prev_ver="", committed_only=True)
+                | self._get_staged_files()
+            )
+        else:
+            changed_files = (
+                self._get_all_changed_files(prev_ver) | self._get_staged_files()
+            )
+
+        pack_ids = {
+            file.parts[1] for file in changed_files if file.parts[0] == PACKS_FOLDER
         }
+        return pack_ids
 
     def _get_untracked_files(self, requested_status: str) -> set:
         """return all untracked files of the given requested status.
@@ -735,11 +772,12 @@ class GitUtil:
         Returns:
             Set[Path]: The staged files to return
         """
-        return {
+        staged_files = {
             Path(item)
             for item in self.repo.git.diff("--cached", "--name-only").split("\n")
             if item
         }
+        return staged_files
 
     def _get_all_changed_files(self, prev_ver: Optional[str] = None) -> Set[Path]:
         """
@@ -751,13 +789,12 @@ class GitUtil:
         Returns:
             Set[Path]: of Paths to files changed in the current branch.
         """
-
         self.fetch()
         remote, branch = self.handle_prev_ver(prev_ver)
         current_hash = self.get_current_commit_hash()
 
         if remote:
-            return {
+            changed_files = {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
                     "--name-only", f"{remote}/{branch}...{current_hash}"
@@ -765,15 +802,35 @@ class GitUtil:
                 if item
             }
 
-        # if remote does not exist we are checking against the commit sha1
+        # if remote does not exist we are checking against the commit sha1 or branch
         else:
-            return {
+            is_private_repo = string_to_bool(
+                os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
+            )
+
+            # In private repos, always use merge-base to find common ancestor
+            # This prevents including all diverged commits
+            if is_private_repo:
+                try:
+                    merge_base = self.repo.git.merge_base(branch, current_hash).strip()
+                    compare_from = merge_base
+                    diff_operator = ".."
+                except Exception:
+                    compare_from = branch
+                    diff_operator = ".."
+            else:
+                # For non-private repos, use three-dot diff
+                diff_operator = "..."
+                compare_from = branch
+
+            changed_files = {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
-                    "--name-only", f"{branch}...{current_hash}"
+                    "--name-only", f"{compare_from}{diff_operator}{current_hash}"
                 ).split("\n")
                 if item
             }
+        return changed_files
 
     def _only_last_commit(
         self, prev_ver: str, requested_status: Lit_change_type
@@ -845,6 +902,10 @@ class GitUtil:
         return ""
 
     def handle_prev_ver(self, prev_ver: Optional[str] = None):
+        if string_to_bool(
+            os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
+        ):
+            return "", prev_ver or "master"
         # check for sha1 in regex
         sha1_pattern = re.compile(r"\b[0-9a-f]{40}\b", flags=re.IGNORECASE)
         if prev_ver and sha1_pattern.match(prev_ver):
@@ -1194,3 +1255,9 @@ class GitUtil:
             logger.debug(f"Staged file '{file_path}'")
         else:
             logger.error(f"File '{file_path}' doesn't exist. Not adding.")
+
+    def get_file_creation_date(self, file_path: Path) -> str:
+        if commits := list(self.repo.iter_commits(paths=file_path)):
+            first_commit = commits[-1]
+            return first_commit.authored_datetime.strftime(ISO_TIMESTAMP_FORMAT)
+        return datetime.now().strftime(ISO_TIMESTAMP_FORMAT)

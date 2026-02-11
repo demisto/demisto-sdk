@@ -142,7 +142,9 @@ class PackMetadataParser:
         self.display_name: str = metadata.get("name", "")
         self.description: str = metadata.get("description", "")
         self.support: str = metadata.get("support", "")
-        self.created: str = metadata.get("created") or NOW
+        self.created = metadata.get("firstCreated") or metadata.get("created")
+        if not self.created:
+            self.created = GitUtil().get_file_creation_date(file_path=path)
         self.updated: str = metadata.get("updated") or NOW
         self.legacy: bool = metadata.get(
             "legacy", metadata.get("partnerId") is None
@@ -188,6 +190,8 @@ class PackMetadataParser:
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
         self.supportedModules: Optional[List[str]] = metadata.get("supportedModules")
+        self.source: str = metadata.get("source", "")
+        self.managed: bool = metadata.get("managed", False)
 
     @property
     def url(self) -> str:
@@ -400,7 +404,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         return {
             "name": "name",
             "description": "description",
-            "created": "created",
+            "created": "firstCreated",
             "support": "support",
             "email": "email",
             "price": "price",
@@ -420,6 +424,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "disable_monthly": "disableMonthly",
             "content_commit_hash": "contentCommitHash",
             "default_data_source_id": "defaultDataSource",
+            "source": "source",
+            "managed": "managed",
         }
 
     def raw_data(self) -> dict:

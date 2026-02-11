@@ -52,6 +52,10 @@ mapping:
     type: seq
     sequence:
     - type: str
+  fromversion:
+    type: str
+  toversion:
+    type: str
   marketplaces:
     type: seq
     sequence:

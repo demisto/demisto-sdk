@@ -5,6 +5,7 @@ sectionOrder:
 commonfields:
   id: HelloWorldEventCollector
   version: -1
+provider: HelloWorldEventCollector
 configuration:
 - defaultvalue: https://some_url.com
   display: Server URL (e.g. https://some_url.com)

@@ -17,7 +17,7 @@ def parse_upload_response(response: Any, path: Path, content_type: "ContentType"
         isinstance(response, dict) and len(response) == 2 and "error" in response
     ):  # response format: {"response": {...}, "error": <empty string if ok>}
         if response["error"]:
-            raise FailedUploadException(path=path, response_body=response)
+            raise FailedUploadException(path=path, response_body=response["error"])
     elif (isinstance(response, tuple) and len(response)) == 3:
         (
             data,

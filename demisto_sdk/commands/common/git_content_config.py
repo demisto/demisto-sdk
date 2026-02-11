@@ -312,8 +312,10 @@ class GitContentConfig:
             if r.ok:
                 return github_hostname, repo_name
             if r.status_code == 403 and GitContentConfig.CREDENTIALS.github_token:
-                logger.error(f"Access forbidden to the repository {repo_name} on {api_host}. Error message: {r.text}")
-                exit(1)
+                logger.error(
+                    f"Access forbidden to the repository {repo_name} on {api_host}. Error message: {r.text}"
+                )
+                return None
             r = requests.get(
                 f"https://api.{api_host}/repos/{repo_name}",
                 verify=False,

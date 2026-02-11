@@ -6,8 +6,8 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
-    YAMLContentItemParser,
+from demisto_sdk.commands.content_graph.parsers.agentix_base import (
+    AgentixBaseParser,
 )
 from demisto_sdk.commands.content_graph.strict_objects.agentix_action_test import (
     StrictAgentixActionTest,
@@ -15,7 +15,7 @@ from demisto_sdk.commands.content_graph.strict_objects.agentix_action_test impor
 
 
 class AgentixActionTestParser(
-    YAMLContentItemParser, content_type=ContentType.AGENTIX_ACTION_TEST
+    AgentixBaseParser, content_type=ContentType.AGENTIX_ACTION_TEST
 ):
     def __init__(
         self,
@@ -39,14 +39,10 @@ class AgentixActionTestParser(
 
     @property
     def object_id(self) -> Optional[str]:
-        if self.yml_data is None:
-            return self.path.stem
         return self.yml_data.get("id") or self.path.stem
 
     @property
     def name(self) -> Optional[str]:
-        if self.yml_data is None:
-            return self.path.stem
         return self.yml_data.get("name") or self.path.stem
 
     @property
@@ -55,14 +51,10 @@ class AgentixActionTestParser(
 
     @property
     def fromversion(self) -> str:
-        if self.yml_data is None:
-            return DEFAULT_AGENTIX_ITEM_FROM_VERSION
         return self.yml_data.get("fromversion") or DEFAULT_AGENTIX_ITEM_FROM_VERSION
 
     @property
     def tests(self) -> List[dict]:
-        if self.yml_data is None:
-            return []
         return self.yml_data.get("tests", [])
 
     def connect_to_dependencies(self) -> None:

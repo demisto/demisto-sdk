@@ -180,6 +180,22 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             help="Downloads and merges content from a Cortex XSOAR or Cortex XSIAM tenant to your local repository.",
         )(download)
 
+    if command_name == "detach" or register_all:
+        from demisto_sdk.commands.detach.detach_setup import detach
+
+        app.command(
+            name="detach",
+            help="Detach content items.",
+        )(detach)
+
+    if command_name == "reattach" or register_all:
+        from demisto_sdk.commands.reattach.reattach_setup import reattach
+
+        app.command(
+            name="reattach",
+            help="Reattach content items.",
+        )(reattach)
+
     if command_name == "run" or register_all:
         from demisto_sdk.commands.run_cmd.run_cmd_setup import run
 

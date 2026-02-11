@@ -228,6 +228,9 @@ class _TaskPlaybook(BaseStrictModel):
     is_auto_switched_to_quiet_mode: Optional[bool] = Field(
         None, alias="isautoswitchedtoquietmode"
     )
+    is_response: Optional[bool] = Field(None, alias="isResponse")
+    requires_intervention: Optional[bool] = Field(None, alias="requiresIntervention")
+    display_label: Optional[str] = Field(None, alias="displayLabel")
     quiet: Optional[bool] = None
     evidence_data: Optional[EvidenceData] = Field(None, alias="evidencedata")
     task: SubTaskPlaybook  # type:ignore[valid-type]
@@ -272,6 +275,8 @@ class StrictPlaybook(BaseStrictModel):
     name: str
     description: str
     hidden: Optional[bool] = None
+    internal: Optional[bool] = None
+    source: Optional[str] = None
     deprecated: Optional[bool] = None
     start_task_id: str = Field(alias="starttaskid")
     view: str

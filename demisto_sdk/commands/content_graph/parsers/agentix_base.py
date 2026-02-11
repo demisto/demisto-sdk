@@ -27,6 +27,7 @@ class AgentixBaseParser(YAMLContentItemParser):
         self.tags: List[str] = self.yml_data.get("tags", [])
         self.category: Optional[str] = self.yml_data.get("category", None)
         self.disabled: Optional[bool] = self.yml_data.get("disabled", False)
+        self.internal: bool = self.yml_data.get("internal", False)
 
     @cached_property
     def field_mapping(self):

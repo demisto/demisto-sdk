@@ -24,6 +24,10 @@ mapping:
   suggestion_reason:
     type: str
     required: true
+  grouping_element:
+    type: str
+  is_auto_enabled:
+    type: bool
   alerts_filter:
     type: map
     mapping:

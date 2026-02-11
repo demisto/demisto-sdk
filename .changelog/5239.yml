@@ -1,0 +1,7 @@
+changes:
+- description: |
+    - Fix a bug where encoding was not specified in `demisto-sdk download` which caused write failure on Windows.
+    - Move the `fcntl` import inside the function that uses it so that everything that doesn’t use it works on Windows.
+    - Bump demisto-py to 3.2.23
+  type: feature
+pr_number: 5239

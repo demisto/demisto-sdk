@@ -1,0 +1,7 @@
+changes:
+- description: >
+    Fix a bug where `demisto-sdk download` would not pretty-format JSON files of some content (like incident types).
+    Only on the re-execution of `demisto-sdk download` would it be properly formated. Also sort the keys of new
+    content on initial download.
+  type: fix
+pr_number: 5201

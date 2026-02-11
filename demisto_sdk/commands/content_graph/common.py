@@ -190,29 +190,28 @@ class ContentType(StrEnum):
     @staticmethod
     def _is_agentix_action_test_path(path: Path) -> bool:
         """
-        Check if the given path represents an AgentixActionTest file or directory.
+        Check if the given path represents an AgentixActionTest file.
 
         Detects two patterns:
         - New pattern: *_test.yml (e.g., EnrichIP_test.yml)
         - Old pattern: test_*.yaml in test_data directory
 
+        Note: This method intentionally does NOT check directories.
+        A directory under AgentixActions/ may contain both an action file
+        and a test file, so the directory itself should not be classified
+        as a test path.
+
         Args:
             path: The path to check
 
         Returns:
-            True if the path represents an AgentixActionTest, False otherwise
+            True if the path represents an AgentixActionTest file, False otherwise
         """
         # Check for test file patterns
         if path.stem.endswith("_test") or (
             path.stem.startswith("test_") and "test_data" in path.parts
         ):
             return True
-
-        # If path is a directory, check if it contains a test file
-        if path.is_dir():
-            for file in path.iterdir():
-                if file.suffix in (".yml", ".yaml") and file.stem.endswith("_test"):
-                    return True
 
         return False
 

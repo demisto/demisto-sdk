@@ -1,0 +1,6 @@
+changes:
+- description: >
+    Fix a bug where the `demisto-sdk run` command would fail when the output of a given command contained HTML tags (conflict with the
+    `colorizer` library). The `<` char is now escaped before printing.
+  type: fix
+pr_number: 5157

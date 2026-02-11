@@ -353,10 +353,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
                 # For AgentixActions directories, also parse test files
                 # inside the action subdirectory as separate content items.
-                if (
-                    is_agentix_actions_folder
-                    and content_item_path.is_dir()
-                ):
+                if is_agentix_actions_folder and content_item_path.is_dir():
                     for file in content_item_path.iterdir():
                         if file.suffix in (
                             ".yml",

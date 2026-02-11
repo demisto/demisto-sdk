@@ -1,0 +1,6 @@
+changes:
+- description: >
+    Fix a bug where `demisto-sdk run --debug` would fail when its output contained a stack
+    trace (the `<module>` strings made the logger crash). Also remove duplicated `\n` in the output.
+  type: fix
+pr_number: 5195

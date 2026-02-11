@@ -2,6 +2,7 @@ category: Identity and Access Management
 commonfields:
   id: Hello IAM World
   version: -1
+provider: Hello IAM World
 configuration:
 - display: Base URL
   name: url

@@ -551,6 +551,7 @@ def mock_integration_for_data_source(
         type="python3",
         docker_image=DockerImage("demisto/python3:3.10.11.54799"),
         category="blabla",
+        provider="test_provider",
         commands=[Command(name="test-command", description="")],
         is_fetch=is_fetch,
         is_fetch_events=is_fetch_events,

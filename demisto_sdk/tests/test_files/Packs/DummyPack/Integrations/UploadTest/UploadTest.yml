@@ -4,6 +4,7 @@ commonfields:
 name: upload_test
 display: upload_test
 category: Authentication
+provider: Test Provider
 description: This is the Hello World integration for getting started.
 configuration:
 - display: Server URL (e.g. https://soar.monstersofhack.com)

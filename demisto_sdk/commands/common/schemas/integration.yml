@@ -37,6 +37,9 @@ mapping:
   category:
     type: str
     required: true
+  provider:
+    type: str
+    required: false
   sectionOrder:
     type: seq
     sequence:
@@ -158,6 +161,10 @@ mapping:
     type: bool
   hidden:
     type: bool
+  internal:
+    type: bool # Hidden from UI and API
+  source:
+    type: str
   videos:
     type: seq
     sequence:

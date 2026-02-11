@@ -45,6 +45,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         )
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
+        self.provider = self.yml_data.get("provider", "")
         self.is_beta = self.yml_data.get("beta", False)
         self.is_fetch = self.script_info.get("isfetch", False)
         self.is_fetch_assets = self.script_info.get("isfetchassets", False)
@@ -52,7 +53,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch_events_and_assets = self.script_info.get(
             "isfetcheventsandassets", False
         )
-        self.is_mcp = self.script_info.get("ismcp", False)
+        self.mcp = self.script_info.get("mcp", False)
         self.is_mappable = self.script_info.get("ismappable", False)
         self.is_remote_sync_in = self.script_info.get("isremotesyncin", False)
         self.is_fetch_samples = self.script_info.get("isFetchSamples", False)
@@ -62,6 +63,8 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_cloud_provider_integration = self.yml_data.get(
             "isCloudProviderIntegration", False
         )
+        self.internal: bool = self.yml_data.get("internal", False)
+        self.source: str = self.yml_data.get("source", "")
 
         self.commands: List[CommandParser] = []
         self.connect_to_commands()

@@ -1,3 +1,7 @@
+from typing import List, Optional
+
+from pydantic import Field
+
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseOptionalVersionJson,
 )
@@ -15,6 +19,7 @@ class _StrictXDRCTemplate(BaseStrictModel):
     content_global_id: str
     from_xdr_version: str
     yaml_template: str
+    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 
 
 StrictXDRCTemplate = create_model(

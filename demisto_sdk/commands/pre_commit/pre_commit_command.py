@@ -749,18 +749,51 @@ def preprocess_files(
     Returns:
         Set[Path]: The set of files to run pre-commit on.
     """
+    from demisto_sdk.commands.common.string_to_bool import string_to_bool
+
+    # Auto-enable committed_only for private repos to avoid getting all diverged files
+    is_private_repo = string_to_bool(
+        os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
+    )
+    if (
+        is_private_repo
+        and use_git
+        and not commited_only
+        and not staged_only
+        and not all_files
+    ):
+        logger.info(
+            "<yellow>DEMISTO_SDK_PRIVATE_REPO_MODE detected - automatically enabling committed_only mode</yellow>"
+        )
+        logger.info(
+            "<yellow>This prevents including all diverged files from master in private repos</yellow>"
+        )
+        commited_only = True
+
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
     all_git_files = git_util.get_all_files().union(staged_files)
     contribution_flow = os.getenv("CONTRIB_BRANCH")
+
     if input_files:
         raw_files = set(input_files)
     elif staged_only:
         raw_files = staged_files
     elif use_git:
-        raw_files = git_util._get_all_changed_files(prev_version)
-        if not commited_only:
+        if commited_only and is_private_repo:
+            # For committed_only mode, get files from actual commits using get_all_changed_files
+            # which properly filters by commit status
+            raw_files = git_util.get_all_changed_files(
+                prev_ver=prev_version or "",
+                committed_only=True,
+                staged_only=False,
+                include_untracked=False,
+            )
+        else:
+            # For non-committed_only mode, use the internal method
+            raw_files = git_util._get_all_changed_files(prev_version)
             raw_files = raw_files.union(staged_files)
+
         if contribution_flow:
             """
             If this command runs on a build triggered by an external contribution PR,
@@ -783,9 +816,11 @@ def preprocess_files(
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():
-            files_to_run.update({path for path in file.rglob("*") if path.is_file()})
+            dir_files = {path for path in file.rglob("*") if path.is_file()}
+            files_to_run.update(dir_files)
         else:
             files_to_run.update(add_related_files(file))
+
     # convert to relative file to content path
     relative_paths = {
         file.relative_to(CONTENT_PATH) if file.is_absolute() else file

@@ -959,6 +959,13 @@ PACKS_FOLDER = "Packs"
 PRIVATE_PACKS_FOLDER = "PrivatePacks"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
+# Private Repository Status Files
+PRIVATE_REPO_STATUS_FILE_PRIVATE = "content_private_files_relative_paths.txt"
+PRIVATE_REPO_STATUS_FILE_TEST_CONF = "content_test_conf_files_relative_paths.txt"
+PRIVATE_REPO_STATUS_FILE_CONFIGURATION = (
+    "content_configuration_files_relative_paths.txt"
+)
+
 CONF_JSON_FILE_NAME = "conf.json"
 VERSION_CONFIG_FILE_NAME = "version_config.json"
 
@@ -1622,6 +1629,8 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.CASE_LAYOUT_RULE: "8.7.0",
     FileType.CASE_FIELD: "8.7.0",
     FileType.CASE_LAYOUT: "8.7.0",
+    FileType.AGENTIX_ACTION: "8.12.0",
+    FileType.AGENTIX_AGENT: "8.12.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.10"
@@ -1634,6 +1643,7 @@ DEFAULT_CONTENT_ITEM_FROM_VERSION = "0.0.0"
 DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"
 MARKETPLACE_MIN_VERSION = "6.0.0"
 MINIMUM_XSOAR_SAAS_VERSION = "8.0.0"
+DEFAULT_AGENTIX_ITEM_FROM_VERSION = "8.12.0"
 
 OLDEST_SUPPORTED_VERSION = "5.0.0"
 OLDEST_INCIDENT_FIELD_SUPPORTED_VERSION = GENERAL_DEFAULT_FROMVERSION
@@ -2317,3 +2327,25 @@ MIRRORING_COMMANDS: list[str] = [
     "get-modified-remote-data",
     "update-remote-system",
 ]
+
+
+class DetachableItemType(StrEnum):
+    INCIDENT_TYPES = "IncidentTypes"
+    LAYOUTS = "Layouts"
+    PLAYBOOKS = "Playbooks"
+    SCRIPTS = "Scripts"
+
+
+DETACH_ITEM_TYPE_TO_ENDPOINT: dict[str, str] = {
+    DetachableItemType.INCIDENT_TYPES.value: "/incidenttype/detach/:id",
+    DetachableItemType.LAYOUTS.value: "/layout/:id/detach",
+    DetachableItemType.PLAYBOOKS.value: "/playbook/detach/:id",
+    DetachableItemType.SCRIPTS.value: "/automation/detach/:id",
+}
+
+REATTACH_ITEM_TYPE_TO_ENDPOINT: dict[str, str] = {
+    DetachableItemType.INCIDENT_TYPES.value: "/incidenttype/attach/:id",
+    DetachableItemType.LAYOUTS.value: "/layout/:id/attach",
+    DetachableItemType.PLAYBOOKS.value: "/playbook/attach/:id",
+    DetachableItemType.SCRIPTS.value: "/automation/attach/:id",
+}

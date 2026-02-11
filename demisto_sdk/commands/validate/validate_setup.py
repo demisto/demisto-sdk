@@ -142,6 +142,11 @@ def validate(
     category_to_run: str = typer.Option(
         None, help="Run specific validations by stating category."
     ),
+    handling_private_repositories: bool = typer.Option(
+        False,
+        "--handling-private-repositories",
+        help="Enable handling of private repositories when looking for status files.",
+    ),
     fix: bool = typer.Option(
         False, "-f", "--fix", help="Whether to autofix failing validations."
     ),
@@ -154,6 +159,11 @@ def validate(
     ),
     skip_new_validate: bool = typer.Option(
         False, help="Whether to skip the new validate flow."
+    ),
+    create_graph_from_scratch: bool = typer.Option(
+        False,
+        "--create-graph-from-scratch",
+        help="If set, creates the content graph from scratch instead of downloading it from the bucket.",
     ),
     ignore: list[str] = typer.Option(
         None, help="An error code to not run. Can be repeated."
@@ -326,6 +336,9 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         prev_ver=kwargs["prev_ver"],
         file_path=file_path,
         execution_mode=execution_mode,
+        handling_private_repositories=kwargs.get(
+            "handling_private_repositories", False
+        ),
     )
     validator_v2 = ValidateManager(
         file_path=file_path,
@@ -335,5 +348,6 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         allow_autofix=kwargs["fix"],
         ignore_support_level=kwargs["ignore_support_level"],
         ignore=kwargs["ignore"],
+        create_graph_from_scratch=kwargs.get("create_graph_from_scratch", False),
     )
     return validator_v2.run_validations()

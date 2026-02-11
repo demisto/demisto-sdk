@@ -83,3 +83,5 @@ class StrictPackMetadata(BaseStrictModel):
     disable_monthly: Optional[bool] = Field(None, alias="disableMonthly")
     content_commit_hash: Optional[str] = Field(None, alias="contentCommitHash")
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    source: Optional[str] = Field("", alias="source")
+    managed: Optional[bool] = Field(False, alias="managed")

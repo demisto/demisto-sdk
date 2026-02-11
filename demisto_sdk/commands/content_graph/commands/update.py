@@ -72,6 +72,7 @@ def update_content_graph(
     packs_to_update: Optional[List[str]] = None,
     dependencies: bool = True,
     output_path: Optional[Path] = None,
+    create_graph_from_scratch: bool = False,
 ) -> None:
     """This function updates a new content graph database in neo4j from the content path
     Args:
@@ -82,12 +83,13 @@ def update_content_graph(
         packs_to_update (List[str]): The packs to update.
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
+        create_graph_from_scratch (bool): Whether to create the graph from scratch instead of downloading.
     """
     force_create_graph = os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE")
     logger.debug(f"DEMISTO_SDK_GRAPH_FORCE_CREATE = {force_create_graph}")
 
-    if string_to_bool(force_create_graph, False):
-        logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
+    if string_to_bool(force_create_graph, False) or create_graph_from_scratch:
+        logger.info("Will create a new graph from scratch")
         create_content_graph(
             content_graph_interface, marketplace, dependencies, output_path
         )

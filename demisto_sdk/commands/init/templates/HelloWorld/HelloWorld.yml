@@ -2,6 +2,7 @@ category: Utilities
 commonfields:
   id: HelloWorld
   version: -1
+provider: HelloWorld
 sectionOrder:
   - Connect
   - Collect

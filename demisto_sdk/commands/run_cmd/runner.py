@@ -212,7 +212,7 @@ class Runner:
                 result = self.client.download_file(log_id)
                 with open(result, "r+") as log_info:
                     for line in log_info:
-                        line = line.replace('<', '\\<').replace('\n', '')
+                        line = line.replace("<", "\\<").replace("\n", "")
                         if self.SECTIONS_HEADER_REGEX.match(line):
                             logger.info(f"<yellow>{line}</yellow>")
                         elif self.FULL_LOG_REGEX.match(line):

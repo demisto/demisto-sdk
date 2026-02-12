@@ -28,9 +28,7 @@ class DockerImage(str):
             username = os.getenv("DEMISTO_SDK_CR_USER", "")
             password = os.getenv("DEMISTO_SDK_CR_PASSWORD", "")
             cls._dockerhub_client = DockerHubClient(
-                registry=DOCKER_REGISTRY_URL,
-                username=username,
-                password=password
+                registry=DOCKER_REGISTRY_URL, username=username, password=password
             )
         return cls._dockerhub_client
 
@@ -137,7 +135,9 @@ class DockerImage(str):
                 return Version(match.group("python_version"))
 
             logger.debug(f"Could not get python version for image {self} from regex")
-            image_env = self._get_dockerhub_client().get_image_env(self.name, tag=self.tag)
+            image_env = self._get_dockerhub_client().get_image_env(
+                self.name, tag=self.tag
+            )
 
             if python_version := next(
                 (
@@ -162,7 +162,9 @@ class DockerImage(str):
         """
         Returns True if the docker-image exist in the configured registry
         """
-        return self._get_dockerhub_client().is_docker_image_exist(self.name, tag=self.tag)
+        return self._get_dockerhub_client().is_docker_image_exist(
+            self.name, tag=self.tag
+        )
 
     @property
     def latest_tag(self) -> Version:
@@ -173,4 +175,6 @@ class DockerImage(str):
         """
         Returns the docker image with the latest tag
         """
-        return DockerImage(self._get_dockerhub_client().get_latest_docker_image(self.name))
+        return DockerImage(
+            self._get_dockerhub_client().get_latest_docker_image(self.name)
+        )

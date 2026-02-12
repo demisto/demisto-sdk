@@ -360,9 +360,7 @@ DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
         ),
     ],
 )
-def test_get_registry_api_url_with_custom_registry(
-    registry: str, expected_url: str
-):
+def test_get_registry_api_url_with_custom_registry(registry: str, expected_url: str):
     """
     Given:
         - Various custom registry URL formats
@@ -404,9 +402,7 @@ def test_do_registry_get_request_custom_registry_skips_bearer_token(
         - ensure get_token is NOT called (no Docker Hub bearer token)
         - ensure the request is made with Accept header but without Authorization header
     """
-    dockerhub_client.registry_api_url = (
-        "https://test-docker.dev/v2"
-    )
+    dockerhub_client.registry_api_url = "https://test-docker.dev/v2"
     mock_get_token = mocker.patch.object(dockerhub_client, "get_token")
     mock_get_request = mocker.patch.object(
         dockerhub_client, "get_request", return_value={"tags": ["1.0.0"]}

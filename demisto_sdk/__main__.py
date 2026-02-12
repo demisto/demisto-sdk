@@ -52,7 +52,6 @@ def main(
     sdk = DemistoSDK()  # Initialize your SDK class
     sdk.configuration = Configuration()  # Initialize the configuration
     ctx.obj = sdk  # Pass sdk instance to context
-    typer.echo("Testing 2")
     load_dotenv(CONTENT_PATH / ".env", override=True)
     if platform.python_version_tuple()[:2] == ("3", "9"):
         message = typer.style(
@@ -520,5 +519,5 @@ args = sys.argv[1:]
 register_commands(args)
 
 if __name__ == "__main__":
-    typer.echo("Running Demisto-SDK CLI Testing 2")
+    typer.echo("Running Demisto-SDK CLI")
     app()  # Run the main app

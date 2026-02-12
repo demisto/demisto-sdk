@@ -1642,9 +1642,9 @@ class Downloader:
             mergedeep.merge(file_data, preserved_data)
 
         if is_yaml:
-            write_dict(file_to_update, data=file_data, handler=yaml, sort_keys=True)
+            write_dict(file_to_update, data=file_data, handler=yaml)
         else:  # json
-            write_dict(file_to_update, data=file_data, handler=json, indent=4, sort_keys=True)
+            write_dict(file_to_update, data=file_data, handler=json, indent=4)
 
     def get_split_item_expected_filename(
         self, content_item_name: str, file_extension: str

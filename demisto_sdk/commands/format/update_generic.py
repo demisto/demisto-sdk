@@ -351,7 +351,7 @@ class BaseUpdate:
         ):
             return  # nothing to set
         current_fromversion_value = self.data.get(self.from_version_key, "")
-        logger.info("Setting fromVersion field testing")
+        logger.info("Setting fromVersion field")
 
         if self.from_version:
             self.data[self.from_version_key] = self.from_version

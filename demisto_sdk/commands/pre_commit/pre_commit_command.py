@@ -469,6 +469,10 @@ def group_by_language(
             api_modules.append(integration_script)
             continue
 
+    # Keep track of the original API module objects (before graph lookup) so we can
+    # also lint them with their *own* docker image.
+    original_api_modules: List[IntegrationScript] = list(api_modules)
+
     if api_modules:
         logger.debug("Pre-Commit: Starting to handle API Modules")
         with ContentGraphInterface() as graph:
@@ -494,6 +498,35 @@ def group_by_language(
                     )
                 )
         logger.debug("Pre-Commit: Finished handling API Modules")
+
+    # Also add API modules themselves to language_to_files so they are linted
+    # with their own docker image (in addition to being linted via importing integrations).
+    for api_module in original_api_modules:
+        code_file_path = api_module.path.parent
+        if python_version := api_module.python_version:
+            version = Version(python_version)
+            language = f"{version.major}.{version.minor}"
+        else:
+            language = api_module.type
+        language_to_files[language].update(
+            {
+                (path, api_module)
+                for path in integrations_scripts_mapping[code_file_path]
+            },
+            {
+                (
+                    api_module.path.relative_to(CONTENT_PATH)
+                    if api_module.path.is_absolute()
+                    else api_module.path,
+                    api_module,
+                )
+            },
+        )
+        logger.debug(
+            f"Pre-Commit: Added API module {api_module.object_id} to language_to_files "
+            f"with its own docker image(s) for direct linting"
+        )
+
     for integration_script in integrations_scripts:
         if (pack := integration_script.in_pack) and pack.object_id == API_MODULES_PACK:
             # we dont need to lint them individually, they will be run with the integrations that uses them

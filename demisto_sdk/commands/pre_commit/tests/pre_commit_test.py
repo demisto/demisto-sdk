@@ -238,6 +238,7 @@ def test_handle_api_modules(mocker, git_repo: Repo):
     Then:
         - Ensure that the API module is added to the files to run
         - Ensure that the integration that uses the API module is added to the files to run, both related to the *integration*
+        - Ensure that the API module is also added with its own object (for its own docker image linting)
     """
     pack1 = git_repo.create_pack("ApiModules")
     script = pack1.create_script("TestApiModule")
@@ -248,18 +249,38 @@ def test_handle_api_modules(mocker, git_repo: Repo):
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(git_repo.path))
     with ChangeCWD(git_repo.path):
         git_repo.create_graph()
-        files_to_run = group_by_language(
+        language_to_files, _ = group_by_language(
             {Path(script.yml.path).relative_to(git_repo.path)}
         )
-    files_to_run = {(path, obj.path) for path, obj in files_to_run[0]["2.7"]}
+
+    all_files = language_to_files["2.7"]
+
+    # Check that the API module files are associated with the integration (existing behavior)
+    files_with_integration_obj = {
+        (path, obj.path) for path, obj in all_files
+        if obj.path == integration.object.path.relative_to(git_repo.path)
+    }
     assert (
         Path(script.yml.path).relative_to(git_repo.path),
         integration.object.path.relative_to(git_repo.path),
-    ) in files_to_run
+    ) in files_with_integration_obj
     assert (
         Path(integration.yml.path).relative_to(git_repo.path),
         integration.object.path.relative_to(git_repo.path),
-    ) in files_to_run
+    ) in files_with_integration_obj
+
+    # Check that the API module is also added with its own object (for its own docker image)
+    api_module_obj_ids = {
+        obj.object_id for _, obj in all_files
+    }
+    assert script.object.object_id in api_module_obj_ids
+
+    # Verify the API module's own files are associated with the API module object
+    files_with_api_module_obj = {
+        path for path, obj in all_files
+        if obj.object_id == script.object.object_id
+    }
+    assert Path(script.yml.path).relative_to(git_repo.path) in files_with_api_module_obj
 
 
 @pytest.mark.parametrize("github_actions", [True, False])

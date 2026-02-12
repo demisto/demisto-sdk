@@ -654,7 +654,7 @@ WHERE NOT dep.content_type = "{ContentType.COMMAND}"
 // Check the dependency's pack is neither core nor autonomous
 MATCH (dep)-[:{RelationshipType.IN_PACK}]->(dep_pack:{ContentType.PACK})
 WHERE NOT dep_pack.object_id IN {core_pack_ids}
-AND NOT (dep_pack.managed = true AND dep_pack.source = "autonomous")
+AND NOT (coalesce(dep_pack.managed, false) = true AND coalesce(dep_pack.source, "") = "autonomous")
 
 RETURN playbook AS content_item_from, collect(r) AS relationships, collect(dep) AS nodes_to
 """

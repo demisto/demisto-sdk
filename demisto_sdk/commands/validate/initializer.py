@@ -41,6 +41,7 @@ from demisto_sdk.commands.common.tools import (
     get_file_by_status,
     get_relative_path_from_packs_dir,
     is_external_repo,
+    is_private_content_file,
     specify_files_from_directory,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -230,7 +231,9 @@ class Initializer:
         self.prev_ver = "master" if handling_private_repositories else prev_ver
         self.execution_mode = execution_mode
         self.handling_private_repositories = handling_private_repositories
-        self.private_content_path = private_content_path
+        self.private_content_path = (
+            Path(private_content_path) if private_content_path else None
+        )
         self.private_content_files: set[Path] = set()
 
         # Set environment variable to enable private repo mode when handling private repositories
@@ -690,13 +693,24 @@ class Initializer:
         for file_path in related_files_main_items:
             path: Path = Path(file_path)
             try:
-                temp_obj = BaseContent.from_path(
-                    path, git_sha=None, raise_on_exception=True
+                is_private = is_private_content_file(
+                    file_path, self.private_content_path
                 )
-                if temp_obj is None:
-                    invalid_content_items.add(path)
+                if is_private and self.private_content_path:
+                    chdir_path = self.private_content_path
                 else:
-                    basecontent_with_path_set.add(temp_obj)
+                    chdir_path = Path(get_content_path())
+
+                with chdir(chdir_path):
+                    temp_obj = BaseContent.from_path(
+                        path, git_sha=None, raise_on_exception=True
+                    )
+                    if temp_obj is None:
+                        invalid_content_items.add(path)
+                    else:
+                        if is_private and self.private_content_path:
+                            temp_obj.path_to_read = self.private_content_path / path
+                        basecontent_with_path_set.add(temp_obj)
             except NotAContentItemException:
                 non_content_items.add(file_path)  # type: ignore[arg-type]
             except InvalidContentItemException:
@@ -896,25 +910,59 @@ class Initializer:
         )
         return statuses_dict
 
+    def handle_private_content_file(self, file):
+        if is_private_content_file(file, self.private_content_path):
+            if not Path(file).is_absolute():
+                file = self.private_content_path / file
+            self.private_content_files.add(file)
+
+        return str(file)
+
     def load_files(self, files: List[str]) -> Set[Path]:
         """Recursively load all files from a given list of paths.
 
+        This method resolves each path to determine if it belongs to the private
+        content directory. If a directory exists in both the standard and
+        private content locations, the files from both locations are merged.
+
         Args:
-            files (List[str]): The list of paths.
+            files (List[str]): A list of file or directory paths (relative or absolute).
 
         Returns:
-            Set[Path]: The set of files obtained from the list of paths.
+            Set[Path]: A unique set of Path objects for all discovered files.
+                    Private files are also tracked in `self.private_content_files`.
         """
         loaded_files: Set[Path] = set()
-        for file in files:
-            file_level = detect_file_level(file)
-            file_obj: Path = Path(file)
-            if file_level in [PathLevel.FILE, PathLevel.PACK]:
-                loaded_files.add(file_obj)
-            else:
-                loaded_files.update(
-                    {path for path in file_obj.rglob("*") if path.is_file()}
-                )
+
+        for file_input in files:
+            resolved_file_str = self.handle_private_content_file(file_input)
+            file_path = Path(resolved_file_str)
+
+            file_level = detect_file_level(resolved_file_str)
+
+            if file_level in {PathLevel.FILE, PathLevel.PACK}:
+                loaded_files.add(file_path)
+                continue
+
+            is_in_private = self.private_content_path and file_path.is_relative_to(
+                self.private_content_path
+            )
+
+            if file_path.exists() and not is_in_private:
+                loaded_files.update(p for p in file_path.rglob("*") if p.is_file())
+
+            if self.private_content_path:
+                rel_path = get_relative_path_from_packs_dir(resolved_file_str)
+                private_dir_obj = self.private_content_path / rel_path
+
+                if private_dir_obj.exists():
+                    private_found = {
+                        p for p in private_dir_obj.rglob("*") if p.is_file()
+                    }
+
+                    loaded_files.update(private_found)
+                    self.private_content_files.update(private_found)
+
         return loaded_files
 
     def collect_related_files_main_items(self, file_paths: Set[Path]) -> Set[Path]:

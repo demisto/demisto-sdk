@@ -21,7 +21,10 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import is_abstract_class
+from demisto_sdk.commands.common.tools import (
+    get_relative_path_from_packs_dir,
+    is_abstract_class,
+)
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
@@ -292,7 +295,7 @@ class BaseResult(BaseModel):
     def rel_path(self):
         path: Path = self.path if self.path else self.content_object.path
         if path.is_absolute():
-            path = path.relative_to(CONTENT_PATH)
+            path = get_relative_path_from_packs_dir(str(path))
         return path
 
     @property

@@ -282,19 +282,17 @@ class DockerHubClient:
 
         if headers:
             _headers = {key: value for key, value in headers}
-        elif is_custom_registry:
-            # For custom registries, don't send Docker Hub bearer token.
-            # Let get_request() use Basic Auth (self.auth) if credentials are available.
-            _headers = {
-                "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
-                "application/vnd.docker.distribution.manifest.list.v2+json",
-            }
         else:
             _headers = {
                 "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
                 "application/vnd.docker.distribution.manifest.list.v2+json",
-                "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
             }
+            if not is_custom_registry:
+                # For custom registries, don't send Docker Hub bearer token.
+                # Let get_request() use Basic Auth (self.auth) if credentials are available.
+                _headers["Authorization"] = (
+                    f"Bearer {self.get_token(docker_image, scope=scope)}"
+                )
 
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",

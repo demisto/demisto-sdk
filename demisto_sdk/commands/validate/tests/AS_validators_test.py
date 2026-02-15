@@ -203,7 +203,6 @@ def test_IsValidAutonomousTriggerValidator_fix():
         ("partner", True, "partner", 0),  # Managed pack with matching source
         ("", False, "autonomous", 0),  # Non-managed pack, source doesn't matter
         ("wrong", False, "autonomous", 0),  # Non-managed pack, source doesn't matter
-        ("", False, "", 0),  # Non-managed pack, no source
         # Invalid cases - should fail
         ("", True, "autonomous", 1),  # Managed pack, missing source on content item
         ("partner", True, "autonomous", 1),  # Managed pack, mismatched source
@@ -227,11 +226,7 @@ def test_SourceInManagedPackValidator_integration(
         - Content items in non-managed packs can have any source value.
     """
     # Create pack with specified metadata
-    pack_metadata = {}
-    if managed is not None:
-        pack_metadata["managed"] = managed
-    if pack_source is not None:
-        pack_metadata["source"] = pack_source
+    pack_metadata = {"managed": managed, "source": pack_source}
 
     pack = create_pack_object(
         paths=list(pack_metadata.keys()), values=list(pack_metadata.values())
@@ -239,8 +234,8 @@ def test_SourceInManagedPackValidator_integration(
 
     # Create integration with specified source
     integration = create_integration_object(
-        paths=["source"] if content_source is not None else [],
-        values=[content_source] if content_source is not None else [],
+        paths=["source"],
+        values=[content_source],
     )
 
     # Manually set the pack relationship

@@ -626,13 +626,13 @@ def get_agentix_actions_using_content_items(
     return [item.get("agentix_action") for item in items]
 
 
-def validate_autonomous_playbook_dependencies(
+def validate_managed_playbook_dependencies(
     tx: Transaction,
     file_paths: List[str],
     core_pack_ids: List[str],
-) -> Dict[str, Neo4jRelationshipResult]:
-    """Query graph to find playbooks in autonomous packs that use scripts or sub-playbooks
-    from packs that are neither core packs nor autonomous packs.
+) -> Tuple[Dict[str, Neo4jRelationshipResult], Dict[str, str]]:
+    """Query graph to find playbooks in managed packs that use scripts or sub-playbooks
+    from packs that are neither core packs nor managed packs with the same source.
 
     Args:
         tx: The Transaction to contact the graph with.
@@ -640,29 +640,34 @@ def validate_autonomous_playbook_dependencies(
         core_pack_ids: List of core pack IDs.
 
     Returns:
-        Dict mapping element IDs to Neo4jRelationshipResult for playbooks with invalid dependencies.
+        A tuple of:
+        - Dict mapping element IDs to Neo4jRelationshipResult for playbooks with invalid dependencies.
+        - Dict mapping element IDs to the pack source value.
     """
-    query = f"""// Returns autonomous playbooks using scripts/sub-playbooks from non-core, non-autonomous packs
+    query = f"""// Returns managed playbooks using scripts/sub-playbooks from packs with a different source
 MATCH (playbook:{ContentType.PLAYBOOK})-[:{RelationshipType.IN_PACK}]->(pack:{ContentType.PACK})
-WHERE pack.managed = true AND pack.source = "autonomous"
+WHERE pack.managed = true
 {f'AND playbook.path IN {file_paths}' if file_paths else ''}
 
-// Find dependencies via USES_PLAYBOOK and USES_COMMAND_OR_SCRIPT, excluding Commands
+// Find dependencies via USES, excluding Commands
 MATCH (playbook)-[r:{RelationshipType.USES}]->(dep)
 WHERE NOT dep.content_type = "{ContentType.COMMAND}"
 
-// Check the dependency's pack is neither core nor autonomous
+// Check the dependency's pack is neither core nor same-source managed
 MATCH (dep)-[:{RelationshipType.IN_PACK}]->(dep_pack:{ContentType.PACK})
 WHERE NOT dep_pack.object_id IN {core_pack_ids}
-AND NOT (coalesce(dep_pack.managed, false) = true AND coalesce(dep_pack.source, "") = "autonomous")
+AND NOT (coalesce(dep_pack.managed, false) = true AND coalesce(dep_pack.source, "") = pack.source)
 
-RETURN playbook AS content_item_from, collect(r) AS relationships, collect(dep) AS nodes_to
+RETURN playbook AS content_item_from, pack.source AS source, collect(r) AS relationships, collect(dep) AS nodes_to
 """
-    return {
-        item.get("content_item_from").element_id: Neo4jRelationshipResult(
+    results: Dict[str, Neo4jRelationshipResult] = {}
+    sources: Dict[str, str] = {}
+    for item in run_query(tx, query):
+        element_id = item.get("content_item_from").element_id
+        results[element_id] = Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
         )
-        for item in run_query(tx, query)
-    }
+        sources[element_id] = item.get("source", "")
+    return results, sources

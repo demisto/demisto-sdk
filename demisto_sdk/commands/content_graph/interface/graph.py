@@ -199,11 +199,11 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def find_autonomous_playbooks_with_invalid_dependencies(
+    def find_managed_playbooks_with_invalid_dependencies(
         self,
         file_paths: List[str],
         core_pack_list: List[str],
-    ) -> List[BaseNode]:
+    ) -> List[Tuple[BaseNode, str]]:
         pass
 
     @abstractmethod

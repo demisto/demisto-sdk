@@ -69,7 +69,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     get_supported_modules_mismatch_commands,
     get_supported_modules_mismatch_content_items,
     get_supported_modules_mismatch_dependencies,
-    validate_autonomous_playbook_dependencies,
+    validate_managed_playbook_dependencies,
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
@@ -625,13 +625,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_autonomous_playbooks_with_invalid_dependencies(
+    def find_managed_playbooks_with_invalid_dependencies(
         self,
         file_paths: List[str],
         core_pack_list: List[str],
-    ) -> List[BaseNode]:
-        """Searches and retrieves playbooks in autonomous packs that use scripts or sub-playbooks
-        from packs that are neither core packs nor autonomous packs.
+    ) -> List[Tuple[BaseNode, str]]:
+        """Searches and retrieves playbooks in managed packs that use scripts or sub-playbooks
+        from packs that are neither core packs nor managed packs with the same source.
 
         Args:
             file_paths (List[str]): A list of playbook file paths to check.
@@ -639,15 +639,20 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             core_pack_list (List[str]): A list of core pack IDs.
 
         Returns:
-            List[BaseNode]: The playbooks with invalid (non-core, non-autonomous) dependencies.
+            List[Tuple[BaseNode, str]]: Tuples of (playbook, pack_source) with invalid dependencies.
         """
         with self.driver.session() as session:
-            results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
-                validate_autonomous_playbook_dependencies, file_paths, core_pack_list
+            results: Dict[str, Neo4jRelationshipResult]
+            sources: Dict[str, str]
+            results, sources = session.execute_read(
+                validate_managed_playbook_dependencies, file_paths, core_pack_list
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
-            return [self._id_to_obj[result] for result in results]
+            return [
+                (self._id_to_obj[element_id], sources.get(element_id, ""))
+                for element_id in results
+            ]
 
     def find_packs_with_invalid_dependencies(
         self, pack_ids: List[str]

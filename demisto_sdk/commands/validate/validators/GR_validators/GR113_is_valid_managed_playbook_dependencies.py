@@ -14,19 +14,20 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[Playbook]
 
 
-class IsValidAutonomousPlaybookDependenciesValidator(BaseValidator[ContentTypes], ABC):
-    error_code = "AS102"
+class IsValidManagedPlaybookDependenciesValidator(BaseValidator[ContentTypes], ABC):
+    error_code = "GR113"
     description = (
-        "Validates that playbooks in autonomous packs only use scripts and "
-        "sub-playbooks from core packs or other autonomous packs."
+        "Validates that playbooks in managed packs only use scripts and "
+        "sub-playbooks from core packs or other managed packs with the same source."
     )
     rationale = (
-        "Autonomous packs should be self-contained and only depend on core packs "
-        "or other autonomous packs for scripts and sub-playbooks."
+        "Managed packs should only depend on core packs or other managed packs "
+        "with the same source for scripts and sub-playbooks."
     )
     error_message = (
-        "Playbook '{0}' is in an autonomous pack but uses the following scripts/sub-playbooks "
-        "from non-core, non-autonomous packs: {1}."
+        "Playbook '{0}' is in a managed pack (source: '{1}') but uses the following "
+        "scripts/sub-playbooks from packs that are not core packs or managed packs "
+        "with the same source: {2}."
     )
     is_auto_fixable = False
     related_field = "tasks"
@@ -49,12 +50,12 @@ class IsValidAutonomousPlaybookDependenciesValidator(BaseValidator[ContentTypes]
 
         core_pack_list = get_core_pack_list()
         invalid_playbooks = (
-            self.graph.find_autonomous_playbooks_with_invalid_dependencies(
+            self.graph.find_managed_playbooks_with_invalid_dependencies(
                 file_paths_to_validate, core_pack_list
             )
         )
 
-        for content_item in invalid_playbooks:
+        for content_item, source in invalid_playbooks:
             invalid_dep_names = [
                 relationship.content_item_to.object_id
                 or relationship.content_item_to.name
@@ -65,6 +66,7 @@ class IsValidAutonomousPlaybookDependenciesValidator(BaseValidator[ContentTypes]
                     validator=self,
                     message=self.error_message.format(
                         content_item.name,
+                        source,
                         ", ".join(f"'{name}'" for name in invalid_dep_names),
                     ),
                     content_object=content_item,

@@ -3,17 +3,17 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import ExecutionMode
-from demisto_sdk.commands.validate.validators.AS_validators.AS102_is_valid_autonomous_playbook_dependencies import (
+from demisto_sdk.commands.validate.validators.GR_validators.GR113_is_valid_managed_playbook_dependencies import (
     ContentTypes,
-    IsValidAutonomousPlaybookDependenciesValidator,
+    IsValidManagedPlaybookDependenciesValidator,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
 
-class IsValidAutonomousPlaybookDependenciesValidatorListFiles(
-    IsValidAutonomousPlaybookDependenciesValidator,
+class IsValidManagedPlaybookDependenciesValidatorListFiles(
+    IsValidManagedPlaybookDependenciesValidator,
 ):
     expected_execution_mode = [ExecutionMode.SPECIFIC_FILES, ExecutionMode.USE_GIT]
 

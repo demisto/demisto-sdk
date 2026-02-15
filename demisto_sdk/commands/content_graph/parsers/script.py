@@ -1,3 +1,4 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -34,6 +35,18 @@ class ScriptParser(BaseScriptParser, content_type=ContentType.SCRIPT):
         self.is_internal: bool = self.yml_data.get("isInternal", False)
         self.internal: bool = self.yml_data.get("internal", False)
         self.source: str = self.yml_data.get("source", "")
+
+    @cached_property
+    def field_mapping(self):
+        mapping = super().field_mapping
+        mapping.update(
+            {
+                "source": "source",
+                "internal": "internal",
+                "is_internal": "isInternal",
+            }
+        )
+        return mapping
 
     @property
     def strict_object(self):

@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     SDK_OFFLINE_ERROR_MESSAGE,
     ExecutionMode,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger, logging_setup_decorator
 from demisto_sdk.commands.common.tools import (
     is_external_repository,
@@ -18,6 +19,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
+from demisto_sdk.commands.validate.private_content_manager import PrivateContentManager
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.utils.utils import update_command_args_from_config_file
@@ -239,7 +241,24 @@ def validate(
 
         # Run new validation flow
         if run_new_validate:
-            exit_code += run_new_validation(file_path, execution_mode, **ctx.params)
+            # When using -a flag (ALL_FILES mode) with private content, wrap with PrivateContentManager
+            # This ensures private content files are copied before ContentDTO.from_path() is called
+            if (
+                execution_mode == ExecutionMode.ALL_FILES
+                and ctx.params.get("private_content_path")
+            ):
+                logger.info(
+                    f"Using PrivateContentManager for ALL_FILES mode with private content path: {ctx.params['private_content_path']}"
+                )
+                with PrivateContentManager(
+                    private_content_path=ctx.params["private_content_path"],
+                    content_path=CONTENT_PATH,
+                ):
+                    exit_code += run_new_validation(
+                        file_path, execution_mode, **ctx.params
+                    )
+            else:
+                exit_code += run_new_validation(file_path, execution_mode, **ctx.params)
 
         raise typer.Exit(code=exit_code)
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

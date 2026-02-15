@@ -5,6 +5,7 @@ from typing import List, Optional
 import typer
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import (
@@ -23,6 +24,9 @@ from demisto_sdk.commands.content_graph.content_graph_builder import (
     ContentGraphBuilder,
 )
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
+from demisto_sdk.commands.validate.private_content_manager import (
+    PrivateContentManager,
+)
 
 app = typer.Typer()
 
@@ -72,6 +76,7 @@ def update_content_graph(
     packs_to_update: Optional[List[str]] = None,
     dependencies: bool = True,
     output_path: Optional[Path] = None,
+    private_content_path: Optional[Path] = None,
 ) -> None:
     """This function updates a new content graph database in neo4j from the content path
     Args:
@@ -82,6 +87,54 @@ def update_content_graph(
         packs_to_update (List[str]): The packs to update.
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
+        private_content_path (Path): Path to the private content repository. When provided,
+            private content packs will be temporarily copied to the content repository.
+    """
+    # If private content path is provided, wrap the entire update in PrivateContentManager
+    if private_content_path:
+        logger.info(
+            f"Private content path provided: {private_content_path}. "
+            "Private content will be temporarily synced for graph update."
+        )
+        with PrivateContentManager(
+            private_content_path=private_content_path,
+            content_path=CONTENT_PATH,
+        ):
+            _update_content_graph_inner(
+                content_graph_interface=content_graph_interface,
+                marketplace=marketplace,
+                use_git=use_git,
+                imported_path=imported_path,
+                packs_to_update=packs_to_update,
+                dependencies=dependencies,
+                output_path=output_path,
+            )
+        return
+
+    _update_content_graph_inner(
+        content_graph_interface=content_graph_interface,
+        marketplace=marketplace,
+        use_git=use_git,
+        imported_path=imported_path,
+        packs_to_update=packs_to_update,
+        dependencies=dependencies,
+        output_path=output_path,
+    )
+
+
+def _update_content_graph_inner(
+    content_graph_interface: ContentGraphInterface,
+    marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+    use_git: bool = False,
+    imported_path: Optional[Path] = None,
+    packs_to_update: Optional[List[str]] = None,
+    dependencies: bool = True,
+    output_path: Optional[Path] = None,
+) -> None:
+    """Internal function that performs the actual graph update logic.
+
+    This is separated from update_content_graph to allow wrapping with PrivateContentManager
+    when private_content_path is provided.
     """
     force_create_graph = os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE")
     logger.debug(f"DEMISTO_SDK_GRAPH_FORCE_CREATE = {force_create_graph}")
@@ -230,6 +283,16 @@ def update(
         resolve_path=True,
         help="Output folder to locate the zip file of the graph exported file.",
     ),
+    private_content_path: Optional[Path] = typer.Option(
+        None,
+        "-pcp",
+        "--private-content-path",
+        exists=True,
+        dir_okay=True,
+        file_okay=False,
+        resolve_path=True,
+        help="Path to the private content repository. When provided, private content packs will be temporarily copied to the content repository for graph update.",
+    ),
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
@@ -269,4 +332,5 @@ def update(
             packs_to_update=list(packs_to_update) if packs_to_update else [],
             dependencies=not no_dependencies,
             output_path=output_path,
+            private_content_path=private_content_path,
         )

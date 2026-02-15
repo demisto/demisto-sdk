@@ -137,8 +137,6 @@ class ValidateManager:
                 logger.info("Closing graph.")
                 BaseValidator.graph_interface.close()
 
-            BaseValidator.cleanup_private_content()
-
         self.add_invalid_content_items()
         return self.validation_results.post_results(
             config_file_content=self.configured_validations

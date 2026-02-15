@@ -45,6 +45,7 @@ class PrivateContentManager:
 
     # Class-level tracking for cleanup on unexpected termination
     _active_instance: Optional["PrivateContentManager"] = None
+    _usage_count = 0
     _original_sigint_handler = None
     _original_sigterm_handler = None
 
@@ -331,26 +332,28 @@ class PrivateContentManager:
             f"Setting up private content sync from: {self.private_content_path}"
         )
 
-        # Set up signal handlers for cleanup on interruption
+        if PrivateContentManager._active_instance:
+            PrivateContentManager._usage_count += 1
+            return PrivateContentManager._active_instance
+
+        PrivateContentManager._active_instance = self
+        PrivateContentManager._usage_count = 1
+
         self._setup_signal_handlers()
-
         try:
-            # Copy private packs to content directory
             self.copy_private_packs()
-
-            # Stage the copied files to Git
             self.stage_copied_files()
-
             return self
         except Exception:
-            # If setup fails, clean up and re-raise
             self.cleanup()
             self._restore_signal_handlers()
             raise
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """Exit the context manager, performing cleanup."""
-        try:
-            self.cleanup()
-        finally:
-            self._restore_signal_handlers()
+        PrivateContentManager._usage_count -= 1
+
+        if PrivateContentManager._usage_count <= 0:
+            try:
+                self.cleanup()
+            finally:
+                self._restore_signal_handlers()

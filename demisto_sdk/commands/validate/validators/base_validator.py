@@ -19,7 +19,6 @@ from demisto_sdk.commands.common.constants import (
     ExecutionMode,
     GitStatuses,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_relative_path_from_packs_dir,
@@ -35,9 +34,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
-from demisto_sdk.commands.validate.private_content_manager import (
-    PrivateContentManager,
-)
 
 ContentTypes = TypeVar("ContentTypes", bound=BaseContent)
 
@@ -96,7 +92,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
     graph_interface: (ClassVar[ContentGraphInterface]): The graph interface.
     private_content_path: (ClassVar[Optional[Path]]): Path to private content repository for graph building.
-    private_content_manager: (ClassVar[Optional[PrivateContentManager]]): Manager for private content sync.
+        When set, this path is passed to update_content_graph() which handles the PrivateContentManager internally.
     dockerhub_api_client (ClassVar[DockerHubClient): the docker hub api client.
     """
 
@@ -111,7 +107,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     is_auto_fixable: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
     private_content_path: ClassVar[Optional[Path]] = None
-    private_content_manager: ClassVar[Optional[PrivateContentManager]] = None
     related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
     expected_execution_mode: ClassVar[Optional[List[ExecutionMode]]] = None
 
@@ -185,22 +180,16 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     def graph(self) -> ContentGraphInterface:
         if not self.graph_interface:
             logger.info("Graph validations were selected, will init graph")
-
-            # If private content path is set, sync private content before building graph
             if BaseValidator.private_content_path:
                 logger.info(
                     f"Private content path detected: {BaseValidator.private_content_path}"
                 )
-                BaseValidator.private_content_manager = PrivateContentManager(
-                    private_content_path=BaseValidator.private_content_path,
-                    content_path=CONTENT_PATH,
-                )
-                BaseValidator.private_content_manager.__enter__()
 
             BaseValidator.graph_interface = ContentGraphInterface()
             update_content_graph(
                 BaseValidator.graph_interface,
                 use_git=True,
+                private_content_path=BaseValidator.private_content_path,
             )
         return self.graph_interface
 
@@ -210,31 +199,13 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         Set the private content path for graph building.
 
         This should be called before accessing the graph property if private content
-        needs to be included in the graph.
+        needs to be included in the graph. The path is passed to update_content_graph()
+        which handles PrivateContentManager internally.
 
         Args:
             private_content_path: Path to the private content repository, or None to disable.
         """
         cls.private_content_path = private_content_path
-
-    @classmethod
-    def cleanup_private_content(cls) -> None:
-        """
-        Clean up private content after graph operations are complete.
-
-        This should be called after all graph operations are done to:
-        - Remove copied private content files
-        - Unstage files from Git index
-        - Restore the repository to its original state
-        """
-        if cls.private_content_manager is not None:
-            logger.info("Cleaning up private content...")
-            try:
-                cls.private_content_manager.__exit__(None, None, None)
-            except Exception as e:
-                logger.error(f"Error during private content cleanup: {e}")
-            finally:
-                cls.private_content_manager = None
 
     def __dir__(self):
         # Exclude specific properties from being displayed when hovering over 'self'

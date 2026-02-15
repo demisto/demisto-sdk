@@ -16,7 +16,7 @@ ContentTypes = Union[Integration, Script, ContentList, Playbook]
 
 
 class SourceInManagedPackValidator(BaseValidator[ContentTypes]):
-    error_code = "AS104"
+    error_code = "MC101"
     description = (
         "Validate that content items in managed packs have the correct source field."
     )
@@ -63,8 +63,8 @@ class SourceInManagedPackValidator(BaseValidator[ContentTypes]):
             FixResult with the fix message.
         """
         pack_metadata = content_item.in_pack.pack_metadata_dict  # type: ignore[union-attr]
-        expected_source = pack_metadata.get("source", "")  # type: ignore[union-attr]
-
+        expected_source = pack_metadata.get("source", "")
+        
         # Update the content item's source attribute
         content_item.source = expected_source
 
@@ -100,7 +100,7 @@ def get_source_validation_error(content_item: ContentTypes) -> tuple[str, str]:
 
     # Get the expected source from pack metadata
     expected_source = pack_metadata.get("source", "")
-
+    
     # Get the actual source from the content item
     actual_source = getattr(content_item, "source", "")
 
@@ -110,10 +110,7 @@ def get_source_validation_error(content_item: ContentTypes) -> tuple[str, str]:
 
     # Check if source field matches pack metadata
     if actual_source != expected_source:
-        return (
-            f"has source '{actual_source}' which does not match the pack metadata source",
-            expected_source,
-        )
+        return f"has source '{actual_source}' which does not match the pack metadata source", expected_source
 
     # The content item is valid
     return "", ""

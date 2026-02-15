@@ -74,6 +74,7 @@ VALIDATION_CATEGORIES = {
     "VC": "Version Config",
     "AG": "Agentix",
     "AS": "Autonomous SOC",
+    "MC": "Managed Content",
 }
 
 

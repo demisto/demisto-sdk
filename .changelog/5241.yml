@@ -1,0 +1,4 @@
+changes:
+- description:  a new validation (AS102) which validates autonomous-soc playbooks does not use scripts or sub-playbooks that are not managed or from our core packs. Also, a small bug where the graph could not be re-built if it was corrupt due to bad DELETE NODE query, was fixed.
+  type: feature
+pr_number: 5241

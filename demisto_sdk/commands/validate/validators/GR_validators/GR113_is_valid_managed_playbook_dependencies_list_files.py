@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import ExecutionMode
+from demisto_sdk.commands.validate.validators.base_validator import (
+    ValidationResult,
+)
 from demisto_sdk.commands.validate.validators.GR_validators.GR113_is_valid_managed_playbook_dependencies import (
     ContentTypes,
     IsValidManagedPlaybookDependenciesValidator,
-)
-from demisto_sdk.commands.validate.validators.base_validator import (
-    ValidationResult,
 )
 
 

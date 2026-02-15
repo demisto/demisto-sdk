@@ -187,5 +187,3 @@ def test_IsValidAutonomousTriggerValidator_fix():
     # Verify it's now valid
     invalid_items_after_fix = validator.obtain_invalid_content_items([trigger])
     assert len(invalid_items_after_fix) == 0
-
-

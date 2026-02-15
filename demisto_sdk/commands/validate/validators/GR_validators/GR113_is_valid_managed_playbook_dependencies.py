@@ -49,10 +49,8 @@ class IsValidManagedPlaybookDependenciesValidator(BaseValidator[ContentTypes], A
         )
 
         core_pack_list = get_core_pack_list()
-        invalid_playbooks = (
-            self.graph.find_managed_playbooks_with_invalid_dependencies(
-                file_paths_to_validate, core_pack_list
-            )
+        invalid_playbooks = self.graph.find_managed_playbooks_with_invalid_dependencies(
+            file_paths_to_validate, core_pack_list
         )
 
         for content_item, source in invalid_playbooks:

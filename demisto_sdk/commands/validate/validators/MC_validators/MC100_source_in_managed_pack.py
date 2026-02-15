@@ -16,7 +16,7 @@ ContentTypes = Union[Integration, Script, ContentList, Playbook]
 
 
 class SourceInManagedPackValidator(BaseValidator[ContentTypes]):
-    error_code = "MC101"
+    error_code = "MC100"
     description = (
         "Validate that content items in managed packs have the correct source field."
     )

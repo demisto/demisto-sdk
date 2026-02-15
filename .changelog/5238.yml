@@ -1,4 +1,4 @@
 changes:
-- description: Added AS104 validation to ensure content items in managed packs have the correct source field matching pack_metadata, with auto-fix support in both validate and format commands.
+- description: Added MC100 validation to ensure content items in managed packs have the correct source field matching pack_metadata, with auto-fix support in both validate and format commands.
   type: feature
 pr_number: 5238

@@ -6,7 +6,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_playbook_object,
     create_script_object,
 )
-from demisto_sdk.commands.validate.validators.MC_validators.MC101_source_in_managed_pack import (
+from demisto_sdk.commands.validate.validators.MC_validators.MC100_source_in_managed_pack import (
     SourceInManagedPackValidator,
 )
 

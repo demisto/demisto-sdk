@@ -149,15 +149,14 @@ class ContentItem(BaseContent):
 
     def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
         try:
-            section_key = f"file:{path}"
-            # Check if the section exists in the ConfigParser
-            if section_key in self.in_pack.ignored_errors_dict:  # type: ignore
-                # Get the 'ignore' value from the section
-                ignore_value = self.in_pack.ignored_errors_dict[section_key].get('ignore', '')  # type: ignore
-                if ignore_value:
-                    # Split by comma and strip whitespace from each error code
-                    return [code.strip() for code in ignore_value.split(',')]
-            return []
+            return (
+                list(
+                    self.in_pack.ignored_errors_dict.get(  # type: ignore
+                        f"file:{path}", []
+                    ).items()
+                )[0][1].split(",")
+                or []
+            )
         except:  # noqa: E722
             logger.debug(
                 f"Failed to extract ignored errors list from {path} for {self.object_id}"

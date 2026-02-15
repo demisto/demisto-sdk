@@ -136,10 +136,19 @@ class ContentItem(BaseContent):
 
     @property
     def ignored_errors(self) -> List[str]:
+        logger.info(f"[DEBUG] Getting ignored_errors for content item: {self.object_id}")
+        logger.info(f"[DEBUG] Content item path: {self.path}")
+        logger.info(f"[DEBUG] Content item path.name: {self.path.name}")
+        
         if ignored_errors := self.get_ignored_errors(self.path.name):
+            logger.info(f"[DEBUG] Found ignored errors using path.name: {ignored_errors}")
             return ignored_errors
+        
         file_path = get_relative_path(self.path, CONTENT_PATH)
-        return self.get_ignored_errors(file_path)
+        logger.info(f"[DEBUG] Trying with relative path: {file_path}")
+        result = self.get_ignored_errors(file_path)
+        logger.info(f"[DEBUG] Final ignored errors result: {result}")
+        return result
 
     def ignored_errors_related_files(self, file_path: Path) -> List[str]:
         if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
@@ -149,7 +158,12 @@ class ContentItem(BaseContent):
 
     def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
         try:
-            return (
+            # DEBUG LOGGING: Show what we're looking for and what's available
+            logger.info(f"[DEBUG] Looking for ignored errors for path: {path}")
+            logger.info(f"[DEBUG] Available sections in pack ignore: {list(self.in_pack.ignored_errors_dict.keys())}")
+            logger.info(f"[DEBUG] Trying to match: file:{path}")
+            
+            result = (
                 list(
                     self.in_pack.ignored_errors_dict.get(  # type: ignore
                         f"file:{path}", []
@@ -157,9 +171,11 @@ class ContentItem(BaseContent):
                 )[0][1].split(",")
                 or []
             )
-        except:  # noqa: E722
-            logger.debug(
-                f"Failed to extract ignored errors list from {path} for {self.object_id}"
+            logger.info(f"[DEBUG] Found ignored errors: {result}")
+            return result
+        except Exception as e:  # noqa: E722
+            logger.info(
+                f"[DEBUG] Failed to extract ignored errors list from {path} for {self.object_id}, error: {e}"
             )
             return []
 

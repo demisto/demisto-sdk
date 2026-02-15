@@ -174,23 +174,17 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     def get_ignored_errors(self, path: Union[str, Path]) -> List[str]:
         try:
-            # DEBUG LOGGING: Show what we're looking for and what's available
-            logger.info(f"[DEBUG PACK] Looking for ignored errors for path: {path}")
-            logger.info(f"[DEBUG PACK] Available sections in pack ignore: {list(self.ignored_errors_dict.keys())}")
-            logger.info(f"[DEBUG PACK] Trying to match: file:{path}")
-            
-            result = (
-                list(
-                    self.ignored_errors_dict.get(  # type: ignore
-                        f"file:{path}", []
-                    ).items()
-                )[0][1].split(",")
-                or []
-            )
-            logger.info(f"[DEBUG PACK] Found ignored errors: {result}")
-            return result
-        except Exception as e:  # noqa: E722
-            logger.info(f"[DEBUG PACK] Failed to extract ignored errors list from path {path}, error: {e}")
+            section_key = f"file:{path}"
+            # Check if the section exists in the ConfigParser
+            if section_key in self.ignored_errors_dict:  # type: ignore
+                # Get the 'ignore' value from the section
+                ignore_value = self.ignored_errors_dict[section_key].get('ignore', '')  # type: ignore
+                if ignore_value:
+                    # Split by comma and strip whitespace from each error code
+                    return [code.strip() for code in ignore_value.split(',')]
+            return []
+        except:  # noqa: E722
+            logger.debug(f"Failed to extract ignored errors list from path {path}")
             return []
 
     @property

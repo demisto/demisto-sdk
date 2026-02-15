@@ -196,6 +196,8 @@ class PackMetadataParser:
         self.hybrid: bool = metadata.get("hybrid") or False
         self.pack_metadata_dict: dict = metadata
         self.supportedModules: Optional[List[str]] = metadata.get("supportedModules")
+        self.source: str = metadata.get("source", "")
+        self.managed: bool = metadata.get("managed", False)
 
     @property
     def url(self) -> str:
@@ -431,6 +433,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "disable_monthly": "disableMonthly",
             "content_commit_hash": "contentCommitHash",
             "default_data_source_id": "defaultDataSource",
+            "source": "source",
+            "managed": "managed",
         }
 
     def raw_data(self) -> dict:

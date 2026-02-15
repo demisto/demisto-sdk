@@ -75,6 +75,8 @@ VALIDATION_CATEGORIES = {
     "TR": "Trigger",
     "VC": "Version Config",
     "AG": "Agentix",
+    "AS": "Autonomous SOC",
+    "MC": "Managed Content",
 }
 
 
@@ -109,6 +111,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     private_content_path: ClassVar[Optional[Path]] = None
     related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
     expected_execution_mode: ClassVar[Optional[List[ExecutionMode]]] = None
+    create_graph_from_scratch: ClassVar[bool] = False
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
@@ -190,6 +193,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                 BaseValidator.graph_interface,
                 use_git=True,
                 private_content_path=BaseValidator.private_content_path,
+                create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
             )
         return self.graph_interface
 

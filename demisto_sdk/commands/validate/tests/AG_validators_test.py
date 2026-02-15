@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgen
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_agentix_action_object,
+    create_agentix_agent_object,
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_content_item import (
     IsForbiddenContentItemValidator,
@@ -24,6 +25,12 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG106_is_action_name
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG107_is_display_name_valid import (
     IsDisplayNameValidValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG108_is_valid_rgb_color import (
+    IsValidColorValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG109_is_system_instructions_valid import (
+    IsSystemInstructionsValidValidator,
 )
 
 
@@ -246,6 +253,54 @@ def test_is_correct_marketplace():
     assert results[0].message == (
         "The following Agentix related content item 'test' should have only marketplace 'platform'."
     )
+
+
+def test_is_valid_color():
+    """
+    Given:
+    - Two AgentixAgent items, one with a valid color and one with an invalid color.
+
+    When:
+    - Calling the IsValidColorValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure one failure is returned for the invalid color and the error message is correct.
+    """
+    content_items = [
+        create_agentix_agent_object(
+            paths=["color", "name"],
+            values=["#FF0000", "Valid Color Agent"],
+        ),
+        create_agentix_agent_object(
+            paths=["color", "name"],
+            values=["invalid_color", "Invalid Color Agent"],
+        ),
+        create_agentix_agent_object(
+            paths=["color", "name"],
+            values=["#12345G", "Invalid Hex Agent"],
+        ),
+        create_agentix_agent_object(
+            paths=["color", "name"],
+            values=["#FFF", "Short Hex Agent"],
+        ),
+    ]
+
+    results = IsValidColorValidator().obtain_invalid_content_items(content_items)
+
+    assert len(results) == 3
+    error_messages = [result.message for result in results]
+    assert (
+        "The Agentix-agent 'Invalid Color Agent' color 'invalid_color' is not a valid RGB hex color.\n"
+        "Please make sure that the color is a valid 6-digit hex color string, starting with '#'. For example: '#FFFFFF'."
+    ) in error_messages
+    assert (
+        "The Agentix-agent 'Invalid Hex Agent' color '#12345G' is not a valid RGB hex color.\n"
+        "Please make sure that the color is a valid 6-digit hex color string, starting with '#'. For example: '#FFFFFF'."
+    ) in error_messages
+    assert (
+        "The Agentix-agent 'Short Hex Agent' color '#FFF' is not a valid RGB hex color.\n"
+        "Please make sure that the color is a valid 6-digit hex color string, starting with '#'. For example: '#FFFFFF'."
+    ) in error_messages
 
 
 def test_is_type_valid():
@@ -513,3 +568,60 @@ def test_is_valid_agent_visibility():
     assert len(results) == 1
     assert "internal" in results[0].message
     assert "public, private" in results[0].message
+
+
+def test_is_system_instructions_valid():
+    """
+    Given
+    - AgentixAgent items with various system instructions lengths and pack names.
+
+    When
+    - Calling the IsSystemInstructionsValidValidator obtain_invalid_content_items function.
+
+    Then
+    - Ensure that only the item with system instructions exceeding the limit and in 'AI Agents' pack is flagged.
+    """
+    limit = 65535
+    long_instructions = "a" * (limit + 1)
+    valid_instructions = "valid instructions"
+
+    # Valid: Short instructions, correct pack
+    valid_agent = create_agentix_agent_object(
+        paths=["systeminstructions", "name"],
+        values=[valid_instructions, "valid_agent"],
+        pack_info={"name": "AI Agents"},
+        agent_name="valid_agent",
+    )
+
+    # Invalid: Long instructions, correct pack
+    invalid_agent = create_agentix_agent_object(
+        paths=["systeminstructions", "name"],
+        values=[long_instructions, "invalid_agent"],
+        pack_info={"name": "AI Agents"},
+        agent_name="invalid_agent",
+    )
+
+    # Ignored: No instructions
+    ignored_agent_no_instructions = create_agentix_agent_object(
+        paths=["systeminstructions", "name"],
+        values=["", "ignored_agent_no_instructions"],
+        pack_info={"name": "AI Agents"},
+        agent_name="ignored_agent_no_instructions",
+    )
+
+    content_items = [
+        valid_agent,
+        invalid_agent,
+        ignored_agent_no_instructions,
+    ]
+
+    results = IsSystemInstructionsValidValidator().obtain_invalid_content_items(
+        content_items
+    )
+
+    assert len(results) == 1
+    assert results[0].content_object.name == "invalid_agent"
+    assert (
+        f"The system instructions for Agentix Agent 'invalid_agent' exceed the maximum allowed size of {limit} bytes"
+        in results[0].message
+    )

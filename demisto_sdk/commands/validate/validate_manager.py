@@ -34,6 +34,7 @@ class ValidateManager:
         allow_autofix=False,
         ignore_support_level=False,
         ignore: Optional[List[str]] = None,
+        create_graph_from_scratch: bool = False,
     ):
         self.ignore_support_level = ignore_support_level
         self.file_path = file_path
@@ -54,6 +55,8 @@ class ValidateManager:
             codes_to_ignore=ignore,
         )
         self.validators = self.filter_validators()
+        # Set the class variable for BaseValidator to use when initializing the graph
+        BaseValidator.create_graph_from_scratch = create_graph_from_scratch
 
         # Set private content path on BaseValidator for graph building
         if self.initializer.private_content_path:

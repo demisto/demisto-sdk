@@ -279,7 +279,13 @@ def is_error_ignored(
     Returns:
         bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
     """
+    logger.info(f"[DEBUG is_error_ignored] Checking if {err_code} should be ignored")
+    logger.info(f"[DEBUG is_error_ignored] ignorable_errors from config: {ignorable_errors}")
+    logger.info(f"[DEBUG is_error_ignored] content_item.ignored_errors: {content_item.ignored_errors}")
+    logger.info(f"[DEBUG is_error_ignored] ALWAYS_RUN_ON_ERROR_CODE: {ALWAYS_RUN_ON_ERROR_CODE}")
+    
     if (err_code not in ignorable_errors) or (err_code in ALWAYS_RUN_ON_ERROR_CODE):
+        logger.info(f"[DEBUG is_error_ignored] Returning False because err_code not in ignorable_errors or in ALWAYS_RUN_ON_ERROR_CODE")
         return False
     if related_file_type:
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
@@ -289,13 +295,17 @@ def is_error_ignored(
                 if err_code in content_item.ignored_errors_related_files(
                     related_file_object.file_path
                 ):
+                    logger.info(f"[DEBUG is_error_ignored] Returning True - found in related files")
                     return True
             except Exception:
                 continue
+        logger.info(f"[DEBUG is_error_ignored] Returning False - not found in related files")
         return False
     else:
         # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
-        return err_code in content_item.ignored_errors
+        result = err_code in content_item.ignored_errors
+        logger.info(f"[DEBUG is_error_ignored] Returning {result} - err_code {'in' if result else 'not in'} content_item.ignored_errors")
+        return result
 
 
 class ValidationResult(BaseResult, BaseModel):

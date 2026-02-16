@@ -429,7 +429,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def get_unknown_content_uses(
         self,
         file_paths: List[str],
+        allow_missing_dependencies: bool = False,
     ) -> List[BaseNode]:
+        if allow_missing_dependencies:
+            logger.info(
+                "Skipping unknown content validation due to allow_missing_dependencies flag"
+            )
+            return []
         with self.driver.session() as session:
             results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
                 validate_unknown_content,
@@ -442,7 +448,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def get_unknown_playbook_tests(
         self,
         file_paths: List[str],
+        allow_missing_dependencies: bool = False,
     ) -> List[BaseNode]:
+        if allow_missing_dependencies:
+            logger.info(
+                "Skipping unknown playbook tests validation due to allow_missing_dependencies flag"
+            )
+            return []
         with self.driver.session() as session:
             results: Dict[str, Neo4jRelationshipResult] = session.execute_read(
                 validate_playbook_tests_in_repository,

@@ -2779,3 +2779,45 @@ def test_PlaybookTestUseCaseConfigValidator_invalid(
     )
     expected_message = f"Invalid configuration in test use case: {test_use_case_name}. {expected_invalid_reason}."
     assert validation_results[0].message == expected_message
+
+
+def test_PlaybookTestsExistValidator_allow_missing_dependencies_flag(graph_repo: Repo):
+    """
+    Given:
+    - A playbook that references a test playbook that does not exist.
+    - The allow_missing_dependencies flag is set to True.
+
+    When:
+    - Calling PlaybookTestsExistValidator.obtain_invalid_content_items_using_graph.
+
+    Then:
+    - Ensure no validation errors because the flag skips unknown playbook tests validation.
+    """
+    playbook_id = "Extract Indicators"
+    test_playbook_id = "Extraction & Enrichment Test"
+
+    pack: TestSuitePack = graph_repo.create_pack("Indicator Extraction Pack")
+    pack.create_playbook(
+        "playbook-ExtractIndicators",
+        yml={
+            "id": playbook_id,
+            "name": playbook_id,
+            # Referenced PB tests do not exist!
+            "tests": [test_playbook_id],
+        },
+    )
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+    BaseValidator.allow_missing_dependencies = True
+
+    try:
+        validation_results = (
+            PlaybookTestsExistValidator().obtain_invalid_content_items_using_graph(
+                content_items=[], validate_all_files=True
+            )
+        )
+        # With allow_missing_dependencies=True, the graph method returns empty list
+        assert len(validation_results) == 0
+    finally:
+        # Reset the flag to avoid affecting other tests
+        BaseValidator.allow_missing_dependencies = False

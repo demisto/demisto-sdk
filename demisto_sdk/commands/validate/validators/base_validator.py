@@ -107,6 +107,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
     expected_execution_mode: ClassVar[Optional[List[ExecutionMode]]] = None
     create_graph_from_scratch: ClassVar[bool] = False
+    allow_missing_dependencies: ClassVar[bool] = False
 
     def get_content_types(self):
         args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore

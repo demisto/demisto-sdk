@@ -2069,3 +2069,53 @@ def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content
     )
 
     assert len(results) == 1
+
+
+def test_IsUsingUnknownContentValidator_allow_missing_dependencies_flag(
+    repo_for_test: Repo,
+):
+    """
+    Given:
+        - A content graph interface with preloaded repository data that contains unknown content usage.
+        - The allow_missing_dependencies flag is set to True.
+    When:
+        - The GR103 validation is executed.
+    Then:
+        - The validator should return no results because the flag skips unknown content validation.
+    """
+    graph_interface = repo_for_test.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    BaseValidator.allow_missing_dependencies = True
+
+    try:
+        results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+            content_items=[]
+        )
+        # With allow_missing_dependencies=True, the graph method returns empty list
+        assert len(results) == 0
+    finally:
+        # Reset the flag to avoid affecting other tests
+        BaseValidator.allow_missing_dependencies = False
+
+
+def test_IsUsingUnknownContentValidator_allow_missing_dependencies_flag_disabled(
+    repo_for_test: Repo,
+):
+    """
+    Given:
+        - A content graph interface with preloaded repository data that contains unknown content usage.
+        - The allow_missing_dependencies flag is set to False (default).
+    When:
+        - The GR103 validation is executed.
+    Then:
+        - The validator should return results identifying unknown content usage.
+    """
+    graph_interface = repo_for_test.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    BaseValidator.allow_missing_dependencies = False
+
+    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+        content_items=[]
+    )
+    # Without the flag, unknown content should be detected
+    assert len(results) == 3

@@ -115,7 +115,6 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         WIDGETS_DIR,
         WIZARDS_DIR,
         LAYOUT_RULES_DIR,
-        AGENTIX_AGENTS_DIR,
         AGENTIX_ACTIONS_DIR,
         *TESTS_AND_DOC_DIRECTORIES,
     )
@@ -227,6 +226,10 @@ class InvalidModelingRuleFileName(InvalidPathException):
 
 class InvalidXDRCTemplatesFileName(InvalidPathException):
     message = "Name of XDRC template files must match the directory containing them, e.g. `{parent folder}.json`, or `{parent folder}.yml`"
+
+
+class InvalidAgentixAgentFileName(InvalidPathException):
+    message = "Name of agentix agent files must match the directory containing them, e.g. `{parent folder}.yml` or `{parent folder}_systeminstructions.md`"
 
 
 class ExemptedPath(Exception, ABC):
@@ -364,6 +367,15 @@ def _validate(path: Path) -> None:
             path.stem == path.parent.name and path.suffix in {".yml", ".xif"}
         ):
             raise InvalidXSIAMParsingRuleFileName
+
+        elif first_level_folder == AGENTIX_AGENTS_DIR and not (
+            (path.stem == path.parent.name and path.suffix == ".yml")
+            or (
+                path.stem == f"{path.parent.name}_systeminstructions"
+                and path.suffix == ".md"
+            )
+        ):
+            raise InvalidAgentixAgentFileName
 
 
 def _validate_image_file_name(image_name: str):

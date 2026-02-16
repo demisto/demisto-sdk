@@ -96,12 +96,8 @@ class ValidateManager:
                         in filtered_content_objects_for_validator
                     ]
                 try:
-                    # check if the validator error code appears in ALWAYS_RUN_ON_ERROR_CODE or ignorable_errors
-                    if (
-                        validator.error_code in ALWAYS_RUN_ON_ERROR_CODE
-                        or validator.error_code
-                        in self.configured_validations.ignorable_errors
-                    ):
+                    # check if the validator error code appears in ALWAYS_RUN_ON_ERROR_CODE
+                    if validator.error_code in ALWAYS_RUN_ON_ERROR_CODE:
                         validation_results = self.filter_validation_results(
                             validation_results
                         )
@@ -187,4 +183,6 @@ class ValidateManager:
             result
             for result in validation_results
             if result.validator.error_code not in result.content_object.ignored_errors
+            or result.validator.error_code
+            not in self.configured_validations.ignorable_errors
         ]

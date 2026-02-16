@@ -201,11 +201,7 @@ def validate(
     if file_paths and not input:
         input = file_paths
 
-    try:
-        validate_paths(input, private_content_path)
-    except typer.BadParameter as e:
-        logger.error(str(e))
-        raise typer.Exit(1)
+    validate_paths(input, private_content_path)
 
     run_with_mp = not no_multiprocessing
     update_command_args_from_config_file("validate", ctx.params)
@@ -248,9 +244,8 @@ def validate(
         if run_new_validate:
             # When using -a flag (ALL_FILES mode) with private content, wrap with PrivateContentManager
             # This ensures private content files are copied before ContentDTO.from_path() is called
-            if (
-                execution_mode == ExecutionMode.ALL_FILES
-                and ctx.params.get("private_content_path")
+            if execution_mode == ExecutionMode.ALL_FILES and ctx.params.get(
+                "private_content_path"
             ):
                 logger.info(
                     f"Using PrivateContentManager for ALL_FILES mode with private content path: {ctx.params['private_content_path']}"

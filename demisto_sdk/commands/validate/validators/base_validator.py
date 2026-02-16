@@ -183,11 +183,6 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     def graph(self) -> ContentGraphInterface:
         if not self.graph_interface:
             logger.info("Graph validations were selected, will init graph")
-            if BaseValidator.private_content_path:
-                logger.info(
-                    f"Private content path detected: {BaseValidator.private_content_path}"
-                )
-
             BaseValidator.graph_interface = ContentGraphInterface()
             update_content_graph(
                 BaseValidator.graph_interface,

@@ -110,7 +110,7 @@ def update_content_graph(
                 packs_to_update=packs_to_update,
                 dependencies=dependencies,
                 output_path=output_path,
-                create_graph_from_scratch=create_graph_from_scratch
+                create_graph_from_scratch=create_graph_from_scratch,
             )
         return
 
@@ -122,7 +122,7 @@ def update_content_graph(
         packs_to_update=packs_to_update,
         dependencies=dependencies,
         output_path=output_path,
-        create_graph_from_scratch=create_graph_from_scratch
+        create_graph_from_scratch=create_graph_from_scratch,
     )
 
 

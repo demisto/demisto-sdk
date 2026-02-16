@@ -21,21 +21,12 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
-        self.underlying_content_item_id: str = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("id")  # type: ignore
-        self.underlying_content_item_name: str = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("name")  # type: ignore
-        self.underlying_content_item_type: str = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("type")  # type: ignore
-        self.underlying_content_item_command: str = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("command")  # type: ignore
-        self.underlying_content_item_version: int = self.yml_data.get(
-            "underlyingcontentitem"
-        ).get("version")  # type: ignore
+        underlying = self.yml_data.get("underlyingcontentitem") or {}
+        self.underlying_content_item_id: str = underlying.get("id", "")
+        self.underlying_content_item_name: str = underlying.get("name", "")
+        self.underlying_content_item_type: str = underlying.get("type", "")
+        self.underlying_content_item_command: str = underlying.get("command", "")
+        self.underlying_content_item_version: int = underlying.get("version", 0)
         self.requires_user_approval: Optional[bool] = self.yml_data.get(
             "requiresuserapproval"
         )

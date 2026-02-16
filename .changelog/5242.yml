@@ -1,0 +1,4 @@
+changes:
+- description: Restructure Agentix actions and agents
+  type: internal
+pr_number: 5242

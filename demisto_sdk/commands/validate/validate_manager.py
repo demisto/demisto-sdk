@@ -183,6 +183,4 @@ class ValidateManager:
             result
             for result in validation_results
             if result.validator.error_code not in result.content_object.ignored_errors
-            or result.validator.error_code
-            not in self.configured_validations.ignorable_errors
         ]

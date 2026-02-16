@@ -17,9 +17,7 @@ EXCLUDED_TASK_TYPES = {PlaybookTaskType.START, PlaybookTaskType.TITLE}
 
 class IsValidQuietModeForAutonomousPlaybookValidator(BaseValidator[ContentTypes]):
     error_code = "AS102"
-    description = (
-        "Validate that tasks without displayLabel in autonomous playbooks have quietmode set to 1."
-    )
+    description = "Validate that tasks without displayLabel in autonomous playbooks have quietmode set to 1."
     rationale = (
         "In autonomous packs (managed: true, source: 'autonomous'), playbook tasks "
         "that do not have a displayLabel must have quietmode: 1 to ensure they run silently."

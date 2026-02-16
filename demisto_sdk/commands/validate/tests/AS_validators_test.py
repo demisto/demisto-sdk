@@ -219,11 +219,21 @@ def _make_tasks(task_overrides):
         # Autonomous pack, task without displayLabel has quietmode=1 — valid
         (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 1, None)], 0),
         # Autonomous pack, all tasks have displayLabel — valid
-        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 0, "Label")], 0),
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", 0, "Label")],
+            0,
+        ),
         # Autonomous pack, task without displayLabel has quietmode=0 — error
         (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 0, None)], 1),
         # Autonomous pack, task without displayLabel has quietmode=None — error
-        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", None, None)], 1),
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", None, None)],
+            1,
+        ),
         # Autonomous pack, only start/title tasks with quietmode=0 — no errors (excluded)
         (True, "autonomous", [("0", "start", 0, None), ("1", "title", 0, None)], 0),
     ],
@@ -245,8 +255,10 @@ def test_IsValidQuietModeForAutonomousPlaybookValidator(
     )
     playbook.pack = pack
 
-    results = IsValidQuietModeForAutonomousPlaybookValidator().obtain_invalid_content_items(
-        [playbook]
+    results = (
+        IsValidQuietModeForAutonomousPlaybookValidator().obtain_invalid_content_items(
+            [playbook]
+        )
     )
     assert len(results) == expected_errors
 

@@ -1061,7 +1061,7 @@ class Initializer:
         Returns:
             bool: True if the given path is a integration/script code. Otherwise, return False.
         """
-        return path.suffix in (".py", "js", "ps1") and not any(
+        return path.suffix in (".py", ".js", ".ps1") and not any(
             [
                 path_str.endswith("_test.py"),
                 path_str.endswith("_test.js"),

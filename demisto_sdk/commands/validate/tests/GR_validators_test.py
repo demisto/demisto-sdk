@@ -1,10 +1,18 @@
+from collections import defaultdict
+from unittest.mock import MagicMock
+
 import pytest
 from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.common import RelationshipType
+from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_agentix_action_object,
+    create_playbook_object,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.GR_validators import (
@@ -2069,3 +2077,118 @@ def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content
     )
 
     assert len(results) == 1
+
+
+# --- GR113 Tests ---
+
+
+def _create_playbook_with_uses(
+    playbook_name: str, dependency_names: list[str]
+) -> Playbook:
+    """Helper to create a Playbook with pre-populated USES relationships."""
+    playbook = create_playbook_object(paths=["name"], values=[playbook_name])
+    relationships: defaultdict[RelationshipType, set[RelationshipData]] = defaultdict(
+        set
+    )
+    for idx, dep_name in enumerate(dependency_names):
+        target_id = f"db-{dep_name}-{idx}"
+        dep_node = UnknownContent(
+            object_id=dep_name, name=dep_name, database_id=target_id
+        )
+        relationships[RelationshipType.USES].add(
+            RelationshipData(
+                relationship_type=RelationshipType.USES,
+                source_id=f"db-{playbook_name}",
+                target_id=target_id,
+                content_item_to=dep_node,
+            )
+        )
+    playbook.relationships_data = relationships
+    return playbook
+
+
+@pytest.mark.parametrize(
+    "source, dep_names, expected_count",
+    [
+        ("autonomous", ["RegularPackScript"], 1),
+        ("partner", ["NonPartnerScript"], 1),
+        ("autonomous", ["Script1", "Script2", "Script3"], 1),
+        ("autonomous", [], 0),  # no invalid deps → graph returns empty
+    ],
+    ids=["autonomous-invalid", "partner-invalid", "multiple-deps", "no-invalid-deps"],
+)
+def test_managed_playbook_dependencies_all_files(
+    mocker, source, dep_names, expected_count
+):
+    """
+    Given:
+        - A playbook in a managed pack with the given source and invalid dependencies.
+    When:
+        - Running IsValidManagedPlaybookDependenciesValidatorAllFiles.
+    Then:
+        - The expected number of validation results is returned, with source in the message.
+    """
+    from demisto_sdk.commands.validate.validators.GR_validators.GR113_is_valid_managed_playbook_dependencies_all_files import (
+        IsValidManagedPlaybookDependenciesValidatorAllFiles,
+    )
+
+    graph_return = []
+    if dep_names:
+        graph_return = [(_create_playbook_with_uses("TestPlaybook", dep_names), source)]
+
+    mock_graph = MagicMock()
+    mock_graph.find_managed_playbooks_with_invalid_dependencies.return_value = (
+        graph_return
+    )
+    BaseValidator.graph_interface = mock_graph
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.GR_validators"
+        ".GR113_is_valid_managed_playbook_dependencies.get_core_pack_list",
+        return_value=["Base", "CommonScripts"],
+    )
+
+    results = IsValidManagedPlaybookDependenciesValidatorAllFiles().obtain_invalid_content_items(
+        []
+    )
+    assert len(results) == expected_count
+    if expected_count:
+        assert source in results[0].message
+        for dep in dep_names:
+            assert dep in results[0].message
+
+
+def test_managed_playbook_dependencies_list_files(mocker):
+    """
+    Given:
+        - A playbook in a managed pack with an invalid sub-playbook dependency.
+    When:
+        - Running IsValidManagedPlaybookDependenciesValidatorListFiles.
+    Then:
+        - One validation result is returned with the dependency name in the message.
+    """
+    from demisto_sdk.commands.validate.validators.GR_validators.GR113_is_valid_managed_playbook_dependencies_list_files import (
+        IsValidManagedPlaybookDependenciesValidatorListFiles,
+    )
+
+    playbook = _create_playbook_with_uses("ManagedPB", ["BadSubPlaybook"])
+    mock_graph = MagicMock()
+    mock_graph.find_managed_playbooks_with_invalid_dependencies.return_value = [
+        (playbook, "autonomous")
+    ]
+    BaseValidator.graph_interface = mock_graph
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.GR_validators"
+        ".GR113_is_valid_managed_playbook_dependencies.get_core_pack_list",
+        return_value=["Base", "CommonScripts"],
+    )
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.GR_validators"
+        ".GR113_is_valid_managed_playbook_dependencies.CONTENT_PATH",
+        playbook.path.parent.parent.parent,
+    )
+
+    results = IsValidManagedPlaybookDependenciesValidatorListFiles().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == 1
+    assert "BadSubPlaybook" in results[0].message

@@ -199,6 +199,14 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def find_managed_playbooks_with_invalid_dependencies(
+        self,
+        file_paths: List[str],
+        core_pack_list: List[str],
+    ) -> List[Tuple[BaseNode, str]]:
+        pass
+
+    @abstractmethod
     def validate_duplicate_ids(
         self, file_paths: List[str]
     ) -> List[Tuple[BaseNode, List[BaseNode]]]:

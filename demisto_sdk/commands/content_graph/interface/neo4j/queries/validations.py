@@ -272,6 +272,8 @@ def _validate_duplicate_agentix_action_field(
     query = f"""// Returns Agentix Actions with duplicate {field_name}
 MATCH (a:{ContentType.AGENTIX_ACTION}), (b:{ContentType.AGENTIX_ACTION})
 WHERE a.{field_name} = b.{field_name}
+AND NOT coalesce(a.not_in_repository, false)
+AND NOT coalesce(b.not_in_repository, false)
 """
     if file_paths:
         query += f"AND a.path in {file_paths}"

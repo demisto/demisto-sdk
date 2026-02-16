@@ -8,6 +8,7 @@ import regex
 from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
+    AGENTIX_ACTIONS_DIR,
     BASE_PACK,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
@@ -105,6 +106,9 @@ class PackContentItems:
             content_type=ContentType.ASSETS_MODELING_RULE
         )
         self.agentix_action = ContentItemsList(content_type=ContentType.AGENTIX_ACTION)
+        self.agentix_action_test = ContentItemsList(
+            content_type=ContentType.AGENTIX_ACTION_TEST
+        )
         self.agentix_agent = ContentItemsList(content_type=ContentType.AGENTIX_AGENT)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
@@ -344,10 +348,24 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_pack_folders(self) -> None:
         """Parses all pack content items by iterating its folders."""
         for folder_path in ContentType.pack_folders(self.path):
+            is_agentix_actions_folder = folder_path.name == AGENTIX_ACTIONS_DIR
             for (
                 content_item_path
             ) in folder_path.iterdir():  # todo: consider multiprocessing
+                # Skip test_data directories (old test file structure)
+                if content_item_path.name == "test_data":
+                    continue
                 self.parse_content_item(content_item_path)
+
+                # For AgentixActions directories, also parse test files
+                # inside the action subdirectory as separate content items.
+                if is_agentix_actions_folder and content_item_path.is_dir():
+                    for file in content_item_path.iterdir():
+                        if file.suffix in (
+                            ".yml",
+                            ".yaml",
+                        ) and file.stem.endswith("_test"):
+                            self.parse_content_item(file)
         if self.private_pack_path:
             self.parse_content_test_conf_folders()
 

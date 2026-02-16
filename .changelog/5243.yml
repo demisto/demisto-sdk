@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue that prevented bi-directional validations failures from being filtered and ignored.
+  type: fix
+pr_number: 5243

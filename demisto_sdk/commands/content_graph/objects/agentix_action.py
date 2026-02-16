@@ -10,6 +10,7 @@ from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
 
 class AgentixActionArgument(BaseModel):
     name: str
+    test: str
     description: str
     type: str
     required: bool = False

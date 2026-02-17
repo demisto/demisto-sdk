@@ -1,0 +1,4 @@
+changes:
+- description: Added AS103 validation to check that autonomous playbooks have correct section headers with valid names, non-empty descriptions, and proper ordering.
+  type: feature
+pr_number: 5249

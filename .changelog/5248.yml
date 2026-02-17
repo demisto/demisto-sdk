@@ -1,4 +1,4 @@
 changes:
-- description: Added ST110 structure validation to ensure that managed packs have a valid non-empty source field.
+- description: Updated the ST110 structure validation to ensure that managed packs have a valid non-empty source field.
   type: feature
 pr_number: 5248

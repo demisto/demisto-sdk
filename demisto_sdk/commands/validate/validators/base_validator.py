@@ -265,7 +265,7 @@ class BaseResult(BaseModel):
     def rel_path(self):
         path: Path = self.path if self.path else self.content_object.path
         if path.is_absolute():
-            path = get_relative_path_from_packs_dir(str(path))
+            path = Path(get_relative_path_from_packs_dir(str(path)))
         return path
 
     @property

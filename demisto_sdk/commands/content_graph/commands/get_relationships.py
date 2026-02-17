@@ -235,6 +235,7 @@ def log_record(
             else ""
         )
         logger.debug(
+            "{}",
             f"<yellow>Found a {relationship} path{mandatorily}"
             f"{' from ' if is_source else ' to '}"
             f"{record['filepath']}</yellow>\n"

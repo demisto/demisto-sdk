@@ -1,8 +1,4 @@
 changes:
-- description: >
-    Add web console link to output of `demisto-sdk run-test-playbook` and `demisto-sdk run-playbook`.
-    Previously, the output of these commands linked to the API endpoint of the associated WorkPlan. This is not
-    helpful to debug visually, so this PR adds the possibility for the user to click to go directly to the
-    Web Console and see the workplan visually, which is much more helpful when debugging.
+- description: Add web console link to output of `demisto-sdk run-test-playbook` and `demisto-sdk run-playbook`.
   type: feature
 pr_number: 5153

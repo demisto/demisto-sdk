@@ -902,9 +902,7 @@ def test_SourceInManagedPackValidator_managed_with_source(pack: Pack):
     pack.pack_metadata.update({"managed": True, "source": "my-source"})
     pack_parser = PackParser(path=pack.path)
 
-    results = SourceInManagedPackValidator().obtain_invalid_content_items(
-        [pack_parser]
-    )
+    results = SourceInManagedPackValidator().obtain_invalid_content_items([pack_parser])
     assert len(results) == 0
 
 
@@ -920,9 +918,7 @@ def test_SourceInManagedPackValidator_managed_without_source(pack: Pack):
     pack.pack_metadata.update({"managed": True})
     pack_parser = PackParser(path=pack.path)
 
-    results = SourceInManagedPackValidator().obtain_invalid_content_items(
-        [pack_parser]
-    )
+    results = SourceInManagedPackValidator().obtain_invalid_content_items([pack_parser])
     assert len(results) == 1
     assert (
         results[0].message
@@ -943,9 +939,7 @@ def test_SourceInManagedPackValidator_managed_with_empty_source(pack: Pack):
     pack.pack_metadata.update({"managed": True, "source": ""})
     pack_parser = PackParser(path=pack.path)
 
-    results = SourceInManagedPackValidator().obtain_invalid_content_items(
-        [pack_parser]
-    )
+    results = SourceInManagedPackValidator().obtain_invalid_content_items([pack_parser])
     assert len(results) == 1
     assert (
         results[0].message
@@ -966,9 +960,7 @@ def test_SourceInManagedPackValidator_not_managed(pack: Pack):
     pack.pack_metadata.update({"managed": False})
     pack_parser = PackParser(path=pack.path)
 
-    results = SourceInManagedPackValidator().obtain_invalid_content_items(
-        [pack_parser]
-    )
+    results = SourceInManagedPackValidator().obtain_invalid_content_items([pack_parser])
     assert len(results) == 0
 
 
@@ -984,7 +976,5 @@ def test_SourceInManagedPackValidator_not_managed_no_source(pack: Pack):
     # Don't set managed field, it defaults to False
     pack_parser = PackParser(path=pack.path)
 
-    results = SourceInManagedPackValidator().obtain_invalid_content_items(
-        [pack_parser]
-    )
+    results = SourceInManagedPackValidator().obtain_invalid_content_items([pack_parser])
     assert len(results) == 0

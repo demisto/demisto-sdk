@@ -1,0 +1,3 @@
+changes:
+- description: Added support for `DEMISTO_SDK_DIFF_FILES` environment variable in graph update command to extract pack IDs from a list of changed files, bypassing git-based detection which may not work in all CI environments.
+  type: feature

@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
 )
 from demisto_sdk.commands.content_graph.commands.update import (
+    extract_pack_ids_from_diff_files,
     update_content_graph,
 )
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -846,3 +847,119 @@ class TestUpdateContentGraph:
                 all_level_dependencies=True,
             )
             assert len(packs_from_graph) == 3
+
+
+class TestExtractPackIdsFromDiffFiles:
+    """Tests for the extract_pack_ids_from_diff_files function."""
+
+    def test_extract_pack_ids_space_separated(self):
+        """
+        Given:
+            - A space-separated string of file paths under Packs/ folder.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns a set of unique pack IDs extracted from the paths.
+        """
+        diff_files = "Packs/ApiModules/ReleaseNotes/2_4_1.md Packs/ApiModules/Scripts/ContentClientApiModule/ContentClientApiModule.py Packs/Halcyon/Integrations/Halcyon/Halcyon.yml"
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == {"ApiModules", "Halcyon"}
+
+    def test_extract_pack_ids_newline_separated(self):
+        """
+        Given:
+            - A newline-separated string of file paths under Packs/ folder.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns a set of unique pack IDs extracted from the paths.
+        """
+        diff_files = """Packs/ApiModules/ReleaseNotes/2_4_1.md
+Packs/ApiModules/Scripts/ContentClientApiModule/ContentClientApiModule.py
+Packs/Halcyon/Integrations/Halcyon/Halcyon.yml
+Packs/Halcyon/ReleaseNotes/1_0_1.md"""
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == {"ApiModules", "Halcyon"}
+
+    def test_extract_pack_ids_mixed_separators(self):
+        """
+        Given:
+            - A string with mixed space and newline separators.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns a set of unique pack IDs extracted from the paths.
+        """
+        diff_files = "Packs/Pack1/file.py\nPacks/Pack2/file.yml Packs/Pack3/file.json"
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == {"Pack1", "Pack2", "Pack3"}
+
+    def test_extract_pack_ids_non_packs_files_ignored(self):
+        """
+        Given:
+            - A string containing file paths, some under Packs/ and some not.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Only returns pack IDs from files under Packs/ folder.
+        """
+        diff_files = (
+            "Packs/MyPack/file.py .github/workflows/ci.yml README.md Tests/test_file.py"
+        )
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == {"MyPack"}
+
+    def test_extract_pack_ids_empty_string(self):
+        """
+        Given:
+            - An empty string.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns an empty set.
+        """
+        result = extract_pack_ids_from_diff_files("")
+        assert result == set()
+
+    def test_extract_pack_ids_no_packs_files(self):
+        """
+        Given:
+            - A string with file paths that are not under Packs/ folder.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns an empty set.
+        """
+        diff_files = ".github/workflows/ci.yml README.md Tests/test_file.py"
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == set()
+
+    def test_extract_pack_ids_packs_folder_only(self):
+        """
+        Given:
+            - A string with just "Packs/" without a pack name.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns an empty set (no valid pack ID).
+        """
+        diff_files = "Packs/"
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == set()
+
+    def test_extract_pack_ids_deduplication(self):
+        """
+        Given:
+            - A string with multiple files from the same pack.
+        When:
+            - Calling extract_pack_ids_from_diff_files.
+        Then:
+            - Returns a set with the pack ID appearing only once.
+        """
+        diff_files = """Packs/MyPack/file1.py
+Packs/MyPack/file2.py
+Packs/MyPack/Integrations/MyIntegration/MyIntegration.py
+Packs/MyPack/pack_metadata.json"""
+        result = extract_pack_ids_from_diff_files(diff_files)
+        assert result == {"MyPack"}
+        assert len(result) == 1

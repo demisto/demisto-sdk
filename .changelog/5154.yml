@@ -1,6 +1,6 @@
 changes:
 - description: |
-    - Add a sleep before `self.get_test_playbook_results_dict()` in `demisto-sdk run-test-playbook`. This fixes a race condition where the method was called before the WorkPlan was actually created, resulting in a crash of the command.
-    - Lower sleep time from 10 to 3 seconds in `demisto-sdk run-test-playbook`. This makes the user experience smoother for shorter test playbooks.
+    Fix a race condition in `demisto-sdk run-test-playbook` that resulted in a crash.
+    Lower sleep time from 10 to 6 seconds in `demisto-sdk run-test-playbook` to make the user experience smoother for shorter test playbooks.
   type: fix
 pr_number: 5154

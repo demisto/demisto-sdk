@@ -62,7 +62,7 @@ class IsSilentPlaybookRelationshipsValidator(BaseValidator[ContentTypes]):
             for playbook in self.graph.search(
                 content_type=ContentType.PLAYBOOK, is_silent=True
             ):
-                if playbook.object_id == content_item.playbook_id:
+                if playbook.object_id == content_item.playbook_id: # type: ignore[union-attr]
                     return True
             return False
 

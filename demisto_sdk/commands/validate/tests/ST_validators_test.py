@@ -32,9 +32,6 @@ from demisto_sdk.commands.validate.validators.ST_validators.ST113_supported_modu
 from demisto_sdk.commands.validate.validators.ST_validators.ST114_is_supported_modules_subset_of_pack import (
     IsSupportedModulesSubsetOfPack,
 )
-from demisto_sdk.commands.validate.validators.ST_validators.ST115_source_in_managed_pack import (
-    SourceInManagedPackValidator,
-)
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
@@ -890,91 +887,65 @@ def test_IsSupportedModulesSubsetOfPack_inherit_pack_when_missing():
         assert len(results) == 0
 
 
-def test_SourceInManagedPackValidator_managed_with_source(pack: Pack):
+def test_SchemaValidator_managed_pack_with_source(pack: Pack):
     """
     Given:
         - A pack with 'managed: true' and a non-empty 'source' field.
     When:
-        - Running the SourceInManagedPackValidator (ST115) validator.
+        - Parsing the pack (ST110 structure validation).
     Then:
-        - The validation should pass.
+        - The pack should parse successfully without structure errors.
     """
     pack.pack_metadata.update({"managed": True, "source": "my-source"})
     pack_parser = PackParser(path=pack.path)
 
-    results = SourceInManagedPackValidator().obtain_invalid_content_items([pack_parser])
-    assert len(results) == 0
+    assert len(pack_parser.structure_errors) == 0
 
 
-def test_SourceInManagedPackValidator_managed_without_source(pack: Pack):
+def test_SchemaValidator_managed_pack_without_source(pack: Pack):
     """
     Given:
         - A pack with 'managed: true' but missing the 'source' field.
     When:
-        - Running the SourceInManagedPackValidator (ST115) validator.
+        - Parsing the pack (ST110 structure validation).
     Then:
-        - The validation should fail with the appropriate error message.
+        - The pack should have a structure error about missing source.
     """
     pack.pack_metadata.update({"managed": True})
     pack_parser = PackParser(path=pack.path)
 
-    results = SourceInManagedPackValidator().obtain_invalid_content_items([pack_parser])
-    assert len(results) == 1
-    assert (
-        results[0].message
-        == "Pack has 'managed: true' but is missing a non-empty 'source' field in pack_metadata.json. Please add a valid source."
-    )
-    assert results[0].validator.error_code == "ST115"
+    assert len(pack_parser.structure_errors) == 1
+    assert "managed: true" in pack_parser.structure_errors[0].error_message
+    assert "source" in pack_parser.structure_errors[0].error_message
 
 
-def test_SourceInManagedPackValidator_managed_with_empty_source(pack: Pack):
+def test_SchemaValidator_managed_pack_with_empty_source(pack: Pack):
     """
     Given:
         - A pack with 'managed: true' but an empty 'source' field.
     When:
-        - Running the SourceInManagedPackValidator (ST115) validator.
+        - Parsing the pack (ST110 structure validation).
     Then:
-        - The validation should fail with the appropriate error message.
+        - The pack should have a structure error about missing source.
     """
     pack.pack_metadata.update({"managed": True, "source": ""})
     pack_parser = PackParser(path=pack.path)
 
-    results = SourceInManagedPackValidator().obtain_invalid_content_items([pack_parser])
-    assert len(results) == 1
-    assert (
-        results[0].message
-        == "Pack has 'managed: true' but is missing a non-empty 'source' field in pack_metadata.json. Please add a valid source."
-    )
-    assert results[0].validator.error_code == "ST115"
+    assert len(pack_parser.structure_errors) == 1
+    assert "managed: true" in pack_parser.structure_errors[0].error_message
+    assert "source" in pack_parser.structure_errors[0].error_message
 
 
-def test_SourceInManagedPackValidator_not_managed(pack: Pack):
+def test_SchemaValidator_not_managed_pack(pack: Pack):
     """
     Given:
         - A pack with 'managed: false' (or missing managed field).
     When:
-        - Running the SourceInManagedPackValidator (ST115) validator.
+        - Parsing the pack (ST110 structure validation).
     Then:
-        - The validation should pass regardless of the source field.
+        - The pack should parse successfully regardless of the source field.
     """
     pack.pack_metadata.update({"managed": False})
     pack_parser = PackParser(path=pack.path)
 
-    results = SourceInManagedPackValidator().obtain_invalid_content_items([pack_parser])
-    assert len(results) == 0
-
-
-def test_SourceInManagedPackValidator_not_managed_no_source(pack: Pack):
-    """
-    Given:
-        - A pack without 'managed' field (defaults to false) and no 'source' field.
-    When:
-        - Running the SourceInManagedPackValidator (ST115) validator.
-    Then:
-        - The validation should pass (source is only required when managed is true).
-    """
-    # Don't set managed field, it defaults to False
-    pack_parser = PackParser(path=pack.path)
-
-    results = SourceInManagedPackValidator().obtain_invalid_content_items([pack_parser])
-    assert len(results) == 0
+    assert len(pack_parser.structure_errors) == 0

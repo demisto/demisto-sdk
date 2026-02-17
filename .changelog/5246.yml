@@ -1,0 +1,4 @@
+changes:
+- description: Added a new AS102 validation that checks autonomous playbook tasks without displayLabel have quietmode 1 (quiet mode enabled), with auto-fix support. Skips start/title task types.
+  type: feature
+pr_number: 5246

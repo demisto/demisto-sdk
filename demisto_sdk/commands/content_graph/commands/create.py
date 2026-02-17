@@ -7,6 +7,7 @@ import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.content_graph.commands.common import recover_if_fails
 from demisto_sdk.commands.content_graph.common import (
@@ -18,6 +19,9 @@ from demisto_sdk.commands.content_graph.content_graph_builder import (
     ContentGraphBuilder,
 )
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
+from demisto_sdk.commands.validate.private_content_manager import (
+    PrivateContentManager,
+)
 
 app = typer.Typer()
 
@@ -28,6 +32,7 @@ def create_content_graph(
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     dependencies: bool = True,
     output_path: Optional[Path] = None,
+    private_content_path: Optional[Path] = None,
 ) -> None:
     """This function creates a new content graph database in neo4j from the content path
 
@@ -36,6 +41,45 @@ def create_content_graph(
         marketplace (MarketplaceVersions): The marketplace to update.
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
+        private_content_path (Path): Path to the private content repository. When provided,
+            private content packs will be temporarily copied to the content repository.
+    """
+    # If private content path is provided, wrap the entire create in PrivateContentManager
+    if private_content_path:
+        logger.info(
+            f"Private content path provided: {private_content_path}. "
+            "Private content will be temporarily synced for graph creation."
+        )
+        with PrivateContentManager(
+            private_content_path=private_content_path,
+            content_path=CONTENT_PATH,
+        ):
+            _create_content_graph_inner(
+                content_graph_interface=content_graph_interface,
+                marketplace=marketplace,
+                dependencies=dependencies,
+                output_path=output_path,
+            )
+        return
+
+    _create_content_graph_inner(
+        content_graph_interface=content_graph_interface,
+        marketplace=marketplace,
+        dependencies=dependencies,
+        output_path=output_path,
+    )
+
+
+def _create_content_graph_inner(
+    content_graph_interface: ContentGraphInterface,
+    marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+    dependencies: bool = True,
+    output_path: Optional[Path] = None,
+) -> None:
+    """Internal function that performs the actual graph creation logic.
+
+    This is separated from create_content_graph to allow wrapping with PrivateContentManager
+    when private_content_path is provided.
     """
     builder = ContentGraphBuilder(content_graph_interface)
     builder.init_database()
@@ -85,6 +129,16 @@ def create(
         resolve_path=True,
         help="Output folder to locate the zip file of the graph exported file.",
     ),
+    private_content_path: Optional[Path] = typer.Option(
+        None,
+        "-pcp",
+        "--private-content-path",
+        exists=True,
+        dir_okay=True,
+        file_okay=False,
+        resolve_path=True,
+        help="Path to the private content repository.",
+    ),
     console_log_threshold: str = typer.Option(
         "INFO",
         "-clt",
@@ -121,6 +175,7 @@ def create(
             marketplace=marketplace,
             dependencies=not no_dependencies,
             output_path=output_path,
+            private_content_path=private_content_path,
         )
 
 

@@ -4,9 +4,8 @@ from typing import List, Optional, Set
 
 import typer
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger, logging_setup
 from demisto_sdk.commands.common.tools import (

@@ -1298,7 +1298,7 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
 
 # A list of validation error codes that must always execute, regardless of ignore settings.
 # This addresses unique cases where validation must run first, then filter the relevant results afterward.
-ALWAYS_RUN_ON_ERROR_CODE = ["GR107"]
+ALWAYS_RUN_ON_ERROR_CODE = ["GR107", "GR109"]
 
 
 class GitStatuses(StrEnum):

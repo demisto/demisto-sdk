@@ -35,13 +35,13 @@ class StrictPackMetadata(BaseStrictModel):
         """
         managed = values.get("managed", False)
         source = values.get("source", "")
-        
+
         if managed and not source:
             raise ValueError(
                 "Pack has 'managed: true' but is missing a non-empty 'source' field. "
                 "Managed packs must specify their source to maintain proper attribution and tracking."
             )
-        
+
         return values
 
     name: str

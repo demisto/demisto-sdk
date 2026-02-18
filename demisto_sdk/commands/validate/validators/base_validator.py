@@ -19,9 +19,11 @@ from demisto_sdk.commands.common.constants import (
     ExecutionMode,
     GitStatuses,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.tools import is_abstract_class
+from demisto_sdk.commands.common.tools import (
+    get_relative_path_from_packs_dir,
+    is_abstract_class,
+)
 from demisto_sdk.commands.content_graph.commands.update import update_content_graph
 from demisto_sdk.commands.content_graph.interface import (
     ContentGraphInterface,
@@ -74,6 +76,7 @@ VALIDATION_CATEGORIES = {
     "VC": "Version Config",
     "AG": "Agentix",
     "AS": "Autonomous SOC",
+    "MC": "Managed Content",
 }
 
 
@@ -90,6 +93,8 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     run_on_deprecated: (ClassVar[bool]): Whether the validation should run on deprecated items or not.
     is_auto_fixable: (ClassVar[bool]): Whether the validation has a fix or not.
     graph_interface: (ClassVar[ContentGraphInterface]): The graph interface.
+    private_content_path: (ClassVar[Optional[Path]]): Path to private content repository for graph building.
+        When set, this path is passed to update_content_graph() which handles the PrivateContentManager internally.
     dockerhub_api_client (ClassVar[DockerHubClient): the docker hub api client.
     """
 
@@ -103,6 +108,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
     graph_interface: ClassVar[ContentGraphInterface] = None
+    private_content_path: ClassVar[Optional[Path]] = None
     related_file_type: ClassVar[Optional[List[RelatedFileType]]] = None
     expected_execution_mode: ClassVar[Optional[List[ExecutionMode]]] = None
     create_graph_from_scratch: ClassVar[bool] = False
@@ -181,9 +187,24 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             update_content_graph(
                 BaseValidator.graph_interface,
                 use_git=True,
+                private_content_path=BaseValidator.private_content_path,
                 create_graph_from_scratch=BaseValidator.create_graph_from_scratch,
             )
         return self.graph_interface
+
+    @classmethod
+    def set_private_content_path(cls, private_content_path: Optional[Path]) -> None:
+        """
+        Set the private content path for graph building.
+
+        This should be called before accessing the graph property if private content
+        needs to be included in the graph. The path is passed to update_content_graph()
+        which handles PrivateContentManager internally.
+
+        Args:
+            private_content_path: Path to the private content repository, or None to disable.
+        """
+        cls.private_content_path = private_content_path
 
     def __dir__(self):
         # Exclude specific properties from being displayed when hovering over 'self'
@@ -244,7 +265,7 @@ class BaseResult(BaseModel):
     def rel_path(self):
         path: Path = self.path if self.path else self.content_object.path
         if path.is_absolute():
-            path = path.relative_to(CONTENT_PATH)
+            path = Path(get_relative_path_from_packs_dir(str(path)))
         return path
 
     @property

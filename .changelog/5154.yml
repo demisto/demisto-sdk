@@ -1,0 +1,6 @@
+changes:
+- description: |
+    Fix a race condition in `demisto-sdk run-test-playbook` that resulted in a crash.
+    Lower sleep time from 10 to 6 seconds in `demisto-sdk run-test-playbook` to make the user experience smoother for shorter test playbooks.
+  type: fix
+pr_number: 5154

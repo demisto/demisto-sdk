@@ -2,7 +2,6 @@ import os
 from datetime import datetime, timedelta
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
-from urllib.parse import urlparse
 
 import dateparser
 import google.auth
@@ -11,7 +10,6 @@ from google.auth.transport.requests import Request
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
-from demisto_sdk.commands.common.constants import DEFAULT_DOCKER_REGISTRY_URL
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
@@ -277,26 +275,18 @@ class DockerHubClient:
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
 
-        # Determine if this is a custom (non-Docker Hub) registry
-        is_custom_registry = self.DEFAULT_REGISTRY not in self.registry_api_url
-
-        if headers:
-            _headers = {key: value for key, value in headers}
-        else:
-            _headers = {
-                "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
-                "application/vnd.docker.distribution.manifest.list.v2+json",
-            }
-            if not is_custom_registry:
-                # For custom registries, don't send Docker Hub bearer token.
-                # Let get_request() use Basic Auth (self.auth) if credentials are available.
-                _headers["Authorization"] = (
-                    f"Bearer {self.get_token(docker_image, scope=scope)}"
-                )
-
         return self.get_request(
             f"{self.registry_api_url}/{docker_image}{url_suffix}",
-            headers=_headers,
+            headers=(
+                {key: value for key, value in headers}
+                if headers
+                else None
+                or {
+                    "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
+                    "application/vnd.docker.distribution.manifest.list.v2+json",
+                    "Authorization": f"Bearer {self.get_token(docker_image, scope=scope)}",
+                }
+            ),
             params={key: value for key, value in params} if params else None,
         )
 
@@ -567,76 +557,13 @@ def get_dockerhub_artifact_registry_url(base_path: str) -> str:
     return parsed_dockerhub_proxy_api_url
 
 
-def _try_resolve_gitlab_ci_registry() -> Optional[str]:
-    """
-    Attempt to resolve a DockerHub proxy API URL from the DOCKER_IO environment variable
-    when running in a GitLab CI environment.
-
-    Returns:
-        str | None: The parsed proxy API URL if successful, None otherwise.
-    """
-    if not (IS_CONTENT_GITLAB_CI and DOCKER_IO):
-        return None
-
-    logger.debug(
-        "Running in a GitLab CI environment with custom DOCKER_IO environment variable, "
-        "trying to parse a DockerHub Google Artifact Registry from DOCKER_IO environment variable."
-    )
-    try:
-        if parsed_url := get_dockerhub_artifact_registry_url(DOCKER_IO):
-            logger.debug(f"Successfully parsed {parsed_url=}")
-            return parsed_url
-        logger.debug(
-            "Could not parse a valid API URL from the DOCKER_IO environment variable."
-        )
-    except ValueError:
-        logger.debug(
-            f"DOCKER_IO value '{DOCKER_IO}' is not a valid Artifact Registry path format."
-        )
-    except Exception:
-        logger.debug(
-            "Could not parse a valid API URL from the DOCKER_IO environment variable.",
-            exc_info=True,
-        )
-    return None
-
-
-def _normalize_registry_url(registry: str) -> str:
-    """
-    Normalize a custom registry URL by ensuring it has a scheme, no trailing slashes,
-    and the /v2 Docker Registry API path prefix.
-
-    Args:
-        registry (str): The raw registry URL to normalize.
-
-    Returns:
-        str: The normalized registry URL with scheme and /v2 path.
-    """
-    parsed = urlparse(registry)
-
-    # Add https scheme if missing
-    if not parsed.scheme:
-        registry = f"https://{registry}"
-
-    # Strip trailing slashes and ensure /v2 suffix
-    registry = registry.rstrip("/")
-    if not registry.endswith("/v2"):
-        registry = f"{registry}/v2"
-
-    return registry
-
-
 def get_registry_api_url(registry: str, default_registry: str) -> str:
     """
     Determine the appropriate registry API URL based on the environment and provided parameters.
 
-    Resolution order:
-        1. If running in GitLab CI with a DOCKER_IO env var, attempt to parse it as a
-           Google Artifact Registry proxy URL.
-        2. If no registry is provided or it matches the default Docker Hub URL, return
-           ``default_registry``.
-        3. Otherwise, normalize the custom registry URL (add scheme, strip trailing
-           slashes, append ``/v2``).
+    This function checks if the code is running in a GitLab CI environment and if a custom Docker.io URL is set.
+    If both conditions are true, it uses the custom Docker.io URL. Otherwise, it falls back to the provided
+    registry or the default registry.
 
     Args:
         registry (str): The registry URL provided by the user.
@@ -646,18 +573,27 @@ def get_registry_api_url(registry: str, default_registry: str) -> str:
         str: The determined registry API URL to use for Docker operations.
     """
     logger.debug(f"dockerhub_client | {IS_CONTENT_GITLAB_CI=}, {DOCKER_IO=}")
+    if IS_CONTENT_GITLAB_CI and DOCKER_IO:
+        try:
+            logger.debug(
+                "Running in a GitLab CI environment with custom DOCKER_IO environment variable, Trying to prase a DockerHub Google Artifact Registry from DOCKER_IO environment variable."
+            )
+            if parsed_dockerhub_proxy_api_url := get_dockerhub_artifact_registry_url(
+                DOCKER_IO
+            ):
+                logger.debug(f"Successfully parsed {parsed_dockerhub_proxy_api_url=}")
+                return parsed_dockerhub_proxy_api_url
+            else:
+                logger.debug(
+                    "Could not parse a valid API URL from the DOCKER_IO environment variable."
+                )
+        except Exception as e:
+            logger.debug(
+                f"Could not parse a valid API URL from the DOCKER_IO environment variable, Error: {str(e)} "
+            )
 
-    # 1. Try GitLab CI Artifact Registry proxy
-    if gitlab_ci_url := _try_resolve_gitlab_ci_registry():
-        return gitlab_ci_url
-
-    # 2. Fall back to default when no custom registry is specified
-    logger.debug(f"Using provided or default registry, {default_registry=} {registry=}")
-    if not registry or registry == DEFAULT_DOCKER_REGISTRY_URL:
-        return default_registry
-
-    # 3. Normalize and return the custom registry URL
-    return _normalize_registry_url(registry)
+    logger.debug(f"using provided or default registry, {default_registry=}")
+    return registry or default_registry
 
 
 def get_gcloud_access_token() -> Optional[str]:

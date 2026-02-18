@@ -1,0 +1,4 @@
+changes:
+- description: Updated the demisto-sdk validate command to support --private-content-path.
+  type: feature
+pr_number: 5197

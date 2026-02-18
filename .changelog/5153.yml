@@ -1,0 +1,4 @@
+changes:
+- description: Add web console link to output of `demisto-sdk run-test-playbook` and `demisto-sdk run-playbook`.
+  type: feature
+pr_number: 5153

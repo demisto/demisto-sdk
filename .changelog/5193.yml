@@ -1,0 +1,6 @@
+changes:
+- description: |
+    - Fix a bug in `demisto-sdk run-playbook` where an invalid log message crashed the command on failed playbook.
+    - Exit with code 1 instead of 0 on failed playbook.
+  type: fix
+pr_number: 5193

@@ -256,6 +256,51 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
     ]
 
 
+def _validate_duplicate_agentix_action_field(
+    tx: Transaction, file_paths: List[str], field_name: str
+) -> List[Tuple[str, List[str]]]:
+    """Generic validator for duplicate Agentix Action fields.
+
+    Args:
+        tx: The Neo4j transaction object.
+        file_paths: List of file paths to filter results.
+        field_name: The field to check for duplicates ('name' or 'display').
+
+    Returns:
+        List of tuples (action_id, list_of_duplicate_ids).
+    """
+    query = f"""// Returns Agentix Actions with duplicate {field_name}
+MATCH (a:{ContentType.AGENTIX_ACTION}), (b:{ContentType.AGENTIX_ACTION})
+WHERE a.{field_name} = b.{field_name}
+AND NOT coalesce(a.not_in_repository, false)
+AND NOT coalesce(b.not_in_repository, false)
+"""
+    if file_paths:
+        query += f"AND a.path in {file_paths}"
+    query += """
+AND elementId(a) <> elementId(b)
+RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
+"""
+    return [
+        (item.get("a_object_id"), item.get("b_object_ids"))
+        for item in run_query(tx, query)
+    ]
+
+
+def validate_multiple_agentix_actions_with_same_display_name(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, List[str]]]:
+    """Query graph to return Agentix Actions with duplicate display names."""
+    return _validate_duplicate_agentix_action_field(tx, file_paths, "display_name")
+
+
+def validate_multiple_agentix_actions_with_same_name(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, List[str]]]:
+    """Query graph to return Agentix Actions with duplicate names."""
+    return _validate_duplicate_agentix_action_field(tx, file_paths, "name")
+
+
 def validate_multiple_script_with_same_name(
     tx: Transaction, file_paths: List[str]
 ) -> Dict[str, str]:

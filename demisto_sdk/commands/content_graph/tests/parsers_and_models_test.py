@@ -776,6 +776,7 @@ class TestParsersAndModels:
         )
         assert model.is_fetch_events is False
         assert model.is_fetch_assets is True
+        assert model.internal is False
 
     def test_unified_integration_parser(self, pack: Pack):
         """
@@ -1013,6 +1014,7 @@ class TestParsersAndModels:
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
         assert model.type == "plain_text"
+        assert model.internal is False
 
     def test_incoming_mapper_parser(self, pack: Pack):
         """
@@ -1249,6 +1251,7 @@ class TestParsersAndModels:
             expected_description="test test2 test3\n   - test4 ",
         )
         assert not model.is_test
+        assert model.internal is False
 
     def test_report_parser(self, pack: Pack):
         """
@@ -1328,6 +1331,7 @@ class TestParsersAndModels:
         assert model.tags == ["transformer"]
         assert not model.is_test
         assert not model.skip_prepare
+        assert model.internal is False
 
     @pytest.mark.parametrize(
         "raw_value, expected_value",
@@ -1438,6 +1442,8 @@ class TestParsersAndModels:
             expected_fromversion="6.10.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
+        assert model.grouping_element == ""
+        assert model.is_auto_enabled is False
 
     def test_layout_rule_parser(self, pack: Pack):
         """
@@ -1879,6 +1885,8 @@ class TestParsersAndModels:
             expected_content_items=expected_content_items,
             expected_deprecated=False,
         )
+        assert model.source == ""
+        assert model.managed is False
 
     def test_repo_parser(self, mocker, repo: Repo):
         """
@@ -3333,3 +3341,100 @@ def test_layout_parser_group():
         layout_path, list(MarketplaceVersions), pack_supported_modules=[]
     )
     assert layout_parser_instance.group == "incident"
+
+
+class TestAgentixBaseParser:
+    """Tests for AgentixBaseParser fromversion and marketplace behavior."""
+
+    def test_agentix_action_parser_default_fromversion(self, pack: Pack):
+        """
+        Given:
+            - An agentix action without an explicit fromversion.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify the default fromversion is DEFAULT_AGENTIX_ITEM_FROM_VERSION (8.12.0).
+        """
+        from demisto_sdk.commands.common.constants import (
+            DEFAULT_AGENTIX_ITEM_FROM_VERSION,
+        )
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixAction", load_yaml("agentix_action.yml")
+        )
+        agentix_action_path = Path(agentix_action.path)
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.fromversion == DEFAULT_AGENTIX_ITEM_FROM_VERSION
+
+    def test_agentix_action_parser_custom_fromversion(self, pack: Pack):
+        """
+        Given:
+            - An agentix action with an explicit fromversion.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify the custom fromversion is used.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action_data = load_yaml("agentix_action.yml")
+        agentix_action_data["fromversion"] = "8.15.0"
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixActionCustomVersion", agentix_action_data
+        )
+        agentix_action_path = Path(agentix_action.path)
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.fromversion == "8.15.0"
+
+    def test_agentix_action_parser_supported_marketplaces(self, pack: Pack):
+        """
+        Given:
+            - An agentix action.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify supported_marketplaces returns only PLATFORM.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixAction", load_yaml("agentix_action.yml")
+        )
+        agentix_action_path = Path(agentix_action.path)
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.supported_marketplaces == {MarketplaceVersions.PLATFORM}
+
+    def test_agentix_action_parser_toversion_default(self, pack: Pack):
+        """
+        Given:
+            - An agentix action without an explicit toversion.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify the default toversion is DEFAULT_CONTENT_ITEM_TO_VERSION.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestAgentixAction", load_yaml("agentix_action.yml")
+        )
+        agentix_action_path = Path(agentix_action.path)
+        parser = AgentixActionParser(
+            agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.toversion == DEFAULT_CONTENT_ITEM_TO_VERSION

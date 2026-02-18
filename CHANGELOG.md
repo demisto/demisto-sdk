@@ -1,4 +1,57 @@
 # Changelog
+## 1.38.19 (2026-02-03)
+### Feature
+* Added the AG109 validator to ensure that Agentix Agent system instructions do not exceed the maximum allowed size of 65535 bytes. [#5205](https://github.com/demisto/demisto-sdk/pull/5205)
+* Added validation AG104 to ensure the agent color is a valid 6-digit RGB hex format. [#5092](https://github.com/demisto/demisto-sdk/pull/5092)
+* Added `--create-graph-from-scratch` flag to the **validate** command to force creating the content graph from scratch instead of downloading it from the bucket. [#5230](https://github.com/demisto/demisto-sdk/pull/5230)
+* Added the ***detach*** command, which allows detaching content items (Incident Types, Layouts, Playbooks, Scripts). [#5217](https://github.com/demisto/demisto-sdk/pull/5217)
+* Added the ***reattach*** command, which allows reattaching previously detached content items. [#5217](https://github.com/demisto/demisto-sdk/pull/5217)
+* Modified the ***validate*** command to enforce that the 'provider' field in integration YAML files must exist and be non-empty for integrations supported in the platform marketplace. [#5203](https://github.com/demisto/demisto-sdk/pull/5203)
+
+### Fix
+* Fixed an issue where the **upload** command incorrectly reported success when uploading system content-items failed. [#5198](https://github.com/demisto/demisto-sdk/pull/5198)
+* Fix ID set on non py. file when content item is script. [#5003](https://github.com/demisto/demisto-sdk/pull/5003)
+
+### Internal
+* Changed PB130 and PB131 validations from errors to warnings. [#5230](https://github.com/demisto/demisto-sdk/pull/5230)
+
+
+## 1.38.18 (2026-01-14)
+### Feature
+* Update BC115 validation to support default supportedModules handling. [#5122](https://github.com/demisto/demisto-sdk/pull/5122)
+* Adds a new validation (BA129) that ensures commands/scripts declare the appropriate compliantpolicies when using arguments associated with specific compliance standards (defined in compliant_policies.json). [#5168](https://github.com/demisto/demisto-sdk/pull/5168)
+* Improved handling private repositories. [#5185](https://github.com/demisto/demisto-sdk/pull/5185)
+
+### Internal
+* Added AgentixAgent to test tools. [#5143](https://github.com/demisto/demisto-sdk/pull/5143)
+* Delete Link PR to Jira github actions [#5191](https://github.com/demisto/demisto-sdk/pull/5191)
+* Added support for the fromversion and toversion fields for Agentix items. [#5180](https://github.com/demisto/demisto-sdk/pull/5180)
+* Updated Agentix items default marketplaces to platform only. [#5180](https://github.com/demisto/demisto-sdk/pull/5180)
+
+
+## 1.38.17 (2026-01-05)
+
+### Feature
+* Added IN168 validator to ensure MCP integrations have only PLATFORM marketplace. [#5174](https://github.com/demisto/demisto-sdk/pull/5174)
+* Added LLM configuration fields under promptConfig object (temperature, maxOutputTokens, webSearch) to Script schemas for AI Tasks with automatic defaults. [#5170](https://github.com/demisto/demisto-sdk/pull/5170)
+* Updated the update release notes command to support --private-content-path. [#5176](https://github.com/demisto/demisto-sdk/pull/5176)
+
+### Internal
+* Content packs containing MCP integrations are now automatically tagged as MCP packs. [#5156](https://github.com/demisto/demisto-sdk/pull/5156)
+* Added new GR111 and GR112 validations. [#5093](https://github.com/demisto/demisto-sdk/pull/5093)
+
+
+## 1.38.16 (2025-12-28)
+### Feature
+* Added support for handling private repositories. [#5159](https://github.com/demisto/demisto-sdk/pull/5159)
+
+### Fix
+* Fixed an issue where the ***format*** command attempted to format list data files when it should only format list metadata files. [#5166](https://github.com/demisto/demisto-sdk/pull/5166)
+
+### Internal
+* Ignore Gr110 when validating all in the Github action. [#5169](https://github.com/demisto/demisto-sdk/pull/5169)
+
+
 ## 1.38.15 (2025-12-16)
 ### Feature
 * Added the `provider` field to the integration schema. [#5155](https://github.com/demisto/demisto-sdk/pull/5155)

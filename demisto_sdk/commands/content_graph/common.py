@@ -109,6 +109,7 @@ class ContentType(StrEnum):
     CASE_LAYOUT = "CaseLayout"
     AGENTIX_AGENT = "AgentixAgent"
     AGENTIX_ACTION = "AgentixAction"
+    AGENTIX_ACTION_TEST = "AgentixActionTest"
 
     @property
     def labels(self) -> List[str]:
@@ -186,6 +187,34 @@ class ContentType(StrEnum):
     def values() -> Iterator[str]:
         return (c.value for c in ContentType)
 
+    @staticmethod
+    def _is_agentix_action_test_path(path: Path) -> bool:
+        """
+        Check if the given path represents an AgentixActionTest file.
+
+        Detects two patterns:
+        - New pattern: *_test.yml (e.g., EnrichIP_test.yml)
+        - Old pattern: test_*.yaml in test_data directory
+
+        Note: This method intentionally does NOT check directories.
+        A directory under AgentixActions/ may contain both an action file
+        and a test file, so the directory itself should not be classified
+        as a test path.
+
+        Args:
+            path: The path to check
+
+        Returns:
+            True if the path represents an AgentixActionTest file, False otherwise
+        """
+        # Check for test file patterns
+        if path.stem.endswith("_test") or (
+            path.stem.startswith("test_") and "test_data" in path.parts
+        ):
+            return True
+
+        return False
+
     @classmethod
     def by_path(cls, path: Path) -> "ContentType":
         for idx, folder in enumerate(path.parts):
@@ -193,6 +222,12 @@ class ContentType(StrEnum):
                 if len(path.parts) <= idx + 2:
                     raise ValueError("Invalid content path.")
                 content_type_dir = path.parts[idx + 2]
+
+                # Special handling for AgentixActionTest files
+                if content_type_dir == "AgentixActions":
+                    if cls._is_agentix_action_test_path(path):
+                        return cls.AGENTIX_ACTION_TEST
+
                 break
         else:
             # less safe option - will raise an exception if the path
@@ -413,6 +448,7 @@ class PackTags:
     FILTER = "Filter"
     COLLECTION = "Collection"
     DATA_SOURCE = "Data Source"
+    MCP = "MCP"
 
 
 class LazyProperty(property):

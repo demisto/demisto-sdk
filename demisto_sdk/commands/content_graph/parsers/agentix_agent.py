@@ -6,6 +6,9 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.agentix_base import AgentixBaseParser
 from demisto_sdk.commands.content_graph.strict_objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.prepare_content.agentix_agent_unifier import (
+    AgentixAgentUnifier,
+)
 
 
 class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGENT):
@@ -22,7 +25,6 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
         self.color: str = self.yml_data.get("color")  # type: ignore
         self.visibility: str = self.yml_data.get("visibility")  # type: ignore
         self.actionids: list[str] = self.yml_data.get("actionids", [])
-        self.systeminstructions: str = self.yml_data.get("systeminstructions", "")
         self.conversationstarters: list[str] = self.yml_data.get(
             "conversationstarters", []
         )
@@ -33,6 +35,23 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
         self.roles: list[str] = self.yml_data.get("roles", [])
         self.sharedwithroles: list[str] = self.yml_data.get("sharedwithroles", [])
         self.add_action_dependencies()
+
+    @property
+    def systeminstructions(self) -> str:
+        """Gets the agent system instructions.
+
+        The system instructions are read from a separate file named
+        <agent_folder_name>_systeminstructions.md in the agent's directory.
+
+        Returns:
+            str: The agent system instructions.
+        """
+        if not self.git_sha:
+            return AgentixAgentUnifier.get_system_instructions(self.path.parent)
+        else:
+            return AgentixAgentUnifier.get_system_instructions_with_sha(
+                self.path, self.git_sha
+            )
 
     def add_action_dependencies(self) -> None:
         """Collects the actions used in the agent as optional dependencies."""

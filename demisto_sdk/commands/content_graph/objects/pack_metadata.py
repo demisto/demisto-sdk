@@ -34,6 +34,8 @@ class PackMetadata(BaseModel):
     name: str
     display_name: str
     description: Optional[str]
+    source: Optional[str] = Field("")
+    managed: Optional[bool] = Field(False)
     created: Optional[str] = Field(alias="firstCreated")
     updated: Optional[str] = Field("")
     legacy: Optional[bool]
@@ -301,6 +303,11 @@ class PackMetadata(BaseModel):
                     if not playbook.is_test
                 ]
             )
+            else set()
+        )
+        tags |= (
+            {PackTags.MCP}
+            if any(integration.mcp for integration in content_items.integration)
             else set()
         )
         tags |= {PackTags.USE_CASE} if self.use_cases else set()
@@ -678,6 +685,10 @@ def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersion
     elif content_item.content_type == ContentType.SCRIPT and content_item.is_internal:
         logger.info(
             f"Skipping {content_item.name} in metadata creation: item is an internal script."
+        )
+    elif content_item.content_type == ContentType.AGENTIX_ACTION_TEST:
+        logger.debug(
+            f"Skipping {content_item.name} in metadata creation: item is an AgentixActionTest."
         )
 
     else:

@@ -25,16 +25,24 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
         self.connect_to_dependencies()
         self.automation_type = get_value(self.json_data, "automation_type", "")
         self.automation_id = get_value(self.json_data, "automation_id", "")
+        self.grouping_element = get_value(self.json_data, "grouping_element", "")
+        self.is_auto_enabled = get_value(self.json_data, "is_auto_enabled", False)
+        self.playbook_id = get_value(self.json_data, "playbook_id", None)
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update(
+        mapping = super().field_mapping
+        mapping.update(
             {
                 "object_id": "trigger_id",
                 "name": "trigger_name",
+                "grouping_element": "grouping_element",
+                "is_auto_enabled": "is_auto_enabled",
             }
         )
-        return super().field_mapping
+        # Remove version field as triggers don't have it in their JSON schema
+        mapping.pop("version", None)
+        return mapping
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

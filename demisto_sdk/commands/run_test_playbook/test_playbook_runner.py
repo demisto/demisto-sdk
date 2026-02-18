@@ -236,7 +236,7 @@ class TestPlaybookRunner:
             raise e
 
         logger.info(
-            f"<green>The test playbook: {self.test_playbook_path} was triggered successfully.</green>"
+            f"<green>The test playbook: {test_playbook_id} was triggered successfully.</green>"
         )
         return response.id
 

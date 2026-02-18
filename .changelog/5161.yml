@@ -1,0 +1,4 @@
+changes:
+- description: Fix a bug where the path of a test playbook (which could be a directory and not a file) was printed instead of the playbook name in `demisto-sdk run-test-playbook`
+  type: fix
+pr_number: 5161

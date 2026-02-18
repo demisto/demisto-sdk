@@ -258,18 +258,28 @@ class ContentItem(BaseContent):
 
     @property
     def data(self) -> dict:
-        return get_file(self.path, keep_order=False)
+        return get_file(
+            getattr(self, "path_to_read", None) or self.path, keep_order=False
+        )
 
     @property
     def text(self) -> str:
-        return get_file(self.path, return_content=True)
+        return get_file(
+            getattr(self, "path_to_read", None) or self.path, return_content=True
+        )
 
     @property
     def ordered_data(self) -> dict:
-        return get_file(self.path, keep_order=True)
+        return get_file(
+            getattr(self, "path_to_read", None) or self.path, keep_order=True
+        )
 
     def save(self, fields_to_exclude: List[str] = []):
-        super()._save(self.path, self.ordered_data, fields_to_exclude=fields_to_exclude)
+        super()._save(
+            getattr(self, "path_to_read", None) or self.path,
+            self.ordered_data,
+            fields_to_exclude=fields_to_exclude,
+        )
 
     def prepare_for_upload(
         self,

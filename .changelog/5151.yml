@@ -1,0 +1,4 @@
+changes:
+- description: Fix a bug where `demisto-sdk xsoar-config-file-update` would crash instead of using the default value when omitting the `--file-path` option.
+  type: fix
+pr_number: 5151

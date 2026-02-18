@@ -165,7 +165,8 @@ class TestPlaybookRunner:
         status_code = SUCCESS_RETURN_CODE
         logger.info(
             f"<green>Waiting for the test playbook to finish running.. \n"
-            f"To see the test playbook run in real-time please go to : {work_plan_link}</green>"
+            f"To see the test playbook run in real-time please go to : {work_plan_link}\n"
+            f"Or for the web console: {work_plan_link.replace('/#/', '/').replace('//api-', '//')}</green>"
         )
 
         elapsed_time = 0
@@ -235,7 +236,7 @@ class TestPlaybookRunner:
             raise e
 
         logger.info(
-            f"<green>The test playbook: {self.test_playbook_path} was triggered successfully.</green>"
+            f"<green>The test playbook: {test_playbook_id} was triggered successfully.</green>"
         )
         return response.id
 

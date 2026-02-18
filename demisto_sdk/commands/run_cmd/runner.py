@@ -179,10 +179,11 @@ class Runner:
                 logger.info("<yellow>### Command:</yellow>")
             if entry.contents:
                 logger.info("<yellow>## Readable Output</yellow>")
+                replaced = entry.contents.replace("<", "\\<")
                 if entry.type == self.ERROR_ENTRY_TYPE:
-                    logger.info("{}", f"<red>{entry.contents}</red>\n")  # noqa: PLE1205
+                    logger.info("{}", f"<red>{replaced}</red>\n")  # noqa: PLE1205
                 else:
-                    logger.info(f"{entry.contents}\n")
+                    logger.info(f"{replaced}\n")
 
             # and entries with `file_id`s defined, that is the fileID of the debug log file
             if entry.type == self.DEBUG_FILE_ENTRY_TYPE:

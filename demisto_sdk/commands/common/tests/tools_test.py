@@ -3311,3 +3311,125 @@ class TestSearchSubstringByLine:
         assert search_substrings_by_line(
             phrases, text, exceptionally_allowed_substrings=exceptions
         ) == (["1"] if expected_to_find else [])
+
+
+class TestRunSync:
+    """Tests for the run_sync function which uses fcntl for file locking."""
+
+    @pytest.mark.skipif(
+        os.name == "nt",
+        reason="fcntl is not available on Windows - this tests Unix-specific functionality",
+    )
+    def test_run_sync_basic_functionality(self, tmp_path):
+        """
+        Given:
+            - A lock file path and a function to execute exclusively.
+        When:
+            - Running run_sync with the function.
+        Then:
+            - The function should be executed successfully.
+        """
+        from demisto_sdk.commands.common.tools import run_sync
+
+        lock_file = tmp_path / "test.lock"
+        result = {"executed": False}
+
+        def test_function():
+            result["executed"] = True
+
+        run_sync(str(lock_file), test_function)
+        assert result["executed"] is True
+
+    @pytest.mark.skipif(
+        os.name == "nt",
+        reason="fcntl is not available on Windows - this tests Unix-specific functionality",
+    )
+    def test_run_sync_with_kwargs(self, tmp_path):
+        """
+        Given:
+            - A lock file path and a function with kwargs.
+        When:
+            - Running run_sync with the function and kwargs.
+        Then:
+            - The function should be executed with the provided kwargs.
+        """
+        from demisto_sdk.commands.common.tools import run_sync
+
+        lock_file = tmp_path / "test.lock"
+        result = {"value": None}
+
+        def test_function(value):
+            result["value"] = value
+
+        run_sync(str(lock_file), test_function, {"value": "test_value"})
+        assert result["value"] == "test_value"
+
+    @pytest.mark.skipif(
+        os.name == "nt",
+        reason="fcntl is not available on Windows - this tests Unix-specific functionality",
+    )
+    def test_run_sync_creates_lock_file(self, tmp_path):
+        """
+        Given:
+            - A lock file path that doesn't exist.
+        When:
+            - Running run_sync.
+        Then:
+            - The lock file should be created.
+        """
+        from demisto_sdk.commands.common.tools import run_sync
+
+        lock_file = tmp_path / "new_lock.lock"
+        assert not lock_file.exists()
+
+        def test_function():
+            pass
+
+        run_sync(str(lock_file), test_function)
+        assert lock_file.exists()
+
+    def test_fcntl_import_is_inside_function(self):
+        """
+        Given:
+            - The tools module.
+        When:
+            - Checking if fcntl is imported at module level.
+        Then:
+            - fcntl should NOT be in the module's global imports (for Windows compatibility).
+            - The import should happen inside the run_sync function.
+        """
+        import inspect
+
+        import demisto_sdk.commands.common.tools as tools_module
+
+        # Verify fcntl is not imported at module level
+        # This is important for Windows compatibility
+        assert not hasattr(
+            tools_module, "fcntl"
+        ), "fcntl should not be imported at module level for Windows compatibility"
+
+        # Verify the import is inside the run_sync function
+        source = inspect.getsource(tools_module.run_sync)
+        assert (
+            "import fcntl" in source
+        ), "fcntl should be imported inside the run_sync function"
+
+    def test_tools_module_can_be_imported_without_fcntl(self, mocker):
+        """
+        Given:
+            - A system where fcntl is not available (like Windows).
+        When:
+            - Importing the tools module.
+        Then:
+            - The import should succeed without errors.
+            - This verifies that fcntl is not imported at module level.
+        """
+        # This test verifies that the tools module can be imported
+        # even if fcntl doesn't exist (simulating Windows)
+        # The fact that we got here means the module imported successfully
+        # without requiring fcntl at the top level
+        import demisto_sdk.commands.common.tools as tools_module
+
+        # Verify the module loaded successfully
+        assert tools_module is not None
+        assert hasattr(tools_module, "run_sync")

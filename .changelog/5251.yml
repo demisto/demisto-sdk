@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where debug-logging in **graph** command failed.
+  type: fix
+pr_number: 5251

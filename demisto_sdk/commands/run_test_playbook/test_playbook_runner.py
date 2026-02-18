@@ -116,6 +116,8 @@ class TestPlaybookRunner:
         Get all pack test playbooks
         """
         full_path = f"{folder_path}/TestPlaybooks"
+        if not Path(full_path).exists():
+            return []
         list_test_playbooks_files = os.listdir(full_path)
         list_test_playbooks_files = [
             f"{full_path}/{tpb}" for tpb in list_test_playbooks_files

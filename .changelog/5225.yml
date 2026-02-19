@@ -1,0 +1,4 @@
+changes:
+- description: Added support for the instructions field for Agentix Actions
+  type: feature
+pr_number: 5225

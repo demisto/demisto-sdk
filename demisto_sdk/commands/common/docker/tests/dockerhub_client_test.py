@@ -8,6 +8,7 @@ from requests import Response, Session
 
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubClient,
+    get_registry_api_url,
     iso8601_to_datetime_str,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
@@ -309,3 +310,185 @@ def test_iso8601_to_datetime_str(datetime_str, response):
         - Ensure the datetime string is normalized converted to microseconds
     """
     assert iso8601_to_datetime_str(datetime_str) == response
+
+
+DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
+
+
+@pytest.mark.parametrize(
+    "registry, expected_url",
+    [
+        pytest.param(
+            "test-docker.dev",
+            "https://test-docker.dev/v2",
+            id="custom registry without scheme",
+        ),
+        pytest.param(
+            "https://test-docker.dev",
+            "https://test-docker.dev/v2",
+            id="custom registry with https no v2",
+        ),
+        pytest.param(
+            "https://test-docker.dev/v2",
+            "https://test-docker.dev/v2",
+            id="custom registry with https and v2",
+        ),
+        pytest.param(
+            "https://test-docker.dev/",
+            "https://test-docker.dev/v2",
+            id="custom registry with trailing slash",
+        ),
+        pytest.param(
+            "https://test-docker.dev/v2/",
+            "https://test-docker.dev/v2",
+            id="custom registry with v2 trailing slash",
+        ),
+        pytest.param(
+            "http://my-registry.example.com",
+            "http://my-registry.example.com/v2",
+            id="custom registry with http scheme",
+        ),
+        pytest.param(
+            "",
+            DEFAULT_REGISTRY,
+            id="empty registry returns default",
+        ),
+        pytest.param(
+            "docker.io",
+            DEFAULT_REGISTRY,
+            id="default docker io returns default registry",
+        ),
+    ],
+)
+def test_get_registry_api_url_with_custom_registry(registry: str, expected_url: str):
+    """
+    Given:
+        - Various custom registry URL formats
+
+    When:
+        - running get_registry_api_url to determine the registry API URL
+
+    Then:
+        - ensure the returned URL always has a scheme (https://) and the /v2 API path prefix
+    """
+    assert get_registry_api_url(registry, DEFAULT_REGISTRY) == expected_url
+
+
+def test_get_registry_api_url_with_none_like_empty_registry():
+    """
+    Given:
+        - An empty string registry (falsy value)
+
+    When:
+        - running get_registry_api_url
+
+    Then:
+        - ensure the default registry is returned
+    """
+    assert get_registry_api_url("", DEFAULT_REGISTRY) == DEFAULT_REGISTRY
+
+
+def test_do_registry_get_request_custom_registry_skips_bearer_token(
+    mocker, dockerhub_client: DockerHubClient
+):
+    """
+    Given:
+        - A DockerHubClient configured with a user-provided custom (non-Docker Hub) registry
+          (e.g., JFrog), where _is_custom_registry is True
+
+    When:
+        - running do_registry_get_request
+
+    Then:
+        - ensure get_token is NOT called (no Docker Hub bearer token)
+        - ensure the request is made with Accept header but without Authorization header
+    """
+    dockerhub_client.registry_api_url = "https://test-docker.dev/v2"
+    dockerhub_client._is_custom_registry = True
+    mock_get_token = mocker.patch.object(dockerhub_client, "get_token")
+    mock_get_request = mocker.patch.object(
+        dockerhub_client, "get_request", return_value={"tags": ["1.0.0"]}
+    )
+
+    dockerhub_client.do_registry_get_request(
+        url_suffix="/tags/list", docker_image="demisto/python3"
+    )
+
+    mock_get_token.assert_not_called()
+    call_args = mock_get_request.call_args
+    headers = call_args[1].get("headers") or call_args[0][1]
+    assert "Authorization" not in headers
+    assert "Accept" in headers
+
+
+def test_do_registry_get_request_default_registry_uses_bearer_token(
+    mocker, dockerhub_client: DockerHubClient
+):
+    """
+    Given:
+        - A DockerHubClient configured with the default Docker Hub registry
+          (_is_custom_registry is False)
+
+    When:
+        - running do_registry_get_request
+
+    Then:
+        - ensure get_token IS called to obtain a Docker Hub bearer token
+        - ensure the Authorization header is set with the bearer token
+    """
+    dockerhub_client.registry_api_url = DockerHubClient.DEFAULT_REGISTRY
+    dockerhub_client._is_custom_registry = False
+    mock_get_token = mocker.patch.object(
+        dockerhub_client, "get_token", return_value="test_token"
+    )
+    mock_get_request = mocker.patch.object(
+        dockerhub_client, "get_request", return_value={"tags": ["1.0.0"]}
+    )
+
+    dockerhub_client.do_registry_get_request(
+        url_suffix="/tags/list", docker_image="demisto/python3"
+    )
+
+    mock_get_token.assert_called_once()
+    call_args = mock_get_request.call_args
+    headers = call_args[1].get("headers") or call_args[0][1]
+    assert headers["Authorization"] == "Bearer test_token"
+    assert "Accept" in headers
+
+
+def test_do_registry_get_request_gar_proxy_uses_bearer_token(
+    mocker, dockerhub_client: DockerHubClient
+):
+    """
+    Given:
+        - A DockerHubClient configured with a GAR proxy registry URL
+          (non-default URL, but _is_custom_registry is False because the URL
+          was resolved from the DOCKER_IO env var, not user-provided)
+
+    When:
+        - running do_registry_get_request
+
+    Then:
+        - ensure get_token IS called to obtain a access token
+        - ensure the Authorization header is set with the bearer token
+    """
+    dockerhub_client.registry_api_url = (
+        "https://test-docker.pkg.dev/v2/test/test-docker"
+    )
+    dockerhub_client._is_custom_registry = False
+    mock_get_token = mocker.patch.object(
+        dockerhub_client, "get_token", return_value="test_access_token"
+    )
+    mock_get_request = mocker.patch.object(
+        dockerhub_client, "get_request", return_value={"tags": ["1.0.0"]}
+    )
+
+    dockerhub_client.do_registry_get_request(
+        url_suffix="/tags/list", docker_image="demisto/python3"
+    )
+
+    mock_get_token.assert_called_once()
+    call_args = mock_get_request.call_args
+    headers = call_args[1].get("headers") or call_args[0][1]
+    assert headers["Authorization"] == "Bearer test_access_token"
+    assert "Accept" in headers

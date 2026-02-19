@@ -1,0 +1,4 @@
+changes:
+- description: Fixed docker-image validations (DO103, DO104, DO106) failing for users with a custom container registry.
+  type: fix
+pr_number: 5255

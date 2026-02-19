@@ -65,6 +65,10 @@ class DockerHubClient:
         self._session = requests.Session()
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
+        # A truly custom registry is one explicitly provided by the user (e.g., JFrog),
+        # NOT one resolved from the DOCKER_IO env var (e.g., GAR proxy).
+        # When registry param is empty, the URL comes from DOCKER_IO or the default.
+        self._is_custom_registry = bool(registry)
 
     def __enter__(self):
         return self
@@ -273,12 +277,13 @@ class DockerHubClient:
             headers: any custom headers
             params: query parameters
         """
-        logger.debug("dockerhub_client | do_registry_get_request")
+        logger.info(
+            f"dockerhub_client | do_registry_get_request | "
+            f"registry_url={self.registry_api_url} | "
+            f"is_custom_registry={self._is_custom_registry}"
+        )
         if not url_suffix.startswith("/"):
             url_suffix = f"/{url_suffix}"
-
-        # Determine if this is a custom (non-Docker Hub) registry
-        is_custom_registry = self.DEFAULT_REGISTRY not in self.registry_api_url
 
         if headers:
             _headers = {key: value for key, value in headers}
@@ -287,9 +292,16 @@ class DockerHubClient:
                 "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
                 "application/vnd.docker.distribution.manifest.list.v2+json",
             }
-            if not is_custom_registry:
-                # For custom registries, don't send Docker Hub bearer token.
+            if self._is_custom_registry:
+                # For user-provided custom registries (e.g., JFrog), don't send bearer token.
                 # Let get_request() use Basic Auth (self.auth) if credentials are available.
+                logger.info(
+                    "Using Basic Auth (skipping bearer token) for custom registry"
+                )
+            else:
+                # For Docker Hub default registry and GAR proxy registries,
+                # use bearer token from get_token() (Docker Hub token or GCloud access token).
+                logger.info("Using bearer token authentication")
                 _headers["Authorization"] = (
                     f"Bearer {self.get_token(docker_image, scope=scope)}"
                 )

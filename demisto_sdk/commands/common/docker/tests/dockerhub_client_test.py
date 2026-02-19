@@ -393,7 +393,8 @@ def test_do_registry_get_request_custom_registry_skips_bearer_token(
 ):
     """
     Given:
-        - A DockerHubClient configured with a custom (non-Docker Hub) registry
+        - A DockerHubClient configured with a user-provided custom (non-Docker Hub) registry
+          (e.g., JFrog), where _is_custom_registry is True
 
     When:
         - running do_registry_get_request
@@ -403,6 +404,7 @@ def test_do_registry_get_request_custom_registry_skips_bearer_token(
         - ensure the request is made with Accept header but without Authorization header
     """
     dockerhub_client.registry_api_url = "https://test-docker.dev/v2"
+    dockerhub_client._is_custom_registry = True
     mock_get_token = mocker.patch.object(dockerhub_client, "get_token")
     mock_get_request = mocker.patch.object(
         dockerhub_client, "get_request", return_value={"tags": ["1.0.0"]}
@@ -425,6 +427,7 @@ def test_do_registry_get_request_default_registry_uses_bearer_token(
     """
     Given:
         - A DockerHubClient configured with the default Docker Hub registry
+          (_is_custom_registry is False)
 
     When:
         - running do_registry_get_request
@@ -434,6 +437,7 @@ def test_do_registry_get_request_default_registry_uses_bearer_token(
         - ensure the Authorization header is set with the bearer token
     """
     dockerhub_client.registry_api_url = DockerHubClient.DEFAULT_REGISTRY
+    dockerhub_client._is_custom_registry = False
     mock_get_token = mocker.patch.object(
         dockerhub_client, "get_token", return_value="test_token"
     )
@@ -449,4 +453,42 @@ def test_do_registry_get_request_default_registry_uses_bearer_token(
     call_args = mock_get_request.call_args
     headers = call_args[1].get("headers") or call_args[0][1]
     assert headers["Authorization"] == "Bearer test_token"
+    assert "Accept" in headers
+
+
+def test_do_registry_get_request_gar_proxy_uses_bearer_token(
+    mocker, dockerhub_client: DockerHubClient
+):
+    """
+    Given:
+        - A DockerHubClient configured with a GAR proxy registry URL
+          (non-default URL, but _is_custom_registry is False because the URL
+          was resolved from the DOCKER_IO env var, not user-provided)
+
+    When:
+        - running do_registry_get_request
+
+    Then:
+        - ensure get_token IS called to obtain a access token
+        - ensure the Authorization header is set with the bearer token
+    """
+    dockerhub_client.registry_api_url = (
+        "https://test-docker.pkg.dev/v2/test/test-docker"
+    )
+    dockerhub_client._is_custom_registry = False
+    mock_get_token = mocker.patch.object(
+        dockerhub_client, "get_token", return_value="test_access_token"
+    )
+    mock_get_request = mocker.patch.object(
+        dockerhub_client, "get_request", return_value={"tags": ["1.0.0"]}
+    )
+
+    dockerhub_client.do_registry_get_request(
+        url_suffix="/tags/list", docker_image="demisto/python3"
+    )
+
+    mock_get_token.assert_called_once()
+    call_args = mock_get_request.call_args
+    headers = call_args[1].get("headers") or call_args[0][1]
+    assert headers["Authorization"] == "Bearer test_access_token"
     assert "Accept" in headers

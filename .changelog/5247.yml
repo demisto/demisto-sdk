@@ -1,0 +1,4 @@
+changes:
+- description: Added `--allow-missing-dependencies` flag to the validate command that allows validations to skip content items not found in the repository. Useful when running from GitLab on private repos where some dependencies exist in private repositories.
+  type: feature
+pr_number: 5247

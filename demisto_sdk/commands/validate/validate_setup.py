@@ -175,6 +175,13 @@ def validate(
         "--create-graph-from-scratch",
         help="If set, creates the content graph from scratch instead of downloading it from the bucket.",
     ),
+    allow_missing_dependencies: bool = typer.Option(
+        False,
+        "--allow-missing-dependencies",
+        help="When set, validations will ignore content items that are not found in the repository. "
+        "Useful when running from GitLab on private repos where some dependencies exist in private repositories. "
+        "Can also be set via DEMISTO_SDK_ALLOW_MISSING_DEPENDENCIES environment variable.",
+    ),
     ignore: list[str] = typer.Option(
         None, help="An error code to not run. Can be repeated."
     ),
@@ -369,6 +376,10 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         ),
         private_content_path=kwargs.get("private_content_path"),
     )
+    # Check both CLI flag and environment variable for allow_missing_dependencies
+    allow_missing_dependencies = kwargs.get("allow_missing_dependencies", False) or (
+        os.getenv("DEMISTO_SDK_ALLOW_MISSING_DEPENDENCIES", "").lower() == "true"
+    )
     validator_v2 = ValidateManager(
         file_path=file_path,
         initializer=initializer,
@@ -378,5 +389,6 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         ignore_support_level=kwargs["ignore_support_level"],
         ignore=kwargs["ignore"],
         create_graph_from_scratch=kwargs.get("create_graph_from_scratch", False),
+        allow_missing_dependencies=allow_missing_dependencies,
     )
     return validator_v2.run_validations()

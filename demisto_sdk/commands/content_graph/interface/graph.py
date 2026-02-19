@@ -156,7 +156,15 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def get_unknown_content_uses(self, file_paths: List[str]) -> List[BaseNode]:
+    def get_unknown_content_uses(
+        self, file_paths: List[str], allow_missing_dependencies: bool = False
+    ) -> List[BaseNode]:
+        pass
+
+    @abstractmethod
+    def get_unknown_playbook_tests(
+        self, file_paths: List[str], allow_missing_dependencies: bool = False
+    ) -> List[BaseNode]:
         pass
 
     @abstractmethod

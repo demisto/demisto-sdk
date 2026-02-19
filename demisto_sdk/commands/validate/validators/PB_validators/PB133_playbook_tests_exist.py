@@ -41,7 +41,8 @@ class PlaybookTestsExistValidator(BaseValidator[ContentTypes], ABC):
         )
         # Query graph for playbooks that have "TESTED BY" relationship objects that are *not* in content repository
         content_items_with_unknown_tests = self.graph.get_unknown_playbook_tests(
-            file_paths_to_validate
+            file_paths_to_validate,
+            allow_missing_dependencies=self.allow_missing_dependencies,
         )
 
         for content_item in content_items_with_unknown_tests:

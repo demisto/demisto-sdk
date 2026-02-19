@@ -19,7 +19,7 @@ class Period(BaseStrictModel):
 
 class _StrictPreProcessRule(BaseStrictModel):
     @root_validator(pre=True)
-    def handle_legacy_script_id(cls, values):
+    def handle_legacy_script_id(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle legacy 'scriptID' field (with capital D) by mapping it to 'scriptId'.
         This ensures backward compatibility with older PreProcessRule files.

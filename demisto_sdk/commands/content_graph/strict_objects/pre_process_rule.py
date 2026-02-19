@@ -1,10 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import Field
+from pydantic import Field, root_validator
 
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
+    SCRIPT_ID_DYNAMIC_MODEL,
     SUFFIXED_ID_DYNAMIC_MODEL,
     BaseStrictModel,
     create_model,
@@ -17,6 +18,16 @@ class Period(BaseStrictModel):
 
 
 class _StrictPreProcessRule(BaseStrictModel):
+    @root_validator(pre=True)
+    def handle_legacy_script_id(cls, values):
+        """
+        Handle legacy 'scriptID' field (with capital D) by mapping it to 'scriptId'.
+        This ensures backward compatibility with older PreProcessRule files.
+        """
+        if "scriptID" in values and "scriptId" not in values:
+            values["scriptId"] = values.pop("scriptID")
+        return values
+
     action: str
     enabled: bool
     existing_events_filters: List[Any] = Field(
@@ -54,6 +65,7 @@ StrictPreProcessRule = create_model(
         _StrictPreProcessRule,
         NAME_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,
+        SCRIPT_ID_DYNAMIC_MODEL,
         SUFFIXED_ID_DYNAMIC_MODEL,
     ),
 )

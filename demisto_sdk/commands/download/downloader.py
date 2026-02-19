@@ -1577,7 +1577,9 @@ class Downloader:
                 temp_dir / content_item_entity_directory / content_item_file_name
             )
             temp_download_path.parent.mkdir(parents=True, exist_ok=True)
-            temp_download_path.write_text(content_item_file_data.getvalue())
+            temp_download_path.write_text(
+                content_item_file_data.getvalue(), encoding="UTF-8"
+            )
 
             source_to_destination_mapping[temp_download_path] = (
                 output_path / content_item_entity_directory / content_item_file_name

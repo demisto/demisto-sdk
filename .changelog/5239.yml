@@ -1,0 +1,5 @@
+changes:
+- description: >
+    Improve Windows compatibility for `demisto-sdk download` and other commands.
+  type: fix
+pr_number: 5239

@@ -1,0 +1,4 @@
+changes:
+- description: Added the missing release note headers for the *AgentixAction* and the *AgentixAgent* content types.
+  type: fix
+pr_number: 5186

@@ -1,0 +1,6 @@
+changes:
+- description: |
+    - Add an error message when the provided github token is unauthorized to help with debugging bad tokens in `demisto-sdk pre-commit`.
+    - Fix a bug where `.env` environment variables were not loaded upon creating the first instance of `GitCredentials`, making `demisto-sdk pre-commit` ignore the `DEMISTO_SDK_GITHUB_TOKEN` environment variable if it was set in the `.env` file.
+  type: fix
+pr_number: 5162

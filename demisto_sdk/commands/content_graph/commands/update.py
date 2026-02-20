@@ -1,10 +1,10 @@
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 import typer
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger, logging_setup
@@ -29,6 +29,35 @@ from demisto_sdk.commands.validate.private_content_manager import (
 )
 
 app = typer.Typer()
+
+# Environment variable name for passing diff files list
+DEMISTO_SDK_DIFF_FILES_ENV = "DEMISTO_SDK_DIFF_FILES"
+
+
+def extract_pack_ids_from_diff_files(diff_files_str: str) -> Set[str]:
+    """Extract unique pack IDs from a list of diff file paths.
+
+    Args:
+        diff_files_str: A string containing file paths, separated by spaces or newlines.
+                       Example: "Packs/MyPack/file.py Packs/OtherPack/file.yml"
+
+    Returns:
+        A set of unique pack IDs extracted from the file paths.
+    """
+    if not diff_files_str:
+        return set()
+
+    # Support both space-separated and newline-separated file lists
+    diff_files = diff_files_str.replace("\n", " ").split()
+
+    pack_ids: Set[str] = set()
+    for file_path in diff_files:
+        path_parts = Path(file_path).parts
+        # Check if the file is under Packs/ folder and has at least pack name
+        if len(path_parts) > 1 and path_parts[0] == PACKS_FOLDER:
+            pack_ids.add(path_parts[1])
+
+    return pack_ids
 
 
 def should_update_graph(
@@ -161,6 +190,20 @@ def _update_content_graph_inner(
     if is_external_repo:
         packs_to_update = get_all_repo_pack_ids()
     packs_to_update = list(packs_to_update) if packs_to_update else []
+
+    # Check for diff files from environment variable
+    # This allows CI systems to pass a list of changed files directly,
+    # bypassing git-based detection which may not work in all CI environments
+    diff_files_env = os.getenv(DEMISTO_SDK_DIFF_FILES_ENV, "")
+    if diff_files_env:
+        env_pack_ids = extract_pack_ids_from_diff_files(diff_files_env)
+        if env_pack_ids:
+            logger.info(
+                f"Extracted {len(env_pack_ids)} pack IDs from {DEMISTO_SDK_DIFF_FILES_ENV} "
+                f"environment variable: {sorted(env_pack_ids)}"
+            )
+            packs_to_update.extend(env_pack_ids)
+
     builder = ContentGraphBuilder(content_graph_interface)
     if not should_update_graph(
         content_graph_interface, use_git, git_util, imported_path, packs_to_update

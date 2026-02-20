@@ -1573,6 +1573,10 @@ class Downloader:
                     )
 
         else:  # Non-unified content item
+
+            if content_item_type in ["incidenttype", "incidentfield", "indicatorfield", "layoutscontainer"]:
+                content_item_file_name = f"{content_item_type}-{content_item_file_name}"
+
             temp_download_path = (
                 temp_dir / content_item_entity_directory / content_item_file_name
             )

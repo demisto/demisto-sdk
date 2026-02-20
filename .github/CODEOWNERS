@@ -1,5 +1,5 @@
 # Infra team
-* @demisto/marketplace-infra-tls
+* @demisto/marketplace-infra-tls 
 # Validations
 demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @yedidyacohenpalo @demisto/marketplace-infra-tls
 demisto_sdk/commands/common/hook_validations/ @yedidyacohenpalo @demisto/marketplace-infra-tls

@@ -1,0 +1,4 @@
+changes:
+- description: Add an explicit error log message when `demisto-sdk zip-packs` fails. Without this, it's not clear to users that the command failed.
+  type: feature
+pr_number: 5194

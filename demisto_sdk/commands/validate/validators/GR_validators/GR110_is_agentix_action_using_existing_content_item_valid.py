@@ -89,17 +89,20 @@ class IsAgentixActionUsingExistingContentItemValidator(
         for action in agentix_actions_to_validate:
             action_type = action.underlying_content_item_type
 
-            if action_type not in {"command", "script", "playbook"}:
+            if action_type not in {"command", "script", "playbook", "internal", "prompt"}:
                 results.append(
                     ValidationResult(
                         validator=self,
                         message=(
                             f"The action '{action.name}' wraps a content type '{action_type}', "
-                            "which is currently unsupported in Agentix. Only 'command', 'script', and 'playbook' types are allowed."
+                            "which is currently unsupported in Agentix. Only 'command', 'script', 'playbook', 'internal', and 'prompt' types are allowed."
                         ),
                         content_object=action,
                     )
                 )
+                continue
+
+            if action_type in {"internal", "prompt"}:
                 continue
 
             item_name: str = (

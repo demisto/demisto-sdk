@@ -1,0 +1,4 @@
+changes:
+- description: Added `is_test` property to AgentixAction and AgentixActionTest to distinguish test from production actions.
+  type: fix
+pr_number: 5257

@@ -18,6 +18,7 @@ class AgentixActionTest(AgentixBase, content_type=ContentType.AGENTIX_ACTION_TES
     description: str = ""
     display_name: str = ""
     tests: List[AgentixActionTestCase] = Field([], exclude=True)
+    is_test: bool = True
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

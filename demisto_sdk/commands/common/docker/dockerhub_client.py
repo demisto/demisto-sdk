@@ -68,9 +68,9 @@ class DockerHubClient:
         # A truly custom registry is one explicitly provided by the user (e.g., JFrog),
         # NOT one resolved from the DOCKER_IO env var (e.g., GAR proxy).
         # When registry param is empty, the URL comes from DOCKER_IO or the default.
-        self._is_custom_registry = bool(
-            registry
-        ) and self.DEFAULT_REGISTRY not in self.registry_api_url
+        self._is_custom_registry = (
+            bool(registry) and self.DEFAULT_REGISTRY not in self.registry_api_url
+        )
 
     def __enter__(self):
         return self

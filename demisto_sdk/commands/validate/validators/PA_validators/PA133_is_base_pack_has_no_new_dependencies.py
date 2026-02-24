@@ -40,7 +40,7 @@ class IsBasePackHasNoNewDependenciesValidator(BaseValidator[ContentTypes], ABC):
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-        validation_results = []
+        validation_results: List[ValidationResult] = []
         pack_ids = (
             [] if validate_all_files else [pack.object_id for pack in content_items]
         )

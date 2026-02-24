@@ -1927,9 +1927,7 @@ def repo_for_test_pa_133_valid(graph_repo: Repo):
     # Base pack with a script that uses a command from Core
     base_pack = graph_repo.create_pack("Base")
     base_pack.create_script("BaseScript")
-    base_pack.pack_metadata.update(
-        {"dependencies": {"Core": {"mandatory": True}}}
-    )
+    base_pack.pack_metadata.update({"dependencies": {"Core": {"mandatory": True}}})
 
     # Core pack (allowed dependency)
     core_pack = graph_repo.create_pack("Core")
@@ -1967,9 +1965,7 @@ def repo_for_test_pa_133_invalid(graph_repo: Repo):
     # Base pack with a playbook that uses a command from NewPack
     base_pack = graph_repo.create_pack("Base")
     base_pack.create_playbook("BasePlaybook", yml=playbook_using_newpack_command)
-    base_pack.pack_metadata.update(
-        {"dependencies": {"NewPack": {"mandatory": True}}}
-    )
+    base_pack.pack_metadata.update({"dependencies": {"NewPack": {"mandatory": True}}})
 
     # NewPack (not an allowed dependency)
     new_pack = graph_repo.create_pack("NewPack")

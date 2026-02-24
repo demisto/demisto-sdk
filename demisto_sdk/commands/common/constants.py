@@ -2039,6 +2039,8 @@ class PlatformSupportedModules(StrEnum):
     XSIAM = "xsiam"
     EXPOSURE_MANAGEMENT = "exposure_management"
     AGENTIX_XSIAM = "agentix_xsiam"
+    TIM = "tim"
+    EMAIL_SECURITY = "email_security"
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {

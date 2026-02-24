@@ -1,0 +1,4 @@
+changes:
+- description: Added support for tim and email_eecurity licenses.
+  type: internal
+pr_number: 5259

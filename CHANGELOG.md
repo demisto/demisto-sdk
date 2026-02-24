@@ -1,4 +1,26 @@
 # Changelog
+## 1.38.20 (2026-02-19)
+### Feature
+* Added a new validation (AS101) that ensures triggers in autonomous packs are properly configured. [#5234](https://github.com/demisto/demisto-sdk/pull/5234)
+* Updated the demisto-sdk validate command to support --private-content-path. [#5197](https://github.com/demisto/demisto-sdk/pull/5197)
+* Updated AgentixActions to support nested directory structure (AgentixActions/<action_id>/<action_id>.yaml) and both .yml and .yaml file extensions [#5237](https://github.com/demisto/demisto-sdk/pull/5237)
+* Added MC100 validation to ensure content items in managed packs have the correct source field matching pack_metadata, with auto-fix support in both validate and format commands. [#5238](https://github.com/demisto/demisto-sdk/pull/5238)
+* Add web console link to output of `demisto-sdk run-test-playbook` and `demisto-sdk run-playbook`. [#5153](https://github.com/demisto/demisto-sdk/pull/5153)
+* Updated the ST110 structure validation to ensure that managed packs have a valid non-empty source field. [#5248](https://github.com/demisto/demisto-sdk/pull/5248)
+* Added a new AS102 validation that checks autonomous playbook tasks without displayLabel have quietmode 1 (quiet mode enabled), with auto-fix support. Skips start/title task types. [#5246](https://github.com/demisto/demisto-sdk/pull/5246)
+
+### Fix
+* Fix a bug where `demisto-sdk xsoar-config-file-update` would crash instead of using the default value when omitting the `--file-path` option. [#5151](https://github.com/demisto/demisto-sdk/pull/5151)
+* Fixed an issue where debug-logging in **graph** command failed. [#5251](https://github.com/demisto/demisto-sdk/pull/5251)
+* Fix a bug where the path of a test playbook (which could be a directory and not a file) was printed instead of the playbook name in `demisto-sdk run-test-playbook` [#5161](https://github.com/demisto/demisto-sdk/pull/5161)
+* Fixed an issue that prevented bi-directional validations failures from being filtered and ignored. [#5243](https://github.com/demisto/demisto-sdk/pull/5243)
+
+### Internal
+* Added support for new schema fields (internal, isResponse, requiresIntervention, grouping_element, is_auto_enabled, source, managed) [#5224](https://github.com/demisto/demisto-sdk/pull/5224)
+* Agentix Agents system instructions are now defined in a separate md file. [#5188](https://github.com/demisto/demisto-sdk/pull/5188)
+* Restructure Agentix actions and agents [#5242](https://github.com/demisto/demisto-sdk/pull/5242)
+
+
 ## 1.38.19 (2026-02-03)
 ### Feature
 * Added the AG109 validator to ensure that Agentix Agent system instructions do not exceed the maximum allowed size of 65535 bytes. [#5205](https://github.com/demisto/demisto-sdk/pull/5205)

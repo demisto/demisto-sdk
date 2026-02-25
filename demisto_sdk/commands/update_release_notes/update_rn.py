@@ -629,7 +629,7 @@ class UpdateRN:
         :return
             Whether the RN was updated successfully or not
         """
-        if self.pack in IGNORED_PACK_NAMES:
+        if self.pack in ["Legacy", "NonSupported"]:
             logger.info(
                 f"<yellow>Release notes are not required for the {self.pack} pack since this pack"
                 f" is not versioned.</yellow>"

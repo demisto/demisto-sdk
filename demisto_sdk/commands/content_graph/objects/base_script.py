@@ -36,6 +36,10 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
     outputs: List[Output] = Field([], exclude=True)
     compliantpolicies: Optional[list[str]] = Field([])
 
+    def save(self):
+        """Save the script, excluding args and outputs which are already in the YAML data."""
+        super().save(fields_to_exclude=["args", "outputs"])
+
     def metadata_fields(self) -> Set[str]:
         return (
             super()

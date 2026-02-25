@@ -39,10 +39,14 @@ __all__ = [
     "CaseLayoutParser",
     "AgentixActionParser",
     "AgentixAgentParser",
+    "AgentixActionTestParser",
 ]
 
 from demisto_sdk.commands.content_graph.parsers.agentix_action import (
     AgentixActionParser,
+)
+from demisto_sdk.commands.content_graph.parsers.agentix_action_test import (
+    AgentixActionTestParser,
 )
 from demisto_sdk.commands.content_graph.parsers.agentix_agent import AgentixAgentParser
 from demisto_sdk.commands.content_graph.parsers.assets_modeling_rule import (

@@ -239,7 +239,7 @@ def log_record(
             f"<yellow>Found a {relationship} path{mandatorily}"
             f"{' from ' if is_source else ' to '}"
             f"{record['filepath']}</yellow>\n"
-            f"{path_to_str(relationship, path['path'])}\n"
+            f"{path_to_str(relationship, path['path'])}\n",
         )
 
 

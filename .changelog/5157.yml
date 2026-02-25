@@ -1,0 +1,5 @@
+changes:
+- description: >
+    Fixed an issue where `demisto-sdk run` would fail when command output contained HTML tags.
+  type: fix
+pr_number: 5157

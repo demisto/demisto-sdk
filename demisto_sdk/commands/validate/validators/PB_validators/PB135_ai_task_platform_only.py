@@ -39,11 +39,11 @@ class AITaskPlatformOnlyValidator(BaseValidator[ContentTypes]):
 
         for content_item in content_items:
             ai_task_ids = self.find_ai_tasks(content_item)
-            
+
             if ai_task_ids:
                 # Check if the pack is restricted to platform marketplace
-                pack_marketplaces = content_item.pack_metadata.marketplaces
-                
+                pack_marketplaces = content_item.marketplaces
+
                 if not pack_marketplaces or (
                     MarketplaceVersions.PLATFORM not in pack_marketplaces
                     or len(pack_marketplaces) > 1
@@ -51,9 +51,7 @@ class AITaskPlatformOnlyValidator(BaseValidator[ContentTypes]):
                     validation_results.append(
                         ValidationResult(
                             validator=self,
-                            message=self.error_message.format(
-                                ", ".join(ai_task_ids)
-                            ),
+                            message=self.error_message.format(", ".join(ai_task_ids)),
                             content_object=content_item,
                         )
                     )
@@ -71,11 +69,11 @@ class AITaskPlatformOnlyValidator(BaseValidator[ContentTypes]):
         """
         ai_task_ids = []
         tasks = content_item.data.get("tasks", {})
-        
+
         for task_id, task_config in tasks.items():
             task_type = task_config.get("type")
             # Check if the task type is aiTask
             if task_type == "aiTask":
                 ai_task_ids.append(task_id)
-        
+
         return ai_task_ids

@@ -3,7 +3,6 @@ import os
 import platform
 import sys
 
-from demisto_sdk.commands.common.logger import logger
 import typer
 from dotenv import load_dotenv
 from rich.console import Console
@@ -50,7 +49,6 @@ def main(
         None, "--log-file-path", help="Path to save log files."
     ),
 ):
-    typer.echo("Testing")
     sdk = DemistoSDK()  # Initialize your SDK class
     sdk.configuration = Configuration()  # Initialize the configuration
     ctx.obj = sdk  # Pass sdk instance to context

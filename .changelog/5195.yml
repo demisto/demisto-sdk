@@ -1,0 +1,8 @@
+changes:
+- description: >
+    Fixed `demisto-sdk run --debug` crashing when displaying error stack traces.
+  type: fix
+- description: >
+    Cleaned up extra blank lines in `demisto-sdk run` output.
+  type: fix
+pr_number: 5195

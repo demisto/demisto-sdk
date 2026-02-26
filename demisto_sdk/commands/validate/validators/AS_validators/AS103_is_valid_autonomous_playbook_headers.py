@@ -1,28 +1,21 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import Iterable, List, Union
+from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import PlaybookTaskType
+from demisto_sdk.commands.common.constants import (
+    AUTONOMOUS_PLAYBOOK_ALLOWED_SECTIONS,
+    AUTONOMOUS_PLAYBOOK_MANDATORY_SECTIONS,
+    AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER,
+    PlaybookTaskType,
+)
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-ContentTypes = Union[Playbook]
-
-EXPECTED_SECTIONS_ORDER = (
-    "Data Collection",
-    "Early Containment",
-    "Investigation",
-    "Verdict",
-    "Remediation",
-)
-MANDATORY_SECTIONS = frozenset(
-    {"Data Collection", "Investigation", "Verdict", "Remediation"}
-)
-ALLOWED_SECTIONS = frozenset(EXPECTED_SECTIONS_ORDER)
+ContentTypes = Playbook
 
 
 class IsValidAutonomousPlaybookHeadersValidator(BaseValidator[ContentTypes]):
@@ -80,10 +73,10 @@ def validate_autonomous_playbook_headers(content_item: ContentTypes) -> List[str
 
     # 3. Check for unknown section names
     for task_id, name, _ in title_tasks_ordered:
-        if name not in ALLOWED_SECTIONS:
+        if name not in AUTONOMOUS_PLAYBOOK_ALLOWED_SECTIONS:
             errors.append(
                 f"Task '{task_id}' has unknown section name '{name}'. "
-                f"Allowed: {', '.join(sorted(ALLOWED_SECTIONS))}"
+                f"Allowed: {', '.join(sorted(AUTONOMOUS_PLAYBOOK_ALLOWED_SECTIONS))}"
             )
 
     # 4. Check for empty descriptions
@@ -95,15 +88,19 @@ def validate_autonomous_playbook_headers(content_item: ContentTypes) -> List[str
 
     # 5. Check mandatory sections exist
     found_names = {name for _, name, _ in title_tasks_ordered}
-    for section in sorted(MANDATORY_SECTIONS):
+    for section in sorted(AUTONOMOUS_PLAYBOOK_MANDATORY_SECTIONS):
         if section not in found_names:
             errors.append(f"Missing mandatory section '{section}'")
 
     # 6. Check ordering
     found_in_order = [
-        name for _, name, _ in title_tasks_ordered if name in ALLOWED_SECTIONS
+        name
+        for _, name, _ in title_tasks_ordered
+        if name in AUTONOMOUS_PLAYBOOK_ALLOWED_SECTIONS
     ]
-    expected_filtered = [s for s in EXPECTED_SECTIONS_ORDER if s in found_names]
+    expected_filtered = [
+        s for s in AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER if s in found_names
+    ]
     if found_in_order != expected_filtered:
         errors.append(
             f"Sections are out of order. "

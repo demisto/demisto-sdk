@@ -2287,6 +2287,20 @@ class PlaybookTaskType(StrEnum):
     COLLECTION = "collection"
 
 
+# Autonomous playbook section headers
+AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER = (
+    "Data Collection",
+    "Early Containment",
+    "Investigation",
+    "Verdict",
+    "Remediation",
+)
+AUTONOMOUS_PLAYBOOK_MANDATORY_SECTIONS = frozenset(
+    {"Data Collection", "Investigation", "Verdict", "Remediation"}
+)
+AUTONOMOUS_PLAYBOOK_ALLOWED_SECTIONS = frozenset(AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER)
+
+
 # Used to format the writing of the yml/json file
 DEFAULT_JSON_INDENT = 4
 DEFAULT_YAML_INDENT = 0

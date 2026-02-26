@@ -874,9 +874,7 @@ class TestShouldUpdateGraph:
         mock_git = MagicMock()
         mock_git.get_all_changed_pack_ids.return_value = {"NewPack", "ModifiedPack"}
 
-        result = should_update_graph(
-            mock_interface, use_git=True, git_util=mock_git
-        )
+        result = should_update_graph(mock_interface, use_git=True, git_util=mock_git)
         assert result is True
 
     def test_should_update_graph_no_commit_no_changes(self):
@@ -900,9 +898,7 @@ class TestShouldUpdateGraph:
 
         mock_git = MagicMock()
 
-        result = should_update_graph(
-            mock_interface, use_git=True, git_util=mock_git
-        )
+        result = should_update_graph(mock_interface, use_git=True, git_util=mock_git)
         assert result is False
 
     def test_should_update_graph_not_alive(self):
@@ -924,9 +920,7 @@ class TestShouldUpdateGraph:
 
         mock_git = MagicMock()
 
-        result = should_update_graph(
-            mock_interface, use_git=False, git_util=mock_git
-        )
+        result = should_update_graph(mock_interface, use_git=False, git_util=mock_git)
         assert result is True
 
     def test_should_update_graph_with_packs_to_update(self):
@@ -973,9 +967,7 @@ class TestShouldUpdateGraph:
         mock_git = MagicMock()
         mock_git.get_all_changed_pack_ids.side_effect = Exception("git error")
 
-        result = should_update_graph(
-            mock_interface, use_git=True, git_util=mock_git
-        )
+        result = should_update_graph(mock_interface, use_git=True, git_util=mock_git)
         assert result is True
 
 
@@ -1029,13 +1021,11 @@ class TestUpdateContentGraphCommitHandling:
         )
 
         calls = mock_git_util.get_all_changed_pack_ids.call_args_list
-        commit_args = [
-            call.args[0] for call in calls if call.args
-        ]
+        commit_args = [call.args[0] for call in calls if call.args]
         assert commit_hash in commit_args, (
             f"Expected get_all_changed_pack_ids to be called with commit hash '{commit_hash}', "
             f"but was called with: {commit_args}"
         )
-        assert True not in commit_args, (
-            "get_all_changed_pack_ids should not be called with boolean True"
-        )
+        assert (
+            True not in commit_args
+        ), "get_all_changed_pack_ids should not be called with boolean True"

@@ -4,7 +4,6 @@ from abc import ABC
 from collections import defaultdict
 from typing import Dict, Iterable, List, Union
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField

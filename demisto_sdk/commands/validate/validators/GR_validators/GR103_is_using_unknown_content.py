@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField

@@ -4,7 +4,6 @@ from abc import ABC
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -25,7 +24,7 @@ class PlaybookTestsExistValidator(BaseValidator[ContentTypes], ABC):
     error_message = "Playbook '{name}' references the following missing {test_type}s: {missing_tests}."
     related_field = "tests"
     is_auto_fixable = False
-    # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool

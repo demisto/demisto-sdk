@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -29,7 +30,7 @@ class IsPackDisplayNameAlreadyExistsValidator(BaseValidator[ContentTypes], ABC):
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
         file_paths_to_objects = {
-            str(content_item.path.relative_to(CONTENT_PATH)): content_item
+            get_relative_path_from_packs_dir(str(content_item.path)): content_item
             for content_item in content_items
         }
         content_id_to_objects = {item.object_id: item for item in content_items}  # type: ignore[attr-defined]

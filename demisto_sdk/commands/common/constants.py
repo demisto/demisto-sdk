@@ -2285,6 +2285,7 @@ class PlaybookTaskType(StrEnum):
     SECTION = "section"
     STANDARD = "standard"
     COLLECTION = "collection"
+    AI_TASK = "aiTask"
 
 
 # Used to format the writing of the yml/json file

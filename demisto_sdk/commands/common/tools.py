@@ -1727,7 +1727,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     if path.suffix == ".json":
         if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES_CONFIG
-        elif LISTS_DIR in os.path.dirname(path):
+        elif LISTS_DIR in os.path.dirname(path) and not path.stem.endswith(
+            "_data"
+        ):
             return FileType.LISTS
         elif path.parent.name == JOBS_DIR:
             return FileType.JOB

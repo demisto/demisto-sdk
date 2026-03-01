@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import datetime
 from typing import Optional
@@ -5,6 +6,7 @@ from typing import Optional
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
+    DOCKER_REGISTRY_URL,
     NATIVE_IMAGE_DOCKER_NAME,
 )
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
@@ -17,7 +19,18 @@ class DockerImage(str):
     DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
         r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"  # regex to extract python version for image name
     )
-    _dockerhub_client = DockerHubClient()
+    _dockerhub_client = None
+
+    @classmethod
+    def _get_dockerhub_client(cls):
+        """Get or create the DockerHub client with the appropriate registry and credentials."""
+        if cls._dockerhub_client is None:
+            username = os.getenv("DEMISTO_SDK_CR_USER", "")
+            password = os.getenv("DEMISTO_SDK_CR_PASSWORD", "")
+            cls._dockerhub_client = DockerHubClient(
+                registry=DOCKER_REGISTRY_URL, username=username, password=password
+            )
+        return cls._dockerhub_client
 
     def __new__(
         cls, docker_image: str, raise_if_not_valid: bool = False
@@ -103,7 +116,7 @@ class DockerImage(str):
 
     @property
     def creation_date(self) -> datetime:
-        return self._dockerhub_client.get_docker_image_tag_creation_date(
+        return self._get_dockerhub_client().get_docker_image_tag_creation_date(
             self.name, tag=self.tag
         )
 
@@ -122,7 +135,9 @@ class DockerImage(str):
                 return Version(match.group("python_version"))
 
             logger.debug(f"Could not get python version for image {self} from regex")
-            image_env = self._dockerhub_client.get_image_env(self.name, tag=self.tag)
+            image_env = self._get_dockerhub_client().get_image_env(
+                self.name, tag=self.tag
+            )
 
             if python_version := next(
                 (
@@ -145,17 +160,21 @@ class DockerImage(str):
     @property
     def is_image_exist(self) -> bool:
         """
-        Returns True if the docker-image exist in dockerhub
+        Returns True if the docker-image exist in the configured registry
         """
-        return self._dockerhub_client.is_docker_image_exist(self.name, tag=self.tag)
+        return self._get_dockerhub_client().is_docker_image_exist(
+            self.name, tag=self.tag
+        )
 
     @property
     def latest_tag(self) -> Version:
-        return self._dockerhub_client.get_latest_docker_image_tag(self.name)
+        return self._get_dockerhub_client().get_latest_docker_image_tag(self.name)
 
     @property
     def latest_docker_image(self) -> "DockerImage":
         """
         Returns the docker image with the latest tag
         """
-        return DockerImage(self._dockerhub_client.get_latest_docker_image(self.name))
+        return DockerImage(
+            self._get_dockerhub_client().get_latest_docker_image(self.name)
+        )

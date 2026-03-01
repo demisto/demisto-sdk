@@ -1,4 +1,0 @@
-changes:
-- description: Allow test files in AgentixAgent directories, consistent with AgentixAction support.
-  type: fix
-pr_number: 0000

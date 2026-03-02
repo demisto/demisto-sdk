@@ -28,6 +28,7 @@ class AgentixActionTestParser(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.connect_to_dependencies()
+        self.is_test: bool = True
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

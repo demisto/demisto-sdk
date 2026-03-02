@@ -102,11 +102,6 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_obtain_invalid_content
     Then
         - Validate that we got the error messages for the duplicate name.
     """
-    mocker.patch.object(
-        GR104_is_pack_display_name_already_exists,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
     graph_repo.create_pack(name="pack1")
 
     graph_repo.create_pack(name="pack2")
@@ -141,11 +136,6 @@ def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_obtain_invalid_content_
     Then
         - Validate that we got the error messages for the duplicate name.
     """
-    mocker.patch.object(
-        GR104_is_pack_display_name_already_exists,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
     graph_repo.create_pack(name="pack1")
 
     graph_repo.create_pack(name="pack2")
@@ -2012,11 +2002,6 @@ def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_
     Then
         - Validate that we got the error messages for the duplicate name.
     """
-    mocker.patch.object(
-        GR112_is_agentix_action_name_already_exists_valid,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
     graph_repo.setup_one_pack(name="pack1")
     graph_repo.setup_one_pack(name="pack2")
     graph_repo.setup_one_pack(name="pack3")
@@ -2047,11 +2032,6 @@ def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content
     Then
         - Validate that we got the error messages for the duplicate display name.
     """
-    mocker.patch.object(
-        GR111_is_agentix_action_display_name_already_exists_valid,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
     graph_repo.setup_one_pack(name="pack1")
     graph_repo.setup_one_pack(name="pack2")
     graph_repo.setup_one_pack(name="pack3")

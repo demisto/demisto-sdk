@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import os
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import DOCKER_REGISTRY_URL
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -28,12 +26,7 @@ class DockerImageExistValidator(DockerValidator[ContentTypes]):
     @staticmethod
     def get_latest_image(content_item):
         docker_name = f"demisto/{content_item.subtype if content_item.type == 'python' else 'powershell'}"
-
-        return DockerHubClient(
-            registry=DOCKER_REGISTRY_URL,
-            username=os.getenv("DEMISTO_SDK_CR_USER", ""),
-            password=os.getenv("DEMISTO_SDK_CR_PASSWORD", ""),
-        ).get_latest_docker_image(docker_name)
+        return DockerHubClient().get_latest_docker_image(docker_name)
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

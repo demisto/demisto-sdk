@@ -1,0 +1,4 @@
+changes:
+- description: Added a new validation (PA133) that ensures the Base pack does not have any new dependencies beyond the currently allowed ones (Core and AggregateScripts).
+  type: feature
+pr_number: 5232

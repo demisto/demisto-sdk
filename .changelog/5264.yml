@@ -1,0 +1,4 @@
+changes:
+- description: Added support for AI tasks in playbooks. Playbooks can now include tasks of type 'aiTask' with an 'aiTaskId' field. Added validator PB135 to ensure playbooks with AI tasks are restricted to the platform marketplace only.
+  type: feature
+pr_number: 5264

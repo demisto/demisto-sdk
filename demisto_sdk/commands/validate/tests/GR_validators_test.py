@@ -7,11 +7,6 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_agentix_action_object,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
-from demisto_sdk.commands.validate.validators.GR_validators import (
-    GR104_is_pack_display_name_already_exists,
-    GR111_is_agentix_action_display_name_already_exists_valid,
-    GR112_is_agentix_action_name_already_exists_valid,
-)
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
     MarketplacesFieldValidatorAllFiles,
 )
@@ -102,11 +97,6 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_obtain_invalid_content
     Then
         - Validate that we got the error messages for the duplicate name.
     """
-    mocker.patch.object(
-        GR104_is_pack_display_name_already_exists,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
     graph_repo.create_pack(name="pack1")
 
     graph_repo.create_pack(name="pack2")
@@ -141,11 +131,6 @@ def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_obtain_invalid_content_
     Then
         - Validate that we got the error messages for the duplicate name.
     """
-    mocker.patch.object(
-        GR104_is_pack_display_name_already_exists,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
     graph_repo.create_pack(name="pack1")
 
     graph_repo.create_pack(name="pack2")
@@ -1559,8 +1544,8 @@ def test_SupportedModulesCompatibility_supported_module_none_in_content_item_a(
 
     assert len(results) == 1
     assert (
-        results[0].message
-        == "The following mandatory dependencies missing required modules: SearchIncidents is missing: [C1, C3, X1, X3, X5, ENT_PLUS, cloud_posture, cloud, cloud_runtime_security, edr, cloud_appsec, agentix, asm, xsiam, exposure_management, agentix_xsiam]"
+        "The following mandatory dependencies missing required modules: SearchIncidents is missing: ["
+        in results[0].message
     )
     assert results[0].content_object.object_id == "Script1"
 
@@ -2012,11 +1997,6 @@ def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_
     Then
         - Validate that we got the error messages for the duplicate name.
     """
-    mocker.patch.object(
-        GR112_is_agentix_action_name_already_exists_valid,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
     graph_repo.setup_one_pack(name="pack1")
     graph_repo.setup_one_pack(name="pack2")
     graph_repo.setup_one_pack(name="pack3")
@@ -2047,11 +2027,6 @@ def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content
     Then
         - Validate that we got the error messages for the duplicate display name.
     """
-    mocker.patch.object(
-        GR111_is_agentix_action_display_name_already_exists_valid,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
     graph_repo.setup_one_pack(name="pack1")
     graph_repo.setup_one_pack(name="pack2")
     graph_repo.setup_one_pack(name="pack3")

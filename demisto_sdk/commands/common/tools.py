@@ -1836,6 +1836,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.AGENTIX_ACTION
 
         elif AGENTIX_AGENTS_DIR in path.parts:
+            # Skip test files under AgentixAgents - they are not content items
+            if path.stem.endswith("_test"):
+                return None
             return FileType.AGENTIX_AGENT
 
     elif path.name == FileType.PACK_IGNORE:

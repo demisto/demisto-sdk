@@ -7,11 +7,6 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_agentix_action_object,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
-from demisto_sdk.commands.validate.validators.GR_validators import (
-    GR104_is_pack_display_name_already_exists,
-    GR111_is_agentix_action_display_name_already_exists_valid,
-    GR112_is_agentix_action_name_already_exists_valid,
-)
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
     MarketplacesFieldValidatorAllFiles,
 )

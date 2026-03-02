@@ -7,9 +7,6 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_script_object,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
-from demisto_sdk.commands.validate.validators.SC_validators import (
-    SC109_script_name_is_not_unique_validator,
-)
 from demisto_sdk.commands.validate.validators.SC_validators.SC100_script_has_invalid_version import (
     ScriptNameIsVersionedCorrectlyValidator,
 )

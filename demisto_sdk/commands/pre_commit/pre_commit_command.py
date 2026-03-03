@@ -28,7 +28,6 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import should_disable_multiprocessing, write_dict
 from demisto_sdk.commands.content_graph.commands.update import (
     DEMISTO_SDK_DIFF_FILES_ENV,
-    extract_pack_ids_from_diff_files,
     update_content_graph,
 )
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -620,14 +619,19 @@ def pre_commit_manager(
         return 0
 
     # If DEMISTO_SDK_DIFF_FILES is set (e.g., by CI when using -i instead of -g),
-    # explicitly update the content graph with only the packs from the diff files.
-    # This is needed because the graph update is not triggered automatically
-    # when pre-commit runs with -i (input files) instead of -g (git diff).
+    # explicitly update the content graph with the packs derived from the actual
+    # files_to_run (which already have resolved relative paths starting with Packs/).
     # We pass use_git=False to avoid also picking up all git-detected changes,
-    # and instead only update the specific packs from the diff files.
-    diff_files_str = os.getenv(DEMISTO_SDK_DIFF_FILES_ENV, "")
-    if diff_files_str:
-        diff_pack_ids = list(extract_pack_ids_from_diff_files(diff_files_str))
+    # and instead only update the specific packs from the input files.
+    if os.getenv(DEMISTO_SDK_DIFF_FILES_ENV):
+        # Extract unique pack IDs from the already-resolved files_to_run paths
+        diff_pack_ids = list(
+            {
+                file.parts[1]
+                for file in files_to_run
+                if len(file.parts) > 1 and file.parts[0] == PACKS_FOLDER
+            }
+        )
         if diff_pack_ids:
             logger.info(
                 f"Pre-Commit: {DEMISTO_SDK_DIFF_FILES_ENV} environment variable detected, "

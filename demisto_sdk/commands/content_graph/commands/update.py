@@ -193,16 +193,19 @@ def _update_content_graph_inner(
 
     # Check for diff files from environment variable
     # This allows CI systems to pass a list of changed files directly,
-    # bypassing git-based detection which may not work in all CI environments
-    diff_files_env = os.getenv(DEMISTO_SDK_DIFF_FILES_ENV, "")
-    if diff_files_env:
-        env_pack_ids = extract_pack_ids_from_diff_files(diff_files_env)
-        if env_pack_ids:
-            logger.info(
-                f"Extracted {len(env_pack_ids)} pack IDs from {DEMISTO_SDK_DIFF_FILES_ENV} "
-                f"environment variable: {sorted(env_pack_ids)}"
-            )
-            packs_to_update.extend(env_pack_ids)
+    # bypassing git-based detection which may not work in all CI environments.
+    # Only read from env var if packs_to_update was not already provided by the caller
+    # (e.g., pre_commit_command.py already extracts packs from files_to_run).
+    if not packs_to_update:
+        diff_files_env = os.getenv(DEMISTO_SDK_DIFF_FILES_ENV, "")
+        if diff_files_env:
+            env_pack_ids = extract_pack_ids_from_diff_files(diff_files_env)
+            if env_pack_ids:
+                logger.info(
+                    f"Extracted {len(env_pack_ids)} pack IDs from {DEMISTO_SDK_DIFF_FILES_ENV} "
+                    f"environment variable: {sorted(env_pack_ids)}"
+                )
+                packs_to_update.extend(env_pack_ids)
 
     builder = ContentGraphBuilder(content_graph_interface)
     if not should_update_graph(

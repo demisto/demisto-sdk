@@ -1,4 +1,0 @@
-changes:
-- description: Fix a bug where `demisto-sdk run-test-playbook --all` would crash if one of the packs did not have the TestPlaybooks subdirectory.
-  type: fix
-pr_number: 5223

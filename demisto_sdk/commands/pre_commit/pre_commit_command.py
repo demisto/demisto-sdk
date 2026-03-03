@@ -26,7 +26,10 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import should_disable_multiprocessing, write_dict
-from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.commands.update import (
+    DEMISTO_SDK_DIFF_FILES_ENV,
+    update_content_graph,
+)
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -614,6 +617,18 @@ def pre_commit_manager(
     if not language_to_files_with_objects:
         logger.info("No files to run pre-commit on, skipping pre-commit.")
         return 0
+
+    # If DEMISTO_SDK_DIFF_FILES is set (e.g., by CI when using -i instead of -g),
+    # explicitly update the content graph with the packs from the diff files.
+    # This is needed because the graph update is not triggered automatically
+    # when pre-commit runs with -i (input files) instead of -g (git diff).
+    if os.getenv(DEMISTO_SDK_DIFF_FILES_ENV):
+        logger.info(
+            f"Pre-Commit: {DEMISTO_SDK_DIFF_FILES_ENV} environment variable detected, "
+            "updating content graph before running hooks."
+        )
+        with ContentGraphInterface() as graph:
+            update_content_graph(graph)
 
     skipped_hooks: set = SKIPPED_HOOKS
     skipped_hooks.update(set(skip_hooks or ()))

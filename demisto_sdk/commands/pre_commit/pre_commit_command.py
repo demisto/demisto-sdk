@@ -28,6 +28,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import should_disable_multiprocessing, write_dict
 from demisto_sdk.commands.content_graph.commands.update import (
     DEMISTO_SDK_DIFF_FILES_ENV,
+    extract_pack_ids_from_diff_files,
     update_content_graph,
 )
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
@@ -619,16 +620,25 @@ def pre_commit_manager(
         return 0
 
     # If DEMISTO_SDK_DIFF_FILES is set (e.g., by CI when using -i instead of -g),
-    # explicitly update the content graph with the packs from the diff files.
+    # explicitly update the content graph with only the packs from the diff files.
     # This is needed because the graph update is not triggered automatically
     # when pre-commit runs with -i (input files) instead of -g (git diff).
-    if os.getenv(DEMISTO_SDK_DIFF_FILES_ENV):
-        logger.info(
-            f"Pre-Commit: {DEMISTO_SDK_DIFF_FILES_ENV} environment variable detected, "
-            "updating content graph before running hooks."
-        )
-        with ContentGraphInterface() as graph:
-            update_content_graph(graph)
+    # We pass use_git=False to avoid also picking up all git-detected changes,
+    # and instead only update the specific packs from the diff files.
+    diff_files_str = os.getenv(DEMISTO_SDK_DIFF_FILES_ENV, "")
+    if diff_files_str:
+        diff_pack_ids = list(extract_pack_ids_from_diff_files(diff_files_str))
+        if diff_pack_ids:
+            logger.info(
+                f"Pre-Commit: {DEMISTO_SDK_DIFF_FILES_ENV} environment variable detected, "
+                f"updating content graph with packs: {sorted(diff_pack_ids)}"
+            )
+            with ContentGraphInterface() as graph:
+                update_content_graph(
+                    graph,
+                    use_git=False,
+                    packs_to_update=diff_pack_ids,
+                )
 
     skipped_hooks: set = SKIPPED_HOOKS
     skipped_hooks.update(set(skip_hooks or ()))

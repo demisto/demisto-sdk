@@ -180,7 +180,7 @@ def _update_content_graph_inner(
         )
         return
 
-    if not imported_path and not use_git:
+    if not imported_path and not use_git and not packs_to_update:
         logger.info("A path to import the graph from was not provided, using git")
         use_git = True
 

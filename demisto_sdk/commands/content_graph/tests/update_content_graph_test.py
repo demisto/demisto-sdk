@@ -66,6 +66,11 @@ def setup_method(mocker, tmp_path_factory):
             }
         },
     )
+    # Prevent downloading the real content graph from the bucket during tests
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph.download_content_graph",
+        side_effect=Exception("Mocked: download_content_graph should not be called in tests"),
+    )
 
 
 @pytest.fixture

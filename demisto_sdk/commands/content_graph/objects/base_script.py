@@ -47,6 +47,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             .union(
                 {
                     "tags",
+                    "internal",
                 }
             )
         )

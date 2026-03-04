@@ -2287,6 +2287,7 @@ class PlaybookTaskType(StrEnum):
     SECTION = "section"
     STANDARD = "standard"
     COLLECTION = "collection"
+    AI_TASK = "aiTask"
 
 
 # Autonomous playbook section headers

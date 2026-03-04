@@ -163,6 +163,7 @@ class _SubTaskPlaybook(BaseStrictModel):
     brand: str
     is_system_task: Optional[bool] = Field(None, alias="issystemtask")
     cloned_from: Optional[str] = Field(None, alias="clonedfrom")
+    ai_task_id: Optional[str] = Field(None, alias="aiTaskId")
 
 
 SubTaskPlaybook = create_model(
@@ -212,6 +213,7 @@ class _TaskPlaybook(BaseStrictModel):
             "section",
             "standard",
             "collection",
+            "aiTask",
         ],
     )
     default_assignee_complex: Optional[Dict] = Field(

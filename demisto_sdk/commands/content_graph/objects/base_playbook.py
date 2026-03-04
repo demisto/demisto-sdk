@@ -43,6 +43,7 @@ class Task(BaseModel):
     brand: Optional[str] = None
     issystemtask: Optional[bool] = None
     clonedfrom: Optional[str] = None
+    aiTaskId: Optional[str] = None
     name_xsoar: Optional[str] = None
     name_marketplacev2: Optional[str] = None
     name_xpanse: Optional[str] = None
@@ -83,6 +84,7 @@ class Task(BaseModel):
             "brand": self.brand,
             "issystemtask": self.issystemtask,
             "clonedfrom": self.clonedfrom,
+            "aiTaskId": self.aiTaskId,
             "name_xsoar": self.name_xsoar,
             "name_marketplacev2": self.name_marketplacev2,
             "name_xpanse": self.name_xpanse,

@@ -234,7 +234,7 @@ def log_record(
             if path["mandatorily"] is not None
             else ""
         )
-        logger.debug(  # noqa: PLE1205
+        logger.debug(
             "{}",
             f"<yellow>Found a {relationship} path{mandatorily}"
             f"{' from ' if is_source else ' to '}"

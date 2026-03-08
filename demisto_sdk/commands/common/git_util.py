@@ -808,16 +808,17 @@ class GitUtil:
                 os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
             )
 
-            # In private repos, always use merge-base to find common ancestor
-            # This prevents including all diverged commits
             if is_private_repo:
-                try:
-                    merge_base = self.repo.git.merge_base(branch, current_hash).strip()
-                    compare_from = merge_base
-                    diff_operator = ".."
-                except Exception:
-                    compare_from = branch
-                    diff_operator = ".."
+                # In private repos, use a direct two-dot diff between the branch tip and HEAD.
+                # The CI pipeline (process_repo_packs) creates a local master branch with
+                # content-private packs committed on it, and also commits the same packs on
+                # the feature branch. Using branch..HEAD (instead of merge_base..HEAD) ensures
+                # that files identical on both branches (e.g. content-private packs with no MR)
+                # are NOT included in the diff, while files that actually differ between the
+                # branches (e.g. content-private packs with an MR, or regular content changes)
+                # ARE included.
+                compare_from = branch
+                diff_operator = ".."
             else:
                 # For non-private repos, use three-dot diff
                 diff_operator = "..."

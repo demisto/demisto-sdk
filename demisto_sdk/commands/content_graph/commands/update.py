@@ -47,7 +47,7 @@ def should_update_graph(
             logger.debug(
                 "Failed to get changed packs from git. Setting to update graph."
             )
-            # If we can't get the changed packs, it could mean the followiing:
+            # If we can't get the changed packs, it could mean the following:
             # 1. We are not fetched from a git repository and unable to fetch
             # 2. The current graph that is running is not in the same repo as we run now
             # 3. The graph which is running is a graph that was created from unit-testing
@@ -203,9 +203,9 @@ def _update_content_graph_inner(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-    if use_git and (commit := content_graph_interface.commit and not is_external_repo):
+    if use_git and (commit := content_graph_interface.commit) and not is_external_repo:
         try:
-            git_util.get_all_changed_pack_ids(commit)  # type: ignore[arg-type]
+            changed_pack_ids = git_util.get_all_changed_pack_ids(commit)
         except Exception as e:
             logger.warning(
                 f"Failed to get changed packs from git. Creating from scratch. Error: {e}"
@@ -214,7 +214,7 @@ def _update_content_graph_inner(
                 content_graph_interface, marketplace, dependencies, output_path
             )
             return
-        packs_to_update.extend(git_util.get_all_changed_pack_ids(commit))  # type: ignore[arg-type]
+        packs_to_update.extend(changed_pack_ids)
 
     packs_str = "\n".join([f"- {p}" for p in sorted(packs_to_update)])
     logger.info(f"Updating the following packs:\n{packs_str}")

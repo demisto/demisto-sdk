@@ -1,4 +1,4 @@
 changes:
 - description: Fixed PA133 validator to exclude test-only dependencies when checking the Base pack for new dependencies.
   type: fix
-pr_number: 9999
+pr_number: 5275

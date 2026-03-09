@@ -156,22 +156,32 @@ class PackMetadata(BaseModel):
         return _metadata
 
     @staticmethod
+    def _escape_for_logger(value: str) -> str:
+        """Escape angle brackets in strings to prevent loguru from interpreting them as color tags."""
+        if isinstance(value, str):
+            return value.replace("<", r"\<").replace(">", r"\>")
+        return str(value)
+
+    @staticmethod
     def _place_data_source_integration_first(
         integration_list: List[Dict],
         data_source_id: str,
     ):
-        logger.debug(
-            f"[_place_data_source_integration_first] Called with data_source_id={data_source_id}, "
+        # Escape data_source_id to prevent loguru from interpreting angle brackets as color tags
+        safe_data_source_id = PackMetadata._escape_for_logger(data_source_id)
+        
+        logger.info(
+            f"[_place_data_source_integration_first] Called with data_source_id={safe_data_source_id}, "
             f"integration_list type={type(integration_list)}, "
             f"integration_list length={len(integration_list) if integration_list else 'None'}"
         )
-        logger.debug(
+        logger.info(
             f"[_place_data_source_integration_first] integration_list contents: {integration_list}"
         )
 
         if not integration_list:
             logger.warning(
-                f"[_place_data_source_integration_first] integration_list is empty or None for {data_source_id=}. "
+                f"[_place_data_source_integration_first] integration_list is empty or None for data_source_id={safe_data_source_id}. "
                 "Cannot place data source integration first."
             )
             return
@@ -182,28 +192,28 @@ class PackMetadata(BaseModel):
             if integration.get("id") == data_source_id
         ]
 
-        logger.debug(
+        logger.info(
             f"[_place_data_source_integration_first] Found {len(integration_metadata_object)} matching integrations "
-            f"for {data_source_id=}: {integration_metadata_object}"
+            f"for data_source_id={safe_data_source_id}: {integration_metadata_object}"
         )
 
         if not integration_metadata_object:
             logger.error(
                 f"[_place_data_source_integration_first] Integration metadata object was not found for "
-                f"{data_source_id=} in integration_list with {len(integration_list)} items. "
+                f"data_source_id={safe_data_source_id} in integration_list with {len(integration_list)} items. "
                 f"Available integration IDs: {[i.get('id') for i in integration_list]}"
             )
             return
 
         logger.info(
-            f"[_place_data_source_integration_first] Placing {data_source_id=} first in the integration_list "
+            f"[_place_data_source_integration_first] Placing data_source_id={safe_data_source_id} first in the integration_list "
             f"(current length: {len(integration_list)})"
         )
         try:
             integration_list.remove(integration_metadata_object[0])
             integration_list.insert(0, integration_metadata_object[0])
-            logger.debug(
-                f"[_place_data_source_integration_first] Successfully placed {data_source_id} first. "
+            logger.info(
+                f"[_place_data_source_integration_first] Successfully placed {safe_data_source_id} first. "
                 f"New order: {[i.get('id') for i in integration_list]}"
             )
         except Exception as e:
@@ -273,21 +283,21 @@ class PackMetadata(BaseModel):
         ):
             # order collected_content_items integration list so that the defaultDataSource will be first
             integration_metadata_key = ContentType.INTEGRATION.metadata_name
-            logger.debug(
+            logger.info(
                 f"[_get_content_items_and_displays_metadata] Preparing to place data source first. "
                 f"default_data_source_id={self.default_data_source_id}, "
                 f"default_data_source_name={self.default_data_source_name}, "
                 f"marketplace={marketplace}, hybrid={self.hybrid}"
             )
-            logger.debug(
+            logger.info(
                 f"[_get_content_items_and_displays_metadata] collected_content_items keys: {list(collected_content_items.keys())}"
             )
-            logger.debug(
+            logger.info(
                 f"[_get_content_items_and_displays_metadata] integration_metadata_key='{integration_metadata_key}', "
                 f"key exists in collected_content_items: {integration_metadata_key in collected_content_items}"
             )
             if integration_metadata_key in collected_content_items:
-                logger.debug(
+                logger.info(
                     f"[_get_content_items_and_displays_metadata] Integration list has "
                     f"{len(collected_content_items[integration_metadata_key])} items: "
                     f"{[i.get('id') for i in collected_content_items[integration_metadata_key]]}"

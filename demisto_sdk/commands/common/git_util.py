@@ -793,6 +793,12 @@ class GitUtil:
         remote, branch = self.handle_prev_ver(prev_ver)
         current_hash = self.get_current_commit_hash()
 
+        # When prev_ver is a SHA1 hash (remote is None), validate the commit exists
+        # before attempting the diff. This handles CI environments with shallow clones
+        # where the commit from an imported graph may not be available locally.
+        if remote is None and not self.is_valid_commit(branch):
+            raise CommitOrBranchNotFoundError(branch, from_remote=False)
+
         if remote:
             changed_files = {
                 Path(os.path.join(item))

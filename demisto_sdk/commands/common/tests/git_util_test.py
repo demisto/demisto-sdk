@@ -2,9 +2,11 @@ import stat
 from datetime import datetime
 from pathlib import Path
 
+import pytest
 from git import Blob
 
 from demisto_sdk.commands.common.constants import ISO_TIMESTAMP_FORMAT
+from demisto_sdk.commands.common.git_util import CommitOrBranchNotFoundError, GitUtil
 from TestSuite.repo import Repo
 
 
@@ -166,3 +168,49 @@ def test_get_file_creation_date(git_repo: Repo):
     file_creation_date = git_repo.git_util.get_file_creation_date(file)
 
     datetime.strptime(file_creation_date, ISO_TIMESTAMP_FORMAT)  # raises if invalid
+
+
+class TestGetAllChangedFiles:
+    """Tests for _get_all_changed_files method."""
+
+    def test_get_all_changed_files_raises_on_invalid_commit_sha(self):
+        """
+        Given:
+            - A prev_ver that is a SHA1 hash not present in the local git history
+              (simulating a CI shallow clone where the imported graph's commit is unavailable).
+
+        When:
+            - Calling _get_all_changed_files with the invalid SHA.
+
+        Then:
+            - A CommitOrBranchNotFoundError is raised before attempting the git diff,
+              preventing the cryptic 'fatal: bad object' git error.
+        """
+        git_util = GitUtil()
+
+        # A SHA1 hash that doesn't exist in the local repo history,
+        # simulating the commit from an imported graph in a CI shallow clone
+        nonexistent_sha = "9e303977aad72c773a365f087970c0edfafebaf0"
+
+        with pytest.raises(CommitOrBranchNotFoundError):
+            git_util._get_all_changed_files(prev_ver=nonexistent_sha)
+
+    def test_get_all_changed_files_works_with_valid_commit(self, git_repo: Repo):
+        """
+        Given:
+            - A valid commit SHA from the current repo.
+
+        When:
+            - Calling _get_all_changed_files with the valid SHA.
+
+        Then:
+            - No exception is raised and a set of paths is returned.
+        """
+        # Create a file and commit it to have a valid commit
+        git_repo.make_file("test_file.txt", "content")
+        git_repo.git_util.commit_files("add test file", "test_file.txt")
+        valid_sha = git_repo.git_util.get_current_commit_hash()
+
+        # This should not raise
+        result = git_repo.git_util._get_all_changed_files(prev_ver=valid_sha)
+        assert isinstance(result, set)

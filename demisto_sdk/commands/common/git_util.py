@@ -828,13 +828,27 @@ class GitUtil:
                 }
             else:
                 # For non-private repos, use three-dot diff (symmetric difference)
-                changed_files = {
-                    Path(os.path.join(item))
-                    for item in self.repo.git.diff(
-                        "--name-only", f"{branch}...{current_hash}"
-                    ).split("\n")
-                    if item
-                }
+                # when comparing branches. For commit SHAs, use tree-to-tree diff
+                # since three-dot requires a common ancestor which may not exist
+                # (e.g., when the SHA comes from an imported graph).
+                if remote is None:
+                    # remote is None when prev_ver is a SHA1 hash
+                    # Use tree-to-tree diff (no dots) for SHA comparisons
+                    changed_files = {
+                        Path(os.path.join(item))
+                        for item in self.repo.git.diff(
+                            "--name-only", branch, current_hash
+                        ).split("\n")
+                        if item
+                    }
+                else:
+                    changed_files = {
+                        Path(os.path.join(item))
+                        for item in self.repo.git.diff(
+                            "--name-only", f"{branch}...{current_hash}"
+                        ).split("\n")
+                        if item
+                    }
         return changed_files
 
     def _only_last_commit(

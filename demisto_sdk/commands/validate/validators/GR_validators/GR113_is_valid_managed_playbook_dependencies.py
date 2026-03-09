@@ -11,7 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Playbook]
+ContentTypes = Playbook
 
 
 class IsValidManagedPlaybookDependenciesValidator(BaseValidator[ContentTypes], ABC):
@@ -41,7 +41,7 @@ class IsValidManagedPlaybookDependenciesValidator(BaseValidator[ContentTypes], A
 
         file_paths_to_validate = (
             [
-                str(content_item.path.relative_to(CONTENT_PATH))
+                get_relative_path_from_packs_dir(str(content_item.path))
                 for content_item in content_items
             ]
             if not validate_all_files

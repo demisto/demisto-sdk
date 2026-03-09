@@ -809,28 +809,32 @@ class GitUtil:
             )
 
             if is_private_repo:
-                # In private repos, use a direct two-dot diff between the branch tip and HEAD.
-                # The CI pipeline (process_repo_packs) creates a local master branch with
-                # content-private packs committed on it, and also commits the same packs on
-                # the feature branch. Using branch..HEAD (instead of merge_base..HEAD) ensures
-                # that files identical on both branches (e.g. content-private packs with no MR)
-                # are NOT included in the diff, while files that actually differ between the
-                # branches (e.g. content-private packs with an MR, or regular content changes)
-                # ARE included.
-                compare_from = branch
-                diff_operator = ".."
+                # In private repos, use a direct tree-to-tree diff (no dots) between
+                # the branch and HEAD. The CI pipeline (process_repo_packs) creates a
+                # local master branch with content-private packs committed on it, and
+                # also commits the same packs on the feature branch.
+                #
+                # A commit-range diff (A..B or A...B) lists commits, which would include
+                # the "Add content-private" commit even when both branches have identical
+                # content-private files. A tree diff (`git diff branch HEAD`) compares
+                # the actual file trees, so files with identical content on both branches
+                # are correctly excluded from the result.
+                changed_files = {
+                    Path(os.path.join(item))
+                    for item in self.repo.git.diff(
+                        "--name-only", branch, current_hash
+                    ).split("\n")
+                    if item
+                }
             else:
-                # For non-private repos, use three-dot diff
-                diff_operator = "..."
-                compare_from = branch
-
-            changed_files = {
-                Path(os.path.join(item))
-                for item in self.repo.git.diff(
-                    "--name-only", f"{compare_from}{diff_operator}{current_hash}"
-                ).split("\n")
-                if item
-            }
+                # For non-private repos, use three-dot diff (symmetric difference)
+                changed_files = {
+                    Path(os.path.join(item))
+                    for item in self.repo.git.diff(
+                        "--name-only", f"{branch}...{current_hash}"
+                    ).split("\n")
+                    if item
+                }
         return changed_files
 
     def _only_last_commit(

@@ -2099,3 +2099,242 @@ def test_IsBasePackHasNoNewDependenciesValidatorListFiles_non_base_pack(
         )
     )
     assert not results
+
+
+@pytest.fixture
+def repo_for_test_pa_133_test_dependency(graph_repo: Repo):
+    """
+    Creates a test repository with a Base pack that has only test dependencies
+    to packs outside the allowed list. This should NOT trigger PA133 because
+    test dependencies should be excluded.
+
+    The Base pack has:
+    - An integration with a test playbook that uses a command from TestOnlyPack.
+    - Only allowed dependencies (Core) in pack_metadata.
+    """
+    test_playbook_using_testonly_command = {
+        "id": "BaseTestPlaybook",
+        "name": "BaseTestPlaybook",
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "1",
+                "task": {
+                    "id": "1",
+                    "script": "TestOnlyIntegration|||test-only-command",
+                    "brand": "TestOnlyIntegration",
+                    "iscommand": "true",
+                },
+            }
+        },
+    }
+    # Base pack with an integration and a test playbook
+    base_pack = graph_repo.create_pack("Base")
+    base_integration = base_pack.create_integration("BaseIntegration")
+    base_integration.set_commands(["base-command"])
+    base_integration.yml.update({"tests": ["BaseTestPlaybook"]})
+    base_pack.create_test_playbook(
+        "BaseTestPlaybook", yml=test_playbook_using_testonly_command
+    )
+    base_pack.pack_metadata.update({"dependencies": {"Core": {"mandatory": True}}})
+
+    # Core pack (allowed dependency)
+    core_pack = graph_repo.create_pack("Core")
+    core_integration = core_pack.create_integration("CoreIntegration")
+    core_integration.set_commands(["core-command"])
+
+    # TestOnlyPack - only used by test playbooks, not by production content
+    test_only_pack = graph_repo.create_pack("TestOnlyPack")
+    test_only_integration = test_only_pack.create_integration("TestOnlyIntegration")
+    test_only_integration.set_commands(["test-only-command"])
+
+    return graph_repo
+
+
+def test_IsBasePackHasNoNewDependenciesValidatorAllFiles_test_dependency_excluded(
+    repo_for_test_pa_133_test_dependency: Repo,
+):
+    """
+    Test that PA133 does not flag test-only dependencies.
+    Given:
+        - A Base pack with an allowed dependency (Core).
+        - A test playbook in Base that uses a command from TestOnlyPack.
+        - TestOnlyPack is NOT in the allowed dependencies list.
+
+    When:
+        - Running the IsBasePackHasNoNewDependenciesValidatorAllFiles validator.
+
+    Then:
+        - The validator should NOT return any results because the dependency
+          on TestOnlyPack is a test-only dependency (is_test=True) and should
+          be excluded from the check.
+    """
+    graph_interface = repo_for_test_pa_133_test_dependency.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsBasePackHasNoNewDependenciesValidatorAllFiles().obtain_invalid_content_items(
+            []
+        )
+    )
+    assert not results
+
+
+def test_IsBasePackHasNoNewDependenciesValidatorListFiles_test_dependency_excluded(
+    repo_for_test_pa_133_test_dependency: Repo,
+):
+    """
+    Test that PA133 does not flag test-only dependencies when checking specific packs.
+    Given:
+        - A Base pack with an allowed dependency (Core).
+        - A test playbook in Base that uses a command from TestOnlyPack.
+        - TestOnlyPack is NOT in the allowed dependencies list.
+
+    When:
+        - Running the IsBasePackHasNoNewDependenciesValidatorListFiles validator on the Base pack.
+
+    Then:
+        - The validator should NOT return any results because the dependency
+          on TestOnlyPack is a test-only dependency (is_test=True) and should
+          be excluded from the check.
+    """
+    graph_interface = repo_for_test_pa_133_test_dependency.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsBasePackHasNoNewDependenciesValidatorListFiles().obtain_invalid_content_items(
+            [repo_for_test_pa_133_test_dependency.packs[0]]
+        )
+    )
+    assert not results
+
+
+@pytest.fixture
+def repo_for_test_pa_133_mixed_dependencies(graph_repo: Repo):
+    """
+    Creates a test repository with a Base pack that has BOTH a test dependency
+    (which should be excluded) AND a real non-allowed dependency (which should
+    still be flagged).
+
+    The Base pack has:
+    - A playbook that uses a command from RealDepPack (non-test, non-allowed dependency).
+    - A test playbook that uses a command from TestOnlyPack (test-only dependency).
+    - Only allowed dependencies (Core) in pack_metadata.
+    """
+    playbook_using_realdep_command = {
+        "id": "BasePlaybook",
+        "name": "BasePlaybook",
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "1",
+                "task": {
+                    "id": "1",
+                    "script": "RealDepIntegration|||real-dep-command",
+                    "brand": "RealDepIntegration",
+                    "iscommand": "true",
+                },
+            }
+        },
+    }
+    test_playbook_using_testonly_command = {
+        "id": "BaseTestPlaybook",
+        "name": "BaseTestPlaybook",
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "1",
+                "task": {
+                    "id": "1",
+                    "script": "TestOnlyIntegration|||test-only-command",
+                    "brand": "TestOnlyIntegration",
+                    "iscommand": "true",
+                },
+            }
+        },
+    }
+    # Base pack with a playbook (real dep) and a test playbook (test dep)
+    base_pack = graph_repo.create_pack("Base")
+    base_integration = base_pack.create_integration("BaseIntegration")
+    base_integration.set_commands(["base-command"])
+    base_integration.yml.update({"tests": ["BaseTestPlaybook"]})
+    base_pack.create_playbook("BasePlaybook", yml=playbook_using_realdep_command)
+    base_pack.create_test_playbook(
+        "BaseTestPlaybook", yml=test_playbook_using_testonly_command
+    )
+    base_pack.pack_metadata.update(
+        {"dependencies": {"RealDepPack": {"mandatory": True}}}
+    )
+
+    # Core pack (allowed dependency)
+    core_pack = graph_repo.create_pack("Core")
+    core_integration = core_pack.create_integration("CoreIntegration")
+    core_integration.set_commands(["core-command"])
+
+    # RealDepPack - used by a real playbook (non-test), should be flagged
+    real_dep_pack = graph_repo.create_pack("RealDepPack")
+    real_dep_integration = real_dep_pack.create_integration("RealDepIntegration")
+    real_dep_integration.set_commands(["real-dep-command"])
+
+    # TestOnlyPack - only used by test playbooks, should NOT be flagged
+    test_only_pack = graph_repo.create_pack("TestOnlyPack")
+    test_only_integration = test_only_pack.create_integration("TestOnlyIntegration")
+    test_only_integration.set_commands(["test-only-command"])
+
+    return graph_repo
+
+
+def test_IsBasePackHasNoNewDependenciesValidatorAllFiles_mixed_deps_flags_only_real(
+    repo_for_test_pa_133_mixed_dependencies: Repo,
+):
+    """
+    Test that PA133 flags real dependencies but excludes test-only dependencies.
+    Given:
+        - A Base pack with:
+            - A playbook using a command from RealDepPack (real, non-allowed dependency).
+            - A test playbook using a command from TestOnlyPack (test-only dependency).
+
+    When:
+        - Running the IsBasePackHasNoNewDependenciesValidatorAllFiles validator.
+
+    Then:
+        - The validator should return exactly 1 result flagging RealDepPack.
+        - TestOnlyPack should NOT appear in the results.
+    """
+    graph_interface = repo_for_test_pa_133_mixed_dependencies.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsBasePackHasNoNewDependenciesValidatorAllFiles().obtain_invalid_content_items(
+            []
+        )
+    )
+    assert len(results) == 1
+    assert "RealDepPack" in results[0].message
+    assert "TestOnlyPack" not in results[0].message
+
+
+def test_IsBasePackHasNoNewDependenciesValidatorListFiles_mixed_deps_flags_only_real(
+    repo_for_test_pa_133_mixed_dependencies: Repo,
+):
+    """
+    Test that PA133 flags real dependencies but excludes test-only dependencies when checking specific packs.
+    Given:
+        - A Base pack with:
+            - A playbook using a command from RealDepPack (real, non-allowed dependency).
+            - A test playbook using a command from TestOnlyPack (test-only dependency).
+
+    When:
+        - Running the IsBasePackHasNoNewDependenciesValidatorListFiles validator on the Base pack.
+
+    Then:
+        - The validator should return exactly 1 result flagging RealDepPack.
+        - TestOnlyPack should NOT appear in the results.
+    """
+    graph_interface = repo_for_test_pa_133_mixed_dependencies.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsBasePackHasNoNewDependenciesValidatorListFiles().obtain_invalid_content_items(
+            [repo_for_test_pa_133_mixed_dependencies.packs[0]]
+        )
+    )
+    assert len(results) == 1
+    assert "RealDepPack" in results[0].message
+    assert "TestOnlyPack" not in results[0].message

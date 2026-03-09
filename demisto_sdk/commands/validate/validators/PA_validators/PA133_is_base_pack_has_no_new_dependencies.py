@@ -57,9 +57,9 @@ class IsBasePackHasNoNewDependenciesValidator(BaseValidator[ContentTypes], ABC):
             dependency_pack_ids = {
                 relationship.content_item_to.object_id
                 for relationship in base_pack_node.depends_on
+                if not relationship.is_test
             }
-            new_deps = dependency_pack_ids - BASE_PACK_ALLOWED_DEPENDENCIES
-            if new_deps:
+            if new_deps := dependency_pack_ids - BASE_PACK_ALLOWED_DEPENDENCIES:
                 validation_results.append(
                     ValidationResult(
                         validator=self,

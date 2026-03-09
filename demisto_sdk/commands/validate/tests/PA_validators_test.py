@@ -108,6 +108,12 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA131_is_default_dat
 from demisto_sdk.commands.validate.validators.PA_validators.PA132_is_valid_default_datasource import (
     IsValidDefaultDataSourceNameValidator,
 )
+from demisto_sdk.commands.validate.validators.PA_validators.PA133_is_base_pack_has_no_new_dependencies_all_files import (
+    IsBasePackHasNoNewDependenciesValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA133_is_base_pack_has_no_new_dependencies_list_files import (
+    IsBasePackHasNoNewDependenciesValidatorListFiles,
+)
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
@@ -1907,6 +1913,189 @@ def test_IsCorePackDependOnNonCorePacksValidatorListFiles(repo_for_test_pa_124: 
     results = (
         IsCorePackDependOnNonCorePacksValidatorListFiles().obtain_invalid_content_items(
             [repo_for_test_pa_124.packs[2]]
+        )
+    )
+    assert not results
+
+
+@pytest.fixture
+def repo_for_test_pa_133_valid(graph_repo: Repo):
+    """
+    Creates a test repository with a Base pack that has only allowed dependencies.
+    The Base pack uses a script from Core pack (allowed dependency).
+    """
+    # Base pack with a script that uses a command from Core
+    base_pack = graph_repo.create_pack("Base")
+    base_pack.create_script("BaseScript")
+    base_pack.pack_metadata.update({"dependencies": {"Core": {"mandatory": True}}})
+
+    # Core pack (allowed dependency)
+    core_pack = graph_repo.create_pack("Core")
+    core_integration = core_pack.create_integration("CoreIntegration")
+    core_integration.set_commands(["core-command"])
+
+    # AggregateScripts pack (allowed dependency)
+    graph_repo.create_pack("AggregateScripts")
+
+    return graph_repo
+
+
+@pytest.fixture
+def repo_for_test_pa_133_invalid(graph_repo: Repo):
+    """
+    Creates a test repository with a Base pack that has a new (unexpected) dependency.
+    The Base pack has a playbook that uses a command from NewPack (not allowed).
+    """
+    playbook_using_newpack_command = {
+        "id": "BasePlaybook",
+        "name": "BasePlaybook",
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "1",
+                "task": {
+                    "id": "1",
+                    "script": "NewIntegration|||new-command",
+                    "brand": "NewIntegration",
+                    "iscommand": "true",
+                },
+            }
+        },
+    }
+    # Base pack with a playbook that uses a command from NewPack
+    base_pack = graph_repo.create_pack("Base")
+    base_pack.create_playbook("BasePlaybook", yml=playbook_using_newpack_command)
+    base_pack.pack_metadata.update({"dependencies": {"NewPack": {"mandatory": True}}})
+
+    # NewPack (not an allowed dependency)
+    new_pack = graph_repo.create_pack("NewPack")
+    new_integration = new_pack.create_integration("NewIntegration")
+    new_integration.set_commands(["new-command"])
+
+    return graph_repo
+
+
+def test_IsBasePackHasNoNewDependenciesValidatorAllFiles_valid(
+    repo_for_test_pa_133_valid: Repo,
+):
+    """
+    Test the IsBasePackHasNoNewDependenciesValidatorAllFiles validator with valid dependencies.
+    Given:
+        - A test repository with a Base pack that only depends on Core (allowed dependency).
+
+    When:
+        - Running the IsBasePackHasNoNewDependenciesValidatorAllFiles validator.
+
+    Then:
+        - The validator should not return any results (no invalid dependencies).
+    """
+    graph_interface = repo_for_test_pa_133_valid.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsBasePackHasNoNewDependenciesValidatorAllFiles().obtain_invalid_content_items(
+            []
+        )
+    )
+    assert not results
+
+
+def test_IsBasePackHasNoNewDependenciesValidatorAllFiles_invalid(
+    repo_for_test_pa_133_invalid: Repo,
+):
+    """
+    Test the IsBasePackHasNoNewDependenciesValidatorAllFiles validator with invalid dependencies.
+    Given:
+        - A test repository with a Base pack that depends on NewPack (not allowed).
+
+    When:
+        - Running the IsBasePackHasNoNewDependenciesValidatorAllFiles validator.
+
+    Then:
+        - The validator should return a result indicating that the Base pack
+          has an unexpected dependency on NewPack.
+    """
+    graph_interface = repo_for_test_pa_133_invalid.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsBasePackHasNoNewDependenciesValidatorAllFiles().obtain_invalid_content_items(
+            []
+        )
+    )
+    assert len(results) == 1
+    assert "NewPack" in results[0].message
+    assert "unexpected dependencies" in results[0].message
+
+
+def test_IsBasePackHasNoNewDependenciesValidatorListFiles_valid(
+    repo_for_test_pa_133_valid: Repo,
+):
+    """
+    Test the IsBasePackHasNoNewDependenciesValidatorListFiles validator with valid dependencies.
+    Given:
+        - A test repository with a Base pack that only depends on Core (allowed dependency).
+
+    When:
+        - Running the IsBasePackHasNoNewDependenciesValidatorListFiles validator on the Base pack.
+
+    Then:
+        - The validator should not return any results (no invalid dependencies).
+    """
+    graph_interface = repo_for_test_pa_133_valid.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsBasePackHasNoNewDependenciesValidatorListFiles().obtain_invalid_content_items(
+            [repo_for_test_pa_133_valid.packs[0]]
+        )
+    )
+    assert not results
+
+
+def test_IsBasePackHasNoNewDependenciesValidatorListFiles_invalid(
+    repo_for_test_pa_133_invalid: Repo,
+):
+    """
+    Test the IsBasePackHasNoNewDependenciesValidatorListFiles validator with invalid dependencies.
+    Given:
+        - A test repository with a Base pack that depends on NewPack (not allowed).
+
+    When:
+        - Running the IsBasePackHasNoNewDependenciesValidatorListFiles validator on the Base pack.
+
+    Then:
+        - The validator should return a result indicating that the Base pack
+          has an unexpected dependency on NewPack.
+    """
+    graph_interface = repo_for_test_pa_133_invalid.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsBasePackHasNoNewDependenciesValidatorListFiles().obtain_invalid_content_items(
+            [repo_for_test_pa_133_invalid.packs[0]]
+        )
+    )
+    assert len(results) == 1
+    assert "NewPack" in results[0].message
+    assert "unexpected dependencies" in results[0].message
+
+
+def test_IsBasePackHasNoNewDependenciesValidatorListFiles_non_base_pack(
+    repo_for_test_pa_133_invalid: Repo,
+):
+    """
+    Test the IsBasePackHasNoNewDependenciesValidatorListFiles validator on a non-Base pack.
+    Given:
+        - A test repository with a Base pack and a NewPack.
+
+    When:
+        - Running the IsBasePackHasNoNewDependenciesValidatorListFiles validator on NewPack (not Base).
+
+    Then:
+        - The validator should not return any results (only checks the Base pack).
+    """
+    graph_interface = repo_for_test_pa_133_invalid.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsBasePackHasNoNewDependenciesValidatorListFiles().obtain_invalid_content_items(
+            [repo_for_test_pa_133_invalid.packs[1]]
         )
     )
     assert not results

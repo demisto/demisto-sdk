@@ -1836,6 +1836,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.AGENTIX_ACTION
 
         elif AGENTIX_AGENTS_DIR in path.parts:
+            # Skip test files under AgentixAgents - they are not content items
+            if path.stem.endswith("_test"):
+                return None
             return FileType.AGENTIX_AGENT
 
     elif path.name == FileType.PACK_IGNORE:
@@ -4778,3 +4781,17 @@ def should_disable_multiprocessing():
         "DEMISTO_SDK_DISABLE_MULTIPROCESSING", "false"
     ).lower() in ["true", "yes", "1"]
     return disable_multiprocessing
+
+
+def is_private_content_file(file, private_content_path: Path | None = None) -> bool:
+    if not private_content_path:
+        return False
+
+    file_path = Path(file)
+    if file_path.is_file() and file_path.is_relative_to(private_content_path):
+        return True
+
+    if not file_path.exists() and private_content_path:
+        return (private_content_path / file).is_file()
+
+    return False

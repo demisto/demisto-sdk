@@ -1,4 +1,55 @@
 # Changelog
+## 1.38.21 (2026-03-03)
+### Feature
+* Added a new validation (PA133) that ensures the Base pack does not have any new dependencies beyond the currently allowed ones (Core and AggregateScripts). [#5232](https://github.com/demisto/demisto-sdk/pull/5232)
+* Added AS103 validation to check that autonomous playbooks have correct section headers with valid names, non-empty descriptions, and proper ordering. [#5250](https://github.com/demisto/demisto-sdk/pull/5250)
+* Add an explicit error log message when `demisto-sdk zip-packs` fails. Without this, it's not clear to users that the command failed. [#5194](https://github.com/demisto/demisto-sdk/pull/5194)
+* Added support for "internal" integration field to appear in the metadata.json file. [#5256](https://github.com/demisto/demisto-sdk/pull/5256)
+* Added support for AI tasks in playbooks. Playbooks can now include tasks of type 'aiTask' with an 'aiTaskId' field. Added validator PB135 to ensure playbooks with AI tasks are restricted to the platform marketplace only. [#5264](https://github.com/demisto/demisto-sdk/pull/5264)
+
+### Fix
+* Fixed an issue where `demisto-sdk run` would fail when command output contained HTML tags.
+ [#5157](https://github.com/demisto/demisto-sdk/pull/5157)
+* Fix a race condition in `demisto-sdk run-test-playbook` that resulted in a crash.
+Lower sleep time from 10 to 6 seconds in `demisto-sdk run-test-playbook` to make the user experience smoother for shorter test playbooks.
+ [#5154](https://github.com/demisto/demisto-sdk/pull/5154)
+* Fix a bug where `demisto-sdk run-test-playbook --all` would crash if one of the packs did not have the TestPlaybooks subdirectory. [#5223](https://github.com/demisto/demisto-sdk/pull/5223)
+* - Fix a bug in `demisto-sdk run-playbook` where an invalid log message crashed the command on failed playbook.
+- Exit with code 1 instead of 0 on failed playbook.
+ [#5193](https://github.com/demisto/demisto-sdk/pull/5193)
+* Added `is_test` property to AgentixAction and AgentixActionTest to distinguish test from production actions. [#5257](https://github.com/demisto/demisto-sdk/pull/5257)
+* Allow test files in AgentixAgent directories, consistent with AgentixAction support. [#5257](https://github.com/demisto/demisto-sdk/pull/5257)
+* Fixed `demisto-sdk run --debug` crashing when displaying error stack traces.
+ [#5195](https://github.com/demisto/demisto-sdk/pull/5195)
+* Cleaned up extra blank lines in `demisto-sdk run` output.
+ [#5195](https://github.com/demisto/demisto-sdk/pull/5195)
+
+### Internal
+* Added support for "tim" and "email_security" add-on licenses. [#5259](https://github.com/demisto/demisto-sdk/pull/5259)
+
+
+## 1.38.20 (2026-02-19)
+### Feature
+* Added a new validation (AS101) that ensures triggers in autonomous packs are properly configured. [#5234](https://github.com/demisto/demisto-sdk/pull/5234)
+* Updated the demisto-sdk validate command to support --private-content-path. [#5197](https://github.com/demisto/demisto-sdk/pull/5197)
+* Updated AgentixActions to support nested directory structure (AgentixActions/<action_id>/<action_id>.yaml) and both .yml and .yaml file extensions [#5237](https://github.com/demisto/demisto-sdk/pull/5237)
+* Added MC100 validation to ensure content items in managed packs have the correct source field matching pack_metadata, with auto-fix support in both validate and format commands. [#5238](https://github.com/demisto/demisto-sdk/pull/5238)
+* Add web console link to output of `demisto-sdk run-test-playbook` and `demisto-sdk run-playbook`. [#5153](https://github.com/demisto/demisto-sdk/pull/5153)
+* Updated the ST110 structure validation to ensure that managed packs have a valid non-empty source field. [#5248](https://github.com/demisto/demisto-sdk/pull/5248)
+* Added a new AS102 validation that checks autonomous playbook tasks without displayLabel have quietmode 1 (quiet mode enabled), with auto-fix support. Skips start/title task types. [#5246](https://github.com/demisto/demisto-sdk/pull/5246)
+
+### Fix
+* Fix a bug where `demisto-sdk xsoar-config-file-update` would crash instead of using the default value when omitting the `--file-path` option. [#5151](https://github.com/demisto/demisto-sdk/pull/5151)
+* Fixed an issue where debug-logging in **graph** command failed. [#5251](https://github.com/demisto/demisto-sdk/pull/5251)
+* Fix a bug where the path of a test playbook (which could be a directory and not a file) was printed instead of the playbook name in `demisto-sdk run-test-playbook` [#5161](https://github.com/demisto/demisto-sdk/pull/5161)
+* Fixed an issue that prevented bi-directional validations failures from being filtered and ignored. [#5243](https://github.com/demisto/demisto-sdk/pull/5243)
+
+### Internal
+* Added support for new schema fields (internal, isResponse, requiresIntervention, grouping_element, is_auto_enabled, source, managed) [#5224](https://github.com/demisto/demisto-sdk/pull/5224)
+* Agentix Agents system instructions are now defined in a separate md file. [#5188](https://github.com/demisto/demisto-sdk/pull/5188)
+* Restructure Agentix actions and agents [#5242](https://github.com/demisto/demisto-sdk/pull/5242)
+
+
 ## 1.38.19 (2026-02-03)
 ### Feature
 * Added the AG109 validator to ensure that Agentix Agent system instructions do not exceed the maximum allowed size of 65535 bytes. [#5205](https://github.com/demisto/demisto-sdk/pull/5205)

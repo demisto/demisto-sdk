@@ -1298,7 +1298,7 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
 
 # A list of validation error codes that must always execute, regardless of ignore settings.
 # This addresses unique cases where validation must run first, then filter the relevant results afterward.
-ALWAYS_RUN_ON_ERROR_CODE = ["GR107"]
+ALWAYS_RUN_ON_ERROR_CODE = ["GR107", "GR109"]
 
 
 class GitStatuses(StrEnum):
@@ -2039,6 +2039,8 @@ class PlatformSupportedModules(StrEnum):
     XSIAM = "xsiam"
     EXPOSURE_MANAGEMENT = "exposure_management"
     AGENTIX_XSIAM = "agentix_xsiam"
+    TIM = "tim"
+    EMAIL_SECURITY = "email_security"
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
@@ -2285,6 +2287,21 @@ class PlaybookTaskType(StrEnum):
     SECTION = "section"
     STANDARD = "standard"
     COLLECTION = "collection"
+    AI_TASK = "aiTask"
+
+
+# Autonomous playbook section headers
+AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER = (
+    "Data Collection",
+    "Early Containment",
+    "Investigation",
+    "Verdict",
+    "Remediation",
+)
+AUTONOMOUS_PLAYBOOK_MANDATORY_SECTIONS = frozenset(
+    {"Data Collection", "Investigation", "Verdict", "Remediation"}
+)
+AUTONOMOUS_PLAYBOOK_ALLOWED_SECTIONS = frozenset(AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER)
 
 
 # Used to format the writing of the yml/json file

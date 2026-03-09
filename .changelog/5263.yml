@@ -1,0 +1,4 @@
+changes:
+- description: Fixed a bug in content graph update where brand new packs not on master were not detected.
+  type: fix
+pr_number: 5263

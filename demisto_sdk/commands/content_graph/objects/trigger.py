@@ -14,6 +14,7 @@ class Trigger(ContentItemXSIAM, content_type=ContentType.TRIGGER):  # type: igno
     automation_id: str = Field(default=None)
     grouping_element: Optional[str] = Field(None)
     is_auto_enabled: bool = Field(False)
+    playbook_id: Optional[str] = Field(None)
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

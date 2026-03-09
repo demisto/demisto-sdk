@@ -148,7 +148,13 @@ class PackMetadataParser:
         self.support: str = metadata.get("support", "")
         self.created = metadata.get("firstCreated") or metadata.get("created")
         if not self.created:
-            self.created = GitUtil().get_file_creation_date(file_path=path)
+            try:
+                self.created = GitUtil(path).get_file_creation_date(file_path=path)
+            except InvalidGitRepositoryError:
+                logger.debug(
+                    f"Could not find git repository for {path}, using current time as creation time."
+                )
+                self.created = NOW
         self.updated: str = metadata.get("updated") or NOW
         self.legacy: bool = metadata.get(
             "legacy", metadata.get("partnerId") is None
@@ -165,7 +171,7 @@ class PackMetadataParser:
         self.current_version: str = metadata.get("currentVersion", "")
         self.version_info: str = ""
         try:
-            self.commit: str = GitUtil().get_current_commit_hash() or ""
+            self.commit: str = GitUtil(path).get_current_commit_hash() or ""
         except InvalidGitRepositoryError as e:
             logger.warning(
                 f"Failed to get commit hash for pack {self.name}. Error: {e}"

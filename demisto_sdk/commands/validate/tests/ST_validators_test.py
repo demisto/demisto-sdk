@@ -885,3 +885,67 @@ def test_IsSupportedModulesSubsetOfPack_inherit_pack_when_missing():
             [playbook]
         )
         assert len(results) == 0
+
+
+def test_SchemaValidator_managed_pack_with_source(pack: Pack):
+    """
+    Given:
+        - A pack with 'managed: true' and a non-empty 'source' field.
+    When:
+        - Parsing the pack (ST110 structure validation).
+    Then:
+        - The pack should parse successfully without structure errors.
+    """
+    pack.pack_metadata.update({"managed": True, "source": "my-source"})
+    pack_parser = PackParser(path=pack.path)
+
+    assert len(pack_parser.structure_errors) == 0
+
+
+def test_SchemaValidator_managed_pack_without_source(pack: Pack):
+    """
+    Given:
+        - A pack with 'managed: true' but missing the 'source' field.
+    When:
+        - Parsing the pack (ST110 structure validation).
+    Then:
+        - The pack should have a structure error about missing source.
+    """
+    pack.pack_metadata.update({"managed": True})
+    pack_parser = PackParser(path=pack.path)
+
+    assert len(pack_parser.structure_errors) == 1
+    assert "managed: true" in pack_parser.structure_errors[0].error_message
+    assert "source" in pack_parser.structure_errors[0].error_message
+
+
+def test_SchemaValidator_managed_pack_with_empty_source(pack: Pack):
+    """
+    Given:
+        - A pack with 'managed: true' but an empty 'source' field.
+    When:
+        - Parsing the pack (ST110 structure validation).
+    Then:
+        - The pack should have a structure error about missing source.
+    """
+    pack.pack_metadata.update({"managed": True, "source": ""})
+    pack_parser = PackParser(path=pack.path)
+
+    assert len(pack_parser.structure_errors) == 1
+    assert "managed: true" in pack_parser.structure_errors[0].error_message
+    assert "source" in pack_parser.structure_errors[0].error_message
+
+
+def test_SchemaValidator_not_managed_pack(pack: Pack):
+    """
+    Given:
+        - A pack with 'managed: false' (or missing managed field).
+    When:
+        - Parsing the pack (ST110 structure validation).
+    Then:
+        - The pack should parse successfully regardless of the source field.
+    """
+    pack.pack_metadata.update({"managed": False})
+    pack_parser = PackParser(path=pack.path)
+
+    assert len(pack_parser.structure_errors) == 0

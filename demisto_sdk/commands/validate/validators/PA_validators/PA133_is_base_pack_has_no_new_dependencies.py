@@ -14,7 +14,7 @@ ContentTypes = Pack
 
 # These are the currently allowed (existing) dependencies for the Base pack.
 # No new dependencies should be added.
-BASE_PACK_ALLOWED_DEPENDENCIES: Set[str] = {"Core", "AggregateScripts"}
+BASE_PACK_ALLOWED_DEPENDENCIES: Set[str] = {"Core", "AggregatedScripts"}
 
 
 class IsBasePackHasNoNewDependenciesValidator(BaseValidator[ContentTypes], ABC):
@@ -25,7 +25,7 @@ class IsBasePackHasNoNewDependenciesValidator(BaseValidator[ContentTypes], ABC):
     )
     rationale = (
         "The Base pack should not have dependencies. "
-        "Currently it has 2 existing dependencies (Core and AggregateScripts) "
+        "Currently it has 2 existing dependencies (Core and AggregatedScripts) "
         "that are pending removal. No new dependencies should be added."
     )
     error_message = (

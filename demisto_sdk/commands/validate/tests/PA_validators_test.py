@@ -1934,8 +1934,8 @@ def repo_for_test_pa_133_valid(graph_repo: Repo):
     core_integration = core_pack.create_integration("CoreIntegration")
     core_integration.set_commands(["core-command"])
 
-    # AggregateScripts pack (allowed dependency)
-    graph_repo.create_pack("AggregateScripts")
+    # AggregatedScripts pack (allowed dependency)
+    graph_repo.create_pack("AggregatedScripts")
 
     return graph_repo
 

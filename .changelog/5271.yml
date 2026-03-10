@@ -1,0 +1,4 @@
+changes:
+- description: Improved content graph update resilience in CI environments with shallow git clones by validating commit availability and updating all packs instead of rebuilding from scratch.
+  type: fix
+pr_number: 5271

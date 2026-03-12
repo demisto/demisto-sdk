@@ -7,6 +7,9 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.tools import get_value
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    NotAContentItemException,
+)
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
@@ -28,6 +31,27 @@ class AgentixBaseParser(YAMLContentItemParser):
         self.category: Optional[str] = self.yml_data.get("category", None)
         self.disabled: Optional[bool] = self.yml_data.get("disabled", False)
         self.internal: bool = self.yml_data.get("internal", False)
+
+    def get_path_with_suffix(self, suffix: str) -> Path:
+        """Override to support both .yml and .yaml extensions for Agentix items.
+
+        Args:
+            suffix (str): The suffix of the content item (typically ".yml").
+
+        Returns:
+            Path: The path to the YAML file with either .yml or .yaml extension.
+        """
+        # Try the requested suffix first
+        try:
+            return super().get_path_with_suffix(suffix)
+        except NotAContentItemException:
+            # If .yml was requested but not found, try .yaml
+            if suffix == ".yml":
+                return super().get_path_with_suffix(".yaml")
+            # If .yaml was requested but not found, try .yml
+            elif suffix == ".yaml":
+                return super().get_path_with_suffix(".yml")
+            raise
 
     @cached_property
     def field_mapping(self):

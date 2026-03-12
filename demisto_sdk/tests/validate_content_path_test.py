@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from demisto_sdk.commands.common.constants import (
+    AGENTIX_AGENTS_DIR,
     CLASSIFIERS_DIR,
     CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
@@ -25,6 +26,7 @@ from demisto_sdk.scripts.validate_content_path import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     ZERO_DEPTH_FILES,
+    InvalidAgentixAgentFileName,
     InvalidClassifier,
     InvalidCorrelationRuleFileName,
     InvalidDepthOneFile,
@@ -221,7 +223,7 @@ def test_content_entities_dir_length():
     If this test failed, it's likely you modified either CONTENT_ENTITIES_DIRS or FOLDERS_ALLOWED_TO_CONTAIN_FILES.
     Update the test values accordingly.
     """
-    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 37
+    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 36
 
     # change this one if you added a content item folder that can't have files directly under it
     assert (
@@ -230,7 +232,7 @@ def test_content_entities_dir_length():
                 CONTENT_ENTITIES_DIRS
             )
         )
-        == 29
+        == 28
     )
 
 
@@ -307,10 +309,12 @@ def test_depth_one_pass(folder: str):
         InvalidXDRCTemplatesFileName,
         InvalidModelingRuleFileName,
         InvalidXSIAMParsingRuleFileName,
+        InvalidAgentixAgentFileName,
     ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
         # InvalidXDRCTemplatesFileName will be raised but it is irrelevant for this test.
         # InvalidModelingRuleFileName will be raised but it is irrelevant for this test.
+        # InvalidAgentixAgentFileName will be raised but it is irrelevant for this test.
         pass
 
 
@@ -606,3 +610,61 @@ def test_modeling_rule_file_invalid(file_name: str):
     folder = "RuleEventCollector_1_2"
     with pytest.raises(InvalidModelingRuleFileName):
         _validate(DUMMY_PACK_PATH / MODELING_RULES_DIR / folder / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "TestAgent.yml",
+        "TestAgent_systeminstructions.md",
+    ],
+)
+def test_agentix_agent_file_valid(file_name: str):
+    """
+    Given:
+        A valid agentix agent file name
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation passes
+    """
+    folder = "TestAgent"
+    _validate(DUMMY_PACK_PATH / AGENTIX_AGENTS_DIR / folder / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "WrongName.yml",
+        "TestAgent.json",
+        "TestAgent_instructions.md",
+        "TestAgent_systeminstructions.txt",
+        "TestAgentExtra_systeminstructions.md",
+        "Test_systeminstructions.md",
+    ],
+)
+def test_agentix_agent_file_invalid(file_name: str):
+    """
+    Given:
+        An invalid agentix agent file name
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidAgentixAgentFileName
+    """
+    folder = "TestAgent"
+    with pytest.raises(InvalidAgentixAgentFileName):
+        _validate(DUMMY_PACK_PATH / AGENTIX_AGENTS_DIR / folder / file_name)
+
+
+def test_agentix_agent_file_at_depth_one_invalid():
+    """
+    Given:
+        An agentix agent file placed directly under AgentixAgents folder (depth 1)
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidDepthOneFile
+    """
+    with pytest.raises(InvalidDepthOneFile):
+        _validate(DUMMY_PACK_PATH / AGENTIX_AGENTS_DIR / "TestAgent.yml")

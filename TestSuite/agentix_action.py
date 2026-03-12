@@ -14,7 +14,10 @@ class AgentixAction(TestSuiteBase):
         self.node_id = name
         self._repo = repo
         self.repo_path = repo.path
-        self.path = tmpdir / f"{self.name}.yml"
+        # Create nested directory structure: AgentixActions/<name>/<name>.yaml
+        self.dir_path = tmpdir / self.name
+        self.dir_path.mkdir(parents=True, exist_ok=True)
+        self.path = self.dir_path / f"{self.name}.yaml"
         self.yaml = YAML(tmp_path=self.path, repo_path=str(repo.path))
         super().__init__(self.path)
 

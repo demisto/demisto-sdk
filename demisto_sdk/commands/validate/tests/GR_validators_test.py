@@ -2156,12 +2156,6 @@ def test_managed_playbook_dependencies_list_files(mocker):
         ".GR113_is_valid_managed_playbook_dependencies.get_core_pack_list",
         return_value=["Base", "CommonScripts"],
     )
-    mocker.patch(
-        "demisto_sdk.commands.validate.validators.GR_validators"
-        ".GR113_is_valid_managed_playbook_dependencies.CONTENT_PATH",
-        playbook.path.parent.parent.parent,
-    )
-
     results = IsValidManagedPlaybookDependenciesValidatorListFiles().obtain_invalid_content_items(
         [playbook]
     )

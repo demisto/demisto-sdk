@@ -17,7 +17,7 @@ class IsValidManagedPlaybookDependenciesValidatorAllFiles(
     expected_execution_mode = [ExecutionMode.ALL_FILES]
 
     def obtain_invalid_content_items(
-        self, content_items: Iterable
+        self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
         return self.obtain_invalid_content_items_using_graph(
             content_items, validate_all_files=True

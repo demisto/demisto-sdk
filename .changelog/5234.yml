@@ -1,4 +1,0 @@
-changes:
-- description: Added a new validation (AS101) that ensures triggers in autonomous packs are properly configured.
-  type: feature
-pr_number: 5234

@@ -2,10 +2,17 @@ import pytest
 
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_pack_object,
+    create_playbook_object,
     create_trigger_object,
 )
 from demisto_sdk.commands.validate.validators.AS_validators.AS101_is_valid_autonomous_trigger import (
     IsValidAutonomousTriggerValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS102_is_valid_quiet_mode_for_autonomous_playbook import (
+    IsValidQuietModeForAutonomousPlaybookValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS103_is_valid_autonomous_playbook_headers import (
+    IsValidAutonomousPlaybookHeadersValidator,
 )
 
 
@@ -187,3 +194,289 @@ def test_IsValidAutonomousTriggerValidator_fix():
     # Verify it's now valid
     invalid_items_after_fix = validator.obtain_invalid_content_items([trigger])
     assert len(invalid_items_after_fix) == 0
+
+
+def _make_tasks(task_overrides):
+    """Build a minimal tasks dict. Each entry in task_overrides is (id, type, quietmode, displayLabel)."""
+    tasks = {}
+    for tid, ttype, qm, dl in task_overrides:
+        entry = {
+            "id": tid,
+            "taskid": f"taskid-{tid}",
+            "type": ttype,
+            "task": {"id": f"taskid-{tid}", "version": -1, "name": f"task-{tid}"},
+        }
+        if qm is not None:
+            entry["quietmode"] = qm
+        if dl is not None:
+            entry["displayLabel"] = dl
+        tasks[tid] = entry
+    return tasks
+
+
+@pytest.mark.parametrize(
+    "managed, source, task_overrides, expected_errors",
+    [
+        # Non-autonomous pack — no errors regardless of quietmode
+        (False, "other", [("0", "start", 0, None), ("1", "regular", 0, None)], 0),
+        # Autonomous pack, task without displayLabel has quietmode=1 — valid
+        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 1, None)], 0),
+        # Autonomous pack, all tasks have displayLabel — valid
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", 0, "Label")],
+            0,
+        ),
+        # Autonomous pack, task without displayLabel has quietmode=0 — error
+        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 0, None)], 1),
+        # Autonomous pack, task without displayLabel has quietmode=None — error
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", None, None)],
+            1,
+        ),
+        # Autonomous pack, only start/title tasks with quietmode=0 — no errors (excluded)
+        (True, "autonomous", [("0", "start", 0, None), ("1", "title", 0, None)], 0),
+    ],
+)
+def test_IsValidQuietModeForAutonomousPlaybookValidator(
+    managed, source, task_overrides, expected_errors
+):
+    """
+    Given:
+        - Playbooks with various task configurations in autonomous/non-autonomous packs.
+    When:
+        - Running IsValidQuietModeForAutonomousPlaybookValidator.obtain_invalid_content_items.
+    Then:
+        - Tasks without displayLabel in autonomous packs must have quietmode=1.
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+    playbook = create_playbook_object(
+        paths=["tasks"], values=[_make_tasks(task_overrides)]
+    )
+    playbook.pack = pack
+
+    results = (
+        IsValidQuietModeForAutonomousPlaybookValidator().obtain_invalid_content_items(
+            [playbook]
+        )
+    )
+    assert len(results) == expected_errors
+
+
+def test_IsValidQuietModeForAutonomousPlaybookValidator_fix():
+    """
+    Given:
+        - A playbook in an autonomous pack with a regular task (quietmode=0, no displayLabel).
+    When:
+        - Running the fix method.
+    Then:
+        - The task's quietmode is set to 1; start task remains unchanged.
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+    tasks = _make_tasks([("0", "start", 0, None), ("1", "regular", 0, None)])
+    playbook = create_playbook_object(paths=["tasks"], values=[tasks])
+    playbook.pack = pack
+
+    validator = IsValidQuietModeForAutonomousPlaybookValidator()
+    assert len(validator.obtain_invalid_content_items([playbook])) == 1
+
+    fix_result = validator.fix(playbook)
+    assert fix_result.message == validator.fix_message
+    assert playbook.tasks["1"].quietmode == 1
+    assert playbook.tasks["0"].quietmode == 0
+    assert len(validator.obtain_invalid_content_items([playbook])) == 0
+
+
+def _make_header_tasks(sections, starttaskid="0"):
+    """Build a playbook task graph with title tasks for the given sections.
+
+    Args:
+        sections: list of (task_id, name, description) for title tasks.
+                  Non-title tasks are auto-generated to link them.
+    Returns:
+        tasks_dict
+    """
+    tasks = {}
+    # Build chain: starttaskid -> section[0] -> section[1] -> ...
+    task_ids = [starttaskid] + [s[0] for s in sections]
+    for i, (tid, name, desc) in enumerate(sections):
+        prev_id = task_ids[i]
+        # Link previous task to this one
+        if prev_id not in tasks:
+            tasks[prev_id] = {
+                "id": prev_id,
+                "taskid": f"taskid-{prev_id}",
+                "type": "start" if prev_id == starttaskid else "regular",
+                "task": {
+                    "id": f"taskid-{prev_id}",
+                    "version": -1,
+                    "name": f"task-{prev_id}",
+                },
+                "nexttasks": {"#none#": [tid]},
+            }
+        else:
+            tasks[prev_id].setdefault("nexttasks", {})["#none#"] = [tid]
+
+        # Title task
+        task_entry = {
+            "id": tid,
+            "taskid": f"taskid-{tid}",
+            "type": "title",
+            "task": {
+                "id": f"taskid-{tid}",
+                "version": -1,
+                "name": name,
+            },
+            "nexttasks": {},
+        }
+        if desc is not None:
+            task_entry["task"]["description"] = desc
+        tasks[tid] = task_entry
+
+    return tasks
+
+
+@pytest.mark.parametrize(
+    "managed, source, sections, expected_errors",
+    [
+        # 1. Non-autonomous pack — no errors regardless of sections
+        (
+            False,
+            "other",
+            [
+                ("1", "Data Collection", "desc1"),
+                ("2", "Investigation", "desc2"),
+            ],
+            0,
+        ),
+        # 2. All 5 sections with descriptions in correct order — valid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Early Containment", "Contain early"),
+                ("3", "Investigation", "Investigate"),
+                ("4", "Verdict", "Determine verdict"),
+                ("5", "Remediation", "Remediate"),
+            ],
+            0,
+        ),
+        # 3. 4 mandatory sections (optional omitted) in correct order — valid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+            ],
+            0,
+        ),
+        # 4. Missing mandatory section "Verdict"
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Remediation", "Remediate"),
+            ],
+            1,
+        ),
+        # 5. Unknown section name "Custom Section"
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Custom Section", "Custom desc"),
+                ("3", "Investigation", "Investigate"),
+                ("4", "Verdict", "Determine verdict"),
+                ("5", "Remediation", "Remediate"),
+            ],
+            1,
+        ),
+        # 6. Empty description on a section
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", ""),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+            ],
+            1,
+        ),
+        # 7. None description on a section
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", None),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+            ],
+            1,
+        ),
+        # 8. Wrong ordering — Investigation before Data Collection
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Investigation", "Investigate"),
+                ("2", "Data Collection", "Collect data"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+            ],
+            1,
+        ),
+        # 9. Multiple errors: missing section + empty description
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", ""),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Remediation", "Remediate"),
+            ],
+            1,
+        ),
+        # 10. No title tasks at all — all mandatory missing
+        (
+            True,
+            "autonomous",
+            [],
+            1,
+        ),
+    ],
+)
+def test_IsValidAutonomousPlaybookHeadersValidator(
+    managed, source, sections, expected_errors
+):
+    """
+    Given:
+        - Playbooks with various section header configurations in autonomous/non-autonomous packs.
+    When:
+        - Running IsValidAutonomousPlaybookHeadersValidator.obtain_invalid_content_items.
+    Then:
+        - Autonomous playbooks must have correct section headers with valid names,
+          non-empty descriptions, and proper ordering.
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+    header_tasks = _make_header_tasks(sections)
+    playbook = create_playbook_object(
+        paths=["starttaskid", "tasks"], values=["0", header_tasks]
+    )
+    playbook.pack = pack
+
+    results = IsValidAutonomousPlaybookHeadersValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_errors

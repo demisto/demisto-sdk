@@ -104,9 +104,20 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Returns:
             Optional[ContentItemParser]: The parsed content item.
         """
+        from demisto_sdk.commands.common.constants import AGENTIX_AGENTS_DIR
         from demisto_sdk.commands.content_graph.common import ContentType
 
         logger.debug(f"Parsing content item {path}")
+
+        # Skip test files under AgentixAgents - they are not content items
+        if AGENTIX_AGENTS_DIR in path.parts and ContentType._is_agentix_agent_test_path(
+            path
+        ):
+            logger.debug(
+                f"Skipping {path} - test file under AgentixAgents is not a content item"
+            )
+            raise NotAContentItemException
+
         if not ContentItemParser.is_content_item(path):
             # Check if this is an AgentixActionTest file before resolving
             # to parent directory. Test files (e.g., EnrichIP_test.yml) live

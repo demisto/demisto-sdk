@@ -1461,7 +1461,7 @@ ALLOWED_IGNORE_ERRORS = (
         "BA119",
         "BA124",
         "BA125",
-        "BA129",
+        "BA129",  # needs to be remove after CRTX-235579 is done
         "DS108",
         "DS107",
         "GF102",

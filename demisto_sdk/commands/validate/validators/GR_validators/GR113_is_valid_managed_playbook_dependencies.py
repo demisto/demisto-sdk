@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Iterable, List, Union
+from typing import Iterable, List
 
-from demisto_sdk.commands.common.tools import get_core_pack_list, get_relative_path_from_packs_dir
+from demisto_sdk.commands.common.tools import (
+    get_core_pack_list,
+    get_relative_path_from_packs_dir,
+)
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,

@@ -272,7 +272,7 @@ def test_xsoar_linter_errors(
     - Ensure invalid files fail with the correct exit code.
     - Ensure invalid files fail with the correct error messages.
     """
-    pack = git_repo.create_pack()
+    pack = git_repo.create_pack(name=f"pack_{uuid.uuid4().hex[:8]}")
     pack.pack_metadata.update({"support": support_level})
 
     with open(file, "r") as f:

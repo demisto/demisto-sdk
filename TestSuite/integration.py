@@ -32,7 +32,7 @@ class Integration(TestSuiteBase):
         self.prefix = "integration"
         # Create paths
         self._tmpdir_integration_path = tmpdir / f"{self.name}"
-        self._tmpdir_integration_path.mkdir()
+        self._tmpdir_integration_path.mkdir(parents=True, exist_ok=True)
 
         # if creating a unified yaml
         self.create_unified = create_unified

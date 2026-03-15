@@ -136,7 +136,10 @@ def _get_title_tasks_in_order(
         if not task_config:
             continue
 
-        if task_config.type == PlaybookTaskType.TITLE:
+        if (
+            task_config.type == PlaybookTaskType.TITLE
+            and not task_config.task.isSubSection
+        ):
             title_tasks.append(
                 (task_id, task_config.task.name, task_config.task.description)
             )

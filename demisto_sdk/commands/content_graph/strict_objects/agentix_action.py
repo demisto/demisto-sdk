@@ -45,3 +45,4 @@ class AgentixAction(AgentixBase):
     )
     requires_user_approval: bool = Field(False, alias="requiresuserapproval")
     few_shots: Optional[list[str]] = Field(None, alias="fewshots")
+    instructions: Optional[str] = None

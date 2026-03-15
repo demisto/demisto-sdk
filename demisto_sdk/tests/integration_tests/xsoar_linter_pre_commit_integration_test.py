@@ -9,6 +9,8 @@ For Valid file use: XSOAR_LINTER_PY3_VALID
 For a new checker, add the invalid statement in the relevant file and add it to the relevant test.
 """
 
+import uuid
+
 import pytest
 from wcmatch.pathlib import Path
 
@@ -270,12 +272,13 @@ def test_xsoar_linter_errors(
     - Ensure invalid files fail with the correct exit code.
     - Ensure invalid files fail with the correct error messages.
     """
-    pack = git_repo.create_pack()
+    pack = git_repo.create_pack(name=f"pack_{uuid.uuid4().hex[:8]}")
     pack.pack_metadata.update({"support": support_level})
 
     with open(file, "r") as f:
         test_content = f.read()
-    integration_obj = pack.create_integration()
+    integration_name = f"integration_{uuid.uuid4().hex[:8]}"
+    integration_obj = pack.create_integration(name=integration_name)
     integration_obj.set_commands(commands)
 
     with open(integration_obj.code.path, "w") as f:

@@ -173,6 +173,9 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN168_is_mcp_integra
 from demisto_sdk.commands.validate.validators.IN_validators.IN169_is_valid_provider_field import (
     IsValidProviderFieldValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN170_is_enrich_section_valid_marketplace import (
+    IsEnrichSectionValidMarketplaceValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 MARKETPLACE_VALUES = [mp.value for mp in MarketplaceVersions]
@@ -6796,3 +6799,140 @@ def test_IsValidProviderFieldValidator_platform_pack_integration_both_marketplac
             results[0].message
             == "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name."
         )
+
+
+## -------------------------  IsEnrichSectionValidMarketplaceValidator IN170 Tests ------------------------- ##
+
+
+def test_IsEnrichSectionValidMarketplaceValidator_valid_platform_integration():
+    """
+    Given:
+        - An integration targeting the 'platform' marketplace with 'Agentic assistant' in sectionorder.
+    When:
+        - Calling the IsEnrichSectionValidMarketplaceValidator.
+    Then:
+        - Should pass validation (0 failures).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["sectionorder", "marketplaces"],
+                values=[
+                    ["Connect", "Agentic assistant"],
+                    ["platform"],
+                ],
+                pack_info={"marketplaces": ["platform"]},
+            ),
+        ]
+        results = (
+            IsEnrichSectionValidMarketplaceValidator()
+            .obtain_invalid_content_items(content_items)
+        )
+        assert len(results) == 0
+
+
+def test_IsEnrichSectionValidMarketplaceValidator_valid_no_agentic_assistant():
+    """
+    Given:
+        - An integration without 'Agentic assistant' in sectionorder targeting xsoar.
+    When:
+        - Calling the IsEnrichSectionValidMarketplaceValidator.
+    Then:
+        - Should pass validation (0 failures).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["sectionorder", "marketplaces"],
+                values=[
+                    ["Connect", "Collect"],
+                    ["xsoar"],
+                ],
+                pack_info={"marketplaces": ["xsoar"]},
+            ),
+        ]
+        results = (
+            IsEnrichSectionValidMarketplaceValidator()
+            .obtain_invalid_content_items(content_items)
+        )
+        assert len(results) == 0
+
+
+def test_IsEnrichSectionValidMarketplaceValidator_invalid_non_platform():
+    """
+    Given:
+        - An integration with 'Agentic assistant' in sectionorder targeting 'xsoar' marketplace.
+    When:
+        - Calling the IsEnrichSectionValidMarketplaceValidator.
+    Then:
+        - Should fail validation (1 failure).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["sectionorder", "marketplaces"],
+                values=[
+                    ["Connect", "Agentic assistant"],
+                    ["xsoar"],
+                ],
+                pack_info={"marketplaces": ["xsoar"]},
+            ),
+        ]
+        results = (
+            IsEnrichSectionValidMarketplaceValidator()
+            .obtain_invalid_content_items(content_items)
+        )
+        assert len(results) == 1
+        assert "Agentic assistant" in results[0].message
+        assert "platform" in results[0].message
+
+
+def test_IsEnrichSectionValidMarketplaceValidator_valid_inherits_platform_from_pack():
+    """
+    Given:
+        - An integration with 'Agentic assistant' in sectionorder, no explicit marketplaces,
+          but pack has 'platform' marketplace.
+    When:
+        - Calling the IsEnrichSectionValidMarketplaceValidator.
+    Then:
+        - Should pass validation (0 failures).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["sectionorder"],
+                values=[["Connect", "Agentic assistant"]],
+                pack_info={"marketplaces": ["platform"]},
+            ),
+        ]
+        results = (
+            IsEnrichSectionValidMarketplaceValidator()
+            .obtain_invalid_content_items(content_items)
+        )
+        assert len(results) == 0
+
+
+def test_IsEnrichSectionValidMarketplaceValidator_invalid_inherits_xsoar_from_pack():
+    """
+    Given:
+        - An integration with 'Agentic assistant' in sectionorder, no explicit marketplaces,
+          but pack has only 'xsoar' marketplace.
+    When:
+        - Calling the IsEnrichSectionValidMarketplaceValidator.
+    Then:
+        - Should fail validation (1 failure).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["sectionorder"],
+                values=[["Connect", "Agentic assistant"]],
+                pack_info={"marketplaces": ["xsoar"]},
+            ),
+        ]
+        results = (
+            IsEnrichSectionValidMarketplaceValidator()
+            .obtain_invalid_content_items(content_items)
+        )
+        assert len(results) == 1
+        assert "Agentic assistant" in results[0].message

@@ -48,6 +48,11 @@ class SectionOrderValues(StrEnum):
     OPTIMIZE = "Optimize"
     MIRRORING = "Mirroring"
     RESULT = "Result"
+    AGENTIC_ASSISTANT = "Agentic assistant"
+
+
+# Sections that are only allowed for specific marketplaces
+PLATFORM_ONLY_SECTIONS = {SectionOrderValues.AGENTIC_ASSISTANT}
 
 
 class _Configuration(BaseStrictModel):
@@ -192,7 +197,7 @@ class _StrictIntegration(BaseStrictModel):
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=5)] = (  # type:ignore[valid-type]
+    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=6)] = (  # type:ignore[valid-type]
         Field(alias="sectionorder")
     )
     configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]
@@ -241,8 +246,9 @@ class _StrictIntegration(BaseStrictModel):
         """
         Validates each configuration object has a valid section clause.
         A valid section clause is a section which is included in the list of the integration's section_order.
-        Even if the section is an allowed value (currently Collect, Connect or Optimize),it could be invalid if the
-        specific value is not present in section_order.
+        Even if the section is an allowed value (currently Collect, Connect, Optimize, or Agentic assistant),
+        it could be invalid if the specific value is not present in section_order.
+        Note: The 'Agentic assistant' section is only valid for integrations targeting the 'platform' marketplace.
         """
         section_order_field = values.get("section_order")
         if not section_order_field:

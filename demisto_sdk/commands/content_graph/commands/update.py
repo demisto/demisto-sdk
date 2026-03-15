@@ -208,12 +208,14 @@ def _update_content_graph_inner(
             changed_pack_ids = git_util.get_all_changed_pack_ids(commit)
         except Exception as e:
             logger.warning(
-                f"Failed to get changed packs from git. Creating from scratch. Error: {e}"
+                f"Failed to get changed packs from git. "
+                f"Will update all packs instead. Error: {e}"
             )
-            create_content_graph(
-                content_graph_interface, marketplace, dependencies, output_path
-            )
-            return
+            # When we can't determine which packs changed (e.g., the graph's commit
+            # doesn't exist in a CI shallow clone), update all packs rather than
+            # creating from scratch. The graph was already imported successfully,
+            # so we just need to refresh all pack data on top of it.
+            changed_pack_ids = set(get_all_repo_pack_ids())
         packs_to_update.extend(changed_pack_ids)
 
     packs_str = "\n".join([f"- {p}" for p in sorted(packs_to_update)])

@@ -5,6 +5,7 @@ from typing import Optional
 import typer
 
 from demisto_sdk.commands.common.logger import logging_setup
+from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 def pre_commit(
@@ -138,6 +139,15 @@ def pre_commit(
 
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
+    # Read pre-commit settings from .demisto-sdk-conf, e.g.:
+    #   [pre-commit]
+    #   common-server-user-python-dir=Packs/Base/Scripts/CommonServerUserPython
+    config_args: dict = {}
+    update_command_args_from_config_file("pre-commit", config_args)
+    common_server_user_python_dir: Optional[str] = config_args.get(
+        "common-server-user-python-dir"
+    )
+
     if handling_private_repositories:
         os.environ["DEMISTO_SDK_PRIVATE_REPO_MODE"] = "true"
 
@@ -161,6 +171,7 @@ def pre_commit(
         dry_run=dry_run,
         run_hook=run_hook,
         pre_commit_template_path=pre_commit_template_path,
+        common_server_user_python_dir=common_server_user_python_dir,
     )
     if return_code:
         raise typer.Exit(1)

@@ -568,6 +568,7 @@ def pre_commit_manager(
     run_hook: Optional[str] = None,
     pre_commit_template_path: Optional[Path] = None,
     json_output_path: Optional[Path] = None,
+    common_server_user_python_dir: Optional[str] = None,
 ) -> int:
     """Run pre-commit hooks .
 
@@ -591,11 +592,30 @@ def pre_commit_manager(
         pre_commit_template_path (Path, optional): Path to the template pre-commit file.
         json_output_path (Path, optional): Optional path to a JSON formatted output file/dir where pre-commit hooks results
             are stored. None by default, and file is not created.
+        common_server_user_python_dir (str, optional): Directory containing CommonServerUserPython.py,
+            relative to CONTENT_PATH. When set (via .demisto-sdk-conf), the directory is added to
+            PYTHONPATH so that `from CommonServerUserPython import *` resolves without creating a stub
+            file. Defaults to None, in which case an empty stub is created in CONTENT_PATH.
     Returns:
         int: Return code of pre-commit.
     """
-    # We have imports to this module, however it does not exists in the repo.
-    (CONTENT_PATH / "CommonServerUserPython.py").touch()
+    # Many integrations/scripts import CommonServerUserPython, but this file is a
+    # per-installation customization that doesn't ship in the repo by default.
+    # If a directory is configured via .demisto-sdk-conf, add it to PYTHONPATH so
+    # the import resolves naturally. Otherwise, fall back to creating an empty stub
+    # file in CONTENT_PATH to prevent import errors.
+    if common_server_user_python_dir:
+        resolved_dir = (CONTENT_PATH / common_server_user_python_dir).resolve()
+        if not (resolved_dir / "CommonServerUserPython.py").is_file():
+            logger.warning(
+                f"CommonServerUserPython.py not found in configured directory: {resolved_dir}. "
+                "Falling back to creating an empty stub."
+            )
+            (CONTENT_PATH / "CommonServerUserPython.py").touch()
+        else:
+            PYTHONPATH.append(resolved_dir)
+    else:
+        (CONTENT_PATH / "CommonServerUserPython.py").touch()
 
     if not any((input_files, staged_only, git_diff, all_files)):
         logger.info("No arguments were given, running on staged files and git changes.")

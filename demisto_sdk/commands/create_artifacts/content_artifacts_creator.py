@@ -1655,6 +1655,10 @@ def calc_relative_packs_dir(
             XDRC_TEMPLATE_DIR in relative_pack_path.parts
             and relative_pack_path.parts[-2] != XDRC_TEMPLATE_DIR
         )
+        or (
+            LISTS_DIR in relative_pack_path.parts
+            and relative_pack_path.parts[-2] != LISTS_DIR
+        )
     ):
         relative_pack_path = relative_pack_path.parent.parent
     else:

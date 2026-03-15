@@ -229,7 +229,7 @@ class InvalidXDRCTemplatesFileName(InvalidPathException):
 
 
 class InvalidAgentixAgentFileName(InvalidPathException):
-    message = "Name of agentix agent files must match the directory containing them, e.g. `{parent folder}.yml` or `{parent folder}_systeminstructions.md`"
+    message = "Name of agentix agent files must match the directory containing them, e.g. `{parent folder}.yml`, `{parent folder}_test.yml`, or `{parent folder}_systeminstructions.md`"
 
 
 class ExemptedPath(Exception, ABC):
@@ -374,6 +374,7 @@ def _validate(path: Path) -> None:
                 path.stem == f"{path.parent.name}_systeminstructions"
                 and path.suffix == ".md"
             )
+            or (path.stem == f"{path.parent.name}_test" and path.suffix == ".yml")
         ):
             raise InvalidAgentixAgentFileName
 

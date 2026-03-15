@@ -215,6 +215,28 @@ class ContentType(StrEnum):
 
         return False
 
+    @staticmethod
+    def _is_agentix_agent_test_path(path: Path) -> bool:
+        """
+        Check if the given path represents a test file under AgentixAgents.
+
+        Test files (e.g., CloudPostureAgent_test.yml) live alongside agent
+        files in the same directory and should NOT be parsed as content items.
+
+        Note: This method intentionally does NOT use path.is_file() or check
+        directories, as the path may not exist on the filesystem (e.g., when
+        coming from git).
+
+        Args:
+            path: The path to check
+
+        Returns:
+            True if the path represents a test file under AgentixAgents, False otherwise
+        """
+        if path.suffix in (".yml", ".yaml") and path.stem.endswith("_test"):
+            return True
+        return False
+
     @classmethod
     def by_path(cls, path: Path) -> "ContentType":
         for idx, folder in enumerate(path.parts):
@@ -227,6 +249,13 @@ class ContentType(StrEnum):
                 if content_type_dir == "AgentixActions":
                     if cls._is_agentix_action_test_path(path):
                         return cls.AGENTIX_ACTION_TEST
+
+                # Skip test files under AgentixAgents - they are not content items
+                if content_type_dir == "AgentixAgents":
+                    if cls._is_agentix_agent_test_path(path):
+                        raise ValueError(
+                            f"Test file under AgentixAgents is not a content item: {path}"
+                        )
 
                 break
         else:

@@ -11,7 +11,7 @@ ignorable_errors = [
   "BA124",
   "BA125",
   "BA127",
-  "BA129",
+  "BA129", # needs to be remove after CRTX-235579 is done
   "GF102",
   "DS108",
   "IF100",
@@ -72,7 +72,8 @@ ignorable_errors = [
   "RM108",
   "RM117",
   "VC100",
-  "VC101"
+  "VC101",
+  "AS103"
 ]
 
 [Custom_Categories]
@@ -144,6 +145,7 @@ select = [
   "PB132",
   "PB133",
   "PB134",
+  "PB135",
   "PB114",
   "BA100",
   "BA101",
@@ -259,7 +261,9 @@ select = [
   "ST114",
   "TR100",
   "AS101",
+  "GR113",
   "AS102",
+  "AS103",
   "MC100",
   "VC100",
   "VC101",
@@ -380,6 +384,7 @@ select = [
   "PB132",
   "PB133",
   "PB134",
+  "PB135",
   "BC100",
   "BC101",
   "BC102",
@@ -566,7 +571,9 @@ select = [
   "VC100",
   "VC101",
   "AS101",
+  "GR113",
   "AS102",
+  "AS103",
   "MC100",
   "BA112"
 ]

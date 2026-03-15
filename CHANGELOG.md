@@ -10,8 +10,7 @@
 * Fixed a bug in content graph update where brand new packs not on master were not detected. [#5263](https://github.com/demisto/demisto-sdk/pull/5263)
 * Added the BA129 error code to the old-validation ignorable errors list in the **validate** command, effective when using the `--run-old-validate` flag. [#5278](https://github.com/demisto/demisto-sdk/pull/5278)
 * Fixed false-positive AS102, AS103, and ST110 validation errors in autonomous playbook tasks. Fields displayLabel, isResponse, requiresIntervention, and isSubSection are now correctly recognized on the inner task sub-object. AS103 now ignores sub-section title tasks where isSubSection is true. [#5277](https://github.com/demisto/demisto-sdk/pull/5277)
-* - Fix a bug in `demisto-sdk download` where custom content would be written in a different file than system content.
- [#5220](https://github.com/demisto/demisto-sdk/pull/5220)
+* - Fix a bug in `demisto-sdk download` where custom content would be written in a different file than system content. [#5220](https://github.com/demisto/demisto-sdk/pull/5220)
 
 
 ## 1.38.21 (2026-03-03)

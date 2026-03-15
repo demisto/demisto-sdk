@@ -163,6 +163,11 @@ class _SubTaskPlaybook(BaseStrictModel):
     brand: str
     is_system_task: Optional[bool] = Field(None, alias="issystemtask")
     cloned_from: Optional[str] = Field(None, alias="clonedfrom")
+    ai_task_id: Optional[str] = Field(None, alias="aiTaskId")
+    display_label: Optional[str] = Field(None, alias="displayLabel")
+    is_response: Optional[bool] = Field(None, alias="isResponse")
+    requires_intervention: Optional[bool] = Field(None, alias="requiresIntervention")
+    is_sub_section: Optional[bool] = Field(None, alias="isSubSection")
 
 
 SubTaskPlaybook = create_model(
@@ -212,6 +217,7 @@ class _TaskPlaybook(BaseStrictModel):
             "section",
             "standard",
             "collection",
+            "aiTask",
         ],
     )
     default_assignee_complex: Optional[Dict] = Field(
@@ -228,9 +234,6 @@ class _TaskPlaybook(BaseStrictModel):
     is_auto_switched_to_quiet_mode: Optional[bool] = Field(
         None, alias="isautoswitchedtoquietmode"
     )
-    is_response: Optional[bool] = Field(None, alias="isResponse")
-    requires_intervention: Optional[bool] = Field(None, alias="requiresIntervention")
-    display_label: Optional[str] = Field(None, alias="displayLabel")
     quiet: Optional[bool] = None
     evidence_data: Optional[EvidenceData] = Field(None, alias="evidencedata")
     task: SubTaskPlaybook  # type:ignore[valid-type]

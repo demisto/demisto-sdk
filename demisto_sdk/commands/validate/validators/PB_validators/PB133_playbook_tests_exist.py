@@ -4,7 +4,7 @@ from abc import ABC
 from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -33,7 +33,7 @@ class PlaybookTestsExistValidator(BaseValidator[ContentTypes], ABC):
 
         file_paths_to_validate = (
             [
-                str(content_item.path.relative_to(CONTENT_PATH))
+                get_relative_path_from_packs_dir(str(content_item.path))
                 for content_item in content_items
             ]
             if not validate_all_files

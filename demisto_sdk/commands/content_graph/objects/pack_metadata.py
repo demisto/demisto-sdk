@@ -686,6 +686,10 @@ def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersion
         logger.info(
             f"Skipping {content_item.name} in metadata creation: item is an internal script."
         )
+    elif content_item.content_type == ContentType.AGENTIX_ACTION_TEST:
+        logger.debug(
+            f"Skipping {content_item.name} in metadata creation: item is an AgentixActionTest."
+        )
 
     else:
         return False

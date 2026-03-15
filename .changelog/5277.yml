@@ -1,0 +1,8 @@
+changes:
+- description: >-
+    Fixed false-positive AS102, AS103, and ST110 validation errors in autonomous
+    playbook tasks. Fields displayLabel, isResponse, requiresIntervention, and
+    isSubSection are now correctly recognized on the inner task sub-object.
+    AS103 now ignores sub-section title tasks where isSubSection is true.
+  type: fix
+pr_number: 5277

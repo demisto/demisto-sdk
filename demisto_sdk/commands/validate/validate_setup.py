@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     SDK_OFFLINE_ERROR_MESSAGE,
     ExecutionMode,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.logger import logger, logging_setup_decorator
 from demisto_sdk.commands.common.tools import (
     is_external_repository,
@@ -18,22 +19,29 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import Initializer
 from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
+from demisto_sdk.commands.validate.private_content_manager import PrivateContentManager
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
-def validate_paths(value: Optional[str]) -> Optional[str]:
-    if not value:  # If no input is provided, just return None
+def validate_paths(
+    input_paths: Optional[str], private_content_path: Optional[Path]
+) -> Optional[str]:
+    if not input_paths:  # If no input is provided, just return None
         return None
 
-    paths = value.split(",")
+    paths = input_paths.split(",")
     for path in paths:
-        stripped_path = path.strip()
-        if not os.path.exists(stripped_path):  # noqa: PTH110
-            raise typer.BadParameter(f"The path '{stripped_path}' does not exist.")
+        path_obj = Path(path)
+        if not path_obj.exists():
+            if not (
+                private_content_path
+                and (Path(private_content_path) / path_obj).exists()
+            ):
+                raise typer.BadParameter(f"The path '{path}' does not exist.")
 
-    return value
+    return input_paths
 
 
 @logging_setup_decorator
@@ -85,7 +93,6 @@ def validate(
         "-i",
         "--input",
         help="Path of the content pack/file to validate.",
-        callback=validate_paths,
     ),
     skip_pack_release_notes: bool = typer.Option(
         False, help="Skip validation of pack release notes."
@@ -151,6 +158,9 @@ def validate(
         False, "-f", "--fix", help="Whether to autofix failing validations."
     ),
     config_path: Path = typer.Option(None, help="Path for a config file to run."),
+    private_content_path: Path = typer.Option(
+        None, help="Path to the private content repository."
+    ),
     ignore_support_level: bool = typer.Option(
         False, help="Skip validations based on support level."
     ),
@@ -191,6 +201,8 @@ def validate(
     if file_paths and not input:
         input = file_paths
 
+    validate_paths(input, private_content_path)
+
     run_with_mp = not no_multiprocessing
     update_command_args_from_config_file("validate", ctx.params)
     sdk = ctx.obj
@@ -230,7 +242,23 @@ def validate(
 
         # Run new validation flow
         if run_new_validate:
-            exit_code += run_new_validation(file_path, execution_mode, **ctx.params)
+            # When using -a flag (ALL_FILES mode) with private content, wrap with PrivateContentManager
+            # This ensures private content files are copied before ContentDTO.from_path() is called
+            if execution_mode == ExecutionMode.ALL_FILES and ctx.params.get(
+                "private_content_path"
+            ):
+                logger.info(
+                    f"Using PrivateContentManager for ALL_FILES mode with private content path: {ctx.params['private_content_path']}"
+                )
+                with PrivateContentManager(
+                    private_content_path=ctx.params["private_content_path"],
+                    content_path=CONTENT_PATH,
+                ):
+                    exit_code += run_new_validation(
+                        file_path, execution_mode, **ctx.params
+                    )
+            else:
+                exit_code += run_new_validation(file_path, execution_mode, **ctx.params)
 
         raise typer.Exit(code=exit_code)
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -339,6 +367,7 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         handling_private_repositories=kwargs.get(
             "handling_private_repositories", False
         ),
+        private_content_path=kwargs.get("private_content_path"),
     )
     validator_v2 = ValidateManager(
         file_path=file_path,

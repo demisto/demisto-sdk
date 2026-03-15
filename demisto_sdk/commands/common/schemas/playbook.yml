@@ -299,6 +299,8 @@ mapping:
                 type: bool
               displayLabel:
                 type: str
+              isSubSection:
+                type: bool
           note:
             type: bool
           nexttasks:

@@ -14,7 +14,7 @@ ContentTypes = Pack
 
 # These are the currently allowed (existing) dependencies for the Base pack.
 # No new dependencies should be added.
-BASE_PACK_ALLOWED_DEPENDENCIES: Set[str] = {"Core", "AggregateScripts"}
+BASE_PACK_ALLOWED_DEPENDENCIES: Set[str] = {"Core", "AggregatedScripts"}
 
 
 class IsBasePackHasNoNewDependenciesValidator(BaseValidator[ContentTypes], ABC):
@@ -25,7 +25,7 @@ class IsBasePackHasNoNewDependenciesValidator(BaseValidator[ContentTypes], ABC):
     )
     rationale = (
         "The Base pack should not have dependencies. "
-        "Currently it has 2 existing dependencies (Core and AggregateScripts) "
+        "Currently it has 2 existing dependencies (Core and AggregatedScripts) "
         "that are pending removal. No new dependencies should be added."
     )
     error_message = (
@@ -57,9 +57,9 @@ class IsBasePackHasNoNewDependenciesValidator(BaseValidator[ContentTypes], ABC):
             dependency_pack_ids = {
                 relationship.content_item_to.object_id
                 for relationship in base_pack_node.depends_on
+                if not relationship.is_test
             }
-            new_deps = dependency_pack_ids - BASE_PACK_ALLOWED_DEPENDENCIES
-            if new_deps:
+            if new_deps := dependency_pack_ids - BASE_PACK_ALLOWED_DEPENDENCIES:
                 validation_results.append(
                     ValidationResult(
                         validator=self,

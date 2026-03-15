@@ -64,7 +64,7 @@ class IsValidQuietModeForAutonomousPlaybookValidator(BaseValidator[ContentTypes]
         for task_config in content_item.tasks.values():
             if task_config.type in EXCLUDED_TASK_TYPES:
                 continue
-            if not task_config.displayLabel and task_config.quietmode != 1:
+            if not task_config.task.displayLabel and task_config.quietmode != 1:
                 task_config.quietmode = 1
 
         return FixResult(
@@ -102,7 +102,7 @@ def get_invalid_quiet_mode_tasks(
     for task_id, task_config in content_item.tasks.items():
         if task_config.type in EXCLUDED_TASK_TYPES:
             continue
-        if not task_config.displayLabel and task_config.quietmode != 1:
+        if not task_config.task.displayLabel and task_config.quietmode != 1:
             invalid_tasks.append((task_id, task_config.quietmode))
 
     return invalid_tasks

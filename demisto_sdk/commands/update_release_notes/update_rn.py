@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     EVENT_COLLECTOR,
+    IGNORED_PACK_NAMES,
     PB_RELEASE_NOTES_FORMAT,
     RN_HEADER_BY_FILE_TYPE,
     SIEM_ONLY_ENTITIES,
@@ -628,7 +629,7 @@ class UpdateRN:
         :return
             Whether the RN was updated successfully or not
         """
-        if self.pack in ["Legacy", "NonSupported"]:
+        if self.pack in IGNORED_PACK_NAMES:
             logger.info(
                 f"<yellow>Release notes are not required for the {self.pack} pack since this pack"
                 f" is not versioned.</yellow>"

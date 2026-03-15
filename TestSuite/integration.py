@@ -103,6 +103,7 @@ class Integration(TestSuiteBase):
         if changelog is not None:
             self.changelog.write(changelog)
         if image is not None:
+            Path(self.image.path).parent.mkdir(parents=True, exist_ok=True)
             self.image.write_bytes(image)
         if commands_txt is not None:
             self.commands_txt.write(commands_txt)

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import logging
 from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -46,8 +46,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 ContentTypes = Union[
     Integration,

@@ -9,6 +9,8 @@ For Valid file use: XSOAR_LINTER_PY3_VALID
 For a new checker, add the invalid statement in the relevant file and add it to the relevant test.
 """
 
+import logging
+import os
 import uuid
 
 import pytest
@@ -272,6 +274,8 @@ def test_xsoar_linter_errors(
     - Ensure invalid files fail with the correct exit code.
     - Ensure invalid files fail with the correct error messages.
     """
+    _diag_logger = logging.getLogger("xsoar_linter_test_debug")
+
     pack = git_repo.create_pack(name=f"pack_{uuid.uuid4().hex[:8]}")
     pack.pack_metadata.update({"support": support_level})
 
@@ -279,6 +283,32 @@ def test_xsoar_linter_errors(
         test_content = f.read()
     integration_name = f"integration_{uuid.uuid4().hex[:8]}"
     integration_obj = pack.create_integration(name=integration_name)
+
+    # Diagnostic logging: check if yml file exists before set_commands
+    yml_path = integration_obj.yml.path
+    yml_exists = os.path.exists(yml_path)
+    parent_exists = os.path.exists(os.path.dirname(yml_path))
+    repo_path = git_repo.path
+    repo_exists = os.path.exists(repo_path)
+    _diag_logger.warning(
+        f"[DIAG] Before set_commands: yml_path={yml_path}, "
+        f"yml_exists={yml_exists}, parent_dir_exists={parent_exists}, "
+        f"repo_path={repo_path}, repo_exists={repo_exists}, "
+        f"repo_id={id(git_repo)}, pid={os.getpid()}"
+    )
+    if not yml_exists:
+        # List what's in the parent directory (if it exists)
+        parent_dir = os.path.dirname(yml_path)
+        if os.path.exists(parent_dir):
+            _diag_logger.warning(f"[DIAG] Parent dir contents: {os.listdir(parent_dir)}")
+        else:
+            # Check grandparent
+            grandparent = os.path.dirname(parent_dir)
+            if os.path.exists(grandparent):
+                _diag_logger.warning(f"[DIAG] Grandparent dir contents: {os.listdir(grandparent)}")
+            else:
+                _diag_logger.warning(f"[DIAG] Grandparent dir also missing: {grandparent}")
+
     integration_obj.set_commands(commands)
 
     with open(integration_obj.code.path, "w") as f:

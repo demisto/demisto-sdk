@@ -1,5 +1,7 @@
+import logging
 import os
 import shutil
+import traceback
 from pathlib import Path
 from typing import List, Optional
 from unittest.mock import MagicMock
@@ -44,6 +46,12 @@ class Repo:
         self._packs_path: Path = tmpdir / "Packs"
         self._packs_path.mkdir()
         self.path = str(self._tmpdir)
+
+        _init_logger = logging.getLogger("repo_del_debug")
+        _init_logger.warning(
+            f"[Repo.__init__] Created repo at path={self.path}, "
+            f"id={id(self)}, pid={os.getpid()}"
+        )
 
         # Initiate ./Tests/ dir
         self._test_dir = tmpdir / "Tests"
@@ -97,6 +105,12 @@ class Repo:
             self.init_git()
 
     def __del__(self):
+        _del_logger = logging.getLogger("repo_del_debug")
+        _del_logger.warning(
+            f"[Repo.__del__] Deleting repo at path={self.path}, "
+            f"id={id(self)}, pid={os.getpid()}\n"
+            f"Traceback:\n{''.join(traceback.format_stack())}"
+        )
         shutil.rmtree(self.path, ignore_errors=True)
         if self.graph_interface:
             self.graph_interface.close()

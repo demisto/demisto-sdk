@@ -6,7 +6,7 @@
 
 ### Fix
 * Fix a bug in the `demisto-sdk zip-files` command where list data files were parsed as unified files. [#5280](https://github.com/demisto/demisto-sdk/pull/5280)
-* - Add an error message when the provided github token is unauthorized to help with debugging bad tokens in `demisto-sdk pre-commit`.
+* Add an error message when the provided github token is unauthorized to help with debugging bad tokens in `demisto-sdk pre-commit`. [#5162](https://github.com/demisto/demisto-sdk/pull/5162)
 - Fix a bug where `.env` environment variables were not loaded upon creating the first instance of `GitCredentials`, making `demisto-sdk pre-commit` ignore the `DEMISTO_SDK_GITHUB_TOKEN` environment variable if it was set in the `.env` file.
  [#5162](https://github.com/demisto/demisto-sdk/pull/5162)
 * Fixed an issue where pre-commit incorrectly classified all files as added in content-private, causing it to run on all files instead of only the changed ones and updating the graph for packs which were not changed. [#5249](https://github.com/demisto/demisto-sdk/pull/5249)

@@ -2,7 +2,7 @@
 ## 1.38.22 (2026-03-16)
 ### Feature
 * Do not prompt for silent playbook when formatting playbooks with the --assume-no argument is given. [#5270](https://github.com/demisto/demisto-sdk/pull/5270)
-* a new validation (GR113) which validates managed playbooks does not use scripts or sub-playbooks that are not managed or from our core packs. Also, a small bug where the graph could not be re-built if it was corrupt due to bad DELETE NODE query, was fixed. [#5241](https://github.com/demisto/demisto-sdk/pull/5241)
+* Added a new validation (GR113) which validates managed playbooks does not use scripts or sub-playbooks that are not managed or from our core packs. Also, a small bug where the graph could not be re-built if it was corrupt due to bad DELETE NODE query, was fixed. [#5241](https://github.com/demisto/demisto-sdk/pull/5241)
 
 ### Fix
 * Fix a bug in the `demisto-sdk zip-files` command where list data files were parsed as unified files. [#5280](https://github.com/demisto/demisto-sdk/pull/5280)

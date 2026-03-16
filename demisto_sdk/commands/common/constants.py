@@ -1177,7 +1177,7 @@ IGNORED_TYPES_REGEXES = [
     SCHEMA_REGEX,
 ]
 
-IGNORED_PACK_NAMES = ["Legacy", "NonSupported", "ApiModules"]
+IGNORED_PACK_NAMES = ["Legacy", "NonSupported"]
 
 PACK_IGNORE_TEST_FLAG = "auto-test"
 

@@ -197,19 +197,31 @@ def test_IsValidAutonomousTriggerValidator_fix():
 
 
 def _make_tasks(task_overrides):
-    """Build a minimal tasks dict. Each entry in task_overrides is (id, type, quietmode, displayLabel)."""
+    """Build a minimal tasks dict.
+
+    Each entry in task_overrides is a tuple of:
+        (id, type, quietmode, inner_displayLabel)
+    where ``inner_displayLabel`` is set inside the nested ``task:`` sub-object
+    (the canonical location for displayLabel in the playbook YAML format).
+    The trailing element is optional (default ``None``).
+    """
     tasks = {}
-    for tid, ttype, qm, dl in task_overrides:
+    for override in task_overrides:
+        tid, ttype, qm = override[0], override[1], override[2]
+        inner_dl = override[3] if len(override) > 3 else None
+
+        inner_task: dict = {"id": f"taskid-{tid}", "version": -1, "name": f"task-{tid}"}
+        if inner_dl is not None:
+            inner_task["displayLabel"] = inner_dl
+
         entry = {
             "id": tid,
             "taskid": f"taskid-{tid}",
             "type": ttype,
-            "task": {"id": f"taskid-{tid}", "version": -1, "name": f"task-{tid}"},
+            "task": inner_task,
         }
         if qm is not None:
             entry["quietmode"] = qm
-        if dl is not None:
-            entry["displayLabel"] = dl
         tasks[tid] = entry
     return tasks
 
@@ -218,27 +230,27 @@ def _make_tasks(task_overrides):
     "managed, source, task_overrides, expected_errors",
     [
         # Non-autonomous pack — no errors regardless of quietmode
-        (False, "other", [("0", "start", 0, None), ("1", "regular", 0, None)], 0),
+        (False, "other", [("0", "start", 0), ("1", "regular", 0)], 0),
         # Autonomous pack, task without displayLabel has quietmode=1 — valid
-        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 1, None)], 0),
-        # Autonomous pack, all tasks have displayLabel — valid
+        (True, "autonomous", [("0", "start", 0), ("1", "regular", 1)], 0),
+        # Autonomous pack, task has displayLabel inside inner task{} — valid
         (
             True,
             "autonomous",
-            [("0", "start", 0, None), ("1", "regular", 0, "Label")],
+            [("0", "start", 0), ("1", "regular", 0, "Label")],
             0,
         ),
         # Autonomous pack, task without displayLabel has quietmode=0 — error
-        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 0, None)], 1),
+        (True, "autonomous", [("0", "start", 0), ("1", "regular", 0)], 1),
         # Autonomous pack, task without displayLabel has quietmode=None — error
         (
             True,
             "autonomous",
-            [("0", "start", 0, None), ("1", "regular", None, None)],
+            [("0", "start", 0), ("1", "regular", None)],
             1,
         ),
         # Autonomous pack, only start/title tasks with quietmode=0 — no errors (excluded)
-        (True, "autonomous", [("0", "start", 0, None), ("1", "title", 0, None)], 0),
+        (True, "autonomous", [("0", "start", 0), ("1", "title", 0)], 0),
     ],
 )
 def test_IsValidQuietModeForAutonomousPlaybookValidator(
@@ -288,6 +300,36 @@ def test_IsValidQuietModeForAutonomousPlaybookValidator_fix():
     assert playbook.tasks["1"].quietmode == 1
     assert playbook.tasks["0"].quietmode == 0
     assert len(validator.obtain_invalid_content_items([playbook])) == 0
+
+
+def test_IsValidQuietModeForAutonomousPlaybookValidator_inner_task_display_label():
+    """
+    Given:
+        - A playbook in an autonomous pack where a regular task has quietmode=0 but
+          its displayLabel is set inside the inner ``task:`` sub-object (not at the
+          top-level TaskConfig).  This is the real-world format that triggered the bug.
+    When:
+        - Running IsValidQuietModeForAutonomousPlaybookValidator.obtain_invalid_content_items.
+    Then:
+        - The task must NOT be flagged as invalid because it has a displayLabel
+          (even though it is on the inner task object rather than the outer TaskConfig).
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+    # 4-tuple: (id, type, quietmode, inner_displayLabel)
+    tasks = _make_tasks(
+        [
+            ("0", "start", 0),
+            ("1", "regular", 0, "Action confirmed on a high-risk host."),
+        ]
+    )
+    playbook = create_playbook_object(paths=["tasks"], values=[tasks])
+    playbook.pack = pack
+
+    validator = IsValidQuietModeForAutonomousPlaybookValidator()
+    results = validator.obtain_invalid_content_items([playbook])
+    assert (
+        len(results) == 0
+    ), "Task with displayLabel inside inner task{} should not be flagged as invalid"
 
 
 def _make_header_tasks(sections, starttaskid="0"):
@@ -480,3 +522,58 @@ def test_IsValidAutonomousPlaybookHeadersValidator(
         [playbook]
     )
     assert len(results) == expected_errors
+
+
+def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
+    """
+    Given:
+        - An autonomous playbook with all required section headers in correct order,
+          plus an extra title task that has ``isSubSection: true`` inside its inner
+          ``task:`` object (e.g. a sub-section like 'User Logoff').
+    When:
+        - Running IsValidAutonomousPlaybookHeadersValidator.obtain_invalid_content_items.
+    Then:
+        - The sub-section title task must be ignored; the playbook must be valid (0 errors).
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+
+    # Build the standard valid sections
+    sections = [
+        ("1", "Data Collection", "Collect data"),
+        ("2", "Investigation", "Investigate"),
+        ("3", "Verdict", "Determine verdict"),
+        ("4", "Remediation", "Remediate"),
+    ]
+    header_tasks = _make_header_tasks(sections)
+
+    # Inject a sub-section title task (isSubSection: true inside task{})
+    header_tasks["404"] = {
+        "id": "404",
+        "taskid": "taskid-404",
+        "type": "title",
+        "task": {
+            "id": "taskid-404",
+            "version": -1,
+            "name": "User Logoff",
+            "type": "title",
+            "iscommand": False,
+            "brand": "",
+            "description": "",
+            "isSubSection": True,
+        },
+        "nexttasks": {},
+    }
+    # Link it from the last section so it's reachable in BFS
+    header_tasks["4"]["nexttasks"] = {"#none#": ["404"]}
+
+    playbook = create_playbook_object(
+        paths=["starttaskid", "tasks"], values=["0", header_tasks]
+    )
+    playbook.pack = pack
+
+    results = IsValidAutonomousPlaybookHeadersValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert (
+        len(results) == 0
+    ), "Sub-section title tasks (isSubSection=true) should be ignored by AS103"

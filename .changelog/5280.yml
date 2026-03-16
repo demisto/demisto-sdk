@@ -1,4 +1,0 @@
-changes:
-- description: Fix a bug in the `demisto-sdk zip-files` command where list data files were parsed as unified files.
-  type: fix
-pr_number: 5280

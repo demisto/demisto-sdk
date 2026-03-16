@@ -280,7 +280,9 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             f"target_content_item_ids={target_content_item_ids}"
         )
 
-        logger.info("[GR109 DEBUG] Querying find_content_items_with_module_mismatch_dependencies...")
+        logger.info(
+            "[GR109 DEBUG] Querying find_content_items_with_module_mismatch_dependencies..."
+        )
         mismatched_dependencies = (
             self.graph.find_content_items_with_module_mismatch_dependencies(
                 target_content_item_ids
@@ -301,7 +303,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 f"is_UnknownContent={isinstance(item, UnknownContent)}, "
                 f"uses_count={len(item.uses) if hasattr(item, 'uses') else 'N/A'}"
             )
-            if hasattr(item, 'uses'):
+            if hasattr(item, "uses"):
                 for j, dep in enumerate(item.uses):
                     dep_to = dep.content_item_to
                     logger.info(
@@ -316,7 +318,9 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                         f"all_attrs={sorted(dep_to.__dict__.keys()) if hasattr(dep_to, '__dict__') else 'N/A'}"
                     )
 
-        logger.info("[GR109 DEBUG] Querying find_content_items_with_module_mismatch_commands...")
+        logger.info(
+            "[GR109 DEBUG] Querying find_content_items_with_module_mismatch_commands..."
+        )
         mismatched_commands = (
             self.graph.find_content_items_with_module_mismatch_commands(
                 target_content_item_ids
@@ -334,7 +338,9 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 f"is_UnknownContent={isinstance(item, UnknownContent)}"
             )
 
-        logger.info("[GR109 DEBUG] Querying find_content_items_with_module_mismatch_content_items...")
+        logger.info(
+            "[GR109 DEBUG] Querying find_content_items_with_module_mismatch_content_items..."
+        )
         mismatched_content_items = (
             self.graph.find_content_items_with_module_mismatch_content_items(
                 target_content_item_ids

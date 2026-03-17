@@ -327,6 +327,8 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             return False
         if self.assume_answer:
             return True
+        elif self.assume_answer is False:
+            return False
 
         logger.info(
             f"\n<blue>Do you want to make '{self.data.get('name')}' a silent playbook? [Y/n]</blue>"

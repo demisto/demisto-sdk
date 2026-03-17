@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple
 
 from more_itertools import first
+from demisto_sdk.commands.common.logger import logger
 from neo4j import Transaction, graph
 
 from demisto_sdk.commands.common.constants import (
@@ -36,6 +37,7 @@ def validate_unknown_content(tx: Transaction, file_paths: List[str]):
         {f'WHERE content_item_from.path in {file_paths}' if file_paths else ''}
         RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
         """
+    logger.info(f"Running query: {query}")
     return {
         item.get("content_item_from").element_id: Neo4jRelationshipResult(
             node_from=item.get("content_item_from"),

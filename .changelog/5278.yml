@@ -1,4 +1,0 @@
-changes:
-- description: Added the BA129 error code to the old-validation ignorable errors list in the **validate** command, effective when using the `--run-old-validate` flag.
-  type: fix
-pr_number: 5278

@@ -1,5 +1,0 @@
-changes:
-- description: |
-    - Fix a bug in `demisto-sdk download` where custom content would be written in a different file than system content.
-  type: fix
-pr_number: 5220

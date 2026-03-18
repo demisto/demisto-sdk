@@ -14,6 +14,9 @@ from demisto_sdk.commands.validate.validators.AS_validators.AS102_is_valid_quiet
 from demisto_sdk.commands.validate.validators.AS_validators.AS103_is_valid_autonomous_playbook_headers import (
     IsValidAutonomousPlaybookHeadersValidator,
 )
+from demisto_sdk.commands.validate.validators.AS_validators.AS104_playbook_must_have_adopted_field import (
+    PlaybookMustHaveAdoptedFieldValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -394,7 +397,7 @@ def _make_header_tasks(sections, starttaskid="0"):
             ],
             0,
         ),
-        # 2. All 5 sections with descriptions in correct order — valid
+        # 2. All 6 sections with descriptions in correct order — valid
         (
             True,
             "autonomous",
@@ -404,10 +407,11 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("3", "Investigation", "Investigate"),
                 ("4", "Verdict", "Determine verdict"),
                 ("5", "Remediation", "Remediate"),
+                ("6", "Playbook Completed", "Playbook done"),
             ],
             0,
         ),
-        # 3. 4 mandatory sections (optional omitted) in correct order — valid
+        # 3. 5 mandatory sections (optional omitted) in correct order — valid
         (
             True,
             "autonomous",
@@ -416,6 +420,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("2", "Investigation", "Investigate"),
                 ("3", "Verdict", "Determine verdict"),
                 ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Playbook done"),
             ],
             0,
         ),
@@ -427,6 +432,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("1", "Data Collection", "Collect data"),
                 ("2", "Investigation", "Investigate"),
                 ("3", "Remediation", "Remediate"),
+                ("4", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -440,6 +446,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("3", "Investigation", "Investigate"),
                 ("4", "Verdict", "Determine verdict"),
                 ("5", "Remediation", "Remediate"),
+                ("6", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -452,6 +459,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("2", "Investigation", "Investigate"),
                 ("3", "Verdict", "Determine verdict"),
                 ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -464,6 +472,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("2", "Investigation", "Investigate"),
                 ("3", "Verdict", "Determine verdict"),
                 ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -476,6 +485,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("2", "Data Collection", "Collect data"),
                 ("3", "Verdict", "Determine verdict"),
                 ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -487,6 +497,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("1", "Data Collection", ""),
                 ("2", "Investigation", "Investigate"),
                 ("3", "Remediation", "Remediate"),
+                ("4", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -495,6 +506,45 @@ def _make_header_tasks(sections, starttaskid="0"):
             True,
             "autonomous",
             [],
+            1,
+        ),
+        # 11. "Playbook Completed" appears twice (duplicatable) — valid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Branch A done"),
+                ("6", "Playbook Completed", "Branch B done"),
+            ],
+            0,
+        ),
+        # 12. Missing "Playbook Completed" — invalid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+            ],
+            1,
+        ),
+        # 13. "Playbook Completed" with empty description — invalid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", ""),
+            ],
             1,
         ),
     ],
@@ -537,12 +587,13 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
     """
     pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
 
-    # Build the standard valid sections
+    # Build the standard valid sections (including mandatory "Playbook Completed")
     sections = [
         ("1", "Data Collection", "Collect data"),
         ("2", "Investigation", "Investigate"),
         ("3", "Verdict", "Determine verdict"),
         ("4", "Remediation", "Remediate"),
+        ("5", "Playbook Completed", "Playbook done"),
     ]
     header_tasks = _make_header_tasks(sections)
 
@@ -564,7 +615,7 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
         "nexttasks": {},
     }
     # Link it from the last section so it's reachable in BFS
-    header_tasks["4"]["nexttasks"] = {"#none#": ["404"]}
+    header_tasks["5"]["nexttasks"] = {"#none#": ["404"]}
 
     playbook = create_playbook_object(
         paths=["starttaskid", "tasks"], values=["0", header_tasks]
@@ -577,3 +628,94 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
     assert (
         len(results) == 0
     ), "Sub-section title tasks (isSubSection=true) should be ignored by AS103"
+
+
+@pytest.mark.parametrize(
+    "managed, source, adopted, expected_errors",
+    [
+        # Non-autonomous pack — no errors regardless of adopted value
+        (False, "other", None, 0),
+        (False, "other", False, 0),
+        (False, "other", True, 0),
+        # Autonomous pack with adopted=True — valid
+        (True, "autonomous", True, 0),
+        # Autonomous pack with adopted=False — invalid
+        (True, "autonomous", False, 1),
+        # Autonomous pack with adopted=None (missing) — invalid
+        (True, "autonomous", None, 1),
+        # Non-autonomous pack (wrong source) — no errors
+        (True, "other", None, 0),
+        # Non-autonomous pack (managed=False) — no errors
+        (False, "autonomous", None, 0),
+    ],
+)
+def test_PlaybookMustHaveAdoptedFieldValidator(
+    managed, source, adopted, expected_errors
+):
+    """
+    Given:
+        - Playbooks with various 'adopted' field values in autonomous/non-autonomous packs.
+    When:
+        - Running PlaybookMustHaveAdoptedFieldValidator.obtain_invalid_content_items.
+    Then:
+        - Playbooks in autonomous packs (managed: true AND source: 'autonomous')
+          must have adopted: true.
+        - Playbooks in non-autonomous packs can have any value for 'adopted'.
+    """
+    pack_metadata = {}
+    if managed is not None:
+        pack_metadata["managed"] = managed
+    if source is not None:
+        pack_metadata["source"] = source
+
+    pack = create_pack_object(
+        paths=list(pack_metadata.keys()), values=list(pack_metadata.values())
+    )
+
+    paths = []
+    values = []
+    if adopted is not None:
+        paths.append("adopted")
+        values.append(adopted)
+
+    playbook = create_playbook_object(paths=paths or None, values=values or None)
+    playbook.pack = pack
+
+    results = PlaybookMustHaveAdoptedFieldValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_errors
+
+
+def test_PlaybookMustHaveAdoptedFieldValidator_fix():
+    """
+    Given:
+        - A playbook in an autonomous pack (managed: true, source: 'autonomous')
+          without the 'adopted' field set.
+    When:
+        - Running the fix method.
+    Then:
+        - The playbook's 'adopted' field should be set to True.
+        - The playbook should then pass validation.
+    """
+    pack = create_pack_object(
+        paths=["managed", "source"],
+        values=[True, "autonomous"],
+    )
+    playbook = create_playbook_object()
+    playbook.pack = pack
+
+    validator = PlaybookMustHaveAdoptedFieldValidator()
+
+    # Verify it's invalid before fix
+    assert len(validator.obtain_invalid_content_items([playbook])) == 1
+
+    # Apply fix
+    fix_result = validator.fix(playbook)
+
+    # Verify fix was applied
+    assert fix_result.message == validator.fix_message
+    assert playbook.adopted is True
+
+    # Verify it's now valid
+    assert len(validator.obtain_invalid_content_items([playbook])) == 0

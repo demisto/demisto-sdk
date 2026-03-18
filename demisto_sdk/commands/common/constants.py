@@ -2297,11 +2297,14 @@ AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER = (
     "Investigation",
     "Verdict",
     "Remediation",
+    "Playbook Completed",
 )
 AUTONOMOUS_PLAYBOOK_MANDATORY_SECTIONS = frozenset(
-    {"Data Collection", "Investigation", "Verdict", "Remediation"}
+    {"Data Collection", "Investigation", "Verdict", "Remediation", "Playbook Completed"}
 )
 AUTONOMOUS_PLAYBOOK_ALLOWED_SECTIONS = frozenset(AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER)
+# Sections that may appear more than once in a playbook (e.g. one per branch)
+AUTONOMOUS_PLAYBOOK_DUPLICATABLE_SECTIONS = frozenset({"Playbook Completed"})
 
 
 # Used to format the writing of the yml/json file

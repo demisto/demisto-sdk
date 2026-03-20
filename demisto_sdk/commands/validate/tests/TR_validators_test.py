@@ -3,6 +3,9 @@ import pytest
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_trigger_object,
 )
+from demisto_sdk.commands.validate.validators.TR_validators.TR001_is_valid_trigger_id import (
+    IsValidTriggerIdValidator,
+)
 from demisto_sdk.commands.validate.validators.TR_validators.TR100_is_silent_trigger import (
     IsSilentTriggerValidator,
 )
@@ -74,3 +77,49 @@ def test_IsSilentTriggerValidator(name, is_silent, result_len, file_name):
         [trigger]
     )
     assert result_len == len(invalid_content_items)
+
+
+@pytest.mark.parametrize(
+    "trigger_id, expected_result_len",
+    [
+        ("9ba5cc715622f50eddd58ab5c413f58b", 0),
+        ("73545719a1bdeba6ba91f6a16044c021", 0),
+        ("ABCDEF0123456789abcdef0123456789", 0),
+        ("aabbcc", 0),
+        ("9ba5cc71-5622-f50e-ddd5-8ab5c413f58b", 1),
+        ("9ba5cc71.5622.f50e", 1),
+        ("my-trigger-name", 1),
+        ("xyz123", 1),
+        ("trigger id with spaces", 1),
+        ("", 1),
+    ],
+)
+def test_IsValidTriggerIdValidator(trigger_id, expected_result_len):
+    """
+    Given:
+        case 1: A valid hex trigger_id.
+        case 2: Another valid hex trigger_id.
+        case 3: A valid hex trigger_id with mixed case.
+        case 4: A short valid hex trigger_id.
+        case 5: A trigger_id with dashes (UUID format).
+        case 6: A trigger_id with dots.
+        case 7: A trigger_id with non-hex characters and dashes.
+        case 8: A trigger_id with non-hex characters (x, y, z).
+        case 9: A trigger_id with spaces.
+        case 10: An empty trigger_id.
+
+    When:
+    - calling IsValidTriggerIdValidator.obtain_invalid_content_items.
+
+    Then:
+    - cases 1-4: Pass. Valid hex string trigger_ids.
+    - cases 5-10: Fail. Invalid trigger_ids containing special characters or non-hex characters.
+    """
+    trigger = create_trigger_object(
+        paths=["trigger_id"], values=[trigger_id]
+    )
+
+    invalid_content_items = IsValidTriggerIdValidator().obtain_invalid_content_items(
+        [trigger]
+    )
+    assert expected_result_len == len(invalid_content_items)

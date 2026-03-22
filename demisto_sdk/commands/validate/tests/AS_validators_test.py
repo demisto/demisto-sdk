@@ -583,58 +583,24 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
 
 
 @pytest.mark.parametrize(
-    "managed, pack_source, item_is_silent, item_source, expected_result_len",
+    "managed, pack_source, item_is_silent, expected_result_len",
     [
         # Valid cases — should pass (no error)
-        (True, "autonomous", False, "autonomous", 0),  # Autonomous pack, not silent
-        (
-            True,
-            "autonomous",
-            False,
-            None,
-            0,
-        ),  # Autonomous pack, not silent, no item source
-        (
-            False,
-            "other",
-            True,
-            "autonomous",
-            0,
-        ),  # Non-autonomous pack, silent but item has source
-        (False, "other", True, None, 0),  # Non-autonomous pack, silent, no item source
-        (True, "other", True, None, 0),  # managed=true but wrong source, silent
-        (
-            False,
-            "autonomous",
-            True,
-            None,
-            0,
-        ),  # source=autonomous but managed=false, silent
+        (True, "autonomous", False, 0),  # Autonomous pack, not silent
+        (False, "other", True, 0),  # Non-autonomous pack, silent
+        (True, "other", True, 0),  # managed=true but wrong source, silent
+        (False, "autonomous", True, 0),  # source=autonomous but managed=false, silent
         # Invalid cases — should fail
-        (
-            True,
-            "autonomous",
-            True,
-            "autonomous",
-            1,
-        ),  # Autonomous pack + item source + silent
-        (True, "autonomous", True, None, 1),  # Autonomous pack alone is enough + silent
-        (
-            True,
-            "autonomous",
-            True,
-            "other",
-            1,
-        ),  # Autonomous pack + different item source + silent
+        (True, "autonomous", True, 1),  # Autonomous pack + silent
     ],
 )
 def test_NoIsSilentInAutonomousPackValidator_playbook(
-    managed, pack_source, item_is_silent, item_source, expected_result_len
+    managed, pack_source, item_is_silent, expected_result_len
 ):
     """
     Given:
-        - Playbooks with various combinations of pack metadata (managed/source),
-          item-level isSilent and item-level source fields.
+        - Playbooks with various combinations of pack metadata (managed/source)
+          and item-level isSilent field.
 
     When:
         - Running NoIsSilentInAutonomousPackValidator.obtain_invalid_content_items.
@@ -654,13 +620,7 @@ def test_NoIsSilentInAutonomousPackValidator_playbook(
         paths=list(pack_metadata.keys()), values=list(pack_metadata.values())
     )
 
-    playbook_paths = ["issilent"]
-    playbook_values: list = [item_is_silent]
-    if item_source is not None:
-        playbook_paths.append("source")
-        playbook_values.append(item_source)
-
-    playbook = create_playbook_object(paths=playbook_paths, values=playbook_values)
+    playbook = create_playbook_object(paths=["issilent"], values=[item_is_silent])
     playbook.pack = pack
 
     results = NoIsSilentInAutonomousPackValidator().obtain_invalid_content_items(
@@ -670,58 +630,24 @@ def test_NoIsSilentInAutonomousPackValidator_playbook(
 
 
 @pytest.mark.parametrize(
-    "managed, pack_source, item_is_silent, item_source, expected_result_len",
+    "managed, pack_source, item_is_silent, expected_result_len",
     [
         # Valid cases — should pass (no error)
-        (True, "autonomous", False, "autonomous", 0),  # Autonomous pack, not silent
-        (
-            True,
-            "autonomous",
-            False,
-            None,
-            0,
-        ),  # Autonomous pack, not silent, no item source
-        (
-            False,
-            "other",
-            True,
-            "autonomous",
-            0,
-        ),  # Non-autonomous pack, silent but item has source
-        (False, "other", True, None, 0),  # Non-autonomous pack, silent, no item source
-        (True, "other", True, None, 0),  # managed=true but wrong source, silent
-        (
-            False,
-            "autonomous",
-            True,
-            None,
-            0,
-        ),  # source=autonomous but managed=false, silent
+        (True, "autonomous", False, 0),  # Autonomous pack, not silent
+        (False, "other", True, 0),  # Non-autonomous pack, silent
+        (True, "other", True, 0),  # managed=true but wrong source, silent
+        (False, "autonomous", True, 0),  # source=autonomous but managed=false, silent
         # Invalid cases — should fail
-        (
-            True,
-            "autonomous",
-            True,
-            "autonomous",
-            1,
-        ),  # Autonomous pack + item source + silent
-        (True, "autonomous", True, None, 1),  # Autonomous pack alone is enough + silent
-        (
-            True,
-            "autonomous",
-            True,
-            "other",
-            1,
-        ),  # Autonomous pack + different item source + silent
+        (True, "autonomous", True, 1),  # Autonomous pack + silent
     ],
 )
 def test_NoIsSilentInAutonomousPackValidator_trigger(
-    managed, pack_source, item_is_silent, item_source, expected_result_len
+    managed, pack_source, item_is_silent, expected_result_len
 ):
     """
     Given:
-        - Triggers with various combinations of pack metadata (managed/source),
-          item-level issilent and item-level source fields.
+        - Triggers with various combinations of pack metadata (managed/source)
+          and item-level issilent field.
 
     When:
         - Running NoIsSilentInAutonomousPackValidator.obtain_invalid_content_items.
@@ -741,13 +667,7 @@ def test_NoIsSilentInAutonomousPackValidator_trigger(
         paths=list(pack_metadata.keys()), values=list(pack_metadata.values())
     )
 
-    trigger_paths = ["issilent"]
-    trigger_values: list = [item_is_silent]
-    if item_source is not None:
-        trigger_paths.append("source")
-        trigger_values.append(item_source)
-
-    trigger = create_trigger_object(paths=trigger_paths, values=trigger_values)
+    trigger = create_trigger_object(paths=["issilent"], values=[item_is_silent])
     trigger.pack = pack
 
     results = NoIsSilentInAutonomousPackValidator().obtain_invalid_content_items(

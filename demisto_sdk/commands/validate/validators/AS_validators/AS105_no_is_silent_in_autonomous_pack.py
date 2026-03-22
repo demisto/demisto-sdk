@@ -69,9 +69,8 @@ def is_invalid_silent_in_autonomous_pack(content_item: ContentTypes) -> bool:
     Check if a playbook or trigger is in an autonomous pack and is marked as isSilent: true.
 
     The check applies when the item is marked as silent AND the pack is autonomous
-    (managed: true AND source: 'autonomous'). The item's own source field is also checked
-    as an additional safety measure — the pack-level check alone is sufficient, but
-    both are verified for completeness.
+    (managed: true AND source: 'autonomous'). If the pack is autonomous, all items
+    within it are considered autonomous as well.
 
     Args:
         content_item: The playbook or trigger content item to validate.
@@ -88,16 +87,4 @@ def is_invalid_silent_in_autonomous_pack(content_item: ContentTypes) -> bool:
 
     is_managed = pack_metadata.get("managed", False)
     pack_source = pack_metadata.get("source", "")
-    is_autonomous_pack = is_managed is True and pack_source == "autonomous"
-
-    if not is_autonomous_pack:
-        return False
-
-    # Pack is autonomous — the item is invalid if it is marked as silent.
-    # Additionally check the item's own source field for completeness.
-    item_source = content_item.data.get("source", "")
-    item_is_autonomous = item_source == "autonomous"
-
-    # Both the pack-level and item-level checks are included for safety.
-    # The pack being autonomous is sufficient; item source is an extra verification.
-    return is_autonomous_pack or item_is_autonomous
+    return is_managed is True and pack_source == "autonomous"

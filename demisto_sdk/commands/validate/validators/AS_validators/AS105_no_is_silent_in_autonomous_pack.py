@@ -15,9 +15,7 @@ ContentTypes = Union[Playbook, Trigger]
 
 class NoIsSilentInAutonomousPackValidator(BaseValidator[ContentTypes]):
     error_code = "AS105"
-    description = (
-        "Validate that playbooks and triggers in autonomous packs do not have isSilent: true."
-    )
+    description = "Validate that playbooks and triggers in autonomous packs do not have isSilent: true."
     rationale = (
         "In autonomous packs (managed: true, source: 'autonomous'), playbooks and triggers "
         "must not be marked as silent (isSilent: true), as silent items are incompatible "

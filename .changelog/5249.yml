@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where pre-commit incorrectly classified all files as added in content-private, causing it to run on all files instead of only the changed ones and updating the graph for packs which were not changed.
-  type: fix
-pr_number: 5249

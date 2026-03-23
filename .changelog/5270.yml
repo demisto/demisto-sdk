@@ -1,4 +1,0 @@
-changes:
-    - description: Do not prompt for silent playbook when formatting playbooks with the --assume-no argument is given.
-      type: feature
-pr_number: 5270

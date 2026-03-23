@@ -1,0 +1,4 @@
+changes:
+- description: "Added new MC101 validation that checks managed packs (managed: true in pack_metadata) have a deployment.json file in the pack folder."
+  type: feature
+pr_number: 5294

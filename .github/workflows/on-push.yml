@@ -43,9 +43,10 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           LATEST_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Commenting changelog for PR: $PR_NUMBER"
-          poetry run python ./Utils/github_workflow_scripts/changelog_comment_scripts/comment_changelog.py -n "$PR_NUMBER" -lt "$LATEST_COMMIT_SHA" -ght ${{ secrets.GITHUB_TOKEN }}
+          poetry run python ./Utils/github_workflow_scripts/changelog_comment_scripts/comment_changelog.py -n "$PR_NUMBER" -lt "$LATEST_COMMIT_SHA" -ght "$GH_TOKEN"
 
   pre-commit-checks:
     runs-on: ubuntu-latest
@@ -423,8 +424,13 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Notify Failed Jobs
+        env:
+          WORKFLOW_ID: ${{ github.run_id }}
+          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
         run: |
-          poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}
+          poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id "$WORKFLOW_ID" --slack-token "$SLACK_TOKEN" --github-token "$GH_TOKEN" --slack-channel "$SLACK_CHANNEL"
   generate_validate_docs:
     name: Generate Validate Docs
     runs-on: ubuntu-latest

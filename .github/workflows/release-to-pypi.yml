@@ -17,7 +17,7 @@ jobs:
           git fetch --tags
           git checkout tags/v${{ github.event.pull_request.head.ref }}
 
-      - uses: tj-actions/branch-names@v8.0.1
+      - uses: tj-actions/branch-names@6871f53176ad61624f978536bbf089c574dc19a2 # v8.0.1
         id: branch-name
 
       - name: Check branch name is a release branch
@@ -47,7 +47,7 @@ jobs:
           poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
 
       - name: Comment PR that SDK has been released
-        uses: thollander/actions-comment-pull-request@v2
+        uses: thollander/actions-comment-pull-request@fabd468d3a1a0b97feee5f6b9e499eab0dd903f6 # v2
         with:
           message: |
             Demisto-SDK ${{ steps.branch-name.outputs.current_branch }} has been released successfully into pypi :smiley:

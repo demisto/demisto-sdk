@@ -213,7 +213,7 @@ jobs:
           coverage report
           coverage xml
       - name: Coveralls-Action
-        uses: coverallsapp/github-action@v2
+        uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2
         continue-on-error: true
       - name: Coveralls-Comment
         env:
@@ -309,7 +309,7 @@ jobs:
 
       - name: Check whether validate_content_path changed
         id: files-changed
-        uses: tj-actions/changed-files@v46.0.1
+        uses: tj-actions/changed-files@823fcebdb31bb35fdf2229d9f769b400309430d0 # v46.0.3
         with:
           files: |
             demisto_sdk/scripts/validate_content_path.py

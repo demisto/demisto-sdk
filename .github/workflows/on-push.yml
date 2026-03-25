@@ -310,7 +310,7 @@ jobs:
 
       - name: Check whether validate_content_path changed
         id: files-changed
-        uses: tj-actions/changed-files@823fcebdb31bb35fdf2229d9f769b400309430d0 # v46.0.3
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: |
             demisto_sdk/scripts/validate_content_path.py

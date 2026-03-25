@@ -2002,6 +2002,14 @@ class MarketplaceVersions(StrEnum):
     PLATFORM = "platform"
 
 
+MARKETPLACES_NO_AGENTIC_ASSISTANT = {
+    MarketplaceVersions.XSOAR,
+    MarketplaceVersions.XSOAR_ON_PREM,
+    MarketplaceVersions.XSOAR_SAAS,
+    MarketplaceVersions.MarketplaceV2,
+    MarketplaceVersions.XPANSE,
+}
+
 MarketplaceVersionToMarketplaceName: Dict[str, str] = {
     MarketplaceVersions.XSOAR.value: DEMISTO_SDK_MARKETPLACE_XSOAR_DIST,
     MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,

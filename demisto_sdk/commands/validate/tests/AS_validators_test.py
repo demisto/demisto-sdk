@@ -14,6 +14,9 @@ from demisto_sdk.commands.validate.validators.AS_validators.AS102_is_valid_quiet
 from demisto_sdk.commands.validate.validators.AS_validators.AS103_is_valid_autonomous_playbook_headers import (
     IsValidAutonomousPlaybookHeadersValidator,
 )
+from demisto_sdk.commands.validate.validators.AS_validators.AS106_warn_quiet_mode_on_display_label_task import (
+    WarnQuietModeOnDisplayLabelTaskValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -577,3 +580,57 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
     assert (
         len(results) == 0
     ), "Sub-section title tasks (isSubSection=true) should be ignored by AS103"
+
+
+@pytest.mark.parametrize(
+    "managed, source, task_overrides, expected_warnings",
+    [
+        # Non-autonomous pack — no warnings regardless of quietmode/displayLabel
+        (False, "other", [("0", "start", 0, None), ("1", "regular", 1, "My Label")], 0),
+        # Autonomous pack, task has displayLabel and quietmode=1 — warning
+        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 1, "My Label")], 1),
+        # Autonomous pack, task has displayLabel but quietmode=0 — no warning
+        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 0, "My Label")], 0),
+        # Autonomous pack, task has displayLabel but quietmode=None — no warning
+        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", None, "My Label")], 0),
+        # Autonomous pack, task has no displayLabel and quietmode=1 — no warning (AS102 handles this)
+        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 1, None)], 0),
+        # Autonomous pack, start/title tasks excluded even with displayLabel and quietmode=1
+        (True, "autonomous", [("0", "start", 1, "Start Label"), ("1", "title", 1, "Title Label")], 0),
+        # Autonomous pack, multiple tasks with displayLabel and quietmode=1 — multiple warnings in one result
+        (
+            True,
+            "autonomous",
+            [
+                ("0", "start", 0, None),
+                ("1", "regular", 1, "Label One"),
+                ("2", "regular", 1, "Label Two"),
+            ],
+            1,
+        ),
+    ],
+)
+def test_WarnQuietModeOnDisplayLabelTaskValidator(
+    managed, source, task_overrides, expected_warnings
+):
+    """
+    Given:
+        - Playbooks with various task configurations in autonomous/non-autonomous packs.
+    When:
+        - Running WarnQuietModeOnDisplayLabelTaskValidator.obtain_invalid_content_items.
+    Then:
+        - Tasks with a displayLabel AND quietmode=1 in autonomous packs should raise a warning.
+        - Tasks without a displayLabel, or with quietmode != 1, or in non-autonomous packs
+          should not raise a warning.
+        - start and title task types are always excluded.
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+    playbook = create_playbook_object(
+        paths=["tasks"], values=[_make_tasks(task_overrides)]
+    )
+    playbook.pack = pack
+
+    results = WarnQuietModeOnDisplayLabelTaskValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_warnings

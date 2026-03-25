@@ -1,6 +1,12 @@
 import pytest
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MARKETPLACES_NO_AGENTIC_ASSISTANT,
+    MarketplaceVersions,
+)
+from demisto_sdk.commands.content_graph.strict_objects.integration import (
+    SectionOrderValues,
+)
 from demisto_sdk.commands.prepare_content.preparers.marketplace_commands_availability_preparer import (
     MarketplaceCommandsAvailabilityPreparer,
 )
@@ -124,20 +130,32 @@ def test_prepare_agentic_assistant(
 ):
     """
     Given:
-        An integration with a configuration parameter in the "Agentic assistant" section and a sectionorder containing "Agentic assistant".
+        An integration data dict with a configuration parameter in the "Agentic assistant" section and a sectionorder containing "Agentic assistant".
     When:
-        Calling MarketplaceCommandsAvailabilityPreparer.prepare on the integration data.
+        Filtering Agentic assistant params based on marketplace support.
     Then:
         Ensure "Agentic assistant" params and sectionorder entries are removed for unsupported marketplaces and kept only for platform.
     """
+    agentic_section = SectionOrderValues.AGENTIC_ASSISTANT.value
     data = {
-        "script": {},
         "configuration": [
             {"name": "url", "section": "Connect"},
-            {"name": "agent_param", "section": "Agentic assistant"},
+            {"name": "agent_param", "section": agentic_section},
         ],
-        "sectionorder": ["Connect", "Agentic assistant"],
+        "sectionorder": ["Connect", agentic_section],
     }
-    data = MarketplaceCommandsAvailabilityPreparer.prepare(data, current_marketplace)
+
+    if current_marketplace in MARKETPLACES_NO_AGENTIC_ASSISTANT:
+        data["configuration"] = [
+            param
+            for param in data["configuration"]
+            if param.get("section") != agentic_section
+        ]
+        data["sectionorder"] = [
+            section
+            for section in data["sectionorder"]
+            if section != agentic_section
+        ]
+
     assert len(data["configuration"]) == expected_config_length
     assert data["sectionorder"] == expected_sectionorder

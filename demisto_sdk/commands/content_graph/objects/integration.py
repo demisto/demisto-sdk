@@ -26,13 +26,19 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MARKETPLACES_NO_AGENTIC_ASSISTANT,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     Argument,
     IntegrationScript,
     Output,
+)
+from demisto_sdk.commands.content_graph.strict_objects.integration import (
+    SectionOrderValues,
 )
 
 
@@ -196,6 +202,20 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         data = MarketplaceCommandsAvailabilityPreparer.prepare(
             data, current_marketplace
         )
+
+        if current_marketplace in MARKETPLACES_NO_AGENTIC_ASSISTANT:
+            agentic_section = SectionOrderValues.AGENTIC_ASSISTANT.value
+            data["configuration"] = [
+                param
+                for param in data.get("configuration", [])
+                if param.get("section") != agentic_section
+            ]
+            if "sectionorder" in data:
+                data["sectionorder"] = [
+                    section
+                    for section in data["sectionorder"]
+                    if section != agentic_section
+                ]
 
         if supported_native_images := self.get_supported_native_images(
             ignore_native_image=kwargs.get("ignore_native_image") or False,

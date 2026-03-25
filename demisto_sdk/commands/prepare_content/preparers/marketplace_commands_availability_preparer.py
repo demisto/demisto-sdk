@@ -1,10 +1,4 @@
-from demisto_sdk.commands.common.constants import (
-    MARKETPLACES_NO_AGENTIC_ASSISTANT,
-    MarketplaceVersions,
-)
-from demisto_sdk.commands.content_graph.strict_objects.integration import (
-    SectionOrderValues,
-)
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 MARKETPLACES_SUPPORTING_FETCH_EVENTS = [
     MarketplaceVersions.MarketplaceV2,
@@ -42,9 +36,6 @@ class MarketplaceCommandsAvailabilityPreparer:
         MarketplaceCommandsAvailabilityPreparer.prepare_quick_actions(
             data, current_marketplace
         )
-        MarketplaceCommandsAvailabilityPreparer.prepare_agentic_assistant(
-            data, current_marketplace
-        )
         return data
 
     @staticmethod
@@ -79,22 +70,3 @@ class MarketplaceCommandsAvailabilityPreparer:
             data["script"]["commands"] = [
                 cmd for cmd in data["script"]["commands"] if not cmd.get("quickaction")
             ]
-
-    @staticmethod
-    def prepare_agentic_assistant(
-        data: dict,
-        current_marketplace: MarketplaceVersions,
-    ) -> None:
-        if current_marketplace in MARKETPLACES_NO_AGENTIC_ASSISTANT:
-            agentic_section = SectionOrderValues.AGENTIC_ASSISTANT.value
-            data["configuration"] = [
-                param
-                for param in data.get("configuration", [])
-                if param.get("section") != agentic_section
-            ]
-            if "sectionorder" in data:
-                data["sectionorder"] = [
-                    section
-                    for section in data["sectionorder"]
-                    if section != agentic_section
-                ]

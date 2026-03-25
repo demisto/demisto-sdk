@@ -199,9 +199,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         data = MarketplaceCommandsAvailabilityPreparer.prepare(
             data, current_marketplace
         )
-        data = MarketplaceAgenticAssistantPreparer.prepare(
-            data, current_marketplace
-        )
+        data = MarketplaceAgenticAssistantPreparer.prepare(data, current_marketplace)
 
         if supported_native_images := self.get_supported_native_images(
             ignore_native_image=kwargs.get("ignore_native_image") or False,

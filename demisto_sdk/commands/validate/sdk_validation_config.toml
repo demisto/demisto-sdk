@@ -73,7 +73,8 @@ ignorable_errors = [
   "RM117",
   "VC100",
   "VC101",
-  "AS103"
+  "AS103",
+  "AS104"
 ]
 
 [Custom_Categories]
@@ -264,6 +265,7 @@ select = [
   "GR113",
   "AS102",
   "AS103",
+  "AS104",
   "MC100",
   "VC100",
   "VC101",
@@ -574,6 +576,7 @@ select = [
   "GR113",
   "AS102",
   "AS103",
+  "AS104",
   "MC100",
   "BA112"
 ]

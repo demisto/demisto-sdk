@@ -48,7 +48,7 @@ class SectionOrderValues(StrEnum):
     OPTIMIZE = "Optimize"
     MIRRORING = "Mirroring"
     RESULT = "Result"
-    AGENTIC_ASSISTANT = "Agentic assistant"
+    AGENTIC_ASSISTANT = "Agentic Assistant"
 
 
 class _Configuration(BaseStrictModel):

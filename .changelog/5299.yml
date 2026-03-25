@@ -1,0 +1,4 @@
+changes:
+- description: Added AS104 validation to ensure that context keys referenced in displayLabel fields of autonomous playbook tasks are actually used in other tasks within the same playbook.
+  type: feature
+pr_number: '5299'

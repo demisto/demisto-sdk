@@ -287,7 +287,7 @@ def test_invalid_section_order(pack: Pack):
     assert results[0].message == (
         "Structure error (type_error.enum) in field sectionorder,1 of integration_0.yml: "
         "value is not a valid enumeration member; permitted: "
-        "'Connect', 'Collect', 'Optimize', 'Mirroring', 'Result', 'Agentic assistant'"
+        "'Connect', 'Collect', 'Optimize', 'Mirroring', 'Result', 'Agentic Assistant'"
     )
 
 
@@ -473,7 +473,7 @@ class TestST111:
         assert len(results) == 1
         assert results[0].message == (
             "Missing 'sectionorder' key. Please add 'sectionorder' (lowercase) to the top of your YAML file and specify the order of the "
-            "Connect, Collect, Optimize, Mirroring, Result, Agentic assistant sections (at least one is required)."
+            "Connect, Collect, Optimize, Mirroring, Result, Agentic Assistant sections (at least one is required)."
         )
 
     def test_invalid_section(self):

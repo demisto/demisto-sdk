@@ -588,15 +588,35 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
         # Non-autonomous pack — no warnings regardless of quietmode/displayLabel
         (False, "other", [("0", "start", 0, None), ("1", "regular", 1, "My Label")], 0),
         # Autonomous pack, task has displayLabel and quietmode=1 — warning
-        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 1, "My Label")], 1),
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", 1, "My Label")],
+            1,
+        ),
         # Autonomous pack, task has displayLabel but quietmode=0 — no warning
-        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 0, "My Label")], 0),
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", 0, "My Label")],
+            0,
+        ),
         # Autonomous pack, task has displayLabel but quietmode=None — no warning
-        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", None, "My Label")], 0),
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", None, "My Label")],
+            0,
+        ),
         # Autonomous pack, task has no displayLabel and quietmode=1 — no warning (AS102 handles this)
         (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 1, None)], 0),
         # Autonomous pack, start/title tasks excluded even with displayLabel and quietmode=1
-        (True, "autonomous", [("0", "start", 1, "Start Label"), ("1", "title", 1, "Title Label")], 0),
+        (
+            True,
+            "autonomous",
+            [("0", "start", 1, "Start Label"), ("1", "title", 1, "Title Label")],
+            0,
+        ),
         # Autonomous pack, multiple tasks with displayLabel and quietmode=1 — multiple warnings in one result
         (
             True,

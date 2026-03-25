@@ -1,4 +1,4 @@
 changes:
 - description: Fixed false duplicate errors in GR111/GR112 for Agentix Actions split across files with different version ranges.
   type: fix
-pr_number: '5296'
+pr_number: '5300'

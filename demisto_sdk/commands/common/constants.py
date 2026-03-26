@@ -2002,6 +2002,14 @@ class MarketplaceVersions(StrEnum):
     PLATFORM = "platform"
 
 
+MARKETPLACES_NO_AGENTIC_ASSISTANT = {
+    MarketplaceVersions.XSOAR,
+    MarketplaceVersions.XSOAR_ON_PREM,
+    MarketplaceVersions.XSOAR_SAAS,
+    MarketplaceVersions.MarketplaceV2,
+    MarketplaceVersions.XPANSE,
+}
+
 MarketplaceVersionToMarketplaceName: Dict[str, str] = {
     MarketplaceVersions.XSOAR.value: DEMISTO_SDK_MARKETPLACE_XSOAR_DIST,
     MarketplaceVersions.MarketplaceV2.value: DEMISTO_SDK_MARKETPLACE_XSIAM_DIST,
@@ -2021,14 +2029,6 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
 
 
 class PlatformSupportedModules(StrEnum):
-    C1 = "C1"
-    C3 = "C3"
-    XO = "X0"
-    X1 = "X1"
-    X3 = "X3"
-    X5 = "X5"
-    ENT_PLUS = "ENT_PLUS"
-    # new licenses - TODO all values above this line needs to be removed as part of batch 4.
     CLOUD_POSTURE = "cloud_posture"
     CLOUD = "cloud"
     CLOUD_RUNTIME_SECURITY = "cloud_runtime_security"

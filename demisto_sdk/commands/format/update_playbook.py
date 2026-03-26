@@ -328,17 +328,9 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
         does not yet have an 'adopted' field, it is set to True.
         """
         try:
-            from pathlib import Path
+            from demisto_sdk.commands.common.tools import get_pack_metadata
 
-            from demisto_sdk.commands.common.tools import get_dict_from_file
-
-            pack_dir = Path(self.source_file).parent.parent
-            pack_metadata_path = pack_dir / "pack_metadata.json"
-
-            if not pack_metadata_path.exists():
-                return
-
-            pack_metadata = get_dict_from_file(str(pack_metadata_path))[0]
+            pack_metadata = get_pack_metadata(str(self.source_file))
 
             if not pack_metadata.get("managed", False):
                 return

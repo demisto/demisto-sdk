@@ -54,6 +54,7 @@ class Parameter(BaseModel):
     hiddenusername: Optional[bool] = None
     hiddenpassword: Optional[bool] = None
     fromlicense: Optional[str] = None
+    supportedModules: Optional[List[str]] = None
 
 
 class IntegrationOutput(Output):

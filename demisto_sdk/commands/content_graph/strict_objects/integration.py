@@ -66,6 +66,12 @@ class _Configuration(BaseStrictModel):
     hidden_username: Optional[bool] = Field(None, alias="hiddenusername")
     hidden_password: Optional[bool] = Field(None, alias="hiddenpassword")
     from_license: Optional[str] = Field(None, alias="fromlicense")
+    supportedModules: Optional[
+        Annotated[
+            List[PlatformSupportedModules],
+            Field(min_length=1, max_length=len(PlatformSupportedModules)),
+        ]
+    ] = None
 
 
 Configuration = create_model(

@@ -173,6 +173,12 @@ from demisto_sdk.commands.validate.validators.IN_validators.IN168_is_mcp_integra
 from demisto_sdk.commands.validate.validators.IN_validators.IN169_is_valid_provider_field import (
     IsValidProviderFieldValidator,
 )
+from demisto_sdk.commands.validate.validators.IN_validators.IN170_is_param_supported_modules_subset_of_integration import (
+    IsParamSupportedModulesSubsetOfIntegrationValidator,
+)
+from demisto_sdk.commands.validate.validators.IN_validators.IN171_is_param_supported_modules_not_empty import (
+    IsParamSupportedModulesNotEmptyValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 MARKETPLACE_VALUES = [mp.value for mp in MarketplaceVersions]
@@ -6796,3 +6802,339 @@ def test_IsValidProviderFieldValidator_platform_pack_integration_both_marketplac
             results[0].message
             == "The Integration is missing the 'provider' field or it has an empty value. Please add a valid provider name."
         )
+
+
+# ===================== IN170 Tests =====================
+
+
+def test_IsParamSupportedModulesSubsetOfIntegrationValidator_valid_exact_match():
+    """
+    Given:
+        - An integration with supportedModules=["xsiam"] and a parameter with supportedModules=["xsiam"].
+    When:
+        - Running the IsParamSupportedModulesSubsetOfIntegrationValidator.
+    Then:
+        - The validation should pass (parameter modules are a subset of integration modules).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["supportedModules", "configuration"],
+                values=[
+                    ["xsiam"],
+                    [
+                        {
+                            "name": "test_param",
+                            "display": "Test Param",
+                            "type": 0,
+                            "supportedModules": ["xsiam"],
+                        }
+                    ],
+                ],
+            ),
+        ]
+        results = IsParamSupportedModulesSubsetOfIntegrationValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(results) == 0
+
+
+def test_IsParamSupportedModulesSubsetOfIntegrationValidator_valid_proper_subset():
+    """
+    Given:
+        - An integration with supportedModules=["xsiam", "edr"] and a parameter with supportedModules=["xsiam"].
+    When:
+        - Running the IsParamSupportedModulesSubsetOfIntegrationValidator.
+    Then:
+        - The validation should pass (parameter modules are a proper subset of integration modules).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["supportedModules", "configuration"],
+                values=[
+                    ["xsiam", "edr"],
+                    [
+                        {
+                            "name": "test_param",
+                            "display": "Test Param",
+                            "type": 0,
+                            "supportedModules": ["xsiam"],
+                        }
+                    ],
+                ],
+            ),
+        ]
+        results = IsParamSupportedModulesSubsetOfIntegrationValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(results) == 0
+
+
+def test_IsParamSupportedModulesSubsetOfIntegrationValidator_valid_param_none():
+    """
+    Given:
+        - An integration with supportedModules=["xsiam"] and a parameter without supportedModules (None).
+    When:
+        - Running the IsParamSupportedModulesSubsetOfIntegrationValidator.
+    Then:
+        - The validation should pass (parameter with no supportedModules is skipped).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["supportedModules", "configuration"],
+                values=[
+                    ["xsiam"],
+                    [
+                        {
+                            "name": "test_param",
+                            "display": "Test Param",
+                            "type": 0,
+                        }
+                    ],
+                ],
+            ),
+        ]
+        results = IsParamSupportedModulesSubsetOfIntegrationValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(results) == 0
+
+
+def test_IsParamSupportedModulesSubsetOfIntegrationValidator_invalid_not_subset():
+    """
+    Given:
+        - An integration with supportedModules=["xsiam"] and a parameter with supportedModules=["xsiam", "edr"].
+    When:
+        - Running the IsParamSupportedModulesSubsetOfIntegrationValidator.
+    Then:
+        - The validation should fail (parameter modules are not a subset of integration modules).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["supportedModules", "configuration"],
+                values=[
+                    ["xsiam"],
+                    [
+                        {
+                            "name": "test_param",
+                            "display": "Test Param",
+                            "type": 0,
+                            "supportedModules": ["xsiam", "edr"],
+                        }
+                    ],
+                ],
+            ),
+        ]
+        results = IsParamSupportedModulesSubsetOfIntegrationValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(results) == 1
+        assert "test_param" in results[0].message
+        assert results[0].validator.error_code == "IN170"
+
+
+def test_IsParamSupportedModulesSubsetOfIntegrationValidator_valid_integration_no_supported_modules():
+    """
+    Given:
+        - An integration with no supportedModules (None, defaults to all modules)
+          and a parameter with supportedModules=["xsiam", "edr"].
+    When:
+        - Running the IsParamSupportedModulesSubsetOfIntegrationValidator.
+    Then:
+        - The validation should pass (integration with no supportedModules defaults to all modules).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_param",
+                            "display": "Test Param",
+                            "type": 0,
+                            "supportedModules": ["xsiam", "edr"],
+                        }
+                    ],
+                ],
+            ),
+        ]
+        results = IsParamSupportedModulesSubsetOfIntegrationValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(results) == 0
+
+
+# ===================== IN171 Tests =====================
+
+
+def test_IsParamSupportedModulesNotEmptyValidator_valid_non_empty():
+    """
+    Given:
+        - An integration with a parameter that has supportedModules=["xsiam"].
+    When:
+        - Running the IsParamSupportedModulesNotEmptyValidator.
+    Then:
+        - The validation should pass (supportedModules is not empty).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_param",
+                            "display": "Test Param",
+                            "type": 0,
+                            "supportedModules": ["xsiam"],
+                        }
+                    ],
+                ],
+            ),
+        ]
+        results = IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(results) == 0
+
+
+def test_IsParamSupportedModulesNotEmptyValidator_valid_none():
+    """
+    Given:
+        - An integration with a parameter that has no supportedModules (None).
+    When:
+        - Running the IsParamSupportedModulesNotEmptyValidator.
+    Then:
+        - The validation should pass (None is not an empty list).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_param",
+                            "display": "Test Param",
+                            "type": 0,
+                        }
+                    ],
+                ],
+            ),
+        ]
+        results = IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(results) == 0
+
+
+def test_IsParamSupportedModulesNotEmptyValidator_invalid_empty_list():
+    """
+    Given:
+        - An integration with a parameter that has supportedModules=[].
+    When:
+        - Running the IsParamSupportedModulesNotEmptyValidator.
+    Then:
+        - The validation should fail (empty supportedModules list).
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "test_param",
+                            "display": "Test Param",
+                            "type": 0,
+                            "supportedModules": [],
+                        }
+                    ],
+                ],
+            ),
+        ]
+        results = IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(results) == 1
+        assert "test_param" in results[0].message
+        assert results[0].validator.error_code == "IN171"
+
+
+def test_IsParamSupportedModulesNotEmptyValidator_valid_multiple_params_none_empty():
+    """
+    Given:
+        - An integration with multiple parameters, none of which have an empty supportedModules list.
+    When:
+        - Running the IsParamSupportedModulesNotEmptyValidator.
+    Then:
+        - The validation should pass.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "param_with_modules",
+                            "display": "Param With Modules",
+                            "type": 0,
+                            "supportedModules": ["xsiam"],
+                        },
+                        {
+                            "name": "param_without_modules",
+                            "display": "Param Without Modules",
+                            "type": 0,
+                        },
+                    ],
+                ],
+            ),
+        ]
+        results = IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(results) == 0
+
+
+def test_IsParamSupportedModulesNotEmptyValidator_invalid_one_of_multiple_params_empty():
+    """
+    Given:
+        - An integration with multiple parameters, one of which has an empty supportedModules list.
+    When:
+        - Running the IsParamSupportedModulesNotEmptyValidator.
+    Then:
+        - The validation should fail for the parameter with the empty list only.
+    """
+    with ChangeCWD(REPO.path):
+        content_items = [
+            create_integration_object(
+                paths=["configuration"],
+                values=[
+                    [
+                        {
+                            "name": "param_with_modules",
+                            "display": "Param With Modules",
+                            "type": 0,
+                            "supportedModules": ["xsiam"],
+                        },
+                        {
+                            "name": "param_empty_modules",
+                            "display": "Param Empty Modules",
+                            "type": 0,
+                            "supportedModules": [],
+                        },
+                    ],
+                ],
+            ),
+        ]
+        results = IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
+            content_items
+        )
+        assert len(results) == 1
+        assert "param_empty_modules" in results[0].message
+        assert results[0].validator.error_code == "IN171"

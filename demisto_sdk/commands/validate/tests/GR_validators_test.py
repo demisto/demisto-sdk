@@ -2176,11 +2176,15 @@ def test_IsAgentixActionNameAlreadyExistsValidator_non_overlapping_versions(
     """
     pack = graph_repo.create_pack("pack1")
     action1 = pack.create_agentix_action("action_v1")
-    action1.create_default_agentix_action(name="test", action_id="test_v1", display="test")
+    action1.create_default_agentix_action(
+        name="test", action_id="test_v1", display="test"
+    )
     action1.yml.update({"fromversion": "8.0.0", "toversion": "8.14.0"})
 
     action2 = pack.create_agentix_action("action_v2")
-    action2.create_default_agentix_action(name="test", action_id="test_v2", display="test")
+    action2.create_default_agentix_action(
+        name="test", action_id="test_v2", display="test"
+    )
     action2.yml.update({"fromversion": "8.15.0", "toversion": "99.99.99"})
 
     BaseValidator.graph_interface = graph_repo.create_graph()
@@ -2206,11 +2210,15 @@ def test_IsAgentixActionDisplayNameAlreadyExistsValidator_non_overlapping_versio
     """
     pack = graph_repo.create_pack("pack1")
     action1 = pack.create_agentix_action("action_v1")
-    action1.create_default_agentix_action(name="test_v1", action_id="test_v1", display="test")
+    action1.create_default_agentix_action(
+        name="test_v1", action_id="test_v1", display="test"
+    )
     action1.yml.update({"fromversion": "8.0.0", "toversion": "8.14.0"})
 
     action2 = pack.create_agentix_action("action_v2")
-    action2.create_default_agentix_action(name="test_v2", action_id="test_v2", display="test")
+    action2.create_default_agentix_action(
+        name="test_v2", action_id="test_v2", display="test"
+    )
     action2.yml.update({"fromversion": "8.15.0", "toversion": "99.99.99"})
 
     BaseValidator.graph_interface = graph_repo.create_graph()

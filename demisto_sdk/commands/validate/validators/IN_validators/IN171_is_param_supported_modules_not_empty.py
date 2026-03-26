@@ -34,7 +34,10 @@ class IsParamSupportedModulesNotEmptyValidator(BaseValidator[ContentTypes]):
         results: List[ValidationResult] = []
         for content_item in content_items:
             for param in content_item.params:
-                if param.supportedModules is not None and len(param.supportedModules) == 0:
+                if (
+                    param.supportedModules is not None
+                    and len(param.supportedModules) == 0
+                ):
                     results.append(
                         ValidationResult(
                             validator=self,

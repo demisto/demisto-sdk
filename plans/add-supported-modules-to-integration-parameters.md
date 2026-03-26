@@ -11,7 +11,7 @@ graph TD
     A[Pack metadata] -->|supportedModules| B[Content Item e.g. Integration]
     B -->|supportedModules on HAS_COMMAND relationship| C[Command]
     B -->|configuration params - NO supportedModules| D[Parameter]
-    
+
     style D fill:#f99,stroke:#333
 ```
 
@@ -201,13 +201,13 @@ def _clean_empty_supported_modules_from_params(self, content_items: dict):
 class IsParamSupportedModulesSubsetOfIntegration(BaseValidator[Integration]):
     error_code = "IN1XX"  # Assign next available IN error code
     description = "Ensure parameter supportedModules is a subset of the integration's supportedModules."
-    
+
     def obtain_invalid_content_items(self, content_items):
         results = []
         for integration in content_items:
             integration_modules = set(
-                integration.supportedModules 
-                or integration.pack.supportedModules 
+                integration.supportedModules
+                or integration.pack.supportedModules
                 or [sm.value for sm in PlatformSupportedModules]
             )
             for param in integration.params:
@@ -379,12 +379,12 @@ graph TD
     A[Pack metadata] -->|supportedModules| B[Integration]
     B -->|supportedModules on HAS_COMMAND rel| C[Command]
     B -->|configuration params WITH supportedModules| D[Parameter]
-    
+
     E[ST114] -->|validates subset| A
     F[GR109] -->|validates compatibility| B
     F -->|validates compatibility| C
     G[New IN1XX] -->|validates param subset of integration| D
     H[New BC1XX] -->|validates no removal| D
-    
+
     style D fill:#9f9,stroke:#333
 ```

@@ -12,9 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Integration
 
 
-class IsParamSupportedModulesSubsetOfIntegrationValidator(
-    BaseValidator[ContentTypes]
-):
+class IsParamSupportedModulesSubsetOfIntegrationValidator(BaseValidator[ContentTypes]):
     error_code = "IN170"
     description = (
         "Validate that each parameter's supportedModules is a subset "

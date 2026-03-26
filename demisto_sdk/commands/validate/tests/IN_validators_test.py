@@ -6996,8 +6996,10 @@ def test_IsParamSupportedModulesNotEmptyValidator_valid_non_empty():
                 ],
             ),
         ]
-        results = IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
-            content_items
+        results = (
+            IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
+                content_items
+            )
         )
         assert len(results) == 0
 
@@ -7026,8 +7028,10 @@ def test_IsParamSupportedModulesNotEmptyValidator_valid_none():
                 ],
             ),
         ]
-        results = IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
-            content_items
+        results = (
+            IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
+                content_items
+            )
         )
         assert len(results) == 0
 
@@ -7057,8 +7061,10 @@ def test_IsParamSupportedModulesNotEmptyValidator_invalid_empty_list():
                 ],
             ),
         ]
-        results = IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
-            content_items
+        results = (
+            IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
+                content_items
+            )
         )
         assert len(results) == 1
         assert "test_param" in results[0].message
@@ -7095,8 +7101,10 @@ def test_IsParamSupportedModulesNotEmptyValidator_valid_multiple_params_none_emp
                 ],
             ),
         ]
-        results = IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
-            content_items
+        results = (
+            IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
+                content_items
+            )
         )
         assert len(results) == 0
 
@@ -7132,8 +7140,10 @@ def test_IsParamSupportedModulesNotEmptyValidator_invalid_one_of_multiple_params
                 ],
             ),
         ]
-        results = IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
-            content_items
+        results = (
+            IsParamSupportedModulesNotEmptyValidator().obtain_invalid_content_items(
+                content_items
+            )
         )
         assert len(results) == 1
         assert "param_empty_modules" in results[0].message

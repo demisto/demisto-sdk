@@ -270,7 +270,6 @@ select = [
 ]
 warning = ["RM108", "PB130", "PB131", "GR107", "GR109", "GR110", "GR101", "PA133", "AS106"]
 
-
 [support_level]
 
 [support_level.community]

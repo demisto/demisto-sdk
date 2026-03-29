@@ -51,20 +51,68 @@ class SectionOrderValues(StrEnum):
 
 
 class _Configuration(BaseStrictModel):
-    display: Optional[str] = None
-    section: Optional[str] = None
-    advanced: Optional[str] = None
-    default_value: Optional[Any] = Field(None, alias="defaultvalue")
-    name: str
-    type: int
-    required: Optional[bool] = None
-    hidden: Optional[Any] = None
-    options: Optional[List[str]] = None
-    additional_info: Optional[str] = Field(None, alias="additionalinfo")
-    display_password: Optional[str] = Field(None, alias="displaypassword")
-    hidden_username: Optional[bool] = Field(None, alias="hiddenusername")
-    hidden_password: Optional[bool] = Field(None, alias="hiddenpassword")
-    from_license: Optional[str] = Field(None, alias="fromlicense")
+    display: Optional[str] = Field(
+        None,
+        description="Display label for this configuration parameter shown in the integration settings UI.",
+    )
+    section: Optional[str] = Field(
+        None,
+        description="Section name this parameter belongs to (e.g. 'Connect', 'Collect'). Must be listed in sectionorder.",
+    )
+    advanced: Optional[str] = Field(
+        None,
+        description="When set, marks this parameter as advanced and hides it by default in the UI.",
+    )
+    default_value: Optional[Any] = Field(
+        None,
+        alias="defaultvalue",
+        description="Default value for this configuration parameter. Used when the user does not provide a value.",
+    )
+    name: str = Field(
+        ...,
+        description="Unique machine-readable name of this configuration parameter. Used in code to access the parameter value.",
+    )
+    type: int = Field(
+        ...,
+        description="Parameter type code. Common values: 0=Short text, 4=Encrypted, 8=Boolean, 9=Authentication, 12=Single select, 16=Multi select.",
+    )
+    required: Optional[bool] = Field(
+        None,
+        description="When True, this parameter must be filled in before the integration instance can be saved.",
+    )
+    hidden: Optional[Any] = Field(
+        None,
+        description="When True, this parameter is hidden from the UI. Can be a boolean or marketplace-specific value.",
+    )
+    options: Optional[List[str]] = Field(
+        None,
+        description="List of allowed values for select-type parameters (type 12 or 16). Users can only choose from these values.",
+    )
+    additional_info: Optional[str] = Field(
+        None,
+        alias="additionalinfo",
+        description="Additional help text shown below the parameter in the UI. Provides extra context or instructions.",
+    )
+    display_password: Optional[str] = Field(
+        None,
+        alias="displaypassword",
+        description="Display label for the password field in credential-type parameters.",
+    )
+    hidden_username: Optional[bool] = Field(
+        None,
+        alias="hiddenusername",
+        description="When True, the username field is hidden in credential-type parameters.",
+    )
+    hidden_password: Optional[bool] = Field(
+        None,
+        alias="hiddenpassword",
+        description="When True, the password field is hidden in credential-type parameters.",
+    )
+    from_license: Optional[str] = Field(
+        None,
+        alias="fromlicense",
+        description="License field to populate this parameter from. Used for license-based authentication.",
+    )
 
 
 Configuration = create_model(
@@ -84,24 +132,63 @@ class IntegrationOutput(Output):  # type:ignore[misc,valid-type]
 
 
 class _Command(BaseStrictModel):
-    name: str
-    execution: Optional[bool] = None
-    description: str
-    deprecated: Optional[bool] = None
-    system: Optional[bool] = None
-    arguments: Optional[List[Argument]] = None  # type:ignore[valid-type]
-    outputs: Optional[List[IntegrationOutput]] = None
-    important: Optional[List[Important]] = None  # type:ignore[valid-type]
-    timeout: Optional[int] = None
-    polling: Optional[bool] = None
-    prettyname: Optional[str] = None
-    compliantpolicies: Optional[List[str]] = None
+    name: str = Field(
+        ...,
+        description="Unique name of the command (e.g. 'ip', 'domain', 'get-alerts'). Used in playbooks and the CLI.",
+    )
+    execution: Optional[bool] = Field(
+        None,
+        description="When True, this command performs a write/execution action (not just read). Used for compliance and auditing.",
+    )
+    description: str = Field(
+        ...,
+        description="Human-readable description of what this command does. Shown in the UI and used for documentation.",
+    )
+    deprecated: Optional[bool] = Field(
+        None,
+        description="When True, this command is deprecated and should not be used in new playbooks.",
+    )
+    system: Optional[bool] = Field(
+        None,
+        description="When True, this is a system-provided command that cannot be deleted.",
+    )
+    arguments: Optional[List[Argument]] = Field(  # type:ignore[valid-type]
+        None,
+        description="List of input arguments accepted by this command.",
+    )
+    outputs: Optional[List[IntegrationOutput]] = Field(
+        None,
+        description="List of output fields returned by this command. Defines the context paths populated after execution.",
+    )
+    important: Optional[List[Important]] = Field(  # type:ignore[valid-type]
+        None,
+        description="List of important outputs to highlight in the UI. These outputs are shown prominently in the war room.",
+    )
+    timeout: Optional[int] = Field(
+        None,
+        description="Command execution timeout in seconds. Overrides the integration-level timeout for this specific command.",
+    )
+    polling: Optional[bool] = Field(
+        None,
+        description="When True, this command supports polling mode for long-running operations.",
+    )
+    prettyname: Optional[str] = Field(
+        None,
+        description="Human-readable display name of the command shown in the UI.",
+    )
+    compliantpolicies: Optional[List[str]] = Field(
+        None,
+        description="List of compliance policy names this command satisfies. Used for compliance reporting.",
+    )
     supportedModules: Optional[
         Annotated[
             List[PlatformSupportedModules],
             Field(min_length=1, max_length=len(PlatformSupportedModules)),
         ]
-    ]
+    ] = Field(
+        None,
+        description="Optional list of platform modules that support this command. Restricts availability to specific modules.",
+    )
 
 
 Command = create_model(
@@ -118,26 +205,103 @@ Command = create_model(
 
 
 class _Script(BaseStrictModel):
-    script: str
-    type_: ScriptType = Field(..., alias="type")
-    docker_image: str = Field(None, alias="dockerimage")
-    alt_docker_images: Optional[List[str]] = Field(None, alias="alt_dockerimages")
-    native_image: Optional[List[str]] = Field(None, alias="nativeImage")
-    is_fetch: Optional[bool] = Field(None, alias="isfetch")
-    is_fetch_events: Optional[bool] = Field(None, alias="isfetchevents")
-    is_fetch_assets: Optional[bool] = Field(None, alias="isfetchassets")
-    mcp: Optional[bool] = Field(None, alias="mcp")
-    long_running: Optional[bool] = Field(None, alias="longRunning")
-    long_running_port: Optional[bool] = Field(None, alias="longRunningPort")
-    is_mappable: Optional[bool] = Field(None, alias="ismappable")
-    is_remote_sync_in: Optional[bool] = Field(None, alias="isremotesyncin")
-    is_remote_sync_out: Optional[bool] = Field(None, alias="isremotesyncout")
-    commands: Optional[List[Command]] = None  # type:ignore[valid-type]
-    run_once: Optional[bool] = Field(None, alias="runonce")
-    sub_type: Optional[str] = Field([TYPE_PYTHON2, TYPE_PYTHON3], alias="subtype")
-    feed: Optional[bool] = None
-    is_fetch_samples: Optional[bool] = Field(None, alias="isFetchSamples")
-    reset_context: Optional[bool] = Field(None, alias="resetContext")
+    script: str = Field(
+        ...,
+        description="The integration script code. For Python integrations, this is the Python source code. For unified integrations, this is '-'.",
+    )
+    type_: ScriptType = Field(
+        ...,
+        alias="type",
+        description="Script language type. Must be one of: 'python3', 'python2', 'powershell', 'javascript'.",
+    )
+    docker_image: str = Field(
+        None,
+        alias="dockerimage",
+        description="Docker image used to run this integration (e.g. 'demisto/python3:3.10.12.63474'). Must be a valid Docker image tag.",
+    )
+    alt_docker_images: Optional[List[str]] = Field(
+        None,
+        alias="alt_dockerimages",
+        description="Alternative Docker images for different platforms. Used for multi-architecture support.",
+    )
+    native_image: Optional[List[str]] = Field(
+        None,
+        alias="nativeImage",
+        description="Native image configurations for running without Docker. Used for native execution environments.",
+    )
+    is_fetch: Optional[bool] = Field(
+        None,
+        alias="isfetch",
+        description="When True, this integration fetches incidents from the external service. Enables the fetch incidents mechanism.",
+    )
+    is_fetch_events: Optional[bool] = Field(
+        None,
+        alias="isfetchevents",
+        description="When True, this integration fetches events for XSIAM. Enables the fetch events mechanism.",
+    )
+    is_fetch_assets: Optional[bool] = Field(
+        None,
+        alias="isfetchassets",
+        description="When True, this integration fetches assets for XSIAM. Enables the fetch assets mechanism.",
+    )
+    mcp: Optional[bool] = Field(
+        None,
+        alias="mcp",
+        description="When True, this integration supports the Model Context Protocol (MCP) for AI agent integration.",
+    )
+    long_running: Optional[bool] = Field(
+        None,
+        alias="longRunning",
+        description="When True, this integration runs as a long-running process rather than per-command execution.",
+    )
+    long_running_port: Optional[bool] = Field(
+        None,
+        alias="longRunningPort",
+        description="When True, the long-running integration exposes a port for incoming connections.",
+    )
+    is_mappable: Optional[bool] = Field(
+        None,
+        alias="ismappable",
+        description="When True, this integration supports incident field mapping via the mapper.",
+    )
+    is_remote_sync_in: Optional[bool] = Field(
+        None,
+        alias="isremotesyncin",
+        description="When True, this integration supports incoming mirroring (syncing changes from the external system to XSOAR).",
+    )
+    is_remote_sync_out: Optional[bool] = Field(
+        None,
+        alias="isremotesyncout",
+        description="When True, this integration supports outgoing mirroring (syncing changes from XSOAR to the external system).",
+    )
+    commands: Optional[List[Command]] = Field(  # type:ignore[valid-type]
+        None,
+        description="List of commands provided by this integration. Each command is callable from playbooks and the CLI.",
+    )
+    run_once: Optional[bool] = Field(
+        None,
+        alias="runonce",
+        description="When True, this integration runs only once and then stops. Used for one-time setup integrations.",
+    )
+    sub_type: Optional[str] = Field(
+        [TYPE_PYTHON2, TYPE_PYTHON3],
+        alias="subtype",
+        description="Python sub-type. Must be 'python3' or 'python2'. Determines which Python version is used.",
+    )
+    feed: Optional[bool] = Field(
+        None,
+        description="When True, this integration is a feed integration that ingests threat intelligence indicators.",
+    )
+    is_fetch_samples: Optional[bool] = Field(
+        None,
+        alias="isFetchSamples",
+        description="When True, this integration can fetch sample incidents for testing and configuration.",
+    )
+    reset_context: Optional[bool] = Field(
+        None,
+        alias="resetContext",
+        description="When True, the integration context is reset on each command execution.",
+    )
 
 
 Script = create_model(
@@ -188,40 +352,136 @@ class Trigger(BaseStrictModel):
 
 
 class _StrictIntegration(BaseStrictModel):
-    common_fields: CommonFieldsIntegration = Field(..., alias="commonfields")  # type:ignore[valid-type]
-    display: str
-    beta: Optional[bool] = None
-    category: str
-    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=5)] = (  # type:ignore[valid-type]
-        Field(alias="sectionorder")
+    common_fields: CommonFieldsIntegration = Field(  # type:ignore[valid-type]
+        ...,
+        alias="commonfields",
+        description="Common metadata fields including the integration's unique ID and schema version.",
     )
-    configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]
-    image: Optional[str] = None
-    description: str
-    provider: Optional[str] = None
-    default_mapper_in: Optional[str] = Field(None, alias="defaultmapperin")
-    default_mapper_out: Optional[str] = Field(None, alias="defaultmapperout")
-    default_classifier: Optional[str] = Field(None, alias="defaultclassifier")
-    detailed_description: Optional[str] = Field(None, alias="detaileddescription")
-    auto_config_instance: Optional[bool] = Field(None, alias="autoconfiginstance")
-    support_level_header: MarketplaceVersions = Field(None, alias="supportlevelheader")
-    script: Script  # type:ignore[valid-type]
-    hidden: Optional[bool] = None
-    internal: Optional[bool] = None
-    source: Optional[str] = None
-    videos: Optional[List[str]] = None
-    versioned_fields: dict = Field(None, alias="versionedfields")
-    default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")
-    script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
-    hybrid: Optional[bool] = None
-    supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
+    display: str = Field(
+        ...,
+        description="Display name of the integration shown in the UI and marketplace.",
+    )
+    beta: Optional[bool] = Field(
+        None,
+        description="When True, marks this integration as a beta release. Beta integrations may have limited support.",
+    )
+    category: str = Field(
+        ...,
+        description="Category of the integration (e.g. 'Data Enrichment & Threat Intelligence', 'Endpoint'). Must use a valid category name.",
+    )
+    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=5)] = (
+        Field(  # type:ignore[valid-type]
+            None,
+            alias="sectionorder",
+            description="Ordered list of configuration sections. Allowed values: Connect, Collect, Optimize, Mirroring, Result. Max 5 sections.",
+        )
+    )
+    configurations: List[Configuration] = Field(  # type:ignore[valid-type]
+        ...,
+        alias="configuration",
+        description="List of configuration parameters for this integration. Defines the settings users must fill in when creating an instance.",
+    )
+    image: Optional[str] = Field(
+        None,
+        description="Base64-encoded integration logo image. Shown in the UI and marketplace.",
+    )
+    description: str = Field(
+        ...,
+        description="Short description of the integration shown in the marketplace listing.",
+    )
+    provider: Optional[str] = Field(
+        None,
+        description="Name of the technology provider (e.g. 'Palo Alto Networks', 'CrowdStrike'). Shown in the marketplace.",
+    )
+    default_mapper_in: Optional[str] = Field(
+        None,
+        alias="defaultmapperin",
+        description="Name of the default incoming mapper for this integration. Applied automatically when creating an instance.",
+    )
+    default_mapper_out: Optional[str] = Field(
+        None,
+        alias="defaultmapperout",
+        description="Name of the default outgoing mapper for this integration. Applied automatically when creating an instance.",
+    )
+    default_classifier: Optional[str] = Field(
+        None,
+        alias="defaultclassifier",
+        description="Name of the default classifier for this integration. Applied automatically when creating an instance.",
+    )
+    detailed_description: Optional[str] = Field(
+        None,
+        alias="detaileddescription",
+        description="Detailed description of the integration shown in the integration configuration panel. Supports markdown.",
+    )
+    auto_config_instance: Optional[bool] = Field(
+        None,
+        alias="autoconfiginstance",
+        description="When True, an integration instance is automatically configured during pack installation.",
+    )
+    support_level_header: MarketplaceVersions = Field(
+        None,
+        alias="supportlevelheader",
+        description="Marketplace version for which the support level header is shown.",
+    )
+    script: Script = Field(  # type:ignore[valid-type]
+        ...,
+        description="Script configuration block containing the integration code, commands, and execution settings.",
+    )
+    hidden: Optional[bool] = Field(
+        None,
+        description="When True, this integration is hidden from the marketplace and integration list.",
+    )
+    internal: Optional[bool] = Field(
+        None,
+        description="When True, marks this integration as internal and not intended for direct use by end users.",
+    )
+    source: Optional[str] = Field(
+        None,
+        description="Source repository or origin of this integration.",
+    )
+    videos: Optional[List[str]] = Field(
+        None,
+        description="List of URLs to demo or tutorial videos for this integration.",
+    )
+    versioned_fields: dict = Field(
+        None,
+        alias="versionedfields",
+        description="Dictionary of fields that have marketplace-specific versions. Used for marketplace-specific customization.",
+    )
+    default_enabled: Optional[bool] = Field(
+        None,
+        alias="defaultEnabled",
+        description="When True, the integration instance is enabled by default after installation.",
+    )
+    script_not_visible: Optional[bool] = Field(
+        None,
+        alias="scriptNotVisible",
+        description="When True, the integration script code is not visible to users.",
+    )
+    hybrid: Optional[bool] = Field(
+        None,
+        description="When True, this integration supports both XSOAR and XSIAM platforms simultaneously.",
+    )
+    supports_quick_actions: Optional[bool] = Field(
+        None,
+        alias="supportsquickactions",
+        description="When True, this integration supports quick actions that can be triggered from the UI.",
+    )
     is_cloud_provider_integration: Optional[bool] = Field(
-        False, alias="isCloudProviderIntegration"
+        False,
+        alias="isCloudProviderIntegration",
+        description="When True, marks this as a cloud provider integration with special handling for cloud authentication.",
     )
-    triggers: Optional[List[Trigger]] = None
+    triggers: Optional[List[Trigger]] = Field(
+        None,
+        description="List of UI triggers that dynamically show/hide configuration parameters based on other parameter values.",
+    )
     supportedModules: Optional[
         Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
-    ]
+    ] = Field(
+        None,
+        description="Optional list of platform modules that support this integration. Restricts availability to specific modules.",
+    )
 
     def __init__(self, **data):
         """

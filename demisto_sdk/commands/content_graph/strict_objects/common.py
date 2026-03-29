@@ -93,6 +93,7 @@ def create_dynamic_model(
     suffixes: Sequence[str] = marketplace_suffixes,
     alias: Optional[str] = None,
     include_without_suffix: bool = False,
+    description: Optional[str] = None,
 ) -> BaseModel:
     """
     This function creates a sub-model for avoiding duplicate lines of parsing arguments with different suffix.
@@ -107,12 +108,19 @@ def create_dynamic_model(
     fields = {
         f"{field_name}_{suffix}": (
             type_,
-            FieldInfo(default, alias=f"{alias or field_name}:{suffix}"),
+            FieldInfo(
+                default,
+                alias=f"{alias or field_name}:{suffix}",
+                description=description,
+            ),
         )
         for suffix in suffixes
     }
     if include_without_suffix:
-        fields[field_name] = (type_, FieldInfo(default, alias=alias or field_name))
+        fields[field_name] = (
+            type_,
+            FieldInfo(default, alias=alias or field_name, description=description),
+        )
 
     return create_model(
         model_name=f"Dynamic{field_name.title()}Model",
@@ -122,22 +130,35 @@ def create_dynamic_model(
 
 
 DESCRIPTION_DYNAMIC_MODEL = create_dynamic_model(
-    field_name="description", type_=Optional[str], default=None
+    field_name="description",
+    type_=Optional[str],
+    default=None,
+    description="Marketplace-specific description override for this content item. Overrides the base description field for the specified marketplace.",
 )
 NAME_DYNAMIC_MODEL = create_dynamic_model(
-    field_name="name", type_=Optional[str], default=None
+    field_name="name",
+    type_=Optional[str],
+    default=None,
+    description="Marketplace-specific name override for this content item. Overrides the base name field for the specified marketplace.",
 )
 DEPRECATED_DYNAMIC_MODEL = deprecated_dynamic_model = create_dynamic_model(
-    field_name="deprecated", type_=Optional[bool], default=None
+    field_name="deprecated",
+    type_=Optional[bool],
+    default=None,
+    description="Marketplace-specific deprecated flag. When True, marks this content item as deprecated for the specified marketplace.",
 )
 REQUIRED_DYNAMIC_MODEL = create_dynamic_model(
-    field_name="required", type_=Optional[bool], default=None
+    field_name="required",
+    type_=Optional[bool],
+    default=None,
+    description="Marketplace-specific required flag. When True, this field is required for the specified marketplace.",
 )
 DEFAULT_DYNAMIC_MODEL = create_dynamic_model(
     field_name="defaultValue",
     type_=Optional[Any],
     default=None,
     include_without_suffix=True,
+    description="Marketplace-specific default value override. Overrides the base defaultValue for the specified marketplace.",
 )
 DEFAULT_DYNAMIC_MODEL_LOWER_CASE = create_dynamic_model(
     # field name here defaultvalue vs defaultValue
@@ -145,63 +166,74 @@ DEFAULT_DYNAMIC_MODEL_LOWER_CASE = create_dynamic_model(
     type_=Optional[Any],
     default=None,
     include_without_suffix=True,
+    description="Marketplace-specific default value override (lowercase variant). Overrides the base defaultvalue for the specified marketplace.",
 )
 ID_DYNAMIC_MODEL = create_dynamic_model(
     field_name="id",
     type_=Optional[Any],
     default=None,
     include_without_suffix=True,
+    description="Unique identifier of this content item. The marketplace-suffixed variants allow different IDs per marketplace.",
 )
 KEY_DYNAMIC_MODEL = create_dynamic_model(
     field_name="key",
     type_=Optional[str],
     default=None,
+    description="Marketplace-specific key override for this field.",
 )
 VALUE_DYNAMIC_MODEL = create_dynamic_model(
     field_name="value",
     type_=Optional[Any],
     default=None,
+    description="Marketplace-specific value override for this field.",
 )
 PLAYBOOK_INPUT_QUERY_DYNAMIC_MODEL = create_dynamic_model(
     field_name="playbookInputQuery",
     type_=Optional[Any],
     default=None,
+    description="Marketplace-specific playbook input query override.",
 )
 FORM_DYNAMIC_MODEL = create_dynamic_model(
     field_name="form",
     type_=Optional[Dict],
     default=None,
     include_without_suffix=True,
+    description="Marketplace-specific form configuration override.",
 )
 MESSAGE_DYNAMIC_MODEL = create_dynamic_model(
     field_name="message",
     type_=Optional[Dict],
     default=None,
     include_without_suffix=True,
+    description="Marketplace-specific message configuration override.",
 )
 SCRIPT_ARGUMENTS_LOWER_CASE_DYNAMIC_MODEL = create_dynamic_model(
     field_name="scriptarguments",
     type_=Optional[Dict],
     default=None,
     include_without_suffix=True,
+    description="Marketplace-specific script arguments override (lowercase variant). Key-value pairs passed to the script.",
 )
 SCRIPT_ARGUMENTS_UPPER_CASE_DYNAMIC_MODEL = create_dynamic_model(
     field_name="scriptArguments",
     type_=Optional[Dict],
     default=None,
     include_without_suffix=True,
+    description="Marketplace-specific script arguments override (camelCase variant). Key-value pairs passed to the script.",
 )
 SCRIPT_ID_DYNAMIC_MODEL = create_dynamic_model(
     field_name="scriptId",
     type_=Optional[str],
     default=None,
     include_without_suffix=True,
+    description="Marketplace-specific script ID override. References the script to execute for this task.",
 )
 IS_CONTEXT_DYNAMIC_MODEL = create_dynamic_model(
     field_name="iscontext",
     type_=Optional[bool],
     default=None,
     include_without_suffix=True,
+    description="Marketplace-specific isContext flag. When True, the value is read from the XSOAR context rather than used as a literal.",
 )
 
 QUICK_ACTION_DYNAMIC_MODEL = create_dynamic_model(
@@ -209,6 +241,7 @@ QUICK_ACTION_DYNAMIC_MODEL = create_dynamic_model(
     type_=Optional[bool],
     default=None,
     include_without_suffix=True,
+    description="Marketplace-specific quick action flag. When True, this command appears as a quick action in the UI.",
 )
 
 HIDDEN_DYNAMIC_MODEL = create_dynamic_model(
@@ -216,6 +249,7 @@ HIDDEN_DYNAMIC_MODEL = create_dynamic_model(
     type_=Optional[bool],
     default=None,
     include_without_suffix=True,
+    description="Marketplace-specific hidden flag. When True, this command/field is hidden from the UI for the specified marketplace.",
 )
 
 

@@ -1,4 +1,22 @@
 # Changelog
+## 1.38.23 (2026-03-29)
+### Feature
+* Added "Agentic assistant" as a valid sectionorder value for integrations. [#5296](https://github.com/demisto/demisto-sdk/pull/5296)
+* Added `supportedModules` support for integration parameters with new validators IN170 and IN171 to ensure parameter-level `supportedModules` values are valid. [#5301](https://github.com/demisto/demisto-sdk/pull/5301)
+* Added AS106 validation warning for autonomous playbook tasks that have a displayLabel but also have quietmode set to 1. [#5298](https://github.com/demisto/demisto-sdk/pull/5298)
+* Added adopted boolean field to playbooks. Added AS104 validator to enforce adopted:true on autonomous pack playbooks with auto-fix. Added Playbook Completed as a mandatory duplicatable section header in AS103. Format command now auto-sets adopted for autonomous pack playbooks. [#5286](https://github.com/demisto/demisto-sdk/pull/5286)
+* Added the AS105 validator to ensure playbooks and triggers in autonomous packs do not have issilent set to true. [#5288](https://github.com/demisto/demisto-sdk/pull/5288)
+* Added new MC101 validation that checks managed packs (managed: true in pack_metadata) have a deployment.json file in the pack folder. [#5294](https://github.com/demisto/demisto-sdk/pull/5294)
+
+### Fix
+* Pinned all third-party GitHub Actions to commit SHAs to mitigate supply chain attacks (CVE-2025-30066), upgraded tj-actions/changed-files from compromised v46.0.1 to v46.0.3, and fixed command injection vulnerabilities via GitHub expression interpolation in workflow run blocks. [#5295](https://github.com/demisto/demisto-sdk/pull/5295)
+* Fixed false duplicate errors in GR111/GR112 for Agentix Actions split across files with different version ranges. [#5300](https://github.com/demisto/demisto-sdk/pull/5300)
+* Fixed an issue where the test_xsoar_linter_errors UT was flaky and failed intermittently. [#5279](https://github.com/demisto/demisto-sdk/pull/5279)
+
+### Internal
+* Remove old product codes from demisto-sdk [#5281](https://github.com/demisto/demisto-sdk/pull/5281)
+
+
 ## 1.38.22 (2026-03-16)
 ### Feature
 * Do not prompt for silent playbook when formatting playbooks with the --assume-no argument is given. [#5270](https://github.com/demisto/demisto-sdk/pull/5270)

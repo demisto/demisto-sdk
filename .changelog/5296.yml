@@ -1,4 +1,0 @@
-changes:
-- description: Added "Agentic assistant" as a valid sectionorder value for integrations.
-  type: feature
-pr_number: 5296

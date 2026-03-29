@@ -3438,3 +3438,398 @@ class TestAgentixBaseParser:
             agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
         )
         assert parser.toversion == DEFAULT_CONTENT_ITEM_TO_VERSION
+
+    def test_agentix_script_action_parsing(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML (has script: {dockerimage: ...}, no underlyingcontentitem)
+              with a .py sibling file.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - parser.is_script_action is True.
+            - underlying_content_item_type is "script".
+            - underlying_content_item_id equals the action's ID.
+            - underlying_content_item_version is -1.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        action_id = "CortexIsolateEndpoint"
+        agentix_action = pack.create_agentix_action(
+            action_id,
+            {
+                "commonfields": {"id": action_id, "version": -1},
+                "name": action_id,
+                "display": "Cortex - Isolate Endpoint",
+                "description": "Isolates an endpoint.",
+                "script": {"dockerimage": "demisto/python3:3.12.12.6391686"},
+                "fromversion": "8.12.0",
+            },
+        )
+        # Create the .py sibling file
+        (agentix_action.dir_path / f"{action_id}.py").write_text("# stub")
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.is_script_action is True
+        assert parser.underlying_content_item_type == "script"
+        assert parser.underlying_content_item_id == action_id
+        assert parser.underlying_content_item_version == -1
+
+    def test_agentix_script_action_no_dependency(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with a .py sibling file.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - No USES relationships are added (generated script doesn't exist in source graph).
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        action_id = "CortexIsolateEndpoint2"
+        agentix_action = pack.create_agentix_action(
+            action_id,
+            {
+                "commonfields": {"id": action_id, "version": -1},
+                "name": action_id,
+                "display": "Cortex - Isolate Endpoint 2",
+                "description": "Isolates an endpoint.",
+                "script": {"dockerimage": "demisto/python3:3.12.12.6391686"},
+                "fromversion": "8.12.0",
+            },
+        )
+        (agentix_action.dir_path / f"{action_id}.py").write_text("# stub")
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        RelationshipsVerifier.run(parser.relationships)  # no uses expected
+
+    def test_agentix_regular_action_still_works(self, pack: Pack):
+        """
+        Given:
+            - A regular agentix action YAML with underlyingcontentitem.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - parser.is_script_action is False.
+            - underlying_content_item_type is "script" (from underlyingcontentitem).
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestRegularAction2", load_yaml("agentix_action.yml")
+        )
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.is_script_action is False
+
+    def test_agentix_action_underlyingargname_auto_derived(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with an arg that has no underlyingargname.
+        When:
+            - Building the AgentixAction model from the parser.
+        Then:
+            - content_item_arg_name defaults to the arg's name.
+        """
+        from demisto_sdk.commands.content_graph.objects.agentix_action import (
+            AgentixAction,
+        )
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        action_id = "TestAutoArgName"
+        agentix_action = pack.create_agentix_action(
+            action_id,
+            {
+                "commonfields": {"id": action_id, "version": -1},
+                "name": action_id,
+                "display": "Test Auto Arg Name",
+                "description": "Test.",
+                "script": {"dockerimage": "demisto/python3:3.12.12.6391686"},
+                "args": [
+                    {
+                        "name": "endpoint_id",
+                        "description": "The endpoint ID.",
+                        "type": "string",
+                        # no underlyingargname
+                    }
+                ],
+                "fromversion": "8.12.0",
+            },
+        )
+        (agentix_action.dir_path / f"{action_id}.py").write_text("# stub")
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = AgentixAction.from_orm(parser)
+        assert model.args is not None
+        assert model.args[0].content_item_arg_name == "endpoint_id"
+
+    def test_agentix_action_underlyingoutputcontextpath_auto_derived(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with an output that has no underlyingoutputcontextpath.
+        When:
+            - Building the AgentixAction model from the parser.
+        Then:
+            - content_item_output_name defaults to the output's name.
+        """
+        from demisto_sdk.commands.content_graph.objects.agentix_action import (
+            AgentixAction,
+        )
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        action_id = "TestAutoOutputPath"
+        agentix_action = pack.create_agentix_action(
+            action_id,
+            {
+                "commonfields": {"id": action_id, "version": -1},
+                "name": action_id,
+                "display": "Test Auto Output Path",
+                "description": "Test.",
+                "script": {"dockerimage": "demisto/python3:3.12.12.6391686"},
+                "outputs": [
+                    {
+                        "name": "Core.Isolation.endpoint_id",
+                        "description": "The endpoint ID.",
+                        "type": "String",
+                        # no underlyingoutputcontextpath
+                    }
+                ],
+                "fromversion": "8.12.0",
+            },
+        )
+        (agentix_action.dir_path / f"{action_id}.py").write_text("# stub")
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = AgentixAction.from_orm(parser)
+        assert model.outputs is not None
+        assert model.outputs[0].content_item_output_name == "Core.Isolation.endpoint_id"
+
+    def test_is_script_action_true(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with a .py sibling file.
+        When:
+            - Building the AgentixAction model from the parser.
+        Then:
+            - model.is_script_action is True.
+        """
+        from demisto_sdk.commands.content_graph.objects.agentix_action import (
+            AgentixAction,
+        )
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        action_id = "TestIsScriptActionTrue"
+        agentix_action = pack.create_agentix_action(
+            action_id,
+            {
+                "commonfields": {"id": action_id, "version": -1},
+                "name": action_id,
+                "display": "Test",
+                "description": "Test.",
+                "script": {"dockerimage": "demisto/python3:3.12.12.6391686"},
+                "fromversion": "8.12.0",
+            },
+        )
+        (agentix_action.dir_path / f"{action_id}.py").write_text("# stub")
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = AgentixAction.from_orm(parser)
+        assert model.is_script_action is True
+
+    def test_is_script_action_false(self, pack: Pack):
+        """
+        Given:
+            - A regular agentix action YAML without a .py sibling file.
+        When:
+            - Building the AgentixAction model from the parser.
+        Then:
+            - model.is_script_action is False.
+        """
+        from demisto_sdk.commands.content_graph.objects.agentix_action import (
+            AgentixAction,
+        )
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestIsScriptActionFalse", load_yaml("agentix_action.yml")
+        )
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = AgentixAction.from_orm(parser)
+        assert model.is_script_action is False
+
+    def test_script_action_dockerimage_in_graph(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with script: {dockerimage: demisto/python3:...}.
+        When:
+            - Building the AgentixAction model from the parser.
+        Then:
+            - model.dockerimage equals the dockerimage from the script: sub-key.
+            - The field is a plain Pydantic field (no exclude=True) so it is included
+              in the graph node dict (verified via model.dict()).
+        """
+        from demisto_sdk.commands.content_graph.objects.agentix_action import (
+            AgentixAction,
+        )
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        docker = "demisto/python3:3.12.12.6391686"
+        agentix_action = pack.create_agentix_action(
+            "TestDockerimage",
+            {
+                "commonfields": {"id": "TestDockerimage", "version": -1},
+                "name": "TestDockerimage",
+                "display": "Test Dockerimage",
+                "description": "Test.",
+                "script": {"dockerimage": docker},
+                "fromversion": "8.12.0",
+                "marketplaces": ["platform"],
+            },
+        )
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = AgentixAction.from_orm(parser)
+        assert (
+            model.dockerimage == docker
+        ), f"Expected dockerimage={docker!r}, got {model.dockerimage!r}"
+        # Verify it appears in model.dict() (not excluded) — graph node uses this
+        model_dict = model.dict()
+        assert model_dict.get("dockerimage") == docker
+
+    def test_dump_script_action_two_files(self, pack: Pack, tmp_path, mocker):
+        """
+        Given:
+            - A script action YAML with a .py sibling file.
+        When:
+            - Calling action.dump(tmp_path, MarketplaceVersions.PLATFORM).
+        Then:
+            - Both script-<id>.yml and agentixaction-<id>.yml are written to tmp_path.
+        """
+        from unittest.mock import MagicMock
+
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects.agentix_action import (
+            AgentixAction,
+        )
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        action_id = "TestDumpTwoFiles"
+        agentix_action = pack.create_agentix_action(
+            action_id,
+            {
+                "commonfields": {"id": action_id, "version": -1},
+                "name": action_id,
+                "display": "Test Dump Two Files",
+                "description": "Test.",
+                "script": {"dockerimage": "demisto/python3:3.12.12.6391686"},
+                "fromversion": "8.12.0",
+                "marketplaces": ["platform"],
+            },
+        )
+        (agentix_action.dir_path / f"{action_id}.py").write_text("def main(): pass\n")
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = AgentixAction.from_orm(parser)
+        # pack is None when using from_orm (no graph relationship); mock it for dump()
+        mock_pack = MagicMock()
+        mock_pack.supportedModules = []
+        model.__dict__["pack"] = mock_pack
+        model.dump(tmp_path, MarketplaceVersions.PLATFORM)
+
+        script_file = tmp_path / f"{ContentType.SCRIPT.server_name}-{action_id}.yml"
+        action_file = tmp_path / model.normalize_name
+        assert script_file.exists(), f"Expected {script_file} to exist"
+        assert action_file.exists(), f"Expected {action_file} to exist"
+
+    def test_dump_script_action_content_matches_expected(self, tmp_path):
+        """
+        Given:
+            - The canonical sample script action assets:
+              TestSuite/assets/default_agentix_action/agentix_script_action-sample.yml
+              TestSuite/assets/default_agentix_action/agentix_script_action-sample.py
+            - Pre-computed expected split outputs in:
+              TestSuite/assets/default_agentix_action/expected_split/
+        When:
+            - Calling action.dump(tmp_path, MarketplaceVersions.PLATFORM).
+        Then:
+            - The generated script-SampleScriptAction.yml matches the expected file exactly.
+            - The generated agentixaction-SampleScriptAction.yml matches the expected file exactly.
+        """
+        from unittest.mock import MagicMock
+
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects.agentix_action import (
+            AgentixAction,
+        )
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+        from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
+
+        assets_dir = (
+            Path(__file__).parent.parent.parent.parent.parent
+            / "TestSuite"
+            / "assets"
+            / "default_agentix_action"
+        )
+        sample_yml = assets_dir / "agentix_script_action-sample.yml"
+        expected_dir = assets_dir / "expected_split"
+
+        parser = AgentixActionParser(
+            sample_yml, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = AgentixAction.from_orm(parser)
+        mock_pack = MagicMock()
+        mock_pack.supportedModules = []
+        model.__dict__["pack"] = mock_pack
+
+        model.dump(tmp_path, MarketplaceVersions.PLATFORM)
+
+        action_id = "SampleScriptAction"
+        script_file = tmp_path / f"{ContentType.SCRIPT.server_name}-{action_id}.yml"
+        action_file = tmp_path / model.normalize_name
+
+        assert script_file.exists(), f"Expected {script_file} to exist"
+        assert action_file.exists(), f"Expected {action_file} to exist"
+
+        actual_script = load_yaml(str(script_file))
+        expected_script = load_yaml(str(expected_dir / f"script-{action_id}.yml"))
+        assert actual_script == expected_script, (
+            f"Generated script YAML does not match expected.\n"
+            f"Expected: {expected_script}\nActual: {actual_script}"
+        )
+
+        actual_action = load_yaml(str(action_file))
+        expected_action = load_yaml(str(expected_dir / model.normalize_name))
+        assert actual_action == expected_action, (
+            f"Generated action YAML does not match expected.\n"
+            f"Expected: {expected_action}\nActual: {actual_action}"
+        )

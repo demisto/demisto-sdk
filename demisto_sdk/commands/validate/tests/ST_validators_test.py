@@ -949,3 +949,367 @@ def test_SchemaValidator_not_managed_pack(pack: Pack):
     pack_parser = PackParser(path=pack.path)
 
     assert len(pack_parser.structure_errors) == 0
+
+
+class TestAgentixActionSchema:
+    """ST110 schema tests for AgentixAction script action changes."""
+
+    def test_schema_regular_action_still_valid(self, pack: Pack):
+        """
+        Given:
+            - A regular agentix action YAML with underlyingcontentitem (no script: sub-key).
+        When:
+            - Parsing the action (ST110 structure validation).
+        Then:
+            - No structure errors.
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestRegularAction",
+            {
+                "commonfields": {"id": "TestRegularAction", "version": -1},
+                "name": "TestRegularAction",
+                "display": "Test Regular Action",
+                "description": "A regular action.",
+                "underlyingcontentitem": {
+                    "id": "some-script",
+                    "name": "some-script",
+                    "type": "script",
+                    "version": -1,
+                },
+                "args": [
+                    {
+                        "name": "endpoint_id",
+                        "description": "The endpoint ID.",
+                        "type": "string",
+                        "underlyingargname": "endpoint_id",
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "Result",
+                        "description": "The result.",
+                        "type": "string",
+                        "underlyingoutputcontextpath": "Result",
+                    }
+                ],
+            },
+        )
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.structure_errors == []
+
+    def test_schema_script_action_valid(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with script: {dockerimage: ...} and no underlyingcontentitem.
+        When:
+            - Parsing the action (ST110 structure validation).
+        Then:
+            - No structure errors.
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestScriptAction",
+            {
+                "commonfields": {"id": "TestScriptAction", "version": -1},
+                "name": "TestScriptAction",
+                "display": "Test Script Action",
+                "description": "A script action.",
+                "script": {"dockerimage": "demisto/python3:3.12.12.6391686"},
+                "args": [
+                    {
+                        "name": "endpoint_id",
+                        "description": "The endpoint ID.",
+                        "type": "string",
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "Result",
+                        "description": "The result.",
+                        "type": "string",
+                    }
+                ],
+            },
+        )
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.structure_errors == []
+
+    def test_schema_neither_script_nor_underlying(self, pack: Pack):
+        """
+        Given:
+            - An action YAML with neither script: nor underlyingcontentitem.
+        When:
+            - Parsing the action (ST110 structure validation).
+        Then:
+            - One structure error from the root_validator.
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestInvalidAction",
+            {
+                "commonfields": {"id": "TestInvalidAction", "version": -1},
+                "name": "TestInvalidAction",
+                "display": "Test Invalid Action",
+                "description": "An invalid action.",
+            },
+        )
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert len(parser.structure_errors) == 1
+
+    def test_schema_underlyingargname_optional(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with an arg that has no underlyingargname.
+        When:
+            - Parsing the action (ST110 structure validation).
+        Then:
+            - No structure errors (underlyingargname is optional).
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestOptionalArgName",
+            {
+                "commonfields": {"id": "TestOptionalArgName", "version": -1},
+                "name": "TestOptionalArgName",
+                "display": "Test Optional Arg Name",
+                "description": "A script action.",
+                "script": {"dockerimage": "demisto/python3:3.12.12.6391686"},
+                "args": [
+                    {
+                        "name": "endpoint_id",
+                        "description": "The endpoint ID.",
+                        "type": "string",
+                        # no underlyingargname — should be optional
+                    }
+                ],
+            },
+        )
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.structure_errors == []
+
+    def test_schema_underlyingoutputcontextpath_optional(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with an output that has no underlyingoutputcontextpath.
+        When:
+            - Parsing the action (ST110 structure validation).
+        Then:
+            - No structure errors (underlyingoutputcontextpath is optional).
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestOptionalOutputPath",
+            {
+                "commonfields": {"id": "TestOptionalOutputPath", "version": -1},
+                "name": "TestOptionalOutputPath",
+                "display": "Test Optional Output Path",
+                "description": "A script action.",
+                "script": {"dockerimage": "demisto/python3:3.12.12.6391686"},
+                "outputs": [
+                    {
+                        "name": "Result",
+                        "description": "The result.",
+                        "type": "string",
+                        # no underlyingoutputcontextpath — should be optional
+                    }
+                ],
+            },
+        )
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.structure_errors == []
+
+    def test_schema_script_action_with_standalone(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with script: {dockerimage: ..., standalone: true}.
+        When:
+            - Parsing the action (ST110 structure validation).
+        Then:
+            - No structure errors (standalone is a valid optional field).
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestStandalone",
+            {
+                "commonfields": {"id": "TestStandalone", "version": -1},
+                "name": "TestStandalone",
+                "display": "Test Standalone",
+                "description": "A script action.",
+                "script": {
+                    "dockerimage": "demisto/python3:3.12.12.6391686",
+                    "standalone": True,
+                },
+            },
+        )
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.structure_errors == []
+
+    def test_schema_script_action_with_runonce(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with script: {dockerimage: ..., runonce: true}.
+        When:
+            - Parsing the action (ST110 structure validation).
+        Then:
+            - No structure errors (runonce is a valid optional field).
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestRunonce",
+            {
+                "commonfields": {"id": "TestRunonce", "version": -1},
+                "name": "TestRunonce",
+                "display": "Test Runonce",
+                "description": "A script action.",
+                "script": {
+                    "dockerimage": "demisto/python3:3.12.12.6391686",
+                    "runonce": True,
+                },
+            },
+        )
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.structure_errors == []
+
+    def test_schema_script_action_with_runas(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with script: {dockerimage: ..., runas: "DBotRole"}.
+        When:
+            - Parsing the action (ST110 structure validation).
+        Then:
+            - No structure errors (runas is a valid optional field).
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestRunas",
+            {
+                "commonfields": {"id": "TestRunas", "version": -1},
+                "name": "TestRunas",
+                "display": "Test Runas",
+                "description": "A script action.",
+                "script": {
+                    "dockerimage": "demisto/python3:3.12.12.6391686",
+                    "runas": "DBotRole",
+                },
+            },
+        )
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.structure_errors == []
+
+    def test_schema_script_action_with_dependson(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with script: {dockerimage: ..., dependson: {must: [...]}}.
+        When:
+            - Parsing the action (ST110 structure validation).
+        Then:
+            - No structure errors (dependson is a valid optional field).
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestDependson",
+            {
+                "commonfields": {"id": "TestDependson", "version": -1},
+                "name": "TestDependson",
+                "display": "Test Dependson",
+                "description": "A script action.",
+                "script": {
+                    "dockerimage": "demisto/python3:3.12.12.6391686",
+                    "dependson": {"must": ["some-command"]},
+                },
+            },
+        )
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        assert parser.structure_errors == []
+
+    def test_schema_script_action_unknown_field_rejected(self, pack: Pack):
+        """
+        Given:
+            - A script action YAML with a truly unknown field under script: (e.g. unknownfield).
+        When:
+            - Constructing AgentixActionParser.
+        Then:
+            - pydantic.ValidationError is raised because ScriptConfig rejects unknown fields
+              (BaseStrictModel has extra=Extra.forbid).
+        """
+        import pydantic
+
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+
+        agentix_action = pack.create_agentix_action(
+            "TestUnknownField",
+            {
+                "commonfields": {"id": "TestUnknownField", "version": -1},
+                "name": "TestUnknownField",
+                "display": "Test Unknown Field",
+                "description": "A script action.",
+                "script": {
+                    "dockerimage": "demisto/python3:3.12.12.6391686",
+                    "unknownfield": "not-allowed",  # truly unknown field
+                },
+            },
+        )
+        with pytest.raises(pydantic.ValidationError):
+            AgentixActionParser(
+                agentix_action.path,
+                list(MarketplaceVersions),
+                pack_supported_modules=[],
+            )

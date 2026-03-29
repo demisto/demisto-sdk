@@ -6,6 +6,7 @@ from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
+    MANAGED_PACK_SOURCE_REQUIRING_ADOPTED,
     PLAYBOOK,
     FileType,
 )
@@ -316,10 +317,6 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             if self.data.get("fromversion", "") == "8.9.0":
                 self.data["fromversion"] = "6.10.0"  # default from version
 
-    # Pack sources whose playbooks must have 'adopted: true'.
-    # To require adoption for a new source, simply add its name here.
-    _SOURCES_REQUIRING_ADOPTED: frozenset = frozenset({"autonomous"})
-
     def add_adopted_field_for_managed_pack(self):
         """Adds 'adopted: true' to playbooks in managed packs that require adoption.
 
@@ -336,7 +333,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                 return
 
             source = pack_metadata.get("source", "")
-            if source not in self._SOURCES_REQUIRING_ADOPTED:
+            if source not in MANAGED_PACK_SOURCE_REQUIRING_ADOPTED:
                 return
 
             if "adopted" not in self.data:

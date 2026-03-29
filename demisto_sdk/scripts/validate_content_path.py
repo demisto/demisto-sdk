@@ -115,7 +115,6 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         WIDGETS_DIR,
         WIZARDS_DIR,
         LAYOUT_RULES_DIR,
-        AGENTIX_ACTIONS_DIR,
         *TESTS_AND_DOC_DIRECTORIES,
     )
 )
@@ -230,6 +229,13 @@ class InvalidXDRCTemplatesFileName(InvalidPathException):
 
 class InvalidAgentixAgentFileName(InvalidPathException):
     message = "Name of agentix agent files must match the directory containing them, e.g. `{parent folder}.yml`, `{parent folder}_test.yml`, or `{parent folder}_systeminstructions.md`"
+
+
+class InvalidAgentixActionFileName(InvalidPathException):
+    message = (
+        "AgentixAction files must be placed in a subfolder under AgentixActions, "
+        "e.g. `AgentixActions/{ActionName}/{ActionName}.yml` or `AgentixActions/{ActionName}/{ActionName}_test.yml`"
+    )
 
 
 class ExemptedPath(Exception, ABC):
@@ -377,6 +383,12 @@ def _validate(path: Path) -> None:
             or (path.stem == f"{path.parent.name}_test" and path.suffix == ".yml")
         ):
             raise InvalidAgentixAgentFileName
+
+        elif first_level_folder == AGENTIX_ACTIONS_DIR and not (
+            (path.stem == path.parent.name and path.suffix == ".yml")
+            or (path.stem == f"{path.parent.name}_test" and path.suffix == ".yml")
+        ):
+            raise InvalidAgentixActionFileName
 
 
 def _validate_image_file_name(image_name: str):

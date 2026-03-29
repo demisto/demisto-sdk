@@ -1,0 +1,4 @@
+changes:
+- description: Added support for Agentix Script Actions - a unified authoring pattern where an AgentixAction YAML and a .py file in the same directory are split by prepare-content into a Script and an AgentixAction.
+  type: feature
+pr_number: 5304

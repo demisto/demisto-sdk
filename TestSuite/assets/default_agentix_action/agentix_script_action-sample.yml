@@ -1,0 +1,23 @@
+commonfields:
+  id: SampleScriptAction
+  version: -1
+name: SampleScriptAction
+display: Sample Script Action
+category: Endpoint
+description: A sample script action for testing.
+script:
+  dockerimage: demisto/python3:3.12.12.6391686
+args:
+  - name: endpoint_id
+    description: The ID of the endpoint.
+    required: true
+    type: string
+outputs:
+  - name: Result.endpoint_id
+    description: The ID of the endpoint.
+    type: String
+marketplaces:
+  - platform
+supportedModules:
+  - xsiam
+fromversion: 8.12.0

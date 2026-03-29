@@ -2297,11 +2297,17 @@ AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER = (
     "Investigation",
     "Verdict",
     "Remediation",
+    "Playbook Completed",
 )
 AUTONOMOUS_PLAYBOOK_MANDATORY_SECTIONS = frozenset(
-    {"Data Collection", "Investigation", "Verdict", "Remediation"}
+    {"Data Collection", "Investigation", "Verdict", "Remediation", "Playbook Completed"}
 )
 AUTONOMOUS_PLAYBOOK_ALLOWED_SECTIONS = frozenset(AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER)
+# Sections that may appear more than once in a playbook (e.g. one per branch)
+AUTONOMOUS_PLAYBOOK_DUPLICATABLE_SECTIONS = frozenset({"Playbook Completed"})
+# Pack sources whose playbooks must have 'adopted: true'.
+# To require adoption for a new source, simply add its name here.
+MANAGED_PACK_SOURCE_REQUIRING_ADOPTED: frozenset = frozenset({"autonomous"})
 
 
 # Used to format the writing of the yml/json file

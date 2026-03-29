@@ -1,0 +1,4 @@
+changes:
+- description: "Added adopted boolean field to playbooks. Added AS104 validator to enforce adopted:true on autonomous pack playbooks with auto-fix. Added Playbook Completed as a mandatory duplicatable section header in AS103. Format command now auto-sets adopted for autonomous pack playbooks."
+  type: feature
+pr_number: 5286

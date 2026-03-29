@@ -14,6 +14,9 @@ from demisto_sdk.commands.validate.validators.AS_validators.AS102_is_valid_quiet
 from demisto_sdk.commands.validate.validators.AS_validators.AS103_is_valid_autonomous_playbook_headers import (
     IsValidAutonomousPlaybookHeadersValidator,
 )
+from demisto_sdk.commands.validate.validators.AS_validators.AS105_no_is_silent_in_autonomous_pack import (
+    NoIsSilentInAutonomousPackValidator,
+)
 from demisto_sdk.commands.validate.validators.AS_validators.AS106_warn_quiet_mode_on_display_label_task import (
     WarnQuietModeOnDisplayLabelTaskValidator,
 )
@@ -580,6 +583,156 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
     assert (
         len(results) == 0
     ), "Sub-section title tasks (isSubSection=true) should be ignored by AS103"
+
+
+@pytest.mark.parametrize(
+    "managed, pack_source, item_is_silent, expected_result_len",
+    [
+        # Valid cases — should pass (no error)
+        (True, "autonomous", False, 0),  # Autonomous pack, not silent
+        (False, "other", True, 0),  # Non-autonomous pack, silent
+        (True, "other", True, 0),  # managed=true but wrong source, silent
+        (False, "autonomous", True, 0),  # source=autonomous but managed=false, silent
+        # Invalid cases — should fail
+        (True, "autonomous", True, 1),  # Autonomous pack + silent
+    ],
+)
+def test_NoIsSilentInAutonomousPackValidator_playbook(
+    managed, pack_source, item_is_silent, expected_result_len
+):
+    """
+    Given:
+        - Playbooks with various combinations of pack metadata (managed/source)
+          and item-level isSilent field.
+
+    When:
+        - Running NoIsSilentInAutonomousPackValidator.obtain_invalid_content_items.
+
+    Then:
+        - Playbooks in autonomous packs (managed: true, source: 'autonomous') that have
+          isSilent: true must be flagged as invalid.
+        - Non-autonomous packs or non-silent items must not be flagged.
+    """
+    pack_metadata: dict = {}
+    if managed is not None:
+        pack_metadata["managed"] = managed
+    if pack_source is not None:
+        pack_metadata["source"] = pack_source
+
+    pack = create_pack_object(
+        paths=list(pack_metadata.keys()), values=list(pack_metadata.values())
+    )
+
+    playbook = create_playbook_object(paths=["issilent"], values=[item_is_silent])
+    playbook.pack = pack
+
+    results = NoIsSilentInAutonomousPackValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_result_len
+
+
+@pytest.mark.parametrize(
+    "managed, pack_source, item_is_silent, expected_result_len",
+    [
+        # Valid cases — should pass (no error)
+        (True, "autonomous", False, 0),  # Autonomous pack, not silent
+        (False, "other", True, 0),  # Non-autonomous pack, silent
+        (True, "other", True, 0),  # managed=true but wrong source, silent
+        (False, "autonomous", True, 0),  # source=autonomous but managed=false, silent
+        # Invalid cases — should fail
+        (True, "autonomous", True, 1),  # Autonomous pack + silent
+    ],
+)
+def test_NoIsSilentInAutonomousPackValidator_trigger(
+    managed, pack_source, item_is_silent, expected_result_len
+):
+    """
+    Given:
+        - Triggers with various combinations of pack metadata (managed/source)
+          and item-level issilent field.
+
+    When:
+        - Running NoIsSilentInAutonomousPackValidator.obtain_invalid_content_items.
+
+    Then:
+        - Triggers in autonomous packs (managed: true, source: 'autonomous') that have
+          issilent: true must be flagged as invalid.
+        - Non-autonomous packs or non-silent items must not be flagged.
+    """
+    pack_metadata: dict = {}
+    if managed is not None:
+        pack_metadata["managed"] = managed
+    if pack_source is not None:
+        pack_metadata["source"] = pack_source
+
+    pack = create_pack_object(
+        paths=list(pack_metadata.keys()), values=list(pack_metadata.values())
+    )
+
+    trigger = create_trigger_object(paths=["issilent"], values=[item_is_silent])
+    trigger.pack = pack
+
+    results = NoIsSilentInAutonomousPackValidator().obtain_invalid_content_items(
+        [trigger]
+    )
+    assert len(results) == expected_result_len
+
+
+def test_NoIsSilentInAutonomousPackValidator_fix_playbook():
+    """
+    Given:
+        - A playbook in an autonomous pack (managed: true, source: 'autonomous')
+          that has isSilent: true.
+
+    When:
+        - Running the fix method.
+
+    Then:
+        - The isSilent field is removed from the playbook data and is_silent is set to False.
+        - The playbook is now valid (no errors).
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+    playbook = create_playbook_object(paths=["issilent"], values=[True])
+    playbook.pack = pack
+
+    validator = NoIsSilentInAutonomousPackValidator()
+    assert len(validator.obtain_invalid_content_items([playbook])) == 1
+
+    fix_result = validator.fix(playbook)
+    assert fix_result.message == validator.fix_message
+    assert playbook.is_silent is False
+    assert "isSilent" not in playbook.data
+
+    assert len(validator.obtain_invalid_content_items([playbook])) == 0
+
+
+def test_NoIsSilentInAutonomousPackValidator_fix_trigger():
+    """
+    Given:
+        - A trigger in an autonomous pack (managed: true, source: 'autonomous')
+          that has issilent: true.
+
+    When:
+        - Running the fix method.
+
+    Then:
+        - The isSilent field is removed from the trigger data and is_silent is set to False.
+        - The trigger is now valid (no errors).
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+    trigger = create_trigger_object(paths=["issilent"], values=[True])
+    trigger.pack = pack
+
+    validator = NoIsSilentInAutonomousPackValidator()
+    assert len(validator.obtain_invalid_content_items([trigger])) == 1
+
+    fix_result = validator.fix(trigger)
+    assert fix_result.message == validator.fix_message
+    assert trigger.is_silent is False
+    assert "isSilent" not in trigger.data
+
+    assert len(validator.obtain_invalid_content_items([trigger])) == 0
 
 
 @pytest.mark.parametrize(

@@ -266,6 +266,7 @@ select = [
   "AS103",
   "AS105",
   "MC100",
+  "MC101",
   "VC100",
   "VC101",
   "BC115"
@@ -273,7 +274,8 @@ select = [
 warning = [
   "RM108",
   "PB130",
-  "PB131"
+  "PB131",
+  "AS106"
 ]
 
 [support_level]
@@ -577,11 +579,13 @@ select = [
   "AS103",
   "AS105",
   "MC100",
+  "MC101",
   "BA112"
 ]
 warning = [
   "GR109",
   "BC117",
   "PB130",
-  "PB131"
+  "PB131",
+  "AS106"
 ]

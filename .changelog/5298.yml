@@ -1,4 +1,0 @@
-changes:
-- description: Added AS106 validation warning for autonomous playbook tasks that have a displayLabel but also have quietmode set to 1.
-  type: feature
-pr_number: '5298'

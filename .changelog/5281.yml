@@ -1,4 +1,0 @@
-changes:
-- description: Remove old product codes from demisto-sdk
-  type: internal
-pr_number: 5281

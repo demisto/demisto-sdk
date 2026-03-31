@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     AlertsFilter,
@@ -27,11 +27,11 @@ class _StrictTrigger(BaseStrictModel):
     grouping_element: Optional[str] = None
     is_auto_enabled: Optional[bool] = None
 
-    @root_validator
-    def validate_automation_playbook_logic(cls, values):
-        automation_id = values.get("automation_id")
-        automation_type = values.get("automation_type")
-        playbook_id = values.get("playbook_id")
+    @model_validator(mode="after")
+    def validate_automation_playbook_logic(self):
+        automation_id = self.automation_id
+        automation_type = self.automation_type
+        playbook_id = self.playbook_id
 
         if automation_type is not None and automation_type not in [
             "command",
@@ -55,7 +55,7 @@ class _StrictTrigger(BaseStrictModel):
         if not has_automation and not has_playbook:
             raise ValueError("Must provide either automation fields or playbook_id.")
 
-        return values
+        return self
 
 
 StrictTrigger = create_model(

@@ -10,7 +10,7 @@ from typing import DefaultDict, Dict, List, Optional, Set, Union
 
 from more_itertools import always_iterable
 from packaging.version import Version
-from pydantic import BaseModel, Extra, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
@@ -19,8 +19,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 
 
 class StrictBaseModel(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
 
 class DictWithSingleSimpleString(StrictBaseModel):
@@ -55,7 +54,8 @@ class Test(StrictBaseModel):
     instance_configuration: Optional[InstanceConfiguration] = None
     marketplaces: Optional[MarketplaceVersions] = None
 
-    @validator("fromversion", "toversion")
+    @field_validator("fromversion", "toversion")
+    @classmethod
     def validate_version(cls, v):
         Version(v)
 

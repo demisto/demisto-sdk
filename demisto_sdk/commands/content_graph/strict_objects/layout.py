@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import Field
+from pydantic import Field, RootModel
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
@@ -22,8 +22,8 @@ class ArgFilter(BaseStrictModel):
     type_: Optional[str] = Field(None, alias="type")
 
 
-class ArgFilters(BaseStrictModel):
-    __root__: List[ArgFilter]
+class ArgFilters(RootModel[List[ArgFilter]]):
+    pass
 
 
 class _SectionField(BaseStrictModel):

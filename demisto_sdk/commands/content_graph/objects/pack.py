@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, List, Optional, Union
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version, parse
-from pydantic import DirectoryPath, Field, validator
+from pydantic import DirectoryPath, Field, field_validator
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
@@ -132,24 +132,25 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     pack_readme: str = Field("", exclude=True)
     latest_rn_version: str = Field("", exclude=True)
     content_items: PackContentItems = Field(
-        PackContentItems(), alias="contentItems", exclude=True
+        default_factory=PackContentItems, alias="contentItems", exclude=True
     )
     pack_metadata_dict: Optional[dict] = Field({}, exclude=True)
 
     @classmethod
-    def from_orm(cls, obj) -> "Pack":
-        pack = super().from_orm(obj)
+    def model_validate(cls, obj, *args, **kwargs) -> "Pack":
+        pack = super().model_validate(obj, *args, **kwargs)
         for content_item in pack.content_items:
             content_item.pack = pack
         return pack
 
-    @validator("path", always=True)
-    def validate_path(cls, v: Path, values) -> Path:
+    @field_validator("path", mode="before")
+    @classmethod
+    def validate_path(cls, v: Path, info) -> Path:
         if v.is_absolute():
             return v
         if not CONTENT_PATH.name:
             return CONTENT_PATH / v
-        return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
+        return CONTENT_PATH.with_name(info.data.get("source_repo", "content")) / v
 
     @property
     def is_private(self) -> bool:
@@ -291,7 +292,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 "disable_monthly",
             }
 
-        metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
+        metadata = self.model_dump(exclude=excluded_fields_from_metadata, by_alias=True)
         metadata.update(
             self._format_metadata(marketplace, self.content_items, self.depends_on)
         )

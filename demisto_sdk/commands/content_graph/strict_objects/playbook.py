@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional
 
-from pydantic import Field, constr
+from pydantic import Field, RootModel, StringConstraints
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
@@ -125,8 +125,8 @@ ArgFilter = create_model(
 )
 
 
-class ArgFilters(BaseStrictModel):
-    __root__: List[ArgFilter]  # type:ignore[valid-type]
+class ArgFilters(RootModel[List[ArgFilter]]):  # type:ignore[valid-type]
+    pass
 
 
 class Condition(BaseStrictModel):
@@ -238,7 +238,9 @@ class _TaskPlaybook(BaseStrictModel):
     evidence_data: Optional[EvidenceData] = Field(None, alias="evidencedata")
     task: SubTaskPlaybook  # type:ignore[valid-type]
     note: Optional[bool] = None
-    next_tasks: Optional[Dict[constr(regex=r".+"), List[str]]] = Field(  # type:ignore[valid-type]
+    next_tasks: Optional[
+        Dict[Annotated[str, StringConstraints(pattern=r".+")], List[str]]
+    ] = Field(  # type:ignore[valid-type]
         None, alias="nexttasks"
     )
     loop: Optional[Loop]  # type:ignore[valid-type]
@@ -293,7 +295,7 @@ class StrictPlaybook(BaseStrictModel):
     inputs: Optional[List[InputPlaybook]] = None  # type:ignore[valid-type]
     inputSections: Optional[List[InputsSectionPlaybook]] = None  # type:ignore[valid-type]
     tags: Optional[List[str]] = None
-    tasks: Dict[constr(regex=TASKS_REGEX), TaskPlaybook]  # type:ignore[valid-type]
+    tasks: Dict[Annotated[str, StringConstraints(pattern=TASKS_REGEX)], TaskPlaybook]  # type:ignore[valid-type]
     system: Optional[bool] = None
     from_version: str = Field(alias="fromversion")
     to_version: Optional[str] = Field(None, alias="toversion")

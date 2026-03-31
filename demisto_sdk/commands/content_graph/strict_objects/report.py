@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional
 
-from pydantic import Field, constr
+from pydantic import Field, StringConstraints
 
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseOptionalVersionJson,
@@ -122,7 +122,9 @@ class _StrictReport(BaseStrictModel):
     sensitive: Optional[bool] = None
     disable_header: Optional[bool] = Field(None, alias="disableHeader")
     dashboard: Optional[Dashboard] = None  # type:ignore[valid-type]
-    decoder: Optional[Dict[constr(regex=r".+"), DecoderItem]] = None  # type:ignore[valid-type]
+    decoder: Optional[
+        Dict[Annotated[str, StringConstraints(pattern=r".+")], DecoderItem]
+    ] = None  # type:ignore[valid-type]
     sections: Any
 
 

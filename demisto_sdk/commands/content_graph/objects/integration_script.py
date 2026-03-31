@@ -62,7 +62,7 @@ class Argument(BaseModel):
         Returns:
             Dict: The Dict representation of the Argument object.
         """
-        dictified_arg = self.dict(exclude_none=True)
+        dictified_arg = self.model_dump(exclude_none=True)
         if "auto" in dictified_arg:
             dictified_arg["auto"] = dictified_arg["auto"].value
         return dictified_arg

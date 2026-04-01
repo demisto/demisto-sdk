@@ -208,17 +208,19 @@ class _TaskPlaybook(BaseStrictModel):
     task_id: str = Field(alias="taskid")
     type: str = Field(
         ...,
-        enum=[
-            "regular",
-            "playbook",
-            "condition",
-            "start",
-            "title",
-            "section",
-            "standard",
-            "collection",
-            "aiTask",
-        ],
+        json_schema_extra={
+            "enum": [
+                "regular",
+                "playbook",
+                "condition",
+                "start",
+                "title",
+                "section",
+                "standard",
+                "collection",
+                "aiTask",
+            ]
+        },
     )
     default_assignee_complex: Optional[Dict] = Field(
         None, alias="defaultassigneecomplex"

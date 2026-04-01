@@ -97,7 +97,7 @@ class BaseContentMetaclass(type(BaseModel)):
 class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
     database_id: Optional[str] = Field(None, exclude=True)  # used for the database
     object_id: str = Field(alias="id")
-    content_type: ClassVar[ContentType] = Field(include=True)
+    content_type: ClassVar[ContentType]
     source_repo: str = "content"
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)

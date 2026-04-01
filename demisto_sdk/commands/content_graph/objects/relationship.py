@@ -44,3 +44,8 @@ class RelationshipData(BaseModel):
     def __eq__(self, __o: object) -> bool:
         """This is needed to check if the relationship already exists"""
         return hash(self) == hash(__o)
+
+
+# Rebuild BaseNode now that RelationshipData is defined, resolving the forward reference.
+# This is needed for pydantic v2 which requires forward references to be resolved before model use.
+BaseNode.model_rebuild()

@@ -145,7 +145,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     @field_validator("path", mode="before")
     @classmethod
-    def validate_path(cls, v: Path, info) -> Path:
+    def validate_path(cls, v, info) -> Path:
+        v = Path(v) if not isinstance(v, Path) else v
         if v.is_absolute():
             return v
         if not CONTENT_PATH.name:

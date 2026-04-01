@@ -16,12 +16,12 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 class _StrictTrigger(BaseStrictModel):
     trigger_id: str
     trigger_name: str
-    playbook_id: Optional[str]
+    playbook_id: Optional[str] = None
     description: str
     suggestion_reason: str
     alerts_filter: Optional[AlertsFilter] = None
-    automation_type: Optional[str]
-    automation_id: Optional[str]
+    automation_type: Optional[str] = None
+    automation_id: Optional[str] = None
     supportedModules: Optional[list[str]] = Field(None, alias="supportedModules")
     issilent: Optional[bool] = Field(default=False)
     grouping_element: Optional[str] = None

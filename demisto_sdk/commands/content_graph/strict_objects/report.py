@@ -68,7 +68,7 @@ class _Dashboard(BaseStrictModel):
     from_date_license: Optional[str] = Field(None, alias="fromDateLicense")
     name: Optional[str] = None
     is_predefined: Optional[bool] = Field(None, alias="isPredefined")
-    period: Optional[Period]
+    period: Optional[Period] = None
     layout: Optional[List[Layout]] = None  # type:ignore[valid-type]
 
 
@@ -81,7 +81,7 @@ Dashboard = create_model(
 class _DecoderItem(BaseStrictModel):
     type: str = Field(enum=["string", "date", "duration", "image"])
     value: Optional[Any] = None
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 DecoderItem = create_model(
@@ -104,7 +104,7 @@ class _StrictReport(BaseStrictModel):
     system: Optional[bool] = None
     locked: Optional[bool] = None
     run_once: Optional[bool] = Field(None, alias="runOnce")
-    times: Optional[int]
+    times: Optional[int] = None
     start_date: Optional[str] = Field(None, alias="startDate")
     recurrent: Optional[bool] = None
     next_scheduled_time: Optional[str] = Field(None, alias="nextScheduledTime")

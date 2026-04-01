@@ -418,3 +418,18 @@ def should_run_on_execution_mode(
     if running_execution_mode in expected_execution_mode:
         return True
     return False
+
+
+# Rebuild models that reference BaseContent (which has forward refs to RelationshipData).
+# This is needed for pydantic v2 which requires forward references to be resolved before model use.
+# Import RelationshipData to ensure it's available for resolution.
+from demisto_sdk.commands.content_graph.objects.relationship import (  # noqa: E402
+    RelationshipData,  # noqa: F401
+)
+
+BaseValidator.model_rebuild()
+BaseResult.model_rebuild()
+ValidationResult.model_rebuild()
+FixResult.model_rebuild()
+InvalidContentItemResult.model_rebuild()
+ValidationCaughtExceptionResult.model_rebuild()

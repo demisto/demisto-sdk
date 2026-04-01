@@ -12,7 +12,7 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
     definition_id: Optional[str] = Field(None, alias="definitionId")
     field_type: Optional[str] = Field(None, alias="type")
     version: Optional[int] = 0
-    group: int = Field(None, exclude=True)
+    group: Optional[int] = Field(None, exclude=True)
     unsearchable: Optional[bool] = Field(None, exclude=True)
 
     def metadata_fields(self) -> Set[str]:

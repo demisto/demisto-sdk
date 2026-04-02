@@ -2,88 +2,95 @@ from abc import ABC
 from typing import Any, Dict, Optional, Sequence
 
 import pydantic
-from pydantic import BaseModel, Extra, validator
-from pydantic.fields import FieldInfo
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 marketplace_suffixes = tuple((marketplace.value for marketplace in MarketplaceVersions))
 
+# Fields that are allowed to have None values even when present
+_NONE_ALLOWED_FIELDS = {
+    "default_value",
+    "defaultvalue",
+    "additional_info",
+    "additionalinfo",
+    "defaultValue",
+    "default",
+    "detailed_description",
+    "image",
+    "default_classifier",
+    "display",
+    "outputs",
+    "predefined",
+    "select_values",
+    "columns",
+    "default_rows",
+    "system_associated_types",
+    "associated_types",
+    "propagation_labels",
+    "sort_values",
+    "playbook_id",
+    "query",
+    "playbook_input_query",
+    "suppression_duration",  # correlation rules
+    "suppression_fields",  # correlation rules
+    "user_defined_category",  # correlation rules
+    "user_defined_severity",  # correlation rules
+    "investigation_query_link",  # correlation rules
+    "cron_tab",  # correlation rules
+    "search_window",  # correlation rules
+    "sort",  # widget
+    "params",  # widget
+    "cache",  # widget
+    "tags",  # modeling rule
+    "to_value",  # report
+    "from_value",  # report
+    "description",  # xsiam_dashboard
+    "default_mapping",  # indicator_type
+    "manual_mapping",  # indicator_type
+    "file_hashes_priority",  # indicator_type
+    "legacy_names",  # indicator_type
+    "default_template_id",  # xsiam-report
+    "breaking_changes_notes",  # release-notes-config
+}
+
 
 class BaseStrictModel(BaseModel, ABC):
-    class Config:
-        """
-        This is the definition of not allowing extra fields except those defined by the schema.
-        """
+    model_config = ConfigDict(extra="forbid", coerce_numbers_to_str=True)
 
-        extra = Extra.forbid
-
-    @validator("*", pre=True)
-    def prevent_none(cls, value, field):
+    @model_validator(mode="before")
+    @classmethod
+    def prevent_none(cls, data: Any) -> Any:
         """
         Validator ensures no None value is entered in a field.
         There is a difference between an empty and missing field.
         Optional means a field can be left out of the schema, but if it does exist, it has to have a value - not None.
         """
-        # There is currently an exclusion for all fields which failed this validation on the Content repository
-        if field.name not in {
-            "default_value",
-            "defaultvalue",
-            "additional_info",
-            "additionalinfo",
-            "defaultValue",
-            "default",
-            "detailed_description",
-            "image",
-            "default_classifier",
-            "display",
-            "outputs",
-            "predefined",
-            "select_values",
-            "columns",
-            "default_rows",
-            "system_associated_types",
-            "associated_types",
-            "propagation_labels",
-            "sort_values",
-            "playbook_id",
-            "query",
-            "playbook_input_query",
-            "suppression_duration",  # correlation rules
-            "suppression_fields",  # correlation rules
-            "user_defined_category",  # correlation rules
-            "user_defined_severity",  # correlation rules
-            "investigation_query_link",  # correlation rules
-            "cron_tab",  # correlation rules
-            "search_window",  # correlation rules
-            "sort",  # widget
-            "params",  # widget
-            "cache",  # widget
-            "tags",  # modeling rule
-            "to_value",  # report
-            "from_value",  # report
-            "description",  # xsiam_dashboard
-            "default_mapping",  # indicator_type
-            "manual_mapping",  # indicator_type
-            "file_hashes_priority",  # indicator_type
-            "legacy_names",  # indicator_type
-            "default_template_id",  # xsiam-report
-            "breaking_changes_notes",  # release-notes-config
-        }:
-            # The assertion is caught by pydantic and converted to a pydantic.ValidationError
-            assert (
-                value is not None
-            ), f"The field {field.alias or field.name} is not required, but should not be None if it exists"
-        return value
+        if not isinstance(data, dict):
+            return data
+        model_fields = cls.model_fields
+        for field_name, value in data.items():
+            # Resolve the actual field name (could be an alias)
+            resolved_name = field_name
+            for fname, finfo in model_fields.items():
+                if finfo.alias == field_name:
+                    resolved_name = fname
+                    break
+            if (
+                resolved_name not in _NONE_ALLOWED_FIELDS
+                and field_name not in _NONE_ALLOWED_FIELDS
+            ):
+                assert (
+                    value is not None
+                ), f"The field {field_name} is not required, but should not be None if it exists"
+        return data
 
 
 def create_model(model_name: str, base_models: tuple, **kwargs) -> BaseModel:
     """
     Wrapper for pydantic.create_model so type:ignore[call-overload] appears only once.
     """
-    return pydantic.create_model(
-        __model_name=model_name, __base__=base_models, **kwargs
-    )  # type:ignore[call-overload]
+    return pydantic.create_model(model_name, __base__=base_models, **kwargs)  # type:ignore[call-overload]
 
 
 def create_dynamic_model(
@@ -107,12 +114,12 @@ def create_dynamic_model(
     fields = {
         f"{field_name}_{suffix}": (
             type_,
-            FieldInfo(default, alias=f"{alias or field_name}:{suffix}"),
+            Field(default=default, alias=f"{alias or field_name}:{suffix}"),
         )
         for suffix in suffixes
     }
     if include_without_suffix:
-        fields[field_name] = (type_, FieldInfo(default, alias=alias or field_name))
+        fields[field_name] = (type_, Field(default=default, alias=alias or field_name))
 
     return create_model(
         model_name=f"Dynamic{field_name.title()}Model",

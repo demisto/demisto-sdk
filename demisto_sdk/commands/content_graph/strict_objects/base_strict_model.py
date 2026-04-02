@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Annotated, Any, List, Literal, Optional, Tuple, Union
 
 import more_itertools
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from demisto_sdk.commands.common.constants import (
     TYPE_JS,
@@ -116,22 +116,28 @@ class ScriptType(StrEnum):
 class StructureError(BaseStrictModel):
     """Used for wrapping Pydantic errors, not part of content."""
 
+    # Override extra="forbid" from BaseStrictModel since pydantic v2 error dicts
+    # contain extra fields like 'input' and 'url' that we don't need to store.
+    model_config = ConfigDict(extra="ignore")
+
     path: Path
-    field_name: Tuple[str, ...] = Field(alias="loc")
+    field_name: Tuple[Union[str, int], ...] = Field(alias="loc")
     error_message: str = Field(alias="msg")
     error_type: str = Field(alias="type")
     ctx: Optional[dict] = None
 
     def __str__(self):
-        field_name = ",".join(more_itertools.always_iterable(self.field_name))
+        field_name = ",".join(
+            str(x) for x in more_itertools.always_iterable(self.field_name)
+        )
         if self.error_type == "assertion_error":
             error_message = (
                 self.error_message
                 or f"An assertion error occurred for field {field_name}"
             )
-        elif self.error_type == "value_error.extra":
+        elif self.error_type == "extra_forbidden":
             error_message = f"The field {field_name} is extra and {self.error_message}"
-        elif self.error_type == "value_error.missing":
+        elif self.error_type == "missing":
             error_message = f"The field {field_name} is required but missing"
         else:
             error_message = self.error_message or ""
@@ -230,9 +236,9 @@ class Or(BaseStrictModel):
 
 
 # Forward references to resolve circular dependencies
-Filter.update_forward_refs()
-And.update_forward_refs()
-Or.update_forward_refs()
+Filter.model_rebuild()
+And.model_rebuild()
+Or.model_rebuild()
 
 
 class AlertsFilter(BaseStrictModel):

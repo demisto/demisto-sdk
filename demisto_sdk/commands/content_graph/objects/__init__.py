@@ -52,6 +52,15 @@ from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgen
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
+
+# Rebuild models that have forward references to resolve them in pydantic v2
+# Rebuild all models that have forward references to resolve them in pydantic v2.
+# BaseNode references "RelationshipData" as a forward ref, and all subclasses inherit this.
+# We must rebuild after RelationshipData is imported so all models can resolve the reference.
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    CONTENT_TYPE_TO_MODEL,
+    BaseNode,
+)
 from demisto_sdk.commands.content_graph.objects.base_playbook import BasePlaybook
 from demisto_sdk.commands.content_graph.objects.base_script import BaseScript
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
@@ -70,7 +79,7 @@ from demisto_sdk.commands.content_graph.objects.incident_field import IncidentFi
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
@@ -92,3 +101,9 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+
+BaseNode.model_rebuild()
+for model_cls in CONTENT_TYPE_TO_MODEL.values():
+    model_cls.model_rebuild()
+Command.model_rebuild()
+RelationshipData.model_rebuild()

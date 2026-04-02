@@ -1,6 +1,6 @@
 from typing import Annotated, Any, List, Optional
 
-from pydantic import Field, conlist, validator
+from pydantic import Field, ValidationInfo, field_validator
 
 from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
@@ -199,7 +199,9 @@ class _StrictIntegration(BaseStrictModel):
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=6)] = (  # type:ignore[valid-type]
+    section_order: Optional[
+        Annotated[List[SectionOrderValues], Field(min_length=1, max_length=6)]
+    ] = (  # type:ignore[valid-type]
         Field(alias="sectionorder")
     )
     configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]
@@ -228,7 +230,7 @@ class _StrictIntegration(BaseStrictModel):
     triggers: Optional[List[Trigger]] = None
     supportedModules: Optional[
         Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
-    ]
+    ] = None
 
     def __init__(self, **data):
         """
@@ -243,15 +245,16 @@ class _StrictIntegration(BaseStrictModel):
             )
         super().__init__(**data)
 
-    @validator("configurations")
-    def validate_sections(cls, configurations, values):
+    @field_validator("configurations")
+    @classmethod
+    def validate_sections(cls, configurations, info: ValidationInfo):
         """
         Validates each configuration object has a valid section clause.
         A valid section clause is a section which is included in the list of the integration's section_order.
         Even if the section is an allowed value (currently Collect, Connect or Optimize),it could be invalid if the
         specific value is not present in section_order.
         """
-        section_order_field = values.get("section_order")
+        section_order_field = info.data.get("section_order")
         if not section_order_field:
             return configurations
         integration_sections = [

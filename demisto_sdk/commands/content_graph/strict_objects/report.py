@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional
 
-from pydantic import Field, constr
+from pydantic import Field, StringConstraints
 
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     BaseOptionalVersionJson,
@@ -68,7 +68,7 @@ class _Dashboard(BaseStrictModel):
     from_date_license: Optional[str] = Field(None, alias="fromDateLicense")
     name: Optional[str] = None
     is_predefined: Optional[bool] = Field(None, alias="isPredefined")
-    period: Optional[Period]
+    period: Optional[Period] = None
     layout: Optional[List[Layout]] = None  # type:ignore[valid-type]
 
 
@@ -79,9 +79,11 @@ Dashboard = create_model(
 
 
 class _DecoderItem(BaseStrictModel):
-    type: str = Field(enum=["string", "date", "duration", "image"])
+    type: str = Field(
+        json_schema_extra={"enum": ["string", "date", "duration", "image"]}
+    )
     value: Optional[Any] = None
-    description: Optional[str]
+    description: Optional[str] = None
 
 
 DecoderItem = create_model(
@@ -98,13 +100,13 @@ class _StrictReport(BaseStrictModel):
     created_by: str = Field(alias="createdBy")
     latest_report_name: Optional[str] = Field(None, alias="latestReportName")
     modified: Optional[str] = None
-    type_: str = Field(alias="type", enum=["pdf", "csv", "docx"])
-    orientation: str = Field(enum=["landscape", "portrait", ""])
+    type_: str = Field(alias="type", json_schema_extra={"enum": ["pdf", "csv", "docx"]})
+    orientation: str = Field(json_schema_extra={"enum": ["landscape", "portrait", ""]})
     recipients: List[str]
     system: Optional[bool] = None
     locked: Optional[bool] = None
     run_once: Optional[bool] = Field(None, alias="runOnce")
-    times: Optional[int]
+    times: Optional[int] = None
     start_date: Optional[str] = Field(None, alias="startDate")
     recurrent: Optional[bool] = None
     next_scheduled_time: Optional[str] = Field(None, alias="nextScheduledTime")
@@ -122,7 +124,9 @@ class _StrictReport(BaseStrictModel):
     sensitive: Optional[bool] = None
     disable_header: Optional[bool] = Field(None, alias="disableHeader")
     dashboard: Optional[Dashboard] = None  # type:ignore[valid-type]
-    decoder: Optional[Dict[constr(regex=r".+"), DecoderItem]] = None  # type:ignore[valid-type]
+    decoder: Optional[
+        Dict[Annotated[str, StringConstraints(pattern=r".+")], DecoderItem]
+    ] = None  # type:ignore[valid-type]
     sections: Any
 
 

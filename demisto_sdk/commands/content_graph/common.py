@@ -404,7 +404,7 @@ class Relationship(BaseModel):
     source_id: Optional[str] = None
     source_type: Optional[ContentType] = None
     source_fromversion: Optional[str] = None
-    source_marketplaces: Optional[List[MarketplaceVersions]]
+    source_marketplaces: Optional[List[MarketplaceVersions]] = None
     target: Optional[str] = None
     target_type: Optional[ContentType] = None
     target_min_version: Optional[str] = None
@@ -422,13 +422,16 @@ class Relationships(dict):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
         self.__getitem__(relationship).append(
-            Relationship.parse_obj(kwargs).dict(exclude_none=True)
+            Relationship.model_validate(kwargs).model_dump(exclude_none=True)
         )
 
     def add_batch(self, relationship: RelationshipType, data: List[Dict[str, Any]]):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
-        data = [Relationship.parse_obj(item).dict(exclude_none=True) for item in data]
+        data = [
+            Relationship.model_validate(item).model_dump(exclude_none=True)
+            for item in data
+        ]
         self.__getitem__(relationship).extend(data)
 
     def update(self, other: "Relationships") -> None:  # type: ignore

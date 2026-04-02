@@ -489,10 +489,10 @@ def validate_structure(file: Path, pydantic_error_list: list) -> None:
     """
     try:
         if file.stem == "pack_metadata":
-            StrictPackMetadata.parse_obj(get_file(file))
+            StrictPackMetadata.model_validate(get_file(file))
         else:
-            StrictReleaseNotesConfig.parse_obj(get_file(file))
-    except pydantic.error_wrappers.ValidationError as e:
+            StrictReleaseNotesConfig.model_validate(get_file(file))
+    except pydantic.ValidationError as e:
         pydantic_error_list += [
             StructureError(path=file, **error) for error in e.errors()
         ]

@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.tools import extract_docker_image_from_text
 
 class NativeImage(BaseModel):
     supported_docker_images: List[str]
-    docker_ref: Optional[str] = None
+    docker_ref: Optional[str]
 
 
 class IgnoredContentItem(BaseModel):

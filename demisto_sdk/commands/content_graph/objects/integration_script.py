@@ -85,7 +85,7 @@ class IntegrationScript(ContentItem):
     description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
-    unified_data: Optional[dict] = Field(None, exclude=True)
+    unified_data: dict = Field(None, exclude=True)
     version: Optional[int] = 0
     tests: Any = ""
 

@@ -63,8 +63,7 @@ class ContentItem(BaseContent):
 
     @field_validator("path", mode="before")
     @classmethod
-    def validate_path(cls, v, info) -> Path:
-        v = Path(v) if not isinstance(v, Path) else v
+    def validate_path(cls, v: Path, info) -> Path:
         if v.is_absolute():
             return v
         if not CONTENT_PATH.name:

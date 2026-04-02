@@ -48,7 +48,7 @@ class Test(StrictBaseModel):
     toversion: Optional[str] = None
     nightly: Optional[bool] = None
     context_print_dt: Optional[str] = None
-    scripts: Optional[Union[str, List[str]]] = None
+    scripts: Optional[Union[str, List[str]]]
     runnable_on_docker_only: Optional[bool] = None
     external_playbook_config: Optional[ExternalPlaybookConfig] = None
     instance_configuration: Optional[InstanceConfiguration] = None
@@ -77,7 +77,7 @@ class ConfJSON(StrictBaseModel):
     tests: List[Test]
     skipped_tests: Dict[str, str]
     skipped_integrations: Dict[str, str]
-    native_nightly_packs: Optional[List[str]] = None
+    native_nightly_packs: Optional[List[str]]
     nightly_packs: List[str]
     parallel_integrations: List[str]
     private_tests: List[str]

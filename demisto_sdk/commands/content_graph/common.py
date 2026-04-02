@@ -404,7 +404,7 @@ class Relationship(BaseModel):
     source_id: Optional[str] = None
     source_type: Optional[ContentType] = None
     source_fromversion: Optional[str] = None
-    source_marketplaces: Optional[List[MarketplaceVersions]] = None
+    source_marketplaces: Optional[List[MarketplaceVersions]]
     target: Optional[str] = None
     target_type: Optional[ContentType] = None
     target_min_version: Optional[str] = None

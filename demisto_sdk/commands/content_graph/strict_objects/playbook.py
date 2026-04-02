@@ -182,7 +182,7 @@ SubTaskPlaybook = create_model(
 
 
 class _Loop(BaseStrictModel):
-    iscommand: Optional[bool] = None
+    iscommand: Optional[bool]
     built_in_condition: Optional[List[ArgFilters]] = Field(
         None, alias="builtincondition"
     )
@@ -223,7 +223,7 @@ class _TaskPlaybook(BaseStrictModel):
     default_assignee_complex: Optional[Dict] = Field(
         None, alias="defaultassigneecomplex"
     )
-    sla: Optional[Dict] = None
+    sla: Optional[Dict]
     sla_reminder: Optional[Dict] = Field(None, alias="slareminder")
     quiet_mode: Optional[int] = Field(None, alias="quietmode")
     restricted_completion: Optional[bool] = Field(None, alias="restrictedcompletion")
@@ -243,10 +243,10 @@ class _TaskPlaybook(BaseStrictModel):
     ] = Field(  # type:ignore[valid-type]
         None, alias="nexttasks"
     )
-    loop: Optional[Loop] = None  # type:ignore[valid-type]
-    conditions: Optional[List[Condition]] = None
+    loop: Optional[Loop]  # type:ignore[valid-type]
+    conditions: Optional[List[Condition]]
     view: str
-    results: Optional[List[str]] = None
+    results: Optional[List[str]]
     continue_on_error: Optional[bool] = Field(None, alias="continueonerror")
     continue_on_error_type: Optional[str] = Field(None, alias="continueonerrortype")
     reputation_calc: Optional[int] = Field(None, alias="reputationcalc")

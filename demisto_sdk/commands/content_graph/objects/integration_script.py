@@ -2,7 +2,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
@@ -70,17 +70,9 @@ class Argument(BaseModel):
 
 class IntegrationScript(ContentItem):
     type: str
-    subtype: Optional[str] = None
+    subtype: Optional[str]
     docker_image: DockerImage = DockerImage("")
     alt_docker_images: List[str] = []
-
-    @field_validator("docker_image", mode="before")
-    @classmethod
-    def validate_docker_image(cls, v):
-        if isinstance(v, str) and not isinstance(v, DockerImage):
-            return DockerImage(v)
-        return v
-
     auto_update_docker_image: bool = True
     description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)

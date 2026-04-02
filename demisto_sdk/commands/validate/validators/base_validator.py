@@ -125,9 +125,12 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                 inner_args = get_args(content_items_hint)
                 if inner_args:
                     args = inner_args[0]
-                    if isinstance(args, (BaseContent, BaseContentMetaclass)):
+                    if isinstance(args, type):
                         return args
-                    return get_args(args) or args
+                    # For Union types, get_args returns tuple of types
+                    union_args = get_args(args)
+                    if union_args:
+                        return union_args
         except Exception:
             pass
         # Fallback: search __orig_bases__ for generic args
@@ -135,9 +138,11 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
             base_args = get_args(base)
             if base_args:
                 args = base_args[0]
-                if isinstance(args, (BaseContent, BaseContentMetaclass)):
+                if isinstance(args, type):
                     return args
-                return get_args(args)
+                union_args = get_args(args)
+                if union_args:
+                    return union_args
         raise TypeError(
             f"Could not determine content types for {type(self).__name__}"
         )

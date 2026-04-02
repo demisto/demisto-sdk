@@ -156,10 +156,8 @@ class TestSkippingInvalidModelingRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
         try:
             with requests_mock.Mocker() as m:
                 with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
@@ -225,10 +223,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
             with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
@@ -290,10 +286,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
             with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
@@ -367,10 +361,8 @@ class TestTheTestModelingRuleCommandSingleRule:
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
 
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
             with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
@@ -449,10 +441,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
             with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
@@ -544,10 +534,8 @@ class TestTheTestModelingRuleCommandSingleRule:
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
 
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
             with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
@@ -644,10 +632,8 @@ class TestTheTestModelingRuleCommandSingleRule:
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
 
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
 
         # mocking Variables
         id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
@@ -780,10 +766,8 @@ class TestTheTestModelingRuleCommandSingleRule:
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
 
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
             with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
@@ -918,10 +902,8 @@ class TestTheTestModelingRuleCommandSingleRule:
 
         test_data_file = pack.modeling_rules[0].testdata
 
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_as_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_as_text(fake_test_data.json(indent=4))
         test_data_file.update(
             {"ignored_validations": [Validations.SCHEMA_TYPES_ALIGNED_WITH_TEST_DATA]}
         )
@@ -1061,10 +1043,8 @@ class TestTheTestModelingRuleCommandSingleRule:
 
         test_data_file = pack.modeling_rules[0].testdata
 
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_as_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_as_text(fake_test_data.json(indent=4))
         test_data_file.update({"ignored_validations": ["blabla"]})
 
         with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
@@ -1135,10 +1115,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
             with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
@@ -1267,10 +1245,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         )
 
         test_data_file = pack.modeling_rules[0].testdata
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_as_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_as_text(fake_test_data.json(indent=4))
         test_data_file.update(
             {"ignored_validations": [Validations.TEST_DATA_CONFIG_IGNORE]}
         )
@@ -1395,10 +1371,8 @@ class TestTheTestModelingRuleCommandMultipleRules:
         test_data_file = (
             modeling_rule_directory_1 / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
 
         # Create Pack 2 with Modeling Rule
         pack_2 = repo.create_pack("Pack2")
@@ -1411,10 +1385,8 @@ class TestTheTestModelingRuleCommandMultipleRules:
         test_data_file = (
             modeling_rule_directory_2 / f"{DEFAULT_MODELING_RULE_NAME_2}_testdata.json"
         )
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
 
         try:
             with SetFakeXsiamClientEnvironmentVars() as fake_env_vars:
@@ -1624,10 +1596,8 @@ class TestDeleteExistingDataset:
         test_data_file = (
             modeling_rule_directory / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
         )
-        fake_test_data = TestData.model_validate_json(
-            Path(TEST_DATA_FILE_PATH).read_text()
-        )
-        test_data_file.write_text(fake_test_data.model_dump_json(indent=4))
+        fake_test_data = TestData.parse_file(TEST_DATA_FILE_PATH.as_posix())
+        test_data_file.write_text(fake_test_data.json(indent=4))
         # mocking Variables
         id_key = f"{fake_test_data.data[0].dataset}.test_data_event_id"
         event_id_1 = str(fake_test_data.data[0].test_data_event_id)

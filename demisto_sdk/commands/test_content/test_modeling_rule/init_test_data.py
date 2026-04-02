@@ -90,9 +90,7 @@ def init_test_data(
                 logger.info(
                     f"<cyan>Updating test data file: {test_data_file}</cyan>",
                 )
-                test_data = TestData.model_validate_json(
-                    Path(test_data_file).read_text()
-                )
+                test_data = TestData.parse_file(test_data_file)
                 dataset_to_fields_map = {
                     mr.dataset: dict.fromkeys(mr.fields) for mr in mr_entity.rules
                 }
@@ -174,7 +172,7 @@ def init_test_data(
                     mr_entity.path.parent
                     / f"{mr_entity.path.parent.stem}{mr_entity.TESTDATA_FILE_SUFFIX}"
                 )
-            test_data_file.write_text(test_data.model_dump_json(indent=4))
+            test_data_file.write_text(test_data.json(indent=4))
             logger.info(
                 f"<green>Successfully {operation_mode}d {test_data_file}</green>",
             )

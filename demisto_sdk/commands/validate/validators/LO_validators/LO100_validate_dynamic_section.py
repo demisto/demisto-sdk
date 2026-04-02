@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import ClassVar, Iterable, List, Union
+from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.tools import is_string_uuid
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -20,10 +20,8 @@ class IsValidDynamicSectionValidator(BaseValidator[ContentTypes]):
         "Ensures that dynamic sections in the layout contains existing scripts."
     )
     rationale = "Section query value has to be a valid script name."
-    error_message_uuid: ClassVar[str] = (
-        "The tab {0} contains UUID value: {1} in the query field, please change it to valid script name."
-    )
-    error_message_unknown_script: ClassVar[str] = (
+    error_message_uuid = "The tab {0} contains UUID value: {1} in the query field, please change it to valid script name."
+    error_message_unknown_script = (
         "The tab {0} contains the following script that not exists in the repo: {1}."
     )
     related_field = "tabs.sections.query"

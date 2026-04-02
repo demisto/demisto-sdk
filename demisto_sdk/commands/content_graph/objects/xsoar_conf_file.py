@@ -1,11 +1,12 @@
 import typing
 from abc import ABC
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Extra, Field
 
 
 class StrictBaseModel(BaseModel, ABC):
-    model_config = ConfigDict(extra="forbid")
+    class Config:
+        extra = Extra.forbid
 
 
 class BasePack(StrictBaseModel, ABC):

@@ -88,6 +88,6 @@ def validate_structure(
     """
     try:
         strict_object(**raw_data)
-    except pydantic.ValidationError as e:
+    except pydantic.error_wrappers.ValidationError as e:
         return [StructureError(path=path, **error) for error in e.errors()]
     return []

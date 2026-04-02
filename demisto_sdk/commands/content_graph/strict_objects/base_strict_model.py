@@ -129,9 +129,9 @@ class StructureError(BaseStrictModel):
                 self.error_message
                 or f"An assertion error occurred for field {field_name}"
             )
-        elif self.error_type == "extra_forbidden":
+        elif self.error_type == "value_error.extra":
             error_message = f"The field {field_name} is extra and {self.error_message}"
-        elif self.error_type == "missing":
+        elif self.error_type == "value_error.missing":
             error_message = f"The field {field_name} is required but missing"
         else:
             error_message = self.error_message or ""
@@ -230,9 +230,9 @@ class Or(BaseStrictModel):
 
 
 # Forward references to resolve circular dependencies
-Filter.model_rebuild()
-And.model_rebuild()
-Or.model_rebuild()
+Filter.update_forward_refs()
+And.update_forward_refs()
+Or.update_forward_refs()
 
 
 class AlertsFilter(BaseStrictModel):

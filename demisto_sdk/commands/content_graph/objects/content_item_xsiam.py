@@ -4,7 +4,7 @@ from typing import List
 
 import demisto_client
 from packaging.version import Version
-from pydantic import DirectoryPath, field_validator
+from pydantic import DirectoryPath, validator
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -26,8 +26,7 @@ from demisto_sdk.commands.upload.exceptions import (
 
 
 class ContentItemXSIAM(ContentItem, ABC):
-    @field_validator("fromversion", mode="before")
-    @classmethod
+    @validator("fromversion", always=True)
     def validate_from_version(cls, v: str) -> str:
         if not v or DEFAULT_CONTENT_ITEM_FROM_VERSION == v:
             return MINIMUM_XSOAR_SAAS_VERSION

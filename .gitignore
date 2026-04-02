@@ -110,9 +110,6 @@ node_modules
 # VS Code Extensions
 .demisto-sdk-report
 
-# .roo
-plans
-
 # Certificates
 *.crt
 

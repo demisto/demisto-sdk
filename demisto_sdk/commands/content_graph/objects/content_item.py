@@ -19,8 +19,7 @@ if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
     from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
-from pydantic import DirectoryPath, Field, field_validator
-from pydantic.fields import FieldInfo
+from pydantic import DirectoryPath, Field, fields, validator
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER, MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -61,14 +60,13 @@ class ContentItem(BaseContent):
     is_silent: bool = False
     upload_path: Optional[Path] = None
 
-    @field_validator("path", mode="before")
-    @classmethod
-    def validate_path(cls, v: Path, info) -> Path:
+    @validator("path", always=True)
+    def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
             return v
         if not CONTENT_PATH.name:
             return CONTENT_PATH / v
-        return CONTENT_PATH.with_name(info.data.get("source_repo", "content")) / v
+        return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
 
     @staticmethod
     @abstractmethod
@@ -82,24 +80,22 @@ class ContentItem(BaseContent):
     def pack_id(self) -> str:
         return self.in_pack.pack_id if self.in_pack else ""
 
-    @field_validator("pack", mode="before")
-    @classmethod
-    def validate_pack(cls, v: Any, info) -> Optional["Pack"]:
+    @validator("pack", always=True)
+    def validate_pack(cls, v: Any, values) -> Optional["Pack"]:
         # Validate that we have the pack containing the content item.
         # The pack is either provided directly or needs to be located.
 
-        if v and not isinstance(v, FieldInfo):
+        if v and not isinstance(v, fields.FieldInfo):
             return v
-        return cls.get_pack(info.data.get("relationships_data"), info.data.get("path"))
+        return cls.get_pack(values.get("relationships_data"), values.get("path"))
 
-    @field_validator("support", mode="before")
-    @classmethod
-    def validate_support(cls, v: str, info) -> str:
+    @validator("support", always=True)
+    def validate_support(cls, v: str, values) -> str:
         # Ensure the 'support' field is present.
         # If not directly provided, the support level from the associated pack will be used.
         if v:
             return v
-        pack = info.data.get("pack")
+        pack = values.get("pack")
         if pack and pack.support:
             return pack.support
 
@@ -321,7 +317,7 @@ class ContentItem(BaseContent):
         if not self.supportedModules:
             exclude_fields["supportedModules"] = True
 
-        summary_res = self.model_dump(
+        summary_res = self.dict(
             include=self.metadata_fields(), by_alias=True, exclude=exclude_fields
         )
 
@@ -406,7 +402,7 @@ class ContentItem(BaseContent):
         Returns:
             dict: id_set entiity
         """
-        id_set_entity = self.model_dump()
+        id_set_entity = self.dict()
         id_set_entity["file_path"] = str(self.path)
         id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity

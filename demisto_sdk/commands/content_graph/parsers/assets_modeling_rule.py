@@ -40,10 +40,10 @@ class AssetsModelingRuleParser(
         for file in directory.iterdir():
             try:
                 if file.suffix == ".yml":
-                    StrictAssetsModelingRule.model_validate(get_file(file))
+                    StrictAssetsModelingRule.parse_obj(get_file(file))
                 elif file.suffix == ".json":
-                    StrictAssetsModelingRuleSchema.model_validate(get_file(file))
-            except pydantic.ValidationError as e:
+                    StrictAssetsModelingRuleSchema.parse_obj(get_file(file))
+            except pydantic.error_wrappers.ValidationError as e:
                 directory_pydantic_error += [
                     StructureError(path=file, **error) for error in e.errors()
                 ]

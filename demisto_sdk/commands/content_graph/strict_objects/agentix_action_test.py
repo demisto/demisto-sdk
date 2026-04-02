@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, root_validator, validator
 
 from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
 
@@ -17,14 +17,13 @@ class EvaluationOutcome(BaseStrictModel):
     actions: List[ActionDetail] = []
     expected_error: Optional[str] = None
 
-    @model_validator(mode="before")
-    @classmethod
-    def validate_action_logic(cls, data):
-        actions = data.get("actions")
+    @root_validator(pre=True)
+    def validate_action_logic(cls, values):
+        actions = values.get("actions")
         # Handle both 'action' and 'actions' as seen in AG109
-        action = data.get("action")
-        expected_error = data.get("expected_error")
-        evaluation_mode = data.get("evaluation_mode")
+        action = values.get("action")
+        expected_error = values.get("expected_error")
+        evaluation_mode = values.get("evaluation_mode")
 
         # Error Handling rule: If expected_error is present, actions should be empty
         # unless in sequence mode for recovery.
@@ -36,7 +35,7 @@ class EvaluationOutcome(BaseStrictModel):
         if not expected_error and actions is None and not action:
             raise ValueError("Either 'expected_error' or 'actions' must be provided.")
 
-        return data
+        return values
 
 
 class AgentixActionTestCase(BaseStrictModel):
@@ -47,19 +46,17 @@ class AgentixActionTestCase(BaseStrictModel):
     any_of: Optional[List[EvaluationOutcome]] = None
     sequence: Optional[List[EvaluationOutcome]] = None
 
-    @model_validator(mode="before")
-    @classmethod
-    def validate_modes(cls, data):
+    @root_validator(pre=True)
+    def validate_modes(cls, values):
         modes = {"any_of", "sequence", "expected_outcomes"}
-        present_modes = modes.intersection(data.keys())
+        present_modes = modes.intersection(values.keys())
         if len(present_modes) > 1:
             raise ValueError(
                 f"Multiple evaluation modes present: {', '.join(present_modes)}. Only one is allowed."
             )
-        return data
+        return values
 
-    @field_validator("prompt")
-    @classmethod
+    @validator("prompt")
     def prompt_must_end_with_period(cls, v):
         if v and not v.strip().endswith("."):
             raise ValueError("Prompt must end with a period (.).")

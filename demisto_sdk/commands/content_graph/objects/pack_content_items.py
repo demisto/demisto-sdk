@@ -1,7 +1,7 @@
 from typing import Any, Dict, Generator, List
 
 from more_itertools import map_reduce
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
@@ -128,6 +128,7 @@ class PackContentItems(BaseModel):
         """Used for easier determination of content items existence in a pack."""
         return bool(list(self))
 
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True, from_attributes=True, populate_by_name=True
-    )
+    class Config:
+        arbitrary_types_allowed = True
+        orm_mode = True
+        allow_population_by_field_name = True

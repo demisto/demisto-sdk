@@ -104,9 +104,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
             "deprecated": self.deprecated,
             "description": self.description,
             "arguments": [arg.to_raw_dict for arg in self.args],
-            "outputs": [
-                output.model_dump(exclude_none=True) for output in self.outputs
-            ],
+            "outputs": [output.dict(exclude_none=True) for output in self.outputs],
         }
         remove_nulls_from_dictionary(command)
         return command
@@ -233,9 +231,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         super().save(fields_to_exclude=["params"])
         data = self.data
         data["script"]["commands"] = [command.to_raw_dict for command in self.commands]
-        data["configuration"] = [
-            param.model_dump(exclude_none=True) for param in self.params
-        ]
+        data["configuration"] = [param.dict(exclude_none=True) for param in self.params]
         write_dict(self.path, data, indent=4)
 
     @cached_property

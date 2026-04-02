@@ -40,10 +40,10 @@ repos:
     args:
     - --lock
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.19.1
+  rev: v0.982
   hooks:
   - id: mypy
-    exclude: tests/.*|demisto_sdk/commands/init/templates/.*|Utils/.*|tests_end_to_end/.*
+    exclude: tests/.*|demisto_sdk/commands/init/templates/.*
     language: system
 - repo: local
   hooks:

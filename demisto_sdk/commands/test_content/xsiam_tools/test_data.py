@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, validator
 
 
 class Validations(str, Enum):
@@ -23,8 +23,7 @@ class EventLog(BaseModel):
     event_data: Optional[Dict[str, Any]] = {}
     expected_values: Optional[Dict[str, Any]] = {}
 
-    @field_validator("test_data_event_id")
-    @classmethod
+    @validator("test_data_event_id")
     def validate_test_data(cls, v):
         v = uuid4()
         return v
@@ -34,22 +33,17 @@ class TestData(BaseModel):
     data: List[EventLog] = Field(default_factory=lambda: [EventLog()])
     ignored_validations: List[str] = []
 
-    @field_validator("data")
-    @classmethod
+    @validator("data", each_item=True)
     def validate_expected_values(cls, v):
-        for item in v:
-            for k in item.expected_values.keys():
-                if (
-                    k == "_time"
-                ):  # '_time' is a special field without the 'xdm.' prefix.
-                    continue
-                if not k.casefold().startswith("xdm."):
-                    err = "The expected values mapping keys are expected to start with 'xdm.' (case insensitive)"
-                    raise ValueError(err)
+        for k in v.expected_values.keys():
+            if k == "_time":  # '_time' is a special field without the 'xdm.' prefix.
+                continue
+            if not k.casefold().startswith("xdm."):
+                err = "The expected values mapping keys are expected to start with 'xdm.' (case insensitive)"
+                raise ValueError(err)
         return v
 
-    @field_validator("ignored_validations")
-    @classmethod
+    @validator("ignored_validations")
     def validate_ignored_validations(cls, v):
         provided_ignored_validations = set(v)
         valid_ignored_validations = Validations.as_set()
@@ -65,8 +59,7 @@ class TestData(BaseModel):
 
 
 class CompletedTestData(TestData):
-    @field_validator("data")
-    @classmethod
+    @validator("data")
     def validate_expected_values(cls, v):
         for test_data_event in v:
             if not test_data_event.expected_values or not any(
@@ -81,8 +74,7 @@ class CompletedTestData(TestData):
                 raise ValueError(err)
         return v
 
-    @field_validator("data")
-    @classmethod
+    @validator("data")
     def validate_event_data(cls, v):
         for test_data_event in v:
             if not test_data_event.event_data:

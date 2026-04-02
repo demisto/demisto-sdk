@@ -12,7 +12,7 @@ from typing import (
     get_args,
 )
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import (
     ALWAYS_RUN_ON_ERROR_CODE,
@@ -98,12 +98,12 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     dockerhub_api_client (ClassVar[DockerHubClient): the docker hub api client.
     """
 
-    error_code: ClassVar[str] = ""
-    description: ClassVar[str] = ""
-    rationale: ClassVar[str] = ""
-    error_message: ClassVar[str] = ""
+    error_code: ClassVar[str]
+    description: ClassVar[str]
+    rationale: ClassVar[str]
+    error_message: ClassVar[str]
     fix_message: ClassVar[str] = ""
-    related_field: ClassVar[str] = ""
+    related_field: ClassVar[str]
     expected_git_statuses: ClassVar[Optional[List[GitStatuses]]] = []
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
@@ -210,9 +210,12 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         # Exclude specific properties from being displayed when hovering over 'self'
         return [attr for attr in dir(type(self)) if attr != "graph"]
 
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,  # allows having custom classes for properties in model
-    )
+    class Config:
+        arbitrary_types_allowed = (
+            True  # allows having custom classes for properties in model
+        )
+        # Exclude the properties from the repr
+        fields = {"graph": {"exclude": True}, "dockerhub_client": {"exclude": True}}
 
     @property
     def error_category(self) -> str:
@@ -224,11 +227,7 @@ def get_all_validators() -> List[BaseValidator]:
     for validator in BaseValidator.__subclasses__():
         validators.append(validator)
         validators.extend(get_all_validators_specific_validation(validator))  # type: ignore[arg-type]
-    return [
-        validator()
-        for validator in validators
-        if not is_abstract_class(validator) and getattr(validator, "error_code", "")
-    ]
+    return [validator() for validator in validators if not is_abstract_class(validator)]
 
 
 def get_all_validators_specific_validation(

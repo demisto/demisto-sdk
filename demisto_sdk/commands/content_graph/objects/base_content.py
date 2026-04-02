@@ -18,7 +18,8 @@ from typing import (
 
 import demisto_client
 from packaging.version import Version
-from pydantic import BaseModel, ConfigDict, DirectoryPath, Field
+from pydantic import BaseModel, DirectoryPath, Field
+from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
@@ -54,7 +55,7 @@ CONTENT_TYPE_TO_MODEL: Dict[ContentType, Type["BaseContent"]] = {}
 json = JSON_Handler()
 
 
-class BaseContentMetaclass(type(BaseModel)):
+class BaseContentMetaclass(ModelMetaclass):
     def __new__(
         cls, name, bases, namespace, content_type: ContentType = None, **kwargs
     ):
@@ -105,12 +106,13 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         defaultdict(set), exclude=True, repr=False
     )
 
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        from_attributes=True,
-        populate_by_name=True,
-        ignored_types=(cached_property,),
-    )
+    class Config:
+        arbitrary_types_allowed = (
+            True  # allows having custom classes for properties in model
+        )
+        orm_mode = True  # allows using from_orm() method
+        allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
+        keep_untouched = (cached_property,)
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
@@ -126,15 +128,15 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             for r in relationship_data:
                 # override the relationships_data of the content item to avoid circular references
                 r: RelationshipData  # type: ignore[no-redef]
-                r_copy = r.model_copy()
-                content_item_to_copy = r_copy.content_item_to.model_copy()
+                r_copy = r.copy()
+                content_item_to_copy = r_copy.content_item_to.copy()
                 r_copy.content_item_to = content_item_to_copy
                 content_item_to_copy.relationships_data = defaultdict(set)
                 dict_copy["relationships_data"][r.relationship_type].add(r_copy)
 
         return {
             "__dict__": dict_copy,
-            "__fields_set__": self.model_fields_set,
+            "__fields_set__": self.__fields_set__,
         }
 
     @property
@@ -156,7 +158,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         This function is used to create the graph nodes, we use this method when creating the graph.
         when creating the graph we want to load the lazy properties into the model.
 
-        We use it instead of `self.model_dump()` because sometimes we need only the primitive values.
+        We use it instead of `self.dict()` because sometimes we need only the primitive values.
 
         Returns:
             Dict[str, Any]: JSON dictionary representation of the class.
@@ -168,7 +170,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             for name, value in inspect.getmembers(self.__class__)
             if isinstance(value, cached_property)
         }
-        json_dct = self.model_dump(
+        json_dct = self.dict(
             exclude={
                 "commands",
                 "database_id",
@@ -295,7 +297,7 @@ class BaseContent(BaseNode):
             or path.name == PACKS_PACK_META_FILE_NAME
         ):  # if the path given is a pack
             try:
-                return CONTENT_TYPE_TO_MODEL[ContentType.PACK].model_validate(
+                return CONTENT_TYPE_TO_MODEL[ContentType.PACK].from_orm(
                     PackParser(
                         path,
                         git_sha=git_sha,
@@ -327,7 +329,7 @@ class BaseContent(BaseNode):
             return None
 
         try:
-            return model.model_validate(content_item_parser)  # type: ignore
+            return model.from_orm(content_item_parser)  # type: ignore
         except Exception:
             logger.exception(
                 f"Could not parse content item from path {path} using {content_item_parser}"

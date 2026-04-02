@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import Field, model_validator
+from pydantic import Field, root_validator
 
 from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
@@ -107,8 +107,8 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
     few_shots: Optional[str] = Field(None, alias="fewshots")
     prompt_config: Optional[PromptConfig] = Field(None, alias="promptConfig")
 
-    @model_validator(mode="after")
-    def validate_llm_constraints(self):
+    @root_validator
+    def validate_llm_constraints(cls, values):
         """
         Validates LLM-related field constraints based on the 'is_llm' flag.
 
@@ -129,27 +129,27 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
             ValueError: If one or more validation conditions are not met.
         """
         errors = []
-        if self.is_llm:
+        if values.get("is_llm"):
             # Enforce LLM mode rules
-            if self.script:
+            if values.get("script"):
                 errors.append(
                     "When 'isllm' is True, 'script' should not appear in yml."
                 )
-            if not self.model and not self.prompt_config:
+            if not values.get("model") and not values.get("prompt_config"):
                 errors.append(
                     "When 'isllm' is True, either 'model' (legacy format with toversion: 8.12.0) "
                     "or 'promptConfig' (new format with fromversion: 8.13.0) must be provided."
                 )
-            if not self.user_prompt:
+            if not values.get("user_prompt"):
                 errors.append("When 'isllm' is True, 'userprompt' must be provided.")
         else:
             # Enforce non-LLM mode: all LLM-related fields must be None or empty
             llm_fields = [
-                ("model", self.model),
-                ("user_prompt", self.user_prompt),
-                ("system_prompt", self.system_prompt),
-                ("few_shots", self.few_shots),
-                ("prompt_config", self.prompt_config),
+                ("model", values.get("model")),
+                ("user_prompt", values.get("user_prompt")),
+                ("system_prompt", values.get("system_prompt")),
+                ("few_shots", values.get("few_shots")),
+                ("prompt_config", values.get("prompt_config")),
             ]
             errors.extend(
                 f"Field '{field_name}' must be empty when 'isllm' is False."
@@ -159,7 +159,7 @@ class _StrictScript(BaseIntegrationScript):  # type:ignore[misc,valid-type]
         if errors:
             raise ValueError("Validation failed:\n" + "\n".join(errors))
 
-        return self
+        return values
 
 
 StrictScript = create_model(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import ClassVar, Iterable, List
+from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -29,9 +29,7 @@ class IsActionNameValidValidator(BaseValidator[ContentTypes]):
     related_field = "name"
     is_auto_fixable = False
 
-    AGENTIX_ACTION_NAME_PATTERN: ClassVar[re.Pattern] = re.compile(
-        r"^[a-zA-Z]\w*$", re.IGNORECASE
-    )
+    AGENTIX_ACTION_NAME_PATTERN = re.compile(r"^[a-zA-Z]\w*$", re.IGNORECASE)
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

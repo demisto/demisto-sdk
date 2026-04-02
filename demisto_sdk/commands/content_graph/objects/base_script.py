@@ -93,7 +93,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
                 obj = self
 
             else:  # a modified script, replaced incidents->alerts
-                obj = self.model_copy(
+                obj = self.copy(
                     update={
                         "name": script_name,
                         "path": self.path.with_name(f"{script_name}.yml"),

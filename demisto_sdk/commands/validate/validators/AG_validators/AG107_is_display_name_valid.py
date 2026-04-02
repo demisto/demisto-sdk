@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import ClassVar, Iterable, List
+from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -21,9 +21,7 @@ class IsDisplayNameValidValidator(BaseValidator[ContentTypes]):
     related_field = "display"
     is_auto_fixable = False
 
-    AGENTIX_ACTION_DISPLAY_NAME_PATTERN: ClassVar[re.Pattern] = re.compile(
-        r"^[A-Za-z][A-Za-z0-9_\- ]*$"
-    )
+    AGENTIX_ACTION_DISPLAY_NAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_\- ]*$")
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

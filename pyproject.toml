@@ -10,10 +10,7 @@ show_error_codes = true
 follow_imports = "silent"
 pretty = true
 allow_redefinition = true
-implicit_optional = true
-disable_error_code = ["literal-required", "call-overload", "union-attr", "override", "type-var", "metaclass", "arg-type", "attr-defined", "assignment", "misc", "call-arg", "index", "return-value", "empty-body", "abstract", "name-defined", "no-redef", "truthy-function", "valid-type", "var-annotated", "operator"]
-plugins = ["pydantic.mypy"]
-exclude = "tests/.*|demisto_sdk/commands/init/templates/.*|Utils/.*|tests_end_to_end/.*"
+exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
 
 [tool.poetry]
 name = "demisto-sdk"
@@ -45,7 +42,7 @@ exclude = [
 python = ">=3.9,<3.13"
 autopep8 = "^2.0.4"
 bandit = "^1.7.4"
-mypy = "^1.0"
+mypy = "^0.982"
 pylint = "^3.3.2"
 vulture = "^2.3"
 beautifulsoup4 = "^4.11.1"
@@ -91,7 +88,7 @@ gsutil = {version = "5.17", optional = true}
 ordered-set = "^4.1.0"
 paramiko = ">=3.4.1,<4.0"
 neo4j = "^5.14.0"
-pydantic = "^2.0"
+pydantic = "^1.10"
 typer = {extras = ["all"], version = "^0.16.0"}
 packaging = "^24.0"
 orjson = "^3.8.3"
@@ -155,11 +152,6 @@ validate-file-permission-changes = "demisto_sdk.scripts.validate_file_permission
 prevent-mypy-global-ignore = "demisto_sdk.scripts.prevent_mypy_global_ignore:main"
 generate-command-docs = "demisto_sdk.scripts.generate_commands_docs:main"
 validate-validation-config-file = "demisto_sdk.scripts.validate_validation_config_file:main"
-
-[tool.pydantic-mypy]
-init_forbid_extra = false
-init_typed = false
-warn_required_dynamic_aliases = false
 
 [tool.ruff]
 exclude = [

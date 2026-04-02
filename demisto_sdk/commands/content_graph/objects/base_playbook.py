@@ -2,7 +2,7 @@ from functools import cached_property
 from typing import Callable, Dict, List, Optional, Set
 
 import demisto_client
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
@@ -22,6 +22,8 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_aler
 
 
 class Task(BaseModel):
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
     id: str
     version: Optional[int] = None
     name: Optional[str] = None
@@ -109,6 +111,8 @@ class Task(BaseModel):
 
 
 class TaskConfig(BaseModel):
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
     id: str
     taskid: str
     type: Optional[PlaybookTaskType] = None

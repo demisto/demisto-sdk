@@ -137,7 +137,7 @@ def create_parsing_rule_object(
     parser = ParsingRuleParser(
         Path(parsing_rule.path), list(MarketplaceVersions), pack_supported_modules=[]
     )
-    return ParsingRule.from_orm(parser)
+    return ParsingRule.model_validate(parser)
 
 
 def create_correlation_rule_object(
@@ -197,7 +197,7 @@ def create_playbook_object(
     parser = PlaybookParser(
         Path(playbook.path), list(MarketplaceVersions), pack_supported_modules=[]
     )
-    return Playbook.from_orm(parser)
+    return Playbook.model_validate(parser)
 
 
 def create_test_playbook_object(
@@ -232,7 +232,7 @@ def create_test_playbook_object(
     parser = TestPlaybookParser(
         Path(playbook.path), list(MarketplaceVersions), pack_supported_modules=[]
     )
-    return TestPlaybook.from_orm(parser)
+    return TestPlaybook.model_validate(parser)
 
 
 def create_doc_file_object(
@@ -969,7 +969,7 @@ def create_agentix_action_object(
     parser = AgentixActionParser(
         Path(agentix_action.path), list(MarketplaceVersions), pack_supported_modules=[]
     )
-    return AgentixAction.from_orm(parser)
+    return AgentixAction.model_validate(parser)
 
 
 def create_agentix_agent_object(
@@ -997,7 +997,7 @@ def create_agentix_agent_object(
     parser = AgentixAgentParser(
         Path(agentix_agent.path), list(MarketplaceVersions), pack_supported_modules=[]
     )
-    return AgentixAgent.from_orm(parser)
+    return AgentixAgent.model_validate(parser)
 
 
 def create_agentix_skill_object(
@@ -1031,4 +1031,4 @@ def create_agentix_skill_object(
     parser = AgentixSkillParser(
         Path(agentix_skill.path), list(MarketplaceVersions), pack_supported_modules=[]
     )
-    return AgentixSkill.from_orm(parser)
+    return AgentixSkill.model_validate(parser)

@@ -16,7 +16,7 @@ json = JSON_Handler()
 
 class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # type: ignore[call-arg]
     description: str = Field(alias="details")
-    regex: Optional[str]
+    regex: Optional[str] = None
     reputation_script_name: Optional[str] = Field("", alias="reputationScriptName")
     expiration: Any
     enhancement_script_names: Optional[List[str]] = Field(

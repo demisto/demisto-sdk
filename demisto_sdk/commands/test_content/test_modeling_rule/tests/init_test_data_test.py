@@ -115,7 +115,7 @@ def test_init_test_data_create(pack):
     )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
-    test_data = TestData.parse_file(test_data_file.as_posix())
+    test_data = TestData.model_validate_json(Path(test_data_file).read_text())
     event_fields: dict = test_data.data[0].expected_values or {}
     assert len(test_data.data) == count
     assert dict(sorted(event_fields.items())) == test_data.data[0].expected_values
@@ -149,7 +149,7 @@ def test_init_test_data_update_with_unchanged_modeling_rule(pack):
     )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
-    test_data = TestData.parse_file(test_data_file.as_posix())
+    test_data = TestData.model_validate_json(Path(test_data_file).read_text())
     assert len(test_data.data) == count
     count = 2
     result = runner.invoke(
@@ -157,7 +157,7 @@ def test_init_test_data_update_with_unchanged_modeling_rule(pack):
     )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
-    test_data = TestData.parse_file(test_data_file.as_posix())
+    test_data = TestData.model_validate_json(Path(test_data_file).read_text())
     first_event_fields: dict = test_data.data[0].expected_values or {}
     assert len(test_data.data) == count
     assert dict(sorted(first_event_fields.items())) == test_data.data[0].expected_values
@@ -192,7 +192,7 @@ def test_init_test_data_update_with_reduced_modeling_rule(pack):
     )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
-    test_data = TestData.parse_file(test_data_file.as_posix())
+    test_data = TestData.model_validate_json(Path(test_data_file).read_text())
     assert len(test_data.data) == count
 
     # verify field exists in the expected values dictionary for test data event 0
@@ -215,7 +215,7 @@ def test_init_test_data_update_with_reduced_modeling_rule(pack):
     )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
-    test_data = TestData.parse_file(test_data_file.as_posix())
+    test_data = TestData.model_validate_json(Path(test_data_file).read_text())
     assert len(test_data.data) == count
     for test_data_event in test_data.data:
         assert (
@@ -259,7 +259,7 @@ def test_init_test_data_update_with_extended_modeling_rule(pack):
     )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
-    test_data = TestData.parse_file(test_data_file.as_posix())
+    test_data = TestData.model_validate_json(Path(test_data_file).read_text())
     assert len(test_data.data) == count
 
     # verify field does not exist in the expected values dictionary for test data event 0
@@ -278,7 +278,7 @@ def test_init_test_data_update_with_extended_modeling_rule(pack):
     )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
-    test_data = TestData.parse_file(test_data_file.as_posix())
+    test_data = TestData.model_validate_json(Path(test_data_file).read_text())
     assert len(test_data.data) == count
     for test_data_event in test_data.data:
         assert (
@@ -327,8 +327,8 @@ class TestInitTestDataMultiInput:
         assert result.exit_code == 0
         assert test_data_file.exists() is True
         assert test_data_file_2.exists() is True
-        test_data = TestData.parse_file(test_data_file.as_posix())
-        test_data_2 = TestData.parse_file(test_data_file_2.as_posix())
+        test_data = TestData.model_validate_json(Path(test_data_file).read_text())
+        test_data_2 = TestData.model_validate_json(Path(test_data_file_2).read_text())
         assert len(test_data.data) == count
         assert len(test_data_2.data) == count
 
@@ -371,7 +371,7 @@ class TestInitTestDataMultiInput:
         assert result.exit_code != 0
         assert test_data_file.exists() is True
         assert test_data_file_2.exists() is False
-        test_data = TestData.parse_file(test_data_file.as_posix())
+        test_data = TestData.model_validate_json(Path(test_data_file).read_text())
         assert len(test_data.data) == count
 
     def test_init_test_data_multi_datasets(self, pack):
@@ -402,5 +402,5 @@ class TestInitTestDataMultiInput:
         )
         assert result.exit_code != 0
         assert test_data_file.exists() is True
-        test_data = TestData.parse_file(test_data_file.as_posix())
+        test_data = TestData.model_validate_json(Path(test_data_file).read_text())
         assert len(test_data.data) == count * count_of_dataset

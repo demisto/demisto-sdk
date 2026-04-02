@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Tuple, Union
+from typing import ClassVar, Iterable, List, Tuple, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -29,7 +29,7 @@ class MarketplaceKeysHaveDefaultValidator(BaseValidator[ContentTypes]):
         "Please remove these keys or add another default option to each key."
     )
     fix_message = "Added default value to the following playbook keys:\n{0}"
-    marketplace_suffixes = [
+    marketplace_suffixes: ClassVar[list] = [
         marketplace for marketplace in MarketplaceVersions.__members__.values()
     ]
     bad_paths_dict: dict = dict()

@@ -78,7 +78,7 @@ class XsoarClient:
     ):
         self.server_config = config
         self._xsoar_client = client or demisto_client.configure(
-            config.base_api_url,
+            str(config.base_api_url).rstrip("/"),
             api_key=self.server_config.api_key.get_secret_value(),
             auth_id=self.server_config.auth_id,
             username=self.server_config.user,

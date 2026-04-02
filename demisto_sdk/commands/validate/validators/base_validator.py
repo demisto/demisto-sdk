@@ -10,9 +10,10 @@ from typing import (
     Optional,
     TypeVar,
     get_args,
+    get_type_hints,
 )
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from demisto_sdk.commands.common.constants import (
     ALWAYS_RUN_ON_ERROR_CODE,
@@ -98,12 +99,12 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     dockerhub_api_client (ClassVar[DockerHubClient): the docker hub api client.
     """
 
-    error_code: ClassVar[str]
-    description: ClassVar[str]
-    rationale: ClassVar[str]
-    error_message: ClassVar[str]
+    error_code: ClassVar[str] = ""
+    description: ClassVar[str] = ""
+    rationale: ClassVar[str] = ""
+    error_message: ClassVar[str] = ""
     fix_message: ClassVar[str] = ""
-    related_field: ClassVar[str]
+    related_field: ClassVar[str] = ""
     expected_git_statuses: ClassVar[Optional[List[GitStatuses]]] = []
     run_on_deprecated: ClassVar[bool] = False
     is_auto_fixable: ClassVar[bool] = False
@@ -114,10 +115,32 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
     create_graph_from_scratch: ClassVar[bool] = False
 
     def get_content_types(self):
-        args = (get_args(self.__orig_bases__[0]) or get_args(self.__orig_bases__[1]))[0]  # type: ignore
-        if isinstance(args, (BaseContent, BaseContentMetaclass)):
-            return args
-        return get_args(args)
+        # In pydantic v2, __orig_bases__ may not preserve resolved generic args
+        # on subclasses. Extract the content type from the obtain_invalid_content_items
+        # method's type hints instead, which correctly resolves the generic parameter.
+        try:
+            hints = get_type_hints(type(self).obtain_invalid_content_items)
+            content_items_hint = hints.get("content_items")
+            if content_items_hint:
+                inner_args = get_args(content_items_hint)
+                if inner_args:
+                    args = inner_args[0]
+                    if isinstance(args, (BaseContent, BaseContentMetaclass)):
+                        return args
+                    return get_args(args) or args
+        except Exception:
+            pass
+        # Fallback: search __orig_bases__ for generic args
+        for base in self.__orig_bases__:  # type: ignore
+            base_args = get_args(base)
+            if base_args:
+                args = base_args[0]
+                if isinstance(args, (BaseContent, BaseContentMetaclass)):
+                    return args
+                return get_args(args)
+        raise TypeError(
+            f"Could not determine content types for {type(self).__name__}"
+        )
 
     def should_run(
         self,
@@ -210,12 +233,9 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         # Exclude specific properties from being displayed when hovering over 'self'
         return [attr for attr in dir(type(self)) if attr != "graph"]
 
-    class Config:
-        arbitrary_types_allowed = (
-            True  # allows having custom classes for properties in model
-        )
-        # Exclude the properties from the repr
-        fields = {"graph": {"exclude": True}, "dockerhub_client": {"exclude": True}}
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,  # allows having custom classes for properties in model
+    )
 
     @property
     def error_category(self) -> str:
@@ -227,7 +247,11 @@ def get_all_validators() -> List[BaseValidator]:
     for validator in BaseValidator.__subclasses__():
         validators.append(validator)
         validators.extend(get_all_validators_specific_validation(validator))  # type: ignore[arg-type]
-    return [validator() for validator in validators if not is_abstract_class(validator)]
+    return [
+        validator()
+        for validator in validators
+        if not is_abstract_class(validator) and getattr(validator, "error_code", "")
+    ]
 
 
 def get_all_validators_specific_validation(
@@ -417,3 +441,18 @@ def should_run_on_execution_mode(
     if running_execution_mode in expected_execution_mode:
         return True
     return False
+
+
+# Rebuild models that reference BaseContent (which has forward refs to RelationshipData).
+# This is needed for pydantic v2 which requires forward references to be resolved before model use.
+# Import RelationshipData to ensure it's available for resolution.
+from demisto_sdk.commands.content_graph.objects.relationship import (  # noqa: E402
+    RelationshipData,  # noqa: F401
+)
+
+BaseValidator.model_rebuild()
+BaseResult.model_rebuild()
+ValidationResult.model_rebuild()
+FixResult.model_rebuild()
+InvalidContentItemResult.model_rebuild()
+ValidationCaughtExceptionResult.model_rebuild()

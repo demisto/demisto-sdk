@@ -24,9 +24,7 @@ class _StrictCorrelationRule(BaseStrictModel):
     cron_tab: Optional[str] = Field(None, alias="crontab")
     dataset: str
     drill_down_query_timeframe: str = Field(..., alias="drilldown_query_timeframe")
-    execution_mode: str = Field(
-        ..., json_schema_extra={"enum": ["REAL_TIME", "SCHEDULED"]}
-    )
+    execution_mode: str = Field(..., enum=["REAL_TIME", "SCHEDULED"])
     mitre_defs: Optional[Any] = None
     search_window: Optional[str] = None
     severity: str

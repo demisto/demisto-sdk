@@ -17,14 +17,8 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 class ArgFilter(BaseStrictModel):
     operator: str
     ignore_case: Optional[bool] = Field(None, alias="ignorecase")
-    left: dict = Field(
-        ...,
-        json_schema_extra={"example": {"value": "Any", "isContext": True}},
-    )
-    right: Optional[dict] = Field(
-        None,
-        json_schema_extra={"example": {"value": "Any", "isContext": True}},
-    )
+    left: dict = Field(..., example={"value": Any, "isContext": bool})
+    right: Optional[dict] = Field(None, example={"value": Any, "isContext": bool})
     type_: Optional[str] = Field(None, alias="type")
 
 
@@ -101,9 +95,7 @@ class _StrictLayout(BaseStrictModel):
     """
 
     id: str
-    group: str = Field(
-        ..., json_schema_extra={"enum": ["incident", "indicator", "case"]}
-    )
+    group: str = Field(..., enum=["incident", "indicator", "case"])
     definition_id: Optional[str] = Field(None, alias="definitionId")
     version: float
     name: str

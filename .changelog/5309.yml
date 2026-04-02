@@ -1,4 +1,0 @@
-changes:
-- description: Migrated pydantic dependency from v1 to v2, updating all models, validators, serialization methods, and configuration patterns to use the pydantic v2 API.
-  type: breaking
-pr_number: '5309'

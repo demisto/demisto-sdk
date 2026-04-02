@@ -53,7 +53,7 @@ class TabsAndSections(BaseStrictModel):
 
 class StrictCaseLayout(BaseStrictModel):
     id_: str = Field(alias="id")
-    group: str = Field(..., json_schema_extra={"enum": ["case"]})
+    group: str = Field(..., enum=["case"])
     definition_id: Optional[str] = Field(None, alias="definitionId")
     version: int
     name: str

@@ -69,7 +69,16 @@ class BaseStrictModel(BaseModel, ABC):
         if not isinstance(data, dict):
             return data
         model_fields = cls.model_fields
+        # Build a set of known field names and their aliases for fast lookup
+        known_names: set = set(model_fields.keys())
+        known_aliases: set = set()
+        for finfo in model_fields.values():
+            if finfo.alias:
+                known_aliases.add(finfo.alias)
         for field_name, value in data.items():
+            # Skip fields not defined in the model (extra fields handled by model_config)
+            if field_name not in known_names and field_name not in known_aliases:
+                continue
             # Resolve the actual field name (could be an alias)
             resolved_name = field_name
             for fname, finfo in model_fields.items():

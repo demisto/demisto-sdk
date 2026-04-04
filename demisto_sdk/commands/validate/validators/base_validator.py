@@ -31,7 +31,6 @@ from demisto_sdk.commands.content_graph.interface import (
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
-    BaseContentMetaclass,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType

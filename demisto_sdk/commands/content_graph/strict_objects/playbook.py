@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Dict, List, Optional
 
-from pydantic import Field, RootModel, StringConstraints
+from pydantic import Field, RootModel, StringConstraints, field_validator
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
@@ -245,6 +245,15 @@ class _TaskPlaybook(BaseStrictModel):
     ] = Field(  # type:ignore[valid-type]
         None, alias="nexttasks"
     )
+
+    @field_validator("next_tasks", mode="before")
+    @classmethod
+    def coerce_nexttasks_keys(cls, v: Any) -> Any:
+        """Coerce non-string dict keys (e.g. booleans from YAML) to strings."""
+        if isinstance(v, dict):
+            return {str(k): val for k, val in v.items()}
+        return v
+
     loop: Optional[Loop] = None  # type:ignore[valid-type]
     conditions: Optional[List[Condition]] = None
     view: str
@@ -298,6 +307,15 @@ class StrictPlaybook(BaseStrictModel):
     inputSections: Optional[List[InputsSectionPlaybook]] = None  # type:ignore[valid-type]
     tags: Optional[List[str]] = None
     tasks: Dict[Annotated[str, StringConstraints(pattern=TASKS_REGEX)], TaskPlaybook]  # type:ignore[valid-type]
+
+    @field_validator("tasks", mode="before")
+    @classmethod
+    def coerce_tasks_keys(cls, v: Any) -> Any:
+        """Coerce non-string dict keys (e.g. integers/booleans from YAML) to strings."""
+        if isinstance(v, dict):
+            return {str(k): val for k, val in v.items()}
+        return v
+
     system: Optional[bool] = None
     from_version: str = Field(alias="fromversion")
     to_version: Optional[str] = Field(None, alias="toversion")

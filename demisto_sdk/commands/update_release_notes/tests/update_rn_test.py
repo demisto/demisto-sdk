@@ -2002,9 +2002,14 @@ class TestRNUpdateUnit:
         )
         filepath = os.path.join(TestRNUpdate.FILES_PATH, "ReleaseNotes/1_1_67.md")
         md_string = "### Shelly"
-        update_rn.create_markdown(
-            release_notes_path=filepath, rn_string=md_string, changed_files={}
-        )
+        try:
+            update_rn.create_markdown(
+                release_notes_path=filepath, rn_string=md_string, changed_files={}
+            )
+        finally:
+            filepath_obj = Path(filepath)
+            if filepath_obj.exists():
+                filepath_obj.unlink()
 
     def test_update_existing_rn(self, mocker):
         """

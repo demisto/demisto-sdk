@@ -1,7 +1,8 @@
 import os
-from typing import Optional
+from typing import Annotated, Optional
 
 from pydantic import AnyUrl, BaseModel, Field, SecretStr, model_validator
+from pydantic.functional_validators import AfterValidator
 
 from demisto_sdk.commands.common.constants import (
     AUTH_ID,
@@ -17,12 +18,23 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.tools import string_to_bool
 
 
+def _validate_url(v: str) -> str:
+    """Validate that the value is a valid URL and return it as a str."""
+    # Use AnyUrl for validation only, then convert back to str
+    AnyUrl(v)
+    return str(v)
+
+
+# A str type that validates as a URL but remains a plain str at runtime
+StrUrl = Annotated[str, AfterValidator(_validate_url)]
+
+
 class XsoarClientConfig(BaseModel):
     """
     api client config for xsoar-on-prem
     """
 
-    base_api_url: AnyUrl = Field(
+    base_api_url: StrUrl = Field(
         default=os.getenv(DEMISTO_BASE_URL), description="XSOAR Tenant Base API URL"
     )
     api_key: SecretStr = Field(

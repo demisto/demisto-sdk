@@ -1723,7 +1723,7 @@ def test_PackMetadataVersionShouldBeRaisedValidator(
         pack = integration.in_pack
         integration.git_status = GitStatuses.MODIFIED
 
-        old_pack = pack.copy(deep=True)
+        old_pack = pack.model_copy(deep=True)
         old_pack.current_version = old_version
 
         pack.old_base_content_object = old_pack
@@ -1779,7 +1779,7 @@ def test_PackMetadataVersionShouldBeRaisedValidator_metadata_change(mocker):
     current_version = "1.0.0"
     with ChangeCWD(REPO.path):
         pack = create_pack_object(["currentVersion", "price"], [current_version, 5])
-        old_pack = pack.copy(deep=True)
+        old_pack = pack.model_copy(deep=True)
         old_pack.current_version = old_version
 
         pack.old_base_content_object = old_pack

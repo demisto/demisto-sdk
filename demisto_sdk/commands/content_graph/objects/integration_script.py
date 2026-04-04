@@ -2,7 +2,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
@@ -35,6 +35,8 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 
 class Output(BaseModel):
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
     description: Optional[str] = ""
     contentPath: Optional[str] = None
     contextPath: Optional[str] = None
@@ -42,6 +44,8 @@ class Output(BaseModel):
 
 
 class Argument(BaseModel):
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
     name: str
     description: str = ""
     required: Optional[bool] = None

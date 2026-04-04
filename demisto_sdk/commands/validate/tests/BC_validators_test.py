@@ -1798,7 +1798,7 @@ def test_IsChangedOrRemovedFieldsValidator_obtain_invalid_content_items_fail():
             values=[True, True, True],
         )
     ]
-    old_content_items: List[Integration] = [content_items[0].copy(deep=True)]
+    old_content_items: List[Integration] = [content_items[0].model_copy(deep=True)]
     create_old_file_pointers(content_items, old_content_items)
     validator = IsChangedOrRemovedFieldsValidator()
     assert not validator.obtain_invalid_content_items(content_items)

@@ -861,7 +861,7 @@ def test_IsValidRequiredFieldValidator(
     content_items = []
     for item, status in items.items():
         item.git_status = status
-        item.old_base_content_object = item.copy(deep=True)
+        item.old_base_content_object = item.model_copy(deep=True)
         content_items.append(item)
 
     result = IsValidRequiredFieldValidator().obtain_invalid_content_items(content_items)

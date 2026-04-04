@@ -143,9 +143,7 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                 union_args = get_args(args)
                 if union_args:
                     return union_args
-        raise TypeError(
-            f"Could not determine content types for {type(self).__name__}"
-        )
+        raise TypeError(f"Could not determine content types for {type(self).__name__}")
 
     def should_run(
         self,

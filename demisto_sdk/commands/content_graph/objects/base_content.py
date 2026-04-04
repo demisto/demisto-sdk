@@ -137,6 +137,14 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
             "__pydantic_fields_set__": self.model_fields_set,
         }
 
+    def __repr_args__(self):
+        """Include loaded lazy properties in repr/str output (pydantic v2 compatibility)."""
+        yield from super().__repr_args__()
+        if hasattr(self, "_lazy_properties"):
+            for prop_name in self._lazy_properties:  # type: ignore[attr-defined]
+                if prop_name in self.__dict__:
+                    yield prop_name, self.__dict__[prop_name]
+
     @property
     def normalize_name(self) -> str:
         # if has name attribute, return it, otherwise return the object id

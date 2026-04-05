@@ -20,7 +20,7 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
     reputation_script_name: Optional[str] = Field("", alias="reputationScriptName")
     expiration: Any
     enhancement_script_names: Optional[List[str]] = Field(
-        alias="enhancementScriptNames"
+        None, alias="enhancementScriptNames"
     )
     version: Optional[int] = 0
 

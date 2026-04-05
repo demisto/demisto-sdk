@@ -16,7 +16,7 @@ class Mapper(ContentItem, content_type=ContentType.MAPPER):  # type: ignore[call
     feed: bool = Field(False, exclude=True)
 
     definition_id: Optional[str] = Field(
-        alias="definitionId"
+        None, alias="definitionId"
     )  # TODO decide if this should be optional or not
 
     def metadata_fields(self) -> Set[str]:

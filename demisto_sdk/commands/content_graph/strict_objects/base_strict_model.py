@@ -126,6 +126,19 @@ class StructureError(BaseStrictModel):
     error_type: str = Field(alias="type")
     ctx: Optional[dict] = None
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, StructureError):
+            return NotImplemented
+        return (
+            self.path == other.path
+            and self.field_name == other.field_name
+            and self.error_message == other.error_message
+            and self.error_type == other.error_type
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.path, self.field_name, self.error_message, self.error_type))
+
     def __str__(self):
         field_name = ",".join(
             str(x) for x in more_itertools.always_iterable(self.field_name)

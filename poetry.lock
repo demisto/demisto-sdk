@@ -4068,21 +4068,6 @@ files = [
 pytest = "*"
 
 [[package]]
-name = "pytest-freezegun"
-version = "0.4.2"
-description = "Wrap tests with fixtures in freeze_time"
-optional = false
-python-versions = "*"
-files = [
-    {file = "pytest-freezegun-0.4.2.zip", hash = "sha256:19c82d5633751bf3ec92caa481fb5cffaac1787bd485f0df6436fd6242176949"},
-    {file = "pytest_freezegun-0.4.2-py2.py3-none-any.whl", hash = "sha256:5318a6bfb8ba4b709c8471c94d0033113877b3ee02da5bfcd917c1889cde99a7"},
-]
-
-[package.dependencies]
-freezegun = ">0.3"
-pytest = ">=3.0.0"
-
-[[package]]
 name = "pytest-github-actions-annotate-failures"
 version = "0.2.0"
 description = "pytest plugin to annotate failed tests with a workflow command for GitHub Actions"
@@ -5982,4 +5967,4 @@ generate-unit-tests = ["klara"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "cad0b761ae3b32676af392c22ffd95bdfeaabd7ff478ec19b1de0f8258edc0cc"
+content-hash = "140bb6daa09d62367f696031009e6006881e27f4713e6f7b5b245019d7b3c485"

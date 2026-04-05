@@ -60,7 +60,7 @@ class StrictPackMetadata(BaseStrictModel):
     certification: Optional[str] = None
     price: Optional[int] = None
     hidden: Optional[bool] = None
-    server_min_version: Optional[str] = Field(alias="serverMinVersion")
+    server_min_version: Optional[str] = Field(default=None, alias="serverMinVersion")
     current_version: Optional[str] = Field(alias="currentVersion")
     version_info: str = Field("", alias="versionInfo")
     commit: Optional[str] = None

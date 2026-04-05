@@ -14,7 +14,7 @@ class Mapper(ContentItem, content_type=ContentType.MAPPER):  # type: ignore[call
     mapping: dict = Field({}, exclude=True)
 
     definition_id: Optional[str] = Field(
-        alias="definitionId"
+        None, alias="definitionId"
     )  # TODO decide if this should be optional or not
 
     @classmethod

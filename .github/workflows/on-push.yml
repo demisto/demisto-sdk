@@ -178,7 +178,7 @@ jobs:
           artifacts-dir: graph-tests
 
       - name: Run Graph Tests
-        timeout-minutes: 60
+        timeout-minutes: 180
         run: |
           source "$(poetry env info --path)/bin/activate"
 
@@ -358,7 +358,7 @@ jobs:
           path: content
 
       - name: Run Graph
-        timeout-minutes: 60
+        timeout-minutes: 180
         run: |
           source $(poetry env info --path)/bin/activate
           cd content

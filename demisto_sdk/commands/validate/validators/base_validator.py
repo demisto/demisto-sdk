@@ -115,8 +115,20 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
 
     def get_content_types(self):
         # In pydantic v2, __orig_bases__ may not preserve resolved generic args
-        # on subclasses. Extract the content type from the obtain_invalid_content_items
-        # method's type hints instead, which correctly resolves the generic parameter.
+        # on subclasses (pydantic's metaclass replaces them). Instead, walk the
+        # MRO and check __pydantic_generic_metadata__ on parameterized generic
+        # classes, which correctly stores the resolved type arguments.
+        for cls in type.mro(type(self)):
+            meta = getattr(cls, "__pydantic_generic_metadata__", None)
+            if meta and meta.get("args"):
+                args = meta["args"][0]
+                if isinstance(args, type):
+                    return args
+                # For Union types, get_args returns tuple of types
+                union_args = get_args(args)
+                if union_args:
+                    return union_args
+        # Fallback: try get_type_hints on obtain_invalid_content_items
         try:
             hints = get_type_hints(type(self).obtain_invalid_content_items)
             content_items_hint = hints.get("content_items")
@@ -126,14 +138,13 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                     args = inner_args[0]
                     if isinstance(args, type):
                         return args
-                    # For Union types, get_args returns tuple of types
                     union_args = get_args(args)
                     if union_args:
                         return union_args
         except Exception:
             pass
         # Fallback: search __orig_bases__ for generic args
-        for base in self.__orig_bases__:  # type: ignore
+        for base in type(self).__orig_bases__:  # type: ignore
             base_args = get_args(base)
             if base_args:
                 args = base_args[0]

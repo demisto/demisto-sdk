@@ -2291,7 +2291,7 @@ class Errors:
     def not_demisto_docker():
         return (
             "docker image must be a demisto docker image. When the docker image is ready, "
-            "please rename it to: demisto/<image>:<tag>"
+            r"please rename it to: demisto/\<image\>:\<tag\>"
         )
 
     @staticmethod

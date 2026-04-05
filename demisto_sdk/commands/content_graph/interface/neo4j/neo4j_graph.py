@@ -1,6 +1,5 @@
 import os
 from functools import lru_cache
-from multiprocessing import Pool
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
@@ -9,7 +8,6 @@ from neo4j import Driver, GraphDatabase, Session, graph
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import download_content_graph
 from demisto_sdk.commands.content_graph.common import (
@@ -307,13 +305,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             logger.debug("{}", f"{self._id_to_obj=}")  # noqa: PLE1205
             return
-        with Pool(processes=cpu_count()) as pool:
-            results = pool.starmap(
-                _parse_node, ((node.element_id, dict(node.items())) for node in nodes)
-            )
-            for result in results:
-                assert result.database_id is not None
-                self._id_to_obj[result.database_id] = result
+        # NOTE: Previously used multiprocessing.Pool.starmap here, but pydantic v2
+        # models cannot be reliably pickled across process boundaries (the worker
+        # processes crash silently, causing the main process to hang indefinitely).
+        # Sequential parsing is fast enough since _parse_node just calls model_validate
+        # on a dict.
+        for node in nodes:
+            result = _parse_node(node.element_id, dict(node.items()))
+            assert result.database_id is not None
+            self._id_to_obj[result.database_id] = result
 
     def _search(
         self,

@@ -42,6 +42,14 @@ class Output(BaseModel):
     contextPath: Optional[str] = None
     type: Optional[str] = None
 
+    @field_validator("contextPath", "contentPath", "description", "type", mode="before")
+    @classmethod
+    def coerce_to_str(cls, v: Any) -> Any:
+        """Coerce non-string values (e.g. booleans) to strings."""
+        if v is not None and not isinstance(v, str):
+            return str(v)
+        return v
+
 
 class Argument(BaseModel):
     model_config = ConfigDict(coerce_numbers_to_str=True)

@@ -429,7 +429,7 @@ def mock_pack(name, marketplaces, hidden=False):
         categories=[],
         useCases=[],
         keywords=[],
-        contentItems=[],
+        contentItems={},
         excluded_dependencies=[],
         deprecated=False,
     )

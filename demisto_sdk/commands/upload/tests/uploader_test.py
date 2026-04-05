@@ -888,16 +888,17 @@ class TestZippedPackUpload:
     @pytest.mark.parametrize(
         argnames="path", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
     )
-    @pytest.mark.parametrize("version", ("6.5.0", "6.6.0", "6.10.0"))
+    @pytest.mark.parametrize("version", ("6.5.0",))
     def test_upload_without_skip_validate(self, mocker, path: Path, version: str):
         """
         Given:
             - zipped pack or zip of pack zips to upload
+            - demisto version <6.6.0 (below MINIMAL_ALLOWED_SKIP_VALIDATION_VERSION)
         When:
             - call to upload command
         Then:
-            - validate the upload_content_packs in the api client was called correct
-              and the skip_validate arg is None
+            - validate the upload_content_packs in the api client was called correctly
+              and the skip_validation arg is not sent
         """
         # prepare
         mock_api_client(mocker, version)
@@ -914,7 +915,7 @@ class TestZippedPackUpload:
         runner = CliRunner()
         runner.invoke(app, ["upload", "-i", str(path)])
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)
-        assert mock_upload_content_packs.call_args[1].get("skip_validate") is None
+        assert mock_upload_content_packs.call_args[1].get("skip_validation") is None
 
     @pytest.mark.parametrize(
         "marketplace,expected_files",

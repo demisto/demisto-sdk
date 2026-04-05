@@ -70,7 +70,7 @@ def mock_pack(
         categories=[],
         useCases=[],
         keywords=[],
-        contentItems=[],
+        contentItems={},
         excluded_dependencies=[],
         deprecated=False,
     )

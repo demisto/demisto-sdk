@@ -46,6 +46,17 @@ class RelationshipData(BaseModel):
         return hash(self) == hash(__o)
 
 
-# Rebuild BaseNode now that RelationshipData is defined, resolving the forward reference.
+# Rebuild BaseNode and all its subclasses now that RelationshipData is defined,
+# resolving the forward reference.
 # This is needed for pydantic v2 which requires forward references to be resolved before model use.
 BaseNode.model_rebuild()
+
+# UnknownContent is a subclass of BaseNode defined in base_content.py and also
+# needs rebuilding since it inherits the RelationshipData forward reference.
+from demisto_sdk.commands.content_graph.objects.base_content import (  # noqa: E402
+    BaseContent,
+    UnknownContent,
+)
+
+BaseContent.model_rebuild()
+UnknownContent.model_rebuild()

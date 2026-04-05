@@ -108,7 +108,7 @@ class _Command(BaseStrictModel):
             List[PlatformSupportedModules],
             Field(min_length=1, max_length=len(PlatformSupportedModules)),
         ]
-    ]
+    ] = None
 
 
 Command = create_model(
@@ -201,8 +201,8 @@ class _StrictIntegration(BaseStrictModel):
     category: str
     section_order: Optional[
         Annotated[List[SectionOrderValues], Field(min_length=1, max_length=6)]
-    ] = (  # type:ignore[valid-type]
-        Field(alias="sectionorder")
+    ] = Field(  # type:ignore[valid-type]
+        default=None, alias="sectionorder"
     )
     configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]
     image: Optional[str] = None

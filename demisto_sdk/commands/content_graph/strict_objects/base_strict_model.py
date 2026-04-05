@@ -55,7 +55,7 @@ class _Argument(BaseStrictModel):
     hidden: Optional[bool] = None
     supportedModules: Optional[
         Annotated[List[PlatformSupportedModules], Field(min_length=1, max_length=7)]
-    ]
+    ] = None
 
 
 HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL = create_dynamic_model(

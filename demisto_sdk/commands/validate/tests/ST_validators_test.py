@@ -74,8 +74,8 @@ def test_SchemaValidator_None_as_value(pack: Pack):
     assert len(results) == 1
     assert (
         results[0].message
-        == "Structure error (assertion_error) in field name of integration_0.yml:"
-        " The field name is not required, but should not be None if it exists"
+        == "Structure error (assertion_error) in field  of integration_0.yml:"
+        " Assertion failed, The field name is not required, but should not be None if it exists"
     )
 
 
@@ -97,8 +97,7 @@ def test_SchemaValidator_missing_mandatory_field(pack: Pack):
     results = SchemaValidator().obtain_invalid_content_items([script_parser])
     assert len(results) == 1
     assert (
-        results[0].message
-        == "Structure error (value_error.missing) in field name of script0.yml:"
+        results[0].message == "Structure error (missing) in field name of script0.yml:"
         " The field name is required but missing"
     )
 
@@ -122,8 +121,8 @@ def test_SchemaValidator_extra_field(pack: Pack):
     assert len(results) == 1
     assert (
         results[0].message
-        == "Structure error (value_error.extra) in field EXTRA_FIELD of integration_0.yml:"
-        " The field EXTRA_FIELD is extra and extra fields not permitted"
+        == "Structure error (extra_forbidden) in field EXTRA_FIELD of integration_0.yml:"
+        " The field EXTRA_FIELD is extra and Extra inputs are not permitted"
     )
 
 
@@ -201,10 +200,10 @@ def test_modeling_rule_parser_errors_check(pack: Pack):
     error_types = {e.error_type for e in modeling_rule_parser.structure_errors}
 
     assert {
-        "field required",
-        "value could not be parsed to a boolean",
+        "Field required",
+        "Input should be a valid boolean, unable to interpret input",
     } == error_messages
-    assert {"value_error.missing", "type_error.bool"} == error_types
+    assert {"missing", "bool_parsing"} == error_types
 
 
 def test_pack_parser_sanity_check(pack: Pack):
@@ -260,10 +259,10 @@ def test_pack_parser_errors_check(pack: Pack):
     error_types = {e.error_type for e in pack_parser.structure_errors}
 
     assert {
-        "value could not be parsed to a boolean",
-        "value is not a valid enumeration member; permitted: 'xsoar', 'partner', 'community', 'developer'",
+        "Input should be a valid boolean, unable to interpret input",
+        "Input should be 'xsoar', 'partner', 'community' or 'developer'",
     } == error_messages
-    assert {"type_error.bool", "type_error.enum"} == error_types
+    assert {"bool_parsing", "enum"} == error_types
 
 
 def test_invalid_section_order(pack: Pack):
@@ -285,9 +284,8 @@ def test_invalid_section_order(pack: Pack):
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
     assert len(results) == 1
     assert results[0].message == (
-        "Structure error (type_error.enum) in field sectionorder,1 of integration_0.yml: "
-        "value is not a valid enumeration member; permitted: "
-        "'Connect', 'Collect', 'Optimize', 'Mirroring', 'Result', 'Agentic Assistant'"
+        "Structure error (enum) in field sectionorder,1 of integration_0.yml: "
+        "Input should be 'Connect', 'Collect', 'Optimize', 'Mirroring', 'Result' or 'Agentic Assistant'"
     )
 
 
@@ -333,7 +331,7 @@ def test_invalid_section(pack: Pack):
     assert len(results) == 1
     assert results[0].message == (
         "Structure error (assertion_error) in field configuration of integration_0.yml: "
-        "section Run of URL is not present in section_order ['Connect']"
+        "Assertion failed, section Run of URL is not present in section_order ['Connect']"
     )
 
 
@@ -437,7 +435,10 @@ def test_SchemaValidator_isCloudProviderIntegration_invalid_type(pack: Pack):
 
     results = SchemaValidator().obtain_invalid_content_items([integration_parser])
     assert len(results) == 1
-    assert "value could not be parsed to a boolean" in results[0].message
+    assert (
+        "Input should be a valid boolean, unable to interpret input"
+        in results[0].message
+    )
 
 
 class TestST111:
@@ -706,7 +707,7 @@ def test_SchemaValidator_triggers_section__valid(pack: Pack):
                     {"name": "effect1", "action": {"hidden": False, "required": True}}
                 ],
             },
-            "value is not a valid enumeration member",
+            "Input should be",
             id="invalid operator",
         ),
         pytest.param(
@@ -719,7 +720,7 @@ def test_SchemaValidator_triggers_section__valid(pack: Pack):
                     }
                 ],
             },
-            "value could not be parsed to a boolean",
+            "Input should be a valid boolean",
             id="invalid value type",
         ),
     ],
@@ -758,17 +759,16 @@ def test_validate_automation_playbook_logic_valid_with_automation_pair():
     Then:
         - Validation passes (no exception) and fields are set.
     """
-    values = {
-        "trigger_id": "t1",
-        "trigger_name": "Test Trigger",
-        "description": "desc",
-        "suggestion_reason": "reason",
-        "automation_type": "command",
-        "automation_id": "Auto123",
-    }
-    returned = _StrictTrigger.validate_automation_playbook_logic(values=values)
-    assert returned["automation_id"] == "Auto123"
-    assert returned["automation_type"] == "command"
+    trigger = _StrictTrigger(
+        trigger_id="t1",
+        trigger_name="Test Trigger",
+        description="desc",
+        suggestion_reason="reason",
+        automation_type="command",
+        automation_id="Auto123",
+    )
+    assert trigger.automation_id == "Auto123"
+    assert trigger.automation_type == "command"
 
 
 def test_validate_automation_playbook_logic_invalid_both_automation_and_playbook():
@@ -780,17 +780,16 @@ def test_validate_automation_playbook_logic_invalid_both_automation_and_playbook
     Then:
         - ValidationError is raised with an appropriate message.
     """
-    values = {
-        "trigger_id": "t2",
-        "trigger_name": "Bad Trigger",
-        "description": "desc",
-        "suggestion_reason": "reason",
-        "playbook_id": "Playbook123",
-        "automation_type": "playbook",
-        "automation_id": "Auto456",
-    }
-    with pytest.raises(ValueError) as exc:
-        _StrictTrigger.validate_automation_playbook_logic(values=values)
+    with pytest.raises(Exception) as exc:
+        _StrictTrigger(
+            trigger_id="t2",
+            trigger_name="Bad Trigger",
+            description="desc",
+            suggestion_reason="reason",
+            playbook_id="Playbook123",
+            automation_type="playbook",
+            automation_id="Auto456",
+        )
     assert "Cannot provide both automation fields and playbook_id." in str(exc.value)
 
 
@@ -803,15 +802,14 @@ def test_validate_automation_playbook_logic_invalid_partial_automation_fields():
     Then:
         - ValidationError is raised indicating both must be provided together.
     """
-    values = {
-        "trigger_id": "t3",
-        "trigger_name": "Partial Trigger",
-        "description": "desc",
-        "suggestion_reason": "reason",
-        "automation_type": "command",
-    }
-    with pytest.raises(ValueError) as exc:
-        _StrictTrigger.validate_automation_playbook_logic(values=values)
+    with pytest.raises(Exception) as exc:
+        _StrictTrigger(
+            trigger_id="t3",
+            trigger_name="Partial Trigger",
+            description="desc",
+            suggestion_reason="reason",
+            automation_type="command",
+        )
     assert "automation_id and automation_type must be provided together." in str(
         exc.value
     )

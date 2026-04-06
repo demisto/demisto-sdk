@@ -90,8 +90,8 @@ class BaseOptionalVersionJson(BaseStrictModel):
 
 
 class Output(BaseStrictModel):
-    content_path: Optional[str] = Field(None, alias="contentPath")
-    context_path: Optional[str] = Field(None, alias="contextPath")
+    content_path: Optional[Any] = Field(None, alias="contentPath")
+    context_path: Optional[Any] = Field(None, alias="contextPath")
     description: str
     type: Optional[str] = None
 

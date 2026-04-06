@@ -61,7 +61,10 @@ with open(SOURCE_FORMAT_PLAYBOOK_COPY) as of:
     SOURCE_FORMAT_PLAYBOOK_YML = (
         of.read()
     )  # prevents overriding by other `format` calls.
-BASIC_YML_CONTENTS = (SOURCE_FORMAT_INTEGRATION_YML, SOURCE_FORMAT_PLAYBOOK_YML)
+BASIC_YML_CONTENTS = (
+    pytest.param(SOURCE_FORMAT_INTEGRATION_YML, id="integration_yml"),
+    pytest.param(SOURCE_FORMAT_PLAYBOOK_YML, id="playbook_yml"),
+)
 
 BASIC_YML_TEST_PACKS = [
     (

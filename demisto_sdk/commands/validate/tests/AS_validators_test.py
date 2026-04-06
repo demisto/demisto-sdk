@@ -23,6 +23,12 @@ from demisto_sdk.commands.validate.validators.AS_validators.AS105_no_is_silent_i
 from demisto_sdk.commands.validate.validators.AS_validators.AS106_warn_quiet_mode_on_display_label_task import (
     WarnQuietModeOnDisplayLabelTaskValidator,
 )
+from demisto_sdk.commands.validate.validators.AS_validators.AS107_subplaybook_prefix_consistency import (
+    SubplaybookPrefixConsistencyValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS108_subplaybook_must_be_internal import (
+    SubplaybookMustBeInternalValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -949,3 +955,214 @@ def test_WarnQuietModeOnDisplayLabelTaskValidator(
         [playbook]
     )
     assert len(results) == expected_warnings
+
+
+@pytest.mark.parametrize(
+    "filename, object_id, name, expected_result_len",
+    [
+        # Valid cases - consistent prefix usage
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            0,
+        ),  # All have prefix
+        (
+            "regular-playbook",
+            "regular-playbook",
+            "regular-playbook",
+            0,
+        ),  # None have prefix
+        ("MyPlaybook", "MyPlaybook", "MyPlaybook", 0),  # None have prefix
+        # Invalid cases - inconsistent prefix usage
+        ("subplaybook-test", "test", "test", 1),  # Only filename has prefix
+        ("test", "subplaybook-test", "test", 1),  # Only id has prefix
+        ("test", "test", "subplaybook-test", 1),  # Only name has prefix
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "test",
+            1,
+        ),  # Filename and id have prefix, name doesn't
+        (
+            "subplaybook-test",
+            "test",
+            "subplaybook-test",
+            1,
+        ),  # Filename and name have prefix, id doesn't
+        (
+            "test",
+            "subplaybook-test",
+            "subplaybook-test",
+            1,
+        ),  # Id and name have prefix, filename doesn't
+        # Case insensitive
+        ("SubPlaybook-Test", "test", "test", 1),  # Uppercase prefix in filename
+        ("test", "SUBPLAYBOOK-test", "test", 1),  # Uppercase prefix in id
+    ],
+)
+def test_SubplaybookPrefixConsistencyValidator(
+    filename, object_id, name, expected_result_len
+):
+    """
+    Given:
+        - Playbooks with various combinations of 'subplaybook' prefix in filename, id, and name.
+
+    When:
+        - Running SubplaybookPrefixConsistencyValidator.obtain_invalid_content_items.
+
+    Then:
+        - Playbooks with inconsistent prefix usage (prefix in some but not all fields) should fail.
+        - Playbooks with consistent prefix usage (all have or all don't have) should pass.
+    """
+    from pathlib import Path
+    from unittest.mock import MagicMock
+
+    playbook = create_playbook_object(paths=["id", "name"], values=[object_id, name])
+
+    # Mock the path to set the filename
+    mock_path = MagicMock(spec=Path)
+    mock_path.stem = filename
+    playbook.path = mock_path
+
+    results = SubplaybookPrefixConsistencyValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_result_len
+
+
+def test_SubplaybookPrefixConsistencyValidator_fix():
+    """
+    Given:
+        - A playbook with inconsistent 'subplaybook' prefix (filename has it, id and name don't).
+
+    When:
+        - Running SubplaybookPrefixConsistencyValidator.fix.
+
+    Then:
+        - The id and name should be updated to include the 'subplaybook' prefix.
+    """
+    from pathlib import Path
+    from unittest.mock import MagicMock
+
+    playbook = create_playbook_object(paths=["id", "name"], values=["test", "test"])
+
+    # Mock the path to set the filename with subplaybook prefix
+    mock_path = MagicMock(spec=Path)
+    mock_path.stem = "subplaybook-test"
+    playbook.path = mock_path
+
+    # Verify it's invalid before fix
+    results = SubplaybookPrefixConsistencyValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == 1
+
+    # Apply fix
+    SubplaybookPrefixConsistencyValidator().fix(playbook)
+
+    # Verify id and name now have the prefix
+    assert playbook.object_id == "subplaybook-test"
+    assert playbook.name == "subplaybook-test"
+
+
+@pytest.mark.parametrize(
+    "filename, object_id, name, internal, expected_result_len",
+    [
+        # Valid cases - subplaybooks with internal=True
+        ("subplaybook-test", "subplaybook-test", "subplaybook-test", True, 0),
+        (
+            "test",
+            "subplaybook-test",
+            "test",
+            True,
+            0,
+        ),  # Any field with prefix + internal=True
+        ("test", "test", "subplaybook-test", True, 0),
+        # Valid cases - non-subplaybooks (no prefix anywhere)
+        ("regular-playbook", "regular-playbook", "regular-playbook", False, 0),
+        (
+            "regular-playbook",
+            "regular-playbook",
+            "regular-playbook",
+            True,
+            0,
+        ),  # internal=True is fine
+        # Invalid cases - subplaybooks without internal=True
+        ("subplaybook-test", "subplaybook-test", "subplaybook-test", False, 1),
+        ("subplaybook-test", "test", "test", False, 1),  # Filename has prefix
+        ("test", "subplaybook-test", "test", False, 1),  # Id has prefix
+        ("test", "test", "subplaybook-test", False, 1),  # Name has prefix
+        # Case insensitive
+        ("SubPlaybook-Test", "test", "test", False, 1),
+        ("test", "SUBPLAYBOOK-test", "test", False, 1),
+    ],
+)
+def test_SubplaybookMustBeInternalValidator(
+    filename, object_id, name, internal, expected_result_len
+):
+    """
+    Given:
+        - Playbooks with various combinations of 'subplaybook' prefix and internal field values.
+
+    When:
+        - Running SubplaybookMustBeInternalValidator.obtain_invalid_content_items.
+
+    Then:
+        - Playbooks with 'subplaybook' prefix but without internal=True should fail.
+        - Playbooks without 'subplaybook' prefix can have any internal value.
+        - Playbooks with 'subplaybook' prefix and internal=True should pass.
+    """
+    from pathlib import Path
+    from unittest.mock import MagicMock
+
+    playbook = create_playbook_object(
+        paths=["id", "name", "internal"], values=[object_id, name, internal]
+    )
+
+    # Mock the path to set the filename
+    mock_path = MagicMock(spec=Path)
+    mock_path.stem = filename
+    playbook.path = mock_path
+
+    results = SubplaybookMustBeInternalValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_result_len
+
+
+def test_SubplaybookMustBeInternalValidator_fix():
+    """
+    Given:
+        - A subplaybook without internal=True.
+
+    When:
+        - Running SubplaybookMustBeInternalValidator.fix.
+
+    Then:
+        - The internal field should be set to True.
+    """
+    from pathlib import Path
+    from unittest.mock import MagicMock
+
+    playbook = create_playbook_object(
+        paths=["id", "name", "internal"],
+        values=["subplaybook-test", "subplaybook-test", False],
+    )
+
+    # Mock the path to set the filename
+    mock_path = MagicMock(spec=Path)
+    mock_path.stem = "subplaybook-test"
+    playbook.path = mock_path
+
+    # Verify it's invalid before fix
+    results = SubplaybookMustBeInternalValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == 1
+
+    # Apply fix
+    SubplaybookMustBeInternalValidator().fix(playbook)
+
+    # Verify internal is now True
+    assert playbook.internal is True

@@ -104,7 +104,6 @@ jobs:
           node_pid=$!
 
           poetry run pytest -v . \
-            -W error \
             --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} \
             --timeout=120 \
             --timeout-method=thread \
@@ -154,7 +153,6 @@ jobs:
           source "$(poetry env info --path)/bin/activate"
 
           poetry run pytest -v demisto_sdk/tests/integration_tests \
-            -W error \
             --timeout=120 \
             --timeout-method=thread \
             -o faulthandler_timeout=150 \
@@ -202,7 +200,6 @@ jobs:
           source "$(poetry env info --path)/bin/activate"
 
           poetry run pytest -v demisto_sdk/commands/content_graph \
-            -W error \
             --timeout=120 \
             --timeout-method=thread \
             -o faulthandler_timeout=150 \

@@ -135,6 +135,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self._rels_to_preserve: List[Dict[str, Any]] = []  # used for graph updates
 
         self._init_driver()
+        self._driver_closed = False
         self.output_path = None
         if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
             self.output_path = Path(artifacts_folder) / "content_graph"
@@ -144,7 +145,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         return self
 
     def __exit__(self, *args) -> None:
-        self.driver.close()
+        self.close()
 
     def _init_driver(self):
         self.driver: Driver = GraphDatabase.driver(
@@ -163,7 +164,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         return self._import_handler.extract_files_from_path(imported_path)
 
     def close(self) -> None:
-        self.driver.close()
+        if not self._driver_closed:
+            self.driver.close()
+            self._driver_closed = True
 
     def _add_relationships_to_objects(
         self,

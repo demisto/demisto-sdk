@@ -33,16 +33,14 @@ def prepare_content(
         False,
         "-a",
         "--all",
-        is_flag=True,
         help="Run prepare-content on all content packs. If no output path is given, "
         "will dump the result in the current working path.",
     ),
     graph: bool = typer.Option(
-        False, "-g", "--graph", is_flag=True, help="Whether to use the content graph"
+        False, "-g", "--graph", help="Whether to use the content graph"
     ),
     skip_update: bool = typer.Option(
         False,
-        is_flag=True,
         help="Whether to skip updating the content graph "
         "(used only when graph is true)",
     ),
@@ -56,14 +54,12 @@ def prepare_content(
         False,
         "-f",
         "--force",
-        is_flag=True,
         help="Forcefully overwrites the preexisting YML if one exists",
     ),
     ignore_native_image: bool = typer.Option(
         False,
         "-ini",
         "--ignore-native-image",
-        is_flag=True,
         help="Whether to ignore the addition of the native image key to "
         "the YML of a script/integration",
     ),

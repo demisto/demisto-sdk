@@ -292,7 +292,6 @@ def update(
         False,
         "-g",
         "--use-git",
-        is_flag=True,
         help="If true, uses git to determine the packs to update.",
     ),
     marketplace: MarketplaceVersions = typer.Option(
@@ -321,7 +320,6 @@ def update(
         False,
         "-nd",
         "--no-dependencies",
-        is_flag=True,
         help="Whether or not to include dependencies in the graph.",
     ),
     output_path: Path = typer.Option(

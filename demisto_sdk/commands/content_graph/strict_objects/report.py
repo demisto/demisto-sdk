@@ -95,7 +95,7 @@ class _StrictReport(BaseStrictModel):
     id_: str = Field(alias="id")
     name: str
     description: str
-    report_type: Optional[str] = Field(alias="reportType")
+    report_type: Optional[str] = Field(default=None, alias="reportType")
     tags: List[str]
     created_by: str = Field(alias="createdBy")
     latest_report_name: Optional[str] = Field(None, alias="latestReportName")

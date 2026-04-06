@@ -79,7 +79,7 @@ class Tabs(BaseStrictModel):
     type_: str = Field(alias="type")
     name: str
     sections: Optional[List[Dict[str, Any]]] = None
-    hidden: Optional[str] = None
+    hidden: Optional[Any] = None
     filters: Optional[Any] = None
     show_empty_fields: Optional[bool] = Field(None, alias="showEmptyFields")
     report: Optional[bool] = None

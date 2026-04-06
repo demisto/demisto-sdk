@@ -366,15 +366,12 @@ main = typer.Typer(
 )
 
 
-release = typer.Option(False, "--release", help="releasing", is_flag=True)
-init = typer.Option(
-    False, "--init", help="Generates a log file for the current PR", is_flag=True
-)
+release = typer.Option(False, "--release", help="releasing")
+init = typer.Option(False, "--init", help="Generates a log file for the current PR")
 validate = typer.Option(
     False,
     "--validate",
     help="Checks whether there is a log file for the current PR, if so checks whether the log file is valid",
-    is_flag=True,
 )
 
 pr_number = typer.Option("", "--pr_number", "-n", help="Pull request number")

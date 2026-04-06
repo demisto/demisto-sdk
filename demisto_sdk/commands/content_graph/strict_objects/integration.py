@@ -55,7 +55,7 @@ class SectionOrderValues(StrEnum):
 class _Configuration(BaseStrictModel):
     display: Optional[str] = None
     section: Optional[str] = None
-    advanced: Optional[str] = None
+    advanced: Optional[Any] = None
     default_value: Optional[Any] = Field(None, alias="defaultvalue")
     name: str
     type: int

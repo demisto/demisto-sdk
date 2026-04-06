@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -15,6 +15,14 @@ class AgentixActionArgument(BaseModel):
     required: bool = False
     default_value: Optional[str] = Field(None, alias="defaultvalue")
     hidden: bool = False
+
+    @field_validator("default_value", mode="before")
+    @classmethod
+    def coerce_default_value_to_str(cls, v: object) -> object:
+        if v is not None and not isinstance(v, str):
+            return str(v)
+        return v
+
     disabled: bool = False
     content_item_arg_name: str = Field(..., alias="underlyingargname")
     isgeneratable: bool = False

@@ -38,7 +38,7 @@ class ContentItemExportableFields(BaseStrictModel):
 
 
 class ElasticCommonFields(BaseStrictModel):
-    type: Optional[Dict[Any, Any]]  # Allow empty
+    type: Optional[Dict[Any, Any]] = None  # Allow empty
 
 
 class _PlaybookOutput(BaseStrictModel):

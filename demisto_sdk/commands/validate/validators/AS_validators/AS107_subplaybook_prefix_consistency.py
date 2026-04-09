@@ -16,14 +16,14 @@ SUBPLAYBOOK_PREFIX = "subplaybook"
 
 class SubplaybookPrefixConsistencyValidator(BaseValidator[ContentTypes]):
     error_code = "AS107"
-    description = "Validate that subplaybook prefix is consistent across filename, id, and name fields."
+    description = "Validate that subplaybook prefix is consistent across filename, id, and name fields in autonomous packs."
     rationale = (
-        "If a playbook has the 'subplaybook' prefix in any of its identifiers "
-        "(filename, id, or name), all three must have this prefix for consistency."
+        "In autonomous packs (managed: true, source: 'autonomous'), if a playbook has the 'subplaybook' "
+        "prefix in any of its identifiers (filename, id, or name), all three must have this prefix for consistency."
     )
     error_message = (
-        "The playbook has inconsistent 'subplaybook' prefix usage. "
-        "Found prefix in: {0}. Missing prefix in: {1}. "
+        "The playbook is in an autonomous pack (managed: true, source: 'autonomous') and has inconsistent "
+        "'subplaybook' prefix usage. Found prefix in: {0}. Missing prefix in: {1}. "
         "All of filename, id, and name must either have or not have the 'subplaybook' prefix."
     )
     fix_message = "Added 'subplaybook' prefix to {0}."
@@ -93,7 +93,7 @@ def _check_subplaybook_prefix_consistency(
     content_item: ContentTypes,
 ) -> Tuple[List[str], List[str]]:
     """
-    Check if a playbook has consistent 'subplaybook' prefix usage.
+    Check if a playbook in an autonomous pack has consistent 'subplaybook' prefix usage.
 
     Args:
         content_item: The playbook content item to validate.
@@ -102,7 +102,17 @@ def _check_subplaybook_prefix_consistency(
         A tuple of two lists:
         - First list: locations where prefix is found
         - Second list: locations where prefix is missing
+        Returns ([], []) if not in an autonomous pack or if consistent.
     """
+    # Check if this is an autonomous pack
+    pack_metadata = content_item.in_pack.pack_metadata_dict  # type: ignore[union-attr]
+    is_managed = pack_metadata.get("managed", False)
+    source = pack_metadata.get("source", "")
+    is_autonomous_pack = is_managed is True and source == "autonomous"
+
+    if not is_autonomous_pack:
+        return [], []
+
     has_prefix = []
     missing_prefix = []
 

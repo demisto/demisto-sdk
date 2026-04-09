@@ -958,67 +958,52 @@ def test_WarnQuietModeOnDisplayLabelTaskValidator(
 
 
 @pytest.mark.parametrize(
-    "filename, object_id, name, expected_result_len",
+    "filename, object_id, name, managed, source, expected_result_len",
     [
-        # Valid cases - consistent prefix usage
-        (
-            "subplaybook-test",
-            "subplaybook-test",
-            "subplaybook-test",
-            0,
-        ),  # All have prefix
-        (
-            "regular-playbook",
-            "regular-playbook",
-            "regular-playbook",
-            0,
-        ),  # None have prefix
-        ("MyPlaybook", "MyPlaybook", "MyPlaybook", 0),  # None have prefix
-        # Invalid cases - inconsistent prefix usage
-        ("subplaybook-test", "test", "test", 1),  # Only filename has prefix
-        ("test", "subplaybook-test", "test", 1),  # Only id has prefix
-        ("test", "test", "subplaybook-test", 1),  # Only name has prefix
-        (
-            "subplaybook-test",
-            "subplaybook-test",
-            "test",
-            1,
-        ),  # Filename and id have prefix, name doesn't
-        (
-            "subplaybook-test",
-            "test",
-            "subplaybook-test",
-            1,
-        ),  # Filename and name have prefix, id doesn't
-        (
-            "test",
-            "subplaybook-test",
-            "subplaybook-test",
-            1,
-        ),  # Id and name have prefix, filename doesn't
+        # Valid cases - consistent prefix usage in autonomous pack
+        ("subplaybook-test", "subplaybook-test", "subplaybook-test", True, "autonomous", 0),  # All have prefix
+        ("regular-playbook", "regular-playbook", "regular-playbook", True, "autonomous", 0),  # None have prefix
+        ("MyPlaybook", "MyPlaybook", "MyPlaybook", True, "autonomous", 0),  # None have prefix
+        # Valid cases - non-autonomous packs (should not validate)
+        ("subplaybook-test", "test", "test", False, "autonomous", 0),  # Not managed
+        ("subplaybook-test", "test", "test", True, "other", 0),  # Wrong source
+        ("subplaybook-test", "test", "test", False, "other", 0),  # Neither managed nor autonomous
+        # Invalid cases - inconsistent prefix usage in autonomous pack
+        ("subplaybook-test", "test", "test", True, "autonomous", 1),  # Only filename has prefix
+        ("test", "subplaybook-test", "test", True, "autonomous", 1),  # Only id has prefix
+        ("test", "test", "subplaybook-test", True, "autonomous", 1),  # Only name has prefix
+        ("subplaybook-test", "subplaybook-test", "test", True, "autonomous", 1),  # Filename and id have prefix, name doesn't
+        ("subplaybook-test", "test", "subplaybook-test", True, "autonomous", 1),  # Filename and name have prefix, id doesn't
+        ("test", "subplaybook-test", "subplaybook-test", True, "autonomous", 1),  # Id and name have prefix, filename doesn't
         # Case insensitive
-        ("SubPlaybook-Test", "test", "test", 1),  # Uppercase prefix in filename
-        ("test", "SUBPLAYBOOK-test", "test", 1),  # Uppercase prefix in id
+        ("SubPlaybook-Test", "test", "test", True, "autonomous", 1),  # Uppercase prefix in filename
+        ("test", "SUBPLAYBOOK-test", "test", True, "autonomous", 1),  # Uppercase prefix in id
     ],
 )
 def test_SubplaybookPrefixConsistencyValidator(
-    filename, object_id, name, expected_result_len
+    filename, object_id, name, managed, source, expected_result_len
 ):
     """
     Given:
-        - Playbooks with various combinations of 'subplaybook' prefix in filename, id, and name.
+        - Playbooks with various combinations of 'subplaybook' prefix in filename, id, and name
+          in autonomous and non-autonomous packs.
 
     When:
         - Running SubplaybookPrefixConsistencyValidator.obtain_invalid_content_items.
 
     Then:
-        - Playbooks with inconsistent prefix usage (prefix in some but not all fields) should fail.
-        - Playbooks with consistent prefix usage (all have or all don't have) should pass.
+        - Playbooks in autonomous packs with inconsistent prefix usage should fail.
+        - Playbooks in autonomous packs with consistent prefix usage should pass.
+        - Playbooks in non-autonomous packs should not be validated (always pass).
     """
     from pathlib import Path
     from unittest.mock import MagicMock
 
+    # Create pack with specified metadata
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+
     playbook = create_playbook_object(paths=["id", "name"], values=[object_id, name])
+    playbook.pack = pack
 
     # Mock the path to set the filename
     mock_path = MagicMock(spec=Path)
@@ -1034,7 +1019,7 @@ def test_SubplaybookPrefixConsistencyValidator(
 def test_SubplaybookPrefixConsistencyValidator_fix():
     """
     Given:
-        - A playbook with inconsistent 'subplaybook' prefix (filename has it, id and name don't).
+        - A playbook in an autonomous pack with inconsistent 'subplaybook' prefix (filename has it, id and name don't).
 
     When:
         - Running SubplaybookPrefixConsistencyValidator.fix.
@@ -1045,7 +1030,11 @@ def test_SubplaybookPrefixConsistencyValidator_fix():
     from pathlib import Path
     from unittest.mock import MagicMock
 
+    # Create pack with autonomous metadata
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+
     playbook = create_playbook_object(paths=["id", "name"], values=["test", "test"])
+    playbook.pack = pack
 
     # Mock the path to set the filename with subplaybook prefix
     mock_path = MagicMock(spec=Path)
@@ -1067,58 +1056,55 @@ def test_SubplaybookPrefixConsistencyValidator_fix():
 
 
 @pytest.mark.parametrize(
-    "filename, object_id, name, internal, expected_result_len",
+    "filename, object_id, name, internal, managed, source, expected_result_len",
     [
-        # Valid cases - subplaybooks with internal=True
-        ("subplaybook-test", "subplaybook-test", "subplaybook-test", True, 0),
-        (
-            "test",
-            "subplaybook-test",
-            "test",
-            True,
-            0,
-        ),  # Any field with prefix + internal=True
-        ("test", "test", "subplaybook-test", True, 0),
-        # Valid cases - non-subplaybooks (no prefix anywhere)
-        ("regular-playbook", "regular-playbook", "regular-playbook", False, 0),
-        (
-            "regular-playbook",
-            "regular-playbook",
-            "regular-playbook",
-            True,
-            0,
-        ),  # internal=True is fine
-        # Invalid cases - subplaybooks without internal=True
-        ("subplaybook-test", "subplaybook-test", "subplaybook-test", False, 1),
-        ("subplaybook-test", "test", "test", False, 1),  # Filename has prefix
-        ("test", "subplaybook-test", "test", False, 1),  # Id has prefix
-        ("test", "test", "subplaybook-test", False, 1),  # Name has prefix
+        # Valid cases - subplaybooks with internal=True in autonomous pack
+        ("subplaybook-test", "subplaybook-test", "subplaybook-test", True, True, "autonomous", 0),
+        ("test", "subplaybook-test", "test", True, True, "autonomous", 0),  # Any field with prefix + internal=True
+        ("test", "test", "subplaybook-test", True, True, "autonomous", 0),
+        # Valid cases - non-subplaybooks in autonomous pack
+        ("regular-playbook", "regular-playbook", "regular-playbook", False, True, "autonomous", 0),
+        ("regular-playbook", "regular-playbook", "regular-playbook", True, True, "autonomous", 0),  # internal=True is fine
+        # Valid cases - non-autonomous packs (should not validate)
+        ("subplaybook-test", "subplaybook-test", "subplaybook-test", False, False, "autonomous", 0),  # Not managed
+        ("subplaybook-test", "subplaybook-test", "subplaybook-test", False, True, "other", 0),  # Wrong source
+        # Invalid cases - subplaybooks without internal=True in autonomous pack
+        ("subplaybook-test", "subplaybook-test", "subplaybook-test", False, True, "autonomous", 1),
+        ("subplaybook-test", "test", "test", False, True, "autonomous", 1),  # Filename has prefix
+        ("test", "subplaybook-test", "test", False, True, "autonomous", 1),  # Id has prefix
+        ("test", "test", "subplaybook-test", False, True, "autonomous", 1),  # Name has prefix
         # Case insensitive
-        ("SubPlaybook-Test", "test", "test", False, 1),
-        ("test", "SUBPLAYBOOK-test", "test", False, 1),
+        ("SubPlaybook-Test", "test", "test", False, True, "autonomous", 1),
+        ("test", "SUBPLAYBOOK-test", "test", False, True, "autonomous", 1),
     ],
 )
 def test_SubplaybookMustBeInternalValidator(
-    filename, object_id, name, internal, expected_result_len
+    filename, object_id, name, internal, managed, source, expected_result_len
 ):
     """
     Given:
-        - Playbooks with various combinations of 'subplaybook' prefix and internal field values.
+        - Playbooks with various combinations of 'subplaybook' prefix and internal field values
+          in autonomous and non-autonomous packs.
 
     When:
         - Running SubplaybookMustBeInternalValidator.obtain_invalid_content_items.
 
     Then:
-        - Playbooks with 'subplaybook' prefix but without internal=True should fail.
-        - Playbooks without 'subplaybook' prefix can have any internal value.
-        - Playbooks with 'subplaybook' prefix and internal=True should pass.
+        - Playbooks in autonomous packs with 'subplaybook' prefix but without internal=True should fail.
+        - Playbooks in autonomous packs without 'subplaybook' prefix can have any internal value.
+        - Playbooks in autonomous packs with 'subplaybook' prefix and internal=True should pass.
+        - Playbooks in non-autonomous packs should not be validated (always pass).
     """
     from pathlib import Path
     from unittest.mock import MagicMock
 
+    # Create pack with specified metadata
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+
     playbook = create_playbook_object(
         paths=["id", "name", "internal"], values=[object_id, name, internal]
     )
+    playbook.pack = pack
 
     # Mock the path to set the filename
     mock_path = MagicMock(spec=Path)
@@ -1134,7 +1120,7 @@ def test_SubplaybookMustBeInternalValidator(
 def test_SubplaybookMustBeInternalValidator_fix():
     """
     Given:
-        - A subplaybook without internal=True.
+        - A subplaybook in an autonomous pack without internal=True.
 
     When:
         - Running SubplaybookMustBeInternalValidator.fix.
@@ -1145,10 +1131,14 @@ def test_SubplaybookMustBeInternalValidator_fix():
     from pathlib import Path
     from unittest.mock import MagicMock
 
+    # Create pack with autonomous metadata
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+
     playbook = create_playbook_object(
         paths=["id", "name", "internal"],
         values=["subplaybook-test", "subplaybook-test", False],
     )
+    playbook.pack = pack
 
     # Mock the path to set the filename
     mock_path = MagicMock(spec=Path)

@@ -75,8 +75,8 @@ def _is_subplaybook_without_internal(content_item: ContentTypes) -> bool:
     """
     # Check if this is an autonomous pack
     pack_metadata = content_item.in_pack.pack_metadata_dict  # type: ignore[union-attr]
-    is_managed = pack_metadata.get("managed", False)
-    source = pack_metadata.get("source", "")
+    is_managed = pack_metadata.get("managed", False)  # type: ignore[union-attr]
+    source = pack_metadata.get("source", "")  # type: ignore[union-attr]
     is_autonomous_pack = is_managed is True and source == "autonomous"
 
     if not is_autonomous_pack:

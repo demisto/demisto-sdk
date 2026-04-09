@@ -961,23 +961,107 @@ def test_WarnQuietModeOnDisplayLabelTaskValidator(
     "filename, object_id, name, managed, source, expected_result_len",
     [
         # Valid cases - consistent prefix usage in autonomous pack
-        ("subplaybook-test", "subplaybook-test", "subplaybook-test", True, "autonomous", 0),  # All have prefix
-        ("regular-playbook", "regular-playbook", "regular-playbook", True, "autonomous", 0),  # None have prefix
-        ("MyPlaybook", "MyPlaybook", "MyPlaybook", True, "autonomous", 0),  # None have prefix
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            True,
+            "autonomous",
+            0,
+        ),  # All have prefix
+        (
+            "regular-playbook",
+            "regular-playbook",
+            "regular-playbook",
+            True,
+            "autonomous",
+            0,
+        ),  # None have prefix
+        (
+            "MyPlaybook",
+            "MyPlaybook",
+            "MyPlaybook",
+            True,
+            "autonomous",
+            0,
+        ),  # None have prefix
         # Valid cases - non-autonomous packs (should not validate)
         ("subplaybook-test", "test", "test", False, "autonomous", 0),  # Not managed
         ("subplaybook-test", "test", "test", True, "other", 0),  # Wrong source
-        ("subplaybook-test", "test", "test", False, "other", 0),  # Neither managed nor autonomous
+        (
+            "subplaybook-test",
+            "test",
+            "test",
+            False,
+            "other",
+            0,
+        ),  # Neither managed nor autonomous
         # Invalid cases - inconsistent prefix usage in autonomous pack
-        ("subplaybook-test", "test", "test", True, "autonomous", 1),  # Only filename has prefix
-        ("test", "subplaybook-test", "test", True, "autonomous", 1),  # Only id has prefix
-        ("test", "test", "subplaybook-test", True, "autonomous", 1),  # Only name has prefix
-        ("subplaybook-test", "subplaybook-test", "test", True, "autonomous", 1),  # Filename and id have prefix, name doesn't
-        ("subplaybook-test", "test", "subplaybook-test", True, "autonomous", 1),  # Filename and name have prefix, id doesn't
-        ("test", "subplaybook-test", "subplaybook-test", True, "autonomous", 1),  # Id and name have prefix, filename doesn't
+        (
+            "subplaybook-test",
+            "test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Only filename has prefix
+        (
+            "test",
+            "subplaybook-test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Only id has prefix
+        (
+            "test",
+            "test",
+            "subplaybook-test",
+            True,
+            "autonomous",
+            1,
+        ),  # Only name has prefix
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Filename and id have prefix, name doesn't
+        (
+            "subplaybook-test",
+            "test",
+            "subplaybook-test",
+            True,
+            "autonomous",
+            1,
+        ),  # Filename and name have prefix, id doesn't
+        (
+            "test",
+            "subplaybook-test",
+            "subplaybook-test",
+            True,
+            "autonomous",
+            1,
+        ),  # Id and name have prefix, filename doesn't
         # Case insensitive
-        ("SubPlaybook-Test", "test", "test", True, "autonomous", 1),  # Uppercase prefix in filename
-        ("test", "SUBPLAYBOOK-test", "test", True, "autonomous", 1),  # Uppercase prefix in id
+        (
+            "SubPlaybook-Test",
+            "test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Uppercase prefix in filename
+        (
+            "test",
+            "SUBPLAYBOOK-test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Uppercase prefix in id
     ],
 )
 def test_SubplaybookPrefixConsistencyValidator(
@@ -1059,20 +1143,100 @@ def test_SubplaybookPrefixConsistencyValidator_fix():
     "filename, object_id, name, internal, managed, source, expected_result_len",
     [
         # Valid cases - subplaybooks with internal=True in autonomous pack
-        ("subplaybook-test", "subplaybook-test", "subplaybook-test", True, True, "autonomous", 0),
-        ("test", "subplaybook-test", "test", True, True, "autonomous", 0),  # Any field with prefix + internal=True
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            True,
+            True,
+            "autonomous",
+            0,
+        ),
+        (
+            "test",
+            "subplaybook-test",
+            "test",
+            True,
+            True,
+            "autonomous",
+            0,
+        ),  # Any field with prefix + internal=True
         ("test", "test", "subplaybook-test", True, True, "autonomous", 0),
         # Valid cases - non-subplaybooks in autonomous pack
-        ("regular-playbook", "regular-playbook", "regular-playbook", False, True, "autonomous", 0),
-        ("regular-playbook", "regular-playbook", "regular-playbook", True, True, "autonomous", 0),  # internal=True is fine
+        (
+            "regular-playbook",
+            "regular-playbook",
+            "regular-playbook",
+            False,
+            True,
+            "autonomous",
+            0,
+        ),
+        (
+            "regular-playbook",
+            "regular-playbook",
+            "regular-playbook",
+            True,
+            True,
+            "autonomous",
+            0,
+        ),  # internal=True is fine
         # Valid cases - non-autonomous packs (should not validate)
-        ("subplaybook-test", "subplaybook-test", "subplaybook-test", False, False, "autonomous", 0),  # Not managed
-        ("subplaybook-test", "subplaybook-test", "subplaybook-test", False, True, "other", 0),  # Wrong source
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            False,
+            False,
+            "autonomous",
+            0,
+        ),  # Not managed
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            False,
+            True,
+            "other",
+            0,
+        ),  # Wrong source
         # Invalid cases - subplaybooks without internal=True in autonomous pack
-        ("subplaybook-test", "subplaybook-test", "subplaybook-test", False, True, "autonomous", 1),
-        ("subplaybook-test", "test", "test", False, True, "autonomous", 1),  # Filename has prefix
-        ("test", "subplaybook-test", "test", False, True, "autonomous", 1),  # Id has prefix
-        ("test", "test", "subplaybook-test", False, True, "autonomous", 1),  # Name has prefix
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            False,
+            True,
+            "autonomous",
+            1,
+        ),
+        (
+            "subplaybook-test",
+            "test",
+            "test",
+            False,
+            True,
+            "autonomous",
+            1,
+        ),  # Filename has prefix
+        (
+            "test",
+            "subplaybook-test",
+            "test",
+            False,
+            True,
+            "autonomous",
+            1,
+        ),  # Id has prefix
+        (
+            "test",
+            "test",
+            "subplaybook-test",
+            False,
+            True,
+            "autonomous",
+            1,
+        ),  # Name has prefix
         # Case insensitive
         ("SubPlaybook-Test", "test", "test", False, True, "autonomous", 1),
         ("test", "SUBPLAYBOOK-test", "test", False, True, "autonomous", 1),

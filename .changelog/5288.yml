@@ -1,4 +1,0 @@
-changes:
-- description: Added the AS105 validator to ensure playbooks and triggers in autonomous packs do not have issilent set to true.
-  type: feature
-pr_number: 5288

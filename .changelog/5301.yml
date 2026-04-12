@@ -1,4 +1,0 @@
-changes:
-- description: Added `supportedModules` support for integration parameters with new validators IN170 and IN171 to ensure parameter-level `supportedModules` values are valid.
-  type: feature
-pr_number: 5301

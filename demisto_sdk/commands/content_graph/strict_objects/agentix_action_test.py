@@ -1,8 +1,10 @@
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import Field, validator
+from pydantic import Field
 
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
+from demisto_sdk.commands.content_graph.strict_objects.common import (
+    BaseStrictModel,
+)
 
 
 class ActionDetail(BaseStrictModel):
@@ -25,6 +27,7 @@ class AgentixActionTestCase(BaseStrictModel):
     """A single test case."""
 
     name: Optional[str] = None
+    prompt: Optional[str] = None
     agent_id: str = Field("", alias="agent_id")
     expected_outcomes: Optional[List[EvaluationOutcome]] = None
 

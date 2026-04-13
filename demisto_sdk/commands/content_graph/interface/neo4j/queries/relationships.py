@@ -145,9 +145,10 @@ WITH target_incident,target, source, r
 CREATE (source)-[r_new:{RelationshipType.USES}{{mandatorily: r.mandatorily}}]->(target_incident)
 
 
-// delete the old target node and old relationship
+// delete the old relationship and the old target node (DETACH handles remaining relationships
+// from other sources that also pointed to this same "alert" placeholder node)
 DELETE r
-DELETE target
+DETACH DELETE target
 """
 
 

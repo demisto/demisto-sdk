@@ -1,4 +1,72 @@
 # Changelog
+## 1.38.23 (2026-03-29)
+### Feature
+* Added "Agentic assistant" as a valid sectionorder value for integrations. [#5296](https://github.com/demisto/demisto-sdk/pull/5296)
+* Added `supportedModules` support for integration parameters with new validators IN170 and IN171 to ensure parameter-level `supportedModules` values are valid. [#5301](https://github.com/demisto/demisto-sdk/pull/5301)
+* Added AS106 validation warning for autonomous playbook tasks that have a displayLabel but also have quietmode set to 1. [#5298](https://github.com/demisto/demisto-sdk/pull/5298)
+* Added adopted boolean field to playbooks. Added AS104 validator to enforce adopted:true on autonomous pack playbooks with auto-fix. Added Playbook Completed as a mandatory duplicatable section header in AS103. Format command now auto-sets adopted for autonomous pack playbooks. [#5286](https://github.com/demisto/demisto-sdk/pull/5286)
+* Added the AS105 validator to ensure playbooks and triggers in autonomous packs do not have issilent set to true. [#5288](https://github.com/demisto/demisto-sdk/pull/5288)
+* Added new MC101 validation that checks managed packs (managed: true in pack_metadata) have a deployment.json file in the pack folder. [#5294](https://github.com/demisto/demisto-sdk/pull/5294)
+
+### Fix
+* Pinned all third-party GitHub Actions to commit SHAs to mitigate supply chain attacks (CVE-2025-30066), upgraded tj-actions/changed-files from compromised v46.0.1 to v46.0.3, and fixed command injection vulnerabilities via GitHub expression interpolation in workflow run blocks. [#5295](https://github.com/demisto/demisto-sdk/pull/5295)
+* Fixed false duplicate errors in GR111/GR112 for Agentix Actions split across files with different version ranges. [#5300](https://github.com/demisto/demisto-sdk/pull/5300)
+* Fixed an issue where the test_xsoar_linter_errors UT was flaky and failed intermittently. [#5279](https://github.com/demisto/demisto-sdk/pull/5279)
+
+### Internal
+* Remove old product codes from demisto-sdk [#5281](https://github.com/demisto/demisto-sdk/pull/5281)
+
+
+## 1.38.22 (2026-03-16)
+### Feature
+* Do not prompt for silent playbook when formatting playbooks with the --assume-no argument is given. [#5270](https://github.com/demisto/demisto-sdk/pull/5270)
+* Added a new validation (GR113) which validates managed playbooks does not use scripts or sub-playbooks that are not managed or from our core packs. Also, a small bug where the graph could not be re-built if it was corrupt due to bad DELETE NODE query, was fixed. [#5241](https://github.com/demisto/demisto-sdk/pull/5241)
+
+### Fix
+* Fix a bug in the `demisto-sdk zip-files` command where list data files were parsed as unified files. [#5280](https://github.com/demisto/demisto-sdk/pull/5280)
+* Add an error message when the provided github token is unauthorized to help with debugging bad tokens in `demisto-sdk pre-commit`. [#5162](https://github.com/demisto/demisto-sdk/pull/5162)
+* Fix a bug where `.env` environment variables were not loaded upon creating the first instance of `GitCredentials`, making `demisto-sdk pre-commit` ignore the `DEMISTO_SDK_GITHUB_TOKEN` environment variable if it was set in the `.env` file. [#5162](https://github.com/demisto/demisto-sdk/pull/5162)
+* Fixed an issue where pre-commit incorrectly classified all files as added in content-private, causing it to run on all files instead of only the changed ones and updating the graph for packs which were not changed. [#5249](https://github.com/demisto/demisto-sdk/pull/5249)
+* Fixed PA133 validator to exclude test-only dependencies when checking the Base pack for new dependencies. [#5275](https://github.com/demisto/demisto-sdk/pull/5275)
+* Fixed a bug in content graph update where brand new packs not on master were not detected. [#5263](https://github.com/demisto/demisto-sdk/pull/5263)
+* Added the BA129 error code to the old-validation ignorable errors list in the **validate** command, effective when using the `--run-old-validate` flag. [#5278](https://github.com/demisto/demisto-sdk/pull/5278)
+* Fixed false-positive AS102, AS103, and ST110 validation errors in autonomous playbook tasks. Fields displayLabel, isResponse, requiresIntervention, and isSubSection are now correctly recognized on the inner task sub-object. AS103 now ignores sub-section title tasks where isSubSection is true. [#5277](https://github.com/demisto/demisto-sdk/pull/5277)
+* Fixed an issue where the **update-release-notes** command would not generate release notes for the ApiModule pack. [#5261](https://github.com/demisto/demisto-sdk/pull/5261)
+* Fix a bug in `demisto-sdk download` where custom content would be written in a different file than system content. [#5220](https://github.com/demisto/demisto-sdk/pull/5220)
+
+### Internal
+* Added the integrations Ids to the test_playbooks_report.json file. [#5261](https://github.com/demisto/demisto-sdk/pull/5261)
+
+
+## 1.38.21 (2026-03-03)
+### Feature
+* Added a new validation (PA133) that ensures the Base pack does not have any new dependencies beyond the currently allowed ones (Core and AggregateScripts). [#5232](https://github.com/demisto/demisto-sdk/pull/5232)
+* Added AS103 validation to check that autonomous playbooks have correct section headers with valid names, non-empty descriptions, and proper ordering. [#5250](https://github.com/demisto/demisto-sdk/pull/5250)
+* Add an explicit error log message when `demisto-sdk zip-packs` fails. Without this, it's not clear to users that the command failed. [#5194](https://github.com/demisto/demisto-sdk/pull/5194)
+* Added support for "internal" integration field to appear in the metadata.json file. [#5256](https://github.com/demisto/demisto-sdk/pull/5256)
+* Added support for AI tasks in playbooks. Playbooks can now include tasks of type 'aiTask' with an 'aiTaskId' field. Added validator PB135 to ensure playbooks with AI tasks are restricted to the platform marketplace only. [#5264](https://github.com/demisto/demisto-sdk/pull/5264)
+
+### Fix
+* Fixed an issue where `demisto-sdk run` would fail when command output contained HTML tags.
+ [#5157](https://github.com/demisto/demisto-sdk/pull/5157)
+* Fix a race condition in `demisto-sdk run-test-playbook` that resulted in a crash.
+Lower sleep time from 10 to 6 seconds in `demisto-sdk run-test-playbook` to make the user experience smoother for shorter test playbooks.
+ [#5154](https://github.com/demisto/demisto-sdk/pull/5154)
+* Fix a bug where `demisto-sdk run-test-playbook --all` would crash if one of the packs did not have the TestPlaybooks subdirectory. [#5223](https://github.com/demisto/demisto-sdk/pull/5223)
+* - Fix a bug in `demisto-sdk run-playbook` where an invalid log message crashed the command on failed playbook.
+- Exit with code 1 instead of 0 on failed playbook.
+ [#5193](https://github.com/demisto/demisto-sdk/pull/5193)
+* Added `is_test` property to AgentixAction and AgentixActionTest to distinguish test from production actions. [#5257](https://github.com/demisto/demisto-sdk/pull/5257)
+* Allow test files in AgentixAgent directories, consistent with AgentixAction support. [#5257](https://github.com/demisto/demisto-sdk/pull/5257)
+* Fixed `demisto-sdk run --debug` crashing when displaying error stack traces.
+ [#5195](https://github.com/demisto/demisto-sdk/pull/5195)
+* Cleaned up extra blank lines in `demisto-sdk run` output.
+ [#5195](https://github.com/demisto/demisto-sdk/pull/5195)
+
+### Internal
+* Added support for "tim" and "email_security" add-on licenses. [#5259](https://github.com/demisto/demisto-sdk/pull/5259)
+
+
 ## 1.38.20 (2026-02-19)
 ### Feature
 * Added a new validation (AS101) that ensures triggers in autonomous packs are properly configured. [#5234](https://github.com/demisto/demisto-sdk/pull/5234)

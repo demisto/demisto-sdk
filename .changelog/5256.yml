@@ -1,4 +1,0 @@
-changes:
-- description: Added support for "internal" integration field to appear in the metadata.json file.
-  type: feature
-pr_number: 5256

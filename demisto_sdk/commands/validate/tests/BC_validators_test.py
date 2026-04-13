@@ -2007,10 +2007,14 @@ def test_IsSupportedModulesRemoved_pack_content_type():
     Then
     - Validate that Pack items don't fall back to pack.supportedModules (since they ARE the pack).
     """
-    new_pack = create_pack_object()
+    new_pack = create_pack_object(
+        paths=["marketplaces"], values=[["xsoar", "marketplacev2", "platform"]]
+    )
     new_pack.supportedModules = ["Cloud", "asm"]
 
-    old_pack = create_pack_object()
+    old_pack = create_pack_object(
+        paths=["marketplaces"], values=[["xsoar", "marketplacev2", "platform"]]
+    )
     old_pack.supportedModules = ["Cloud", "asm", "edr", "cloud_posture"]
     new_pack.old_base_content_object = old_pack
 

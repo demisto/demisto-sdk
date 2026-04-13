@@ -317,6 +317,12 @@ def _validate(path: Path) -> None:
     if depth == 1:  # Packs/myPack/<first level folder>/<the file>
         _exempt_unified_files(path, first_level_folder)  # Raises PathIsUnified
 
+        if first_level_folder == AGENTIX_ACTIONS_DIR:
+            raise InvalidAgentixActionFileName
+
+        if first_level_folder == AGENTIX_AGENTS_DIR:
+            raise InvalidAgentixAgentFileName
+
         if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise InvalidDepthOneFile

@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from demisto_sdk.commands.common.constants import (
+    AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
     CLASSIFIERS_DIR,
     CONTENT_ENTITIES_DIRS,
@@ -239,7 +240,10 @@ def test_content_entities_dir_length():
 
 folders_not_allowed_to_contain_files = (
     set(CONTENT_ENTITIES_DIRS) | DEPTH_ONE_FOLDERS
-).difference(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
+).difference(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES) - {
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
+}
 
 DUMMY_PACK_PATH = Path("content", "Packs", "myPack")
 
@@ -667,9 +671,9 @@ def test_agentix_agent_file_at_depth_one_invalid():
     When:
         Running validate_path
     Then:
-        Make sure the validation raises InvalidDepthOneFile
+        Make sure the validation raises InvalidAgentixAgentFileName
     """
-    with pytest.raises(InvalidDepthOneFile):
+    with pytest.raises(InvalidAgentixAgentFileName):
         _validate(DUMMY_PACK_PATH / AGENTIX_AGENTS_DIR / "TestAgent.yml")
 
 
@@ -691,13 +695,13 @@ class TestAgentixActionsPathValidation:
         When:
             - Running _validate on the path.
         Then:
-            - InvalidDepthOneFile is raised.
+            - InvalidAgentixActionFileName is raised.
         """
         path = tmp_path / "Packs" / "Core" / "AgentixActions" / "CortexDummyAction.yml"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.touch()
 
-        with pytest.raises(InvalidDepthOneFile):
+        with pytest.raises(InvalidAgentixActionFileName):
             _validate(path)
 
     def test_new_hierarchy_valid_action_file(self, tmp_path: Path):

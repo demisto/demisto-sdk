@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_FOLDER,
     PARTNER_SUPPORT,
     XSOAR_SUPPORT,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
@@ -120,6 +121,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA129_missing_compliant_policies import (
     MissingCompliantPoliciesValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA130_marketplacev2_without_platform import (
+    MarketplaceV2WithoutPlatformValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -3469,3 +3473,119 @@ def test_MissingCompliantPoliciesValidator_only_new_command_is_reported(mocker):
     assert [r.message for r in results] == [
         "Command new-cmd uses the arguments: ['endpoint_id'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation']."
     ]
+
+
+def _set_marketplaces(content_items, marketplaces_list):
+    """Helper to set marketplaces on a list of content items."""
+    for item, mp in zip(content_items, marketplaces_list):
+        item.marketplaces = mp
+    return content_items
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        pytest.param(
+            _set_marketplaces(
+                [create_integration_object(), create_script_object(), create_playbook_object()],
+                [
+                    [MarketplaceVersions.XSOAR],
+                    [MarketplaceVersions.XSOAR],
+                    [MarketplaceVersions.XSOAR],
+                ],
+            ),
+            0,
+            id="no_marketplacev2_should_pass",
+        ),
+        pytest.param(
+            _set_marketplaces(
+                [create_integration_object(), create_script_object()],
+                [
+                    [MarketplaceVersions.MarketplaceV2],
+                    [MarketplaceVersions.MarketplaceV2],
+                ],
+            ),
+            2,
+            id="two_items_with_marketplacev2_without_platform_should_fail",
+        ),
+        pytest.param(
+            _set_marketplaces(
+                [create_integration_object(), create_script_object(), create_playbook_object()],
+                [
+                    [MarketplaceVersions.MarketplaceV2],
+                    [MarketplaceVersions.XSOAR],
+                    [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM],
+                ],
+            ),
+            1,
+            id="one_item_with_marketplacev2_without_platform_should_fail",
+        ),
+        pytest.param(
+            _set_marketplaces(
+                [create_integration_object()],
+                [
+                    [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM],
+                ],
+            ),
+            0,
+            id="marketplacev2_with_platform_should_pass",
+        ),
+        pytest.param(
+            _set_marketplaces(
+                [create_integration_object()],
+                [
+                    [MarketplaceVersions.PLATFORM],
+                ],
+            ),
+            0,
+            id="platform_only_should_pass",
+        ),
+    ],
+)
+def test_MarketplaceV2WithoutPlatformValidator_obtain_invalid_content_items(
+    content_items, expected_number_of_failures
+):
+    """
+    Given
+    content_items list with various marketplace configurations.
+        - Case 1: All items have only xsoar marketplace - should pass.
+        - Case 2: Two items have marketplacev2 without platform - should fail both.
+        - Case 3: One item has marketplacev2 without platform, one has xsoar, one has both - should fail one.
+        - Case 4: Item has both marketplacev2 and platform - should pass.
+        - Case 5: Item has only platform - should pass.
+    When
+    - Calling the MarketplaceV2WithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+        - Make sure the right amount of failures return and that the error message is correct.
+    """
+    results = MarketplaceV2WithoutPlatformValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(results) == expected_number_of_failures
+    for result in results:
+        assert (
+            result.message
+            == "The content item has 'marketplacev2' in its marketplaces but is missing "
+            "'platform'. Please add 'platform' to the marketplaces list."
+        )
+
+
+def test_MarketplaceV2WithoutPlatformValidator_fix():
+    """
+    Given
+    - A content item with 'marketplacev2' in its marketplaces but without 'platform'.
+    When
+    - Calling the MarketplaceV2WithoutPlatformValidator fix function.
+    Then
+    - Make sure 'platform' is added to the marketplaces list and the fix message is correct.
+    """
+    content_item = create_integration_object()
+    content_item.marketplaces = [MarketplaceVersions.MarketplaceV2]
+
+    assert MarketplaceVersions.PLATFORM not in content_item.marketplaces
+
+    result = MarketplaceV2WithoutPlatformValidator().fix(content_item)
+
+    assert MarketplaceVersions.PLATFORM in content_item.marketplaces
+    assert MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
+    assert result.message == "Added 'platform' to the marketplaces list."

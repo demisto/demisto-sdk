@@ -131,6 +131,9 @@ ALLOWED_SUFFIXES = frozenset(
         ".js",
         ".xif",
         ".ps1",
+        ".html",
+        ".css",
+        ".csv",
         "",
     )
 )

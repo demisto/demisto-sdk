@@ -3487,7 +3487,11 @@ def _set_marketplaces(content_items, marketplaces_list):
     [
         pytest.param(
             _set_marketplaces(
-                [create_integration_object(), create_script_object(), create_playbook_object()],
+                [
+                    create_integration_object(),
+                    create_script_object(),
+                    create_playbook_object(),
+                ],
                 [
                     [MarketplaceVersions.XSOAR],
                     [MarketplaceVersions.XSOAR],
@@ -3510,7 +3514,11 @@ def _set_marketplaces(content_items, marketplaces_list):
         ),
         pytest.param(
             _set_marketplaces(
-                [create_integration_object(), create_script_object(), create_playbook_object()],
+                [
+                    create_integration_object(),
+                    create_script_object(),
+                    create_playbook_object(),
+                ],
                 [
                     [MarketplaceVersions.MarketplaceV2],
                     [MarketplaceVersions.XSOAR],

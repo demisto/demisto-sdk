@@ -116,9 +116,7 @@ class MarketplaceV2WithoutPlatformValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        for item in content_items:
-            a = item.marketplaces
-        returned_value = [
+        return [
             ValidationResult(
                 validator=self,
                 message=self.error_message,
@@ -128,7 +126,6 @@ class MarketplaceV2WithoutPlatformValidator(BaseValidator[ContentTypes]):
             if MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
             and MarketplaceVersions.PLATFORM not in content_item.marketplaces
         ]
-        return returned_value
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         content_item.marketplaces.append(MarketplaceVersions.PLATFORM)

@@ -4,7 +4,11 @@ from typing import Iterable, List, cast
 
 from git import Union
 
-from demisto_sdk.commands.common.constants import GitStatuses, PlatformSupportedModules
+from demisto_sdk.commands.common.constants import (
+    GitStatuses,
+    MarketplaceVersions,
+    PlatformSupportedModules,
+)
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
@@ -87,7 +91,7 @@ class IsSupportedModulesRemoved(BaseValidator[ContentTypes]):
         "Ensure that no support module are removed from an existing content item."
     )
     rationale = "Removing a support module for content item can break functionality for customers."
-    error_message = "The following support modules have been removed from the integration {}. Removing supported modules is not allowed, Please undo."
+    error_message = "The following support modules have been removed from the content item {}. Removing supported modules is not allowed, Please undo."
     related_field = "supportedModules"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
@@ -119,7 +123,13 @@ class IsSupportedModulesRemoved(BaseValidator[ContentTypes]):
         """
         Calculates the set of supported modules that were removed from the old item
         compared to the new item.
+
+        If the "platform" marketplace is not in the old content object's marketplaces,
+        skip the validation and return an empty set.
         """
+        if MarketplaceVersions.PLATFORM not in old_item.marketplaces:
+            return set()
+
         default_modules = [sm.value for sm in PlatformSupportedModules]
 
         def get_modules(item: ContentTypes) -> set:

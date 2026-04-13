@@ -1842,7 +1842,7 @@ def test_IsSupportedModulesRemoved_with_removed_modules():
     assert len(res) == 1
     assert (
         res[0].message
-        == "The following support modules have been removed from the integration 'cloud_posture', 'edr'. Removing supported modules is not allowed, Please undo."
+        == "The following support modules have been removed from the content item 'cloud_posture', 'edr'. Removing supported modules is not allowed, Please undo."
     )
     assert res[0].validator.error_code == "BC115"
 
@@ -1897,7 +1897,7 @@ def test_IsSupportedModulesRemoved_with_pack_fallback():
         assert len(res) == 1
         assert (
             res[0].message
-            == "The following support modules have been removed from the integration 'cloud_posture', 'edr'. Removing supported modules is not allowed, Please undo."
+            == "The following support modules have been removed from the content item 'cloud_posture', 'edr'. Removing supported modules is not allowed, Please undo."
         )
         assert res[0].validator.error_code == "BC115"
 

@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.mypy]
 check_untyped_defs = true
 ignore_missing_imports = true
-python_version = "3.9"
+python_version = "3.11"
 show_error_codes = true
 follow_imports = "silent"
 pretty = true
@@ -23,10 +23,10 @@ classifiers = [
   'Intended Audience :: Developers',
   'Natural Language :: English',
   'License :: OSI Approved :: MIT License',
-  'Programming Language :: Python :: 3.9',
-  'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.13',
+  'Programming Language :: Python :: 3.14',
   'Programming Language :: Python :: Implementation :: CPython'
 ]
 exclude = [
@@ -39,7 +39,7 @@ exclude = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.11,<=3.14"
 autopep8 = "^2.0.4"
 bandit = "^1.7.4"
 mypy = "^0.982"
@@ -51,7 +51,7 @@ coloredlogs = "^15.0.1"
 configparser = "^5.2.0"
 coverage = "^7.2.1,<7.4" # in 7.4 we get empty results
 decorator = "^5.1.1"
-demisto-py = "^3.2.21"
+demisto-py = {branch = "sk_demisto_py_new_python", git = "https://github.com/demisto/demisto-py.git"}
 dictor = "^0.1.9"
 docker = "^7.1.0"
 flatten-dict = "^0.4.2"

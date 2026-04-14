@@ -740,7 +740,11 @@ class Initializer:
         Returns:
             bool: True if the item is unrelated. Otherwise, return False.
         """
-        return "Packs" not in path or any(
+        # A path is related if it's under Packs/ or connectors/
+        is_content_path = "Packs" in path or "connectors" in path
+        if not is_content_path:
+            return True
+        return any(
             file in path.lower()
             for file in (
                 "commands_example.txt",

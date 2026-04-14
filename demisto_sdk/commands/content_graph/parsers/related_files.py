@@ -40,6 +40,13 @@ class RelatedFileType(Enum):
     AUTHOR_IMAGE = "author_image_file"
     RELEASE_NOTE = "release_note"
     VERSION_CONFIG = "version_config"
+    CONNECTOR_CONNECTION = "connector_connection"
+    CONNECTOR_CAPABILITIES = "connector_capabilities"
+    CONNECTOR_CONFIGURATIONS = "connector_configurations"
+    CONNECTOR_TRIGGERS = "connector_triggers"
+    CONNECTOR_SUMMARY = "connector_summary"
+    CONNECTOR_HANDLER = "connector_handler"
+    CONNECTOR_SERIALIZER = "connector_serializer"
 
 
 class RelatedFile(ABC):
@@ -421,3 +428,192 @@ class TestUseCaseRelatedFile(TextFiles):
         parsed_ast = ast.parse(self.file_content)
         docstring = ast.get_docstring(parsed_ast)
         return json5.loads(docstring) if docstring else {}
+
+
+# ============================================================
+# Connector-related file classes
+# ============================================================
+
+
+class ConnectorYAMLRelatedFile(RelatedFile):
+    """Base class for connector-related YAML files.
+
+    Each connector sub-file (connection.yaml, capabilities.yaml, etc.)
+    is modeled as a RelatedFile for file-level concerns (existence,
+    git status, path resolution) while its parsed content is stored
+    as Pydantic sub-models on the Connector object.
+    """
+
+    def __init__(
+        self,
+        main_file_path: Path,
+        filename: str,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        self._filename = filename
+        super().__init__(main_file_path, git_sha, prev_ver)
+
+    def get_optional_paths(self) -> List[Path]:
+        return [self.main_file_path / self._filename]
+
+    @cached_property
+    def file_content(self) -> Optional[Dict[str, Any]]:
+        if self.exist:
+            from demisto_sdk.commands.common.tools import get_yaml
+
+            return get_yaml(str(self.file_path), git_sha=self.git_sha)
+        return None
+
+
+class ConnectionRelatedFile(ConnectorYAMLRelatedFile):
+    file_type = RelatedFileType.CONNECTOR_CONNECTION
+
+    def __init__(
+        self,
+        main_file_path: Path,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        super().__init__(main_file_path, "connection.yaml", git_sha, prev_ver)
+
+
+class CapabilitiesRelatedFile(ConnectorYAMLRelatedFile):
+    file_type = RelatedFileType.CONNECTOR_CAPABILITIES
+
+    def __init__(
+        self,
+        main_file_path: Path,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        super().__init__(main_file_path, "capabilities.yaml", git_sha, prev_ver)
+
+
+class ConfigurationsRelatedFile(ConnectorYAMLRelatedFile):
+    file_type = RelatedFileType.CONNECTOR_CONFIGURATIONS
+
+    def __init__(
+        self,
+        main_file_path: Path,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        super().__init__(main_file_path, "configurations.yaml", git_sha, prev_ver)
+
+
+class TriggersRelatedFile(ConnectorYAMLRelatedFile):
+    file_type = RelatedFileType.CONNECTOR_TRIGGERS
+
+    def __init__(
+        self,
+        main_file_path: Path,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        super().__init__(main_file_path, "triggers.yaml", git_sha, prev_ver)
+
+
+class SummaryRelatedFile(ConnectorYAMLRelatedFile):
+    file_type = RelatedFileType.CONNECTOR_SUMMARY
+
+    def __init__(
+        self,
+        main_file_path: Path,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        super().__init__(main_file_path, "summary.yaml", git_sha, prev_ver)
+
+
+class HandlerRelatedFile(RelatedFile):
+    """A handler directory containing handler.yaml and optional serializer.yaml."""
+
+    file_type = RelatedFileType.CONNECTOR_HANDLER
+
+    def __init__(
+        self,
+        main_file_path: Path,
+        handler_dir_name: str,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        self._handler_dir_name = handler_dir_name
+        super().__init__(main_file_path, git_sha, prev_ver)
+
+    def get_optional_paths(self) -> List[Path]:
+        return [
+            self.main_file_path
+            / "components"
+            / "handlers"
+            / self._handler_dir_name
+            / "handler.yaml"
+        ]
+
+    @cached_property
+    def file_content(self) -> Optional[Dict[str, Any]]:
+        if self.exist:
+            from demisto_sdk.commands.common.tools import get_yaml
+
+            return get_yaml(str(self.file_path), git_sha=self.git_sha)
+        return None
+
+    @cached_property
+    def serializer_file(self) -> "SerializerRelatedFile":
+        return SerializerRelatedFile(
+            self.main_file_path, self._handler_dir_name, self.git_sha
+        )
+
+    @property
+    def handler_id(self) -> Optional[str]:
+        return self.file_content.get("id") if self.file_content else None
+
+    @property
+    def module(self) -> Optional[str]:
+        if self.file_content:
+            return self.file_content.get("metadata", {}).get("module")
+        return None
+
+    @property
+    def is_xsoar_handler(self) -> bool:
+        """Identify if this handler is XSOAR-related."""
+        if not self.file_content:
+            return False
+        module = self.file_content.get("metadata", {}).get("module", "")
+        team = (
+            self.file_content.get("metadata", {}).get("ownership", {}).get("team", "")
+        )
+        return module == "xsoar" or team == "xsoar"
+
+
+class SerializerRelatedFile(RelatedFile):
+    """Serializer YAML file within a handler directory."""
+
+    file_type = RelatedFileType.CONNECTOR_SERIALIZER
+
+    def __init__(
+        self,
+        main_file_path: Path,
+        handler_dir_name: str,
+        git_sha: Optional[str] = None,
+        prev_ver: Optional[str] = None,
+    ) -> None:
+        self._handler_dir_name = handler_dir_name
+        super().__init__(main_file_path, git_sha, prev_ver)
+
+    def get_optional_paths(self) -> List[Path]:
+        return [
+            self.main_file_path
+            / "components"
+            / "handlers"
+            / self._handler_dir_name
+            / "serializer.yaml"
+        ]
+
+    @cached_property
+    def file_content(self) -> Optional[Dict[str, Any]]:
+        if self.exist:
+            from demisto_sdk.commands.common.tools import get_yaml
+
+            return get_yaml(str(self.file_path), git_sha=self.git_sha)
+        return None

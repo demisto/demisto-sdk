@@ -55,6 +55,8 @@ class RelationshipType(StrEnum):
     HAS_COMMAND = "HAS_COMMAND"
     IMPORTS = "IMPORTS"
     IN_PACK = "IN_PACK"
+    REFERENCES_INTEGRATION = "REFERENCES_INTEGRATION"
+    REFERENCES_PACK = "REFERENCES_PACK"
     TESTED_BY = "TESTED_BY"
     USES = "USES"
     USES_BY_ID = "USES_BY_ID"
@@ -109,6 +111,7 @@ class ContentType(StrEnum):
     CASE_LAYOUT = "CaseLayout"
     AGENTIX_AGENT = "AgentixAgent"
     AGENTIX_ACTION = "AgentixAction"
+    CONNECTOR = "Connector"
 
     @property
     def labels(self) -> List[str]:

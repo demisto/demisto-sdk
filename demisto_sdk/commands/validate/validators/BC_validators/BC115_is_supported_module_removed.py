@@ -4,11 +4,8 @@ from typing import Iterable, List, cast
 
 from git import Union
 
-from demisto_sdk.commands.common.constants import (
-    GitStatuses,
-    MarketplaceVersions,
-    PlatformSupportedModules,
-)
+from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.tools import get_content_item_supported_modules
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
@@ -127,23 +124,7 @@ class IsSupportedModulesRemoved(BaseValidator[ContentTypes]):
         If the "platform" marketplace is not in the old content object's marketplaces,
         skip the validation and return an empty set.
         """
-        if MarketplaceVersions.PLATFORM not in old_item.marketplaces:
-            return set()
-
-        default_modules = [sm.value for sm in PlatformSupportedModules]
-
-        def get_modules(item: ContentTypes) -> set:
-            """
-            Resolves the definitive list of supported modules for an item,
-            falling back to its pack's modules or the platform defaults.
-            """
-            modules = item.supportedModules
-            if not modules and not isinstance(item, Pack):
-                modules = item.pack.supportedModules
-
-            return set(modules or default_modules)
-
-        old_params = get_modules(old_item)
-        new_params = get_modules(new_item)
+        old_params = get_content_item_supported_modules(old_item)
+        new_params = get_content_item_supported_modules(new_item)
 
         return old_params.difference(new_params)

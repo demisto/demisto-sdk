@@ -6,6 +6,7 @@ from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
+    MANAGED_PACK_SOURCE_REQUIRING_ADOPTED,
     PLAYBOOK,
     FileType,
 )
@@ -316,6 +317,34 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             if self.data.get("fromversion", "") == "8.9.0":
                 self.data["fromversion"] = "6.10.0"  # default from version
 
+    def add_adopted_field_for_managed_pack(self):
+        """Adds 'adopted: true' to playbooks in managed packs that require adoption.
+
+        Reads the pack metadata to determine whether the pack is managed and its
+        source is one that requires the 'adopted' field. If so, and the playbook
+        does not yet have an 'adopted' field, it is set to True.
+        """
+        try:
+            from demisto_sdk.commands.common.tools import get_pack_metadata
+
+            pack_metadata = get_pack_metadata(str(self.source_file))
+
+            if not pack_metadata.get("managed", False):
+                return
+
+            source = pack_metadata.get("source", "")
+            if source not in MANAGED_PACK_SOURCE_REQUIRING_ADOPTED:
+                return
+
+            if "adopted" not in self.data:
+                logger.info(
+                    f"Adding 'adopted: true' to playbook in managed pack (source='{source}')."
+                )
+                self.data["adopted"] = True
+
+        except Exception as e:
+            logger.debug(f"Could not add adopted field for managed pack: {e}")
+
     def ask_for_silent_playbook(self) -> bool:
         """
         Asks the user if they want to make the current playbook a silent playbook.
@@ -327,6 +356,8 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             return False
         if self.assume_answer:
             return True
+        elif self.assume_answer is False:
+            return False
 
         logger.info(
             f"\n<blue>Do you want to make '{self.data.get('name')}' a silent playbook? [Y/n]</blue>"
@@ -352,6 +383,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             self.delete_sourceplaybookid()
             self.remove_empty_fields_from_scripts()
             self.add_source_field_for_managed_pack()
+            self.add_adopted_field_for_managed_pack()
 
             # Update silent playbook for new files only
             if not self.old_file:

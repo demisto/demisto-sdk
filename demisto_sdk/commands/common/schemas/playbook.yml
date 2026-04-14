@@ -40,6 +40,8 @@ mapping:
     type: bool
   issilent:
     type: bool
+  adopted:
+    type: bool
   internal:
     type: bool # Hidden from UI and API
   source:

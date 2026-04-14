@@ -274,6 +274,7 @@ MATCH (a:{ContentType.AGENTIX_ACTION}), (b:{ContentType.AGENTIX_ACTION})
 WHERE a.{field_name} = b.{field_name}
 AND NOT coalesce(a.not_in_repository, false)
 AND NOT coalesce(b.not_in_repository, false)
+AND {is_target_available('a', 'b')}
 """
     if file_paths:
         query += f"AND a.path in {file_paths}"

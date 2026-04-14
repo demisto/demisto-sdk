@@ -48,6 +48,7 @@ class SectionOrderValues(StrEnum):
     OPTIMIZE = "Optimize"
     MIRRORING = "Mirroring"
     RESULT = "Result"
+    AGENTIC_ASSISTANT = "Agentic Assistant"
 
 
 class _Configuration(BaseStrictModel):
@@ -65,6 +66,12 @@ class _Configuration(BaseStrictModel):
     hidden_username: Optional[bool] = Field(None, alias="hiddenusername")
     hidden_password: Optional[bool] = Field(None, alias="hiddenpassword")
     from_license: Optional[str] = Field(None, alias="fromlicense")
+    supportedModules: Optional[
+        Annotated[
+            List[PlatformSupportedModules],
+            Field(min_length=1, max_length=len(PlatformSupportedModules)),
+        ]
+    ] = None
 
 
 Configuration = create_model(
@@ -192,7 +199,7 @@ class _StrictIntegration(BaseStrictModel):
     display: str
     beta: Optional[bool] = None
     category: str
-    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=5)] = (  # type:ignore[valid-type]
+    section_order: Optional[conlist(SectionOrderValues, min_items=1, max_items=6)] = (  # type:ignore[valid-type]
         Field(alias="sectionorder")
     )
     configurations: List[Configuration] = Field(..., alias="configuration")  # type:ignore[valid-type]

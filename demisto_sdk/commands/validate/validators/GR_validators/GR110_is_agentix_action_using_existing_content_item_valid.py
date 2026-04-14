@@ -89,7 +89,13 @@ class IsAgentixActionUsingExistingContentItemValidator(
         for action in agentix_actions_to_validate:
             action_type = action.underlying_content_item_type
 
-            if action_type not in {"command", "script", "playbook", "internal", "prompt"}:
+            if action_type not in {
+                "command",
+                "script",
+                "playbook",
+                "internal",
+                "prompt",
+            }:
                 results.append(
                     ValidationResult(
                         validator=self,

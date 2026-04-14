@@ -43,9 +43,10 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           LATEST_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Commenting changelog for PR: $PR_NUMBER"
-          poetry run python ./Utils/github_workflow_scripts/changelog_comment_scripts/comment_changelog.py -n "$PR_NUMBER" -lt "$LATEST_COMMIT_SHA" -ght ${{ secrets.GITHUB_TOKEN }}
+          poetry run python ./Utils/github_workflow_scripts/changelog_comment_scripts/comment_changelog.py -n "$PR_NUMBER" -lt "$LATEST_COMMIT_SHA" -ght "$GH_TOKEN"
 
   pre-commit-checks:
     runs-on: ubuntu-latest
@@ -213,7 +214,7 @@ jobs:
           coverage report
           coverage xml
       - name: Coveralls-Action
-        uses: coverallsapp/github-action@v2
+        uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2
         continue-on-error: true
       - name: Coveralls-Comment
         env:
@@ -309,7 +310,7 @@ jobs:
 
       - name: Check whether validate_content_path changed
         id: files-changed
-        uses: tj-actions/changed-files@v46.0.1
+        uses: tj-actions/changed-files@823fcebdb31bb35fdf2229d9f769b400309430d0 # v46.0.3
         with:
           files: |
             demisto_sdk/scripts/validate_content_path.py
@@ -395,7 +396,7 @@ jobs:
         with:
           artifacts-path-dir: test-new-validate-command
           artifact-name: test-new-validate-command-artifacts
-          validate-arguments: "-a --prev-ver origin/master --config-path sdk_validation_config.toml --ignore GR110"
+          validate-arguments: "-a --prev-ver origin/master --config-path sdk_validation_config.toml --ignore GR110 --create-graph-from-scratch"
 
   slack-notify-master-failure:
     needs:
@@ -423,8 +424,13 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Notify Failed Jobs
+        env:
+          WORKFLOW_ID: ${{ github.run_id }}
+          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
         run: |
-          poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}
+          poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id "$WORKFLOW_ID" --slack-token "$SLACK_TOKEN" --github-token "$GH_TOKEN" --slack-channel "$SLACK_CHANNEL"
   generate_validate_docs:
     name: Generate Validate Docs
     runs-on: ubuntu-latest

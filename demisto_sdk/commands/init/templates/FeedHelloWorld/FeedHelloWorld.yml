@@ -2,6 +2,7 @@ category: Data Enrichment & Threat Intelligence
 commonfields:
   id: HelloWorld Feed
   version: -1
+provider: HelloWorld Feed
 configuration:
 - defaultvalue: 'true'
   display: Fetch indicators

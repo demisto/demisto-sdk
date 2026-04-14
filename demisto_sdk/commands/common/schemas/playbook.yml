@@ -40,6 +40,12 @@ mapping:
     type: bool
   issilent:
     type: bool
+  adopted:
+    type: bool
+  internal:
+    type: bool # Hidden from UI and API
+  source:
+    type: str
   starttaskid:
     type: str
     required: true
@@ -289,6 +295,14 @@ mapping:
                 type: text
               id:xsoar_on_prem:
                 type: text
+              isResponse: # Is the task possible response
+                type: bool
+              requiresIntervention:
+                type: bool
+              displayLabel:
+                type: str
+              isSubSection:
+                type: bool
           note:
             type: bool
           nexttasks:

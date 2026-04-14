@@ -26,7 +26,10 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import should_disable_multiprocessing, write_dict
-from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.commands.update import (
+    DEMISTO_SDK_DIFF_FILES_ENV,
+    update_content_graph,
+)
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -615,6 +618,32 @@ def pre_commit_manager(
         logger.info("No files to run pre-commit on, skipping pre-commit.")
         return 0
 
+    # If DEMISTO_SDK_DIFF_FILES is set (e.g., by CI when using -i instead of -g),
+    # explicitly update the content graph with the packs derived from the actual
+    # files_to_run (which already have resolved relative paths starting with Packs/).
+    # We pass use_git=False to avoid also picking up all git-detected changes,
+    # and instead only update the specific packs from the input files.
+    if os.getenv(DEMISTO_SDK_DIFF_FILES_ENV):
+        # Extract unique pack IDs from the already-resolved files_to_run paths
+        diff_pack_ids = list(
+            {
+                file.parts[1]
+                for file in files_to_run
+                if len(file.parts) > 1 and file.parts[0] == PACKS_FOLDER
+            }
+        )
+        if diff_pack_ids:
+            logger.info(
+                f"Pre-Commit: {DEMISTO_SDK_DIFF_FILES_ENV} environment variable detected, "
+                f"updating content graph with packs: {sorted(diff_pack_ids)}"
+            )
+            with ContentGraphInterface() as graph:
+                update_content_graph(
+                    graph,
+                    use_git=False,
+                    packs_to_update=diff_pack_ids,
+                )
+
     skipped_hooks: set = SKIPPED_HOOKS
     skipped_hooks.update(set(skip_hooks or ()))
     if validate and "validate" in skipped_hooks:
@@ -749,18 +778,51 @@ def preprocess_files(
     Returns:
         Set[Path]: The set of files to run pre-commit on.
     """
+    from demisto_sdk.commands.common.string_to_bool import string_to_bool
+
+    # Auto-enable committed_only for private repos to avoid getting all diverged files
+    is_private_repo = string_to_bool(
+        os.getenv("DEMISTO_SDK_PRIVATE_REPO_MODE", ""), default_when_empty=False
+    )
+    if (
+        is_private_repo
+        and use_git
+        and not commited_only
+        and not staged_only
+        and not all_files
+    ):
+        logger.info(
+            "<yellow>DEMISTO_SDK_PRIVATE_REPO_MODE detected - automatically enabling committed_only mode</yellow>"
+        )
+        logger.info(
+            "<yellow>This prevents including all diverged files from master in private repos</yellow>"
+        )
+        commited_only = True
+
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
     all_git_files = git_util.get_all_files().union(staged_files)
     contribution_flow = os.getenv("CONTRIB_BRANCH")
+
     if input_files:
         raw_files = set(input_files)
     elif staged_only:
         raw_files = staged_files
     elif use_git:
-        raw_files = git_util._get_all_changed_files(prev_version)
-        if not commited_only:
+        if commited_only and is_private_repo:
+            # For committed_only mode, get files from actual commits using get_all_changed_files
+            # which properly filters by commit status
+            raw_files = git_util.get_all_changed_files(
+                prev_ver=prev_version or "",
+                committed_only=True,
+                staged_only=False,
+                include_untracked=False,
+            )
+        else:
+            # For non-committed_only mode, use the internal method
+            raw_files = git_util._get_all_changed_files(prev_version)
             raw_files = raw_files.union(staged_files)
+
         if contribution_flow:
             """
             If this command runs on a build triggered by an external contribution PR,
@@ -783,9 +845,11 @@ def preprocess_files(
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():
-            files_to_run.update({path for path in file.rglob("*") if path.is_file()})
+            dir_files = {path for path in file.rglob("*") if path.is_file()}
+            files_to_run.update(dir_files)
         else:
             files_to_run.update(add_related_files(file))
+
     # convert to relative file to content path
     relative_paths = {
         file.relative_to(CONTENT_PATH) if file.is_absolute() else file

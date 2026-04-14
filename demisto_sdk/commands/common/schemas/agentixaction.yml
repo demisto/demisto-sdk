@@ -51,6 +51,12 @@ mapping:
         required: false
   requiresuserapproval:
     type: bool
+  internal:
+    type: bool # Hidden from UI and API
+  fromversion:
+    type: str
+  toversion:
+    type: str
   marketplaces:
     type: seq
     sequence:

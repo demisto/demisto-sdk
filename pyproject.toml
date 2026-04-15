@@ -96,7 +96,7 @@ more-itertools = "^10.0.0"
 junitparser = "^3.1.0"
 google-cloud-secret-manager = "^2.18.3"
 json5 = "^0.9.14"
-klara = {version = "^0.6.3", optional = true}
+klara = {version = "^0.6.3", optional = true, python = "<3.13"} #TODO
 typing-extensions = "^4.1.1" # not a mypy types- dependency
 pre-commit = "^3.5.0"
 lxml = "^5.0.0"

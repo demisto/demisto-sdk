@@ -97,7 +97,6 @@ more-itertools = "^10.0.0"
 junitparser = "^3.1.0"
 google-cloud-secret-manager = "^2.18.3"
 json5 = "^0.9.14"
-klara = {version = "^0.6.3", optional = true, python = "<3.13"} #TODO
 typing-extensions = "^4.1.1" # not a mypy types- dependency
 pre-commit = "^3.5.0"
 lxml = "^5.0.0"
@@ -112,7 +111,6 @@ jira = "^3.8.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]
-generate-unit-tests = ["klara"]
 
 [tool.poetry.group.dev.dependencies]
 mock = "^4.0.3"
@@ -158,7 +156,6 @@ validate-validation-config-file = "demisto_sdk.scripts.validate_validation_confi
 exclude = [
   "demisto_sdk/tests/test_files/",
   "demisto_sdk/commands/init/tests/test_files",
-  "demisto_sdk/commands/generate_unit_tests/tests/test_files/",
   "demisto_sdk/commands/init/templates",
   "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py"
 ]

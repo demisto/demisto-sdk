@@ -135,8 +135,7 @@ Supported commands:
 18. [postman-codegen](https://xsoar.pan.dev/docs/integrations/postman-codegen)
 19. [generate-integration](https://xsoar.pan.dev/docs/integrations/code-generator)
 20. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen)
-21. [generate-unit-tests](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_unit_tests/README.md)
-22. [setup-env](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/setup_env/README.md)
+21. [setup-env](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/setup_env/README.md)
 
 ---
 

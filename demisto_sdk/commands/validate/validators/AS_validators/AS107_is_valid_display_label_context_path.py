@@ -17,7 +17,7 @@ _CONTEXT_KEY_RE = re.compile(r"\$\{([^}]+)\}")
 
 
 class IsValidDisplayLabelContextPathValidator(BaseValidator[ContentTypes]):
-    error_code = "AS104"
+    error_code = "AS107"
     description = (
         "Validate that context keys referenced in displayLabel fields "
         "are actually used in other tasks within the same playbook."

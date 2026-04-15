@@ -14,7 +14,16 @@ from demisto_sdk.commands.validate.validators.AS_validators.AS102_is_valid_quiet
 from demisto_sdk.commands.validate.validators.AS_validators.AS103_is_valid_autonomous_playbook_headers import (
     IsValidAutonomousPlaybookHeadersValidator,
 )
-from demisto_sdk.commands.validate.validators.AS_validators.AS104_is_valid_display_label_context_path import (
+from demisto_sdk.commands.validate.validators.AS_validators.AS104_playbook_must_have_adopted_field import (
+    PlaybookMustHaveAdoptedFieldValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS105_no_is_silent_in_autonomous_pack import (
+    NoIsSilentInAutonomousPackValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS106_warn_quiet_mode_on_display_label_task import (
+    WarnQuietModeOnDisplayLabelTaskValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS107_is_valid_display_label_context_path import (
     IsValidDisplayLabelContextPathValidator,
 )
 
@@ -397,7 +406,7 @@ def _make_header_tasks(sections, starttaskid="0"):
             ],
             0,
         ),
-        # 2. All 5 sections with descriptions in correct order — valid
+        # 2. All 6 sections with descriptions in correct order — valid
         (
             True,
             "autonomous",
@@ -407,10 +416,11 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("3", "Investigation", "Investigate"),
                 ("4", "Verdict", "Determine verdict"),
                 ("5", "Remediation", "Remediate"),
+                ("6", "Playbook Completed", "Playbook done"),
             ],
             0,
         ),
-        # 3. 4 mandatory sections (optional omitted) in correct order — valid
+        # 3. 5 mandatory sections (optional omitted) in correct order — valid
         (
             True,
             "autonomous",
@@ -419,6 +429,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("2", "Investigation", "Investigate"),
                 ("3", "Verdict", "Determine verdict"),
                 ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Playbook done"),
             ],
             0,
         ),
@@ -430,6 +441,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("1", "Data Collection", "Collect data"),
                 ("2", "Investigation", "Investigate"),
                 ("3", "Remediation", "Remediate"),
+                ("4", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -443,6 +455,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("3", "Investigation", "Investigate"),
                 ("4", "Verdict", "Determine verdict"),
                 ("5", "Remediation", "Remediate"),
+                ("6", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -455,6 +468,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("2", "Investigation", "Investigate"),
                 ("3", "Verdict", "Determine verdict"),
                 ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -467,6 +481,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("2", "Investigation", "Investigate"),
                 ("3", "Verdict", "Determine verdict"),
                 ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -479,6 +494,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("2", "Data Collection", "Collect data"),
                 ("3", "Verdict", "Determine verdict"),
                 ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -490,6 +506,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("1", "Data Collection", ""),
                 ("2", "Investigation", "Investigate"),
                 ("3", "Remediation", "Remediate"),
+                ("4", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -498,6 +515,45 @@ def _make_header_tasks(sections, starttaskid="0"):
             True,
             "autonomous",
             [],
+            1,
+        ),
+        # 11. "Playbook Completed" appears twice (duplicatable) — valid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Branch A done"),
+                ("6", "Playbook Completed", "Branch B done"),
+            ],
+            0,
+        ),
+        # 12. Missing "Playbook Completed" — invalid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+            ],
+            1,
+        ),
+        # 13. "Playbook Completed" with empty description — invalid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", ""),
+            ],
             1,
         ),
     ],
@@ -540,12 +596,13 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
     """
     pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
 
-    # Build the standard valid sections
+    # Build the standard valid sections (including mandatory "Playbook Completed")
     sections = [
         ("1", "Data Collection", "Collect data"),
         ("2", "Investigation", "Investigate"),
         ("3", "Verdict", "Determine verdict"),
         ("4", "Remediation", "Remediate"),
+        ("5", "Playbook Completed", "Playbook done"),
     ]
     header_tasks = _make_header_tasks(sections)
 
@@ -567,7 +624,7 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
         "nexttasks": {},
     }
     # Link it from the last section so it's reachable in BFS
-    header_tasks["4"]["nexttasks"] = {"#none#": ["404"]}
+    header_tasks["5"]["nexttasks"] = {"#none#": ["404"]}
 
     playbook = create_playbook_object(
         paths=["starttaskid", "tasks"], values=["0", header_tasks]
@@ -582,8 +639,322 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
     ), "Sub-section title tasks (isSubSection=true) should be ignored by AS103"
 
 
+@pytest.mark.parametrize(
+    "managed, source, adopted, expected_errors",
+    [
+        # Non-autonomous pack — no errors regardless of adopted value
+        (False, "other", None, 0),
+        (False, "other", False, 0),
+        (False, "other", True, 0),
+        # Autonomous pack with adopted=True — valid
+        (True, "autonomous", True, 0),
+        # Autonomous pack with adopted=False — invalid
+        (True, "autonomous", False, 1),
+        # Autonomous pack with adopted=None (missing) — invalid
+        (True, "autonomous", None, 1),
+        # Non-autonomous pack (wrong source) — no errors
+        (True, "other", None, 0),
+        # Non-autonomous pack (managed=False) — no errors
+        (False, "autonomous", None, 0),
+    ],
+)
+def test_PlaybookMustHaveAdoptedFieldValidator(
+    managed, source, adopted, expected_errors
+):
+    """
+    Given:
+        - Playbooks with various 'adopted' field values in autonomous/non-autonomous packs.
+    When:
+        - Running PlaybookMustHaveAdoptedFieldValidator.obtain_invalid_content_items.
+    Then:
+        - Playbooks in autonomous packs (managed: true AND source: 'autonomous')
+          must have adopted: true.
+        - Playbooks in non-autonomous packs can have any value for 'adopted'.
+    """
+    pack_metadata = {}
+    if managed is not None:
+        pack_metadata["managed"] = managed
+    if source is not None:
+        pack_metadata["source"] = source
+
+    pack = create_pack_object(
+        paths=list(pack_metadata.keys()), values=list(pack_metadata.values())
+    )
+
+    paths = []
+    values = []
+    if adopted is not None:
+        paths.append("adopted")
+        values.append(adopted)
+
+    playbook = create_playbook_object(paths=paths or None, values=values or None)
+    playbook.pack = pack
+
+    results = PlaybookMustHaveAdoptedFieldValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_errors
+
+
+def test_PlaybookMustHaveAdoptedFieldValidator_fix():
+    """
+    Given:
+        - A playbook in an autonomous pack (managed: true, source: 'autonomous')
+          without the 'adopted' field set.
+    When:
+        - Running the fix method.
+    Then:
+        - The playbook's 'adopted' field should be set to True.
+        - The playbook should then pass validation.
+    """
+    pack = create_pack_object(
+        paths=["managed", "source"],
+        values=[True, "autonomous"],
+    )
+    playbook = create_playbook_object()
+    playbook.pack = pack
+
+    validator = PlaybookMustHaveAdoptedFieldValidator()
+
+    # Verify it's invalid before fix
+    assert len(validator.obtain_invalid_content_items([playbook])) == 1
+
+    # Apply fix
+    fix_result = validator.fix(playbook)
+
+    # Verify fix was applied
+    assert fix_result.message == validator.fix_message
+    assert playbook.adopted is True
+
+    # Verify it's now valid
+    assert len(validator.obtain_invalid_content_items([playbook])) == 0
+
+
+@pytest.mark.parametrize(
+    "managed, pack_source, item_is_silent, expected_result_len",
+    [
+        # Valid cases — should pass (no error)
+        (True, "autonomous", False, 0),  # Autonomous pack, not silent
+        (False, "other", True, 0),  # Non-autonomous pack, silent
+        (True, "other", True, 0),  # managed=true but wrong source, silent
+        (False, "autonomous", True, 0),  # source=autonomous but managed=false, silent
+        # Invalid cases — should fail
+        (True, "autonomous", True, 1),  # Autonomous pack + silent
+    ],
+)
+def test_NoIsSilentInAutonomousPackValidator_playbook(
+    managed, pack_source, item_is_silent, expected_result_len
+):
+    """
+    Given:
+        - Playbooks with various combinations of pack metadata (managed/source)
+          and item-level isSilent field.
+
+    When:
+        - Running NoIsSilentInAutonomousPackValidator.obtain_invalid_content_items.
+
+    Then:
+        - Playbooks in autonomous packs (managed: true, source: 'autonomous') that have
+          isSilent: true must be flagged as invalid.
+        - Non-autonomous packs or non-silent items must not be flagged.
+    """
+    pack_metadata: dict = {}
+    if managed is not None:
+        pack_metadata["managed"] = managed
+    if pack_source is not None:
+        pack_metadata["source"] = pack_source
+
+    pack = create_pack_object(
+        paths=list(pack_metadata.keys()), values=list(pack_metadata.values())
+    )
+
+    playbook = create_playbook_object(paths=["issilent"], values=[item_is_silent])
+    playbook.pack = pack
+
+    results = NoIsSilentInAutonomousPackValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_result_len
+
+
+@pytest.mark.parametrize(
+    "managed, pack_source, item_is_silent, expected_result_len",
+    [
+        # Valid cases — should pass (no error)
+        (True, "autonomous", False, 0),  # Autonomous pack, not silent
+        (False, "other", True, 0),  # Non-autonomous pack, silent
+        (True, "other", True, 0),  # managed=true but wrong source, silent
+        (False, "autonomous", True, 0),  # source=autonomous but managed=false, silent
+        # Invalid cases — should fail
+        (True, "autonomous", True, 1),  # Autonomous pack + silent
+    ],
+)
+def test_NoIsSilentInAutonomousPackValidator_trigger(
+    managed, pack_source, item_is_silent, expected_result_len
+):
+    """
+    Given:
+        - Triggers with various combinations of pack metadata (managed/source)
+          and item-level issilent field.
+
+    When:
+        - Running NoIsSilentInAutonomousPackValidator.obtain_invalid_content_items.
+
+    Then:
+        - Triggers in autonomous packs (managed: true, source: 'autonomous') that have
+          issilent: true must be flagged as invalid.
+        - Non-autonomous packs or non-silent items must not be flagged.
+    """
+    pack_metadata: dict = {}
+    if managed is not None:
+        pack_metadata["managed"] = managed
+    if pack_source is not None:
+        pack_metadata["source"] = pack_source
+
+    pack = create_pack_object(
+        paths=list(pack_metadata.keys()), values=list(pack_metadata.values())
+    )
+
+    trigger = create_trigger_object(paths=["issilent"], values=[item_is_silent])
+    trigger.pack = pack
+
+    results = NoIsSilentInAutonomousPackValidator().obtain_invalid_content_items(
+        [trigger]
+    )
+    assert len(results) == expected_result_len
+
+
+def test_NoIsSilentInAutonomousPackValidator_fix_playbook():
+    """
+    Given:
+        - A playbook in an autonomous pack (managed: true, source: 'autonomous')
+          that has isSilent: true.
+
+    When:
+        - Running the fix method.
+
+    Then:
+        - The isSilent field is removed from the playbook data and is_silent is set to False.
+        - The playbook is now valid (no errors).
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+    playbook = create_playbook_object(paths=["issilent"], values=[True])
+    playbook.pack = pack
+
+    validator = NoIsSilentInAutonomousPackValidator()
+    assert len(validator.obtain_invalid_content_items([playbook])) == 1
+
+    fix_result = validator.fix(playbook)
+    assert fix_result.message == validator.fix_message
+    assert playbook.is_silent is False
+    assert "isSilent" not in playbook.data
+
+    assert len(validator.obtain_invalid_content_items([playbook])) == 0
+
+
+def test_NoIsSilentInAutonomousPackValidator_fix_trigger():
+    """
+    Given:
+        - A trigger in an autonomous pack (managed: true, source: 'autonomous')
+          that has issilent: true.
+
+    When:
+        - Running the fix method.
+
+    Then:
+        - The isSilent field is removed from the trigger data and is_silent is set to False.
+        - The trigger is now valid (no errors).
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+    trigger = create_trigger_object(paths=["issilent"], values=[True])
+    trigger.pack = pack
+
+    validator = NoIsSilentInAutonomousPackValidator()
+    assert len(validator.obtain_invalid_content_items([trigger])) == 1
+
+    fix_result = validator.fix(trigger)
+    assert fix_result.message == validator.fix_message
+    assert trigger.is_silent is False
+    assert "isSilent" not in trigger.data
+
+    assert len(validator.obtain_invalid_content_items([trigger])) == 0
+
+
+@pytest.mark.parametrize(
+    "managed, source, task_overrides, expected_warnings",
+    [
+        # Non-autonomous pack — no warnings regardless of quietmode/displayLabel
+        (False, "other", [("0", "start", 0, None), ("1", "regular", 1, "My Label")], 0),
+        # Autonomous pack, task has displayLabel and quietmode=1 — warning
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", 1, "My Label")],
+            1,
+        ),
+        # Autonomous pack, task has displayLabel but quietmode=0 — no warning
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", 0, "My Label")],
+            0,
+        ),
+        # Autonomous pack, task has displayLabel but quietmode=None — no warning
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", None, "My Label")],
+            0,
+        ),
+        # Autonomous pack, task has no displayLabel and quietmode=1 — no warning (AS102 handles this)
+        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 1, None)], 0),
+        # Autonomous pack, start/title tasks excluded even with displayLabel and quietmode=1
+        (
+            True,
+            "autonomous",
+            [("0", "start", 1, "Start Label"), ("1", "title", 1, "Title Label")],
+            0,
+        ),
+        # Autonomous pack, multiple tasks with displayLabel and quietmode=1 — multiple warnings in one result
+        (
+            True,
+            "autonomous",
+            [
+                ("0", "start", 0, None),
+                ("1", "regular", 1, "Label One"),
+                ("2", "regular", 1, "Label Two"),
+            ],
+            1,
+        ),
+    ],
+)
+def test_WarnQuietModeOnDisplayLabelTaskValidator(
+    managed, source, task_overrides, expected_warnings
+):
+    """
+    Given:
+        - Playbooks with various task configurations in autonomous/non-autonomous packs.
+    When:
+        - Running WarnQuietModeOnDisplayLabelTaskValidator.obtain_invalid_content_items.
+    Then:
+        - Tasks with a displayLabel AND quietmode=1 in autonomous packs should raise a warning.
+        - Tasks without a displayLabel, or with quietmode != 1, or in non-autonomous packs
+          should not raise a warning.
+        - start and title task types are always excluded.
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+    playbook = create_playbook_object(
+        paths=["tasks"], values=[_make_tasks(task_overrides)]
+    )
+    playbook.pack = pack
+
+    results = WarnQuietModeOnDisplayLabelTaskValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_warnings
+
 def _make_display_label_tasks(task_overrides):
-    """Build a minimal tasks dict for AS104 tests.
+    """Build a minimal tasks dict for AS107 tests.
 
     Each entry in task_overrides is a tuple of:
         (id, inner_displayLabel, scriptarguments)

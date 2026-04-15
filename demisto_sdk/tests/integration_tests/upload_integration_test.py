@@ -375,8 +375,8 @@ def test_integration_upload_path_does_not_exist(demisto_client_mock):
         assert isinstance(result.exception, SystemExit)
 
         # Check for error message in the output
-        assert "Invalid value for '--input' / '-i'" in result.stdout
-        assert "does not exist" in result.stdout
+        assert "Invalid value for '--input' / '-i'" in result.output
+        assert "does not exist" in result.output
         mock_print.assert_called()
 
 

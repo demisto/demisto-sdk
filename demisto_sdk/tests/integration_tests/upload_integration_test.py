@@ -368,7 +368,7 @@ def test_integration_upload_path_does_not_exist(demisto_client_mock):
 
     # Mock rich Console to avoid rich formatting during tests
     with mock.patch.object(Console, "print", wraps=Console().print) as mock_print:
-        runner = CliRunner(mix_stderr=True)
+        runner = CliRunner()
         result = runner.invoke(app, [UPLOAD_CMD, "-i", invalid_dir_path, "--insecure"])
 
         assert result.exit_code == 2

@@ -806,7 +806,7 @@ class TestZippedPackUpload:
         """
         invalid_zip_path = "not_exist_dir/not_exist_zip"
         with mock.patch.object(Console, "print", wraps=Console().print) as mock_print:
-            runner = CliRunner(mix_stderr=True)
+            runner = CliRunner()
             result = runner.invoke(
                 app, ["upload", "-i", invalid_zip_path, "--insecure"]
             )

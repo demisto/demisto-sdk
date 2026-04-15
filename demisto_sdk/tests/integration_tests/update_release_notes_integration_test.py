@@ -64,7 +64,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
         )
     }
     rn_path = join(RN_FOLDER, "1_0_1.md")
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=True)
     mocker.patch(
         "demisto_sdk.commands.update_release_notes.update_rn_manager.get_pack_name",
         return_value="FeedAzureValid",
@@ -140,7 +140,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     }
     rn_path = join(RN_FOLDER, "1_0_1.md")
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     mocker.patch(
         "demisto_sdk.commands.common.tools.get_pack_name", return_value="FeedAzureValid"
     )
@@ -209,7 +209,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
         + "- Updated the City incident field to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
     )
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     modified_files = {
         join(AZURE_FEED_PACK_PATH, "IncidentFields", "incidentfield-city.json")
     }
@@ -277,7 +277,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
         + "- Updated the VMware integration to %%UPDATE_CONTENT_ITEM_CHANGE_DESCRIPTION%%.\n"
     )
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     old_files = {join(VMWARE_PACK_PATH, "Integrations", "integration-VMware.yml")}
     rn_path = join(VMWARE_RN_PACK_PATH, "1_0_1.md")
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
@@ -331,7 +331,7 @@ def test_update_release_notes_non_content_path(demisto_client, mocker):
     - Ensure an error is raised
     """
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
         GitUtil, "get_current_working_branch", return_value="branch_name"
@@ -398,7 +398,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
     with open(rn_path, "w") as file_:
         file_.write(input_rn)
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
 
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)
     mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
@@ -514,7 +514,7 @@ def test_update_release_notes_modified_apimodule(
         "demisto_sdk.commands.update_release_notes.update_rn.update_content_graph",
     )
     modified_files = {api_module_script_path}
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
 
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
     mocker.patch.object(OldValidateManager, "setup_git_params", return_value="")
@@ -606,7 +606,7 @@ def test_update_release_on_metadata_change(demisto_client, mocker, repo):
     )
 
     with ChangeCWD(repo.path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(app, [UPDATE_RN_COMMAND, "-g"])
     assert result.exit_code == 0
     assert all(
@@ -655,7 +655,7 @@ def test_update_release_notes_master_ahead_of_current(demisto_client, mocker, re
     mocker.patch.object(Path, "cwd", return_value=path_cwd)
 
     with ChangeCWD(repo.path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
         )
@@ -714,7 +714,7 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
     mocker.patch.object(Path, "cwd", return_value=path_cwd)
 
     with ChangeCWD(repo.path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
         )
@@ -743,7 +743,7 @@ def test_force_update_release_no_pack_given(demisto_client, repo, mocker):
     - Ensure that an error is printed.
     """
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=True)
     result = runner.invoke(app, [UPDATE_RN_COMMAND, "--force"])
     assert "Please add a specific pack in order to force" in result.output
 
@@ -759,7 +759,7 @@ def test_update_release_notes_specific_version_invalid(demisto_client, repo):
     Then
     - Ensure that an error is printed.
     """
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=True)
     result = runner.invoke(
         app, [UPDATE_RN_COMMAND, "-i", join("Packs", "ThinkCanary"), "-v", "3.x.t"]
     )
@@ -811,7 +811,7 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
     mocker.patch.object(Path, "cwd", return_value=path_cwd)
 
     with ChangeCWD(repo.path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=True)
         result = runner.invoke(
             app,
             [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid"), "-v", "4.0.0"],
@@ -865,7 +865,7 @@ def test_force_update_release(demisto_client, mocker, repo):
         return_value={"ThinkCanary"},
     )
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=True)
     result = runner.invoke(
         app, [UPDATE_RN_COMMAND, "-i", join("Packs", "ThinkCanary"), "--force"]
     )
@@ -907,7 +907,7 @@ def test_update_release_notes_only_pack_ignore_changed(mocker, pack):
         return_value=("1.2.3", {"currentVersion": "1.2.3"}),
     )
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=True)
     result = runner.invoke(app, [UPDATE_RN_COMMAND, "-g"])
     assert result.exit_code == 0
     assert not result.exception
@@ -931,7 +931,7 @@ def test_update_release_on_metadata_change_that_require_rn(
     - Ensure release notes file created with no errors
     """
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=True)
 
     pack_metadata_path = "demisto_sdk/tests/test_files/1.pack_metadata.json"
     pack = repo.create_pack("FeedAzureValid")

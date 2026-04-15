@@ -58,7 +58,7 @@ def test_integration_download_no_force(demisto_client, tmp_path):
 
     env = Environment(tmp_path)
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         ["download", "-o", pack_path, "-i", "TestScript", "-i", "DummyPlaybook"],
@@ -82,7 +82,7 @@ def test_integration_download_with_force(demisto_client, tmp_path, mocker):
 
     env = Environment(tmp_path)
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [
@@ -113,7 +113,7 @@ def test_integration_download_list_files(demisto_client, mocker, capsys):
     - Ensure list files has been made successfully.
     """
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(app, ["download", "-lf"])
 
     expected_table_str = """Content Name                          Content Type
@@ -150,7 +150,7 @@ def test_integration_download_fail(demisto_client, tmp_path):
     """
     env = Environment(tmp_path)
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [

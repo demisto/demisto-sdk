@@ -33,7 +33,7 @@ class TestPrepareContent:
         integration.create_default_integration()
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner()
+            runner = CliRunner(mix_stderr=False)
 
             # Verify that passing both -a and -i raises an exception.
             result = runner.invoke(
@@ -118,7 +118,7 @@ class TestPrepareContentIntegration:
         }
         integration = pack.create_integration(name, yml=yml, description=description)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner()
+            runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 app,
                 [PREPARE_CONTENT_CMD, "-i", f"{integration.path}"],
@@ -151,7 +151,7 @@ def test_pack_prepare_content(mocker, git_repo, monkeypatch):
     with ChangeCWD(pack.repo_path):
         with TemporaryDirectory() as dir:
             monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", dir)
-            runner = CliRunner()
+            runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 app,
                 [PREPARE_CONTENT_CMD, "-i", f"{pack.path}"],
@@ -222,7 +222,7 @@ def test_replace_marketplace_references__end_to_end(git_repo, monkeypatch):
     with ChangeCWD(pack.repo_path):
         with TemporaryDirectory() as dir:
             monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", dir)
-            runner = CliRunner()
+            runner = CliRunner(mix_stderr=False)
             runner.invoke(
                 app, [PREPARE_CONTENT_CMD, "-i", f"{pack.path}", "-mp", "marketplacev2"]
             )

@@ -26,7 +26,7 @@ def test_spell_integration_dir_valid(repo, mocker, monkeypatch):
     integration.create_default_integration()
 
     with ChangeCWD(repo.path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app, [DOC_REVIEW, "-i", integration.path], catch_exceptions=False
         )
@@ -66,7 +66,7 @@ def test_spell_integration_invalid(repo):
     integration.yml.write_dict(yml_content)
 
     with ChangeCWD(repo.path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app, [DOC_REVIEW, "-i", integration.yml.path], catch_exceptions=False
         )
@@ -100,7 +100,7 @@ def test_spell_script_invalid(repo, mocker, monkeypatch):
     script.yml.write_dict(yml_content)
 
     with ChangeCWD(repo.path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app, [DOC_REVIEW, "-i", script.yml.path], catch_exceptions=False
         )
@@ -136,7 +136,7 @@ def test_spell_playbook_invalid(repo, mocker, monkeypatch):
     playbook.yml.write_dict(yml_content)
 
     with ChangeCWD(repo.path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app, [DOC_REVIEW, "-i", playbook.yml.path], catch_exceptions=False
         )
@@ -169,7 +169,7 @@ def test_spell_readme_invalid(repo, mocker, monkeypatch):
     )
 
     with ChangeCWD(repo.path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app, [DOC_REVIEW, "-i", integration.readme.path], catch_exceptions=False
         )
@@ -222,7 +222,7 @@ def test_review_release_notes_valid(repo, mocker, monkeypatch):
     )
     rn = pack.create_release_notes(version="1.1.0", content=valid_rn)
     with ChangeCWD(repo.path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(app, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False)
         assert all(
             [
@@ -262,7 +262,7 @@ def test_review_release_notes_invalid(repo, mocker, monkeypatch):
     )
     rn = pack.create_release_notes(version="1.1.0", content=valid_rn)
     with ChangeCWD(repo.path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(app, [DOC_REVIEW, "-i", rn.path], catch_exceptions=False)
 
         assert all(
@@ -295,7 +295,7 @@ def test_templates_print(repo, mocker, monkeypatch):
     """
 
     with ChangeCWD(repo.path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(app, [DOC_REVIEW, "--templates"], catch_exceptions=False)
         assert "General Pointers About Release Notes:" in result.output
         assert "Checking spelling on" not in result.output

@@ -74,7 +74,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             import demisto_sdk.commands.common.update_id_set as uis
 
             mocker.patch.object(uis, "cpu_count", return_value=1)
-            runner = CliRunner()
+            runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 app,
                 [
@@ -144,7 +144,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         repo.id_set.write_json(id_set)
 
         with ChangeCWD(integration.repo_path):
-            runner = CliRunner()
+            runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 app,
                 [
@@ -200,7 +200,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
-            runner = CliRunner()
+            runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 app,
                 [
@@ -265,7 +265,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
-            runner = CliRunner()
+            runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 app,
                 [
@@ -290,7 +290,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
 
     def test_wrong_path(self, pack, mocker):
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner()
+            runner = CliRunner(mix_stderr=False)
             pack.create_integration()
             path = os.path.join("Packs", Path(pack.path).name, "Integrations")
             result = runner.invoke(app, [FIND_DEPENDENCIES_CMD, "-i", path])

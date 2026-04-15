@@ -128,7 +128,7 @@ class ContentGitRepo:
         * validate -g --include-untracked
         """
         with ChangeCWD(self.content):
-            runner = CliRunner()
+            runner = CliRunner(mix_stderr=False)
             self.run_command("git add .")
             # commit flow - secrets, lint and validate only on staged files without rn
             res = runner.invoke(app, "secrets")
@@ -240,7 +240,7 @@ def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
         f"./{author_image_rel_path}/{AUTHOR_IMAGE_FILE_NAME}"
     )
     monkeypatch.chdir(content_repo.content)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     res = runner.invoke(
         app,
         f"init -a {author_image_abs_path} --pack --name Sample",
@@ -262,7 +262,7 @@ def init_integration(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
 
     Then: Validate lint, secrets and validate exit code is 0
     """
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     hello_world_path = content_repo.content / "Packs" / "HelloWorld" / "Integrations"
     monkeypatch.chdir(hello_world_path)
     res = runner.invoke(
@@ -288,7 +288,7 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
 
     Then: Validate lint, secrets and validate exit code is 0
     """
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     monkeypatch.chdir(
         content_repo.content / "Packs" / "HelloWorld" / "Scripts" / "HelloWorldScript"
     )
@@ -328,7 +328,7 @@ def rename_incident_field(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch
     content_repo.run_command(
         f"git mv {curr_incident_field} {hello_world_incidentfields_path / 'incidentfield-new.json'}"
     )
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     res = runner.invoke(app, "update-release-notes -i Packs/HelloWorld -u revision")
     assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
     try:

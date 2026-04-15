@@ -67,7 +67,7 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path, mocker):
     tmp_pack_metadata_path = tmp_pack_path / "pack_metadata.json"
     tmp_integration_path = tmp_pack_path / "Integrations" / integration_name
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app, [INIT_CMD, "-o", tmp_dir_path, "-n", pack_name], input="\n".join(inputs)
     )
@@ -178,7 +178,7 @@ def test_integration_init_integration_positive_no_inline_pack_name(
     tmp_pack_metadata_path = tmp_pack_path / "pack_metadata.json"
     tmp_integration_path = tmp_pack_path / "Integrations" / integration_name
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(app, [INIT_CMD, "-o", tmp_dir_path], input="\n".join(inputs))
 
     assert result.exit_code == 0

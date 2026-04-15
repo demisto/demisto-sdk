@@ -519,7 +519,7 @@ def test_format_on_valid_py(mocker, repo):
     integration.code.write(valid_py)
 
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [
@@ -567,7 +567,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     invalid_py = "test\n\n\n\n"
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [
@@ -615,7 +615,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     invalid_py = "{'test':'testing','test1':'testing1'}"
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [
@@ -666,7 +666,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo, monkeypatch):
     )
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
-        result = CliRunner().invoke(
+        result = CliRunner(mix_stderr=False).invoke(
             app,
             [
                 FORMAT_CMD,
@@ -716,7 +716,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
     )
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [
@@ -777,7 +777,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     mocker.patch.object(tools, "is_external_repository", return_value=True)
     monkeypatch.setattr("builtins.input", lambda _: "N")
     with ChangeCWD(Path(playbook.path).parent):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [FORMAT_CMD, "-i", playbook.path, "-y", "-ngr"],
@@ -824,7 +824,7 @@ def test_format_integration_skipped_files(repo, mocker, monkeypatch):
     pack.create_doc_file()
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app, [FORMAT_CMD, "-i", str(pack.path), "-ngr"], catch_exceptions=False
     )
@@ -859,7 +859,7 @@ def test_format_commonserver_skipped_files(repo, mocker):
     pack.create_script("CommonServerPython")
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [FORMAT_CMD, "-i", str(pack.path), "-ngr"],
@@ -905,7 +905,7 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo, mocker, monkey
     assert "fromversion" not in playbook_content
 
     playbook.yml.write_dict(playbook_content)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "--assume-yes", "-ngr"],
@@ -939,7 +939,7 @@ def test_format_playbook_without_fromversion_with_preset_flag_silent(
     assert "fromversion" not in playbook_content
 
     playbook.yml.write_dict(playbook_content)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [
@@ -982,7 +982,7 @@ def test_format_playbook_without_fromversion_with_preset_flag_larger_fromversion
     assert "fromversion" not in playbook_content
 
     playbook.yml.write_dict(playbook_content)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [
@@ -1024,7 +1024,7 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual_non_silent(
     assert "fromversion" not in playbook_content
 
     playbook.yml.write_dict(playbook_content)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "--from-version", "6.0.0", "-ngr"],
@@ -1058,7 +1058,7 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(
     assert "fromversion" not in playbook_content
 
     playbook.yml.write_dict(playbook_content)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "-ngr"],
@@ -1093,7 +1093,7 @@ def test_format_playbook_copy_removed_from_name_and_id_silent(
     playbook_content["name"] = playbook_name + "_copy"
 
     playbook.yml.write_dict(playbook_content)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "-ngr"],
@@ -1130,7 +1130,7 @@ def test_format_playbook_copy_removed_from_name_and_id_non_silent(
     playbook_content["name"] = playbook_name + "_copy"
 
     playbook.yml.write_dict(playbook_content)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [FORMAT_CMD, "-i", str(playbook.yml.path), "-ngr"],
@@ -1171,7 +1171,7 @@ def test_format_playbook_no_input_specified_silent(mocker, repo, monkeypatch):
         "get_files_to_format_from_git",
         return_value=[str(playbook.yml.path)],
     )
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [FORMAT_CMD, "-ngr"],
@@ -1212,7 +1212,7 @@ def test_format_playbook_no_input_specified_non_silent(mocker, repo, monkeypatch
         "get_files_to_format_from_git",
         return_value=[str(playbook.yml.path)],
     )
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [FORMAT_CMD, "-ngr"],
@@ -1249,7 +1249,7 @@ def test_format_playbook_silent_with_fromversion(repo):
     playbook_content = playbook.yml.read_dict()
 
     playbook.yml.write_dict(playbook_content)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [
@@ -1294,7 +1294,7 @@ def test_format_playbook_silent_without_fromversion(repo):
     playbook_content = playbook.yml.read_dict()
 
     playbook.yml.write_dict(playbook_content)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [
@@ -1336,7 +1336,7 @@ def test_format_playbook_non_silent_with_fromversion(repo):
     playbook_content = playbook.yml.read_dict()
 
     playbook.yml.write_dict(playbook_content)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [
@@ -1376,7 +1376,7 @@ def test_format_playbook_non_silent_without_fromversion(repo):
     playbook_content = playbook.yml.read_dict()
 
     playbook.yml.write_dict(playbook_content)
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         app,
         [
@@ -1437,7 +1437,7 @@ def test_format_incident_type_layout_id(repo, mocker):
         },
     )
 
-    runner = CliRunner()
+    runner = CliRunner(mix_stderr=False)
     with ChangeCWD(repo.path):
         mocker.patch("builtins.input", return_value="n")
         format_result = runner.invoke(
@@ -1510,7 +1510,7 @@ def test_format_generic_field_wrong_values(
     pack.create_generic_field("generic-field", generic_field)
     generic_field_path = pack.generic_fields[0].path
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [FORMAT_CMD, "-i", generic_field_path, "-y", "-ngr"],
@@ -1561,7 +1561,7 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
     pack.create_generic_field("generic-field", generic_field)
     generic_field_path = pack.generic_fields[0].path
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [FORMAT_CMD, "-i", generic_field_path, "-y", "-ngr"],
@@ -1611,7 +1611,7 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
     pack.create_generic_type("generic-type", generic_type)
     generic_type_path = pack.generic_types[0].path
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [FORMAT_CMD, "-i", generic_type_path, "-y", "-ngr"],
@@ -1661,7 +1661,7 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
     pack.create_generic_type("generic-type", generic_type)
     generic_type_path = pack.generic_types[0].path
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [FORMAT_CMD, "-i", generic_type_path, "-y", "-ngr"],
@@ -1710,7 +1710,7 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
     pack.create_generic_module("generic-module", generic_module)
     generic_module_path = pack.generic_modules[0].path
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [FORMAT_CMD, "-i", generic_module_path, "-y", "-ngr"],
@@ -1761,7 +1761,7 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
     pack.create_generic_module("generic-module", generic_module)
     generic_module_path = pack.generic_modules[0].path
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [FORMAT_CMD, "-i", generic_module_path, "-y", "-ngr"],
@@ -1810,7 +1810,7 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
     pack.create_generic_definition("generic-definition", generic_definition)
     generic_definition_path = pack.generic_definitions[0].path
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [FORMAT_CMD, "-i", generic_definition_path, "-y", "-ngr"],
@@ -1863,7 +1863,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
     pack.create_generic_definition("generic-definition", generic_definition)
     generic_definition_path = pack.generic_definitions[0].path
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [FORMAT_CMD, "-i", generic_definition_path, "-y", "-ngr"],
@@ -2273,7 +2273,7 @@ def test_verify_deletion_from_conf_pack_format_with_deprecate_flag(
 
     # Run
     with ChangeCWD(repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [
@@ -2346,7 +2346,7 @@ def test_verify_deletion_from_conf_script_format_with_deprecate_flag(
 
     # Run
     with ChangeCWD(repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app, [FORMAT_CMD, "-i", f"{script_path}", "-d", "-ngr"], input="\n"
         )

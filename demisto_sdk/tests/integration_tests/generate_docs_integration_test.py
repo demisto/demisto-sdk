@@ -33,7 +33,7 @@ class TestPlaybooks:
         valid_playbook_with_io = join(
             DEMISTO_SDK_PATH, "tests/test_files/playbook-Test_playbook.yml"
         )
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         arguments = [GENERATE_DOCS_CMD, "-i", valid_playbook_with_io, "-o", tmpdir]
         result = runner.invoke(app, arguments)
         readme_path = join(tmpdir, "playbook-Test_playbook_README.md")
@@ -73,7 +73,7 @@ class TestPlaybooks:
         valid_playbook_no_io = join(
             DEMISTO_SDK_PATH, "tests/test_files/Playbooks.playbook-test.yml"
         )
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         arguments = [GENERATE_DOCS_CMD, "-i", valid_playbook_no_io, "-o", tmpdir]
         result = runner.invoke(app, arguments)
         readme_path = join(tmpdir, "Playbooks.playbook-test_README.md")
@@ -110,7 +110,7 @@ class TestPlaybooks:
             DEMISTO_SDK_PATH,
             "tests/test_files/Packs/DummyPack/Playbooks/DummyPlaybook.yml",
         )
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         arguments = [
             GENERATE_DOCS_CMD,
             "-i",
@@ -153,7 +153,7 @@ class TestPlaybooks:
             DEMISTO_SDK_PATH,
             "tests/test_files/Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml",
         )
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         arguments = [
             GENERATE_DOCS_CMD,
             "-i",
@@ -198,7 +198,7 @@ class TestPlaybooks:
         """
 
         valid_playbook_dir = join(DEMISTO_SDK_PATH, "tests/test_files/Playbooks")
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         arguments = [GENERATE_DOCS_CMD, "-i", valid_playbook_dir, "-o", tmpdir]
         result = runner.invoke(app, arguments)
         readme_path_1 = join(tmpdir, "playbook-Test_playbook_README.md")

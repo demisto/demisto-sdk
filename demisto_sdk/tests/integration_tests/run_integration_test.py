@@ -52,7 +52,9 @@ def test_integration_run_non_existing_command(
 
     mocker.patch.object(DefaultApi, "investigation_add_entries_sync", return_value=None)
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
-    result = CliRunner().invoke(
+    result = CliRunner(
+        mix_stderr=False,
+    ).invoke(
         app,
         [
             "run",
@@ -86,9 +88,9 @@ def test_json_to_outputs_flag(mocker, set_environment_variables):
     # mock to set prefix instead of getting it from input
 
     command = "!kl-get-records"
-    run_result = CliRunner().invoke(
-        app, ["run", "-q", command, "--json-to-outputs", "-p", "Keylight", "-r"]
-    )
+    run_result = CliRunner(
+        mix_stderr=False,
+    ).invoke(app, ["run", "-q", command, "--json-to-outputs", "-p", "Keylight", "-r"])
 
     assert run_result.exit_code == 0
     assert not run_result.stderr
@@ -119,7 +121,9 @@ def test_json_to_outputs_flag_fail_no_prefix(
     # mock to set prefix instead of getting it from input
 
     command = "!kl-get-records"
-    run_result = CliRunner().invoke(app, ["run", "-q", command, "--json-to-outputs"])
+    run_result = CliRunner(
+        mix_stderr=False,
+    ).invoke(app, ["run", "-q", command, "--json-to-outputs"])
     assert run_result.exit_code == 1
     assert (
         "A prefix for the outputs is needed for this command. Please provide one"
@@ -145,7 +149,7 @@ def test_incident_id_passed_to_run(mocker):
     # mock to set prefix instead of getting it from input
 
     command = "!kl-get-records"
-    result = CliRunner().invoke(
+    result = CliRunner(mix_stderr=False).invoke(
         app,
         [
             "run",

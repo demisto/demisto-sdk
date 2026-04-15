@@ -325,7 +325,7 @@ def test_validate_deleted_files_without_protected_dirs():
         main,
         catch_exceptions=False,
     )
-    assert "Missing argument" in result.stdout
+    assert "Missing argument" in result.output
 
 
 def test_is_file_allowed_to_be_deleted_logging_fallback_to_local(

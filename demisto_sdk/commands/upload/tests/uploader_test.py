@@ -815,7 +815,7 @@ class TestZippedPackUpload:
             assert isinstance(result.exception, SystemExit)
 
             # Check for error message in the output
-            assert "Invalid value for '--input' / '-i'" in result.stdout
+            assert "Invalid value for '--input' / '-i'" in result.output
             mock_print.assert_called()
 
     @pytest.mark.parametrize(

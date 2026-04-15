@@ -195,7 +195,7 @@ class TestPackUniqueFilesValidator:
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(pack_metadata_no_email_and_url)
         with ChangeCWD(repo.path):
-            result = CliRunner().invoke(
+            result = CliRunner(mix_stderr=False).invoke(
                 app,
                 [
                     VALIDATE_CMD,
@@ -256,7 +256,7 @@ class TestPackUniqueFilesValidator:
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(pack_metadata_changed_url)
         with ChangeCWD(repo.path):
-            runner = CliRunner()
+            runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 app,
                 [
@@ -312,7 +312,7 @@ class TestPackUniqueFilesValidator:
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):
-            result = CliRunner().invoke(
+            result = CliRunner(mix_stderr=False).invoke(
                 app,
                 [
                     VALIDATE_CMD,

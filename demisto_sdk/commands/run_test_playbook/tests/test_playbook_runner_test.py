@@ -131,7 +131,7 @@ class TestTestPlaybookRunner:
                 "get_test_playbook_results_dict",
                 return_value={"state": tpb_result},
             )
-            result = CliRunner().invoke(
+            result = CliRunner(mix_stderr=False).invoke(
                 app, ["run-test-playbook", "--all", "-tpb", "", "-t", "5"]
             )
             assert result.exit_code == expected_exit_code

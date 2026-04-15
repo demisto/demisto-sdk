@@ -806,7 +806,7 @@ class TestZippedPackUpload:
         """
         invalid_zip_path = "not_exist_dir/not_exist_zip"
         with mock.patch.object(Console, "print", wraps=Console().print) as mock_print:
-            runner = CliRunner()
+            runner = CliRunner(mix_stderr=True)
             result = runner.invoke(
                 app, ["upload", "-i", invalid_zip_path, "--insecure"]
             )
@@ -815,7 +815,7 @@ class TestZippedPackUpload:
             assert isinstance(result.exception, SystemExit)
 
             # Check for error message in the output
-            assert "Invalid value for '--input' / '-i'" in result.output
+            assert "Invalid value for '--input' / '-i'" in result.stdout
             mock_print.assert_called()
 
     @pytest.mark.parametrize(

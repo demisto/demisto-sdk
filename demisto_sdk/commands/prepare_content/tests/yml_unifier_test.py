@@ -1391,7 +1391,7 @@ def test_unify_partner_contributed_pack(mocker, repo):
     )
 
     with ChangeCWD(pack.repo_path):
-        result = CliRunner().invoke(
+        result = CliRunner(mix_stderr=False).invoke(
             app,
             [
                 UNIFY_CMD,
@@ -1447,7 +1447,7 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
     )
 
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner()
+        runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             app,
             [
@@ -1504,7 +1504,7 @@ def test_unify_contributor_emails_list(mocker, repo, pack_metadata):
     )
 
     with ChangeCWD(pack.repo_path):
-        CliRunner().invoke(
+        CliRunner(mix_stderr=False).invoke(
             app,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
@@ -1554,7 +1554,7 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
     )
 
     with ChangeCWD(pack.repo_path):
-        result = CliRunner().invoke(
+        result = CliRunner(mix_stderr=False).invoke(
             app,
             [
                 UNIFY_CMD,
@@ -1607,7 +1607,7 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
     )
 
     with ChangeCWD(pack.repo_path):
-        result = CliRunner().invoke(
+        result = CliRunner(mix_stderr=False).invoke(
             app,
             [
                 UNIFY_CMD,
@@ -1662,7 +1662,7 @@ def test_unify_community_contributed(mocker, repo):
     )
 
     with ChangeCWD(pack.repo_path):
-        result = CliRunner().invoke(
+        result = CliRunner(mix_stderr=False).invoke(
             app,
             [
                 UNIFY_CMD,

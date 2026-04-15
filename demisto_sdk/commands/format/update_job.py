@@ -65,9 +65,7 @@ class JobJSONFormat(BaseUpdateJSON):
         except Exception as err:
             logger.exception(
                 "".join(
-                    traceback.format_exception(
-                        etype=type(err), value=err, tb=err.__traceback__
-                    )
+                    traceback.format_exception(err)
                 )
             )
             logger.debug(

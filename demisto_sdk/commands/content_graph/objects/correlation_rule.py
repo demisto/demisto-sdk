@@ -1,9 +1,9 @@
+from enum import StrEnum
 from pathlib import Path
 from typing import Optional
 
 from pydantic import Field
 
-from enum import StrEnum
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
     ContentItemXSIAM,

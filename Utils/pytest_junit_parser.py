@@ -1,10 +1,9 @@
+from enum import StrEnum
 from functools import cached_property
 from pathlib import Path
 from typing import List, Optional
 
 from junitparser import Failure, JUnitXml, Skipped, TestCase
-
-from enum import StrEnum
 
 
 class TestStatus(StrEnum):

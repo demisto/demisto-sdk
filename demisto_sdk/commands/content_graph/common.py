@@ -1,5 +1,6 @@
 import os
 import re
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Optional, Set
 
@@ -19,7 +20,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.logger import logger
-from enum import StrEnum
 from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_json,

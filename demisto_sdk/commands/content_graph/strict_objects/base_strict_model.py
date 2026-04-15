@@ -1,3 +1,4 @@
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any, List, Literal, Optional, Tuple, Union
 
@@ -12,7 +13,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     PlatformSupportedModules,
 )
-from enum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DEFAULT_DYNAMIC_MODEL,
     DEPRECATED_DYNAMIC_MODEL,

@@ -1,3 +1,4 @@
+from enum import StrEnum
 from typing import List, Optional, Union
 
 from packaging.version import Version
@@ -6,7 +7,6 @@ from pydantic import Field, root_validator, validator
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
-from enum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
 
 

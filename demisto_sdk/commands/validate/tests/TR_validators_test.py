@@ -3,11 +3,11 @@ import pytest
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_trigger_object,
 )
-from demisto_sdk.commands.validate.validators.TR_validators.TR101_is_valid_trigger_id import (
-    IsValidTriggerIdValidator,
-)
 from demisto_sdk.commands.validate.validators.TR_validators.TR100_is_silent_trigger import (
     IsSilentTriggerValidator,
+)
+from demisto_sdk.commands.validate.validators.TR_validators.TR101_is_valid_trigger_id import (
+    IsValidTriggerIdValidator,
 )
 
 
@@ -115,9 +115,7 @@ def test_IsValidTriggerIdValidator(trigger_id, expected_result_len):
     - cases 1-4: Pass. Valid hex string trigger_ids.
     - cases 5-10: Fail. Invalid trigger_ids containing special characters or non-hex characters.
     """
-    trigger = create_trigger_object(
-        paths=["trigger_id"], values=[trigger_id]
-    )
+    trigger = create_trigger_object(paths=["trigger_id"], values=[trigger_id])
 
     invalid_content_items = IsValidTriggerIdValidator().obtain_invalid_content_items(
         [trigger]

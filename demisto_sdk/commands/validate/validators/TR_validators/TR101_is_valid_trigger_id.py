@@ -16,7 +16,7 @@ VALID_TRIGGER_ID_PATTERN = re.compile(r"^[0-9a-fA-F]+$")
 
 
 class IsValidTriggerIdValidator(BaseValidator[ContentTypes]):
-    error_code = "TR001"
+    error_code = "TR101"
     description = "Validate that the trigger_id is a valid hex string UUID without special characters."
     rationale = (
         "The trigger_id must be a hex string containing only characters [0-9a-fA-F]. "

@@ -3,7 +3,7 @@ import pytest
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_trigger_object,
 )
-from demisto_sdk.commands.validate.validators.TR_validators.TR001_is_valid_trigger_id import (
+from demisto_sdk.commands.validate.validators.TR_validators.TR101_is_valid_trigger_id import (
     IsValidTriggerIdValidator,
 )
 from demisto_sdk.commands.validate.validators.TR_validators.TR100_is_silent_trigger import (

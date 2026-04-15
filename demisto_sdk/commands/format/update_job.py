@@ -63,11 +63,7 @@ class JobJSONFormat(BaseUpdateJSON):
             return SUCCESS_RETURN_CODE
 
         except Exception as err:
-            logger.exception(
-                "".join(
-                    traceback.format_exception(err)
-                )
-            )
+            logger.exception("".join(traceback.format_exception(err)))
             logger.debug(
                 f"\n<red>Failed to update file {self.source_file}. Error: {err}</red>"
             )

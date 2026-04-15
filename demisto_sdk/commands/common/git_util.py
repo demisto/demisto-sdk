@@ -323,6 +323,7 @@ class GitUtil:
                     .refs[branch]
                     .commit.diff(current_branch_or_hash)
                     .iter_change_type("M")
+                    if item.a_path is not None
                 }.union(untrue_rename_committed)
 
             # if remote does not exist we are checking against the commit sha1
@@ -371,6 +372,7 @@ class GitUtil:
                 .refs[branch]
                 .commit.diff(current_branch_or_hash)
                 .iter_change_type("A")
+                if item.a_path is not None
             }
 
         # if remote does not exist we are checking against the commit sha1
@@ -444,6 +446,7 @@ class GitUtil:
                 .refs[branch]
                 .commit.diff(current_branch_or_hash)
                 .iter_change_type("A")
+                if item.a_path is not None
             }.union(untrue_rename_committed)
 
         # if remote does not exist we are checking against the commit sha1
@@ -548,6 +551,7 @@ class GitUtil:
                     .refs[branch]
                     .commit.diff(current_branch_or_hash)
                     .iter_change_type("D")
+                    if item.a_path is not None
                 }
 
             # if remote does not exist we are checking against the commit sha1
@@ -641,7 +645,9 @@ class GitUtil:
                     .refs[branch]
                     .commit.diff(current_branch_or_hash)
                     .iter_change_type("R")
-                    if item.score == 100
+                    if item.a_path is not None
+                    and item.b_path is not None
+                    and item.score == 100
                 }
 
             # if remote does not exist we are checking against the commit sha1
@@ -1017,7 +1023,9 @@ class GitUtil:
                 .refs[branch]
                 .commit.diff(current_branch_or_hash)
                 .iter_change_type("R")
-                if item.score < 100
+                if item.b_path is not None
+                and item.score is not None
+                and item.score < 100
                 and self._check_file_status(
                     file_path=str(item.b_path), remote=remote, branch=branch
                 )

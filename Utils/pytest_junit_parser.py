@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from junitparser import Failure, JUnitXml, Skipped, TestCase
 
-from demisto_sdk.commands.common.StrEnum import StrEnum
+from enum import StrEnum
 
 
 class TestStatus(StrEnum):

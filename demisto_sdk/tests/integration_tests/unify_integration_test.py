@@ -47,7 +47,7 @@ class TestGenericModuleUnifier:
             f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [UNIFY_CMD, "-i", generic_module_path, "-mp", "marketplacev2"],
@@ -77,7 +77,7 @@ class TestParsingRuleUnifier:
         pack = repo.create_pack()
         pack.create_parsing_rule()
 
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             app,
             [UNIFY_CMD, "-i", pack.parsing_rules[0].path, "-o", tmpdir],
@@ -118,7 +118,7 @@ class TestParsingRuleUnifier:
             samples=[sample],
         )
 
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             app,
             [UNIFY_CMD, "-i", pack.parsing_rules[0].path, "-o", tmpdir],
@@ -151,7 +151,7 @@ class TestModelingRuleUnifier:
         pack = repo.create_pack()
         pack.create_modeling_rule()
 
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             app,
             [UNIFY_CMD, "-i", pack.modeling_rules[0].path, "-o", tmpdir],
@@ -190,7 +190,7 @@ class TestIntegrationScriptUnifier:
 
         with ChangeCWD(pack.repo_path):
             with TemporaryDirectory() as artifact_dir:
-                runner = CliRunner(mix_stderr=False)
+                runner = CliRunner()
                 if flag:
                     runner.invoke(
                         app,
@@ -248,7 +248,7 @@ class TestIntegrationScriptUnifier:
         script.create_default_script()
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             runner.invoke(app, [UNIFY_CMD, "-i", f"{script.path}", "-c", "Test"])
             with open(
                 os.path.join(script.path, "script-dummy-script.yml")
@@ -277,7 +277,7 @@ class TestIntegrationScriptUnifier:
             with TemporaryDirectory() as artifact_dir:
                 monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
                 monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
-                runner = CliRunner(mix_stderr=False)
+                runner = CliRunner()
                 runner.invoke(app, [UNIFY_CMD, "-i", f"{integration.path}", "-ini"])
 
                 with open(
@@ -303,7 +303,7 @@ class TestIntegrationScriptUnifier:
         script.create_default_script()
 
         with ChangeCWD(pack.repo_path):
-            CliRunner(mix_stderr=False).invoke(
+            CliRunner().invoke(
                 app, [UNIFY_CMD, "-i", f"{script.path}", "-ini"]
             )
             with open(
@@ -343,7 +343,7 @@ class TestLayoutUnifer:
         output = "test.json"
 
         with ChangeCWD(REPO.path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app, [UNIFY_CMD, "-i", f"{layout.path}", "-o", output]
             )
@@ -415,7 +415,7 @@ Always be polite and professional."""
             system_instructions=system_instructions_content,
         )
 
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             app,
             [UNIFY_CMD, "-i", agent.path, "-o", tmpdir],

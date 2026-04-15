@@ -61,7 +61,7 @@ inflection = "^0.5.1"
 jsonschema = "^4.4.0"
 mergedeep = "^1.3.4"
 networkx = "^2.7.1"
-nltk = "==3.9.1"
+nltk = "^3.9.1"
 prettytable = "^3.2.0"
 pykwalify = "^1.8.0"
 pyspellchecker = "^0.6.3"
@@ -161,7 +161,7 @@ exclude = [
   "demisto_sdk/commands/init/templates",
   "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py"
 ]
-target-version = "py39"
+target-version = "py311"
 
 [tool.ruff.lint]
 ignore = [
@@ -199,7 +199,6 @@ logger-objects = ["demisto_sdk.commands.common.logger.logger"]
 "orjson".msg = "use JSON_Handler instead"
 "packaging.version.LooseVersion".msg = "Use packaging.version.Version"
 "ruamel.yaml".msg = "use YAML_Handler instead"
-"str.StrEnum".msg = "Import from demisto_sdk.commands.common.StrEnum for <3.11 compatability"
 "ujson".msg = "use JSON_Handler"
 
 [tool.ruff.lint.mccabe]

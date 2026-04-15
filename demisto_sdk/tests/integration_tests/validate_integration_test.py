@@ -148,7 +148,7 @@ class TestGenericFieldValidation:
         pack.create_generic_field("generic-field", GENERIC_FIELD)
         generic_field_path = pack.generic_fields[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -183,7 +183,7 @@ class TestGenericFieldValidation:
         pack.create_generic_field("generic-field", generic_field_copy)
         generic_field_path = pack.generic_fields[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -236,7 +236,7 @@ class TestGenericFieldValidation:
         pack.create_generic_field("generic-field", generic_field_copy)
         generic_field_path = pack.generic_fields[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -281,7 +281,7 @@ class TestGenericTypeValidation:
         pack.create_generic_type("generic-type", GENERIC_TYPE)
         generic_type_path = pack.generic_types[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -323,7 +323,7 @@ class TestGenericTypeValidation:
         pack.create_generic_type("generic-type", generic_type_copy)
         generic_type_path = pack.generic_types[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -368,7 +368,7 @@ class TestGenericTypeValidation:
         pack.create_generic_type("generic-type", generic_type_copy)
         generic_type_path = pack.generic_types[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -412,7 +412,7 @@ class TestGenericModuleValidation:
         pack.create_generic_module("generic-module", GENERIC_MODULE)
         generic_module_path = pack.generic_modules[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -454,7 +454,7 @@ class TestGenericModuleValidation:
         pack.create_generic_module("generic-module", generic_module_copy)
         generic_module_path = pack.generic_modules[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -497,7 +497,7 @@ class TestGenericModuleValidation:
         pack.create_generic_module("generic-module", generic_module_copy)
         generic_module_path = pack.generic_modules[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -543,7 +543,7 @@ class TestGenericDefinitionValidation:
             "generic-definition", generic_def_copy
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -586,7 +586,7 @@ class TestGenericDefinitionValidation:
             "generic-definition", generic_def_copy
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -630,7 +630,7 @@ class TestGenericDefinitionValidation:
             "generic-definition", generic_def_copy
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -674,7 +674,7 @@ class TestIncidentFieldValidation:
         pack.create_incident_field("incident-field", INCIDENT_FIELD)
         incident_field_path = pack.incident_fields[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -716,7 +716,7 @@ class TestIncidentFieldValidation:
         pack.create_incident_field("incident-field", incident_field_copy)
         incident_field_path = pack.incident_fields[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -778,7 +778,7 @@ class TestIncidentFieldValidation:
         repo.id_set.write_json(id_set)
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -839,7 +839,7 @@ class TestIncidentFieldValidation:
         repo.id_set.write_json(id_set)
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -898,7 +898,7 @@ class TestDeprecatedIntegration:
         integration = pack.create_integration(yml=valid_integration_yml)
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -944,7 +944,7 @@ class TestDeprecatedIntegration:
         invalid_integration_yml["description"] = "Deprecated."
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -986,7 +986,7 @@ class TestDeprecatedIntegration:
         integration = pack.create_integration(yml=yml)
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1033,7 +1033,7 @@ class TestDeprecatedIntegration:
         integration = pack.create_integration(yml=yml)
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1073,7 +1073,7 @@ class TestDeprecatedIntegration:
         invalid_integration_yml["display"] = "(Deprecated)"
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1124,7 +1124,7 @@ class TestDeprecatedIntegration:
         valid_integration_yml["commonfields"]["version"] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1197,7 +1197,7 @@ class TestDeprecatedIntegration:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1247,7 +1247,7 @@ class TestDeprecatedIntegration:
         valid_integration_yml["commonfields"]["version"] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1317,7 +1317,7 @@ class TestDeprecatedIntegration:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1368,7 +1368,7 @@ class TestIntegrationValidation:
         )
         integration = pack.create_integration("integration0", yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1442,7 +1442,7 @@ class TestIntegrationValidation:
         )
 
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1494,7 +1494,7 @@ class TestIntegrationValidation:
         del invalid_integration_yml["fromversion"]
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1541,7 +1541,7 @@ class TestIntegrationValidation:
             return_value=[valid_integration_yml.get("category")],
         )
         with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1594,7 +1594,7 @@ class TestIntegrationValidation:
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
             return_value=["Network Security"],
         )
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             app,
             [
@@ -1625,7 +1625,7 @@ class TestIntegrationValidation:
         integration_path = join(
             TEST_FILES_PATH, "integration-valid-no-unallowed-hidden-params.yml"
         )
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             app,
             [
@@ -1686,7 +1686,7 @@ class TestIntegrationValidation:
         )
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1737,7 +1737,7 @@ class TestIntegrationValidation:
         first_argument.pop("description")
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1788,7 +1788,7 @@ class TestIntegrationValidation:
             }
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -1845,7 +1845,7 @@ class TestPackValidation:
             "demisto_sdk.commands.validate.tools.get_approved_tags_from_branch",
             return_value={},
         )
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             app,
             [
@@ -1900,7 +1900,7 @@ class TestPackValidation:
             "demisto_sdk.commands.validate.tools.get_approved_tags_from_branch",
             return_value={},
         )
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             app,
             [
@@ -1940,7 +1940,7 @@ class TestPackValidation:
         Then
         - See that the validation failed.
         """
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             app,
             [
@@ -1973,7 +1973,7 @@ class TestClassifierValidation:
         pack = repo.create_pack("PackName")
         classifier = pack.create_classifier("new_classifier", NEW_CLASSIFIER)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2015,7 +2015,7 @@ class TestClassifierValidation:
 
         classifier = pack.create_classifier("new_classifier", new_classifier_copy)
         with ChangeCWD(pack.repo_path):
-            result = CliRunner(mix_stderr=False).invoke(
+            result = CliRunner().invoke(
                 app,
                 [
                     VALIDATE_CMD,
@@ -2055,7 +2055,7 @@ class TestClassifierValidation:
         new_classifier_copy["toVersion"] = "5.0.0"
         classifier = pack.create_classifier("new_classifier", new_classifier_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2093,7 +2093,7 @@ class TestClassifierValidation:
         new_classifier_copy["fromVersion"] = "6.0.5"
         classifier = pack.create_classifier("new_classifier", new_classifier_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2130,7 +2130,7 @@ class TestClassifierValidation:
         del new_classifier_copy["id"]
         classifier = pack.create_classifier("new_classifier", new_classifier_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2171,7 +2171,7 @@ class TestClassifierValidation:
         del new_classifier_copy["fromVersion"]
         classifier = pack.create_classifier("new_classifier", new_classifier_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2211,7 +2211,7 @@ class TestClassifierValidation:
         new_classifier_copy["type"] = "test"
         classifier = pack.create_classifier("new_classifier", new_classifier_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2248,7 +2248,7 @@ class TestClassifierValidation:
         pack = repo.create_pack("PackName")
         classifier = pack.create_classifier("old_classifier", OLD_CLASSIFIER)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2289,7 +2289,7 @@ class TestClassifierValidation:
         old_classifier_copy["fromVersion"] = "6.0.0"
         classifier = pack.create_classifier("old_classifier", old_classifier_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2331,7 +2331,7 @@ class TestClassifierValidation:
         old_classifier_copy["toVersion"] = "6.0.0"
         classifier = pack.create_classifier("old_classifier", old_classifier_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2372,7 +2372,7 @@ class TestClassifierValidation:
         del old_classifier_copy["id"]
         classifier = pack.create_classifier("old_classifier", old_classifier_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2413,7 +2413,7 @@ class TestClassifierValidation:
         del old_classifier_copy["toVersion"]
         classifier = pack.create_classifier("old_classifier", old_classifier_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2457,7 +2457,7 @@ class TestMapperValidation:
         pack = repo.create_pack("PackName")
         mapper = pack.create_mapper("mapper", MAPPER)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2498,7 +2498,7 @@ class TestMapperValidation:
         mapper_copy["fromVersion"] = "5.0.0"
         mapper = pack.create_mapper("mapper", mapper_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2541,7 +2541,7 @@ class TestMapperValidation:
         mapper_copy["toVersion"] = "5.0.0"
         mapper = pack.create_mapper("mapper", mapper_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2577,7 +2577,7 @@ class TestMapperValidation:
         del mapper_copy["id"]
         mapper = pack.create_mapper("mapper", mapper_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2619,7 +2619,7 @@ class TestMapperValidation:
         mapper_copy["fromVersion"] = "6.0.5"
         mapper = pack.create_mapper("mapper", mapper_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2656,7 +2656,7 @@ class TestMapperValidation:
         mapper_copy["type"] = "test"
         mapper = pack.create_mapper("mapper", mapper_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2692,7 +2692,7 @@ class TestDashboardValidation:
         pack = repo.create_pack("PackName")
         dashboard = pack.create_dashboard("dashboard", DASHBOARD)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2733,7 +2733,7 @@ class TestDashboardValidation:
         dashboard_copy["version"] = 1
         dashboard = pack.create_dashboard("dashboard", dashboard_copy)
         with ChangeCWD(pack.repo_path):
-            result = CliRunner(mix_stderr=False).invoke(
+            result = CliRunner().invoke(
                 app,
                 [
                     VALIDATE_CMD,
@@ -2770,7 +2770,7 @@ class TestIndicatorFieldValidation:
         pack.create_indicator_field("indicator-field", INDICATOR_FIELD)
         indicator_field_path = pack.indicator_fields[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2812,7 +2812,7 @@ class TestIndicatorFieldValidation:
         pack.create_indicator_field("indicator-field", indicator_field_copy)
         indicator_field_path = pack.indicator_fields[0].path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2854,7 +2854,7 @@ class TestIncidentTypeValidation:
         pack = repo.create_pack("PackName")
         incident_type = pack.create_incident_type("incident_type", INCIDENT_TYPE)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2895,7 +2895,7 @@ class TestIncidentTypeValidation:
         incident_type_copy["days"] = -1
         incident_type = pack.create_incident_type("incident_type", incident_type_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -2961,7 +2961,7 @@ class TestIncidentTypeValidation:
         }
         incident_type = pack.create_incident_type("incident_type", incident_type_data)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3030,7 +3030,7 @@ class TestIncidentTypeValidation:
         }
         incident_type = pack.create_incident_type("incident_type", incident_type_data)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3100,7 +3100,7 @@ class TestIncidentTypeValidation:
         }
         incident_type = pack.create_incident_type("incident_type", incident_type_data)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3198,7 +3198,7 @@ class TestLayoutValidation:
         pack = repo.create_pack("PackName")
         layout = pack._create_json_based(name="layout-name", prefix="", content=LAYOUT)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3241,7 +3241,7 @@ class TestLayoutValidation:
             name="layout-name", prefix="", content=layout_copy
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3285,7 +3285,7 @@ class TestLayoutValidation:
             name="wrongpath", prefix="", content=layout_copy
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3327,7 +3327,7 @@ class TestLayoutValidation:
             name="layoutscontainer-test", prefix="", content=LAYOUTS_CONTAINER
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3370,7 +3370,7 @@ class TestLayoutValidation:
             name="layoutscontainer", prefix="", content=layout_copy
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3412,7 +3412,7 @@ class TestLayoutValidation:
             name="wrongname", prefix="", content=LAYOUTS_CONTAINER
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3457,7 +3457,7 @@ class TestLayoutValidation:
             name="layoutscontainer", prefix="", content=layoutscontainer_copy
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3497,7 +3497,7 @@ class TestLayoutValidation:
 
         layout = pack._create_json_based(name="layout", prefix="", content=layout_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3555,7 +3555,7 @@ class TestLayoutValidation:
         repo.id_set.write_json(id_set)
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3626,7 +3626,7 @@ class TestLayoutValidation:
         repo.id_set.write_json(id_set)
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3694,7 +3694,7 @@ class TestLayoutValidation:
         repo.id_set.write_json(id_set)
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3760,7 +3760,7 @@ class TestLayoutValidation:
         repo.id_set.write_json(id_set)
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3807,7 +3807,7 @@ class TestPlaybookValidation:
         mocker.patch.object(
             ContentEntityValidator, "validate_readme_exists", return_value=True
         )
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             app,
             [
@@ -3846,7 +3846,7 @@ class TestPlaybookValidation:
 
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         with ChangeCWD(TEST_FILES_PATH):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3887,7 +3887,7 @@ class TestPlaybookValidateDeprecated:
 
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(PlaybookValidator, "is_script_id_valid", return_value=True)
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             app,
             [
@@ -3926,7 +3926,7 @@ class TestPlaybookValidateDeprecated:
 
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         with ChangeCWD(TEST_FILES_PATH):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -3970,7 +3970,7 @@ class TestPlaybookValidateDeprecated:
         valid_playbook_yml["version"] = -2
         playbook = pack.create_playbook(yml=valid_playbook_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4034,7 +4034,7 @@ class TestPlaybookValidateDeprecated:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4079,7 +4079,7 @@ class TestPlaybookValidateDeprecated:
         valid_playbook_yml["version"] = -2
         playbook = pack.create_playbook(yml=valid_playbook_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4144,7 +4144,7 @@ class TestPlaybookValidateDeprecated:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4186,7 +4186,7 @@ class TestReportValidation:
         pack = repo.create_pack("PackName")
         report = pack._create_json_based(name="report", prefix="", content=REPORT)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4227,7 +4227,7 @@ class TestReportValidation:
         report_copy["orientation"] = "bla"
         report = pack._create_json_based(name="report", prefix="", content=report_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4263,7 +4263,7 @@ class TestReputationValidation:
             name="reputation", prefix="", content=REPUTATION
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4306,7 +4306,7 @@ class TestReputationValidation:
             name="reputation", prefix="", content=reputation_copy
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4347,7 +4347,7 @@ class TestScriptValidation:
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4390,7 +4390,7 @@ class TestScriptValidation:
         invalid_script_yml["name"] = invalid_script_yml["name"] + "_v2"
         script = pack.create_script(yml=invalid_script_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4438,7 +4438,7 @@ class TestScriptDeprecatedValidation:
         )
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4481,7 +4481,7 @@ class TestScriptDeprecatedValidation:
         invalid_script_yml["deprecated"] = True
         script = pack.create_script(yml=invalid_script_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4526,7 +4526,7 @@ class TestScriptDeprecatedValidation:
         )
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4594,7 +4594,7 @@ class TestScriptDeprecatedValidation:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4640,7 +4640,7 @@ class TestScriptDeprecatedValidation:
         valid_script_yml["commonfields"]["version"] = -2
         script = pack.create_script(yml=valid_script_yml)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4705,7 +4705,7 @@ class TestScriptDeprecatedValidation:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4748,7 +4748,7 @@ class TestWidgetValidation:
         pack = repo.create_pack("PackName")
         widget = pack._create_json_based(name="widget", prefix="", content=WIDGET)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4789,7 +4789,7 @@ class TestWidgetValidation:
         widget_copy["version"] = 1
         widget = pack._create_json_based(name="widget", prefix="", content=widget_copy)
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4835,7 +4835,7 @@ class TestImageValidation:
         integration = pack.create_integration()
         image_path = integration.image.path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4879,7 +4879,7 @@ class TestImageValidation:
             ImageValidator, "load_image", return_value=DEFAULT_IMAGE_BASE64
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4920,7 +4920,7 @@ class TestImageValidation:
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -4956,7 +4956,7 @@ class TestImageValidation:
         integration = pack.create_integration(image=image)
         image_path = integration.image.path
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -5017,7 +5017,7 @@ class TestAuthorImageValidation:
         pack.author_image.write(DEFAULT_IMAGE_BASE64)
 
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -5067,7 +5067,7 @@ class TestAuthorImageValidation:
         pack.author_image.write("")
         author_image_path = pack.author_image.path
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -5136,7 +5136,7 @@ class TestAllFilesValidator:
         script = pack2.create_script(yml=valid_script_yml)
 
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -5212,7 +5212,7 @@ class TestAllFilesValidator:
         mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
         with ChangeCWD(repo.path):
-            result = CliRunner(mix_stderr=False).invoke(
+            result = CliRunner().invoke(
                 app,
                 [
                     VALIDATE_CMD,
@@ -5314,7 +5314,7 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -5405,7 +5405,7 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -5490,7 +5490,7 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -5566,7 +5566,7 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -5601,7 +5601,7 @@ class TestValidationUsingGit:
         Then
         - Ensure an error is raised on the non found file
         """
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         result = runner.invoke(
             app,
             [
@@ -5648,7 +5648,7 @@ class TestValidationUsingGit:
             side_effect=FileNotFoundError,
         )
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -5711,7 +5711,7 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -5786,7 +5786,7 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(repo.path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -5865,7 +5865,7 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(repo.path):
-            result = CliRunner(mix_stderr=False).invoke(
+            result = CliRunner().invoke(
                 app,
                 [
                     VALIDATE_CMD,
@@ -5909,7 +5909,7 @@ class TestSpecificValidations:
             name="reputation", prefix="", content=reputation_copy
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -5954,7 +5954,7 @@ class TestSpecificValidations:
             name="reputation", prefix="", content=reputation_copy
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -6003,7 +6003,7 @@ class TestSpecificValidations:
             name="reputation", prefix="", content=reputation_copy
         )
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [
@@ -6081,7 +6081,7 @@ class TestBasicValidation:
         mocker.patch.object(GitUtil, "deleted_files", return_value={})
 
         with ChangeCWD(pack.repo_path):
-            runner = CliRunner(mix_stderr=False)
+            runner = CliRunner()
             result = runner.invoke(
                 app,
                 [

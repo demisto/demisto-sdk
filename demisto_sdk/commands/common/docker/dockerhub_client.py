@@ -12,7 +12,7 @@ from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.StrEnum import StrEnum
+from enum import StrEnum
 from demisto_sdk.commands.common.tools import retry
 
 DOCKERHUB_USER = "DOCKERHUB_USER"

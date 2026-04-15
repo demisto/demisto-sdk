@@ -7,7 +7,7 @@ from typing import Dict, List
 
 from packaging.version import Version
 
-from demisto_sdk.commands.common.StrEnum import StrEnum
+from enum import StrEnum
 
 # Note: Do NOT add imports of internal modules here, as it may cause circular imports.
 
@@ -1633,7 +1633,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.AGENTIX_AGENT: "8.12.0",
 }
 
-DEFAULT_PYTHON_VERSION = "3.10"
+DEFAULT_PYTHON_VERSION = "3.11"
 DEFAULT_PYTHON2_VERSION = "2.7"
 
 # This constant below should always be two versions before the latest server version

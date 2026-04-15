@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.StrEnum import StrEnum
+from enum import StrEnum
 from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_json,

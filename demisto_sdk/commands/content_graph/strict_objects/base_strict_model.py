@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     PlatformSupportedModules,
 )
-from demisto_sdk.commands.common.StrEnum import StrEnum
+from enum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DEFAULT_DYNAMIC_MODEL,
     DEPRECATED_DYNAMIC_MODEL,

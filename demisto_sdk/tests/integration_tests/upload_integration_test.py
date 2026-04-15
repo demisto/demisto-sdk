@@ -77,7 +77,7 @@ def test_integration_upload_pack_positive(demisto_client_mock, mocker):
     ):
         mock_upload_method(mocker, content_class)
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
     result = runner.invoke(
         app, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--no-zip"]
@@ -135,7 +135,7 @@ def test_integration_upload_pack_with_specific_marketplace(demisto_client_mock, 
     ):
         mock_upload_method(mocker, content_class)
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     mocker.patch.object(PackParser, "parse_ignored_errors", return_value={})
     result = runner.invoke(
         app, [UPLOAD_CMD, "-i", str(pack_path), "--insecure", "--marketplace", "xsoar"]
@@ -238,7 +238,7 @@ def test_zipped_pack_upload_positive(
     mocker.patch.object(Path, "cwd", return_value=Path.cwd())
 
     pack = repo.setup_one_pack(name="test-pack")
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     with ChangeCWD(pack.repo_path):
         with TemporaryDirectory() as artifact_dir:
             monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
@@ -402,7 +402,7 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
         "demisto_sdk.commands.upload.uploader.get_demisto_version",
         return_value=Version("0"),
     )
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(app, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 1
     assert (
@@ -441,7 +441,7 @@ def test_upload_single_list(mocker, pack):
     mocker.patch.object(ContentItem, "pack_name", return_value="PackWithList")
     mocker.patch.object(ContentItem, "pack_version", return_value="1.2.0")
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
 
     with ChangeCWD(pack.repo_path):
         result = runner.invoke(
@@ -490,7 +490,7 @@ def test_upload_single_indicator_field(mocker, pack):
     mocker.patch.object(ContentItem, "pack_name", return_value="PackWithIndicatorField")
     mocker.patch.object(ContentItem, "pack_version", return_value="1.2.0")
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
 
     with ChangeCWD(pack.repo_path):
         result = runner.invoke(

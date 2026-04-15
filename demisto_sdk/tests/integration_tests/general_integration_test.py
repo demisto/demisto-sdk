@@ -47,7 +47,7 @@ def test_conf_file_custom(mocker: LogCaptureFixture, repo):
     integration.yml.update({"tests": ["myInt_test_playbook"]})
 
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         # pre-conf file - see validate fail on docker related issue
         result = runner.invoke(
             app,
@@ -57,7 +57,7 @@ def test_conf_file_custom(mocker: LogCaptureFixture, repo):
 
     repo.make_file(DEMISTO_SDK_CONFIG_FILE, "[validate]\nno_docker_checks=True")
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner()
         # post-conf file - see validate not fail on docker related issue as we are skipping
         result = runner.invoke(
             app,

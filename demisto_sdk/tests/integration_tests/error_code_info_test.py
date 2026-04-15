@@ -17,7 +17,7 @@ def test_error_code_info_end_to_end(mocker, error_code):
      - make sure the command does not fail and exits gracefully.
     """
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(app, ["error-code", "-i", error_code])
 
     assert result.exit_code == 0
@@ -26,7 +26,7 @@ def test_error_code_info_end_to_end(mocker, error_code):
 
 
 def test_error_code_info_sanity(mocker, monkeypatch):
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(app, ["error-code", "-i", "BA100"])
 
     assert all(
@@ -43,7 +43,7 @@ def test_error_code_info_refactored_validate(mocker, monkeypatch):
         DockerImageTagIsNotOutdated,
     )
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(app, ["error-code", "-i", "DO106"])
 
     assert all(
@@ -60,7 +60,7 @@ def test_error_code_info_refactored_validate(mocker, monkeypatch):
 
 
 def test_error_code_info_failure(mocker, monkeypatch):
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(app, ["error-code", "-i", "KELLER"])
 
     assert "No such error" in result.output

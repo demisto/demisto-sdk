@@ -1106,6 +1106,31 @@ def _make_display_label_tasks(task_overrides):
             ],
             0,
         ),
+        # 9. Autonomous pack, displayLabel context key used via complex root/accessor split — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "User ${PaloAltoNetworksXQL.GenericQuery.results.actor_effective_username} detected.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {
+                        "value": {
+                            "complex": {
+                                "root": "PaloAltoNetworksXQL.GenericQuery.results",
+                                "accessor": "actor_effective_username",
+                            }
+                        }
+                    },
+                ),
+            ],
+            0,
+        ),
     ],
 )
 def test_IsValidDisplayLabelContextPathValidator(

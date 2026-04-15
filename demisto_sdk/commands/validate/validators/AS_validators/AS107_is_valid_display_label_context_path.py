@@ -30,9 +30,10 @@ class IsValidDisplayLabelContextPathValidator(BaseValidator[ContentTypes]):
         "purpose in the playbook flow."
     )
     error_message = (
-        "The playbook is in an autonomous pack (managed: true, source: 'autonomous') "
-        "but the following tasks have displayLabel fields referencing context keys "
-        "not used in other tasks: {0}."
+        "Task '{0}' has a displayLabel that references the context key '{1}', "
+        "but this key is not used in any other task in the playbook. "
+        "displayLabel context keys should reference values that are consumed "
+        "by other tasks in the playbook flow."
     )
     related_field = "displayLabel"
     is_auto_fixable = False
@@ -43,15 +44,11 @@ class IsValidDisplayLabelContextPathValidator(BaseValidator[ContentTypes]):
         results: List[ValidationResult] = []
         for content_item in content_items:
             invalid_tasks = get_invalid_display_label_context_keys(content_item)
-            if invalid_tasks:
-                task_details = ", ".join(
-                    f"task '{task_id}' uses '{context_key}'"
-                    for task_id, context_key in invalid_tasks
-                )
+            for task_id, context_key in invalid_tasks:
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=self.error_message.format(task_details),
+                        message=self.error_message.format(task_id, context_key),
                         content_object=content_item,
                     )
                 )
@@ -89,6 +86,10 @@ def _is_context_key_used_in_other_tasks(
 ) -> bool:
     """Check if a context key is used in any task other than the current one.
 
+    Handles both direct references (e.g. ``${issue.id}`` appearing as
+    ``"simple": "${issue.id}"``) and complex root/accessor splits where a key
+    like ``A.B.C`` is stored as ``"root": "A.B"`` + ``"accessor": "C"``.
+
     Args:
         context_key: The context key to search for.
         current_task_id: The ID of the task containing the displayLabel.
@@ -97,11 +98,27 @@ def _is_context_key_used_in_other_tasks(
     Returns:
         True if the context key is found in at least one other task.
     """
+    # Build a list of search patterns: the full key, plus all possible
+    # root/accessor splits (for complex field references).
+    search_patterns = [context_key]
+    parts = context_key.split(".")
+    for i in range(1, len(parts)):
+        root = ".".join(parts[:i])
+        accessor = ".".join(parts[i:])
+        search_patterns.append((root, accessor))
+
     for task_id, serialized_data in all_tasks_serialized.items():
         if task_id == current_task_id:
             continue
+        # Check for exact full key match
         if context_key in serialized_data:
             return True
+        # Check for root/accessor split matches
+        for pattern in search_patterns:
+            if isinstance(pattern, tuple):
+                root, accessor = pattern
+                if root in serialized_data and accessor in serialized_data:
+                    return True
     return False
 
 

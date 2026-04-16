@@ -23,7 +23,7 @@ from demisto_sdk.commands.validate.validators.AS_validators.AS105_no_is_silent_i
 from demisto_sdk.commands.validate.validators.AS_validators.AS106_warn_quiet_mode_on_display_label_task import (
     WarnQuietModeOnDisplayLabelTaskValidator,
 )
-from demisto_sdk.commands.validate.validators.AS_validators.AS107_is_valid_display_label_context_path import (
+from demisto_sdk.commands.validate.validators.AS_validators.AS108_is_valid_display_label_context_path import (
     IsValidDisplayLabelContextPathValidator,
 )
 
@@ -955,7 +955,7 @@ def test_WarnQuietModeOnDisplayLabelTaskValidator(
 
 
 def _make_display_label_tasks(task_overrides):
-    """Build a minimal tasks dict for AS107 tests.
+    """Build a minimal tasks dict for AS108 tests.
 
     Each entry in task_overrides is a tuple of:
         (id, inner_displayLabel, scriptarguments)

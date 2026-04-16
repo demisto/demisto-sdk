@@ -41,6 +41,12 @@ runs:
         cache: poetry
         cache-dependency-path: poetry.lock
 
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxml2-dev libxslt-dev
+      shell: bash
+
     - name: Install dependencies with poetry
       run: |
         cd ${{ inputs.working-dir }}

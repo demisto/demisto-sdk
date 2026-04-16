@@ -953,6 +953,7 @@ def test_WarnQuietModeOnDisplayLabelTaskValidator(
     )
     assert len(results) == expected_warnings
 
+
 def _make_display_label_tasks(task_overrides):
     """Build a minimal tasks dict for AS107 tests.
 
@@ -1044,7 +1045,11 @@ def _make_display_label_tasks(task_overrides):
                 (
                     "1",
                     "Script retrieved with SHA256 ${File.SHA256}.",
-                    {"value": {"simple": "Script retrieved with SHA256 ${File.SHA256}."}},
+                    {
+                        "value": {
+                            "simple": "Script retrieved with SHA256 ${File.SHA256}."
+                        }
+                    },
                 ),
             ],
             1,
@@ -1150,9 +1155,7 @@ def test_IsValidDisplayLabelContextPathValidator(
     )
     playbook.pack = pack
 
-    results = (
-        IsValidDisplayLabelContextPathValidator().obtain_invalid_content_items(
-            [playbook]
-        )
+    results = IsValidDisplayLabelContextPathValidator().obtain_invalid_content_items(
+        [playbook]
     )
     assert len(results) == expected_errors

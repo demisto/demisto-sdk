@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-import json
 import re
-from typing import Iterable, List, Set, Tuple, Union
+from typing import Iterable, List, Tuple, Union
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
+
+json = JSON_Handler()
 
 ContentTypes = Union[Playbook]
 
@@ -98,14 +100,14 @@ def _is_context_key_used_in_other_tasks(
     Returns:
         True if the context key is found in at least one other task.
     """
-    # Build a list of search patterns: the full key, plus all possible
-    # root/accessor splits (for complex field references).
-    search_patterns = [context_key]
+    # Build a list of root/accessor split patterns for complex field references.
+    # E.g. "A.B.C" can be split as ("A", "B.C") or ("A.B", "C").
+    split_patterns: List[Tuple[str, str]] = []
     parts = context_key.split(".")
     for i in range(1, len(parts)):
         root = ".".join(parts[:i])
         accessor = ".".join(parts[i:])
-        search_patterns.append((root, accessor))
+        split_patterns.append((root, accessor))
 
     for task_id, serialized_data in all_tasks_serialized.items():
         if task_id == current_task_id:
@@ -114,11 +116,9 @@ def _is_context_key_used_in_other_tasks(
         if context_key in serialized_data:
             return True
         # Check for root/accessor split matches
-        for pattern in search_patterns:
-            if isinstance(pattern, tuple):
-                root, accessor = pattern
-                if root in serialized_data and accessor in serialized_data:
-                    return True
+        for root, accessor in split_patterns:
+            if root in serialized_data and accessor in serialized_data:
+                return True
     return False
 
 

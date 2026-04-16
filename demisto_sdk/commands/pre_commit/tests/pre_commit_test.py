@@ -8,6 +8,7 @@ from packaging.version import parse
 
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 import demisto_sdk.commands.pre_commit.pre_commit_context as context
+from demisto_sdk.commands.common.constants import DEFAULT_PYTHON_VERSION
 from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -215,7 +216,7 @@ def test_config_files(mocker, repo: Repo, native_image_config):
     )
     assert all(
         Path(obj.path).relative_to(repo.path)
-        in pre_commit_context.python_version_to_files["3.10"]
+        in pre_commit_context.python_version_to_files[DEFAULT_PYTHON_VERSION]
         for obj in (incident_field, classifier)
     )
     assert (

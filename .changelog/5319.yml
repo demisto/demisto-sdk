@@ -5,4 +5,6 @@ changes:
   type: feature
 - description: Fixed docstring parsing in generate-yml-from-python for Python 3.13+ compatibility using inspect.cleandoc normalization.
   type: internal
+- description: Updated GitHub Actions to support Node.js 24 and resolve deprecation warnings for Node.js 20.
+  type: internal
 pr_number: 5319

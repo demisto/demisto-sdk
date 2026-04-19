@@ -611,8 +611,14 @@ class MetadataToDict:
         if not docstring:
             return "", [], []
 
-        regex_sections = r"^(?: {4}|\t)(?P<name>\*{0,4}\w+|\w+\s\w+):\n(?P<desc>(?:(\s|\S)*?(\n\n|\Z)))"
-        regex_titles = r"^(?: {4}|\t)(?P<name>\*{0,4}\w+|\w+\s\w+):"
+        # Normalize docstring indentation for consistent parsing across Python versions.
+        # Python 3.13+ strips leading whitespace from docstrings at compile time,
+        # while earlier versions preserve it. Using inspect.cleandoc ensures
+        # the same normalized format regardless of Python version.
+        docstring = inspect.cleandoc(docstring)
+
+        regex_sections = r"^ *(?P<name>\*{0,4}\w+|\w+\s\w+):\n(?P<desc>(?:(\s|\S)*?(\n\n|\Z)))"
+        regex_titles = r"^ *(?P<name>\*{0,4}\w+|\w+\s\w+):"
         section_titles = re.findall(regex_titles, docstring, re.MULTILINE)
         regex_description_sections = r"(?P<desc>\A(\s|\S)*?)(\n\n|\Z)"
         descrition_sections = re.findall(

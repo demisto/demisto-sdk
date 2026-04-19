@@ -3639,26 +3639,70 @@ def test_MarketplaceV2WithoutPlatformValidator_supported_modules(
     assert len(results) == expected_number_of_failures
 
 
-def test_MarketplaceV2WithoutPlatformValidator_fix():
+def test_MarketplaceV2WithoutPlatformValidator_fix_no_platform():
     """
     Given
-    - A content item with 'marketplacev2' in its marketplaces but without 'platform'.
+    - A content item with 'marketplacev2' but without 'platform' in its marketplaces
+      (get_content_item_supported_modules returns empty set).
     When
     - Calling the MarketplaceV2WithoutPlatformValidator fix function.
     Then
-    - Make sure 'platform' is added to the marketplaces list and the fix message is correct.
+    - 'platform' is added to the marketplaces list.
+    - supportedModules is set to ['xsiam'].
     """
     content_item = create_integration_object()
     content_item.marketplaces = [MarketplaceVersions.MarketplaceV2]
 
-    assert MarketplaceVersions.PLATFORM not in content_item.marketplaces
-
     result = MarketplaceV2WithoutPlatformValidator().fix(content_item)
 
     assert MarketplaceVersions.PLATFORM in content_item.marketplaces
-    assert MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
-    assert (
-        result.message
-        == "Added 'platform' to the marketplaces list. "
-        "Please also ensure 'xsiam' is added to the supported modules manually."
-    )
+    assert content_item.supportedModules == ["xsiam"]
+
+
+def test_MarketplaceV2WithoutPlatformValidator_fix_has_platform_no_xsiam():
+    """
+    Given
+    - A content item with 'marketplacev2' and 'platform' in its marketplaces
+      but 'xsiam' is NOT in its supported modules.
+    When
+    - Calling the MarketplaceV2WithoutPlatformValidator fix function.
+    Then
+    - 'xsiam' is added to the item's supportedModules.
+    """
+    content_item = create_integration_object()
+    content_item.marketplaces = [
+        MarketplaceVersions.MarketplaceV2,
+        MarketplaceVersions.PLATFORM,
+    ]
+    content_item.supportedModules = ["edr", "asm"]
+
+    result = MarketplaceV2WithoutPlatformValidator().fix(content_item)
+
+    assert "xsiam" in content_item.supportedModules
+    assert "edr" in content_item.supportedModules
+    assert "asm" in content_item.supportedModules
+
+
+def test_MarketplaceV2WithoutPlatformValidator_fix_has_platform_none_supported_modules():
+    """
+    Given
+    - A content item with 'marketplacev2' and 'platform' in its marketplaces
+      but supportedModules is None, and the pack's supportedModules does not include xsiam.
+    When
+    - Calling the MarketplaceV2WithoutPlatformValidator fix function.
+    Then
+    - supportedModules is set to ['xsiam'].
+    """
+    content_item = create_integration_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["edr"]
+    content_item.pack = pack
+    content_item.marketplaces = [
+        MarketplaceVersions.MarketplaceV2,
+        MarketplaceVersions.PLATFORM,
+    ]
+    content_item.supportedModules = None
+
+    result = MarketplaceV2WithoutPlatformValidator().fix(content_item)
+
+    assert sorted(content_item.supportedModules) == ["edr", "xsiam"]

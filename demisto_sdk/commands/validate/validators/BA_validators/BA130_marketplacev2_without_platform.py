@@ -36,6 +36,7 @@ from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
@@ -83,6 +84,7 @@ ContentTypes = Union[
     ListObject,
     Mapper,
     ModelingRule,
+    Pack,
     ParsingRule,
     Playbook,
     PreProcessRule,
@@ -117,8 +119,8 @@ class MarketplaceV2WithoutPlatformValidator(BaseValidator[ContentTypes]):
         "in the supported modules."
     )
     fix_message = (
-        "Added 'platform' to the marketplaces list. "
-        "Please also ensure 'xsiam' is added to the supported modules manually."
+        "Added 'platform' to the marketplaces list and/or 'xsiam' to the "
+        "supported modules."
     )
     related_field = "marketplaces"
     is_auto_fixable = True
@@ -139,7 +141,17 @@ class MarketplaceV2WithoutPlatformValidator(BaseValidator[ContentTypes]):
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:
-        content_item.marketplaces.append(MarketplaceVersions.PLATFORM)
+        supported_modules = get_content_item_supported_modules(content_item)
+        if not supported_modules:
+            # No platform in marketplaces - add platform and set xsiam
+            content_item.marketplaces.append(MarketplaceVersions.PLATFORM)
+            content_item.supportedModules = [PlatformSupportedModules.XSIAM.value]
+        else:
+            # Platform exists but xsiam is missing - add xsiam to the resolved modules
+            content_item.supportedModules = list(
+                supported_modules | {PlatformSupportedModules.XSIAM.value}
+            )
+
         return FixResult(
             validator=self,
             message=self.fix_message,

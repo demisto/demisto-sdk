@@ -1,0 +1,4 @@
+changes:
+- description: Added `internal` and `prompt` as valid `underlyingcontentitem.type` values for Agentix actions.
+  type: feature
+pr_number: 11037

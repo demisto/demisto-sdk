@@ -736,7 +736,7 @@ def is_test_data_exists_on_server(
             second list is test event ids that do not have expected_values to check.
     """
     missing_event_data, missing_expected_values_data = [], []
-    test_data = TestData.parse_file(test_data_path)
+    test_data = TestData.model_validate_json(Path(test_data_path).read_text())
     for event_log in test_data.data:
         if not event_log.event_data:
             missing_event_data.append(event_log.test_data_event_id)
@@ -929,7 +929,9 @@ def validate_modeling_rule(
             f"Checking that event data was added to the test data file</cyan>",
         )
         try:
-            test_data = TestData.parse_file(modeling_rule.testdata_path.as_posix())
+            test_data = TestData.model_validate_json(
+                Path(modeling_rule.testdata_path).read_text()
+            )
         except ValueError as ex:
             err = f"Failed to parse test data file {get_relative_path_to_content(modeling_rule.testdata_path)} as JSON"
             logger.error(

@@ -1,6 +1,5 @@
 import os
 from functools import lru_cache
-from multiprocessing import Pool
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
@@ -9,7 +8,6 @@ from neo4j import Driver, GraphDatabase, Session, graph
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import download_content_graph
 from demisto_sdk.commands.content_graph.common import (
@@ -110,13 +108,13 @@ def _parse_node(element_id: str, node: dict) -> BaseNode:
     obj: BaseNode
     content_type = node.get("content_type", "")
     if node.get("not_in_repository"):
-        obj = UnknownContent.parse_obj(node)
+        obj = UnknownContent.model_validate(node)
 
     else:
         model = CONTENT_TYPE_TO_MODEL.get(content_type)
         if not model:
             raise NoModelException(f"No model for {content_type}")
-        obj = model.parse_obj(node)
+        obj = model.model_validate(node)
     obj.database_id = element_id
     return obj
 
@@ -137,6 +135,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self._rels_to_preserve: List[Dict[str, Any]] = []  # used for graph updates
 
         self._init_driver()
+        self._driver_closed = False
         self.output_path = None
         if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
             self.output_path = Path(artifacts_folder) / "content_graph"
@@ -146,7 +145,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         return self
 
     def __exit__(self, *args) -> None:
-        self.driver.close()
+        self.close()
 
     def _init_driver(self):
         self.driver: Driver = GraphDatabase.driver(
@@ -165,7 +164,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         return self._import_handler.extract_files_from_path(imported_path)
 
     def close(self) -> None:
-        self.driver.close()
+        if not self._driver_closed:
+            self.driver.close()
+            self._driver_closed = True
 
     def _add_relationships_to_objects(
         self,
@@ -307,13 +308,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             logger.debug("{}", f"{self._id_to_obj=}")  # noqa: PLE1205
             return
-        with Pool(processes=cpu_count()) as pool:
-            results = pool.starmap(
-                _parse_node, ((node.element_id, dict(node.items())) for node in nodes)
-            )
-            for result in results:
-                assert result.database_id is not None
-                self._id_to_obj[result.database_id] = result
+        # NOTE: Previously used multiprocessing.Pool.starmap here, but pydantic v2
+        # models cannot be reliably pickled across process boundaries (the worker
+        # processes crash silently, causing the main process to hang indefinitely).
+        # Sequential parsing is fast enough since _parse_node just calls model_validate
+        # on a dict.
+        for node in nodes:
+            result = _parse_node(node.element_id, dict(node.items()))
+            assert result.database_id is not None
+            self._id_to_obj[result.database_id] = result
 
     def _search(
         self,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import ClassVar, Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -29,8 +29,10 @@ class IsDashboardContainForbiddenFieldsValidator(BaseValidator[ContentTypes]):
     error_code = "DA100"
     description = "Validate that the dashboard excludes all the unnecessary fields."
     rationale = "The Dashboard should contain only the required fields."
-    dashboard_error_message = "The '{0}' fields need to be removed from {1}."
-    widgets_error_message = (
+    dashboard_error_message: ClassVar[str] = (
+        "The '{0}' fields need to be removed from {1}."
+    )
+    widgets_error_message: ClassVar[str] = (
         "The '{0}' fields need to be removed from {1} Widget listed under {2}."
     )
     fix_message = "Removed all unnecessary fields from {}: " + ", ".join(

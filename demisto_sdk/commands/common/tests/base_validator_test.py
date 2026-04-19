@@ -122,7 +122,7 @@ def test_handle_error_github_annotation(
     - Ensure the message was printed if needed, and not if not
     - Ensure the message includes the suggested_fix if exists
     """
-    monkeypatch.setenv("GITHUB_ACTIONS", is_github_actions)
+    monkeypatch.setenv("GITHUB_ACTIONS", str(is_github_actions))
     base_validator = BaseValidator()
     base_validator.handle_error(
         error_message="Error-message",

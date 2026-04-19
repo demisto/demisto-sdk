@@ -4424,7 +4424,18 @@ def retry(
 
 
 def is_abstract_class(cls):
-    return ABC in getattr(cls, "__bases__", ())
+    if ABC in getattr(cls, "__bases__", ()):
+        return True
+    # In pydantic v2, parameterizing a generic ABC (e.g. MyValidator[SomeType])
+    # creates a concrete subclass that loses ABC from __bases__ but still has no
+    # real implementation.  Detect these by checking whether the pydantic generic
+    # origin class is itself abstract.
+    meta = getattr(cls, "__pydantic_generic_metadata__", None)
+    if meta:
+        origin = meta.get("origin")
+        if origin is not None and ABC in getattr(origin, "__bases__", ()):
+            return True
+    return False
 
 
 class SecretManagerException(Exception):

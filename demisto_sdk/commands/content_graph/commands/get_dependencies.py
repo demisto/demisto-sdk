@@ -40,7 +40,6 @@ def get_dependencies(
         False,
         "-sr",
         "--show-reasons",
-        is_flag=True,
         help="This flag prints all of the relationships between the given content pack and its dependencies.",
     ),
     dependency: str = typer.Option(
@@ -63,26 +62,22 @@ def get_dependencies(
         False,
         "-m",
         "--mandatory-only",
-        is_flag=True,
         help="If true, returns only the mandatory dependencies.",
     ),
     all_level_dependencies: bool = typer.Option(
         False,
         "-ald",
         "--all-level-dependencies",
-        is_flag=True,
         help="If true, will retrieve all level of dependencies.",
     ),
     include_tests: bool = typer.Option(
         False,
         "--include-test-dependencies",
-        is_flag=True,
         help="If true, will include tests dependencies in result.",
     ),
     include_hidden: bool = typer.Option(
         False,
         "--include-hidden",
-        is_flag=True,
         help="If true, will include hidden packs in result.",
     ),
     direction: Direction = typer.Option(
@@ -97,7 +92,6 @@ def get_dependencies(
         False,
         "-nu",
         "--no-update-graph",
-        is_flag=True,
         help="If provided, does not update the graph before querying. Default is to update the graph.",
     ),
     output: Optional[Path] = typer.Option(

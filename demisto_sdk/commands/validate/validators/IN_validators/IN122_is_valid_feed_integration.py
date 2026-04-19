@@ -96,7 +96,7 @@ class IsValidFeedIntegrationValidator(BaseValidator[ContentTypes]):
                 equal_key_values: dict = required_param.get("must_equal", dict())  # type: ignore[assignment]
                 contained_key_values: dict = required_param.get("must_contain", dict())  # type: ignore[assignment]
                 must_be_one_of: dict = required_param.get("must_be_one_of", list())  # type: ignore[assignment]
-                param_details = current_param.dict()
+                param_details = current_param.model_dump()
                 if not all(
                     [
                         (

@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional
 
-from pydantic import Field, constr
+from pydantic import Field, RootModel, StringConstraints, field_validator
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
@@ -38,7 +38,7 @@ class ContentItemExportableFields(BaseStrictModel):
 
 
 class ElasticCommonFields(BaseStrictModel):
-    type: Optional[Dict[Any, Any]]  # Allow empty
+    type: Optional[Dict[Any, Any]] = None  # Allow empty
 
 
 class _PlaybookOutput(BaseStrictModel):
@@ -125,8 +125,8 @@ ArgFilter = create_model(
 )
 
 
-class ArgFilters(BaseStrictModel):
-    __root__: List[ArgFilter]  # type:ignore[valid-type]
+class ArgFilters(RootModel[List[ArgFilter]]):  # type:ignore[valid-type]
+    pass
 
 
 class Condition(BaseStrictModel):
@@ -182,7 +182,7 @@ SubTaskPlaybook = create_model(
 
 
 class _Loop(BaseStrictModel):
-    iscommand: Optional[bool]
+    iscommand: Optional[bool] = None
     built_in_condition: Optional[List[ArgFilters]] = Field(
         None, alias="builtincondition"
     )
@@ -208,22 +208,24 @@ class _TaskPlaybook(BaseStrictModel):
     task_id: str = Field(alias="taskid")
     type: str = Field(
         ...,
-        enum=[
-            "regular",
-            "playbook",
-            "condition",
-            "start",
-            "title",
-            "section",
-            "standard",
-            "collection",
-            "aiTask",
-        ],
+        json_schema_extra={
+            "enum": [
+                "regular",
+                "playbook",
+                "condition",
+                "start",
+                "title",
+                "section",
+                "standard",
+                "collection",
+                "aiTask",
+            ]
+        },
     )
     default_assignee_complex: Optional[Dict] = Field(
         None, alias="defaultassigneecomplex"
     )
-    sla: Optional[Dict]
+    sla: Optional[Dict] = None
     sla_reminder: Optional[Dict] = Field(None, alias="slareminder")
     quiet_mode: Optional[int] = Field(None, alias="quietmode")
     restricted_completion: Optional[bool] = Field(None, alias="restrictedcompletion")
@@ -238,13 +240,24 @@ class _TaskPlaybook(BaseStrictModel):
     evidence_data: Optional[EvidenceData] = Field(None, alias="evidencedata")
     task: SubTaskPlaybook  # type:ignore[valid-type]
     note: Optional[bool] = None
-    next_tasks: Optional[Dict[constr(regex=r".+"), List[str]]] = Field(  # type:ignore[valid-type]
+    next_tasks: Optional[
+        Dict[Annotated[str, StringConstraints(pattern=r".+")], List[str]]
+    ] = Field(  # type:ignore[valid-type]
         None, alias="nexttasks"
     )
-    loop: Optional[Loop]  # type:ignore[valid-type]
-    conditions: Optional[List[Condition]]
+
+    @field_validator("next_tasks", mode="before")
+    @classmethod
+    def coerce_nexttasks_keys(cls, v: Any) -> Any:
+        """Coerce non-string dict keys (e.g. booleans from YAML) to strings."""
+        if isinstance(v, dict):
+            return {str(k): val for k, val in v.items()}
+        return v
+
+    loop: Optional[Loop] = None  # type:ignore[valid-type]
+    conditions: Optional[List[Condition]] = None
     view: str
-    results: Optional[List[str]]
+    results: Optional[List[str]] = None
     continue_on_error: Optional[bool] = Field(None, alias="continueonerror")
     continue_on_error_type: Optional[str] = Field(None, alias="continueonerrortype")
     reputation_calc: Optional[int] = Field(None, alias="reputationcalc")
@@ -293,7 +306,16 @@ class StrictPlaybook(BaseStrictModel):
     inputs: Optional[List[InputPlaybook]] = None  # type:ignore[valid-type]
     inputSections: Optional[List[InputsSectionPlaybook]] = None  # type:ignore[valid-type]
     tags: Optional[List[str]] = None
-    tasks: Dict[constr(regex=TASKS_REGEX), TaskPlaybook]  # type:ignore[valid-type]
+    tasks: Dict[Annotated[str, StringConstraints(pattern=TASKS_REGEX)], TaskPlaybook]  # type:ignore[valid-type]
+
+    @field_validator("tasks", mode="before")
+    @classmethod
+    def coerce_tasks_keys(cls, v: Any) -> Any:
+        """Coerce non-string dict keys (e.g. integers/booleans from YAML) to strings."""
+        if isinstance(v, dict):
+            return {str(k): val for k, val in v.items()}
+        return v
+
     system: Optional[bool] = None
     from_version: str = Field(alias="fromversion")
     to_version: Optional[str] = Field(None, alias="toversion")
@@ -302,5 +324,5 @@ class StrictPlaybook(BaseStrictModel):
     role_name: Optional[List[str]] = Field(None, alias="rolename")
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
-    is_silent: Optional[bool] = Field(alias="issilent")
+    is_silent: Optional[bool] = Field(default=None, alias="issilent")
     adopted: Optional[bool] = None

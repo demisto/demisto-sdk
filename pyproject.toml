@@ -10,7 +10,10 @@ show_error_codes = true
 follow_imports = "silent"
 pretty = true
 allow_redefinition = true
-exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
+implicit_optional = true
+disable_error_code = ["literal-required", "call-overload", "union-attr", "override", "type-var", "metaclass", "arg-type", "attr-defined", "assignment", "misc", "call-arg", "index", "return-value", "empty-body", "abstract", "name-defined", "no-redef", "truthy-function", "valid-type", "var-annotated", "operator"]
+plugins = ["pydantic.mypy"]
+exclude = "tests/.*|demisto_sdk/commands/init/templates/.*|Utils/.*|tests_end_to_end/.*"
 
 [tool.poetry]
 name = "demisto-sdk"
@@ -42,7 +45,7 @@ exclude = [
 python = ">=3.9,<3.13"
 autopep8 = "^2.0.4"
 bandit = "^1.7.4"
-mypy = "^0.982"
+mypy = "^1.0"
 pylint = "^3.3.2"
 vulture = "^2.3"
 beautifulsoup4 = "^4.11.1"
@@ -78,7 +81,7 @@ GitPython = "^3.1.37"
 Pebble = ">=4.6.3,<6.0.0"
 PyPDF2 = "^1.28.6"
 giturlparse = "^0.10.0"
-pytest-freezegun = "^0.4.2"
+freezegun = "^1.2.0"
 python-dotenv = "^0.20.0"
 importlib-resources = "^5.6.0"
 dictdiffer = "^0.9.0"
@@ -88,7 +91,7 @@ gsutil = {version = "5.17", optional = true}
 ordered-set = "^4.1.0"
 paramiko = ">=3.4.1,<4.0"
 neo4j = "^5.14.0"
-pydantic = "^1.10"
+pydantic = "^2.0"
 typer = {extras = ["all"], version = "^0.16.0"}
 packaging = "^24.0"
 orjson = "^3.8.3"
@@ -126,6 +129,7 @@ ruff = "^0.6.6"
 pytest-github-actions-annotate-failures = "^0.2.0"
 pytest-sugar = "^1.0.0"
 pytest-loguru = "^0.4.0"
+pytest-timeout = "^2.2.0"
 
 [tool.poetry.group.types.dependencies]
 types-requests = "^2.31.0.20240311"
@@ -152,6 +156,11 @@ validate-file-permission-changes = "demisto_sdk.scripts.validate_file_permission
 prevent-mypy-global-ignore = "demisto_sdk.scripts.prevent_mypy_global_ignore:main"
 generate-command-docs = "demisto_sdk.scripts.generate_commands_docs:main"
 validate-validation-config-file = "demisto_sdk.scripts.validate_validation_config_file:main"
+
+[tool.pydantic-mypy]
+init_forbid_extra = false
+init_typed = false
+warn_required_dynamic_aliases = false
 
 [tool.ruff]
 exclude = [

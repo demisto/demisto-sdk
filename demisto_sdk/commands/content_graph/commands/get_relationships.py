@@ -74,7 +74,6 @@ def get_relationships(
         True,
         "-u/-nu",
         "--update-graph/--no-update-graph",
-        is_flag=True,
         help="If true, runs an update on the graph before querying.",
     ),
     marketplace: MarketplaceVersions = typer.Option(
@@ -88,25 +87,21 @@ def get_relationships(
     mandatory_only: bool = typer.Option(
         False,
         "--mandatory-only",
-        is_flag=True,
         help="If true, returns only mandatory relationships (relevant only for DEPENDS_ON/USES relationships).",
     ),
     include_tests: bool = typer.Option(
         False,
         "--include-tests",
-        is_flag=True,
         help="If true, includes tests in outputs (relevant only for DEPENDS_ON/USES relationships).",
     ),
     include_deprecated: bool = typer.Option(
         False,
         "--include-deprecated",
-        is_flag=True,
         help="If true, includes deprecated in outputs.",
     ),
     include_hidden: bool = typer.Option(
         False,
         "--include-hidden",
-        is_flag=True,
         help="If true, includes hidden packs in outputs (relevant only for DEPENDS_ON relationships).",
     ),
     direction: Direction = typer.Option(

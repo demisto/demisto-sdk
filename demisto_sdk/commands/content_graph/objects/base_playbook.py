@@ -1,8 +1,8 @@
 from functools import cached_property
-from typing import Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set
 
 import demisto_client
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
@@ -22,6 +22,8 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_aler
 
 
 class Task(BaseModel):
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
     id: str
     version: Optional[int] = None
     name: Optional[str] = None
@@ -109,6 +111,8 @@ class Task(BaseModel):
 
 
 class TaskConfig(BaseModel):
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
     id: str
     taskid: str
     type: Optional[PlaybookTaskType] = None
@@ -130,6 +134,15 @@ class TaskConfig(BaseModel):
     task: Task
     note: Optional[bool] = None
     nexttasks: Optional[Dict[str, List[str]]] = None
+
+    @field_validator("nexttasks", mode="before")
+    @classmethod
+    def coerce_nexttasks_keys(cls, v: Any) -> Any:
+        """Coerce non-string dict keys (e.g. booleans from YAML) to strings."""
+        if isinstance(v, dict):
+            return {str(k): val for k, val in v.items()}
+        return v
+
     loop: Optional[Dict] = None
     conditions: Optional[List[dict]] = None
     view: Optional[str] = None
@@ -192,6 +205,14 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     tags: List[str] = Field([])
     tests: List[str] = Field([])
     adopted: Optional[bool] = Field(None)
+
+    @field_validator("tasks", mode="before")
+    @classmethod
+    def coerce_tasks_keys(cls, v: Any) -> Any:
+        """Coerce non-string dict keys (e.g. integers from YAML) to strings."""
+        if isinstance(v, dict):
+            return {str(k): val for k, val in v.items()}
+        return v
 
     def prepare_for_upload(
         self,

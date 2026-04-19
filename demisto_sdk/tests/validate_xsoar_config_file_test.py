@@ -79,11 +79,10 @@ def test_extra_root_key():
             }
         )
     assert len(e.value.errors()) == 1
-    assert dict((e.value.errors())[0]) == {
-        "loc": ("SURPRISE",),
-        "msg": "extra fields not permitted",
-        "type": "value_error.extra",
-    }
+    error = e.value.errors()[0]
+    assert error["loc"] == ("SURPRISE",)
+    assert error["msg"] == "Extra inputs are not permitted"
+    assert error["type"] == "extra_forbidden"
 
 
 @pytest.mark.parametrize("key", ("custom_packs", "marketplace_packs", "lists", "jobs"))
@@ -156,8 +155,8 @@ def test_invalid_file_bad_keys(
         )
     assert len(e.value.errors()) == 2
     assert {error["type"] for error in e.value.errors()} == {
-        "value_error.missing",
-        "value_error.extra",
+        "missing",
+        "extra_forbidden",
     }
 
 

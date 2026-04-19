@@ -2,7 +2,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
@@ -35,13 +35,25 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 
 
 class Output(BaseModel):
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
     description: Optional[str] = ""
     contentPath: Optional[str] = None
     contextPath: Optional[str] = None
     type: Optional[str] = None
 
+    @field_validator("contextPath", "contentPath", "description", "type", mode="before")
+    @classmethod
+    def coerce_to_str(cls, v: Any) -> Any:
+        """Coerce non-string values (e.g. booleans) to strings."""
+        if v is not None and not isinstance(v, str):
+            return str(v)
+        return v
+
 
 class Argument(BaseModel):
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
     name: str
     description: str = ""
     required: Optional[bool] = None
@@ -62,7 +74,7 @@ class Argument(BaseModel):
         Returns:
             Dict: The Dict representation of the Argument object.
         """
-        dictified_arg = self.dict(exclude_none=True)
+        dictified_arg = self.model_dump(exclude_none=True)
         if "auto" in dictified_arg:
             dictified_arg["auto"] = dictified_arg["auto"].value
         return dictified_arg
@@ -70,14 +82,22 @@ class Argument(BaseModel):
 
 class IntegrationScript(ContentItem):
     type: str
-    subtype: Optional[str]
+    subtype: Optional[str] = None
     docker_image: DockerImage = DockerImage("")
     alt_docker_images: List[str] = []
+
+    @field_validator("docker_image", mode="before")
+    @classmethod
+    def validate_docker_image(cls, v):
+        if isinstance(v, str) and not isinstance(v, DockerImage):
+            return DockerImage(v)
+        return v
+
     auto_update_docker_image: bool = True
     description: Optional[str] = Field("")
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)
-    unified_data: dict = Field(None, exclude=True)
+    unified_data: Optional[dict] = Field(None, exclude=True)
     version: Optional[int] = 0
     tests: Any = ""
 

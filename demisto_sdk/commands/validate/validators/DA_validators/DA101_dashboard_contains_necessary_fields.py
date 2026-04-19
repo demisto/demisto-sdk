@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import ClassVar, Iterable, List
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -19,10 +19,12 @@ class IsDashboardContainNecessaryFieldsValidator(BaseValidator[ContentTypes]):
     error_code = "DA101"
     description = "Validate that the dashboard includes all the necessary fields."
     rationale = "The Dashboard should contains the required 'fromDate', 'toDate', 'fromDateLicense' fields."
-    dashboard_error_message = (
+    dashboard_error_message: ClassVar[str] = (
         "The '{0}' fields are missing from {1} and need to be added."
     )
-    widget_error_message = "The '{0}' fields are missing from {1} Widget listed under {2} and need to be added."
+    widget_error_message: ClassVar[str] = (
+        "The '{0}' fields are missing from {1} Widget listed under {2} and need to be added."
+    )
     related_field = "layout"
     is_auto_fixable = False
 

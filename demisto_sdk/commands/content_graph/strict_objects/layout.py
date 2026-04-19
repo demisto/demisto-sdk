@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import Field
+from pydantic import Field, RootModel
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
@@ -17,13 +17,19 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 class ArgFilter(BaseStrictModel):
     operator: str
     ignore_case: Optional[bool] = Field(None, alias="ignorecase")
-    left: dict = Field(..., example={"value": Any, "isContext": bool})
-    right: Optional[dict] = Field(None, example={"value": Any, "isContext": bool})
+    left: dict = Field(
+        ...,
+        json_schema_extra={"example": {"value": "Any", "isContext": True}},
+    )
+    right: Optional[dict] = Field(
+        None,
+        json_schema_extra={"example": {"value": "Any", "isContext": True}},
+    )
     type_: Optional[str] = Field(None, alias="type")
 
 
-class ArgFilters(BaseStrictModel):
-    __root__: List[ArgFilter]
+class ArgFilters(RootModel[List[ArgFilter]]):
+    pass
 
 
 class _SectionField(BaseStrictModel):
@@ -73,7 +79,7 @@ class Tabs(BaseStrictModel):
     type_: str = Field(alias="type")
     name: str
     sections: Optional[List[Dict[str, Any]]] = None
-    hidden: Optional[str] = None
+    hidden: Optional[Any] = None
     filters: Optional[Any] = None
     show_empty_fields: Optional[bool] = Field(None, alias="showEmptyFields")
     report: Optional[bool] = None
@@ -95,7 +101,9 @@ class _StrictLayout(BaseStrictModel):
     """
 
     id: str
-    group: str = Field(..., enum=["incident", "indicator", "case"])
+    group: str = Field(
+        ..., json_schema_extra={"enum": ["incident", "indicator", "case"]}
+    )
     definition_id: Optional[str] = Field(None, alias="definitionId")
     version: float
     name: str

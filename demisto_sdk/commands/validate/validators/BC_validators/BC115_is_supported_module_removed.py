@@ -4,7 +4,8 @@ from typing import Iterable, List, cast
 
 from git import Union
 
-from demisto_sdk.commands.common.constants import GitStatuses, PlatformSupportedModules
+from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.tools import get_content_item_supported_modules
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
@@ -87,7 +88,7 @@ class IsSupportedModulesRemoved(BaseValidator[ContentTypes]):
         "Ensure that no support module are removed from an existing content item."
     )
     rationale = "Removing a support module for content item can break functionality for customers."
-    error_message = "The following support modules have been removed from the integration {}. Removing supported modules is not allowed, Please undo."
+    error_message = "The following support modules have been removed from the content item {}. Removing supported modules is not allowed, Please undo."
     related_field = "supportedModules"
     is_auto_fixable = False
     expected_git_statuses = [GitStatuses.MODIFIED, GitStatuses.RENAMED]
@@ -119,21 +120,11 @@ class IsSupportedModulesRemoved(BaseValidator[ContentTypes]):
         """
         Calculates the set of supported modules that were removed from the old item
         compared to the new item.
+
+        If the "platform" marketplace is not in the old content object's marketplaces,
+        skip the validation and return an empty set.
         """
-        default_modules = [sm.value for sm in PlatformSupportedModules]
-
-        def get_modules(item: ContentTypes) -> set:
-            """
-            Resolves the definitive list of supported modules for an item,
-            falling back to its pack's modules or the platform defaults.
-            """
-            modules = item.supportedModules
-            if not modules and not isinstance(item, Pack):
-                modules = item.pack.supportedModules
-
-            return set(modules or default_modules)
-
-        old_params = get_modules(old_item)
-        new_params = get_modules(new_item)
+        old_params = get_content_item_supported_modules(old_item)
+        new_params = get_content_item_supported_modules(new_item)
 
         return old_params.difference(new_params)

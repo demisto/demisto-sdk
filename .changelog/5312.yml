@@ -1,0 +1,4 @@
+changes:
+- description: 'Added AS107 validator: Validate that subplaybook prefix is consistent across filename, id, and name fields. Added AS108 validator: Validate that subplaybooks have the internal field set to true.'
+  type: feature
+pr_number: '5312'

@@ -142,6 +142,7 @@ class SubCapability(BaseModel):
     title: str
     default_enabled: bool = False
     required: bool = False
+    required_license: List[str] = []  # own value, or inherited from parent capability
 
 
 class CapabilityConfig(BaseModel):

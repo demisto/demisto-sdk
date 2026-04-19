@@ -37,7 +37,11 @@ from demisto_sdk.commands.common.tools import (
     is_external_repo,
     specify_files_from_directory,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+    _get_connector_dir,
+    _is_connector_path,
+)
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import (
     ContentDTO,
@@ -726,6 +730,11 @@ class Initializer:
                 paths_set.add(path)
             elif self.is_pack_item(path_str):
                 paths_set.add(self.obtain_metadata_path(path))
+            elif _is_connector_path(path):
+                # Map any connector-related file (handler.yaml, capabilities.yaml, etc.)
+                # to the parent connector.yaml to avoid duplicate parsing.
+                connector_dir = _get_connector_dir(path)
+                paths_set.add(connector_dir / "connector.yaml")
             else:
                 paths_set.add(path)
 

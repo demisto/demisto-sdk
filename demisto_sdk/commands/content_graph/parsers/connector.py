@@ -259,25 +259,32 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
         # Parse capabilities and merge configurations
         result: List[CapabilityData] = []
         for cap in cap_data.get("capabilities", []):
+            config = cap.get("config")
+            cap_config = None
+            parent_license: List[str] = []
+            if config:
+                from demisto_sdk.commands.content_graph.objects.connector import (
+                    CapabilityConfig,
+                )
+
+                parent_license = config.get("required_license", [])
+                cap_config = CapabilityConfig(required_license=parent_license)
+
             sub_caps = [
                 SubCapability(
                     id=sc["id"],
                     title=sc.get("title", ""),
                     default_enabled=sc.get("default_enabled", False),
                     required=sc.get("required", False),
+                    # Use sub-capability's own required_license if present,
+                    # otherwise inherit from the parent capability.
+                    required_license=(
+                        sc.get("config", {}).get("required_license")
+                        or parent_license
+                    ),
                 )
                 for sc in cap.get("sub_capabilities", [])
             ]
-            config = cap.get("config")
-            cap_config = None
-            if config:
-                from demisto_sdk.commands.content_graph.objects.connector import (
-                    CapabilityConfig,
-                )
-
-                cap_config = CapabilityConfig(
-                    required_license=config.get("required_license", [])
-                )
 
             # Unified configurations: general + per-capability
             unified_configs = list(general_field_groups)  # copy

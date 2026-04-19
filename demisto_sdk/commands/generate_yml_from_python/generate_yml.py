@@ -617,7 +617,9 @@ class MetadataToDict:
         # the same normalized format regardless of Python version.
         docstring = inspect.cleandoc(docstring)
 
-        regex_sections = r"^ *(?P<name>\*{0,4}\w+|\w+\s\w+):\n(?P<desc>(?:(\s|\S)*?(\n\n|\Z)))"
+        regex_sections = (
+            r"^ *(?P<name>\*{0,4}\w+|\w+\s\w+):\n(?P<desc>(?:(\s|\S)*?(\n\n|\Z)))"
+        )
         regex_titles = r"^ *(?P<name>\*{0,4}\w+|\w+\s\w+):"
         section_titles = re.findall(regex_titles, docstring, re.MULTILINE)
         regex_description_sections = r"(?P<desc>\A(\s|\S)*?)(\n\n|\Z)"

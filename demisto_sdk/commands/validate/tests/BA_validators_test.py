@@ -3653,7 +3653,7 @@ def test_MarketplaceV2WithoutPlatformValidator_fix_no_platform():
     content_item = create_integration_object()
     content_item.marketplaces = [MarketplaceVersions.MarketplaceV2]
 
-    result = MarketplaceV2WithoutPlatformValidator().fix(content_item)
+    MarketplaceV2WithoutPlatformValidator().fix(content_item)
 
     assert MarketplaceVersions.PLATFORM in content_item.marketplaces
     assert content_item.supportedModules == ["xsiam"]
@@ -3676,7 +3676,7 @@ def test_MarketplaceV2WithoutPlatformValidator_fix_has_platform_no_xsiam():
     ]
     content_item.supportedModules = ["edr", "asm"]
 
-    result = MarketplaceV2WithoutPlatformValidator().fix(content_item)
+    MarketplaceV2WithoutPlatformValidator().fix(content_item)
 
     assert "xsiam" in content_item.supportedModules
     assert "edr" in content_item.supportedModules
@@ -3703,6 +3703,6 @@ def test_MarketplaceV2WithoutPlatformValidator_fix_has_platform_none_supported_m
     ]
     content_item.supportedModules = None
 
-    result = MarketplaceV2WithoutPlatformValidator().fix(content_item)
+    MarketplaceV2WithoutPlatformValidator().fix(content_item)
 
     assert sorted(content_item.supportedModules) == ["edr", "xsiam"]

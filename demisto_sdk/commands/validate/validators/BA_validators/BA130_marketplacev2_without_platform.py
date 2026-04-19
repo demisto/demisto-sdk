@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    MarketplaceVersions,
+    PlatformSupportedModules,
+)
+from demisto_sdk.commands.common.tools import get_content_item_supported_modules
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_action_test import (
     AgentixActionTest,
@@ -99,17 +103,23 @@ class MarketplaceV2WithoutPlatformValidator(BaseValidator[ContentTypes]):
     error_code = "BA130"
     description = (
         "Validates that content items with 'marketplacev2' in their marketplaces "
-        "also include 'platform'."
+        "also include 'platform' and have 'xsiam' in their supported modules."
     )
     rationale = (
         "Content items listed under 'marketplacev2' should also be listed under "
-        "'platform' to ensure proper availability across all relevant marketplaces."
+        "'platform' and have 'xsiam' in their supported modules to ensure proper "
+        "availability across all relevant marketplaces."
     )
     error_message = (
         "The content item has 'marketplacev2' in its marketplaces but is missing "
-        "'platform'. Please add 'platform' to the marketplaces list."
+        "'platform' in its marketplaces and/or 'xsiam' in its supported modules. "
+        "Please add 'platform' to the marketplaces list and ensure 'xsiam' is "
+        "in the supported modules."
     )
-    fix_message = "Added 'platform' to the marketplaces list."
+    fix_message = (
+        "Added 'platform' to the marketplaces list. "
+        "Please also ensure 'xsiam' is added to the supported modules manually."
+    )
     related_field = "marketplaces"
     is_auto_fixable = True
 
@@ -124,7 +134,8 @@ class MarketplaceV2WithoutPlatformValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
-            and MarketplaceVersions.PLATFORM not in content_item.marketplaces
+            and PlatformSupportedModules.XSIAM
+            not in get_content_item_supported_modules(content_item)
         ]
 
     def fix(self, content_item: ContentTypes) -> FixResult:

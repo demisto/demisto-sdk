@@ -3476,9 +3476,14 @@ def test_MissingCompliantPoliciesValidator_only_new_command_is_reported(mocker):
 
 
 def _set_marketplaces(content_items, marketplaces_list):
-    """Helper to set marketplaces on a list of content items."""
+    """Helper to set marketplaces on a list of content items.
+    Also sets supportedModules to ['xsiam'] for items that have PLATFORM
+    in their marketplaces, to avoid AttributeError when pack is None.
+    """
     for item, mp in zip(content_items, marketplaces_list):
         item.marketplaces = mp
+        if MarketplaceVersions.PLATFORM in mp:
+            item.supportedModules = ["xsiam"]
     return content_items
 
 
@@ -3536,7 +3541,7 @@ def _set_marketplaces(content_items, marketplaces_list):
                 ],
             ),
             0,
-            id="marketplacev2_with_platform_should_pass",
+            id="marketplacev2_with_platform_and_xsiam_should_pass",
         ),
         pytest.param(
             _set_marketplaces(
@@ -3558,8 +3563,8 @@ def test_MarketplaceV2WithoutPlatformValidator_obtain_invalid_content_items(
     content_items list with various marketplace configurations.
         - Case 1: All items have only xsoar marketplace - should pass.
         - Case 2: Two items have marketplacev2 without platform - should fail both.
-        - Case 3: One item has marketplacev2 without platform, one has xsoar, one has both - should fail one.
-        - Case 4: Item has both marketplacev2 and platform - should pass.
+        - Case 3: One item has marketplacev2 without platform, one has xsoar, one has both marketplacev2 and platform with xsiam - should fail one.
+        - Case 4: Item has both marketplacev2 and platform with xsiam in supported modules - should pass.
         - Case 5: Item has only platform - should pass.
     When
     - Calling the MarketplaceV2WithoutPlatformValidator obtain_invalid_content_items function.
@@ -3574,8 +3579,64 @@ def test_MarketplaceV2WithoutPlatformValidator_obtain_invalid_content_items(
         assert (
             result.message
             == "The content item has 'marketplacev2' in its marketplaces but is missing "
-            "'platform'. Please add 'platform' to the marketplaces list."
+            "'platform' in its marketplaces and/or 'xsiam' in its supported modules. "
+            "Please add 'platform' to the marketplaces list and ensure 'xsiam' is "
+            "in the supported modules."
         )
+
+
+@pytest.mark.parametrize(
+    "marketplaces, supported_modules, expected_number_of_failures",
+    [
+        pytest.param(
+            [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM],
+            ["xsiam"],
+            0,
+            id="platform_and_xsiam_in_supported_modules_should_pass",
+        ),
+        pytest.param(
+            [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM],
+            ["xsiam", "edr"],
+            0,
+            id="platform_and_xsiam_and_edr_in_supported_modules_should_pass",
+        ),
+        pytest.param(
+            [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM],
+            ["edr", "asm"],
+            1,
+            id="platform_but_no_xsiam_in_supported_modules_should_fail",
+        ),
+        pytest.param(
+            [MarketplaceVersions.MarketplaceV2],
+            ["xsiam"],
+            1,
+            id="xsiam_in_supported_modules_but_no_platform_should_fail",
+        ),
+    ],
+)
+def test_MarketplaceV2WithoutPlatformValidator_supported_modules(
+    marketplaces, supported_modules, expected_number_of_failures
+):
+    """
+    Given
+    - A content item with 'marketplacev2' in its marketplaces
+      with various marketplace and supported modules configurations.
+        - Case 1: 'platform' in marketplaces and 'xsiam' in supported modules - should pass.
+        - Case 2: 'platform' in marketplaces and 'xsiam' + 'edr' in supported modules - should pass.
+        - Case 3: 'platform' in marketplaces but no 'xsiam' in supported modules - should fail.
+        - Case 4: no 'platform' in marketplaces but 'xsiam' in supported modules - should fail.
+    When
+    - Calling the MarketplaceV2WithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failures return.
+    """
+    content_item = create_integration_object()
+    content_item.marketplaces = marketplaces
+    content_item.supportedModules = supported_modules
+    results = MarketplaceV2WithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == expected_number_of_failures
 
 
 def test_MarketplaceV2WithoutPlatformValidator_fix():
@@ -3596,4 +3657,8 @@ def test_MarketplaceV2WithoutPlatformValidator_fix():
 
     assert MarketplaceVersions.PLATFORM in content_item.marketplaces
     assert MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
-    assert result.message == "Added 'platform' to the marketplaces list."
+    assert (
+        result.message
+        == "Added 'platform' to the marketplaces list. "
+        "Please also ensure 'xsiam' is added to the supported modules manually."
+    )

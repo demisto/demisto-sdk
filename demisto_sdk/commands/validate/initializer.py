@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from git import InvalidGitRepositoryError
 
@@ -24,9 +24,11 @@ from demisto_sdk.commands.common.constants import (
     ExecutionMode,
     FileType,
     GitStatuses,
+    MarketplaceVersions,
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
@@ -849,3 +851,211 @@ class Initializer:
                 ).replace("//", "/")
                 break
         return Path(path_str)
+
+
+class ConnectorAwareInitializer(Initializer):
+    """Extends Initializer with connector-integration cross-discovery.
+
+    When ``--run-connectors-validation`` is used, this initializer replaces the
+    standard ``Initializer``.  It:
+
+    1. Runs the normal file-collection flow (supports ``-g``, ``-i``, ``-a``).
+    2. Filters the result to only ``Integration`` and ``Connector`` objects.
+    3. Applies marketplace / XSOAR-handler filters.
+    4. Cross-matches connectors and integrations and expands with missing counterparts.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.connectors_path: Path = Path(CONTENT_PATH) / "connectors"
+
+    def gather_objects_to_run_on(self) -> Tuple[Set[BaseContent], Set[Path]]:
+        from demisto_sdk.commands.content_graph.objects.connector import Connector
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+
+        # 1. Run normal flow to get all content objects
+        all_objects, invalid_items = super().gather_objects_to_run_on()
+
+        # 2. Filter to only Integration and Connector objects
+        filtered: Set[BaseContent] = set()
+        for obj in all_objects:
+            if isinstance(obj, Integration):
+                # Only keep platform-supported integrations
+                if MarketplaceVersions.PLATFORM in obj.marketplaces:
+                    filtered.add(obj)
+                else:
+                    logger.debug(
+                        f"Skipping integration '{obj.object_id}' -- "
+                        f"not in PLATFORM marketplace."
+                    )
+            elif isinstance(obj, Connector):
+                # Only keep connectors with at least one XSOAR handler
+                if obj.xsoar_handlers:
+                    filtered.add(obj)
+                else:
+                    logger.debug(
+                        f"Skipping connector '{obj.object_id}' -- "
+                        f"no XSOAR handlers."
+                    )
+            # Skip everything else (packs, scripts, playbooks, etc.)
+
+        # 3. Cross-match and expand with missing counterparts
+        filtered = self._cross_match_and_expand(filtered)
+
+        return filtered, invalid_items
+
+    def _cross_match_and_expand(self, objects: Set[BaseContent]) -> Set[BaseContent]:
+        """Match connectors to integrations and expand with missing counterparts.
+
+        Phase 1: Direct matching from the current set.
+        Phase 2: For unmatched items, scan filesystem / use graph.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import Connector
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+
+        integrations: Set[Integration] = {
+            obj for obj in objects if isinstance(obj, Integration)
+        }
+        connectors: Set[Connector] = {
+            obj for obj in objects if isinstance(obj, Connector)
+        }
+
+        # Build lookup maps
+        integration_by_id: Dict[str, Integration] = {
+            i.object_id: i for i in integrations
+        }
+        integration_by_name: Dict[str, Integration] = {i.name: i for i in integrations}
+
+        matched_integration_ids: Set[str] = set()
+        matched_connector_ids: Set[str] = set()
+
+        # --- Phase 1: Direct matching ---
+        for connector in connectors:
+            for handler in connector.xsoar_handlers:
+                int_id = handler.xsoar_integration_id
+                if not int_id:
+                    continue
+                match = integration_by_id.get(int_id) or integration_by_name.get(int_id)
+                if match:
+                    connector.related_content = match
+                    if connector not in match.related_content:
+                        match.related_content.append(connector)
+                    matched_integration_ids.add(match.object_id)
+                    matched_connector_ids.add(connector.object_id)
+                    logger.debug(
+                        f"Matched connector '{connector.object_id}' -> "
+                        f"integration '{match.object_id}' (direct)."
+                    )
+
+        # Check if all matched -- skip graph entirely
+        unmatched_integrations = {
+            i for i in integrations if i.object_id not in matched_integration_ids
+        }
+        unmatched_connectors = {
+            c for c in connectors if c.object_id not in matched_connector_ids
+        }
+
+        if not unmatched_integrations and not unmatched_connectors:
+            logger.debug(
+                "All connectors and integrations matched directly, skipping graph."
+            )
+            return objects
+
+        # --- Phase 2a: Unmatched integrations -> scan connectors/ dir ---
+        if unmatched_integrations and self.connectors_path.exists():
+            logger.debug(
+                f"Scanning {self.connectors_path} for connectors referencing "
+                f"unmatched integrations: "
+                f"{[i.object_id for i in unmatched_integrations]}"
+            )
+            existing_connector_ids = {c.object_id for c in connectors}
+            for connector_dir in sorted(self.connectors_path.iterdir()):
+                if not connector_dir.is_dir():
+                    continue
+                connector_yaml = connector_dir / "connector.yaml"
+                if not connector_yaml.exists():
+                    continue
+                # Skip if already in the set
+                if connector_dir.name in existing_connector_ids:
+                    continue
+                connector = BaseContent.from_path(connector_yaml)
+                if not isinstance(connector, Connector) or not connector.xsoar_handlers:
+                    continue
+                for ref_id in connector.referenced_integration_ids:
+                    match = integration_by_id.get(ref_id) or integration_by_name.get(
+                        ref_id
+                    )
+                    if match:
+                        connector.related_content = match
+                        if connector not in match.related_content:
+                            match.related_content.append(connector)
+                        objects.add(connector)
+                        matched_integration_ids.add(match.object_id)
+                        logger.debug(
+                            f"Matched connector '{connector.object_id}' -> "
+                            f"integration '{match.object_id}' (filesystem scan)."
+                        )
+                        break
+
+        # --- Phase 2b: Unmatched connectors -> graph search for integration ---
+        # Recalculate after phase 2a
+        unmatched_connectors = {
+            c for c in connectors if c.object_id not in matched_connector_ids
+        }
+        if unmatched_connectors:
+            logger.debug(
+                f"Searching graph for integrations referenced by unmatched "
+                f"connectors: {[c.object_id for c in unmatched_connectors]}"
+            )
+            for connector in unmatched_connectors:
+                for handler in connector.xsoar_handlers:
+                    int_id = handler.xsoar_integration_id
+                    if not int_id:
+                        continue
+                    results = self._graph_search_integration(int_id)
+                    if results:
+                        integration = results[0]
+                        # Check platform marketplace
+                        if hasattr(integration, "marketplaces") and (
+                            MarketplaceVersions.PLATFORM not in integration.marketplaces
+                        ):
+                            logger.debug(
+                                f"Skipping graph-found integration "
+                                f"'{integration.object_id}' -- not PLATFORM."
+                            )
+                            continue
+                        connector.related_content = integration
+                        if hasattr(integration, "related_content"):
+                            if connector not in integration.related_content:
+                                integration.related_content.append(connector)
+                        objects.add(integration)
+                        logger.debug(
+                            f"Matched connector '{connector.object_id}' -> "
+                            f"integration '{integration.object_id}' (graph)."
+                        )
+                        break
+
+        return objects
+
+    @staticmethod
+    def _graph_search_integration(integration_id: str) -> List[Any]:
+        """Lazy graph search -- only called for unmatched items."""
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.validate.validators.base_validator import (
+            BaseValidator,
+        )
+
+        graph = BaseValidator.graph_interface
+        if not graph:
+            logger.debug("Graph interface not available, skipping graph search.")
+            return []
+        results = graph.search(
+            content_type=ContentType.INTEGRATION,
+            object_id=integration_id,
+        )
+        if not results:
+            results = graph.search(
+                content_type=ContentType.INTEGRATION,
+                name=integration_id,
+            )
+        return results

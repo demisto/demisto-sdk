@@ -6,11 +6,10 @@ each one into a ``ConnectorParser``.
 """
 
 from pathlib import Path
-from typing import Iterator, List, Optional
+from typing import Iterator, List
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.parsers.connector import ConnectorParser
-
 
 CONNECTORS_FOLDER = "connectors"
 
@@ -35,9 +34,7 @@ class ConnectorRepositoryParser:
                 self.connectors.append(connector)
                 logger.debug(f"Parsed connector: {connector.object_id}")
             except Exception as e:
-                logger.warning(
-                    f"Failed to parse connector at {connector_path}: {e}"
-                )
+                logger.warning(f"Failed to parse connector at {connector_path}: {e}")
 
     def iter_connectors(self) -> Iterator[Path]:
         """Iterate all valid connector directories.

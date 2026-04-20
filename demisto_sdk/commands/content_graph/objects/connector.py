@@ -26,7 +26,6 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     TriggersRelatedFile,
 )
 
-
 # ============================================================
 # Shared field sub-models
 # ============================================================
@@ -333,6 +332,9 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         default_factory=dict, exclude=True
     )
 
+    # === Cross-link to matched Integration (set by ConnectorAwareInitializer) ===
+    related_content: Optional[Any] = Field(None, exclude=True)
+
     # === Derived properties ===
 
     @property
@@ -352,9 +354,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
     @property
     def referenced_integration_ids(self) -> List[str]:
         """Integration display names referenced by XSOAR handlers."""
-        return [
-            h.xsoar_integration_id for h in self.handlers if h.xsoar_integration_id
-        ]
+        return [h.xsoar_integration_id for h in self.handlers if h.xsoar_integration_id]
 
     @property
     def referenced_pack_ids(self) -> List[str]:
@@ -429,5 +429,3 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         if path.name == "connector.yaml" or (path / "connector.yaml").exists():
             return True
         return "metadata" in _dict and "vendor" in _dict.get("metadata", {})
-
-

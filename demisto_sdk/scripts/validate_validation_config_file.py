@@ -59,6 +59,7 @@ def validate_all_validations_run_on_git_mode(
 ) -> int:
     """
     Validate that all validations configured in the path_based section are also configured in the use_git section.
+    Also validates the same for connector-specific sections.
 
     Arguments:
     - configured_validations (ConfiguredValidations): The ConfiguredValidations object
@@ -72,6 +73,23 @@ def validate_all_validations_run_on_git_mode(
     ) - set(configured_validations.selected_use_git_section):
         logger.error(
             f"[VA101] The following error codes are configured to run on path-based inputs but are not configured to run on git mode: {', '.join(non_configured_use_git_error_codes)}."
+        )
+        exit_code = 1
+
+    # Check connector-specific sections consistency
+    connector_path_based = set(
+        config_file_content.get("connectors_path_based_validations", {}).get(
+            "select", []
+        )
+    )
+    connector_use_git = set(
+        config_file_content.get("connectors_use_git", {}).get("select", [])
+    )
+    if non_configured_connector_codes := connector_path_based - connector_use_git:
+        logger.error(
+            f"[VA101] The following connector error codes are configured in "
+            f"connectors_path_based_validations but not in connectors_use_git: "
+            f"{', '.join(non_configured_connector_codes)}."
         )
         exit_code = 1
     return exit_code

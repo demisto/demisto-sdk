@@ -52,7 +52,6 @@ class IsMatchingIntegrationExistValidator(BaseValidator[ContentTypes], ABC):
         results: List[ValidationResult] = []
 
         for connector in content_items:
-
             for handler in connector.handlers:
                 if not handler.is_xsoar:
                     continue
@@ -85,9 +84,7 @@ class IsMatchingIntegrationExistValidator(BaseValidator[ContentTypes], ABC):
                         object_id=pack_id,
                     )
                     if not packs:
-                        missing.append(
-                            f"Pack '{pack_id}' (from xsoar-pack-id)"
-                        )
+                        missing.append(f"Pack '{pack_id}' (from xsoar-pack-id)")
 
                 if missing:
                     results.append(

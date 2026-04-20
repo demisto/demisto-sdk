@@ -98,7 +98,9 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
 
         # Parse sub-models from related files
         self.connection: Optional[ConnectorConnectionData] = self._parse_connection()
-        self.capabilities: List[CapabilityData] = self._parse_capabilities_with_configs()
+        self.capabilities: List[CapabilityData] = (
+            self._parse_capabilities_with_configs()
+        )
 
         # Discover and parse handlers
         self.handlers: List[HandlerData] = self._parse_handlers()
@@ -189,9 +191,7 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
         general_configs = self._parse_general_configurations(
             data.get("general_configurations")
         )
-        profiles = [
-            self._parse_connection_profile(p) for p in data.get("profiles", [])
-        ]
+        profiles = [self._parse_connection_profile(p) for p in data.get("profiles", [])]
 
         return ConnectorConnectionData(
             title=metadata.get("title", ""),
@@ -279,8 +279,7 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
                     # Use sub-capability's own required_license if present,
                     # otherwise inherit from the parent capability.
                     required_license=(
-                        sc.get("config", {}).get("required_license")
-                        or parent_license
+                        sc.get("config", {}).get("required_license") or parent_license
                     ),
                 )
                 for sc in cap.get("sub_capabilities", [])
@@ -450,9 +449,7 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
 
         return resolved
 
-    def _collect_handler_fields(
-        self, handler: HandlerData
-    ) -> List[Tuple[str, str]]:
+    def _collect_handler_fields(self, handler: HandlerData) -> List[Tuple[str, str]]:
         """Collect all connector field IDs relevant to a handler.
 
         Returns list of (field_id, source_file) tuples.

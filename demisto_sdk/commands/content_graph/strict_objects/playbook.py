@@ -163,6 +163,11 @@ class _SubTaskPlaybook(BaseStrictModel):
     brand: str
     is_system_task: Optional[bool] = Field(None, alias="issystemtask")
     cloned_from: Optional[str] = Field(None, alias="clonedfrom")
+    ai_task_id: Optional[str] = Field(None, alias="aiTaskId")
+    display_label: Optional[str] = Field(None, alias="displayLabel")
+    is_response: Optional[bool] = Field(None, alias="isResponse")
+    requires_intervention: Optional[bool] = Field(None, alias="requiresIntervention")
+    is_sub_section: Optional[bool] = Field(None, alias="isSubSection")
 
 
 SubTaskPlaybook = create_model(
@@ -212,6 +217,7 @@ class _TaskPlaybook(BaseStrictModel):
             "section",
             "standard",
             "collection",
+            "aiTask",
         ],
     )
     default_assignee_complex: Optional[Dict] = Field(
@@ -272,6 +278,8 @@ class StrictPlaybook(BaseStrictModel):
     name: str
     description: str
     hidden: Optional[bool] = None
+    internal: Optional[bool] = None
+    source: Optional[str] = None
     deprecated: Optional[bool] = None
     start_task_id: str = Field(alias="starttaskid")
     view: str
@@ -295,3 +303,4 @@ class StrictPlaybook(BaseStrictModel):
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
     is_silent: Optional[bool] = Field(alias="issilent")
+    adopted: Optional[bool] = None

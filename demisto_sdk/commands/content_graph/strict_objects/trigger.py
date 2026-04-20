@@ -24,6 +24,8 @@ class _StrictTrigger(BaseStrictModel):
     automation_id: Optional[str]
     supportedModules: Optional[list[str]] = Field(None, alias="supportedModules")
     issilent: Optional[bool] = Field(default=False)
+    grouping_element: Optional[str] = None
+    is_auto_enabled: Optional[bool] = None
 
     @root_validator
     def validate_automation_playbook_logic(cls, values):

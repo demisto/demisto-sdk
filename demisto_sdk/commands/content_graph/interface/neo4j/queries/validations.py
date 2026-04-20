@@ -256,6 +256,52 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
     ]
 
 
+def _validate_duplicate_agentix_action_field(
+    tx: Transaction, file_paths: List[str], field_name: str
+) -> List[Tuple[str, List[str]]]:
+    """Generic validator for duplicate Agentix Action fields.
+
+    Args:
+        tx: The Neo4j transaction object.
+        file_paths: List of file paths to filter results.
+        field_name: The field to check for duplicates ('name' or 'display').
+
+    Returns:
+        List of tuples (action_id, list_of_duplicate_ids).
+    """
+    query = f"""// Returns Agentix Actions with duplicate {field_name}
+MATCH (a:{ContentType.AGENTIX_ACTION}), (b:{ContentType.AGENTIX_ACTION})
+WHERE a.{field_name} = b.{field_name}
+AND NOT coalesce(a.not_in_repository, false)
+AND NOT coalesce(b.not_in_repository, false)
+AND {is_target_available('a', 'b')}
+"""
+    if file_paths:
+        query += f"AND a.path in {file_paths}"
+    query += """
+AND elementId(a) <> elementId(b)
+RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
+"""
+    return [
+        (item.get("a_object_id"), item.get("b_object_ids"))
+        for item in run_query(tx, query)
+    ]
+
+
+def validate_multiple_agentix_actions_with_same_display_name(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, List[str]]]:
+    """Query graph to return Agentix Actions with duplicate display names."""
+    return _validate_duplicate_agentix_action_field(tx, file_paths, "display_name")
+
+
+def validate_multiple_agentix_actions_with_same_name(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[str, List[str]]]:
+    """Query graph to return Agentix Actions with duplicate names."""
+    return _validate_duplicate_agentix_action_field(tx, file_paths, "name")
+
+
 def validate_multiple_script_with_same_name(
     tx: Transaction, file_paths: List[str]
 ) -> Dict[str, str]:
@@ -581,3 +627,50 @@ def get_agentix_actions_using_content_items(
     """
     items = run_query(tx, query)
     return [item.get("agentix_action") for item in items]
+
+
+def validate_managed_playbook_dependencies(
+    tx: Transaction,
+    file_paths: List[str],
+    core_pack_ids: List[str],
+) -> Tuple[Dict[str, Neo4jRelationshipResult], Dict[str, str]]:
+    """Query graph to find playbooks in managed packs that use scripts or sub-playbooks
+    from packs that are neither core packs nor managed packs with the same source.
+
+    Args:
+        tx: The Transaction to contact the graph with.
+        file_paths: The file paths to filter playbooks. If empty, checks all playbooks.
+        core_pack_ids: List of core pack IDs.
+
+    Returns:
+        A tuple of:
+        - Dict mapping element IDs to Neo4jRelationshipResult for playbooks with invalid dependencies.
+        - Dict mapping element IDs to the pack source value.
+    """
+    query = f"""// Returns managed playbooks using scripts/sub-playbooks from packs with a different source
+MATCH (playbook:{ContentType.PLAYBOOK})-[:{RelationshipType.IN_PACK}]->(pack:{ContentType.PACK})
+WHERE pack.managed = true
+{f'AND playbook.path IN {file_paths}' if file_paths else ''}
+
+// Find dependencies via USES, excluding Commands
+MATCH (playbook)-[r:{RelationshipType.USES}]->(dep)
+WHERE NOT dep.content_type = "{ContentType.COMMAND}"
+
+// Check the dependency's pack is neither core nor same-source managed
+MATCH (dep)-[:{RelationshipType.IN_PACK}]->(dep_pack:{ContentType.PACK})
+WHERE NOT dep_pack.object_id IN {core_pack_ids}
+AND NOT (coalesce(dep_pack.managed, false) = true AND coalesce(dep_pack.source, "") = pack.source)
+
+RETURN playbook AS content_item_from, pack.source AS source, collect(r) AS relationships, collect(dep) AS nodes_to
+"""
+    results: Dict[str, Neo4jRelationshipResult] = {}
+    sources: Dict[str, str] = {}
+    for item in run_query(tx, query):
+        element_id = item.get("content_item_from").element_id
+        results[element_id] = Neo4jRelationshipResult(
+            node_from=item.get("content_item_from"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        sources[element_id] = item.get("source", "")
+    return results, sources

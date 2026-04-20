@@ -68,6 +68,8 @@ from demisto_sdk.commands.common.tools import (
     get_json,
     get_pack_name,
     get_yaml,
+    get_yml_paths_in_dir,
+    str2bool,
 )
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -278,6 +280,39 @@ def does_dict_have_alternative_key(data: dict) -> bool:
                 return True
 
     return False
+
+
+def should_skip_code_retrieval(file_path: str) -> tuple[bool, str, str]:
+    """
+    Determines if code retrieval should be skipped for a script.
+
+    Args:
+        file_path: Path to the script package directory.
+
+    Returns:
+        A tuple of (should_skip, yml_path, reason) where:
+        - should_skip: True if code retrieval should be skipped
+        - yml_path: Path to the YML file
+        - reason: The reason for skipping ('isllm', 'unified', or empty string if not skipping)
+    """
+    _, yml_path = get_yml_paths_in_dir(str(file_path))
+    if not yml_path:
+        raise Exception(
+            f"No yml files found in package path: {file_path}. "
+            "Is this really a package dir?"
+        )
+    yml_data = get_yaml(yml_path, keep_order=False)
+
+    # Check if it's an LLM script
+    if str2bool(yml_data.get("isllm", False)):
+        return True, yml_path, "isllm"
+
+    # Check if the script is already unified (has code embedded in the YML)
+    script_content = yml_data.get("script", "")
+    if isinstance(script_content, str) and script_content not in ("", "-"):
+        return True, yml_path, "unified"
+
+    return False, yml_path, ""
 
 
 def should_skip_item_by_mp(
@@ -851,12 +886,31 @@ def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
     return {id_: playbook_data}
 
 
-def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
+def get_script_data(
+    file_path, script_code=None, packs: Dict[str, Dict] = None, llm_script: bool = False
+):
     data_dictionary = get_yaml(file_path)
+    depends_on = None
+    command_to_integration = None
+    script_executions = None
+    if not llm_script:
+        if script_code is None:
+            script_code = data_dictionary.get("script", "")
+        depends_on, command_to_integration = get_depends_on(data_dictionary)
+        script_executions = sorted(
+            list(
+                set(
+                    re.findall(
+                        r"execute_?command\(['\"](\w+)['\"].*",
+                        script_code,
+                        re.IGNORECASE,
+                    )
+                )
+            )
+        )
+    else:
+        logger.info(f"Does not retrieve script for {file_path=}")
     id_ = data_dictionary.get("commonfields", {}).get("id", "-")
-    if script_code is None:
-        script_code = data_dictionary.get("script", "")
-
     name = data_dictionary.get("name", "-")
     display_name = get_display_name(file_path, data_dictionary)
     type_ = data_dictionary.get("type", "")
@@ -867,21 +921,10 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
     deprecated = data_dictionary.get("deprecated", False)
     fromversion = data_dictionary.get("fromversion")
     docker_image = data_dictionary.get("dockerimage")
-    depends_on, command_to_integration = get_depends_on(data_dictionary)
-    script_executions = sorted(
-        list(
-            set(
-                re.findall(
-                    r"execute_?command\(['\"](\w+)['\"].*", script_code, re.IGNORECASE
-                )
-            )
-        )
-    )
     pack = get_pack_name(file_path)
     marketplaces = get_item_marketplaces(
         file_path, item_data=data_dictionary, packs=packs
     )
-
     if "Packs" in file_path and not file_path.startswith("Packs"):
         file_path = file_path[file_path.index("Packs") :]
 
@@ -1836,13 +1879,21 @@ def process_script(
                     logger.info(f"adding {file_path} to id_set")
                 res.append(get_script_data(file_path, packs=packs))
         else:
+            code = None
             # package script
-            (
-                yml_path,
-                code,
-            ) = IntegrationScriptUnifier.get_script_or_integration_package_data(
-                Path(file_path)
-            )
+            skip_code, yml_path, skip_reason = should_skip_code_retrieval(file_path)
+            if not skip_code:
+                logger.info("Should retrieve script.")
+                (
+                    yml_path,
+                    code,
+                ) = IntegrationScriptUnifier.get_script_or_integration_package_data(
+                    Path(file_path)
+                )
+            elif skip_reason == "unified":
+                logger.info(
+                    f"Script {file_path} is already unified, skipping code retrieval."
+                )
             if should_skip_item_by_mp(
                 yml_path,
                 marketplace,
@@ -1853,7 +1904,17 @@ def process_script(
                 return [], excluded_items_from_id_set
             if print_logs:
                 logger.info(f"adding {file_path} to id_set")
-            res.append(get_script_data(yml_path, script_code=code, packs=packs))
+            # Skip code analysis only for LLM scripts (they have no executable code)
+            # For unified scripts, code is in the YML and will be analyzed by get_script_data
+            skip_code_analysis = skip_code and skip_reason == "isllm"
+            res.append(
+                get_script_data(
+                    yml_path,
+                    script_code=code,
+                    packs=packs,
+                    llm_script=skip_code_analysis,
+                )
+            )
     except Exception as exp:
         logger.info(f"<red>failed to process {file_path}, Error: {str(exp)}</red>")
         raise

@@ -135,6 +135,10 @@ mapping:
     type: bool
   isInternal:
     type: bool
+  internal:
+    type: bool # Hidden from UI and API
+  source:
+    type: str
   model:
     type: str
   userprompt:
@@ -143,6 +147,15 @@ mapping:
     type: str
   fewshots:
     type: str
+  promptConfig:
+    type: map
+    mapping:
+      temperature:
+        type: number
+      maxOutputTokens:
+        type: int
+      webSearch:
+        type: bool
 
   compliantpolicies:
     type: seq

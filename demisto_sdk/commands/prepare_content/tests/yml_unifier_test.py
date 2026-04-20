@@ -1324,6 +1324,7 @@ INTEGRATION_YAML = {
     "display": "test",
     "category": "test",
     "script": {"type": "python", "script": "import abc"},
+    "provider": "test",
 }
 
 PARTNER_DISPLAY_NAME = "test (Partner Contribution)"

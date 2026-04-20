@@ -44,6 +44,8 @@ from .wizard.wizard import Wizard
 from .xdrc_template.xdrc_template import XDRCTemplate
 from .xsiam_dashboard.xsiam_dashboard import XSIAMDashboard
 from .xsiam_report.xsiam_report import XSIAMReport
+from .agentix_agent.agentix_agent import AgentixAgent
+from .agentix_action.agentix_action import AgentixAction
 
 __all__ = [
     name

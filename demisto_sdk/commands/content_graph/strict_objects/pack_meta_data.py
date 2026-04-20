@@ -1,7 +1,7 @@
 from typing import List, Optional, Union
 
 from packaging.version import Version
-from pydantic import Field, validator
+from pydantic import Field, root_validator, validator
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
@@ -26,6 +26,23 @@ class StrictPackMetadata(BaseStrictModel):
         """
         Version(value)
         return value
+
+    @root_validator
+    def validate_managed_pack_has_source(cls, values):
+        """
+        Validator ensures that packs with managed: true have a non-empty source field.
+        This validation will be shown as a structure pydantic error (ST110).
+        """
+        managed = values.get("managed", False)
+        source = values.get("source", "")
+
+        if managed and not source:
+            raise ValueError(
+                "Pack has 'managed: true' but is missing a non-empty 'source' field. "
+                "Managed packs must specify their source to maintain proper attribution and tracking."
+            )
+
+        return values
 
     name: str
     display_name: Optional[str] = None
@@ -83,3 +100,5 @@ class StrictPackMetadata(BaseStrictModel):
     disable_monthly: Optional[bool] = Field(None, alias="disableMonthly")
     content_commit_hash: Optional[str] = Field(None, alias="contentCommitHash")
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    source: Optional[str] = Field("", alias="source")
+    managed: Optional[bool] = Field(False, alias="managed")

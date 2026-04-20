@@ -34,6 +34,9 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
     Output,
 )
+from demisto_sdk.commands.prepare_content.preparers.marketplace_agentic_assistant_preparer import (
+    MarketplaceAgenticAssistantPreparer,
+)
 
 
 class Parameter(BaseModel):
@@ -51,6 +54,7 @@ class Parameter(BaseModel):
     hiddenusername: Optional[bool] = None
     hiddenpassword: Optional[bool] = None
     fromlicense: Optional[str] = None
+    supportedModules: Optional[List[str]] = None
 
 
 class IntegrationOutput(Output):
@@ -110,7 +114,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = Field(False, alias="isfetchassets")
-    is_mcp: Optional[bool] = Field(None, alias="ismcp")
+    mcp: Optional[bool] = Field(None, alias="mcp")
     supports_quick_actions: bool = Field(False, alias="supportsquickactions")
     is_fetch_events_and_assets: bool = False
     is_fetch_samples: bool = False
@@ -120,6 +124,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_mappable: bool = False
     long_running: bool = False
     category: str
+    internal: bool = Field(False)
+    source: str = Field("")
+    provider: Optional[str] = None
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
     is_cloud_provider_integration: bool = Field(
@@ -182,6 +189,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "is_fetch_events": True,
                     "is_fetch_assets": True,
                     "is_beta": True,
+                    "internal": True,
                 }
             )
         )
@@ -195,6 +203,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         data = MarketplaceCommandsAvailabilityPreparer.prepare(
             data, current_marketplace
         )
+        data = MarketplaceAgenticAssistantPreparer.prepare(data, current_marketplace)
 
         if supported_native_images := self.get_supported_native_images(
             ignore_native_image=kwargs.get("ignore_native_image") or False,

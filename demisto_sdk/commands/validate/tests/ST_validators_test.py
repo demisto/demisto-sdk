@@ -287,7 +287,7 @@ def test_invalid_section_order(pack: Pack):
     assert results[0].message == (
         "Structure error (type_error.enum) in field sectionorder,1 of integration_0.yml: "
         "value is not a valid enumeration member; permitted: "
-        "'Connect', 'Collect', 'Optimize', 'Mirroring', 'Result'"
+        "'Connect', 'Collect', 'Optimize', 'Mirroring', 'Result', 'Agentic Assistant'"
     )
 
 
@@ -473,7 +473,7 @@ class TestST111:
         assert len(results) == 1
         assert results[0].message == (
             "Missing 'sectionorder' key. Please add 'sectionorder' (lowercase) to the top of your YAML file and specify the order of the "
-            "Connect, Collect, Optimize, Mirroring, Result sections (at least one is required)."
+            "Connect, Collect, Optimize, Mirroring, Result, Agentic Assistant sections (at least one is required)."
         )
 
     def test_invalid_section(self):
@@ -885,3 +885,67 @@ def test_IsSupportedModulesSubsetOfPack_inherit_pack_when_missing():
             [playbook]
         )
         assert len(results) == 0
+
+
+def test_SchemaValidator_managed_pack_with_source(pack: Pack):
+    """
+    Given:
+        - A pack with 'managed: true' and a non-empty 'source' field.
+    When:
+        - Parsing the pack (ST110 structure validation).
+    Then:
+        - The pack should parse successfully without structure errors.
+    """
+    pack.pack_metadata.update({"managed": True, "source": "my-source"})
+    pack_parser = PackParser(path=pack.path)
+
+    assert len(pack_parser.structure_errors) == 0
+
+
+def test_SchemaValidator_managed_pack_without_source(pack: Pack):
+    """
+    Given:
+        - A pack with 'managed: true' but missing the 'source' field.
+    When:
+        - Parsing the pack (ST110 structure validation).
+    Then:
+        - The pack should have a structure error about missing source.
+    """
+    pack.pack_metadata.update({"managed": True})
+    pack_parser = PackParser(path=pack.path)
+
+    assert len(pack_parser.structure_errors) == 1
+    assert "managed: true" in pack_parser.structure_errors[0].error_message
+    assert "source" in pack_parser.structure_errors[0].error_message
+
+
+def test_SchemaValidator_managed_pack_with_empty_source(pack: Pack):
+    """
+    Given:
+        - A pack with 'managed: true' but an empty 'source' field.
+    When:
+        - Parsing the pack (ST110 structure validation).
+    Then:
+        - The pack should have a structure error about missing source.
+    """
+    pack.pack_metadata.update({"managed": True, "source": ""})
+    pack_parser = PackParser(path=pack.path)
+
+    assert len(pack_parser.structure_errors) == 1
+    assert "managed: true" in pack_parser.structure_errors[0].error_message
+    assert "source" in pack_parser.structure_errors[0].error_message
+
+
+def test_SchemaValidator_not_managed_pack(pack: Pack):
+    """
+    Given:
+        - A pack with 'managed: false' (or missing managed field).
+    When:
+        - Parsing the pack (ST110 structure validation).
+    Then:
+        - The pack should parse successfully regardless of the source field.
+    """
+    pack.pack_metadata.update({"managed": False})
+    pack_parser = PackParser(path=pack.path)
+
+    assert len(pack_parser.structure_errors) == 0

@@ -338,7 +338,7 @@ def run_new_validation(file_path, execution_mode, **kwargs):
             execution_mode=execution_mode,
         )
     else:
-        initializer = Initializer(
+        initializer = Initializer(  # type: ignore[assignment]
             staged=kwargs["staged"],
             committed_only=kwargs["post_commit"],
             prev_ver=kwargs["prev_ver"],

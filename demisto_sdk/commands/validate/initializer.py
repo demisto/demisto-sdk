@@ -978,7 +978,7 @@ class ConnectorAwareInitializer(Initializer):
                 # Skip if already in the set
                 if connector_dir.name in existing_connector_ids:
                     continue
-                connector = BaseContent.from_path(connector_yaml)
+                connector = BaseContent.from_path(connector_yaml)  # type: ignore[assignment]
                 if not isinstance(connector, Connector) or not connector.xsoar_handlers:
                     continue
                 for ref_id in connector.referenced_integration_ids:

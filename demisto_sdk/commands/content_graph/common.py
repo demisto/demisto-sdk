@@ -1,5 +1,6 @@
 import os
 import re
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, NamedTuple, Optional, Set
 
@@ -19,7 +20,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_json,
@@ -449,7 +449,7 @@ class Nodes(dict):
         self.add_batch(args)  # type: ignore[arg-type]
 
     def add(self, **kwargs):
-        content_type: ContentType = ContentType(kwargs.get("content_type"))
+        content_type: ContentType = ContentType(kwargs["content_type"])
         if content_type not in self.keys():
             self.__setitem__(content_type, [])
         self.__getitem__(content_type).append(kwargs)

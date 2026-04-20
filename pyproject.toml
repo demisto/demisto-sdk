@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.mypy]
 check_untyped_defs = true
 ignore_missing_imports = true
-python_version = "3.9"
+python_version = "3.11"
 show_error_codes = true
 follow_imports = "silent"
 pretty = true
@@ -23,10 +23,10 @@ classifiers = [
   'Intended Audience :: Developers',
   'Natural Language :: English',
   'License :: OSI Approved :: MIT License',
-  'Programming Language :: Python :: 3.9',
-  'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.13',
+  'Programming Language :: Python :: 3.14',
   'Programming Language :: Python :: Implementation :: CPython'
 ]
 exclude = [
@@ -39,8 +39,9 @@ exclude = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.11,<3.15"
 autopep8 = "^2.0.4"
+click = "==8.1.8" # In version 8.2 there a BC they remove the mix_stderr parameter
 bandit = "^1.7.4"
 mypy = "^0.982"
 pylint = "^3.3.2"
@@ -51,7 +52,7 @@ coloredlogs = "^15.0.1"
 configparser = "^5.2.0"
 coverage = "^7.2.1,<7.4" # in 7.4 we get empty results
 decorator = "^5.1.1"
-demisto-py = "^3.2.21"
+demisto-py = {branch = "sk_demisto_py_new_python", git = "https://github.com/demisto/demisto-py.git"}
 dictor = "^0.1.9"
 docker = "^7.1.0"
 flatten-dict = "^0.4.2"
@@ -61,7 +62,7 @@ inflection = "^0.5.1"
 jsonschema = "^4.4.0"
 mergedeep = "^1.3.4"
 networkx = "^2.7.1"
-nltk = "==3.9.1"
+nltk = "^3.9.1"
 prettytable = "^3.2.0"
 pykwalify = "^1.8.0"
 pyspellchecker = "^0.6.3"
@@ -96,22 +97,20 @@ more-itertools = "^10.0.0"
 junitparser = "^3.1.0"
 google-cloud-secret-manager = "^2.18.3"
 json5 = "^0.9.14"
-klara = {version = "^0.6.3", optional = true}
 typing-extensions = "^4.1.1" # not a mypy types- dependency
 pre-commit = "^3.5.0"
-lxml = "^5.0.0"
+lxml = "^6.0.1"
 uv = "^0.1.5"
 toml = "^0.10.2"
 werkzeug = "^3.1.3" # Added as mitmproxy8 -> flask<2.1
 loguru = "^0.7.2"
 pygithub = "^2.2.0"
 setuptools = ">=80.9.0"
-python-gitlab = "^3.0.0" # import gitlab
+python-gitlab = "^8.0.0" # import gitlab
 jira = "^3.8.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]
-generate-unit-tests = ["klara"]
 
 [tool.poetry.group.dev.dependencies]
 mock = "^4.0.3"
@@ -157,11 +156,10 @@ validate-validation-config-file = "demisto_sdk.scripts.validate_validation_confi
 exclude = [
   "demisto_sdk/tests/test_files/",
   "demisto_sdk/commands/init/tests/test_files",
-  "demisto_sdk/commands/generate_unit_tests/tests/test_files/",
   "demisto_sdk/commands/init/templates",
   "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py"
 ]
-target-version = "py39"
+target-version = "py311"
 
 [tool.ruff.lint]
 ignore = [
@@ -199,7 +197,6 @@ logger-objects = ["demisto_sdk.commands.common.logger.logger"]
 "orjson".msg = "use JSON_Handler instead"
 "packaging.version.LooseVersion".msg = "Use packaging.version.Version"
 "ruamel.yaml".msg = "use YAML_Handler instead"
-"str.StrEnum".msg = "Import from demisto_sdk.commands.common.StrEnum for <3.11 compatability"
 "ujson".msg = "use JSON_Handler"
 
 [tool.ruff.lint.mccabe]

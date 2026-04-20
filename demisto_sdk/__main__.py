@@ -53,12 +53,6 @@ def main(
     sdk.configuration = Configuration()  # Initialize the configuration
     ctx.obj = sdk  # Pass sdk instance to context
     load_dotenv(CONTENT_PATH / ".env", override=True)
-    if platform.python_version_tuple()[:2] == ("3", "9"):
-        message = typer.style(
-            "Warning: Demisto-SDK will soon stop supporting Python 3.9. Please update your python environment.",
-            fg=typer.colors.RED,
-        )
-        typer.echo(message)
 
     if platform.system() == "Windows":
         typer.echo(
@@ -480,16 +474,6 @@ def register_commands(_args: list[str] = []):  # noqa: C901
         app.command(
             name="merge-id-sets", help="Deprecated. Merge two id_sets.", hidden=True
         )(merge_id_sets)
-
-    if command_name == "generate-unit-tests" or register_all:
-        from demisto_sdk.commands.generate_unit_tests.generate_unit_tests_setup import (
-            generate_unit_tests,
-        )
-
-        app.command(
-            name="generate-unit-tests",
-            help="This command generates unit tests automatically from an integration's Python code.",
-        )(generate_unit_tests)
 
     if command_name == "generate-test-playbook" or register_all:
         from demisto_sdk.commands.generate_test_playbook.generate_test_playbook_setup import (

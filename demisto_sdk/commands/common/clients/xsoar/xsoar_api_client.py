@@ -3,6 +3,7 @@ import re
 import socket
 import time
 import urllib.parse
+from enum import StrEnum
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
@@ -36,7 +37,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import retry
 
 

@@ -1,0 +1,4 @@
+changes:
+- description: Remove agentix_xsiam references from demisto-sdk
+  type: internal
+pr_number: 5323

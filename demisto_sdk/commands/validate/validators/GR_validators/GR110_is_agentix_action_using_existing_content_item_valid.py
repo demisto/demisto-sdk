@@ -108,7 +108,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
                 )
                 continue
 
-            if action_type in {"internal", "prompt"}:
+            if action_type == "internal":
                 continue
 
             item_name: str = (
@@ -189,7 +189,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
         """
         # Check in changed items first
         for item in changed_underlying:
-            if action_type in {"script", "playbook"} and item.object_id == item_name:
+            if action_type in {"script", "playbook", "prompt"} and item.object_id == item_name:
                 return item
             elif action_type == "command" and isinstance(item, Integration):
                 commands = item.data.get("script", {}).get("commands", [])
@@ -207,7 +207,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
                                 == action.underlying_content_item_id
                             ):
                                 return integration
-            else:  # script/playbook
+            else:  # script/playbook/prompt
                 return graph_result[0] if graph_result else None
 
         return None

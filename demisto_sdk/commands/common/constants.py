@@ -2038,7 +2038,6 @@ class PlatformSupportedModules(StrEnum):
     ASM = "asm"
     XSIAM = "xsiam"
     EXPOSURE_MANAGEMENT = "exposure_management"
-    AGENTIX_XSIAM = "agentix_xsiam"
     TIM = "tim"
     EMAIL_SECURITY = "email_security"
 

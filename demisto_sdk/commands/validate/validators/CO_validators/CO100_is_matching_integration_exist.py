@@ -1,16 +1,7 @@
-"""CO100 — IsMatchingIntegrationExist
-
-Validates that for each XSOAR handler in a connector, the referenced
-``xsoar-integration-id`` and ``xsoar-pack-id`` from ``triggering.labels``
-actually exist in the content repo graph.
-"""
-
 from __future__ import annotations
 
-from abc import ABC
 from typing import Iterable, List
 
-from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.connector import Connector
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -20,83 +11,61 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Connector
 
 
-class IsMatchingIntegrationExistValidator(BaseValidator[ContentTypes], ABC):
+class IsMatchingIntegrationExistValidator(BaseValidator[ContentTypes]):
     error_code = "CO100"
     description = (
-        "Validates that the handler's matching pack and integration ID "
-        "exist in the content repository."
+        "Validates that the connector's XSOAR handlers reference an integration "
+        "that exists in the content repository."
     )
     rationale = (
-        "Each XSOAR handler in a connector references a pack and integration "
-        "via triggering.labels. These must exist in the content repo to ensure "
-        "the connector can be properly linked."
+        "Each XSOAR handler in a connector references an integration "
+        "via triggering.labels. The ConnectorAwareInitializer resolves these "
+        "references and populates related_content. If it is None, the "
+        "referenced integration does not exist."
     )
     error_message = (
-        "Connector '{0}' has handler '{1}' referencing non-existent content: {2}"
+        "Connector '{connector_id}' has XSOAR handlers referencing "
+        "integrations that could not be found in the content repo: {handler_details}"
     )
     related_field = "triggering.labels"
     is_auto_fixable = False
 
-    def obtain_invalid_content_items_using_graph(
+    def obtain_invalid_content_items(
         self,
         content_items: Iterable[ContentTypes],
-        validate_all_files: bool = False,
     ) -> List[ValidationResult]:
-        """Check that referenced integrations and packs exist in the graph.
+        """Check that each connector has a matched integration via related_content.
 
-        For each XSOAR handler in each connector:
-        - If ``xsoar-integration-id`` is set, verify an Integration with that
-          display name exists.
-        - If ``xsoar-pack-id`` is set, verify a Pack with that object_id exists.
+        The ConnectorAwareInitializer already resolved the integration references.
+        If ``connector.related_content`` is None, the integration was not found.
         """
         results: List[ValidationResult] = []
 
         for connector in content_items:
-            for handler in connector.handlers:
-                if not handler.is_xsoar:
-                    continue
+            if not connector.xsoar_handlers:
+                continue
 
-                missing: List[str] = []
+            if connector.related_content is not None:
+                # Integration was found and linked -- valid
+                continue
 
-                # Check integration reference
-                if integration_id := handler.xsoar_integration_id:
-                    integrations = self.graph_interface.search(
-                        content_type=ContentType.INTEGRATION,
-                        object_id=integration_id,
+            # Collect handler ID -> integration ID pairs for the error message
+            handler_details_parts = [
+                f"handler '{h.id}' -> integration-id '{h.xsoar_integration_id}'"
+                for h in connector.xsoar_handlers
+                if h.xsoar_integration_id
+            ]
+
+            if handler_details_parts:
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
+                            connector_id=connector.object_id,
+                            handler_details="\n".join(handler_details_parts),
+                        ),
+                        content_object=connector,
                     )
-                    if not integrations:
-                        # Also try searching by display name since
-                        # xsoar-integration-id may be the display name
-                        integrations = self.graph_interface.search(
-                            content_type=ContentType.INTEGRATION,
-                            name=integration_id,
-                        )
-                    if not integrations:
-                        missing.append(
-                            f"Integration '{integration_id}' "
-                            f"(from xsoar-integration-id)"
-                        )
-
-                # Check pack reference
-                if pack_id := handler.xsoar_pack_id:
-                    packs = self.graph_interface.search(
-                        content_type=ContentType.PACK,
-                        object_id=pack_id,
-                    )
-                    if not packs:
-                        missing.append(f"Pack '{pack_id}' (from xsoar-pack-id)")
-
-                if missing:
-                    results.append(
-                        ValidationResult(
-                            validator=self,
-                            message=self.error_message.format(
-                                connector.object_id,
-                                handler.id,
-                                ", ".join(missing),
-                            ),
-                            content_object=connector,
-                        )
-                    )
+                )
 
         return results

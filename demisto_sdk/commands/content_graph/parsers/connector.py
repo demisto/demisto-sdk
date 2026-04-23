@@ -485,7 +485,7 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             if gen_cfg:
                 for fg in gen_cfg.get("configurations", []):
                     for f in fg.get("fields", []):
-                        fields.append((f.get("id", ""), "capabilities.yaml"))
+                        fields.append((f.get("id", ""), "capabilities.yaml"))  # type:ignore
 
         # 4. Configurations for this handler's capabilities (already unified in CapabilityData)
         handler_cap_ids: Set[str] = {hc.id for hc in handler.capabilities}

@@ -622,11 +622,22 @@ class Initializer:
             content_objects_to_run_with_packs.add(content_object)
         return content_objects_to_run_with_packs
 
-    def get_files_using_git(self) -> Tuple[Set[BaseContent], Set[Path], Set[Path]]:
-        """Return all files added/changed/deleted.
+    def _collect_git_statuses(
+        self,
+        path_filter: Optional[Any] = None,
+    ) -> Dict[Union[Path, Tuple[Path, Path]], Union[GitStatuses, None]]:
+        """Collect git-changed files, build status dict, and optionally filter paths.
+
+        This is the shared logic between ``get_files_using_git`` and
+        ``ConnectorAwareInitializer.gather_objects_to_run_on``.
+
+        Args:
+            path_filter: Optional callable ``(Path) -> bool``.  When provided,
+                only paths for which the callable returns True are kept before
+                the expensive parsing step.
 
         Returns:
-            Tuple[Set[BaseContent], Set[Path], Set[Path]]: The sets of all the successful casts, the sets of all failed casts, and the set of non content items.
+            A statuses dict ready to be passed to ``git_paths_to_basecontent_set``.
         """
         self.validate_git_installed()
         self.set_prev_ver()
@@ -639,44 +650,52 @@ class Initializer:
             renamed_files,
             deleted_files,
         ) = self.collect_files_to_run(self.file_path)
+
+        # Optional early path filtering to avoid parsing irrelevant files
+        if path_filter is not None:
+            modified_files = {f for f in modified_files if path_filter(f)}
+            added_files = {f for f in added_files if path_filter(f)}
+            renamed_files = {
+                (old, new) for old, new in renamed_files if path_filter(new)
+            }
+            deleted_files = {f for f in deleted_files if path_filter(f)}
+
         file_by_status_dict: Dict[Path, GitStatuses] = {
             file: GitStatuses.MODIFIED for file in modified_files
         }
         file_by_status_dict.update({file: GitStatuses.ADDED for file in added_files})
-        # Adding only the new path with the renamed status.
         file_by_status_dict.update(
             {new_path: GitStatuses.RENAMED for _, new_path in renamed_files}
         )
         file_by_status_dict.update(
             {file: GitStatuses.DELETED for file in deleted_files}
         )
-        # Keeping a mapping dictionary between the new and the old path.
-        renamed_files = {new_path: old_path for old_path, new_path in renamed_files}
-        # Calculating the main file for each of changed files and allocate a status for it.
+        renamed_map = {new_path: old_path for old_path, new_path in renamed_files}
         statuses_dict: Dict[Path, Union[GitStatuses, None]] = self.get_items_status(
             file_by_status_dict
         )
-        # Updating the statuses dict with the paths tuple of the renamed files.
-        statuses_dict_with_renamed_files_tuple: Dict[
+        statuses_with_renamed: Dict[
             Union[Path, Tuple[Path, Path]], Union[GitStatuses, None]
         ] = {}
         for path, status in statuses_dict.items():
             if status == GitStatuses.RENAMED:
-                statuses_dict_with_renamed_files_tuple[(path, renamed_files[path])] = (
-                    status
-                )
+                statuses_with_renamed[(path, renamed_map[path])] = status
             else:
-                statuses_dict_with_renamed_files_tuple[path] = status
-        # Parsing the files.
-        basecontent_with_path_set: Set[BaseContent] = set()
-        invalid_content_items: Set[Path] = set()
+                statuses_with_renamed[path] = status
+        return statuses_with_renamed
+
+    def get_files_using_git(self) -> Tuple[Set[BaseContent], Set[Path], Set[Path]]:
+        """Return all files added/changed/deleted.
+
+        Returns:
+            Tuple[Set[BaseContent], Set[Path], Set[Path]]: The sets of all the successful casts, the sets of all failed casts, and the set of non content items.
+        """
+        statuses = self._collect_git_statuses()
         (
             basecontent_with_path_set,
             invalid_content_items,
             non_content_items,
-        ) = self.git_paths_to_basecontent_set(
-            statuses_dict_with_renamed_files_tuple, prev_ver=self.prev_ver
-        )
+        ) = self.git_paths_to_basecontent_set(statuses, prev_ver=self.prev_ver)
         return basecontent_with_path_set, invalid_content_items, non_content_items
 
     def paths_to_basecontent_set(
@@ -1146,18 +1165,40 @@ class ConnectorAwareInitializer(Initializer):
         super().__init__(**kwargs)
         self.connectors_path: Path = Path(CONTENT_PATH) / "connectors"
 
+    @staticmethod
+    def _is_relevant_path(path: Path) -> bool:
+        """Return True if the path is an Integration or Connector item."""
+        path_str = str(path)
+        return (
+            f"/{INTEGRATIONS_DIR}/" in path_str
+            or path_str.startswith(f"{INTEGRATIONS_DIR}/")
+            or "connectors/" in path_str
+        )
+
     def gather_objects_to_run_on(self) -> Tuple[Set[BaseContent], Set[Path]]:
         from demisto_sdk.commands.content_graph.objects.connector import Connector
         from demisto_sdk.commands.content_graph.objects.integration import Integration
 
-        # 1. Run normal flow to get all content objects
-        all_objects, invalid_items = super().gather_objects_to_run_on()
+        # 1. Collect and parse only relevant paths (Integrations + connectors)
+        if self.execution_mode == ExecutionMode.USE_GIT:
+            statuses = self._collect_git_statuses(path_filter=self._is_relevant_path)
+            all_objects, invalid_items, _ = self.git_paths_to_basecontent_set(
+                statuses, prev_ver=self.prev_ver
+            )
+        elif self.execution_mode == ExecutionMode.SPECIFIC_FILES:
+            loaded = self.load_files(self.file_path.split(","))
+            filtered_paths = {p for p in loaded if self._is_relevant_path(p)}
+            all_objects, invalid_items, _ = self.paths_to_basecontent_set(
+                filtered_paths
+            )
+        else:
+            # ALL_FILES or fallback -- use parent as-is
+            all_objects, invalid_items = super().gather_objects_to_run_on()
 
-        # 2. Filter to only Integration and Connector objects
+        # 2. Post-filter: keep only Integration and Connector objects
         filtered: Set[BaseContent] = set()
         for obj in all_objects:
             if isinstance(obj, Integration):
-                # Only keep platform-supported integrations
                 if MarketplaceVersions.PLATFORM in obj.marketplaces:
                     filtered.add(obj)
                 else:
@@ -1166,7 +1207,6 @@ class ConnectorAwareInitializer(Initializer):
                         f"not in PLATFORM marketplace."
                     )
             elif isinstance(obj, Connector):
-                # Only keep connectors with at least one XSOAR handler
                 if obj.xsoar_handlers:
                     filtered.add(obj)
                 else:
@@ -1174,7 +1214,6 @@ class ConnectorAwareInitializer(Initializer):
                         f"Skipping connector '{obj.object_id}' -- "
                         f"no XSOAR handlers."
                     )
-            # Skip everything else (packs, scripts, playbooks, etc.)
 
         # 3. Cross-match and expand with missing counterparts
         filtered = self._cross_match_and_expand(filtered)

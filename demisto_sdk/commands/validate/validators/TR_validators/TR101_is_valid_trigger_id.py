@@ -9,7 +9,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = Union[Trigger]
+ContentTypes = Trigger
 
 # Regex: only hex characters (0-9, a-f, A-F), non-empty
 VALID_TRIGGER_ID_PATTERN = re.compile(r"^[0-9a-fA-F]+$")

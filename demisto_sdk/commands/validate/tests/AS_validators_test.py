@@ -1324,6 +1324,7 @@ def test_SubplaybookMustBeInternalValidator_fix():
     # Verify internal is now True
     assert playbook.internal is True
 
+
 def _make_display_label_tasks(task_overrides):
     """Build a minimal tasks dict for AS109 tests.
 

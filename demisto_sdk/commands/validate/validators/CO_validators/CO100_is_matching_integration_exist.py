@@ -14,14 +14,14 @@ ContentTypes = Connector
 class IsMatchingIntegrationExistValidator(BaseValidator[ContentTypes]):
     error_code = "CO100"
     description = (
-        "Validates that the connector's XSOAR handlers reference an integration "
-        "that exists in the content repository."
+        "Validates that each XSOAR handler in a connector references an "
+        "integration that exists in the content repository."
     )
     rationale = (
-        "Each XSOAR handler in a connector references an integration "
-        "via triggering.labels. The ConnectorAwareInitializer resolves these "
-        "references and populates related_content. If it is None, the "
-        "referenced integration does not exist."
+        "Each XSOAR handler references an integration via triggering.labels. "
+        "The ConnectorAwareInitializer resolves these references and populates "
+        "handler.related_integration. If it is None, the referenced integration "
+        "does not exist."
     )
     error_message = (
         "Connector '{connector_id}' has XSOAR handlers referencing "
@@ -34,10 +34,10 @@ class IsMatchingIntegrationExistValidator(BaseValidator[ContentTypes]):
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
-        """Check that each connector has a matched integration via related_content.
+        """Check that each XSOAR handler has a matched integration.
 
         The ConnectorAwareInitializer already resolved the integration references.
-        If ``connector.related_content`` is None, the integration was not found.
+        If ``handler.related_integration`` is None, the integration was not found.
         """
         results: List[ValidationResult] = []
 
@@ -45,24 +45,20 @@ class IsMatchingIntegrationExistValidator(BaseValidator[ContentTypes]):
             if not connector.xsoar_handlers:
                 continue
 
-            if connector.related_content is not None:
-                # Integration was found and linked -- valid
-                continue
-
-            # Collect handler ID -> integration ID pairs for the error message
-            handler_details_parts = [
+            # Collect unresolved handlers
+            unresolved_parts = [
                 f"handler '{h.id}' -> integration-id '{h.xsoar_integration_id}'"
                 for h in connector.xsoar_handlers
-                if h.xsoar_integration_id
+                if h.xsoar_integration_id and h.related_integration is None
             ]
 
-            if handler_details_parts:
+            if unresolved_parts:
                 results.append(
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
                             connector_id=connector.object_id,
-                            handler_details="\n".join(handler_details_parts),
+                            handler_details="\n".join(unresolved_parts),
                         ),
                         content_object=connector,
                     )

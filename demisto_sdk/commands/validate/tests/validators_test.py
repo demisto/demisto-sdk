@@ -990,6 +990,7 @@ def _mock_handler(
     handler.id = handler_id
     handler.is_xsoar = is_xsoar
     handler.xsoar_integration_id = integration_id
+    handler.related_integration = None
     handler.module = "xsoar" if is_xsoar else "cwp"
     return handler
 
@@ -998,7 +999,7 @@ def _mock_connector(
     object_id: str = "salesforce",
     handlers: Optional[List[Mock]] = None,
 ) -> Mock:
-    """Create a mock Connector that passes isinstance checks via content_type."""
+    """Create a mock Connector that passes isinstance checks via spec."""
     from demisto_sdk.commands.content_graph.objects.connector import Connector
 
     connector = Mock(spec=Connector)
@@ -1006,7 +1007,6 @@ def _mock_connector(
     all_handlers = handlers or [_mock_handler()]
     connector.handlers = all_handlers
     connector.xsoar_handlers = [h for h in all_handlers if h.is_xsoar]
-    connector.related_content = None
     connector.referenced_integration_ids = [
         h.xsoar_integration_id
         for h in all_handlers
@@ -1021,28 +1021,29 @@ def _mock_integration(
     name: str = "Salesforce",
     marketplaces: Optional[List[MarketplaceVersions]] = None,
 ) -> Mock:
-    """Create a mock Integration that passes isinstance checks via content_type."""
+    """Create a mock Integration that passes isinstance checks via spec."""
     integration = Mock(spec=Integration)
     integration.object_id = object_id
     integration.name = name
     integration.marketplaces = marketplaces or [MarketplaceVersions.PLATFORM]
-    integration.related_content = []
+    integration.related_content = None
     return integration
 
 
 class TestConnectorAwareInitializerCrossMatch:
-    """Tests for ConnectorAwareInitializer._cross_match_and_expand."""
+    """Tests for ConnectorAwareInitializer._cross_match_and_expand (handler-level)."""
 
-    def test_direct_match_links_connector_and_integration(self):
+    def test_direct_match_links_handler_and_integration(self):
         """
         Given: Both a connector and its referenced integration in the objects set.
         When: _cross_match_and_expand is called.
-        Then: connector.related_content points to the integration,
-              integration.related_content contains the connector,
+        Then: handler.related_integration points to the integration,
+              integration.related_content points to the handler,
               and graph search is NOT invoked.
         """
         integration = _mock_integration()
-        connector = _mock_connector()
+        handler = _mock_handler()
+        connector = _mock_connector(handlers=[handler])
 
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
         initializer.connectors_path = Path("/fake/connectors")
@@ -1053,15 +1054,15 @@ class TestConnectorAwareInitializerCrossMatch:
             result = initializer._cross_match_and_expand({integration, connector})
             mock_graph.assert_not_called()
 
-        assert connector.related_content == integration
-        assert connector in integration.related_content
+        assert handler.related_integration == integration
+        assert integration.related_content == handler
 
     def test_unrelated_integration_stays_unmatched(self):
         """
-        Given: An integration that no connector references.
+        Given: An integration that no connector handler references.
         When: _cross_match_and_expand is called.
         Then: Integration remains in the result, no connector is added,
-              and graph search is NOT invoked (no unmatched connectors).
+              and graph search is NOT invoked (no unmatched handlers).
         """
         integration = _mock_integration(object_id="UnrelatedInt", name="UnrelatedInt")
 
@@ -1082,12 +1083,12 @@ class TestConnectorAwareInitializerCrossMatch:
         Given: An integration in the objects set, and a connector directory on disk
                whose handler references that integration.
         When: _cross_match_and_expand is called.
-        Then: Phase 2a filesystem scan discovers the connector and adds it to the set.
+        Then: Phase 2a filesystem scan discovers the connector and links handler.
         """
         integration = _mock_integration()
-        discovered_connector = _mock_connector()
+        discovered_handler = _mock_handler()
+        discovered_connector = _mock_connector(handlers=[discovered_handler])
 
-        # Create a fake connector directory
         connector_dir = tmp_path / "salesforce"
         connector_dir.mkdir()
         (connector_dir / "connector.yaml").write_text("id: salesforce\n")
@@ -1102,16 +1103,17 @@ class TestConnectorAwareInitializerCrossMatch:
             result = initializer._cross_match_and_expand({integration})
 
         assert discovered_connector in result
-        assert discovered_connector.related_content == integration
+        assert discovered_handler.related_integration == integration
 
-    def test_graph_search_for_unmatched_connector(self):
+    def test_graph_search_for_unmatched_handler(self):
         """
-        Given: A connector in the objects set whose referenced integration is NOT
+        Given: A connector with a handler whose referenced integration is NOT
                in the set and NOT on the filesystem.
         When: _cross_match_and_expand is called.
         Then: Phase 2b graph search is invoked for the integration ID.
         """
-        connector = _mock_connector()
+        handler = _mock_handler()
+        connector = _mock_connector(handlers=[handler])
         graph_integration = _mock_integration()
 
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
@@ -1125,22 +1127,25 @@ class TestConnectorAwareInitializerCrossMatch:
             result = initializer._cross_match_and_expand({connector})
             mock_graph.assert_called_once_with("Salesforce")
 
-        assert connector.related_content == graph_integration
+        assert handler.related_integration == graph_integration
         assert graph_integration in result
 
-    def test_multiple_xsoar_handlers_first_match_wins(self):
+    def test_multiple_handlers_each_matched_independently(self):
         """
         Given: A connector with 2 XSOAR handlers referencing different integrations,
-               only the first integration is in the objects set.
+               both integrations are in the objects set.
         When: _cross_match_and_expand is called.
-        Then: Connector is matched to the first found integration.
+        Then: Each handler is matched to its own integration independently.
         """
         handler1 = _mock_handler(handler_id="xsoar_sf", integration_id="Salesforce")
         handler2 = _mock_handler(
             handler_id="xsoar_sf_iam", integration_id="SalesforceIAM"
         )
         connector = _mock_connector(handlers=[handler1, handler2])
-        integration = _mock_integration()
+        integration1 = _mock_integration(object_id="Salesforce", name="Salesforce")
+        integration2 = _mock_integration(
+            object_id="SalesforceIAM", name="SalesforceIAM"
+        )
 
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
         initializer.connectors_path = Path("/fake/connectors")
@@ -1148,9 +1153,13 @@ class TestConnectorAwareInitializerCrossMatch:
         with patch.object(
             ConnectorAwareInitializer, "_graph_search_integration"
         ) as mock_graph:
-            result = initializer._cross_match_and_expand({integration, connector})
+            result = initializer._cross_match_and_expand(
+                {integration1, integration2, connector}
+            )
+            mock_graph.assert_not_called()
 
-        assert connector.related_content == integration
+        assert handler1.related_integration == integration1
+        assert handler2.related_integration == integration2
 
 
 class TestConnectorAwareInitializerGatherObjects:

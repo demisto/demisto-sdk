@@ -176,8 +176,7 @@ def validate(
     run_connectors_validation: bool = typer.Option(
         False,
         "--run-connectors-validation",
-        help="Use ConnectorAwareInitializer to parse only integrations and connectors, "
-        "match them, and enable connector-specific validators (CO category).",
+        help="Parse only integrations and connectors and match them for easier connector-specific validators (CO category).",
     ),
     create_graph_from_scratch: bool = typer.Option(
         False,

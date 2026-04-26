@@ -256,6 +256,9 @@ class HandlerData(BaseModel):
     handler_dir_name: str  # directory name for path resolution
     resolved_params: List[ResolvedParamMapping] = []  # built by parser
 
+    # Cross-link to matched Integration (set by ConnectorAwareInitializer)
+    related_integration: Optional[Any] = None
+
     @property
     def module(self) -> Optional[str]:
         return self.metadata.get("module")
@@ -331,9 +334,6 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
     capability_handler_map: Dict[str, CapabilityHandlerMapping] = Field(
         default_factory=dict, exclude=True
     )
-
-    # === Cross-link to matched Integration (set by ConnectorAwareInitializer) ===
-    related_content: Optional[Any] = Field(None, exclude=True)
 
     # === Derived properties ===
 

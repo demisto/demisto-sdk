@@ -678,6 +678,7 @@ class Initializer:
         statuses_dict: Dict[Path, Union[GitStatuses, None]] = self.get_items_status(
             file_by_status_dict
         )
+        # Updating the statuses dict with the paths tuple of the renamed files.
         statuses_dict_with_renamed_files_tuple: Dict[
             Union[Path, Tuple[Path, Path]], Union[GitStatuses, None]
         ] = {}
@@ -696,12 +697,12 @@ class Initializer:
         Returns:
             Tuple[Set[BaseContent], Set[Path], Set[Path]]: The sets of all the successful casts, the sets of all failed casts, and the set of non content items.
         """
-        statuses = self._collect_git_statuses()
+        statuses_dict_with_renamed_files_tuple = self._collect_git_statuses()
         (
             basecontent_with_path_set,
             invalid_content_items,
             non_content_items,
-        ) = self.git_paths_to_basecontent_set(statuses, prev_ver=self.prev_ver)
+        ) = self.git_paths_to_basecontent_set(statuses_dict_with_renamed_files_tuple, prev_ver=self.prev_ver)
         return basecontent_with_path_set, invalid_content_items, non_content_items
 
     def paths_to_basecontent_set(

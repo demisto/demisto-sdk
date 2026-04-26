@@ -702,7 +702,9 @@ class Initializer:
             basecontent_with_path_set,
             invalid_content_items,
             non_content_items,
-        ) = self.git_paths_to_basecontent_set(statuses_dict_with_renamed_files_tuple, prev_ver=self.prev_ver)
+        ) = self.git_paths_to_basecontent_set(
+            statuses_dict_with_renamed_files_tuple, prev_ver=self.prev_ver
+        )
         return basecontent_with_path_set, invalid_content_items, non_content_items
 
     def paths_to_basecontent_set(
@@ -1351,6 +1353,15 @@ class ConnectorAwareInitializer(Initializer):
                         f"'{connector.object_id}') -> integration "
                         f"'{integration.object_id}' (graph)."
                     )
+
+        # --- Cleanup: Remove integrations without a matching connector handler ---
+        unmatched_final = {i for i in integrations if i.related_content is None}
+        if unmatched_final:
+            logger.debug(
+                f"Removing {len(unmatched_final)} integration(s) with no matching "
+                f"connector handler: {[i.object_id for i in unmatched_final]}"
+            )
+            integrations -= unmatched_final
 
         return integrations | connectors
 

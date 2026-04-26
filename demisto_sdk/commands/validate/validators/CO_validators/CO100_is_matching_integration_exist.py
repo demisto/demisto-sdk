@@ -14,18 +14,20 @@ ContentTypes = Connector
 class IsMatchingIntegrationExistValidator(BaseValidator[ContentTypes]):
     error_code = "CO100"
     description = (
-        "Validates that each XSOAR handler in a connector references an "
-        "integration that exists in the content repository."
+        "Validates that each XSOAR handler in a connector has an "
+        "xsoar-integration-id label and that the referenced integration "
+        "exists in the content repository."
     )
     rationale = (
-        "Each XSOAR handler references an integration via triggering.labels. "
+        "Every XSOAR handler must declare an xsoar-integration-id in its "
+        "triggering.labels so the platform knows which integration to invoke. "
         "The ConnectorAwareInitializer resolves these references and populates "
-        "handler.related_integration. If it is None, the referenced integration "
-        "does not exist."
+        "handler.related_integration. A handler that is missing the label or "
+        "whose referenced integration cannot be found is invalid."
     )
     error_message = (
-        "Connector '{connector_id}' has XSOAR handlers referencing "
-        "integrations that could not be found in the content repo: {handler_details}"
+        "Connector '{connector_id}' has XSOAR handlers with integration "
+        "problems: {handler_details}"
     )
     related_field = "triggering.labels"
     is_auto_fixable = False
@@ -34,23 +36,32 @@ class IsMatchingIntegrationExistValidator(BaseValidator[ContentTypes]):
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
-        """Check that each XSOAR handler has a matched integration.
+        """Check that each XSOAR handler has a valid integration reference.
 
-        The ConnectorAwareInitializer already resolved the integration references.
-        If ``handler.related_integration`` is None, the integration was not found.
+        Two failure cases:
+        1. Handler has ``xsoar_integration_id`` but ``related_integration`` is
+           None — the referenced integration was not found in the content repo.
+        2. Handler has no ``xsoar_integration_id`` at all — the handler YAML is
+           missing the ``xsoar-integration-id`` triggering label.
         """
         results: List[ValidationResult] = []
 
         for connector in content_items:
-            if not connector.xsoar_handlers:
-                continue
-
-            # Collect unresolved handlers
-            unresolved_parts = [
-                f"handler '{h.id}' -> integration-id '{h.xsoar_integration_id}'"
+            # Case 1: declared integration ID but not resolved
+            unresolved = [
+                f"handler '{h.id}' -> integration-id '{h.xsoar_integration_id}' not found"
                 for h in connector.xsoar_handlers
                 if h.xsoar_integration_id and h.related_integration is None
             ]
+
+            # Case 2: no integration ID declared at all
+            missing_id = [
+                f"handler '{h.id}' is missing xsoar-integration-id in triggering.labels"
+                for h in connector.xsoar_handlers
+                if not h.xsoar_integration_id
+            ]
+
+            unresolved_parts = unresolved + missing_id
 
             if unresolved_parts:
                 results.append(

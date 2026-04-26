@@ -361,6 +361,11 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         """Pack IDs referenced by XSOAR handlers."""
         return [h.xsoar_pack_id for h in self.handlers if h.xsoar_pack_id]
 
+    @cached_property
+    def capability_by_id(self) -> Dict[str, "CapabilityData"]:
+        """Lookup dict mapping capability ID to CapabilityData."""
+        return {c.id: c for c in self.capabilities}
+
     @property
     def all_capability_ids(self) -> List[str]:
         return [c.id for c in self.capabilities]

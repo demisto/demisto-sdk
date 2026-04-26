@@ -47,28 +47,20 @@ class IsMatchingLicenseValidator(BaseValidator[ContentTypes]):
         results: List[ValidationResult] = []
 
         for connector in content_items:
-            if not connector.xsoar_handlers:
-                continue
-
-            # Build capability lookup from connector-level capabilities
-            capability_by_id = {c.id: c for c in connector.capabilities}
-
             for handler in connector.xsoar_handlers:
                 if handler.related_integration is None:
                     # No matched integration -- CO100 handles this
                     continue
 
                 integration = handler.related_integration
-                integration_modules: Set[str] = set(
-                    getattr(integration, "supportedModules", None) or []
-                )
+                integration_modules: Set[str] = set(integration.supportedModules or [])
                 if not integration_modules:
                     continue
 
                 # Collect the union of all required_license from this handler's capabilities
                 handler_licenses: Set[str] = set()
                 for cap in handler.capabilities:
-                    cap_data = capability_by_id.get(cap.id)
+                    cap_data = connector.capability_by_id.get(cap.id)
                     if not cap_data:
                         continue
                     if cap_data.config and cap_data.config.required_license:
@@ -80,17 +72,14 @@ class IsMatchingLicenseValidator(BaseValidator[ContentTypes]):
                 if not handler_licenses:
                     continue
 
-                missing_modules = integration_modules - handler_licenses
-                if missing_modules:
+                if missing_modules := integration_modules - handler_licenses:
                     results.append(
                         ValidationResult(
                             validator=self,
                             message=self.error_message.format(
                                 connector_id=connector.object_id,
                                 handler_id=handler.id,
-                                integration_id=getattr(
-                                    integration, "object_id", "unknown"
-                                ),
+                                integration_id=integration.object_id,
                                 integration_modules=sorted(integration_modules),
                                 handler_licenses=sorted(handler_licenses),
                                 missing_modules=sorted(missing_modules),

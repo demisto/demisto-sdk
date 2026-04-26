@@ -488,7 +488,7 @@ def register_commands(_args: list[str] = []):  # noqa: C901
 
         app.command(
             name="generate-unit-tests",
-            help="[Deprecated] This command generates unit tests automatically from an integration's Python code. This command is deprecated and will be removed in the next version.",
+            help="[Deprecated] This command generates unit tests automatically from an integration's Python code. This command is deprecated and will be removed in a subsequent version.",
             deprecated=True,
         )(generate_unit_tests)
 

@@ -63,7 +63,7 @@ def generate_unit_tests(
 
     """
     logger.warning(
-        "<yellow>WARNING: The `generate-unit-tests` command is deprecated and will be removed in the next version.</yellow>"
+        "<yellow>WARNING: The `generate-unit-tests` command is deprecated and will be removed in a subsequent version.</yellow>"
     )
 
     import logging  # noqa: TID251 # special case: controlling external logger

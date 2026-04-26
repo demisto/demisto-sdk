@@ -1,4 +1,4 @@
 changes:
-- description: Added a deprecation warning to the **generate-unit-tests** command, this command will remove in the next version of the SDK.
+- description: Added a deprecation warning to the **generate-unit-tests** command, this command will remove in a subsequent version of the SDK.
   type: feature
 pr_number: 5320

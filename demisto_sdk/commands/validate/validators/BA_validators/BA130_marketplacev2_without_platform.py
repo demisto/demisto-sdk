@@ -104,23 +104,22 @@ ContentTypes = Union[
 class MarketplaceV2WithoutPlatformValidator(BaseValidator[ContentTypes]):
     error_code = "BA130"
     description = (
-        "Validates that content items with 'marketplacev2' in their marketplaces "
-        "also include 'platform' and have 'xsiam' in their supported modules."
+        "Validates that content items with 'marketplacev2' also have 'platform' "
+        "in their marketplaces and 'xsiam' in their supported modules — set "
+        "directly, inherited from the pack, or via defaults."
     )
     rationale = (
-        "Content items listed under 'marketplacev2' should also be listed under "
-        "'platform' and have 'xsiam' in their supported modules to ensure proper "
-        "availability across all relevant marketplaces."
+        "Content items with 'marketplacev2' must also have 'platform' and 'xsiam' "
+        "in their supported modules. These values don't have to be set directly on "
+        "the item — they can be inherited from the pack or resolved from defaults."
     )
     error_message = (
-        "The content item has 'marketplacev2' in its marketplaces but is missing "
-        "'platform' in its marketplaces and/or 'xsiam' in its supported modules. "
-        "Please add 'platform' to the marketplaces list and ensure 'xsiam' is "
-        "in the supported modules."
+        "The content item has 'marketplacev2' but is missing 'platform' in its "
+        "marketplaces and/or 'xsiam' in its supported modules (these can be set "
+        "directly, inherited from the pack, or resolved from defaults)."
     )
     fix_message = (
-        "Added 'platform' to the marketplaces list and/or 'xsiam' to the "
-        "supported modules."
+        "Added 'platform' to marketplaces and/or 'xsiam' to supported modules."
     )
     related_field = "marketplaces"
     is_auto_fixable = True

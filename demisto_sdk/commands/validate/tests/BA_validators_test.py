@@ -3578,10 +3578,9 @@ def test_MarketplaceV2WithoutPlatformValidator_obtain_invalid_content_items(
     for result in results:
         assert (
             result.message
-            == "The content item has 'marketplacev2' in its marketplaces but is missing "
-            "'platform' in its marketplaces and/or 'xsiam' in its supported modules. "
-            "Please add 'platform' to the marketplaces list and ensure 'xsiam' is "
-            "in the supported modules."
+            == "The content item has 'marketplacev2' but is missing 'platform' in its "
+            "marketplaces and/or 'xsiam' in its supported modules (these can be set "
+            "directly, inherited from the pack, or resolved from defaults)."
         )
 
 

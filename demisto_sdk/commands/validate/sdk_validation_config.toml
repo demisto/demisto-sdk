@@ -12,6 +12,7 @@ ignorable_errors = [
   "BA125",
   "BA127",
   "BA129", # needs to be remove after CRTX-235579 is done
+  "BA130",
   "GF102",
   "DS108",
   "IF100",
@@ -339,6 +340,7 @@ select = [
   "BA127",
   "BA128",
   "BA129",
+  "BA130",
   "AG100",
   "AG101",
   "AG102",

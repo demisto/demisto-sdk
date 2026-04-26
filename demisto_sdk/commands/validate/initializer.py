@@ -31,7 +31,6 @@ from demisto_sdk.commands.common.constants import (
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER
 from demisto_sdk.commands.common.logger import logger
@@ -51,6 +50,8 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
     _get_connector_dir,
     _is_connector_path,
 )
+from demisto_sdk.commands.content_graph.objects.connector import Connector
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import (
     ContentDTO,
@@ -664,25 +665,30 @@ class Initializer:
             file: GitStatuses.MODIFIED for file in modified_files
         }
         file_by_status_dict.update({file: GitStatuses.ADDED for file in added_files})
+        # Adding only the new path with the renamed status.
         file_by_status_dict.update(
             {new_path: GitStatuses.RENAMED for _, new_path in renamed_files}
         )
         file_by_status_dict.update(
             {file: GitStatuses.DELETED for file in deleted_files}
         )
-        renamed_map = {new_path: old_path for old_path, new_path in renamed_files}
+        # Keeping a mapping dictionary between the new and the old path.
+        renamed_files = {new_path: old_path for old_path, new_path in renamed_files}
+        # Calculating the main file for each of changed files and allocate a status for it.
         statuses_dict: Dict[Path, Union[GitStatuses, None]] = self.get_items_status(
             file_by_status_dict
         )
-        statuses_with_renamed: Dict[
+        statuses_dict_with_renamed_files_tuple: Dict[
             Union[Path, Tuple[Path, Path]], Union[GitStatuses, None]
         ] = {}
         for path, status in statuses_dict.items():
             if status == GitStatuses.RENAMED:
-                statuses_with_renamed[(path, renamed_map[path])] = status
+                statuses_dict_with_renamed_files_tuple[(path, renamed_files[path])] = (
+                    status
+                )
             else:
-                statuses_with_renamed[path] = status
-        return statuses_with_renamed
+                statuses_dict_with_renamed_files_tuple[path] = status
+        return statuses_dict_with_renamed_files_tuple
 
     def get_files_using_git(self) -> Tuple[Set[BaseContent], Set[Path], Set[Path]]:
         """Return all files added/changed/deleted.
@@ -1163,7 +1169,6 @@ class ConnectorAwareInitializer(Initializer):
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.connectors_path: Path = Path(CONTENT_PATH) / "connectors"
 
     @staticmethod
     def _is_relevant_path(path: Path) -> bool:
@@ -1176,9 +1181,6 @@ class ConnectorAwareInitializer(Initializer):
         )
 
     def gather_objects_to_run_on(self) -> Tuple[Set[BaseContent], Set[Path]]:
-        from demisto_sdk.commands.content_graph.objects.connector import Connector
-        from demisto_sdk.commands.content_graph.objects.integration import Integration
-
         # 1. Collect and parse only relevant paths (Integrations + connectors)
         if self.execution_mode == ExecutionMode.USE_GIT:
             statuses = self._collect_git_statuses(path_filter=self._is_relevant_path)
@@ -1196,11 +1198,12 @@ class ConnectorAwareInitializer(Initializer):
             all_objects, invalid_items = super().gather_objects_to_run_on()
 
         # 2. Post-filter: keep only Integration and Connector objects
-        filtered: Set[BaseContent] = set()
+        filtered_integrations: Set[Integration] = set()
+        filtered_connectors: Set[Connector] = set()
         for obj in all_objects:
             if isinstance(obj, Integration):
                 if MarketplaceVersions.PLATFORM in obj.marketplaces:
-                    filtered.add(obj)
+                    filtered_integrations.add(obj)
                 else:
                     logger.debug(
                         f"Skipping integration '{obj.object_id}' -- "
@@ -1208,7 +1211,7 @@ class ConnectorAwareInitializer(Initializer):
                     )
             elif isinstance(obj, Connector):
                 if obj.xsoar_handlers:
-                    filtered.add(obj)
+                    filtered_connectors.add(obj)
                 else:
                     logger.debug(
                         f"Skipping connector '{obj.object_id}' -- "
@@ -1216,11 +1219,15 @@ class ConnectorAwareInitializer(Initializer):
                     )
 
         # 3. Cross-match and expand with missing counterparts
-        filtered = self._cross_match_and_expand(filtered)
+        filtered = self._cross_match_and_expand(
+            filtered_integrations, filtered_connectors
+        )
 
         return filtered, invalid_items
 
-    def _cross_match_and_expand(self, objects: Set[BaseContent]) -> Set[BaseContent]:
+    def _cross_match_and_expand(
+        self, integrations: Set[Integration], connectors: Set[Connector]
+    ) -> Set[BaseContent]:
         """Match connector handlers to integrations and expand with missing counterparts.
 
         Each XSOAR handler references an integration via ``xsoar_integration_id``.
@@ -1228,24 +1235,14 @@ class ConnectorAwareInitializer(Initializer):
         (1:1 handler-to-integration) and ``integration.related_content`` (1:1 back-ref).
 
         Phase 1: Direct matching from the current set.
-        Phase 2a: Unmatched integrations -- scan connectors/ dir for referencing connectors.
+        Phase 2a: Unmatched integrations -- graph search for connectors referencing them.
         Phase 2b: Unmatched handlers -- graph search for integration.
         """
-        from demisto_sdk.commands.content_graph.objects.connector import Connector
-        from demisto_sdk.commands.content_graph.objects.integration import Integration
-
-        integrations: Set[Integration] = {
-            obj for obj in objects if isinstance(obj, Integration)
-        }
-        connectors: Set[Connector] = {
-            obj for obj in objects if isinstance(obj, Connector)
-        }
 
         # Build lookup maps
         integration_by_id: Dict[str, Integration] = {
             i.object_id: i for i in integrations
         }
-        integration_by_name: Dict[str, Integration] = {i.name: i for i in integrations}
 
         matched_integration_ids: Set[str] = set()
         # Track which handlers have been matched (handler_id is unique within a connector)
@@ -1257,7 +1254,7 @@ class ConnectorAwareInitializer(Initializer):
                 int_id = handler.xsoar_integration_id
                 if not int_id:
                     continue
-                match = integration_by_id.get(int_id) or integration_by_name.get(int_id)
+                match = integration_by_id.get(int_id)
                 if match:
                     handler.related_integration = match
                     match.related_content = handler
@@ -1285,47 +1282,36 @@ class ConnectorAwareInitializer(Initializer):
             logger.debug(
                 "All handlers and integrations matched directly, skipping graph."
             )
-            return objects
+            return integrations | connectors
 
-        # --- Phase 2a: Unmatched integrations -- scan connectors/ dir ---
-        if unmatched_integrations and self.connectors_path.exists():
+        # --- Phase 2a: Unmatched integrations -- graph search for connectors ---
+        if unmatched_integrations:
             logger.debug(
-                f"Scanning {self.connectors_path} for connectors referencing "
-                f"unmatched integrations: "
-                f"{[i.object_id for i in unmatched_integrations]}"
+                f"Searching graph for connectors referencing unmatched "
+                f"integrations: {[i.object_id for i in unmatched_integrations]}"
             )
             existing_connector_ids = {c.object_id for c in connectors}
-            for connector_dir in sorted(self.connectors_path.iterdir()):
-                if not connector_dir.is_dir():
-                    continue
-                connector_yaml = connector_dir / "connector.yaml"
-                if not connector_yaml.exists():
-                    continue
-                if connector_dir.name in existing_connector_ids:
-                    continue
-                connector = BaseContent.from_path(connector_yaml)  # type: ignore[assignment]
-                if not isinstance(connector, Connector) or not connector.xsoar_handlers:
-                    continue
-                added = False
-                for handler in connector.xsoar_handlers:
-                    int_id = handler.xsoar_integration_id
-                    if not int_id:
+            for integration in list(unmatched_integrations):
+                found_connectors = self._graph_search_connectors(integration.object_id)
+                for found_connector in found_connectors:
+                    if not isinstance(found_connector, Connector):
                         continue
-                    match = integration_by_id.get(int_id) or integration_by_name.get(
-                        int_id
-                    )
-                    if match:
-                        handler.related_integration = match
-                        match.related_content = handler
-                        matched_integration_ids.add(match.object_id)
-                        added = True
-                        logger.debug(
-                            f"Matched handler '{handler.id}' (connector "
-                            f"'{connector.object_id}') -> integration "
-                            f"'{match.object_id}' (filesystem scan)."
-                        )
-                if added:
-                    objects.add(connector)
+                    if found_connector.object_id in existing_connector_ids:
+                        continue
+                    if not found_connector.xsoar_handlers:
+                        continue
+                    for handler in found_connector.xsoar_handlers:
+                        if handler.xsoar_integration_id == integration.object_id:
+                            handler.related_integration = integration
+                            integration.related_content = handler
+                            matched_integration_ids.add(integration.object_id)
+                            logger.debug(
+                                f"Matched handler '{handler.id}' (connector "
+                                f"'{found_connector.object_id}') -> integration "
+                                f"'{integration.object_id}' (graph)."
+                            )
+                    connectors.add(found_connector)
+                    existing_connector_ids.add(found_connector.object_id)
 
         # --- Phase 2b: Unmatched handlers -- graph search for integration ---
         # Recalculate unmatched handlers after phase 2a
@@ -1358,18 +1344,18 @@ class ConnectorAwareInitializer(Initializer):
                     handler.related_integration = integration
                     if hasattr(integration, "related_content"):
                         integration.related_content = handler
-                    objects.add(integration)
+                    integrations.add(integration)
                     logger.debug(
                         f"Matched handler '{handler.id}' (connector "
                         f"'{connector.object_id}') -> integration "
                         f"'{integration.object_id}' (graph)."
                     )
 
-        return objects
+        return integrations | connectors
 
     @staticmethod
     def _graph_search_integration(integration_id: str) -> List[Any]:
-        """Lazy graph search -- only called for unmatched items."""
+        """Graph search for an integration by object_id or name."""
         from demisto_sdk.commands.content_graph.common import ContentType
         from demisto_sdk.commands.validate.validators.base_validator import (
             BaseValidator,
@@ -1389,3 +1375,27 @@ class ConnectorAwareInitializer(Initializer):
                 name=integration_id,
             )
         return results
+
+    @staticmethod
+    def _graph_search_connectors(integration_id: str) -> List[Any]:
+        """Graph search for connectors whose XSOAR handlers reference the given integration.
+
+        Searches all connectors in the graph and filters to those with at least
+        one XSOAR handler whose ``xsoar_integration_id`` matches.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.validate.validators.base_validator import (
+            BaseValidator,
+        )
+
+        graph = BaseValidator.graph_interface
+        if not graph:
+            logger.debug("Graph interface not available, skipping connector search.")
+            return []
+        all_connectors = graph.search(content_type=ContentType.CONNECTOR)
+        return [
+            c
+            for c in all_connectors
+            if hasattr(c, "xsoar_handlers")
+            and any(h.xsoar_integration_id == integration_id for h in c.xsoar_handlers)
+        ]

@@ -1035,7 +1035,7 @@ class TestConnectorAwareInitializerCrossMatch:
 
     def test_direct_match_links_handler_and_integration(self):
         """
-        Given: Both a connector and its referenced integration in the objects set.
+        Given: Both a connector and its referenced integration in the sets.
         When: _cross_match_and_expand is called.
         Then: handler.related_integration points to the integration,
               integration.related_content points to the handler,
@@ -1046,12 +1046,16 @@ class TestConnectorAwareInitializerCrossMatch:
         connector = _mock_connector(handlers=[handler])
 
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
-        initializer.connectors_path = Path("/fake/connectors")
 
-        with patch.object(
-            ConnectorAwareInitializer, "_graph_search_integration"
-        ) as mock_graph:
-            result = initializer._cross_match_and_expand({integration, connector})
+        with (
+            patch.object(
+                ConnectorAwareInitializer, "_graph_search_integration"
+            ) as mock_graph,
+            patch.object(
+                ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
+            ),
+        ):
+            result = initializer._cross_match_and_expand({integration}, {connector})
             mock_graph.assert_not_called()
 
         assert handler.related_integration == integration
@@ -1061,46 +1065,39 @@ class TestConnectorAwareInitializerCrossMatch:
         """
         Given: An integration that no connector handler references.
         When: _cross_match_and_expand is called.
-        Then: Integration remains in the result, no connector is added,
-              and graph search is NOT invoked (no unmatched handlers).
+        Then: Integration remains in the result, no connector is added.
         """
         integration = _mock_integration(object_id="UnrelatedInt", name="UnrelatedInt")
 
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
-        initializer.connectors_path = Path("/fake/nonexistent")
 
         with patch.object(
-            ConnectorAwareInitializer, "_graph_search_integration"
-        ) as mock_graph:
-            result = initializer._cross_match_and_expand({integration})
-            mock_graph.assert_not_called()
+            ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
+        ):
+            result = initializer._cross_match_and_expand({integration}, set())
 
         assert integration in result
         assert len(result) == 1
 
-    def test_filesystem_scan_discovers_connector(self, tmp_path: Path):
+    def test_graph_search_discovers_connector(self):
         """
-        Given: An integration in the objects set, and a connector directory on disk
+        Given: An integration in the set, and a connector in the graph
                whose handler references that integration.
         When: _cross_match_and_expand is called.
-        Then: Phase 2a filesystem scan discovers the connector and links handler.
+        Then: Phase 2a graph search discovers the connector and links handler.
         """
         integration = _mock_integration()
         discovered_handler = _mock_handler()
         discovered_connector = _mock_connector(handlers=[discovered_handler])
 
-        connector_dir = tmp_path / "salesforce"
-        connector_dir.mkdir()
-        (connector_dir / "connector.yaml").write_text("id: salesforce\n")
-
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
-        initializer.connectors_path = tmp_path
 
-        with patch(
-            "demisto_sdk.commands.validate.initializer.BaseContent.from_path",
-            return_value=discovered_connector,
+        with patch.object(
+            ConnectorAwareInitializer,
+            "_graph_search_connectors",
+            return_value=[discovered_connector],
         ):
-            result = initializer._cross_match_and_expand({integration})
+            result = initializer._cross_match_and_expand({integration}, set())
 
         assert discovered_connector in result
         assert discovered_handler.related_integration == integration
@@ -1108,7 +1105,7 @@ class TestConnectorAwareInitializerCrossMatch:
     def test_graph_search_for_unmatched_handler(self):
         """
         Given: A connector with a handler whose referenced integration is NOT
-               in the set and NOT on the filesystem.
+               in the set.
         When: _cross_match_and_expand is called.
         Then: Phase 2b graph search is invoked for the integration ID.
         """
@@ -1117,14 +1114,20 @@ class TestConnectorAwareInitializerCrossMatch:
         graph_integration = _mock_integration()
 
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
-        initializer.connectors_path = Path("/fake/nonexistent")
 
-        with patch.object(
-            ConnectorAwareInitializer,
-            "_graph_search_integration",
-            return_value=[graph_integration],
-        ) as mock_graph:
-            result = initializer._cross_match_and_expand({connector})
+        with (
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_connectors",
+                return_value=[],
+            ),
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_integration",
+                return_value=[graph_integration],
+            ) as mock_graph,
+        ):
+            result = initializer._cross_match_and_expand(set(), {connector})
             mock_graph.assert_called_once_with("Salesforce")
 
         assert handler.related_integration == graph_integration
@@ -1133,7 +1136,7 @@ class TestConnectorAwareInitializerCrossMatch:
     def test_multiple_handlers_each_matched_independently(self):
         """
         Given: A connector with 2 XSOAR handlers referencing different integrations,
-               both integrations are in the objects set.
+               both integrations are in the set.
         When: _cross_match_and_expand is called.
         Then: Each handler is matched to its own integration independently.
         """
@@ -1148,13 +1151,17 @@ class TestConnectorAwareInitializerCrossMatch:
         )
 
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
-        initializer.connectors_path = Path("/fake/connectors")
 
-        with patch.object(
-            ConnectorAwareInitializer, "_graph_search_integration"
-        ) as mock_graph:
+        with (
+            patch.object(
+                ConnectorAwareInitializer, "_graph_search_integration"
+            ) as mock_graph,
+            patch.object(
+                ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
+            ),
+        ):
             result = initializer._cross_match_and_expand(
-                {integration1, integration2, connector}
+                {integration1, integration2}, {connector}
             )
             mock_graph.assert_not_called()
 
@@ -1183,11 +1190,10 @@ class TestConnectorAwareInitializerGatherObjects:
         mocker.patch.object(
             ConnectorAwareInitializer,
             "_cross_match_and_expand",
-            side_effect=lambda objs: objs,
+            side_effect=lambda ints, cons: ints | cons,
         )
 
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
-        initializer.connectors_path = Path("/fake/connectors")
         filtered, _ = initializer.gather_objects_to_run_on()
 
         from demisto_sdk.commands.content_graph.objects.connector import Connector
@@ -1210,11 +1216,10 @@ class TestConnectorAwareInitializerGatherObjects:
         mocker.patch.object(
             ConnectorAwareInitializer,
             "_cross_match_and_expand",
-            side_effect=lambda objs: objs,
+            side_effect=lambda ints, cons: ints | cons,
         )
 
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
-        initializer.connectors_path = Path("/fake/connectors")
         filtered, _ = initializer.gather_objects_to_run_on()
 
         integrations_in_result = [o for o in filtered if isinstance(o, Integration)]

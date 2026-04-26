@@ -59,17 +59,17 @@ class AgentixActionTestParser(
         return self.yml_data.get("tests", [])
 
     def connect_to_dependencies(self) -> None:
-        """Create USES relationship to the agents used in the tests."""
+        """Create USES relationship to the agents and actions used in the tests."""
         for test in self.tests:
             if agent_id := test.get("agent_id"):
                 self.add_dependency_by_id(
                     agent_id, ContentType.AGENTIX_AGENT, is_mandatory=True
                 )
-            # Check all possible outcome keys
-            for mode in ["expected_outcomes", "any_of", "sequence"]:
-                for outcome in test.get(mode, []):
-                    for action in outcome.get("actions", []):
-                        if action_id := action.get("action_id"):
-                            self.add_dependency_by_id(
-                                action_id, ContentType.AGENTIX_ACTION, is_mandatory=True
-                            )
+            # expected_outcomes is a list of outcome dicts, each with an 'actions' list
+            for outcome in test.get("expected_outcomes", []):
+                for action in outcome.get("actions", []):
+                    # Test files use action_name (matches the 'name' field in the action YML)
+                    if action_name := action.get("action_name"):
+                        self.add_dependency_by_id(
+                            action_name, ContentType.AGENTIX_ACTION, is_mandatory=True
+                        )

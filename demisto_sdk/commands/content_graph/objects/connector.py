@@ -290,10 +290,6 @@ class HandlerData(BaseModel):
             return self.triggering.labels.get("xsoar-content-id")
         return None
 
-    @property
-    def capability_ids(self) -> List[str]:
-        return [c.id for c in self.capabilities]
-
 
 # ============================================================
 # Capability-handler mapping
@@ -351,45 +347,14 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
             if mapping.is_xsoar
         ]
 
-    @property
-    def referenced_integration_ids(self) -> List[str]:
-        """Integration display names referenced by XSOAR handlers."""
-        return [h.xsoar_integration_id for h in self.handlers if h.xsoar_integration_id]
-
-    @property
-    def referenced_pack_ids(self) -> List[str]:
-        """Pack IDs referenced by XSOAR handlers."""
-        return [h.xsoar_pack_id for h in self.handlers if h.xsoar_pack_id]
-
     @cached_property
     def capability_by_id(self) -> Dict[str, "CapabilityData"]:
         """Lookup dict mapping capability ID to CapabilityData."""
         return {c.id: c for c in self.capabilities}
 
     @property
-    def all_capability_ids(self) -> List[str]:
-        return [c.id for c in self.capabilities]
-
-    @property
     def all_connection_profile_ids(self) -> List[str]:
         return [p.id for p in (self.connection.profiles if self.connection else [])]
-
-    @property
-    def all_field_ids(self) -> List[str]:
-        """All connector field IDs across all files — for uniqueness validation."""
-        ids: List[str] = []
-        if self.connection:
-            if self.connection.general_configurations:
-                for group in self.connection.general_configurations.configurations:
-                    ids.extend(f.id for f in group.fields)
-            for profile in self.connection.profiles:
-                for group in profile.configurations:
-                    ids.extend(f.id for f in group.fields)
-        # Capability configurations (already unified with general configs)
-        for cap in self.capabilities:
-            for group in cap.configurations:
-                ids.extend(f.id for f in group.fields)
-        return ids
 
     # === RelatedFile cached properties ===
 

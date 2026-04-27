@@ -1006,7 +1006,7 @@ class TestConnectorAwareInitializerCrossMatch:
                 ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
             ),
         ):
-            result = initializer._cross_match_and_expand({integration}, {connector})
+            initializer._cross_match_and_expand({integration}, {connector})
             mock_graph.assert_not_called()
 
         handler = connector.xsoar_handlers[0]
@@ -1138,7 +1138,7 @@ class TestConnectorAwareInitializerCrossMatch:
                 ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
             ),
         ):
-            result = initializer._cross_match_and_expand(
+            initializer._cross_match_and_expand(
                 {integration1, integration2}, {connector}
             )
             mock_graph.assert_not_called()

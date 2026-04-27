@@ -72,7 +72,7 @@ class TestCO100IsMatchingIntegrationExist:
                 {
                     "id": "xsoar-no-label",
                     "triggering": {
-                        "labels": {},
+                        "labels": None,
                     },
                 },
             ]
@@ -103,7 +103,7 @@ class TestCO100IsMatchingIntegrationExist:
                         "ownership": {"team": "other-team"},
                     },
                     "triggering": {
-                        "labels": {},
+                        "labels": None,
                     },
                 },
             ]
@@ -257,7 +257,7 @@ class TestCO112IsMatchingLicense:
                             {
                                 "id": "sub-1",
                                 "title": "Sub One",
-                                "required_license": ["xsiam"],
+                                "config": {"required_license": ["xsiam"]},
                             }
                         ],
                     }
@@ -293,7 +293,7 @@ class TestCO112IsMatchingLicense:
                             {
                                 "id": "sub-1",
                                 "title": "Sub One",
-                                "required_license": ["xsiam"],
+                                "config": {"required_license": ["xsiam"]},
                             }
                         ],
                     }
@@ -372,8 +372,12 @@ class TestCO112IsMatchingLicense:
         bad_integration = create_integration_object(
             paths=["supportedModules"], values=[["xsiam", "xsoar"]]
         )
-        connector.handlers[0].related_integration = good_integration
-        connector.handlers[1].related_integration = bad_integration
+        # Match by handler ID since directory order is non-deterministic
+        for h in connector.handlers:
+            if h.id == "xsoar-good":
+                h.related_integration = good_integration
+            elif h.id == "xsoar-bad":
+                h.related_integration = bad_integration
 
         validator = IsMatchingLicenseValidator()
         results = validator.obtain_invalid_content_items([connector])

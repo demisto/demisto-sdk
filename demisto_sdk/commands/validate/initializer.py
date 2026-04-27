@@ -1205,7 +1205,11 @@ class ConnectorAwareInitializer(Initializer):
         filtered_connectors: Set[Connector] = set()
         for obj in all_objects:
             if isinstance(obj, Integration):
-                if MarketplaceVersions.PLATFORM in obj.marketplaces:
+                if obj.deprecated:
+                    logger.debug(
+                        f"Skipping integration '{obj.object_id}' -- deprecated."
+                    )
+                elif MarketplaceVersions.PLATFORM in obj.marketplaces:
                     filtered_integrations.add(obj)
                 else:
                     logger.debug(
@@ -1336,6 +1340,12 @@ class ConnectorAwareInitializer(Initializer):
                 results = self._graph_search_integration(int_id)
                 if results:
                     integration = results[0]
+                    if getattr(integration, "deprecated", False):
+                        logger.debug(
+                            f"Skipping graph-found integration "
+                            f"'{integration.object_id}' -- deprecated."
+                        )
+                        continue
                     if hasattr(integration, "marketplaces") and (
                         MarketplaceVersions.PLATFORM not in integration.marketplaces
                     ):

@@ -1226,6 +1226,34 @@ class TestConnectorAwareInitializerGatherObjects:
         assert len(integrations_in_result) == 0
 
 
+    def test_deprecated_integration_filtered_out(self, mocker: MockerFixture):
+        """
+        Given: An integration that is deprecated.
+        When: gather_objects_to_run_on filters objects.
+        Then: Integration is excluded from the result.
+        """
+        connector = create_connector_object()
+        integration = create_integration_object()
+        integration.deprecated = True
+
+        mocker.patch(
+            "demisto_sdk.commands.validate.initializer.Initializer.gather_objects_to_run_on",
+            return_value=({connector, integration}, set()),
+        )
+        mocker.patch.object(
+            ConnectorAwareInitializer,
+            "_cross_match_and_expand",
+            side_effect=lambda ints, cons: ints | cons,
+        )
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+        initializer.execution_mode = ExecutionMode.ALL_FILES
+        filtered, _ = initializer.gather_objects_to_run_on()
+
+        integrations_in_result = [o for o in filtered if isinstance(o, Integration)]
+        assert len(integrations_in_result) == 0
+
+
 class TestConnectorRelatedFileDeduplication:
     """Tests for collect_related_files_main_items connector deduplication."""
 

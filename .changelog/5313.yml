@@ -1,0 +1,4 @@
+changes:
+- description: Updated AgentixActionTest parser to resolve action dependencies using `action_name` instead of `action_id`, and simplified the strict object model for `EvaluationOutcome` and `AgentixActionTestCase`.
+  type: internal
+pr_number: 5313

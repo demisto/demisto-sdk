@@ -1225,7 +1225,6 @@ class TestConnectorAwareInitializerGatherObjects:
         integrations_in_result = [o for o in filtered if isinstance(o, Integration)]
         assert len(integrations_in_result) == 0
 
-
     def test_deprecated_integration_filtered_out(self, mocker: MockerFixture):
         """
         Given: An integration that is deprecated.

@@ -83,14 +83,16 @@ warning = []
 [connectors_path_based_validations]
 select = [
   "CO100",
-  "CO112"
+  "CO112",
+  "CO113"
 ]
 warning = []
 
 [connectors_use_git]
 select = [
   "CO100",
-  "CO112"
+  "CO112",
+  "CO113"
 ]
 warning = []
 

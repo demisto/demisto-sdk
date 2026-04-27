@@ -1,5 +1,9 @@
-"""Tests for CO (Connector) validators — CO100 and CO112."""
+"""Tests for CO (Connector) validators — CO100, CO112, and CO113."""
 
+from demisto_sdk.commands.content_graph.objects.connector import (
+    ConnectorField,
+    FieldGroup,
+)
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_connector_object,
     create_integration_object,
@@ -9,6 +13,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO100_is_matching_in
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO112_is_matching_license import (
     IsMatchingLicenseValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO113_is_mirroring_omitted import (
+    IsMirroringOmittedValidator,
 )
 
 # ============================================================
@@ -434,3 +441,90 @@ class TestCO112IsMatchingLicense:
         results = validator.obtain_invalid_content_items([connector])
 
         assert len(results) == 0
+
+
+# ============================================================
+# CO113 — IsMirroringOmittedValidator
+# ============================================================
+
+
+class TestCO113IsMirroringOmitted:
+    """Tests for CO113 validator: mirroring fields must not appear in capability configurations."""
+
+    def test_no_mirroring_fields_passes(self):
+        """
+        Given: A default connector with no mirroring fields in capability configurations.
+        When: CO113 runs.
+        Then: No validation errors are returned.
+        """
+        connector = create_connector_object()
+
+        validator = IsMirroringOmittedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_mirroring_field_in_capability_config(self):
+        """
+        Given: A connector with 'mirror_direction' field in a capability's configurations.
+        When: CO113 runs.
+        Then: A validation error is returned mentioning the forbidden field.
+        """
+        connector = create_connector_object()
+        # Inject a forbidden field into the first capability's configurations
+        connector.capabilities[0].configurations = [
+            FieldGroup(
+                fields=[
+                    ConnectorField(
+                        id="mirror_direction",
+                        title="Mirror Direction",
+                        field_type="select",
+                    ),
+                ]
+            )
+        ]
+
+        validator = IsMirroringOmittedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "mirror_direction" in results[0].message
+        assert "test-capability" in results[0].message
+
+    def test_multiple_mirroring_fields_all_reported(self):
+        """
+        Given: A connector with all 3 forbidden mirroring fields in capability configurations.
+        When: CO113 runs.
+        Then: A single validation error listing all 3 forbidden fields.
+        """
+        connector = create_connector_object()
+        # Inject all three forbidden fields into the first capability's configurations
+        connector.capabilities[0].configurations = [
+            FieldGroup(
+                fields=[
+                    ConnectorField(
+                        id="mirror_direction",
+                        title="Mirror Direction",
+                        field_type="select",
+                    ),
+                    ConnectorField(
+                        id="close_incident",
+                        title="Close Incident",
+                        field_type="checkbox",
+                    ),
+                    ConnectorField(
+                        id="close_out",
+                        title="Close Out",
+                        field_type="checkbox",
+                    ),
+                ]
+            )
+        ]
+
+        validator = IsMirroringOmittedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "mirror_direction" in results[0].message
+        assert "close_incident" in results[0].message
+        assert "close_out" in results[0].message

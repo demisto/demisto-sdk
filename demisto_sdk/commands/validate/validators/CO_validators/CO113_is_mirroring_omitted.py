@@ -19,11 +19,7 @@ class IsMirroringOmittedValidator(BaseValidator[ContentTypes]):
         "Validates that mirroring parameters (mirror_direction, close_incident, "
         "close_out) are not present in the connector's capability configurations."
     )
-    rationale = (
-        "Mirroring is handled at the platform level and should not be exposed "
-        "through connector capability configurations. Including these fields "
-        "can cause conflicts with the platform's mirroring mechanism."
-    )
+    rationale = "Mirroring is not supported in the platform."
     error_message = (
         "Connector '{connector_id}' contains forbidden mirroring fields "
         "in capability configurations: {details}"

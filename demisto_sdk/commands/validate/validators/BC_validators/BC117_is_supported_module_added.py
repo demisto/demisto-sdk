@@ -94,32 +94,62 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
         "The following support modules {} have been added to the {} {}."
         " Adding supported modules requires a PM approval."
     )
+    new_pack_error_message = (
+        "A new pack was added containing {} {} with supported modules {}."
+        " Please make sure the supportedModules configuration is approved by a PM."
+    )
     related_field = "supportedModules"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
     related_file_type = [RelatedFileType.SCHEMA]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        return [
-            ValidationResult(
-                validator=self,
-                message=self.error_message.format(
-                    ", ".join(map(repr, sorted(difference))),
-                    content_item.display_name,
-                    content_item.content_type,
-                ),
-                content_object=content_item,
-            )
-            for content_item in content_items
+        results: List[ValidationResult] = []
+        for content_item in content_items:
+            old_item = cast(ContentTypes, content_item.old_base_content_object)
+
+            # For newly added items in a new pack (no pack association on old item),
+            # warn that supportedModules need PM approval.
             if (
-                difference := self.added_parameters(
-                    cast(ContentTypes, content_item.old_base_content_object),
-                    content_item,
+                content_item.git_status == GitStatuses.ADDED
+                and not isinstance(content_item, Pack)
+                and not getattr(old_item, "pack", None)
+            ):
+                modules = get_content_item_supported_modules(content_item)
+                if modules:
+                    results.append(
+                        ValidationResult(
+                            validator=self,
+                            message=self.new_pack_error_message.format(
+                                content_item.display_name,
+                                content_item.content_type,
+                                ", ".join(map(repr, sorted(modules))),
+                            ),
+                            content_object=content_item,
+                        )
+                    )
+                continue
+
+            difference = self.added_parameters(old_item, content_item)
+            if difference:
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
+                            ", ".join(map(repr, sorted(difference))),
+                            content_item.display_name,
+                            content_item.content_type,
+                        ),
+                        content_object=content_item,
+                    )
                 )
-            )
-        ]
+        return results
 
     def added_parameters(self, old_item: ContentTypes, new_item: ContentTypes) -> set:
         old_params = get_content_item_supported_modules(old_item)

@@ -2100,3 +2100,68 @@ def test_IsSupportedModulesAdded_with_removed_modules():
     res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
 
     assert len(res) == 0
+
+
+def test_IsSupportedModulesAdded_new_pack_with_supported_modules():
+    """
+    Given
+    - A script in a newly added pack where the old_base_content_object has no pack attribute (new pack scenario).
+    - The script has supportedModules defined.
+
+    When
+    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
+
+    Then
+    - Return a ValidationResult with an informative message about the new pack needing PM approval.
+    - Should NOT raise an AttributeError.
+    """
+    new_item = create_script_object(
+        paths=["supportedModules"],
+        values=[["Cloud", "asm"]],
+    )
+    new_item.git_status = GitStatuses.ADDED
+    new_item.marketplaces = [MarketplaceVersions.PLATFORM]
+
+    # Simulate a new pack scenario: old_base_content_object is a deep copy but with no pack
+    old_item = create_script_object(
+        paths=["supportedModules"],
+        values=[["Cloud", "asm"]],
+    )
+    old_item.git_status = GitStatuses.ADDED
+    old_item.pack = None
+    new_item.old_base_content_object = old_item
+
+    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 1
+    assert "new pack" in res[0].message.lower()
+    assert "approved" in res[0].message.lower()
+    assert res[0].validator.error_code == "BC117"
+
+
+def test_IsSupportedModulesAdded_new_pack_non_platform_item():
+    """
+    Given
+    - A script in a newly added pack where the old_base_content_object has no pack attribute (new pack scenario).
+    - The script is NOT a platform item (no 'platform' marketplace).
+
+    When
+    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
+
+    Then
+    - Return an empty list (no validation issues since the item is not a platform item).
+    """
+    new_item = create_script_object()
+    new_item.git_status = GitStatuses.ADDED
+    new_item.supportedModules = None
+    new_item.marketplaces = [MarketplaceVersions.XSOAR]
+
+    old_item = create_script_object()
+    old_item.git_status = GitStatuses.ADDED
+    old_item.pack = None
+    old_item.marketplaces = [MarketplaceVersions.XSOAR]
+    new_item.old_base_content_object = old_item
+
+    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 0

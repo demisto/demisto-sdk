@@ -1,4 +1,0 @@
-changes:
-- description: Updated the `validate-content-path` pre-commit hook to enforce the new AgentixActions directory hierarchy. Files must now be placed in a subfolder (e.g., `AgentixActions/<ActionName>/<ActionName>.yml`), and the old flat structure (`AgentixActions/<ActionName>.yml`) is no longer allowed.
-  type: feature
-pr_number: 5303

@@ -1270,27 +1270,108 @@ class ConnectorAwareInitializer(Initializer):
     def _cross_match_and_expand(
         self, integrations: Set[Integration], connectors: Set[Connector]
     ) -> Set[BaseContent]:
-        """Match connector handlers to integrations and expand with missing counterparts.
+        """Orchestrate the 4-phase handler-integration cross-matching.
 
-        Each XSOAR handler references an integration via ``xsoar_integration_id``.
-        This method resolves those references and sets ``handler.related_integration``
-        (1:1 handler-to-integration) and ``integration.related_content`` (1:1 back-ref).
+        Each XSOAR handler inside a ``Connector`` references an integration via
+        its ``xsoar_integration_id`` field.  This method resolves those references
+        and sets bidirectional cross-links:
 
-        Phase 1: Direct matching from the current set.
-        Phase 2a: Unmatched integrations -- graph search for connectors referencing them.
-        Phase 2b: Unmatched handlers -- graph search for integration.
+        * ``handler.related_integration`` — the ``Integration`` object (1:1).
+        * ``integration.related_content`` — the handler back-reference (1:1).
+
+        **Phases**:
+
+        1. *Direct match* — pair handlers with integrations already in the
+           working set (no graph access needed).
+        2. *Graph-expand connectors* — for integrations that had no handler in
+           the working set, search the content graph for connectors that
+           reference them and add those connectors.
+        3. *Graph-expand integrations* — for handlers that still have no
+           integration after phase 2a, search the graph for the referenced
+           integration and add it.
+        4. *Cleanup* — remove integrations that remain unmatched after all
+           expansion phases.
+
+        Example flow::
+
+            Input:  integrations={A, B}, connectors={C1(handler→A)}
+            Phase 1:  A ↔ C1.handler  (direct match)
+            Phase 2a: B has no handler → graph finds C2(handler→B) → add C2
+            Phase 2b: (nothing left unmatched)
+            Cleanup:  (nothing to remove)
+            Output: {A, B, C1, C2}
+
+        Args:
+            integrations: Mutable set of ``Integration`` objects to match and
+                potentially expand with graph-discovered integrations.
+            connectors: Mutable set of ``Connector`` objects to match and
+                potentially expand with graph-discovered connectors.
+
+        Returns:
+            The union ``integrations | connectors`` with all cross-links set.
         """
+        # Phase 1: Direct matching
+        matched_ids, matched_keys = self._direct_match(integrations, connectors)
 
-        # Build lookup maps
+        # Early exit if everything matched
+        unmatched_integrations = {
+            i for i in integrations if i.object_id not in matched_ids
+        }
+        unmatched_handlers = [
+            (c, h)
+            for c in connectors
+            for h in c.xsoar_handlers
+            if h.xsoar_integration_id and f"{c.object_id}::{h.id}" not in matched_keys
+        ]
+
+        if not unmatched_integrations and not unmatched_handlers:
+            logger.debug(
+                "All handlers and integrations matched directly, skipping graph."
+            )
+            return integrations | connectors
+
+        # Phase 2a: Find connectors for unmatched integrations via graph
+        self._graph_expand_connectors(unmatched_integrations, connectors, matched_ids)
+
+        # Phase 2b: Find integrations for still-unmatched handlers via graph
+        self._graph_expand_integrations(connectors, integrations)
+
+        # Cleanup: Drop integrations that never found a handler
+        self._remove_unmatched_integrations(integrations)
+
+        return integrations | connectors
+
+    def _direct_match(
+        self, integrations: Set[Integration], connectors: Set[Connector]
+    ) -> Tuple[Set[str], Set[str]]:
+        """Phase 1: Match handlers to integrations already in the working set.
+
+        For each XSOAR handler that declares an ``xsoar_integration_id``, look
+        up the integration in the current *integrations* set.  If found, set the
+        bidirectional cross-links:
+
+        * ``handler.related_integration = integration``
+        * ``integration.related_content = handler``
+
+        Args:
+            integrations: The current set of ``Integration`` objects.
+            connectors: The current set of ``Connector`` objects whose handlers
+                will be inspected.
+
+        Returns:
+            A tuple of ``(matched_integration_ids, matched_handler_keys)`` where
+            *matched_integration_ids* contains the ``object_id`` of every
+            integration that was paired, and *matched_handler_keys* contains
+            composite keys of the form ``"connector_id::handler_id"`` for every
+            handler that was paired.
+        """
         integration_by_id: Dict[str, Integration] = {
             i.object_id: i for i in integrations
         }
 
         matched_integration_ids: Set[str] = set()
-        # Track which handlers have been matched (handler_id is unique within a connector)
         matched_handler_keys: Set[str] = set()  # "connector_id::handler_id"
 
-        # --- Phase 1: Direct matching ---
         for connector in connectors:
             for handler in connector.xsoar_handlers:
                 int_id = handler.xsoar_integration_id
@@ -1308,98 +1389,133 @@ class ConnectorAwareInitializer(Initializer):
                         f"'{match.object_id}' (direct)."
                     )
 
-        # Determine what's still unmatched
-        unmatched_integrations = {
-            i for i in integrations if i.object_id not in matched_integration_ids
-        }
-        unmatched_handlers = [
-            (c, h)
-            for c in connectors
-            for h in c.xsoar_handlers
-            if h.xsoar_integration_id
-            and f"{c.object_id}::{h.id}" not in matched_handler_keys
-        ]
+        return matched_integration_ids, matched_handler_keys
 
-        if not unmatched_integrations and not unmatched_handlers:
-            logger.debug(
-                "All handlers and integrations matched directly, skipping graph."
-            )
-            return integrations | connectors
+    def _graph_expand_connectors(
+        self,
+        unmatched_integrations: Set[Integration],
+        connectors: Set[Connector],
+        matched_ids: Set[str],
+    ) -> None:
+        """Phase 2a: Find connectors for integrations that had no direct match.
 
-        # --- Phase 2a: Unmatched integrations -- graph search for connectors ---
-        if unmatched_integrations:
-            logger.debug(
-                f"Searching graph for connectors referencing unmatched "
-                f"integrations: {[i.object_id for i in unmatched_integrations]}"
-            )
-            existing_connector_ids = {c.object_id for c in connectors}
-            for integration in list(unmatched_integrations):
-                found_connectors = self._graph_search_connectors(integration.object_id)
-                for found_connector in found_connectors:
-                    if not isinstance(found_connector, Connector):
-                        continue
-                    if found_connector.object_id in existing_connector_ids:
-                        continue
-                    if not found_connector.xsoar_handlers:
-                        continue
-                    for handler in found_connector.xsoar_handlers:
-                        if handler.xsoar_integration_id == integration.object_id:
-                            handler.related_integration = integration
-                            integration.related_content = handler
-                            matched_integration_ids.add(integration.object_id)
-                            logger.debug(
-                                f"Matched handler '{handler.id}' (connector "
-                                f"'{found_connector.object_id}') -> integration "
-                                f"'{integration.object_id}' (graph)."
-                            )
-                    connectors.add(found_connector)
-                    existing_connector_ids.add(found_connector.object_id)
+        For each unmatched integration, search the content graph for connectors
+        whose XSOAR handlers reference it.  Found connectors are added to the
+        *connectors* set in-place and their handlers are linked to the
+        integration.
 
-        # --- Phase 2b: Unmatched handlers -- graph search for integration ---
-        # Recalculate unmatched handlers after phase 2a
+        Args:
+            unmatched_integrations: Integrations from the working set that were
+                not paired during Phase 1.
+            connectors: Mutable set of connectors — new graph-discovered
+                connectors are added here.
+            matched_ids: Mutable set of matched integration IDs — updated when
+                a graph-discovered connector matches an integration.
+        """
+        if not unmatched_integrations:
+            return
+
+        logger.debug(
+            f"Searching graph for connectors referencing unmatched "
+            f"integrations: {[i.object_id for i in unmatched_integrations]}"
+        )
+        existing_connector_ids = {c.object_id for c in connectors}
+        for integration in list(unmatched_integrations):
+            found_connectors = self._graph_search_connectors(integration.object_id)
+            for found_connector in found_connectors:
+                if not isinstance(found_connector, Connector):
+                    continue
+                if found_connector.object_id in existing_connector_ids:
+                    continue
+                if not found_connector.xsoar_handlers:
+                    continue
+                for handler in found_connector.xsoar_handlers:
+                    if handler.xsoar_integration_id == integration.object_id:
+                        handler.related_integration = integration
+                        integration.related_content = handler
+                        matched_ids.add(integration.object_id)
+                        logger.debug(
+                            f"Matched handler '{handler.id}' (connector "
+                            f"'{found_connector.object_id}') -> integration "
+                            f"'{integration.object_id}' (graph)."
+                        )
+                connectors.add(found_connector)
+                existing_connector_ids.add(found_connector.object_id)
+
+    def _graph_expand_integrations(
+        self, connectors: Set[Connector], integrations: Set[Integration]
+    ) -> None:
+        """Phase 2b: Find integrations for handlers that still have no match.
+
+        After Phase 2a, recalculate which handlers are still unmatched.  For
+        each, search the content graph for the referenced integration.  Skip
+        deprecated integrations and those not in the ``PLATFORM`` marketplace.
+
+        Found integrations are added to the *integrations* set in-place and
+        linked to their handler.
+
+        Args:
+            connectors: The (possibly expanded) set of connectors whose
+                unmatched handlers will be inspected.
+            integrations: Mutable set of integrations — new graph-discovered
+                integrations are added here.
+        """
         unmatched_handlers = [
             (c, h)
             for c in connectors
             for h in c.xsoar_handlers
             if h.xsoar_integration_id and h.related_integration is None
         ]
-        if unmatched_handlers:
-            logger.debug(
-                f"Searching graph for integrations referenced by unmatched "
-                f"handlers: {[(c.object_id, h.id) for c, h in unmatched_handlers]}"
-            )
-            for connector, handler in unmatched_handlers:
-                int_id = handler.xsoar_integration_id
-                if not int_id:
-                    continue
-                results = self._graph_search_integration(int_id)
-                if results:
-                    integration = results[0]
-                    if getattr(integration, "deprecated", False):
-                        logger.debug(
-                            f"Skipping graph-found integration "
-                            f"'{integration.object_id}' -- deprecated."
-                        )
-                        continue
-                    if hasattr(integration, "marketplaces") and (
-                        MarketplaceVersions.PLATFORM not in integration.marketplaces
-                    ):
-                        logger.debug(
-                            f"Skipping graph-found integration "
-                            f"'{integration.object_id}' -- not PLATFORM."
-                        )
-                        continue
-                    handler.related_integration = integration
-                    if hasattr(integration, "related_content"):
-                        integration.related_content = handler
-                    integrations.add(integration)
-                    logger.debug(
-                        f"Matched handler '{handler.id}' (connector "
-                        f"'{connector.object_id}') -> integration "
-                        f"'{integration.object_id}' (graph)."
-                    )
+        if not unmatched_handlers:
+            return
 
-        # --- Cleanup: Remove integrations without a matching connector handler ---
+        logger.debug(
+            f"Searching graph for integrations referenced by unmatched "
+            f"handlers: {[(c.object_id, h.id) for c, h in unmatched_handlers]}"
+        )
+        for connector, handler in unmatched_handlers:
+            int_id = handler.xsoar_integration_id
+            if not int_id:
+                continue
+            results = self._graph_search_integration(int_id)
+            if results:
+                integration = results[0]
+                if getattr(integration, "deprecated", False):
+                    logger.debug(
+                        f"Skipping graph-found integration "
+                        f"'{integration.object_id}' -- deprecated."
+                    )
+                    continue
+                if hasattr(integration, "marketplaces") and (
+                    MarketplaceVersions.PLATFORM not in integration.marketplaces
+                ):
+                    logger.debug(
+                        f"Skipping graph-found integration "
+                        f"'{integration.object_id}' -- not PLATFORM."
+                    )
+                    continue
+                handler.related_integration = integration
+                if hasattr(integration, "related_content"):
+                    integration.related_content = handler
+                integrations.add(integration)
+                logger.debug(
+                    f"Matched handler '{handler.id}' (connector "
+                    f"'{connector.object_id}') -> integration "
+                    f"'{integration.object_id}' (graph)."
+                )
+
+    @staticmethod
+    def _remove_unmatched_integrations(integrations: Set[Integration]) -> None:
+        """Cleanup: Remove integrations that have no matching connector handler.
+
+        After all matching phases, any integration whose ``related_content`` is
+        ``None`` has no connector handler pointing to it and should be excluded
+        from the validation set.
+
+        Args:
+            integrations: Mutable set of integrations — unmatched entries are
+                removed in-place.
+        """
         unmatched_final = {i for i in integrations if i.related_content is None}
         if unmatched_final:
             logger.debug(
@@ -1407,8 +1523,6 @@ class ConnectorAwareInitializer(Initializer):
                 f"connector handler: {[i.object_id for i in unmatched_final]}"
             )
             integrations -= unmatched_final
-
-        return integrations | connectors
 
     @staticmethod
     def _graph_search_integration(integration_id: str) -> List[Any]:

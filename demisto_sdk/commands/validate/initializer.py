@@ -639,6 +639,20 @@ class Initializer:
 
         Returns:
             A statuses dict ready to be passed to ``git_paths_to_basecontent_set``.
+            Keys are either a single ``Path`` (for modified/added/deleted files)
+            or a ``(new_path, old_path)`` tuple (for renamed files).
+            Values are ``GitStatuses`` enum members or ``None`` (for implicitly
+            collected items like pack_metadata.json).
+
+            Example::
+
+                {
+                    Path("Packs/MyPack/Integrations/MyInt/MyInt.yml"): GitStatuses.MODIFIED,
+                    Path("Packs/MyPack/pack_metadata.json"): None,
+                    (Path("Packs/MyPack/Integrations/New/New.yml"),
+                     Path("Packs/MyPack/Integrations/Old/Old.yml")): GitStatuses.RENAMED,
+                    Path("connectors/salesforce/connector.yaml"): GitStatuses.ADDED,
+                }
         """
         self.validate_git_installed()
         self.set_prev_ver()
@@ -1184,6 +1198,27 @@ class ConnectorAwareInitializer(Initializer):
         )
 
     def gather_objects_to_run_on(self) -> Tuple[Set[BaseContent], Set[Path]]:
+        """Collect, filter, and cross-match connector and integration objects.
+
+        Overrides the parent ``Initializer.gather_objects_to_run_on`` to:
+
+        1. **Collect** — Use the standard file-collection flow (``-g``, ``-i``,
+           or ``-a``) but pre-filter to only Integration and Connector paths
+           via ``_is_relevant_path``.
+        2. **Post-filter** — Keep only ``Integration`` objects that are in the
+           PLATFORM marketplace and not deprecated, and ``Connector`` objects
+           that have at least one XSOAR handler.
+        3. **Cross-match** — Call ``_cross_match_and_expand`` to link each
+           XSOAR handler to its referenced integration (and vice versa),
+           expanding with graph-discovered counterparts when needed.
+
+        Returns:
+            Tuple of:
+            - ``Set[BaseContent]``: The filtered set of ``Integration`` and
+              ``Connector`` objects with cross-links populated
+              (``handler.related_integration`` and ``integration.related_content``).
+            - ``Set[Path]``: Paths that could not be parsed into valid content items.
+        """
         # 1. Collect and parse only relevant paths (Integrations + connectors)
         if self.execution_mode == ExecutionMode.USE_GIT:
             statuses = self._collect_git_statuses(path_filter=self._is_relevant_path)

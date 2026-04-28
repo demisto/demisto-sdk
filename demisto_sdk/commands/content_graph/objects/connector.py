@@ -33,7 +33,6 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
 
 class FieldModifiers(BaseModel):
     required: bool = False
-    disabled: bool = False
     hidden: bool = False
     read_only: bool = False
 
@@ -46,7 +45,6 @@ class FieldOptions(BaseModel):
     default_value: Optional[Any] = None
     hint: Optional[str] = None
     values: Optional[List[dict]] = None
-    layout: Optional[dict] = None
     create_modifiers: Optional[FieldModifiers] = None
     edit_modifiers: Optional[FieldModifiers] = None
 
@@ -96,7 +94,7 @@ class ConnectorMetadata(BaseModel):
 
 
 class ConnectorSettings(BaseModel):
-    allow_skip_verification: bool = False
+    allow_skip_verification: bool = True
 
 
 # ============================================================
@@ -177,7 +175,9 @@ class FieldMapping(BaseModel):
     """Raw serializer entry from serializer.yaml."""
 
     id: str  # connector field ID (connector_param_name)
-    field_name: str  # integration parameter name (content_param_name)
+    field_name: (
+        str  # value to transform integration parameter name (content_param_name) to
+    )
     field_value: Optional[str] = None  # optional value transform (e.g. "toString")
 
 
@@ -217,17 +217,34 @@ class ResolvedParamMapping(BaseModel):
 # ============================================================
 
 
+class HandlerOwnership(BaseModel):
+    """Ownership info from handler metadata."""
+
+    team: str = ""
+    maintainers: List[str] = []
+
+
+class HandlerMetadata(BaseModel):
+    """Typed metadata from a handler.yaml ``metadata`` block."""
+
+    version: str = "1.0.0"
+    description: str = ""
+    module: Optional[str] = None
+    tags: List[str] = []
+    ownership: HandlerOwnership = HandlerOwnership()
+
+
 class HandlerTriggering(BaseModel):
-    type: str  # "ZERO_SCALE" or "PUB_SUB"
+    type: str = "PUB_SUB"
     labels: Optional[Dict[str, str]] = None
     args: Optional[dict] = None
 
 
 class HandlerAuthOption(BaseModel):
     id: str  # references connection profile ID
-    scopes: List[str] = []
+    scopes: Optional[List[str]] = []
     workloads: List[str] = []
-    methods: Optional[List[Any]] = None
+    methods: Optional[List[str]] = []
 
 
 class HandlerCapability(BaseModel):
@@ -247,7 +264,7 @@ class HandlerData(BaseModel):
     """Parsed structured data from a handler.yaml file."""
 
     id: str
-    metadata: dict  # raw metadata dict
+    metadata: HandlerMetadata = HandlerMetadata()
     enabled: bool = True
     triggering: HandlerTriggering
     capabilities: List[HandlerCapability] = []
@@ -261,16 +278,16 @@ class HandlerData(BaseModel):
 
     @property
     def module(self) -> Optional[str]:
-        return self.metadata.get("module")
+        return self.metadata.module
 
     @property
-    def team(self) -> Optional[str]:
-        return self.metadata.get("ownership", {}).get("team")
+    def team(self) -> str:
+        return self.metadata.ownership.team
 
     @property
     def is_xsoar(self) -> bool:
         """Identify if this handler is XSOAR-related."""
-        return self.module == "xsoar" or self.team == "xsoar"
+        return self.module == "xsoar" and self.team == "xsoar"
 
     @property
     def xsoar_integration_id(self) -> Optional[str]:
@@ -284,12 +301,6 @@ class HandlerData(BaseModel):
             return self.triggering.labels.get("xsoar-pack-id")
         return None
 
-    @property
-    def xsoar_content_id(self) -> Optional[str]:
-        if self.triggering.labels:
-            return self.triggering.labels.get("xsoar-content-id")
-        return None
-
 
 # ============================================================
 # Capability-handler mapping
@@ -297,13 +308,26 @@ class HandlerData(BaseModel):
 
 
 class CapabilityHandlerMapping(BaseModel):
-    """Maps a capability to its handlers and related context."""
+    """Links a capability to the handler(s) that serve it.
 
-    capability_id: str
-    handler_ids: List[str] = []
-    is_xsoar: bool = False  # True if any handler for this capability is XSOAR
-    auth_profile_ids: List[str] = []  # connection profile IDs used
-    has_configurations: bool = False  # whether configurations.yaml has config for this
+    Built by the parser from the cross-reference between capabilities.yaml
+    and each handler's ``capabilities`` list.  For example, if capability
+    ``"identity-posture"`` is served by handlers ``["xsoar", "cwp"]``, this
+    mapping records that relationship along with auth and config metadata.
+
+    Used by validators (e.g. CO112) to look up which handlers back a
+    capability and whether the capability has XSOAR involvement.
+    """
+
+    capability_id: str  # matches CapabilityData.id
+    handler_ids: List[str] = []  # handler IDs that declare this capability
+    is_xsoar: bool = False  # True if at least one handler is XSOAR-related
+    auth_profile_ids: List[
+        str
+    ] = []  # connection profile IDs referenced by auth_options
+    has_configurations: bool = (
+        False  # True if configurations.yaml has a section for this capability
+    )
 
 
 # ============================================================
@@ -395,7 +419,5 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        """Check if a dict/path represents a connector."""
-        if path.name == "connector.yaml" or (path / "connector.yaml").exists():
-            return True
-        return "metadata" in _dict and "vendor" in _dict.get("metadata", {})
+        """Check if the given path/dict represents a Connector content item."""
+        return path.name == "connector.yaml" and "connectors" in path.parts

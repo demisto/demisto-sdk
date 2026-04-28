@@ -58,7 +58,7 @@ def validate_all_validations_run_on_git_mode(
     config_file_content: dict,
 ) -> int:
     """
-    Validate that all validations configured in the path_based section are also configured in the use_git section.
+    Verifies that all validations configured in the path_based section are also configured in the use_git section.
     Also validates the same for connector-specific sections.
 
     Arguments:

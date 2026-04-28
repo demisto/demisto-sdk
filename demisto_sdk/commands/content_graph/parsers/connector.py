@@ -29,6 +29,8 @@ from demisto_sdk.commands.content_graph.objects.connector import (
     HandlerAuthOption,
     HandlerCapability,
     HandlerData,
+    HandlerMetadata,
+    HandlerOwnership,
     HandlerTestConnection,
     HandlerTriggering,
     ResolvedParamMapping,
@@ -380,9 +382,21 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
                     computed_fields=computed_fields,
                 )
 
+            raw_meta = hdata.get("metadata", {})
+            handler_metadata = HandlerMetadata(
+                version=raw_meta.get("version", "1.0.0"),
+                description=raw_meta.get("description", ""),
+                module=raw_meta.get("module"),
+                tags=raw_meta.get("tags", []),
+                ownership=HandlerOwnership(
+                    team=raw_meta.get("ownership", {}).get("team", ""),
+                    maintainers=raw_meta.get("ownership", {}).get("maintainers", []),
+                ),
+            )
+
             handler_data = HandlerData(
                 id=hdata["id"],
-                metadata=hdata.get("metadata", {}),
+                metadata=handler_metadata,
                 enabled=hdata.get("enabled", True),
                 triggering=triggering,
                 capabilities=handler_caps,

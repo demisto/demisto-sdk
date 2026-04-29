@@ -66,6 +66,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_agentix_actions_using_content_items,
     get_items_using_deprecated,
+    get_non_mandatory_supported_modules_mismatch_dependencies,
     get_supported_modules_mismatch_commands,
     get_supported_modules_mismatch_content_items,
     get_supported_modules_mismatch_dependencies,
@@ -693,6 +694,31 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             results = session.execute_read(
                 get_supported_modules_mismatch_dependencies, content_item_ids
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_content_items_with_non_mandatory_module_mismatch_dependencies(
+        self, content_item_ids: List[str]
+    ) -> List[BaseNode]:
+        """
+        Retrieves content items with invalid non-mandatory dependency relationships based on supported modules.
+
+        This method identifies content items where a non-mandatory (optional) dependent item's
+        `supportedModules` are not fully included in the `supportedModules` of the item it depends on.
+
+        Args:
+            content_item_ids (List[str]): List of content item IDs to check for invalid dependencies.
+                                        If empty, all relevant content items will be checked.
+        Returns:
+            List[BaseNode]: Content items that have invalid supported module non-mandatory dependencies, if any exist.
+
+        """
+        with self.driver.session() as session:
+            results = session.execute_read(
+                get_non_mandatory_supported_modules_mismatch_dependencies,
+                content_item_ids,
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

@@ -84,6 +84,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR111_is_agentix_act
 from demisto_sdk.commands.validate.validators.GR_validators.GR112_is_agentix_action_name_already_exists_valid import (
     IsAgentixActionNameAlreadyExistsValidator,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR114_is_non_mandatory_supported_modules_compatibility_all_files import (
+    IsNonMandatorySupportedModulesCompatibilityAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR114_is_non_mandatory_supported_modules_compatibility_list_files import (
+    IsNonMandatorySupportedModulesCompatibilityListFiles,
+)
 from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
@@ -1765,6 +1771,194 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
         == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
+
+
+@pytest.fixture
+def repo_for_test_gr_114(graph_repo: Repo):
+    """
+    Creates a test repository for testing GR114 validator (non-mandatory dependencies).
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains an IndicatorType "MyIndicatorType" with `supportedModules: ["module_x"]`
+              that has a non-mandatory dependency on script "ReputationScript" via reputationScriptName.
+    - Pack B: Contains "ReputationScript" with `supportedModules: ["module_y"]`.
+              Note: "ReputationScript" does *not* list "module_x" in its supportedModules.
+
+    The indicator_type -> script dependency via reputationScriptName is non-mandatory (is_mandatory=False),
+    which is what GR114 validates.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    pack_a.create_indicator_type(
+        "MyIndicatorType",
+        content={
+            "id": "MyIndicatorType",
+            "details": "MyIndicatorType",
+            "preProcessingScript": "",
+            "fromVersion": "6.10.0",
+            "reputationScriptName": "ReputationScript",
+            "supportedModules": ["module_x"],
+        },
+    )
+
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    script_yml = {
+        "commonfields": {"id": "ReputationScript", "version": -1},
+        "name": "ReputationScript",
+        "comment": "Reputation script",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_y"],
+    }
+    pack_b.create_script("ReputationScript", yml=script_yml)
+
+    return graph_repo
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_all_files(
+    repo_for_test_gr_114: Repo,
+):
+    """
+    Given:
+        A repository where "MyIndicatorType" (with `supportedModules: ['module_x']`)
+        has a non-mandatory dependency on "ReputationScript", which does not support "module_x".
+    When:
+        Running the IsNonMandatorySupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should identify "MyIndicatorType" as invalid (warning), reporting that
+        "ReputationScript" is missing "module_x".
+    """
+    graph_interface = repo_for_test_gr_114.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsNonMandatorySupportedModulesCompatibilityAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following non-mandatory dependencies have missing required modules: ReputationScript is missing: [module_x]"
+    )
+    assert results[0].content_object.object_id == "MyIndicatorType"
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_list_files(
+    repo_for_test_gr_114: Repo,
+):
+    """
+    Given:
+        A repository where "MyIndicatorType" (with `supportedModules: ['module_x']`)
+        has a non-mandatory dependency on "ReputationScript", which does not support "module_x".
+    When:
+        The IsNonMandatorySupportedModulesCompatibility validator runs specifically on "MyIndicatorType".
+    Then:
+        The validator should identify "MyIndicatorType" as invalid (warning), reporting that
+        "ReputationScript" is missing the required "module_x".
+    """
+    graph_interface = repo_for_test_gr_114.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsNonMandatorySupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+        [repo_for_test_gr_114.packs[0].indicator_types[0].object]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following non-mandatory dependencies have missing required modules: ReputationScript is missing: [module_x]"
+    )
+    assert results[0].content_object.object_id == "MyIndicatorType"
+
+
+@pytest.fixture
+def repo_for_test_gr_114_valid(graph_repo: Repo):
+    """
+    Creates a test repository for testing GR114 validator where the dependency is valid.
+
+    This fixture sets up a graph repository where "MyIndicatorType" has a non-mandatory
+    dependency on "ReputationScript", and "ReputationScript" supports all modules that
+    "MyIndicatorType" supports.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    pack_a.create_indicator_type(
+        "MyIndicatorType",
+        content={
+            "id": "MyIndicatorType",
+            "details": "MyIndicatorType",
+            "preProcessingScript": "",
+            "fromVersion": "6.10.0",
+            "reputationScriptName": "ReputationScript",
+            "supportedModules": ["module_x"],
+        },
+    )
+
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    script_yml = {
+        "commonfields": {"id": "ReputationScript", "version": -1},
+        "name": "ReputationScript",
+        "comment": "Reputation script",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_x", "module_y"],
+    }
+    pack_b.create_script("ReputationScript", yml=script_yml)
+
+    return graph_repo
+
+
+def test_NonMandatorySupportedModulesCompatibility_valid_all_files(
+    repo_for_test_gr_114_valid: Repo,
+):
+    """
+    Given:
+        A repository where "MyIndicatorType" (with `supportedModules: ['module_x']`)
+        has a non-mandatory dependency on "ReputationScript", which supports "module_x".
+    When:
+        Running the IsNonMandatorySupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should pass with no results.
+    """
+    graph_interface = repo_for_test_gr_114_valid.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsNonMandatorySupportedModulesCompatibilityAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 0
 
 
 @pytest.fixture

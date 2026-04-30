@@ -308,6 +308,21 @@ class File(ABC):
             )
         except Exception as error:
             if from_remote:
+                # Fallback: try reading from local branch when remote fails
+                logger.debug(
+                    f"Could not read git file {self.path} from remote branch/commit {DEMISTO_GIT_UPSTREAM}:{tag}, "
+                    f"falling back to local branch {tag}"
+                )
+                try:
+                    return self.load(
+                        GitUtil.from_content_path().read_file_content(
+                            self.path,
+                            commit_or_branch=tag,
+                            from_remote=False,
+                        )
+                    )
+                except Exception:
+                    pass  # Fall through to raise the original error
                 tag = f"{DEMISTO_GIT_UPSTREAM}:{tag}"
             logger.error(
                 f"Could not read git file {self.path} from branch/commit {tag} as {self.__class__.__name__} file"

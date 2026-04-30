@@ -287,7 +287,7 @@ class File(ABC):
 
         git_util = GitUtil.from_content_path()
         if not git_util.is_file_exist_in_commit_or_branch(
-            path, commit_or_branch=tag, from_remote=from_remote
+            path, commit_or_branch=tag, from_remote=False
         ):
             raise FileNotFoundError(
                 f"File {path} does not exist in commit/branch {tag}"

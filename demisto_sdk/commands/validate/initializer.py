@@ -1,4 +1,3 @@
-import copy
 import os
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
@@ -789,9 +788,9 @@ class Initializer:
                                 logger.debug(
                                     f"Could not parse the old_base_content_object for {obj.path}, setting a copy of the object as the old_base_content_object."
                                 )
-                                obj.old_base_content_object = copy.deepcopy(obj)
+                                obj.old_base_content_object = obj.copy(deep=True)
                         else:
-                            obj.old_base_content_object = copy.deepcopy(obj)
+                            obj.old_base_content_object = obj.copy(deep=True)
                         if obj.old_base_content_object:
                             obj.old_base_content_object.git_sha = prev_ver
                         basecontent_with_path_set.add(obj)

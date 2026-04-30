@@ -427,6 +427,14 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             name="error-code", help="Quickly find relevant info for an error code."
         )(error_code)
 
+    if command_name == "get-schema" or register_all:
+        from demisto_sdk.commands.get_schema.get_schema_setup import get_schema
+
+        app.command(
+            name="get-schema",
+            help="Returns the JSON schema of a content item type based on its strict pydantic model.",
+        )(get_schema)
+
     if command_name == "test-content" or register_all:
         from demisto_sdk.commands.test_content.content_test_setup import test_content
 

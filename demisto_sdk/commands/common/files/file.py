@@ -262,7 +262,7 @@ class File(ABC):
         path: Union[str, Path],
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
         encoding: Optional[str] = None,
-        from_remote: bool = True,
+        from_remote: bool = False,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ) -> Any:
@@ -287,7 +287,7 @@ class File(ABC):
 
         git_util = GitUtil.from_content_path()
         if not git_util.is_file_exist_in_commit_or_branch(
-            path, commit_or_branch=tag, from_remote=False
+            path, commit_or_branch=tag, from_remote=from_remote
         ):
             raise FileNotFoundError(
                 f"File {path} does not exist in commit/branch {tag}"

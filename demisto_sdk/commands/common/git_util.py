@@ -204,7 +204,7 @@ class GitUtil:
         return blob.data_stream.read()
 
     def is_file_exist_in_commit_or_branch(
-        self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = False
+        self, path: Union[Path, str], commit_or_branch: str, from_remote: bool = True
     ) -> bool:
         try:
             commit = self.get_commit(commit_or_branch, from_remote=from_remote)

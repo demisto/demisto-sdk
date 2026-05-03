@@ -66,7 +66,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     get_agentix_actions_using_content_items,
     get_items_using_deprecated,
-    get_non_mandatory_supported_modules_mismatch_dependencies,
     get_supported_modules_mismatch_commands,
     get_supported_modules_mismatch_content_items,
     get_supported_modules_mismatch_dependencies,
@@ -717,8 +716,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         with self.driver.session() as session:
             results = session.execute_read(
-                get_non_mandatory_supported_modules_mismatch_dependencies,
+                get_supported_modules_mismatch_dependencies,
                 content_item_ids,
+                False,
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

@@ -123,6 +123,54 @@ class IsNonMandatorySupportedModulesCompatibility(BaseValidator[ContentTypes], A
 
         return missing_modules_by_dependency
 
+    def get_missing_modules_by_command(self, content_item) -> dict[str, list[str]]:
+        """Get missing modules for each command of a content item.
+
+        Args:
+            content_item: The content item to check commands for
+
+        Returns:
+            dict: A dictionary mapping the content item ID to lists of missing modules per command
+        """
+        missing_modules_by_item: dict[str, list[str]] = {}
+
+        for command in content_item.commands:
+            # Get modules supported by the command but not by the content item
+            missing_modules = [
+                module
+                for module in command.supportedModules
+                if module not in content_item.supportedModules
+            ]
+
+            if missing_modules:
+                if content_item.object_id not in missing_modules_by_item:
+                    missing_modules_by_item[content_item.object_id] = []
+                missing_modules_by_item[content_item.object_id].extend(missing_modules)
+
+        return missing_modules_by_item
+
+    def get_commands_with_missing_modules_by_content_item(
+        self, item, commands_with_missing_modules_by_content_item: dict
+    ):
+        """Get commands with missing modules for a content item.
+
+        Args:
+            item: The content item to check commands for
+            commands_with_missing_modules_by_content_item: Dictionary to populate with commands that have missing modules
+
+        Returns:
+            dict: A dictionary mapping content item IDs to lists of command IDs
+        """
+        for rel in item.uses:
+            command = rel.content_item_to
+            # At this point, we assume the mismatch is already established
+            if item.object_id not in commands_with_missing_modules_by_content_item:
+                commands_with_missing_modules_by_content_item[item.object_id] = []
+            # Add the command ID to the list
+            commands_with_missing_modules_by_content_item[item.object_id].append(
+                command.object_id
+            )
+
     def format_error_messages(self, missing_modules_dict):
         """Format error messages for missing modules.
 
@@ -137,6 +185,22 @@ class IsNonMandatorySupportedModulesCompatibility(BaseValidator[ContentTypes], A
             formatted_messages.append(f"{object_id} is missing: [{', '.join(modules)}]")
         return formatted_messages
 
+    def format_commands_error_message(self, commands_with_missing_modules: dict) -> str:
+        """Format error message for commands with missing modules.
+
+        Args:
+            commands_with_missing_modules: Dictionary mapping content item IDs to lists of command IDs
+
+        Returns:
+            str: Formatted error message
+        """
+        formatted_messages = []
+        for content_item_id, commands in commands_with_missing_modules.items():
+            formatted_messages.append(
+                f"Content item '{content_item_id}' has incompatible commands: [{', '.join(commands)}]"
+            )
+        return ", ".join(formatted_messages)
+
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
@@ -148,6 +212,18 @@ class IsNonMandatorySupportedModulesCompatibility(BaseValidator[ContentTypes], A
 
         mismatched_dependencies = self.graph.find_content_items_with_non_mandatory_module_mismatch_dependencies(
             target_content_item_ids
+        )
+
+        mismatched_commands = (
+            self.graph.find_content_items_with_module_mismatch_commands(
+                target_content_item_ids
+            )
+        )
+
+        mismatched_content_items = (
+            self.graph.find_content_items_with_module_mismatch_content_items(
+                target_content_item_ids
+            )
         )
 
         results: List[ValidationResult] = []
@@ -167,6 +243,39 @@ class IsNonMandatorySupportedModulesCompatibility(BaseValidator[ContentTypes], A
                         message=self.error_message.format(
                             ", ".join(formatted_messages)
                         ),
+                        content_object=invalid_item,
+                    )
+                )
+
+        # Process items with mismatched commands
+        for invalid_item in mismatched_commands:
+            missing_modules_by_item = self.get_missing_modules_by_command(invalid_item)
+            if missing_modules_by_item:
+                formatted_messages = self.format_error_messages(missing_modules_by_item)
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
+                            ", ".join(formatted_messages)
+                        ),
+                        content_object=invalid_item,
+                    )
+                )
+
+        # Process items with mismatched content_items
+        for invalid_item in mismatched_content_items:
+            commands_with_missing_modules: dict[str, list[str]] = {}
+            self.get_commands_with_missing_modules_by_content_item(
+                invalid_item, commands_with_missing_modules
+            )
+            if commands_with_missing_modules:
+                formatted_message = self.format_commands_error_message(
+                    commands_with_missing_modules
+                )
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=f"Module compatibility issue detected: {formatted_message}. Make sure the commands used are supported by the same modules as the content item.",
                         content_object=invalid_item,
                     )
                 )

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import DEPLOYMENT_JSON_FILENAME
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -9,8 +10,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Pack
-
-DEPLOYMENT_JSON_FILENAME = "deployment.json"
 
 
 class ManagedPackHasDeploymentJsonValidator(BaseValidator[ContentTypes]):

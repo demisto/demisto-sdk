@@ -1,0 +1,4 @@
+changes:
+- description: Bump nltk version
+  type: internal
+pr_number: 5328

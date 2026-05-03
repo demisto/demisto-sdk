@@ -289,8 +289,17 @@ class File(ABC):
         if not git_util.is_file_exist_in_commit_or_branch(
             path, commit_or_branch=tag, from_remote=from_remote
         ):
-            raise FileNotFoundError(
-                f"File {path} does not exist in commit/branch {tag}"
+            if not git_util.is_file_exist_in_commit_or_branch(
+                path, commit_or_branch=tag, from_remote=False
+            ):
+                raise FileNotFoundError(
+                    f"File {path} does not exist in commit/branch {tag}"
+                )
+            # File not found in remote but exists locally — read from local
+            return (
+                cls._from_path(path)
+                .as_path(path, encoding=encoding, handler=handler)
+                .__read_git_file(tag, False)
             )
 
         return (

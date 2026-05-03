@@ -1,13 +1,13 @@
 import os
 
 os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "True"
-import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import typer
 import yaml
 
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger, logging_setup
 
 main = typer.Typer()
@@ -81,7 +81,8 @@ def decide_capabilities(integration_yml: dict) -> Dict[str, List[str]]:
         result["Log Collection"] = []
         get_events_cmd_count = sum(1 for n in command_names if "get-events" in n)
         if (
-            "eventcollector" in integration_name or get_events_cmd_count == 1
+            "Event Collector" in integration_name
+            or (len(command_names) - get_events_cmd_count == 0)
         ) and _is_pure_event_collector(integration_yml):
             # Pure event collector — short-circuit to keep the result minimal
             return {"general_configurations": [], "Log Collection": []}
@@ -96,7 +97,9 @@ def decide_capabilities(integration_yml: dict) -> Dict[str, List[str]]:
         get_indicators_cmd_count = sum(
             1 for n in command_names if "get-indicators" in n
         )
-        if "feed" in integration_name or get_indicators_cmd_count == 1:
+        if "feed" in integration_name or (
+            len(command_names) - get_indicators_cmd_count == 0
+        ):
             return {
                 "general_configurations": [],
                 "Threat Intelligence & Enrichment": [],
@@ -233,11 +236,7 @@ def _multi_capability_mapping(
     handled_commands = handled_commands or set()
     commands_section: dict = command_params.get("commands") or {}
     for cmd_name, params in commands_section.items():
-        if cmd_name == "test-module":
-            # already handled in step 2.1
-            continue
-        if cmd_name in handled_commands:
-            # already handled in step 2.1.5 (manual mapping)
+        if cmd_name == "test-module" or cmd_name in handled_commands:
             continue
         target = _resolve_target_capability(cmd_name, result)
         for param in params or []:
@@ -276,20 +275,6 @@ def _deduplicate(result: Dict[str, List[str]]) -> None:
             result["general_configurations"].append(param)
 
 
-def _log_orphans(result: Dict[str, List[str]], param_defaults: dict) -> None:
-    """Step 2.5 - Log any params present in ``param_defaults`` that ended up
-    not being mapped to any capability."""
-    placed: set = set()
-    for params in result.values():
-        placed.update(params)
-    orphans = [p for p in param_defaults.keys() if p not in placed]
-    if orphans:
-        logger.warning(
-            f"The following params are in param_defaults but were not mapped "
-            f"to any capability: {orphans}"
-        )
-
-
 def map_params_to_capabilities(
     capabilities: Dict[str, List[str]],
     command_params: dict,
@@ -323,9 +308,6 @@ def map_params_to_capabilities(
     # Step 2.4 - deduplicate
     _deduplicate(result)
 
-    # Step 2.5 - orphan logging
-    _log_orphans(result, param_defaults)
-
     return result
 
 
@@ -335,7 +317,8 @@ def map_params_to_capabilities(
 @main.command()
 def generate_param_mapping(
     command_params_json: str = typer.Argument(
-        ..., help="JSON string with the {integration, commands} structure."
+        ...,
+        help="JSON string with the {integration: '', commands: {command: [params]}} structure that map commands to their params.",
     ),
     param_defaults_json: str = typer.Argument(
         ..., help="JSON string mapping param names to their default values."

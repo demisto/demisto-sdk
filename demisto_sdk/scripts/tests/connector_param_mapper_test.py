@@ -1,10 +1,9 @@
-import json
-import logging
 from pathlib import Path
 
 import pytest
 import yaml
 
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.scripts.connector_param_mapper import (
     decide_capabilities,
     map_params_to_capabilities,
@@ -67,7 +66,11 @@ class TestDecideCapabilities:
             },
         )
         result = decide_capabilities(yml)
-        assert result == {"general_configurations": [], "Log Collection": []}
+        assert result == {
+            "general_configurations": [],
+            "Log Collection": [],
+            "Automation": [],
+        }
 
     def test_log_collection_early_exit_single_get_events_command(self):
         yml = _build_yml(
@@ -81,7 +84,11 @@ class TestDecideCapabilities:
             },
         )
         result = decide_capabilities(yml)
-        assert result == {"general_configurations": [], "Log Collection": []}
+        assert result == {
+            "general_configurations": [],
+            "Log Collection": [],
+            "Automation": [],
+        }
 
     def test_log_collection_no_early_exit_with_two_get_events(self):
         # 2 commands matching "get-events" should NOT trigger early exit
@@ -153,6 +160,7 @@ class TestDecideCapabilities:
         assert result == {
             "general_configurations": [],
             "Threat Intelligence & Enrichment": [],
+            "Automation": [],
         }
 
     def test_fetch_assets_added(self):
@@ -281,7 +289,11 @@ class TestDecideCapabilities:
             },
         )
         result = decide_capabilities(yml)
-        assert result == {"general_configurations": [], "Log Collection": []}
+        assert result == {
+            "general_configurations": [],
+            "Log Collection": [],
+            "Automation": [],
+        }
 
     def test_event_collector_with_fetch_credentials_param_keeps_both(self):
         """Multi-purpose collector: isfetchevents + isFetchCredentials param +
@@ -413,17 +425,16 @@ class TestMapParamsToCapabilities:
             },
         }
         param_defaults = {"missing_param": 1, "a": 2}
-        with caplog.at_level(logging.WARNING):
-            result = map_params_to_capabilities(
-                capabilities, command_params, param_defaults
-            )
+        caplog.set_level("WARNING")
+        result = map_params_to_capabilities(
+            capabilities, command_params, param_defaults
+        )
         # The param should not be placed anywhere
         assert "missing_param" not in result["Automation"]
         assert "missing_param" not in result["general_configurations"]
         # And a warning should have been logged
-        all_messages = " ".join(r.getMessage() for r in caplog.records)
-        assert "missing_param" in all_messages
-        assert "Fetch Issues" in all_messages
+        assert "missing_param" in caplog.text
+        assert "Fetch Issues" in caplog.text
 
     def test_get_events_command_routes_to_log_collection(self):
         """Substring routing: a command containing 'get-events' should be routed
@@ -560,19 +571,6 @@ class TestMapParamsToCapabilities:
         )
         assert result["general_configurations"].count("url") == 1
         assert "url" not in result["Fetch Issues"]
-
-    def test_orphan_params_logged(self, caplog):
-        capabilities = {"general_configurations": [], "Automation": []}
-        command_params = {
-            "integration": "X",
-            "commands": {"vendor-action": ["a"]},
-        }
-        # 'orphan_param' is in defaults but never appears in any command
-        param_defaults = {"a": 1, "orphan_param": "ghost"}
-        with caplog.at_level(logging.WARNING):
-            map_params_to_capabilities(capabilities, command_params, param_defaults)
-        all_messages = " ".join(r.getMessage() for r in caplog.records)
-        assert "orphan_param" in all_messages
 
 
 # ---------------------------------------------------------------------------

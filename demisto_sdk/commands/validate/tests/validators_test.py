@@ -982,7 +982,9 @@ def test_is_pack_item_deployment_json():
         - Should return True, indicating it's a pack-level item.
     """
     initializer = Initializer()
-    assert initializer.is_pack_item(f"Packs/SomePack/{DEPLOYMENT_JSON_FILENAME}") is True
+    assert (
+        initializer.is_pack_item(f"Packs/SomePack/{DEPLOYMENT_JSON_FILENAME}") is True
+    )
 
 
 def test_deployment_json_in_zero_depth_files():

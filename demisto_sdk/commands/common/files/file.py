@@ -293,11 +293,15 @@ class File(ABC):
                 f"File {path} not found in commit/branch {tag}, {from_remote=}"
             )
             # Fallback to local if remote was requested; otherwise, fail
-            if from_remote and git_util.is_file_exist_in_commit_or_branch(path, commit_or_branch=tag, from_remote=False):
+            if from_remote and git_util.is_file_exist_in_commit_or_branch(
+                path, commit_or_branch=tag, from_remote=False
+            ):
                 logger.debug(f"File {path} found in local repo.")
                 from_remote = False  # Reassign flag to read from local instead
             else:
-                raise FileNotFoundError(f"File {path} does not exist in commit/branch {tag}")
+                raise FileNotFoundError(
+                    f"File {path} does not exist in commit/branch {tag}"
+                )
 
         return (
             cls._from_path(path)

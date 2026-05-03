@@ -299,7 +299,6 @@ class File(ABC):
             else:
                 raise FileNotFoundError(f"File {path} does not exist in commit/branch {tag}")
 
-        # A single, clean return statement handles both cases
         return (
             cls._from_path(path)
             .as_path(path, encoding=encoding, handler=handler)

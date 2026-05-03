@@ -1,4 +1,0 @@
-changes:
-- description: Added new ignorable and auto-fixable validation BA130 that checks whether 'marketplacev2' appears in a content item's marketplaces while 'platform' does not.
-  type: feature
-pr_number: 5315

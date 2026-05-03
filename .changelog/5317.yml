@@ -1,4 +1,0 @@
-changes:
-- description: Added support for `.html`, `.css`, and `.csv` file suffixes in the `validate-content-path` pre-commit hook.
-  type: fix
-pr_number: 5317

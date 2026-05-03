@@ -1,4 +1,21 @@
 # Changelog
+## 1.38.24 (2026-04-26)
+### Feature
+* Added AS109 validation to ensure that context keys referenced in displayLabel fields of autonomous playbook tasks are actually used in other tasks within the same playbook. [#5299](https://github.com/demisto/demisto-sdk/pull/5299)
+* Added new ignorable and auto-fixable validation BA130 that checks whether 'marketplacev2' appears in a content item's marketplaces while 'platform' does not. [#5315](https://github.com/demisto/demisto-sdk/pull/5315)
+* Added AS107 validator: Validate that subplaybook prefix is consistent across filename, id, and name fields. Added AS108 validator: Validate that subplaybooks have the internal field set to true. [#5312](https://github.com/demisto/demisto-sdk/pull/5312)
+* Added a deprecation warning to the **generate-unit-tests** command, this command will remove in a subsequent version of the SDK. [#5320](https://github.com/demisto/demisto-sdk/pull/5320)
+* Added TR101 validation to verify that trigger_id is a valid hex string without special characters like dashes or dots. [#5287](https://github.com/demisto/demisto-sdk/pull/5287)
+* Updated the `validate-content-path` pre-commit hook to enforce the new AgentixActions directory hierarchy. Files must now be placed in a subfolder (e.g., `AgentixActions/<ActionName>/<ActionName>.yml`), and the old flat structure (`AgentixActions/<ActionName>.yml`) is no longer allowed. [#5303](https://github.com/demisto/demisto-sdk/pull/5303)
+
+### Fix
+* Added support for `.html`, `.css`, and `.csv` file suffixes in the `validate-content-path` pre-commit hook. [#5317](https://github.com/demisto/demisto-sdk/pull/5317)
+
+### Internal
+* Remove agentix_xsiam references from demisto-sdk [#5323](https://github.com/demisto/demisto-sdk/pull/5323)
+* Updated AgentixActionTest parser to resolve action dependencies using `action_name` instead of `action_id`, and simplified the strict object model for `EvaluationOutcome` and `AgentixActionTestCase`. [#5313](https://github.com/demisto/demisto-sdk/pull/5313)
+
+
 ## 1.38.23 (2026-03-29)
 ### Feature
 * Added "Agentic assistant" as a valid sectionorder value for integrations. [#5296](https://github.com/demisto/demisto-sdk/pull/5296)

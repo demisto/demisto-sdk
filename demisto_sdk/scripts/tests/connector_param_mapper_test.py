@@ -1,10 +1,9 @@
-import json
-import logging
 from pathlib import Path
 
 import pytest
 import yaml
 
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.scripts.connector_param_mapper import (
     decide_capabilities,
     map_params_to_capabilities,
@@ -413,17 +412,16 @@ class TestMapParamsToCapabilities:
             },
         }
         param_defaults = {"missing_param": 1, "a": 2}
-        with caplog.at_level(logging.WARNING):
-            result = map_params_to_capabilities(
-                capabilities, command_params, param_defaults
-            )
+        caplog.set_level("WARNING")
+        result = map_params_to_capabilities(
+            capabilities, command_params, param_defaults
+        )
         # The param should not be placed anywhere
         assert "missing_param" not in result["Automation"]
         assert "missing_param" not in result["general_configurations"]
         # And a warning should have been logged
-        all_messages = " ".join(r.getMessage() for r in caplog.records)
-        assert "missing_param" in all_messages
-        assert "Fetch Issues" in all_messages
+        assert "missing_param" in caplog.text
+        assert "Fetch Issues" in caplog.text
 
     def test_get_events_command_routes_to_log_collection(self):
         """Substring routing: a command containing 'get-events' should be routed
@@ -569,10 +567,9 @@ class TestMapParamsToCapabilities:
         }
         # 'orphan_param' is in defaults but never appears in any command
         param_defaults = {"a": 1, "orphan_param": "ghost"}
-        with caplog.at_level(logging.WARNING):
-            map_params_to_capabilities(capabilities, command_params, param_defaults)
-        all_messages = " ".join(r.getMessage() for r in caplog.records)
-        assert "orphan_param" in all_messages
+        caplog.set_level("WARNING")
+        map_params_to_capabilities(capabilities, command_params, param_defaults)
+        assert "orphan_param" in caplog.text
 
 
 # ---------------------------------------------------------------------------

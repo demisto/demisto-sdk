@@ -1,13 +1,13 @@
 import os
 
 os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "True"
-import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import typer
 import yaml
 
+from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger, logging_setup
 
 main = typer.Typer()

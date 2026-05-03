@@ -289,7 +289,9 @@ class File(ABC):
         if not git_util.is_file_exist_in_commit_or_branch(
             path, commit_or_branch=tag, from_remote=from_remote
         ):
-            logger.debug(f"File {path} not found in commit/branch {tag}, {from_remote=}")
+            logger.debug(
+                f"File {path} not found in commit/branch {tag}, {from_remote=}"
+            )
             if not git_util.is_file_exist_in_commit_or_branch(
                 path, commit_or_branch=tag, from_remote=False
             ):

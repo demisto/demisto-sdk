@@ -570,11 +570,155 @@ class TestMapParamsToCapabilities:
         # 'orphan_param' is in defaults but never appears in any command
         param_defaults = {"a": 1, "orphan_param": "ghost"}
         with caplog.at_level(logging.WARNING):
-            map_params_to_capabilities(
-                capabilities, command_params, param_defaults
-            )
+            map_params_to_capabilities(capabilities, command_params, param_defaults)
         all_messages = " ".join(r.getMessage() for r in caplog.records)
         assert "orphan_param" in all_messages
+
+
+# ---------------------------------------------------------------------------
+# Step 2.1.5 - manual command-to-capability mapping tests
+# ---------------------------------------------------------------------------
+class TestManualMapping:
+    def test_manual_mapping_empty_dict_preserves_existing_behavior(self):
+        """An empty manual mapping must produce identical results to omitting
+        the parameter entirely."""
+        capabilities = {
+            "general_configurations": [],
+            "Fetch Issues": [],
+            "Automation": [],
+        }
+        command_params = {
+            "integration": "X",
+            "commands": {
+                "test-module": ["url"],
+                "fetch-incidents": ["incident_query", "max_incidents"],
+                "vendor-do-stuff": ["arg1"],
+            },
+        }
+        param_defaults = {
+            "incident_query": "",
+            "max_incidents": 50,
+            "arg1": "x",
+        }
+        baseline = map_params_to_capabilities(
+            capabilities, command_params, param_defaults
+        )
+        with_empty_manual = map_params_to_capabilities(
+            capabilities,
+            command_params,
+            param_defaults,
+            manual_command_to_capability={},
+        )
+        assert baseline == with_empty_manual
+
+    def test_manual_mapping_routes_long_running_to_custom_capability(self):
+        """Primary use case: route long-running-execution to a brand-new
+        'Connection Health' capability that is not in the initial mapping."""
+        capabilities = {"general_configurations": [], "Automation": []}
+        command_params = {
+            "integration": "X",
+            "commands": {
+                "test-module": ["url"],
+                "long-running-execution": ["url", "port"],
+                "my-cmd": ["url", "filter"],
+            },
+        }
+        param_defaults = {"url": None, "port": "8080", "filter": ""}
+        manual = {"long-running-execution": ["Connection Health"]}
+        result = map_params_to_capabilities(
+            capabilities,
+            command_params,
+            param_defaults,
+            manual_command_to_capability=manual,
+        )
+        assert "Connection Health" in result
+        assert "port" in result["Connection Health"]
+        assert "filter" in result["Automation"]
+        # 'url' appears in test-module + long-running + my-cmd → dedup → general
+        assert "url" in result["general_configurations"]
+        assert "url" not in result["Connection Health"]
+        assert "url" not in result["Automation"]
+
+    def test_manual_mapping_overrides_command_to_capability_constant(self):
+        """Manual mapping must take precedence over COMMAND_TO_CAPABILITY
+        (e.g. fetch-events would automatically route to 'Log Collection')."""
+        capabilities = {
+            "general_configurations": [],
+            "Log Collection": [],
+            "Automation": [],
+        }
+        command_params = {
+            "integration": "X",
+            "commands": {
+                "test-module": ["url"],
+                "fetch-events": ["url", "lookback"],
+                "my-cmd": ["url"],
+            },
+        }
+        param_defaults = {"url": None, "lookback": "1h"}
+        manual = {"fetch-events": ["Custom Cap"]}
+        result = map_params_to_capabilities(
+            capabilities,
+            command_params,
+            param_defaults,
+            manual_command_to_capability=manual,
+        )
+        assert "Custom Cap" in result
+        assert "lookback" in result["Custom Cap"]
+        assert "lookback" not in result["Log Collection"]
+
+    def test_manual_mapping_multi_target_routes_to_all_listed(self):
+        """Manual mapping with multiple target capabilities routes the params
+        into every listed capability; dedup later moves shared params into
+        general_configurations."""
+        capabilities = {"general_configurations": [], "Automation": []}
+        command_params = {
+            "integration": "X",
+            "commands": {
+                "test-module": ["url"],
+                "my-cmd": ["url", "shared", "extra"],
+            },
+        }
+        param_defaults = {"url": None, "shared": "x", "extra": "y"}
+        manual = {"my-cmd": ["Cap A", "Cap B"]}
+        result = map_params_to_capabilities(
+            capabilities,
+            command_params,
+            param_defaults,
+            manual_command_to_capability=manual,
+        )
+        assert "Cap A" in result
+        assert "Cap B" in result
+        # 'shared' and 'extra' were placed in BOTH Cap A and Cap B → dedup
+        # moves them into general_configurations and clears them from the caps.
+        assert "shared" in result["general_configurations"]
+        assert "extra" in result["general_configurations"]
+        assert result["Cap A"] == []
+        assert result["Cap B"] == []
+
+    def test_manual_mapping_with_existing_capability_no_duplicate_keys(self):
+        """When the manual target capability already exists, do not create a
+        duplicate key, and ensure the command is not double-routed via Step 2.3."""
+        capabilities = {"general_configurations": [], "Automation": []}
+        command_params = {
+            "integration": "X",
+            "commands": {
+                "test-module": ["url"],
+                "my-cmd": ["url", "filter"],
+            },
+        }
+        param_defaults = {"url": None, "filter": ""}
+        manual = {"my-cmd": ["Automation"]}
+        result = map_params_to_capabilities(
+            capabilities,
+            command_params,
+            param_defaults,
+            manual_command_to_capability=manual,
+        )
+        # 'Automation' key exists exactly once, with 'filter' present once.
+        assert list(result.keys()).count("Automation") == 1
+        assert result["Automation"].count("filter") == 1
+        assert "filter" in result["Automation"]
 
 
 # ---------------------------------------------------------------------------

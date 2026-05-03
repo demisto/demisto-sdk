@@ -3,7 +3,7 @@ import os
 os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "True"
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import typer
 import yaml
@@ -128,17 +128,60 @@ def _handle_test_module(
     commands_section: dict = command_params.get("commands") or {}
     test_module_params: List[str] = commands_section.get("test-module", []) or []
     for param in test_module_params:
-        if param not in param_defaults and param not in result["general_configurations"]:
+        if (
+            param not in param_defaults
+            and param not in result["general_configurations"]
+        ):
             result["general_configurations"].append(param)
+
+
+def _apply_manual_mapping(
+    result: Dict[str, List[str]],
+    command_params: dict,
+    manual_command_to_capability: Dict[str, List[str]],
+) -> set:
+    """Step 2.1.5 — Apply manual command-to-capability overrides.
+
+    Manual mapping is the source of truth for any listed command. For each entry:
+      1. Ensure each listed capability exists in the result dict (create with []).
+      2. Add the command's params (from command_params['commands'][cmd]) to each
+         listed capability.
+
+    Returns the set of command names that were handled here, so subsequent steps
+    (2.2 / 2.3) can skip them and avoid double-routing.
+
+    No-op when ``manual_command_to_capability`` is empty.
+    """
+    handled_commands: set = set()
+    if not manual_command_to_capability:
+        return handled_commands
+
+    commands_section: dict = command_params.get("commands") or {}
+    for cmd_name, capability_list in manual_command_to_capability.items():
+        # Ensure each capability exists.
+        for cap in capability_list:
+            if cap not in result:
+                result[cap] = []
+        # Route this command's params to each listed capability.
+        params = commands_section.get(cmd_name) or []
+        for cap in capability_list:
+            for param in params:
+                if param not in result[cap]:
+                    result[cap].append(param)
+        handled_commands.add(cmd_name)
+    return handled_commands
 
 
 def _single_capability_shortcut(
     result: Dict[str, List[str]],
     command_params: dict,
+    handled_commands: Optional[set] = None,
 ) -> None:
     """Step 2.2 - When only a single (non-general) capability exists, dump all
     unique command params (excluding those already placed in
-    ``general_configurations``) into that capability."""
+    ``general_configurations`` and those handled by manual mapping) into that
+    capability."""
+    handled_commands = handled_commands or set()
     target_capability = next(
         cap for cap in result.keys() if cap != "general_configurations"
     )
@@ -146,6 +189,8 @@ def _single_capability_shortcut(
     seen: set = set()
     commands_section: dict = command_params.get("commands") or {}
     for cmd_name, params in commands_section.items():
+        if cmd_name in handled_commands:
+            continue
         for param in params or []:
             if param in already_placed or param in seen:
                 continue
@@ -153,9 +198,7 @@ def _single_capability_shortcut(
             result[target_capability].append(param)
 
 
-def _resolve_target_capability(
-    cmd_name: str, result: Dict[str, List[str]]
-) -> str:
+def _resolve_target_capability(cmd_name: str, result: Dict[str, List[str]]) -> str:
     """Decide which capability a command's params should be routed to.
 
     Resolution order:
@@ -173,10 +216,7 @@ def _resolve_target_capability(
         return COMMAND_TO_CAPABILITY[cmd_name]
     if "get-events" in cmd_name and "Log Collection" in result:
         return "Log Collection"
-    if (
-        "get-indicators" in cmd_name
-        and "Threat Intelligence & Enrichment" in result
-    ):
+    if "get-indicators" in cmd_name and "Threat Intelligence & Enrichment" in result:
         return "Threat Intelligence & Enrichment"
     return "Automation"
 
@@ -184,14 +224,20 @@ def _resolve_target_capability(
 def _multi_capability_mapping(
     result: Dict[str, List[str]],
     command_params: dict,
+    handled_commands: Optional[set] = None,
 ) -> None:
     """Step 2.3 - For each command, map its params to the matching capability
-    (or ``Automation``).  Warns if the target capability is missing from the
-    result mapping."""
+    (or ``Automation``).  Skips test-module (handled in 2.1) and any command
+    already routed by manual mapping (Step 2.1.5).  Warns if the target
+    capability is missing from the result mapping."""
+    handled_commands = handled_commands or set()
     commands_section: dict = command_params.get("commands") or {}
     for cmd_name, params in commands_section.items():
         if cmd_name == "test-module":
             # already handled in step 2.1
+            continue
+        if cmd_name in handled_commands:
+            # already handled in step 2.1.5 (manual mapping)
             continue
         target = _resolve_target_capability(cmd_name, result)
         for param in params or []:
@@ -248,22 +294,31 @@ def map_params_to_capabilities(
     capabilities: Dict[str, List[str]],
     command_params: dict,
     param_defaults: dict,
+    manual_command_to_capability: Optional[Dict[str, List[str]]] = None,
 ) -> Dict[str, List[str]]:
     """Apply Step 2 - populate the capabilities mapping with parameter names
     derived from the supplied ``command_params`` and ``param_defaults`` JSON
-    inputs."""
+    inputs. ``manual_command_to_capability`` (optional) overrides automatic
+    routing for any listed commands."""
+    manual_command_to_capability = manual_command_to_capability or {}
+
     # Work on a fresh dict so the caller's data is untouched.
     result: Dict[str, List[str]] = {k: list(v) for k, v in capabilities.items()}
 
     # Step 2.1
     _handle_test_module(result, command_params, param_defaults)
 
+    # Step 2.1.5 - manual override (source of truth for listed commands)
+    handled_commands = _apply_manual_mapping(
+        result, command_params, manual_command_to_capability
+    )
+
     if len(result) == 2:
         # Step 2.2 - single-capability shortcut (skip 2.3)
-        _single_capability_shortcut(result, command_params)
+        _single_capability_shortcut(result, command_params, handled_commands)
     else:
         # Step 2.3 - multi-capability mapping
-        _multi_capability_mapping(result, command_params)
+        _multi_capability_mapping(result, command_params, handled_commands)
 
     # Step 2.4 - deduplicate
     _deduplicate(result)
@@ -288,6 +343,14 @@ def generate_param_mapping(
     integration_yml_path: Path = typer.Argument(
         ..., exists=True, help="Path to the integration YML file."
     ),
+    manual_command_to_capability_json: str = typer.Argument(
+        "{}",
+        help=(
+            "JSON string mapping command name -> list of capability names. "
+            "Acts as source of truth, overriding automatic routing. "
+            "Pass '{}' or omit to disable."
+        ),
+    ),
     output_path: Path = typer.Option(
         Path("./param_mapping_output.json"),
         "-o",
@@ -296,16 +359,21 @@ def generate_param_mapping(
     ),
 ) -> None:
     """Generate the connector parameter mapping from the integration YML and
-    the supplied command/defaults JSON inputs."""
+    the supplied command/defaults JSON inputs (with optional manual overrides)."""
     logging_setup(calling_function=__name__)
 
     command_params: Dict[str, Any] = json.loads(command_params_json)
     param_defaults: Dict[str, Any] = json.loads(param_defaults_json)
+    manual_command_to_capability: Dict[str, List[str]] = json.loads(
+        manual_command_to_capability_json
+    )
     with open(integration_yml_path) as f:
         integration_yml: dict = yaml.safe_load(f)
 
     capabilities = decide_capabilities(integration_yml)
-    result = map_params_to_capabilities(capabilities, command_params, param_defaults)
+    result = map_params_to_capabilities(
+        capabilities, command_params, param_defaults, manual_command_to_capability
+    )
 
     with open(output_path, "w") as f:
         json.dump(result, f, indent=2)

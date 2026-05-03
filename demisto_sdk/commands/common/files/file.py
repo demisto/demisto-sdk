@@ -262,7 +262,7 @@ class File(ABC):
         path: Union[str, Path],
         tag: str = DEMISTO_GIT_PRIMARY_BRANCH,
         encoding: Optional[str] = None,
-        from_remote: bool = False,
+        from_remote: bool = True,
         handler: Optional[XSOAR_Handler] = None,
         clear_cache: bool = False,
     ) -> Any:

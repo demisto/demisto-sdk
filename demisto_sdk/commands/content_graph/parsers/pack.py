@@ -202,6 +202,7 @@ class PackMetadataParser:
         self.supportedModules: Optional[List[str]] = metadata.get("supportedModules")
         self.source: str = metadata.get("source", "")
         self.managed: bool = metadata.get("managed", False)
+        self.internal: bool = metadata.get("internal", False)
 
     @property
     def url(self) -> str:
@@ -450,6 +451,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "default_data_source_id": "defaultDataSource",
             "source": "source",
             "managed": "managed",
+            "internal": "internal",
         }
 
     def raw_data(self) -> dict:

@@ -39,6 +39,7 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
     )
     related_field = "dependson"
     is_auto_fixable = False
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     def obtain_invalid_content_items(
         self,

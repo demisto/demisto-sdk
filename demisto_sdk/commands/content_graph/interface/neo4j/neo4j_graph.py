@@ -724,7 +724,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result] for result in results]
 
     def find_content_items_with_module_mismatch_content_items(
-        self, content_item_ids: List[str]
+        self, content_item_ids: List[str], mandatory: bool = True
     ) -> List[BaseNode]:
         """
         Retrieves content items with invalid command relationships based on supported modules.
@@ -735,12 +735,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             content_item_ids (List[str]): List of content item IDs to check for invalid commands.
                                         If empty, all relevant content items will be checked.
+            mandatory (bool): If True, checks mandatory (mandatorily:true) USES relationships.
+                              If False, checks non-mandatory (mandatorily:false) USES relationships.
+                              Defaults to True.
         Returns:
             List[BaseNode]: Content items that have invalid supported module commands, if any exist.
         """
         with self.driver.session() as session:
             results = session.execute_read(
-                get_supported_modules_mismatch_content_items, content_item_ids
+                get_supported_modules_mismatch_content_items,
+                content_item_ids,
+                mandatory,
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

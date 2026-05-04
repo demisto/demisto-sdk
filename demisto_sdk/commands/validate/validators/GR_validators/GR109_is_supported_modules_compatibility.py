@@ -217,15 +217,18 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             )
         )
 
-        mismatched_commands = (
-            self.graph.find_content_items_with_module_mismatch_commands(
-                target_content_item_ids
+        if self.mandatory_dependency:
+            mismatched_commands = (
+                self.graph.find_content_items_with_module_mismatch_commands(
+                    target_content_item_ids
+                )
             )
-        )
+        else:
+            mismatched_commands = []
 
         mismatched_content_items = (
             self.graph.find_content_items_with_module_mismatch_content_items(
-                target_content_item_ids
+                target_content_item_ids, self.mandatory_dependency
             )
         )
 

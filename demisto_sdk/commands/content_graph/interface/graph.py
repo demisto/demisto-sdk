@@ -333,6 +333,12 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def find_content_items_with_module_mismatch_content_items(
+        self, content_item_ids: List[str], mandatory: bool = True
+    ) -> List[BaseNode]:
+        pass
+
+    @abstractmethod
     def get_api_module_imports(self, api_module: str) -> List[IntegrationScript]:
         pass
 

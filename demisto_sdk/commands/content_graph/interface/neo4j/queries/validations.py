@@ -544,6 +544,7 @@ def get_supported_modules_mismatch_commands(
 def get_supported_modules_mismatch_content_items(
     tx: Transaction,
     content_item_ids: List[str],
+    mandatory: bool = True,
 ):
     """
     Fetches all content items that use at least one command with a module support incompatibility.
@@ -553,12 +554,16 @@ def get_supported_modules_mismatch_content_items(
     Args:
         tx (Transaction): The Neo4j transaction object.
         content_item_ids (List[str]): List of content item IDs to check. If empty, all items are checked.
+        mandatory (bool): If True, checks mandatory (mandatorily:true) USES relationships.
+                          If False, checks non-mandatory (mandatorily:false) USES relationships.
+                          Defaults to True.
 
     Returns:
         Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
     """
+    mandatorily_value = str(mandatory).lower()
     query = f"""
-    MATCH (content_item{{deprecated: false, is_test: false}})-[u:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()
+    MATCH (content_item{{deprecated: false, is_test: false}})-[u:{RelationshipType.USES}{{mandatorily:{mandatorily_value}}}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()
     WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR content_item.object_id IN {content_item_ids})
         AND 'platform' IN content_item.marketplaces
         // An incompatibility is only possible if the command has a specific module list.

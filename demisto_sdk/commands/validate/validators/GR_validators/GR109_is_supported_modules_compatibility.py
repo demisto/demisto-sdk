@@ -278,10 +278,13 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 formatted_message = self.format_commands_error_message(
                     commands_with_missing_modules
                 )
+                dependency_type = (
+                    "mandatory" if self.mandatory_dependency else "non-mandatory"
+                )
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=f"Module compatibility issue detected: {formatted_message}. Make sure the commands used are supported by the same modules as the content item.",
+                        message=f"Module compatibility issue detected for {dependency_type} dependency: {formatted_message}. Make sure the commands used are supported by the same modules as the content item.",
                         content_object=invalid_item,
                     )
                 )

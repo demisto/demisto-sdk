@@ -1741,7 +1741,7 @@ def test_SupportedModulesCompatibility_invalid_all_files_mismatch_playbook(
     assert len(results) == 1
     assert (
         results[0].message
-        == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+        == "Module compatibility issue detected for mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
 
@@ -1768,7 +1768,7 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
     assert len(results) == 1
     assert (
         results[0].message
-        == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+        == "Module compatibility issue detected for mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
 
@@ -2142,7 +2142,7 @@ def test_NonMandatorySupportedModulesCompatibility_invalid_all_files_mismatch_pl
     assert len(results) == 1
     assert (
         results[0].message
-        == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+        == "Module compatibility issue detected for non-mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
 
@@ -2169,7 +2169,7 @@ def test_NonMandatorySupportedModulesCompatibility_invalid_list_files_mismatch_p
     assert len(results) == 1
     assert (
         results[0].message
-        == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+        == "Module compatibility issue detected for non-mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
 

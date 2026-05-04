@@ -1,0 +1,4 @@
+changes:
+- description: Added support for the `internal` flag in pack_metadata.json to mark packs as internal (hidden from UI and API).
+  type: feature
+pr_number: 5325

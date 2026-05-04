@@ -2,7 +2,7 @@ import os
 
 os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "True"
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import typer
 import yaml
@@ -90,7 +90,9 @@ def decide_capabilities(integration_yml: dict) -> Dict[str, List[str]]:
     # Rule 2 - Log Collection (with possible early exit)
     if script.get("isfetchevents") is True:
         result["Log Collection"] = []
-        if "event collector" in integration_name and _is_pure_event_collector(integration_yml, command_names):
+        if "event collector" in integration_name and _is_pure_event_collector(
+            integration_yml, command_names
+        ):
             # Pure event collector — short-circuit to keep the result minimal
             return {"general_configurations": [], "Log Collection": []}
 
@@ -104,7 +106,7 @@ def decide_capabilities(integration_yml: dict) -> Dict[str, List[str]]:
         get_indicators_cmd_count = sum(
             1 for n in command_names if "get-indicators" in n
         )
-        if "feed" in integration_name or (
+        if "feed" in integration_name and (
             len(command_names) - get_indicators_cmd_count == 0
         ):
             return {
@@ -305,16 +307,102 @@ def _deduplicate(result: Dict[str, List[str]]) -> None:
             general_set.add(param)
 
 
+_MISSING = object()
+
+
+def _collect_hidden_params(
+    integration_yml: dict, param_defaults: dict
+) -> Tuple[set, set]:
+    """Step 2.6 helper — Collect names of params to remove because they're
+    hidden on the Cortex Platform, plus any hidden params kept by the carve-out.
+
+    A param is considered hidden on the platform if EITHER:
+      - Its ``hidden`` field is ``True`` (boolean — hidden in all marketplaces)
+      - Its ``hidden`` field is a list that contains the string ``"platform"``
+
+    Carve-out: a hidden param is KEPT (not added to the removal set) if ALL
+    THREE of the following hold:
+      1. Its name is NOT a key in ``param_defaults`` (no external override)
+      2. It is hidden in the platform (the trigger above)
+      3. It HAS a ``defaultvalue`` field in the YAML (any non-``None`` value;
+         empty string ``""`` counts)
+
+    Returns a 2-tuple:
+      - ``to_remove``: set of param names that should be filtered out
+      - ``kept_by_carveout``: set of hidden param names that were KEPT due to
+        the carve-out (used by the caller for INFO logging)
+    """
+    to_remove: set = set()
+    kept_by_carveout: set = set()
+    for param in integration_yml.get("configuration", []) or []:
+        name = param.get("name", "")
+        hidden_value = param.get("hidden")
+        is_hidden_on_platform = hidden_value is True or (
+            isinstance(hidden_value, list) and "platform" in hidden_value
+        )
+        if not is_hidden_on_platform:
+            continue
+        # Hidden on platform — apply the carve-out check
+        not_in_param_defaults = name not in param_defaults
+        # Sentinel distinguishes "key absent" from "key present with value None"
+        defaultvalue = param.get("defaultvalue", _MISSING)
+        has_yml_defaultvalue = defaultvalue is not _MISSING and defaultvalue is not None
+        if not_in_param_defaults and has_yml_defaultvalue:
+            kept_by_carveout.add(name)
+        else:
+            to_remove.add(name)
+    return to_remove, kept_by_carveout
+
+
+def _filter_hidden_params(
+    result: Dict[str, List[str]],
+    hidden_params: set,
+    kept_by_carveout: Optional[set] = None,
+) -> None:
+    """Step 2.6 — Remove hidden params from every capability list and log them.
+
+    Mutates ``result`` in place. Two log messages may be emitted:
+      - ``"Removed the following params..."`` if any params were stripped
+      - ``"Kept the following hidden params because they have a YAML
+        defaultvalue and no override in param_defaults..."`` if any were
+        kept by the carve-out
+    """
+    kept_by_carveout = kept_by_carveout or set()
+    if not hidden_params and not kept_by_carveout:
+        return
+    if hidden_params:
+        removed: set = set()
+        for capability, params in result.items():
+            filtered = [p for p in params if p not in hidden_params]
+            if len(filtered) != len(params):
+                removed.update(p for p in params if p in hidden_params)
+                result[capability] = filtered
+        if removed:
+            logger.info(
+                f"Removed the following params from the final result because "
+                f"they're hidden in the platform/all marketplaces: "
+                f"{sorted(removed)}"
+            )
+    if kept_by_carveout:
+        logger.info(
+            f"Kept the following hidden params because they have a YAML "
+            f"defaultvalue and no override in param_defaults: "
+            f"{sorted(kept_by_carveout)}"
+        )
+
+
 def map_params_to_capabilities(
     capabilities: Dict[str, List[str]],
     command_params: dict,
     param_defaults: dict,
     manual_command_to_capability: Optional[Dict[str, List[str]]] = None,
+    integration_yml: Optional[dict] = None,
 ) -> Dict[str, List[str]]:
     """Apply Step 2 - populate the capabilities mapping with parameter names
     derived from the supplied ``command_params`` and ``param_defaults`` JSON
     inputs. ``manual_command_to_capability`` (optional) overrides automatic
-    routing for any listed commands."""
+    routing for any listed commands. ``integration_yml`` (optional) enables
+    Step 2.6 — filtering out params hidden on the Cortex Platform."""
     manual_command_to_capability = manual_command_to_capability or {}
 
     # Work on a fresh dict so the caller's data is untouched.
@@ -337,6 +425,13 @@ def map_params_to_capabilities(
 
     # Step 2.4 - deduplicate
     _deduplicate(result)
+
+    # Step 2.6 (NEW) - filter hidden params
+    if integration_yml is not None:
+        to_remove, kept_by_carveout = _collect_hidden_params(
+            integration_yml, param_defaults
+        )
+        _filter_hidden_params(result, to_remove, kept_by_carveout)
 
     return result
 
@@ -385,7 +480,11 @@ def generate_param_mapping(
 
     capabilities = decide_capabilities(integration_yml)
     result = map_params_to_capabilities(
-        capabilities, command_params, param_defaults, manual_command_to_capability
+        capabilities,
+        command_params,
+        param_defaults,
+        manual_command_to_capability,
+        integration_yml=integration_yml,  # NEW: enables Step 2.6
     )
 
     with open(output_path, "w") as f:

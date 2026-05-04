@@ -5,6 +5,7 @@ import yaml
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.scripts.connector_param_mapper import (
+    _filter_hidden_params,
     decide_capabilities,
     map_params_to_capabilities,
 )
@@ -96,6 +97,7 @@ class TestDecideCapabilities:
         assert result == {
             "general_configurations": [],
             "Log Collection": [],
+            "Automation": [],
         }
 
     def test_log_collection_no_early_exit_when_only_get_events_commands(self):
@@ -205,6 +207,7 @@ class TestDecideCapabilities:
         assert result == {
             "general_configurations": [],
             "Threat Intelligence & Enrichment": [],
+            "Automation": [],
         }
 
     def test_threat_intel_early_exit_single_get_indicators(self):
@@ -321,7 +324,7 @@ class TestDecideCapabilities:
         assert result == {
             "general_configurations": [],
             "Log Collection": [],
-            "Automation": []
+            "Automation": [],
         }
 
 
@@ -932,3 +935,340 @@ class TestEndToEnd:
         assert "Automation" in result
         assert "Fetch Issues" not in result  # isfetch:platform=False blocks it
         assert result["general_configurations"] == []
+
+
+# ---------------------------------------------------------------------------
+# Step 2.6 - hidden param filter tests
+# ---------------------------------------------------------------------------
+class TestHiddenParamFilter:
+    def test_hidden_true_param_removed_from_result(self):
+        """
+        Given: An integration YML with a param marked ``hidden: true`` and
+               another normal param, and command_params that route both into
+               capabilities.
+        When:  map_params_to_capabilities is called with the YML passed via
+               the new ``integration_yml`` kwarg.
+        Then:  The hidden=true param is stripped from every capability list,
+               while the normal param remains.
+        """
+        integration_yml = {
+            "name": "X",
+            "configuration": [
+                {"name": "secret", "hidden": True},
+                {"name": "url"},
+            ],
+            "script": {"commands": []},
+        }
+        capabilities = {"general_configurations": [], "Automation": []}
+        command_params = {
+            "integration": "X",
+            "commands": {
+                "test-module": ["secret", "url"],
+                "my-cmd": ["secret", "url"],
+            },
+        }
+        param_defaults = {"secret": None, "url": "x"}
+
+        result = map_params_to_capabilities(
+            capabilities,
+            command_params,
+            param_defaults,
+            integration_yml=integration_yml,
+        )
+
+        all_params = [p for params in result.values() for p in params]
+        assert "secret" not in all_params
+        assert "url" in all_params
+
+    def test_hidden_list_with_platform_param_removed(self):
+        """
+        Given: An integration YML with a param whose ``hidden`` field is a
+               list containing ``"platform"`` (e.g. [marketplacev2, platform]).
+        When:  map_params_to_capabilities runs with the YML passed in.
+        Then:  That param is stripped from every capability list.
+        """
+        integration_yml = {
+            "name": "X",
+            "configuration": [
+                {"name": "interval", "hidden": ["marketplacev2", "platform"]},
+                {"name": "url"},
+            ],
+            "script": {"commands": []},
+        }
+        capabilities = {"general_configurations": [], "Automation": []}
+        command_params = {
+            "integration": "X",
+            "commands": {
+                "test-module": ["url"],
+                "my-cmd": ["interval", "url"],
+            },
+        }
+        param_defaults = {"interval": 1, "url": "x"}
+
+        result = map_params_to_capabilities(
+            capabilities,
+            command_params,
+            param_defaults,
+            integration_yml=integration_yml,
+        )
+
+        all_params = [p for params in result.values() for p in params]
+        assert "interval" not in all_params
+        assert "url" in all_params
+
+    def test_hidden_list_without_platform_param_kept(self):
+        """
+        Given: An integration YML with a param whose ``hidden`` field is a
+               list that does NOT contain ``"platform"`` (e.g. [xsoar]).
+        When:  map_params_to_capabilities runs with the YML passed in.
+        Then:  That param is preserved in the result (Cortex Platform is
+               unaffected by xsoar-only hidden flags).
+        """
+        integration_yml = {
+            "name": "X",
+            "configuration": [
+                {"name": "interval", "hidden": ["xsoar"]},
+                {"name": "url"},
+            ],
+            "script": {"commands": []},
+        }
+        capabilities = {"general_configurations": [], "Automation": []}
+        command_params = {
+            "integration": "X",
+            "commands": {
+                "test-module": ["url"],
+                "my-cmd": ["interval", "url"],
+            },
+        }
+        param_defaults = {"interval": 1, "url": "x"}
+
+        result = map_params_to_capabilities(
+            capabilities,
+            command_params,
+            param_defaults,
+            integration_yml=integration_yml,
+        )
+
+        all_params = [p for params in result.values() for p in params]
+        assert "interval" in all_params
+        assert "url" in all_params
+
+    def test_no_hidden_params_no_log(self, caplog):
+        """
+        Given: An integration YML whose configuration has no params hidden on
+               the platform (no ``hidden: true`` and no list containing
+               ``"platform"``).
+        When:  map_params_to_capabilities runs at INFO level with the YML
+               passed in.
+        Then:  No "Removed the following params" INFO message is emitted.
+        """
+        integration_yml = {
+            "name": "X",
+            "configuration": [
+                {"name": "url"},
+                {"name": "interval", "hidden": ["xsoar"]},
+            ],
+            "script": {"commands": []},
+        }
+        capabilities = {"general_configurations": [], "Automation": []}
+        command_params = {
+            "integration": "X",
+            "commands": {
+                "test-module": ["url"],
+                "my-cmd": ["interval", "url"],
+            },
+        }
+        param_defaults = {"interval": 1, "url": "x"}
+
+        caplog.set_level("INFO")
+        map_params_to_capabilities(
+            capabilities,
+            command_params,
+            param_defaults,
+            integration_yml=integration_yml,
+        )
+
+        assert "Removed the following params" not in caplog.text
+
+    def test_hidden_param_in_multiple_capabilities_removed_once_logged_once(
+        self, caplog
+    ):
+        """
+        Given: A pre-built result where the same hidden param appears in TWO
+               capability lists, and a hidden_params set containing it.
+        When:  _filter_hidden_params is invoked directly at INFO level.
+        Then:  The param is removed from BOTH capabilities AND the INFO log
+               message contains the param name exactly once (the helper
+               deduplicates removed names via a set).
+        """
+        result = {
+            "general_configurations": ["url", "secret"],
+            "Automation": ["secret", "arg1"],
+        }
+        hidden_params = {"secret"}
+
+        caplog.set_level("INFO")
+        _filter_hidden_params(result, hidden_params, set())
+
+        # Param removed from both capabilities
+        assert "secret" not in result["general_configurations"]
+        assert "secret" not in result["Automation"]
+        assert result["general_configurations"] == ["url"]
+        assert result["Automation"] == ["arg1"]
+
+        # The INFO log message lists the param exactly once
+        assert "Removed the following params" in caplog.text
+        assert caplog.text.count("'secret'") == 1
+
+    def test_hidden_param_kept_when_has_yml_defaultvalue_and_not_in_param_defaults(
+        self, caplog
+    ):
+        """
+        Given: An integration YML with a param marked ``hidden: true`` that
+               also has a YAML ``defaultvalue`` field, and a ``param_defaults``
+               dict that does NOT contain the param's name.
+        When:  map_params_to_capabilities runs at INFO level with the YML
+               passed in.
+        Then:  The hidden param is KEPT in the result by the carve-out, an
+               INFO "Kept the following hidden params" message is emitted
+               naming it, and no "Removed the following params" message
+               mentions the param.
+        """
+        integration_yml = {
+            "name": "X",
+            "configuration": [
+                {"name": "internal_retries", "hidden": True, "defaultvalue": "3"},
+                {"name": "url"},
+            ],
+            "script": {"commands": []},
+        }
+        capabilities = {"general_configurations": [], "Automation": []}
+        command_params = {
+            "integration": "X",
+            "commands": {
+                "test-module": ["url"],
+                "my-cmd": ["internal_retries", "url"],
+            },
+        }
+        # internal_retries is intentionally NOT in param_defaults
+        param_defaults = {"url": "x"}
+
+        caplog.set_level("INFO")
+        result = map_params_to_capabilities(
+            capabilities,
+            command_params,
+            param_defaults,
+            integration_yml=integration_yml,
+        )
+
+        all_params = [p for params in result.values() for p in params]
+        assert "internal_retries" in all_params
+        assert "url" in all_params
+
+        assert "Kept the following hidden params" in caplog.text
+        assert "internal_retries" in caplog.text
+        # No "Removed" message for internal_retries
+        if "Removed the following params" in caplog.text:
+            assert (
+                "internal_retries"
+                not in caplog.text.split("Removed the following params")[1].split("\n")[
+                    0
+                ]
+            )
+
+    def test_hidden_param_removed_when_in_param_defaults_even_with_yml_defaultvalue(
+        self, caplog
+    ):
+        """
+        Given: An integration YML with a param hidden on the platform (via a
+               list containing ``"platform"``) AND a YAML ``defaultvalue``,
+               but the param IS present in ``param_defaults``.
+        When:  map_params_to_capabilities runs at INFO level with the YML
+               passed in.
+        Then:  The carve-out does NOT fire (condition #1 fails) — the param is
+               removed from the result, and no "Kept the following hidden
+               params" log message is emitted.
+        """
+        integration_yml = {
+            "name": "X",
+            "configuration": [
+                {
+                    "name": "interval",
+                    "hidden": ["marketplacev2", "platform"],
+                    "defaultvalue": "1",
+                },
+                {"name": "url"},
+            ],
+            "script": {"commands": []},
+        }
+        capabilities = {"general_configurations": [], "Automation": []}
+        command_params = {
+            "integration": "X",
+            "commands": {
+                "test-module": ["url"],
+                "my-cmd": ["interval", "url"],
+            },
+        }
+        # interval IS in param_defaults — carve-out condition #1 fails
+        param_defaults = {"interval": "5", "url": "x"}
+
+        caplog.set_level("INFO")
+        result = map_params_to_capabilities(
+            capabilities,
+            command_params,
+            param_defaults,
+            integration_yml=integration_yml,
+        )
+
+        all_params = [p for params in result.values() for p in params]
+        assert "interval" not in all_params
+        assert "url" in all_params
+
+        assert "Kept the following hidden params" not in caplog.text
+
+    def test_hidden_param_removed_when_no_yml_defaultvalue_even_if_not_in_param_defaults(
+        self, caplog
+    ):
+        """
+        Given: An integration YML with a param marked ``hidden: true`` that
+               has NO ``defaultvalue`` field at all in the YAML, and a
+               ``param_defaults`` dict that does NOT contain the param's
+               name.
+        When:  map_params_to_capabilities runs at INFO level with the YML
+               passed in.
+        Then:  The carve-out does NOT fire (condition #3 fails) — the param
+               is removed from the result, and no "Kept the following hidden
+               params" log message is emitted.
+        """
+        integration_yml = {
+            "name": "X",
+            "configuration": [
+                {"name": "secret", "hidden": True},
+                {"name": "url"},
+            ],
+            "script": {"commands": []},
+        }
+        capabilities = {"general_configurations": [], "Automation": []}
+        command_params = {
+            "integration": "X",
+            "commands": {
+                "test-module": ["url"],
+                "my-cmd": ["secret", "url"],
+            },
+        }
+        # secret is NOT in param_defaults, but YML has no defaultvalue
+        param_defaults = {"url": "x"}
+
+        caplog.set_level("INFO")
+        result = map_params_to_capabilities(
+            capabilities,
+            command_params,
+            param_defaults,
+            integration_yml=integration_yml,
+        )
+
+        all_params = [p for params in result.values() for p in params]
+        assert "secret" not in all_params
+        assert "url" in all_params
+
+        assert "Kept the following hidden params" not in caplog.text

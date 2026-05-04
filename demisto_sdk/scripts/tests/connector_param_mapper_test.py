@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 import pytest
 import yaml
@@ -16,8 +17,8 @@ from demisto_sdk.scripts.connector_param_mapper import (
 # ---------------------------------------------------------------------------
 def _build_yml(
     name: str = "MyIntegration",
-    configuration: list | None = None,
-    script: dict | None = None,
+    configuration: Optional[list] = None,
+    script: Optional[dict] = None,
 ) -> dict:
     return {
         "name": name,

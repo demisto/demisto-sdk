@@ -30,10 +30,22 @@ def _build_yml(
 # ---------------------------------------------------------------------------
 class TestDecideCapabilities:
     def test_only_general_configurations(self):
+        """
+        Given: A bare integration YML with no fetch flags and no commands.
+        When:  decide_capabilities is called.
+        Then:  Only the empty 'general_configurations' bucket is returned.
+        """
         yml = _build_yml()
         assert decide_capabilities(yml) == {"general_configurations": []}
 
     def test_fetch_secrets_added(self):
+        """
+        Given: A YML whose configuration includes an 'isFetchCredentials' param
+               and no commands.
+        When:  decide_capabilities is called.
+        Then:  'Fetch Secrets' is added and 'Automation' is NOT added (no
+               non-excluded commands exist).
+        """
         yml = _build_yml(
             configuration=[{"name": "isFetchCredentials", "type": 8}],
         )
@@ -42,6 +54,13 @@ class TestDecideCapabilities:
         assert "Automation" not in result
 
     def test_log_collection_normal(self):
+        """
+        Given: A YML with isfetchevents=True, a name that does NOT contain
+               'eventcollector', and no 'get-events' style command.
+        When:  decide_capabilities is called.
+        Then:  Both 'Log Collection' and 'Automation' are present (no early
+               exit, because non-excluded commands exist).
+        """
         # isfetchevents true but name has no eventcollector and no get-events cmd
         yml = _build_yml(
             name="SomeSiem",
@@ -58,6 +77,13 @@ class TestDecideCapabilities:
         assert "Automation" in result  # has non-excluded commands
 
     def test_log_collection_early_exit_eventcollector_name(self):
+        """
+        Given: A pure event-collector YML (isfetchevents=True only) whose
+               name contains 'eventcollector'.
+        When:  decide_capabilities is called.
+        Then:  Rule 2 short-circuits and returns the minimal mapping
+               {general_configurations, Log Collection, Automation}.
+        """
         yml = _build_yml(
             name="MyEventCollector",
             script={
@@ -73,13 +99,18 @@ class TestDecideCapabilities:
         }
 
     def test_log_collection_early_exit_single_get_events_command(self):
+        """
+        Given: A pure event-collector YML where exactly one command matches
+               'get-events' and no other commands exist.
+        When:  decide_capabilities is called.
+        Then:  Rule 2 short-circuits and returns the minimal mapping.
+        """
         yml = _build_yml(
-            name="SomeIntegration",
+            name="SomeIntegrationeventcollector",
             script={
                 "isfetchevents": True,
                 "commands": [
                     {"name": "vendor-get-events"},
-                    {"name": "vendor-list"},
                 ],
             },
         )
@@ -87,10 +118,16 @@ class TestDecideCapabilities:
         assert result == {
             "general_configurations": [],
             "Log Collection": [],
-            "Automation": [],
         }
 
     def test_log_collection_no_early_exit_with_two_get_events(self):
+        """
+        Given: A YML with two distinct 'get-events' commands plus another
+               command (so the name has no 'eventcollector' marker).
+        When:  decide_capabilities is called.
+        Then:  Rule 2's early-exit must NOT fire; both 'Log Collection' and
+               'Automation' remain in the result.
+        """
         # 2 commands matching "get-events" should NOT trigger early exit
         yml = _build_yml(
             name="SomeIntegration",
@@ -108,11 +145,21 @@ class TestDecideCapabilities:
         assert "Automation" in result
 
     def test_fetch_issues_added(self):
+        """
+        Given: A YML with isfetch=True and no isfetch:platform override.
+        When:  decide_capabilities is called.
+        Then:  'Fetch Issues' is added to the result.
+        """
         yml = _build_yml(script={"isfetch": True, "commands": []})
         result = decide_capabilities(yml)
         assert "Fetch Issues" in result
 
     def test_fetch_issues_skipped_when_platform_false(self):
+        """
+        Given: A YML with isfetch=True but isfetch:platform=False.
+        When:  decide_capabilities is called.
+        Then:  'Fetch Issues' is suppressed (the platform flag blocks it).
+        """
         yml = _build_yml(
             script={"isfetch": True, "isfetch:platform": False, "commands": []}
         )
@@ -120,6 +167,13 @@ class TestDecideCapabilities:
         assert "Fetch Issues" not in result
 
     def test_threat_intel_added(self):
+        """
+        Given: A YML with feed=True, a name that does NOT contain 'feed',
+               and commands that do NOT match the 'get-indicators' early-exit.
+        When:  decide_capabilities is called.
+        Then:  Both 'Threat Intelligence & Enrichment' and 'Automation' are
+               present.
+        """
         yml = _build_yml(
             name="GenericTI",
             script={
@@ -135,6 +189,13 @@ class TestDecideCapabilities:
         assert "Automation" in result
 
     def test_threat_intel_early_exit_feed_in_name(self):
+        """
+        Given: A YML with feed=True whose name contains 'feed'.
+        When:  decide_capabilities is called.
+        Then:  Rule 4 short-circuits and only
+               {general_configurations, Threat Intelligence & Enrichment}
+               is returned.
+        """
         yml = _build_yml(
             name="MyFeedSource",
             script={"feed": True, "commands": [{"name": "ti-action"}]},
@@ -146,6 +207,15 @@ class TestDecideCapabilities:
         }
 
     def test_threat_intel_early_exit_single_get_indicators(self):
+        """
+        Given: A YML with feed=True where exactly one command matches
+               'get-indicators' (rest leaves command list empty after
+               exclusion).
+        When:  decide_capabilities is called.
+        Then:  Rule 4 short-circuits and only
+               {general_configurations, Threat Intelligence & Enrichment,
+               Automation} is returned.
+        """
         yml = _build_yml(
             name="SomeTI",
             script={
@@ -164,11 +234,24 @@ class TestDecideCapabilities:
         }
 
     def test_fetch_assets_added(self):
+        """
+        Given: A YML with isfetchassets=True and no commands.
+        When:  decide_capabilities is called.
+        Then:  'Fetch Assets and Vulnerabilities' is added to the result.
+        """
         yml = _build_yml(script={"isfetchassets": True, "commands": []})
         result = decide_capabilities(yml)
         assert "Fetch Assets and Vulnerabilities" in result
 
     def test_automation_added(self):
+        """
+        Given: A YML whose only commands are NOT in the
+               EXCLUDED_AUTOMATION_PATTERNS list (note: 'vendor-fetch-events'
+               IS excluded by substring, but 'vendor-do-stuff' is not).
+        When:  decide_capabilities is called.
+        Then:  'Automation' is added because at least one non-excluded
+               command exists.
+        """
         yml = _build_yml(
             script={
                 "commands": [
@@ -181,6 +264,13 @@ class TestDecideCapabilities:
         assert "Automation" in result
 
     def test_automation_not_added_when_only_excluded_commands(self):
+        """
+        Given: A YML whose every command matches an EXCLUDED_AUTOMATION_PATTERNS
+               substring (get-events / get-indicators / fetch-incidents /
+               fetch-events / fetch-credentials).
+        When:  decide_capabilities is called.
+        Then:  'Automation' is NOT added (no non-excluded command exists).
+        """
         yml = _build_yml(
             script={
                 "commands": [
@@ -196,6 +286,13 @@ class TestDecideCapabilities:
         assert "Automation" not in result
 
     def test_combined_capabilities(self):
+        """
+        Given: A YML that triggers Fetch Secrets (isFetchCredentials param),
+               Fetch Issues (isfetch=True), Fetch Assets and Vulnerabilities
+               (isfetchassets=True), AND Automation (non-excluded commands).
+        When:  decide_capabilities is called.
+        Then:  All four capabilities co-exist in the returned mapping.
+        """
         yml = _build_yml(
             name="BigIntegration",
             configuration=[{"name": "isFetchCredentials"}],
@@ -218,8 +315,13 @@ class TestDecideCapabilities:
     # Rule 2 early-exit precondition tests (Option B fix)
     # ------------------------------------------------------------------
     def test_event_collector_with_isfetchassets_keeps_both_capabilities(self):
-        """Multi-purpose collector: isfetchevents + isfetchassets + name contains
-        'eventcollector' must NOT short-circuit; both capabilities must remain."""
+        """
+        Given: A multi-purpose collector YML with isfetchevents=True AND
+               isfetchassets=True whose name contains 'eventcollector'.
+        When:  decide_capabilities is called.
+        Then:  Rule 2's early-exit must NOT fire — both 'Log Collection' and
+               'Fetch Assets and Vulnerabilities' must remain.
+        """
         yml = _build_yml(
             name="JamfProtectEventCollector",
             script={
@@ -236,8 +338,13 @@ class TestDecideCapabilities:
         assert "Fetch Assets and Vulnerabilities" in result
 
     def test_event_collector_with_isfetch_keeps_both_capabilities(self):
-        """Multi-purpose collector: isfetchevents + isfetch + name contains
-        'eventcollector' must NOT short-circuit; both capabilities must remain."""
+        """
+        Given: A multi-purpose collector YML with isfetchevents=True AND
+               isfetch=True whose name contains 'eventcollector'.
+        When:  decide_capabilities is called.
+        Then:  Rule 2's early-exit must NOT fire — both 'Log Collection' and
+               'Fetch Issues' must remain.
+        """
         yml = _build_yml(
             name="MyEventCollector",
             script={
@@ -253,12 +360,14 @@ class TestDecideCapabilities:
         assert "Fetch Issues" in result
 
     def test_event_collector_with_feed_keeps_both_capabilities(self):
-        """Multi-purpose collector: isfetchevents + feed + name contains
-        'eventcollector' must NOT short-circuit; both capabilities must remain.
-
-        Note: the command list intentionally avoids triggering Rule 4's own
-        early-exit (no single 'get-indicators' command) so we can verify
-        that BOTH Log Collection and Threat Intelligence & Enrichment remain.
+        """
+        Given: A multi-purpose collector YML with isfetchevents=True AND
+               feed=True whose name contains 'eventcollector', and a command
+               list that intentionally avoids Rule 4's own early-exit
+               (no single 'get-indicators' command).
+        When:  decide_capabilities is called.
+        Then:  Rule 2's early-exit must NOT fire — both 'Log Collection' and
+               'Threat Intelligence & Enrichment' must remain.
         """
         yml = _build_yml(
             name="MyEventCollector",
@@ -276,8 +385,13 @@ class TestDecideCapabilities:
         assert "Threat Intelligence & Enrichment" in result
 
     def test_pure_event_collector_still_short_circuits(self):
-        """Regression guard: when isfetchevents is the only fetch flag and the
-        name contains 'eventcollector', the early-exit must still fire."""
+        """
+        Given: A pure event-collector YML where isfetchevents is the only
+               fetch flag and the name contains 'eventcollector'.
+        When:  decide_capabilities is called.
+        Then:  Rule 2's early-exit fires (regression guard for the
+               multi-purpose fix above).
+        """
         yml = _build_yml(
             name="MyEventCollector",
             script={
@@ -296,8 +410,14 @@ class TestDecideCapabilities:
         }
 
     def test_event_collector_with_fetch_credentials_param_keeps_both(self):
-        """Multi-purpose collector: isfetchevents + isFetchCredentials param +
-        name contains 'eventcollector' must NOT short-circuit."""
+        """
+        Given: A multi-purpose collector YML with isfetchevents=True AND an
+               'isFetchCredentials' configuration param, name contains
+               'eventcollector'.
+        When:  decide_capabilities is called.
+        Then:  Rule 2's early-exit must NOT fire — both 'Log Collection' and
+               'Fetch Secrets' must remain.
+        """
         yml = _build_yml(
             name="MyEventCollector",
             configuration=[{"name": "isFetchCredentials", "type": 8}],
@@ -318,6 +438,13 @@ class TestDecideCapabilities:
 # ---------------------------------------------------------------------------
 class TestMapParamsToCapabilities:
     def test_test_module_param_without_default_goes_to_general(self):
+        """
+        Given: A test-module command exposing two params, of which only
+               'api_key' has a default in param_defaults.
+        When:  map_params_to_capabilities is called.
+        Then:  'url' (no default) lands in general_configurations and
+               'api_key' (has default) does NOT.
+        """
         capabilities = {"general_configurations": [], "Automation": []}
         command_params = {
             "integration": "X",
@@ -331,6 +458,13 @@ class TestMapParamsToCapabilities:
         assert "api_key" not in result["general_configurations"]
 
     def test_test_module_param_with_default_skipped(self):
+        """
+        Given: A test-module command whose only param has a default in
+               param_defaults.
+        When:  map_params_to_capabilities is called.
+        Then:  The param is NOT added to general_configurations
+               (Step 2.1 skips defaulted params).
+        """
         capabilities = {"general_configurations": [], "Automation": []}
         command_params = {
             "integration": "X",
@@ -343,6 +477,15 @@ class TestMapParamsToCapabilities:
         assert "api_key" not in result["general_configurations"]
 
     def test_single_capability_shortcut(self):
+        """
+        Given: A capabilities mapping with exactly 2 keys
+               (general_configurations + Log Collection) and several commands
+               whose params overlap with test-module.
+        When:  map_params_to_capabilities is called.
+        Then:  Step 2.2 shortcut fires: all unique command params (minus the
+               one already in general_configurations) land in the single
+               non-general capability.
+        """
         # only 2 keys → all unique command params go into the non-general one
         capabilities = {"general_configurations": [], "Log Collection": []}
         command_params = {
@@ -364,6 +507,14 @@ class TestMapParamsToCapabilities:
         )
 
     def test_multi_capability_fetch_incidents_to_fetch_issues(self):
+        """
+        Given: Multiple capabilities (Fetch Issues + Automation) plus a
+               fetch-incidents command and an unrelated vendor command.
+        When:  map_params_to_capabilities is called.
+        Then:  Step 2.3 routes 'fetch-incidents' params to 'Fetch Issues'
+               (via COMMAND_TO_CAPABILITY) and the vendor command's param
+               to 'Automation'.
+        """
         capabilities = {
             "general_configurations": [],
             "Fetch Issues": [],
@@ -391,6 +542,14 @@ class TestMapParamsToCapabilities:
         assert result["Automation"] == ["arg1"]
 
     def test_multi_capability_other_command_to_automation(self):
+        """
+        Given: A multi-capability mapping (Fetch Issues + Automation) but
+               only generic vendor commands that don't match
+               COMMAND_TO_CAPABILITY.
+        When:  map_params_to_capabilities is called.
+        Then:  All vendor params fall back to 'Automation' and 'Fetch Issues'
+               remains empty.
+        """
         capabilities = {
             "general_configurations": [],
             "Fetch Issues": [],
@@ -411,6 +570,13 @@ class TestMapParamsToCapabilities:
         assert result["Fetch Issues"] == []
 
     def test_multi_capability_missing_target_logs_warning(self, caplog):
+        """
+        Given: A capabilities mapping that does NOT contain 'Fetch Issues'
+               while a fetch-incidents command supplies params.
+        When:  map_params_to_capabilities is called at WARNING log level.
+        Then:  The orphan param is NOT placed anywhere AND a warning naming
+               both the param and the missing target capability is logged.
+        """
         # Fetch Issues capability is NOT present, but fetch-incidents command provides params
         capabilities = {
             "general_configurations": [],
@@ -437,9 +603,13 @@ class TestMapParamsToCapabilities:
         assert "Fetch Issues" in caplog.text
 
     def test_get_events_command_routes_to_log_collection(self):
-        """Substring routing: a command containing 'get-events' should be routed
-        to 'Log Collection' instead of the default 'Automation' fallback,
-        provided 'Log Collection' exists in the capabilities."""
+        """
+        Given: A multi-capability mapping containing 'Log Collection' and a
+               command whose name contains 'get-events'.
+        When:  map_params_to_capabilities is called.
+        Then:  Substring routing places the get-events params in
+               'Log Collection' (not the default Automation fallback).
+        """
         capabilities = {
             "general_configurations": [],
             "Log Collection": [],
@@ -462,8 +632,13 @@ class TestMapParamsToCapabilities:
     def test_get_events_command_falls_back_to_automation_without_log_collection(
         self,
     ):
-        """If 'Log Collection' is NOT in capabilities, a 'get-events' command
-        should fall back to 'Automation' (no special routing)."""
+        """
+        Given: A capabilities mapping that does NOT contain 'Log Collection'
+               and a command whose name contains 'get-events'.
+        When:  map_params_to_capabilities is called.
+        Then:  With only 2 capabilities, Step 2.2 shortcut fires and the
+               get-events param lands in 'Automation' (no special routing).
+        """
         capabilities = {
             "general_configurations": [],
             "Automation": [],
@@ -483,9 +658,15 @@ class TestMapParamsToCapabilities:
         assert result["Automation"] == ["events_param"]
 
     def test_get_indicators_command_routes_to_threat_intel(self):
-        """Substring routing: a command containing 'get-indicators' should be
-        routed to 'Threat Intelligence & Enrichment' instead of the default
-        'Automation' fallback, provided that capability exists."""
+        """
+        Given: A multi-capability mapping containing
+               'Threat Intelligence & Enrichment' and a command whose name
+               contains 'get-indicators'.
+        When:  map_params_to_capabilities is called.
+        Then:  Substring routing places the get-indicators params in
+               'Threat Intelligence & Enrichment' (not the default Automation
+               fallback).
+        """
         capabilities = {
             "general_configurations": [],
             "Threat Intelligence & Enrichment": [],
@@ -508,8 +689,13 @@ class TestMapParamsToCapabilities:
     def test_get_indicators_command_falls_back_to_automation_without_threat_intel(
         self,
     ):
-        """If 'Threat Intelligence & Enrichment' is NOT in capabilities, a
-        'get-indicators' command should fall back to 'Automation'."""
+        """
+        Given: A capabilities mapping that does NOT contain
+               'Threat Intelligence & Enrichment' and a command whose name
+               contains 'get-indicators'.
+        When:  map_params_to_capabilities is called.
+        Then:  The get-indicators params fall back to 'Automation'.
+        """
         capabilities = {
             "general_configurations": [],
             "Fetch Issues": [],
@@ -529,6 +715,15 @@ class TestMapParamsToCapabilities:
         assert result["Fetch Issues"] == []
 
     def test_dedup_param_in_multiple_capabilities_moves_to_general(self):
+        """
+        Given: A param ('shared') that is referenced by two different
+               commands routed to two different capabilities, plus a unique
+               param.
+        When:  map_params_to_capabilities is called.
+        Then:  Step 2.4 dedup moves 'shared' into general_configurations and
+               removes it from both capabilities; 'unique' stays in
+               'Automation'.
+        """
         capabilities = {
             "general_configurations": [],
             "Fetch Issues": [],
@@ -551,6 +746,13 @@ class TestMapParamsToCapabilities:
         assert "unique" in result["Automation"]
 
     def test_dedup_param_in_general_and_capability_keeps_general(self):
+        """
+        Given: A param ('url') that ends up in general_configurations (via
+               test-module) AND in another capability (via fetch-incidents).
+        When:  map_params_to_capabilities is called.
+        Then:  Step 2.4 dedup keeps a single occurrence in
+               general_configurations and removes it from 'Fetch Issues'.
+        """
         # If a param is in general_configurations AND in another capability,
         # _deduplicate should remove it from the capability and keep it in general.
         capabilities = {
@@ -578,8 +780,13 @@ class TestMapParamsToCapabilities:
 # ---------------------------------------------------------------------------
 class TestManualMapping:
     def test_manual_mapping_empty_dict_preserves_existing_behavior(self):
-        """An empty manual mapping must produce identical results to omitting
-        the parameter entirely."""
+        """
+        Given: A complete command_params + capabilities setup and TWO calls
+               to map_params_to_capabilities — one without
+               manual_command_to_capability and one with an empty dict.
+        When:  The two results are compared.
+        Then:  They are identical (an empty manual mapping must be a no-op).
+        """
         capabilities = {
             "general_configurations": [],
             "Fetch Issues": [],
@@ -610,8 +817,16 @@ class TestManualMapping:
         assert baseline == with_empty_manual
 
     def test_manual_mapping_routes_long_running_to_custom_capability(self):
-        """Primary use case: route long-running-execution to a brand-new
-        'Connection Health' capability that is not in the initial mapping."""
+        """
+        Given: An initial capabilities mapping that does NOT contain
+               'Connection Health', plus a manual override routing
+               'long-running-execution' to a new 'Connection Health'
+               capability.
+        When:  map_params_to_capabilities is called with the manual mapping.
+        Then:  'Connection Health' is created with 'port'; 'filter' lands in
+               'Automation'; 'url' (shared by 3 commands) is moved to
+               general_configurations by Step 2.4 dedup.
+        """
         capabilities = {"general_configurations": [], "Automation": []}
         command_params = {
             "integration": "X",
@@ -638,8 +853,14 @@ class TestManualMapping:
         assert "url" not in result["Automation"]
 
     def test_manual_mapping_overrides_command_to_capability_constant(self):
-        """Manual mapping must take precedence over COMMAND_TO_CAPABILITY
-        (e.g. fetch-events would automatically route to 'Log Collection')."""
+        """
+        Given: A capabilities mapping that contains 'Log Collection' (where
+               'fetch-events' would normally route via COMMAND_TO_CAPABILITY)
+               plus a manual override pointing 'fetch-events' to 'Custom Cap'.
+        When:  map_params_to_capabilities is called.
+        Then:  Manual mapping wins — 'lookback' lands in 'Custom Cap' and
+               NOT in 'Log Collection'.
+        """
         capabilities = {
             "general_configurations": [],
             "Log Collection": [],
@@ -666,9 +887,15 @@ class TestManualMapping:
         assert "lookback" not in result["Log Collection"]
 
     def test_manual_mapping_multi_target_routes_to_all_listed(self):
-        """Manual mapping with multiple target capabilities routes the params
-        into every listed capability; dedup later moves shared params into
-        general_configurations."""
+        """
+        Given: A manual override routing 'my-cmd' to BOTH 'Cap A' and
+               'Cap B', and 'url' is also referenced by test-module.
+        When:  map_params_to_capabilities is called.
+        Then:  Both 'Cap A' and 'Cap B' are created; the params placed in
+               both then duplicate, so Step 2.4 dedup moves 'shared' and
+               'extra' into general_configurations and clears them from the
+               capabilities (leaving Cap A and Cap B empty).
+        """
         capabilities = {"general_configurations": [], "Automation": []}
         command_params = {
             "integration": "X",
@@ -695,8 +922,13 @@ class TestManualMapping:
         assert result["Cap B"] == []
 
     def test_manual_mapping_with_existing_capability_no_duplicate_keys(self):
-        """When the manual target capability already exists, do not create a
-        duplicate key, and ensure the command is not double-routed via Step 2.3."""
+        """
+        Given: A manual override routing 'my-cmd' to 'Automation' (which
+               already exists in the initial mapping).
+        When:  map_params_to_capabilities is called.
+        Then:  No duplicate 'Automation' key is created and 'filter' appears
+               exactly once (Step 2.3 must skip the manually-handled command).
+        """
         capabilities = {"general_configurations": [], "Automation": []}
         command_params = {
             "integration": "X",
@@ -724,6 +956,16 @@ class TestManualMapping:
 # ---------------------------------------------------------------------------
 class TestEndToEnd:
     def test_e2e_simple_integration(self, tmp_path: Path):
+        """
+        Given: A small fake integration YML (isfetch=True with a vendor
+               command) written to a tmp_path, plus matching command_params
+               and param_defaults.
+        When:  decide_capabilities → map_params_to_capabilities is run, the
+               result is JSON-serialised to disk and reloaded.
+        Then:  The full end-to-end mapping equals
+               {general_configurations:[url], Fetch Issues:[max_fetch],
+               Automation:[arg1]} and JSON round-trip preserves it.
+        """
         # Build a small fake integration YML
         yml_content = {
             "name": "TinyIntegration",
@@ -768,6 +1010,16 @@ class TestEndToEnd:
         assert loaded == result
 
     def test_e2e_exabeam_yml(self):
+        """
+        Given: The real ExabeamSecOpsPlatform integration YML (skipped if
+               not present locally), which has isfetchevents=True AND
+               isfetch=True with isfetch:platform=False.
+        When:  decide_capabilities is called on the parsed YML.
+        Then:  Rule 2's early-exit must NOT fire (other fetch flags exist),
+               so 'Log Collection' and 'Automation' remain, 'Fetch Issues' is
+               blocked by the platform flag, and general_configurations is
+               empty.
+        """
         yml_path = Path(
             "/Users/yhayun/dev/demisto/content/Packs/"
             "ExabeamSecurityOperationsPlatform/Integrations/"

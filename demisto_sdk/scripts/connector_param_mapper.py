@@ -33,7 +33,7 @@ EXCLUDED_AUTOMATION_PATTERNS: List[str] = [
 # ---------------------------------------------------------------------------
 # Step 1: Decide capabilities
 # ---------------------------------------------------------------------------
-def _is_pure_event_collector(integration_yml: dict) -> bool:
+def _is_pure_event_collector(integration_yml: dict, command_names) -> bool:
     """Check whether the integration is a pure event collector with no other fetch capabilities.
 
     Returns True only if the integration has isfetchevents but NO other fetch indicators
@@ -53,6 +53,9 @@ def _is_pure_event_collector(integration_yml: dict) -> bool:
     for param in integration_yml.get("configuration", []) or []:
         if param.get("name") == "isFetchCredentials":
             return False
+    get_events_cmd_count = sum(1 for n in command_names if "get-events" in n)
+    if (len(command_names) - get_events_cmd_count == 0):
+        return False
     return True
 
 
@@ -79,11 +82,7 @@ def decide_capabilities(integration_yml: dict) -> Dict[str, List[str]]:
     # Rule 2 - Log Collection (with possible early exit)
     if script.get("isfetchevents") is True:
         result["Log Collection"] = []
-        get_events_cmd_count = sum(1 for n in command_names if "get-events" in n)
-        if (
-            "Event Collector" in integration_name
-            or (len(command_names) - get_events_cmd_count == 0)
-        ) and _is_pure_event_collector(integration_yml):
+        if "Event Collector" in integration_name and _is_pure_event_collector(integration_yml, command_names):
             # Pure event collector — short-circuit to keep the result minimal
             return {"general_configurations": [], "Log Collection": []}
 
@@ -127,15 +126,18 @@ def _handle_test_module(
     param_defaults: dict,
 ) -> None:
     """Step 2.1 - Add params from ``test-module`` without a default to
-    ``general_configurations``."""
+    ``general_configurations``.
+
+    Uses a local ``general_set`` for O(1) membership checks instead of
+    repeatedly scanning the underlying list.
+    """
     commands_section: dict = command_params.get("commands") or {}
     test_module_params: List[str] = commands_section.get("test-module", []) or []
+    general_set: set = set(result["general_configurations"])
     for param in test_module_params:
-        if (
-            param not in param_defaults
-            and param not in result["general_configurations"]
-        ):
+        if param not in param_defaults and param not in general_set:
             result["general_configurations"].append(param)
+            general_set.add(param)
 
 
 def _apply_manual_mapping(
@@ -153,6 +155,9 @@ def _apply_manual_mapping(
     Returns the set of command names that were handled here, so subsequent steps
     (2.2 / 2.3) can skip them and avoid double-routing.
 
+    Uses a ``placed_per_cap`` dict-of-sets for O(1) per-capability dedup
+    instead of scanning ``result[cap]`` linearly on every check.
+
     No-op when ``manual_command_to_capability`` is empty.
     """
     handled_commands: set = set()
@@ -160,6 +165,7 @@ def _apply_manual_mapping(
         return handled_commands
 
     commands_section: dict = command_params.get("commands") or {}
+    placed_per_cap: Dict[str, set] = {}
     for cmd_name, capability_list in manual_command_to_capability.items():
         # Ensure each capability exists.
         for cap in capability_list:
@@ -168,9 +174,11 @@ def _apply_manual_mapping(
         # Route this command's params to each listed capability.
         params = commands_section.get(cmd_name) or []
         for cap in capability_list:
+            cap_set = placed_per_cap.setdefault(cap, set(result[cap]))
             for param in params:
-                if param not in result[cap]:
+                if param not in cap_set:
                     result[cap].append(param)
+                    cap_set.add(param)
         handled_commands.add(cmd_name)
     return handled_commands
 
@@ -232,18 +240,26 @@ def _multi_capability_mapping(
     """Step 2.3 - For each command, map its params to the matching capability
     (or ``Automation``).  Skips test-module (handled in 2.1) and any command
     already routed by manual mapping (Step 2.1.5).  Warns if the target
-    capability is missing from the result mapping."""
+    capability is missing from the result mapping.
+
+    Uses a ``placed_per_cap`` dict-of-sets for O(1) per-capability dedup
+    instead of scanning ``result[target]`` linearly on every check.
+    """
     handled_commands = handled_commands or set()
     commands_section: dict = command_params.get("commands") or {}
+    placed_per_cap: Dict[str, set] = {}
     for cmd_name, params in commands_section.items():
         if cmd_name == "test-module" or cmd_name in handled_commands:
             continue
         target = _resolve_target_capability(cmd_name, result)
-        for param in params or []:
-            if target in result:
-                if param not in result[target]:
+        if target in result:
+            cap_set = placed_per_cap.setdefault(target, set(result[target]))
+            for param in params or []:
+                if param not in cap_set:
                     result[target].append(param)
-            else:
+                    cap_set.add(param)
+        else:
+            for param in params or []:
                 logger.warning(
                     f"{param} failed to add to {target} because it doesn't "
                     f"exist although it's a part of {cmd_name}."
@@ -253,7 +269,11 @@ def _multi_capability_mapping(
 def _deduplicate(result: Dict[str, List[str]]) -> None:
     """Step 2.4 - Move any param appearing in two or more capabilities (or in
     ``general_configurations`` plus another capability) into
-    ``general_configurations`` exactly once."""
+    ``general_configurations`` exactly once.
+
+    Uses a snapshot ``general_set`` for O(1) membership lookup at the final
+    insertion step instead of an O(n) list scan per duplicate.
+    """
     # Count occurrences of every param across all keys.
     occurrences: Dict[str, int] = {}
     for params in result.values():
@@ -270,9 +290,11 @@ def _deduplicate(result: Dict[str, List[str]]) -> None:
     for capability in list(result.keys()):
         result[capability] = [p for p in result[capability] if p not in duplicated]
 
+    general_set: set = set(result["general_configurations"])
     for param in duplicated:
-        if param not in result["general_configurations"]:
+        if param not in general_set:
             result["general_configurations"].append(param)
+            general_set.add(param)
 
 
 def map_params_to_capabilities(

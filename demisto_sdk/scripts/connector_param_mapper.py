@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import typer
-import yaml
 
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.logger import logger, logging_setup
 
 main = typer.Typer()
@@ -476,7 +476,7 @@ def generate_param_mapping(
         manual_command_to_capability_json
     )
     with open(integration_yml_path) as f:
-        integration_yml: dict = yaml.safe_load(f)
+        integration_yml: dict = yaml.load(f)
 
     capabilities = decide_capabilities(integration_yml)
     result = map_params_to_capabilities(

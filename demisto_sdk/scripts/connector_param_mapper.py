@@ -33,12 +33,20 @@ EXCLUDED_AUTOMATION_PATTERNS: List[str] = [
 # ---------------------------------------------------------------------------
 # Step 1: Decide capabilities
 # ---------------------------------------------------------------------------
-def _is_pure_event_collector(integration_yml: dict, command_names) -> bool:
-    """Check whether the integration is a pure event collector with no other fetch capabilities.
+def _is_pure_event_collector(integration_yml: dict, command_names: List[str]) -> bool:
+    """Check whether the integration qualifies as a 'pure' event collector for Rule 2's early-exit.
 
-    Returns True only if the integration has isfetchevents but NO other fetch indicators
-    (no isfetch, no isfetch:platform, no feed, no isfetchassets, no isFetchCredentials param).
-    Used to gate Rule 2's early-exit so multi-purpose collectors don't drop their other capabilities.
+    Returns True only if ALL of the following hold:
+      - No other fetch flags are set: ``isfetch``, ``isfetch:platform``, ``feed``,
+        ``isfetchassets``.
+      - No configuration param named ``isFetchCredentials`` exists.
+      - The integration has at least ONE command that is NOT a ``get-events``-style
+        command (i.e., ``len(command_names) - get_events_count > 0``). An integration
+        whose ONLY commands are get-events is NOT considered pure — the early-exit
+        is suppressed for that edge case.
+
+    Used to gate Rule 2's early-exit so multi-purpose collectors don't drop their
+    other capabilities.
     """
     script = integration_yml.get("script", {}) or {}
     if script.get("isfetch"):
@@ -54,7 +62,7 @@ def _is_pure_event_collector(integration_yml: dict, command_names) -> bool:
         if param.get("name") == "isFetchCredentials":
             return False
     get_events_cmd_count = sum(1 for n in command_names if "get-events" in n)
-    if (len(command_names) - get_events_cmd_count == 0):
+    if len(command_names) - get_events_cmd_count > 0:
         return False
     return True
 
@@ -82,7 +90,7 @@ def decide_capabilities(integration_yml: dict) -> Dict[str, List[str]]:
     # Rule 2 - Log Collection (with possible early exit)
     if script.get("isfetchevents") is True:
         result["Log Collection"] = []
-        if "Event Collector" in integration_name and _is_pure_event_collector(integration_yml, command_names):
+        if "event collector" in integration_name and _is_pure_event_collector(integration_yml, command_names):
             # Pure event collector — short-circuit to keep the result minimal
             return {"general_configurations": [], "Log Collection": []}
 

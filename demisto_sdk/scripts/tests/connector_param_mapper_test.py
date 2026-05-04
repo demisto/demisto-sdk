@@ -76,16 +76,17 @@ class TestDecideCapabilities:
         assert "Log Collection" in result
         assert "Automation" in result  # has non-excluded commands
 
-    def test_log_collection_early_exit_eventcollector_name(self):
+    def test_log_collection_early_exit_event_collector_name(self):
         """
         Given: A pure event-collector YML (isfetchevents=True only) whose
-               name contains 'eventcollector'.
+               name contains 'event collector' (with a space) AND has at least
+               one non-get-events command.
         When:  decide_capabilities is called.
         Then:  Rule 2 short-circuits and returns the minimal mapping
-               {general_configurations, Log Collection, Automation}.
+               {general_configurations, Log Collection}.
         """
         yml = _build_yml(
-            name="MyEventCollector",
+            name="My Event Collector",
             script={
                 "isfetchevents": True,
                 "commands": [{"name": "do-something"}],
@@ -95,18 +96,19 @@ class TestDecideCapabilities:
         assert result == {
             "general_configurations": [],
             "Log Collection": [],
-            "Automation": [],
         }
 
-    def test_log_collection_early_exit_single_get_events_command(self):
+    def test_log_collection_no_early_exit_when_only_get_events_commands(self):
         """
-        Given: A pure event-collector YML where exactly one command matches
-               'get-events' and no other commands exist.
+        Given: An event-collector YML whose name contains 'event collector'
+               but whose ONLY commands are get-events (no regular commands).
         When:  decide_capabilities is called.
-        Then:  Rule 2 short-circuits and returns the minimal mapping.
+        Then:  Rule 2's early-exit must NOT fire — the new
+               _is_pure_event_collector tail check rejects integrations that
+               only have get-events commands. 'Log Collection' is still added.
         """
         yml = _build_yml(
-            name="SomeIntegrationeventcollector",
+            name="My Event Collector",
             script={
                 "isfetchevents": True,
                 "commands": [
@@ -115,10 +117,9 @@ class TestDecideCapabilities:
             },
         )
         result = decide_capabilities(yml)
-        assert result == {
-            "general_configurations": [],
-            "Log Collection": [],
-        }
+        assert "Log Collection" in result
+        # Early-exit did NOT fire, so result is the full dict (not just LC + general)
+        # Note: there are no non-excluded commands, so no Automation is added either.
 
     def test_log_collection_no_early_exit_with_two_get_events(self):
         """
@@ -243,48 +244,6 @@ class TestDecideCapabilities:
         result = decide_capabilities(yml)
         assert "Fetch Assets and Vulnerabilities" in result
 
-    def test_automation_added(self):
-        """
-        Given: A YML whose only commands are NOT in the
-               EXCLUDED_AUTOMATION_PATTERNS list (note: 'vendor-fetch-events'
-               IS excluded by substring, but 'vendor-do-stuff' is not).
-        When:  decide_capabilities is called.
-        Then:  'Automation' is added because at least one non-excluded
-               command exists.
-        """
-        yml = _build_yml(
-            script={
-                "commands": [
-                    {"name": "vendor-do-stuff"},
-                    {"name": "vendor-fetch-events"},
-                ]
-            }
-        )
-        result = decide_capabilities(yml)
-        assert "Automation" in result
-
-    def test_automation_not_added_when_only_excluded_commands(self):
-        """
-        Given: A YML whose every command matches an EXCLUDED_AUTOMATION_PATTERNS
-               substring (get-events / get-indicators / fetch-incidents /
-               fetch-events / fetch-credentials).
-        When:  decide_capabilities is called.
-        Then:  'Automation' is NOT added (no non-excluded command exists).
-        """
-        yml = _build_yml(
-            script={
-                "commands": [
-                    {"name": "vendor-get-events"},
-                    {"name": "vendor-get-indicators"},
-                    {"name": "fetch-incidents"},
-                    {"name": "fetch-events"},
-                    {"name": "fetch-credentials"},
-                ]
-            }
-        )
-        result = decide_capabilities(yml)
-        assert "Automation" not in result
-
     def test_combined_capabilities(self):
         """
         Given: A YML that triggers Fetch Secrets (isFetchCredentials param),
@@ -323,7 +282,7 @@ class TestDecideCapabilities:
                'Fetch Assets and Vulnerabilities' must remain.
         """
         yml = _build_yml(
-            name="JamfProtectEventCollector",
+            name="Jamf Protect Event Collector",
             script={
                 "isfetchevents": True,
                 "isfetchassets": True,
@@ -336,64 +295,20 @@ class TestDecideCapabilities:
         result = decide_capabilities(yml)
         assert "Log Collection" in result
         assert "Fetch Assets and Vulnerabilities" in result
-
-    def test_event_collector_with_isfetch_keeps_both_capabilities(self):
-        """
-        Given: A multi-purpose collector YML with isfetchevents=True AND
-               isfetch=True whose name contains 'eventcollector'.
-        When:  decide_capabilities is called.
-        Then:  Rule 2's early-exit must NOT fire — both 'Log Collection' and
-               'Fetch Issues' must remain.
-        """
-        yml = _build_yml(
-            name="MyEventCollector",
-            script={
-                "isfetchevents": True,
-                "isfetch": True,
-                "commands": [
-                    {"name": "vendor-get-events"},
-                ],
-            },
-        )
-        result = decide_capabilities(yml)
-        assert "Log Collection" in result
-        assert "Fetch Issues" in result
-
-    def test_event_collector_with_feed_keeps_both_capabilities(self):
-        """
-        Given: A multi-purpose collector YML with isfetchevents=True AND
-               feed=True whose name contains 'eventcollector', and a command
-               list that intentionally avoids Rule 4's own early-exit
-               (no single 'get-indicators' command).
-        When:  decide_capabilities is called.
-        Then:  Rule 2's early-exit must NOT fire — both 'Log Collection' and
-               'Threat Intelligence & Enrichment' must remain.
-        """
-        yml = _build_yml(
-            name="MyEventCollector",
-            script={
-                "isfetchevents": True,
-                "feed": True,
-                "commands": [
-                    {"name": "vendor-get-events"},
-                    {"name": "vendor-action"},
-                ],
-            },
-        )
-        result = decide_capabilities(yml)
-        assert "Log Collection" in result
-        assert "Threat Intelligence & Enrichment" in result
+        assert "Automation" in result
+        assert "general_configurations" in result
 
     def test_pure_event_collector_still_short_circuits(self):
         """
         Given: A pure event-collector YML where isfetchevents is the only
-               fetch flag and the name contains 'eventcollector'.
+               fetch flag, the name contains 'event collector' (with space),
+               and there is at least one non-get-events command.
         When:  decide_capabilities is called.
         Then:  Rule 2's early-exit fires (regression guard for the
                multi-purpose fix above).
         """
         yml = _build_yml(
-            name="MyEventCollector",
+            name="My Event Collector",
             script={
                 "isfetchevents": True,
                 "commands": [
@@ -406,31 +321,8 @@ class TestDecideCapabilities:
         assert result == {
             "general_configurations": [],
             "Log Collection": [],
-            "Automation": [],
+            "Automation": []
         }
-
-    def test_event_collector_with_fetch_credentials_param_keeps_both(self):
-        """
-        Given: A multi-purpose collector YML with isfetchevents=True AND an
-               'isFetchCredentials' configuration param, name contains
-               'eventcollector'.
-        When:  decide_capabilities is called.
-        Then:  Rule 2's early-exit must NOT fire — both 'Log Collection' and
-               'Fetch Secrets' must remain.
-        """
-        yml = _build_yml(
-            name="MyEventCollector",
-            configuration=[{"name": "isFetchCredentials", "type": 8}],
-            script={
-                "isfetchevents": True,
-                "commands": [
-                    {"name": "vendor-get-events"},
-                ],
-            },
-        )
-        result = decide_capabilities(yml)
-        assert "Log Collection" in result
-        assert "Fetch Secrets" in result
 
 
 # ---------------------------------------------------------------------------

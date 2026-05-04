@@ -94,71 +94,35 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
         "The following support modules {} have been added to the {} {}."
         " Adding supported modules requires a PM approval."
     )
-    new_pack_error_message = (
-        "A new pack was added containing {} {} with supported modules {}."
-        " Please make sure the supportedModules configuration is approved by a PM."
-    )
     related_field = "supportedModules"
     is_auto_fixable = False
-    expected_git_statuses = [
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-        GitStatuses.RENAMED,
-    ]
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
     related_file_type = [RelatedFileType.SCHEMA]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        results: List[ValidationResult] = []
-        for content_item in content_items:
-            old_item = cast(ContentTypes, content_item.old_base_content_object)
+        return [
+            ValidationResult(
+                validator=self,
+                message=self.error_message.format(
+                    ", ".join(map(repr, sorted(difference))),
+                    content_item.display_name,
+                    content_item.content_type,
+                ),
+                content_object=content_item,
+            )
+            for content_item in content_items
+            if (difference := self.added_parameters(content_item))
+        ]
 
-            # For newly added items in a new pack (no pack association on old item),
-            # warn that supportedModules need PM approval.
-            if (
-                content_item.git_status == GitStatuses.ADDED
-                and not isinstance(content_item, Pack)
-                and not getattr(old_item, "pack", None)
-            ):
-                modules = get_content_item_supported_modules(content_item)
-                if modules:
-                    results.append(
-                        ValidationResult(
-                            validator=self,
-                            message=self.new_pack_error_message.format(
-                                content_item.display_name,
-                                content_item.content_type,
-                                ", ".join(map(repr, sorted(modules))),
-                            ),
-                            content_object=content_item,
-                        )
-                    )
-                continue
+    def added_parameters(self, content_item: ContentTypes) -> set:
+        if content_item.git_status == GitStatuses.ADDED:
+            return get_content_item_supported_modules(content_item)
 
-            difference = self.added_parameters(old_item, content_item)
-            if difference:
-                results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            ", ".join(map(repr, sorted(difference))),
-                            content_item.display_name,
-                            content_item.content_type,
-                        ),
-                        content_object=content_item,
-                    )
-                )
-        return results
-
-    def added_parameters(self, old_item: ContentTypes, new_item: ContentTypes) -> set:
+        old_item = cast(ContentTypes, content_item.old_base_content_object)
         old_params = get_content_item_supported_modules(old_item)
 
-        # When a new content is added and contains supportedModules, the validation should warn
-        if old_params and old_item.git_status == GitStatuses.ADDED:
-            return old_params
+        new_params = get_content_item_supported_modules(content_item)
 
-        new_params = get_content_item_supported_modules(new_item)
-
-        # Otherwise, when a new content is modified and contains more supportedModules, the validation should warn too
         return new_params.difference(old_params)

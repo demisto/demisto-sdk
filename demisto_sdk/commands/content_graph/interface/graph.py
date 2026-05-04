@@ -328,13 +328,7 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def find_content_items_with_module_mismatch_dependencies(
-        self, content_item_ids: List[str]
-    ) -> List[BaseNode]:
-        pass
-
-    @abstractmethod
-    def find_content_items_with_non_mandatory_module_mismatch_dependencies(
-        self, content_item_ids: List[str]
+        self, content_item_ids: List[str], mandatory: bool = True
     ) -> List[BaseNode]:
         pass
 

@@ -1,0 +1,4 @@
+changes:
+- description: Prevent SDK crash when encountering `deployment.json` files in pack root.
+  type: fix
+pr_number: 5332

@@ -4820,6 +4820,8 @@ def get_content_item_supported_modules(item) -> set[str]:
 
     modules = item.supportedModules
     if not modules and not isinstance(item, Pack):
-        modules = item.pack.supportedModules
+        pack = getattr(item, "pack", None)
+        if pack is not None:
+            modules = pack.supportedModules
 
     return set(modules or default_modules)

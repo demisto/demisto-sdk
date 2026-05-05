@@ -12,13 +12,19 @@ from demisto_sdk.commands.common.logger import logger, logging_setup
 
 main = typer.Typer()
 
+FETCH_ASSETS_CAPABILITIES = "Fetch Assets and Vulnerabilities"
+FETCH_ISSUES_CAPABILITIES = "Fetch Issues"
+FETCH_EVENTS_CAPABILITIES = "Log Collection"
+FETCH_SECRETS_CAPABILITIES = "Fetch Secrets"
+FETCH_INDICATORS_CAPABILITIES = "Threat Intelligence & Enrichment"
+AUTOMATION_CAPABILITY = "Automation"
 
 COMMAND_TO_CAPABILITY: Dict[str, str] = {
-    "fetch-incidents": "Fetch Issues",
-    "fetch-events": "Log Collection",
-    "fetch-credentials": "Fetch Secrets",
-    "fetch-indicators": "Threat Intelligence & Enrichment",
-    "fetch-assets": "Fetch Assets and Vulnerabilities",
+    "fetch-incidents": FETCH_ISSUES_CAPABILITIES,
+    "fetch-events": FETCH_EVENTS_CAPABILITIES,
+    "fetch-credentials": FETCH_SECRETS_CAPABILITIES,
+    "fetch-indicators": FETCH_INDICATORS_CAPABILITIES,
+    "fetch-assets": FETCH_ASSETS_CAPABILITIES,
 }
 
 EXCLUDED_AUTOMATION_PATTERNS: List[str] = [
@@ -27,6 +33,7 @@ EXCLUDED_AUTOMATION_PATTERNS: List[str] = [
     "fetch-incidents",
     "fetch-events",
     "fetch-credentials",
+    "fetch-indicators",
 ]
 
 
@@ -85,24 +92,24 @@ def decide_capabilities(integration_yml: dict) -> Dict[str, List[str]]:
 
     # Rule 1 - Fetch Secrets
     if any(p.get("name") == "isFetchCredentials" for p in configuration):
-        result["Fetch Secrets"] = []
+        result[FETCH_SECRETS_CAPABILITIES] = []
 
     # Rule 2 - Log Collection (with possible early exit)
     if script.get("isfetchevents") is True:
-        result["Log Collection"] = []
+        result[FETCH_EVENTS_CAPABILITIES] = []
         if "event collector" in integration_name and _is_pure_event_collector(
             integration_yml, command_names
         ):
             # Pure event collector — short-circuit to keep the result minimal
-            return {"general_configurations": [], "Log Collection": []}
+            return {"general_configurations": [], FETCH_EVENTS_CAPABILITIES: []}
 
     # Rule 3 - Fetch Issues
     if script.get("isfetch") is True and script.get("isfetch:platform") is not False:
-        result["Fetch Issues"] = []
+        result[FETCH_ISSUES_CAPABILITIES] = []
 
     # Rule 4 - Threat Intelligence & Enrichment (with possible early exit)
     if script.get("feed") is True:
-        result["Threat Intelligence & Enrichment"] = []
+        result[FETCH_INDICATORS_CAPABILITIES] = []
         get_indicators_cmd_count = sum(
             1 for n in command_names if "get-indicators" in n
         )
@@ -111,17 +118,17 @@ def decide_capabilities(integration_yml: dict) -> Dict[str, List[str]]:
         ):
             return {
                 "general_configurations": [],
-                "Threat Intelligence & Enrichment": [],
+                FETCH_INDICATORS_CAPABILITIES: [],
             }
 
     # Rule 5 - Fetch Assets and Vulnerabilities
     if script.get("isfetchassets") is True:
-        result["Fetch Assets and Vulnerabilities"] = []
+        result[FETCH_ASSETS_CAPABILITIES] = []
 
     # Rule 6 - Automation
-    for name in command_names:
-        if not any(pattern in name for pattern in EXCLUDED_AUTOMATION_PATTERNS):
-            result["Automation"] = []
+    for command_name in command_names:
+        if not any(pattern in command_name for pattern in EXCLUDED_AUTOMATION_PATTERNS):
+            result[AUTOMATION_CAPABILITY] = []
             break
 
     return result
@@ -235,11 +242,11 @@ def _resolve_target_capability(cmd_name: str, result: Dict[str, List[str]]) -> s
     """
     if cmd_name in COMMAND_TO_CAPABILITY:
         return COMMAND_TO_CAPABILITY[cmd_name]
-    if "get-events" in cmd_name and "Log Collection" in result:
-        return "Log Collection"
-    if "get-indicators" in cmd_name and "Threat Intelligence & Enrichment" in result:
-        return "Threat Intelligence & Enrichment"
-    return "Automation"
+    if "get-events" in cmd_name and FETCH_EVENTS_CAPABILITIES in result:
+        return FETCH_EVENTS_CAPABILITIES
+    if "get-indicators" in cmd_name and FETCH_INDICATORS_CAPABILITIES in result:
+        return FETCH_INDICATORS_CAPABILITIES
+    return AUTOMATION_CAPABILITY
 
 
 def _multi_capability_mapping(
@@ -391,6 +398,10 @@ def _filter_hidden_params(
         )
 
 
+def is_single_capability(results):
+    return len(results) == 2
+
+
 def map_params_to_capabilities(
     capabilities: Dict[str, List[str]],
     command_params: dict,
@@ -416,7 +427,7 @@ def map_params_to_capabilities(
         result, command_params, manual_command_to_capability
     )
 
-    if len(result) == 2:
+    if is_single_capability(results=result):
         # Step 2.2 - single-capability shortcut (skip 2.3)
         _single_capability_shortcut(result, command_params, handled_commands)
     else:

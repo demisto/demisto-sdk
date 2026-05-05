@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Iterable, List, Set
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.base_script import (
     EXECUTE_CMD_PATTERN,

@@ -1696,15 +1696,18 @@ def repo_for_test_gr_109_mismatch_playbook(graph_repo: Repo):
     )
 
     # Create the playbook that uses command_x with supportedModules
+    # starttaskid and nexttasks ensure task "0" is on the mandatory execution path
     playbook_yml = {
         "id": "playbook1",
         "name": "playbook1",
+        "starttaskid": "0",
         "supportedModules": ["module_x", "module_y"],
         "tasks": {
             "0": {
                 "id": "0",
                 "taskid": "0",
                 "type": "regular",
+                "nexttasks": {"#none#": ["1"]},
                 "task": {
                     "id": "0",
                     "name": "run command_x",
@@ -1714,7 +1717,19 @@ def repo_for_test_gr_109_mismatch_playbook(graph_repo: Repo):
                     "iscommand": True,
                     "brand": "Integration1",
                 },
-            }
+            },
+            "1": {
+                "id": "1",
+                "taskid": "1",
+                "type": "title",
+                "task": {
+                    "id": "1",
+                    "name": "Done",
+                    "type": "title",
+                    "iscommand": False,
+                    "brand": "",
+                },
+            },
         },
     }
     pack_a.create_playbook("playbook1", yml=playbook_yml)
@@ -2019,8 +2034,9 @@ def test_NonMandatorySupportedModulesCompatibility_invalid_all_files_mismatch_co
     When:
         Running the IsNonMandatorySupportedModulesCompatibility validator on all files.
     Then:
-        The validator should identify "Integration1" as invalid (warning), reporting that
-        it is missing the required "module_y".
+        The validator should not flag command-level mismatches for non-mandatory dependencies,
+        since GR114 only checks non-mandatory USES relationships (not HAS_COMMAND relationships).
+        Command-level module mismatches are only checked by GR109 (mandatory dependencies).
     """
     graph_interface = repo_for_test_gr_114_mismatch_command.create_graph()
     BaseValidator.graph_interface = graph_interface
@@ -2028,12 +2044,7 @@ def test_NonMandatorySupportedModulesCompatibility_invalid_all_files_mismatch_co
         []
     )
 
-    assert len(results) == 1
-    assert (
-        results[0].message
-        == "The following non-mandatory dependencies have missing required modules: Integration1 is missing: [module_y]"
-    )
-    assert results[0].content_object.object_id == "Integration1"
+    assert len(results) == 0
 
 
 def test_NonMandatorySupportedModulesCompatibility_invalid_list_files_mismatch_command(
@@ -2046,8 +2057,9 @@ def test_NonMandatorySupportedModulesCompatibility_invalid_list_files_mismatch_c
     When:
         The IsNonMandatorySupportedModulesCompatibility validator runs specifically on "Integration1".
     Then:
-        The validator should identify "Integration1" as invalid (warning), reporting it is
-        missing the required "module_y".
+        The validator should not flag command-level mismatches for non-mandatory dependencies,
+        since GR114 only checks non-mandatory USES relationships (not HAS_COMMAND relationships).
+        Command-level module mismatches are only checked by GR109 (mandatory dependencies).
     """
     graph_interface = repo_for_test_gr_114_mismatch_command.create_graph()
     BaseValidator.graph_interface = graph_interface
@@ -2055,12 +2067,7 @@ def test_NonMandatorySupportedModulesCompatibility_invalid_list_files_mismatch_c
     results = IsNonMandatorySupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
         [repo_for_test_gr_114_mismatch_command.packs[0].integrations[0].object]
     )
-    assert len(results) == 1
-    assert (
-        results[0].message
-        == "The following non-mandatory dependencies have missing required modules: Integration1 is missing: [module_y]"
-    )
-    assert results[0].content_object.object_id == "Integration1"
+    assert len(results) == 0
 
 
 @pytest.fixture

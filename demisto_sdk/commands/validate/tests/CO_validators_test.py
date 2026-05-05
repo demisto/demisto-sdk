@@ -23,6 +23,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO112_is_matching_li
 from demisto_sdk.commands.validate.validators.CO_validators.CO113_is_mirroring_omitted import (
     IsMirroringOmittedValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO114_is_handler_ownership_fields_align import (
+    IsHandlerOwnershipFieldsAlignValidator,
+)
 
 # ============================================================
 # CO100 — IsMatchingIntegrationExistValidator
@@ -748,3 +751,303 @@ class TestCO113IsMirroringOmitted:
         assert "mirror_direction" in results[0].message
         assert "close_incident" in results[0].message
         assert "close_out" in results[0].message
+
+
+# ============================================================
+# CO114 — IsHandlerOwnershipFieldsAlignValidator
+# ============================================================
+
+
+class TestCO114IsHandlerOwnershipFieldsAlign:
+    """Tests for CO114 validator: any handler with module='xsoar' must have a
+    fully aligned metadata.ownership block (team='xsoar', maintainers contains
+    '@xsoar-content', all exact case)."""
+
+    def test_aligned_xsoar_handler_passes(self):
+        """
+        Given: A connector whose XSOAR handler has module='xsoar', team='xsoar',
+               and maintainers containing '@xsoar-content'.
+        When: CO114 runs.
+        Then: No validation errors are returned.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "aligned-handler",
+                    "metadata": {
+                        "module": "xsoar",
+                        "ownership": {
+                            "team": "xsoar",
+                            "maintainers": ["@xsoar-content"],
+                        },
+                    },
+                },
+            ]
+        )
+
+        validator = IsHandlerOwnershipFieldsAlignValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_partner_handler_skipped(self):
+        """
+        Given: A connector whose handler is a partner handler (module='partner').
+        When: CO114 runs.
+        Then: The handler is skipped entirely — no validation errors.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "partner-handler",
+                    "metadata": {
+                        "module": "partner",
+                        "ownership": {
+                            "team": "partner-team",
+                            "maintainers": ["@partner-dev"],
+                        },
+                    },
+                },
+            ]
+        )
+
+        validator = IsHandlerOwnershipFieldsAlignValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_module_case_mismatch_fails(self):
+        """
+        Given: A connector with a handler whose module is 'XSOAR' (uppercase).
+        When: CO114 runs.
+        Then: A validation error reports the module case-mismatch.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "module-upper",
+                    "metadata": {
+                        "module": "XSOAR",
+                        "ownership": {
+                            "team": "xsoar",
+                            "maintainers": ["@xsoar-content"],
+                        },
+                    },
+                },
+            ]
+        )
+
+        validator = IsHandlerOwnershipFieldsAlignValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "module='XSOAR'" in msg
+        assert "case mismatch" in msg
+
+    def test_team_case_mismatch_fails(self):
+        """
+        Given: A connector with module='xsoar' but team='XSOAR' (uppercase).
+        When: CO114 runs.
+        Then: A validation error reports the team case-mismatch.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "team-upper",
+                    "metadata": {
+                        "module": "xsoar",
+                        "ownership": {
+                            "team": "XSOAR",
+                            "maintainers": ["@xsoar-content"],
+                        },
+                    },
+                },
+            ]
+        )
+
+        validator = IsHandlerOwnershipFieldsAlignValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "team='XSOAR'" in msg
+        assert "case mismatch" in msg
+
+    def test_team_completely_wrong_value_fails(self):
+        """
+        Given: A connector with module='xsoar' but team='partner'.
+        When: CO114 runs.
+        Then: A validation error reports the wrong team value (no case-mismatch
+              wording — the value is genuinely wrong, not a casing issue).
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "team-wrong",
+                    "metadata": {
+                        "module": "xsoar",
+                        "ownership": {
+                            "team": "partner",
+                            "maintainers": ["@xsoar-content"],
+                        },
+                    },
+                },
+            ]
+        )
+
+        validator = IsHandlerOwnershipFieldsAlignValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "team='partner'" in msg
+        assert "must be exactly 'xsoar'" in msg
+        assert "case mismatch" not in msg
+
+    def test_missing_ownership_block_fails(self):
+        """
+        Given: A connector with module='xsoar' but the ownership block left
+               at the Pydantic empty default (team='', maintainers=[]).
+        When: CO114 runs.
+        Then: A validation error reports the missing ownership block. The
+              R3/R4 messages should NOT also be emitted (R2 supersedes).
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "no-ownership",
+                    "metadata": {
+                        "module": "xsoar",
+                        "ownership": {
+                            "team": "",
+                            "maintainers": [],
+                        },
+                    },
+                },
+            ]
+        )
+
+        validator = IsHandlerOwnershipFieldsAlignValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "missing the metadata.ownership block" in msg
+        # R3/R4 must NOT also fire when block is empty
+        assert "team=''" not in msg
+        assert "missing '@xsoar-content'" not in msg
+
+    def test_missing_xsoar_content_maintainer_fails(self):
+        """
+        Given: A connector with module='xsoar', team='xsoar', but maintainers
+               does not contain '@xsoar-content'.
+        When: CO114 runs.
+        Then: A validation error reports the missing maintainer (without a
+              case-mismatch suffix — there's no case-insensitive match).
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "missing-maintainer",
+                    "metadata": {
+                        "module": "xsoar",
+                        "ownership": {
+                            "team": "xsoar",
+                            "maintainers": ["@dev1"],
+                        },
+                    },
+                },
+            ]
+        )
+
+        validator = IsHandlerOwnershipFieldsAlignValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "missing '@xsoar-content' in maintainers" in msg
+        assert "['@dev1']" in msg
+        assert "case mismatch" not in msg
+
+    def test_maintainer_case_mismatch_fails(self):
+        """
+        Given: A connector with module='xsoar', team='xsoar', and maintainers
+               containing '@XSOAR-Content' (case-insensitive match only).
+        When: CO114 runs.
+        Then: A validation error reports the missing maintainer WITH a
+              case-mismatch suffix.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "maintainer-upper",
+                    "metadata": {
+                        "module": "xsoar",
+                        "ownership": {
+                            "team": "xsoar",
+                            "maintainers": ["@XSOAR-Content"],
+                        },
+                    },
+                },
+            ]
+        )
+
+        validator = IsHandlerOwnershipFieldsAlignValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "missing '@xsoar-content' in maintainers" in msg
+        assert "case mismatch detected, fix the case" in msg
+
+    def test_multiple_handlers_with_multiple_issues(self):
+        """
+        Given: A connector with two xsoar-module handlers, each with different
+               ownership issues (one with case-mismatched team + missing
+               maintainer; one with missing ownership block entirely).
+        When: CO114 runs.
+        Then: A SINGLE ValidationResult is returned, listing both handlers
+              and ALL their issues.
+        """
+        connector = create_connector_object(
+            connector_id="cs-falcon",
+            handlers=[
+                {
+                    "id": "detection-handler",
+                    "metadata": {
+                        "module": "xsoar",
+                        "ownership": {
+                            "team": "XSOAR",
+                            "maintainers": ["@dev1"],
+                        },
+                    },
+                },
+                {
+                    "id": "event-handler",
+                    "metadata": {
+                        "module": "xsoar",
+                        "ownership": {
+                            "team": "",
+                            "maintainers": [],
+                        },
+                    },
+                },
+            ],
+        )
+
+        validator = IsHandlerOwnershipFieldsAlignValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "cs-falcon" in msg
+        # First handler — both team case mismatch and missing maintainer
+        assert "detection-handler" in msg
+        assert "team='XSOAR'" in msg
+        assert "case mismatch" in msg
+        assert "missing '@xsoar-content'" in msg
+        assert "['@dev1']" in msg
+        # Second handler — missing ownership block
+        assert "event-handler" in msg
+        assert "missing the metadata.ownership block" in msg

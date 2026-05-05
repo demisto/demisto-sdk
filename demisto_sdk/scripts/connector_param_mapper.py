@@ -162,7 +162,9 @@ def _apply_manual_mapping(
     command_params: dict,
     manual_command_to_capability: Dict[str, List[str]],
 ) -> set:
-    """Step 2.1.5 — Apply manual command-to-capability overrides.
+    """
+    manual_command_to_capability - mapping command name -> list of capability names.
+    Step 2.1.5 — Apply manual command-to-capability overrides.
 
     Manual mapping is the source of truth for any listed command. For each entry:
       1. Ensure each listed capability exists in the result dict (create with []).
@@ -254,7 +256,9 @@ def _multi_capability_mapping(
     command_params: dict,
     handled_commands: Optional[set] = None,
 ) -> None:
-    """Step 2.3 - For each command, map its params to the matching capability
+    """
+    command_params structure- {integration: '', commands: {command: [params]}}
+    Step 2.3 - For each command, map its params to the matching capability
     (or ``Automation``).  Skips test-module (handled in 2.1) and any command
     already routed by manual mapping (Step 2.1.5).  Warns if the target
     capability is missing from the result mapping.

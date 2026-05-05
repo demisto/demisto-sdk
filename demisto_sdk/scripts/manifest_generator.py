@@ -16,14 +16,18 @@ import os
 
 os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "True"
 
-from pathlib import Path  # noqa: E402
-from typing import Any, Dict  # noqa: E402
+from pathlib import Path
+from typing import Any, Dict
 
-import typer  # noqa: E402
+import typer
 
-from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json  # noqa: E402
-from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml  # noqa: E402
-from demisto_sdk.commands.common.logger import logger, logging_setup  # noqa: E402
+from demisto_sdk.commands.common.handlers import (
+    DEFAULT_JSON_HANDLER as json,
+)
+from demisto_sdk.commands.common.handlers import (
+    DEFAULT_YAML_HANDLER as yaml,
+)
+from demisto_sdk.commands.common.logger import logger, logging_setup
 
 main = typer.Typer()
 

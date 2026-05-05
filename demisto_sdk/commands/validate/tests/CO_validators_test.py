@@ -1,4 +1,6 @@
-"""Tests for CO (Connector) validators — CO100, CO112, and CO113."""
+"""Tests for CO (Connector) validators — CO100, CO101, CO112, and CO113."""
+
+from unittest.mock import MagicMock
 
 from demisto_sdk.commands.content_graph.objects.connector import (
     ConnectorField,
@@ -8,8 +10,12 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_connector_object,
     create_integration_object,
 )
+from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.CO_validators.CO100_is_matching_integration_exist import (
     IsMatchingIntegrationExistValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO101_is_matching_pack_exist import (
+    IsMatchingPackExistValidator,
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO112_is_matching_license import (
     IsMatchingLicenseValidator,
@@ -136,6 +142,220 @@ class TestCO100IsMatchingIntegrationExist:
         # related_integration is None by default
 
         validator = IsMatchingIntegrationExistValidator()
+        results = validator.obtain_invalid_content_items(
+            [valid_connector, invalid_connector]
+        )
+
+        assert len(results) == 1
+        assert "invalid-conn" in results[0].message
+
+
+# ============================================================
+# CO101 — IsMatchingPackExistValidator
+# ============================================================
+
+
+class TestCO101IsMatchingPackExist:
+    """Tests for CO101 validator: every XSOAR handler must reference a pack
+    that exists in the content graph."""
+
+    @staticmethod
+    def _set_graph(mocker, search_return):
+        """Helper: install a mock graph_interface on BaseValidator.
+
+        ``search_return`` is the value returned by ``graph.search(...)``.
+        """
+        mock_graph = MagicMock()
+        mock_graph.search.return_value = search_return
+        mocker.patch.object(BaseValidator, "graph_interface", mock_graph)
+        return mock_graph
+
+    def test_handler_with_existing_pack_passes(self, mocker):
+        """
+        Given: A connector whose XSOAR handler has xsoar_pack_id and the graph
+               returns a matching pack.
+        When: CO101 runs.
+        Then: No validation errors are returned.
+        """
+        self._set_graph(mocker, search_return=[MagicMock()])
+        connector = create_connector_object()
+        assert connector.handlers[0].xsoar_pack_id == "TestPack"
+
+        validator = IsMatchingPackExistValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_handler_with_unresolved_pack_id_fails(self, mocker):
+        """
+        Given: A connector whose XSOAR handler has xsoar_pack_id but the graph
+               returns no matching pack.
+        When: CO101 runs.
+        Then: A validation error is returned mentioning the pack ID.
+        """
+        self._set_graph(mocker, search_return=[])
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-unresolved",
+                    "triggering": {
+                        "labels": {
+                            "xsoar-pack-id": "FakePack",
+                        },
+                    },
+                },
+            ]
+        )
+
+        validator = IsMatchingPackExistValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "FakePack" in results[0].message
+        assert "not found" in results[0].message
+
+    def test_handler_missing_pack_id_fails(self, mocker):
+        """
+        Given: A connector whose XSOAR handler has no xsoar_pack_id at all.
+        When: CO101 runs.
+        Then: A validation error is returned about the missing label.
+        """
+        self._set_graph(mocker, search_return=[MagicMock()])
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-no-pack",
+                    "triggering": {
+                        "labels": None,
+                    },
+                },
+            ]
+        )
+
+        validator = IsMatchingPackExistValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "missing xsoar-pack-id" in results[0].message
+        assert "xsoar-no-pack" in results[0].message
+
+    def test_both_failure_cases_combined(self, mocker):
+        """
+        Given: A connector with two XSOAR handlers — one with an unresolved
+               pack ID and one missing the pack ID entirely.
+        When: CO101 runs.
+        Then: A single ValidationResult is returned containing both issues.
+        """
+        self._set_graph(mocker, search_return=[])
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-unresolved",
+                    "triggering": {
+                        "labels": {
+                            "xsoar-pack-id": "FakePack",
+                        },
+                    },
+                },
+                {
+                    "id": "xsoar-no-label",
+                    "triggering": {
+                        "labels": None,
+                    },
+                },
+            ]
+        )
+
+        validator = IsMatchingPackExistValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "FakePack" in msg
+        assert "not found" in msg
+        assert "missing xsoar-pack-id" in msg
+        assert "xsoar-no-label" in msg
+
+    def test_non_xsoar_handler_ignored(self, mocker):
+        """
+        Given: A connector with a non-XSOAR handler (module != 'xsoar') that
+               has neither a valid pack_id nor any pack_id.
+        When: CO101 runs.
+        Then: No validation errors — non-XSOAR handlers are skipped entirely.
+        """
+        self._set_graph(mocker, search_return=[])
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "other-handler",
+                    "metadata": {
+                        "module": "other",
+                        "ownership": {"team": "other-team"},
+                    },
+                    "triggering": {
+                        "labels": None,
+                    },
+                },
+            ]
+        )
+        assert len(connector.xsoar_handlers) == 0
+
+        validator = IsMatchingPackExistValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_graph_unavailable_fails_as_missing(self, mocker):
+        """
+        Given: BaseValidator.graph_interface is None and an XSOAR handler
+               declares an xsoar_pack_id.
+        When: CO101 runs.
+        Then: The pack is treated as missing -> "not found" failure.
+        """
+        mocker.patch.object(BaseValidator, "graph_interface", None)
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-no-graph",
+                    "triggering": {
+                        "labels": {
+                            "xsoar-pack-id": "AnyPack",
+                        },
+                    },
+                },
+            ]
+        )
+
+        validator = IsMatchingPackExistValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "AnyPack" in results[0].message
+        assert "not found" in results[0].message
+
+    def test_multiple_connectors_independent_results(self, mocker):
+        """
+        Given: Two connectors — one valid (pack found), one invalid (no pack_id).
+        When: CO101 runs on both.
+        Then: Only the invalid connector produces a validation error.
+        """
+        self._set_graph(mocker, search_return=[MagicMock()])
+        valid_connector = create_connector_object(connector_id="valid-conn")
+        assert valid_connector.handlers[0].xsoar_pack_id == "TestPack"
+
+        invalid_connector = create_connector_object(
+            connector_id="invalid-conn",
+            handlers=[
+                {
+                    "id": "xsoar-no-pack",
+                    "triggering": {
+                        "labels": None,
+                    },
+                },
+            ],
+        )
+
+        validator = IsMatchingPackExistValidator()
         results = validator.obtain_invalid_content_items(
             [valid_connector, invalid_connector]
         )

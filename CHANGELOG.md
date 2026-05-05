@@ -1,4 +1,19 @@
 # Changelog
+## 1.38.25 (2026-05-04)
+### Feature
+* Added support for the `internal` flag in pack_metadata.json to mark packs as internal (hidden from UI and API). [#5325](https://github.com/demisto/demisto-sdk/pull/5325)
+* Jobs are now blocked from being uploaded as part of a pack. [#5329](https://github.com/demisto/demisto-sdk/pull/5329)
+
+### Fix
+* Prevent SDK crash when encountering `deployment.json` files in pack root. [#5332](https://github.com/demisto/demisto-sdk/pull/5332)
+* Get script's python file from local repo when unifying old_base_content. [#5331](https://github.com/demisto/demisto-sdk/pull/5331)
+* Fixed BC117 validation to handle new pack scenarios where the old content item has no pack attribute, preventing an AttributeError. [#5326](https://github.com/demisto/demisto-sdk/pull/5326)
+* Added support for RENAMED git status in BC117 validation and improved handling of newly added items in new packs. [#5326](https://github.com/demisto/demisto-sdk/pull/5326)
+
+### Internal
+* Bump nltk version [#5328](https://github.com/demisto/demisto-sdk/pull/5328)
+
+
 ## 1.38.24 (2026-04-26)
 ### Feature
 * Added AS109 validation to ensure that context keys referenced in displayLabel fields of autonomous playbook tasks are actually used in other tasks within the same playbook. [#5299](https://github.com/demisto/demisto-sdk/pull/5299)

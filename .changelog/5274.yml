@@ -1,0 +1,4 @@
+changes:
+    - description: Add [pre-commit] section to .demisto-sdk-conf file. Add logic to read and use directory value here for pythonpath rather than adding empty CommonServerUserPython.py in root of content repository.
+      type: feature
+pr_number: 5274

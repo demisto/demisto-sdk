@@ -77,6 +77,7 @@ VALIDATION_CATEGORIES = {
     "AG": "Agentix",
     "AS": "Autonomous SOC",
     "MC": "Managed Content",
+    "CO": "Connector",
 }
 
 

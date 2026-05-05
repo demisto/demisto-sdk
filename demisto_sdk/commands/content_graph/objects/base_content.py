@@ -291,6 +291,23 @@ class BaseContent(BaseNode):
     ) -> Optional["BaseContent"]:
         logger.debug(f"Loading content item from {path}")
 
+        # Detect connector paths (unified-connectors-content)
+        if _is_connector_path(path):
+            try:
+                from demisto_sdk.commands.content_graph.parsers.connector import (
+                    ConnectorParser,
+                )
+
+                connector_dir = _get_connector_dir(path)
+                return CONTENT_TYPE_TO_MODEL[ContentType.CONNECTOR].from_orm(
+                    ConnectorParser(connector_dir, git_sha=git_sha)
+                )
+            except Exception:
+                logger.exception(f"Could not parse connector from {path}")
+                if raise_on_exception:
+                    raise
+                return None
+
         if (
             path.is_dir()
             and path.parent.name == PACKS_FOLDER
@@ -354,3 +371,31 @@ class UnknownContent(BaseNode):
     @property
     def identifier(self):
         return self.object_id or self.name
+
+
+def _is_connector_path(path: Path) -> bool:
+    """Check if a path belongs to a connector directory in unified-connectors-content."""
+    if path.name == "connector.yaml":
+        return True
+    if path.is_dir() and (path / "connector.yaml").exists():
+        return True
+    # Check if any parent is a connector directory
+    if "connectors" in path.parts:
+        idx = path.parts.index("connectors")
+        if len(path.parts) > idx + 1:
+            connector_dir = Path(*path.parts[: idx + 2])
+            return (connector_dir / "connector.yaml").exists()
+    return False
+
+
+def _get_connector_dir(path: Path) -> Path:
+    """Get the connector root directory from any sub-path within it."""
+    if path.name == "connector.yaml":
+        return path.parent
+    if path.is_dir() and (path / "connector.yaml").exists():
+        return path
+    if "connectors" in path.parts:
+        idx = path.parts.index("connectors")
+        if len(path.parts) > idx + 1:
+            return Path(*path.parts[: idx + 2])
+    return path

@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -18,6 +19,7 @@ from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
+from demisto_sdk.commands.content_graph.objects.connector import Connector
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.generic_definition import (
@@ -52,6 +54,7 @@ from demisto_sdk.commands.content_graph.parsers.agentix_action import (
     AgentixActionParser,
 )
 from demisto_sdk.commands.content_graph.parsers.agentix_agent import AgentixAgentParser
+from demisto_sdk.commands.content_graph.parsers.connector import ConnectorParser
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
     ParsingRuleParser,
@@ -996,3 +999,105 @@ def create_agentix_agent_object(
         Path(agentix_agent.path), list(MarketplaceVersions), pack_supported_modules=[]
     )
     return AgentixAgent.from_orm(parser)
+
+
+def create_connector_object(
+    connector_id: str = "test-connector",
+    handlers: Optional[List[Dict[str, Any]]] = None,
+    capabilities_data: Optional[Dict[str, Any]] = None,
+    connector_overrides: Optional[Dict[str, Any]] = None,
+    connection_data: Optional[Dict[str, Any]] = None,
+) -> Connector:
+    """Create a Connector object from template YAMLs for testing.
+
+    Unlike other content items, connectors are NOT pack-based. They live under
+    ``connectors/<name>/`` with their own directory structure. This factory
+    creates a temporary connector directory, writes the YAML files, and parses
+    them through ``ConnectorParser`` to produce a real ``Connector`` object.
+
+    Args:
+        connector_id: The connector ID (used as directory name and in connector.yaml).
+        handlers: List of handler YAML dicts. Each dict is merged on top of the
+            default handler template. If None, a single default XSOAR handler is created.
+        capabilities_data: Dict to merge on top of the default capabilities template.
+        connector_overrides: Dict to merge on top of the default connector.yaml template.
+        connection_data: Dict to merge on top of the default connection.yaml template.
+
+    Returns:
+        A fully parsed Connector object.
+    """
+    import copy
+
+    # Load templates
+    connector_yml = load_yaml("connector.yaml")
+    handler_template = load_yaml("connector_handler.yaml")
+    capabilities_yml = load_yaml("connector_capabilities.yaml")
+    connection_yml = load_yaml("connector_connection.yaml")
+
+    # Apply overrides to connector.yaml
+    connector_yml["id"] = connector_id
+    if connector_overrides:
+        _deep_merge(connector_yml, connector_overrides)
+
+    # Apply overrides to capabilities.yaml
+    if capabilities_data:
+        _deep_merge(capabilities_yml, capabilities_data)
+
+    # Apply overrides to connection.yaml
+    if connection_data:
+        _deep_merge(connection_yml, connection_data)
+
+    # Prepare handler configs
+    if handlers is None:
+        handler_configs = [copy.deepcopy(handler_template)]
+    else:
+        handler_configs = []
+        for h_overrides in handlers:
+            h = copy.deepcopy(handler_template)
+            _deep_merge(h, h_overrides)
+            handler_configs.append(h)
+
+    # Create temporary directory structure
+    import tempfile
+
+    tmp_dir = Path(tempfile.mkdtemp())
+    connector_dir = tmp_dir / connector_id
+    connector_dir.mkdir(parents=True)
+
+    # Write connector.yaml
+    with open(connector_dir / "connector.yaml", "w") as f:
+        yaml.dump(connector_yml, f)
+
+    # Write capabilities.yaml
+    with open(connector_dir / "capabilities.yaml", "w") as f:
+        yaml.dump(capabilities_yml, f)
+
+    # Write connection.yaml
+    with open(connector_dir / "connection.yaml", "w") as f:
+        yaml.dump(connection_yml, f)
+
+    # Write handler directories
+    handlers_dir = connector_dir / "components" / "handlers"
+    for h_config in handler_configs:
+        handler_name = h_config.get("id", "xsoar-test").replace("-", "_")
+        handler_dir = handlers_dir / handler_name
+        handler_dir.mkdir(parents=True)
+        with open(handler_dir / "handler.yaml", "w") as f:
+            yaml.dump(h_config, f)
+
+    # Parse and return
+    parser = ConnectorParser(
+        connector_dir,
+        pack_marketplaces=list(MarketplaceVersions),
+        pack_supported_modules=[],
+    )
+    return Connector.from_orm(parser)
+
+
+def _deep_merge(base: dict, overrides: dict) -> None:
+    """Recursively merge overrides into base dict (in-place)."""
+    for key, value in overrides.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            _deep_merge(base[key], value)
+        else:
+            base[key] = value

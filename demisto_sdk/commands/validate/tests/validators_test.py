@@ -28,8 +28,12 @@ from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
     ConfiguredValidations,
 )
-from demisto_sdk.commands.validate.initializer import Initializer
+from demisto_sdk.commands.validate.initializer import (
+    ConnectorAwareInitializer,
+    Initializer,
+)
 from demisto_sdk.commands.validate.tests.test_tools import (
+    create_connector_object,
     create_integration_object,
     create_pack_object,
     create_script_object,
@@ -970,6 +974,328 @@ def test_config_reader_ignore_all_flag(
     assert results.ignorable_errors == expected_results.ignorable_errors
     assert results.warning == expected_results.warning
     assert results.support_level_dict == expected_results.support_level_dict
+
+
+# ============================================================
+# ConnectorAwareInitializer — initializer function tests
+# ============================================================
+
+
+class TestConnectorAwareInitializerCrossMatch:
+    """Tests for ConnectorAwareInitializer._cross_match_and_expand (handler-level)."""
+
+    def test_direct_match_links_handler_and_integration(self):
+        """
+        Given: Both a connector and its referenced integration in the sets.
+        When: _cross_match_and_expand is called.
+        Then: handler.related_integration points to the integration,
+              integration.related_content points to the handler,
+              and graph search is NOT invoked.
+        """
+        # Default handler template has xsoar-integration-id: "TestIntegration"
+        # Default integration template has object_id: "TestIntegration"
+        integration = create_integration_object()
+        connector = create_connector_object()
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with (
+            patch.object(
+                ConnectorAwareInitializer, "_graph_search_integration"
+            ) as mock_graph,
+            patch.object(
+                ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
+            ),
+        ):
+            initializer._cross_match_and_expand({integration}, {connector})
+            mock_graph.assert_not_called()
+
+        handler = connector.xsoar_handlers[0]
+        assert handler.related_integration is integration
+        assert integration.related_content is handler
+
+    def test_unrelated_integration_removed_by_cleanup(self):
+        """
+        Given: An integration that no connector handler references.
+        When: _cross_match_and_expand is called.
+        Then: Integration is removed from the result by the cleanup step.
+        """
+        integration = create_integration_object(
+            paths=["commonfields.id", "name"],
+            values=["UnrelatedInt", "UnrelatedInt"],
+        )
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with patch.object(
+            ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
+        ):
+            result = initializer._cross_match_and_expand({integration}, set())
+
+        assert integration not in result
+        assert len(result) == 0
+
+    def test_graph_search_discovers_connector(self):
+        """
+        Given: An integration in the set, and a connector in the graph
+               whose handler references that integration.
+        When: _cross_match_and_expand is called.
+        Then: Phase 2a graph search discovers the connector and links handler.
+        """
+        integration = create_integration_object()
+        discovered_connector = create_connector_object(connector_id="discovered")
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with patch.object(
+            ConnectorAwareInitializer,
+            "_graph_search_connectors",
+            return_value=[discovered_connector],
+        ):
+            result = initializer._cross_match_and_expand({integration}, set())
+
+        assert discovered_connector in result
+        discovered_handler = discovered_connector.xsoar_handlers[0]
+        assert discovered_handler.related_integration is integration
+
+    def test_graph_search_for_unmatched_handler(self):
+        """
+        Given: A connector with a handler whose referenced integration is NOT
+               in the set.
+        When: _cross_match_and_expand is called.
+        Then: Phase 2b graph search is invoked for the integration ID.
+        """
+        connector = create_connector_object()
+        graph_integration = create_integration_object()
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with (
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_connectors",
+                return_value=[],
+            ),
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_integration",
+                return_value=[graph_integration],
+            ) as mock_graph,
+        ):
+            result = initializer._cross_match_and_expand(set(), {connector})
+            mock_graph.assert_called_once_with("TestIntegration")
+
+        handler = connector.xsoar_handlers[0]
+        assert handler.related_integration is graph_integration
+        assert graph_integration in result
+
+    def test_multiple_handlers_each_matched_independently(self):
+        """
+        Given: A connector with 2 XSOAR handlers referencing different integrations,
+               both integrations are in the set.
+        When: _cross_match_and_expand is called.
+        Then: Each handler is matched to its own integration independently.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-sf",
+                    "triggering": {
+                        "labels": {
+                            "xsoar-integration-id": "Salesforce",
+                            "xsoar-pack-id": "Salesforce",
+                            "xsoar-content-id": "test-connector",
+                        },
+                    },
+                },
+                {
+                    "id": "xsoar-sf-iam",
+                    "triggering": {
+                        "labels": {
+                            "xsoar-integration-id": "SalesforceIAM",
+                            "xsoar-pack-id": "SalesforceIAM",
+                            "xsoar-content-id": "test-connector",
+                        },
+                    },
+                },
+            ]
+        )
+        integration1 = create_integration_object(
+            paths=["commonfields.id", "name"],
+            values=["Salesforce", "Salesforce"],
+        )
+        integration2 = create_integration_object(
+            paths=["commonfields.id", "name"],
+            values=["SalesforceIAM", "SalesforceIAM"],
+        )
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with (
+            patch.object(
+                ConnectorAwareInitializer, "_graph_search_integration"
+            ) as mock_graph,
+            patch.object(
+                ConnectorAwareInitializer, "_graph_search_connectors", return_value=[]
+            ),
+        ):
+            initializer._cross_match_and_expand(
+                {integration1, integration2}, {connector}
+            )
+            mock_graph.assert_not_called()
+
+        handlers = connector.xsoar_handlers
+        sf_handler = next(h for h in handlers if h.xsoar_integration_id == "Salesforce")
+        iam_handler = next(
+            h for h in handlers if h.xsoar_integration_id == "SalesforceIAM"
+        )
+        assert sf_handler.related_integration is integration1
+        assert iam_handler.related_integration is integration2
+
+
+class TestConnectorAwareInitializerGatherObjects:
+    """Tests for ConnectorAwareInitializer.gather_objects_to_run_on filtering."""
+
+    def test_non_xsoar_connector_filtered_out(self, mocker: MockerFixture):
+        """
+        Given: A connector with NO XSOAR handlers (only cwp).
+        When: gather_objects_to_run_on filters objects.
+        Then: Connector is excluded from the result.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import Connector
+
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "cwp-handler",
+                    "metadata": {
+                        "module": "cwp",
+                        "version": "1.0.0",
+                        "description": "CWP handler",
+                        "tags": ["test"],
+                        "ownership": {"team": "cwp", "maintainers": ["@test"]},
+                    },
+                }
+            ]
+        )
+        integration = create_integration_object()
+
+        # Use ALL_FILES mode so the code falls through to super().gather_objects_to_run_on()
+        mocker.patch(
+            "demisto_sdk.commands.validate.initializer.Initializer.gather_objects_to_run_on",
+            return_value=({connector, integration}, set()),
+        )
+        mocker.patch.object(
+            ConnectorAwareInitializer,
+            "_cross_match_and_expand",
+            side_effect=lambda ints, cons: ints | cons,
+        )
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+        initializer.execution_mode = ExecutionMode.ALL_FILES
+        filtered, _ = initializer.gather_objects_to_run_on()
+
+        connectors_in_result = [o for o in filtered if isinstance(o, Connector)]
+        assert len(connectors_in_result) == 0
+
+    def test_non_platform_integration_filtered_out(self, mocker: MockerFixture):
+        """
+        Given: An integration that does NOT have PLATFORM in its marketplaces.
+        When: gather_objects_to_run_on filters objects.
+        Then: Integration is excluded from the result.
+        """
+        integration = create_integration_object(
+            paths=["marketplaces"],
+            values=[["xsoar"]],
+        )
+
+        mocker.patch(
+            "demisto_sdk.commands.validate.initializer.Initializer.gather_objects_to_run_on",
+            return_value=({integration}, set()),
+        )
+        mocker.patch.object(
+            ConnectorAwareInitializer,
+            "_cross_match_and_expand",
+            side_effect=lambda ints, cons: ints | cons,
+        )
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+        initializer.execution_mode = ExecutionMode.ALL_FILES
+        filtered, _ = initializer.gather_objects_to_run_on()
+
+        integrations_in_result = [o for o in filtered if isinstance(o, Integration)]
+        assert len(integrations_in_result) == 0
+
+    def test_deprecated_integration_filtered_out(self, mocker: MockerFixture):
+        """
+        Given: An integration that is deprecated.
+        When: gather_objects_to_run_on filters objects.
+        Then: Integration is excluded from the result.
+        """
+        connector = create_connector_object()
+        integration = create_integration_object()
+        integration.deprecated = True
+
+        mocker.patch(
+            "demisto_sdk.commands.validate.initializer.Initializer.gather_objects_to_run_on",
+            return_value=({connector, integration}, set()),
+        )
+        mocker.patch.object(
+            ConnectorAwareInitializer,
+            "_cross_match_and_expand",
+            side_effect=lambda ints, cons: ints | cons,
+        )
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+        initializer.execution_mode = ExecutionMode.ALL_FILES
+        filtered, _ = initializer.gather_objects_to_run_on()
+
+        integrations_in_result = [o for o in filtered if isinstance(o, Integration)]
+        assert len(integrations_in_result) == 0
+
+
+class TestConnectorRelatedFileDeduplication:
+    """Tests for collect_related_files_main_items connector deduplication."""
+
+    def test_connector_files_deduplicate_to_connector_yaml(self):
+        """
+        Given: Multiple connector-related files modified (handler.yaml + capabilities.yaml).
+        When: collect_related_files_main_items is called.
+        Then: Both resolve to a single connectors/<name>/connector.yaml path.
+        """
+        initializer = Initializer()
+
+        handler_path = Path(
+            "connectors/salesforce/components/handlers/xsoar/handler.yaml"
+        )
+        capabilities_path = Path("connectors/salesforce/capabilities.yaml")
+
+        with (
+            patch(
+                "demisto_sdk.commands.validate.initializer._is_connector_path",
+                return_value=True,
+            ),
+            patch(
+                "demisto_sdk.commands.validate.initializer._get_connector_dir",
+                return_value=Path("connectors/salesforce"),
+            ),
+            patch.object(
+                initializer,
+                "is_unrelated_path",
+                return_value=False,
+            ),
+            patch.object(
+                initializer,
+                "is_pack_item",
+                return_value=False,
+            ),
+        ):
+            result = initializer.collect_related_files_main_items(
+                {handler_path, capabilities_path}
+            )
+
+        assert result == {Path("connectors/salesforce/connector.yaml")}
+        assert len(result) == 1
 
 
 def test_is_pack_item_deployment_json():

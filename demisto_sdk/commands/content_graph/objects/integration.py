@@ -133,6 +133,9 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         False, alias="isCloudProviderIntegration"
     )
 
+    # === Cross-link to matched handler (set by ConnectorAwareInitializer) ===
+    related_content: Optional[Any] = Field(None, exclude=True)
+
     @property
     def imports(self) -> List["Script"]:
         return [

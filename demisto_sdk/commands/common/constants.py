@@ -181,6 +181,7 @@ DEMISTO_SDK_MARKETPLACE_XPANSE_DIST = "xpanse-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST = "marketplace-saas-dist"
 DEMISTO_SDK_MARKETPLACE_XSOAR_DIST_DEV = "marketplace-dist-dev"
 DEMISTO_SDK_MARKETPLACE_PLATFORM_INTERNAL_PROD = "marketplace-cortex-content-dev"
+DEMISTO_SDK_MARKETPLACE_CYBERARK_DIST = "marketplace-cortex-content-dev"
 
 
 # Server Types
@@ -2000,6 +2001,7 @@ class MarketplaceVersions(StrEnum):
     XSOAR_SAAS = "xsoar_saas"
     XSOAR_ON_PREM = "xsoar_on_prem"
     PLATFORM = "platform"
+    CYBERARK = "cyberark"
 
 
 MARKETPLACES_NO_AGENTIC_ASSISTANT = {
@@ -2008,6 +2010,7 @@ MARKETPLACES_NO_AGENTIC_ASSISTANT = {
     MarketplaceVersions.XSOAR_SAAS,
     MarketplaceVersions.MarketplaceV2,
     MarketplaceVersions.XPANSE,
+    MarketplaceVersions.CYBERARK,
 }
 
 MarketplaceVersionToMarketplaceName: Dict[str, str] = {
@@ -2016,6 +2019,7 @@ MarketplaceVersionToMarketplaceName: Dict[str, str] = {
     MarketplaceVersions.XPANSE.value: DEMISTO_SDK_MARKETPLACE_XPANSE_DIST,
     MarketplaceVersions.XSOAR_SAAS.value: DEMISTO_SDK_MARKETPLACE_XSOAR_SAAS_DIST,
     MarketplaceVersions.PLATFORM.value: DEMISTO_SDK_MARKETPLACE_PLATFORM_INTERNAL_PROD,
+    MarketplaceVersions.CYBERARK.value: DEMISTO_SDK_MARKETPLACE_CYBERARK_DIST,
 }
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
@@ -2025,6 +2029,7 @@ MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.MarketplaceV2: "Config/core_packs_mpv2_list.json",
     MarketplaceVersions.XPANSE: "Config/core_packs_xpanse_list.json",
     MarketplaceVersions.PLATFORM: "Config/core_packs_platform_list.json",
+    MarketplaceVersions.CYBERARK: "Config/core_packs_platform_list.json",
 }
 
 
@@ -2210,6 +2215,7 @@ MARKETPLACE_TAG_MAPPING = {
     MarketplaceVersions.XSOAR_ON_PREM.value: [
         "XSOAR_ON_PREM"
     ],  # If uploading to XSOAR_ON_PREM, keep XSOAR_ON_PREM tags
+    MarketplaceVersions.CYBERARK.value: ["CYBERARK"],
 }
 
 VALID_MARKETPLACE_TAGS = {
@@ -2220,6 +2226,7 @@ VALID_MARKETPLACE_TAGS = {
     "XSIAM",
     "XSIAM_ONLY",
     "PLATFORM",
+    "CYBERARK",
 }
 
 MARKDOWN_IMAGES_ARTIFACT_FILE_NAME = "markdown_images.json"

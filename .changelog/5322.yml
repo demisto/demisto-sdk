@@ -1,0 +1,4 @@
+changes:
+- description: 'Added SC110 validator: Validates that wrapper scripts declare all commands/scripts they call via executeCommand in the "dependson" field.'
+  type: feature
+pr_number: 5322

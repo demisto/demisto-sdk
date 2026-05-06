@@ -73,3 +73,9 @@ class AgentixActionParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AC
             self.add_dependency_by_id(
                 self.underlying_content_item_id, ContentType.PLAYBOOK, is_mandatory=True
             )
+        elif self.underlying_content_item_type == "prompt":
+            # For prompt scripts (isllm=True scripts), use USES_BY_ID with the script ID
+            self.add_dependency_by_id(
+                self.underlying_content_item_id, ContentType.SCRIPT, is_mandatory=True
+            )
+        # "internal" type has no external content item dependency — nothing to register

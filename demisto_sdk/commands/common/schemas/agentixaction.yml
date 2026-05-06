@@ -32,7 +32,7 @@ mapping:
     - include: outputs_schema
   underlyingcontentitem:
     type: map
-    required: true
+    required: false
     mapping:
       id:
         type: str
@@ -49,6 +49,26 @@ mapping:
       command:
         type: str
         required: false
+  script:
+    type: map
+    required: false
+    mapping:
+      dockerimage:
+        type: str
+        required: true
+      standalone:
+        type: bool
+        required: false
+      runonce:
+        type: bool
+        required: false
+      runas:
+        type: str
+        required: false
+      dependson:
+        type: map
+        required: false
+        allowempty: true
   requiresuserapproval:
     type: bool
   internal:

@@ -1,0 +1,28 @@
+comment: A sample script action for testing.
+fromversion: 8.12.0
+name: SampleScriptAction
+marketplaces:
+- platform
+supportedModules:
+- xsiam
+commonfields:
+  id: SampleScriptAction
+  version: -1
+script: >
+  print("SampleScriptAction")  # noqa: T201
+type: python
+enabled: true
+args:
+- name: endpoint_id
+  required: true
+  description: The ID of the endpoint.
+scripttarget: 0
+outputs:
+- contextPath: Result.endpoint_id
+  description: The ID of the endpoint.
+  type: String
+dockerimage: demisto/python3:3.12.12.6391686
+subtype: python3
+isllm: false
+isInternal: false
+internal: true

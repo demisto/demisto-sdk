@@ -87,6 +87,11 @@ class IsAgentixActionUsingExistingContentItemValidator(
                 agentix_actions_to_validate.update(dependent_actions)
 
         for action in agentix_actions_to_validate:
+            # Script actions generate their own script at prepare-content time;
+            # the script does not exist in the content repo, so GR110 cannot validate it.
+            if action.is_script_action:
+                continue
+
             action_type = action.underlying_content_item_type
 
             if action_type not in {"command", "script", "playbook"}:

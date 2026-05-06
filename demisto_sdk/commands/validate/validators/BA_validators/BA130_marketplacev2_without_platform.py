@@ -1,12 +1,20 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Union, cast
+from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.constants import (
+    MarketplaceVersions,
+    PlatformSupportedModules,
+)
 from demisto_sdk.commands.common.tools import get_content_item_supported_modules
-from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
+from demisto_sdk.commands.content_graph.objects.agentix_action_test import (
+    AgentixActionTest,
+)
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
+    AssetsModelingRule,
+)
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -24,84 +32,97 @@ from demisto_sdk.commands.content_graph.objects.incident_type import IncidentTyp
 from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
 from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
+from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
+from demisto_sdk.commands.content_graph.objects.test_script import TestScript
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
+from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
+    FixResult,
     ValidationResult,
 )
 
 ContentTypes = Union[
-    Integration,
-    Script,
-    Pack,
-    Playbook,
-    Dashboard,
+    AgentixAction,
+    AgentixActionTest,
+    AgentixAgent,
+    AssetsModelingRule,
+    CaseField,
+    CaseLayout,
+    CaseLayoutRule,
     Classifier,
-    IncidentType,
-    Job,
-    Layout,
-    Mapper,
-    Wizard,
     CorrelationRule,
-    IncidentField,
-    IncidentType,
-    IndicatorField,
-    IndicatorType,
-    LayoutRule,
-    Layout,
-    ModelingRule,
-    ParsingRule,
-    Report,
-    TestPlaybook,
-    Trigger,
-    Widget,
+    Dashboard,
     GenericDefinition,
     GenericField,
     GenericModule,
     GenericType,
+    IncidentField,
+    IncidentType,
+    IndicatorField,
+    IndicatorType,
+    Integration,
+    Job,
+    Layout,
+    LayoutRule,
+    ListObject,
+    Mapper,
+    ModelingRule,
+    Pack,
+    ParsingRule,
+    Playbook,
+    PreProcessRule,
+    Report,
+    Script,
+    TestPlaybook,
+    TestScript,
+    Trigger,
+    Widget,
+    Wizard,
+    XDRCTemplate,
     XSIAMDashboard,
     XSIAMReport,
-    CaseField,
-    CaseLayout,
-    CaseLayoutRule,
-    AgentixAction,
-    AgentixAgent,
 ]
 
 
-class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
-    error_code = "BC117"
+class MarketplaceV2WithoutPlatformValidator(BaseValidator[ContentTypes]):
+    error_code = "BA130"
     description = (
-        "Checks whether supported modules have been added to the existing content item."
+        "Validates that content items with 'marketplacev2' also have 'platform' "
+        "in their marketplaces and 'xsiam' in their supported modules — set "
+        "directly, inherited from the pack, or via defaults."
     )
-    rationale = "Adding a support module for a content item requires a PM approval."
+    rationale = (
+        "Content items with 'marketplacev2' must also have 'platform' and 'xsiam' "
+        "in their supported modules. These values don't have to be set directly on "
+        "the item — they can be inherited from the pack or resolved from defaults."
+    )
     error_message = (
-        "The following support modules {} have been added to the {} {}."
-        " Adding supported modules requires a PM approval."
+        "The content item has 'marketplacev2' but is missing 'platform' in its "
+        "marketplaces and/or 'xsiam' in its supported modules (these can be set "
+        "directly, inherited from the pack, or resolved from defaults)."
     )
-    related_field = "supportedModules"
-    is_auto_fixable = False
-    expected_git_statuses = [
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-        GitStatuses.RENAMED,
-    ]
-    related_file_type = [RelatedFileType.SCHEMA]
+    fix_message = (
+        "Added 'platform' to marketplaces and/or 'xsiam' to supported modules."
+    )
+    related_field = "marketplaces"
+    is_auto_fixable = True
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
@@ -109,24 +130,29 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
         return [
             ValidationResult(
                 validator=self,
-                message=self.error_message.format(
-                    ", ".join(map(repr, sorted(difference))),
-                    content_item.display_name,
-                    content_item.content_type,
-                ),
+                message=self.error_message,
                 content_object=content_item,
             )
             for content_item in content_items
-            if (difference := self.added_parameters(content_item))
+            if MarketplaceVersions.MarketplaceV2 in content_item.marketplaces
+            and PlatformSupportedModules.XSIAM
+            not in get_content_item_supported_modules(content_item)
         ]
 
-    def added_parameters(self, content_item: ContentTypes) -> set:
-        if content_item.git_status == GitStatuses.ADDED:
-            return get_content_item_supported_modules(content_item)
+    def fix(self, content_item: ContentTypes) -> FixResult:
+        supported_modules = get_content_item_supported_modules(content_item)
+        if not supported_modules:
+            # No platform in marketplaces - add platform and set xsiam
+            content_item.marketplaces.append(MarketplaceVersions.PLATFORM)
+            content_item.supportedModules = [PlatformSupportedModules.XSIAM.value]
+        else:
+            # Platform exists but xsiam is missing - add xsiam to the resolved modules
+            content_item.supportedModules = list(
+                supported_modules | {PlatformSupportedModules.XSIAM.value}
+            )
 
-        old_item = cast(ContentTypes, content_item.old_base_content_object)
-        old_params = get_content_item_supported_modules(old_item)
-
-        new_params = get_content_item_supported_modules(content_item)
-
-        return new_params.difference(old_params)
+        return FixResult(
+            validator=self,
+            message=self.fix_message,
+            content_object=content_item,
+        )

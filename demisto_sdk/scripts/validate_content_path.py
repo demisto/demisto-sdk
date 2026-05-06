@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
+    DEPLOYMENT_JSON_FILENAME,
     DOC_FILES_DIR,
     GENERIC_DEFINITIONS_DIR,
     GENERIC_MODULES_DIR,
@@ -66,6 +67,7 @@ ZERO_DEPTH_FILES = frozenset(
         PACKS_README_FILE_NAME,
         PACKS_PACK_META_FILE_NAME,
         PACKS_VERSION_CONFIG_FILE_NAME,
+        DEPLOYMENT_JSON_FILENAME,
     )
 )
 
@@ -115,7 +117,6 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         WIDGETS_DIR,
         WIZARDS_DIR,
         LAYOUT_RULES_DIR,
-        AGENTIX_ACTIONS_DIR,
         *TESTS_AND_DOC_DIRECTORIES,
     )
 )
@@ -132,6 +133,9 @@ ALLOWED_SUFFIXES = frozenset(
         ".js",
         ".xif",
         ".ps1",
+        ".html",
+        ".css",
+        ".csv",
         "",
     )
 )
@@ -232,6 +236,13 @@ class InvalidAgentixAgentFileName(InvalidPathException):
     message = "Name of agentix agent files must match the directory containing them, e.g. `{parent folder}.yml`, `{parent folder}_test.yml`, or `{parent folder}_systeminstructions.md`"
 
 
+class InvalidAgentixActionFileName(InvalidPathException):
+    message = (
+        "AgentixAction files must be placed in a subfolder under AgentixActions, "
+        "e.g. `AgentixActions/{ActionName}/{ActionName}.yml` or `AgentixActions/{ActionName}/{ActionName}_test.yml`"
+    )
+
+
 class ExemptedPath(Exception, ABC):
     message: ClassVar[str]
 
@@ -311,6 +322,12 @@ def _validate(path: Path) -> None:
     if depth == 1:  # Packs/myPack/<first level folder>/<the file>
         _exempt_unified_files(path, first_level_folder)  # Raises PathIsUnified
 
+        if first_level_folder == AGENTIX_ACTIONS_DIR:
+            raise InvalidAgentixActionFileName
+
+        if first_level_folder == AGENTIX_AGENTS_DIR:
+            raise InvalidAgentixAgentFileName
+
         if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise InvalidDepthOneFile
@@ -377,6 +394,12 @@ def _validate(path: Path) -> None:
             or (path.stem == f"{path.parent.name}_test" and path.suffix == ".yml")
         ):
             raise InvalidAgentixAgentFileName
+
+        elif first_level_folder == AGENTIX_ACTIONS_DIR and not (
+            (path.stem == path.parent.name and path.suffix == ".yml")
+            or (path.stem == f"{path.parent.name}_test" and path.suffix == ".yml")
+        ):
+            raise InvalidAgentixActionFileName
 
 
 def _validate_image_file_name(image_name: str):

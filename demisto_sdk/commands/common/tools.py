@@ -135,6 +135,7 @@ from demisto_sdk.commands.common.constants import (
     IdSetKeys,
     MarketplaceVersions,
     PathLevel,
+    PlatformSupportedModules,
     urljoin,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
@@ -4795,3 +4796,32 @@ def is_private_content_file(file, private_content_path: Path | None = None) -> b
         return (private_content_path / file).is_file()
 
     return False
+
+
+def get_content_item_supported_modules(item) -> set[str]:
+    """
+    Resolves the definitive list of supported modules for an item,
+    falling back to its pack's modules or the platform defaults.
+
+    Args:
+        item: A content item object that has marketplaces, supportedModules,
+              and optionally pack attributes.
+
+    Returns:
+        A set of supported module names, or empty set if not a platform item.
+    """
+    # Import here to avoid circular imports
+    from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+    if MarketplaceVersions.PLATFORM not in item.marketplaces:
+        return set()
+
+    default_modules = [sm.value for sm in PlatformSupportedModules]
+
+    modules = item.supportedModules
+    if not modules and not isinstance(item, Pack):
+        pack = getattr(item, "pack", None)
+        if pack is not None:
+            modules = pack.supportedModules
+
+    return set(modules or default_modules)

@@ -459,9 +459,23 @@ def validate_playbook_tests_in_repository(
 def get_supported_modules_mismatch_dependencies(
     tx: Transaction,
     content_item_ids: List[str],
+    mandatory: bool = True,
 ):
+    """Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
+
+    Args:
+        tx (Transaction): The Neo4j transaction object.
+        content_item_ids (List[str]): List of content item IDs to check. If empty, all items are checked.
+        mandatory (bool): If True, checks mandatory (mandatorily:true) USES relationships.
+                          If False, checks non-mandatory (mandatorily:false) USES relationships.
+                          Defaults to True.
+
+    Returns:
+        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
+    """
+    mandatorily_value = "true" if mandatory else "false"
     query = f""" // Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
-    MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(contentItemB)
+    MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:{mandatorily_value}}}]->(contentItemB)
     WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItemA.object_id IN {content_item_ids})
       AND contentItemB.supportedModules IS NOT NULL AND 'platform' IN contentItemA.marketplaces
       AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {[sm.value for sm in PlatformSupportedModules]}) WHERE module IN contentItemB.supportedModules)
@@ -530,6 +544,7 @@ def get_supported_modules_mismatch_commands(
 def get_supported_modules_mismatch_content_items(
     tx: Transaction,
     content_item_ids: List[str],
+    mandatory: bool = True,
 ):
     """
     Fetches all content items that use at least one command with a module support incompatibility.
@@ -539,12 +554,16 @@ def get_supported_modules_mismatch_content_items(
     Args:
         tx (Transaction): The Neo4j transaction object.
         content_item_ids (List[str]): List of content item IDs to check. If empty, all items are checked.
+        mandatory (bool): If True, checks mandatory (mandatorily:true) USES relationships.
+                          If False, checks non-mandatory (mandatorily:false) USES relationships.
+                          Defaults to True.
 
     Returns:
         Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
     """
+    mandatorily_value = str(mandatory).lower()
     query = f"""
-    MATCH (content_item{{deprecated: false, is_test: false}})-[u:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()
+    MATCH (content_item{{deprecated: false, is_test: false}})-[u:{RelationshipType.USES}{{mandatorily:{mandatorily_value}}}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()
     WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR content_item.object_id IN {content_item_ids})
         AND 'platform' IN content_item.marketplaces
         // An incompatibility is only possible if the command has a specific module list.

@@ -1,0 +1,4 @@
+changes:
+- description: Added GR114 validation that warns when a content item's supportedModules are not a subset of its non-mandatory dependency's supportedModules.
+  type: feature
+pr_number: 5327

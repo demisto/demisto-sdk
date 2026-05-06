@@ -23,6 +23,15 @@ from demisto_sdk.commands.validate.validators.AS_validators.AS105_no_is_silent_i
 from demisto_sdk.commands.validate.validators.AS_validators.AS106_warn_quiet_mode_on_display_label_task import (
     WarnQuietModeOnDisplayLabelTaskValidator,
 )
+from demisto_sdk.commands.validate.validators.AS_validators.AS107_subplaybook_prefix_consistency import (
+    SubplaybookPrefixConsistencyValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS108_subplaybook_must_be_internal import (
+    SubplaybookMustBeInternalValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS109_is_valid_display_label_context_path import (
+    IsValidDisplayLabelContextPathValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -949,3 +958,575 @@ def test_WarnQuietModeOnDisplayLabelTaskValidator(
         [playbook]
     )
     assert len(results) == expected_warnings
+
+
+@pytest.mark.parametrize(
+    "filename, object_id, name, managed, source, expected_result_len",
+    [
+        # Valid cases - consistent prefix usage in autonomous pack
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            True,
+            "autonomous",
+            0,
+        ),  # All have prefix
+        (
+            "regular-playbook",
+            "regular-playbook",
+            "regular-playbook",
+            True,
+            "autonomous",
+            0,
+        ),  # None have prefix
+        (
+            "MyPlaybook",
+            "MyPlaybook",
+            "MyPlaybook",
+            True,
+            "autonomous",
+            0,
+        ),  # None have prefix
+        # Valid cases - non-autonomous packs (should not validate)
+        ("subplaybook-test", "test", "test", False, "autonomous", 0),  # Not managed
+        ("subplaybook-test", "test", "test", True, "other", 0),  # Wrong source
+        (
+            "subplaybook-test",
+            "test",
+            "test",
+            False,
+            "other",
+            0,
+        ),  # Neither managed nor autonomous
+        # Invalid cases - inconsistent prefix usage in autonomous pack
+        (
+            "subplaybook-test",
+            "test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Only filename has prefix
+        (
+            "test",
+            "subplaybook-test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Only id has prefix
+        (
+            "test",
+            "test",
+            "subplaybook-test",
+            True,
+            "autonomous",
+            1,
+        ),  # Only name has prefix
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Filename and id have prefix, name doesn't
+        (
+            "subplaybook-test",
+            "test",
+            "subplaybook-test",
+            True,
+            "autonomous",
+            1,
+        ),  # Filename and name have prefix, id doesn't
+        (
+            "test",
+            "subplaybook-test",
+            "subplaybook-test",
+            True,
+            "autonomous",
+            1,
+        ),  # Id and name have prefix, filename doesn't
+        # Case insensitive
+        (
+            "SubPlaybook-Test",
+            "test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Uppercase prefix in filename
+        (
+            "test",
+            "SUBPLAYBOOK-test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Uppercase prefix in id
+    ],
+)
+def test_SubplaybookPrefixConsistencyValidator(
+    filename, object_id, name, managed, source, expected_result_len
+):
+    """
+    Given:
+        - Playbooks with various combinations of 'subplaybook' prefix in filename, id, and name
+          in autonomous and non-autonomous packs.
+
+    When:
+        - Running SubplaybookPrefixConsistencyValidator.obtain_invalid_content_items.
+
+    Then:
+        - Playbooks in autonomous packs with inconsistent prefix usage should fail.
+        - Playbooks in autonomous packs with consistent prefix usage should pass.
+        - Playbooks in non-autonomous packs should not be validated (always pass).
+    """
+    from pathlib import Path
+    from unittest.mock import MagicMock
+
+    # Create pack with specified metadata
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+
+    playbook = create_playbook_object(paths=["id", "name"], values=[object_id, name])
+    playbook.pack = pack
+
+    # Mock the path to set the filename
+    mock_path = MagicMock(spec=Path)
+    mock_path.stem = filename
+    playbook.path = mock_path
+
+    results = SubplaybookPrefixConsistencyValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_result_len
+
+
+def test_SubplaybookPrefixConsistencyValidator_fix():
+    """
+    Given:
+        - A playbook in an autonomous pack with inconsistent 'subplaybook' prefix (filename has it, id and name don't).
+
+    When:
+        - Running SubplaybookPrefixConsistencyValidator.fix.
+
+    Then:
+        - The id and name should be updated to include the 'subplaybook' prefix.
+    """
+    from pathlib import Path
+    from unittest.mock import MagicMock
+
+    # Create pack with autonomous metadata
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+
+    playbook = create_playbook_object(paths=["id", "name"], values=["test", "test"])
+    playbook.pack = pack
+
+    # Mock the path to set the filename with subplaybook prefix
+    mock_path = MagicMock(spec=Path)
+    mock_path.stem = "subplaybook-test"
+    playbook.path = mock_path
+
+    # Verify it's invalid before fix
+    results = SubplaybookPrefixConsistencyValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == 1
+
+    # Apply fix
+    SubplaybookPrefixConsistencyValidator().fix(playbook)
+
+    # Verify id and name now have the prefix
+    assert playbook.object_id == "subplaybook-test"
+    assert playbook.name == "subplaybook-test"
+
+
+@pytest.mark.parametrize(
+    "filename, object_id, name, internal, managed, source, expected_result_len",
+    [
+        # Valid cases - subplaybooks with internal=True in autonomous pack
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            True,
+            True,
+            "autonomous",
+            0,
+        ),
+        (
+            "test",
+            "subplaybook-test",
+            "test",
+            True,
+            True,
+            "autonomous",
+            0,
+        ),  # Any field with prefix + internal=True
+        ("test", "test", "subplaybook-test", True, True, "autonomous", 0),
+        # Valid cases - non-subplaybooks in autonomous pack
+        (
+            "regular-playbook",
+            "regular-playbook",
+            "regular-playbook",
+            False,
+            True,
+            "autonomous",
+            0,
+        ),
+        (
+            "regular-playbook",
+            "regular-playbook",
+            "regular-playbook",
+            True,
+            True,
+            "autonomous",
+            0,
+        ),  # internal=True is fine
+        # Valid cases - non-autonomous packs (should not validate)
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            False,
+            False,
+            "autonomous",
+            0,
+        ),  # Not managed
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            False,
+            True,
+            "other",
+            0,
+        ),  # Wrong source
+        # Invalid cases - subplaybooks without internal=True in autonomous pack
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            False,
+            True,
+            "autonomous",
+            1,
+        ),
+        (
+            "subplaybook-test",
+            "test",
+            "test",
+            False,
+            True,
+            "autonomous",
+            1,
+        ),  # Filename has prefix
+        (
+            "test",
+            "subplaybook-test",
+            "test",
+            False,
+            True,
+            "autonomous",
+            1,
+        ),  # Id has prefix
+        (
+            "test",
+            "test",
+            "subplaybook-test",
+            False,
+            True,
+            "autonomous",
+            1,
+        ),  # Name has prefix
+        # Case insensitive
+        ("SubPlaybook-Test", "test", "test", False, True, "autonomous", 1),
+        ("test", "SUBPLAYBOOK-test", "test", False, True, "autonomous", 1),
+    ],
+)
+def test_SubplaybookMustBeInternalValidator(
+    filename, object_id, name, internal, managed, source, expected_result_len
+):
+    """
+    Given:
+        - Playbooks with various combinations of 'subplaybook' prefix and internal field values
+          in autonomous and non-autonomous packs.
+
+    When:
+        - Running SubplaybookMustBeInternalValidator.obtain_invalid_content_items.
+
+    Then:
+        - Playbooks in autonomous packs with 'subplaybook' prefix but without internal=True should fail.
+        - Playbooks in autonomous packs without 'subplaybook' prefix can have any internal value.
+        - Playbooks in autonomous packs with 'subplaybook' prefix and internal=True should pass.
+        - Playbooks in non-autonomous packs should not be validated (always pass).
+    """
+    from pathlib import Path
+    from unittest.mock import MagicMock
+
+    # Create pack with specified metadata
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+
+    playbook = create_playbook_object(
+        paths=["id", "name", "internal"], values=[object_id, name, internal]
+    )
+    playbook.pack = pack
+
+    # Mock the path to set the filename
+    mock_path = MagicMock(spec=Path)
+    mock_path.stem = filename
+    playbook.path = mock_path
+
+    results = SubplaybookMustBeInternalValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_result_len
+
+
+def test_SubplaybookMustBeInternalValidator_fix():
+    """
+    Given:
+        - A subplaybook in an autonomous pack without internal=True.
+
+    When:
+        - Running SubplaybookMustBeInternalValidator.fix.
+
+    Then:
+        - The internal field should be set to True.
+    """
+    from pathlib import Path
+    from unittest.mock import MagicMock
+
+    # Create pack with autonomous metadata
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+
+    playbook = create_playbook_object(
+        paths=["id", "name", "internal"],
+        values=["subplaybook-test", "subplaybook-test", False],
+    )
+    playbook.pack = pack
+
+    # Mock the path to set the filename
+    mock_path = MagicMock(spec=Path)
+    mock_path.stem = "subplaybook-test"
+    playbook.path = mock_path
+
+    # Verify it's invalid before fix
+    results = SubplaybookMustBeInternalValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == 1
+
+    # Apply fix
+    SubplaybookMustBeInternalValidator().fix(playbook)
+
+    # Verify internal is now True
+    assert playbook.internal is True
+
+
+def _make_display_label_tasks(task_overrides):
+    """Build a minimal tasks dict for AS109 tests.
+
+    Each entry in task_overrides is a tuple of:
+        (id, inner_displayLabel, scriptarguments)
+    where ``inner_displayLabel`` is set inside the nested ``task:`` sub-object,
+    and ``scriptarguments`` is an optional dict of script arguments for the task.
+    """
+    tasks = {}
+    for override in task_overrides:
+        tid = override[0]
+        inner_dl = override[1] if len(override) > 1 else None
+        script_args = override[2] if len(override) > 2 else None
+
+        inner_task: dict = {
+            "id": f"taskid-{tid}",
+            "version": -1,
+            "name": f"task-{tid}",
+        }
+        if inner_dl is not None:
+            inner_task["displayLabel"] = inner_dl
+            inner_task["name"] = inner_dl
+
+        entry: dict = {
+            "id": tid,
+            "taskid": f"taskid-{tid}",
+            "type": "regular",
+            "task": inner_task,
+        }
+        if script_args is not None:
+            entry["scriptarguments"] = script_args
+        tasks[tid] = entry
+    return tasks
+
+
+@pytest.mark.parametrize(
+    "managed, source, task_overrides, expected_errors",
+    [
+        # 1. Non-autonomous pack — no errors regardless of displayLabel content
+        (
+            False,
+            "other",
+            [
+                ("1", "Script retrieved with SHA256 ${File.SHA256}.", None),
+            ],
+            0,
+        ),
+        # 2. Autonomous pack, displayLabel context key used in another task's scriptarguments — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "Alert ${issue.id} confirmed as false positive.",
+                    {"id": {"simple": "${issue.id}"}},
+                ),
+                (
+                    "2",
+                    None,
+                    {"alert_ids": {"simple": "${issue.id}"}},
+                ),
+            ],
+            0,
+        ),
+        # 3. Autonomous pack, displayLabel context key used in another task's conditions — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "Risk level is ${Core.RiskyHost.risk_level}.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {"risk": {"simple": "${Core.RiskyHost.risk_level}"}},
+                ),
+            ],
+            0,
+        ),
+        # 4. Autonomous pack, displayLabel context key NOT used in any other task — invalid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "Script retrieved with SHA256 ${File.SHA256}.",
+                    {
+                        "value": {
+                            "simple": "Script retrieved with SHA256 ${File.SHA256}."
+                        }
+                    },
+                ),
+            ],
+            1,
+        ),
+        # 5. Autonomous pack, displayLabel with no context keys (static text) — valid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Action confirmed on a high-risk host.", None),
+            ],
+            0,
+        ),
+        # 6. Autonomous pack, no displayLabel — valid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", None, {"key": {"simple": "value"}}),
+            ],
+            0,
+        ),
+        # 7. Autonomous pack, displayLabel with multiple context keys, one unused — invalid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "User ${issue.id} with hash ${File.SHA256}.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {"alert_ids": {"simple": "${issue.id}"}},
+                ),
+            ],
+            1,
+        ),
+        # 8. Autonomous pack, displayLabel with multiple context keys, all used — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "User ${issue.id} on endpoint ${issue.agentid}.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {
+                        "alert_ids": {"simple": "${issue.id}"},
+                        "agent": {"simple": "${issue.agentid}"},
+                    },
+                ),
+            ],
+            0,
+        ),
+        # 9. Autonomous pack, displayLabel context key used via complex root/accessor split — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "User ${PaloAltoNetworksXQL.GenericQuery.results.actor_effective_username} detected.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {
+                        "value": {
+                            "complex": {
+                                "root": "PaloAltoNetworksXQL.GenericQuery.results",
+                                "accessor": "actor_effective_username",
+                            }
+                        }
+                    },
+                ),
+            ],
+            0,
+        ),
+    ],
+)
+def test_IsValidDisplayLabelContextPathValidator(
+    managed, source, task_overrides, expected_errors
+):
+    """
+    Given:
+        - Playbooks with various displayLabel configurations in autonomous/non-autonomous packs.
+    When:
+        - Running IsValidDisplayLabelContextPathValidator.obtain_invalid_content_items.
+    Then:
+        - Context keys in displayLabel must be used in at least one other task.
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+    playbook = create_playbook_object(
+        paths=["tasks"], values=[_make_display_label_tasks(task_overrides)]
+    )
+    playbook.pack = pack
+
+    results = IsValidDisplayLabelContextPathValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_errors

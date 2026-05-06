@@ -1,4 +1,0 @@
-changes:
-- description: Get script's python file from local repo when unifying old_base_content.
-  type: fix
-pr_number: 5331

@@ -1,6 +1,0 @@
-changes:
-- description: Fixed BC117 validation to handle new pack scenarios where the old content item has no pack attribute, preventing an AttributeError.
-  type: fix
-- description: Added support for RENAMED git status in BC117 validation and improved handling of newly added items in new packs.
-  type: fix
-pr_number: 5326

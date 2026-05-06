@@ -1,4 +1,0 @@
-changes:
-- description: Jobs are now blocked from being uploaded as part of a pack.
-  type: feature
-pr_number: 5329

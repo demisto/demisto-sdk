@@ -300,22 +300,51 @@ def is_error_ignored(
         bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
     """
     if (err_code not in ignorable_errors) or (err_code in ALWAYS_RUN_ON_ERROR_CODE):
+        logger.debug(
+            f"[is_error_ignored] {err_code} for {content_item.path.name}: "
+            f"err_code_in_ignorable_errors={err_code in ignorable_errors}, "
+            f"err_code_in_ALWAYS_RUN={err_code in ALWAYS_RUN_ON_ERROR_CODE}, "
+            f"ignorable_errors_list={ignorable_errors}. "
+            f"Returning False (error will NOT be ignored)."
+        )
         return False
     if related_file_type:
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
         for related_file in related_file_type:
             try:
                 related_file_object = getattr(content_item, related_file.value)
-                if err_code in content_item.ignored_errors_related_files(
+                ignored_errors_for_file = content_item.ignored_errors_related_files(
                     related_file_object.file_path
-                ):
+                )
+                logger.debug(
+                    f"[is_error_ignored] {err_code} for {content_item.path.name}: "
+                    f"checking related_file_type={related_file.value}, "
+                    f"related_file_path={related_file_object.file_path}, "
+                    f"ignored_errors_for_related_file={ignored_errors_for_file}, "
+                    f"err_code_in_ignored={err_code in ignored_errors_for_file}"
+                )
+                if err_code in ignored_errors_for_file:
                     return True
-            except Exception:
+            except Exception as e:
+                logger.debug(
+                    f"[is_error_ignored] {err_code} for {content_item.path.name}: "
+                    f"Exception checking related_file_type={related_file.value}: {e}"
+                )
                 continue
+        logger.debug(
+            f"[is_error_ignored] {err_code} for {content_item.path.name}: "
+            f"No related file had this error ignored. Returning False."
+        )
         return False
     else:
         # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
-        return err_code in content_item.ignored_errors
+        item_ignored = content_item.ignored_errors
+        logger.debug(
+            f"[is_error_ignored] {err_code} for {content_item.path.name}: "
+            f"no related_file_type, checking content_item.ignored_errors={item_ignored}, "
+            f"err_code_in_ignored={err_code in item_ignored}"
+        )
+        return err_code in item_ignored
 
 
 class ValidationResult(BaseResult, BaseModel):

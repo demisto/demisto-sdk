@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Set
+import re
+from typing import Iterable, List, Optional, Set
 
+from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.base_script import (
     EXECUTE_CMD_PATTERN,
@@ -17,8 +20,8 @@ ContentTypes = Script
 class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
     error_code = "SC110"
     description = (
-        "Validates that wrapper scripts declare all commands/scripts they call via "
-        "executeCommand in the 'dependson' field."
+        "Validates that wrapper scripts (those wrapped by an AgentixAction) declare "
+        "all commands/scripts they call via executeCommand in the 'dependson' field."
     )
     rationale = (
         "The 'dependson' field is used to build pack dependency graphs and ensure "
@@ -33,14 +36,23 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
     )
     related_field = "dependson"
     is_auto_fixable = False
+    # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
+
+    # Class-level cache for wrapped script IDs (populated once per validation run)
+    _wrapped_script_ids_cache: Optional[Set[str]] = None
 
     def obtain_invalid_content_items(
         self,
         content_items: Iterable[ContentTypes],
     ) -> List[ValidationResult]:
         """
-        Identify scripts that call commands/scripts via executeCommand but do not
-        declare them in the 'dependson' field (either 'must' or 'should').
+        Identify scripts that are wrapped by an AgentixAction and call
+        commands/scripts via executeCommand but do not declare them in the
+        'dependson' field (either 'must' or 'should').
+
+        Only scripts that have at least one AgentixAction wrapping them
+        (underlyingcontentitem.type == 'script') are validated.
+        Uses the content graph to determine which scripts are wrapped.
 
         Args:
             content_items (Iterable[ContentTypes]): A list of Script objects to validate.
@@ -50,8 +62,23 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
                 missing dependson declarations for commands they call.
         """
         results: List[ValidationResult] = []
+        content_items_list = list(content_items)
 
-        for content_item in content_items:
+        if not content_items_list:
+            return results
+
+        # Build the set of script IDs wrapped by AgentixActions (cached)
+        wrapped_ids = self._get_action_wrapped_script_ids(content_items_list)
+
+        for content_item in content_items_list:
+            # Only validate scripts that are wrapped by an AgentixAction
+            if content_item.object_id not in wrapped_ids:
+                logger.debug(
+                    f"SC110: Skipping script '{content_item.name}' "
+                    f"(id={content_item.object_id}) — not wrapped by any AgentixAction."
+                )
+                continue
+
             # LLM scripts have no code to parse
             if content_item.is_llm:
                 continue
@@ -80,6 +107,66 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
                 )
 
         return results
+
+    @classmethod
+    def _get_action_wrapped_script_ids(
+        cls, content_items: List[ContentTypes]
+    ) -> Set[str]:
+        """
+        Build a set of script IDs that are wrapped by at least one AgentixAction.
+
+        Uses the content graph to query for AgentixActions that have a USES
+        relationship to the given scripts.
+
+        The result is cached at the class level so it is only computed once per
+        validation run.
+
+        Args:
+            content_items: The list of Script content items being validated.
+
+        Returns:
+            Set[str]: A set of script IDs that are wrapped by AgentixActions.
+        """
+        if cls._wrapped_script_ids_cache is not None:
+            return cls._wrapped_script_ids_cache
+
+        script_ids = [item.object_id for item in content_items]
+        wrapped_ids: Set[str] = set()
+
+        try:
+            if not cls.graph_interface:
+                logger.debug(
+                    "SC110: Graph not available, falling back to validating all scripts."
+                )
+                wrapped_ids = set(script_ids)
+            else:
+                # Query the graph for AgentixActions that use these scripts
+                actions = cls.graph_interface.get_agentix_actions_using_content_items(
+                    script_ids
+                )
+
+                # Extract the script IDs that have at least one wrapping action
+                for action in actions:
+                    underlying_id = getattr(
+                        action, "underlying_content_item_id", None
+                    )
+                    if underlying_id and underlying_id in script_ids:
+                        wrapped_ids.add(underlying_id)
+
+                logger.debug(
+                    f"SC110: Found {len(wrapped_ids)} script(s) wrapped by "
+                    f"AgentixActions (out of {len(script_ids)} checked): "
+                    f"{sorted(wrapped_ids)}"
+                )
+        except Exception:
+            logger.debug(
+                "SC110: Graph lookup failed, falling back to validating all scripts.",
+                exc_info=True,
+            )
+            wrapped_ids = set(script_ids)
+
+        cls._wrapped_script_ids_cache = wrapped_ids
+        return wrapped_ids
 
     @staticmethod
     def _get_called_commands(code: str) -> Set[str]:

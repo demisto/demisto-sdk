@@ -315,6 +315,25 @@ def test_DuplicatedScriptNameValidatorAllFiles_obtain_invalid_content_items(
 # --- SC110 Tests ---
 
 
+def _mock_wrapped_ids(monkeypatch, wrapped_ids):
+    """Helper to mock the _get_action_wrapped_script_ids class method."""
+    monkeypatch.setattr(
+        WrapperScriptMissingDependsOnValidator,
+        "_get_action_wrapped_script_ids",
+        classmethod(lambda cls, content_items: wrapped_ids),
+    )
+    # Clear the cache to ensure the mock is used
+    WrapperScriptMissingDependsOnValidator._wrapped_script_ids_cache = None
+
+
+@pytest.fixture(autouse=True)
+def _reset_sc110_cache():
+    """Reset the wrapped script IDs cache before each SC110 test."""
+    WrapperScriptMissingDependsOnValidator._wrapped_script_ids_cache = None
+    yield
+    WrapperScriptMissingDependsOnValidator._wrapped_script_ids_cache = None
+
+
 @pytest.mark.parametrize(
     "code, dependson, expected_invalid",
     [
@@ -393,11 +412,12 @@ def test_DuplicatedScriptNameValidatorAllFiles_obtain_invalid_content_items(
     ],
 )
 def test_WrapperScriptMissingDependsOnValidator_obtain_invalid_content_items(
-    code, dependson, expected_invalid
+    monkeypatch, code, dependson, expected_invalid
 ):
     """
     Given:
-        - A script with various combinations of executeCommand calls and dependson declarations.
+        - A script wrapped by an AgentixAction with various combinations of
+          executeCommand calls and dependson declarations.
     When:
         - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
     Then:
@@ -412,6 +432,9 @@ def test_WrapperScriptMissingDependsOnValidator_obtain_invalid_content_items(
         code=code,
     )
 
+    # Mock the script as being wrapped by an AgentixAction
+    _mock_wrapped_ids(monkeypatch, {content_item.object_id})
+
     results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
         [content_item]
     )
@@ -423,10 +446,11 @@ def test_WrapperScriptMissingDependsOnValidator_obtain_invalid_content_items(
         assert len(results) == 0
 
 
-def test_WrapperScriptMissingDependsOnValidator_llm_script_is_skipped():
+def test_WrapperScriptMissingDependsOnValidator_llm_script_is_skipped(monkeypatch):
     """
     Given:
-        - An LLM script (isllm=True) that would otherwise fail (no dependson declared).
+        - An LLM script (isllm=True) that would otherwise fail (no dependson declared),
+          and is wrapped by an AgentixAction.
     When:
         - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
     Then:
@@ -437,6 +461,8 @@ def test_WrapperScriptMissingDependsOnValidator_llm_script_is_skipped():
         values=[True],
     )
 
+    _mock_wrapped_ids(monkeypatch, {content_item.object_id})
+
     results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
         [content_item]
     )
@@ -444,10 +470,13 @@ def test_WrapperScriptMissingDependsOnValidator_llm_script_is_skipped():
     assert len(results) == 0
 
 
-def test_WrapperScriptMissingDependsOnValidator_missing_commands_listed_in_message():
+def test_WrapperScriptMissingDependsOnValidator_missing_commands_listed_in_message(
+    monkeypatch,
+):
     """
     Given:
-        - A script that calls two commands via executeCommand but declares neither in dependson.
+        - A script wrapped by an AgentixAction that calls two commands via executeCommand
+          but declares neither in dependson.
     When:
         - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
     Then:
@@ -463,6 +492,8 @@ def test_WrapperScriptMissingDependsOnValidator_missing_commands_listed_in_messa
         code=code,
     )
 
+    _mock_wrapped_ids(monkeypatch, {content_item.object_id})
+
     results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
         [content_item]
     )
@@ -472,10 +503,13 @@ def test_WrapperScriptMissingDependsOnValidator_missing_commands_listed_in_messa
     assert "CommandBeta" in results[0].message
 
 
-def test_WrapperScriptMissingDependsOnValidator_partial_missing_listed_in_message():
+def test_WrapperScriptMissingDependsOnValidator_partial_missing_listed_in_message(
+    monkeypatch,
+):
     """
     Given:
-        - A script that calls two commands but only declares one in dependson.must.
+        - A script wrapped by an AgentixAction that calls two commands but only declares
+          one in dependson.must.
     When:
         - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
     Then:
@@ -492,6 +526,8 @@ def test_WrapperScriptMissingDependsOnValidator_partial_missing_listed_in_messag
         code=code,
     )
 
+    _mock_wrapped_ids(monkeypatch, {content_item.object_id})
+
     results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
         [content_item]
     )
@@ -499,3 +535,105 @@ def test_WrapperScriptMissingDependsOnValidator_partial_missing_listed_in_messag
     assert len(results) == 1
     assert "MissingScript" in results[0].message
     assert "DeclaredScript" not in results[0].message
+
+
+def test_WrapperScriptMissingDependsOnValidator_code_file_fallback_when_code_is_none(
+    monkeypatch,
+):
+    """
+    Given:
+        - A script wrapped by an AgentixAction whose `.code` attribute is None
+          (simulating an object loaded from the content graph, where `code` is
+          excluded from serialisation) but whose code file on disk contains an
+          executeCommand call that is not declared in dependson.
+    When:
+        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+    Then:
+        - The validator falls back to reading the code from `code_file.file_content` and
+          still produces a ValidationResult for the missing dependson entry.
+    """
+    code = 'demisto.executeCommand("MyScript", {})'
+    content_item = create_script_object(
+        paths=["dependson"],
+        values=[{}],
+        code=code,
+    )
+    # Simulate the object being loaded from the graph (code field is not persisted).
+    content_item.code = None
+
+    _mock_wrapped_ids(monkeypatch, {content_item.object_id})
+
+    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+
+    assert len(results) == 1
+    assert "MyScript" in results[0].message
+
+
+def test_WrapperScriptMissingDependsOnValidator_not_wrapped_script_is_skipped(
+    monkeypatch,
+):
+    """
+    Given:
+        - A script that calls a command via executeCommand without declaring it in
+          dependson, but is NOT wrapped by any AgentixAction.
+    When:
+        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+    Then:
+        - The script is skipped and no ValidationResult is produced, because the
+          validation only applies to scripts wrapped by AgentixActions.
+    """
+    code = 'demisto.executeCommand("SomeCommand", {})'
+    content_item = create_script_object(
+        paths=["dependson"],
+        values=[{}],
+        code=code,
+    )
+
+    # Mock with an empty set — no scripts are wrapped
+    _mock_wrapped_ids(monkeypatch, set())
+
+    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+
+    assert len(results) == 0
+
+
+def test_WrapperScriptMissingDependsOnValidator_only_wrapped_scripts_validated(
+    monkeypatch,
+):
+    """
+    Given:
+        - Two scripts: one wrapped by an AgentixAction (missing dependson) and one
+          not wrapped (also missing dependson).
+    When:
+        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+    Then:
+        - Only the wrapped script produces a ValidationResult.
+        - The unwrapped script is skipped.
+    """
+    code = 'demisto.executeCommand("SomeCommand", {})'
+    wrapped_script = create_script_object(
+        paths=["dependson"],
+        values=[{}],
+        code=code,
+        name="WrappedScript",
+    )
+    unwrapped_script = create_script_object(
+        paths=["dependson"],
+        values=[{}],
+        code=code,
+        name="UnwrappedScript",
+    )
+
+    # Only the wrapped script's ID is in the set
+    _mock_wrapped_ids(monkeypatch, {wrapped_script.object_id})
+
+    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
+        [wrapped_script, unwrapped_script]
+    )
+
+    assert len(results) == 1
+    assert wrapped_script.name in results[0].message

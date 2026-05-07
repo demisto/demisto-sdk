@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from typing import Iterable, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import GitStatuses
@@ -36,7 +35,7 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
     )
     related_field = "dependson"
     is_auto_fixable = False
-    # expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     # Class-level cache for wrapped script IDs (populated once per validation run)
     _wrapped_script_ids_cache: Optional[Set[str]] = None
@@ -147,9 +146,7 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
 
                 # Extract the script IDs that have at least one wrapping action
                 for action in actions:
-                    underlying_id = getattr(
-                        action, "underlying_content_item_id", None
-                    )
+                    underlying_id = getattr(action, "underlying_content_item_id", None)
                     if underlying_id and underlying_id in script_ids:
                         wrapped_ids.add(underlying_id)
 

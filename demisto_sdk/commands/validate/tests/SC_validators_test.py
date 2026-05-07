@@ -537,20 +537,19 @@ def test_WrapperScriptMissingDependsOnValidator_partial_missing_listed_in_messag
     assert "DeclaredScript" not in results[0].message
 
 
-def test_WrapperScriptMissingDependsOnValidator_code_file_fallback_when_code_is_none(
+def test_WrapperScriptMissingDependsOnValidator_code_is_none_skipped(
     monkeypatch,
 ):
     """
     Given:
         - A script wrapped by an AgentixAction whose `.code` attribute is None
           (simulating an object loaded from the content graph, where `code` is
-          excluded from serialisation) but whose code file on disk contains an
-          executeCommand call that is not declared in dependson.
+          excluded from serialisation).
     When:
         - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
     Then:
-        - The validator falls back to reading the code from `code_file.file_content` and
-          still produces a ValidationResult for the missing dependson entry.
+        - The script is skipped because there is no code to parse, so no
+          ValidationResult is produced.
     """
     code = 'demisto.executeCommand("MyScript", {})'
     content_item = create_script_object(
@@ -567,8 +566,7 @@ def test_WrapperScriptMissingDependsOnValidator_code_file_fallback_when_code_is_
         [content_item]
     )
 
-    assert len(results) == 1
-    assert "MyScript" in results[0].message
+    assert len(results) == 0
 
 
 def test_WrapperScriptMissingDependsOnValidator_not_wrapped_script_is_skipped(

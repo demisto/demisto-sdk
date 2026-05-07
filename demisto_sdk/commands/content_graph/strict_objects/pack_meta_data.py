@@ -47,7 +47,7 @@ class StrictPackMetadata(BaseStrictModel):
     name: str
     display_name: Optional[str] = None
     description: Optional[str] = None
-    created: Optional[str] = None
+    created: Optional[str] = Field(None, alias="firstCreated")
     updated: Optional[str] = None
     legacy: Optional[bool] = None
     support: PackSupportOption

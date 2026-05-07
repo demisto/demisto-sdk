@@ -89,17 +89,26 @@ class IsAgentixActionUsingExistingContentItemValidator(
         for action in agentix_actions_to_validate:
             action_type = action.underlying_content_item_type
 
-            if action_type not in {"command", "script", "playbook"}:
+            if action_type not in {
+                "command",
+                "script",
+                "playbook",
+                "internal",
+                "prompt",
+            }:
                 results.append(
                     ValidationResult(
                         validator=self,
                         message=(
                             f"The action '{action.name}' wraps a content type '{action_type}', "
-                            "which is currently unsupported in Agentix. Only 'command', 'script', and 'playbook' types are allowed."
+                            "which is currently unsupported in Agentix. Only 'command', 'script', 'playbook', 'internal', and 'prompt' types are allowed."
                         ),
                         content_object=action,
                     )
                 )
+                continue
+
+            if action_type == "internal":
                 continue
 
             item_name: str = (
@@ -180,7 +189,10 @@ class IsAgentixActionUsingExistingContentItemValidator(
         """
         # Check in changed items first
         for item in changed_underlying:
-            if action_type in {"script", "playbook"} and item.object_id == item_name:
+            if (
+                action_type in {"script", "playbook", "prompt"}
+                and item.object_id == item_name
+            ):
                 return item
             elif action_type == "command" and isinstance(item, Integration):
                 commands = item.data.get("script", {}).get("commands", [])
@@ -198,7 +210,7 @@ class IsAgentixActionUsingExistingContentItemValidator(
                                 == action.underlying_content_item_id
                             ):
                                 return integration
-            else:  # script/playbook
+            else:  # script/playbook/prompt
                 return graph_result[0] if graph_result else None
 
         return None

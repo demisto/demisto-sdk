@@ -3,7 +3,7 @@ from typing import List, Optional
 
 import typer
 
-from demisto_sdk.commands.common.logger import logging_setup_decorator
+from demisto_sdk.commands.common.logger import logger, logging_setup_decorator
 
 
 @logging_setup_decorator
@@ -62,6 +62,10 @@ def generate_unit_tests(
     >NOTE: The generate-unit-test command only works if demisto-sdk is installed with pip install demisto-sdk [generate-unit-tests].
 
     """
+    logger.warning(
+        "<yellow>WARNING: The `generate-unit-tests` command is deprecated and will be removed in a subsequent version.</yellow>"
+    )
+
     import logging  # noqa: TID251 # special case: controlling external logger
 
     from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (

@@ -55,6 +55,7 @@ class CorrelationRuleParser(
         return {
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         }
 
     @property

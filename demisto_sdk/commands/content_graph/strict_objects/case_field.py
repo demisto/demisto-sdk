@@ -71,7 +71,7 @@ class _StrictCaseField(BaseStrictModel):
     open_ended: Optional[bool] = Field(None, alias="openEnded")
     template: Optional[str] = None
     marketplaces: Literal[
-        MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM
+        MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM, MarketplaceVersions.CYBERARK
     ] = Field(default_factory=list)
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
     aliases: Optional[List[StrictAliases]] = Field(None, alias="Aliases")

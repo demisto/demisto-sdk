@@ -53,6 +53,7 @@ class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELIN
         return {
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         }
 
     @property

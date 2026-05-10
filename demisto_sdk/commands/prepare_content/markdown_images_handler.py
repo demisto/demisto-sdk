@@ -249,6 +249,9 @@ def process_markdown_images(
     bucket_path = MarketplaceVersionToMarketplaceName.get(marketplace)
     if bucket_path and marketplace == MarketplaceVersions.PLATFORM.value:
         bucket_path += "/april-content"  # CIAC-13208
+    if bucket_path and marketplace == MarketplaceVersions.CYBERARK.value:
+        bucket_path += "/cyberark-content"  # CIAC-13208
+
 
     google_api_markdown_images_url = f"{GOOGLE_CLOUD_STORAGE_PUBLIC_BASE_PATH}/{bucket_path}/content/packs/{pack_name}"
 
@@ -257,6 +260,7 @@ def process_markdown_images(
         MarketplaceVersions.MarketplaceV2,
         MarketplaceVersions.XPANSE,
         MarketplaceVersions.PLATFORM,
+        MarketplaceVersions.CYBERARK, # TODO
     ]:
         to_replace = f"{SERVER_API_TO_STORAGE}/{pack_name}"
     else:

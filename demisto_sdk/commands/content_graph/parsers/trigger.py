@@ -49,6 +49,7 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
         return {
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         }
 
     def connect_to_dependencies(self) -> None:

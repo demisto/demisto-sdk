@@ -2010,7 +2010,6 @@ MARKETPLACES_NO_AGENTIC_ASSISTANT = {
     MarketplaceVersions.XSOAR_SAAS,
     MarketplaceVersions.MarketplaceV2,
     MarketplaceVersions.XPANSE,
-    MarketplaceVersions.CYBERARK,
 }
 
 MarketplaceVersionToMarketplaceName: Dict[str, str] = {

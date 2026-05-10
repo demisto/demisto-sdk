@@ -67,6 +67,12 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             )
             data["nativeimage"] = supported_native_images
 
+        # Remove `internal: true` so the uploaded script will be visible to the user.
+        if data.pop("internal", None):
+            logger.debug(
+                f"Removed 'internal' field from script {self.object_id} before upload"
+            )
+
         return data
 
     @property

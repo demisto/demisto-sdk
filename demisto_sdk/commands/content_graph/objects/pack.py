@@ -264,6 +264,38 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     ):
                         del command["supportedModules"]
 
+    def _dump_pack_metadata(self, source: Path, destination: Path) -> None:
+        """Copies the pack_metadata.json file to the destination, removing the
+        `internal` field so the uploaded pack will be visible to the user.
+
+        Falls back to a plain copy if the source cannot be parsed as JSON.
+
+        Args:
+            source (Path): The path to the original pack_metadata.json.
+            destination (Path): The path to write the modified pack_metadata.json.
+        """
+        try:
+            pack_metadata = get_file(source, raise_on_error=True)
+        except Exception as e:
+            logger.debug(
+                f"Failed reading {source} as JSON ({e}); falling back to plain copy"
+            )
+            shutil.copy(source, destination)
+            return
+
+        if not isinstance(pack_metadata, dict):
+            logger.debug(
+                f"{source} is not a JSON object; falling back to plain copy"
+            )
+            shutil.copy(source, destination)
+            return
+
+        if pack_metadata.pop("internal", None):
+            logger.debug(
+                f"Removed 'internal' field from {source} before upload"
+            )
+        write_dict(destination, data=pack_metadata, indent=4)
+
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         """Dumps the pack metadata file.
 
@@ -281,6 +313,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             "url",
             "email",
             "database_id",
+            # Strip `internal` so the uploaded pack will be visible to the user.
+            "internal",
         }
         if not self.is_private:
             excluded_fields_from_metadata |= {
@@ -398,7 +432,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 )
             self.dump_metadata(path / "metadata.json", marketplace)
             self.dump_readme(path / "README.md", marketplace)
-            shutil.copy(
+            self._dump_pack_metadata(
                 self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME
             )
             try:

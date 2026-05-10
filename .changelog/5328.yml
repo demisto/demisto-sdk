@@ -1,0 +1,4 @@
+changes:
+- description: Strip the `internal` field from script YAMLs and pack metadata files during the `upload` flow so the uploaded content is visible to users.
+  type: fix
+pr_number: 5328

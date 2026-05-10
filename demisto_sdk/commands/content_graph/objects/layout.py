@@ -35,7 +35,7 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
 
         if (
             current_marketplace
-            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM, MarketplaceVersions.CYBERARK]
             and self.group == "indicator"
         ):
             data = replace_layout_incident_alert(data)

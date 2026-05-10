@@ -138,7 +138,7 @@ class PackMetadata(BaseModel):
             if self.default_data_source_name
             and self.default_data_source_id
             and marketplace
-            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM, MarketplaceVersions.CYBERARK]
             and not self.hybrid
             else None  # if the pack is multiple marketplace, override the initially set str default_data_source_id
         )
@@ -229,7 +229,7 @@ class PackMetadata(BaseModel):
             and self.default_data_source_name
             and collected_content_items
             and marketplace
-            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM, MarketplaceVersions.CYBERARK]
             and not self.hybrid
         ):
             # order collected_content_items integration list so that the defaultDataSource will be first
@@ -355,7 +355,7 @@ class PackMetadata(BaseModel):
             {PackTags.DATA_SOURCE}
             if self.is_data_source(content_items)
             and marketplace
-            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM, MarketplaceVersions.CYBERARK]
             else set()
         )
 
@@ -515,7 +515,7 @@ class PackMetadata(BaseModel):
             return author
         elif marketplace == MarketplaceVersions.MarketplaceV2:
             return author.replace("Cortex XSOAR", "Cortex XSIAM")
-        elif marketplace == MarketplaceVersions.PLATFORM:
+        elif marketplace in (MarketplaceVersions.PLATFORM, MarketplaceVersions.CYBERARK):
             return author.replace("Cortex XSOAR", "Cortex")
         raise ValueError(f"Unknown marketplace version for author: {marketplace}")
 

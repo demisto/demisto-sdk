@@ -547,10 +547,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 if marketplace in [
                     MarketplaceVersions.MarketplaceV2,
                     MarketplaceVersions.PLATFORM,
+                    MarketplaceVersions.CYBERARK,
                 ]:
                     raise  # many XSIAM content types must be uploaded zipped.
                 logger.warning(
-                    f"Not uploading pack {self.object_id}: {item.content_type} {item.object_id} as it was not indivudally uploaded"
+                    f"Not uploading pack {self.object_id}: {item.content_type} {item.object_id} as it was not individually uploaded"
                 )
             except ApiException as e:
                 upload_failures.append(

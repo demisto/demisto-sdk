@@ -65,9 +65,7 @@ def test_base_script_prepare_for_upload_strips_internal_true(mocker):
         "prepare_for_upload",
         return_value=dict(base_data),
     )
-    mocker.patch.object(
-        BaseScript, "get_supported_native_images", return_value=[]
-    )
+    mocker.patch.object(BaseScript, "get_supported_native_images", return_value=[])
 
     script = _build_minimal_script()
     prepared = script.prepare_for_upload()
@@ -92,9 +90,7 @@ def test_base_script_prepare_for_upload_no_internal_field(mocker):
         "prepare_for_upload",
         return_value=dict(base_data),
     )
-    mocker.patch.object(
-        BaseScript, "get_supported_native_images", return_value=[]
-    )
+    mocker.patch.object(BaseScript, "get_supported_native_images", return_value=[])
 
     script = _build_minimal_script()
     prepared = script.prepare_for_upload()
@@ -119,9 +115,7 @@ def test_base_script_prepare_for_upload_internal_false_is_kept_out(mocker):
         "prepare_for_upload",
         return_value=dict(base_data),
     )
-    mocker.patch.object(
-        BaseScript, "get_supported_native_images", return_value=[]
-    )
+    mocker.patch.object(BaseScript, "get_supported_native_images", return_value=[])
 
     script = _build_minimal_script()
     prepared = script.prepare_for_upload()

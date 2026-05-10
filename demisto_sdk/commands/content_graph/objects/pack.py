@@ -284,16 +284,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             return
 
         if not isinstance(pack_metadata, dict):
-            logger.debug(
-                f"{source} is not a JSON object; falling back to plain copy"
-            )
+            logger.debug(f"{source} is not a JSON object; falling back to plain copy")
             shutil.copy(source, destination)
             return
 
         if pack_metadata.pop("internal", None):
-            logger.debug(
-                f"Removed 'internal' field from {source} before upload"
-            )
+            logger.debug(f"Removed 'internal' field from {source} before upload")
         write_dict(destination, data=pack_metadata, indent=4)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:

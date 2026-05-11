@@ -62,6 +62,7 @@ class PackMetaData(JSONObject):
         self._supported_modules: Optional[List[str]] = None
         self._source: str = ""
         self._managed: bool = False
+        self._internal: bool = False
 
     @property
     def name(self) -> str:
@@ -527,6 +528,18 @@ class PackMetaData(JSONObject):
         """Setter for the managed attribute"""
         self._managed = is_managed
 
+    @property
+    def internal(self):
+        """
+        Whether the pack is internal (hidden from UI and API).
+        """
+        return self._internal
+
+    @internal.setter
+    def internal(self, is_internal: bool):
+        """Setter for the internal attribute"""
+        self._internal = is_internal
+
     def dump_metadata_file(self, dest_dir: Union[Path, str] = "") -> List[Path]:
         file_content = {
             "name": self.name,
@@ -614,6 +627,7 @@ class PackMetaData(JSONObject):
             self.supportedModules = user_metadata.get("supportedModules")
             self.source = user_metadata.get("source", "")
             self.managed = user_metadata.get("managed", False)
+            self.internal = user_metadata.get("internal", False)
             if self.price > 0:
                 self.premium = True
                 self.vendor_id = user_metadata.get("vendorId", "")

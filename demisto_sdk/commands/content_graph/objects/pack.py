@@ -64,6 +64,7 @@ from demisto_sdk.commands.prepare_content.markdown_images_handler import (
 )
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
+    CONTENT_TYPES_NOT_SUPPORTED_IN_UPLOAD,
     MULTIPLE_ZIPPED_PACKS_FILE_NAME,
     MULTIPLE_ZIPPED_PACKS_FILE_STEM,
 )
@@ -527,6 +528,18 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             content_types_excluded_from_upload.discard(ContentType.TEST_PLAYBOOK)
 
         for item in self.content_items:
+            if item.content_type in CONTENT_TYPES_NOT_SUPPORTED_IN_UPLOAD:
+                upload_failures.append(
+                    FailedUploadException(
+                        item.path,
+                        response_body={},
+                        additional_info=(
+                            f"{item.content_type} is not a content item and therefore cannot be uploaded as part of a pack"
+                        ),
+                    )
+                )
+                continue
+
             if item.content_type in content_types_excluded_from_upload:
                 logger.debug(
                     f"SKIPPING upload of {item.content_type} {item.object_id}: type is skipped"

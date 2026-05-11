@@ -36,6 +36,7 @@ class PackMetadata(BaseModel):
     description: Optional[str]
     source: Optional[str] = Field("")
     managed: Optional[bool] = Field(False)
+    internal: Optional[bool] = Field(False)
     created: Optional[str] = Field(alias="firstCreated")
     updated: Optional[str] = Field("")
     legacy: Optional[bool]

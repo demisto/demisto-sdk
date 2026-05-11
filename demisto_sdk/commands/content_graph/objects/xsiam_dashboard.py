@@ -28,8 +28,9 @@ class XSIAMDashboard(ContentItemXSIAM, content_type=ContentType.XSIAM_DASHBOARD)
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
+        strip_internal: bool = False,
     ) -> None:
-        super().dump(dir, marketplace)
+        super().dump(dir, marketplace, strip_internal=strip_internal)
         if (self.path.parent / f"{self.path.stem}_image.png").exists():
             shutil.copy(
                 self.path.parent / f"{self.path.stem}_image.png",

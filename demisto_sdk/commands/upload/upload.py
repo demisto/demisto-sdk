@@ -126,7 +126,15 @@ def zip_multiple_packs(
     result_zip_path = dir / MULTIPLE_ZIPPED_PACKS_FILE_NAME
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_dir_path = Path(tmp_dir)
-        ContentDTO(packs=packs).dump(tmp_dir_path, marketplace=marketplace, zip=False)
+        # strip_internal=True: this is an upload flow, so the `internal`
+        # field should be removed from the dumped script YAMLs and pack
+        # metadata so the uploaded content is visible to users.
+        ContentDTO(packs=packs).dump(
+            tmp_dir_path,
+            marketplace=marketplace,
+            zip=False,
+            strip_internal=True,
+        )
         with ZipFile(result_zip_path, "w") as zip_file:
             # copy files that were already zipped into the result
             for was_zipped in were_zipped:

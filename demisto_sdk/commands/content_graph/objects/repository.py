@@ -59,7 +59,16 @@ class ContentDTO(BaseModel):
         zip: bool = True,
         packs_to_dump: Optional[list] = None,
         output_stem: str = "content_packs",  # without extension
+        strip_internal: bool = False,
     ):
+        """Dumps all (or selected) packs to ``dir``.
+
+        Args:
+            strip_internal: When true, the ``internal`` field is removed from
+                the dumped script YAMLs and pack metadata files. Should only
+                be set by the ``demisto-sdk upload`` flow; artifact builds
+                and other consumers should leave it false.
+        """
         dir.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Got packs to dump: {packs_to_dump}")
         packs_to_dump = (
@@ -81,14 +90,23 @@ class ContentDTO(BaseModel):
                 pool.starmap(
                     Pack.dump,
                     (
-                        (pack, dir / pack.path.name, marketplace)
+                        (
+                            pack,
+                            dir / pack.path.name,
+                            marketplace,
+                            strip_internal,
+                        )
                         for pack in packs_to_dump
                     ),
                 )
 
         else:
             for pack in packs_to_dump:
-                pack.dump(dir / pack.path.name, marketplace)
+                pack.dump(
+                    dir / pack.path.name,
+                    marketplace,
+                    strip_internal=strip_internal,
+                )
 
         time_taken = time.time() - start_time
         logger.debug(f"Repository dump ended. Took {time_taken} seconds")

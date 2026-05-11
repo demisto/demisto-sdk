@@ -67,8 +67,11 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             )
             data["nativeimage"] = supported_native_images
 
-        # Remove `internal: true` so the uploaded script will be visible to the user.
-        if data.pop("internal", None):
+        # Remove `internal: true` so the uploaded script will be visible to
+        # the user. Only stripped on the upload flow (see `Pack.dump` and
+        # `ContentItem._upload`); other flows (prepare-content, artifact
+        # builds) keep the field intact.
+        if kwargs.get("strip_internal") and data.pop("internal", None):
             logger.debug(
                 f"Removed 'internal' field from script {self.object_id} before upload"
             )
@@ -83,9 +86,16 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             if r.content_item_to.database_id == r.source_id
         ]  # type: ignore[return-value]
 
-    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(
+        self,
+        dir: DirectoryPath,
+        marketplace: MarketplaceVersions,
+        strip_internal: bool = False,
+    ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        data = self.prepare_for_upload(current_marketplace=marketplace)
+        data = self.prepare_for_upload(
+            current_marketplace=marketplace, strip_internal=strip_internal
+        )
 
         for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(
             data, marketplace, self.is_incident_to_alert(marketplace)

@@ -22,10 +22,12 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
+        strip_internal: bool = False,
     ) -> None:
         super().dump(
             dir=dir / self.path.parent.name,
             marketplace=marketplace,
+            strip_internal=strip_internal,
         )
 
     @staticmethod

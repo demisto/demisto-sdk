@@ -379,7 +379,16 @@ class ContentItem(BaseContent):
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
+        strip_internal: bool = False,
     ) -> None:
+        """Dumps a single content item to ``dir`` for upload/artifact creation.
+
+        Args:
+            strip_internal: When true, the ``internal`` field is removed from
+                the dumped data (currently only consumed by
+                ``BaseScript.prepare_for_upload``). Should only be set by the
+                ``demisto-sdk upload`` flow.
+        """
         if not self.path.exists():
             logger.warning(f"Could not find file {self.path}, skipping dump")
             return
@@ -387,7 +396,10 @@ class ContentItem(BaseContent):
         try:
             write_dict(
                 dir / self.normalize_name,
-                data=self.prepare_for_upload(current_marketplace=marketplace),
+                data=self.prepare_for_upload(
+                    current_marketplace=marketplace,
+                    strip_internal=strip_internal,
+                ),
                 handler=self.handler,
             )
             logger.debug(f"path to dumped file: {str(dir / self.normalize_name)}")
@@ -456,9 +468,13 @@ class ContentItem(BaseContent):
 
         with TemporaryDirectory() as f:
             dir_path = Path(f)
+            # strip_internal=True: this is the per-item upload flow, so the
+            # `internal` field should be removed from the dumped script so
+            # the uploaded content is visible to users.
             self.dump(
                 dir_path,
                 marketplace=marketplace,
+                strip_internal=True,
             )
             response = upload_method(dir_path / self.normalize_name)
             parse_upload_response(

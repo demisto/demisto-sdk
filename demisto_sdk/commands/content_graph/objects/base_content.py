@@ -267,6 +267,7 @@ class BaseContent(BaseNode):
         self,
         path: DirectoryPath,
         marketplace: MarketplaceVersions,
+        strip_internal: bool = False,
     ) -> None:
         raise NotImplementedError
 

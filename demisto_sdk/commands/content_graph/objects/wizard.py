@@ -49,6 +49,7 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
+        strip_internal: bool = False,
     ) -> None:
         if not self.path.exists():
             logger.warning(f"Could not find file {self.path}, skipping dump")
@@ -61,4 +62,4 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
                 f"The wizard {dir} current marketplace is {marketplace} skipping dump."
             )
             return
-        return super().dump(dir, marketplace)
+        return super().dump(dir, marketplace, strip_internal=strip_internal)

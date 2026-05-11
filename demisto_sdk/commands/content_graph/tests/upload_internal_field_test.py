@@ -1,6 +1,8 @@
 """Tests verifying that `internal: true` is stripped from script YAMLs and
-pack metadata files during the upload preparation, so the uploaded content is
-visible to the user."""
+pack metadata files **only** during the ``demisto-sdk upload`` flow (i.e. when
+``strip_internal=True`` is passed), so the uploaded content is visible to the
+user. Other flows (``prepare-content``, artifact builds) must keep the field
+intact."""
 
 from pathlib import Path
 from typing import Any, Dict
@@ -18,8 +20,9 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 
 
 def _build_minimal_script() -> Script:
-    """Build a Script instance via `construct()` (bypasses pydantic validation)
-    so we can call its methods without spinning up the content graph."""
+    """Build a Script instance via ``construct()`` (bypasses pydantic
+    validation) so we can call its methods without spinning up the content
+    graph."""
     return Script.construct(  # type: ignore[call-arg]
         object_id="MyScript",
         name="MyScript",
@@ -39,19 +42,23 @@ def _build_minimal_script() -> Script:
 
 
 # ---------------------------------------------------------------------------
-# Script YAML  -- BaseScript.prepare_for_upload should strip `internal`.
+# Script YAML  -- BaseScript.prepare_for_upload should strip `internal` only
+# when ``strip_internal=True`` is passed (the upload flow). Other callers
+# (prepare-content, artifact builds) pass no flag / False and the field must
+# be preserved.
 # ---------------------------------------------------------------------------
 
 
-def test_base_script_prepare_for_upload_strips_internal_true(mocker):
+def test_base_script_prepare_for_upload_strips_internal_when_flag_true(mocker):
     """
     Given:
-        - A Script whose underlying upload data contains `internal: true`.
+        - A Script whose underlying upload data contains ``internal: true``.
     When:
-        - BaseScript.prepare_for_upload is invoked.
+        - ``BaseScript.prepare_for_upload`` is invoked with
+          ``strip_internal=True`` (i.e. the upload flow).
     Then:
-        - The `internal` key is removed from the resulting data, so the script
-          uploaded to the server is visible to the user.
+        - The ``internal`` key is removed from the resulting data so the
+          uploaded script is visible to the user.
         - The other keys are preserved unchanged.
     """
     base_data = {
@@ -68,21 +75,54 @@ def test_base_script_prepare_for_upload_strips_internal_true(mocker):
     mocker.patch.object(BaseScript, "get_supported_native_images", return_value=[])
 
     script = _build_minimal_script()
-    prepared = script.prepare_for_upload()
+    prepared = script.prepare_for_upload(strip_internal=True)
 
     assert "internal" not in prepared
     assert prepared["name"] == "MyScript"
     assert prepared["type"] == "python"
 
 
+def test_base_script_prepare_for_upload_keeps_internal_when_flag_false(mocker):
+    """
+    Given:
+        - A Script whose underlying upload data contains ``internal: true``.
+    When:
+        - ``BaseScript.prepare_for_upload`` is invoked **without**
+          ``strip_internal`` (i.e. the prepare-content / artifact-build flow).
+    Then:
+        - The ``internal`` key is preserved on the resulting data, because
+          the strip is scoped to the upload flow only.
+    """
+    base_data = {
+        "name": "MyScript",
+        "script": "-",
+        "type": "python",
+        "internal": True,
+    }
+    mocker.patch.object(
+        IntegrationScript,
+        "prepare_for_upload",
+        return_value=dict(base_data),
+    )
+    mocker.patch.object(BaseScript, "get_supported_native_images", return_value=[])
+
+    script = _build_minimal_script()
+    prepared = script.prepare_for_upload()  # no strip_internal -> defaults to False
+
+    assert prepared.get("internal") is True
+    assert prepared["name"] == "MyScript"
+
+
 def test_base_script_prepare_for_upload_no_internal_field(mocker):
     """
     Given:
-        - A Script whose underlying upload data does not contain `internal`.
+        - A Script whose underlying upload data does not contain ``internal``.
     When:
-        - BaseScript.prepare_for_upload is invoked.
+        - ``BaseScript.prepare_for_upload`` is invoked with
+          ``strip_internal=True``.
     Then:
-        - The data is returned unchanged (no KeyError, no `internal` added).
+        - The data is returned unchanged (no ``KeyError``, no ``internal``
+          added).
     """
     base_data = {"name": "MyScript", "script": "-", "type": "python"}
     mocker.patch.object(
@@ -93,21 +133,22 @@ def test_base_script_prepare_for_upload_no_internal_field(mocker):
     mocker.patch.object(BaseScript, "get_supported_native_images", return_value=[])
 
     script = _build_minimal_script()
-    prepared = script.prepare_for_upload()
+    prepared = script.prepare_for_upload(strip_internal=True)
 
     assert "internal" not in prepared
     assert prepared == base_data
 
 
-def test_base_script_prepare_for_upload_internal_false_is_kept_out(mocker):
+def test_base_script_prepare_for_upload_internal_false_is_stripped(mocker):
     """
     Given:
-        - A Script whose underlying upload data contains `internal: false`.
+        - A Script whose underlying upload data contains ``internal: false``.
     When:
-        - BaseScript.prepare_for_upload is invoked.
+        - ``BaseScript.prepare_for_upload`` is invoked with
+          ``strip_internal=True``.
     Then:
-        - The `internal` key is removed from the resulting data (we always
-          strip the field, regardless of value).
+        - The ``internal`` key is removed from the resulting data; the
+          upload-flow strip is unconditional regardless of value.
     """
     base_data = {"name": "MyScript", "internal": False}
     mocker.patch.object(
@@ -118,7 +159,7 @@ def test_base_script_prepare_for_upload_internal_false_is_kept_out(mocker):
     mocker.patch.object(BaseScript, "get_supported_native_images", return_value=[])
 
     script = _build_minimal_script()
-    prepared = script.prepare_for_upload()
+    prepared = script.prepare_for_upload(strip_internal=True)
 
     assert "internal" not in prepared
 
@@ -128,21 +169,27 @@ def test_base_script_prepare_for_upload_internal_false_is_kept_out(mocker):
 # ---------------------------------------------------------------------------
 
 
-def _call_dump_pack_metadata(source: Path, destination: Path) -> None:
-    """Invoke Pack._dump_pack_metadata as an unbound method, passing a stub
-    self so we don't have to instantiate a real (graph-backed) Pack."""
+def _call_dump_pack_metadata(
+    source: Path, destination: Path, strip_internal: bool = False
+) -> None:
+    """Invoke ``Pack._dump_pack_metadata`` as an unbound method, passing a
+    stub ``self`` so we don't have to instantiate a real (graph-backed)
+    ``Pack``."""
     fake_self = MagicMock()
-    Pack._dump_pack_metadata(fake_self, source, destination)
+    Pack._dump_pack_metadata(
+        fake_self, source, destination, strip_internal=strip_internal
+    )
 
 
-def test_dump_pack_metadata_strips_internal_true(tmp_path):
+def test_dump_pack_metadata_strips_internal_when_flag_true(tmp_path):
     """
     Given:
-        - A pack_metadata.json containing `"internal": true`.
+        - A ``pack_metadata.json`` containing ``"internal": true``.
     When:
-        - Pack._dump_pack_metadata is called.
+        - ``Pack._dump_pack_metadata`` is called with ``strip_internal=True``.
     Then:
-        - The destination pack_metadata.json no longer contains `internal`.
+        - The destination ``pack_metadata.json`` no longer contains
+          ``internal``.
         - Other fields are preserved unchanged.
     """
     source = tmp_path / "pack_metadata.json"
@@ -158,7 +205,7 @@ def test_dump_pack_metadata_strips_internal_true(tmp_path):
     }
     source.write_text(json.dumps(metadata))
 
-    _call_dump_pack_metadata(source, destination)
+    _call_dump_pack_metadata(source, destination, strip_internal=True)
 
     written = get_json(destination)
     assert "internal" not in written
@@ -166,14 +213,47 @@ def test_dump_pack_metadata_strips_internal_true(tmp_path):
     assert written["currentVersion"] == "1.0.0"
 
 
+def test_dump_pack_metadata_keeps_internal_when_flag_false(tmp_path):
+    """
+    Given:
+        - A ``pack_metadata.json`` containing ``"internal": true``.
+    When:
+        - ``Pack._dump_pack_metadata`` is called **without**
+          ``strip_internal`` (the default for prepare-content / artifact
+          builds).
+    Then:
+        - The destination ``pack_metadata.json`` is a verbatim copy of the
+          source - the ``internal`` field is preserved.
+    """
+    source = tmp_path / "pack_metadata.json"
+    destination = tmp_path / "out" / "pack_metadata.json"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+
+    metadata: Dict[str, Any] = {
+        "name": "TestPack",
+        "internal": True,
+        "currentVersion": "1.0.0",
+    }
+    source.write_text(json.dumps(metadata))
+
+    _call_dump_pack_metadata(source, destination)  # strip_internal=False (default)
+
+    # Verbatim copy: bytes match exactly.
+    assert destination.read_text() == source.read_text()
+    written = get_json(destination)
+    assert written.get("internal") is True
+
+
 def test_dump_pack_metadata_no_internal_field(tmp_path):
     """
     Given:
-        - A pack_metadata.json that does not contain the `internal` key.
+        - A ``pack_metadata.json`` that does not contain the ``internal``
+          key.
     When:
-        - Pack._dump_pack_metadata is called.
+        - ``Pack._dump_pack_metadata`` is called with ``strip_internal=True``.
     Then:
-        - The destination contains the same data (round-tripped through JSON).
+        - The destination contains the same data (round-tripped through
+          JSON).
     """
     source = tmp_path / "pack_metadata.json"
     destination = tmp_path / "out" / "pack_metadata.json"
@@ -182,7 +262,7 @@ def test_dump_pack_metadata_no_internal_field(tmp_path):
     metadata = {"name": "TestPack", "currentVersion": "1.0.0"}
     source.write_text(json.dumps(metadata))
 
-    _call_dump_pack_metadata(source, destination)
+    _call_dump_pack_metadata(source, destination, strip_internal=True)
 
     written = get_json(destination)
     assert "internal" not in written
@@ -192,9 +272,9 @@ def test_dump_pack_metadata_no_internal_field(tmp_path):
 def test_dump_pack_metadata_falls_back_to_copy_on_invalid_json(tmp_path):
     """
     Given:
-        - A pack_metadata.json that cannot be parsed as JSON.
+        - A ``pack_metadata.json`` that cannot be parsed as JSON.
     When:
-        - Pack._dump_pack_metadata is called.
+        - ``Pack._dump_pack_metadata`` is called with ``strip_internal=True``.
     Then:
         - The original file is copied as-is to the destination (no crash).
     """
@@ -205,7 +285,7 @@ def test_dump_pack_metadata_falls_back_to_copy_on_invalid_json(tmp_path):
     raw = "this is not valid json"
     source.write_text(raw)
 
-    _call_dump_pack_metadata(source, destination)
+    _call_dump_pack_metadata(source, destination, strip_internal=True)
 
     assert destination.read_text() == raw
 
@@ -215,25 +295,28 @@ def test_dump_pack_metadata_falls_back_to_copy_on_invalid_json(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_dump_metadata_excludes_internal_field(tmp_path):
+def test_dump_metadata_excludes_internal_field_when_flag_true():
     """
     Given:
-        - The set of excluded fields used by Pack.dump_metadata.
+        - The ``Pack.dump_metadata`` source.
     When:
         - Inspecting the function source.
     Then:
-        - The `internal` field is included in the excluded set, so it will
-          never be written to the generated metadata.json.
-
-    This is a lightweight guarantee that future edits don't accidentally drop
-    the exclusion. The full end-to-end behavior (graph-backed pack -> dumped
-    metadata.json) is exercised by `pack_metadata_graph_test.py`.
+        - It includes a code path that adds ``"internal"`` to the
+          ``excluded_fields_from_metadata`` set when ``strip_internal`` is
+          true, so the upload flow will exclude it from the generated
+          ``metadata.json``.
     """
     import inspect
 
     source = inspect.getsource(Pack.dump_metadata)
-    # The set literal must include the `internal` key.
+    # The conditional must add "internal" to the excluded set.
+    assert "strip_internal" in source, (
+        "Pack.dump_metadata must gate the `internal` exclusion behind the "
+        "`strip_internal` flag so it is only stripped on the upload flow."
+    )
     assert '"internal"' in source, (
-        "Pack.dump_metadata must exclude the `internal` field from the dumped "
-        "metadata.json so that the uploaded pack is visible to users."
+        "Pack.dump_metadata must (conditionally) exclude the `internal` field "
+        "from the dumped metadata.json on the upload flow so the uploaded "
+        "pack is visible to users."
     )

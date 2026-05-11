@@ -29,6 +29,9 @@ from demisto_sdk.commands.validate.validators.AS_validators.AS107_subplaybook_pr
 from demisto_sdk.commands.validate.validators.AS_validators.AS108_subplaybook_must_be_internal import (
     SubplaybookMustBeInternalValidator,
 )
+from demisto_sdk.commands.validate.validators.AS_validators.AS109_is_valid_display_label_context_path import (
+    IsValidDisplayLabelContextPathValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -1320,3 +1323,210 @@ def test_SubplaybookMustBeInternalValidator_fix():
 
     # Verify internal is now True
     assert playbook.internal is True
+
+
+def _make_display_label_tasks(task_overrides):
+    """Build a minimal tasks dict for AS109 tests.
+
+    Each entry in task_overrides is a tuple of:
+        (id, inner_displayLabel, scriptarguments)
+    where ``inner_displayLabel`` is set inside the nested ``task:`` sub-object,
+    and ``scriptarguments`` is an optional dict of script arguments for the task.
+    """
+    tasks = {}
+    for override in task_overrides:
+        tid = override[0]
+        inner_dl = override[1] if len(override) > 1 else None
+        script_args = override[2] if len(override) > 2 else None
+
+        inner_task: dict = {
+            "id": f"taskid-{tid}",
+            "version": -1,
+            "name": f"task-{tid}",
+        }
+        if inner_dl is not None:
+            inner_task["displayLabel"] = inner_dl
+            inner_task["name"] = inner_dl
+
+        entry: dict = {
+            "id": tid,
+            "taskid": f"taskid-{tid}",
+            "type": "regular",
+            "task": inner_task,
+        }
+        if script_args is not None:
+            entry["scriptarguments"] = script_args
+        tasks[tid] = entry
+    return tasks
+
+
+@pytest.mark.parametrize(
+    "managed, source, task_overrides, expected_errors",
+    [
+        # 1. Non-autonomous pack — no errors regardless of displayLabel content
+        (
+            False,
+            "other",
+            [
+                ("1", "Script retrieved with SHA256 ${File.SHA256}.", None),
+            ],
+            0,
+        ),
+        # 2. Autonomous pack, displayLabel context key used in another task's scriptarguments — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "Alert ${issue.id} confirmed as false positive.",
+                    {"id": {"simple": "${issue.id}"}},
+                ),
+                (
+                    "2",
+                    None,
+                    {"alert_ids": {"simple": "${issue.id}"}},
+                ),
+            ],
+            0,
+        ),
+        # 3. Autonomous pack, displayLabel context key used in another task's conditions — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "Risk level is ${Core.RiskyHost.risk_level}.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {"risk": {"simple": "${Core.RiskyHost.risk_level}"}},
+                ),
+            ],
+            0,
+        ),
+        # 4. Autonomous pack, displayLabel context key NOT used in any other task — invalid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "Script retrieved with SHA256 ${File.SHA256}.",
+                    {
+                        "value": {
+                            "simple": "Script retrieved with SHA256 ${File.SHA256}."
+                        }
+                    },
+                ),
+            ],
+            1,
+        ),
+        # 5. Autonomous pack, displayLabel with no context keys (static text) — valid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Action confirmed on a high-risk host.", None),
+            ],
+            0,
+        ),
+        # 6. Autonomous pack, no displayLabel — valid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", None, {"key": {"simple": "value"}}),
+            ],
+            0,
+        ),
+        # 7. Autonomous pack, displayLabel with multiple context keys, one unused — invalid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "User ${issue.id} with hash ${File.SHA256}.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {"alert_ids": {"simple": "${issue.id}"}},
+                ),
+            ],
+            1,
+        ),
+        # 8. Autonomous pack, displayLabel with multiple context keys, all used — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "User ${issue.id} on endpoint ${issue.agentid}.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {
+                        "alert_ids": {"simple": "${issue.id}"},
+                        "agent": {"simple": "${issue.agentid}"},
+                    },
+                ),
+            ],
+            0,
+        ),
+        # 9. Autonomous pack, displayLabel context key used via complex root/accessor split — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "User ${PaloAltoNetworksXQL.GenericQuery.results.actor_effective_username} detected.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {
+                        "value": {
+                            "complex": {
+                                "root": "PaloAltoNetworksXQL.GenericQuery.results",
+                                "accessor": "actor_effective_username",
+                            }
+                        }
+                    },
+                ),
+            ],
+            0,
+        ),
+    ],
+)
+def test_IsValidDisplayLabelContextPathValidator(
+    managed, source, task_overrides, expected_errors
+):
+    """
+    Given:
+        - Playbooks with various displayLabel configurations in autonomous/non-autonomous packs.
+    When:
+        - Running IsValidDisplayLabelContextPathValidator.obtain_invalid_content_items.
+    Then:
+        - Context keys in displayLabel must be used in at least one other task.
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+    playbook = create_playbook_object(
+        paths=["tasks"], values=[_make_display_label_tasks(task_overrides)]
+    )
+    playbook.pack = pack
+
+    results = IsValidDisplayLabelContextPathValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_errors

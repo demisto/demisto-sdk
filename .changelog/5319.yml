@@ -1,6 +1,8 @@
 changes:
 - description: Drop support for Python 3.9.
   type: breaking
+- description: Removed the **generate-unit-tests** command, which is no longer supported.
+  type: breaking
 - description: Added support for Python 3.13 and 3.14
   type: feature
 - description: Fixed docstring parsing in generate-yml-from-python for Python 3.13+ compatibility using inspect.cleandoc normalization.

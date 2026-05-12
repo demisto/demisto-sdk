@@ -1,6 +1,7 @@
 variables:
-  CURRENT_BRANCH_NAME: sk_infra_new_python
+  CURRENT_BRANCH_NAME: "${INFRA_BRANCH}"
+
 include:
   - file: "/.gitlab/ci/demisto-sdk/.gitlab-ci.yml"
-    ref: sk_infra_new_python
+    ref: "${INFRA_BRANCH}"
     project: "${CI_PROJECT_NAMESPACE}/infra"

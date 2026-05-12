@@ -1,5 +1,5 @@
 changes:
-- description: Drop support for Python 3.9 and 3.10
+- description: Drop support for Python 3.9.
   type: breaking
 - description: Added support for Python 3.13 and 3.14
   type: feature

@@ -1,11 +1,13 @@
 import os
 import re
-from enum import Enum, IntEnum, StrEnum
+from enum import Enum, IntEnum
 from functools import reduce
 from pathlib import Path
 from typing import Dict, List
 
 from packaging.version import Version
+
+from demisto_sdk.commands.common.StrEnum import StrEnum
 
 # Note: Do NOT add imports of internal modules here, as it may cause circular imports.
 

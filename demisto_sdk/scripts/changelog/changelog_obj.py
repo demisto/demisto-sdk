@@ -1,7 +1,8 @@
-from enum import StrEnum
 from typing import Dict, List, Union
 
 from pydantic import BaseModel, validator
+
+from demisto_sdk.commands.common.StrEnum import StrEnum
 
 INITIAL_DESCRIPTION = "enter description about this PR"
 INITIAL_TYPE = "<breaking|feature|fix|internal>"

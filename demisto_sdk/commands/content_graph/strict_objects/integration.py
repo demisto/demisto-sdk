@@ -1,4 +1,3 @@
-from enum import StrEnum
 from typing import Annotated, Any, List, Optional
 
 from pydantic import Field, conlist, validator
@@ -9,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     PlatformSupportedModules,
 )
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
     Argument,
     BaseIntegrationScript,

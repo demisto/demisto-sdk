@@ -1,4 +1,3 @@
-from enum import StrEnum
 from typing import Dict, Optional, Union
 
 from packaging.version import Version
@@ -14,6 +13,7 @@ from demisto_sdk.commands.common.files.errors import FileReadError
 from demisto_sdk.commands.common.files.json_file import JsonFile
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.singleton import PydanticSingleton
+from demisto_sdk.commands.common.StrEnum import StrEnum
 from demisto_sdk.commands.common.tools import NoInternetConnectionException
 
 DOCKER_IMAGES_METADATA_NAME = "docker_images_metadata.json"

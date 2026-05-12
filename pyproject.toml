@@ -201,6 +201,7 @@ logger-objects = ["demisto_sdk.commands.common.logger.logger"]
 "orjson".msg = "use JSON_Handler instead"
 "packaging.version.LooseVersion".msg = "Use packaging.version.Version"
 "ruamel.yaml".msg = "use YAML_Handler instead"
+"str.StrEnum".msg = "Import from demisto_sdk.commands.common.StrEnum for <3.11 compatability"
 "ujson".msg = "use JSON_Handler"
 
 [tool.ruff.lint.mccabe]

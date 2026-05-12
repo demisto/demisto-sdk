@@ -1,0 +1,4 @@
+changes:
+- description: Add auto-merge for Dependabot PRs
+  type: internal
+pr_number: 5352

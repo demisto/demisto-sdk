@@ -19,7 +19,7 @@ concurrency:
 jobs:
   validate-changelog:
     runs-on: ubuntu-latest
-    if: github.ref_name != 'master'
+    if: github.ref_name != 'master' && github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

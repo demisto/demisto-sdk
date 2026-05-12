@@ -97,90 +97,21 @@ def repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
 def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Generator:
     """
     Initializes a repo with graph required mocks.
-
-    Patches CONTENT_PATH at every import site (not just base_content) so that
-    Pydantic validators on Pack/ContentItem resolve relative paths against the
-    temp test repo, not the runtime checkout. Without this, paths stored in
-    the graph as `Packs/<pack_id>` get resolved to `<runtime_repo>/Packs/<pack_id>`,
-    causing `FileNotFoundError` for pack ids that happen to exist in the runtime
-    checkout (e.g. `Base`).
-
-    Also clears the lru_cache on `BaseContent.from_path` and `get_file` so that
-    cached `Path("Packs/<pack_id>")` keys from previous tests are not reused.
     """
+    import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
     import demisto_sdk.commands.content_graph.objects.base_content as bc
-    from demisto_sdk.commands.common import content_constant_paths as ccp
-    from demisto_sdk.commands.common import tools as common_tools
-    from demisto_sdk.commands.content_graph.interface import graph as graph_iface
-    from demisto_sdk.commands.content_graph.objects import (
-        content_item as ci,
-        pack as pack_mod,
-    )
-    from demisto_sdk.commands.content_graph.parsers import (
-        base_content as parsers_bc,
-    )
-    from demisto_sdk.commands.content_graph.objects.base_content import (
-        BaseContent as _BaseContent,
-    )
 
     repo = get_repo(request, tmp_path_factory)
-    repo_path = Path(repo.path)
 
-    # Save originals so we can restore them after the test.
-    originals = {
-        "bc": bc.CONTENT_PATH,
-        "ccp": ccp.CONTENT_PATH,
-        "ci": ci.CONTENT_PATH,
-        "pack": pack_mod.CONTENT_PATH,
-        "parsers_bc": parsers_bc.CONTENT_PATH,
-        "graph_iface": graph_iface.CONTENT_PATH,
-        "interface_repo_path": ContentGraphInterface.repo_path,
-    }
+    bc.CONTENT_PATH = Path(repo.path)
+    neo4j_path = bc.CONTENT_PATH.parent.parent / "neo4j"
 
-    # Override CONTENT_PATH at *every* import site so Pydantic validators on
-    # Pack/ContentItem resolve relative paths against the temp test repo, not
-    # the runtime checkout. Without this, the path stored in the graph as
-    # `Packs/<pack_id>` would resolve to `<runtime_repo>/Packs/<pack_id>`,
-    # causing FileNotFoundError for pack ids that exist in the runtime
-    # checkout (e.g. `Base`).
-    bc.CONTENT_PATH = repo_path
-    ccp.CONTENT_PATH = repo_path
-    ci.CONTENT_PATH = repo_path
-    pack_mod.CONTENT_PATH = repo_path
-    parsers_bc.CONTENT_PATH = repo_path
-    graph_iface.CONTENT_PATH = repo_path
-    ContentGraphInterface.repo_path = repo_path
+    mock.patch.object(ContentGraphInterface, "repo_path", bc.CONTENT_PATH)
+    mock.patch.object(neo4j_service, "REPO_PATH", neo4j_path)
 
-    neo4j_path = repo_path.parent.parent / "neo4j"
-
-    # Clear lru_caches whose keys are paths that may collide with paths
-    # constructed by other tests (notably `Path("Packs/Base")`). Without
-    # this, a stale cached entry from another test can return a Pack with a
-    # `path` pointing to the (non-existent) runtime `Packs/Base`.
-    if hasattr(_BaseContent.from_path, "cache_clear"):
-        _BaseContent.from_path.cache_clear()
-    if hasattr(common_tools.get_file, "cache_clear"):
-        common_tools.get_file.cache_clear()
-
-    try:
-        yield repo
-    finally:
-        # Restore originals so subsequent tests see the runtime values.
-        bc.CONTENT_PATH = originals["bc"]
-        ccp.CONTENT_PATH = originals["ccp"]
-        ci.CONTENT_PATH = originals["ci"]
-        pack_mod.CONTENT_PATH = originals["pack"]
-        parsers_bc.CONTENT_PATH = originals["parsers_bc"]
-        graph_iface.CONTENT_PATH = originals["graph_iface"]
-        ContentGraphInterface.repo_path = originals["interface_repo_path"]
-
-        if hasattr(_BaseContent.from_path, "cache_clear"):
-            _BaseContent.from_path.cache_clear()
-        if hasattr(common_tools.get_file, "cache_clear"):
-            common_tools.get_file.cache_clear()
-
-        if (neo4j_path / "neo4j-data/data").exists():
-            shutil.rmtree(neo4j_path / "neo4j-data/data")
+    yield repo
+    if (neo4j_path / "neo4j-data/data").exists():
+        shutil.rmtree(neo4j_path / "neo4j-data/data")
 
 
 @pytest.fixture

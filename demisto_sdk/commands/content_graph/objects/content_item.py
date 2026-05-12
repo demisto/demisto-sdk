@@ -64,18 +64,9 @@ class ContentItem(BaseContent):
     def validate_path(cls, v: Path, values) -> Path:
         if v.is_absolute():
             return v
-        # Re-import CONTENT_PATH lazily so test fixtures that rebind it on the
-        # `content_constant_paths` module (e.g. graph_repo) are honored even
-        # though `content_item.py` originally imported `CONTENT_PATH` at
-        # module load.
-        from demisto_sdk.commands.common import (
-            content_constant_paths as _ccp,
-        )
-
-        content_path = _ccp.CONTENT_PATH
-        if not content_path.name:
-            return content_path / v
-        return content_path.with_name(values.get("source_repo", "content")) / v
+        if not CONTENT_PATH.name:
+            return CONTENT_PATH / v
+        return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
 
     @staticmethod
     @abstractmethod

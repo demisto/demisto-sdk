@@ -205,10 +205,23 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
+        # Build a mapping from object_id to the ContentDTO object so that
+        # ValidationResult.content_object is the same instance that was passed
+        # in via content_items.  This is required because validate_manager.py
+        # filters ALL_FILES results to only those whose content_object is in
+        # filtered_content_objects_for_validator (which contains ContentDTO
+        # objects, not graph objects).  Without this mapping the graph objects
+        # returned by the graph queries would never match and all results would
+        # be silently discarded.
+        content_items_list = list(content_items)
+        object_id_to_content_item = {
+            item.object_id: item for item in content_items_list
+        }
+
         target_content_item_ids = (
             []
             if validate_all_files
-            else [content_item.object_id for content_item in content_items]
+            else [content_item.object_id for content_item in content_items_list]
         )
 
         mismatched_dependencies = (
@@ -236,6 +249,11 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
 
         # Process items with mismatched dependencies
         for invalid_item in mismatched_dependencies:
+            # Resolve to the ContentDTO object so the result passes the
+            # ALL_FILES filter in validate_manager.py
+            content_object = object_id_to_content_item.get(
+                invalid_item.object_id, invalid_item
+            )
             missing_modules_by_dependency = self.get_missing_modules_by_dependency(
                 invalid_item
             )
@@ -249,12 +267,15 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                         message=self.error_message.format(
                             ", ".join(formatted_messages)
                         ),
-                        content_object=invalid_item,
+                        content_object=content_object,
                     )
                 )
 
         # Process items with mismatched commands
         for invalid_item in mismatched_commands:
+            content_object = object_id_to_content_item.get(
+                invalid_item.object_id, invalid_item
+            )
             missing_modules_by_item = self.get_missing_modules_by_command(invalid_item)
             if missing_modules_by_item:
                 formatted_messages = self.format_error_messages(missing_modules_by_item)
@@ -264,12 +285,15 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                         message=self.error_message.format(
                             ", ".join(formatted_messages)
                         ),
-                        content_object=invalid_item,
+                        content_object=content_object,
                     )
                 )
 
         # Process items with mismatched content_items
         for invalid_item in mismatched_content_items:
+            content_object = object_id_to_content_item.get(
+                invalid_item.object_id, invalid_item
+            )
             commands_with_missing_modules: dict[str, list[str]] = {}
             self.get_commands_with_missing_modules_by_content_item(
                 invalid_item, commands_with_missing_modules
@@ -285,7 +309,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                     ValidationResult(
                         validator=self,
                         message=f"Module compatibility issue detected for {dependency_type} dependency: {formatted_message}. Make sure the commands used are supported by the same modules as the content item.",
-                        content_object=invalid_item,
+                        content_object=content_object,
                     )
                 )
         return results

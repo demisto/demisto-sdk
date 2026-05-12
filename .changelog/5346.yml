@@ -1,4 +1,4 @@
 changes:
-- description: Strip the `internal` field from script YAMLs and pack metadata files during the `upload` flow so the uploaded content is visible to users.
+- description: Strip the `internal` and `isInternal` fields from script YAMLs and the `internal` field from pack metadata files during the `upload` flow so the uploaded content is visible to users (including in the pack `metadata.json` content items list).
   type: fix
 pr_number: 5346

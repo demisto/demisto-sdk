@@ -319,8 +319,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
             strip_internal (bool): If true, the ``internal`` field is excluded
                 from the dumped ``metadata.json`` so the uploaded pack is
-                visible to users. Should only be set by the
-                ``demisto-sdk upload`` flow.
+                visible to users, and scripts marked with ``isInternal: true``
+                are still listed in ``metadata.json``'s content items.
+                Should only be set by the ``demisto-sdk upload`` flow.
         """
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
         self._enhance_pack_properties(marketplace, self.object_id, self.content_items)
@@ -348,7 +349,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
         metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
         metadata.update(
-            self._format_metadata(marketplace, self.content_items, self.depends_on)
+            self._format_metadata(
+                marketplace,
+                self.content_items,
+                self.depends_on,
+                strip_internal=strip_internal,
+            )
         )
         self._clean_empty_supportedModuels_from_commands(
             metadata.get("contentItems", {})
@@ -417,11 +423,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             path: Output directory.
             marketplace: Destination marketplace.
             tpb: When true, include test playbooks in the dump.
-            strip_internal: When true, the ``internal`` field is removed from
-                the dumped script YAMLs and pack metadata files. Should only
-                be set by the ``demisto-sdk upload`` flow so that uploaded
-                content is visible to users; other flows (prepare-content,
-                artifact builds) keep the field intact.
+            strip_internal: When true, the ``internal`` and ``isInternal``
+                fields are removed from the dumped script YAMLs (and
+                ``internal`` from pack metadata files), and scripts marked
+                ``isInternal: true`` are still listed in the pack
+                ``metadata.json`` content items. Should only be set by the
+                ``demisto-sdk upload`` flow so that uploaded content is
+                visible to users; other flows (prepare-content, artifact
+                builds) keep the fields intact.
         """
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
@@ -555,8 +564,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         with TemporaryDirectory() as temp_dump_dir:
             temp_dir_path = Path(temp_dump_dir)
             # strip_internal=True: this is an upload flow, so the `internal`
-            # field should be removed from the dumped script YAMLs and pack
-            # metadata so the uploaded content is visible to users.
+            # and `isInternal` fields should be removed from the dumped
+            # script YAMLs and pack metadata so the uploaded content is
+            # visible to users.
             self.dump(
                 temp_dir_path,
                 marketplace=marketplace,

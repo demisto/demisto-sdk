@@ -126,9 +126,9 @@ def zip_multiple_packs(
     result_zip_path = dir / MULTIPLE_ZIPPED_PACKS_FILE_NAME
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_dir_path = Path(tmp_dir)
-        # strip_internal=True: this is an upload flow, so the `internal`
-        # field should be removed from the dumped script YAMLs and pack
-        # metadata so the uploaded content is visible to users.
+        # strip_internal=True: this is an upload flow, so the `internal` and
+        # `isInternal` fields should be removed from the dumped script YAMLs
+        # and pack metadata so the uploaded content is visible to users.
         ContentDTO(packs=packs).dump(
             tmp_dir_path,
             marketplace=marketplace,

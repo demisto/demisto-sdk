@@ -164,6 +164,212 @@ def test_base_script_prepare_for_upload_internal_false_is_stripped(mocker):
     assert "internal" not in prepared
 
 
+def test_base_script_prepare_for_upload_strips_isInternal_when_flag_true(mocker):
+    """
+    Given:
+        - A Script whose underlying upload data contains ``isInternal: true``.
+    When:
+        - ``BaseScript.prepare_for_upload`` is invoked with
+          ``strip_internal=True`` (i.e. the upload flow).
+    Then:
+        - The ``isInternal`` key is removed from the resulting data so the
+          uploaded script is listed in the pack metadata.
+        - The other keys are preserved unchanged.
+    """
+    base_data = {
+        "name": "MyScript",
+        "script": "-",
+        "type": "python",
+        "isInternal": True,
+    }
+    mocker.patch.object(
+        IntegrationScript,
+        "prepare_for_upload",
+        return_value=dict(base_data),
+    )
+    mocker.patch.object(BaseScript, "get_supported_native_images", return_value=[])
+
+    script = _build_minimal_script()
+    prepared = script.prepare_for_upload(strip_internal=True)
+
+    assert "isInternal" not in prepared
+    assert prepared["name"] == "MyScript"
+    assert prepared["type"] == "python"
+
+
+def test_base_script_prepare_for_upload_keeps_isInternal_when_flag_false(mocker):
+    """
+    Given:
+        - A Script whose underlying upload data contains ``isInternal: true``.
+    When:
+        - ``BaseScript.prepare_for_upload`` is invoked **without**
+          ``strip_internal`` (i.e. the prepare-content / artifact-build flow).
+    Then:
+        - The ``isInternal`` key is preserved on the resulting data, because
+          the strip is scoped to the upload flow only.
+    """
+    base_data = {
+        "name": "MyScript",
+        "script": "-",
+        "type": "python",
+        "isInternal": True,
+    }
+    mocker.patch.object(
+        IntegrationScript,
+        "prepare_for_upload",
+        return_value=dict(base_data),
+    )
+    mocker.patch.object(BaseScript, "get_supported_native_images", return_value=[])
+
+    script = _build_minimal_script()
+    prepared = script.prepare_for_upload()  # no strip_internal -> defaults to False
+
+    assert prepared.get("isInternal") is True
+    assert prepared["name"] == "MyScript"
+
+
+def test_base_script_prepare_for_upload_strips_both_internal_fields(mocker):
+    """
+    Given:
+        - A Script whose underlying upload data contains both ``internal: true``
+          and ``isInternal: true``.
+    When:
+        - ``BaseScript.prepare_for_upload`` is invoked with
+          ``strip_internal=True``.
+    Then:
+        - Both ``internal`` and ``isInternal`` keys are removed from the
+          resulting data.
+    """
+    base_data = {
+        "name": "MyScript",
+        "script": "-",
+        "type": "python",
+        "internal": True,
+        "isInternal": True,
+    }
+    mocker.patch.object(
+        IntegrationScript,
+        "prepare_for_upload",
+        return_value=dict(base_data),
+    )
+    mocker.patch.object(BaseScript, "get_supported_native_images", return_value=[])
+
+    script = _build_minimal_script()
+    prepared = script.prepare_for_upload(strip_internal=True)
+
+    assert "internal" not in prepared
+    assert "isInternal" not in prepared
+
+
+# ---------------------------------------------------------------------------
+# should_ignore_item_in_metadata -- the upload flow (strip_internal=True)
+# must NOT skip scripts marked ``isInternal: true``, so they appear in the
+# generated metadata.json's content items list. Other flows must continue
+# skipping them as before (preserving PR #5025 semantics).
+# ---------------------------------------------------------------------------
+
+
+def test_should_ignore_item_in_metadata_skips_internal_script_by_default():
+    """
+    Given:
+        - A Script content item with ``is_internal=True``.
+    When:
+        - ``should_ignore_item_in_metadata`` is called without the
+          ``strip_internal`` flag (the prepare-content / artifact-build flow).
+    Then:
+        - The function returns True, preserving the PR #5025 behavior of
+          excluding internal scripts from the pack metadata content items.
+    """
+    from demisto_sdk.commands.content_graph.common import ContentType
+    from demisto_sdk.commands.content_graph.objects.pack_metadata import (
+        should_ignore_item_in_metadata,
+    )
+
+    content_item = MagicMock()
+    content_item.is_test = False
+    content_item.is_silent = False
+    content_item.is_llm = False
+    content_item.is_internal = True
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    content_item.content_type = ContentType.SCRIPT
+    content_item.name = "MyInternalScript"
+
+    assert (
+        should_ignore_item_in_metadata(content_item, MarketplaceVersions.XSOAR) is True
+    )
+
+
+def test_should_ignore_item_in_metadata_keeps_internal_script_on_upload():
+    """
+    Given:
+        - A Script content item with ``is_internal=True``.
+    When:
+        - ``should_ignore_item_in_metadata`` is called with
+          ``strip_internal=True`` (the upload flow).
+    Then:
+        - The function returns False so the internal script is included in
+          the generated ``metadata.json`` content items list, matching the
+          fact that the script's ``isInternal`` field is also stripped from
+          the dumped YAML on this flow.
+    """
+    from demisto_sdk.commands.content_graph.common import ContentType
+    from demisto_sdk.commands.content_graph.objects.pack_metadata import (
+        should_ignore_item_in_metadata,
+    )
+
+    content_item = MagicMock()
+    content_item.is_test = False
+    content_item.is_silent = False
+    content_item.is_llm = False
+    content_item.is_internal = True
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    content_item.content_type = ContentType.SCRIPT
+    content_item.name = "MyInternalScript"
+
+    assert (
+        should_ignore_item_in_metadata(
+            content_item,
+            MarketplaceVersions.XSOAR,
+            strip_internal=True,
+        )
+        is False
+    )
+
+
+def test_should_ignore_item_in_metadata_still_skips_test_on_upload_flow():
+    """
+    Given:
+        - A test Script content item.
+    When:
+        - ``should_ignore_item_in_metadata`` is called with ``strip_internal=True``.
+    Then:
+        - The function still returns True - ``strip_internal`` only relaxes
+          the ``isInternal`` skip rule, not the unrelated ``is_test`` rule.
+    """
+    from demisto_sdk.commands.content_graph.common import ContentType
+    from demisto_sdk.commands.content_graph.objects.pack_metadata import (
+        should_ignore_item_in_metadata,
+    )
+
+    content_item = MagicMock()
+    content_item.is_test = True
+    content_item.is_silent = False
+    content_item.is_llm = False
+    content_item.is_internal = False
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    content_item.content_type = ContentType.SCRIPT
+    content_item.name = "MyTestScript"
+
+    assert (
+        should_ignore_item_in_metadata(
+            content_item,
+            MarketplaceVersions.XSOAR,
+            strip_internal=True,
+        )
+        is True
+    )
+
+
 # ---------------------------------------------------------------------------
 # pack_metadata.json (the file copied verbatim from disk during dump).
 # ---------------------------------------------------------------------------

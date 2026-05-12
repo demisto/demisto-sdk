@@ -67,14 +67,20 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             )
             data["nativeimage"] = supported_native_images
 
-        # Remove `internal: true` so the uploaded script will be visible to
-        # the user. Only stripped on the upload flow (see `Pack.dump` and
+        # Remove `internal: true` and `isInternal: true` so the uploaded
+        # script will be visible to the user and listed in pack metadata.
+        # Only stripped on the upload flow (see `Pack.dump` and
         # `ContentItem._upload`); other flows (prepare-content, artifact
-        # builds) keep the field intact.
-        if kwargs.get("strip_internal") and data.pop("internal", None):
-            logger.debug(
-                f"Removed 'internal' field from script {self.object_id} before upload"
-            )
+        # builds) keep the fields intact.
+        if kwargs.get("strip_internal"):
+            if data.pop("internal", None):
+                logger.debug(
+                    f"Removed 'internal' field from script {self.object_id} before upload"
+                )
+            if data.pop("isInternal", None):
+                logger.debug(
+                    f"Removed 'isInternal' field from script {self.object_id} before upload"
+                )
 
         return data
 

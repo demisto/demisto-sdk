@@ -129,14 +129,9 @@ class ContentItem(BaseContent):
             pack = next(iter(in_pack)).content_item_to  # type: ignore[return-value]
         if not pack:
             if pack_name := get_pack_name(path):
-                try:
-                    pack = BaseContent.from_path(
-                        CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
-                    )  # type: ignore[assignment]
-                except (FileNotFoundError, OSError):
-                    logger.debug(
-                        f"Could not find pack {pack_name} at {CONTENT_PATH / PACKS_FOLDER / pack_name}"
-                    )
+                pack = BaseContent.from_path(
+                    CONTENT_PATH / PACKS_FOLDER / pack_name, metadata_only=True
+                )  # type: ignore[assignment]
         return pack  # type: ignore[return-value]
 
     @property

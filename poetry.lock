@@ -5382,4 +5382,4 @@ build = ["gsutil"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.15"
-content-hash = "47992384920e26758b8dae591a3f7428fb1ada26201afc76fb592f7dae4dfb7c"
+content-hash = "59d442f43bdc52c6827473a7ea7fe5bfe3f0e53ea9062704f4668fa720708326"

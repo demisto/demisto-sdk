@@ -9,4 +9,6 @@ changes:
   type: internal
 - description: Updated GitHub Actions to support Node.js 24 and resolve deprecation warnings for Node.js 20.
   type: internal
+- description: Hardened the graph_repo test fixture to fully override CONTENT_PATH at every import site and to clear path-keyed lru_caches, fixing flaky PA133 unit tests on Python 3.14.
+  type: internal
 pr_number: 5319

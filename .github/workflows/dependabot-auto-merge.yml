@@ -72,7 +72,6 @@ jobs:
       - name: Approve and auto-merge for Dependabot PRs
         if: |
           steps.check_breaking.outputs.has_breaking_changes != 'true' && (
-            contains(steps.metadata.outputs.dependency-names, 'demisto/*') ||
             steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
             steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
             (steps.metadata.outputs.update-type == 'version-update:semver-major' && steps.evaluate_major.outputs.should_merge_major == 'true')

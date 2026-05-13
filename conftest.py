@@ -3,24 +3,30 @@
 import multiprocessing
 import os
 import shutil
+import sys
 from pathlib import Path
 from typing import Generator
 from unittest import mock
 
-# Python 3.14 changed the default multiprocessing start method on POSIX from
-# "fork" to "forkserver". Several test fixtures (e.g. ``graph_repo``) mutate
-# module-level globals such as ``CONTENT_PATH`` in the parent process and rely
-# on worker processes inheriting that mutated state. With "forkserver" the
-# workers re-import the module fresh and lose the mutation, which causes
-# spurious ``FileNotFoundError: Packs/<pack>/pack_metadata.json`` failures
-# (see PA133 validator tests). Pin the test suite to "fork" to preserve the
-# behavior that worked on Python <= 3.13. Production code is unaffected.
-if multiprocessing.get_start_method(allow_none=True) is None:
+# Python 3.14 switched the default POSIX multiprocessing start method to
+# "forkserver", which breaks test fixtures that mutate module globals in
+# the parent and expect children to inherit them. Pin to "fork" for tests.
+if sys.version_info >= (3, 14) and multiprocessing.get_start_method(allow_none=True) is None:
     try:
         multiprocessing.set_start_method("fork")
     except (ValueError, RuntimeError):
-        # "fork" is unavailable on Windows; fall back to the platform default.
-        pass
+        pass  # "fork" is unavailable on Windows; fall back to the default.
+
+# Python 3.14 propagates BlockingIOError from stderr writes instead of
+# silently retrying EAGAIN. Force blocking mode so pytest-sugar's wide
+# progress lines on the GitHub Actions log pipe don't crash the run.
+if sys.version_info >= (3, 14):
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            os.set_blocking(_stream.fileno(), True)
+        except (OSError, ValueError, AttributeError):
+            pass  # capture, no real fd, or unsupported platform (Windows).
+    del _stream
 
 import pytest
 from _pytest.fixtures import FixtureRequest

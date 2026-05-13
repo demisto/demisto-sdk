@@ -1,4 +1,23 @@
 # Changelog
+## 1.39.0 (2026-05-13)
+### Breaking
+* Drop support for Python 3.9. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+* Removed the deprecated **generate-unit-tests** command, which is no longer supported. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+
+### Feature
+* Added GR114 validation that warns when a content item's supportedModules are not a subset of its non-mandatory dependency's supportedModules. [#5327](https://github.com/demisto/demisto-sdk/pull/5327)
+* Added support for the marketplace-suffix syntax (e.g. `hybrid:marketplacev2`) on the integration root-level `hybrid` field, so it no longer fails the ST110 validation. [#5353](https://github.com/demisto/demisto-sdk/pull/5353)
+* Added `internal` and `prompt` as valid `underlyingcontentitem.type` values for Agentix actions. [#5206](https://github.com/demisto/demisto-sdk/pull/5206)
+* Added support for Python 3.13 and 3.14 [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+
+### Fix
+* Added `marketplaces` field to the `StrictPreProcessRule` schema to prevent ST110 validation failures when pre-process rules include a `marketplaces` field. [#5345](https://github.com/demisto/demisto-sdk/pull/5345)
+
+### Internal
+* Fixed docstring parsing in generate-yml-from-python for Python 3.13+ compatibility using inspect.cleandoc normalization. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+* Updated GitHub Actions to support Node.js 24 and resolve deprecation warnings for Node.js 20. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+
+
 ## 1.38.25 (2026-05-04)
 ### Feature
 * Added support for the `internal` flag in pack_metadata.json to mark packs as internal (hidden from UI and API). [#5325](https://github.com/demisto/demisto-sdk/pull/5325)

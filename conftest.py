@@ -18,18 +18,8 @@ if (
     try:
         multiprocessing.set_start_method("fork")
     except (ValueError, RuntimeError):
-        pass  # "fork" is unavailable on Windows; fall back to the default.
-
-# Python 3.14 propagates BlockingIOError from stderr writes instead of
-# silently retrying EAGAIN. Force blocking mode so pytest-sugar's wide
-# progress lines on the GitHub Actions log pipe don't crash the run.
-if sys.version_info >= (3, 14):
-    for _stream in (sys.stdout, sys.stderr):
-        try:
-            os.set_blocking(_stream.fileno(), True)
-        except (OSError, ValueError, AttributeError):
-            pass  # capture, no real fd, or unsupported platform (Windows).
-    del _stream
+        # "fork" is unavailable on Windows; fall back to the platform default.
+        pass
 
 import pytest
 from _pytest.fixtures import FixtureRequest

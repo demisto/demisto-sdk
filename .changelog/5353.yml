@@ -1,0 +1,4 @@
+changes:
+- description: Added support for the marketplace-suffix syntax (e.g. `hybrid:marketplacev2`) on the integration root-level `hybrid` field, so it no longer fails the ST110 validation.
+  type: feature
+pr_number: 5353

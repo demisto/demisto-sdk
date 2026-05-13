@@ -11,7 +11,10 @@ from unittest import mock
 # Python 3.14 switched the default POSIX multiprocessing start method to
 # "forkserver", which breaks test fixtures that mutate module globals in
 # the parent and expect children to inherit them. Pin to "fork" for tests.
-if sys.version_info >= (3, 14) and multiprocessing.get_start_method(allow_none=True) is None:
+if (
+    sys.version_info >= (3, 14)
+    and multiprocessing.get_start_method(allow_none=True) is None
+):
     try:
         multiprocessing.set_start_method("fork")
     except (ValueError, RuntimeError):

@@ -113,18 +113,53 @@ def graph_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Ge
     """
     Initializes a repo with graph required mocks.
     """
-    import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
+    import demisto_sdk.commands.common.content_constant_paths as ccp
     import demisto_sdk.commands.content_graph.objects.base_content as bc
+    import demisto_sdk.commands.content_graph.objects.content_item as ci
+    import demisto_sdk.commands.content_graph.objects.pack as pack_module
+    import demisto_sdk.commands.content_graph.objects.repository as repo_module
+    import demisto_sdk.commands.content_graph.parsers.base_content as parser_bc
 
     repo = get_repo(request, tmp_path_factory)
 
-    bc.CONTENT_PATH = Path(repo.path)
-    neo4j_path = bc.CONTENT_PATH.parent.parent / "neo4j"
+    new_content_path = Path(repo.path)
+    original_content_path = ccp.CONTENT_PATH
+    original_env = os.environ.get("DEMISTO_SDK_CONTENT_PATH")
 
-    mock.patch.object(ContentGraphInterface, "repo_path", bc.CONTENT_PATH)
-    mock.patch.object(neo4j_service, "REPO_PATH", neo4j_path)
+    # Patch CONTENT_PATH in all modules that import it
+    ccp.CONTENT_PATH = new_content_path
+    bc.CONTENT_PATH = new_content_path
+    ci.CONTENT_PATH = new_content_path
+    pack_module.CONTENT_PATH = new_content_path
+    repo_module.CONTENT_PATH = new_content_path
+    parser_bc.CONTENT_PATH = new_content_path
+
+    # Set env var so multiprocessing child processes resolve the correct path
+    os.environ["DEMISTO_SDK_CONTENT_PATH"] = str(new_content_path)
+
+    neo4j_path = new_content_path.parent.parent / "neo4j"
+
+    p1 = mock.patch.object(ContentGraphInterface, "repo_path", new_content_path)
+    p1.start()
 
     yield repo
+
+    # Restore original CONTENT_PATH in all modules
+    ccp.CONTENT_PATH = original_content_path
+    bc.CONTENT_PATH = original_content_path
+    ci.CONTENT_PATH = original_content_path
+    pack_module.CONTENT_PATH = original_content_path
+    repo_module.CONTENT_PATH = original_content_path
+    parser_bc.CONTENT_PATH = original_content_path
+
+    # Restore env var
+    if original_env is None:
+        os.environ.pop("DEMISTO_SDK_CONTENT_PATH", None)
+    else:
+        os.environ["DEMISTO_SDK_CONTENT_PATH"] = original_env
+
+    p1.stop()
+
     if (neo4j_path / "neo4j-data/data").exists():
         shutil.rmtree(neo4j_path / "neo4j-data/data")
 

@@ -3627,14 +3627,18 @@ def test_MissingCompliantPoliciesValidator_list_get_commands_excluded(mocker):
                 {
                     "name": "endpoint-list",
                     "description": "List endpoints",
-                    "arguments": [{"name": "endpoint_id", "description": "Endpoint ID"}],
+                    "arguments": [
+                        {"name": "endpoint_id", "description": "Endpoint ID"}
+                    ],
                     "outputs": [],
                     "compliantpolicies": [],  # Missing policies but should be ignored
                 },
                 {
                     "name": "get-endpoint-details",
                     "description": "Get endpoint details",
-                    "arguments": [{"name": "endpoint_id", "description": "Endpoint ID"}],
+                    "arguments": [
+                        {"name": "endpoint_id", "description": "Endpoint ID"}
+                    ],
                     "outputs": [],
                     "compliantpolicies": [],  # Missing policies but should be ignored
                 },
@@ -3724,7 +3728,9 @@ def test_MissingCompliantPoliciesValidator_mixed_commands(mocker):
                     "description": "Delete user",
                     "arguments": [{"name": "username", "description": "Username"}],
                     "outputs": [],
-                    "compliantpolicies": ["User Soft Remediation"],  # Should PASS - has policy
+                    "compliantpolicies": [
+                        "User Soft Remediation"
+                    ],  # Should PASS - has policy
                 },
             ]
         ],

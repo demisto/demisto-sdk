@@ -15,9 +15,7 @@ ContentTypes = Union[Integration, Script]
 
 # Reputation commands that should be excluded from BA129 validation
 # These are standard indicator reputation commands
-REPUTATION_COMMANDS = {
-    "ip", "domain", "url", "file", "email", "cve", "endpoint"
-}
+REPUTATION_COMMANDS = {"ip", "domain", "url", "file", "email", "cve", "endpoint"}
 
 
 class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
@@ -121,31 +119,31 @@ class MissingCompliantPoliciesValidator(BaseValidator[ContentTypes]):
     def _should_skip_command(command_name: str) -> bool:
         """
         Determines if a command should be skipped from BA129 validation.
-        
+
         Commands are skipped if they are:
         1. Reputation commands (e.g., ip, domain, url, file, email, cve, etc.)
         2. List commands (commands containing 'list')
         3. Get commands (commands containing 'get')
-        
+
         Args:
             command_name (str): The name of the command to check.
-            
+
         Returns:
             bool: True if the command should be skipped, False otherwise.
         """
         if not command_name:
             return False
-        
+
         command_lower = command_name.lower()
-        
+
         # Check if it's a reputation command
         if command_lower in REPUTATION_COMMANDS:
             return True
-        
+
         # Check if it's a list or get command
         if "list" in command_lower or "get" in command_lower:
             return True
-        
+
         return False
 
     def _is_new_command(self, content_item: ContentTypes, command_name: str) -> bool:

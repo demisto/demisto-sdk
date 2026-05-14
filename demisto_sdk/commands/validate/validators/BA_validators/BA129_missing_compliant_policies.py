@@ -16,8 +16,7 @@ ContentTypes = Union[Integration, Script]
 # Reputation commands that should be excluded from BA129 validation
 # These are standard indicator reputation commands
 REPUTATION_COMMANDS = {
-    "ip", "domain", "url", "file", "email", "cve", "cidr",
-    "account", "host", "fqdn", "registry", "ssdeep"
+    "ip", "domain", "url", "file", "email", "cve", "endpoint"
 }
 
 

@@ -1,0 +1,4 @@
+changes:
+- description: update google-cloud-storage version
+  type: fix
+pr_number: 5357

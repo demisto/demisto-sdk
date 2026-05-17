@@ -14,6 +14,24 @@ from demisto_sdk.commands.validate.validators.AS_validators.AS102_is_valid_quiet
 from demisto_sdk.commands.validate.validators.AS_validators.AS103_is_valid_autonomous_playbook_headers import (
     IsValidAutonomousPlaybookHeadersValidator,
 )
+from demisto_sdk.commands.validate.validators.AS_validators.AS104_playbook_must_have_adopted_field import (
+    PlaybookMustHaveAdoptedFieldValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS105_no_is_silent_in_autonomous_pack import (
+    NoIsSilentInAutonomousPackValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS106_warn_quiet_mode_on_display_label_task import (
+    WarnQuietModeOnDisplayLabelTaskValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS107_subplaybook_prefix_consistency import (
+    SubplaybookPrefixConsistencyValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS108_subplaybook_must_be_internal import (
+    SubplaybookMustBeInternalValidator,
+)
+from demisto_sdk.commands.validate.validators.AS_validators.AS109_is_valid_display_label_context_path import (
+    IsValidDisplayLabelContextPathValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -394,7 +412,7 @@ def _make_header_tasks(sections, starttaskid="0"):
             ],
             0,
         ),
-        # 2. All 5 sections with descriptions in correct order — valid
+        # 2. All 6 sections with descriptions in correct order — valid
         (
             True,
             "autonomous",
@@ -404,10 +422,11 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("3", "Investigation", "Investigate"),
                 ("4", "Verdict", "Determine verdict"),
                 ("5", "Remediation", "Remediate"),
+                ("6", "Playbook Completed", "Playbook done"),
             ],
             0,
         ),
-        # 3. 4 mandatory sections (optional omitted) in correct order — valid
+        # 3. 5 mandatory sections (optional omitted) in correct order — valid
         (
             True,
             "autonomous",
@@ -416,6 +435,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("2", "Investigation", "Investigate"),
                 ("3", "Verdict", "Determine verdict"),
                 ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Playbook done"),
             ],
             0,
         ),
@@ -427,6 +447,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("1", "Data Collection", "Collect data"),
                 ("2", "Investigation", "Investigate"),
                 ("3", "Remediation", "Remediate"),
+                ("4", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -440,6 +461,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("3", "Investigation", "Investigate"),
                 ("4", "Verdict", "Determine verdict"),
                 ("5", "Remediation", "Remediate"),
+                ("6", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -452,6 +474,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("2", "Investigation", "Investigate"),
                 ("3", "Verdict", "Determine verdict"),
                 ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -464,6 +487,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("2", "Investigation", "Investigate"),
                 ("3", "Verdict", "Determine verdict"),
                 ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -476,6 +500,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("2", "Data Collection", "Collect data"),
                 ("3", "Verdict", "Determine verdict"),
                 ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -487,6 +512,7 @@ def _make_header_tasks(sections, starttaskid="0"):
                 ("1", "Data Collection", ""),
                 ("2", "Investigation", "Investigate"),
                 ("3", "Remediation", "Remediate"),
+                ("4", "Playbook Completed", "Playbook done"),
             ],
             1,
         ),
@@ -495,6 +521,45 @@ def _make_header_tasks(sections, starttaskid="0"):
             True,
             "autonomous",
             [],
+            1,
+        ),
+        # 11. "Playbook Completed" appears twice (duplicatable) — valid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", "Branch A done"),
+                ("6", "Playbook Completed", "Branch B done"),
+            ],
+            0,
+        ),
+        # 12. Missing "Playbook Completed" — invalid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+            ],
+            1,
+        ),
+        # 13. "Playbook Completed" with empty description — invalid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Data Collection", "Collect data"),
+                ("2", "Investigation", "Investigate"),
+                ("3", "Verdict", "Determine verdict"),
+                ("4", "Remediation", "Remediate"),
+                ("5", "Playbook Completed", ""),
+            ],
             1,
         ),
     ],
@@ -537,12 +602,13 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
     """
     pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
 
-    # Build the standard valid sections
+    # Build the standard valid sections (including mandatory "Playbook Completed")
     sections = [
         ("1", "Data Collection", "Collect data"),
         ("2", "Investigation", "Investigate"),
         ("3", "Verdict", "Determine verdict"),
         ("4", "Remediation", "Remediate"),
+        ("5", "Playbook Completed", "Playbook done"),
     ]
     header_tasks = _make_header_tasks(sections)
 
@@ -564,7 +630,7 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
         "nexttasks": {},
     }
     # Link it from the last section so it's reachable in BFS
-    header_tasks["4"]["nexttasks"] = {"#none#": ["404"]}
+    header_tasks["5"]["nexttasks"] = {"#none#": ["404"]}
 
     playbook = create_playbook_object(
         paths=["starttaskid", "tasks"], values=["0", header_tasks]
@@ -577,3 +643,890 @@ def test_IsValidAutonomousPlaybookHeadersValidator_ignores_subsections():
     assert (
         len(results) == 0
     ), "Sub-section title tasks (isSubSection=true) should be ignored by AS103"
+
+
+@pytest.mark.parametrize(
+    "managed, source, adopted, expected_errors",
+    [
+        # Non-autonomous pack — no errors regardless of adopted value
+        (False, "other", None, 0),
+        (False, "other", False, 0),
+        (False, "other", True, 0),
+        # Autonomous pack with adopted=True — valid
+        (True, "autonomous", True, 0),
+        # Autonomous pack with adopted=False — invalid
+        (True, "autonomous", False, 1),
+        # Autonomous pack with adopted=None (missing) — invalid
+        (True, "autonomous", None, 1),
+        # Non-autonomous pack (wrong source) — no errors
+        (True, "other", None, 0),
+        # Non-autonomous pack (managed=False) — no errors
+        (False, "autonomous", None, 0),
+    ],
+)
+def test_PlaybookMustHaveAdoptedFieldValidator(
+    managed, source, adopted, expected_errors
+):
+    """
+    Given:
+        - Playbooks with various 'adopted' field values in autonomous/non-autonomous packs.
+    When:
+        - Running PlaybookMustHaveAdoptedFieldValidator.obtain_invalid_content_items.
+    Then:
+        - Playbooks in autonomous packs (managed: true AND source: 'autonomous')
+          must have adopted: true.
+        - Playbooks in non-autonomous packs can have any value for 'adopted'.
+    """
+    pack_metadata = {}
+    if managed is not None:
+        pack_metadata["managed"] = managed
+    if source is not None:
+        pack_metadata["source"] = source
+
+    pack = create_pack_object(
+        paths=list(pack_metadata.keys()), values=list(pack_metadata.values())
+    )
+
+    paths = []
+    values = []
+    if adopted is not None:
+        paths.append("adopted")
+        values.append(adopted)
+
+    playbook = create_playbook_object(paths=paths or None, values=values or None)
+    playbook.pack = pack
+
+    results = PlaybookMustHaveAdoptedFieldValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_errors
+
+
+def test_PlaybookMustHaveAdoptedFieldValidator_fix():
+    """
+    Given:
+        - A playbook in an autonomous pack (managed: true, source: 'autonomous')
+          without the 'adopted' field set.
+    When:
+        - Running the fix method.
+    Then:
+        - The playbook's 'adopted' field should be set to True.
+        - The playbook should then pass validation.
+    """
+    pack = create_pack_object(
+        paths=["managed", "source"],
+        values=[True, "autonomous"],
+    )
+    playbook = create_playbook_object()
+    playbook.pack = pack
+
+    validator = PlaybookMustHaveAdoptedFieldValidator()
+
+    # Verify it's invalid before fix
+    assert len(validator.obtain_invalid_content_items([playbook])) == 1
+
+    # Apply fix
+    fix_result = validator.fix(playbook)
+
+    # Verify fix was applied
+    assert fix_result.message == validator.fix_message
+    assert playbook.adopted is True
+
+    # Verify it's now valid
+    assert len(validator.obtain_invalid_content_items([playbook])) == 0
+
+
+@pytest.mark.parametrize(
+    "managed, pack_source, item_is_silent, expected_result_len",
+    [
+        # Valid cases — should pass (no error)
+        (True, "autonomous", False, 0),  # Autonomous pack, not silent
+        (False, "other", True, 0),  # Non-autonomous pack, silent
+        (True, "other", True, 0),  # managed=true but wrong source, silent
+        (False, "autonomous", True, 0),  # source=autonomous but managed=false, silent
+        # Invalid cases — should fail
+        (True, "autonomous", True, 1),  # Autonomous pack + silent
+    ],
+)
+def test_NoIsSilentInAutonomousPackValidator_playbook(
+    managed, pack_source, item_is_silent, expected_result_len
+):
+    """
+    Given:
+        - Playbooks with various combinations of pack metadata (managed/source)
+          and item-level isSilent field.
+
+    When:
+        - Running NoIsSilentInAutonomousPackValidator.obtain_invalid_content_items.
+
+    Then:
+        - Playbooks in autonomous packs (managed: true, source: 'autonomous') that have
+          isSilent: true must be flagged as invalid.
+        - Non-autonomous packs or non-silent items must not be flagged.
+    """
+    pack_metadata: dict = {}
+    if managed is not None:
+        pack_metadata["managed"] = managed
+    if pack_source is not None:
+        pack_metadata["source"] = pack_source
+
+    pack = create_pack_object(
+        paths=list(pack_metadata.keys()), values=list(pack_metadata.values())
+    )
+
+    playbook = create_playbook_object(paths=["issilent"], values=[item_is_silent])
+    playbook.pack = pack
+
+    results = NoIsSilentInAutonomousPackValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_result_len
+
+
+@pytest.mark.parametrize(
+    "managed, pack_source, item_is_silent, expected_result_len",
+    [
+        # Valid cases — should pass (no error)
+        (True, "autonomous", False, 0),  # Autonomous pack, not silent
+        (False, "other", True, 0),  # Non-autonomous pack, silent
+        (True, "other", True, 0),  # managed=true but wrong source, silent
+        (False, "autonomous", True, 0),  # source=autonomous but managed=false, silent
+        # Invalid cases — should fail
+        (True, "autonomous", True, 1),  # Autonomous pack + silent
+    ],
+)
+def test_NoIsSilentInAutonomousPackValidator_trigger(
+    managed, pack_source, item_is_silent, expected_result_len
+):
+    """
+    Given:
+        - Triggers with various combinations of pack metadata (managed/source)
+          and item-level issilent field.
+
+    When:
+        - Running NoIsSilentInAutonomousPackValidator.obtain_invalid_content_items.
+
+    Then:
+        - Triggers in autonomous packs (managed: true, source: 'autonomous') that have
+          issilent: true must be flagged as invalid.
+        - Non-autonomous packs or non-silent items must not be flagged.
+    """
+    pack_metadata: dict = {}
+    if managed is not None:
+        pack_metadata["managed"] = managed
+    if pack_source is not None:
+        pack_metadata["source"] = pack_source
+
+    pack = create_pack_object(
+        paths=list(pack_metadata.keys()), values=list(pack_metadata.values())
+    )
+
+    trigger = create_trigger_object(paths=["issilent"], values=[item_is_silent])
+    trigger.pack = pack
+
+    results = NoIsSilentInAutonomousPackValidator().obtain_invalid_content_items(
+        [trigger]
+    )
+    assert len(results) == expected_result_len
+
+
+def test_NoIsSilentInAutonomousPackValidator_fix_playbook():
+    """
+    Given:
+        - A playbook in an autonomous pack (managed: true, source: 'autonomous')
+          that has isSilent: true.
+
+    When:
+        - Running the fix method.
+
+    Then:
+        - The isSilent field is removed from the playbook data and is_silent is set to False.
+        - The playbook is now valid (no errors).
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+    playbook = create_playbook_object(paths=["issilent"], values=[True])
+    playbook.pack = pack
+
+    validator = NoIsSilentInAutonomousPackValidator()
+    assert len(validator.obtain_invalid_content_items([playbook])) == 1
+
+    fix_result = validator.fix(playbook)
+    assert fix_result.message == validator.fix_message
+    assert playbook.is_silent is False
+    assert "isSilent" not in playbook.data
+
+    assert len(validator.obtain_invalid_content_items([playbook])) == 0
+
+
+def test_NoIsSilentInAutonomousPackValidator_fix_trigger():
+    """
+    Given:
+        - A trigger in an autonomous pack (managed: true, source: 'autonomous')
+          that has issilent: true.
+
+    When:
+        - Running the fix method.
+
+    Then:
+        - The isSilent field is removed from the trigger data and is_silent is set to False.
+        - The trigger is now valid (no errors).
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+    trigger = create_trigger_object(paths=["issilent"], values=[True])
+    trigger.pack = pack
+
+    validator = NoIsSilentInAutonomousPackValidator()
+    assert len(validator.obtain_invalid_content_items([trigger])) == 1
+
+    fix_result = validator.fix(trigger)
+    assert fix_result.message == validator.fix_message
+    assert trigger.is_silent is False
+    assert "isSilent" not in trigger.data
+
+    assert len(validator.obtain_invalid_content_items([trigger])) == 0
+
+
+@pytest.mark.parametrize(
+    "managed, source, task_overrides, expected_warnings",
+    [
+        # Non-autonomous pack — no warnings regardless of quietmode/displayLabel
+        (False, "other", [("0", "start", 0, None), ("1", "regular", 1, "My Label")], 0),
+        # Autonomous pack, task has displayLabel and quietmode=1 — warning
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", 1, "My Label")],
+            1,
+        ),
+        # Autonomous pack, task has displayLabel but quietmode=0 — no warning
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", 0, "My Label")],
+            0,
+        ),
+        # Autonomous pack, task has displayLabel but quietmode=None — no warning
+        (
+            True,
+            "autonomous",
+            [("0", "start", 0, None), ("1", "regular", None, "My Label")],
+            0,
+        ),
+        # Autonomous pack, task has no displayLabel and quietmode=1 — no warning (AS102 handles this)
+        (True, "autonomous", [("0", "start", 0, None), ("1", "regular", 1, None)], 0),
+        # Autonomous pack, start/title tasks excluded even with displayLabel and quietmode=1
+        (
+            True,
+            "autonomous",
+            [("0", "start", 1, "Start Label"), ("1", "title", 1, "Title Label")],
+            0,
+        ),
+        # Autonomous pack, multiple tasks with displayLabel and quietmode=1 — multiple warnings in one result
+        (
+            True,
+            "autonomous",
+            [
+                ("0", "start", 0, None),
+                ("1", "regular", 1, "Label One"),
+                ("2", "regular", 1, "Label Two"),
+            ],
+            1,
+        ),
+    ],
+)
+def test_WarnQuietModeOnDisplayLabelTaskValidator(
+    managed, source, task_overrides, expected_warnings
+):
+    """
+    Given:
+        - Playbooks with various task configurations in autonomous/non-autonomous packs.
+    When:
+        - Running WarnQuietModeOnDisplayLabelTaskValidator.obtain_invalid_content_items.
+    Then:
+        - Tasks with a displayLabel AND quietmode=1 in autonomous packs should raise a warning.
+        - Tasks without a displayLabel, or with quietmode != 1, or in non-autonomous packs
+          should not raise a warning.
+        - start and title task types are always excluded.
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+    playbook = create_playbook_object(
+        paths=["tasks"], values=[_make_tasks(task_overrides)]
+    )
+    playbook.pack = pack
+
+    results = WarnQuietModeOnDisplayLabelTaskValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_warnings
+
+
+@pytest.mark.parametrize(
+    "filename, object_id, name, managed, source, expected_result_len",
+    [
+        # Valid cases - consistent prefix usage in autonomous pack
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            True,
+            "autonomous",
+            0,
+        ),  # All have prefix
+        (
+            "regular-playbook",
+            "regular-playbook",
+            "regular-playbook",
+            True,
+            "autonomous",
+            0,
+        ),  # None have prefix
+        (
+            "MyPlaybook",
+            "MyPlaybook",
+            "MyPlaybook",
+            True,
+            "autonomous",
+            0,
+        ),  # None have prefix
+        # Valid cases - non-autonomous packs (should not validate)
+        ("subplaybook-test", "test", "test", False, "autonomous", 0),  # Not managed
+        ("subplaybook-test", "test", "test", True, "other", 0),  # Wrong source
+        (
+            "subplaybook-test",
+            "test",
+            "test",
+            False,
+            "other",
+            0,
+        ),  # Neither managed nor autonomous
+        # Invalid cases - inconsistent prefix usage in autonomous pack
+        (
+            "subplaybook-test",
+            "test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Only filename has prefix
+        (
+            "test",
+            "subplaybook-test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Only id has prefix
+        (
+            "test",
+            "test",
+            "subplaybook-test",
+            True,
+            "autonomous",
+            1,
+        ),  # Only name has prefix
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Filename and id have prefix, name doesn't
+        (
+            "subplaybook-test",
+            "test",
+            "subplaybook-test",
+            True,
+            "autonomous",
+            1,
+        ),  # Filename and name have prefix, id doesn't
+        (
+            "test",
+            "subplaybook-test",
+            "subplaybook-test",
+            True,
+            "autonomous",
+            1,
+        ),  # Id and name have prefix, filename doesn't
+        # Case insensitive
+        (
+            "SubPlaybook-Test",
+            "test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Uppercase prefix in filename
+        (
+            "test",
+            "SUBPLAYBOOK-test",
+            "test",
+            True,
+            "autonomous",
+            1,
+        ),  # Uppercase prefix in id
+    ],
+)
+def test_SubplaybookPrefixConsistencyValidator(
+    filename, object_id, name, managed, source, expected_result_len
+):
+    """
+    Given:
+        - Playbooks with various combinations of 'subplaybook' prefix in filename, id, and name
+          in autonomous and non-autonomous packs.
+
+    When:
+        - Running SubplaybookPrefixConsistencyValidator.obtain_invalid_content_items.
+
+    Then:
+        - Playbooks in autonomous packs with inconsistent prefix usage should fail.
+        - Playbooks in autonomous packs with consistent prefix usage should pass.
+        - Playbooks in non-autonomous packs should not be validated (always pass).
+    """
+    from pathlib import Path
+    from unittest.mock import MagicMock
+
+    # Create pack with specified metadata
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+
+    playbook = create_playbook_object(paths=["id", "name"], values=[object_id, name])
+    playbook.pack = pack
+
+    # Mock the path to set the filename
+    mock_path = MagicMock(spec=Path)
+    mock_path.stem = filename
+    playbook.path = mock_path
+
+    results = SubplaybookPrefixConsistencyValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_result_len
+
+
+def test_SubplaybookPrefixConsistencyValidator_fix():
+    """
+    Given:
+        - A playbook in an autonomous pack with inconsistent 'subplaybook' prefix (filename has it, id and name don't).
+
+    When:
+        - Running SubplaybookPrefixConsistencyValidator.fix.
+
+    Then:
+        - The id and name should be updated to include the 'subplaybook' prefix.
+    """
+    from pathlib import Path
+    from unittest.mock import MagicMock
+
+    # Create pack with autonomous metadata
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+
+    playbook = create_playbook_object(paths=["id", "name"], values=["test", "test"])
+    playbook.pack = pack
+
+    # Mock the path to set the filename with subplaybook prefix
+    mock_path = MagicMock(spec=Path)
+    mock_path.stem = "subplaybook-test"
+    playbook.path = mock_path
+
+    # Verify it's invalid before fix
+    results = SubplaybookPrefixConsistencyValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == 1
+
+    # Apply fix
+    SubplaybookPrefixConsistencyValidator().fix(playbook)
+
+    # Verify id and name now have the prefix
+    assert playbook.object_id == "subplaybook-test"
+    assert playbook.name == "subplaybook-test"
+
+
+@pytest.mark.parametrize(
+    "filename, object_id, name, internal, managed, source, expected_result_len",
+    [
+        # Valid cases - subplaybooks with internal=True in autonomous pack
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            True,
+            True,
+            "autonomous",
+            0,
+        ),
+        (
+            "test",
+            "subplaybook-test",
+            "test",
+            True,
+            True,
+            "autonomous",
+            0,
+        ),  # Any field with prefix + internal=True
+        ("test", "test", "subplaybook-test", True, True, "autonomous", 0),
+        # Valid cases - non-subplaybooks in autonomous pack
+        (
+            "regular-playbook",
+            "regular-playbook",
+            "regular-playbook",
+            False,
+            True,
+            "autonomous",
+            0,
+        ),
+        (
+            "regular-playbook",
+            "regular-playbook",
+            "regular-playbook",
+            True,
+            True,
+            "autonomous",
+            0,
+        ),  # internal=True is fine
+        # Valid cases - non-autonomous packs (should not validate)
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            False,
+            False,
+            "autonomous",
+            0,
+        ),  # Not managed
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            False,
+            True,
+            "other",
+            0,
+        ),  # Wrong source
+        # Invalid cases - subplaybooks without internal=True in autonomous pack
+        (
+            "subplaybook-test",
+            "subplaybook-test",
+            "subplaybook-test",
+            False,
+            True,
+            "autonomous",
+            1,
+        ),
+        (
+            "subplaybook-test",
+            "test",
+            "test",
+            False,
+            True,
+            "autonomous",
+            1,
+        ),  # Filename has prefix
+        (
+            "test",
+            "subplaybook-test",
+            "test",
+            False,
+            True,
+            "autonomous",
+            1,
+        ),  # Id has prefix
+        (
+            "test",
+            "test",
+            "subplaybook-test",
+            False,
+            True,
+            "autonomous",
+            1,
+        ),  # Name has prefix
+        # Case insensitive
+        ("SubPlaybook-Test", "test", "test", False, True, "autonomous", 1),
+        ("test", "SUBPLAYBOOK-test", "test", False, True, "autonomous", 1),
+    ],
+)
+def test_SubplaybookMustBeInternalValidator(
+    filename, object_id, name, internal, managed, source, expected_result_len
+):
+    """
+    Given:
+        - Playbooks with various combinations of 'subplaybook' prefix and internal field values
+          in autonomous and non-autonomous packs.
+
+    When:
+        - Running SubplaybookMustBeInternalValidator.obtain_invalid_content_items.
+
+    Then:
+        - Playbooks in autonomous packs with 'subplaybook' prefix but without internal=True should fail.
+        - Playbooks in autonomous packs without 'subplaybook' prefix can have any internal value.
+        - Playbooks in autonomous packs with 'subplaybook' prefix and internal=True should pass.
+        - Playbooks in non-autonomous packs should not be validated (always pass).
+    """
+    from pathlib import Path
+    from unittest.mock import MagicMock
+
+    # Create pack with specified metadata
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+
+    playbook = create_playbook_object(
+        paths=["id", "name", "internal"], values=[object_id, name, internal]
+    )
+    playbook.pack = pack
+
+    # Mock the path to set the filename
+    mock_path = MagicMock(spec=Path)
+    mock_path.stem = filename
+    playbook.path = mock_path
+
+    results = SubplaybookMustBeInternalValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_result_len
+
+
+def test_SubplaybookMustBeInternalValidator_fix():
+    """
+    Given:
+        - A subplaybook in an autonomous pack without internal=True.
+
+    When:
+        - Running SubplaybookMustBeInternalValidator.fix.
+
+    Then:
+        - The internal field should be set to True.
+    """
+    from pathlib import Path
+    from unittest.mock import MagicMock
+
+    # Create pack with autonomous metadata
+    pack = create_pack_object(paths=["managed", "source"], values=[True, "autonomous"])
+
+    playbook = create_playbook_object(
+        paths=["id", "name", "internal"],
+        values=["subplaybook-test", "subplaybook-test", False],
+    )
+    playbook.pack = pack
+
+    # Mock the path to set the filename
+    mock_path = MagicMock(spec=Path)
+    mock_path.stem = "subplaybook-test"
+    playbook.path = mock_path
+
+    # Verify it's invalid before fix
+    results = SubplaybookMustBeInternalValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == 1
+
+    # Apply fix
+    SubplaybookMustBeInternalValidator().fix(playbook)
+
+    # Verify internal is now True
+    assert playbook.internal is True
+
+
+def _make_display_label_tasks(task_overrides):
+    """Build a minimal tasks dict for AS109 tests.
+
+    Each entry in task_overrides is a tuple of:
+        (id, inner_displayLabel, scriptarguments)
+    where ``inner_displayLabel`` is set inside the nested ``task:`` sub-object,
+    and ``scriptarguments`` is an optional dict of script arguments for the task.
+    """
+    tasks = {}
+    for override in task_overrides:
+        tid = override[0]
+        inner_dl = override[1] if len(override) > 1 else None
+        script_args = override[2] if len(override) > 2 else None
+
+        inner_task: dict = {
+            "id": f"taskid-{tid}",
+            "version": -1,
+            "name": f"task-{tid}",
+        }
+        if inner_dl is not None:
+            inner_task["displayLabel"] = inner_dl
+            inner_task["name"] = inner_dl
+
+        entry: dict = {
+            "id": tid,
+            "taskid": f"taskid-{tid}",
+            "type": "regular",
+            "task": inner_task,
+        }
+        if script_args is not None:
+            entry["scriptarguments"] = script_args
+        tasks[tid] = entry
+    return tasks
+
+
+@pytest.mark.parametrize(
+    "managed, source, task_overrides, expected_errors",
+    [
+        # 1. Non-autonomous pack — no errors regardless of displayLabel content
+        (
+            False,
+            "other",
+            [
+                ("1", "Script retrieved with SHA256 ${File.SHA256}.", None),
+            ],
+            0,
+        ),
+        # 2. Autonomous pack, displayLabel context key used in another task's scriptarguments — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "Alert ${issue.id} confirmed as false positive.",
+                    {"id": {"simple": "${issue.id}"}},
+                ),
+                (
+                    "2",
+                    None,
+                    {"alert_ids": {"simple": "${issue.id}"}},
+                ),
+            ],
+            0,
+        ),
+        # 3. Autonomous pack, displayLabel context key used in another task's conditions — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "Risk level is ${Core.RiskyHost.risk_level}.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {"risk": {"simple": "${Core.RiskyHost.risk_level}"}},
+                ),
+            ],
+            0,
+        ),
+        # 4. Autonomous pack, displayLabel context key NOT used in any other task — invalid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "Script retrieved with SHA256 ${File.SHA256}.",
+                    {
+                        "value": {
+                            "simple": "Script retrieved with SHA256 ${File.SHA256}."
+                        }
+                    },
+                ),
+            ],
+            1,
+        ),
+        # 5. Autonomous pack, displayLabel with no context keys (static text) — valid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", "Action confirmed on a high-risk host.", None),
+            ],
+            0,
+        ),
+        # 6. Autonomous pack, no displayLabel — valid
+        (
+            True,
+            "autonomous",
+            [
+                ("1", None, {"key": {"simple": "value"}}),
+            ],
+            0,
+        ),
+        # 7. Autonomous pack, displayLabel with multiple context keys, one unused — invalid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "User ${issue.id} with hash ${File.SHA256}.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {"alert_ids": {"simple": "${issue.id}"}},
+                ),
+            ],
+            1,
+        ),
+        # 8. Autonomous pack, displayLabel with multiple context keys, all used — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "User ${issue.id} on endpoint ${issue.agentid}.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {
+                        "alert_ids": {"simple": "${issue.id}"},
+                        "agent": {"simple": "${issue.agentid}"},
+                    },
+                ),
+            ],
+            0,
+        ),
+        # 9. Autonomous pack, displayLabel context key used via complex root/accessor split — valid
+        (
+            True,
+            "autonomous",
+            [
+                (
+                    "1",
+                    "User ${PaloAltoNetworksXQL.GenericQuery.results.actor_effective_username} detected.",
+                    None,
+                ),
+                (
+                    "2",
+                    None,
+                    {
+                        "value": {
+                            "complex": {
+                                "root": "PaloAltoNetworksXQL.GenericQuery.results",
+                                "accessor": "actor_effective_username",
+                            }
+                        }
+                    },
+                ),
+            ],
+            0,
+        ),
+    ],
+)
+def test_IsValidDisplayLabelContextPathValidator(
+    managed, source, task_overrides, expected_errors
+):
+    """
+    Given:
+        - Playbooks with various displayLabel configurations in autonomous/non-autonomous packs.
+    When:
+        - Running IsValidDisplayLabelContextPathValidator.obtain_invalid_content_items.
+    Then:
+        - Context keys in displayLabel must be used in at least one other task.
+    """
+    pack = create_pack_object(paths=["managed", "source"], values=[managed, source])
+    playbook = create_playbook_object(
+        paths=["tasks"], values=[_make_display_label_tasks(task_overrides)]
+    )
+    playbook.pack = pack
+
+    results = IsValidDisplayLabelContextPathValidator().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == expected_errors

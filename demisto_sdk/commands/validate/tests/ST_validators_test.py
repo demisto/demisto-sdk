@@ -287,7 +287,7 @@ def test_invalid_section_order(pack: Pack):
     assert results[0].message == (
         "Structure error (type_error.enum) in field sectionorder,1 of integration_0.yml: "
         "value is not a valid enumeration member; permitted: "
-        "'Connect', 'Collect', 'Optimize', 'Mirroring', 'Result'"
+        "'Connect', 'Collect', 'Optimize', 'Mirroring', 'Result', 'Agentic Assistant'"
     )
 
 
@@ -440,6 +440,26 @@ def test_SchemaValidator_isCloudProviderIntegration_invalid_type(pack: Pack):
     assert "value could not be parsed to a boolean" in results[0].message
 
 
+def test_SchemaValidator_hybrid_with_marketplace_suffix(pack: Pack):
+    """
+    Given:
+        - An integration with `hybrid:marketplacev2: true` (marketplace-suffixed field)
+    When:
+        - Executing the SchemaValidator (ST110 validation)
+    Then:
+        - Ensure the validation passes (the marketplace-suffixed `hybrid` field is supported,
+          like for the `deprecated` field)
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    integration.yml.update({"hybrid:marketplacev2": True})
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 0
+
+
 class TestST111:
     def test_invalid_section_order(self):
         """
@@ -473,7 +493,7 @@ class TestST111:
         assert len(results) == 1
         assert results[0].message == (
             "Missing 'sectionorder' key. Please add 'sectionorder' (lowercase) to the top of your YAML file and specify the order of the "
-            "Connect, Collect, Optimize, Mirroring, Result sections (at least one is required)."
+            "Connect, Collect, Optimize, Mirroring, Result, Agentic Assistant sections (at least one is required)."
         )
 
     def test_invalid_section(self):

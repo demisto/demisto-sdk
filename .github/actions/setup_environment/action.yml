@@ -15,7 +15,7 @@ inputs:
   poetry-install-arguments:
     required: false
     type: string
-    default: "-E generate-unit-tests"
+    default: ""
     description: "the arguments for the poetry install command"
 
 runs:
@@ -23,7 +23,7 @@ runs:
   steps:
 
     - name: Setup Poetry
-      uses: Gr1N/setup-poetry@v9
+      uses: Gr1N/setup-poetry@48b0f77c8c1b1b19cb962f0f00dff7b4be8f81ec # v9
       with:
         poetry-version: '1.8.5' # TODO - Support Poetry v2.0.0
 
@@ -35,7 +35,7 @@ runs:
       shell: bash
 
     - name: Set up Python ${{ inputs.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ inputs.python-version }}
         cache: poetry

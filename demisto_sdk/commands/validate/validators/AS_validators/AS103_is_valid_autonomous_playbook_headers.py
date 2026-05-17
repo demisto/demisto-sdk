@@ -5,6 +5,7 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import (
     AUTONOMOUS_PLAYBOOK_ALLOWED_SECTIONS,
+    AUTONOMOUS_PLAYBOOK_DUPLICATABLE_SECTIONS,
     AUTONOMOUS_PLAYBOOK_MANDATORY_SECTIONS,
     AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER,
     PlaybookTaskType,
@@ -92,16 +93,33 @@ def validate_autonomous_playbook_headers(content_item: ContentTypes) -> List[str
         if section not in found_names:
             errors.append(f"Missing mandatory section '{section}'")
 
-    # 6. Check ordering
+    # 6. Check ordering.
+    # Duplicatable sections (e.g. "Playbook Completed") may appear multiple times;
+    # for the ordering check we collapse consecutive/repeated occurrences of those
+    # sections so that each unique non-duplicatable section still appears in the
+    # correct relative position, while duplicatable sections are allowed anywhere
+    # after their canonical position in AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER.
     found_in_order = [
         name
         for _, name, _ in title_tasks_ordered
         if name in AUTONOMOUS_PLAYBOOK_ALLOWED_SECTIONS
     ]
+    # Build a deduplicated view: keep only the first occurrence of each
+    # duplicatable section for the ordering comparison.
+    seen_duplicatable: set = set()
+    deduped_found: List[str] = []
+    for name in found_in_order:
+        if name in AUTONOMOUS_PLAYBOOK_DUPLICATABLE_SECTIONS:
+            if name not in seen_duplicatable:
+                seen_duplicatable.add(name)
+                deduped_found.append(name)
+        else:
+            deduped_found.append(name)
+
     expected_filtered = [
         s for s in AUTONOMOUS_PLAYBOOK_SECTIONS_ORDER if s in found_names
     ]
-    if found_in_order != expected_filtered:
+    if deduped_found != expected_filtered:
         errors.append(
             f"Sections are out of order. "
             f"Expected: {expected_filtered}, Found: {found_in_order}"

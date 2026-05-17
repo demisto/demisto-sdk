@@ -191,6 +191,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
     quiet: bool = Field(False)
     tags: List[str] = Field([])
     tests: List[str] = Field([])
+    adopted: Optional[bool] = Field(None)
 
     def prepare_for_upload(
         self,

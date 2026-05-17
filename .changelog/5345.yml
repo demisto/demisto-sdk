@@ -1,4 +1,0 @@
-changes:
-- description: Added `marketplaces` field to the `StrictPreProcessRule` schema to prevent ST110 validation failures when pre-process rules include a `marketplaces` field.
-  type: fix
-pr_number: 5345

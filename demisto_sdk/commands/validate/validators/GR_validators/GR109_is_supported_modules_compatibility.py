@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.common.logger import logger
+
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
@@ -110,6 +112,14 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             # Filter by mandatory/non-mandatory based on the class member
             if dependency.mandatorily != self.mandatory_dependency:
                 continue
+            dep_target = dependency.content_item_to
+            logger.error(
+                f"[GR109][get_missing_modules_by_dependency] content_item='{content_item.object_id}' "
+                f"-> dep_target='{getattr(dep_target, 'object_id', repr(dep_target))}' "
+                f"(type={type(dep_target).__name__}, mandatorily={dependency.mandatorily}). "
+                f"has 'supportedModules': {hasattr(dep_target, 'supportedModules')}. "
+                f"dep_target.supportedModules={getattr(dep_target, 'supportedModules', '<MISSING ATTRIBUTE>')}"
+            )
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module

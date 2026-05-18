@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     PlatformSupportedModules,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -481,7 +482,11 @@ def get_supported_modules_mismatch_dependencies(
       AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {[sm.value for sm in PlatformSupportedModules]}) WHERE module IN contentItemB.supportedModules)
     RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
     """
-    return {
+    logger.error(
+        f"[GR109][get_supported_modules_mismatch_dependencies] Running query "
+        f"(mandatory={mandatory}, content_item_ids={content_item_ids}):\n{query}"
+    )
+    results = {
         item.get("contentItemA").element_id: Neo4jRelationshipResult(
             node_from=item.get("contentItemA"),
             relationships=item.get("relationships"),
@@ -489,6 +494,11 @@ def get_supported_modules_mismatch_dependencies(
         )
         for item in run_query(tx, query)
     }
+    logger.error(
+        f"[GR109][get_supported_modules_mismatch_dependencies] Query returned {len(results)} result(s). "
+        f"Matched contentItemA IDs: {list(results.keys())}"
+    )
+    return results
 
 
 def get_supported_modules_mismatch_commands(

@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     PlatformSupportedModules,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -481,14 +482,76 @@ def get_supported_modules_mismatch_dependencies(
       AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {[sm.value for sm in PlatformSupportedModules]}) WHERE module IN contentItemB.supportedModules)
     RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
     """
-    return {
-        item.get("contentItemA").element_id: Neo4jRelationshipResult(
-            node_from=item.get("contentItemA"),
-            relationships=item.get("relationships"),
-            nodes_to=item.get("nodes_to"),
+
+    logger.error(
+        f"[GR109] get_supported_modules_mismatch_dependencies — "
+        f"mandatory={mandatory} (mandatorily_value='{mandatorily_value}') "
+        f"content_item_ids={content_item_ids}"
+    )
+    logger.error(
+        f"[GR109] get_supported_modules_mismatch_dependencies — executing query:\n{query}"
+    )
+
+    raw_results = list(run_query(tx, query))
+
+    logger.error(
+        f"[GR109] get_supported_modules_mismatch_dependencies — "
+        f"query returned {len(raw_results)} raw result(s)"
+    )
+
+    results = {}
+    for item in raw_results:
+        node_a = item.get("contentItemA")
+        nodes_to = item.get("nodes_to") or []
+        relationships = item.get("relationships") or []
+
+        node_a_id = node_a.get("object_id") if node_a else None
+        node_a_type = list(node_a.labels)[0] if node_a and node_a.labels else "Unknown"
+        node_a_supported_modules = node_a.get("supportedModules") if node_a else None
+        node_a_marketplaces = node_a.get("marketplaces") if node_a else None
+        node_a_element_id = node_a.element_id if node_a else None
+
+        logger.error(
+            f"[GR109] get_supported_modules_mismatch_dependencies — "
+            f"result row: contentItemA.object_id='{node_a_id}' "
+            f"(type={node_a_type}, element_id={node_a_element_id}) "
+            f"supportedModules={node_a_supported_modules} "
+            f"marketplaces={node_a_marketplaces} "
+            f"relationships_count={len(relationships)} "
+            f"nodes_to_count={len(nodes_to)}"
         )
-        for item in run_query(tx, query)
-    }
+
+        for i, node_b in enumerate(nodes_to):
+            node_b_id = node_b.get("object_id") if node_b else None
+            node_b_type = (
+                list(node_b.labels)[0] if node_b and node_b.labels else "Unknown"
+            )
+            node_b_supported_modules = (
+                node_b.get("supportedModules") if node_b else None
+            )
+            node_b_not_in_repo = node_b.get("not_in_repository") if node_b else None
+            node_b_element_id = node_b.element_id if node_b else None
+
+            logger.error(
+                f"[GR109] get_supported_modules_mismatch_dependencies — "
+                f"  contentItemB[{i}]: object_id='{node_b_id}' "
+                f"(type={node_b_type}, element_id={node_b_element_id}) "
+                f"supportedModules={node_b_supported_modules} "
+                f"not_in_repository={node_b_not_in_repo}"
+            )
+
+        results[node_a_element_id] = Neo4jRelationshipResult(
+            node_from=node_a,
+            relationships=relationships,
+            nodes_to=nodes_to,
+        )
+
+    logger.error(
+        f"[GR109] get_supported_modules_mismatch_dependencies — "
+        f"returning {len(results)} result(s) keyed by element_id: {list(results.keys())}"
+    )
+
+    return results
 
 
 def get_supported_modules_mismatch_commands(

@@ -692,13 +692,27 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             List[BaseNode]: Content items that have invalid supported module dependencies, if any exist.
 
         """
+        logger.error(
+            f"[GR109] find_content_items_with_module_mismatch_dependencies — "
+            f"content_item_ids={content_item_ids} mandatory={mandatory}"
+        )
         with self.driver.session() as session:
             results = session.execute_read(
                 get_supported_modules_mismatch_dependencies, content_item_ids, mandatory
             )
+            logger.error(
+                f"[GR109] find_content_items_with_module_mismatch_dependencies — "
+                f"Neo4j returned {len(results)} result(s), element_ids={list(results.keys())}"
+            )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
-            return [self._id_to_obj[result] for result in results]
+            resolved = [self._id_to_obj[result] for result in results]
+            logger.error(
+                f"[GR109] find_content_items_with_module_mismatch_dependencies — "
+                f"resolved {len(resolved)} object(s): "
+                f"{[(getattr(obj, 'object_id', repr(obj)), type(obj).__name__) for obj in resolved]}"
+            )
+            return resolved
 
     def find_content_items_with_module_mismatch_commands(
         self, content_item_ids: List[str]

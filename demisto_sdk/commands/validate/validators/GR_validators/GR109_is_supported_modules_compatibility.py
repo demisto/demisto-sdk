@@ -107,32 +107,110 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             dict: A dictionary mapping dependency IDs to lists of missing modules
         """
         missing_modules_by_dependency: dict[str, list[str]] = {}
-        for dependency in content_item.uses:
-            # Filter by mandatory/non-mandatory based on the class member
-            if dependency.mandatorily != self.mandatory_dependency:
-                continue
+
+        content_item_id = getattr(content_item, "object_id", repr(content_item))
+        content_item_type = type(content_item).__name__
+        content_item_modules = getattr(content_item, "supportedModules", None)
+        all_uses = list(content_item.uses)
+
+        logger.error(
+            f"[GR109][get_missing_modules_by_dependency] "
+            f"Checking content_item={content_item_id!r} (type={content_item_type}) | "
+            f"supportedModules={content_item_modules!r} | "
+            f"mandatory_dependency={self.mandatory_dependency!r} | "
+            f"total uses relationships={len(all_uses)}"
+        )
+
+        for i, dependency in enumerate(all_uses):
+            dep_mandatorily = getattr(dependency, "mandatorily", "<unknown>")
             dep_target = dependency.content_item_to
-            if not hasattr(dep_target, "supportedModules"):
+            dep_target_id: str = (
+                getattr(dep_target, "object_id", None)
+                or getattr(dep_target, "name", None)
+                or repr(dep_target)
+            )
+            dep_target_type = type(dep_target).__name__
+            dep_target_has_supported_modules = hasattr(dep_target, "supportedModules")
+            dep_target_supported_modules = getattr(
+                dep_target, "supportedModules", "<NO ATTR>"
+            )
+            dep_target_not_in_repo = getattr(
+                dep_target, "not_in_repository", "<unknown>"
+            )
+
+            logger.error(
+                f"[GR109][get_missing_modules_by_dependency] "
+                f"  dep[{i}]: target={dep_target_id!r} (type={dep_target_type}) | "
+                f"mandatorily={dep_mandatorily!r} | "
+                f"has_supportedModules={dep_target_has_supported_modules} | "
+                f"supportedModules={dep_target_supported_modules!r} | "
+                f"not_in_repository={dep_target_not_in_repo!r}"
+            )
+
+            # Filter by mandatory/non-mandatory based on the class member
+            if dep_mandatorily != self.mandatory_dependency:
                 logger.error(
-                    f"[GR109] Unexpected dependency target type — "
-                    f"content_item={getattr(content_item, 'object_id', repr(content_item))!r} "
-                    f"(type={type(content_item).__name__}) "
-                    f"depends on {getattr(dep_target, 'object_id', None) or getattr(dep_target, 'name', repr(dep_target))!r} "
-                    f"(type={type(dep_target).__name__}) which has no 'supportedModules'. "
-                    f"node_id={getattr(dep_target, 'node_id', 'N/A')!r}, "
-                    f"not_in_repository={getattr(dep_target, 'not_in_repository', 'N/A')!r}"
+                    f"[GR109][get_missing_modules_by_dependency] "
+                    f"    SKIP dep[{i}] {dep_target_id!r}: mandatorily={dep_mandatorily!r} "
+                    f"!= self.mandatory_dependency={self.mandatory_dependency!r}"
                 )
+                continue
+
+            if not dep_target_has_supported_modules:
+                logger.error(
+                    f"[GR109][get_missing_modules_by_dependency] "
+                    f"  *** CRASH RISK: dep[{i}] target={dep_target_id!r} (type={dep_target_type}) "
+                    f"has NO 'supportedModules' attribute! ***\n"
+                    f"      content_item={content_item_id!r} (type={content_item_type})\n"
+                    f"      dep_target not_in_repository={dep_target_not_in_repo!r}\n"
+                    f"      dep_target dir={[a for a in dir(dep_target) if not a.startswith('_')]!r}\n"
+                    f"      This is an UnknownContent node — skipping to avoid AttributeError."
+                )
+                # SAFE SKIP: do not attempt to access dep_target.supportedModules
+                continue
+
+            # Effective modules for content_item: if None/empty → treat as all platform modules
+            effective_content_item_modules = content_item_modules or [
+                sm.value for sm in PlatformSupportedModules
+            ]
+
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module
-                for module in content_item.supportedModules
-                or [sm.value for sm in PlatformSupportedModules]
-                if module
-                not in dep_target.supportedModules  # will crash here if UnknownContent
+                for module in effective_content_item_modules
+                if module not in (dep_target_supported_modules or [])
             ]
-            if missing_modules:
-                missing_modules_by_dependency[dep_target.object_id] = missing_modules
 
+            logger.error(
+                f"[GR109][get_missing_modules_by_dependency] "
+                f"    dep[{i}] {dep_target_id!r}: "
+                f"effective_content_item_modules={effective_content_item_modules!r} | "
+                f"dep_target.supportedModules={dep_target_supported_modules!r} | "
+                f"missing_modules={missing_modules!r}"
+            )
+
+            if missing_modules:
+                logger.error(
+                    f"[GR109][get_missing_modules_by_dependency] "
+                    f"  *** MISMATCH: content_item={content_item_id!r} -> dep={dep_target_id!r} "
+                    f"is missing modules: {missing_modules!r} ***\n"
+                    f"      content_item.supportedModules={content_item_modules!r} "
+                    f"(effective={effective_content_item_modules!r})\n"
+                    f"      dep_target.supportedModules={dep_target_supported_modules!r}\n"
+                    f"      mandatory_dependency={self.mandatory_dependency!r}"
+                )
+                missing_modules_by_dependency[dep_target_id] = missing_modules
+            else:
+                logger.error(
+                    f"[GR109][get_missing_modules_by_dependency] "
+                    f"    dep[{i}] {dep_target_id!r}: OK — no missing modules."
+                )
+
+        logger.error(
+            f"[GR109][get_missing_modules_by_dependency] "
+            f"  Result for {content_item_id!r}: {len(missing_modules_by_dependency)} mismatch(es) found. "
+            f"Keys: {list(missing_modules_by_dependency.keys())!r}"
+        )
         return missing_modules_by_dependency
 
     def get_missing_modules_by_command(self, content_item) -> dict[str, list[str]]:
@@ -222,37 +300,97 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             else [content_item.object_id for content_item in content_items]
         )
 
+        logger.error(
+            f"[GR109][obtain_invalid_content_items_using_graph] "
+            f"validate_all_files={validate_all_files!r} | "
+            f"mandatory_dependency={self.mandatory_dependency!r} | "
+            f"validator_class={type(self).__name__!r} | "
+            f"target_content_item_ids count={len(target_content_item_ids)} | "
+            f"ids={target_content_item_ids!r}"
+        )
+
+        logger.error(
+            f"[GR109][obtain_invalid_content_items_using_graph] "
+            f"Step 1/3: Calling find_content_items_with_module_mismatch_dependencies "
+            f"(mandatory={self.mandatory_dependency!r}) ..."
+        )
         mismatched_dependencies = (
             self.graph.find_content_items_with_module_mismatch_dependencies(
                 target_content_item_ids, self.mandatory_dependency
             )
         )
+        logger.error(
+            f"[GR109][obtain_invalid_content_items_using_graph] "
+            f"Step 1/3 result: {len(mismatched_dependencies)} item(s) with mismatched dependencies. "
+            f"Types: {[type(o).__name__ for o in mismatched_dependencies]!r} | "
+            f"IDs: {[getattr(o, 'object_id', repr(o)) for o in mismatched_dependencies]!r}"
+        )
 
         if self.mandatory_dependency:
+            logger.error(
+                "[GR109][obtain_invalid_content_items_using_graph] "
+                "Step 2/3: Calling find_content_items_with_module_mismatch_commands ..."
+            )
             mismatched_commands = (
                 self.graph.find_content_items_with_module_mismatch_commands(
                     target_content_item_ids
                 )
             )
+            logger.error(
+                f"[GR109][obtain_invalid_content_items_using_graph] "
+                f"Step 2/3 result: {len(mismatched_commands)} item(s) with mismatched commands. "
+                f"IDs: {[getattr(o, 'object_id', repr(o)) for o in mismatched_commands]!r}"
+            )
         else:
+            logger.error(
+                "[GR109][obtain_invalid_content_items_using_graph] "
+                "Step 2/3: SKIPPED (mandatory_dependency=False — commands check only runs for mandatory)."
+            )
             mismatched_commands = []
 
+        logger.error(
+            f"[GR109][obtain_invalid_content_items_using_graph] "
+            f"Step 3/3: Calling find_content_items_with_module_mismatch_content_items "
+            f"(mandatory={self.mandatory_dependency!r}) ..."
+        )
         mismatched_content_items = (
             self.graph.find_content_items_with_module_mismatch_content_items(
                 target_content_item_ids, self.mandatory_dependency
             )
         )
+        logger.error(
+            f"[GR109][obtain_invalid_content_items_using_graph] "
+            f"Step 3/3 result: {len(mismatched_content_items)} item(s) with mismatched content_items. "
+            f"IDs: {[getattr(o, 'object_id', repr(o)) for o in mismatched_content_items]!r}"
+        )
 
         results: List[ValidationResult] = []
 
         # Process items with mismatched dependencies
+        logger.error(
+            f"[GR109][obtain_invalid_content_items_using_graph] "
+            f"Processing {len(mismatched_dependencies)} mismatched_dependencies item(s) ..."
+        )
         for invalid_item in mismatched_dependencies:
+            item_id = getattr(invalid_item, "object_id", repr(invalid_item))
+            item_type = type(invalid_item).__name__
+            item_modules = getattr(invalid_item, "supportedModules", "<no attr>")
+            item_uses_count = len(list(getattr(invalid_item, "uses", [])))
+            logger.error(
+                f"[GR109][obtain_invalid_content_items_using_graph] "
+                f"  Processing mismatched_dep item: {item_id!r} (type={item_type}) | "
+                f"supportedModules={item_modules!r} | uses count={item_uses_count}"
+            )
             missing_modules_by_dependency = self.get_missing_modules_by_dependency(
                 invalid_item
             )
             if missing_modules_by_dependency:
                 formatted_messages = self.format_error_messages(
                     missing_modules_by_dependency
+                )
+                logger.error(
+                    f"[GR109][obtain_invalid_content_items_using_graph] "
+                    f"  -> VALIDATION ERROR for {item_id!r}: {formatted_messages!r}"
                 )
                 results.append(
                     ValidationResult(
@@ -263,12 +401,27 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                         content_object=invalid_item,
                     )
                 )
+            else:
+                logger.error(
+                    f"[GR109][obtain_invalid_content_items_using_graph] "
+                    f"  -> {item_id!r} was in mismatched_dependencies from graph query "
+                    f"but get_missing_modules_by_dependency returned empty — no error emitted."
+                )
 
         # Process items with mismatched commands
+        logger.error(
+            f"[GR109][obtain_invalid_content_items_using_graph] "
+            f"Processing {len(mismatched_commands)} mismatched_commands item(s) ..."
+        )
         for invalid_item in mismatched_commands:
+            item_id = getattr(invalid_item, "object_id", repr(invalid_item))
             missing_modules_by_item = self.get_missing_modules_by_command(invalid_item)
             if missing_modules_by_item:
                 formatted_messages = self.format_error_messages(missing_modules_by_item)
+                logger.error(
+                    f"[GR109][obtain_invalid_content_items_using_graph] "
+                    f"  -> COMMAND MISMATCH ERROR for {item_id!r}: {formatted_messages!r}"
+                )
                 results.append(
                     ValidationResult(
                         validator=self,
@@ -280,7 +433,12 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 )
 
         # Process items with mismatched content_items
+        logger.error(
+            f"[GR109][obtain_invalid_content_items_using_graph] "
+            f"Processing {len(mismatched_content_items)} mismatched_content_items item(s) ..."
+        )
         for invalid_item in mismatched_content_items:
+            item_id = getattr(invalid_item, "object_id", repr(invalid_item))
             commands_with_missing_modules: dict[str, list[str]] = {}
             self.get_commands_with_missing_modules_by_content_item(
                 invalid_item, commands_with_missing_modules
@@ -292,6 +450,11 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 dependency_type = (
                     "mandatory" if self.mandatory_dependency else "non-mandatory"
                 )
+                logger.error(
+                    f"[GR109][obtain_invalid_content_items_using_graph] "
+                    f"  -> CONTENT_ITEM COMMAND MISMATCH for {item_id!r} "
+                    f"(dependency_type={dependency_type!r}): {formatted_message!r}"
+                )
                 results.append(
                     ValidationResult(
                         validator=self,
@@ -299,4 +462,9 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                         content_object=invalid_item,
                     )
                 )
+
+        logger.error(
+            f"[GR109][obtain_invalid_content_items_using_graph] "
+            f"Done. Total ValidationResult(s) to emit: {len(results)}"
+        )
         return results

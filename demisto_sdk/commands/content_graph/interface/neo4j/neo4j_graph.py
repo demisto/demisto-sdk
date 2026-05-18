@@ -692,13 +692,58 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             List[BaseNode]: Content items that have invalid supported module dependencies, if any exist.
 
         """
+        from demisto_sdk.commands.common.logger import logger
+
+        logger.error(
+            f"[GR109][find_content_items_with_module_mismatch_dependencies] "
+            f"Called with mandatory={mandatory!r}, content_item_ids count={len(content_item_ids)}, "
+            f"ids={content_item_ids!r}"
+        )
         with self.driver.session() as session:
             results = session.execute_read(
                 get_supported_modules_mismatch_dependencies, content_item_ids, mandatory
             )
+            logger.error(
+                f"[GR109][find_content_items_with_module_mismatch_dependencies] "
+                f"Query returned {len(results)} raw result(s) (element_ids): {list(results.keys())!r}"
+            )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
+            logger.error(
+                f"[GR109][find_content_items_with_module_mismatch_dependencies] "
+                f"_id_to_obj now has {len(self._id_to_obj)} entries after _add_nodes_to_mapping."
+            )
             self._add_relationships_to_objects(session, results)
-            return [self._id_to_obj[result] for result in results]
+
+            resolved: List[BaseNode] = []
+            for element_id in results:
+                obj = self._id_to_obj.get(element_id)
+                obj_type = (
+                    type(obj).__name__ if obj is not None else "<NOT FOUND IN MAPPING>"
+                )
+                obj_id = (
+                    getattr(obj, "object_id", "<no object_id>")
+                    if obj is not None
+                    else "<None>"
+                )
+                logger.error(
+                    f"[GR109][find_content_items_with_module_mismatch_dependencies] "
+                    f"  element_id={element_id!r} -> Python type={obj_type!r}, object_id={obj_id!r}"
+                )
+                if obj is not None:
+                    resolved.append(obj)
+                else:
+                    logger.error(
+                        f"[GR109][find_content_items_with_module_mismatch_dependencies] "
+                        f"  *** element_id={element_id!r} not found in _id_to_obj mapping! "
+                        f"This will cause a KeyError. Skipping."
+                    )
+
+            logger.error(
+                f"[GR109][find_content_items_with_module_mismatch_dependencies] "
+                f"Returning {len(resolved)} resolved BaseNode object(s). "
+                f"Types: {[type(o).__name__ for o in resolved]!r}"
+            )
+            return resolved
 
     def find_content_items_with_module_mismatch_commands(
         self, content_item_ids: List[str]

@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     PlatformSupportedModules,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -481,14 +482,92 @@ def get_supported_modules_mismatch_dependencies(
       AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {[sm.value for sm in PlatformSupportedModules]}) WHERE module IN contentItemB.supportedModules)
     RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
     """
-    return {
-        item.get("contentItemA").element_id: Neo4jRelationshipResult(
-            node_from=item.get("contentItemA"),
-            relationships=item.get("relationships"),
-            nodes_to=item.get("nodes_to"),
+
+    logger.error(
+        f"[GR109][get_supported_modules_mismatch_dependencies] "
+        f"mandatory={mandatory!r} | content_item_ids count={len(content_item_ids)} | "
+        f"content_item_ids={content_item_ids!r}"
+    )
+    logger.error(
+        f"[GR109][get_supported_modules_mismatch_dependencies] Executing Cypher query:\n{query}"
+    )
+
+    raw_items = list(run_query(tx, query))
+    logger.error(
+        f"[GR109][get_supported_modules_mismatch_dependencies] "
+        f"Raw query returned {len(raw_items)} row(s)."
+    )
+
+    results: Dict[str, Neo4jRelationshipResult] = {}
+    for item in raw_items:
+        node_from = item.get("contentItemA")
+        relationships = item.get("relationships")
+        nodes_to = item.get("nodes_to")
+
+        node_from_id: str = getattr(node_from, "element_id", "") or ""
+        node_from_obj_id = (
+            dict(node_from).get("object_id", "<no object_id>")
+            if node_from
+            else "<None>"
         )
-        for item in run_query(tx, query)
-    }
+        node_from_labels = list(node_from.labels) if node_from else []
+        node_from_supported_modules = (
+            dict(node_from).get("supportedModules", "<not set>")
+            if node_from
+            else "<None>"
+        )
+
+        logger.error(
+            f"[GR109][get_supported_modules_mismatch_dependencies] "
+            f"  contentItemA: object_id={node_from_obj_id!r} | labels={node_from_labels} | "
+            f"supportedModules={node_from_supported_modules!r} | element_id={node_from_id!r}"
+        )
+
+        for i, (rel, node_b) in enumerate(zip(relationships or [], nodes_to or [])):
+            node_b_obj_id = (
+                dict(node_b).get("object_id", "<no object_id>") if node_b else "<None>"
+            )
+            node_b_labels = list(node_b.labels) if node_b else []
+            node_b_supported_modules = (
+                dict(node_b).get("supportedModules", "<not set>")
+                if node_b
+                else "<None>"
+            )
+            rel_mandatorily = (
+                dict(rel).get("mandatorily", "<not set>") if rel else "<None>"
+            )
+            is_unknown = "UnknownContent" in node_b_labels if node_b else False
+
+            logger.error(
+                f"[GR109][get_supported_modules_mismatch_dependencies] "
+                f"    -> dep[{i}] contentItemB: object_id={node_b_obj_id!r} | labels={node_b_labels} | "
+                f"supportedModules={node_b_supported_modules!r} | "
+                f"rel.mandatorily={rel_mandatorily!r} | IS_UNKNOWN_CONTENT={is_unknown}"
+            )
+            if is_unknown:
+                logger.error(
+                    f"[GR109][get_supported_modules_mismatch_dependencies] "
+                    f"  *** UnknownContent node detected in query results! ***\n"
+                    f"      contentItemA={node_from_obj_id!r} -> contentItemB={node_b_obj_id!r}\n"
+                    f"      contentItemB labels={node_b_labels}\n"
+                    f"      contentItemB all props={dict(node_b)!r}\n"
+                    f"      This node has supportedModules={node_b_supported_modules!r} in the graph "
+                    f"(the Cypher WHERE clause requires contentItemB.supportedModules IS NOT NULL, "
+                    f"so this node somehow has it set). "
+                    f"The Python object will be UnknownContent and will crash on .supportedModules access."
+                )
+
+        results[node_from_id] = Neo4jRelationshipResult(
+            node_from=node_from,
+            relationships=relationships,
+            nodes_to=nodes_to,
+        )
+
+    logger.error(
+        f"[GR109][get_supported_modules_mismatch_dependencies] "
+        f"Returning {len(results)} result(s) (keyed by element_id)."
+    )
+    return results
 
 
 def get_supported_modules_mismatch_commands(

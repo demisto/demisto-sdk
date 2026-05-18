@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -110,17 +111,27 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             # Filter by mandatory/non-mandatory based on the class member
             if dependency.mandatorily != self.mandatory_dependency:
                 continue
+            dep_target = dependency.content_item_to
+            if not hasattr(dep_target, "supportedModules"):
+                logger.error(
+                    f"[GR109] Unexpected dependency target type — "
+                    f"content_item={getattr(content_item, 'object_id', repr(content_item))!r} "
+                    f"(type={type(content_item).__name__}) "
+                    f"depends on {getattr(dep_target, 'object_id', None) or getattr(dep_target, 'name', repr(dep_target))!r} "
+                    f"(type={type(dep_target).__name__}) which has no 'supportedModules'. "
+                    f"node_id={getattr(dep_target, 'node_id', 'N/A')!r}, "
+                    f"not_in_repository={getattr(dep_target, 'not_in_repository', 'N/A')!r}"
+                )
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module
                 for module in content_item.supportedModules
                 or [sm.value for sm in PlatformSupportedModules]
-                if module not in dependency.content_item_to.supportedModules
+                if module
+                not in dep_target.supportedModules  # will crash here if UnknownContent
             ]
             if missing_modules:
-                missing_modules_by_dependency[dependency.content_item_to.object_id] = (
-                    missing_modules
-                )
+                missing_modules_by_dependency[dep_target.object_id] = missing_modules
 
         return missing_modules_by_dependency
 

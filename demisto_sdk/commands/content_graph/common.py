@@ -616,6 +616,7 @@ def replace_marketplace_references(
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.XPANSE,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         }:
             if isinstance(data, dict):
                 keys_to_update = {}

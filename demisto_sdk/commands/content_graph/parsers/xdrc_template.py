@@ -37,6 +37,7 @@ class XDRCTemplateParser(JSONContentItemParser, content_type=ContentType.XDRC_TE
         return {
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         }
 
     @property

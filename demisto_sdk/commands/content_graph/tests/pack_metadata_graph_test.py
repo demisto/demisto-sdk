@@ -353,3 +353,66 @@ def test_pack_metadata_dependencies_min_version(
     assert metadata_dependencies.get("TestDependencyPack")
     assert metadata_dependencies.get("TestDependencyPack", {})["mandatory"]
     assert metadata_dependencies.get("TestDependencyPack", {})["minVersion"] == "1.2.3"
+
+
+class TestGetAuthor:
+    """Unit tests for PackMetadata._get_author static method."""
+
+    @pytest.mark.parametrize(
+        "marketplace, author, expected",
+        [
+            (MarketplaceVersions.XSOAR, "Cortex XSOAR", "Cortex XSOAR"),
+            (MarketplaceVersions.XPANSE, "Cortex XSOAR", "Cortex XSOAR"),
+            (MarketplaceVersions.XSOAR_ON_PREM, "Cortex XSOAR", "Cortex XSOAR"),
+            (MarketplaceVersions.XSOAR_SAAS, "Cortex XSOAR", "Cortex XSOAR"),
+            (MarketplaceVersions.MarketplaceV2, "Cortex XSOAR", "Cortex XSIAM"),
+            (MarketplaceVersions.PLATFORM, "Cortex XSOAR", "Cortex"),
+            (MarketplaceVersions.CYBERARK, "Cortex XSOAR", "Cortex"),
+        ],
+    )
+    def test_get_author(self, marketplace, author, expected):
+        """
+        Given:
+            - An author string and a marketplace version.
+        When:
+            - Calling _get_author to resolve the author for the given marketplace.
+        Then:
+            - The author is correctly transformed based on the marketplace.
+        """
+        assert PackMetadata._get_author(author, marketplace) == expected
+
+    @pytest.mark.parametrize(
+        "marketplace",
+        [
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.XPANSE,
+            MarketplaceVersions.XSOAR_ON_PREM,
+            MarketplaceVersions.XSOAR_SAAS,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
+        ],
+    )
+    def test_get_author_custom_author_unchanged(self, marketplace):
+        """
+        Given:
+            - A custom author string (not containing "Cortex XSOAR") and any marketplace.
+        When:
+            - Calling _get_author.
+        Then:
+            - The custom author string is returned unchanged.
+        """
+        assert PackMetadata._get_author("CyberArk", marketplace) == "CyberArk"
+
+    def test_get_author_cyberark_behaves_like_platform(self):
+        """
+        Given:
+            - An author "Cortex XSOAR" and the CYBERARK marketplace.
+        When:
+            - Calling _get_author.
+        Then:
+            - The author is replaced with "Cortex" (same behavior as PLATFORM).
+        """
+        platform_result = PackMetadata._get_author("Cortex XSOAR", MarketplaceVersions.PLATFORM)
+        cyberark_result = PackMetadata._get_author("Cortex XSOAR", MarketplaceVersions.CYBERARK)
+        assert platform_result == cyberark_result == "Cortex"

@@ -34,6 +34,7 @@ class ParsingRuleParser(YAMLContentItemParser, content_type=ContentType.PARSING_
         return {
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         }
 
     @property

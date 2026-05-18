@@ -62,7 +62,7 @@ class StrictCaseLayout(BaseStrictModel):
     description: Optional[str] = None
     system: Optional[bool] = None
     marketplaces: Optional[
-        List[Literal[MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]]
+        List[Literal[MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM, MarketplaceVersions.CYBERARK]]
     ] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
     edit: Optional[TabsAndSections] = None

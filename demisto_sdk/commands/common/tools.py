@@ -148,6 +148,9 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
+from demisto_sdk.commands.common.handlers.xsoar_handler import (
+    JSONDecodeError,
+)
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.string_to_bool import (
     # all files, except for the logger setup, import from tools, so we import it here (makes more sense than having all other files import from string_to_bool.py)
@@ -638,7 +641,12 @@ def get_file_details(
     if not file_content:
         return {}
     if full_file_path.endswith("json"):
-        file_details = json.loads(file_content)
+        try:
+            file_details = json.loads(file_content)
+        except JSONDecodeError:
+            logger.error(f"{full_file_path} not valid json, trying YAML file types")
+            file_details = yaml.load(file_content)
+
     elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
     elif full_file_path.endswith(".pack-ignore"):

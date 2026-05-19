@@ -494,10 +494,6 @@ def get_supported_modules_mismatch_dependencies(
         )
         for item in run_query(tx, query)
     }
-    logger.error(
-        f"[GR109][get_supported_modules_mismatch_dependencies] Query returned {len(results)} result(s). "
-        f"Matched contentItemA IDs: {list(results.keys())}"
-    )
     return results
 
 

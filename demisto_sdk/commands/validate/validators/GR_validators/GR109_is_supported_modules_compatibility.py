@@ -3,9 +3,8 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.logger import logger
-
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -108,18 +107,22 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             dict: A dictionary mapping dependency IDs to lists of missing modules
         """
         missing_modules_by_dependency: dict[str, list[str]] = {}
+        unknown_content_dependencies: list[str] = []
         for dependency in content_item.uses:
             # Filter by mandatory/non-mandatory based on the class member
             if dependency.mandatorily != self.mandatory_dependency:
                 continue
             dep_target = dependency.content_item_to
-            logger.error(
-                f"[GR109][get_missing_modules_by_dependency] content_item='{content_item.object_id}' "
-                f"-> dep_target='{getattr(dep_target, 'object_id', repr(dep_target))}' "
-                f"(type={type(dep_target).__name__}, mandatorily={dependency.mandatorily}). "
-                f"has 'supportedModules': {hasattr(dep_target, 'supportedModules')}. "
-                f"dep_target.supportedModules={getattr(dep_target, 'supportedModules', '<MISSING ATTRIBUTE>')}"
-            )
+            if not hasattr(dep_target, "supportedModules"):
+                dep_target_id = getattr(dep_target, "object_id", repr(dep_target))
+                logger.error(
+                    f"[GR109][get_missing_modules_by_dependency] content_item='{content_item.object_id}' "
+                    f"-> dep_target='{dep_target_id}' "
+                    f"(type={type(dep_target).__name__}, mandatorily={dependency.mandatorily}) "
+                    f"has no 'supportedModules' attribute — skipping module check for this dependency."
+                )
+                unknown_content_dependencies.append(dep_target_id)
+                continue
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module
@@ -131,6 +134,13 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 missing_modules_by_dependency[dependency.content_item_to.object_id] = (
                     missing_modules
                 )
+
+        if unknown_content_dependencies:
+            logger.error(
+                f"[GR109][get_missing_modules_by_dependency] content_item='{content_item.object_id}' "
+                f"has {len(unknown_content_dependencies)} UnknownContent dependency(ies) without 'supportedModules': "
+                f"{unknown_content_dependencies}"
+            )
 
         return missing_modules_by_dependency
 

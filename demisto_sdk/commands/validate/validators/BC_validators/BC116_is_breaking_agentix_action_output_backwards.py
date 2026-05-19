@@ -38,7 +38,9 @@ class IsBreakingAgentixActionOutputBackwardsValidator(BaseValidator[ContentTypes
         current_outputs: Set[str] = set()
         if content_item.outputs:
             current_outputs = {
-                output.content_item_output_name for output in content_item.outputs
+                output.content_item_output_name
+                for output in content_item.outputs
+                if output.content_item_output_name is not None
             }
 
         old_outputs: Set[str] = set()
@@ -49,6 +51,7 @@ class IsBreakingAgentixActionOutputBackwardsValidator(BaseValidator[ContentTypes
             old_outputs = {
                 output.content_item_output_name
                 for output in content_item.old_base_content_object.outputs  # type: ignore[attr-defined]
+                if output.content_item_output_name is not None
             }
 
         return list(old_outputs - current_outputs)

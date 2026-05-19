@@ -72,7 +72,7 @@ class ValidateManager:
         Returns:
             int: the exit code to obtained from the calculations of post_results.
         """
-        logger.info("Starting validate items.")
+        logger.info("Starting validate items. sk")
         try:
             for validator in self.validators:
                 logger.debug(
@@ -98,11 +98,14 @@ class ValidateManager:
                         validator.expected_execution_mode == [ExecutionMode.ALL_FILES]
                         and self.initializer.execution_mode == ExecutionMode.ALL_FILES
                     ):
+                        filtered_paths = {
+                            obj.path for obj in filtered_content_objects_for_validator
+                        }
                         validation_results = [
                             validation_result
                             for validation_result in validation_results
-                            if validation_result.content_object
-                            in filtered_content_objects_for_validator
+                            if validation_result.content_object.path
+                            in filtered_paths
                         ]
                     try:
                         # check if the validator error code appears in ALWAYS_RUN_ON_ERROR_CODE

@@ -1,3 +1,5 @@
+import pytest
+
 from demisto_sdk.commands.common.constants import (
     SKIP_PREPARE_SCRIPT_NAME,
     MarketplaceVersions,
@@ -24,6 +26,9 @@ from demisto_sdk.commands.validate.validators.SC_validators.SC109_script_name_is
 )
 from demisto_sdk.commands.validate.validators.SC_validators.SC109_script_name_is_not_unique_validator_list_files import (
     DuplicatedScriptNameValidatorListFiles,
+)
+from demisto_sdk.commands.validate.validators.SC_validators.SC110_wrapper_script_missing_dependson import (
+    WrapperScriptMissingDependsOnValidator,
 )
 from TestSuite.repo import ChangeCWD, Repo
 
@@ -305,3 +310,192 @@ def test_DuplicatedScriptNameValidatorAllFiles_obtain_invalid_content_items(
 
     assert len(results) == 1
     assert "test_alert_1.yml" == results[0].content_object.path.name
+
+
+# --- SC110 Tests ---
+
+
+@pytest.mark.parametrize(
+    "code, dependson, expected_invalid",
+    [
+        pytest.param(
+            'demisto.executeCommand("MyScript", {})',
+            {"must": ["MyScript"]},
+            False,
+            id="valid: called command declared in dependson.must",
+        ),
+        pytest.param(
+            'demisto.executeCommand("MyScript", {})',
+            {"should": ["MyScript"]},
+            False,
+            id="valid: called command declared in dependson.should",
+        ),
+        pytest.param(
+            'demisto.executeCommand("MyScript", {})',
+            {"must": ["MyScript"], "should": ["OtherScript"]},
+            False,
+            id="valid: called command in must, extra entry in should",
+        ),
+        pytest.param(
+            'demisto.executeCommand("MyScript", {})',
+            {},
+            True,
+            id="invalid: called command not declared in dependson",
+        ),
+        pytest.param(
+            'demisto.executeCommand("MyScript", {})',
+            {"must": ["OtherScript"]},
+            True,
+            id="invalid: dependson.must has different command",
+        ),
+        pytest.param(
+            "result = some_function()",
+            {},
+            False,
+            id="valid: no executeCommand calls",
+        ),
+        pytest.param(
+            'demisto.executeCommand("MyScript", {})',
+            {"must": ["MyPack|MyScript"]},
+            False,
+            id="valid: pipe-prefixed pack name stripped correctly",
+        ),
+        pytest.param(
+            'demisto.execute_command("MyScript", {})',
+            {},
+            True,
+            id="invalid: execute_command (underscore variant) also detected",
+        ),
+        pytest.param(
+            'demisto.execute_command("MyScript", {})',
+            {"must": ["MyScript"]},
+            False,
+            id="valid: execute_command (underscore variant) declared in must",
+        ),
+        pytest.param(
+            'demisto.executeCommand("ScriptA", {})\ndemisto.executeCommand("ScriptB", {})',
+            {"must": ["ScriptA", "ScriptB"]},
+            False,
+            id="valid: multiple calls all declared",
+        ),
+        pytest.param(
+            'demisto.executeCommand("ScriptA", {})\ndemisto.executeCommand("ScriptB", {})',
+            {"must": ["ScriptA"]},
+            True,
+            id="invalid: one of multiple calls not declared",
+        ),
+        pytest.param(
+            'demisto.executeCommand("ScriptA", {})\ndemisto.executeCommand("ScriptB", {})',
+            {"must": ["ScriptA"], "should": ["ScriptB"]},
+            False,
+            id="valid: multiple calls split across must and should",
+        ),
+    ],
+)
+def test_WrapperScriptMissingDependsOnValidator_obtain_invalid_content_items(
+    code, dependson, expected_invalid
+):
+    """
+    Given:
+        - A script with various combinations of executeCommand calls and dependson declarations.
+    When:
+        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+    Then:
+        - Scripts missing dependson entries for called commands produce a ValidationResult.
+        - Scripts with all called commands declared (in must or should) pass validation.
+        - Scripts with no executeCommand calls always pass.
+        - Pipe-prefixed pack names in dependson are handled correctly.
+    """
+    content_item = create_script_object(
+        paths=["dependson"],
+        values=[dependson],
+        code=code,
+    )
+
+    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+
+    if expected_invalid:
+        assert len(results) == 1
+        assert content_item.name in results[0].message
+    else:
+        assert len(results) == 0
+
+
+def test_WrapperScriptMissingDependsOnValidator_llm_script_is_skipped():
+    """
+    Given:
+        - An LLM script (isllm=True) that would otherwise fail (no dependson declared).
+    When:
+        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+    Then:
+        - LLM scripts are skipped entirely (no code to parse), so no ValidationResult is produced.
+    """
+    content_item = create_script_object(
+        paths=["isllm"],
+        values=[True],
+    )
+
+    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+
+    assert len(results) == 0
+
+
+def test_WrapperScriptMissingDependsOnValidator_missing_commands_listed_in_message():
+    """
+    Given:
+        - A script that calls two commands via executeCommand but declares neither in dependson.
+    When:
+        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+    Then:
+        - The ValidationResult message lists both missing command names.
+    """
+    code = (
+        'demisto.executeCommand("CommandAlpha", {})\n'
+        'demisto.executeCommand("CommandBeta", {})'
+    )
+    content_item = create_script_object(
+        paths=["dependson"],
+        values=[{}],
+        code=code,
+    )
+
+    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+
+    assert len(results) == 1
+    assert "CommandAlpha" in results[0].message
+    assert "CommandBeta" in results[0].message
+
+
+def test_WrapperScriptMissingDependsOnValidator_partial_missing_listed_in_message():
+    """
+    Given:
+        - A script that calls two commands but only declares one in dependson.must.
+    When:
+        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+    Then:
+        - Only the undeclared command appears in the ValidationResult message.
+        - The declared command does NOT appear in the missing list.
+    """
+    code = (
+        'demisto.executeCommand("DeclaredScript", {})\n'
+        'demisto.executeCommand("MissingScript", {})'
+    )
+    content_item = create_script_object(
+        paths=["dependson"],
+        values=[{"must": ["DeclaredScript"]}],
+        code=code,
+    )
+
+    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+
+    assert len(results) == 1
+    assert "MissingScript" in results[0].message
+    assert "DeclaredScript" not in results[0].message

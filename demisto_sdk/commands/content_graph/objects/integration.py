@@ -170,7 +170,29 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         ):
             summary["isfetchassets"] = False
         summary["name"] = self.display_name
+        summary["fetchTypes"] = self._build_fetch_types(summary)
         return summary
+
+    def _build_fetch_types(self, summary: dict) -> List[str]:
+        """Builds a list of fetch capabilities the integration supports,
+        intended for the pack's marketplace metadata so consumers can know
+        which kinds of fetching an integration provides before installation.
+
+        `is_feed` is intentionally read from the model (not added to the
+        serialized summary) to avoid introducing a new `feed` / `is_feed`
+        key on each integration entry - that flag is already represented
+        by inclusion of the `"feed"` string in `fetchTypes`.
+        """
+        fetch_types: List[str] = []
+        if self.is_feed:
+            fetch_types.append("feed")
+        if summary.get("isfetch"):
+            fetch_types.append("fetch-incidents")
+        if summary.get("isfetchevents"):
+            fetch_types.append("fetch-events")
+        if summary.get("isfetchassets"):
+            fetch_types.append("fetch-assets")
+        return fetch_types
 
     def metadata_fields(self):
         return (

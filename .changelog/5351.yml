@@ -1,0 +1,4 @@
+changes:
+- description: Fixed GR109 validation not running in nightly (`-a` / ALL_FILES) mode.
+  type: fix
+pr_number: 5351

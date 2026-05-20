@@ -32,7 +32,7 @@ class ContentItemXSIAM(ContentItem, ABC):
             return MINIMUM_XSOAR_SAAS_VERSION
         return v
 
-    def dump(
+    def dump(  # type: ignore[override]
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,

@@ -375,7 +375,7 @@ class ContentItem(BaseContent):
         logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized
 
-    def dump(
+    def dump(  # type: ignore[override]
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,

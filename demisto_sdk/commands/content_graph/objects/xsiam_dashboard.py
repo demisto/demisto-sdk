@@ -24,7 +24,7 @@ class XSIAMDashboard(ContentItemXSIAM, content_type=ContentType.XSIAM_DASHBOARD)
             summary.update({"preview": preview})
         return summary
 
-    def dump(
+    def dump(  # type: ignore[override]
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,

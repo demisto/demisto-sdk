@@ -45,7 +45,7 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
             return True
         return False
 
-    def dump(
+    def dump(  # type: ignore[override]
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,

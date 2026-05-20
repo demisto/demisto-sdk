@@ -92,7 +92,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             if r.content_item_to.database_id == r.source_id
         ]  # type: ignore[return-value]
 
-    def dump(
+    def dump(  # type: ignore[override]
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,

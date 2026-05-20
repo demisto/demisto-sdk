@@ -12,7 +12,7 @@ class GenericType(ContentItem, content_type=ContentType.GENERIC_TYPE):  # type: 
     definition_id: Optional[str] = Field(alias="definitionId")
     version: Optional[int] = 0
 
-    def dump(
+    def dump(  # type: ignore[override]
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,

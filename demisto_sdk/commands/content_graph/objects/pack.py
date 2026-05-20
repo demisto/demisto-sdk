@@ -413,25 +413,28 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         self,
         path: Path,
         marketplace: MarketplaceVersions,
-        strip_internal: bool = False,
-        *,
-        tpb: bool = False,
+        **kwargs,
     ):
         """Dumps the pack to ``path`` for upload/artifact creation.
 
         Args:
             path: Output directory.
             marketplace: Destination marketplace.
-            tpb: When true, include test playbooks in the dump.
-            strip_internal: When true, the ``internal`` and ``isInternal``
-                fields are removed from the dumped script YAMLs (and
-                ``internal`` from pack metadata files), and scripts marked
-                ``isInternal: true`` are still listed in the pack
-                ``metadata.json`` content items. Should only be set by the
-                ``demisto-sdk upload`` flow so that uploaded content is
-                visible to users; other flows (prepare-content, artifact
-                builds) keep the fields intact.
+            **kwargs: Optional flags forwarded to the inner dump steps:
+                - ``tpb`` (bool): When true, include test playbooks in the
+                  dump.
+                - ``strip_internal`` (bool): When true, the ``internal`` and
+                  ``isInternal`` fields are removed from the dumped script
+                  YAMLs (and ``internal`` from pack metadata files), and
+                  scripts marked ``isInternal: true`` are still listed in
+                  the pack ``metadata.json`` content items. Should only be
+                  set by the ``demisto-sdk upload`` flow so that uploaded
+                  content is visible to users; other flows (prepare-content,
+                  artifact builds) keep the fields intact.
         """
+        tpb: bool = kwargs.pop("tpb", False)
+        strip_internal: bool = kwargs.get("strip_internal", False)
+
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
             return
@@ -477,7 +480,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 content_item.dump(
                     dir=dir,
                     marketplace=marketplace,
-                    strip_internal=strip_internal,
+                    **kwargs,
                 )
             self.dump_metadata(
                 path / "metadata.json", marketplace, strip_internal=strip_internal

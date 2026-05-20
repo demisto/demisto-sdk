@@ -379,15 +379,19 @@ class ContentItem(BaseContent):
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        strip_internal: bool = False,
+        **kwargs,
     ) -> None:
         """Dumps a single content item to ``dir`` for upload/artifact creation.
 
         Args:
-            strip_internal: When true, the ``internal`` and ``isInternal``
-                fields are removed from the dumped data (currently only
-                consumed by ``BaseScript.prepare_for_upload``). Should only
-                be set by the ``demisto-sdk upload`` flow.
+            **kwargs: Additional flags forwarded to ``prepare_for_upload``.
+                The only upload-specific flag currently recognized is
+                ``strip_internal`` (set by the ``demisto-sdk upload`` flow
+                via ``ContentItem._upload`` / ``zip_multiple_packs``).
+                When true, the ``internal`` and ``isInternal`` fields are
+                removed from the dumped script data so the uploaded content
+                is visible to the user. Other flows (prepare-content,
+                artifact builds) do not pass it and the fields are kept.
         """
         if not self.path.exists():
             logger.warning(f"Could not find file {self.path}, skipping dump")
@@ -398,7 +402,7 @@ class ContentItem(BaseContent):
                 dir / self.normalize_name,
                 data=self.prepare_for_upload(
                     current_marketplace=marketplace,
-                    strip_internal=strip_internal,
+                    **kwargs,
                 ),
                 handler=self.handler,
             )
@@ -471,6 +475,7 @@ class ContentItem(BaseContent):
             # strip_internal=True: this is the per-item upload flow, so the
             # `internal` and `isInternal` fields should be removed from the
             # dumped script so the uploaded content is visible to users.
+            # Passed via **kwargs to keep the public `dump` signature stable.
             self.dump(
                 dir_path,
                 marketplace=marketplace,

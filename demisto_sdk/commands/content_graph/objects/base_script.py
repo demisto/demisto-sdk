@@ -96,11 +96,11 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        strip_internal: bool = False,
+        **kwargs,
     ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
         data = self.prepare_for_upload(
-            current_marketplace=marketplace, strip_internal=strip_internal
+            current_marketplace=marketplace, **kwargs
         )
 
         for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(

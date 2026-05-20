@@ -99,9 +99,7 @@ class IsHandlerOwnershipFieldsAlignValidator(BaseValidator[ContentTypes]):
                                 f"exactly 'xsoar' lowercase)"
                             )
                         else:
-                            issues.append(
-                                f"team='{team}' (must be exactly 'xsoar')"
-                            )
+                            issues.append(f"team='{team}' (must be exactly 'xsoar')")
 
                     # R4: maintainers contains @xsoar-content
                     maintainers = ownership.maintainers

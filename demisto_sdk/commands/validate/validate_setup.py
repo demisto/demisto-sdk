@@ -17,7 +17,10 @@ from demisto_sdk.commands.common.tools import (
     is_sdk_defined_working_offline,
 )
 from demisto_sdk.commands.validate.config_reader import ConfigReader
-from demisto_sdk.commands.validate.initializer import Initializer
+from demisto_sdk.commands.validate.initializer import (
+    ConnectorAwareInitializer,
+    Initializer,
+)
 from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from demisto_sdk.commands.validate.private_content_manager import PrivateContentManager
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
@@ -169,6 +172,11 @@ def validate(
     ),
     skip_new_validate: bool = typer.Option(
         False, help="Whether to skip the new validate flow."
+    ),
+    run_connectors_validation: bool = typer.Option(
+        False,
+        "--run-connectors-validation",
+        help="Parse only integrations and connectors and match them for easier connector-specific validators (CO category).",
     ),
     create_graph_from_scratch: bool = typer.Option(
         False,
@@ -358,17 +366,30 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         explicitly_selected=(kwargs.get("run_specific_validations") or "").split(","),
         allow_ignore_all_errors=kwargs["allow_ignore_all_errors"],
     )
-    initializer = Initializer(
-        staged=kwargs["staged"],
-        committed_only=kwargs["post_commit"],
-        prev_ver=kwargs["prev_ver"],
-        file_path=file_path,
-        execution_mode=execution_mode,
-        handling_private_repositories=kwargs.get(
-            "handling_private_repositories", False
-        ),
-        private_content_path=kwargs.get("private_content_path"),
-    )
+    if kwargs.get("run_connectors_validation"):
+        initializer = ConnectorAwareInitializer(
+            staged=kwargs["staged"],
+            committed_only=kwargs["post_commit"],
+            prev_ver=kwargs["prev_ver"],
+            file_path=file_path,
+            execution_mode=execution_mode,
+            handling_private_repositories=kwargs.get(
+                "handling_private_repositories", False
+            ),
+            private_content_path=kwargs.get("private_content_path"),
+        )
+    else:
+        initializer = Initializer(
+            staged=kwargs["staged"],
+            committed_only=kwargs["post_commit"],
+            prev_ver=kwargs["prev_ver"],
+            file_path=file_path,
+            execution_mode=execution_mode,
+            handling_private_repositories=kwargs.get(
+                "handling_private_repositories", False
+            ),
+            private_content_path=kwargs.get("private_content_path"),
+        )  # type: ignore[assignment]
     validator_v2 = ValidateManager(
         file_path=file_path,
         initializer=initializer,

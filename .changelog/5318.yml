@@ -1,0 +1,4 @@
+changes:
+- description: Added support for connectors validations.
+  type: internal
+pr_number: 5318

@@ -170,29 +170,34 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         ):
             summary["isfetchassets"] = False
         summary["name"] = self.display_name
-        summary["fetchTypes"] = self._build_fetch_types(summary)
+        if fetch_tags := self._build_fetch_tags(summary):
+            summary["tags"] = fetch_tags
         return summary
 
-    def _build_fetch_types(self, summary: dict) -> List[str]:
-        """Builds a list of fetch capabilities the integration supports,
+    def _build_fetch_tags(self, summary: dict) -> List[str]:
+        """Builds the list of fetch-capability tags the integration supports,
         intended for the pack's marketplace metadata so consumers can know
         which kinds of fetching an integration provides before installation.
 
-        `is_feed` is intentionally read from the model (not added to the
-        serialized summary) to avoid introducing a new `feed` / `is_feed`
-        key on each integration entry - that flag is already represented
-        by inclusion of the `"feed"` string in `fetchTypes`.
+        Emitted under the `tags` key on the integration summary, matching the
+        `tags` convention already used elsewhere in the metadata (e.g. the
+        classifier/mapper `tags: ["feed"]` indicator).
+
+        `is_feed` is intentionally read from the model rather than the
+        serialized summary, so the integration entry does not gain a new
+        `feed` / `is_feed` key - the feed signal is conveyed only via the
+        `"feed"` string in `tags`.
         """
-        fetch_types: List[str] = []
+        tags: List[str] = []
         if self.is_feed:
-            fetch_types.append("feed")
+            tags.append("feed")
         if summary.get("isfetch"):
-            fetch_types.append("fetch-incidents")
+            tags.append("fetch-incidents")
         if summary.get("isfetchevents"):
-            fetch_types.append("fetch-events")
+            tags.append("fetch-events")
         if summary.get("isfetchassets"):
-            fetch_types.append("fetch-assets")
-        return fetch_types
+            tags.append("fetch-assets")
+        return tags
 
     def metadata_fields(self):
         return (

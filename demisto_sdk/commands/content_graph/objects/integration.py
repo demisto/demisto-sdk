@@ -114,6 +114,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = Field(False, alias="isfetchassets")
+    is_fetch_credentials: bool = Field(False, alias="isfetchcredentials")
     mcp: Optional[bool] = Field(None, alias="mcp")
     supports_quick_actions: bool = Field(False, alias="supportsquickactions")
     is_fetch_events_and_assets: bool = False
@@ -197,6 +198,8 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             tags.append("fetch-events")
         if summary.get("isfetchassets"):
             tags.append("fetch-assets")
+        if summary.get("isfetchcredentials"):
+            tags.append("fetch-credentials")
         return tags
 
     def metadata_fields(self):
@@ -212,6 +215,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "is_fetch": True,
                     "is_fetch_events": True,
                     "is_fetch_assets": True,
+                    "is_fetch_credentials": True,
                     "is_beta": True,
                     "internal": True,
                 }

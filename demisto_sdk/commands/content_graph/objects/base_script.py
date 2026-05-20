@@ -99,9 +99,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
         **kwargs,
     ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        data = self.prepare_for_upload(
-            current_marketplace=marketplace, **kwargs
-        )
+        data = self.prepare_for_upload(current_marketplace=marketplace, **kwargs)
 
         for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(
             data, marketplace, self.is_incident_to_alert(marketplace)

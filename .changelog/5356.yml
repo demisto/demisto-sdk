@@ -1,0 +1,4 @@
+changes:
+- description: Improved BA129 validation to exclude reputation commands, list commands, and get commands from validation to prevent false positives.
+  type: feature
+pr_number: 5356

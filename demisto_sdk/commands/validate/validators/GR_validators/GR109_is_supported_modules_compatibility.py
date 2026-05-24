@@ -30,10 +30,8 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
-from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
@@ -49,7 +47,6 @@ ContentTypes = Union[
     Integration,
     Script,
     Pack,
-    Playbook,
     Dashboard,
     Classifier,
     IncidentType,
@@ -67,7 +64,6 @@ ContentTypes = Union[
     ModelingRule,
     ParsingRule,
     Report,
-    TestPlaybook,
     Trigger,
     Widget,
     GenericDefinition,

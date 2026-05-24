@@ -1,5 +1,6 @@
-"""Tests for CO (Connector) validators — CO100, CO101, CO109, CO112, CO113, CO114, CO117, and CO123."""
+"""Tests for CO (Connector) validators — CO100, CO101, CO109, CO110, CO111, CO112, CO113, CO114, CO116, CO117, CO119, and CO123."""
 
+from typing import List, Optional
 from unittest.mock import MagicMock
 
 from demisto_sdk.commands.content_graph.objects.connector import (
@@ -21,6 +22,12 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO101_is_matching_pa
 from demisto_sdk.commands.validate.validators.CO_validators.CO109_no_hidden_param_in_connector import (
     NoHiddenParamInConnectorValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO110_no_removed_connector_params import (
+    NoRemovedConnectorParamsValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO111_no_change_connector_ids import (
+    NoChangeConnectorIdsValidator,
+)
 from demisto_sdk.commands.validate.validators.CO_validators.CO112_is_matching_license import (
     IsMatchingLicenseValidator,
 )
@@ -30,8 +37,17 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO113_is_mirroring_o
 from demisto_sdk.commands.validate.validators.CO_validators.CO114_is_handler_ownership_fields_align import (
     IsHandlerOwnershipFieldsAlignValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO116_is_connector_matches_integration_flags import (
+    CAPABILITY_FLAG_REQUIREMENTS,
+    INTEGRATION_TO_LONGRUNNING_CAPABILITY,
+    IsConnectorMatchesIntegrationFlagsValidator,
+)
 from demisto_sdk.commands.validate.validators.CO_validators.CO117_no_orphaned_handler_capability_ids import (
     NoOrphanedHandlerCapabilityIdsValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO119_is_capability_name_valid import (
+    CANONICAL_CAPABILITY_IDS,
+    IsCapabilityNameValidValidator,
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO123_is_connector_ownership_fields_align import (
     IsConnectorOwnershipFieldsAlignValidator,
@@ -1471,9 +1487,6 @@ class TestCO117NoOrphanedHandlerCapabilityIds:
 # ============================================================
 
 
-from typing import Optional
-
-
 def _build_connector_with_hidden_param_setup(
     *,
     integration_param_overrides: list,
@@ -1766,3 +1779,1303 @@ class TestCO109NoHiddenParamInConnector:
         results = validator.obtain_invalid_content_items([connector])
 
         assert len(results) == 0
+
+
+# ============================================================
+# CO111 — NoChangeConnectorIdsValidator
+# ============================================================
+
+
+class TestCO111NoChangeConnectorIds:
+    """Tests for CO111 validator: breaking-change check that catches
+    removed or renamed IDs in an XSOAR-supported connector.
+
+    Trigger gate: connector has at least one XSOAR handler.
+    Detection: for every ID in the old version (connector.yaml.id +
+    capabilities[].id + sub_capabilities[].id + connection profile ids +
+    handler.id per-file), the corresponding new-version set must contain
+    that id. Any missing id fails. Additions are non-breaking and pass.
+    Output: one ValidationResult per connector, grouped by file path.
+    """
+
+    def test_no_changes_passes(self):
+        """
+        Given: An XSOAR-supported connector whose old and new versions
+               have identical IDs across all four file types.
+        When:  CO111 runs.
+        Then:  No validation errors.
+        """
+        new = create_connector_object(connector_id="stable-conn")
+        old = create_connector_object(connector_id="stable-conn")
+        new.old_base_content_object = old
+
+        validator = NoChangeConnectorIdsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 0
+
+    def test_no_xsoar_handlers_skipped(self):
+        """
+        Given: A connector whose only handler is a partner handler (not
+               XSOAR), AND its old version had a different connector id.
+        When:  CO111 runs.
+        Then:  No validation errors — the trigger gate (at least one XSOAR
+               handler in the NEW connector) is not met, so CO111 does not
+               apply.
+        """
+        partner_handler = {
+            "id": "partner-handler",
+            "metadata": {
+                "module": "partner",
+                "ownership": {
+                    "team": "partner-team",
+                    "maintainers": ["@partner-dev"],
+                },
+            },
+        }
+        new = create_connector_object(
+            connector_id="renamed-id", handlers=[partner_handler]
+        )
+        old = create_connector_object(
+            connector_id="original-id", handlers=[partner_handler]
+        )
+        new.old_base_content_object = old
+
+        validator = NoChangeConnectorIdsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 0
+
+    def test_connector_id_renamed_fails(self):
+        """
+        Given: An XSOAR-supported connector whose connector.yaml.id changed.
+        When:  CO111 runs.
+        Then:  A single ValidationResult lists the old connector id under
+               the 'connector.yaml' bucket.
+        """
+        new = create_connector_object(connector_id="new-id")
+        old = create_connector_object(connector_id="old-id")
+        new.old_base_content_object = old
+
+        validator = NoChangeConnectorIdsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "new-id" in msg  # connector header
+        assert "connector.yaml" in msg
+        assert "'old-id'" in msg
+
+    def test_capability_id_removed_fails(self):
+        """
+        Given: An XSOAR-supported connector whose old version had a
+               capability id 'removed-cap' that no longer exists in new.
+        When:  CO111 runs.
+        Then:  A single ValidationResult lists the missing capability id
+               under the 'capabilities.yaml' bucket.
+        """
+        new = create_connector_object(connector_id="cap-conn")
+        # Inject old capabilities directly (bypassing the parser).
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            CapabilityData,
+        )
+
+        old = create_connector_object(connector_id="cap-conn")
+        old.capabilities = list(old.capabilities) + [
+            CapabilityData(
+                id="removed-cap",
+                title="Removed",
+                description="Capability that will be removed",
+            ),
+        ]
+        new.old_base_content_object = old
+
+        validator = NoChangeConnectorIdsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "capabilities.yaml" in msg
+        assert "'removed-cap'" in msg
+
+    def test_sub_capability_id_removed_fails(self):
+        """
+        Given: An XSOAR-supported connector whose old version's capability
+               had a sub_capability id 'removed-sub' that no longer exists
+               in new (the parent capability is still present).
+        When:  CO111 runs.
+        Then:  A ValidationResult lists the missing sub_capability id under
+               the 'capabilities.yaml' bucket (nested ids are validated the
+               same as top-level ones).
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            CapabilityData,
+            SubCapability,
+        )
+
+        new = create_connector_object(connector_id="sub-conn")
+        old = create_connector_object(connector_id="sub-conn")
+        # Replace the default capability with one that has a sub-cap in OLD.
+        old.capabilities = [
+            CapabilityData(
+                id="test-capability",
+                title="Test",
+                description="Top cap",
+                sub_capabilities=[
+                    SubCapability(id="removed-sub", title="Removed sub"),
+                ],
+            ),
+        ]
+        new.old_base_content_object = old
+
+        validator = NoChangeConnectorIdsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "capabilities.yaml" in msg
+        assert "'removed-sub'" in msg
+
+    def test_handler_id_renamed_in_same_dir_fails(self):
+        """
+        Given: An XSOAR-supported connector where a handler directory was
+               kept (same handler_dir_name) but its id was renamed.
+        When:  CO111 runs.
+        Then:  A ValidationResult lists the old handler id under the
+               components/handlers/<dir>/handler.yaml bucket. The fact
+               that the new id is a different value is enough to flag —
+               renames-in-place are the most subtle breaking change.
+        """
+        new = create_connector_object(connector_id="h-conn")
+        old = create_connector_object(connector_id="h-conn")
+        # Both connectors have one handler in dir 'xsoar_test' (slug of the
+        # template handler id 'xsoar-test'). Rename the new handler's id.
+        new.handlers[0].id = "new-handler-id"
+        # OLD keeps original id 'xsoar-test'.
+        new.old_base_content_object = old
+
+        validator = NoChangeConnectorIdsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 1
+        msg = results[0].message
+        # Path is constructed from handler_dir_name, which is 'xsoar_test'
+        # (the template's dir; see create_connector_object).
+        assert "components/handlers/xsoar_test/handler.yaml" in msg
+        assert "'xsoar-test'" in msg  # the OLD id
+
+    def test_addition_is_not_breaking(self):
+        """
+        Given: An XSOAR-supported connector where the NEW version added a
+               brand-new capability id, but every OLD id is preserved.
+        When:  CO111 runs.
+        Then:  No validation errors — additions are non-breaking.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            CapabilityData,
+        )
+
+        new = create_connector_object(connector_id="add-conn")
+        new.capabilities = list(new.capabilities) + [
+            CapabilityData(
+                id="brand-new-cap",
+                title="New",
+                description="Added in this revision",
+            ),
+        ]
+        old = create_connector_object(connector_id="add-conn")
+        new.old_base_content_object = old
+
+        validator = NoChangeConnectorIdsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 0
+
+    def test_multiple_removals_one_validation_result_groups_by_file(self):
+        """
+        Given: An XSOAR-supported connector with TWO removals across two
+               file types: a capability id removed AND the handler id
+               renamed in-place.
+        When:  CO111 runs.
+        Then:  A SINGLE ValidationResult per connector (CO114/CO123
+               pattern). The message contains BOTH file-type sections and
+               BOTH removed ids.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            CapabilityData,
+        )
+
+        new = create_connector_object(connector_id="multi-rm")
+        # Rename the handler id in place.
+        new.handlers[0].id = "new-handler"
+
+        old = create_connector_object(connector_id="multi-rm")
+        # Old had an extra capability that is now removed.
+        old.capabilities = list(old.capabilities) + [
+            CapabilityData(
+                id="old-extra-cap",
+                title="Extra",
+                description="Removed in new",
+            ),
+        ]
+        new.old_base_content_object = old
+
+        validator = NoChangeConnectorIdsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 1
+        msg = results[0].message
+        # Both removal sections present in a single message.
+        assert "capabilities.yaml" in msg
+        assert "'old-extra-cap'" in msg
+        assert "components/handlers/xsoar_test/handler.yaml" in msg
+        assert "'xsoar-test'" in msg
+
+
+# ============================================================
+# CO119 — IsCapabilityNameValidValidator
+# ============================================================
+
+
+class TestCO119IsCapabilityNameValid:
+    """Tests for CO119 validator: every capability id claimed by an XSOAR
+    handler must be a canonical top-level capability OR a sub_capability
+    nested under a canonical parent (per Q1=a / Q2=a / Q3=b in design).
+
+    Canonical set:
+      automation, fetch-assets-and-vulnerabilities, fetch-issues,
+      fetch-secrets, log-collection, threat-intelligence-enrichment.
+    """
+
+    def test_canonical_set_has_exactly_six_entries(self):
+        """Sanity guard: if someone adds a 7th to CANONICAL_CAPABILITY_IDS
+        without updating the spec, this test will scream first."""
+        assert len(CANONICAL_CAPABILITY_IDS) == 6
+
+    def test_handler_claims_canonical_top_level_passes(self):
+        """
+        Given: A connector whose XSOAR handler claims 'automation' (the
+               default capabilities.yaml template uses 'test-capability',
+               so override it to use the canonical 'automation' instead).
+        When:  CO119 runs.
+        Then:  No validation errors.
+        """
+        connector = create_connector_object(
+            capabilities_data={
+                "capabilities": [
+                    {
+                        "id": "automation",
+                        "title": "Automation",
+                        "description": "Run automations",
+                    },
+                ],
+            },
+            handlers=[
+                {
+                    "id": "xsoar-auto",
+                    "capabilities": [{"id": "automation"}],
+                },
+            ],
+        )
+
+        validator = IsCapabilityNameValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_handler_claims_sub_cap_under_canonical_parent_passes(self):
+        """
+        Given: capabilities.yaml declares a top-level 'automation' (canonical)
+               with a sub_capability 'xsoar_x-automation'; handler claims
+               'xsoar_x-automation'.
+        When:  CO119 runs.
+        Then:  No validation errors — sub-cap inherits canonical status
+               from its parent.
+        """
+        connector = create_connector_object(
+            capabilities_data={
+                "capabilities": [
+                    {
+                        "id": "automation",
+                        "title": "Automation",
+                        "description": "Run automations",
+                        "sub_capabilities": [
+                            {"id": "xsoar_x-automation", "title": "X"},
+                        ],
+                    },
+                ],
+            },
+            handlers=[
+                {
+                    "id": "xsoar-sub",
+                    "capabilities": [{"id": "xsoar_x-automation"}],
+                },
+            ],
+        )
+
+        validator = IsCapabilityNameValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_handler_claims_invalid_top_level_fails(self):
+        """
+        Given: A handler claims 'made-up-cap' which is NOT in the canonical
+               set and not declared anywhere in capabilities.yaml.
+        When:  CO119 runs.
+        Then:  Single ValidationResult per connector lists the bad id +
+               the canonical set for reference.
+        """
+        connector = create_connector_object(
+            connector_id="bad-top-conn",
+            capabilities_data={
+                "capabilities": [
+                    {
+                        "id": "automation",
+                        "title": "Automation",
+                        "description": "Run automations",
+                    },
+                ],
+            },
+            handlers=[
+                {
+                    "id": "xsoar-bad",
+                    "capabilities": [{"id": "made-up-cap"}],
+                },
+            ],
+        )
+
+        validator = IsCapabilityNameValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "bad-top-conn" in msg
+        assert "'xsoar-bad'" in msg
+        assert "'made-up-cap'" in msg
+        # The error message lists the canonical set for reference.
+        assert "'automation'" in msg
+
+    def test_handler_claims_sub_cap_under_NON_canonical_parent_fails(self):
+        """
+        Given: capabilities.yaml has a top-level 'custom-cap' (NOT in the
+               canonical set) with a sub_capability 'sub-1'; an XSOAR
+               handler claims 'sub-1'.
+        When:  CO119 runs.
+        Then:  Failure — per Q2=a, sub-caps under non-canonical parents
+               are themselves invalid.
+        """
+        connector = create_connector_object(
+            connector_id="non-canon-parent-conn",
+            capabilities_data={
+                "capabilities": [
+                    {
+                        "id": "custom-cap",
+                        "title": "Custom",
+                        "description": "Custom (non-canonical)",
+                        "sub_capabilities": [
+                            {"id": "sub-1", "title": "Sub-1"},
+                        ],
+                    },
+                ],
+            },
+            handlers=[
+                {
+                    "id": "xsoar-sub-bad",
+                    "capabilities": [{"id": "sub-1"}],
+                },
+            ],
+        )
+
+        validator = IsCapabilityNameValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'sub-1'" in msg
+        assert "'xsoar-sub-bad'" in msg
+
+    def test_all_six_canonical_names_recognized(self):
+        """
+        Given: A connector that declares all 6 canonical top-level
+               capabilities and one handler claiming each in turn.
+        When:  CO119 runs.
+        Then:  No validation errors — every canonical id is accepted.
+        """
+        canonical = sorted(CANONICAL_CAPABILITY_IDS)
+        # One handler per canonical capability; each handler claims its
+        # matching canonical id.
+        handlers = [
+            {
+                "id": f"xsoar-h{i}",
+                "capabilities": [{"id": cap_id}],
+            }
+            for i, cap_id in enumerate(canonical)
+        ]
+        capabilities = [
+            {
+                "id": cap_id,
+                "title": cap_id.replace("-", " ").title(),
+                "description": f"{cap_id} capability",
+            }
+            for cap_id in canonical
+        ]
+        connector = create_connector_object(
+            connector_id="all-canon",
+            capabilities_data={"capabilities": capabilities},
+            handlers=handlers,
+        )
+
+        validator = IsCapabilityNameValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_handler_with_empty_capabilities_list_is_skipped(self):
+        """
+        Given: XSOAR handler with empty ``capabilities: []`` list.
+        When:  CO119 runs.
+        Then:  No validation errors — there is nothing to validate.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "empty-cap-handler",
+                    "capabilities": [],
+                },
+            ],
+        )
+
+        validator = IsCapabilityNameValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_non_xsoar_handlers_are_skipped(self):
+        """
+        Given: A connector whose only handler is a partner handler claiming
+               a totally bogus capability id.
+        When:  CO119 runs.
+        Then:  No validation errors — Q1=a: non-xsoar handlers are out of
+               CO119's scope.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "partner-handler",
+                    "metadata": {
+                        "module": "partner",
+                        "ownership": {
+                            "team": "partner-team",
+                            "maintainers": ["@partner-dev"],
+                        },
+                    },
+                    "capabilities": [{"id": "wildly-non-canonical"}],
+                },
+            ],
+        )
+
+        validator = IsCapabilityNameValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_multiple_violations_merged_into_one_validation_result(self):
+        """
+        Given: A connector with TWO XSOAR handlers each claiming a different
+               invalid capability id.
+        When:  CO119 runs.
+        Then:  A single ValidationResult is returned (matching CO114/CO117
+               pattern) listing both handler ids and both bad ids.
+        """
+        connector = create_connector_object(
+            connector_id="multi-bad",
+            capabilities_data={
+                "capabilities": [
+                    {"id": "automation", "title": "Automation", "description": "Auto"},
+                ],
+            },
+            handlers=[
+                {
+                    "id": "xsoar-h1",
+                    "capabilities": [{"id": "made-up-A"}],
+                },
+                {
+                    "id": "xsoar-h2",
+                    "capabilities": [{"id": "made-up-B"}],
+                },
+            ],
+        )
+
+        validator = IsCapabilityNameValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "multi-bad" in msg
+        assert "'xsoar-h1'" in msg
+        assert "'xsoar-h2'" in msg
+        assert "'made-up-A'" in msg
+        assert "'made-up-B'" in msg
+
+
+# ============================================================
+# CO110 — NoRemovedConnectorParamsValidator
+# ============================================================
+
+
+class TestCO110NoRemovedConnectorParams:
+    """Tests for CO110 validator: breaking-change check that catches
+    removed (or renamed-without-serializer-bridge) parameter ids across
+    every param-bearing bucket of an XSOAR-supported connector.
+
+    Trigger gate: connector has at least one XSOAR handler.
+    Detection (per bucket — capability '<id>', connection.yaml
+    (general_configurations), connection.yaml (profile '<id>')):
+    every field id in the OLD bucket must be either (a) present in the
+    matching NEW bucket OR (b) bridged by a NEW handler serializer
+    entry whose ``field_name`` equals the old id. Missing-and-unbridged
+    ids fail. Additions are non-breaking and pass.
+    """
+
+    @staticmethod
+    def _add_capability_field(connector, cap_id: str, field_id: str) -> None:
+        """Helper: append a ConnectorField with id=field_id to the FIRST
+        FieldGroup of the named capability's configurations list. Creates
+        the FieldGroup if the capability has none.
+        """
+        for cap in connector.capabilities:
+            if cap.id == cap_id:
+                if not cap.configurations:
+                    cap.configurations = [FieldGroup(fields=[])]
+                cap.configurations[0].fields.append(
+                    ConnectorField(
+                        id=field_id,
+                        title=field_id.replace("_", " ").title(),
+                        field_type="input",
+                    )
+                )
+                return
+        raise ValueError(f"capability '{cap_id}' not found on connector")
+
+    @staticmethod
+    def _add_profile_field(connector, profile_id: str, field_id: str) -> None:
+        """Helper: append a ConnectorField with id=field_id to the FIRST
+        FieldGroup of the named connection profile's configurations list.
+        Creates the FieldGroup if the profile has none.
+        """
+        assert connector.connection is not None
+        for profile in connector.connection.profiles:
+            if profile.id == profile_id:
+                if not profile.configurations:
+                    profile.configurations = [FieldGroup(fields=[])]
+                profile.configurations[0].fields.append(
+                    ConnectorField(
+                        id=field_id,
+                        title=field_id.replace("_", " ").title(),
+                        field_type="input",
+                    )
+                )
+                return
+        raise ValueError(f"profile '{profile_id}' not found on connection")
+
+    @staticmethod
+    def _set_general_configurations(connector, field_ids: list) -> None:
+        """Helper: replace ``connection.general_configurations`` with a
+        single FieldGroup containing one input field per id in field_ids.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            GeneralConfigurations,
+        )
+
+        assert connector.connection is not None
+        connector.connection.general_configurations = GeneralConfigurations(
+            configurations=[
+                FieldGroup(
+                    fields=[
+                        ConnectorField(
+                            id=fid,
+                            title=fid.replace("_", " ").title(),
+                            field_type="input",
+                        )
+                        for fid in field_ids
+                    ]
+                )
+            ]
+        )
+
+    @staticmethod
+    def _set_handler_serializer_bridges(
+        connector, handler_idx: int, bridges: list
+    ) -> None:
+        """Helper: set handler.serializer.field_mappings on the
+        handler_idx-th handler so each entry in ``bridges`` (a list of
+        ``(new_id, old_id)`` tuples) becomes a FieldMapping bridge.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            FieldMapping,
+            SerializerData,
+        )
+
+        connector.handlers[handler_idx].serializer = SerializerData(
+            field_mappings=[
+                FieldMapping(id=new_id, field_name=old_id) for new_id, old_id in bridges
+            ]
+        )
+
+    def test_no_changes_passes(self):
+        """
+        Given: An XSOAR-supported connector whose old and new versions
+               have identical field ids across all buckets.
+        When:  CO110 runs.
+        Then:  No validation errors.
+        """
+        new = create_connector_object(connector_id="stable-conn")
+        old = create_connector_object(connector_id="stable-conn")
+        new.old_base_content_object = old
+
+        validator = NoRemovedConnectorParamsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 0
+
+    def test_no_xsoar_handlers_skipped(self):
+        """
+        Given: A connector whose only handler is a partner handler (not
+               XSOAR), AND its old version had a field that was removed
+               in the new version.
+        When:  CO110 runs.
+        Then:  No validation errors — the XSOAR-handler gate is not
+               met, so CO110 does not apply.
+        """
+        partner_handler = {
+            "id": "partner-handler",
+            "metadata": {
+                "module": "partner",
+                "ownership": {
+                    "team": "partner-team",
+                    "maintainers": ["@partner-dev"],
+                },
+            },
+        }
+        new = create_connector_object(
+            connector_id="partner-only", handlers=[partner_handler]
+        )
+        old = create_connector_object(
+            connector_id="partner-only", handlers=[partner_handler]
+        )
+        # Drop a profile field from NEW so a diff would normally fire.
+        new.connection.profiles[0].configurations = []
+        new.old_base_content_object = old
+
+        validator = NoRemovedConnectorParamsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 0
+
+    def test_general_configurations_param_removed_fails(self):
+        """
+        Given: An XSOAR-supported connector whose OLD version had a
+               connection.yaml general_configurations field ``timeout``
+               that no longer exists in NEW.
+        When:  CO110 runs.
+        Then:  A ValidationResult lists ``timeout`` under the
+               ``connection.yaml (general_configurations)`` bucket.
+        """
+        new = create_connector_object(connector_id="gc-conn")
+        old = create_connector_object(connector_id="gc-conn")
+        # OLD had a timeout general-config field; NEW has none.
+        self._set_general_configurations(old, ["timeout"])
+        new.old_base_content_object = old
+
+        validator = NoRemovedConnectorParamsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "gc-conn" in msg
+        assert "connection.yaml (general_configurations)" in msg
+        assert "'timeout'" in msg
+
+    def test_per_capability_param_removed_fails(self):
+        """
+        Given: An XSOAR-supported connector whose OLD version had a field
+               id ``old_mailbox_param`` under capability ``test-capability``
+               (the template capability) that no longer exists in NEW.
+        When:  CO110 runs.
+        Then:  A ValidationResult lists the missing field id under the
+               ``capability 'test-capability'`` bucket.
+        """
+        new = create_connector_object(connector_id="cap-conn")
+        old = create_connector_object(connector_id="cap-conn")
+        self._add_capability_field(old, "test-capability", "old_mailbox_param")
+        new.old_base_content_object = old
+
+        validator = NoRemovedConnectorParamsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "capability 'test-capability'" in msg
+        assert "'old_mailbox_param'" in msg
+
+    def test_connection_profile_auth_param_removed_fails(self):
+        """
+        Given: An XSOAR-supported connector whose OLD ``default``
+               connection profile had an ``api_url`` field that is removed
+               in NEW (the template starts with api_url; we drop it).
+        When:  CO110 runs.
+        Then:  A ValidationResult lists ``api_url`` under the
+               ``connection.yaml (profile 'default')`` bucket.
+        """
+        new = create_connector_object(connector_id="auth-conn")
+        old = create_connector_object(connector_id="auth-conn")
+        # OLD keeps the template's api_url; NEW drops it.
+        new.connection.profiles[0].configurations = []
+        new.old_base_content_object = old
+
+        validator = NoRemovedConnectorParamsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "connection.yaml (profile 'default')" in msg
+        assert "'api_url'" in msg
+
+    def test_param_renamed_with_serializer_bridge_passes(self):
+        """
+        Given: An XSOAR-supported connector whose OLD had a field id
+               ``foo`` under a capability, and NEW has that field
+               renamed to ``xsoar_test_foo`` PLUS the NEW handler's
+               serializer carries ``{id: xsoar_test_foo, field_name: foo}``
+               so the platform can still resolve the old id.
+        When:  CO110 runs.
+        Then:  No validation errors — the serializer escape hatch
+               bridges the rename (this is what
+               ``manifest_generator.dedup_field_id_and_register``
+               produces during multi-handler dedup, and CO110 must not
+               flag those legitimate renames).
+        """
+        new = create_connector_object(connector_id="bridge-conn")
+        old = create_connector_object(connector_id="bridge-conn")
+        self._add_capability_field(old, "test-capability", "foo")
+        self._add_capability_field(new, "test-capability", "xsoar_test_foo")
+        self._set_handler_serializer_bridges(
+            new, handler_idx=0, bridges=[("xsoar_test_foo", "foo")]
+        )
+        new.old_base_content_object = old
+
+        validator = NoRemovedConnectorParamsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 0
+
+    def test_param_renamed_without_serializer_bridge_fails(self):
+        """
+        Given: An XSOAR-supported connector whose OLD had field id ``foo``
+               under a capability, and NEW has it renamed to ``bar`` with
+               NO matching serializer bridge.
+        When:  CO110 runs.
+        Then:  A ValidationResult flags ``foo`` as removed (the rename is
+               indistinguishable from a deletion from the platform's
+               perspective, and without a serializer bridge there's no
+               way to resolve the old id).
+        """
+        new = create_connector_object(connector_id="rename-conn")
+        old = create_connector_object(connector_id="rename-conn")
+        self._add_capability_field(old, "test-capability", "foo")
+        self._add_capability_field(new, "test-capability", "bar")
+        # No serializer entry on new.
+        new.old_base_content_object = old
+
+        validator = NoRemovedConnectorParamsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "capability 'test-capability'" in msg
+        assert "'foo'" in msg
+        # 'bar' is the new id (addition) — must NOT be listed as removed.
+        assert "'bar'" not in msg
+
+    def test_addition_only_is_not_breaking(self):
+        """
+        Given: An XSOAR-supported connector where NEW added brand-new
+               fields to a capability and to a connection profile, but
+               every OLD field id is preserved.
+        When:  CO110 runs.
+        Then:  No validation errors — additions are non-breaking.
+        """
+        new = create_connector_object(connector_id="add-only")
+        old = create_connector_object(connector_id="add-only")
+        # Only NEW adds fields; old stays minimal.
+        self._add_capability_field(new, "test-capability", "brand_new_cap_field")
+        self._add_profile_field(new, "default", "brand_new_auth_field")
+        new.old_base_content_object = old
+
+        validator = NoRemovedConnectorParamsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 0
+
+    def test_multiple_buckets_grouped_in_one_validation_result(self):
+        """
+        Given: An XSOAR-supported connector with removals across THREE
+               distinct buckets simultaneously: a capability field, a
+               general_configurations field, AND a connection profile
+               field.
+        When:  CO110 runs.
+        Then:  A SINGLE ValidationResult per connector (the CO111 / CO114
+               / CO123 pattern). The message lists ALL three buckets and
+               the removed id in each.
+        """
+        new = create_connector_object(connector_id="multi-rm")
+        old = create_connector_object(connector_id="multi-rm")
+
+        # Bucket 1: capability field 'cap_only' removed.
+        self._add_capability_field(old, "test-capability", "cap_only")
+        # Bucket 2: general_configurations 'gc_only' removed.
+        self._set_general_configurations(old, ["gc_only"])
+        # Bucket 3: profile field 'api_url' removed (template starts with it
+        # in old; we drop it in new).
+        new.connection.profiles[0].configurations = []
+        new.old_base_content_object = old
+
+        validator = NoRemovedConnectorParamsValidator()
+        results = validator.obtain_invalid_content_items([new])
+
+        assert len(results) == 1
+        msg = results[0].message
+        # All three bucket labels appear in the same single message.
+        assert "capability 'test-capability'" in msg
+        assert "'cap_only'" in msg
+        assert "connection.yaml (general_configurations)" in msg
+        assert "'gc_only'" in msg
+        assert "connection.yaml (profile 'default')" in msg
+        assert "'api_url'" in msg
+
+
+# ============================================================
+# CO116 — IsConnectorMatchesIntegrationFlagsValidator
+# ============================================================
+
+
+class TestCO116IsConnectorMatchesIntegrationFlags:
+    """Tests for CO116 validator: cross-validate connector capability
+    declarations against the matched integration's script flags.
+
+    Trigger gate: each XSOAR handler with a resolved
+    ``related_integration`` is checked independently. Handlers without
+    a resolved integration are skipped (CO100's concern).
+
+    Detection (per handler, per declared capability):
+      - ``fetch-issues`` requires ``script.isfetch: true``
+        (``isfetch:platform: false`` disables it; ``:platform`` only
+        consulted when base is True).
+      - ``log-collection`` requires ``script.isfetchevents: true``.
+      - ``fetch-assets-and-vulnerabilities`` requires
+        ``script.isfetchassets: true``.
+      - ``threat-intelligence-enrichment`` requires ``script.feed: true``.
+      - ``fetch-secrets`` and ``automation`` are EXEMPT (never checked).
+
+    Long-running exemption (NARROW, per-capability): a specific
+    capability is exempt if (a) the integration has
+    ``script.longRunning: true`` AND (b)
+    ``INTEGRATION_TO_LONGRUNNING_CAPABILITY[integration.object_id]``
+    points to that exact capability.
+
+    Output: one ValidationResult per handler with all unforgiven
+    mismatches grouped in a single message.
+    """
+
+    @staticmethod
+    def _make_integration_mock(
+        script: Optional[dict] = None, object_id: str = "TestIntegration"
+    ) -> MagicMock:
+        """Build a minimal Integration stand-in for CO116.
+
+        ``script`` is exposed as a dict (the validator's
+        ``_get_integration_script`` helper accepts dicts directly). The
+        ``object_id`` doubles as the integration id used to look up the
+        long-running exemption.
+        """
+        integration = MagicMock()
+        integration.script = script if script is not None else {}
+        integration.object_id = object_id
+        return integration
+
+    @staticmethod
+    def _set_handler_capabilities(connector, cap_ids: List[str]) -> None:
+        """Replace the first handler's capabilities with the given ids
+        (no auth options — CO116 doesn't read them).
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+
+        connector.handlers[0].capabilities = [
+            HandlerCapability(id=cap_id) for cap_id in cap_ids
+        ]
+
+    def test_no_xsoar_handlers_skipped(self):
+        """
+        Given: A connector whose only handler is a partner handler, with
+               a declared capability that would normally trigger a flag
+               check.
+        When:  CO116 runs.
+        Then:  No validation errors — the XSOAR-handler gate is not
+               met (``connector.xsoar_handlers`` is empty).
+        """
+        partner_handler = {
+            "id": "partner-handler",
+            "metadata": {
+                "module": "partner",
+                "ownership": {
+                    "team": "partner-team",
+                    "maintainers": ["@partner-dev"],
+                },
+            },
+            "capabilities": [{"id": "fetch-issues"}],
+        }
+        connector = create_connector_object(
+            connector_id="partner-only", handlers=[partner_handler]
+        )
+        # related_integration with isfetch=false — would normally fail.
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={"isfetch": False}
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_handler_without_related_integration_skipped(self):
+        """
+        Given: An XSOAR handler with NO resolved related_integration.
+        When:  CO116 runs.
+        Then:  No validation errors — CO100 handles the missing-
+               integration case; CO116 must not pile on.
+        """
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["fetch-issues"])
+        assert connector.handlers[0].related_integration is None
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_fetch_issues_with_isfetch_true_passes(self):
+        """
+        Given: Handler declares ``fetch-issues`` capability, integration
+               has ``script.isfetch: true`` (no platform override).
+        When:  CO116 runs.
+        Then:  No validation errors.
+        """
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["fetch-issues"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={"isfetch": True}
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_fetch_issues_with_isfetch_false_fails(self):
+        """
+        Given: Handler declares ``fetch-issues``, integration has
+               ``script.isfetch: false`` (no platform override).
+        When:  CO116 runs.
+        Then:  ValidationResult lists the capability mismatch.
+        """
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["fetch-issues"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={"isfetch": False}, object_id="NoFetchIntegration"
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "fetch-issues" in msg
+        assert "script.isfetch" in msg
+        assert "NoFetchIntegration" in msg
+
+    def test_fetch_issues_platform_variant_alone_does_not_enable(self):
+        """
+        Given: Handler declares ``fetch-issues``, integration has
+               ``script.isfetch: false`` AND
+               ``script.isfetch:platform: true``.
+        When:  CO116 runs.
+        Then:  ValidationResult fires — the platform variant can only
+               *disable* a fetch, never *enable* one (mirrors Rule 3's
+               ``isfetch is True and isfetch:platform is not False``).
+        """
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["fetch-issues"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={"isfetch": False, "isfetch:platform": True}
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+
+    def test_fetch_issues_platform_variant_false_disables_a_true_base(self):
+        """
+        Given: Handler declares ``fetch-issues``, integration has
+               ``script.isfetch: true`` BUT
+               ``script.isfetch:platform: false``.
+        When:  CO116 runs.
+        Then:  ValidationResult fires — the platform explicitly
+               disabled the fetch even though the base flag is True.
+        """
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["fetch-issues"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={"isfetch": True, "isfetch:platform": False}
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+
+    def test_log_collection_with_isfetchevents_false_fails(self):
+        """
+        Given: Handler declares ``log-collection``, integration has
+               ``script.isfetchevents: false``.
+        When:  CO116 runs.
+        Then:  ValidationResult fires.
+        """
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["log-collection"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={"isfetchevents": False}
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "log-collection" in results[0].message
+        assert "script.isfetchevents" in results[0].message
+
+    def test_fetch_assets_with_isfetchassets_false_fails(self):
+        """
+        Given: Handler declares ``fetch-assets-and-vulnerabilities``,
+               integration has ``script.isfetchassets: false``.
+        When:  CO116 runs.
+        Then:  ValidationResult fires.
+        """
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["fetch-assets-and-vulnerabilities"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={"isfetchassets": False}
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "fetch-assets-and-vulnerabilities" in results[0].message
+        assert "script.isfetchassets" in results[0].message
+
+    def test_threat_intelligence_with_feed_false_fails(self):
+        """
+        Given: Handler declares ``threat-intelligence-enrichment``,
+               integration has ``script.feed: false``.
+        When:  CO116 runs.
+        Then:  ValidationResult fires.
+        """
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["threat-intelligence-enrichment"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={"feed": False}
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "threat-intelligence-enrichment" in results[0].message
+        assert "script.feed" in results[0].message
+
+    def test_fetch_secrets_capability_is_exempt(self):
+        """
+        Given: Handler declares ``fetch-secrets``, integration has NONE
+               of the fetch flags enabled (and no isFetchCredentials
+               param). This would NOT be flagged by CO116 because
+               fetch-secrets is exempt per the spec — Rule 1 in the
+               mapper gates it on a *config param*, not a script flag,
+               which the validator deliberately does not check.
+        When:  CO116 runs.
+        Then:  No validation errors.
+        """
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["fetch-secrets"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={}
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_automation_capability_is_exempt(self):
+        """
+        Given: Handler declares ``automation``, integration has NO
+               fetch flags. Automation is exempt because Rule 6 derives
+               it from command presence, not a script flag.
+        When:  CO116 runs.
+        Then:  No validation errors.
+        """
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["automation"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={}
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_long_running_narrow_exemption_for_matching_capability(self):
+        """
+        Given: Handler declares ``fetch-issues``, integration is
+               ``QRadar v3`` (mapped to ``fetch-issues`` in
+               INTEGRATION_TO_LONGRUNNING_CAPABILITY) with
+               ``longRunning: true`` and NO ``isfetch`` flag.
+        When:  CO116 runs.
+        Then:  No validation errors — the narrow long-running exemption
+               fires because the mismatched capability matches the one
+               listed for this integration id.
+        """
+        assert INTEGRATION_TO_LONGRUNNING_CAPABILITY.get("QRadar v3") == (
+            "fetch-issues"
+        )
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["fetch-issues"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={"longRunning": True, "isfetch": False},
+            object_id="QRadar v3",
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_long_running_narrow_exemption_does_NOT_apply_to_other_caps(self):
+        """
+        Given: Handler declares BOTH ``fetch-issues`` AND
+               ``log-collection``. Integration is ``QRadar v3``
+               (long-running → ``fetch-issues``) with ``longRunning:
+               true``, ``isfetch: false``, ``isfetchevents: false``.
+        When:  CO116 runs.
+        Then:  ValidationResult fires for ``log-collection`` only.
+               ``fetch-issues`` is exempt (the narrow long-running
+               exemption applies to it), but ``log-collection`` is NOT
+               (the integration is not mapped to log-collection).
+        """
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["fetch-issues", "log-collection"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={
+                "longRunning": True,
+                "isfetch": False,
+                "isfetchevents": False,
+            },
+            object_id="QRadar v3",
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "log-collection" in msg
+        # fetch-issues should NOT appear in the mismatch list (exempt).
+        # Use a precise check on the mismatch-line marker to avoid false
+        # negatives if 'fetch-issues' appears in headers etc.
+        assert "capability 'fetch-issues'" not in msg
+        assert "capability 'log-collection'" in msg
+
+    def test_long_running_without_integration_in_dict_does_not_exempt(self):
+        """
+        Given: Handler declares ``fetch-issues``, integration has
+               ``longRunning: true`` AND ``isfetch: false``, but the
+               integration id is NOT in
+               INTEGRATION_TO_LONGRUNNING_CAPABILITY.
+        When:  CO116 runs.
+        Then:  ValidationResult fires — without an entry in the dict,
+               long-running gives no exemption (narrow rule).
+        """
+        unknown_id = "ThisIdIsDeliberatelyMissingFromTheDict"
+        assert unknown_id not in INTEGRATION_TO_LONGRUNNING_CAPABILITY
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["fetch-issues"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={"longRunning": True, "isfetch": False},
+            object_id=unknown_id,
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "fetch-issues" in results[0].message
+
+    def test_multiple_mismatches_one_handler_one_validation_result(self):
+        """
+        Given: A handler declares BOTH ``fetch-issues`` and
+               ``log-collection``; the integration has NEITHER flag
+               enabled (and is NOT long-running).
+        When:  CO116 runs.
+        Then:  A SINGLE ValidationResult per handler with BOTH
+               mismatches in its message (CO112-style grouping).
+        """
+        connector = create_connector_object()
+        self._set_handler_capabilities(connector, ["fetch-issues", "log-collection"])
+        connector.handlers[0].related_integration = self._make_integration_mock(
+            script={"isfetch": False, "isfetchevents": False}
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "fetch-issues" in msg
+        assert "log-collection" in msg
+        assert "script.isfetch" in msg
+        assert "script.isfetchevents" in msg
+
+    def test_capability_flag_requirements_has_exactly_four_entries(self):
+        """
+        Given: The CAPABILITY_FLAG_REQUIREMENTS table exported by the
+               CO116 module.
+        When:  Inspected by this sanity check.
+        Then:  It contains EXACTLY the four canonical fetch-gated
+               capabilities — fetch-issues, log-collection,
+               fetch-assets-and-vulnerabilities,
+               threat-intelligence-enrichment. fetch-secrets and
+               automation must NOT appear (they are intentionally
+               exempt).
+        """
+        assert set(CAPABILITY_FLAG_REQUIREMENTS.keys()) == {
+            "fetch-issues",
+            "log-collection",
+            "fetch-assets-and-vulnerabilities",
+            "threat-intelligence-enrichment",
+        }
+        assert "fetch-secrets" not in CAPABILITY_FLAG_REQUIREMENTS
+        assert "automation" not in CAPABILITY_FLAG_REQUIREMENTS

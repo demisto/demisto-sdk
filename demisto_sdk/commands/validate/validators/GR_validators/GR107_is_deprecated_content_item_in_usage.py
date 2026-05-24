@@ -94,12 +94,27 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
+        # Materialise the iterable so we can iterate it twice and build the
+        # id→ContentDTO mapping required for ALL_FILES mode.  validate_manager
+        # filters results by checking `validation_result.content_object in
+        # filtered_content_objects_for_validator`, which is a list of ContentDTO
+        # instances.  The graph returns BaseNode objects (different instances),
+        # so without this mapping all GR107 results are silently discarded in
+        # nightly (-a) mode.
+        content_items_list = list(content_items)
+        id_to_dto = {item.object_id: item for item in content_items_list}
+
+        def resolve_dto(graph_item):
+            """Return the ContentDTO instance for a graph node, falling back to
+            the graph node itself when no match is found (e.g. list-files mode)."""
+            return id_to_dto.get(graph_item.object_id, graph_item)
+
         content_item_paths: List = (
             []
             if validate_all_files
             else [
                 get_relative_path_from_packs_dir(str(content_item.path))
-                for content_item in content_items
+                for content_item in content_items_list
             ]
         )
         # Group results by content item
@@ -118,7 +133,7 @@ class IsDeprecatedContentItemInUsageValidator(BaseValidator[ContentTypes], ABC):
                     item_id=item_using_deprecated.object_id,
                     deprecated_items=", ".join(data["deprecated_items"]),
                 ),
-                content_object=item_using_deprecated,
+                content_object=resolve_dto(item_using_deprecated),
             )
             for item_using_deprecated, data in grouped_results.items()
         ]

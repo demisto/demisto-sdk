@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -104,15 +105,33 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         """
         missing_modules_by_dependency: dict[str, list[str]] = {}
         for dependency in content_item.uses:
+            # Defensive check: dependency.content_item_to may be an UnknownContent
+            # node (or any object without `supportedModules`), which would raise
+            # AttributeError. Log enough context to identify which content items
+            # are involved and skip the problematic dependency.
+            dependency_target = dependency.content_item_to
+            if not hasattr(dependency_target, "supportedModules"):
+                logger.warning(
+                    f"[GR109] Skipping dependency without 'supportedModules' attribute. "
+                    f"Source content item: id='{getattr(content_item, 'object_id', None)}', "
+                    f"type='{type(content_item).__name__}', "
+                    f"path='{getattr(content_item, 'path', None)}'. "
+                    f"Dependency target: id='{getattr(dependency_target, 'object_id', None)}', "
+                    f"type='{type(dependency_target).__name__}', "
+                    f"node_id='{getattr(dependency_target, 'node_id', None)}', "
+                    f"content_type='{getattr(dependency_target, 'content_type', None)}', "
+                    f"mandatorily={dependency.mandatorily}."
+                )
+                continue
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module
                 for module in content_item.supportedModules
                 or [sm.value for sm in PlatformSupportedModules]
-                if module not in dependency.content_item_to.supportedModules
+                if module not in dependency_target.supportedModules
             ]
             if missing_modules:
-                missing_modules_by_dependency[dependency.content_item_to.object_id] = (
+                missing_modules_by_dependency[dependency_target.object_id] = (
                     missing_modules
                 )
 

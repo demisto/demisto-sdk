@@ -1,4 +1,4 @@
-"""Tests for CO (Connector) validators — CO100, CO101, CO109, CO110, CO111, CO112, CO113, CO114, CO116, CO117, CO119, and CO123."""
+"""Tests for CO (Connector) validators — CO100, CO101, CO109, CO110, CO111, CO112, CO113, CO114, CO116, CO117, CO119, CO123, and CO130."""
 
 from typing import List, Optional
 from unittest.mock import MagicMock
@@ -51,6 +51,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO119_is_capability_
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO123_is_connector_ownership_fields_align import (
     IsConnectorOwnershipFieldsAlignValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_every_integration_param_covered import (
+    IsEveryIntegrationParamCoveredValidator,
 )
 
 # ============================================================
@@ -3079,3 +3082,481 @@ class TestCO116IsConnectorMatchesIntegrationFlags:
         }
         assert "fetch-secrets" not in CAPABILITY_FLAG_REQUIREMENTS
         assert "automation" not in CAPABILITY_FLAG_REQUIREMENTS
+
+
+# ============================================================
+# CO130 — IsEveryIntegrationParamCoveredValidator
+# ============================================================
+
+
+def _build_connector_with_coverage_setup(
+    *,
+    integration_param_overrides: list,
+    resolved_pairs: List[tuple],
+    capability_id: str = "test-capability",
+    connector_field_ids: Optional[List[str]] = None,
+    connector_id: str = "co130-connector",
+    handler_capability_id: Optional[str] = None,
+):
+    """Helper: build a connector + integration tuple plumbed for CO130
+    tests.
+
+    Args:
+      integration_param_overrides: full ``configuration`` list passed to
+        ``create_integration_object`` — each entry is a YAML param dict
+        (must include ``name``; may include ``hidden`` / ``defaultvalue``).
+      resolved_pairs: list of (connector_param_name, content_param_name)
+        tuples. One ``ResolvedParamMapping`` is created per tuple and
+        attached to ``handler[0].resolved_params``.
+      capability_id: the id of the single CapabilityData declared in
+        capabilities.yaml (also the default handler claim).
+      connector_field_ids: list of ConnectorField ids placed inside the
+        capability's configurations bucket. Defaults to the
+        connector_param_name of every resolved_pairs entry (so coverage
+        is "wired up" by default for every resolved mapping).
+      handler_capability_id: override what the handler claims (defaults
+        to ``capability_id``).
+
+    Returns the parsed Connector with ``handlers[0].related_integration``
+    and ``handlers[0].resolved_params`` set.
+    """
+    claim_id = handler_capability_id or capability_id
+    connector = create_connector_object(
+        connector_id=connector_id,
+        capabilities_data={
+            "capabilities": [
+                {
+                    "id": capability_id,
+                    "title": "Test Cap",
+                    "description": "Test cap for CO130 coverage tests",
+                },
+            ],
+        },
+        handlers=[
+            {
+                "id": "xsoar-handler",
+                "capabilities": [{"id": claim_id}],
+            },
+        ],
+    )
+
+    if connector_field_ids is None:
+        connector_field_ids = [pair[0] for pair in resolved_pairs]
+
+    connector.capabilities[0].configurations = [
+        FieldGroup(
+            fields=[
+                ConnectorField(
+                    id=fid,
+                    title=fid.replace("_", " ").title(),
+                    field_type="input",
+                )
+                for fid in connector_field_ids
+            ],
+        ),
+    ]
+
+    integration = create_integration_object(
+        paths=["configuration"],
+        values=[integration_param_overrides],
+    )
+
+    connector.handlers[0].related_integration = integration
+    connector.handlers[0].resolved_params = [
+        ResolvedParamMapping(
+            connector_param_name=connector_name,
+            content_param_name=yaml_name,
+            is_serialized=False,
+            source_file="capabilities.yaml",
+        )
+        for connector_name, yaml_name in resolved_pairs
+    ]
+    return connector
+
+
+class TestCO130IsEveryIntegrationParamCovered:
+    """Tests for CO130 validator: every VISIBLE integration YAML param
+    must be covered by a reachable connector field via the handler's
+    resolved_params.
+
+    Trigger gate: each XSOAR handler with a resolved
+    ``related_integration`` is checked independently. Handlers missing
+    an integration are skipped (CO100's concern).
+
+    Coverage semantics:
+      - covered = set of ``content_param_name`` for every
+        ``resolved_params`` entry whose ``connector_param_name`` is
+        reachable from this handler.
+      - visible = set of integration YAML param names that are neither
+        hidden-on-platform NOR a mirroring param (CO113's
+        FORBIDDEN_MIRRORING_FIELDS).
+      - uncovered = visible - covered. Non-empty -> ValidationResult.
+
+    Exemptions:
+      - ``hidden: true`` and ``hidden: [..., 'platform']`` params are
+        exempt.
+      - ``mirror_direction`` / ``close_incident`` / ``close_out``
+        (FORBIDDEN_MIRRORING_FIELDS) are exempt.
+    """
+
+    def test_no_xsoar_handlers_skipped(self):
+        """
+        Given: A connector whose only handler is a partner handler,
+               with an uncovered visible param that WOULD normally fail.
+        When:  CO130 runs.
+        Then:  No validation errors — the XSOAR-handler gate is not
+               met (``connector.xsoar_handlers`` is empty).
+        """
+        partner_handler = {
+            "id": "partner-handler",
+            "metadata": {
+                "module": "partner",
+                "ownership": {
+                    "team": "partner-team",
+                    "maintainers": ["@partner-dev"],
+                },
+            },
+        }
+        connector = create_connector_object(
+            connector_id="partner-only", handlers=[partner_handler]
+        )
+        integration = create_integration_object(
+            paths=["configuration"],
+            values=[[{"name": "lonely_param", "display": "Lonely"}]],
+        )
+        connector.handlers[0].related_integration = integration
+        connector.handlers[0].resolved_params = []
+
+        validator = IsEveryIntegrationParamCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_handler_without_related_integration_skipped(self):
+        """
+        Given: An XSOAR handler with NO resolved related_integration.
+        When:  CO130 runs.
+        Then:  No validation errors — CO100 handles the missing-
+               integration case; CO130 must not pile on.
+        """
+        connector = create_connector_object()
+        assert connector.handlers[0].related_integration is None
+
+        validator = IsEveryIntegrationParamCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_all_visible_params_covered_passes(self):
+        """
+        Given: Integration with two visible params (``server``,
+               ``port``), and the handler's resolved_params + reachable
+               fields cover both.
+        When:  CO130 runs.
+        Then:  No validation errors.
+        """
+        connector = _build_connector_with_coverage_setup(
+            integration_param_overrides=[
+                {"name": "server", "display": "Server"},
+                {"name": "port", "display": "Port"},
+            ],
+            resolved_pairs=[("server_url", "server"), ("port_field", "port")],
+        )
+
+        validator = IsEveryIntegrationParamCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_visible_param_not_covered_fails(self):
+        """
+        Given: Integration has two visible params (``server``, ``port``)
+               but the connector only covers ``server`` — ``port`` has
+               no matching resolved_params entry.
+        When:  CO130 runs.
+        Then:  ValidationResult lists ``port`` as uncovered.
+        """
+        connector = _build_connector_with_coverage_setup(
+            integration_param_overrides=[
+                {"name": "server", "display": "Server"},
+                {"name": "port", "display": "Port"},
+            ],
+            resolved_pairs=[("server_url", "server")],
+        )
+
+        validator = IsEveryIntegrationParamCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'port'" in msg
+        # Covered params must NOT appear in the uncovered list.
+        assert "'server'" not in msg
+
+    def test_hidden_true_param_not_covered_passes(self):
+        """
+        Given: Integration has a visible param ``server`` (covered) AND
+               a hidden param ``debug`` (NOT covered).
+        When:  CO130 runs.
+        Then:  No validation errors — ``debug`` is hidden so it is
+               exempt from the coverage requirement.
+        """
+        connector = _build_connector_with_coverage_setup(
+            integration_param_overrides=[
+                {"name": "server", "display": "Server"},
+                {"name": "debug", "display": "Debug", "hidden": True},
+            ],
+            resolved_pairs=[("server_url", "server")],
+        )
+
+        validator = IsEveryIntegrationParamCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_hidden_list_with_platform_param_not_covered_passes(self):
+        """
+        Given: A param marked hidden=[..., 'platform'] (hidden in the
+               platform UI) is NOT covered.
+        When:  CO130 runs.
+        Then:  No validation errors — platform-hidden params are
+               exempt.
+        """
+        connector = _build_connector_with_coverage_setup(
+            integration_param_overrides=[
+                {"name": "server", "display": "Server"},
+                {
+                    "name": "legacy_flag",
+                    "display": "Legacy",
+                    "hidden": ["platform", "xsoar"],
+                },
+            ],
+            resolved_pairs=[("server_url", "server")],
+        )
+
+        validator = IsEveryIntegrationParamCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_hidden_list_without_platform_param_uncovered_fails(self):
+        """
+        Given: A param has ``hidden: ['xsoar_saas']`` — hidden in
+               another marketplace but NOT in platform. It is NOT
+               covered by the connector.
+        When:  CO130 runs.
+        Then:  ValidationResult fires — only ``hidden: true`` and
+               ``hidden: [..., 'platform']`` are exempted; other hidden
+               lists must still be covered because the param is visible
+               on the platform.
+        """
+        connector = _build_connector_with_coverage_setup(
+            integration_param_overrides=[
+                {"name": "server", "display": "Server"},
+                {
+                    "name": "saas_only",
+                    "display": "SaaS Only",
+                    "hidden": ["xsoar_saas"],
+                },
+            ],
+            resolved_pairs=[("server_url", "server")],
+        )
+
+        validator = IsEveryIntegrationParamCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'saas_only'" in msg
+
+    def test_mirror_direction_param_not_covered_passes(self):
+        """
+        Given: An integration with the canonical mirroring param
+               ``mirror_direction`` (FORBIDDEN_MIRRORING_FIELDS) that is
+               NOT covered by the connector.
+        When:  CO130 runs.
+        Then:  No validation errors — mirroring params are exempt per
+               CO113's FORBIDDEN_MIRRORING_FIELDS set (re-imported by
+               CO130 for source-of-truth alignment).
+        """
+        connector = _build_connector_with_coverage_setup(
+            integration_param_overrides=[
+                {"name": "server", "display": "Server"},
+                {"name": "mirror_direction", "display": "Mirror Direction"},
+            ],
+            resolved_pairs=[("server_url", "server")],
+        )
+
+        validator = IsEveryIntegrationParamCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_resolved_params_unreachable_field_does_NOT_count(self):
+        """
+        Given: ``resolved_params`` declares a mapping
+               ``foo_field -> foo`` but ``foo_field`` is NOT in the
+               handler-reachable field set (the connector has no field
+               with id ``foo_field`` in any reachable bucket).
+        When:  CO130 runs.
+        Then:  ValidationResult fires because ``foo`` is uncovered
+               (resolved_params alone is insufficient — the field must
+               actually be present in a reachable bucket for the
+               mapping to count as coverage).
+        """
+        connector = _build_connector_with_coverage_setup(
+            integration_param_overrides=[{"name": "foo", "display": "Foo"}],
+            resolved_pairs=[("foo_field", "foo")],
+            # Override field ids: NO field has id 'foo_field' in the
+            # reachable bucket. Coverage is therefore not satisfied
+            # even though resolved_params says it is.
+            connector_field_ids=["unrelated_field"],
+        )
+
+        validator = IsEveryIntegrationParamCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "'foo'" in results[0].message
+
+    def test_multiple_uncovered_params_one_handler_grouped(self):
+        """
+        Given: A handler whose integration has THREE uncovered visible
+               params (``a``, ``b``, ``c``).
+        When:  CO130 runs.
+        Then:  A SINGLE ValidationResult per connector lists all three
+               uncovered names in one message (CO109-style grouping).
+        """
+        connector = _build_connector_with_coverage_setup(
+            integration_param_overrides=[
+                {"name": "a"},
+                {"name": "b"},
+                {"name": "c"},
+            ],
+            resolved_pairs=[],
+            connector_field_ids=[],
+        )
+
+        validator = IsEveryIntegrationParamCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        # Sorted-determinism is guaranteed by _check_handler iterating
+        # sorted(uncovered).
+        assert "'a'" in msg
+        assert "'b'" in msg
+        assert "'c'" in msg
+        # All three lines under the same handler header.
+        assert msg.count("handler 'xsoar-handler'") == 3
+
+    def test_multiple_handlers_independent_coverage(self):
+        """
+        Given: A connector with TWO XSOAR handlers, each pointing at a
+               different integration. Handler A fully covers its
+               integration; Handler B has an uncovered visible param.
+        When:  CO130 runs.
+        Then:  A SINGLE ValidationResult per connector reports ONLY
+               Handler B's uncovered param. Handler A's complete
+               coverage does NOT contribute (per-handler scope, Q4=a).
+        """
+        # Two XSOAR handlers, each pointed at its own integration.
+        connector = create_connector_object(
+            connector_id="multi-handler",
+            capabilities_data={
+                "capabilities": [
+                    {
+                        "id": "cap-a",
+                        "title": "Cap A",
+                        "description": "Cap A",
+                    },
+                    {
+                        "id": "cap-b",
+                        "title": "Cap B",
+                        "description": "Cap B",
+                    },
+                ],
+            },
+            handlers=[
+                {
+                    "id": "xsoar-handler-a",
+                    "capabilities": [{"id": "cap-a"}],
+                },
+                {
+                    "id": "xsoar-handler-b",
+                    "capabilities": [{"id": "cap-b"}],
+                },
+            ],
+        )
+
+        # Wire up per-capability configurations so reachable fields
+        # match what resolved_params says.
+        connector.capabilities[0].configurations = [
+            FieldGroup(
+                fields=[
+                    ConnectorField(
+                        id="server_a",
+                        title="Server A",
+                        field_type="input",
+                    )
+                ],
+            ),
+        ]
+        connector.capabilities[1].configurations = [
+            FieldGroup(
+                fields=[
+                    ConnectorField(
+                        id="server_b",
+                        title="Server B",
+                        field_type="input",
+                    )
+                ],
+            ),
+        ]
+
+        # Handler A: fully covers its integration's only visible param.
+        integration_a = create_integration_object(
+            paths=["configuration"],
+            values=[[{"name": "yaml_a", "display": "YAML A"}]],
+        )
+        connector.handlers[0].related_integration = integration_a
+        connector.handlers[0].resolved_params = [
+            ResolvedParamMapping(
+                connector_param_name="server_a",
+                content_param_name="yaml_a",
+                is_serialized=False,
+                source_file="capabilities.yaml",
+            )
+        ]
+
+        # Handler B: integration has TWO visible params, only one covered.
+        integration_b = create_integration_object(
+            paths=["configuration"],
+            values=[
+                [
+                    {"name": "yaml_b", "display": "YAML B"},
+                    {"name": "uncovered_b", "display": "Uncovered B"},
+                ]
+            ],
+        )
+        connector.handlers[1].related_integration = integration_b
+        connector.handlers[1].resolved_params = [
+            ResolvedParamMapping(
+                connector_param_name="server_b",
+                content_param_name="yaml_b",
+                is_serialized=False,
+                source_file="capabilities.yaml",
+            )
+        ]
+
+        validator = IsEveryIntegrationParamCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        # Handler B's uncovered param is reported.
+        assert "xsoar-handler-b" in msg
+        assert "'uncovered_b'" in msg
+        # Handler A has no issues — must not appear in the message.
+        assert "xsoar-handler-a" not in msg
+        assert "'yaml_a'" not in msg

@@ -167,18 +167,40 @@ class NoHiddenParamInConnectorValidator(BaseValidator[ContentTypes]):
         connector: Connector, handler: HandlerData
     ) -> Set[str]:
         """Collect every ConnectorField.id reachable from this handler's
-        perspective:
+        perspective.
 
-        - connection.yaml: any ConnectionProfile whose id matches one of the
-          handler.capabilities[*].auth_options[*].id values
-        - capabilities.yaml: any CapabilityData whose id matches one of the
-          handler.capabilities[].id values (including nested
-          sub_capabilities — they share the parent's configurations bucket)
-        - configurations.yaml general_configurations are NOT modeled as a
-          first-class collection on Connector; the CapabilityData model
-          already exposes the *unified* configurations list (general +
-          per-capability), so iterating connector.capabilities for handler-
-          claimed ids covers that surface.
+        Canonical reachability rule (per the spec): a param is related to
+        a handler if it appears in:
+          - general_configurations (always — reachable from every handler), AND
+          - the sub-capability the handler claims, AND
+          - the parent capability that the sub-capability is registered to.
+        Exception: a handler claiming a top-level capability with no
+        sub-capability sees only that capability's own params (no upward
+        traversal because the root has no parent).
+
+        Schema assumption (CURRENT model — see
+        ``demisto_sdk/commands/content_graph/objects/connector.py``):
+        ``SubCapability`` carries only ``id`` / ``title`` /
+        ``default_enabled`` / ``required`` / ``required_license`` — it has
+        NO ``configurations`` of its own. The parser
+        (``_parse_capabilities_with_configs``) already merges
+        general_configurations from BOTH capabilities.yaml and
+        configurations.yaml PLUS per-capability configurations from
+        configurations.yaml into a single ``CapabilityData.configurations``
+        bag PER top-level capability. So the canonical rule collapses,
+        under the current schema, to: "walk the matched top-level
+        capability's unified configurations bag" — which is exactly what
+        the loop below does. If the schema ever grows per-sub-capability
+        configurations, this helper must be tightened to walk only the
+        specific sub-cap's configs + the parent's own root-level configs
+        + general_configurations (instead of the parent's whole bag).
+
+        Mechanics:
+        - connection.yaml: any ConnectionProfile whose id matches one of
+          the handler.capabilities[*].auth_options[*].id values.
+        - capabilities.yaml / configurations.yaml: any CapabilityData
+          whose id matches one of handler.capabilities[].id values
+          (directly or transitively via a sub-capability id).
         """
         result: Set[str] = set()
 

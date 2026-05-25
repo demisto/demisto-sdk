@@ -2,7 +2,6 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.strict_objects.common import (
     DESCRIPTION_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
@@ -47,7 +46,6 @@ class _StrictPreProcessRule(BaseStrictModel):
     system: bool
     to_server_version: str = Field(alias="toServerVersion")
     version: int
-    marketplaces: Optional[List[MarketplaceVersions]] = None
 
 
 StrictPreProcessRule = create_model(

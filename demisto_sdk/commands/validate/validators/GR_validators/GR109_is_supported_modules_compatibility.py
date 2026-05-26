@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -106,17 +107,44 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             dict: A dictionary mapping dependency IDs to lists of missing modules
         """
         missing_modules_by_dependency: dict[str, list[str]] = {}
+        logger.info(
+            f"[GR109] get_missing_modules_by_dependency: inspecting content item "
+            f"'{getattr(content_item, 'object_id', '<unknown>')}' "
+            f"(type={type(content_item).__name__}, "
+            f"supportedModules={getattr(content_item, 'supportedModules', None)})"
+        )
         for dependency in content_item.uses:
             # Filter by mandatory/non-mandatory based on the class member
             if dependency.mandatorily != self.mandatory_dependency:
                 continue
-            # Get modules supported by the content item but not by its dependency
-            missing_modules = [
-                module
-                for module in content_item.supportedModules
-                or [sm.value for sm in PlatformSupportedModules]
-                if module not in dependency.content_item_to.supportedModules
-            ]
+            dep_target = getattr(dependency, "content_item_to", None)
+            dep_id = getattr(dep_target, "object_id", "<unknown>")
+            dep_supported = getattr(dep_target, "supportedModules", None)
+            logger.info(
+                f"[GR109] get_missing_modules_by_dependency: content item "
+                f"'{getattr(content_item, 'object_id', '<unknown>')}' uses dependency "
+                f"'{dep_id}' (type={type(dep_target).__name__}, "
+                f"supportedModules={dep_supported})"
+            )
+            try:
+                # Get modules supported by the content item but not by its dependency
+                missing_modules = [
+                    module
+                    for module in content_item.supportedModules
+                    or [sm.value for sm in PlatformSupportedModules]
+                    if module not in dependency.content_item_to.supportedModules
+                ]
+            except Exception as e:
+                logger.error(
+                    f"[GR109] get_missing_modules_by_dependency FAILED for content item "
+                    f"'{getattr(content_item, 'object_id', '<unknown>')}' "
+                    f"(type={type(content_item).__name__}) when processing dependency "
+                    f"'{dep_id}' (type={type(dep_target).__name__}, "
+                    f"supportedModules={dep_supported}). "
+                    f"content_item.supportedModules={getattr(content_item, 'supportedModules', None)}. "
+                    f"Error: {e!r}"
+                )
+                raise
             if missing_modules:
                 missing_modules_by_dependency[dependency.content_item_to.object_id] = (
                     missing_modules
@@ -134,14 +162,38 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             dict: A dictionary mapping the content item ID to lists of missing modules per command
         """
         missing_modules_by_item: dict[str, list[str]] = {}
+        logger.info(
+            f"[GR109] get_missing_modules_by_command: inspecting content item "
+            f"'{getattr(content_item, 'object_id', '<unknown>')}' "
+            f"(type={type(content_item).__name__}, "
+            f"supportedModules={getattr(content_item, 'supportedModules', None)})"
+        )
 
         for command in content_item.commands:
-            # Get modules supported by the command but not by the content item
-            missing_modules = [
-                module
-                for module in command.supportedModules
-                if module not in content_item.supportedModules
-            ]
+            cmd_id = getattr(command, "object_id", getattr(command, "name", "<unknown>"))
+            cmd_supported = getattr(command, "supportedModules", None)
+            logger.info(
+                f"[GR109] get_missing_modules_by_command: content item "
+                f"'{getattr(content_item, 'object_id', '<unknown>')}' has command "
+                f"'{cmd_id}' (supportedModules={cmd_supported})"
+            )
+            try:
+                # Get modules supported by the command but not by the content item
+                missing_modules = [
+                    module
+                    for module in command.supportedModules
+                    if module not in content_item.supportedModules
+                ]
+            except Exception as e:
+                logger.error(
+                    f"[GR109] get_missing_modules_by_command FAILED for content item "
+                    f"'{getattr(content_item, 'object_id', '<unknown>')}' "
+                    f"(type={type(content_item).__name__}, "
+                    f"supportedModules={getattr(content_item, 'supportedModules', None)}) "
+                    f"when processing command '{cmd_id}' "
+                    f"(supportedModules={cmd_supported}). Error: {e!r}"
+                )
+                raise
 
             if missing_modules:
                 if content_item.object_id not in missing_modules_by_item:
@@ -162,8 +214,19 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         Returns:
             dict: A dictionary mapping content item IDs to lists of command IDs
         """
+        logger.info(
+            f"[GR109] get_commands_with_missing_modules_by_content_item: inspecting "
+            f"content item '{getattr(item, 'object_id', '<unknown>')}' "
+            f"(type={type(item).__name__})"
+        )
         for rel in item.uses:
             command = rel.content_item_to
+            cmd_id = getattr(command, "object_id", "<unknown>")
+            logger.info(
+                f"[GR109] get_commands_with_missing_modules_by_content_item: content item "
+                f"'{getattr(item, 'object_id', '<unknown>')}' uses '{cmd_id}' "
+                f"(type={type(command).__name__})"
+            )
             # At this point, we assume the mismatch is already established
             if item.object_id not in commands_with_missing_modules_by_content_item:
                 commands_with_missing_modules_by_content_item[item.object_id] = []
@@ -210,32 +273,55 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             if validate_all_files
             else [content_item.object_id for content_item in content_items]
         )
+        logger.info(
+            f"[GR109] obtain_invalid_content_items_using_graph started. "
+            f"mandatory_dependency={self.mandatory_dependency}, "
+            f"validate_all_files={validate_all_files}, "
+            f"target_content_item_ids_count={len(target_content_item_ids)}"
+        )
 
-        mismatched_dependencies = (
+        mismatched_dependencies = list(
             self.graph.find_content_items_with_module_mismatch_dependencies(
                 target_content_item_ids, self.mandatory_dependency
             )
         )
+        logger.info(
+            f"[GR109] mismatched_dependencies ({len(mismatched_dependencies)} items): "
+            f"{[getattr(i, 'object_id', '<unknown>') for i in mismatched_dependencies]}"
+        )
 
         if self.mandatory_dependency:
-            mismatched_commands = (
+            mismatched_commands = list(
                 self.graph.find_content_items_with_module_mismatch_commands(
                     target_content_item_ids
                 )
             )
         else:
             mismatched_commands = []
+        logger.info(
+            f"[GR109] mismatched_commands ({len(mismatched_commands)} items): "
+            f"{[getattr(i, 'object_id', '<unknown>') for i in mismatched_commands]}"
+        )
 
-        mismatched_content_items = (
+        mismatched_content_items = list(
             self.graph.find_content_items_with_module_mismatch_content_items(
                 target_content_item_ids, self.mandatory_dependency
             )
+        )
+        logger.info(
+            f"[GR109] mismatched_content_items ({len(mismatched_content_items)} items): "
+            f"{[getattr(i, 'object_id', '<unknown>') for i in mismatched_content_items]}"
         )
 
         results: List[ValidationResult] = []
 
         # Process items with mismatched dependencies
         for invalid_item in mismatched_dependencies:
+            logger.info(
+                f"[GR109] Processing mismatched_dependencies item: "
+                f"'{getattr(invalid_item, 'object_id', '<unknown>')}' "
+                f"(type={type(invalid_item).__name__})"
+            )
             missing_modules_by_dependency = self.get_missing_modules_by_dependency(
                 invalid_item
             )
@@ -255,6 +341,11 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
 
         # Process items with mismatched commands
         for invalid_item in mismatched_commands:
+            logger.info(
+                f"[GR109] Processing mismatched_commands item: "
+                f"'{getattr(invalid_item, 'object_id', '<unknown>')}' "
+                f"(type={type(invalid_item).__name__})"
+            )
             missing_modules_by_item = self.get_missing_modules_by_command(invalid_item)
             if missing_modules_by_item:
                 formatted_messages = self.format_error_messages(missing_modules_by_item)
@@ -270,6 +361,11 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
 
         # Process items with mismatched content_items
         for invalid_item in mismatched_content_items:
+            logger.info(
+                f"[GR109] Processing mismatched_content_items item: "
+                f"'{getattr(invalid_item, 'object_id', '<unknown>')}' "
+                f"(type={type(invalid_item).__name__})"
+            )
             commands_with_missing_modules: dict[str, list[str]] = {}
             self.get_commands_with_missing_modules_by_content_item(
                 invalid_item, commands_with_missing_modules
@@ -288,4 +384,8 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                         content_object=invalid_item,
                     )
                 )
+        logger.info(
+            f"[GR109] obtain_invalid_content_items_using_graph finished. "
+            f"Produced {len(results)} validation results."
+        )
         return results

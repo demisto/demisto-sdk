@@ -20,11 +20,6 @@ inputs:
     default: "master"
     description: "Branch, tag, or commit SHA to checkout in demisto/content"
 
-  content-private-ref:
-    required: false
-    default: ""
-    description: "Branch, tag, or commit SHA to checkout in demisto/content-private. Leave empty to skip."
-
 
 runs:
   using: 'composite'
@@ -44,20 +39,6 @@ runs:
           repository: demisto/content
           path: content
           ref: ${{ inputs.content-ref }}
-
-      - name: Checkout content-private
-        if: ${{ inputs.content-private-ref != '' }}
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          repository: demisto/content-private
-          path: content-private
-          ref: ${{ inputs.content-private-ref }}
-
-      - name: Merge content-private into content
-        if: ${{ inputs.content-private-ref != '' }}
-        run: cp -rn content-private/. content/
-        shell: bash
 
       - name: Run Validate All
         run: |

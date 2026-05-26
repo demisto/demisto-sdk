@@ -205,13 +205,10 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-        # Materialise the iterable once so it can be iterated multiple times.
-        content_items_list = list(content_items)
-
         target_content_item_ids = (
             []
             if validate_all_files
-            else [item.object_id for item in content_items_list]
+            else [content_item.object_id for content_item in content_items]
         )
 
         mismatched_dependencies = (

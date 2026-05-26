@@ -67,6 +67,21 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             )
             data["nativeimage"] = supported_native_images
 
+        # Remove `internal: true` and `isInternal: true` so the uploaded
+        # script will be visible to the user and listed in pack metadata.
+        # Only stripped on the upload flow (see `Pack.dump` and
+        # `ContentItem._upload`); other flows (prepare-content, artifact
+        # builds) keep the fields intact.
+        if kwargs.get("strip_internal"):
+            if data.pop("internal", None):
+                logger.debug(
+                    f"Removed 'internal' field from script {self.object_id} before upload"
+                )
+            if data.pop("isInternal", None):
+                logger.debug(
+                    f"Removed 'isInternal' field from script {self.object_id} before upload"
+                )
+
         return data
 
     @property
@@ -77,9 +92,14 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
             if r.content_item_to.database_id == r.source_id
         ]  # type: ignore[return-value]
 
-    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(  # type: ignore[override]
+        self,
+        dir: DirectoryPath,
+        marketplace: MarketplaceVersions,
+        **kwargs,
+    ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        data = self.prepare_for_upload(current_marketplace=marketplace)
+        data = self.prepare_for_upload(current_marketplace=marketplace, **kwargs)
 
         for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(
             data, marketplace, self.is_incident_to_alert(marketplace)

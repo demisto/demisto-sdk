@@ -30,8 +30,10 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
@@ -47,6 +49,7 @@ ContentTypes = Union[
     Integration,
     Script,
     Pack,
+    Playbook,
     Dashboard,
     Classifier,
     IncidentType,
@@ -64,6 +67,7 @@ ContentTypes = Union[
     ModelingRule,
     ParsingRule,
     Report,
+    TestPlaybook,
     Trigger,
     Widget,
     GenericDefinition,
@@ -201,21 +205,8 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-        # Build a mapping from object_id to the ContentDTO object so that
-        # ValidationResult.content_object is the same instance that was passed
-        # in via content_items.  This is required because validate_manager.py
-        # filters ALL_FILES results to only those whose content_object is in
-        # filtered_content_objects_for_validator (which contains ContentDTO
-        # objects, not graph objects).  Without this mapping the graph objects
-        # returned by the graph queries would never match and all results would
-        # be silently discarded.
+        # Materialise the iterable once so it can be iterated multiple times.
         content_items_list = list(content_items)
-        id_to_dto = {item.object_id: item for item in content_items_list}
-
-        def resolve_dto(graph_item):
-            """Return the ContentDTO instance for a graph node, falling back to
-            the graph node itself when no match is found (e.g. list-files mode)."""
-            return id_to_dto.get(graph_item.object_id, graph_item)
 
         target_content_item_ids = (
             []
@@ -261,7 +252,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                         message=self.error_message.format(
                             ", ".join(formatted_messages)
                         ),
-                        content_object=resolve_dto(invalid_item),
+                        content_object=invalid_item,
                     )
                 )
 
@@ -276,7 +267,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                         message=self.error_message.format(
                             ", ".join(formatted_messages)
                         ),
-                        content_object=resolve_dto(invalid_item),
+                        content_object=invalid_item,
                     )
                 )
 
@@ -297,7 +288,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                     ValidationResult(
                         validator=self,
                         message=f"Module compatibility issue detected for {dependency_type} dependency: {formatted_message}. Make sure the commands used are supported by the same modules as the content item.",
-                        content_object=resolve_dto(invalid_item),
+                        content_object=invalid_item,
                     )
                 )
         return results

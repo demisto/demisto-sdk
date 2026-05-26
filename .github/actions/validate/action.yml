@@ -5,18 +5,20 @@ author: 'Demisto-SDK'
 inputs:
   artifacts-path-dir:
     required: true
-    type: string
     description: "The path to the artifacts dir"
 
   artifact-name:
     required: false
-    type: string
     description: "The name of of the artifact to upload"
 
   validate-arguments:
     required: false
-    type: string
     description: "The validate command arguments to run."
+
+  content-ref:
+    required: false
+    default: "master"
+    description: "Branch, tag, or commit SHA to checkout in demisto/content"
 
 
 runs:
@@ -36,6 +38,7 @@ runs:
           fetch-depth: 0
           repository: demisto/content
           path: content
+          ref: ${{ inputs.content-ref }}
 
       - name: Run Validate All
         run: |

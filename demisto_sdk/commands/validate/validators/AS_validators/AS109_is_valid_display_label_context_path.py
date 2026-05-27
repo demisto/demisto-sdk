@@ -15,16 +15,9 @@ ContentTypes = Union[Playbook]
 # Extracts context keys from ${...} placeholders, e.g. ${issue.id} -> "issue.id"
 _CONTEXT_KEY_RE = re.compile(r"\$\{([^}]+)\}")
 
-# Extracts the leading identifier from a context path, ignoring DT filters
-# and dot suffixes.  Applied to values captured by _CONTEXT_KEY_RE, 'root'
-# fields, and 'simple' fields in the stringified task dict.
-_ROOT_RE = re.compile(r"^([A-Za-z_]\w*)")
-
-# Matches 'root' and 'simple' string values in the Python repr of a task dict.
-# Captures the value portion so we can extract its leading identifier.
-# E.g.  "'root': 'File'"  → captures "File"
-#        "'simple': 'SuspiciousCommandLines'"  → captures "SuspiciousCommandLines"
-_FIELD_VAL_RE = re.compile(r"'(?:root|simple)':\s*'([^']+)'")
+# Matches dot-separated identifiers, e.g. "PaloAltoNetworksXQL.GenericQuery.results"
+# Used to capture root values in complex field references.
+_DOT_PATH_RE = re.compile(r"[A-Za-z_]\w*(?:\.\w+)+")
 
 
 class IsValidDisplayLabelContextPathValidator(BaseValidator[ContentTypes]):
@@ -65,28 +58,16 @@ class IsValidDisplayLabelContextPathValidator(BaseValidator[ContentTypes]):
         return results
 
 
-def _get_root_name(path: str) -> str:
-    """Extract the leading identifier (root name) from a context path.
-
-    Strips DT filter expressions and dot suffixes.
-    ``FileEnrichment(val.TIMScore == 0).Value`` → ``FileEnrichment``
-    ``File.SHA256`` → ``File``
-    """
-    m = _ROOT_RE.match(path)
-    return m.group(1) if m else path
-
-
-def _extract_roots_from_task(task_str: str) -> Set[str]:
-    """Extract all context-key root names from the string repr of a task dict.
-
-    Scans for ``${...}`` references and ``'root'``/``'simple'`` field values.
-    """
-    roots: Set[str] = set()
-    for key in _CONTEXT_KEY_RE.findall(task_str):
-        roots.add(_get_root_name(key))
-    for val in _FIELD_VAL_RE.findall(task_str):
-        roots.add(_get_root_name(val))
-    return roots
+def _build_token_index(content_item: ContentTypes) -> Dict[str, Set[str]]:
+    """Build an inverted index mapping each context-key token to the task IDs that contain it."""
+    index: Dict[str, Set[str]] = defaultdict(set)
+    for task_id, task_config in content_item.tasks.items():
+        task_str = str(task_config.to_raw_dict)
+        for token in _DOT_PATH_RE.findall(task_str):
+            index[token].add(task_id)
+        for key in _CONTEXT_KEY_RE.findall(task_str):
+            index[key].add(task_id)
+    return index
 
 
 def _get_invalid_display_label_keys(
@@ -102,11 +83,7 @@ def _get_invalid_display_label_keys(
     ):
         return []
 
-    # Build inverted index: root name → set of task IDs that reference it
-    root_index: Dict[str, Set[str]] = defaultdict(set)
-    for task_id, task_config in content_item.tasks.items():
-        for root in _extract_roots_from_task(str(task_config.to_raw_dict)):
-            root_index[root].add(task_id)
+    token_index = _build_token_index(content_item)
 
     invalid: List[Tuple[str, str]] = []
     for task_id, task_config in content_item.tasks.items():
@@ -114,7 +91,23 @@ def _get_invalid_display_label_keys(
         if not display_label:
             continue
         for key in _CONTEXT_KEY_RE.findall(display_label):
-            root = _get_root_name(key)
-            if not (root_index.get(root, set()) - {task_id}):
+            if not _key_used_elsewhere(key, task_id, token_index):
                 invalid.append((task_id, key))
     return invalid
+
+
+def _key_used_elsewhere(
+    key: str, current_id: str, token_index: Dict[str, Set[str]]
+) -> bool:
+    """Check whether *key* or any of its dot-separated prefixes is used by another task.
+
+    For ``A.B.C``, checks ``A.B.C``, then ``A.B``, then ``A``.
+    This handles the complex root/accessor split where the split point is unknown.
+    """
+    parts = key.split(".")
+    exclude = {current_id}
+    for i in range(len(parts), 0, -1):
+        prefix = ".".join(parts[:i])
+        if token_index.get(prefix, set()) - exclude:
+            return True
+    return False

@@ -267,7 +267,6 @@ class BaseContent(BaseNode):
         self,
         path: DirectoryPath,
         marketplace: MarketplaceVersions,
-        **kwargs,
     ) -> None:
         raise NotImplementedError
 

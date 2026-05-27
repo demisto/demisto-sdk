@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from typing import Iterable, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import GitStatuses
@@ -13,6 +15,9 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
+EXECUTE_POLLING_CMD_PATTERN = re.compile(
+    r"execute_polling_command\(['\"]([a-zA-Z-_]+)['\"].*", re.IGNORECASE
+)
 ContentTypes = Script
 
 
@@ -178,7 +183,9 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
         Returns:
             Set[str]: A set of command/script names called via executeCommand.
         """
-        return set(EXECUTE_CMD_PATTERN.findall(code))
+        return set(EXECUTE_CMD_PATTERN.findall(code)) | set(
+            EXECUTE_POLLING_CMD_PATTERN.findall(code)
+        )
 
     @staticmethod
     def _get_declared_depends_on(content_item: ContentTypes) -> Set[str]:

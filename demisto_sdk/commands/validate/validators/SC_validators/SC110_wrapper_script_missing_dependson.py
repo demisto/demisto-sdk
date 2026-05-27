@@ -88,7 +88,6 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
                 continue
 
             code = content_item.code
-            logger.debug(f"code is {code}")
             if not code:
                 continue
 
@@ -98,7 +97,6 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
 
             declared_depends_on = self._get_declared_depends_on(content_item)
             missing = called_commands - declared_depends_on
-            logger.debug(f"called_commands are {called_commands}, declared_dependson are: {declared_depends_on}. {missing=}.")
 
             if missing:
                 results.append(

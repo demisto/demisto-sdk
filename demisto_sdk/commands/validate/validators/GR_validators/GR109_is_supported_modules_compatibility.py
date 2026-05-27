@@ -4,8 +4,6 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
-from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -94,6 +92,9 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     related_field = "supportedModules"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.SCHEMA]
+    # Controls whether to check mandatory (True) or non-mandatory (False) USES relationships.
+    # Subclasses can override this to change the dependency type being validated.
+    mandatory_dependency: bool = True
 
     def get_missing_modules_by_dependency(self, content_item) -> dict[str, list[str]]:
         """Get missing modules for each dependency of a content item.
@@ -106,15 +107,8 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         """
         missing_modules_by_dependency: dict[str, list[str]] = {}
         for dependency in content_item.uses:
-            # Skip UnknownContent dependencies — they don't have supportedModules
-            if isinstance(dependency.content_item_to, UnknownContent):
-                logger.warning(
-                    f"[GR109] Content item '{content_item.object_id}' "
-                    f"(type: {type(content_item).__name__}, path: {getattr(content_item, 'path', 'N/A')}) "
-                    f"depends on '{dependency.content_item_to.object_id or dependency.content_item_to.name}' "
-                    f"(content_type: {getattr(dependency.content_item_to, 'content_type', 'unknown')}), "
-                    f"which is UnknownContent (not in repository). Skipping module compatibility check."
-                )
+            # Filter by mandatory/non-mandatory based on the class member
+            if dependency.mandatorily != self.mandatory_dependency:
                 continue
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
@@ -219,19 +213,22 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
 
         mismatched_dependencies = (
             self.graph.find_content_items_with_module_mismatch_dependencies(
-                target_content_item_ids
+                target_content_item_ids, self.mandatory_dependency
             )
         )
 
-        mismatched_commands = (
-            self.graph.find_content_items_with_module_mismatch_commands(
-                target_content_item_ids
+        if self.mandatory_dependency:
+            mismatched_commands = (
+                self.graph.find_content_items_with_module_mismatch_commands(
+                    target_content_item_ids
+                )
             )
-        )
+        else:
+            mismatched_commands = []
 
         mismatched_content_items = (
             self.graph.find_content_items_with_module_mismatch_content_items(
-                target_content_item_ids
+                target_content_item_ids, self.mandatory_dependency
             )
         )
 
@@ -281,10 +278,13 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 formatted_message = self.format_commands_error_message(
                     commands_with_missing_modules
                 )
+                dependency_type = (
+                    "mandatory" if self.mandatory_dependency else "non-mandatory"
+                )
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=f"Module compatibility issue detected: {formatted_message}. Make sure the commands used are supported by the same modules as the content item.",
+                        message=f"Module compatibility issue detected for {dependency_type} dependency: {formatted_message}. Make sure the commands used are supported by the same modules as the content item.",
                         content_object=invalid_item,
                     )
                 )

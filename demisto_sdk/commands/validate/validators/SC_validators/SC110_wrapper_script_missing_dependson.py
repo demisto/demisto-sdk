@@ -88,6 +88,7 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
                 continue
 
             code = content_item.code
+            logger.debug(f"code is {code}")
             if not code:
                 continue
 

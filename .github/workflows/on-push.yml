@@ -397,6 +397,7 @@ jobs:
           artifacts-path-dir: test-new-validate-command
           artifact-name: test-new-validate-command-artifacts
           validate-arguments: "-a --prev-ver origin/master --config-path sdk_validation_config.toml --ignore GR110 --create-graph-from-scratch"
+          content-ref: "1d9bc33920116dd2372187085b600e041bd91613"
 
   slack-notify-master-failure:
     needs:

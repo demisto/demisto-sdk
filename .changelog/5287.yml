@@ -1,4 +1,0 @@
-changes:
-- description: Added TR101 validation to verify that trigger_id is a valid hex string without special characters like dashes or dots.
-  type: feature
-pr_number: 5287

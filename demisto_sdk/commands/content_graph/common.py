@@ -449,7 +449,7 @@ class Nodes(dict):
         self.add_batch(args)  # type: ignore[arg-type]
 
     def add(self, **kwargs):
-        content_type: ContentType = ContentType(kwargs.get("content_type"))
+        content_type: ContentType = ContentType(kwargs["content_type"])
         if content_type not in self.keys():
             self.__setitem__(content_type, [])
         self.__getitem__(content_type).append(kwargs)

@@ -375,24 +375,11 @@ class ContentItem(BaseContent):
         logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized
 
-    def dump(  # type: ignore[override]
+    def dump(
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        **kwargs,
     ) -> None:
-        """Dumps a single content item to ``dir`` for upload/artifact creation.
-
-        Args:
-            **kwargs: Additional flags forwarded to ``prepare_for_upload``.
-                The only upload-specific flag currently recognized is
-                ``strip_internal`` (set by the ``demisto-sdk upload`` flow
-                via ``ContentItem._upload`` / ``zip_multiple_packs``).
-                When true, the ``internal`` and ``isInternal`` fields are
-                removed from the dumped script data so the uploaded content
-                is visible to the user. Other flows (prepare-content,
-                artifact builds) do not pass it and the fields are kept.
-        """
         if not self.path.exists():
             logger.warning(f"Could not find file {self.path}, skipping dump")
             return
@@ -400,10 +387,7 @@ class ContentItem(BaseContent):
         try:
             write_dict(
                 dir / self.normalize_name,
-                data=self.prepare_for_upload(
-                    current_marketplace=marketplace,
-                    **kwargs,
-                ),
+                data=self.prepare_for_upload(current_marketplace=marketplace),
                 handler=self.handler,
             )
             logger.debug(f"path to dumped file: {str(dir / self.normalize_name)}")
@@ -472,14 +456,9 @@ class ContentItem(BaseContent):
 
         with TemporaryDirectory() as f:
             dir_path = Path(f)
-            # strip_internal=True: this is the per-item upload flow, so the
-            # `internal` and `isInternal` fields should be removed from the
-            # dumped script so the uploaded content is visible to users.
-            # Passed via **kwargs to keep the public `dump` signature stable.
             self.dump(
                 dir_path,
                 marketplace=marketplace,
-                strip_internal=True,
             )
             response = upload_method(dir_path / self.normalize_name)
             parse_upload_response(

@@ -264,64 +264,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                     ):
                         del command["supportedModules"]
 
-    def _dump_pack_metadata(
-        self, source: Path, destination: Path, strip_internal: bool = False
-    ) -> None:
-        """Copies the pack_metadata.json file to the destination.
-
-        When ``strip_internal`` is true, the ``internal`` field is removed so
-        the uploaded pack will be visible to the user. Otherwise the file is
-        copied verbatim.
-
-        Falls back to a plain copy if the source cannot be parsed as JSON,
-        or if ``strip_internal`` is false.
-
-        Args:
-            source (Path): The path to the original pack_metadata.json.
-            destination (Path): The path to write the (possibly modified)
-                pack_metadata.json.
-            strip_internal (bool): If true, remove the ``internal`` field from
-                the destination file. Should only be set by the
-                ``demisto-sdk upload`` flow.
-        """
-        if not strip_internal:
-            shutil.copy(source, destination)
-            return
-
-        try:
-            pack_metadata = get_file(source, raise_on_error=True)
-        except Exception as e:
-            logger.debug(
-                f"Failed reading {source} as JSON ({e}); falling back to plain copy"
-            )
-            shutil.copy(source, destination)
-            return
-
-        if not isinstance(pack_metadata, dict):
-            logger.debug(f"{source} is not a JSON object; falling back to plain copy")
-            shutil.copy(source, destination)
-            return
-
-        if pack_metadata.pop("internal", None):
-            logger.debug(f"Removed 'internal' field from {source} before upload")
-        write_dict(destination, data=pack_metadata, indent=4)
-
-    def dump_metadata(
-        self,
-        path: Path,
-        marketplace: MarketplaceVersions,
-        strip_internal: bool = False,
-    ) -> None:
+    def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         """Dumps the pack metadata file.
 
         Args:
             path (Path): The path of the file to dump the metadata.
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
-            strip_internal (bool): If true, the ``internal`` field is excluded
-                from the dumped ``metadata.json`` so the uploaded pack is
-                visible to users, and scripts marked with ``isInternal: true``
-                are still listed in ``metadata.json``'s content items.
-                Should only be set by the ``demisto-sdk upload`` flow.
         """
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
         self._enhance_pack_properties(marketplace, self.object_id, self.content_items)
@@ -334,9 +282,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             "email",
             "database_id",
         }
-        if strip_internal:
-            # Strip `internal` so the uploaded pack will be visible to the user.
-            excluded_fields_from_metadata.add("internal")
         if not self.is_private:
             excluded_fields_from_metadata |= {
                 "premium",
@@ -349,12 +294,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
         metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
         metadata.update(
-            self._format_metadata(
-                marketplace,
-                self.content_items,
-                self.depends_on,
-                strip_internal=strip_internal,
-            )
+            self._format_metadata(marketplace, self.content_items, self.depends_on)
         )
         self._clean_empty_supportedModuels_from_commands(
             metadata.get("contentItems", {})
@@ -409,32 +349,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         except FileNotFoundError:
             logger.debug(f'No such file {self.path / "ReleaseNotes"}')
 
-    def dump(
-        self,
-        path: Path,
-        marketplace: MarketplaceVersions,
-        **kwargs,
-    ):
-        """Dumps the pack to ``path`` for upload/artifact creation.
-
-        Args:
-            path: Output directory.
-            marketplace: Destination marketplace.
-            **kwargs: Optional flags forwarded to the inner dump steps:
-                - ``tpb`` (bool): When true, include test playbooks in the
-                  dump.
-                - ``strip_internal`` (bool): When true, the ``internal`` and
-                  ``isInternal`` fields are removed from the dumped script
-                  YAMLs (and ``internal`` from pack metadata files), and
-                  scripts marked ``isInternal: true`` are still listed in
-                  the pack ``metadata.json`` content items. Should only be
-                  set by the ``demisto-sdk upload`` flow so that uploaded
-                  content is visible to users; other flows (prepare-content,
-                  artifact builds) keep the fields intact.
-        """
-        tpb: bool = kwargs.pop("tpb", False)
-        strip_internal: bool = kwargs.get("strip_internal", False)
-
+    def dump(self, path: Path, marketplace: MarketplaceVersions, tpb: bool = False):
         if not self.path.exists():
             logger.warning(f"Pack {self.name} does not exist in {self.path}")
             return
@@ -480,16 +395,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 content_item.dump(
                     dir=dir,
                     marketplace=marketplace,
-                    **kwargs,
                 )
-            self.dump_metadata(
-                path / "metadata.json", marketplace, strip_internal=strip_internal
-            )
+            self.dump_metadata(path / "metadata.json", marketplace)
             self.dump_readme(path / "README.md", marketplace)
-            self._dump_pack_metadata(
-                self.path / PACK_METADATA_FILENAME,
-                path / PACK_METADATA_FILENAME,
-                strip_internal=strip_internal,
+            shutil.copy(
+                self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME
             )
             try:
                 shutil.copy(
@@ -566,16 +476,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         # 1) dump the pack into a temporary file
         with TemporaryDirectory() as temp_dump_dir:
             temp_dir_path = Path(temp_dump_dir)
-            # strip_internal=True: this is an upload flow, so the `internal`
-            # and `isInternal` fields should be removed from the dumped
-            # script YAMLs and pack metadata so the uploaded content is
-            # visible to users.
-            self.dump(
-                temp_dir_path,
-                marketplace=marketplace,
-                tpb=tpb,
-                strip_internal=True,
-            )
+            self.dump(temp_dir_path, marketplace=marketplace, tpb=tpb)
 
             # 2) zip the dumped pack
             with TemporaryDirectory() as pack_zips_dir:

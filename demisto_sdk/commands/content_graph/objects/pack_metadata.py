@@ -107,7 +107,6 @@ class PackMetadata(BaseModel):
         marketplace: MarketplaceVersions,
         content_items: PackContentItems,
         dependencies: List[RelationshipData],
-        strip_internal: bool = False,
     ) -> dict:
         """
         Enhancing the pack metadata properties after dumping into a dictionary. (properties that can't be calculating before)
@@ -121,9 +120,6 @@ class PackMetadata(BaseModel):
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
             content_items (PackContentItems): The pack content items object.
             dependencies (list[RelationshipData]): List of the pack dependencies.
-            strip_internal (bool): When true, scripts marked with ``isInternal: true``
-                are still listed in the pack metadata content items. Should only be
-                set by the ``demisto-sdk upload`` flow.
 
         Returns:
             dict: The update metadata dictionary.
@@ -133,9 +129,7 @@ class PackMetadata(BaseModel):
         (
             collected_content_items,
             content_displays,
-        ) = self._get_content_items_and_displays_metadata(
-            marketplace, content_items, strip_internal=strip_internal
-        )
+        ) = self._get_content_items_and_displays_metadata(marketplace, content_items)
 
         default_data_source_value = (
             {
@@ -182,10 +176,7 @@ class PackMetadata(BaseModel):
         integration_list.insert(0, integration_metadata_object[0])
 
     def _get_content_items_and_displays_metadata(
-        self,
-        marketplace: MarketplaceVersions,
-        content_items: PackContentItems,
-        strip_internal: bool = False,
+        self, marketplace: MarketplaceVersions, content_items: PackContentItems
     ) -> Tuple[Dict, Dict]:
         """
         Gets the pack content items and display names to add into the pack's metadata dictionary.
@@ -195,9 +186,6 @@ class PackMetadata(BaseModel):
         Args:
             marketplace (MarketplaceVersions): The marketplace to which the pack should belong to.
             content_items (PackContentItems): The pack content items object.
-            strip_internal (bool): When true, scripts marked with ``isInternal: true``
-                are still listed in the pack metadata content items. Should only be
-                set by the ``demisto-sdk upload`` flow.
 
         Returns:
             Tuple[Dict, Dict]: The content items and display names dictionaries to add to the pack metadata.
@@ -205,9 +193,7 @@ class PackMetadata(BaseModel):
         collected_content_items: dict = {}
         content_displays: dict = {}
         for content_item in content_items:
-            if should_ignore_item_in_metadata(
-                content_item, marketplace, strip_internal=strip_internal
-            ):
+            if should_ignore_item_in_metadata(content_item, marketplace):
                 continue
             new_content_item = None
             try:
@@ -677,22 +663,9 @@ class PackMetadata(BaseModel):
         return filtered_content_items[0] if filtered_content_items else None
 
 
-def should_ignore_item_in_metadata(
-    content_item,
-    marketplace: MarketplaceVersions,
-    strip_internal: bool = False,
-):
+def should_ignore_item_in_metadata(content_item, marketplace: MarketplaceVersions):
     """
-    Checks whether content item should be ignored from metadata.
-
-    Args:
-        content_item: The content item to evaluate.
-        marketplace (MarketplaceVersions): The destination marketplace.
-        strip_internal (bool): When true, scripts marked with ``isInternal: true``
-            are NOT skipped (so they will appear in the pack metadata content items).
-            Should only be set by the ``demisto-sdk upload`` flow so that uploaded
-            content is visible to users; other flows (prepare-content, artifact
-            builds) preserve the original skip behavior.
+    Checks whether content item should be ignored from metadata
     """
     if content_item.is_test:
         logger.debug(
@@ -710,11 +683,7 @@ def should_ignore_item_in_metadata(
         logger.info(
             f"Skipping {content_item.name} in metadata creation: item is under Agentix {content_item.content_type.value} and is_llm={content_item.is_llm}."
         )
-    elif (
-        content_item.content_type == ContentType.SCRIPT
-        and content_item.is_internal
-        and not strip_internal
-    ):
+    elif content_item.content_type == ContentType.SCRIPT and content_item.is_internal:
         logger.info(
             f"Skipping {content_item.name} in metadata creation: item is an internal script."
         )

@@ -12,16 +12,14 @@ class GenericType(ContentItem, content_type=ContentType.GENERIC_TYPE):  # type: 
     definition_id: Optional[str] = Field(alias="definitionId")
     version: Optional[int] = 0
 
-    def dump(  # type: ignore[override]
+    def dump(
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        **kwargs,
     ) -> None:
         super().dump(
             dir=dir / self.path.parent.name,
             marketplace=marketplace,
-            **kwargs,
         )
 
     @staticmethod

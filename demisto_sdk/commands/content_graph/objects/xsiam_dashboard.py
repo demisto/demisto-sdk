@@ -24,13 +24,12 @@ class XSIAMDashboard(ContentItemXSIAM, content_type=ContentType.XSIAM_DASHBOARD)
             summary.update({"preview": preview})
         return summary
 
-    def dump(  # type: ignore[override]
+    def dump(
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        **kwargs,
     ) -> None:
-        super().dump(dir, marketplace, **kwargs)
+        super().dump(dir, marketplace)
         if (self.path.parent / f"{self.path.stem}_image.png").exists():
             shutil.copy(
                 self.path.parent / f"{self.path.stem}_image.png",

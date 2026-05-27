@@ -18,16 +18,14 @@ class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type
     def metadata_fields(self) -> Set[str]:
         return super().metadata_fields().union({"field_type"})
 
-    def dump(  # type: ignore[override]
+    def dump(
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        **kwargs,
     ) -> None:
         super().dump(
             dir=dir / self.path.parent.name,
             marketplace=marketplace,
-            **kwargs,
         )
 
     @staticmethod

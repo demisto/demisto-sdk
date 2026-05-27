@@ -32,11 +32,10 @@ class ContentItemXSIAM(ContentItem, ABC):
             return MINIMUM_XSOAR_SAAS_VERSION
         return v
 
-    def dump(  # type: ignore[override]
+    def dump(
         self,
         dir: DirectoryPath,
         marketplace: MarketplaceVersions,
-        **kwargs,
     ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
 
@@ -55,7 +54,6 @@ class ContentItemXSIAM(ContentItem, ABC):
 
         data = self.prepare_for_upload(
             marketplace,
-            **kwargs,
         )
 
         for file in output_paths:

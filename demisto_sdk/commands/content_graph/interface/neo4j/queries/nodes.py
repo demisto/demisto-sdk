@@ -170,13 +170,17 @@ def create_nodes_by_type(
     data: List[Dict[str, Any]],
 ) -> None:
     labels: str = ":".join(content_type.labels)
+    logger.info(
+        f"Creating {len(data)} nodes of type {content_type}. "
+        f"object_ids: {[d.get('object_id', 'N/A') for d in data[:10]]}{'...' if len(data) > 10 else ''}"
+    )
     if content_type in ContentType.content_items():
         query = CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE.format(labels=labels)
     else:
         query = CREATE_NODES_BY_TYPE_TEMPLATE.format(labels=labels)
     result = run_query(tx, query, data=data).single()
     nodes_count: int = result["nodes_created"]
-    logger.debug(f"Created {nodes_count} nodes of type {content_type}.")
+    logger.info(f"Created {nodes_count} nodes of type {content_type} (expected {len(data)}).")
 
 
 def _match(

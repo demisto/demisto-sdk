@@ -60,10 +60,17 @@ class RepositoryParser:
     @staticmethod
     def parse_pack(pack_path: Path) -> Optional[PackParser]:
         try:
-            return PackParser(pack_path)
+            pack = PackParser(pack_path)
+            logger.info(f"Successfully parsed pack '{pack_path.name}'")
+            return pack
         except (NotAContentItemException, FileNotFoundError):
             logger.warning(f"Pack {pack_path.name} is not a valid pack. Skipping")
             return None
+        except Exception:
+            logger.exception(
+                f"Unexpected error parsing pack {pack_path.name}"
+            )
+            raise
 
     @staticmethod
     def should_parse_pack(path: Path) -> bool:

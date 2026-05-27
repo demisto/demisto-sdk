@@ -382,10 +382,21 @@ class PackParser(BaseContentParser, PackMetadataParser):
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)
             self.relationships.update(content_item.relationships)
+            logger.info(
+                f"Successfully parsed content item: "
+                f"object_id='{content_item.object_id}', "
+                f"content_type='{content_item.content_type}', "
+                f"path='{content_item_path}'"
+            )
         except NotAContentItemException:
             logger.debug(f"Skipping {content_item_path} - not a content item")
         except InvalidContentItemException:
             logger.error(f"{content_item_path} - invalid content item")
+            raise
+        except Exception:
+            logger.exception(
+                f"Unexpected error parsing content item at {content_item_path} in pack {self.object_id}"
+            )
             raise
 
     def parse_content_test_conf_folders(self):

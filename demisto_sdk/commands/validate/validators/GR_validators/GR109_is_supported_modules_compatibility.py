@@ -4,6 +4,8 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -104,6 +106,16 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         """
         missing_modules_by_dependency: dict[str, list[str]] = {}
         for dependency in content_item.uses:
+            # Skip UnknownContent dependencies — they don't have supportedModules
+            if isinstance(dependency.content_item_to, UnknownContent):
+                logger.warning(
+                    f"[GR109] Content item '{content_item.object_id}' "
+                    f"(type: {type(content_item).__name__}, path: {getattr(content_item, 'path', 'N/A')}) "
+                    f"depends on '{dependency.content_item_to.object_id or dependency.content_item_to.name}' "
+                    f"(content_type: {getattr(dependency.content_item_to, 'content_type', 'unknown')}), "
+                    f"which is UnknownContent (not in repository). Skipping module compatibility check."
+                )
+                continue
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module

@@ -105,6 +105,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         """
         missing_modules_by_dependency: dict[str, list[str]] = {}
         for dependency in content_item.uses:
+            logger.info(f"{dependency.content_item_to=}")
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module
@@ -211,7 +212,6 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 target_content_item_ids
             )
         )
-        logger.info(f"{mismatched_dependencies=}")
 
         mismatched_commands = (
             self.graph.find_content_items_with_module_mismatch_commands(
@@ -229,6 +229,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
 
         # Process items with mismatched dependencies
         for invalid_item in mismatched_dependencies:
+            logger.info(f"{invalid_item=}")
             missing_modules_by_dependency = self.get_missing_modules_by_dependency(
                 invalid_item
             )

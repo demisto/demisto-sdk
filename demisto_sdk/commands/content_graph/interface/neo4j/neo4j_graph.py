@@ -110,6 +110,13 @@ def _parse_node(element_id: str, node: dict) -> BaseNode:
     obj: BaseNode
     content_type = node.get("content_type", "")
     if node.get("not_in_repository"):
+        logger.info(
+            f"Creating UnknownContent node: "
+            f"object_id='{node.get('object_id', '')}', "
+            f"name='{node.get('name', '')}', "
+            f"content_type='{content_type}'. "
+            f"This item was referenced by another content item but was not found as a parsed node in the repository."
+        )
         obj = UnknownContent.parse_obj(node)
 
     else:

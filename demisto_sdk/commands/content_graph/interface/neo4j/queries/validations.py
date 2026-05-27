@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     PlatformSupportedModules,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -467,6 +468,8 @@ def get_supported_modules_mismatch_dependencies(
       AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {[sm.value for sm in PlatformSupportedModules]}) WHERE module IN contentItemB.supportedModules)
     RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
     """
+    logger.info(f"{content_item_ids=}")
+    logger.info(f"{query=}")
     return {
         item.get("contentItemA").element_id: Neo4jRelationshipResult(
             node_from=item.get("contentItemA"),

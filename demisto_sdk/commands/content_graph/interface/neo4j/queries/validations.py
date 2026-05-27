@@ -483,6 +483,7 @@ def get_supported_modules_mismatch_dependencies(
       AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {[sm.value for sm in PlatformSupportedModules]}) WHERE module IN contentItemB.supportedModules)
     RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
     """
+    logger.info(f"{query=}")
     return {
         item.get("contentItemA").element_id: Neo4jRelationshipResult(
             node_from=item.get("contentItemA"),

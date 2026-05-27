@@ -89,7 +89,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
             if r.content_item_to.database_id == r.source_id
         ]
 
-    def dump(self, *args) -> None:
+    def dump(self, *args, **kwargs) -> None:
         raise NotImplementedError()
 
     @property

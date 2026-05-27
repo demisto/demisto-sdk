@@ -8,3 +8,9 @@ CONTENT_TYPES_EXCLUDED_FROM_UPLOAD = {
     ContentType.TEST_SCRIPT,
     ContentType.AGENTIX_ACTION_TEST,
 }
+
+# Content types that are not supported by the platform and should cause the upload to fail
+# with a clear error message when found in a pack.
+CONTENT_TYPES_NOT_SUPPORTED_IN_UPLOAD = {
+    ContentType.JOB,
+}

@@ -112,16 +112,6 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             # Filter by mandatory/non-mandatory based on the class member
             if dependency.mandatorily != self.mandatory_dependency:
                 continue
-            # Skip UnknownContent dependencies — they don't have supportedModules
-            if isinstance(dependency.content_item_to, UnknownContent):
-                logger.warning(
-                    f"[GR109] Content item '{content_item.object_id}' "
-                    f"(type: {type(content_item).__name__}, path: {getattr(content_item, 'path', 'N/A')}) "
-                    f"depends on '{dependency.content_item_to.object_id or dependency.content_item_to.name}' "
-                    f"(content_type: {getattr(dependency.content_item_to, 'content_type', 'unknown')}), "
-                    f"which is UnknownContent (not in repository). Skipping module compatibility check."
-                )
-                continue
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module

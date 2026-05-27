@@ -143,6 +143,8 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
                 actions = cls.graph_interface.get_agentix_actions_using_content_items(
                     script_ids
                 )
+                logger.debug(f"scripts ids: {script_ids}")
+                logger.debug(f"actions found: {actions}")
 
                 # Extract the script IDs that have at least one wrapping action
                 for action in actions:

@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -92,9 +93,6 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     related_field = "supportedModules"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.SCHEMA]
-    # Controls whether to check mandatory (True) or non-mandatory (False) USES relationships.
-    # Subclasses can override this to change the dependency type being validated.
-    mandatory_dependency: bool = True
 
     def get_missing_modules_by_dependency(self, content_item) -> dict[str, list[str]]:
         """Get missing modules for each dependency of a content item.
@@ -107,18 +105,33 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         """
         missing_modules_by_dependency: dict[str, list[str]] = {}
         for dependency in content_item.uses:
-            # Filter by mandatory/non-mandatory based on the class member
-            if dependency.mandatorily != self.mandatory_dependency:
+            # Defensive check: dependency.content_item_to may be an UnknownContent
+            # node (or any object without `supportedModules`), which would raise
+            # AttributeError. Log enough context to identify which content items
+            # are involved and skip the problematic dependency.
+            dependency_target = dependency.content_item_to
+            if not hasattr(dependency_target, "supportedModules"):
+                logger.warning(
+                    f"[GR109] Skipping dependency without 'supportedModules' attribute. "
+                    f"Source content item: id='{getattr(content_item, 'object_id', None)}', "
+                    f"type='{type(content_item).__name__}', "
+                    f"path='{getattr(content_item, 'path', None)}'. "
+                    f"Dependency target: id='{getattr(dependency_target, 'object_id', None)}', "
+                    f"type='{type(dependency_target).__name__}', "
+                    f"node_id='{getattr(dependency_target, 'node_id', None)}', "
+                    f"content_type='{getattr(dependency_target, 'content_type', None)}', "
+                    f"mandatorily={dependency.mandatorily}."
+                )
                 continue
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module
                 for module in content_item.supportedModules
                 or [sm.value for sm in PlatformSupportedModules]
-                if module not in dependency.content_item_to.supportedModules
+                if module not in dependency_target.supportedModules
             ]
             if missing_modules:
-                missing_modules_by_dependency[dependency.content_item_to.object_id] = (
+                missing_modules_by_dependency[dependency_target.object_id] = (
                     missing_modules
                 )
 
@@ -213,22 +226,19 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
 
         mismatched_dependencies = (
             self.graph.find_content_items_with_module_mismatch_dependencies(
-                target_content_item_ids, self.mandatory_dependency
+                target_content_item_ids
             )
         )
 
-        if self.mandatory_dependency:
-            mismatched_commands = (
-                self.graph.find_content_items_with_module_mismatch_commands(
-                    target_content_item_ids
-                )
+        mismatched_commands = (
+            self.graph.find_content_items_with_module_mismatch_commands(
+                target_content_item_ids
             )
-        else:
-            mismatched_commands = []
+        )
 
         mismatched_content_items = (
             self.graph.find_content_items_with_module_mismatch_content_items(
-                target_content_item_ids, self.mandatory_dependency
+                target_content_item_ids
             )
         )
 
@@ -278,13 +288,10 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 formatted_message = self.format_commands_error_message(
                     commands_with_missing_modules
                 )
-                dependency_type = (
-                    "mandatory" if self.mandatory_dependency else "non-mandatory"
-                )
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=f"Module compatibility issue detected for {dependency_type} dependency: {formatted_message}. Make sure the commands used are supported by the same modules as the content item.",
+                        message=f"Module compatibility issue detected: {formatted_message}. Make sure the commands used are supported by the same modules as the content item.",
                         content_object=invalid_item,
                     )
                 )

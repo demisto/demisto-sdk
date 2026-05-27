@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -210,6 +211,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 target_content_item_ids
             )
         )
+        logger.info(f"{mismatched_dependencies=}")
 
         mismatched_commands = (
             self.graph.find_content_items_with_module_mismatch_commands(

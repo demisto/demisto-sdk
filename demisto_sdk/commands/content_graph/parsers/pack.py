@@ -388,11 +388,6 @@ class PackParser(BaseContentParser, PackMetadataParser):
         except InvalidContentItemException:
             logger.error(f"{content_item_path} - invalid content item")
             raise
-        except Exception:
-            logger.exception(
-                f"Unexpected error parsing content item at {content_item_path} in pack {self.object_id}"
-            )
-            raise
 
     def parse_content_test_conf_folders(self):
         logger.info("Checking if content-test-conf repo has additional content items.")

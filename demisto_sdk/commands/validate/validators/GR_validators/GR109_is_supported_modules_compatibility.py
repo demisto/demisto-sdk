@@ -4,8 +4,6 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
-from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent

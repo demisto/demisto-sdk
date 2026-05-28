@@ -391,7 +391,7 @@ jobs:
   validate-files-new-validate:
     runs-on: ubuntu-latest
     name: Test New Validate Command
-    timeout-minutes: 90
+    timeout-minutes: 60
     env:
       CI_COMMIT_BRANCH: "master"
 

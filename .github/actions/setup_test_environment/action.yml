@@ -41,6 +41,6 @@ runs:
 
     - name: Install npm
       run: |
-        npm install
+        npm ci
         echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > ${{ inputs.artifacts-dir }}/node_versions_info.json
       shell: bash

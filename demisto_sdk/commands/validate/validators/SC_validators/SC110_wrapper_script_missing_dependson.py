@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-
 from typing import Iterable, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import GitStatuses

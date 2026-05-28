@@ -1,4 +1,4 @@
 changes:
-- description: Add npm caching to the `actions/setup-node` CI step to fix inconsistent Node.js availability after the upgrade from `setup-node@v4` to `v6`.
+- description: Add npm caching to the `actions/setup-node` CI step and increase the `validate-files-new-validate` job timeout to 90 minutes to fix intermittent failures caused by Node.js download time on cold runners.
   type: internal
 pr_number: 5386

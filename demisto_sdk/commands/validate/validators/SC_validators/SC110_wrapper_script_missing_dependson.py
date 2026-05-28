@@ -25,7 +25,10 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
     error_code = "SC110"
     description = (
         "Validates that wrapper scripts (those wrapped by an AgentixAction) declare "
-        "all commands/scripts they call via executeCommand in the 'dependson' field."
+        "all commands/scripts they call via executeCommand in the 'dependson' field. "
+        "Note: the check is not recursive — it only inspects commands/scripts called "
+        "directly by the current script, and does not traverse into scripts that are "
+        "themselves executed by the current script."
     )
     rationale = (
         "The 'dependson' field is used to build pack dependency graphs and ensure "
@@ -35,7 +38,7 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
     )
     error_message = (
         "Script '{name}' calls the following commands/scripts via executeCommand "
-        "but does not list them in 'dependson.must' or 'dependson.should': {missing}. "
+        "but does not list them in 'dependson': {missing}. "
         "Add them under 'dependson.must' or 'dependson.should' in the script's YAML."
     )
     related_field = "dependson"

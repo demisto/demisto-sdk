@@ -614,14 +614,14 @@ def test_WrapperScriptMissingDependsOnValidator_only_wrapped_scripts_validated(
     """
     code = 'demisto.executeCommand("SomeCommand", {})'
     wrapped_script = create_script_object(
-        paths=["dependson"],
-        values=[{}],
+        paths=["dependson", "commonfields.id", "name"],
+        values=[{}, "WrappedScript", "WrappedScript"],
         code=code,
         name="WrappedScript",
     )
     unwrapped_script = create_script_object(
-        paths=["dependson"],
-        values=[{}],
+        paths=["dependson", "commonfields.id", "name"],
+        values=[{}, "UnwrappedScript", "UnwrappedScript"],
         code=code,
         name="UnwrappedScript",
     )

@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_FOLDER,
     PARTNER_SUPPORT,
     XSOAR_SUPPORT,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
@@ -120,6 +121,9 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA128_is_command_or_
 )
 from demisto_sdk.commands.validate.validators.BA_validators.BA129_missing_compliant_policies import (
     MissingCompliantPoliciesValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA130_marketplacev2_without_platform import (
+    MarketplaceV2WithoutPlatformValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -3469,3 +3473,505 @@ def test_MissingCompliantPoliciesValidator_only_new_command_is_reported(mocker):
     assert [r.message for r in results] == [
         "Command new-cmd uses the arguments: ['endpoint_id'], which are associated with one or more compliance policies, but does not declare the required compliantpolicies: ['EndPoint Isolation']."
     ]
+
+
+def test_MissingCompliantPoliciesValidator_reputation_commands_excluded(mocker):
+    """
+    Given:
+    - Integration commands that are reputation commands (ip, domain, url, file, email, cve, etc.)
+    - These commands use arguments that would normally require compliantpolicies
+    - However, they do NOT declare any compliantpolicies
+
+    When:
+    - Calling obtain_invalid_content_items.
+
+    Then:
+    - The validator should NOT report any failures for reputation commands
+    - Reputation commands should be excluded from BA129 validation
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip", "ip_list"],
+            },
+            {
+                "name": "Domain Blockage",
+                "category": "EndPoint",
+                "arguments": ["domain"],
+            },
+        ]
+    }
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    # Create integration with reputation commands that use policy-associated arguments
+    integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "ip",
+                    "description": "Check IP reputation",
+                    "arguments": [{"name": "ip", "description": "IP address"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+                {
+                    "name": "domain",
+                    "description": "Check domain reputation",
+                    "arguments": [{"name": "domain", "description": "Domain name"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+                {
+                    "name": "url",
+                    "description": "Check URL reputation",
+                    "arguments": [{"name": "url", "description": "URL"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                },
+                {
+                    "name": "file",
+                    "description": "Check file reputation",
+                    "arguments": [{"name": "file", "description": "File hash"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                },
+                {
+                    "name": "email",
+                    "description": "Check email reputation",
+                    "arguments": [{"name": "email", "description": "Email address"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                },
+                {
+                    "name": "cve",
+                    "description": "Check CVE",
+                    "arguments": [{"name": "cve", "description": "CVE ID"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                },
+            ]
+        ],
+    )
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items([integration])
+
+    # All reputation commands should be excluded, so no failures
+    assert results == []
+
+
+def test_MissingCompliantPoliciesValidator_list_get_commands_excluded(mocker):
+    """
+    Given:
+    - Integration commands that are list or get commands
+    - These commands use arguments that would normally require compliantpolicies
+    - However, they do NOT declare any compliantpolicies
+
+    When:
+    - Calling obtain_invalid_content_items.
+
+    Then:
+    - The validator should NOT report any failures for list/get commands
+    - List and get commands should be excluded from BA129 validation
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "User Soft Remediation",
+                "category": "IAM",
+                "arguments": ["username", "user_id"],
+            },
+            {
+                "name": "EndPoint Isolation",
+                "category": "EndPoint",
+                "arguments": ["endpoint_id"],
+            },
+        ]
+    }
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    # Create integration with list/get commands that use policy-associated arguments
+    integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "list-users",
+                    "description": "List users",
+                    "arguments": [{"name": "username", "description": "Username"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+                {
+                    "name": "get-user",
+                    "description": "Get user details",
+                    "arguments": [{"name": "user_id", "description": "User ID"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+                {
+                    "name": "endpoint-list",
+                    "description": "List endpoints",
+                    "arguments": [
+                        {"name": "endpoint_id", "description": "Endpoint ID"}
+                    ],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+                {
+                    "name": "get-endpoint-details",
+                    "description": "Get endpoint details",
+                    "arguments": [
+                        {"name": "endpoint_id", "description": "Endpoint ID"}
+                    ],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+                {
+                    "name": "userlist",
+                    "description": "User list",
+                    "arguments": [{"name": "username", "description": "Username"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+            ]
+        ],
+    )
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items([integration])
+
+    # All list/get commands should be excluded, so no failures
+    assert results == []
+
+
+def test_MissingCompliantPoliciesValidator_mixed_commands(mocker):
+    """
+    Given:
+    - Integration with a mix of:
+      1. Reputation commands (should be excluded)
+      2. List/get commands (should be excluded)
+      3. Regular commands that ARE missing required policies (should fail)
+      4. Regular commands that HAVE required policies (should pass)
+
+    When:
+    - Calling obtain_invalid_content_items.
+
+    Then:
+    - Only the regular command missing policies should be reported
+    - Reputation and list/get commands should be excluded
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip_list"],
+            },
+            {
+                "name": "User Soft Remediation",
+                "category": "IAM",
+                "arguments": ["username"],
+            },
+        ]
+    }
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "ip",
+                    "description": "IP reputation",
+                    "arguments": [{"name": "ip_list", "description": "IPs"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Excluded - reputation command
+                },
+                {
+                    "name": "list-users",
+                    "description": "List users",
+                    "arguments": [{"name": "username", "description": "Username"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Excluded - list command
+                },
+                {
+                    "name": "block-ip",
+                    "description": "Block IP",
+                    "arguments": [{"name": "ip_list", "description": "IPs to block"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Should FAIL - regular command missing policy
+                },
+                {
+                    "name": "delete-user",
+                    "description": "Delete user",
+                    "arguments": [{"name": "username", "description": "Username"}],
+                    "outputs": [],
+                    "compliantpolicies": [
+                        "User Soft Remediation"
+                    ],  # Should PASS - has policy
+                },
+            ]
+        ],
+    )
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items([integration])
+
+    # Only the block-ip command should fail
+    assert len(results) == 1
+    assert "block-ip" in results[0].message
+    assert "IP Blockage" in results[0].message
+
+
+def _set_marketplaces(content_items, marketplaces_list):
+    """Helper to set marketplaces on a list of content items.
+    Also sets supportedModules to ['xsiam'] for items that have PLATFORM
+    in their marketplaces, to avoid AttributeError when pack is None.
+    """
+    for item, mp in zip(content_items, marketplaces_list):
+        item.marketplaces = mp
+        if MarketplaceVersions.PLATFORM in mp:
+            item.supportedModules = ["xsiam"]
+    return content_items
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        pytest.param(
+            _set_marketplaces(
+                [
+                    create_integration_object(),
+                    create_script_object(),
+                    create_playbook_object(),
+                ],
+                [
+                    [MarketplaceVersions.XSOAR],
+                    [MarketplaceVersions.XSOAR],
+                    [MarketplaceVersions.XSOAR],
+                ],
+            ),
+            0,
+            id="no_marketplacev2_should_pass",
+        ),
+        pytest.param(
+            _set_marketplaces(
+                [create_integration_object(), create_script_object()],
+                [
+                    [MarketplaceVersions.MarketplaceV2],
+                    [MarketplaceVersions.MarketplaceV2],
+                ],
+            ),
+            2,
+            id="two_items_with_marketplacev2_without_platform_should_fail",
+        ),
+        pytest.param(
+            _set_marketplaces(
+                [
+                    create_integration_object(),
+                    create_script_object(),
+                    create_playbook_object(),
+                ],
+                [
+                    [MarketplaceVersions.MarketplaceV2],
+                    [MarketplaceVersions.XSOAR],
+                    [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM],
+                ],
+            ),
+            1,
+            id="one_item_with_marketplacev2_without_platform_should_fail",
+        ),
+        pytest.param(
+            _set_marketplaces(
+                [create_integration_object()],
+                [
+                    [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM],
+                ],
+            ),
+            0,
+            id="marketplacev2_with_platform_and_xsiam_should_pass",
+        ),
+        pytest.param(
+            _set_marketplaces(
+                [create_integration_object()],
+                [
+                    [MarketplaceVersions.PLATFORM],
+                ],
+            ),
+            0,
+            id="platform_only_should_pass",
+        ),
+    ],
+)
+def test_MarketplaceV2WithoutPlatformValidator_obtain_invalid_content_items(
+    content_items, expected_number_of_failures
+):
+    """
+    Given
+    content_items list with various marketplace configurations.
+        - Case 1: All items have only xsoar marketplace - should pass.
+        - Case 2: Two items have marketplacev2 without platform - should fail both.
+        - Case 3: One item has marketplacev2 without platform, one has xsoar, one has both marketplacev2 and platform with xsiam - should fail one.
+        - Case 4: Item has both marketplacev2 and platform with xsiam in supported modules - should pass.
+        - Case 5: Item has only platform - should pass.
+    When
+    - Calling the MarketplaceV2WithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+        - Make sure the right amount of failures return and that the error message is correct.
+    """
+    results = MarketplaceV2WithoutPlatformValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(results) == expected_number_of_failures
+    for result in results:
+        assert (
+            result.message
+            == "The content item has 'marketplacev2' but is missing 'platform' in its "
+            "marketplaces and/or 'xsiam' in its supported modules (these can be set "
+            "directly, inherited from the pack, or resolved from defaults)."
+        )
+
+
+@pytest.mark.parametrize(
+    "marketplaces, supported_modules, expected_number_of_failures",
+    [
+        pytest.param(
+            [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM],
+            ["xsiam"],
+            0,
+            id="platform_and_xsiam_in_supported_modules_should_pass",
+        ),
+        pytest.param(
+            [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM],
+            ["xsiam", "edr"],
+            0,
+            id="platform_and_xsiam_and_edr_in_supported_modules_should_pass",
+        ),
+        pytest.param(
+            [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM],
+            ["edr", "asm"],
+            1,
+            id="platform_but_no_xsiam_in_supported_modules_should_fail",
+        ),
+        pytest.param(
+            [MarketplaceVersions.MarketplaceV2],
+            ["xsiam"],
+            1,
+            id="xsiam_in_supported_modules_but_no_platform_should_fail",
+        ),
+    ],
+)
+def test_MarketplaceV2WithoutPlatformValidator_supported_modules(
+    marketplaces, supported_modules, expected_number_of_failures
+):
+    """
+    Given
+    - A content item with 'marketplacev2' in its marketplaces
+      with various marketplace and supported modules configurations.
+        - Case 1: 'platform' in marketplaces and 'xsiam' in supported modules - should pass.
+        - Case 2: 'platform' in marketplaces and 'xsiam' + 'edr' in supported modules - should pass.
+        - Case 3: 'platform' in marketplaces but no 'xsiam' in supported modules - should fail.
+        - Case 4: no 'platform' in marketplaces but 'xsiam' in supported modules - should fail.
+    When
+    - Calling the MarketplaceV2WithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failures return.
+    """
+    content_item = create_integration_object()
+    content_item.marketplaces = marketplaces
+    content_item.supportedModules = supported_modules
+    results = MarketplaceV2WithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == expected_number_of_failures
+
+
+def test_MarketplaceV2WithoutPlatformValidator_fix_no_platform():
+    """
+    Given
+    - A content item with 'marketplacev2' but without 'platform' in its marketplaces
+      (get_content_item_supported_modules returns empty set).
+    When
+    - Calling the MarketplaceV2WithoutPlatformValidator fix function.
+    Then
+    - 'platform' is added to the marketplaces list.
+    - supportedModules is set to ['xsiam'].
+    """
+    content_item = create_integration_object()
+    content_item.marketplaces = [MarketplaceVersions.MarketplaceV2]
+
+    MarketplaceV2WithoutPlatformValidator().fix(content_item)
+
+    assert MarketplaceVersions.PLATFORM in content_item.marketplaces
+    assert content_item.supportedModules == ["xsiam"]
+
+
+def test_MarketplaceV2WithoutPlatformValidator_fix_has_platform_no_xsiam():
+    """
+    Given
+    - A content item with 'marketplacev2' and 'platform' in its marketplaces
+      but 'xsiam' is NOT in its supported modules.
+    When
+    - Calling the MarketplaceV2WithoutPlatformValidator fix function.
+    Then
+    - 'xsiam' is added to the item's supportedModules.
+    """
+    content_item = create_integration_object()
+    content_item.marketplaces = [
+        MarketplaceVersions.MarketplaceV2,
+        MarketplaceVersions.PLATFORM,
+    ]
+    content_item.supportedModules = ["edr", "asm"]
+
+    MarketplaceV2WithoutPlatformValidator().fix(content_item)
+
+    assert "xsiam" in content_item.supportedModules
+    assert "edr" in content_item.supportedModules
+    assert "asm" in content_item.supportedModules
+
+
+def test_MarketplaceV2WithoutPlatformValidator_fix_has_platform_none_supported_modules():
+    """
+    Given
+    - A content item with 'marketplacev2' and 'platform' in its marketplaces
+      but supportedModules is None, and the pack's supportedModules does not include xsiam.
+    When
+    - Calling the MarketplaceV2WithoutPlatformValidator fix function.
+    Then
+    - supportedModules is set to ['xsiam'].
+    """
+    content_item = create_integration_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["edr"]
+    content_item.pack = pack
+    content_item.marketplaces = [
+        MarketplaceVersions.MarketplaceV2,
+        MarketplaceVersions.PLATFORM,
+    ]
+    content_item.supportedModules = None
+
+    MarketplaceV2WithoutPlatformValidator().fix(content_item)
+
+    assert sorted(content_item.supportedModules) == ["edr", "xsiam"]

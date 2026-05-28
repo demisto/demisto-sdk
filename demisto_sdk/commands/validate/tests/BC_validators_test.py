@@ -1842,7 +1842,7 @@ def test_IsSupportedModulesRemoved_with_removed_modules():
     assert len(res) == 1
     assert (
         res[0].message
-        == "The following support modules have been removed from the integration 'cloud_posture', 'edr'. Removing supported modules is not allowed, Please undo."
+        == "The following support modules have been removed from the content item 'cloud_posture', 'edr'. Removing supported modules is not allowed, Please undo."
     )
     assert res[0].validator.error_code == "BC115"
 
@@ -1897,7 +1897,7 @@ def test_IsSupportedModulesRemoved_with_pack_fallback():
         assert len(res) == 1
         assert (
             res[0].message
-            == "The following support modules have been removed from the integration 'cloud_posture', 'edr'. Removing supported modules is not allowed, Please undo."
+            == "The following support modules have been removed from the content item 'cloud_posture', 'edr'. Removing supported modules is not allowed, Please undo."
         )
         assert res[0].validator.error_code == "BC115"
 
@@ -2007,10 +2007,14 @@ def test_IsSupportedModulesRemoved_pack_content_type():
     Then
     - Validate that Pack items don't fall back to pack.supportedModules (since they ARE the pack).
     """
-    new_pack = create_pack_object()
+    new_pack = create_pack_object(
+        paths=["marketplaces"], values=[["xsoar", "marketplacev2", "platform"]]
+    )
     new_pack.supportedModules = ["Cloud", "asm"]
 
-    old_pack = create_pack_object()
+    old_pack = create_pack_object(
+        paths=["marketplaces"], values=[["xsoar", "marketplacev2", "platform"]]
+    )
     old_pack.supportedModules = ["Cloud", "asm", "edr", "cloud_posture"]
     new_pack.old_base_content_object = old_pack
 
@@ -2091,6 +2095,106 @@ def test_IsSupportedModulesAdded_with_removed_modules():
     )
     new_item.old_base_content_object = create_integration_object(
         paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]
+    )
+
+    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 0
+
+
+def test_IsSupportedModulesAdded_new_pack_with_supported_modules():
+    """
+    Given
+    - A script in a newly added pack (git_status=ADDED).
+    - The script has supportedModules defined.
+
+    When
+    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
+
+    Then
+    - Return a ValidationResult indicating the modules were added and require PM approval.
+    - Should NOT raise an AttributeError (even though old_base_content_object has no pack).
+    """
+    new_item = create_script_object(
+        paths=["supportedModules"],
+        values=[["Cloud", "asm"]],
+    )
+    new_item.git_status = GitStatuses.ADDED
+    new_item.marketplaces = [MarketplaceVersions.PLATFORM]
+
+    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 1
+    assert "approval" in res[0].message.lower()
+    assert res[0].validator.error_code == "BC117"
+
+
+def test_IsSupportedModulesAdded_new_pack_non_platform_item():
+    """
+    Given
+    - A newly added script that is NOT a platform item (no 'platform' marketplace).
+
+    When
+    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
+
+    Then
+    - Return an empty list (no validation issues since the item is not a platform item).
+    """
+    new_item = create_script_object()
+    new_item.git_status = GitStatuses.ADDED
+    new_item.supportedModules = None
+    new_item.marketplaces = [MarketplaceVersions.XSOAR]
+
+    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 0
+
+
+def test_IsSupportedModulesAdded_renamed_with_added_modules():
+    """
+    Given
+    - A content item that was renamed (e.g., moved to a different pack) and had modules added.
+
+    When
+    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
+
+    Then
+    - Return a ValidationResult indicating which modules were added.
+    """
+    new_item = create_integration_object(
+        paths=["supportedModules"],
+        values=[["Cloud", "asm", "agentix", "edr"]],
+    )
+    new_item.git_status = GitStatuses.RENAMED
+    new_item.old_base_content_object = create_integration_object(
+        paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]
+    )
+
+    res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
+
+    assert len(res) == 1
+    assert "'edr'" in res[0].message
+    assert res[0].validator.error_code == "BC117"
+
+
+def test_IsSupportedModulesAdded_renamed_without_added_modules():
+    """
+    Given
+    - A content item that was renamed but has the same supportedModules as before.
+
+    When
+    - Running IsSupportedModulesAdded.obtain_invalid_content_items.
+
+    Then
+    - Return an empty list (no modules were added).
+    """
+    new_item = create_integration_object(
+        paths=["supportedModules"],
+        values=[["Cloud", "asm"]],
+    )
+    new_item.git_status = GitStatuses.RENAMED
+    new_item.old_base_content_object = create_integration_object(
+        paths=["supportedModules"], values=[["Cloud", "asm"]]
     )
 
     res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])

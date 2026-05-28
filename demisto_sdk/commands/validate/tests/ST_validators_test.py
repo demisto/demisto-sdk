@@ -440,6 +440,26 @@ def test_SchemaValidator_isCloudProviderIntegration_invalid_type(pack: Pack):
     assert "value could not be parsed to a boolean" in results[0].message
 
 
+def test_SchemaValidator_hybrid_with_marketplace_suffix(pack: Pack):
+    """
+    Given:
+        - An integration with `hybrid:marketplacev2: true` (marketplace-suffixed field)
+    When:
+        - Executing the SchemaValidator (ST110 validation)
+    Then:
+        - Ensure the validation passes (the marketplace-suffixed `hybrid` field is supported,
+          like for the `deprecated` field)
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    integration.yml.update({"hybrid:marketplacev2": True})
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 0
+
+
 class TestST111:
     def test_invalid_section_order(self):
         """

@@ -1,4 +1,0 @@
-changes:
-- description: Pinned all third-party GitHub Actions to commit SHAs to mitigate supply chain attacks (CVE-2025-30066), upgraded tj-actions/changed-files from compromised v46.0.1 to v46.0.3, and fixed command injection vulnerabilities via GitHub expression interpolation in workflow run blocks.
-  type: fix
-pr_number: '5295'

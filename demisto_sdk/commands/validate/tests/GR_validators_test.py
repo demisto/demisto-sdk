@@ -84,6 +84,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR111_is_agentix_act
 from demisto_sdk.commands.validate.validators.GR_validators.GR112_is_agentix_action_name_already_exists_valid import (
     IsAgentixActionNameAlreadyExistsValidator,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR114_is_non_mandatory_supported_modules_compatibility_all_files import (
+    IsNonMandatorySupportedModulesCompatibilityAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR114_is_non_mandatory_supported_modules_compatibility_list_files import (
+    IsNonMandatorySupportedModulesCompatibilityListFiles,
+)
 from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
@@ -1690,15 +1696,18 @@ def repo_for_test_gr_109_mismatch_playbook(graph_repo: Repo):
     )
 
     # Create the playbook that uses command_x with supportedModules
+    # starttaskid and nexttasks ensure task "0" is on the mandatory execution path
     playbook_yml = {
         "id": "playbook1",
         "name": "playbook1",
+        "starttaskid": "0",
         "supportedModules": ["module_x", "module_y"],
         "tasks": {
             "0": {
                 "id": "0",
                 "taskid": "0",
                 "type": "regular",
+                "nexttasks": {"#none#": ["1"]},
                 "task": {
                     "id": "0",
                     "name": "run command_x",
@@ -1708,7 +1717,19 @@ def repo_for_test_gr_109_mismatch_playbook(graph_repo: Repo):
                     "iscommand": True,
                     "brand": "Integration1",
                 },
-            }
+            },
+            "1": {
+                "id": "1",
+                "taskid": "1",
+                "type": "title",
+                "task": {
+                    "id": "1",
+                    "name": "Done",
+                    "type": "title",
+                    "iscommand": False,
+                    "brand": "",
+                },
+            },
         },
     }
     pack_a.create_playbook("playbook1", yml=playbook_yml)
@@ -1735,7 +1756,7 @@ def test_SupportedModulesCompatibility_invalid_all_files_mismatch_playbook(
     assert len(results) == 1
     assert (
         results[0].message
-        == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+        == "Module compatibility issue detected for mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
 
@@ -1762,7 +1783,400 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
     assert len(results) == 1
     assert (
         results[0].message
-        == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+        == "Module compatibility issue detected for mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+    )
+    assert results[0].content_object.object_id == "playbook1"
+
+
+@pytest.fixture
+def repo_for_test_gr_114(graph_repo: Repo):
+    """
+    Creates a test repository for testing GR114 validator (non-mandatory dependencies).
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains an IndicatorType "MyIndicatorType" with `supportedModules: ["module_x"]`
+              that has a non-mandatory dependency on script "ReputationScript" via reputationScriptName.
+    - Pack B: Contains "ReputationScript" with `supportedModules: ["module_y"]`.
+              Note: "ReputationScript" does *not* list "module_x" in its supportedModules.
+
+    The indicator_type -> script dependency via reputationScriptName is non-mandatory (is_mandatory=False),
+    which is what GR114 validates.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    pack_a.create_indicator_type(
+        "MyIndicatorType",
+        content={
+            "id": "MyIndicatorType",
+            "details": "MyIndicatorType",
+            "preProcessingScript": "",
+            "fromVersion": "6.10.0",
+            "reputationScriptName": "ReputationScript",
+            "supportedModules": ["module_x"],
+        },
+    )
+
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    script_yml = {
+        "commonfields": {"id": "ReputationScript", "version": -1},
+        "name": "ReputationScript",
+        "comment": "Reputation script",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_y"],
+    }
+    pack_b.create_script("ReputationScript", yml=script_yml)
+
+    return graph_repo
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_all_files(
+    repo_for_test_gr_114: Repo,
+):
+    """
+    Given:
+        A repository where "MyIndicatorType" (with `supportedModules: ['module_x']`)
+        has a non-mandatory dependency on "ReputationScript", which does not support "module_x".
+    When:
+        Running the IsNonMandatorySupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should identify "MyIndicatorType" as invalid (warning), reporting that
+        "ReputationScript" is missing "module_x".
+    """
+    graph_interface = repo_for_test_gr_114.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsNonMandatorySupportedModulesCompatibilityAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following non-mandatory dependencies have missing required modules: ReputationScript is missing: [module_x]"
+    )
+    assert results[0].content_object.object_id == "MyIndicatorType"
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_list_files(
+    repo_for_test_gr_114: Repo,
+):
+    """
+    Given:
+        A repository where "MyIndicatorType" (with `supportedModules: ['module_x']`)
+        has a non-mandatory dependency on "ReputationScript", which does not support "module_x".
+    When:
+        The IsNonMandatorySupportedModulesCompatibility validator runs specifically on "MyIndicatorType".
+    Then:
+        The validator should identify "MyIndicatorType" as invalid (warning), reporting that
+        "ReputationScript" is missing the required "module_x".
+    """
+    graph_interface = repo_for_test_gr_114.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsNonMandatorySupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+        [repo_for_test_gr_114.packs[0].indicator_types[0].object]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following non-mandatory dependencies have missing required modules: ReputationScript is missing: [module_x]"
+    )
+    assert results[0].content_object.object_id == "MyIndicatorType"
+
+
+@pytest.fixture
+def repo_for_test_gr_114_valid(graph_repo: Repo):
+    """
+    Creates a test repository for testing GR114 validator where the dependency is valid.
+
+    This fixture sets up a graph repository where "MyIndicatorType" has a non-mandatory
+    dependency on "ReputationScript", and "ReputationScript" supports all modules that
+    "MyIndicatorType" supports.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    pack_a.create_indicator_type(
+        "MyIndicatorType",
+        content={
+            "id": "MyIndicatorType",
+            "details": "MyIndicatorType",
+            "preProcessingScript": "",
+            "fromVersion": "6.10.0",
+            "reputationScriptName": "ReputationScript",
+            "supportedModules": ["module_x"],
+        },
+    )
+
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    script_yml = {
+        "commonfields": {"id": "ReputationScript", "version": -1},
+        "name": "ReputationScript",
+        "comment": "Reputation script",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_x", "module_y"],
+    }
+    pack_b.create_script("ReputationScript", yml=script_yml)
+
+    return graph_repo
+
+
+def test_NonMandatorySupportedModulesCompatibility_valid_all_files(
+    repo_for_test_gr_114_valid: Repo,
+):
+    """
+    Given:
+        A repository where "MyIndicatorType" (with `supportedModules: ['module_x']`)
+        has a non-mandatory dependency on "ReputationScript", which supports "module_x".
+    When:
+        Running the IsNonMandatorySupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should pass with no results.
+    """
+    graph_interface = repo_for_test_gr_114_valid.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsNonMandatorySupportedModulesCompatibilityAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 0
+
+
+@pytest.fixture
+def repo_for_test_gr_114_mismatch_command(graph_repo: Repo):
+    """
+    Creates a test repository to test the command mismatch part of GR114 validation.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains Integration1 with `supportedModules: ["module_x"]`.
+              Integration1 has command_x with `supportedModules: ["module_x", "module_y"]`.
+    """
+    yml = {
+        "commonfields": {"id": "Integration1", "version": -1},
+        "name": "Integration1",
+        "display": "Integration1",
+        "description": "this is an integration Integration1",
+        "category": "category",
+        "provider": "Integration1",
+        "supportedModules": ["module_x"],
+        "script": {
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "command_x",
+                    "description": "description",
+                    "arguments": [],
+                    "supportedModules": ["module_x", "module_y"],
+                }
+            ],
+            "dockerimage": None,
+        },
+        "configuration": [],
+    }
+
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    pack_a.create_integration("Integration1", yml=yml)
+
+    return graph_repo
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_all_files_mismatch_command(
+    repo_for_test_gr_114_mismatch_command: Repo,
+):
+    """
+    Given:
+        A repository where "command_x" (with `supportedModules: ['module_x', 'module_y']`)
+        is included in "Integration1" (with `supportedModules: ['module_x']`).
+    When:
+        Running the IsNonMandatorySupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should not flag command-level mismatches for non-mandatory dependencies,
+        since GR114 only checks non-mandatory USES relationships (not HAS_COMMAND relationships).
+        Command-level module mismatches are only checked by GR109 (mandatory dependencies).
+    """
+    graph_interface = repo_for_test_gr_114_mismatch_command.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsNonMandatorySupportedModulesCompatibilityAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 0
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_list_files_mismatch_command(
+    repo_for_test_gr_114_mismatch_command: Repo,
+):
+    """
+    Given:
+        A repository where "command_x" (with `supportedModules: ['module_x', 'module_y']`)
+        is included in "Integration1" (with `supportedModules: ['module_x']`).
+    When:
+        The IsNonMandatorySupportedModulesCompatibility validator runs specifically on "Integration1".
+    Then:
+        The validator should not flag command-level mismatches for non-mandatory dependencies,
+        since GR114 only checks non-mandatory USES relationships (not HAS_COMMAND relationships).
+        Command-level module mismatches are only checked by GR109 (mandatory dependencies).
+    """
+    graph_interface = repo_for_test_gr_114_mismatch_command.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsNonMandatorySupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+        [repo_for_test_gr_114_mismatch_command.packs[0].integrations[0].object]
+    )
+    assert len(results) == 0
+
+
+@pytest.fixture
+def repo_for_test_gr_114_mismatch_playbook(graph_repo: Repo):
+    """
+    Creates a test repository to test the playbook/content-item mismatch part of GR114 validation.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains a playbook named playbook1 and a command named command_x.
+              playbook1 uses command_x.
+              playbook1 is configured with `supportedModules: ["module_x", "module_y"]`.
+              command_x only supports "module_x".
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.set_data(marketplaces=[MarketplaceVersions.PLATFORM.value])
+    integration1 = pack_a.create_integration(name="integration1")
+    integration1.set_data(
+        script={
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "command_x",
+                    "description": "description",
+                    "arguments": [],
+                    "supportedModules": ["module_x"],
+                }
+            ],
+            "dockerimage": None,
+        }
+    )
+
+    playbook_yml = {
+        "id": "playbook1",
+        "name": "playbook1",
+        "supportedModules": ["module_x", "module_y"],
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "0",
+                "type": "regular",
+                "task": {
+                    "id": "0",
+                    "name": "run command_x",
+                    "description": "Uses command_x",
+                    "script": "command_x",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "Integration1",
+                },
+            }
+        },
+    }
+    pack_a.create_playbook("playbook1", yml=playbook_yml)
+
+    return graph_repo
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_all_files_mismatch_playbook(
+    repo_for_test_gr_114_mismatch_playbook: Repo,
+):
+    """
+    Given:
+        A repository where "playbook1" (with `supportedModules: ['module_x', 'module_y']`)
+        uses "command_x", which only supports "module_x".
+    When:
+        Running the IsNonMandatorySupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should identify "playbook1" as invalid (warning), reporting that
+        "command_x" is missing "module_y".
+    """
+    graph_interface = repo_for_test_gr_114_mismatch_playbook.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsNonMandatorySupportedModulesCompatibilityAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "Module compatibility issue detected for non-mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+    )
+    assert results[0].content_object.object_id == "playbook1"
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
+    repo_for_test_gr_114_mismatch_playbook: Repo,
+):
+    """
+    Given:
+        A repository where "playbook1" (with `supportedModules: ['module_x', 'module_y']`)
+        uses "command_x", which only supports "module_x".
+    When:
+        The IsNonMandatorySupportedModulesCompatibility validator runs specifically on "playbook1".
+    Then:
+        The validator should identify "playbook1" as invalid (warning), reporting that
+        "command_x" is missing the required "module_y".
+    """
+    graph_interface = repo_for_test_gr_114_mismatch_playbook.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsNonMandatorySupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+        [repo_for_test_gr_114_mismatch_playbook.packs[0].playbooks[0].object]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "Module compatibility issue detected for non-mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
 

@@ -1,0 +1,4 @@
+changes:
+- description: Add npm caching to the `actions/setup-node` CI step to fix inconsistent Node.js availability after the upgrade from `setup-node@v4` to `v6`.
+  type: internal
+pr_number: 5386

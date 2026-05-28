@@ -1,4 +1,5 @@
 changes:
-- description: Add npm caching to the `actions/setup-node` CI step and increase the `validate-files-new-validate` job timeout to 90 minutes to fix intermittent failures caused by Node.js download time on cold runners.
+- description: Switch `npm install` to `npm ci` in the `setup_test_environment` action, add NPM caching to the action.
+  pr: 5386
   type: internal
 pr_number: 5386

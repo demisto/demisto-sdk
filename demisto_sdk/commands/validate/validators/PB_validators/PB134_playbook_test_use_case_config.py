@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import cache
 from typing import Iterable, List, Tuple
 
 from demisto_sdk.commands.common.constants import GitStatuses
@@ -15,7 +16,13 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ALL_PACK_IDS = get_all_repo_pack_ids()
+
+@cache
+def _all_pack_ids() -> list:
+    # Lazy: scanning ./Packs at import time breaks any `demisto-sdk`
+    # invocation made outside a content repo (e.g. `--help`).
+    return get_all_repo_pack_ids()
+
 
 ContentTypes = Playbook
 
@@ -90,10 +97,11 @@ class PlaybookTestUseCaseConfigValidator(BaseValidator[ContentTypes]):
             return False, "Invalid object schema"
 
         # Step 3: Check pack IDs
+        all_pack_ids = _all_pack_ids()
         invalid_pack_ids = {
             pack_id
             for pack_id in additional_needed_packs.keys()
-            if pack_id not in ALL_PACK_IDS
+            if pack_id not in all_pack_ids
         }
         if invalid_pack_ids:
             return False, f"Unknown packs: {', '.join(invalid_pack_ids)}"

@@ -1,0 +1,4 @@
+changes:
+- description: "fix: --help produces a confusing and unhelpful error when run outside a content repository"
+  type: fix
+pr_number: 5390

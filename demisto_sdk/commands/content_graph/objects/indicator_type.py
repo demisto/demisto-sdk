@@ -18,7 +18,7 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
     description: str = Field(alias="details")
     regex: Optional[str] = None
     reputation_script_name: Optional[str] = Field("", alias="reputationScriptName")
-    expiration: Any
+    expiration: Any = None
     enhancement_script_names: Optional[List[str]] = Field(
         None, alias="enhancementScriptNames"
     )

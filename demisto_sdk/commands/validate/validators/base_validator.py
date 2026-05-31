@@ -141,8 +141,12 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
                     union_args = get_args(args)
                     if union_args:
                         return union_args
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(
+                "Failed to resolve type hints for obtain_invalid_content_items; "
+                "falling back to __orig_bases__ parsing. Error: %s",
+                e,
+            )
         # Fallback: search __orig_bases__ for generic args
         for base in type(self).__orig_bases__:  # type: ignore
             base_args = get_args(base)
@@ -458,14 +462,17 @@ def should_run_on_execution_mode(
 
 # Rebuild models that reference BaseContent (which has forward refs to RelationshipData).
 # This is needed for pydantic v2 which requires forward references to be resolved before model use.
-# Import RelationshipData to ensure it's available for resolution.
+# Import RelationshipData and reference it in the rebuild namespace so the forward
+# reference can be resolved (and to make the import usage explicit for linters).
 from demisto_sdk.commands.content_graph.objects.relationship import (  # noqa: E402
-    RelationshipData,  # noqa: F401
+    RelationshipData,
 )
 
-BaseValidator.model_rebuild()
-BaseResult.model_rebuild()
-ValidationResult.model_rebuild()
-FixResult.model_rebuild()
-InvalidContentItemResult.model_rebuild()
-ValidationCaughtExceptionResult.model_rebuild()
+_REBUILD_NS = {"RelationshipData": RelationshipData}
+
+BaseValidator.model_rebuild(_types_namespace=_REBUILD_NS)
+BaseResult.model_rebuild(_types_namespace=_REBUILD_NS)
+ValidationResult.model_rebuild(_types_namespace=_REBUILD_NS)
+FixResult.model_rebuild(_types_namespace=_REBUILD_NS)
+InvalidContentItemResult.model_rebuild(_types_namespace=_REBUILD_NS)
+ValidationCaughtExceptionResult.model_rebuild(_types_namespace=_REBUILD_NS)

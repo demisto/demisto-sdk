@@ -3475,6 +3475,276 @@ def test_MissingCompliantPoliciesValidator_only_new_command_is_reported(mocker):
     ]
 
 
+def test_MissingCompliantPoliciesValidator_reputation_commands_excluded(mocker):
+    """
+    Given:
+    - Integration commands that are reputation commands (ip, domain, url, file, email, cve, etc.)
+    - These commands use arguments that would normally require compliantpolicies
+    - However, they do NOT declare any compliantpolicies
+
+    When:
+    - Calling obtain_invalid_content_items.
+
+    Then:
+    - The validator should NOT report any failures for reputation commands
+    - Reputation commands should be excluded from BA129 validation
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip", "ip_list"],
+            },
+            {
+                "name": "Domain Blockage",
+                "category": "EndPoint",
+                "arguments": ["domain"],
+            },
+        ]
+    }
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    # Create integration with reputation commands that use policy-associated arguments
+    integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "ip",
+                    "description": "Check IP reputation",
+                    "arguments": [{"name": "ip", "description": "IP address"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+                {
+                    "name": "domain",
+                    "description": "Check domain reputation",
+                    "arguments": [{"name": "domain", "description": "Domain name"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+                {
+                    "name": "url",
+                    "description": "Check URL reputation",
+                    "arguments": [{"name": "url", "description": "URL"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                },
+                {
+                    "name": "file",
+                    "description": "Check file reputation",
+                    "arguments": [{"name": "file", "description": "File hash"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                },
+                {
+                    "name": "email",
+                    "description": "Check email reputation",
+                    "arguments": [{"name": "email", "description": "Email address"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                },
+                {
+                    "name": "cve",
+                    "description": "Check CVE",
+                    "arguments": [{"name": "cve", "description": "CVE ID"}],
+                    "outputs": [],
+                    "compliantpolicies": [],
+                },
+            ]
+        ],
+    )
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items([integration])
+
+    # All reputation commands should be excluded, so no failures
+    assert results == []
+
+
+def test_MissingCompliantPoliciesValidator_list_get_commands_excluded(mocker):
+    """
+    Given:
+    - Integration commands that are list or get commands
+    - These commands use arguments that would normally require compliantpolicies
+    - However, they do NOT declare any compliantpolicies
+
+    When:
+    - Calling obtain_invalid_content_items.
+
+    Then:
+    - The validator should NOT report any failures for list/get commands
+    - List and get commands should be excluded from BA129 validation
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "User Soft Remediation",
+                "category": "IAM",
+                "arguments": ["username", "user_id"],
+            },
+            {
+                "name": "EndPoint Isolation",
+                "category": "EndPoint",
+                "arguments": ["endpoint_id"],
+            },
+        ]
+    }
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    # Create integration with list/get commands that use policy-associated arguments
+    integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "list-users",
+                    "description": "List users",
+                    "arguments": [{"name": "username", "description": "Username"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+                {
+                    "name": "get-user",
+                    "description": "Get user details",
+                    "arguments": [{"name": "user_id", "description": "User ID"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+                {
+                    "name": "endpoint-list",
+                    "description": "List endpoints",
+                    "arguments": [
+                        {"name": "endpoint_id", "description": "Endpoint ID"}
+                    ],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+                {
+                    "name": "get-endpoint-details",
+                    "description": "Get endpoint details",
+                    "arguments": [
+                        {"name": "endpoint_id", "description": "Endpoint ID"}
+                    ],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+                {
+                    "name": "userlist",
+                    "description": "User list",
+                    "arguments": [{"name": "username", "description": "Username"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Missing policies but should be ignored
+                },
+            ]
+        ],
+    )
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items([integration])
+
+    # All list/get commands should be excluded, so no failures
+    assert results == []
+
+
+def test_MissingCompliantPoliciesValidator_mixed_commands(mocker):
+    """
+    Given:
+    - Integration with a mix of:
+      1. Reputation commands (should be excluded)
+      2. List/get commands (should be excluded)
+      3. Regular commands that ARE missing required policies (should fail)
+      4. Regular commands that HAVE required policies (should pass)
+
+    When:
+    - Calling obtain_invalid_content_items.
+
+    Then:
+    - Only the regular command missing policies should be reported
+    - Reputation and list/get commands should be excluded
+    """
+    mock_policies_dict = {
+        "policies": [
+            {
+                "name": "IP Blockage",
+                "category": "EndPoint",
+                "arguments": ["ip_list"],
+            },
+            {
+                "name": "User Soft Remediation",
+                "category": "IAM",
+                "arguments": ["username"],
+            },
+        ]
+    }
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.is_external_repository", return_value=False
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.tools.get_dict_from_file",
+        return_value=(mock_policies_dict, "Config/compliant_policies.json"),
+    )
+
+    integration = create_integration_object(
+        paths=["script.commands"],
+        values=[
+            [
+                {
+                    "name": "ip",
+                    "description": "IP reputation",
+                    "arguments": [{"name": "ip_list", "description": "IPs"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Excluded - reputation command
+                },
+                {
+                    "name": "list-users",
+                    "description": "List users",
+                    "arguments": [{"name": "username", "description": "Username"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Excluded - list command
+                },
+                {
+                    "name": "block-ip",
+                    "description": "Block IP",
+                    "arguments": [{"name": "ip_list", "description": "IPs to block"}],
+                    "outputs": [],
+                    "compliantpolicies": [],  # Should FAIL - regular command missing policy
+                },
+                {
+                    "name": "delete-user",
+                    "description": "Delete user",
+                    "arguments": [{"name": "username", "description": "Username"}],
+                    "outputs": [],
+                    "compliantpolicies": [
+                        "User Soft Remediation"
+                    ],  # Should PASS - has policy
+                },
+            ]
+        ],
+    )
+
+    validator = MissingCompliantPoliciesValidator()
+    results = validator.obtain_invalid_content_items([integration])
+
+    # Only the block-ip command should fail
+    assert len(results) == 1
+    assert "block-ip" in results[0].message
+    assert "IP Blockage" in results[0].message
+
+
 def _set_marketplaces(content_items, marketplaces_list):
     """Helper to set marketplaces on a list of content items.
     Also sets supportedModules to ['xsiam'] for items that have PLATFORM

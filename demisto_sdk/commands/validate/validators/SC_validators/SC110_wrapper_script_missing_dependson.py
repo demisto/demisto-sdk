@@ -141,9 +141,7 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
 
         try:
             if not cls.graph_interface:
-                logger.debug(
-                    "SC110: Graph not available — skipping validation."
-                )
+                logger.debug("SC110: Graph not available — skipping validation.")
                 # No graph → cannot determine which scripts are wrapped → skip all.
                 wrapped_ids = set()
             else:

@@ -142,9 +142,10 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
         try:
             if not cls.graph_interface:
                 logger.debug(
-                    "SC110: Graph not available, falling back to validating all scripts."
+                    "SC110: Graph not available — skipping validation."
                 )
-                wrapped_ids = set(script_ids)
+                # No graph → cannot determine which scripts are wrapped → skip all.
+                wrapped_ids = set()
             else:
                 # Query the graph for AgentixActions that use these scripts
                 actions = cls.graph_interface.get_agentix_actions_using_content_items(
@@ -164,10 +165,11 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
                 )
         except Exception:
             logger.debug(
-                "SC110: Graph lookup failed, falling back to validating all scripts.",
+                "SC110: Graph lookup failed — skipping validation.",
                 exc_info=True,
             )
-            wrapped_ids = set(script_ids)
+            # On any graph error, also skip rather than over-validate.
+            wrapped_ids = set()
 
         cls._wrapped_script_ids_cache = wrapped_ids
         return wrapped_ids

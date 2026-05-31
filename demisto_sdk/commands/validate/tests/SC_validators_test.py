@@ -635,3 +635,73 @@ def test_WrapperScriptMissingDependsOnValidator_only_wrapped_scripts_validated(
 
     assert len(results) == 1
     assert wrapped_script.name in results[0].message
+
+
+def test_WrapperScriptMissingDependsOnValidator_no_graph_skips_validation(
+    monkeypatch,
+):
+    """
+    Given:
+        - A script that calls a command via executeCommand without declaring it
+          in dependson.
+        - The content graph is NOT available (BaseValidator.graph_interface is None).
+    When:
+        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+    Then:
+        - No scripts are validated at all (the validator skips silently rather than
+          falling back to validating every script), so no ValidationResult is produced.
+    """
+    code = 'demisto.executeCommand("SomeCommand", {})'
+    content_item = create_script_object(
+        paths=["dependson"],
+        values=[{}],
+        code=code,
+    )
+
+    # Simulate "no graph available" by clearing the graph_interface.
+    monkeypatch.setattr(BaseValidator, "graph_interface", None)
+    # Ensure the cache is empty so the (new) fallback path is exercised.
+    WrapperScriptMissingDependsOnValidator._wrapped_script_ids_cache = None
+
+    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+
+    assert results == []
+
+
+def test_WrapperScriptMissingDependsOnValidator_graph_error_skips_validation(
+    monkeypatch,
+):
+    """
+    Given:
+        - A script that calls a command via executeCommand without declaring it
+          in dependson.
+        - The content graph IS available but raises an exception when queried.
+    When:
+        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+    Then:
+        - No scripts are validated at all (the validator skips silently on graph
+          errors rather than falling back to validating every script), so no
+          ValidationResult is produced.
+    """
+    code = 'demisto.executeCommand("SomeCommand", {})'
+    content_item = create_script_object(
+        paths=["dependson"],
+        values=[{}],
+        code=code,
+    )
+
+    class _ExplodingGraph:
+        def get_agentix_actions_using_content_items(self, _script_ids):
+            raise RuntimeError("simulated graph failure")
+
+    monkeypatch.setattr(BaseValidator, "graph_interface", _ExplodingGraph())
+    # Ensure the cache is empty so the (new) error-fallback path is exercised.
+    WrapperScriptMissingDependsOnValidator._wrapped_script_ids_cache = None
+
+    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+
+    assert results == []

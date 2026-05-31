@@ -50,9 +50,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.is_fetch = self.script_info.get("isfetch", False)
         self.is_fetch_assets = self.script_info.get("isfetchassets", False)
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
-        self.is_fetch_credentials = self.script_info.get(
-            "isfetchcredentials", False
-        )
+        self.is_fetch_credentials = self.script_info.get("isfetchcredentials", False)
         self.is_fetch_events_and_assets = self.script_info.get(
             "isfetcheventsandassets", False
         )

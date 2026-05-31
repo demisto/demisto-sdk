@@ -39,7 +39,8 @@ class DefaultImageValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if (
-                content_item.image.exist and content_item.image.load_image()
+                content_item.image.exist
+                and content_item.image.load_image()
                 in [
                     DEFAULT_IMAGE_BASE64,
                     DEFAULT_DBOT_IMAGE_BASE64,

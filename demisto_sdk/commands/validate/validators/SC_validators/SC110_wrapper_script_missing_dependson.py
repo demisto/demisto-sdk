@@ -42,6 +42,7 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes]):
     )
     related_field = "dependson"
     is_auto_fixable = False
+    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
 
     # Class-level cache for wrapped script IDs (populated once per validation run)
     _wrapped_script_ids_cache: Optional[Set[str]] = None

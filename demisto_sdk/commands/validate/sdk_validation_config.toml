@@ -84,6 +84,7 @@ warning = []
 
 [path_based_validations]
 select = [
+  "SC110",
   "IN100",
   "IN101",
   "IN102",

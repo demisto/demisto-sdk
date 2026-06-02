@@ -1,0 +1,58 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  name:
+    type: str
+    required: true
+  display:
+    type: str
+    required: true
+  version:
+    type: number
+  description:
+    type: str
+  fromVersion:
+    type: str
+  toVersion:
+    type: str
+  marketplaces:
+    type: seq
+    sequence:
+    - type: str
+      enum: ['xsoar', 'marketplacev2', 'xpanse', 'xsoar_saas', 'xsoar_on_prem', 'platform']
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str
+  name:xsoar:
+    type: str
+  name:marketplacev2:
+    type: str
+  name:xpanse:
+    type: str
+  name:xsoar_saas:
+    type: str
+  name:xsoar_on_prem:
+    type: str
+  description:xsoar:
+    type: str
+  description:marketplacev2:
+    type: str
+  description:xpanse:
+    type: str
+  description:xsoar_saas:
+    type: str
+  description:xsoar_on_prem:
+    type: str
+  id:xsoar:
+    type: str
+  id:marketplacev2:
+    type: str
+  id:xpanse:
+    type: str
+  id:xsoar_saas:
+    type: str
+  id:xsoar_on_prem:
+    type: str

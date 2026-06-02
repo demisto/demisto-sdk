@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import Field
 
@@ -19,10 +19,11 @@ class _StrictCollection(BaseStrictModel):
     id_: str = Field(alias="id")
     name: str
     display: str
-    version: Optional[int] = None
+    from_version: Optional[str] = Field(None, alias="fromversion")
+    to_version: Optional[str] = Field(None, alias="toversion")
     description: Optional[str] = None
-    marketplaces: Optional[List[MarketplaceVersions]] = None
-    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
+    supportedModules: Optional[List[str]] = None
 
 
 StrictCollection = create_model(

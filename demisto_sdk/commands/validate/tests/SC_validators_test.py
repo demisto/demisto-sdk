@@ -27,8 +27,11 @@ from demisto_sdk.commands.validate.validators.SC_validators.SC109_script_name_is
 from demisto_sdk.commands.validate.validators.SC_validators.SC109_script_name_is_not_unique_validator_list_files import (
     DuplicatedScriptNameValidatorListFiles,
 )
-from demisto_sdk.commands.validate.validators.SC_validators.SC110_wrapper_script_missing_dependson import (
-    WrapperScriptMissingDependsOnValidator,
+from demisto_sdk.commands.validate.validators.SC_validators.SC110_wrapper_script_missing_dependson_all_files import (
+    WrapperScriptMissingDependsOnValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.SC_validators.SC110_wrapper_script_missing_dependson_list_files import (
+    WrapperScriptMissingDependsOnValidatorListFiles,
 )
 from TestSuite.repo import ChangeCWD, Repo
 
@@ -315,23 +318,35 @@ def test_DuplicatedScriptNameValidatorAllFiles_obtain_invalid_content_items(
 # --- SC110 Tests ---
 
 
-def _mock_wrapped_ids(monkeypatch, wrapped_ids):
-    """Helper to mock the _get_action_wrapped_script_ids class method."""
-    monkeypatch.setattr(
-        WrapperScriptMissingDependsOnValidator,
-        "_get_action_wrapped_script_ids",
-        classmethod(lambda cls, content_items: wrapped_ids),
-    )
-    # Clear the cache to ensure the mock is used
-    WrapperScriptMissingDependsOnValidator._wrapped_script_ids_cache = None
+class _FakeAction:
+    """Lightweight stand-in for AgentixAction nodes returned by the graph query."""
+
+    def __init__(self, underlying_content_item_id, underlying_content_item_type="script"):
+        self.underlying_content_item_id = underlying_content_item_id
+        self.underlying_content_item_type = underlying_content_item_type
 
 
-@pytest.fixture(autouse=True)
-def _reset_sc110_cache():
-    """Reset the wrapped script IDs cache before each SC110 test."""
-    WrapperScriptMissingDependsOnValidator._wrapped_script_ids_cache = None
-    yield
-    WrapperScriptMissingDependsOnValidator._wrapped_script_ids_cache = None
+class _FakeGraph:
+    """Fake graph that returns a pre-configured list of AgentixActions."""
+
+    def __init__(self, wrapped_script_ids):
+        self._actions = [_FakeAction(sid) for sid in wrapped_script_ids]
+        self.last_query_ids = None
+
+    def get_agentix_actions_using_content_items(self, content_item_ids):
+        self.last_query_ids = list(content_item_ids)
+        # Mimic the real query: when ids are provided, only return matching ones.
+        if not content_item_ids:
+            return list(self._actions)
+        ids = set(content_item_ids)
+        return [a for a in self._actions if a.underlying_content_item_id in ids]
+
+
+def _install_fake_graph(monkeypatch, wrapped_script_ids):
+    """Replace BaseValidator.graph_interface with a fake graph for SC110 tests."""
+    fake_graph = _FakeGraph(wrapped_script_ids)
+    monkeypatch.setattr(BaseValidator, "graph_interface", fake_graph)
+    return fake_graph
 
 
 @pytest.mark.parametrize(
@@ -419,7 +434,7 @@ def test_WrapperScriptMissingDependsOnValidator_obtain_invalid_content_items(
         - A script wrapped by an AgentixAction with various combinations of
           executeCommand calls and dependson declarations.
     When:
-        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+        - Running WrapperScriptMissingDependsOnValidatorListFiles.obtain_invalid_content_items.
     Then:
         - Scripts missing dependson entries for called commands produce a ValidationResult.
         - Scripts with all called commands declared (in must or should) pass validation.
@@ -432,11 +447,13 @@ def test_WrapperScriptMissingDependsOnValidator_obtain_invalid_content_items(
         code=code,
     )
 
-    # Mock the script as being wrapped by an AgentixAction
-    _mock_wrapped_ids(monkeypatch, {content_item.object_id})
+    # Tell the fake graph this script is wrapped by an AgentixAction.
+    _install_fake_graph(monkeypatch, {content_item.object_id})
 
-    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
-        [content_item]
+    results = (
+        WrapperScriptMissingDependsOnValidatorListFiles().obtain_invalid_content_items(
+            [content_item]
+        )
     )
 
     if expected_invalid:
@@ -452,7 +469,7 @@ def test_WrapperScriptMissingDependsOnValidator_llm_script_is_skipped(monkeypatc
         - An LLM script (isllm=True) that would otherwise fail (no dependson declared),
           and is wrapped by an AgentixAction.
     When:
-        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+        - Running WrapperScriptMissingDependsOnValidatorListFiles.obtain_invalid_content_items.
     Then:
         - LLM scripts are skipped entirely (no code to parse), so no ValidationResult is produced.
     """
@@ -461,10 +478,12 @@ def test_WrapperScriptMissingDependsOnValidator_llm_script_is_skipped(monkeypatc
         values=[True],
     )
 
-    _mock_wrapped_ids(monkeypatch, {content_item.object_id})
+    _install_fake_graph(monkeypatch, {content_item.object_id})
 
-    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
-        [content_item]
+    results = (
+        WrapperScriptMissingDependsOnValidatorListFiles().obtain_invalid_content_items(
+            [content_item]
+        )
     )
 
     assert len(results) == 0
@@ -478,7 +497,7 @@ def test_WrapperScriptMissingDependsOnValidator_missing_commands_listed_in_messa
         - A script wrapped by an AgentixAction that calls two commands via executeCommand
           but declares neither in dependson.
     When:
-        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+        - Running WrapperScriptMissingDependsOnValidatorListFiles.obtain_invalid_content_items.
     Then:
         - The ValidationResult message lists both missing command names.
     """
@@ -492,10 +511,12 @@ def test_WrapperScriptMissingDependsOnValidator_missing_commands_listed_in_messa
         code=code,
     )
 
-    _mock_wrapped_ids(monkeypatch, {content_item.object_id})
+    _install_fake_graph(monkeypatch, {content_item.object_id})
 
-    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
-        [content_item]
+    results = (
+        WrapperScriptMissingDependsOnValidatorListFiles().obtain_invalid_content_items(
+            [content_item]
+        )
     )
 
     assert len(results) == 1
@@ -511,7 +532,7 @@ def test_WrapperScriptMissingDependsOnValidator_partial_missing_listed_in_messag
         - A script wrapped by an AgentixAction that calls two commands but only declares
           one in dependson.must.
     When:
-        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+        - Running WrapperScriptMissingDependsOnValidatorListFiles.obtain_invalid_content_items.
     Then:
         - Only the undeclared command appears in the ValidationResult message.
         - The declared command does NOT appear in the missing list.
@@ -526,10 +547,12 @@ def test_WrapperScriptMissingDependsOnValidator_partial_missing_listed_in_messag
         code=code,
     )
 
-    _mock_wrapped_ids(monkeypatch, {content_item.object_id})
+    _install_fake_graph(monkeypatch, {content_item.object_id})
 
-    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
-        [content_item]
+    results = (
+        WrapperScriptMissingDependsOnValidatorListFiles().obtain_invalid_content_items(
+            [content_item]
+        )
     )
 
     assert len(results) == 1
@@ -546,7 +569,7 @@ def test_WrapperScriptMissingDependsOnValidator_code_is_none_skipped(
           (simulating an object loaded from the content graph, where `code` is
           excluded from serialisation).
     When:
-        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+        - Running WrapperScriptMissingDependsOnValidatorListFiles.obtain_invalid_content_items.
     Then:
         - The script is skipped because there is no code to parse, so no
           ValidationResult is produced.
@@ -560,10 +583,12 @@ def test_WrapperScriptMissingDependsOnValidator_code_is_none_skipped(
     # Simulate the object being loaded from the graph (code field is not persisted).
     content_item.code = None
 
-    _mock_wrapped_ids(monkeypatch, {content_item.object_id})
+    _install_fake_graph(monkeypatch, {content_item.object_id})
 
-    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
-        [content_item]
+    results = (
+        WrapperScriptMissingDependsOnValidatorListFiles().obtain_invalid_content_items(
+            [content_item]
+        )
     )
 
     assert len(results) == 0
@@ -577,7 +602,7 @@ def test_WrapperScriptMissingDependsOnValidator_not_wrapped_script_is_skipped(
         - A script that calls a command via executeCommand without declaring it in
           dependson, but is NOT wrapped by any AgentixAction.
     When:
-        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+        - Running WrapperScriptMissingDependsOnValidatorListFiles.obtain_invalid_content_items.
     Then:
         - The script is skipped and no ValidationResult is produced, because the
           validation only applies to scripts wrapped by AgentixActions.
@@ -589,11 +614,13 @@ def test_WrapperScriptMissingDependsOnValidator_not_wrapped_script_is_skipped(
         code=code,
     )
 
-    # Mock with an empty set — no scripts are wrapped
-    _mock_wrapped_ids(monkeypatch, set())
+    # Fake graph reports no wrapped scripts
+    _install_fake_graph(monkeypatch, set())
 
-    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
-        [content_item]
+    results = (
+        WrapperScriptMissingDependsOnValidatorListFiles().obtain_invalid_content_items(
+            [content_item]
+        )
     )
 
     assert len(results) == 0
@@ -607,7 +634,7 @@ def test_WrapperScriptMissingDependsOnValidator_only_wrapped_scripts_validated(
         - Two scripts: one wrapped by an AgentixAction (missing dependson) and one
           not wrapped (also missing dependson).
     When:
-        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+        - Running WrapperScriptMissingDependsOnValidatorListFiles.obtain_invalid_content_items.
     Then:
         - Only the wrapped script produces a ValidationResult.
         - The unwrapped script is skipped.
@@ -626,82 +653,71 @@ def test_WrapperScriptMissingDependsOnValidator_only_wrapped_scripts_validated(
         name="UnwrappedScript",
     )
 
-    # Only the wrapped script's ID is in the set
-    _mock_wrapped_ids(monkeypatch, {wrapped_script.object_id})
+    # Only the wrapped script's ID is reported by the fake graph
+    _install_fake_graph(monkeypatch, {wrapped_script.object_id})
 
-    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
-        [wrapped_script, unwrapped_script]
+    results = (
+        WrapperScriptMissingDependsOnValidatorListFiles().obtain_invalid_content_items(
+            [wrapped_script, unwrapped_script]
+        )
     )
 
     assert len(results) == 1
     assert wrapped_script.name in results[0].message
 
 
-def test_WrapperScriptMissingDependsOnValidator_no_graph_skips_validation(
+def test_WrapperScriptMissingDependsOnValidator_list_files_passes_script_ids_to_graph(
     monkeypatch,
 ):
     """
     Given:
-        - A script that calls a command via executeCommand without declaring it
-          in dependson.
-        - The content graph is NOT available (BaseValidator.graph_interface is None).
+        - The ListFiles subclass running on a specific changed script.
     When:
-        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+        - obtain_invalid_content_items is called.
     Then:
-        - No scripts are validated at all (the validator skips silently rather than
-          falling back to validating every script), so no ValidationResult is produced.
+        - The graph query is restricted to the IDs of the scripts in scope
+          (not an empty list, which would mean "all AgentixActions").
     """
-    code = 'demisto.executeCommand("SomeCommand", {})'
     content_item = create_script_object(
         paths=["dependson"],
         values=[{}],
-        code=code,
+        code='demisto.executeCommand("SomeCommand", {})',
     )
+    fake_graph = _install_fake_graph(monkeypatch, {content_item.object_id})
 
-    # Simulate "no graph available" by clearing the graph_interface.
-    monkeypatch.setattr(BaseValidator, "graph_interface", None)
-    # Ensure the cache is empty so the (new) fallback path is exercised.
-    WrapperScriptMissingDependsOnValidator._wrapped_script_ids_cache = None
-
-    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
+    WrapperScriptMissingDependsOnValidatorListFiles().obtain_invalid_content_items(
         [content_item]
     )
 
-    assert results == []
+    assert fake_graph.last_query_ids == [content_item.object_id]
 
 
-def test_WrapperScriptMissingDependsOnValidator_graph_error_skips_validation(
+def test_WrapperScriptMissingDependsOnValidator_all_files_queries_all_actions(
     monkeypatch,
 ):
     """
     Given:
-        - A script that calls a command via executeCommand without declaring it
-          in dependson.
-        - The content graph IS available but raises an exception when queried.
+        - The AllFiles subclass running in ALL_FILES mode.
     When:
-        - Running WrapperScriptMissingDependsOnValidator.obtain_invalid_content_items.
+        - obtain_invalid_content_items is called.
     Then:
-        - No scripts are validated at all (the validator skips silently on graph
-          errors rather than falling back to validating every script), so no
-          ValidationResult is produced.
+        - The graph query is called with an empty list, instructing it to return
+          every AgentixAction in the graph (so wrapped scripts are detected even
+          when only the script itself changed and not the wrapping action).
     """
-    code = 'demisto.executeCommand("SomeCommand", {})'
     content_item = create_script_object(
         paths=["dependson"],
         values=[{}],
-        code=code,
+        code='demisto.executeCommand("SomeCommand", {})',
+    )
+    fake_graph = _install_fake_graph(monkeypatch, {content_item.object_id})
+
+    results = (
+        WrapperScriptMissingDependsOnValidatorAllFiles().obtain_invalid_content_items(
+            [content_item]
+        )
     )
 
-    class _ExplodingGraph:
-        def get_agentix_actions_using_content_items(self, _script_ids):
-            raise RuntimeError("simulated graph failure")
-
-    monkeypatch.setattr(BaseValidator, "graph_interface", _ExplodingGraph())
-    # Ensure the cache is empty so the (new) error-fallback path is exercised.
-    WrapperScriptMissingDependsOnValidator._wrapped_script_ids_cache = None
-
-    results = WrapperScriptMissingDependsOnValidator().obtain_invalid_content_items(
-        [content_item]
-    )
-
-    assert results == []
+    assert fake_graph.last_query_ids == []
+    assert len(results) == 1
+    assert content_item.name in results[0].message

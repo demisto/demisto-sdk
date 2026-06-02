@@ -106,6 +106,8 @@ mapping:
         type: bool
       isfetchassets:
         type: bool
+      isfetchcredentials:
+        type: bool
       mcp:
         type: bool
       longRunning:

@@ -1,4 +1,0 @@
-changes:
-- description: Fixed IM106 validation crash when integration image file does not exist by checking image existence before attempting to load it.
-  type: fix
-pr_number: 5388

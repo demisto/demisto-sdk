@@ -1,8 +1,0 @@
-changes:
-- description: Enriched the pack marketplace metadata for classifiers and mappers by adding a `tags` field (set to `["feed"]` when the item is a feed) and exposing the `type` field.
-  type: feature
-- description: Enriched the integration marketplace metadata with a `tags` field that advertises fetch capabilities (`feed`, `fetch-incidents`, `fetch-events`, `fetch-assets`, `fetch-credentials`) so consumers can identify supported fetch types before installation.
-  type: feature
-- description: Added support for the `isfetchcredentials` integration field in the schema, parser, content graph object, and strict object models.
-  type: feature
-pr_number: '5367'

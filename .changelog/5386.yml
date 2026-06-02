@@ -1,5 +1,0 @@
-changes:
-- description: Switch `npm install` to `npm ci` in the `setup_test_environment` action, add NPM caching to the action.
-  pr: 5386
-  type: internal
-pr_number: 5386

@@ -110,6 +110,7 @@ class PackContentItems:
             content_type=ContentType.AGENTIX_ACTION_TEST
         )
         self.agentix_agent = ContentItemsList(content_type=ContentType.AGENTIX_AGENT)
+        self.collection = ContentItemsList(content_type=ContentType.COLLECTION)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()

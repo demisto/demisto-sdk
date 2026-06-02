@@ -10,6 +10,7 @@ from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
+    COLLECTIONS_DIR,
     AGENTIX_AGENTS_DIR,
     AUTHOR_IMAGE_FILE_NAME,
     CASE_FIELDS_DIR,
@@ -116,6 +117,7 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         TRIGGER_DIR,
         WIDGETS_DIR,
         WIZARDS_DIR,
+        COLLECTIONS_DIR,
         LAYOUT_RULES_DIR,
         *TESTS_AND_DOC_DIRECTORIES,
     )

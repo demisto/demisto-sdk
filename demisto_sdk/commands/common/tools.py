@@ -60,6 +60,7 @@ from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     ASSETS_MODELING_RULES_DIR,
     CLASSIFIERS_DIR,
+    COLLECTIONS_DIR,
     CONF_JSON_FILE_NAME,
     CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
@@ -1842,6 +1843,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
                 return None
             return FileType.AGENTIX_AGENT
 
+        elif COLLECTIONS_DIR in path.parts:
+            return FileType.COLLECTION
+
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
 
@@ -1903,6 +1907,7 @@ def find_type(
     """
     from demisto_sdk.commands.content_graph.objects import (
         AgentixAction,
+        Collection,
         AgentixAgent,
         CaseField,
         CaseLayout,
@@ -2103,6 +2108,9 @@ def find_type(
 
     if AgentixAction.match(_dict, Path(path)):
         return FileType.AGENTIX_ACTION
+
+    if Collection.match(_dict, Path(path)):
+        return FileType.COLLECTION
 
     return None
 

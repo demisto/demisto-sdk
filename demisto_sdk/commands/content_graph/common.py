@@ -110,6 +110,7 @@ class ContentType(StrEnum):
     AGENTIX_AGENT = "AgentixAgent"
     AGENTIX_ACTION = "AgentixAction"
     AGENTIX_ACTION_TEST = "AgentixActionTest"
+    COLLECTION = "Collection"
 
     @property
     def labels(self) -> List[str]:

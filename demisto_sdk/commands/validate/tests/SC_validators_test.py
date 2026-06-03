@@ -321,7 +321,9 @@ def test_DuplicatedScriptNameValidatorAllFiles_obtain_invalid_content_items(
 class _FakeAction:
     """Lightweight stand-in for AgentixAction nodes returned by the graph query."""
 
-    def __init__(self, underlying_content_item_id, underlying_content_item_type="script"):
+    def __init__(
+        self, underlying_content_item_id, underlying_content_item_type="script"
+    ):
         self.underlying_content_item_id = underlying_content_item_id
         self.underlying_content_item_type = underlying_content_item_type
 

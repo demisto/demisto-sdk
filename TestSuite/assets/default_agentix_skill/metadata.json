@@ -1,0 +1,14 @@
+{
+    "id": "sample_agentix_skill",
+    "name": "Sample Agentix Skill",
+    "display": "Sample Agentix Skill",
+    "description": "A sample skill for testing purposes.",
+    "fromversion": "8.12.0",
+    "internal": false,
+    "supportedModules": [
+        "agentix"
+    ],
+    "marketplaces": [
+        "platform"
+    ]
+}

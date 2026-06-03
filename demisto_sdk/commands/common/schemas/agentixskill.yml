@@ -1,0 +1,29 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  name:
+    type: str
+    required: true
+  display:
+    type: str
+  description:
+    type: str
+    required: true
+  content:
+    type: str
+  fromversion:
+    type: str
+  toversion:
+    type: str
+  internal:
+    type: bool
+  supportedModules:
+    type: seq
+    sequence:
+    - type: str
+  marketplaces:
+    type: seq
+    sequence:
+    - type: str

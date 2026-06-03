@@ -9,12 +9,12 @@ from demisto_sdk.commands.common.content.objects.abstract_objects.general_object
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentixAction,
     AgentixAgent,
-    Collection,
     AgentTool,
     AuthorImage,
     ChangeLog,
     Classifier,
     ClassifierMapper,
+    Collection,
     Contributors,
     CorrelationRule,
     Dashboard,

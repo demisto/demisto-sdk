@@ -1907,12 +1907,12 @@ def find_type(
     """
     from demisto_sdk.commands.content_graph.objects import (
         AgentixAction,
-        Collection,
         AgentixAgent,
         CaseField,
         CaseLayout,
         CaseLayoutRule,
         Classifier,
+        Collection,
         CorrelationRule,
         Dashboard,
         GenericDefinition,

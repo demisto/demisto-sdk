@@ -10,12 +10,12 @@ from typing_extensions import Annotated
 
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
-    COLLECTIONS_DIR,
     AGENTIX_AGENTS_DIR,
     AUTHOR_IMAGE_FILE_NAME,
     CASE_FIELDS_DIR,
     CASE_LAYOUTS_DIR,
     CLASSIFIERS_DIR,
+    COLLECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEPLOYMENT_JSON_FILENAME,

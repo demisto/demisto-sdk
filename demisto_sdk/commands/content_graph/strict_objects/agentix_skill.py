@@ -2,10 +2,12 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel
+from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+    BaseStrictModel,
+)
 
 
-class AgentixSkill(BaseStrictModel):
+class StrictAgentixSkill(BaseStrictModel):
     id_: str = Field(alias="id")
     name: str
     display: Optional[str] = None

@@ -1,4 +1,42 @@
 # Changelog
+## 1.39.1 (2026-05-31)
+### Feature
+* Enriched the pack marketplace metadata for classifiers and mappers by adding a `tags` field (set to `["feed"]` when the item is a feed) and exposing the `type` field. [#5367](https://github.com/demisto/demisto-sdk/pull/5367)
+* Enriched the integration marketplace metadata with a `tags` field that advertises fetch capabilities (`feed`, `fetch-incidents`, `fetch-events`, `fetch-assets`, `fetch-credentials`) so consumers can identify supported fetch types before installation. [#5367](https://github.com/demisto/demisto-sdk/pull/5367)
+* Added support for the `isfetchcredentials` integration field in the schema, parser, content graph object, and strict object models. [#5367](https://github.com/demisto/demisto-sdk/pull/5367)
+* Adding Github.com co-pilot instructions [#5350](https://github.com/demisto/demisto-sdk/pull/5350)
+* Improved BA129 validation to exclude reputation commands, list commands, and get commands from validation to prevent false positives. [#5356](https://github.com/demisto/demisto-sdk/pull/5356)
+
+### Fix
+* Strip the `internal` and `isInternal` fields from script YAMLs and the `internal` field from pack metadata files during the `upload` flow so the uploaded content is visible to users (including in the pack `metadata.json` content items list). [#5346](https://github.com/demisto/demisto-sdk/pull/5346)
+* Fixed false positives in AS109 validation by improving context key detection to handle single-segment keys, complex root/accessor splits, DT filter expressions, iscontext fields, and Set command key arguments. [#5341](https://github.com/demisto/demisto-sdk/pull/5341)
+* Fixed the error message of BA125 to be more clear. [#5344](https://github.com/demisto/demisto-sdk/pull/5344)
+* Fixed IM106 validation crash when integration image file does not exist by checking image existence before attempting to load it. [#5388](https://github.com/demisto/demisto-sdk/pull/5388)
+
+### Internal
+* Switch `npm install` to `npm ci` in the `setup_test_environment` action, add NPM caching to the action. [#5386](https://github.com/demisto/demisto-sdk/pull/5386)
+* Add auto-merge for Dependabot PRs [#5352](https://github.com/demisto/demisto-sdk/pull/5352)
+
+
+## 1.39.0 (2026-05-13)
+### Breaking
+* Drop support for Python 3.9. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+* Removed the deprecated **generate-unit-tests** command, which is no longer supported. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+
+### Feature
+* Added support for Python 3.13 and 3.14 [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+* Added GR114 validation that warns when a content item's supportedModules are not a subset of its non-mandatory dependency's supportedModules. [#5327](https://github.com/demisto/demisto-sdk/pull/5327)
+* Added support for the marketplace-suffix syntax (e.g. `hybrid:marketplacev2`) on the integration root-level `hybrid` field, so it no longer fails the ST110 validation. [#5353](https://github.com/demisto/demisto-sdk/pull/5353)
+* Added `internal` and `prompt` as valid `underlyingcontentitem.type` values for Agentix actions. [#5206](https://github.com/demisto/demisto-sdk/pull/5206)
+
+### Fix
+* Added `marketplaces` field to the `StrictPreProcessRule` schema to prevent ST110 validation failures when pre-process rules include a `marketplaces` field. [#5345](https://github.com/demisto/demisto-sdk/pull/5345)
+
+### Internal
+* Fixed docstring parsing in generate-yml-from-python for Python 3.13+ compatibility using inspect.cleandoc normalization. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+* Updated GitHub Actions to support Node.js 24 and resolve deprecation warnings for Node.js 20. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)
+
+
 ## 1.38.25 (2026-05-04)
 ### Feature
 * Added support for the `internal` flag in pack_metadata.json to mark packs as internal (hidden from UI and API). [#5325](https://github.com/demisto/demisto-sdk/pull/5325)

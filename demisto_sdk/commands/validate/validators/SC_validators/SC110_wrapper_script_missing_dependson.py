@@ -70,11 +70,7 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes], ABC):
             List[ValidationResult]: A list of validation results for scripts that are
                 missing dependson declarations for commands they call.
         """
-        content_items_list = list(content_items)
-        if not content_items_list:
-            return []
-
-        items_by_id = {item.object_id: item for item in content_items_list}
+        items_by_id = {item.object_id: item for item in content_items}
 
         # Ask the graph which scripts are wrapped by an AgentixAction.
         # - validate_all_files=True  -> [] means "return all AgentixActions"

@@ -115,6 +115,9 @@ class TestConfiguration:
         self.test_integrations: List[str] = self._parse_integrations_conf(
             test_configuration
         )
+        self.test_scripts: List[str] = self._parse_scripts_conf(
+            test_configuration
+        )
         self.test_instance_names: List[str] = self._parse_instance_names_conf(
             test_configuration
         )
@@ -136,6 +139,13 @@ class TestConfiguration:
         if not isinstance(integrations_conf, list):
             integrations_conf = [integrations_conf]
         return integrations_conf
+
+    @staticmethod
+    def _parse_scripts_conf(test_configuration):
+        scripts_conf = test_configuration.get("scripts", [])
+        if not isinstance(scripts_conf, list):
+            scripts_conf = [scripts_conf]
+        return scripts_conf
 
     @staticmethod
     def _parse_instance_names_conf(test_configuration):
@@ -182,6 +192,10 @@ class TestPlaybook:
         self.test_suite = TestSuite(self.configuration.playbook_id)
         self.test_suite_system_out: List[str] = []
         self.test_suite_system_err: List[str] = []
+        self.scripts: List[Script] = [
+            Script(name=script_name)
+            for script_name in self.configuration.test_scripts
+        ]
         self.integrations: List[Integration] = [
             Integration(
                 build_context=self.build_context,
@@ -269,6 +283,9 @@ class TestPlaybook:
         )
         self.test_suite.add_property(
             "playbook.integrations", ",".join(map(str, self.integrations))
+        )
+        self.test_suite.add_property(
+            "playbook.scripts", ",".join(map(str, self.scripts))
         )
         self.test_suite.add_property(
             "runnable_on_docker_only",
@@ -1553,6 +1570,22 @@ class TestResults:
         logging_module.info("Finished uploading playbook results file to bucket")
 
 
+class Script:
+    def __init__(self, name: str):
+        """
+        A script class that represents a script used by a test playbook.
+        Args:
+            name: The name of the script
+        """
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return str(self)
+
+
 class Integration:
     def __init__(
         self,
@@ -2596,6 +2629,9 @@ class TestContext:
                 "number_of_executions": self.playbook.configuration.number_of_executions,
                 "number_of_successful_runs": self.playbook.configuration.number_of_successful_runs,
                 "failed_stage": failed_stage,
+                "scripts": [
+                    script.name for script in self.playbook.scripts
+                ],
                 "integrations": [
                     integration.name for integration in self.playbook.integrations
                 ],

@@ -76,7 +76,7 @@ class WrapperScriptMissingDependsOnValidator(BaseValidator[ContentTypes], ABC):
         # - validate_all_files=True  -> [] means "return all AgentixActions"
         # - validate_all_files=False -> restrict the query to the IDs we care about
         query_ids: List[str] = [] if validate_all_files else list(items_by_id.keys())
-        
+    
         actions: List[AgentixAction] = (
             self.graph.get_agentix_actions_using_content_items(query_ids)
         )

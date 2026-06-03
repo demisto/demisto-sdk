@@ -12,7 +12,7 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
 )
 from demisto_sdk.commands.content_graph.strict_objects.agentix_skill import (
-    StrictAgentixSkill,
+    AgentixSkill,
 )
 from demisto_sdk.commands.prepare_content.agentix_skill_unifier import (
     AgentixSkillUnifier,
@@ -93,4 +93,4 @@ class AgentixSkillParser(JSONContentItemParser, content_type=ContentType.AGENTIX
 
     @property
     def strict_object(self):
-        return StrictAgentixSkill
+        return AgentixSkill

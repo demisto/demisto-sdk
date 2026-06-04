@@ -1,6 +1,6 @@
 changes:
 - description: Added Skill content item type.
   type: feature
-- description: Extended `AgentixAgent` with a new `skills` field — a list of registered `AgentixSkill` IDs attached to the agent.
+- description: Extended `AgentixAgent` with a new `skillids` field — a list of registered `AgentixSkill` IDs attached to the agent.
   type: feature
 pr_number: '5394'

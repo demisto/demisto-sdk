@@ -25,7 +25,7 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
         self.color: str = self.yml_data.get("color")  # type: ignore
         self.visibility: str = self.yml_data.get("visibility")  # type: ignore
         self.actionids: list[str] = self.yml_data.get("actionids", [])
-        self.skill_ids: list[str] = self.yml_data.get("skill_ids", [])
+        self.skillids: list[str] = self.yml_data.get("skillids", [])
         self.conversationstarters: list[str] = self.yml_data.get(
             "conversationstarters", []
         )
@@ -65,7 +65,7 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
 
     def add_skill_dependencies(self) -> None:
         """Collects the skills registered with the agent as optional dependencies."""
-        if skill_ids := self.yml_data.get("skill_ids"):
+        if skill_ids := self.yml_data.get("skillids"):
             for skill_id in skill_ids:
                 self.add_dependency_by_id(
                     skill_id, ContentType.AGENTIX_SKILL, is_mandatory=False

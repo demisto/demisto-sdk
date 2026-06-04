@@ -56,7 +56,9 @@ class AgentixSkillUnifier(Unifier):
             package_path, unified
         )
 
-        logger.debug(f"<green>Created unified AgentixSkill metadata: {path.name}</green>")
+        logger.debug(
+            f"<green>Created unified AgentixSkill metadata: {path.name}</green>"
+        )
         return unified
 
     @staticmethod
@@ -80,9 +82,7 @@ class AgentixSkillUnifier(Unifier):
         return None
 
     @staticmethod
-    def insert_skill_content_to_metadata(
-        package_path: Path, unified: dict
-    ) -> dict:
+    def insert_skill_content_to_metadata(package_path: Path, unified: dict) -> dict:
         """
         Read skill body from file and add to the unified metadata dict.
 
@@ -157,7 +157,5 @@ class AgentixSkillUnifier(Unifier):
             content = TextFile.read_from_git_path(content_file_path, tag=git_sha)
             return content.strip() if content else ""
         except Exception as e:
-            logger.debug(
-                f"Could not read skill content from git sha {git_sha}: {e}"
-            )
+            logger.debug(f"Could not read skill content from git sha {git_sha}: {e}")
             return ""

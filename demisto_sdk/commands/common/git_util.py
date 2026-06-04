@@ -233,8 +233,8 @@ class GitUtil:
         Returns:
             list: The list of files under the given target_dir in the given git_sha.
         """
+        files: List[str] = []
         try:
-            files = []
             commit = self.repo.commit(git_sha)
 
             target_dir = self.path_from_git_root(target_dir)
@@ -250,15 +250,13 @@ class GitUtil:
                         traverse_tree(item, item_path)
 
             traverse_tree(tree)
-            return files
         except CommitOrBranchNotFoundError:
             logger.exception(f"Could not get commit {git_sha}")
         except Exception as e:
             logger.exception(
                 f"Could not get files from {target_dir=} with {git_sha=}, reason: {e}"
             )
-        finally:
-            return files
+        return files
 
     @lru_cache
     def get_all_files(self) -> Set[Path]:

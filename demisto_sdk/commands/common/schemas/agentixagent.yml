@@ -20,7 +20,7 @@ mapping:
     type: seq
     sequence:
     - type: str
-  skills:
+  skill_ids:
     type: seq
     sequence:
     - type: str

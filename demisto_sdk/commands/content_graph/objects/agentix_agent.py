@@ -16,7 +16,7 @@ class AgentixAgent(AgentixBase, content_type=ContentType.AGENTIX_AGENT):
     color: str
     visibility: str
     actionids: list[str] = []
-    skills: list[str] = []
+    skill_ids: list[str] = []
     systeminstructions: str = ""
     conversationstarters: list[str] = []
     builtinactions: list[str] = []

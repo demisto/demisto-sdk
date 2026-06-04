@@ -13,14 +13,14 @@ class AgentixSkillUnifier(Unifier):
     Unifier for AgentixSkill content items.
 
     This class handles merging the skill body (Markdown) from a separate file
-    into the skill's metadata JSON during the content creation process.
+    into the skill's ``metadata.yml`` during the content creation process.
 
     The skill body file follows the naming convention:
     ``skill.md``
 
     Directory structure:
     AgentixSkills/SkillName/
-    ├── metadata.json
+    ├── metadata.yml
     └── skill.md
     """
 
@@ -38,8 +38,8 @@ class AgentixSkillUnifier(Unifier):
         Merges skill body from a separate file into the metadata dict.
 
         Args:
-            path: Path to the skill metadata.json file
-            data: Parsed metadata JSON data
+            path: Path to the skill ``metadata.yml`` file
+            data: Parsed metadata YAML data
             marketplace: Target marketplace (unused for skills, kept for interface compatibility)
             **kwargs: Additional arguments (unused)
 
@@ -143,7 +143,7 @@ class AgentixSkillUnifier(Unifier):
         (e.g., for backward compatibility checks).
 
         Args:
-            metadata_path: Path to the skill metadata.json file
+            metadata_path: Path to the skill ``metadata.yml`` file
             git_sha: The git commit SHA to read from
 
         Returns:

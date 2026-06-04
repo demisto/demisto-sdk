@@ -1,0 +1,12 @@
+commonfields:
+  id: TestAgentixSkill
+  version: -1
+name: TestAgentixSkill
+display: Test Agentix Skill
+description: Test Agentix Skill for unit tests.
+fromversion: 8.12.0
+internal: false
+supportedModules:
+  - agentix
+marketplaces:
+  - platform

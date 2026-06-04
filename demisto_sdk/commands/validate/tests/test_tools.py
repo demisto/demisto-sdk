@@ -1013,7 +1013,7 @@ def create_agentix_skill_object(
     Returns:
         The AgentixSkill object.
     """
-    metadata = load_json("agentix_skill.json")
+    metadata = load_yaml("agentix_skill.yml")
     update_keys(metadata, paths, values)
     pack = REPO.create_pack()
     if pack_info:

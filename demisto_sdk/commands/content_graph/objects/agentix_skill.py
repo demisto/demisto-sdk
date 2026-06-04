@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     SkillContentRelatedFile,
 )
@@ -15,26 +15,30 @@ from demisto_sdk.commands.prepare_content.agentix_skill_unifier import (
     AgentixSkillUnifier,
 )
 
+# Canonical schema-file name for AgentixSkill packages (see CRTX-251738).
+SKILL_METADATA_FILE_NAME = "metadata.yml"
 
-class AgentixSkill(ContentItem, content_type=ContentType.AGENTIX_SKILL):
+
+class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
     """Represents an AgentixSkill content item.
 
     Skills live under ``Packs/<PackName>/AgentixSkills/<SkillName>/`` with two
-    files: ``metadata.json`` (schema fields) and ``skill.md`` (the body, merged
-    into the ``content`` field at upload time).
+    files: ``metadata.yml`` (schema fields, YAML with a nested
+    ``commonfields: {id, version}`` block symmetric with ``AgentixAgent``) and
+    ``skill.md`` (the Markdown body, merged into the ``content`` field at upload
+    time).
     """
 
     display: Optional[str] = None
-    internal: bool = False
     content: str = ""
     supportedModules: Optional[list[str]] = None
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        """Match an AgentixSkill ``metadata.json`` file under ``AgentixSkills/``."""
-        if path.suffix != ".json":
+        """Match an AgentixSkill ``metadata.yml`` file under ``AgentixSkills/``."""
+        if path.suffix not in {".yml", ".yaml"}:
             return False
-        if path.name != "metadata.json":
+        if path.name != SKILL_METADATA_FILE_NAME:
             return False
         return AGENTIX_SKILLS_DIR in path.parts
 

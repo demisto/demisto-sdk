@@ -1,8 +1,15 @@
 type: map
 mapping:
-  id:
-    type: str
+  commonfields:
+    type: map
     required: true
+    mapping:
+      id:
+        type: str
+        required: true
+      version:
+        type: int
+        required: true
   name:
     type: str
     required: true
@@ -13,12 +20,20 @@ mapping:
     required: true
   content:
     type: str
+  tags:
+    type: seq
+    sequence:
+    - type: str
+  category:
+    type: str
+  disabled:
+    type: bool
+  internal:
+    type: bool
   fromversion:
     type: str
   toversion:
     type: str
-  internal:
-    type: bool
   supportedModules:
     type: seq
     sequence:

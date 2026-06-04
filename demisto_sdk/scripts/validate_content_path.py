@@ -247,7 +247,7 @@ class InvalidAgentixActionFileName(InvalidPathException):
 class InvalidAgentixSkillFileName(InvalidPathException):
     message = (
         "AgentixSkill files must be placed in a subfolder under AgentixSkills, "
-        "e.g. `AgentixSkills/{SkillName}/metadata.json` or `AgentixSkills/{SkillName}/skill.md`"
+        "e.g. `AgentixSkills/{SkillName}/metadata.yml` or `AgentixSkills/{SkillName}/skill.md`"
     )
 
 
@@ -413,7 +413,7 @@ def _validate(path: Path) -> None:
             raise InvalidAgentixActionFileName
 
         elif first_level_folder == AGENTIX_SKILLS_DIR and not (
-            (path.name == "metadata.json") or (path.name == "skill.md")
+            (path.name == "metadata.yml") or (path.name == "skill.md")
         ):
             raise InvalidAgentixSkillFileName
 

@@ -52,7 +52,7 @@ mapping:
     type: seq
     sequence:
     - type: str
-  system_collection_ids:
+  collectionids:
     type: seq
     sequence:
     - type: str

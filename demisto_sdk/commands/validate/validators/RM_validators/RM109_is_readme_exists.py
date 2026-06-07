@@ -46,6 +46,6 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
                 )
                 and (not content_item.readme.exist)
                 and (not content_item.is_silent)
-                and (not getattr(content_item, "source") == "autonomous")
+                and getattr(content_item, "source", "") != "autonomous"
             )
         ]

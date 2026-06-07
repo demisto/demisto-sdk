@@ -482,6 +482,8 @@ def test_IsReadmeExistsValidator_obtain_invalid_content_items(
             for result, expected_msg in zip(results, expected_msgs)
         ]
     )
+    for result in results:
+        assert result.path == result.content_object.readme.file_path
 
 
 def test_ImagePathIntegrationValidator_obtain_invalid_content_items_valid_case():

@@ -114,6 +114,9 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA133_is_base_pack_h
 from demisto_sdk.commands.validate.validators.PA_validators.PA133_is_base_pack_has_no_new_dependencies_list_files import (
     IsBasePackHasNoNewDependenciesValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.PA_validators.PA134_supported_modules_coverage import (
+    PackSupportedModulesCoverageValidator,
+)
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
@@ -2309,6 +2312,214 @@ def test_IsBasePackHasNoNewDependenciesValidatorAllFiles_mixed_deps_flags_only_r
     assert len(results) == 1
     assert "RealDepPack" in results[0].message
     assert "TestOnlyPack" not in results[0].message
+
+
+# ---------------------------------------------------------------------------
+# PA134 – PackSupportedModulesCoverageValidator
+# ---------------------------------------------------------------------------
+
+
+def test_PackSupportedModulesCoverageValidator_no_supported_modules_on_pack():
+    """
+    Given:
+        - A pack with no supportedModules declared in its metadata.
+    When:
+        - Running the PackSupportedModulesCoverageValidator (PA134).
+    Then:
+        - The validation should pass (no explicit declaration → nothing to validate).
+    """
+    pack = create_pack_object()
+    pack.supportedModules = None
+
+    integration = create_integration_object(
+        paths=["supportedModules"], values=[["xsiam"]]
+    )
+    pack.content_items.integration.append(integration)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 0
+
+
+def test_PackSupportedModulesCoverageValidator_all_modules_covered():
+    """
+    Given:
+        - A pack with supportedModules: ["agentix", "xsiam"].
+        - One integration whose supportedModules covers both: ["agentix", "xsiam"].
+    When:
+        - Running the PackSupportedModulesCoverageValidator (PA134).
+    Then:
+        - The validation should pass.
+    """
+    pack = create_pack_object(paths=["supportedModules"], values=[["agentix", "xsiam"]])
+    pack.supportedModules = ["agentix", "xsiam"]
+
+    integration = create_integration_object(
+        paths=["supportedModules"], values=[["agentix", "xsiam"]]
+    )
+    pack.content_items.integration.append(integration)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 0
+
+
+def test_PackSupportedModulesCoverageValidator_item_inherits_all_modules():
+    """
+    Given:
+        - A pack with supportedModules: ["agentix", "xsiam"].
+        - One integration with supportedModules=None (inherits all pack modules).
+    When:
+        - Running the PackSupportedModulesCoverageValidator (PA134).
+    Then:
+        - The validation should pass because the item covers all pack modules implicitly.
+    """
+    pack = create_pack_object(paths=["supportedModules"], values=[["agentix", "xsiam"]])
+    pack.supportedModules = ["agentix", "xsiam"]
+
+    integration = create_integration_object()
+    integration.supportedModules = None
+    pack.content_items.integration.append(integration)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 0
+
+
+def test_PackSupportedModulesCoverageValidator_module_not_covered():
+    """
+    Given:
+        - A pack with supportedModules: ["agentix", "xsiam"].
+        - One integration whose supportedModules only covers ["xsiam"].
+        - No other uploadable content item covers "agentix".
+    When:
+        - Running the PackSupportedModulesCoverageValidator (PA134).
+    Then:
+        - The validation should fail, reporting "agentix" as uncovered.
+    """
+    pack = create_pack_object(paths=["supportedModules"], values=[["agentix", "xsiam"]])
+    pack.supportedModules = ["agentix", "xsiam"]
+
+    integration = create_integration_object(
+        paths=["supportedModules"], values=[["xsiam"]]
+    )
+    pack.content_items.integration.append(integration)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 1
+    assert "agentix" in results[0].message
+    assert results[0].validator.error_code == "PA134"
+
+
+def test_PackSupportedModulesCoverageValidator_multiple_items_union_covers_all():
+    """
+    Given:
+        - A pack with supportedModules: ["agentix", "xsiam"].
+        - Integration A covers ["agentix"].
+        - Integration B covers ["xsiam"].
+    When:
+        - Running the PackSupportedModulesCoverageValidator (PA134).
+    Then:
+        - The validation should pass because the union of item modules covers all pack modules.
+    """
+    pack = create_pack_object(paths=["supportedModules"], values=[["agentix", "xsiam"]])
+    pack.supportedModules = ["agentix", "xsiam"]
+
+    integration_a = create_integration_object(
+        paths=["supportedModules"], values=[["agentix"]]
+    )
+    integration_b = create_integration_object(
+        paths=["supportedModules"], values=[["xsiam"]]
+    )
+    pack.content_items.integration.extend([integration_a, integration_b])
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 0
+
+
+def test_PackSupportedModulesCoverageValidator_no_uploadable_items():
+    """
+    Given:
+        - A pack with supportedModules: ["agentix", "xsiam"].
+        - The pack has no uploadable content items (content_items is empty).
+    When:
+        - Running the PackSupportedModulesCoverageValidator (PA134).
+    Then:
+        - The validation should pass (empty pack is a separate concern).
+    """
+    pack = create_pack_object(paths=["supportedModules"], values=[["agentix", "xsiam"]])
+    pack.supportedModules = ["agentix", "xsiam"]
+    # No content items added — pack.content_items is empty by default.
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 0
+
+
+def test_PackSupportedModulesCoverageValidator_fix():
+    """
+    Given:
+        - A pack with supportedModules: ["agentix", "xsiam"].
+        - One integration whose supportedModules only covers ["xsiam"].
+    When:
+        - Running the fix() method of PackSupportedModulesCoverageValidator (PA134).
+    Then:
+        - "agentix" is removed from the pack's supportedModules.
+        - The fix message mentions "agentix".
+    """
+    pack = create_pack_object(paths=["supportedModules"], values=[["agentix", "xsiam"]])
+    pack.supportedModules = ["agentix", "xsiam"]
+
+    integration = create_integration_object(
+        paths=["supportedModules"], values=[["xsiam"]]
+    )
+    pack.content_items.integration.append(integration)
+
+    validator = PackSupportedModulesCoverageValidator()
+    # Run validation first to populate the cache.
+    results = validator.obtain_invalid_content_items([pack])
+    assert len(results) == 1
+
+    fix_result = validator.fix(pack)
+    assert pack.supportedModules == ["xsiam"]
+    assert "agentix" in fix_result.message
+
+
+def test_PackSupportedModulesCoverageValidator_multiple_uncovered_modules():
+    """
+    Given:
+        - A pack with supportedModules: ["agentix", "xsiam", "edr"].
+        - One integration whose supportedModules only covers ["xsiam"].
+    When:
+        - Running the PackSupportedModulesCoverageValidator (PA134).
+    Then:
+        - The validation should fail, reporting both "agentix" and "edr" as uncovered.
+    """
+    pack = create_pack_object(
+        paths=["supportedModules"], values=[["agentix", "xsiam", "edr"]]
+    )
+    pack.supportedModules = ["agentix", "xsiam", "edr"]
+
+    integration = create_integration_object(
+        paths=["supportedModules"], values=[["xsiam"]]
+    )
+    pack.content_items.integration.append(integration)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 1
+    assert "agentix" in results[0].message
+    assert "edr" in results[0].message
+    assert "xsiam" not in results[0].message
 
 
 def test_IsBasePackHasNoNewDependenciesValidatorListFiles_mixed_deps_flags_only_real(

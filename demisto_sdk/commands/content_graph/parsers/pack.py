@@ -446,6 +446,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "preview_only": "previewOnly",
             "excluded_dependencies": "excludedDependencies",
             "modules": "modules",
+            "supportedModules": "supportedModules",
             "disable_monthly": "disableMonthly",
             "content_commit_hash": "contentCommitHash",
             "default_data_source_id": "defaultDataSource",

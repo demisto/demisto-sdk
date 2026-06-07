@@ -29,8 +29,9 @@ class AgentixSkillParser(AgentixBaseParser, content_type=ContentType.AGENTIX_SKI
 
     * ``metadata.yml`` — the schema fields authored as YAML, using a nested
       ``commonfields: {id, version}`` block (symmetric with ``AgentixAgent``)
-      plus top-level ``name``, ``display``, ``description``, ``fromversion``,
-      ``toversion``, ``internal``, ``supportedModules``.
+      plus top-level ``name``, ``description``, ``fromversion``, ``toversion``,
+      ``internal``, ``supportedModules``. ``name`` is the human-readable
+      Title Case label (no separate ``display`` field).
     * ``skill.md`` — the skill body (Markdown), merged into the ``content`` field
       during ``prepare-content``.
     """
@@ -45,7 +46,6 @@ class AgentixSkillParser(AgentixBaseParser, content_type=ContentType.AGENTIX_SKI
         super().__init__(
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
-        self.display: Optional[str] = self.yml_data.get("display")
         self.internal: bool = self.yml_data.get("internal", False)
 
     def get_path_with_suffix(self, suffix: str) -> Path:
@@ -84,11 +84,18 @@ class AgentixSkillParser(AgentixBaseParser, content_type=ContentType.AGENTIX_SKI
     def field_mapping(self):
         super().field_mapping.update(
             {
-                "display": "display",
                 "description": "description",
             }
         )
         return super().field_mapping
+
+    @property
+    def display_name(self) -> Optional[str]:
+        """For AgentixSkill the ``name`` field is the human-readable Title Case
+        label — there is no separate ``display`` field — so we surface ``name``
+        as the display name to satisfy the parent ``ContentItem.display_name``.
+        """
+        return self.name
 
     @property
     def content(self) -> str:

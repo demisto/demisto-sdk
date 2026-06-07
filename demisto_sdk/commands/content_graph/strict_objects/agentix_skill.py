@@ -12,8 +12,7 @@ class StrictAgentixSkill(AgentixBase):
     ``id`` and ``version``, plus the common fields ``name``, ``description``,
     ``tags``, ``category``, ``disabled``, ``internal``, ``fromversion``,
     ``toversion``, ``marketplaces``, ``supportedModules``). Adds the
-    skill-specific ``display`` and ``content`` fields.
+    skill-specific ``content`` field.
     """
 
-    display: Optional[str] = None
     content: Optional[str] = None

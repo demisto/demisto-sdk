@@ -29,7 +29,6 @@ class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
     time).
     """
 
-    display: Optional[str] = None
     content: str = ""
     supportedModules: Optional[list[str]] = None
 

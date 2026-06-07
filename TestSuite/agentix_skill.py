@@ -65,8 +65,8 @@ class AgentixSkill(YAML):
 
     def create_default_agentix_skill(
         self,
-        name: str = "sample_agentix_skill",
-        skill_id: str = "sample_agentix_skill_id",
+        name: str = "Sample Agentix Skill",
+        skill_id: str = "sample-agentix-skill-id",
         skill_content: str = "Sample skill body.",
     ):
         """Create a new agentix skill with basic data.
@@ -78,9 +78,12 @@ class AgentixSkill(YAML):
         top-level ``id`` (kept for parity with ``AgentixAgent``'s
         ``create_default_agentix_agent`` helper).
 
+        ``AgentixSkill`` has no ``display`` field — ``name`` is the
+        human-readable Title Case label shown to the user.
+
         Args:
-            name: Skill name (default ``"sample_agentix_skill"``).
-            skill_id: Skill ID (default ``"sample_agentix_skill_id"``).
+            name: Skill name in Title Case (default ``"Sample Agentix Skill"``).
+            skill_id: Skill ID in kebab-case (default ``"sample-agentix-skill-id"``).
             skill_content: The skill body (Markdown). Default ``"Sample skill body."``.
         """
         default_dir = Path(__file__).parent / "assets" / "default_agentix_skill"
@@ -90,7 +93,6 @@ class AgentixSkill(YAML):
         metadata["commonfields"]["id"] = skill_id
         metadata["id"] = skill_id  # parity with AgentixAgent helper
         metadata["name"] = name
-        metadata.setdefault("display", name)
         self.build(metadata=metadata, skill_content=skill_content)
 
     def update(self, update_obj: dict, key_dict_to_update: Optional[str] = None):

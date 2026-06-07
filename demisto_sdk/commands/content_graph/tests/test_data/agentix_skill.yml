@@ -1,8 +1,7 @@
 commonfields:
-  id: TestAgentixSkill
+  id: test-agentix-skill
   version: -1
-name: TestAgentixSkill
-display: Test Agentix Skill
+name: Test Agentix Skill
 description: Test Agentix Skill for unit tests.
 fromversion: 8.12.0
 internal: false

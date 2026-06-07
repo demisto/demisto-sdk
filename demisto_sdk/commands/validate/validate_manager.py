@@ -98,6 +98,26 @@ class ValidateManager:
                         validator.expected_execution_mode == [ExecutionMode.ALL_FILES]
                         and self.initializer.execution_mode == ExecutionMode.ALL_FILES
                     ):
+                        # Graph-based validators (GR*, PA*, etc.) query the content
+                        # graph and return ValidationResult objects whose
+                        # content_object is a graph BaseNode instance — a different
+                        # Python object from the ContentDTO instances stored in
+                        # filtered_content_objects_for_validator.  The identity
+                        # check below would therefore silently discard every result.
+                        # To fix this, we remap each result's content_object to the
+                        # matching ContentDTO (by object_id) before filtering.
+                        id_to_dto = {
+                            item.object_id: item
+                            for item in filtered_content_objects_for_validator
+                        }
+                        for validation_result in validation_results:
+                            graph_obj = validation_result.content_object
+                            if graph_obj not in filtered_content_objects_for_validator:
+                                dto = id_to_dto.get(
+                                    getattr(graph_obj, "object_id", None) or ""
+                                )
+                                if dto is not None:
+                                    validation_result.content_object = dto
                         validation_results = [
                             validation_result
                             for validation_result in validation_results

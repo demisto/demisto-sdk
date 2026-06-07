@@ -32,6 +32,7 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
                     content_item.content_type, content_item.name
                 ),
                 content_object=content_item,
+                path=content_item.readme.file_path,
             )
             for content_item in content_items
             if (

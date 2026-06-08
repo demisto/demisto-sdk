@@ -37,7 +37,7 @@ class CollectionParser(YAMLContentItemParser, content_type=ContentType.COLLECTIO
     @property
     def display_name(self) -> Optional[str]:
         return (
-            get_value(self.json_data, self.field_mapping.get("display", ""))
+            get_value(self.yml_data, self.field_mapping.get("display", ""))
             or self.name
             or self.object_id
         )

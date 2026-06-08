@@ -14,8 +14,10 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 
 
 class _StrictTrigger(BaseStrictModel):
-    trigger_id: str
-    trigger_name: str
+    trigger_id: Optional[str] = None
+    id: str
+    trigger_name: Optional[str] = None
+    name: str
     playbook_id: Optional[str]
     description: str
     suggestion_reason: str

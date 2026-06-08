@@ -16,7 +16,8 @@ class _StrictXDRCTemplate(BaseStrictModel):
     os_type: str
     profile_type: str
     name: str
-    content_global_id: str
+    content_global_id: Optional[str] = None
+    id: str
     from_xdr_version: str
     yaml_template: str
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")

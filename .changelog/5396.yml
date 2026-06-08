@@ -1,0 +1,6 @@
+changes:
+- description: Fixed RM109 validation to point to the expected README file path instead of the content item's YML file when the README is missing.
+  type: fix
+- description: Excluded autonomous playbooks from RM109 README existence validation.
+  type: fix
+pr_number: '5396'

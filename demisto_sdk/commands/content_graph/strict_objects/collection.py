@@ -18,7 +18,6 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 class _StrictCollection(BaseStrictModel):
     id_: str = Field(alias="id")
     name: str
-    display: str
     description: Optional[str] = None
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = None

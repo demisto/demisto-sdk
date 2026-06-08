@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
@@ -29,18 +28,14 @@ class CollectionParser(YAMLContentItemParser, content_type=ContentType.COLLECTIO
     def field_mapping(self):
         super().field_mapping.update(
             {
-                "display": "display",
+                "object_id": "id",
             }
         )
         return super().field_mapping
 
     @property
     def display_name(self) -> Optional[str]:
-        return (
-            get_value(self.yml_data, self.field_mapping.get("display", ""))
-            or self.name
-            or self.object_id
-        )
+        return self.name or self.object_id
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

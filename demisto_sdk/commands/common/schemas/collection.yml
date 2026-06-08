@@ -6,16 +6,11 @@ mapping:
   name:
     type: str
     required: true
-  display:
-    type: str
-    required: true
-  version:
-    type: number
   description:
     type: str
-  fromVersion:
+  fromversion:
     type: str
-  toVersion:
+  toversion:
     type: str
   marketplaces:
     type: seq

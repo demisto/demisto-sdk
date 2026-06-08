@@ -11,8 +11,11 @@ class Collection(ContentItem, content_type=ContentType.COLLECTION):  # type: ign
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         if (
-            "display" in _dict
-            and "supportedModules" in _dict
+            "layout" not in _dict  # not a layout
+            and "commonfields" not in _dict  # not an integration or script
+            and "rules" not in _dict  # not a modeling rule or parsing rule
+            and "tasks" not in _dict  # not a playbook
+            and "display" in _dict
             and path.suffix == ".yml"
         ):
             return True

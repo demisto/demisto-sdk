@@ -25,6 +25,7 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
         self.color: str = self.yml_data.get("color")  # type: ignore
         self.visibility: str = self.yml_data.get("visibility")  # type: ignore
         self.actionids: list[str] = self.yml_data.get("actionids", [])
+        self.collectionids: list[str] = self.yml_data.get("collectionids", [])
         self.conversationstarters: list[str] = self.yml_data.get(
             "conversationstarters", []
         )

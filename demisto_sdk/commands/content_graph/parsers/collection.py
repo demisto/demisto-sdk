@@ -45,10 +45,6 @@ class CollectionParser(YAMLContentItemParser, content_type=ContentType.COLLECTIO
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {
-            MarketplaceVersions.XSOAR,
-            MarketplaceVersions.XSOAR_SAAS,
-            MarketplaceVersions.XSOAR_ON_PREM,
-            MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.PLATFORM,
         }
 

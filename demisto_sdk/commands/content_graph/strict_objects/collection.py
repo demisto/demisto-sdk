@@ -20,7 +20,7 @@ class _StrictCollection(BaseStrictModel):
     name: str
     display: str
     description: Optional[str] = None
-    marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
+    marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = None
 
 

@@ -5,15 +5,15 @@ from typing import List, Optional, Set
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_value
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import (
-    JSONContentItemParser,
+from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
+    YAMLContentItemParser,
 )
 from demisto_sdk.commands.content_graph.strict_objects.collection import (
     StrictCollection,
 )
 
 
-class CollectionParser(JSONContentItemParser, content_type=ContentType.COLLECTION):
+class CollectionParser(YAMLContentItemParser, content_type=ContentType.COLLECTION):
     def __init__(
         self,
         path: Path,

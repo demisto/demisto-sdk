@@ -13,7 +13,7 @@ class Collection(ContentItem, content_type=ContentType.COLLECTION):  # type: ign
         if (
             "display" in _dict
             and "supportedModules" in _dict
-            and path.suffix == ".json"
+            and path.suffix == ".yml"
         ):
             return True
         return False

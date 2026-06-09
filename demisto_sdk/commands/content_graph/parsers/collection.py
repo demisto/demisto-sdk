@@ -28,7 +28,8 @@ class CollectionParser(YAMLContentItemParser, content_type=ContentType.COLLECTIO
     def field_mapping(self):
         super().field_mapping.update(
             {
-                "object_id": "id",
+                "object_id": "commonfields.id",
+                "version": "commonfields.version",
             }
         )
         return super().field_mapping

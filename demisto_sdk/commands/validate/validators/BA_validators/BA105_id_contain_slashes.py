@@ -4,6 +4,7 @@ from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.collection import Collection
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -69,6 +70,7 @@ ContentTypes = Union[
     XSIAMReport,
     AgentixAction,
     AgentixAgent,
+    Collection,
 ]
 
 

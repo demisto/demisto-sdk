@@ -8,6 +8,7 @@ from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
     AgentixAgent,
     CaseField,
+    Collection,
     CaseLayout,
     CaseLayoutRule,
     Classifier,
@@ -79,6 +80,7 @@ ContentTypes = Union[
     CaseLayoutRule,
     AgentixAction,
     AgentixAgent,
+    Collection,
 ]
 
 

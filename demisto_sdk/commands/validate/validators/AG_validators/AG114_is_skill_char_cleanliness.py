@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -49,6 +50,11 @@ class IsSkillCharCleanlinessValidator(BaseValidator[ContentTypes]):
     )
     related_field = "content"
     related_file_type = [RelatedFileType.SKILL_CONTENT]
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

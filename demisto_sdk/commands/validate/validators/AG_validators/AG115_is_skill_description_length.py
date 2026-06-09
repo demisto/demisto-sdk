@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
+from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -26,6 +27,11 @@ class IsSkillDescriptionLengthValidator(BaseValidator[ContentTypes]):
     )
     error_message = "The AgentixSkill '{0}' has an invalid description: {1}"
     related_field = "description"
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

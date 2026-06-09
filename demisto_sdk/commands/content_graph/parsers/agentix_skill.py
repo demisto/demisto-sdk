@@ -13,8 +13,9 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.strict_objects.agentix_skill import (
     StrictAgentixSkill,
 )
-from demisto_sdk.commands.prepare_content.agentix_skill_unifier import (
-    AgentixSkillUnifier,
+from demisto_sdk.commands.prepare_content.agentix_markdown_unifier import (
+    AGENTIX_SKILL_FILE_NAME,
+    AgentixMarkdownUnifier,
 )
 
 # Canonical schema-file name for AgentixSkill packages (see CRTX-251738).
@@ -105,8 +106,12 @@ class AgentixSkillParser(AgentixBaseParser, content_type=ContentType.AGENTIX_SKI
         directory as ``metadata.yml``.
         """
         if not self.git_sha:
-            return AgentixSkillUnifier.get_skill_content(self.path.parent)
-        return AgentixSkillUnifier.get_skill_content_with_sha(self.path, self.git_sha)
+            return AgentixMarkdownUnifier.get_content(
+                self.path.parent, file_name=AGENTIX_SKILL_FILE_NAME
+            )
+        return AgentixMarkdownUnifier.get_content_with_sha(
+            self.path, self.git_sha, file_name=AGENTIX_SKILL_FILE_NAME
+        )
 
     @property
     def strict_object(self):

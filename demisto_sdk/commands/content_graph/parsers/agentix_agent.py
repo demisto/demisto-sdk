@@ -6,8 +6,9 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.agentix_base import AgentixBaseParser
 from demisto_sdk.commands.content_graph.strict_objects.agentix_agent import AgentixAgent
-from demisto_sdk.commands.prepare_content.agentix_agent_unifier import (
-    AgentixAgentUnifier,
+from demisto_sdk.commands.prepare_content.agentix_markdown_unifier import (
+    AGENTIX_AGENT_FILE_SUFFIX,
+    AgentixMarkdownUnifier,
 )
 
 
@@ -49,10 +50,12 @@ class AgentixAgentParser(AgentixBaseParser, content_type=ContentType.AGENTIX_AGE
             str: The agent system instructions.
         """
         if not self.git_sha:
-            return AgentixAgentUnifier.get_system_instructions(self.path.parent)
+            return AgentixMarkdownUnifier.get_content(
+                self.path.parent, file_suffix=AGENTIX_AGENT_FILE_SUFFIX
+            )
         else:
-            return AgentixAgentUnifier.get_system_instructions_with_sha(
-                self.path, self.git_sha
+            return AgentixMarkdownUnifier.get_content_with_sha(
+                self.path, self.git_sha, file_suffix=AGENTIX_AGENT_FILE_SUFFIX
             )
 
     def add_action_dependencies(self) -> None:

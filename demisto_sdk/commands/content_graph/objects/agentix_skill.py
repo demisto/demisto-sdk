@@ -11,8 +11,10 @@ from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     SkillContentRelatedFile,
 )
-from demisto_sdk.commands.prepare_content.agentix_skill_unifier import (
-    AgentixSkillUnifier,
+from demisto_sdk.commands.prepare_content.agentix_markdown_unifier import (
+    AGENTIX_SKILL_FILE_NAME,
+    AGENTIX_SKILL_TARGET_FIELD,
+    AgentixMarkdownUnifier,
 )
 
 # Canonical schema-file name for AgentixSkill packages (see CRTX-251738).
@@ -65,5 +67,11 @@ class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
             ``skill.md``.
         """
         data = super().prepare_for_upload(current_marketplace)
-        data = AgentixSkillUnifier.unify(self.path, data, current_marketplace)
+        data = AgentixMarkdownUnifier.unify(
+            self.path,
+            data,
+            current_marketplace,
+            target_field=AGENTIX_SKILL_TARGET_FIELD,
+            file_name=AGENTIX_SKILL_FILE_NAME,
+        )
         return data

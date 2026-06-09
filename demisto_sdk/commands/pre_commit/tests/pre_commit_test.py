@@ -466,6 +466,9 @@ class TestPreprocessFiles:
             - Running demisto-sdk pre-commit -i file1.yml.
         Then:
             - Check that the associated python file was gathered correctly.
+            - Check that the sibling README.md is also gathered, so that
+              README-targeting hooks (e.g. markdownlint-cli2) fire whenever
+              the integration manifest is touched.
         """
         pack1 = repo.create_pack("Pack1")
         mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
@@ -481,6 +484,7 @@ class TestPreprocessFiles:
             Path(integration.yml.rel_path),
             Path(integration.code.rel_path),
             Path(integration.test.rel_path),
+            Path(integration.readme.rel_path),
         }
         mocker.patch.object(GitUtil, "get_all_files", return_value=relative_paths)
         output = preprocess_files(input_files=input_files)

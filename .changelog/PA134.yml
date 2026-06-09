@@ -1,4 +1,6 @@
 changes:
 - description: Added PA134 validation to detect packs whose declared supportedModules are not covered by any individually-uploadable content item, which would result in an empty pack for tenants licensed only for those modules. The validation is auto-fixable and removes the uncovered modules from the pack's supportedModules.
   type: feature
+- description: Fixed Pack.save() to not inject the `firstCreated` field into pack_metadata.json when it was not originally present. Previously, any auto-fix (PA134, PA120, PA104, etc.) would silently add `firstCreated` as a side-effect.
+  type: fix
 pr_number: 'PA134'

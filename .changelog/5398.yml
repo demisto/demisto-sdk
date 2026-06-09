@@ -3,4 +3,4 @@ changes:
   type: feature
 - description: Fixed Pack.save() to not inject the `firstCreated` field into pack_metadata.json when it was not originally present. Previously, any auto-fix (PA134, PA120, PA104, etc.) would silently add `firstCreated` as a side-effect.
   type: fix
-pr_number: 'PA134'
+pr_number: '5398'

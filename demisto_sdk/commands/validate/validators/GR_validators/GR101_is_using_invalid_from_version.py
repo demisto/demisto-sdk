@@ -7,7 +7,6 @@ from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
     AgentixAgent,
-    AgentixSkill,
     CaseField,
     CaseLayout,
     CaseLayoutRule,

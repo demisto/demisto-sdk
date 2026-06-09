@@ -730,9 +730,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         # the value work correctly, but we must not add the field as a
         # side-effect of any auto-fix (e.g. PA120, PA134, …).
         fields_to_exclude = (
-            []
-            if "firstCreated" in data or "created" in data
-            else ["created"]
+            [] if "firstCreated" in data or "created" in data else ["created"]
         )
         super()._save(
             file_path,

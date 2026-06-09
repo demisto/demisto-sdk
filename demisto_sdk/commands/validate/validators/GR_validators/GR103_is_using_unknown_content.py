@@ -46,7 +46,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Union[
     AgentixAgent,
-    AgentixSkill,
     Integration,
     Script,
     Playbook,

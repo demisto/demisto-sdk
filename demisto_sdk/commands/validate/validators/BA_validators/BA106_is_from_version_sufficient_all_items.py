@@ -112,7 +112,7 @@ FROM_VERSION_DICT: Dict[ContentType, str] = {
     ContentType.CASE_LAYOUT_RULE: "8.7.0",
     ContentType.AGENTIX_ACTION: "8.12.0",
     ContentType.AGENTIX_AGENT: "8.12.0",
-    ContentType.AGENTIX_SKILL: "8.12.0",
+    ContentType.AGENTIX_SKILL: "8.15.0",
 }
 
 

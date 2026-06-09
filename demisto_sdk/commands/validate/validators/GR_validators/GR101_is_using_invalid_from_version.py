@@ -80,7 +80,6 @@ ContentTypes = Union[
     CaseLayoutRule,
     AgentixAction,
     AgentixAgent,
-    AgentixSkill,
 ]
 
 

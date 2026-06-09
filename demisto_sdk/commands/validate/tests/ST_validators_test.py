@@ -969,3 +969,93 @@ def test_SchemaValidator_not_managed_pack(pack: Pack):
     pack_parser = PackParser(path=pack.path)
 
     assert len(pack_parser.structure_errors) == 0
+
+
+def test_SchemaValidator_isArray_platform_in_argument__valid(pack: Pack):
+    """
+    Given:
+        - An integration with a command argument that uses 'isArray:platform' (a
+          marketplace-specific override of 'isArray').
+    When:
+        - Running the SchemaValidator (ST110 validation).
+    Then:
+        - The validation should pass without any errors.
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    integration.yml.update(
+        {
+            "script": {
+                "commands": [
+                    {
+                        "name": "test-command",
+                        "description": "A test command.",
+                        "arguments": [
+                            {
+                                "name": "url",
+                                "description": "The URL to rasterize.",
+                                "required": True,
+                                "isArray": True,
+                                "isArray:platform": False,
+                                "default": True,
+                            }
+                        ],
+                    }
+                ],
+                "script": "-",
+                "type": "python",
+                "subtype": "python3",
+                "dockerimage": "demisto/python3:latest",
+            }
+        }
+    )
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 0
+
+
+def test_SchemaValidator_isArray_marketplace_suffixes_in_argument__valid(pack: Pack):
+    """
+    Given:
+        - An integration with a command argument that uses multiple marketplace-suffixed
+          variants of 'isArray' (e.g. 'isArray:xsoar', 'isArray:marketplacev2').
+    When:
+        - Running the SchemaValidator (ST110 validation).
+    Then:
+        - The validation should pass without any errors.
+    """
+    integration = pack.create_integration(yml=load_yaml("integration.yml"))
+    integration.yml.update(
+        {
+            "script": {
+                "commands": [
+                    {
+                        "name": "test-command",
+                        "description": "A test command.",
+                        "arguments": [
+                            {
+                                "name": "url",
+                                "description": "The URL to rasterize.",
+                                "required": True,
+                                "isArray": True,
+                                "isArray:platform": False,
+                                "isArray:xsoar": True,
+                                "isArray:marketplacev2": True,
+                                "default": True,
+                            }
+                        ],
+                    }
+                ],
+                "script": "-",
+                "type": "python",
+                "subtype": "python3",
+                "dockerimage": "demisto/python3:latest",
+            }
+        }
+    )
+    integration_parser = IntegrationParser(
+        Path(integration.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+    results = SchemaValidator().obtain_invalid_content_items([integration_parser])
+    assert len(results) == 0

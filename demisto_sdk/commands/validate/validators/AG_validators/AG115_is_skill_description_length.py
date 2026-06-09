@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -27,19 +27,23 @@ class IsSkillDescriptionLengthValidator(BaseValidator[ContentTypes]):
     )
     error_message = "The AgentixSkill '{0}' has an invalid description: {1}"
     related_field = "description"
-    expected_git_statuses = [
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-        GitStatuses.RENAMED,
-    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
+        content_items = list(content_items)
+        logger.debug(
+            f"[{self.error_code}] Running on {len(content_items)} AgentixSkill item(s)."
+        )
         results: List[ValidationResult] = []
         for content_item in content_items:
             description = content_item.description or ""
             word_count = len(description.split())
+            logger.debug(
+                f"[{self.error_code}] Skill '{content_item.display_name}': "
+                f"description has {word_count} word(s) "
+                f"(allowed {DESCRIPTION_MIN_WORDS}-{DESCRIPTION_MAX_WORDS})."
+            )
 
             problem = ""
             if word_count < DESCRIPTION_MIN_WORDS:
@@ -61,4 +65,7 @@ class IsSkillDescriptionLengthValidator(BaseValidator[ContentTypes]):
                         content_object=content_item,
                     )
                 )
+        logger.debug(
+            f"[{self.error_code}] Finished. Found {len(results)} invalid item(s)."
+        )
         return results

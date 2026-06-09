@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Iterable, List
 
-from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
@@ -50,20 +50,23 @@ class IsSkillCharCleanlinessValidator(BaseValidator[ContentTypes]):
     )
     related_field = "content"
     related_file_type = [RelatedFileType.SKILL_CONTENT]
-    expected_git_statuses = [
-        GitStatuses.ADDED,
-        GitStatuses.MODIFIED,
-        GitStatuses.RENAMED,
-    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
+        content_items = list(content_items)
+        logger.debug(
+            f"[{self.error_code}] Running on {len(content_items)} AgentixSkill item(s)."
+        )
         results: List[ValidationResult] = []
         for content_item in content_items:
             body = content_item.skill_content_file.file_content
             prose = strip_code_blocks(f"{content_item.description or ''}\n{body}")
             disallowed = find_disallowed_chars(prose)
+            logger.debug(
+                f"[{self.error_code}] Skill '{content_item.display_name}': "
+                f"found {len(disallowed)} disallowed character(s)."
+            )
             if disallowed:
                 results.append(
                     ValidationResult(
@@ -75,4 +78,7 @@ class IsSkillCharCleanlinessValidator(BaseValidator[ContentTypes]):
                         content_object=content_item,
                     )
                 )
+        logger.debug(
+            f"[{self.error_code}] Finished. Found {len(results)} invalid item(s)."
+        )
         return results

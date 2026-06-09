@@ -481,6 +481,32 @@ def group_by_language(
             )
         for api_module in api_modules:
             assert isinstance(api_module, Script)
+
+            # Rescue non-code files (e.g. README.md, description.md, images,
+            # json) that the user explicitly passed inside the ApiModule folder.
+            # The API-module-expansion block below only copies .py/.yml/.ps1
+            # files (via `add_related_files`) into the per-integration mapping,
+            # and the second loop in `group_by_language` skips the ApiModules
+            # pack entirely - so without this rescue, anything that isn't
+            # source code would be silently dropped before reaching pre-commit.
+            # Keys in `integrations_scripts_mapping` are `CONTENT_PATH /
+            # <relative path>` (see code_file_path above), so prefer that
+            # absolute form; also try the relative form as a fallback.
+            if api_module.path.is_absolute():
+                absolute_api_folder = api_module.path.parent
+                relative_api_folder = api_module.path.parent.relative_to(
+                    CONTENT_PATH
+                )
+            else:
+                relative_api_folder = api_module.path.parent
+                absolute_api_folder = CONTENT_PATH / relative_api_folder
+            api_module_files = integrations_scripts_mapping.get(
+                absolute_api_folder
+            ) or integrations_scripts_mapping.get(relative_api_folder, set())
+            for f in api_module_files:
+                if f.suffix.lower() not in {".py", ".yml", ".ps1"}:
+                    infra_files.append(f)
+
             for imported_by in api_module.imported_by:
                 # we need to add the api module for each integration that uses it, so it will execute the api module check
                 integrations_scripts.add(imported_by)
@@ -709,6 +735,13 @@ def add_related_files(file: Path) -> Set[Path]:
             files_to_run.add(py_file_path)
         elif ps1_file_path.exists():
             files_to_run.add(ps1_file_path)
+
+        # Pull in the sibling README.md so README-targeting hooks
+        # (e.g. markdownlint-cli2 with `files: "^(.*/)?README\\.md$"`)
+        # fire whenever the integration/script manifest is touched.
+        readme_path = file.with_name("README.md")
+        if readme_path.exists():
+            files_to_run.add(readme_path)
 
     # Identifying test files
 

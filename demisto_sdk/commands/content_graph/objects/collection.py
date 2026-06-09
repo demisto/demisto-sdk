@@ -6,6 +6,8 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class Collection(ContentItem, content_type=ContentType.COLLECTION):  # type: ignore[call-arg]
+    version: int = -1
+
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         if (

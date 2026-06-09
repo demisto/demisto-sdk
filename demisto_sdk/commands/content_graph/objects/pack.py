@@ -724,8 +724,21 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def save(self):
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
+        # Do not inject `firstCreated` if it was not originally present in the
+        # pack metadata file.  The parser always populates `self.created` (via
+        # git history or the current timestamp) so that other flows that need
+        # the value work correctly, but we must not add the field as a
+        # side-effect of any auto-fix (e.g. PA120, PA134, …).
+        fields_to_exclude = (
+            []
+            if "firstCreated" in data or "created" in data
+            else ["created"]
+        )
         super()._save(
-            file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS
+            file_path,
+            data,
+            predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS,
+            fields_to_exclude=fields_to_exclude,
         )  # type: ignore
 
     @cached_property

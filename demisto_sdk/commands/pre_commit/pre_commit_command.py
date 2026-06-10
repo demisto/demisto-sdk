@@ -88,9 +88,9 @@ class PreCommitRunner:
         for hook_id in hooks.copy():
             if hook_id in custom_hooks_to_classes:
                 PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
-                    custom_hooks_to_classes[
-                        hook_id
-                    ](**hooks.pop(hook_id), context=pre_commit_context).prepare_hook()
+                    custom_hooks_to_classes[hook_id](
+                        **hooks.pop(hook_id), context=pre_commit_context
+                    ).prepare_hook()
                 )
             elif hook_id.endswith("in-docker"):
                 PreCommitRunner.original_hook_id_to_generated_hook_ids[hook_id] = (
@@ -494,14 +494,12 @@ def group_by_language(
             # absolute form; also try the relative form as a fallback.
             if api_module.path.is_absolute():
                 absolute_api_folder = api_module.path.parent
-                relative_api_folder = api_module.path.parent.relative_to(
-                    CONTENT_PATH
-                )
+                relative_api_folder = api_module.path.parent.relative_to(CONTENT_PATH)
             else:
                 relative_api_folder = api_module.path.parent
                 absolute_api_folder = CONTENT_PATH / relative_api_folder
-            api_module_files = integrations_scripts_mapping.get(
-                absolute_api_folder
+            api_module_files: Set[Path] = integrations_scripts_mapping.get(
+                absolute_api_folder, set()
             ) or integrations_scripts_mapping.get(relative_api_folder, set())
             for f in api_module_files:
                 if f.suffix.lower() not in {".py", ".yml", ".ps1"}:

@@ -43,7 +43,7 @@ class IsSkillContentFileExistsValidator(BaseValidator[ContentTypes]):
             exists = content_item.skill_content_file.exist
             logger.debug(
                 f"[{self.error_code}] Skill '{content_item.display_name}': "
-                f"<SkillName>_skill.md exists={exists}."
+                f"skill content file exists={exists}."
             )
             if not exists:
                 results.append(

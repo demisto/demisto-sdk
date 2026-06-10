@@ -958,6 +958,7 @@ AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 DEPLOYMENT_JSON_FILENAME = "deployment.json"
 PACKS_FOLDER = "Packs"
 PRIVATE_PACKS_FOLDER = "PrivatePacks"
+CONNECTORS_FOLDER = "connectors"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
 # Private Repository Status Files

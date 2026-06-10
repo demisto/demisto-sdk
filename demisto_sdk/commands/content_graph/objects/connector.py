@@ -15,7 +15,11 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    Nodes,
+    Relationships,
+)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     CapabilitiesRelatedFile,
@@ -354,6 +358,17 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
     capability_handler_map: Dict[str, CapabilityHandlerMapping] = Field(
         default_factory=dict, exclude=True
     )
+    # Relationships collected by the parser (REFERENCES_INTEGRATION / REFERENCES_PACK).
+    # Excluded from serialization; consumed by the graph builder.
+    relationships: Relationships = Field(default_factory=Relationships, exclude=True)
+
+    def to_nodes(self) -> Nodes:
+        """Return a ``Nodes`` collection containing this connector's graph node.
+
+        Connectors are top-level content items (not contained in a Pack), so
+        unlike :py:meth:`Pack.to_nodes` we only emit a single node.
+        """
+        return Nodes(self.to_dict())
 
     # === Derived properties ===
 

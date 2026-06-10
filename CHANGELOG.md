@@ -1,4 +1,23 @@
 # Changelog
+## 1.39.1 (2026-05-31)
+### Feature
+* Enriched the pack marketplace metadata for classifiers and mappers by adding a `tags` field (set to `["feed"]` when the item is a feed) and exposing the `type` field. [#5367](https://github.com/demisto/demisto-sdk/pull/5367)
+* Enriched the integration marketplace metadata with a `tags` field that advertises fetch capabilities (`feed`, `fetch-incidents`, `fetch-events`, `fetch-assets`, `fetch-credentials`) so consumers can identify supported fetch types before installation. [#5367](https://github.com/demisto/demisto-sdk/pull/5367)
+* Added support for the `isfetchcredentials` integration field in the schema, parser, content graph object, and strict object models. [#5367](https://github.com/demisto/demisto-sdk/pull/5367)
+* Adding Github.com co-pilot instructions [#5350](https://github.com/demisto/demisto-sdk/pull/5350)
+* Improved BA129 validation to exclude reputation commands, list commands, and get commands from validation to prevent false positives. [#5356](https://github.com/demisto/demisto-sdk/pull/5356)
+
+### Fix
+* Strip the `internal` and `isInternal` fields from script YAMLs and the `internal` field from pack metadata files during the `upload` flow so the uploaded content is visible to users (including in the pack `metadata.json` content items list). [#5346](https://github.com/demisto/demisto-sdk/pull/5346)
+* Fixed false positives in AS109 validation by improving context key detection to handle single-segment keys, complex root/accessor splits, DT filter expressions, iscontext fields, and Set command key arguments. [#5341](https://github.com/demisto/demisto-sdk/pull/5341)
+* Fixed the error message of BA125 to be more clear. [#5344](https://github.com/demisto/demisto-sdk/pull/5344)
+* Fixed IM106 validation crash when integration image file does not exist by checking image existence before attempting to load it. [#5388](https://github.com/demisto/demisto-sdk/pull/5388)
+
+### Internal
+* Switch `npm install` to `npm ci` in the `setup_test_environment` action, add NPM caching to the action. [#5386](https://github.com/demisto/demisto-sdk/pull/5386)
+* Add auto-merge for Dependabot PRs [#5352](https://github.com/demisto/demisto-sdk/pull/5352)
+
+
 ## 1.39.0 (2026-05-13)
 ### Breaking
 * Drop support for Python 3.9. [#5319](https://github.com/demisto/demisto-sdk/pull/5319)

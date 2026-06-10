@@ -1,9 +1,10 @@
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional, Set
 
 import demisto_client
 from pydantic import Field
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
@@ -12,6 +13,20 @@ class Classifier(ContentItem, content_type=ContentType.CLASSIFIER):  # type: ign
     type: Optional[str]
     definition_id: Optional[str] = Field(alias="definitionId")
     version: Optional[int] = 0
+    feed: bool = Field(False, exclude=True)
+
+    def metadata_fields(self) -> Set[str]:
+        return super().metadata_fields().union({"type"})
+
+    def summary(
+        self,
+        marketplace: Optional[MarketplaceVersions] = None,
+        incident_to_alert: bool = False,
+    ) -> dict:
+        summary = super().summary(marketplace, incident_to_alert)
+        if self.feed:
+            summary["tags"] = ["feed"]
+        return summary
 
     @classmethod
     def _client_upload_method(cls, client: demisto_client) -> Callable:

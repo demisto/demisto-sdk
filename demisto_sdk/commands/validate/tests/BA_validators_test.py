@@ -1644,34 +1644,34 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
         pytest.param(
             [create_integration_object(readme_content="test-module")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Integrations/integration_0/README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Integrations/integration_0/README.md. To ignore, add this file to the .pack-ignore of pack 'PACK_NAME'.",
             id="invalid: integration readme",
         ),
         pytest.param(
             [create_integration_object(description_content="test-module")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Integrations/integration_0/integration_0_description.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Integrations/integration_0/integration_0_description.md. To ignore, add this file to the .pack-ignore of pack 'PACK_NAME'.",
             id="invalid: integration description",
         ),
         pytest.param([create_script_object()], 0, "", id="valid: script"),
         pytest.param(
             [create_script_object(readme_content="test-module ")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Scripts/script0/README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Scripts/script0/README.md. To ignore, add this file to the .pack-ignore of pack 'PACK_NAME'.",
             id="invalid: script readme",
         ),
         pytest.param([create_playbook_object()], 0, "", id="valid: playbook"),
         pytest.param(
             [create_playbook_object(readme_content="test-module ")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Playbooks/playbook-0_README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/Playbooks/playbook-0_README.md. To ignore, add this file to the .pack-ignore of pack 'PACK_NAME'.",
             id="invalid: playbook readme",
         ),
         pytest.param([create_pack_object()], 0, "", id="valid: pack"),
         pytest.param(
             [create_pack_object(readme_text="test-module ")],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/README.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/README.md. To ignore, add this file to the .pack-ignore of pack 'PACK_NAME'.",
             id="invalid: pack readme",
         ),
         pytest.param(
@@ -1681,7 +1681,7 @@ def test_ValidPackNameValidator_obtain_invalid_content_items(
                 )
             ],
             1,
-            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/ReleaseNotes/1_0_1.md",
+            "Found internal terms in a customer-facing documentation: found test-module in Packs/PACK_NAME/ReleaseNotes/1_0_1.md. To ignore, add this file to the .pack-ignore of pack 'PACK_NAME'.",
             id="invalid: pack release note",
         ),
     ],

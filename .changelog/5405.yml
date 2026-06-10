@@ -1,4 +1,4 @@
 changes:
-- description: Fixed an issue where `pre-commit` silently skipped hooks targeting non-code files (e.g. `markdownlint-cli2` on `README.md`) sitting inside an `ApiModules` pack folder.
+- description: Fixed an issue where `pre-commit` silently skipped hooks targeting non-code files (e.g. `markdownlint-cli2` on `README.md`).
   type: fix
 pr_number: '5405'

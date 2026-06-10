@@ -15,7 +15,7 @@ ContentTypes = AgentixSkill
 
 class IsSkillContentFileExistsValidator(BaseValidator[ContentTypes]):
     error_code = "AG111"
-    description = "Checks that the AgentixSkill follows the required package format (a '<SkillName>_skill.md' body file next to '<SkillName>.yml')."
+    description = "Checks that the AgentixSkill follows the required package format (a 'SKILL_NAME_skill.md' body file next to 'SKILL_NAME.yml')."
     error_message = (
         "The AgentixSkill '{0}' is missing its content file. "
         "Please create a file named '{1}_skill.md' in the skill's directory "
@@ -23,10 +23,10 @@ class IsSkillContentFileExistsValidator(BaseValidator[ContentTypes]):
     )
     related_field = "content"
     rationale = (
-        "An AgentixSkill package must contain a '<SkillName>.yml' schema file and "
-        "a '<SkillName>_skill.md' body file in the same directory under "
+        "An AgentixSkill package must contain a 'SKILL_NAME.yml' schema file and "
+        "a 'SKILL_NAME_skill.md' body file in the same directory under "
         "'AgentixSkills/'. The skill body is merged into the 'content' field at "
-        "upload time, so the '<SkillName>_skill.md' file is required for the "
+        "upload time, so the 'SKILL_NAME_skill.md' file is required for the "
         "skill to be valid."
     )
     related_file_type = [RelatedFileType.SKILL_CONTENT]

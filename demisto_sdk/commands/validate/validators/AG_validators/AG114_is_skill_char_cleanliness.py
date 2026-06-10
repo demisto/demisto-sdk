@@ -38,7 +38,7 @@ class IsSkillCharCleanlinessValidator(BaseValidator[ContentTypes]):
     error_code = "AG114"
     description = (
         "Checks that the AgentixSkill prose (description and "
-        "'<SkillName>_skill.md' body, excluding code blocks) contains only "
+        "'SKILL_NAME_skill.md' body, excluding code blocks) contains only "
         "ASCII characters."
     )
     rationale = (

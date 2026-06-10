@@ -63,13 +63,12 @@ class ResultWriter:
         failing_error_codes: Set[str] = set()
         warning_error_codes: Set[str] = set()
         for result in validation_results:
-            readable_message = result.format_readable_message.replace("<", r"\<")
             if result.validator.error_code in config_file_content.warning:
                 warning_error_codes.add(result.validator.error_code)
-                logger.warning(f"<yellow>{readable_message}</yellow>")
+                logger.warning(f"<yellow>{result.format_readable_message}</yellow>")
             else:
                 failing_error_codes.add(result.validator.error_code)
-                logger.error(f"<red>{readable_message}</red>")
+                logger.error(f"<red>{result.format_readable_message}</red>")
                 exit_code = 1
         return exit_code, failing_error_codes, warning_error_codes
 

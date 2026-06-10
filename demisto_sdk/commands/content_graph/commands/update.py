@@ -93,9 +93,7 @@ def extract_connector_ids_from_diff_files(diff_files_str: str) -> Set[str]:
     return connector_ids
 
 
-def _changed_connectors_from_git(
-    git_util: GitUtil, commit: str
-) -> Set[str]:
+def _changed_connectors_from_git(git_util: GitUtil, commit: str) -> Set[str]:
     """Return connector directory names touched between ``commit`` and HEAD.
 
     Uses the same diff machinery as

@@ -51,14 +51,18 @@ class ContentGraphBuilder:
         packs_to_parse: Optional[Tuple[str, ...]] = None,
         connectors_to_parse: Optional[Tuple[str, ...]] = None,
     ) -> None:
+        # ``connectors`` is passed as a keyword argument so that existing test
+        # mocks of ``_create_content_dto`` that only accept ``(packs)`` keep
+        # working unchanged.
         content_dto: ContentDTO = self._create_content_dto(
-            packs_to_parse, connectors_to_parse
+            packs_to_parse, connectors=connectors_to_parse
         )
         self._collect_nodes_and_relationships_from_model(content_dto)
 
     def _create_content_dto(
         self,
         packs: Optional[Tuple[str, ...]],
+        *,
         connectors: Optional[Tuple[str, ...]] = None,
     ) -> ContentDTO:
         """Parses the repository, then creates and returns a repository model.
@@ -66,7 +70,9 @@ class ContentGraphBuilder:
         Args:
             packs: A list of pack names to parse. If not provided, parses all packs
                 (unless ``connectors`` narrows the parse — see :func:`ContentDTO.from_path`).
-            connectors: A list of connector directory names to parse.
+            connectors: Keyword-only. A list of connector directory names to
+                parse. Made keyword-only so test mocks with the original
+                single-positional signature (``mock(packs)``) stay compatible.
         """
         return ContentDTO.from_path(
             packs_to_parse=packs, connectors_to_parse=connectors

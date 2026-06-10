@@ -1333,6 +1333,8 @@ class TestAgentixActionSchema:
                 list(MarketplaceVersions),
                 pack_supported_modules=[],
             )
+
+
 def test_SchemaValidator_isArray_platform_in_argument__valid(pack: Pack):
     """
     Given:

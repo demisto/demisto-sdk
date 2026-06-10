@@ -303,3 +303,4 @@ class StrictPlaybook(BaseStrictModel):
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
     is_silent: Optional[bool] = Field(alias="issilent")
+    adopted: Optional[bool] = None

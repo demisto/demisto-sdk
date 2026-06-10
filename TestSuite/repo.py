@@ -1,5 +1,4 @@
 import os
-import shutil
 from pathlib import Path
 from typing import List, Optional
 from unittest.mock import MagicMock
@@ -95,11 +94,6 @@ class Repo:
         self.git_util: Optional[GitUtil] = None
         if init_git:
             self.init_git()
-
-    def __del__(self):
-        shutil.rmtree(self.path, ignore_errors=True)
-        if self.graph_interface:
-            self.graph_interface.close()
 
     def setup_one_pack(
         self, name: Optional[str] = None, marketplaces: List[str] = DEFAULT_MARKETPLACES

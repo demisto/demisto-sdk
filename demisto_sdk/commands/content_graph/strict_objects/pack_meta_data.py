@@ -102,3 +102,4 @@ class StrictPackMetadata(BaseStrictModel):
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
     source: Optional[str] = Field("", alias="source")
     managed: Optional[bool] = Field(False, alias="managed")
+    internal: Optional[bool] = Field(False, alias="internal")

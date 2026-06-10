@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Iterable, List, Union, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
+from demisto_sdk.commands.common.tools import get_content_item_supported_modules
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -95,7 +96,11 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
     )
     related_field = "supportedModules"
     is_auto_fixable = False
-    expected_git_statuses = [GitStatuses.ADDED, GitStatuses.MODIFIED]
+    expected_git_statuses = [
+        GitStatuses.ADDED,
+        GitStatuses.MODIFIED,
+        GitStatuses.RENAMED,
+    ]
     related_file_type = [RelatedFileType.SCHEMA]
 
     def obtain_invalid_content_items(
@@ -112,22 +117,16 @@ class IsSupportedModulesAdded(BaseValidator[ContentTypes]):
                 content_object=content_item,
             )
             for content_item in content_items
-            if (
-                difference := self.added_parameters(
-                    cast(ContentTypes, content_item.old_base_content_object),
-                    content_item,
-                )
-            )
+            if (difference := self.added_parameters(content_item))
         ]
 
-    def added_parameters(self, old_item: ContentTypes, new_item: ContentTypes) -> set:
-        old_params = set(old_item.supportedModules or [])
+    def added_parameters(self, content_item: ContentTypes) -> set:
+        if content_item.git_status == GitStatuses.ADDED:
+            return get_content_item_supported_modules(content_item)
 
-        # When a new content is added and contains supportedModules, the validation should warn
-        if old_params and old_item.git_status == GitStatuses.ADDED:
-            return old_params
+        old_item = cast(ContentTypes, content_item.old_base_content_object)
+        old_params = get_content_item_supported_modules(old_item)
 
-        new_params = set(new_item.supportedModules or [])
+        new_params = get_content_item_supported_modules(content_item)
 
-        # Otherwise, when a new content is modified and contains more supportedModules, the validation should warn too
         return new_params.difference(old_params)

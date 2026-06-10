@@ -19,10 +19,10 @@ concurrency:
 jobs:
   validate-changelog:
     runs-on: ubuntu-latest
-    if: github.ref_name != 'master'
+    if: github.ref_name != 'master' && github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -43,16 +43,17 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           LATEST_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Commenting changelog for PR: $PR_NUMBER"
-          poetry run python ./Utils/github_workflow_scripts/changelog_comment_scripts/comment_changelog.py -n "$PR_NUMBER" -lt "$LATEST_COMMIT_SHA" -ght ${{ secrets.GITHUB_TOKEN }}
+          poetry run python ./Utils/github_workflow_scripts/changelog_comment_scripts/comment_changelog.py -n "$PR_NUMBER" -lt "$LATEST_COMMIT_SHA" -ght "$GH_TOKEN"
 
   pre-commit-checks:
     runs-on: ubuntu-latest
     name: Pre Commit Checks
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
@@ -60,7 +61,7 @@ jobs:
           python-version: "3.12"
 
       - name: Cache pre-commit
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-3|3.11|${{ hashFiles('.pre-commit-config.yaml') }}|${{ hashFiles('.poetry.lock') }}
@@ -76,13 +77,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     defaults:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -102,7 +103,15 @@ jobs:
           node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
           node_pid=$!
 
-          poetry run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=unit-tests/junit.xml --force-sugar --durations 25 || pytest_exit_code=$?
+          # pytest-sugar's wide ANSI progress bars trigger BlockingIOError on the
+          # GitHub Actions log pipe under Python 3.14 (3.14's BufferedWriter no
+          # longer silently retries EAGAIN). Skip --force-sugar on 3.14 only.
+          SUGAR_FLAG="--force-sugar"
+          if [[ "${{ matrix.python-version }}" == "3.14" ]]; then
+            SUGAR_FLAG=""
+          fi
+
+          poetry run pytest -v . --ignore={demisto_sdk/commands/init/templates,demisto_sdk/tests/integration_tests,demisto_sdk/commands/content_graph,tests_end_to_end} --cov=demisto_sdk --cov-report=html:unit-tests/coverage --junitxml=unit-tests/junit.xml $SUGAR_FLAG --durations 25 || pytest_exit_code=$?
           echo "PYTEST_EXIT_CODE=$pytest_exit_code" >> $GITHUB_ENV
 
           kill $node_pid
@@ -121,13 +130,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     defaults:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -160,13 +169,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     defaults:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -199,13 +208,13 @@ jobs:
     if: github.ref_name != 'master'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
       - name: Run coverage
         run: |
           pip install coverage
@@ -213,7 +222,7 @@ jobs:
           coverage report
           coverage xml
       - name: Coveralls-Action
-        uses: coverallsapp/github-action@v2
+        uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2
         continue-on-error: true
       - name: Coveralls-Comment
         env:
@@ -232,7 +241,7 @@ jobs:
     name: Test Pre-Commit Command
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
@@ -240,7 +249,7 @@ jobs:
           python-version: "3.11"  # CIAC-11940
 
       - name: Checkout Content
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           repository: demisto/content
@@ -248,7 +257,7 @@ jobs:
 
       - name: Cache Pre commit
         id: cache-pre-commit
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pre-commit
           key: ${{ runner.os }}-pre-commit
@@ -303,13 +312,13 @@ jobs:
     name: Test validate-content-path
     steps:
       - name: Checkout SDK
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Check whether validate_content_path changed
         id: files-changed
-        uses: tj-actions/changed-files@v46.0.1
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             demisto_sdk/scripts/validate_content_path.py
@@ -317,7 +326,7 @@ jobs:
 
       - name: Checkout Content
         if: steps.files-changed.outputs.any_changed == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
           repository: demisto/content
@@ -343,7 +352,7 @@ jobs:
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
@@ -351,7 +360,7 @@ jobs:
           python-version: "3.12"
 
       - name: Checkout content
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: demisto/content
           path: content
@@ -388,7 +397,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run Validate
         uses: ./.github/actions/validate
@@ -412,7 +421,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python Environment
         uses: ./.github/actions/setup_environment
@@ -420,16 +429,21 @@ jobs:
           python-version: "3.12"
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
 
       - name: Notify Failed Jobs
+        env:
+          WORKFLOW_ID: ${{ github.run_id }}
+          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
         run: |
-          poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id ${{ github.run_id }} --slack-token ${{secrets.SLACK_TOKEN}} --github-token ${{ secrets.GITHUB_TOKEN }} --slack-channel ${{secrets.SLACK_CHANNEL}}
+          poetry run python Utils/github_workflow_scripts/slack_notifier_master/slack_notifier.py --workflow-id "$WORKFLOW_ID" --slack-token "$SLACK_TOKEN" --github-token "$GH_TOKEN" --slack-channel "$SLACK_CHANNEL"
   generate_validate_docs:
     name: Generate Validate Docs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -442,7 +456,7 @@ jobs:
         run: poetry run python demisto_sdk/commands/validate/generate_validate_docs.py validation_docs.md
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           path: validation_docs.md
           if-no-files-found: error
@@ -455,12 +469,12 @@ jobs:
     name: Verify SDK Pip Installation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: "pip"

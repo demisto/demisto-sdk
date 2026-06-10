@@ -682,6 +682,67 @@ def test_agentix_agent_file_at_depth_one_invalid():
         _validate(DUMMY_PACK_PATH / AGENTIX_AGENTS_DIR / "TestAgent.yml")
 
 
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "TestSkill.yml",
+        "TestSkill_skill.md",
+    ],
+)
+def test_agentix_skill_file_valid(file_name: str):
+    """
+    Given:
+        A valid agentix skill file name following the new naming standard
+        (<SkillName>.yml and <SkillName>_skill.md)
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation passes
+    """
+    folder = "TestSkill"
+    _validate(DUMMY_PACK_PATH / AGENTIX_SKILLS_DIR / folder / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "metadata.yml",
+        "skill.md",
+        "WrongName.yml",
+        "TestSkill.json",
+        "TestSkill_skill.txt",
+        "TestSkillExtra_skill.md",
+        "Test_skill.md",
+    ],
+)
+def test_agentix_skill_file_invalid(file_name: str):
+    """
+    Given:
+        An invalid agentix skill file name (including the old fixed names
+        'metadata.yml' and 'skill.md')
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidAgentixSkillFileName
+    """
+    folder = "TestSkill"
+    with pytest.raises(InvalidAgentixSkillFileName):
+        _validate(DUMMY_PACK_PATH / AGENTIX_SKILLS_DIR / folder / file_name)
+
+
+def test_agentix_skill_file_at_depth_one_invalid():
+    """
+    Given:
+        An agentix skill file placed directly under AgentixSkills folder (depth 1)
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidAgentixSkillFileName
+    """
+    with pytest.raises(InvalidAgentixSkillFileName):
+        _validate(DUMMY_PACK_PATH / AGENTIX_SKILLS_DIR / "TestSkill.yml")
+
+
 class TestAgentixActionsPathValidation:
     """Tests for the AgentixActions path hierarchy validation.
 

@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     DEMISTO_GIT_PRIMARY_BRANCH,
     DEMISTO_GIT_UPSTREAM,
+    DEPLOYMENT_JSON_FILENAME,
     DOC_FILES_DIR,
     INTEGRATIONS_DIR,
     MODELING_RULES_DIR,
@@ -1105,6 +1106,7 @@ class Initializer:
                 PACKS_CONTRIBUTORS_FILE_NAME,
                 DOC_FILES_DIR,
                 PACKS_VERSION_CONFIG_FILE_NAME,
+                DEPLOYMENT_JSON_FILENAME,
             )
         )
 

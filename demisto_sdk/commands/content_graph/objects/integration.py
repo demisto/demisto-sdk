@@ -89,7 +89,7 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
             if r.content_item_to.database_id == r.source_id
         ]
 
-    def dump(self, *args) -> None:
+    def dump(self, *args, **kwargs) -> None:
         raise NotImplementedError()
 
     @property
@@ -114,6 +114,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch: bool = Field(False, alias="isfetch")
     is_fetch_events: bool = Field(False, alias="isfetchevents")
     is_fetch_assets: bool = Field(False, alias="isfetchassets")
+    is_fetch_credentials: bool = Field(False, alias="isfetchcredentials")
     mcp: Optional[bool] = Field(None, alias="mcp")
     supports_quick_actions: bool = Field(False, alias="supportsquickactions")
     is_fetch_events_and_assets: bool = False
@@ -173,7 +174,36 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         ):
             summary["isfetchassets"] = False
         summary["name"] = self.display_name
+        if fetch_tags := self._build_fetch_tags(summary):
+            summary["tags"] = fetch_tags
         return summary
+
+    def _build_fetch_tags(self, summary: dict) -> List[str]:
+        """Builds the list of fetch-capability tags the integration supports,
+        intended for the pack's marketplace metadata so consumers can know
+        which kinds of fetching an integration provides before installation.
+
+        Emitted under the `tags` key on the integration summary, matching the
+        `tags` convention already used elsewhere in the metadata (e.g. the
+        classifier/mapper `tags: ["feed"]` indicator).
+
+        `is_feed` is intentionally read from the model rather than the
+        serialized summary, so the integration entry does not gain a new
+        `feed` / `is_feed` key - the feed signal is conveyed only via the
+        `"feed"` string in `tags`.
+        """
+        tags: List[str] = []
+        if self.is_feed:
+            tags.append("feed")
+        if summary.get("isfetch"):
+            tags.append("fetch-incidents")
+        if summary.get("isfetchevents"):
+            tags.append("fetch-events")
+        if summary.get("isfetchassets"):
+            tags.append("fetch-assets")
+        if summary.get("isfetchcredentials"):
+            tags.append("fetch-credentials")
+        return tags
 
     def metadata_fields(self):
         return (
@@ -188,6 +218,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                     "is_fetch": True,
                     "is_fetch_events": True,
                     "is_fetch_assets": True,
+                    "is_fetch_credentials": True,
                     "is_beta": True,
                     "internal": True,
                 }

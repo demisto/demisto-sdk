@@ -1,0 +1,7 @@
+changes:
+- description: Added support for '<action: action-id>' tags in the AgentixSkill body
+    ('<SkillName>_skill.md'). During prepare-content, each tag is replaced with the
+    referenced action's name (resolved via the content graph), and every referenced
+    action-id is added as an optional dependency of the skill in the graph.
+  type: feature
+pr_number: '5400'

@@ -4,6 +4,9 @@ from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.objects.agentix_skill_action_tags import (
+    extract_action_ids,
+)
 from demisto_sdk.commands.content_graph.parsers.agentix_base import (
     AgentixBaseParser,
 )
@@ -43,6 +46,19 @@ class AgentixSkillParser(AgentixBaseParser, content_type=ContentType.AGENTIX_SKI
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.internal: bool = self.yml_data.get("internal", False)
+        self.add_action_dependencies()
+
+    def add_action_dependencies(self) -> None:
+        """Collects the actions referenced in the skill body as optional dependencies.
+
+        The skill body (``<SkillName>_skill.md``) may reference Agentix actions
+        inline using ``<action: action-id>`` tags. Each referenced action-id is
+        registered as an optional dependency of the skill in the content graph.
+        """
+        for action_id in extract_action_ids(self.content):
+            self.add_dependency_by_id(
+                action_id, ContentType.AGENTIX_ACTION, is_mandatory=False
+            )
 
     @cached_property
     def field_mapping(self):

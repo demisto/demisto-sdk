@@ -83,7 +83,7 @@ class AgentixMarkdownUnifier(Unifier):
         data: dict,
         marketplace: Optional[MarketplaceVersions] = None,
         *,
-        target_field: str,
+        target_field: Optional[str] = None,
         file_name: Optional[str] = None,
         file_suffix: Optional[str] = None,
         **kwargs,
@@ -95,7 +95,7 @@ class AgentixMarkdownUnifier(Unifier):
             path: Path to the content item's main file (yml/metadata)
             data: Parsed data of the content item
             marketplace: Target marketplace (unused, kept for interface compatibility)
-            target_field: The key in the data dict to populate
+            target_field: The key in the data dict to populate (required)
             file_name: Fixed Markdown file name (mutually exclusive with file_suffix)
             file_suffix: Suffix appended to the package folder name
             **kwargs: Additional arguments (unused)
@@ -103,6 +103,9 @@ class AgentixMarkdownUnifier(Unifier):
         Returns:
             Unified dict with ``target_field`` populated from the Markdown file
         """
+        if not target_field:
+            raise ValueError("'target_field' must be provided.")
+
         logger.debug(f"Unifying Agentix Markdown file: {path}")
 
         package_path = path.parent
@@ -117,9 +120,7 @@ class AgentixMarkdownUnifier(Unifier):
                 unified[target_field] = content.strip()
                 logger.debug(f"Inserted content from '{markdown_file.name}'")
             except Exception as e:
-                logger.warning(
-                    f"Failed to read Markdown file '{markdown_file}': {e}"
-                )
+                logger.warning(f"Failed to read Markdown file '{markdown_file}': {e}")
         else:
             logger.debug(f"No Markdown file found in '{package_path}'")
 
@@ -155,9 +156,7 @@ class AgentixMarkdownUnifier(Unifier):
             try:
                 return markdown_file.read_text(encoding="utf-8").strip()
             except Exception as e:
-                logger.warning(
-                    f"Failed to read Markdown file '{markdown_file}': {e}"
-                )
+                logger.warning(f"Failed to read Markdown file '{markdown_file}': {e}")
         return ""
 
     @classmethod

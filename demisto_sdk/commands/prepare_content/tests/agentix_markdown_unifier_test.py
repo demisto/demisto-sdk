@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from demisto_sdk.commands.prepare_content.agentix_markdown_unifier import (
-    AGENTIX_SKILL_FILE_NAME,
+    AGENTIX_SKILL_FILE_SUFFIX,
     AGENTIX_SKILL_TARGET_FIELD,
     AgentixMarkdownUnifier,
 )
@@ -12,7 +12,8 @@ from demisto_sdk.commands.prepare_content.agentix_markdown_unifier import (
 def test_unify_populates_target_field_from_markdown_file(tmp_path: Path):
     """
     Given
-    - A package directory containing a 'skill.md' markdown file and a data dict.
+    - A package directory containing a '<SkillName>_skill.md' markdown file and a
+      data dict.
 
     When
     - Calling AgentixMarkdownUnifier.unify with a target_field.
@@ -23,17 +24,17 @@ def test_unify_populates_target_field_from_markdown_file(tmp_path: Path):
     """
     package_path = tmp_path / "MySkill"
     package_path.mkdir()
-    (package_path / AGENTIX_SKILL_FILE_NAME).write_text(
+    (package_path / f"{package_path.name}{AGENTIX_SKILL_FILE_SUFFIX}").write_text(
         "  skill body content\n", encoding="utf-8"
     )
-    main_file = package_path / "metadata.yml"
+    main_file = package_path / "MySkill.yml"
     data = {"id": "MySkill"}
 
     unified = AgentixMarkdownUnifier.unify(
         main_file,
         data,
         target_field=AGENTIX_SKILL_TARGET_FIELD,
-        file_name=AGENTIX_SKILL_FILE_NAME,
+        file_suffix=AGENTIX_SKILL_FILE_SUFFIX,
     )
 
     assert unified[AGENTIX_SKILL_TARGET_FIELD] == "skill body content"
@@ -54,14 +55,14 @@ def test_unify_missing_markdown_file_leaves_target_field_unset(tmp_path: Path):
     """
     package_path = tmp_path / "MySkill"
     package_path.mkdir()
-    main_file = package_path / "metadata.yml"
+    main_file = package_path / "MySkill.yml"
     data = {"id": "MySkill"}
 
     unified = AgentixMarkdownUnifier.unify(
         main_file,
         data,
         target_field=AGENTIX_SKILL_TARGET_FIELD,
-        file_name=AGENTIX_SKILL_FILE_NAME,
+        file_suffix=AGENTIX_SKILL_FILE_SUFFIX,
     )
 
     assert unified == data
@@ -80,11 +81,11 @@ def test_unify_without_target_field_raises(tmp_path: Path):
     Then
     - A ValueError is raised by the runtime guard.
     """
-    main_file = tmp_path / "metadata.yml"
+    main_file = tmp_path / "MySkill.yml"
 
     with pytest.raises(ValueError, match="target_field"):
         AgentixMarkdownUnifier.unify(
             main_file,
             {"id": "MySkill"},
-            file_name=AGENTIX_SKILL_FILE_NAME,
+            file_suffix=AGENTIX_SKILL_FILE_SUFFIX,
         )

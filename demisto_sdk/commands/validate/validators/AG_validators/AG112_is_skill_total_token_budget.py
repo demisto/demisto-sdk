@@ -25,7 +25,7 @@ def estimate_tokens(text: str) -> int:
 class IsSkillTotalTokenBudgetValidator(BaseValidator[ContentTypes]):
     error_code = "AG112"
     description = (
-        "Checks that the AgentixSkill 'skill.md' body does not exceed "
+        "Checks that the AgentixSkill '<SkillName>_skill.md' body does not exceed "
         f"{SKILL_TOKEN_LIMIT} estimated tokens."
     )
     rationale = (
@@ -33,8 +33,8 @@ class IsSkillTotalTokenBudgetValidator(BaseValidator[ContentTypes]):
         "degrading the agent's performance."
     )
     error_message = (
-        "The AgentixSkill '{0}' skill.md is too large: an estimated {1} tokens "
-        f"(limit is {SKILL_TOKEN_LIMIT}). Trim the skill body."
+        "The AgentixSkill '{0}' <SkillName>_skill.md is too large: an estimated "
+        f"{{1}} tokens (limit is {SKILL_TOKEN_LIMIT}). Trim the skill body."
     )
     related_field = "content"
     related_file_type = [RelatedFileType.SKILL_CONTENT]

@@ -12,23 +12,20 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     SkillContentRelatedFile,
 )
 from demisto_sdk.commands.prepare_content.agentix_markdown_unifier import (
-    AGENTIX_SKILL_FILE_NAME,
+    AGENTIX_SKILL_FILE_SUFFIX,
     AGENTIX_SKILL_TARGET_FIELD,
     AgentixMarkdownUnifier,
 )
-
-# Canonical schema-file name for AgentixSkill packages (see CRTX-251738).
-SKILL_METADATA_FILE_NAME = "metadata.yml"
 
 
 class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
     """Represents an AgentixSkill content item.
 
     Skills live under ``Packs/<PackName>/AgentixSkills/<SkillName>/`` with two
-    files: ``metadata.yml`` (schema fields, YAML with a nested
+    files: ``<SkillName>.yml`` (schema fields, YAML with a nested
     ``commonfields: {id, version}`` block symmetric with ``AgentixAgent``) and
-    ``skill.md`` (the Markdown body, merged into the ``content`` field at upload
-    time).
+    ``<SkillName>_skill.md`` (the Markdown body, merged into the ``content``
+    field at upload time).
     """
 
     content: str = ""
@@ -36,16 +33,16 @@ class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
-        """Match an AgentixSkill ``metadata.yml`` file under ``AgentixSkills/``."""
+        """Match an AgentixSkill ``<SkillName>.yml`` file under ``AgentixSkills/``."""
         if path.suffix not in {".yml", ".yaml"}:
             return False
-        if path.name != SKILL_METADATA_FILE_NAME:
+        if path.stem.endswith("_test"):
             return False
         return AGENTIX_SKILLS_DIR in path.parts
 
     @cached_property
     def skill_content_file(self) -> SkillContentRelatedFile:
-        """Accessor for the related ``skill.md`` file."""
+        """Accessor for the related ``<SkillName>_skill.md`` file."""
         return SkillContentRelatedFile(self.path, git_sha=self.git_sha)
 
     def prepare_for_upload(
@@ -56,7 +53,7 @@ class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
         """Prepare the AgentixSkill for upload by unifying the skill body.
 
         This method merges the skill body (Markdown) from the sibling
-        ``skill.md`` file into the metadata dict's ``content`` field.
+        ``<SkillName>_skill.md`` file into the metadata dict's ``content`` field.
 
         Args:
             current_marketplace: Target marketplace (default: PLATFORM)
@@ -64,7 +61,7 @@ class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
 
         Returns:
             Unified metadata dict with the ``content`` field populated from
-            ``skill.md``.
+            ``<SkillName>_skill.md``.
         """
         data = super().prepare_for_upload(current_marketplace)
         data = AgentixMarkdownUnifier.unify(
@@ -72,6 +69,6 @@ class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
             data,
             current_marketplace,
             target_field=AGENTIX_SKILL_TARGET_FIELD,
-            file_name=AGENTIX_SKILL_FILE_NAME,
+            file_suffix=AGENTIX_SKILL_FILE_SUFFIX,
         )
         return data

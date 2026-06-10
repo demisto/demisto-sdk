@@ -7,9 +7,9 @@ from demisto_sdk.commands.common.files import TextFile
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.prepare_content.unifier import Unifier
 
-# AgentixSkill: skill body is stored in a fixed-name file and unified into "content".
+# AgentixSkill: skill body lives in "<folder>_skill.md" and is unified into "content".
 AGENTIX_SKILL_TARGET_FIELD = "content"
-AGENTIX_SKILL_FILE_NAME = "skill.md"
+AGENTIX_SKILL_FILE_SUFFIX = "_skill.md"
 
 # AgentixAgent: system instructions live in "<folder>_systeminstructions.md"
 # and are unified into "systeminstructions".
@@ -29,9 +29,10 @@ class AgentixMarkdownUnifier(Unifier):
     - ``target_field``: the key in the data dict to populate with the file text
       (e.g. ``content`` for skills, ``systeminstructions`` for agents).
     - The Markdown file name, supplied either as:
-        * ``file_name`` - a fixed file name (e.g. ``skill.md``), or
+        * ``file_name`` - a fixed file name, or
         * ``file_suffix`` - a suffix appended to the package folder name
-          (e.g. ``_systeminstructions.md`` -> ``<folder>_systeminstructions.md``).
+          (e.g. ``_skill.md`` -> ``<folder>_skill.md``, or
+          ``_systeminstructions.md`` -> ``<folder>_systeminstructions.md``).
 
     Exactly one of ``file_name`` / ``file_suffix`` must be provided.
     """

@@ -293,7 +293,7 @@ class SystemInstructionsRelatedFile(TextFiles):
 
 
 class SkillContentRelatedFile(TextFiles):
-    """Related file for AgentixSkill body content (skill.md)."""
+    """Related file for AgentixSkill body content (<SkillName>_skill.md)."""
 
     file_type = RelatedFileType.SKILL_CONTENT
 
@@ -301,9 +301,12 @@ class SkillContentRelatedFile(TextFiles):
         """
         Get the path to the skill body file.
 
-        The file should be named ``skill.md`` and live next to ``metadata.json``.
+        The file should be named ``<skill_folder_name>_skill.md`` and live next
+        to the skill's ``<SkillName>.yml`` schema file.
         """
-        return [self.main_file_path.parent / "skill.md"]
+        return [
+            self.main_file_path.parent / f"{self.main_file_path.parts[-2]}_skill.md"
+        ]
 
 
 class ImageFiles(RelatedFile):

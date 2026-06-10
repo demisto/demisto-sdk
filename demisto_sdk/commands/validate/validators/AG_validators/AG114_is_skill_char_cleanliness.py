@@ -37,8 +37,9 @@ def find_disallowed_chars(prose: str) -> List[str]:
 class IsSkillCharCleanlinessValidator(BaseValidator[ContentTypes]):
     error_code = "AG114"
     description = (
-        "Checks that the AgentixSkill prose (description and 'skill.md' body, "
-        "excluding code blocks) contains only ASCII characters."
+        "Checks that the AgentixSkill prose (description and "
+        "'<SkillName>_skill.md' body, excluding code blocks) contains only "
+        "ASCII characters."
     )
     rationale = (
         "Emojis, decorative Unicode, and ASCII art waste tokens and can confuse "

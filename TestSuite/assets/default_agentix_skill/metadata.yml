@@ -3,7 +3,7 @@ commonfields:
   version: -1
 name: Sample Agentix Skill
 description: A sample skill for testing purposes.
-fromversion: 8.12.0
+fromversion: 8.15.0
 internal: false
 supportedModules:
   - agentix

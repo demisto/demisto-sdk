@@ -6,6 +6,7 @@ from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
     CLASSIFIERS_DIR,
+    COLLECTIONS_DIR,
     CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
     DOC_FILES_DIR,
@@ -30,6 +31,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidAgentixActionFileName,
     InvalidAgentixAgentFileName,
     InvalidClassifier,
+    InvalidCollectionFileName,
     InvalidCorrelationRuleFileName,
     InvalidDepthOneFile,
     InvalidDepthOneFolder,
@@ -225,7 +227,7 @@ def test_content_entities_dir_length():
     If this test failed, it's likely you modified either CONTENT_ENTITIES_DIRS or FOLDERS_ALLOWED_TO_CONTAIN_FILES.
     Update the test values accordingly.
     """
-    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 36
+    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 35
 
     # change this one if you added a content item folder that can't have files directly under it
     assert (
@@ -234,7 +236,7 @@ def test_content_entities_dir_length():
                 CONTENT_ENTITIES_DIRS
             )
         )
-        == 28
+        == 27
     )
 
 
@@ -243,6 +245,7 @@ folders_not_allowed_to_contain_files = (
 ).difference(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES) - {
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    COLLECTIONS_DIR,
 }
 
 DUMMY_PACK_PATH = Path("content", "Packs", "myPack")
@@ -316,6 +319,7 @@ def test_depth_one_pass(folder: str):
         InvalidXSIAMParsingRuleFileName,
         InvalidAgentixAgentFileName,
         InvalidAgentixActionFileName,
+        InvalidCollectionFileName,
     ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
         # InvalidXDRCTemplatesFileName will be raised but it is irrelevant for this test.
@@ -675,6 +679,54 @@ def test_agentix_agent_file_at_depth_one_invalid():
     """
     with pytest.raises(InvalidAgentixAgentFileName):
         _validate(DUMMY_PACK_PATH / AGENTIX_AGENTS_DIR / "TestAgent.yml")
+
+
+def test_collection_file_valid():
+    """
+    Given:
+        A valid collection file in the new hierarchy: Collections/<name>/<name>.yml
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation passes
+    """
+    folder = "TestCollection"
+    _validate(DUMMY_PACK_PATH / COLLECTIONS_DIR / folder / f"{folder}.yml")
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "WrongName.yml",
+        "TestCollection.json",
+        "TestCollection.md",
+    ],
+)
+def test_collection_file_invalid(file_name: str):
+    """
+    Given:
+        An invalid collection file name
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidCollectionFileName
+    """
+    folder = "TestCollection"
+    with pytest.raises(InvalidCollectionFileName):
+        _validate(DUMMY_PACK_PATH / COLLECTIONS_DIR / folder / file_name)
+
+
+def test_collection_file_at_depth_one_invalid():
+    """
+    Given:
+        A collection file placed directly under Collections folder (depth 1)
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidCollectionFileName
+    """
+    with pytest.raises(InvalidCollectionFileName):
+        _validate(DUMMY_PACK_PATH / COLLECTIONS_DIR / "TestCollection.yml")
 
 
 class TestAgentixActionsPathValidation:

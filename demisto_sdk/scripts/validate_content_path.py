@@ -117,7 +117,6 @@ DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
         TRIGGER_DIR,
         WIDGETS_DIR,
         WIZARDS_DIR,
-        COLLECTIONS_DIR,
         LAYOUT_RULES_DIR,
         *TESTS_AND_DOC_DIRECTORIES,
     )
@@ -245,6 +244,13 @@ class InvalidAgentixActionFileName(InvalidPathException):
     )
 
 
+class InvalidCollectionFileName(InvalidPathException):
+    message = (
+        "Collection files must be placed in a subfolder under Collections, "
+        "e.g. `Collections/{CollectionName}/{CollectionName}.yml`"
+    )
+
+
 class ExemptedPath(Exception, ABC):
     message: ClassVar[str]
 
@@ -330,6 +336,9 @@ def _validate(path: Path) -> None:
         if first_level_folder == AGENTIX_AGENTS_DIR:
             raise InvalidAgentixAgentFileName
 
+        if first_level_folder == COLLECTIONS_DIR:
+            raise InvalidCollectionFileName
+
         if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise InvalidDepthOneFile
@@ -402,6 +411,11 @@ def _validate(path: Path) -> None:
             or (path.stem == f"{path.parent.name}_test" and path.suffix == ".yml")
         ):
             raise InvalidAgentixActionFileName
+
+        elif first_level_folder == COLLECTIONS_DIR and not (
+            path.stem == path.parent.name and path.suffix == ".yml"
+        ):
+            raise InvalidCollectionFileName
 
 
 def _validate_image_file_name(image_name: str):

@@ -35,10 +35,6 @@ class CollectionParser(YAMLContentItemParser, content_type=ContentType.COLLECTIO
         return super().field_mapping
 
     @property
-    def display_name(self) -> Optional[str]:
-        return self.name or self.object_id
-
-    @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {
             MarketplaceVersions.PLATFORM,

@@ -1325,3 +1325,32 @@ class TestConnectorRelatedFileDeduplication:
 
         assert result == {Path("connectors/salesforce/connector.yaml")}
         assert len(result) == 1
+
+
+def test_is_pack_item_deployment_json():
+    """
+    Given:
+        - A path to a deployment.json file in a pack.
+    When:
+        - Calling is_pack_item with the path.
+    Then:
+        - Should return True, indicating it's a pack-level item.
+    """
+    initializer = Initializer()
+    assert (
+        initializer.is_pack_item(f"Packs/SomePack/{DEPLOYMENT_JSON_FILENAME}") is True
+    )
+
+
+def test_deployment_json_in_zero_depth_files():
+    """
+    Given:
+        - The ZERO_DEPTH_FILES constant.
+    When:
+        - Checking if deployment.json is included.
+    Then:
+        - deployment.json should be in ZERO_DEPTH_FILES.
+    """
+    from demisto_sdk.scripts.validate_content_path import ZERO_DEPTH_FILES
+
+    assert DEPLOYMENT_JSON_FILENAME in ZERO_DEPTH_FILES

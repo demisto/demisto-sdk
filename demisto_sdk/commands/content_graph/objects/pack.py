@@ -167,6 +167,37 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         file_path = get_relative_path(self.path, CONTENT_PATH)
         return self.get_ignored_errors(file_path / PACK_METADATA_FILENAME)
 
+    @cached_property
+    def pack_level_ignored_errors(self) -> List[str]:
+        """Error codes listed under the [pack] section of `.pack-ignore`.
+
+        Codes returned here are ignored for the pack itself and for every
+        content item belonging to it (including their related files).
+
+        The `.pack-ignore` file is parsed with `configparser`, so the values
+        of `ignored_errors_dict` are `configparser.SectionProxy` objects
+        (NOT plain dicts); this method intentionally accesses them through
+        `.items()` to stay compatible with that representation, matching
+        the access pattern in `ContentItem.get_ignored_errors`.
+        """
+        try:
+            section = self.ignored_errors_dict.get("pack")
+            if section is None:
+                return []
+            for key, value in section.items():
+                if key == "ignore":
+                    return [
+                        code.strip()
+                        for code in str(value).split(",")
+                        if code.strip()
+                    ]
+            return []
+        except Exception as e:  # pragma: no cover - defensive
+            logger.debug(
+                f"Failed to extract pack-level ignored errors for {self.object_id}: {e}"
+            )
+            return []
+
     def ignored_errors_related_files(self, file_path: Path) -> List[str]:
         if ignored_errors := self.get_ignored_errors((Path(file_path)).name):
             return ignored_errors

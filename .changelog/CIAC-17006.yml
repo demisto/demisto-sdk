@@ -1,0 +1,4 @@
+changes:
+- description: Support pack-level validation ignores via a new `[pack]` section in `.pack-ignore`. Codes listed there are ignored for the pack itself and for every content item it contains, in addition to the existing per-file `[file:<path>]` mechanism. The `PA137` safety check now also covers the new section.
+  type: feature
+pr_number: 'CIAC-17006'

@@ -4085,23 +4085,51 @@ def is_epoch_datetime(string: str) -> bool:
 
 
 def extract_error_codes_from_file(pack_name: str) -> Set[str]:
-    """
+    """Return every error code listed under any ``ignore=`` key in the
+    pack's ``.pack-ignore`` file.
+
+    Aggregates codes from BOTH the legacy per-file ``[file:<path>]`` sections
+    AND the pack-level ``[pack]`` section (CIAC-17006). This ensures the
+    ``PA137`` safety check ("non-ignorable error in .pack-ignore") covers
+    every code a developer may attempt to ignore, regardless of where they
+    placed it.
+
     Args:
-        pack_name: a pack name from which to get the pack ignore errors.
-    Returns: error codes set  that in pack.ignore file
+        pack_name: the pack name whose ``.pack-ignore`` should be parsed.
+
+    Returns:
+        The set of every distinct error code present under any ``ignore``
+        key. Whitespace around codes is stripped and empty entries are
+        dropped.
     """
-    error_codes_list = []
-    if pack_name and (config := get_pack_ignore_content(pack_name)):
-        # go over every file in the config
-        for section in filter(
-            lambda section: section.startswith("file:"), config.sections()
-        ):
-            # given section is of type file
-            for key in config[section]:
-                if key == "ignore":
-                    # group ignore codes to a list
-                    error_codes = str(config[section][key]).split(",")
-                    error_codes_list.extend(error_codes)
+    error_codes_list: List[str] = []
+    if not pack_name:
+        return set()
+    config = get_pack_ignore_content(pack_name)
+    if not config:
+        return set()
+
+    # 1. Existing per-file sections.
+    for section in filter(
+        lambda section: section.startswith("file:"), config.sections()
+    ):
+        for key in config[section]:
+            if key == "ignore":
+                error_codes_list.extend(
+                    code.strip()
+                    for code in str(config[section][key]).split(",")
+                    if code.strip()
+                )
+
+    # 2. New pack-level section.
+    if config.has_section("pack"):
+        for key in config["pack"]:
+            if key == "ignore":
+                error_codes_list.extend(
+                    code.strip()
+                    for code in str(config["pack"][key]).split(",")
+                    if code.strip()
+                )
 
     return set(error_codes_list)
 

@@ -225,6 +225,12 @@ HYBRID_DYNAMIC_MODEL = create_dynamic_model(
     include_without_suffix=True,
 )
 
+IS_ARRAY_DYNAMIC_MODEL = create_dynamic_model(
+    field_name="isArray",
+    type_=Optional[bool],
+    default=None,
+)
+
 
 class _LeftOrRight(BaseStrictModel):
     value: Any  # VALUE_DYNAMIC_MODEL doesn't have the raw 'value', only its variations

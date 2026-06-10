@@ -3833,3 +3833,61 @@ class TestAgentixBaseParser:
             f"Generated action YAML does not match expected.\n"
             f"Expected: {expected_action}\nActual: {actual_action}"
         )
+
+    def test_dump_script_action_strip_internal(self, pack: Pack, tmp_path):
+        """
+        Given:
+            - A script action YAML with a .py sibling file (generated script is internal
+              by default since standalone is not set).
+        When:
+            - Calling action.dump(tmp_path, MarketplaceVersions.PLATFORM, strip_internal=True)
+              (the upload flow).
+        Then:
+            - The generated script YAML has the `internal` and `isInternal` fields removed,
+              so the uploaded script is visible to the user (mirrors BaseScript.dump).
+        """
+        from unittest.mock import MagicMock
+
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.content_graph.objects.agentix_action import (
+            AgentixAction,
+        )
+        from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+            AgentixActionParser,
+        )
+        from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
+
+        action_id = "TestStripInternal"
+        agentix_action = pack.create_agentix_action(
+            action_id,
+            {
+                "commonfields": {"id": action_id, "version": -1},
+                "name": action_id,
+                "display": "Test Strip Internal",
+                "description": "Test.",
+                "script": {"dockerimage": "demisto/python3:3.12.12.6391686"},
+                "fromversion": "8.12.0",
+                "marketplaces": ["platform"],
+            },
+        )
+        (agentix_action.dir_path / f"{action_id}.py").write_text("def main(): pass\n")
+        parser = AgentixActionParser(
+            agentix_action.path, list(MarketplaceVersions), pack_supported_modules=[]
+        )
+        model = AgentixAction.from_orm(parser)
+        mock_pack = MagicMock()
+        mock_pack.supportedModules = []
+        model.__dict__["pack"] = mock_pack
+
+        # Upload flow: strip_internal=True should remove internal/isInternal from the script
+        model.dump(tmp_path, MarketplaceVersions.PLATFORM, strip_internal=True)
+
+        script_file = tmp_path / f"{ContentType.SCRIPT.server_name}-{action_id}.yml"
+        assert script_file.exists(), f"Expected {script_file} to exist"
+        script_data = load_yaml(str(script_file))
+        assert (
+            "internal" not in script_data
+        ), "strip_internal=True should remove 'internal' from the generated script"
+        assert (
+            "isInternal" not in script_data
+        ), "strip_internal=True should remove 'isInternal' from the generated script"

@@ -112,20 +112,28 @@ class AgentixAction(AgentixBase, content_type=ContentType.AGENTIX_ACTION):
             return action_dict
         return super().prepare_for_upload(current_marketplace, **kwargs)
 
-    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(  # type: ignore[override]
+        self,
+        dir: DirectoryPath,
+        marketplace: MarketplaceVersions,
+        **kwargs,
+    ) -> None:
         dir.mkdir(exist_ok=True, parents=True)
         if not self.is_script_action:
-            super().dump(dir, marketplace)
+            super().dump(dir, marketplace, **kwargs)
             return
         from demisto_sdk.commands.prepare_content.agentix_action_splitter import (
             AgentixActionSplitter,
         )
 
-        processed_data = super().prepare_for_upload(marketplace)
+        processed_data = super().prepare_for_upload(marketplace, **kwargs)
         py_code = (self.path.parent / f"{self.path.stem}.py").read_text()
         script_dict, action_dict = AgentixActionSplitter.split(
             self.path, self, py_code, processed_data
         )
+        if kwargs.get("strip_internal"):
+            script_dict.pop("internal", None)
+            script_dict.pop("isInternal", None)
         write_dict(dir / self.normalize_name, data=action_dict, handler=self.handler)
         script_name = f"{ContentType.SCRIPT.server_name}-{self.object_id}.yml"
         write_dict(dir / script_name, data=script_dict, handler=self.handler)

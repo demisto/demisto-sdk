@@ -370,6 +370,73 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         """
         return Nodes(self.to_dict())
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize the connector to a Neo4j-safe property dict.
+
+        Neo4j only accepts primitive values (or arrays of primitives) as node
+        properties — it rejects nested maps. The base implementation expands
+        Pydantic sub-models (``ConnectorMetadata``, ``ConnectorSettings``)
+        into nested dicts, which causes ``Neo.ClientError.Statement.TypeError``
+        at node creation time.
+
+        We flatten the structured sub-models into Neo4j-friendly scalars:
+
+        * ``connector_metadata`` → individual top-level properties (``title``,
+          ``description``, ``version``, ``category``, ``vendor``, ``publisher``,
+          ``domain``, ``author_image``) plus ``tags`` (list of strings) and
+          ``ownership_team`` / ``ownership_maintainers`` (flattened ownership).
+        * ``settings`` → ``allow_skip_verification`` as a top-level boolean.
+
+        The original nested attributes remain available on the live Python
+        object for code that consumes them directly (e.g. CO123 reads
+        ``connector.connector_metadata.ownership.maintainers``); only the
+        graph-node representation is flattened.
+        """
+        json_dct = super().to_dict()
+
+        # Drop the nested BaseModel dumps that Neo4j cannot store.
+        metadata = json_dct.pop("metadata", None) or json_dct.pop(
+            "connector_metadata", None
+        )
+        settings = json_dct.pop("settings", None)
+
+        if isinstance(metadata, dict):
+            # Promote primitive metadata fields to top-level node properties.
+            for key in (
+                "title",
+                "description",
+                "version",
+                "category",
+                "vendor",
+                "publisher",
+                "domain",
+                "author_image",
+            ):
+                value = metadata.get(key)
+                if value is not None:
+                    json_dct.setdefault(key, value)
+            tags = metadata.get("tags")
+            if isinstance(tags, list):
+                # Neo4j accepts arrays of primitives — keep only strings.
+                json_dct["tags"] = [t for t in tags if isinstance(t, str)]
+            ownership = metadata.get("ownership")
+            if isinstance(ownership, dict):
+                team = ownership.get("team")
+                if isinstance(team, str):
+                    json_dct["ownership_team"] = team
+                maintainers = ownership.get("maintainers")
+                if isinstance(maintainers, list):
+                    json_dct["ownership_maintainers"] = [
+                        m for m in maintainers if isinstance(m, str)
+                    ]
+
+        if isinstance(settings, dict):
+            allow_skip = settings.get("allow_skip_verification")
+            if isinstance(allow_skip, bool):
+                json_dct["allow_skip_verification"] = allow_skip
+
+        return json_dct
+
     # === Derived properties ===
 
     @property

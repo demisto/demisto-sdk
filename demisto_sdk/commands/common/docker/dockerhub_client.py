@@ -65,10 +65,17 @@ class DockerHubClient:
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
         # A truly custom registry is one explicitly provided by the user (e.g., JFrog),
-        # NOT one resolved from the DOCKER_IO env var (e.g., GAR proxy).
-        # When registry param is empty, the URL comes from DOCKER_IO or the default.
+        # NOT one resolved from the DOCKER_IO env var (e.g., GAR proxy in GitLab CI).
+        # In GitLab CI the registry URL is the GAR proxy (resolved from DOCKER_IO) and
+        # requires a gcloud bearer token, so it must NEVER be treated as a custom
+        # registry. We therefore explicitly exclude the GitLab CI environment here,
+        # mirroring the canonical is_custom_registry() logic in docker_helper.py.
+        # Note: callers (DockerImage, DO104) always pass registry=DOCKER_REGISTRY_URL,
+        # which equals the GAR path in CI, so bool(registry) alone is insufficient.
         self._is_custom_registry = (
-            bool(registry) and self.DEFAULT_REGISTRY not in self.registry_api_url
+            bool(registry)
+            and not IS_CONTENT_GITLAB_CI
+            and self.DEFAULT_REGISTRY not in self.registry_api_url
         )
 
     def __enter__(self):

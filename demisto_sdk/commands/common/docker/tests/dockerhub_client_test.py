@@ -583,3 +583,94 @@ def test_get_image_tag_metadata_default_registry_uses_docker_hub_api(
     mock_docker_hub.assert_called_once_with("/repositories/demisto/python3/tags/1.0.0")
     mock_get_digest.assert_not_called()
     assert response == {"last_updated": "2023-01-01T00:00:00.000000Z"}
+
+
+def test_is_custom_registry_flag_gar_in_gitlab_ci_is_false(monkeypatch):
+    """
+    Regression test for the GitLab CI GAR 401 failure.
+
+    Given:
+        - Running inside GitLab CI (IS_CONTENT_GITLAB_CI is truthy) with DOCKER_IO
+          pointing at a Google Artifact Registry (GAR) proxy path, exactly as the
+          DockerImage / DO104 callers construct the client
+          (registry=DOCKER_REGISTRY_URL, which equals the GAR path in CI).
+
+    When:
+        - constructing a DockerHubClient through its real __init__
+
+    Then:
+        - _is_custom_registry MUST be False so the gcloud bearer token is used.
+          Treating GAR as a custom registry skips the bearer token and causes a
+          401 Unauthorized against the GAR proxy.
+    """
+    import demisto_sdk.commands.common.docker.dockerhub_client as dockerhub_client_module
+
+    gar_path = (
+        "europe-west4-docker.pkg.dev/xdr-shared-services-prod-eu-01/"
+        "xdr-docker-hub-virtual"
+    )
+    monkeypatch.setattr(dockerhub_client_module, "IS_CONTENT_GITLAB_CI", "true")
+    monkeypatch.setattr(dockerhub_client_module, "DOCKER_IO", gar_path)
+
+    # Use a unique docker_hub_api_url to avoid the @lru_cache returning a cached
+    # instance built under different env conditions in another test.
+    client = DockerHubClient(
+        docker_hub_api_url="https://gar-ci-test.example/v2",
+        registry=gar_path,
+    )
+
+    assert client._is_custom_registry is False
+    assert "pkg.dev" in client.registry_api_url
+
+
+def test_is_custom_registry_flag_customer_registry_not_in_ci_is_true(monkeypatch):
+    """
+    Given:
+        - NOT running in GitLab CI (IS_CONTENT_GITLAB_CI is falsy) and a user-provided
+          custom registry URL (e.g., a JFrog/Harbor host:port), as configured by a
+          customer via DEMISTO_SDK_CONTAINER_REGISTRY.
+
+    When:
+        - constructing a DockerHubClient through its real __init__
+
+    Then:
+        - _is_custom_registry MUST be True so Basic Auth is used for the custom registry
+    """
+    import demisto_sdk.commands.common.docker.dockerhub_client as dockerhub_client_module
+
+    monkeypatch.setattr(dockerhub_client_module, "IS_CONTENT_GITLAB_CI", None)
+    monkeypatch.setattr(dockerhub_client_module, "DOCKER_IO", "")
+
+    client = DockerHubClient(
+        docker_hub_api_url="https://customreg-test.example/v2",
+        registry="https://my-jfrog.example.com:8443",
+    )
+
+    assert client._is_custom_registry is True
+    assert client.registry_api_url == "https://my-jfrog.example.com:8443/v2"
+
+
+def test_is_custom_registry_flag_default_registry_is_false(monkeypatch):
+    """
+    Given:
+        - NOT running in GitLab CI and no custom registry provided (empty registry),
+          i.e., the local Docker Hub default scenario.
+
+    When:
+        - constructing a DockerHubClient through its real __init__
+
+    Then:
+        - _is_custom_registry MUST be False so the Docker Hub bearer token is used.
+    """
+    import demisto_sdk.commands.common.docker.dockerhub_client as dockerhub_client_module
+
+    monkeypatch.setattr(dockerhub_client_module, "IS_CONTENT_GITLAB_CI", None)
+    monkeypatch.setattr(dockerhub_client_module, "DOCKER_IO", "")
+
+    client = DockerHubClient(
+        docker_hub_api_url="https://default-test.example/v2",
+        registry="",
+    )
+
+    assert client._is_custom_registry is False
+    assert client.registry_api_url == DockerHubClient.DEFAULT_REGISTRY

@@ -122,6 +122,7 @@ CASE_LAYOUTS_DIR = "CaseLayouts"
 CASE_FIELDS_DIR = "CaseFields"
 AGENTIX_ACTIONS_DIR = "AgentixActions"
 AGENTIX_AGENTS_DIR = "AgentixAgents"
+AGENTIX_SKILLS_DIR = "AgentixSkills"
 COLLECTIONS_DIR = "Collections"
 
 # NAMES OF ENTITIES
@@ -282,6 +283,7 @@ class FileType(StrEnum):
     VERSION_CONFIG = "version_config"
     AGENTIX_AGENT = "agentixagent"
     AGENTIX_ACTION = "agentixaction"
+    AGENTIX_SKILL = "agentixskill"
     COLLECTION = "collection"
 
 
@@ -325,6 +327,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CASE_LAYOUT: "Case Layouts",
     FileType.AGENTIX_AGENT: "Agents",
     FileType.AGENTIX_ACTION: "Actions",
+    FileType.AGENTIX_SKILL: "Skills",
     FileType.COLLECTION: "Collections",
 }
 
@@ -436,6 +439,7 @@ CONTENT_ENTITIES_DIRS = [
     CASE_LAYOUTS_DIR,
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
     COLLECTIONS_DIR,
 ]
 
@@ -1637,6 +1641,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.CASE_LAYOUT: "8.7.0",
     FileType.AGENTIX_ACTION: "8.12.0",
     FileType.AGENTIX_AGENT: "8.12.0",
+    FileType.AGENTIX_SKILL: "8.15.0",
     FileType.COLLECTION: "8.15.0",
 }
 

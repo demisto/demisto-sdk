@@ -4,6 +4,7 @@ from typing import ClassVar, Dict, Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.collection import Collection
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
@@ -40,6 +41,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[
     AgentixAgent,
     AgentixAction,
+    AgentixSkill,
     Classifier,
     CorrelationRule,
     Dashboard,

@@ -11,6 +11,7 @@ from typing_extensions import Annotated
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
     AUTHOR_IMAGE_FILE_NAME,
     CASE_FIELDS_DIR,
     CASE_LAYOUTS_DIR,
@@ -244,6 +245,13 @@ class InvalidAgentixActionFileName(InvalidPathException):
     )
 
 
+class InvalidAgentixSkillFileName(InvalidPathException):
+    message = (
+        "AgentixSkill files must be placed in a subfolder under AgentixSkills, "
+        "e.g. `AgentixSkills/{SkillName}/{SkillName}.yml` or `AgentixSkills/{SkillName}/{SkillName}_skill.md`"
+    )
+
+
 class InvalidCollectionFileName(InvalidPathException):
     message = (
         "Collection files must be placed in a subfolder under Collections, "
@@ -328,94 +336,114 @@ def _validate(path: Path) -> None:
             raise InvalidSuffix
 
     if depth == 1:  # Packs/myPack/<first level folder>/<the file>
-        _exempt_unified_files(path, first_level_folder)  # Raises PathIsUnified
-
-        if first_level_folder == AGENTIX_ACTIONS_DIR:
-            raise InvalidAgentixActionFileName
-
-        if first_level_folder == AGENTIX_AGENTS_DIR:
-            raise InvalidAgentixAgentFileName
-
-        if first_level_folder == COLLECTIONS_DIR:
-            raise InvalidCollectionFileName
-
-        if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
-            # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
-            raise InvalidDepthOneFile
-
-        if first_level_folder in {LAYOUTS_DIR, CASE_LAYOUTS_DIR} and not (
-            path.stem.startswith(("layout-", "layoutscontainer-"))
-            and path.suffix == ".json"
-        ):
-            raise InvalidLayoutFileName
-
-        if first_level_folder == CLASSIFIERS_DIR and not (
-            path.suffix == ".json"
-            and (path.stem.startswith("classifier-") or path.stem.startswith("mapper-"))
-        ):
-            raise InvalidClassifier
-
-        if xsiam_constraints := XSIAM_DEPTH_1_CHECKS.get(
-            first_level_folder
-        ):  # items whose name must start with `{pack_folder}_`
-            if not (
-                path.stem.startswith(f"{pack_folder_name}_")
-                and path.suffix in xsiam_constraints.allowed_suffixes
-            ):
-                raise xsiam_constraints.exception
-
-        if (
-            first_level_folder == DOC_FILES_DIR
-            and path.suffix in SUPPORTED_IMAGE_FORMATS
-        ):
-            _validate_image_file_name(path.stem)
+        _validate_depth_one(path, pack_folder_name, first_level_folder)
 
     if depth == 2:
-        if first_level_folder in {
-            ContentType.INTEGRATION.as_folder,
-            ContentType.SCRIPT.as_folder,
-        }:
-            _validate_integration_script_file(path, parts_after_packs)
-        elif first_level_folder == ContentType.XDRC_TEMPLATE.as_folder and not (
-            path.stem == path.parent.name and path.suffix in {".json", ".yml"}
-        ):
-            raise InvalidXDRCTemplatesFileName
+        _validate_depth_two(path, first_level_folder, parts_after_packs)
 
-        elif first_level_folder == ContentType.MODELING_RULE.as_folder and not (
-            (path.stem == path.parent.name and path.suffix in {".yml", ".xif"})
-            or (
-                path.stem.startswith(path.parent.name)
-                and path.stem.endswith(("_schema", "_testdata"))
-                and path.suffix == ".json"
-            )
-        ):
-            raise InvalidModelingRuleFileName
 
-        elif first_level_folder == PARSING_RULES_DIR and not (
-            path.stem == path.parent.name and path.suffix in {".yml", ".xif"}
-        ):
-            raise InvalidXSIAMParsingRuleFileName
+def _validate_depth_one(
+    path: Path, pack_folder_name: str, first_level_folder: str
+) -> None:
+    """Validates files at depth 1: Packs/myPack/<first level folder>/<the file>"""
+    _exempt_unified_files(path, first_level_folder)  # Raises PathIsUnified
 
-        elif first_level_folder == AGENTIX_AGENTS_DIR and not (
-            (path.stem == path.parent.name and path.suffix == ".yml")
-            or (
-                path.stem == f"{path.parent.name}_systeminstructions"
-                and path.suffix == ".md"
-            )
-            or (path.stem == f"{path.parent.name}_test" and path.suffix == ".yml")
-        ):
-            raise InvalidAgentixAgentFileName
+    if first_level_folder == AGENTIX_ACTIONS_DIR:
+        raise InvalidAgentixActionFileName
 
-        elif first_level_folder == AGENTIX_ACTIONS_DIR and not (
-            (path.stem == path.parent.name and path.suffix == ".yml")
-            or (path.stem == f"{path.parent.name}_test" and path.suffix == ".yml")
-        ):
-            raise InvalidAgentixActionFileName
+    if first_level_folder == AGENTIX_AGENTS_DIR:
+        raise InvalidAgentixAgentFileName
 
-        elif first_level_folder == COLLECTIONS_DIR and not (
-            path.stem == path.parent.name and path.suffix == ".yml"
+    if first_level_folder == AGENTIX_SKILLS_DIR:
+        raise InvalidAgentixSkillFileName
+
+    if first_level_folder == COLLECTIONS_DIR:
+        raise InvalidCollectionFileName
+
+    if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
+        # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
+        raise InvalidDepthOneFile
+
+    if first_level_folder in {LAYOUTS_DIR, CASE_LAYOUTS_DIR} and not (
+        path.stem.startswith(("layout-", "layoutscontainer-"))
+        and path.suffix == ".json"
+    ):
+        raise InvalidLayoutFileName
+
+    if first_level_folder == CLASSIFIERS_DIR and not (
+        path.suffix == ".json"
+        and (path.stem.startswith("classifier-") or path.stem.startswith("mapper-"))
+    ):
+        raise InvalidClassifier
+
+    if xsiam_constraints := XSIAM_DEPTH_1_CHECKS.get(
+        first_level_folder
+    ):  # items whose name must start with `{pack_folder}_`
+        if not (
+            path.stem.startswith(f"{pack_folder_name}_")
+            and path.suffix in xsiam_constraints.allowed_suffixes
         ):
-            raise InvalidCollectionFileName
+            raise xsiam_constraints.exception
+
+    if first_level_folder == DOC_FILES_DIR and path.suffix in SUPPORTED_IMAGE_FORMATS:
+        _validate_image_file_name(path.stem)
+
+
+def _validate_depth_two(
+    path: Path, first_level_folder: str, parts_after_packs: Sequence[str]
+) -> None:
+    """Validates files at depth 2."""
+    if first_level_folder in {
+        ContentType.INTEGRATION.as_folder,
+        ContentType.SCRIPT.as_folder,
+    }:
+        _validate_integration_script_file(path, parts_after_packs)
+    elif first_level_folder == ContentType.XDRC_TEMPLATE.as_folder and not (
+        path.stem == path.parent.name and path.suffix in {".json", ".yml"}
+    ):
+        raise InvalidXDRCTemplatesFileName
+
+    elif first_level_folder == ContentType.MODELING_RULE.as_folder and not (
+        (path.stem == path.parent.name and path.suffix in {".yml", ".xif"})
+        or (
+            path.stem.startswith(path.parent.name)
+            and path.stem.endswith(("_schema", "_testdata"))
+            and path.suffix == ".json"
+        )
+    ):
+        raise InvalidModelingRuleFileName
+
+    elif first_level_folder == PARSING_RULES_DIR and not (
+        path.stem == path.parent.name and path.suffix in {".yml", ".xif"}
+    ):
+        raise InvalidXSIAMParsingRuleFileName
+
+    elif first_level_folder == AGENTIX_AGENTS_DIR and not (
+        (path.stem == path.parent.name and path.suffix == ".yml")
+        or (
+            path.stem == f"{path.parent.name}_systeminstructions"
+            and path.suffix == ".md"
+        )
+        or (path.stem == f"{path.parent.name}_test" and path.suffix == ".yml")
+    ):
+        raise InvalidAgentixAgentFileName
+
+    elif first_level_folder == AGENTIX_ACTIONS_DIR and not (
+        (path.stem == path.parent.name and path.suffix == ".yml")
+        or (path.stem == f"{path.parent.name}_test" and path.suffix == ".yml")
+    ):
+        raise InvalidAgentixActionFileName
+
+    elif first_level_folder == AGENTIX_SKILLS_DIR and not (
+        (path.stem == path.parent.name and path.suffix == ".yml")
+        or (path.name == f"{path.parent.name}_skill.md")
+    ):
+        raise InvalidAgentixSkillFileName
+
+    elif first_level_folder == COLLECTIONS_DIR and not (
+        path.stem == path.parent.name and path.suffix == ".yml"
+    ):
+        raise InvalidCollectionFileName
 
 
 def _validate_image_file_name(image_name: str):

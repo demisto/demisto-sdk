@@ -56,6 +56,7 @@ from requests.exceptions import HTTPError
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
     ASSETS_MODELING_RULES_DIR,
@@ -1850,6 +1851,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
                 return None
             return FileType.AGENTIX_AGENT
 
+        elif AGENTIX_SKILLS_DIR in path.parts:
+            return FileType.AGENTIX_SKILL
+
         elif COLLECTIONS_DIR in path.parts:
             return FileType.COLLECTION
 
@@ -1915,6 +1919,7 @@ def find_type(
     from demisto_sdk.commands.content_graph.objects import (
         AgentixAction,
         AgentixAgent,
+        AgentixSkill,
         CaseField,
         CaseLayout,
         CaseLayoutRule,
@@ -2115,6 +2120,9 @@ def find_type(
 
     if AgentixAction.match(_dict, Path(path)):
         return FileType.AGENTIX_ACTION
+
+    if AgentixSkill.match(_dict, Path(path)):
+        return FileType.AGENTIX_SKILL
 
     if Collection.match(_dict, Path(path)):
         return FileType.COLLECTION

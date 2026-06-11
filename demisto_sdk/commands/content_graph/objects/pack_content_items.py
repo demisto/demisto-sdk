@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.objects.agentix_action_test import (
     AgentixActionTest,
 )
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
@@ -115,6 +116,7 @@ class PackContentItems(BaseModel):
     agentix_action_test: List[AgentixActionTest] = Field(
         [], alias=ContentType.AGENTIX_ACTION_TEST.value
     )
+    agentix_skill: List[AgentixSkill] = Field([], alias=ContentType.AGENTIX_SKILL.value)
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""

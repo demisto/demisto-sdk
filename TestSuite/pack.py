@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
     ASSETS_MODELING_RULES_DIR,
     CASE_FIELDS_DIR,
     CASE_LAYOUT_RULES_DIR,
@@ -20,6 +21,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from TestSuite.agentix_action import AgentixAction
 from TestSuite.agentix_agent import AgentixAgent
+from TestSuite.agentix_skill import AgentixSkill
 from TestSuite.case_field import CaseField
 from TestSuite.case_layout import CaseLayout
 from TestSuite.case_layout_rule import CaseLayoutRule
@@ -124,6 +126,7 @@ class Pack(TestSuiteBase):
 
         self.agentix_actions: List[AgentixAction] = list()
         self.agentix_agents: List[AgentixAgent] = list()
+        self.agentix_skills: List[AgentixSkill] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -269,6 +272,9 @@ class Pack(TestSuiteBase):
 
         self._agentix_agents_path = self._pack_path / AGENTIX_AGENTS_DIR
         self._agentix_agents_path.mkdir(exist_ok=True)
+
+        self._agentix_skills_path = self._pack_path / AGENTIX_SKILLS_DIR
+        self._agentix_skills_path.mkdir(exist_ok=True)
 
         super().__init__(self._pack_path)
 
@@ -866,3 +872,20 @@ class Pack(TestSuiteBase):
         )
         self.agentix_agents.append(agentix_agent)
         return agentix_agent
+
+    def create_agentix_skill(
+        self,
+        name: Optional[str] = None,
+        metadata: Optional[dict] = None,
+        skill_content: Optional[str] = None,
+    ) -> AgentixSkill:
+        """Create a TestSuite ``AgentixSkill`` under this pack's ``AgentixSkills/`` folder."""
+        if name is None:
+            name = f"agentix_skill-{len(self.agentix_skills)}"
+        agentix_skill = AgentixSkill(self._agentix_skills_path, name, self._repo)
+        agentix_skill.build(
+            metadata=metadata,
+            skill_content=skill_content,
+        )
+        self.agentix_skills.append(agentix_skill)
+        return agentix_skill

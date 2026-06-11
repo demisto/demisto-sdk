@@ -4,7 +4,11 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
-from demisto_sdk.commands.content_graph.objects import AgentixAction, AgentixAgent
+from demisto_sdk.commands.content_graph.objects import (
+    AgentixAction,
+    AgentixAgent,
+    AgentixSkill,
+)
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -77,6 +81,7 @@ ContentTypes = Union[
     CaseLayoutRule,
     AgentixAction,
     AgentixAgent,
+    AgentixSkill,
 ]
 
 

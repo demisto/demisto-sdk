@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.content.objects.abstract_objects.general_object
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentixAction,
     AgentixAgent,
+    AgentixSkill,
     AgentTool,
     AuthorImage,
     ChangeLog,
@@ -105,6 +106,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.LAYOUT_RULE: LayoutRule,
     FileType.AGENTIX_ACTION: AgentixAction,
     FileType.AGENTIX_AGENT: AgentixAgent,
+    FileType.AGENTIX_SKILL: AgentixSkill,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

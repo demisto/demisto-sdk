@@ -11,6 +11,7 @@ from typing_extensions import Annotated
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
     AUTHOR_IMAGE_FILE_NAME,
     CASE_FIELDS_DIR,
     CASE_LAYOUTS_DIR,
@@ -243,6 +244,13 @@ class InvalidAgentixActionFileName(InvalidPathException):
     )
 
 
+class InvalidAgentixSkillFileName(InvalidPathException):
+    message = (
+        "AgentixSkill files must be placed in a subfolder under AgentixSkills, "
+        "e.g. `AgentixSkills/{SkillName}/{SkillName}.yml` or `AgentixSkills/{SkillName}/{SkillName}_skill.md`"
+    )
+
+
 class ExemptedPath(Exception, ABC):
     message: ClassVar[str]
 
@@ -328,6 +336,9 @@ def _validate(path: Path) -> None:
         if first_level_folder == AGENTIX_AGENTS_DIR:
             raise InvalidAgentixAgentFileName
 
+        if first_level_folder == AGENTIX_SKILLS_DIR:
+            raise InvalidAgentixSkillFileName
+
         if first_level_folder not in DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES:
             # Packs/MyPack/SomeFolderThatShouldntHaveFilesDirectly/<file>
             raise InvalidDepthOneFile
@@ -400,6 +411,12 @@ def _validate(path: Path) -> None:
             or (path.stem == f"{path.parent.name}_test" and path.suffix == ".yml")
         ):
             raise InvalidAgentixActionFileName
+
+        elif first_level_folder == AGENTIX_SKILLS_DIR and not (
+            (path.stem == path.parent.name and path.suffix == ".yml")
+            or (path.name == f"{path.parent.name}_skill.md")
+        ):
+            raise InvalidAgentixSkillFileName
 
 
 def _validate_image_file_name(image_name: str):

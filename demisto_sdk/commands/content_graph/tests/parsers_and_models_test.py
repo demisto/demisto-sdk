@@ -3438,3 +3438,78 @@ class TestAgentixBaseParser:
             agentix_action_path, list(MarketplaceVersions), pack_supported_modules=[]
         )
         assert parser.toversion == DEFAULT_CONTENT_ITEM_TO_VERSION
+
+    def test_agentix_skill_parser_action_tag_dependencies(self, pack: Pack):
+        """
+        Given:
+            - An agentix skill whose body (<SkillName>_skill.md) references
+              actions via '<action=action-id>' tags (with flexible whitespace
+              and a duplicate).
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify each referenced action-id is added once as an optional
+              USES_BY_ID dependency on AGENTIX_ACTION.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_skill import (
+            AgentixSkillParser,
+        )
+
+        skill_body = (
+            "Use <action= first-action> and <action=second-action>.\n"
+            "Reuse <action= first-action> again."
+        )
+        agentix_skill = pack.create_agentix_skill(
+            "TestSkillWithActions", skill_content=skill_body
+        )
+        agentix_skill.create_default_agentix_skill(
+            name="Test Skill With Actions",
+            skill_id="test-skill-with-actions",
+            skill_content=skill_body,
+        )
+        parser = AgentixSkillParser(
+            Path(agentix_skill.path),
+            list(MarketplaceVersions),
+            pack_supported_modules=[],
+        )
+        RelationshipsVerifier.verify_uses(
+            parser.relationships,
+            RelationshipType.USES_BY_ID,
+            {
+                "first-action": ContentType.AGENTIX_ACTION,
+                "second-action": ContentType.AGENTIX_ACTION,
+            },
+        )
+
+    def test_agentix_skill_parser_no_action_tags(self, pack: Pack):
+        """
+        Given:
+            - An agentix skill whose body has no '<action=...>' tags.
+        When:
+            - Creating the content item's parser.
+        Then:
+            - Verify no USES_BY_ID action dependencies are created.
+        """
+        from demisto_sdk.commands.content_graph.parsers.agentix_skill import (
+            AgentixSkillParser,
+        )
+
+        skill_body = "A plain skill body with no action references."
+        agentix_skill = pack.create_agentix_skill(
+            "TestSkillNoActions", skill_content=skill_body
+        )
+        agentix_skill.create_default_agentix_skill(
+            name="Test Skill No Actions",
+            skill_id="test-skill-no-actions",
+            skill_content=skill_body,
+        )
+        parser = AgentixSkillParser(
+            Path(agentix_skill.path),
+            list(MarketplaceVersions),
+            pack_supported_modules=[],
+        )
+        RelationshipsVerifier.verify_uses(
+            parser.relationships,
+            RelationshipType.USES_BY_ID,
+            {},
+        )

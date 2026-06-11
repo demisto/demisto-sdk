@@ -42,6 +42,7 @@ __all__ = [
     "AgentixAction",
     "AgentixAgent",
     "AgentixActionTest",
+    "AgentixSkill",
 ]
 
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
@@ -49,6 +50,7 @@ from demisto_sdk.commands.content_graph.objects.agentix_action_test import (
     AgentixActionTest,
 )
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )

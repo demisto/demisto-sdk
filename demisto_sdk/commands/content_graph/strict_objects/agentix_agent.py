@@ -7,6 +7,7 @@ class AgentixAgent(AgentixBase):
     color: str
     visibility: str
     actionids: list[str] = []
+    skillids: list[str] = []
     systeminstructions: str = ""
     conversationstarters: list[str] = []
     builtinactions: list[str] = []

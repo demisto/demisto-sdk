@@ -2,7 +2,6 @@ import os
 from datetime import datetime, timedelta
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
-from urllib.parse import urlparse
 
 import dateparser
 import google.auth
@@ -411,7 +410,7 @@ class DockerHubClient:
             tag: The tag of the docker image
         """
         try:
-            if IS_CONTENT_GITLAB_CI:
+            if IS_CONTENT_GITLAB_CI or self._is_custom_registry:
                 image_digest = self.get_image_digest(docker_image, tag=tag)
                 response = self.get_image_blobs(docker_image, image_digest=image_digest)
                 return response
@@ -626,10 +625,7 @@ def _normalize_registry_url(registry: str) -> str:
     Returns:
         str: The normalized registry URL with scheme and /v2 path.
     """
-    parsed = urlparse(registry)
-
-    # Add https scheme if missing
-    if not parsed.scheme:
+    if "://" not in registry:
         registry = f"https://{registry}"
 
     # Strip trailing slashes and ensure /v2 suffix

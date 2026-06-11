@@ -324,6 +324,26 @@ DEFAULT_REGISTRY = "https://registry-1.docker.io/v2"
             id="custom registry without scheme",
         ),
         pytest.param(
+            "localhost:5050",
+            "https://localhost:5050/v2",
+            id="scheme-less host:port gets https prepended",
+        ),
+        pytest.param(
+            "my-registry.example.com:8443",
+            "https://my-registry.example.com:8443/v2",
+            id="scheme-less host:port with hostname gets https prepended",
+        ),
+        pytest.param(
+            "http://localhost:5050",
+            "http://localhost:5050/v2",
+            id="http host:port keeps http scheme",
+        ),
+        pytest.param(
+            "http://localhost:5050/v2/",
+            "http://localhost:5050/v2",
+            id="http host:port with v2 trailing slash",
+        ),
+        pytest.param(
             "https://test-docker.dev",
             "https://test-docker.dev/v2",
             id="custom registry with https no v2",
@@ -492,3 +512,74 @@ def test_do_registry_get_request_gar_proxy_uses_bearer_token(
     headers = call_args[1].get("headers") or call_args[0][1]
     assert headers["Authorization"] == "Bearer test_access_token"
     assert "Accept" in headers
+
+
+def test_get_image_tag_metadata_custom_registry_uses_registry_api(
+    mocker, dockerhub_client: DockerHubClient
+):
+    """
+    Given:
+        - A DockerHubClient configured with a user-provided custom registry
+          (e.g., JFrog/Harbor), where _is_custom_registry is True
+
+    When:
+        - running get_image_tag_metadata (used by creation_date / DO106)
+
+    Then:
+        - ensure the tag metadata is fetched from the Docker Registry API
+          (manifest -> config blob), NOT from the hub.docker.com web API,
+          which would 404 for images that only exist on the custom registry
+    """
+    dockerhub_client._is_custom_registry = True
+    mock_get_digest = mocker.patch.object(
+        dockerhub_client, "get_image_digest", return_value="sha256:abc123"
+    )
+    mock_get_blobs = mocker.patch.object(
+        dockerhub_client,
+        "get_image_blobs",
+        return_value={"created": "2023-01-01T00:00:00.000000Z"},
+    )
+    mock_docker_hub = mocker.patch.object(dockerhub_client, "do_docker_hub_get_request")
+
+    response = dockerhub_client.get_image_tag_metadata(
+        "xsoar-custom/csirc-common", tag="1.0.0"
+    )
+
+    # The registry API path must be used for custom registries.
+    mock_get_digest.assert_called_once_with("xsoar-custom/csirc-common", tag="1.0.0")
+    mock_get_blobs.assert_called_once_with(
+        "xsoar-custom/csirc-common", image_digest="sha256:abc123"
+    )
+    # The Docker Hub web API must NOT be used for custom registries.
+    mock_docker_hub.assert_not_called()
+    assert response == {"created": "2023-01-01T00:00:00.000000Z"}
+
+
+def test_get_image_tag_metadata_default_registry_uses_docker_hub_api(
+    mocker, dockerhub_client: DockerHubClient
+):
+    """
+    Given:
+        - A DockerHubClient configured with the default Docker Hub registry
+          (_is_custom_registry is False, not running in GitLab CI)
+
+    When:
+        - running get_image_tag_metadata
+
+    Then:
+        - ensure the tag metadata is fetched from the hub.docker.com web API,
+          preserving the original Docker Hub behavior
+    """
+    dockerhub_client._is_custom_registry = False
+    mock_docker_hub = mocker.patch.object(
+        dockerhub_client,
+        "do_docker_hub_get_request",
+        return_value={"last_updated": "2023-01-01T00:00:00.000000Z"},
+    )
+    mock_get_digest = mocker.patch.object(dockerhub_client, "get_image_digest")
+
+    response = dockerhub_client.get_image_tag_metadata("demisto/python3", tag="1.0.0")
+
+    mock_docker_hub.assert_called_once_with("/repositories/demisto/python3/tags/1.0.0")
+    mock_get_digest.assert_not_called()
+    assert response == {"last_updated": "2023-01-01T00:00:00.000000Z"}

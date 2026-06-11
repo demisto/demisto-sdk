@@ -305,7 +305,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             logger.debug(
                 "No nodes to parse packs because all of them in mapping",
             )
-            logger.debug("{}", f"{self._id_to_obj=}")  # noqa: PLE1205
+            # NOTE: previously this also logged `f"{self._id_to_obj=}"`, which
+            # forces a full repr() of every cached BaseContent object. Pydantic
+            # models repr() their nested fields recursively, and the graph now
+            # contains items with circular relationships (e.g.
+            # Connector -> Pack -> Integration -> Pack -> ...), so the repr
+            # walks itself forever and crashes with RecursionError. Log only
+            # the cache size — the full dump was diagnostic, not actionable.
+            logger.debug(f"_id_to_obj cache size: {len(self._id_to_obj)}")
             return
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(

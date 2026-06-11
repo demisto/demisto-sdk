@@ -390,7 +390,7 @@ def _validate_depth_one(
 
 
 def _validate_depth_two(
-    path: Path, first_level_folder: str, parts_after_packs: tuple
+    path: Path, first_level_folder: str, parts_after_packs: Sequence[str]
 ) -> None:
     """Validates files at depth 2."""
     if first_level_folder in {

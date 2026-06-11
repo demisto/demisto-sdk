@@ -34,11 +34,9 @@ class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
         """Match an AgentixSkill ``<SkillName>.yml`` file under ``AgentixSkills/``."""
-        if path.suffix not in {".yml", ".yaml"}:
-            return False
-        if path.stem.endswith("_test"):
-            return False
-        return AGENTIX_SKILLS_DIR in path.parts
+        if path.suffix in {".yml", ".yaml"} and not path.stem.endswith("_test") and AGENTIX_SKILLS_DIR in path.parts: 
+            return True
+        return False
 
     @cached_property
     def skill_content_file(self) -> SkillContentRelatedFile:

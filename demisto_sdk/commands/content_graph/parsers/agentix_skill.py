@@ -46,20 +46,8 @@ class AgentixSkillParser(AgentixBaseParser, content_type=ContentType.AGENTIX_SKI
 
     @cached_property
     def field_mapping(self):
-        super().field_mapping.update(
-            {
-                "description": "description",
-            }
-        )
+        super().field_mapping.update({"display": "name"})
         return super().field_mapping
-
-    @property
-    def display_name(self) -> Optional[str]:
-        """For AgentixSkill the ``name`` field is the human-readable Title Case
-        label — there is no separate ``display`` field — so we surface ``name``
-        as the display name to satisfy the parent ``ContentItem.display_name``.
-        """
-        return self.name
 
     @property
     def content(self) -> str:

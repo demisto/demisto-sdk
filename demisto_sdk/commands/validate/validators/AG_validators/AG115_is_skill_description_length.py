@@ -45,22 +45,22 @@ class IsSkillDescriptionLengthValidator(BaseValidator[ContentTypes]):
                 f"(allowed {DESCRIPTION_MIN_WORDS}-{DESCRIPTION_MAX_WORDS})."
             )
 
-            problem = ""
+            issue = ""
             if word_count < DESCRIPTION_MIN_WORDS:
-                problem = (
+                issue = (
                     f"it has {word_count} words (minimum is {DESCRIPTION_MIN_WORDS})."
                 )
             elif word_count > DESCRIPTION_MAX_WORDS:
-                problem = (
+                issue = (
                     f"it has {word_count} words (maximum is {DESCRIPTION_MAX_WORDS})."
                 )
 
-            if problem:
+            if issue:
                 results.append(
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
-                            content_item.display_name, problem
+                            content_item.display_name, issue
                         ),
                         content_object=content_item,
                     )

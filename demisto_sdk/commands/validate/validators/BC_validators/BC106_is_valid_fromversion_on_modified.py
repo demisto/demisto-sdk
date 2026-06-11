@@ -7,6 +7,7 @@ from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAct
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
+from demisto_sdk.commands.content_graph.objects.collection import Collection
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -27,6 +28,7 @@ ContentTypes = Union[
     AgentixAction,
     AgentixAgent,
     AgentixSkill,
+    Collection,
 ]
 
 

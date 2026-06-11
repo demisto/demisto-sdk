@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     CASE_FIELDS_DIR,
     CASE_LAYOUT_RULES_DIR,
     CASE_LAYOUTS_DIR,
+    COLLECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DEFAULT_IMAGE_BASE64,
     LAYOUT_RULES_DIR,
@@ -26,6 +27,7 @@ from TestSuite.case_field import CaseField
 from TestSuite.case_layout import CaseLayout
 from TestSuite.case_layout_rule import CaseLayoutRule
 from TestSuite.classifier import Classifier
+from TestSuite.collection import Collection
 from TestSuite.content_list import ContentList
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.dashboard import Dashboard
@@ -127,6 +129,7 @@ class Pack(TestSuiteBase):
         self.agentix_actions: List[AgentixAction] = list()
         self.agentix_agents: List[AgentixAgent] = list()
         self.agentix_skills: List[AgentixSkill] = list()
+        self.collections: List[Collection] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -275,6 +278,9 @@ class Pack(TestSuiteBase):
 
         self._agentix_skills_path = self._pack_path / AGENTIX_SKILLS_DIR
         self._agentix_skills_path.mkdir(exist_ok=True)
+
+        self._collections_path = self._pack_path / COLLECTIONS_DIR
+        self._collections_path.mkdir(exist_ok=True)
 
         super().__init__(self._pack_path)
 
@@ -889,3 +895,17 @@ class Pack(TestSuiteBase):
         )
         self.agentix_skills.append(agentix_skill)
         return agentix_skill
+
+    def create_collection(
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+    ) -> Collection:
+        if name is None:
+            name = f"collection-{len(self.collections)}"
+        collection = Collection(self._collections_path, name, self._repo)
+        collection.build(
+            yml,
+        )
+        self.collections.append(collection)
+        return collection

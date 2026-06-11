@@ -1,5 +1,6 @@
 __all__ = [
     "ClassifierParser",
+    "CollectionParser",
     "CorrelationRuleParser",
     "DashboardParser",
     "GenericDefinitionParser",
@@ -62,6 +63,7 @@ from demisto_sdk.commands.content_graph.parsers.case_layout_rule import (
     CaseLayoutRuleParser,
 )
 from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser
+from demisto_sdk.commands.content_graph.parsers.collection import CollectionParser
 from demisto_sdk.commands.content_graph.parsers.correlation_rule import (
     CorrelationRuleParser,
 )

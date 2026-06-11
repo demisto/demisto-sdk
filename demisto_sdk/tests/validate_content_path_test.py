@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     AGENTIX_AGENTS_DIR,
     AGENTIX_SKILLS_DIR,
     CLASSIFIERS_DIR,
+    COLLECTIONS_DIR,
     CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
     DOC_FILES_DIR,
@@ -32,6 +33,7 @@ from demisto_sdk.scripts.validate_content_path import (
     InvalidAgentixAgentFileName,
     InvalidAgentixSkillFileName,
     InvalidClassifier,
+    InvalidCollectionFileName,
     InvalidCorrelationRuleFileName,
     InvalidDepthOneFile,
     InvalidDepthOneFolder,
@@ -246,6 +248,7 @@ folders_not_allowed_to_contain_files = (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
     AGENTIX_SKILLS_DIR,
+    COLLECTIONS_DIR,
 }
 
 DUMMY_PACK_PATH = Path("content", "Packs", "myPack")
@@ -320,6 +323,7 @@ def test_depth_one_pass(folder: str):
         InvalidAgentixAgentFileName,
         InvalidAgentixActionFileName,
         InvalidAgentixSkillFileName,
+        InvalidCollectionFileName,
     ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
         # InvalidXDRCTemplatesFileName will be raised but it is irrelevant for this test.
@@ -741,6 +745,54 @@ def test_agentix_skill_file_at_depth_one_invalid():
     """
     with pytest.raises(InvalidAgentixSkillFileName):
         _validate(DUMMY_PACK_PATH / AGENTIX_SKILLS_DIR / "TestSkill.yml")
+
+
+def test_collection_file_valid():
+    """
+    Given:
+        A valid collection file in the new hierarchy: Collections/<name>/<name>.yml
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation passes
+    """
+    folder = "TestCollection"
+    _validate(DUMMY_PACK_PATH / COLLECTIONS_DIR / folder / f"{folder}.yml")
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "WrongName.yml",
+        "TestCollection.json",
+        "TestCollection.md",
+    ],
+)
+def test_collection_file_invalid(file_name: str):
+    """
+    Given:
+        An invalid collection file name
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidCollectionFileName
+    """
+    folder = "TestCollection"
+    with pytest.raises(InvalidCollectionFileName):
+        _validate(DUMMY_PACK_PATH / COLLECTIONS_DIR / folder / file_name)
+
+
+def test_collection_file_at_depth_one_invalid():
+    """
+    Given:
+        A collection file placed directly under Collections folder (depth 1)
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidCollectionFileName
+    """
+    with pytest.raises(InvalidCollectionFileName):
+        _validate(DUMMY_PACK_PATH / COLLECTIONS_DIR / "TestCollection.yml")
 
 
 class TestAgentixActionsPathValidation:

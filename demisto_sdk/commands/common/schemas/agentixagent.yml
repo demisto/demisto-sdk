@@ -56,6 +56,10 @@ mapping:
     type: seq
     sequence:
     - type: str
+  collectionids:
+    type: seq
+    sequence:
+    - type: str
   fromversion:
     type: str
   toversion:

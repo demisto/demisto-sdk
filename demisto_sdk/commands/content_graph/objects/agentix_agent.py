@@ -22,6 +22,7 @@ class AgentixAgent(AgentixBase, content_type=ContentType.AGENTIX_AGENT):
     autoenablenewactions: bool = False
     roles: list[str] = []
     sharedwithroles: list[str] = []
+    collectionids: list[str] = []
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

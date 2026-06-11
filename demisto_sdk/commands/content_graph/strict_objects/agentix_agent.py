@@ -13,3 +13,4 @@ class AgentixAgent(AgentixBase):
     autoenablenewactions: bool = False
     roles: list[str] = []
     sharedwithroles: list[str] = []
+    collectionids: list[str] = []

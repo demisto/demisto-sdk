@@ -58,7 +58,9 @@ class AgentixAgentUnifier(Unifier):
 
         # Rename 'collectionids' (source field) to 'system_collection_ids' (server field)
         if "collectionids" in yml_unified:
-            yml_unified["systemknowledgecollectionids"] = yml_unified.pop("collectionids")
+            yml_unified["systemknowledgecollectionids"] = yml_unified.pop(
+                "collectionids"
+            )
 
         logger.debug(f"<green>Created unified AgentixAgent yml: {path.name}</green>")
         return yml_unified

@@ -3443,7 +3443,7 @@ class TestAgentixBaseParser:
         """
         Given:
             - An agentix skill whose body (<SkillName>_skill.md) references
-              actions via '<action: action-id>' tags (with flexible whitespace
+              actions via '<action=action-id>' tags (with flexible whitespace
               and a duplicate).
         When:
             - Creating the content item's parser.
@@ -3456,8 +3456,8 @@ class TestAgentixBaseParser:
         )
 
         skill_body = (
-            "Use <action: first-action> and <action:second-action>.\n"
-            "Reuse <action: first-action> again."
+            "Use <action= first-action> and <action=second-action>.\n"
+            "Reuse <action= first-action> again."
         )
         agentix_skill = pack.create_agentix_skill(
             "TestSkillWithActions", skill_content=skill_body
@@ -3484,7 +3484,7 @@ class TestAgentixBaseParser:
     def test_agentix_skill_parser_no_action_tags(self, pack: Pack):
         """
         Given:
-            - An agentix skill whose body has no '<action: ...>' tags.
+            - An agentix skill whose body has no '<action=...>' tags.
         When:
             - Creating the content item's parser.
         Then:

@@ -10,7 +10,7 @@ def test_resolve_action_tags_replaces_with_names(mocker):
     When:
         - Resolving the action tags in a body referencing those actions.
     Then:
-        - Each '<action: action-id>' tag is replaced with the action name.
+        - Each '<action=action-id>' tag is replaced with the action name.
     """
     skill = create_agentix_skill_object(skill_name="skill_with_actions")
     mocker.patch.object(
@@ -23,7 +23,7 @@ def test_resolve_action_tags_replaces_with_names(mocker):
     )
 
     resolved = skill._resolve_action_tags(
-        "Run <action: first-action> then <action:second-action>."
+        "Run <action= first-action> then <action=second-action>."
     )
 
     assert resolved == "Run First Action then Second Action."
@@ -37,14 +37,14 @@ def test_resolve_action_tags_leaves_unresolved(mocker):
     When:
         - Resolving the action tags in the body.
     Then:
-        - The original '<action: action-id>' tag is left untouched.
+        - The original '<action=action-id>' tag is left untouched.
     """
     skill = create_agentix_skill_object(skill_name="skill_unresolved_action")
     mocker.patch.object(type(skill), "_action_id_to_name", return_value={})
 
-    resolved = skill._resolve_action_tags("Use <action: missing-action> here.")
+    resolved = skill._resolve_action_tags("Use <action= missing-action> here.")
 
-    assert resolved == "Use <action: missing-action> here."
+    assert resolved == "Use <action=missing-action> here."
 
 
 def test_resolve_action_tags_no_tags_passthrough(mocker):

@@ -13,28 +13,28 @@ from demisto_sdk.commands.content_graph.objects.agentix_skill_action_tags import
         ("Some plain skill body without tags.", []),
         ("", []),
         # Single tag, no whitespace.
-        ("Use <action:my-action-id> here.", ["my-action-id"]),
-        # Single tag, whitespace after colon.
-        ("Use <action: my-action-id> here.", ["my-action-id"]),
+        ("Use <action=my-action-id> here.", ["my-action-id"]),
+        # Single tag, whitespace around the equals sign.
+        ("Use <action = my-action-id> here.", ["my-action-id"]),
         # Flexible whitespace around tokens.
-        ("Use <  action :  my-action-id  > here.", ["my-action-id"]),
+        ("Use <  action =  my-action-id  > here.", ["my-action-id"]),
         # Multiple distinct tags, order preserved.
         (
-            "First <action: a-one> then <action:b-two>.",
+            "First <action= a-one> then <action=b-two>.",
             ["a-one", "b-two"],
         ),
         # Duplicates de-duplicated, first-appearance order kept.
         (
-            "<action: dup> and again <action: dup> and <action: other>.",
+            "<action= dup> and again <action= dup> and <action= other>.",
             ["dup", "other"],
         ),
         # Dotted/underscored ids.
-        ("<action: name.with.dots_and_under>", ["name.with.dots_and_under"]),
+        ("<action= name.with.dots_and_under>", ["name.with.dots_and_under"]),
     ],
 )
 def test_extract_action_ids(text, expected):
     """
-    Given a skill body with zero or more ``<action: action-id>`` tags.
+    Given a skill body with zero or more ``<action=action-id>`` tags.
     When extracting action-ids.
     Then the de-duplicated, order-preserving list of ids is returned.
     """
@@ -47,7 +47,7 @@ def test_replace_action_tags_replaces_with_resolver_output():
     When replacing the tags.
     Then each tag is swapped for the resolver's plain-text output.
     """
-    text = "Run <action: my-action-id> and <action:other-id> now."
+    text = "Run <action= my-action-id> and <action=other-id> now."
     names = {"my-action-id": "My Action Name", "other-id": "Other Action"}
 
     result = replace_action_tags(text, lambda action_id: names[action_id])
@@ -61,16 +61,16 @@ def test_replace_action_tags_resolver_can_keep_unresolved():
     When replacing the tags.
     Then unresolved tags are left untouched while resolved ones are swapped.
     """
-    text = "Known <action: known> unknown <action: missing>."
+    text = "Known <action= known> unknown <action= missing>."
 
     def resolver(action_id: str) -> str:
         if action_id == "known":
             return "Known Name"
-        return f"<action: {action_id}>"
+        return f"<action={action_id}>"
 
     result = replace_action_tags(text, resolver)
 
-    assert result == "Known Known Name unknown <action: missing>."
+    assert result == "Known Known Name unknown <action=missing>."
 
 
 def test_replace_action_tags_empty_text():

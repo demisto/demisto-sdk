@@ -52,7 +52,7 @@ class AgentixSkillParser(AgentixBaseParser, content_type=ContentType.AGENTIX_SKI
         """Collects the actions referenced in the skill body as optional dependencies.
 
         The skill body (``<SkillName>_skill.md``) may reference Agentix actions
-        inline using ``<action: action-id>`` tags. Each referenced action-id is
+        inline using ``<action=action-id>`` tags. Each referenced action-id is
         registered as an optional dependency of the skill in the content graph.
         """
         for action_id in extract_action_ids(self.content):

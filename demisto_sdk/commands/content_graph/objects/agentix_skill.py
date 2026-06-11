@@ -58,14 +58,14 @@ class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
 
         This method merges the skill body (Markdown) from the sibling
         ``<SkillName>_skill.md`` file into the metadata dict's ``content`` field,
-        and replaces every ``<action: action-id>`` tag in the body with the
+        and replaces every ``<action=action-id>`` tag in the body with the
         referenced action's human-readable name.
 
         The action-id -> action-name mapping is resolved from the content graph
         ``uses`` relationships, which are populated when the skill is loaded with
         the graph (``prepare-content --graph``). When an action-id cannot be
         resolved (e.g. the skill was not enriched with the graph), the original
-        ``<action: action-id>`` tag is left untouched and a warning is logged.
+        ``<action=action-id>`` tag is left untouched and a warning is logged.
 
         Args:
             current_marketplace: Target marketplace (default: PLATFORM)
@@ -106,7 +106,7 @@ class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
         return mapping
 
     def _resolve_action_tags(self, content: str) -> str:
-        """Replace ``<action: action-id>`` tags with the resolved action name.
+        """Replace ``<action=action-id>`` tags with the resolved action name.
 
         Unresolved ids leave the original tag in place and emit a warning.
         """
@@ -118,10 +118,10 @@ class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
                 logger.warning(
                     f"AgentixSkill '{self.object_id}': could not resolve action "
                     f"id '{action_id}' to an action name (is the skill prepared "
-                    f"with --graph?). Leaving the '<action: {action_id}>' tag "
+                    f"with --graph?). Leaving the '<action={action_id}>' tag "
                     f"unchanged."
                 )
-                return f"<action: {action_id}>"
+                return f"<action={action_id}>"
             return name
 
         return replace_action_tags(content, resolver)

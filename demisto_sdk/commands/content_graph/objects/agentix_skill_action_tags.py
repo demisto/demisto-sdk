@@ -1,24 +1,24 @@
-"""Helpers for the AgentixSkill ``<action: action-id>`` tag feature.
+"""Helpers for the AgentixSkill ``<action=action-id>`` tag feature.
 
 An AgentixSkill body (``<SkillName>_skill.md``) may reference other Agentix
-actions inline using a tag of the form ``<action: action-id>``. The whitespace
-after the colon is flexible, so both ``<action:my-action-id>`` and
-``<action: my-action-id>`` are recognized.
+actions inline using a tag of the form ``<action=action-id>``. The whitespace
+around the equals sign is flexible, so both ``<action=my-action-id>`` and
+``<action = my-action-id>`` are recognized.
 
 Two behaviors are derived from these tags:
 
 * During content-graph parsing, every referenced ``action-id`` becomes an
   (optional) dependency of the skill.
 * During ``prepare-content``/upload, each tag is replaced with the resolved
-  action **name** (e.g. ``<action: my-action-id>`` -> ``My Action Name``).
+  action **name** (e.g. ``<action=my-action-id>`` -> ``My Action Name``).
 """
 
 import re
 from typing import Callable, List
 
-# Matches ``<action: action-id>`` with flexible surrounding whitespace.
+# Matches ``<action=action-id>`` with flexible surrounding whitespace.
 # The captured group is the action-id (word characters, hyphens, dots).
-ACTION_TAG_PATTERN = re.compile(r"<\s*action\s*:\s*([\w.\-]+)\s*>")
+ACTION_TAG_PATTERN = re.compile(r"<\s*action\s*=\s*([\w.\-]+)\s*>")
 
 
 def extract_action_ids(text: str) -> List[str]:
@@ -28,7 +28,7 @@ def extract_action_ids(text: str) -> List[str]:
         text: The skill body (Markdown) to scan.
 
     Returns:
-        The action-ids referenced via ``<action: action-id>`` tags, in first
+        The action-ids referenced via ``<action=action-id>`` tags, in first
         appearance order, without duplicates.
     """
     if not text:
@@ -44,7 +44,7 @@ def extract_action_ids(text: str) -> List[str]:
 
 
 def replace_action_tags(text: str, resolver: Callable[[str], str]) -> str:
-    """Replace each ``<action: action-id>`` tag using ``resolver``.
+    """Replace each ``<action=action-id>`` tag using ``resolver``.
 
     Args:
         text: The skill body (Markdown) to transform.

@@ -279,6 +279,14 @@ def _update_content_graph_inner(
     # bypassing git-based detection which may not work in all CI environments.
     # Only read from env var if packs_to_update was not already provided by the caller
     # (e.g., pre_commit_command.py already extracts packs from files_to_run).
+    # Track whether the changed-items list came from an explicit, trusted source
+    # (caller-supplied args or DEMISTO_SDK_DIFF_FILES). When it did, we must NOT
+    # fall back to git-diff augmentation later — in CI the graph's pinned commit
+    # is often absent from the local history (shallow clone) and `git diff`
+    # fails, which currently tears down the whole import via "Creating from
+    # scratch". The env-var path is the single source of truth in that case.
+    explicit_changes_provided = bool(packs_to_update or connectors_to_update)
+
     if not packs_to_update and not connectors_to_update:
         diff_files_env = os.getenv(DEMISTO_SDK_DIFF_FILES_ENV, "")
         if diff_files_env:
@@ -297,6 +305,8 @@ def _update_content_graph_inner(
                     f"{sorted(env_connector_ids)}"
                 )
                 connectors_to_update.extend(env_connector_ids)
+            if env_pack_ids or env_connector_ids:
+                explicit_changes_provided = True
 
     builder = ContentGraphBuilder(content_graph_interface)
     if not should_update_graph(
@@ -345,7 +355,12 @@ def _update_content_graph_inner(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-    if use_git and (commit := content_graph_interface.commit) and not is_external_repo:
+    if (
+        use_git
+        and (commit := content_graph_interface.commit)
+        and not is_external_repo
+        and not explicit_changes_provided
+    ):
         try:
             changed_pack_ids = git_util.get_all_changed_pack_ids(commit)
         except Exception as e:
@@ -367,8 +382,18 @@ def _update_content_graph_inner(
                 "Continuing without connector updates."
             )
             changed_connector_ids = set()
-        if changed_connector_ids:
-            connectors_to_update.extend(changed_connector_ids)
+    elif explicit_changes_provided:
+        logger.info(
+            "Skipping git-diff augmentation: changed packs/connectors were "
+            "provided explicitly (via caller args or "
+            f"{DEMISTO_SDK_DIFF_FILES_ENV}), so the bucket-commit git diff "
+            "is redundant and would fail in shallow CI clones."
+        )
+        changed_connector_ids: Set[str] = set()
+    else:
+        changed_connector_ids = set()
+    if changed_connector_ids:
+        connectors_to_update.extend(changed_connector_ids)
 
     if packs_to_update:
         packs_str = "\n".join([f"- {p}" for p in sorted(packs_to_update)])

@@ -111,6 +111,9 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         logger.info(f"[GR109] Checking module compatibility for content item: {content_item.object_id}")
         missing_modules_by_dependency: dict[str, list[str]] = {}
         for dependency in content_item.uses:
+            # Filter by mandatory/non-mandatory based on the class member
+            if dependency.mandatorily != self.mandatory_dependency:
+                continue
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module

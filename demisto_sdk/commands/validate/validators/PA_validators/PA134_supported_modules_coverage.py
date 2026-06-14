@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import ClassVar, Dict, Iterable, List, Set
 
+from demisto_sdk.commands.common.tools import get_content_item_supported_modules
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
@@ -86,7 +87,7 @@ class PackSupportedModulesCoverageValidator(BaseValidator[ContentTypes]):
         Returns an empty set when the pack is valid (or when the check is
         not applicable).
         """
-        pack_modules = set(pack.supportedModules or [])
+        pack_modules = get_content_item_supported_modules(pack)
         if not pack_modules:
             # No explicit supportedModules declaration — nothing to validate.
             return set()
@@ -97,17 +98,8 @@ class PackSupportedModulesCoverageValidator(BaseValidator[ContentTypes]):
             if item.content_type not in _SKIP_CONTENT_TYPES
         ]
 
-        if not uploadable_items:
-            # Pack has no uploadable items at all — a separate concern.
-            return set()
-
-        # If any uploadable item has supportedModules=None it inherits *all*
-        # pack modules, meaning every pack module is covered.
-        if any(item.supportedModules is None for item in uploadable_items):
-            return set()
-
         union_of_item_modules: Set[str] = set()
         for item in uploadable_items:
-            union_of_item_modules.update(item.supportedModules or [])
+            union_of_item_modules.update(get_content_item_supported_modules(item))
 
         return pack_modules - union_of_item_modules

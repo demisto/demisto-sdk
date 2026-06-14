@@ -2,6 +2,7 @@ category: Authentication
 commonfields:
   id: TestIntegPackage
   version: -1
+provider: Test Provider
 configuration:
 - defaultvalue: https://example.net
   display: Server URL (e.g. https://example.net)  # this is a comment text inside a file 033dab25fd9655480dbec3a4c579a0e6

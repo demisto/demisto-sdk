@@ -43,6 +43,8 @@ Whether to skip the new validate flow or not. Alternatively, you can configure t
 A comma separated list of validations to run stated the error codes.
 * **--ignore**
 An error code to not run. To ignore more than one error, repeat this option (e.g. `--ignore AA123 --ignore BC321`)
+* **--private-content-path**
+Path to a private content repository.
 
 ### Validation Error Codes
 Each error found by validate has an error code attached to it. The code can be found in brackets preceding the error itself.  
@@ -106,4 +108,7 @@ Validates all files under the `HelloWorld` content pack.
 This will validate all files in the repo using the old validate method.
 
 `demisto-sdk validate --config-path {config_file_path} -a`
-TValidates all files in the repository using the settings configured in the config file in the given path.
+Validates all files in the repository using the settings configured in the config file in the given path.
+
+`demisto-sdk validate --private-content-path /path/to/private-content -g`
+Validates changes using git while including private content packs in the content graph. The private packs are temporarily copied and staged, then automatically cleaned up after validation.

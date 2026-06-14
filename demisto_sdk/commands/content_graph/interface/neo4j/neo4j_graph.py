@@ -72,6 +72,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_core_packs_dependencies,
     validate_duplicate_ids,
     validate_fromversion,
+    validate_managed_playbook_dependencies,
     validate_marketplaces,
     validate_multiple_agentix_actions_with_same_display_name,
     validate_multiple_agentix_actions_with_same_name,
@@ -624,6 +625,35 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
+    def find_managed_playbooks_with_invalid_dependencies(
+        self,
+        file_paths: List[str],
+        core_pack_list: List[str],
+    ) -> List[Tuple[BaseNode, str]]:
+        """Searches and retrieves playbooks in managed packs that use scripts or sub-playbooks
+        from packs that are neither core packs nor managed packs with the same source.
+
+        Args:
+            file_paths (List[str]): A list of playbook file paths to check.
+                If empty, runs the query over all playbooks.
+            core_pack_list (List[str]): A list of core pack IDs.
+
+        Returns:
+            List[Tuple[BaseNode, str]]: Tuples of (playbook, pack_source) with invalid dependencies.
+        """
+        with self.driver.session() as session:
+            results: Dict[str, Neo4jRelationshipResult]
+            sources: Dict[str, str]
+            results, sources = session.execute_read(
+                validate_managed_playbook_dependencies, file_paths, core_pack_list
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [
+                (self._id_to_obj[element_id], sources.get(element_id, ""))
+                for element_id in results
+            ]
+
     def find_packs_with_invalid_dependencies(
         self, pack_ids: List[str]
     ) -> List[BaseNode]:
@@ -645,7 +675,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result] for result in results]
 
     def find_content_items_with_module_mismatch_dependencies(
-        self, content_item_ids: List[str]
+        self, content_item_ids: List[str], mandatory: bool = True
     ) -> List[BaseNode]:
         """
         Retrieves content items with invalid dependency relationships based on supported modules.
@@ -656,13 +686,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             content_item_ids (List[str]): List of content item IDs to check for invalid dependencies.
                                         If empty, all relevant content items will be checked.
+            mandatory (bool): If True, checks mandatory USES relationships (default).
+                              If False, checks non-mandatory (optional) USES relationships.
         Returns:
             List[BaseNode]: Content items that have invalid supported module dependencies, if any exist.
 
         """
         with self.driver.session() as session:
             results = session.execute_read(
-                get_supported_modules_mismatch_dependencies, content_item_ids
+                get_supported_modules_mismatch_dependencies, content_item_ids, mandatory
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
@@ -692,7 +724,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result] for result in results]
 
     def find_content_items_with_module_mismatch_content_items(
-        self, content_item_ids: List[str]
+        self, content_item_ids: List[str], mandatory: bool = True
     ) -> List[BaseNode]:
         """
         Retrieves content items with invalid command relationships based on supported modules.
@@ -703,12 +735,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             content_item_ids (List[str]): List of content item IDs to check for invalid commands.
                                         If empty, all relevant content items will be checked.
+            mandatory (bool): If True, checks mandatory (mandatorily:true) USES relationships.
+                              If False, checks non-mandatory (mandatorily:false) USES relationships.
+                              Defaults to True.
         Returns:
             List[BaseNode]: Content items that have invalid supported module commands, if any exist.
         """
         with self.driver.session() as session:
             results = session.execute_read(
-                get_supported_modules_mismatch_content_items, content_item_ids
+                get_supported_modules_mismatch_content_items,
+                content_item_ids,
+                mandatory,
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
@@ -843,7 +880,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if output_path:
             output_path = output_path / marketplace.value
             logger.info(f"Saving content graph in {output_path}.zip")
-            self.zip_import_dir(output_path)
+            self.zip_import_dir(output_path)  # type: ignore[arg-type]
 
     def clean_graph(self):
         with self.driver.session() as session:

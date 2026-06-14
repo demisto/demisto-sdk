@@ -491,6 +491,7 @@ def mock_integration(name: str = "SampleIntegration", deprecated: bool = False):
         type="python3",
         docker_image=DockerImage("demisto/python3:3.10.11.54799"),
         category="blabla",
+        provider="Test Provider",
         commands=[
             Command(name="test-command", description=""),
             Command(name="deprecated-command", description=""),

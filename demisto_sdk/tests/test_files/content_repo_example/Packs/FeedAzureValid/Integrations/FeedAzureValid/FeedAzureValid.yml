@@ -1,4 +1,5 @@
 category: Data Enrichment & Threat Intelligence
+provider: AzureFeed
 commonfields:
   id: AzureFeed
   version: -1

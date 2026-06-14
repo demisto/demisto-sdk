@@ -3,7 +3,11 @@ from pathlib import Path
 import pytest
 
 from demisto_sdk.commands.common.constants import (
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
     CLASSIFIERS_DIR,
+    COLLECTIONS_DIR,
     CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
     DOC_FILES_DIR,
@@ -25,7 +29,11 @@ from demisto_sdk.scripts.validate_content_path import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     ZERO_DEPTH_FILES,
+    InvalidAgentixActionFileName,
+    InvalidAgentixAgentFileName,
+    InvalidAgentixSkillFileName,
     InvalidClassifier,
+    InvalidCollectionFileName,
     InvalidCorrelationRuleFileName,
     InvalidDepthOneFile,
     InvalidDepthOneFolder,
@@ -221,7 +229,7 @@ def test_content_entities_dir_length():
     If this test failed, it's likely you modified either CONTENT_ENTITIES_DIRS or FOLDERS_ALLOWED_TO_CONTAIN_FILES.
     Update the test values accordingly.
     """
-    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 37
+    assert len(set(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 35
 
     # change this one if you added a content item folder that can't have files directly under it
     assert (
@@ -230,13 +238,18 @@ def test_content_entities_dir_length():
                 CONTENT_ENTITIES_DIRS
             )
         )
-        == 29
+        == 27
     )
 
 
 folders_not_allowed_to_contain_files = (
     set(CONTENT_ENTITIES_DIRS) | DEPTH_ONE_FOLDERS
-).difference(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
+).difference(DEPTH_ONE_FOLDERS_ALLOWED_TO_CONTAIN_FILES) - {
+    AGENTIX_ACTIONS_DIR,
+    AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
+    COLLECTIONS_DIR,
+}
 
 DUMMY_PACK_PATH = Path("content", "Packs", "myPack")
 
@@ -307,10 +320,17 @@ def test_depth_one_pass(folder: str):
         InvalidXDRCTemplatesFileName,
         InvalidModelingRuleFileName,
         InvalidXSIAMParsingRuleFileName,
+        InvalidAgentixAgentFileName,
+        InvalidAgentixActionFileName,
+        InvalidAgentixSkillFileName,
+        InvalidCollectionFileName,
     ):
         # In Integration/script, InvalidIntegrationScriptFileType will be raised but is irrelevant for this test.
         # InvalidXDRCTemplatesFileName will be raised but it is irrelevant for this test.
         # InvalidModelingRuleFileName will be raised but it is irrelevant for this test.
+        # InvalidAgentixAgentFileName will be raised but it is irrelevant for this test.
+        # InvalidAgentixActionFileName will be raised but it is irrelevant for this test.
+        # InvalidAgentixSkillFileName will be raised but it is irrelevant for this test.
         pass
 
 
@@ -606,3 +626,290 @@ def test_modeling_rule_file_invalid(file_name: str):
     folder = "RuleEventCollector_1_2"
     with pytest.raises(InvalidModelingRuleFileName):
         _validate(DUMMY_PACK_PATH / MODELING_RULES_DIR / folder / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "TestAgent.yml",
+        "TestAgent_systeminstructions.md",
+    ],
+)
+def test_agentix_agent_file_valid(file_name: str):
+    """
+    Given:
+        A valid agentix agent file name
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation passes
+    """
+    folder = "TestAgent"
+    _validate(DUMMY_PACK_PATH / AGENTIX_AGENTS_DIR / folder / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "WrongName.yml",
+        "TestAgent.json",
+        "TestAgent_instructions.md",
+        "TestAgent_systeminstructions.txt",
+        "TestAgentExtra_systeminstructions.md",
+        "Test_systeminstructions.md",
+    ],
+)
+def test_agentix_agent_file_invalid(file_name: str):
+    """
+    Given:
+        An invalid agentix agent file name
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidAgentixAgentFileName
+    """
+    folder = "TestAgent"
+    with pytest.raises(InvalidAgentixAgentFileName):
+        _validate(DUMMY_PACK_PATH / AGENTIX_AGENTS_DIR / folder / file_name)
+
+
+def test_agentix_agent_file_at_depth_one_invalid():
+    """
+    Given:
+        An agentix agent file placed directly under AgentixAgents folder (depth 1)
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidAgentixAgentFileName
+    """
+    with pytest.raises(InvalidAgentixAgentFileName):
+        _validate(DUMMY_PACK_PATH / AGENTIX_AGENTS_DIR / "TestAgent.yml")
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "TestSkill.yml",
+        "TestSkill_skill.md",
+    ],
+)
+def test_agentix_skill_file_valid(file_name: str):
+    """
+    Given:
+        A valid agentix skill file name following the new naming standard
+        (<SkillName>.yml and <SkillName>_skill.md)
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation passes
+    """
+    folder = "TestSkill"
+    _validate(DUMMY_PACK_PATH / AGENTIX_SKILLS_DIR / folder / file_name)
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "metadata.yml",
+        "skill.md",
+        "WrongName.yml",
+        "TestSkill.json",
+        "TestSkill_skill.txt",
+        "TestSkillExtra_skill.md",
+        "Test_skill.md",
+    ],
+)
+def test_agentix_skill_file_invalid(file_name: str):
+    """
+    Given:
+        An invalid agentix skill file name (including the old fixed names
+        'metadata.yml' and 'skill.md')
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidAgentixSkillFileName
+    """
+    folder = "TestSkill"
+    with pytest.raises(InvalidAgentixSkillFileName):
+        _validate(DUMMY_PACK_PATH / AGENTIX_SKILLS_DIR / folder / file_name)
+
+
+def test_agentix_skill_file_at_depth_one_invalid():
+    """
+    Given:
+        An agentix skill file placed directly under AgentixSkills folder (depth 1)
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidAgentixSkillFileName
+    """
+    with pytest.raises(InvalidAgentixSkillFileName):
+        _validate(DUMMY_PACK_PATH / AGENTIX_SKILLS_DIR / "TestSkill.yml")
+
+
+def test_collection_file_valid():
+    """
+    Given:
+        A valid collection file in the new hierarchy: Collections/<name>/<name>.yml
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation passes
+    """
+    folder = "TestCollection"
+    _validate(DUMMY_PACK_PATH / COLLECTIONS_DIR / folder / f"{folder}.yml")
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "WrongName.yml",
+        "TestCollection.json",
+        "TestCollection.md",
+    ],
+)
+def test_collection_file_invalid(file_name: str):
+    """
+    Given:
+        An invalid collection file name
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidCollectionFileName
+    """
+    folder = "TestCollection"
+    with pytest.raises(InvalidCollectionFileName):
+        _validate(DUMMY_PACK_PATH / COLLECTIONS_DIR / folder / file_name)
+
+
+def test_collection_file_at_depth_one_invalid():
+    """
+    Given:
+        A collection file placed directly under Collections folder (depth 1)
+    When:
+        Running validate_path
+    Then:
+        Make sure the validation raises InvalidCollectionFileName
+    """
+    with pytest.raises(InvalidCollectionFileName):
+        _validate(DUMMY_PACK_PATH / COLLECTIONS_DIR / "TestCollection.yml")
+
+
+class TestAgentixActionsPathValidation:
+    """Tests for the AgentixActions path hierarchy validation.
+
+    The new (valid) hierarchy is:
+        Packs/<Pack>/AgentixActions/<ActionName>/<ActionName>.yml
+        Packs/<Pack>/AgentixActions/<ActionName>/<ActionName>_test.yml
+
+    The old (invalid) hierarchy is:
+        Packs/<Pack>/AgentixActions/<ActionName>.yml
+    """
+
+    def test_old_hierarchy_depth_one_file_fails(self, tmp_path: Path):
+        """
+        Given:
+            - A file directly under AgentixActions (old hierarchy).
+        When:
+            - Running _validate on the path.
+        Then:
+            - InvalidAgentixActionFileName is raised.
+        """
+        path = tmp_path / "Packs" / "Core" / "AgentixActions" / "CortexDummyAction.yml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+
+        with pytest.raises(InvalidAgentixActionFileName):
+            _validate(path)
+
+    def test_new_hierarchy_valid_action_file(self, tmp_path: Path):
+        """
+        Given:
+            - A file in the new hierarchy: AgentixActions/<ActionName>/<ActionName>.yml
+        When:
+            - Running _validate on the path.
+        Then:
+            - No exception is raised (path is valid).
+        """
+        path = (
+            tmp_path
+            / "Packs"
+            / "CommonScripts"
+            / "AgentixActions"
+            / "GetCaseExtraData"
+            / "GetCaseExtraData.yml"
+        )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+
+        # Should not raise any exception
+        _validate(path)
+
+    def test_new_hierarchy_valid_test_file(self, tmp_path: Path):
+        """
+        Given:
+            - A test file in the new hierarchy: AgentixActions/<ActionName>/<ActionName>_test.yml
+        When:
+            - Running _validate on the path.
+        Then:
+            - No exception is raised (path is valid).
+        """
+        path = (
+            tmp_path
+            / "Packs"
+            / "CommonScripts"
+            / "AgentixActions"
+            / "GetCaseExtraData"
+            / "GetCaseExtraData_test.yml"
+        )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+
+        # Should not raise any exception
+        _validate(path)
+
+    def test_new_hierarchy_mismatched_file_name_fails(self, tmp_path: Path):
+        """
+        Given:
+            - A file in a subfolder under AgentixActions but with a name that doesn't match the parent folder.
+        When:
+            - Running _validate on the path.
+        Then:
+            - InvalidAgentixActionFileName is raised.
+        """
+        path = (
+            tmp_path
+            / "Packs"
+            / "CommonScripts"
+            / "AgentixActions"
+            / "GetCaseExtraData"
+            / "WrongName.yml"
+        )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+
+        with pytest.raises(InvalidAgentixActionFileName):
+            _validate(path)
+
+    def test_new_hierarchy_wrong_suffix_fails(self, tmp_path: Path):
+        """
+        Given:
+            - A file in the new hierarchy with a .json suffix instead of .yml.
+        When:
+            - Running _validate on the path.
+        Then:
+            - InvalidAgentixActionFileName is raised.
+        """
+        path = (
+            tmp_path
+            / "Packs"
+            / "CommonScripts"
+            / "AgentixActions"
+            / "GetCaseExtraData"
+            / "GetCaseExtraData.json"
+        )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+
+        with pytest.raises(InvalidAgentixActionFileName):
+            _validate(path)

@@ -38,6 +38,8 @@ class _StrictList(BaseStrictModel):
     truncated: Optional[bool] = None
     type_: str = Field(alias="type")
     version: int
+    internal: Optional[bool] = None
+    source: Optional[str] = None
     marketplaces: Optional[List[MarketplaceVersions]] = None
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 

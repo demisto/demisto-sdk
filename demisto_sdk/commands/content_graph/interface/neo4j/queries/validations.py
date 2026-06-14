@@ -272,6 +272,9 @@ def _validate_duplicate_agentix_action_field(
     query = f"""// Returns Agentix Actions with duplicate {field_name}
 MATCH (a:{ContentType.AGENTIX_ACTION}), (b:{ContentType.AGENTIX_ACTION})
 WHERE a.{field_name} = b.{field_name}
+AND NOT coalesce(a.not_in_repository, false)
+AND NOT coalesce(b.not_in_repository, false)
+AND {is_target_available('a', 'b')}
 """
     if file_paths:
         query += f"AND a.path in {file_paths}"
@@ -456,9 +459,23 @@ def validate_playbook_tests_in_repository(
 def get_supported_modules_mismatch_dependencies(
     tx: Transaction,
     content_item_ids: List[str],
+    mandatory: bool = True,
 ):
+    """Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
+
+    Args:
+        tx (Transaction): The Neo4j transaction object.
+        content_item_ids (List[str]): List of content item IDs to check. If empty, all items are checked.
+        mandatory (bool): If True, checks mandatory (mandatorily:true) USES relationships.
+                          If False, checks non-mandatory (mandatorily:false) USES relationships.
+                          Defaults to True.
+
+    Returns:
+        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
+    """
+    mandatorily_value = "true" if mandatory else "false"
     query = f""" // Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
-    MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(contentItemB)
+    MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:{mandatorily_value}}}]->(contentItemB)
     WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItemA.object_id IN {content_item_ids})
       AND contentItemB.supportedModules IS NOT NULL AND 'platform' IN contentItemA.marketplaces
       AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {[sm.value for sm in PlatformSupportedModules]}) WHERE module IN contentItemB.supportedModules)
@@ -527,6 +544,7 @@ def get_supported_modules_mismatch_commands(
 def get_supported_modules_mismatch_content_items(
     tx: Transaction,
     content_item_ids: List[str],
+    mandatory: bool = True,
 ):
     """
     Fetches all content items that use at least one command with a module support incompatibility.
@@ -536,12 +554,16 @@ def get_supported_modules_mismatch_content_items(
     Args:
         tx (Transaction): The Neo4j transaction object.
         content_item_ids (List[str]): List of content item IDs to check. If empty, all items are checked.
+        mandatory (bool): If True, checks mandatory (mandatorily:true) USES relationships.
+                          If False, checks non-mandatory (mandatorily:false) USES relationships.
+                          Defaults to True.
 
     Returns:
         Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
     """
+    mandatorily_value = str(mandatory).lower()
     query = f"""
-    MATCH (content_item{{deprecated: false, is_test: false}})-[u:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()
+    MATCH (content_item{{deprecated: false, is_test: false}})-[u:{RelationshipType.USES}{{mandatorily:{mandatorily_value}}}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()
     WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR content_item.object_id IN {content_item_ids})
         AND 'platform' IN content_item.marketplaces
         // An incompatibility is only possible if the command has a specific module list.
@@ -624,3 +646,50 @@ def get_agentix_actions_using_content_items(
     """
     items = run_query(tx, query)
     return [item.get("agentix_action") for item in items]
+
+
+def validate_managed_playbook_dependencies(
+    tx: Transaction,
+    file_paths: List[str],
+    core_pack_ids: List[str],
+) -> Tuple[Dict[str, Neo4jRelationshipResult], Dict[str, str]]:
+    """Query graph to find playbooks in managed packs that use scripts or sub-playbooks
+    from packs that are neither core packs nor managed packs with the same source.
+
+    Args:
+        tx: The Transaction to contact the graph with.
+        file_paths: The file paths to filter playbooks. If empty, checks all playbooks.
+        core_pack_ids: List of core pack IDs.
+
+    Returns:
+        A tuple of:
+        - Dict mapping element IDs to Neo4jRelationshipResult for playbooks with invalid dependencies.
+        - Dict mapping element IDs to the pack source value.
+    """
+    query = f"""// Returns managed playbooks using scripts/sub-playbooks from packs with a different source
+MATCH (playbook:{ContentType.PLAYBOOK})-[:{RelationshipType.IN_PACK}]->(pack:{ContentType.PACK})
+WHERE pack.managed = true
+{f'AND playbook.path IN {file_paths}' if file_paths else ''}
+
+// Find dependencies via USES, excluding Commands
+MATCH (playbook)-[r:{RelationshipType.USES}]->(dep)
+WHERE NOT dep.content_type = "{ContentType.COMMAND}"
+
+// Check the dependency's pack is neither core nor same-source managed
+MATCH (dep)-[:{RelationshipType.IN_PACK}]->(dep_pack:{ContentType.PACK})
+WHERE NOT dep_pack.object_id IN {core_pack_ids}
+AND NOT (coalesce(dep_pack.managed, false) = true AND coalesce(dep_pack.source, "") = pack.source)
+
+RETURN playbook AS content_item_from, pack.source AS source, collect(r) AS relationships, collect(dep) AS nodes_to
+"""
+    results: Dict[str, Neo4jRelationshipResult] = {}
+    sources: Dict[str, str] = {}
+    for item in run_query(tx, query):
+        element_id = item.get("content_item_from").element_id
+        results[element_id] = Neo4jRelationshipResult(
+            node_from=item.get("content_item_from"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        sources[element_id] = item.get("source", "")
+    return results, sources

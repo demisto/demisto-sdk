@@ -26,7 +26,10 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import should_disable_multiprocessing, write_dict
-from demisto_sdk.commands.content_graph.commands.update import update_content_graph
+from demisto_sdk.commands.content_graph.commands.update import (
+    DEMISTO_SDK_DIFF_FILES_ENV,
+    update_content_graph,
+)
 from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -478,6 +481,30 @@ def group_by_language(
             )
         for api_module in api_modules:
             assert isinstance(api_module, Script)
+
+            # Rescue non-code files (e.g. README.md, description.md, images,
+            # json) that the user explicitly passed inside the ApiModule folder.
+            # The API-module-expansion block below only copies .py/.yml/.ps1
+            # files (via `add_related_files`) into the per-integration mapping,
+            # and the second loop in `group_by_language` skips the ApiModules
+            # pack entirely - so without this rescue, anything that isn't
+            # source code would be silently dropped before reaching pre-commit.
+            # Keys in `integrations_scripts_mapping` are `CONTENT_PATH /
+            # <relative path>` (see code_file_path above), so prefer that
+            # absolute form; also try the relative form as a fallback.
+            if api_module.path.is_absolute():
+                absolute_api_folder = api_module.path.parent
+                relative_api_folder = api_module.path.parent.relative_to(CONTENT_PATH)
+            else:
+                relative_api_folder = api_module.path.parent
+                absolute_api_folder = CONTENT_PATH / relative_api_folder
+            api_module_files: Set[Path] = integrations_scripts_mapping.get(
+                absolute_api_folder, set()
+            ) or integrations_scripts_mapping.get(relative_api_folder, set())
+            for f in api_module_files:
+                if f.suffix.lower() not in {".py", ".yml", ".ps1"}:
+                    infra_files.append(f)
+
             for imported_by in api_module.imported_by:
                 # we need to add the api module for each integration that uses it, so it will execute the api module check
                 integrations_scripts.add(imported_by)
@@ -615,6 +642,32 @@ def pre_commit_manager(
         logger.info("No files to run pre-commit on, skipping pre-commit.")
         return 0
 
+    # If DEMISTO_SDK_DIFF_FILES is set (e.g., by CI when using -i instead of -g),
+    # explicitly update the content graph with the packs derived from the actual
+    # files_to_run (which already have resolved relative paths starting with Packs/).
+    # We pass use_git=False to avoid also picking up all git-detected changes,
+    # and instead only update the specific packs from the input files.
+    if os.getenv(DEMISTO_SDK_DIFF_FILES_ENV):
+        # Extract unique pack IDs from the already-resolved files_to_run paths
+        diff_pack_ids = list(
+            {
+                file.parts[1]
+                for file in files_to_run
+                if len(file.parts) > 1 and file.parts[0] == PACKS_FOLDER
+            }
+        )
+        if diff_pack_ids:
+            logger.info(
+                f"Pre-Commit: {DEMISTO_SDK_DIFF_FILES_ENV} environment variable detected, "
+                f"updating content graph with packs: {sorted(diff_pack_ids)}"
+            )
+            with ContentGraphInterface() as graph:
+                update_content_graph(
+                    graph,
+                    use_git=False,
+                    packs_to_update=diff_pack_ids,
+                )
+
     skipped_hooks: set = SKIPPED_HOOKS
     skipped_hooks.update(set(skip_hooks or ()))
     if validate and "validate" in skipped_hooks:
@@ -680,6 +733,13 @@ def add_related_files(file: Path) -> Set[Path]:
             files_to_run.add(py_file_path)
         elif ps1_file_path.exists():
             files_to_run.add(ps1_file_path)
+
+        # Pull in the sibling README.md so README-targeting hooks
+        # (e.g. markdownlint-cli2 with `files: "^(.*/)?README\\.md$"`)
+        # fire whenever the integration/script manifest is touched.
+        readme_path = file.with_name("README.md")
+        if readme_path.exists():
+            files_to_run.add(readme_path)
 
     # Identifying test files
 

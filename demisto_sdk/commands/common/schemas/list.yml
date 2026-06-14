@@ -62,6 +62,10 @@ mapping:
   version:
     type: number
     required: true
+  internal:
+    type: bool # Hidden from UI and API
+  source:
+    type: str
 
   description:xsoar:
     type: str

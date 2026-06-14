@@ -12,6 +12,7 @@ from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
+from demisto_sdk.commands.content_graph.objects.collection import Collection
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.generic_definition import (
@@ -82,6 +83,7 @@ ContentTypes = Union[
     CaseLayoutRule,
     AgentixAction,
     AgentixAgent,
+    Collection,
 ]
 
 
@@ -93,6 +95,9 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     related_field = "supportedModules"
     is_auto_fixable = False
     related_file_type = [RelatedFileType.SCHEMA]
+    # Controls whether to check mandatory (True) or non-mandatory (False) USES relationships.
+    # Subclasses can override this to change the dependency type being validated.
+    mandatory_dependency: bool = True
 
     def get_missing_modules_by_dependency(self, content_item) -> dict[str, list[str]]:
         """Get missing modules for each dependency of a content item.
@@ -106,7 +111,6 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         logger.info(f"[GR109] Checking module compatibility for content item: {content_item.object_id}")
         missing_modules_by_dependency: dict[str, list[str]] = {}
         for dependency in content_item.uses:
-            logger.info(f"[GR109] Checking dependency: {dependency.content_item_to.object_id} for content item: {content_item.object_id}")
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
                 module
@@ -223,23 +227,26 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         logger.info("[GR109] Querying graph for content items with module mismatch dependencies")
         mismatched_dependencies = (
             self.graph.find_content_items_with_module_mismatch_dependencies(
-                target_content_item_ids
+                target_content_item_ids, self.mandatory_dependency
             )
         )
         logger.info(f"[GR109] Found {len(mismatched_dependencies)} items with mismatched dependencies")
 
         logger.info("[GR109] Querying graph for content items with module mismatch commands")
-        mismatched_commands = (
-            self.graph.find_content_items_with_module_mismatch_commands(
-                target_content_item_ids
+        if self.mandatory_dependency:
+            mismatched_commands = (
+                self.graph.find_content_items_with_module_mismatch_commands(
+                    target_content_item_ids
+                )
             )
-        )
-        logger.info(f"[GR109] Found {len(mismatched_commands)} items with mismatched commands")
+            logger.info(f"[GR109] Found {len(mismatched_commands)} items with mismatched commands")
+        else:
+            mismatched_commands = []
 
         logger.info("[GR109] Querying graph for content items with module mismatch content items")
         mismatched_content_items = (
             self.graph.find_content_items_with_module_mismatch_content_items(
-                target_content_item_ids
+                target_content_item_ids, self.mandatory_dependency
             )
         )
         logger.info(f"[GR109] Found {len(mismatched_content_items)} items with mismatched content items")
@@ -299,10 +306,13 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                     commands_with_missing_modules
                 )
                 logger.info(f"[GR109] Adding validation result for {invalid_item.object_id}: {formatted_message}")
+                dependency_type = (
+                    "mandatory" if self.mandatory_dependency else "non-mandatory"
+                )
                 results.append(
                     ValidationResult(
                         validator=self,
-                        message=f"Module compatibility issue detected: {formatted_message}. Make sure the commands used are supported by the same modules as the content item.",
+                        message=f"Module compatibility issue detected for {dependency_type} dependency: {formatted_message}. Make sure the commands used are supported by the same modules as the content item.",
                         content_object=invalid_item,
                     )
                 )

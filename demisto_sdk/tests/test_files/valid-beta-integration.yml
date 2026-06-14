@@ -2,6 +2,7 @@ category: Messaging
 commonfields:
   id: Telegram
   version: -1
+provider: Telegram
 configuration:
 - display: API Token
   name: token

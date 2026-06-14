@@ -776,6 +776,7 @@ class TestParsersAndModels:
         )
         assert model.is_fetch_events is False
         assert model.is_fetch_assets is True
+        assert model.internal is False
 
     def test_unified_integration_parser(self, pack: Pack):
         """
@@ -1013,6 +1014,7 @@ class TestParsersAndModels:
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
         assert model.type == "plain_text"
+        assert model.internal is False
 
     def test_incoming_mapper_parser(self, pack: Pack):
         """
@@ -1249,6 +1251,7 @@ class TestParsersAndModels:
             expected_description="test test2 test3\n   - test4 ",
         )
         assert not model.is_test
+        assert model.internal is False
 
     def test_report_parser(self, pack: Pack):
         """
@@ -1328,6 +1331,7 @@ class TestParsersAndModels:
         assert model.tags == ["transformer"]
         assert not model.is_test
         assert not model.skip_prepare
+        assert model.internal is False
 
     @pytest.mark.parametrize(
         "raw_value, expected_value",
@@ -1438,6 +1442,8 @@ class TestParsersAndModels:
             expected_fromversion="6.10.0",
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
+        assert model.grouping_element == ""
+        assert model.is_auto_enabled is False
 
     def test_layout_rule_parser(self, pack: Pack):
         """
@@ -1879,6 +1885,8 @@ class TestParsersAndModels:
             expected_content_items=expected_content_items,
             expected_deprecated=False,
         )
+        assert model.source == ""
+        assert model.managed is False
 
     def test_repo_parser(self, mocker, repo: Repo):
         """

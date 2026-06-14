@@ -18,6 +18,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DEPRECATED_DYNAMIC_MODEL,
     DESCRIPTION_DYNAMIC_MODEL,
     ID_DYNAMIC_MODEL,
+    IS_ARRAY_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
     BaseStrictModel,
@@ -75,6 +76,7 @@ Argument = create_model(
         DEPRECATED_DYNAMIC_MODEL,
         DEFAULT_DYNAMIC_MODEL,
         HIDDEN_MARKETPLACE_V2_DYNAMIC_MODEL,
+        IS_ARRAY_DYNAMIC_MODEL,
     ),
 )
 
@@ -246,6 +248,7 @@ class AgentixBase(BaseStrictModel):
     name: str
     description: str
     disabled: bool = False
+    internal: Optional[bool] = None
     from_version: Optional[str] = Field(None, alias="fromversion")
     to_version: Optional[str] = Field(None, alias="toversion")
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None

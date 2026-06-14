@@ -116,6 +116,8 @@ class TestPlaybookRunner:
         Get all pack test playbooks
         """
         full_path = f"{folder_path}/TestPlaybooks"
+        if not Path(full_path).exists():
+            return []
         list_test_playbooks_files = os.listdir(full_path)
         list_test_playbooks_files = [
             f"{full_path}/{tpb}" for tpb in list_test_playbooks_files
@@ -165,16 +167,19 @@ class TestPlaybookRunner:
         status_code = SUCCESS_RETURN_CODE
         logger.info(
             f"<green>Waiting for the test playbook to finish running.. \n"
-            f"To see the test playbook run in real-time please go to : {work_plan_link}</green>"
+            f"To see the test playbook run in real-time please go to : {work_plan_link}\n"
+            f"Or for the web console: {work_plan_link.replace('/#/', '/').replace('//api-', '//')}</green>"
         )
 
         elapsed_time = 0
         start_time = time.time()
 
+        time.sleep(1)
+
         while elapsed_time < self.timeout:
             test_playbook_result = self.get_test_playbook_results_dict(incident_id)
             if test_playbook_result["state"] == "inprogress":
-                time.sleep(10)
+                time.sleep(6)
                 elapsed_time = int(time.time() - start_time)
             else:  # the test playbook has finished running
                 break
@@ -235,7 +240,7 @@ class TestPlaybookRunner:
             raise e
 
         logger.info(
-            f"<green>The test playbook: {self.test_playbook_path} was triggered successfully.</green>"
+            f"<green>The test playbook: {test_playbook_id} was triggered successfully.</green>"
         )
         return response.id
 

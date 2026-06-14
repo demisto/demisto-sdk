@@ -105,6 +105,7 @@ class TestPrepareContentIntegration:
             "display": name,
             "description": description,
             "category": "category",
+            "provider": name,
             "script": {
                 "type": "python",
                 "subtype": "python3",

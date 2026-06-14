@@ -59,7 +59,17 @@ class ContentDTO(BaseModel):
         zip: bool = True,
         packs_to_dump: Optional[list] = None,
         output_stem: str = "content_packs",  # without extension
+        **kwargs,
     ):
+        """Dumps all (or selected) packs to ``dir``.
+
+        Args:
+            **kwargs: Optional flags forwarded to ``Pack.dump``. The only
+                upload-specific flag currently recognized is
+                ``strip_internal`` (set by the ``demisto-sdk upload`` flow
+                via ``zip_multiple_packs``); artifact builds and other
+                consumers do not pass it.
+        """
         dir.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Got packs to dump: {packs_to_dump}")
         packs_to_dump = (
@@ -77,9 +87,16 @@ class ContentDTO(BaseModel):
         )
         start_time = time.time()
         if USE_MULTIPROCESSING:
+            # Pool.starmap can't forward **kwargs, so we rebuild the args
+            # tuple including only positional arguments. ``Pack.dump`` accepts
+            # ``**kwargs`` (e.g. ``strip_internal``, ``tpb``), so we pass them
+            # via ``functools.partial`` instead.
+            from functools import partial
+
+            dump_fn = partial(Pack.dump, **kwargs)
             with Pool(processes=cpu_count()) as pool:
                 pool.starmap(
-                    Pack.dump,
+                    dump_fn,
                     (
                         (pack, dir / pack.path.name, marketplace)
                         for pack in packs_to_dump
@@ -88,7 +105,11 @@ class ContentDTO(BaseModel):
 
         else:
             for pack in packs_to_dump:
-                pack.dump(dir / pack.path.name, marketplace)
+                pack.dump(
+                    dir / pack.path.name,
+                    marketplace,
+                    **kwargs,
+                )
 
         time_taken = time.time() - start_time
         logger.debug(f"Repository dump ended. Took {time_taken} seconds")

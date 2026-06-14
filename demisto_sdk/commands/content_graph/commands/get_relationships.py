@@ -234,11 +234,12 @@ def log_record(
             if path["mandatorily"] is not None
             else ""
         )
-        logger.debug(
+        logger.debug(  # noqa: PLE1205
+            "{}",
             f"<yellow>Found a {relationship} path{mandatorily}"
             f"{' from ' if is_source else ' to '}"
             f"{record['filepath']}</yellow>\n"
-            f"{path_to_str(relationship, path['path'])}\n"
+            f"{path_to_str(relationship, path['path'])}\n",
         )
 
 

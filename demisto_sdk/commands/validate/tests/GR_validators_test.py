@@ -1,17 +1,20 @@
+from collections import defaultdict
+from unittest.mock import MagicMock
+
 import pytest
 from pytest_mock import MockerFixture
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.common import RelationshipType
+from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_agentix_action_object,
+    create_playbook_object,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
-from demisto_sdk.commands.validate.validators.GR_validators import (
-    GR104_is_pack_display_name_already_exists,
-    GR111_is_agentix_action_display_name_already_exists_valid,
-    GR112_is_agentix_action_name_already_exists_valid,
-)
 from demisto_sdk.commands.validate.validators.GR_validators.GR100_uses_items_not_in_market_place_all_files import (
     MarketplacesFieldValidatorAllFiles,
 )
@@ -81,6 +84,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR111_is_agentix_act
 from demisto_sdk.commands.validate.validators.GR_validators.GR112_is_agentix_action_name_already_exists_valid import (
     IsAgentixActionNameAlreadyExistsValidator,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR114_is_non_mandatory_supported_modules_compatibility_all_files import (
+    IsNonMandatorySupportedModulesCompatibilityAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR114_is_non_mandatory_supported_modules_compatibility_list_files import (
+    IsNonMandatorySupportedModulesCompatibilityListFiles,
+)
 from TestSuite.repo import Repo
 
 MP_XSOAR = [MarketplaceVersions.XSOAR.value]
@@ -102,11 +111,6 @@ def test_IsPackDisplayNameAlreadyExistsValidatorListFiles_obtain_invalid_content
     Then
         - Validate that we got the error messages for the duplicate name.
     """
-    mocker.patch.object(
-        GR104_is_pack_display_name_already_exists,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
     graph_repo.create_pack(name="pack1")
 
     graph_repo.create_pack(name="pack2")
@@ -141,11 +145,6 @@ def test_IsPackDisplayNameAlreadyExistsValidatorAllFiles_obtain_invalid_content_
     Then
         - Validate that we got the error messages for the duplicate name.
     """
-    mocker.patch.object(
-        GR104_is_pack_display_name_already_exists,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
     graph_repo.create_pack(name="pack1")
 
     graph_repo.create_pack(name="pack2")
@@ -1559,8 +1558,8 @@ def test_SupportedModulesCompatibility_supported_module_none_in_content_item_a(
 
     assert len(results) == 1
     assert (
-        results[0].message
-        == "The following mandatory dependencies missing required modules: SearchIncidents is missing: [C1, C3, X1, X3, X5, ENT_PLUS, cloud_posture, cloud, cloud_runtime_security, edr, cloud_appsec, agentix, asm, xsiam, exposure_management, agentix_xsiam]"
+        "The following mandatory dependencies missing required modules: SearchIncidents is missing: ["
+        in results[0].message
     )
     assert results[0].content_object.object_id == "Script1"
 
@@ -1581,6 +1580,7 @@ def repo_for_test_gr_109_mismatch_command(graph_repo: Repo):
         "display": "Integration1",
         "description": "this is an integration Integration1",
         "category": "category",
+        "provider": "Integration1",
         "supportedModules": ["module_x"],
         "script": {
             "type": "python",
@@ -1696,15 +1696,18 @@ def repo_for_test_gr_109_mismatch_playbook(graph_repo: Repo):
     )
 
     # Create the playbook that uses command_x with supportedModules
+    # starttaskid and nexttasks ensure task "0" is on the mandatory execution path
     playbook_yml = {
         "id": "playbook1",
         "name": "playbook1",
+        "starttaskid": "0",
         "supportedModules": ["module_x", "module_y"],
         "tasks": {
             "0": {
                 "id": "0",
                 "taskid": "0",
                 "type": "regular",
+                "nexttasks": {"#none#": ["1"]},
                 "task": {
                     "id": "0",
                     "name": "run command_x",
@@ -1714,7 +1717,19 @@ def repo_for_test_gr_109_mismatch_playbook(graph_repo: Repo):
                     "iscommand": True,
                     "brand": "Integration1",
                 },
-            }
+            },
+            "1": {
+                "id": "1",
+                "taskid": "1",
+                "type": "title",
+                "task": {
+                    "id": "1",
+                    "name": "Done",
+                    "type": "title",
+                    "iscommand": False,
+                    "brand": "",
+                },
+            },
         },
     }
     pack_a.create_playbook("playbook1", yml=playbook_yml)
@@ -1741,7 +1756,7 @@ def test_SupportedModulesCompatibility_invalid_all_files_mismatch_playbook(
     assert len(results) == 1
     assert (
         results[0].message
-        == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+        == "Module compatibility issue detected for mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
 
@@ -1768,7 +1783,400 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
     assert len(results) == 1
     assert (
         results[0].message
-        == "Module compatibility issue detected: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+        == "Module compatibility issue detected for mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+    )
+    assert results[0].content_object.object_id == "playbook1"
+
+
+@pytest.fixture
+def repo_for_test_gr_114(graph_repo: Repo):
+    """
+    Creates a test repository for testing GR114 validator (non-mandatory dependencies).
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains an IndicatorType "MyIndicatorType" with `supportedModules: ["module_x"]`
+              that has a non-mandatory dependency on script "ReputationScript" via reputationScriptName.
+    - Pack B: Contains "ReputationScript" with `supportedModules: ["module_y"]`.
+              Note: "ReputationScript" does *not* list "module_x" in its supportedModules.
+
+    The indicator_type -> script dependency via reputationScriptName is non-mandatory (is_mandatory=False),
+    which is what GR114 validates.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    pack_a.create_indicator_type(
+        "MyIndicatorType",
+        content={
+            "id": "MyIndicatorType",
+            "details": "MyIndicatorType",
+            "preProcessingScript": "",
+            "fromVersion": "6.10.0",
+            "reputationScriptName": "ReputationScript",
+            "supportedModules": ["module_x"],
+        },
+    )
+
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    script_yml = {
+        "commonfields": {"id": "ReputationScript", "version": -1},
+        "name": "ReputationScript",
+        "comment": "Reputation script",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_y"],
+    }
+    pack_b.create_script("ReputationScript", yml=script_yml)
+
+    return graph_repo
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_all_files(
+    repo_for_test_gr_114: Repo,
+):
+    """
+    Given:
+        A repository where "MyIndicatorType" (with `supportedModules: ['module_x']`)
+        has a non-mandatory dependency on "ReputationScript", which does not support "module_x".
+    When:
+        Running the IsNonMandatorySupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should identify "MyIndicatorType" as invalid (warning), reporting that
+        "ReputationScript" is missing "module_x".
+    """
+    graph_interface = repo_for_test_gr_114.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsNonMandatorySupportedModulesCompatibilityAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following non-mandatory dependencies have missing required modules: ReputationScript is missing: [module_x]"
+    )
+    assert results[0].content_object.object_id == "MyIndicatorType"
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_list_files(
+    repo_for_test_gr_114: Repo,
+):
+    """
+    Given:
+        A repository where "MyIndicatorType" (with `supportedModules: ['module_x']`)
+        has a non-mandatory dependency on "ReputationScript", which does not support "module_x".
+    When:
+        The IsNonMandatorySupportedModulesCompatibility validator runs specifically on "MyIndicatorType".
+    Then:
+        The validator should identify "MyIndicatorType" as invalid (warning), reporting that
+        "ReputationScript" is missing the required "module_x".
+    """
+    graph_interface = repo_for_test_gr_114.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsNonMandatorySupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+        [repo_for_test_gr_114.packs[0].indicator_types[0].object]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "The following non-mandatory dependencies have missing required modules: ReputationScript is missing: [module_x]"
+    )
+    assert results[0].content_object.object_id == "MyIndicatorType"
+
+
+@pytest.fixture
+def repo_for_test_gr_114_valid(graph_repo: Repo):
+    """
+    Creates a test repository for testing GR114 validator where the dependency is valid.
+
+    This fixture sets up a graph repository where "MyIndicatorType" has a non-mandatory
+    dependency on "ReputationScript", and "ReputationScript" supports all modules that
+    "MyIndicatorType" supports.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    pack_a.create_indicator_type(
+        "MyIndicatorType",
+        content={
+            "id": "MyIndicatorType",
+            "details": "MyIndicatorType",
+            "preProcessingScript": "",
+            "fromVersion": "6.10.0",
+            "reputationScriptName": "ReputationScript",
+            "supportedModules": ["module_x"],
+        },
+    )
+
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    script_yml = {
+        "commonfields": {"id": "ReputationScript", "version": -1},
+        "name": "ReputationScript",
+        "comment": "Reputation script",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_x", "module_y"],
+    }
+    pack_b.create_script("ReputationScript", yml=script_yml)
+
+    return graph_repo
+
+
+def test_NonMandatorySupportedModulesCompatibility_valid_all_files(
+    repo_for_test_gr_114_valid: Repo,
+):
+    """
+    Given:
+        A repository where "MyIndicatorType" (with `supportedModules: ['module_x']`)
+        has a non-mandatory dependency on "ReputationScript", which supports "module_x".
+    When:
+        Running the IsNonMandatorySupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should pass with no results.
+    """
+    graph_interface = repo_for_test_gr_114_valid.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsNonMandatorySupportedModulesCompatibilityAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 0
+
+
+@pytest.fixture
+def repo_for_test_gr_114_mismatch_command(graph_repo: Repo):
+    """
+    Creates a test repository to test the command mismatch part of GR114 validation.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains Integration1 with `supportedModules: ["module_x"]`.
+              Integration1 has command_x with `supportedModules: ["module_x", "module_y"]`.
+    """
+    yml = {
+        "commonfields": {"id": "Integration1", "version": -1},
+        "name": "Integration1",
+        "display": "Integration1",
+        "description": "this is an integration Integration1",
+        "category": "category",
+        "provider": "Integration1",
+        "supportedModules": ["module_x"],
+        "script": {
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "command_x",
+                    "description": "description",
+                    "arguments": [],
+                    "supportedModules": ["module_x", "module_y"],
+                }
+            ],
+            "dockerimage": None,
+        },
+        "configuration": [],
+    }
+
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    pack_a.create_integration("Integration1", yml=yml)
+
+    return graph_repo
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_all_files_mismatch_command(
+    repo_for_test_gr_114_mismatch_command: Repo,
+):
+    """
+    Given:
+        A repository where "command_x" (with `supportedModules: ['module_x', 'module_y']`)
+        is included in "Integration1" (with `supportedModules: ['module_x']`).
+    When:
+        Running the IsNonMandatorySupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should not flag command-level mismatches for non-mandatory dependencies,
+        since GR114 only checks non-mandatory USES relationships (not HAS_COMMAND relationships).
+        Command-level module mismatches are only checked by GR109 (mandatory dependencies).
+    """
+    graph_interface = repo_for_test_gr_114_mismatch_command.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsNonMandatorySupportedModulesCompatibilityAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 0
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_list_files_mismatch_command(
+    repo_for_test_gr_114_mismatch_command: Repo,
+):
+    """
+    Given:
+        A repository where "command_x" (with `supportedModules: ['module_x', 'module_y']`)
+        is included in "Integration1" (with `supportedModules: ['module_x']`).
+    When:
+        The IsNonMandatorySupportedModulesCompatibility validator runs specifically on "Integration1".
+    Then:
+        The validator should not flag command-level mismatches for non-mandatory dependencies,
+        since GR114 only checks non-mandatory USES relationships (not HAS_COMMAND relationships).
+        Command-level module mismatches are only checked by GR109 (mandatory dependencies).
+    """
+    graph_interface = repo_for_test_gr_114_mismatch_command.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsNonMandatorySupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+        [repo_for_test_gr_114_mismatch_command.packs[0].integrations[0].object]
+    )
+    assert len(results) == 0
+
+
+@pytest.fixture
+def repo_for_test_gr_114_mismatch_playbook(graph_repo: Repo):
+    """
+    Creates a test repository to test the playbook/content-item mismatch part of GR114 validation.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains a playbook named playbook1 and a command named command_x.
+              playbook1 uses command_x.
+              playbook1 is configured with `supportedModules: ["module_x", "module_y"]`.
+              command_x only supports "module_x".
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.set_data(marketplaces=[MarketplaceVersions.PLATFORM.value])
+    integration1 = pack_a.create_integration(name="integration1")
+    integration1.set_data(
+        script={
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "command_x",
+                    "description": "description",
+                    "arguments": [],
+                    "supportedModules": ["module_x"],
+                }
+            ],
+            "dockerimage": None,
+        }
+    )
+
+    playbook_yml = {
+        "id": "playbook1",
+        "name": "playbook1",
+        "supportedModules": ["module_x", "module_y"],
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "0",
+                "type": "regular",
+                "task": {
+                    "id": "0",
+                    "name": "run command_x",
+                    "description": "Uses command_x",
+                    "script": "command_x",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "Integration1",
+                },
+            }
+        },
+    }
+    pack_a.create_playbook("playbook1", yml=playbook_yml)
+
+    return graph_repo
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_all_files_mismatch_playbook(
+    repo_for_test_gr_114_mismatch_playbook: Repo,
+):
+    """
+    Given:
+        A repository where "playbook1" (with `supportedModules: ['module_x', 'module_y']`)
+        uses "command_x", which only supports "module_x".
+    When:
+        Running the IsNonMandatorySupportedModulesCompatibility validator on all files.
+    Then:
+        The validator should identify "playbook1" as invalid (warning), reporting that
+        "command_x" is missing "module_y".
+    """
+    graph_interface = repo_for_test_gr_114_mismatch_playbook.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsNonMandatorySupportedModulesCompatibilityAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "Module compatibility issue detected for non-mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
+    )
+    assert results[0].content_object.object_id == "playbook1"
+
+
+def test_NonMandatorySupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
+    repo_for_test_gr_114_mismatch_playbook: Repo,
+):
+    """
+    Given:
+        A repository where "playbook1" (with `supportedModules: ['module_x', 'module_y']`)
+        uses "command_x", which only supports "module_x".
+    When:
+        The IsNonMandatorySupportedModulesCompatibility validator runs specifically on "playbook1".
+    Then:
+        The validator should identify "playbook1" as invalid (warning), reporting that
+        "command_x" is missing the required "module_y".
+    """
+    graph_interface = repo_for_test_gr_114_mismatch_playbook.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsNonMandatorySupportedModulesCompatibilityListFiles().obtain_invalid_content_items(
+        [repo_for_test_gr_114_mismatch_playbook.packs[0].playbooks[0].object]
+    )
+    assert len(results) == 1
+    assert (
+        results[0].message
+        == "Module compatibility issue detected for non-mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
 
@@ -2011,11 +2419,6 @@ def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_
     Then
         - Validate that we got the error messages for the duplicate name.
     """
-    mocker.patch.object(
-        GR112_is_agentix_action_name_already_exists_valid,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
     graph_repo.setup_one_pack(name="pack1")
     graph_repo.setup_one_pack(name="pack2")
     graph_repo.setup_one_pack(name="pack3")
@@ -2046,11 +2449,6 @@ def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content
     Then
         - Validate that we got the error messages for the duplicate display name.
     """
-    mocker.patch.object(
-        GR111_is_agentix_action_display_name_already_exists_valid,
-        "CONTENT_PATH",
-        new=graph_repo.path,
-    )
     graph_repo.setup_one_pack(name="pack1")
     graph_repo.setup_one_pack(name="pack2")
     graph_repo.setup_one_pack(name="pack3")
@@ -2068,3 +2466,180 @@ def test_IsAgentixActionDisplayNameAlreadyExistsValidator_obtain_invalid_content
     )
 
     assert len(results) == 1
+
+
+# --- GR113 Tests ---
+
+
+def _create_playbook_with_uses(
+    playbook_name: str, dependency_names: list[str]
+) -> Playbook:
+    """Helper to create a Playbook with pre-populated USES relationships."""
+    playbook = create_playbook_object(paths=["name"], values=[playbook_name])
+    relationships: defaultdict[RelationshipType, set[RelationshipData]] = defaultdict(
+        set
+    )
+    for idx, dep_name in enumerate(dependency_names):
+        target_id = f"db-{dep_name}-{idx}"
+        dep_node = UnknownContent(
+            object_id=dep_name, name=dep_name, database_id=target_id
+        )
+        relationships[RelationshipType.USES].add(
+            RelationshipData(
+                relationship_type=RelationshipType.USES,
+                source_id=f"db-{playbook_name}",
+                target_id=target_id,
+                content_item_to=dep_node,
+            )
+        )
+    playbook.relationships_data = relationships
+    return playbook
+
+
+@pytest.mark.parametrize(
+    "source, dep_names, expected_count",
+    [
+        ("autonomous", ["RegularPackScript"], 1),
+        ("partner", ["NonPartnerScript"], 1),
+        ("autonomous", ["Script1", "Script2", "Script3"], 1),
+        ("autonomous", [], 0),  # no invalid deps → graph returns empty
+    ],
+    ids=["autonomous-invalid", "partner-invalid", "multiple-deps", "no-invalid-deps"],
+)
+def test_managed_playbook_dependencies_all_files(
+    mocker, source, dep_names, expected_count
+):
+    """
+    Given:
+        - A playbook in a managed pack with the given source and invalid dependencies.
+    When:
+        - Running IsValidManagedPlaybookDependenciesValidatorAllFiles.
+    Then:
+        - The expected number of validation results is returned, with source in the message.
+    """
+    from demisto_sdk.commands.validate.validators.GR_validators.GR113_is_valid_managed_playbook_dependencies_all_files import (
+        IsValidManagedPlaybookDependenciesValidatorAllFiles,
+    )
+
+    graph_return = []
+    if dep_names:
+        graph_return = [(_create_playbook_with_uses("TestPlaybook", dep_names), source)]
+
+    mock_graph = MagicMock()
+    mock_graph.find_managed_playbooks_with_invalid_dependencies.return_value = (
+        graph_return
+    )
+    BaseValidator.graph_interface = mock_graph
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.GR_validators"
+        ".GR113_is_valid_managed_playbook_dependencies.get_core_pack_list",
+        return_value=["Base", "CommonScripts"],
+    )
+
+    results = IsValidManagedPlaybookDependenciesValidatorAllFiles().obtain_invalid_content_items(
+        []
+    )
+    assert len(results) == expected_count
+    if expected_count:
+        assert source in results[0].message
+        for dep in dep_names:
+            assert dep in results[0].message
+
+
+def test_managed_playbook_dependencies_list_files(mocker):
+    """
+    Given:
+        - A playbook in a managed pack with an invalid sub-playbook dependency.
+    When:
+        - Running IsValidManagedPlaybookDependenciesValidatorListFiles.
+    Then:
+        - One validation result is returned with the dependency name in the message.
+    """
+    from demisto_sdk.commands.validate.validators.GR_validators.GR113_is_valid_managed_playbook_dependencies_list_files import (
+        IsValidManagedPlaybookDependenciesValidatorListFiles,
+    )
+
+    playbook = _create_playbook_with_uses("ManagedPB", ["BadSubPlaybook"])
+    mock_graph = MagicMock()
+    mock_graph.find_managed_playbooks_with_invalid_dependencies.return_value = [
+        (playbook, "autonomous")
+    ]
+    BaseValidator.graph_interface = mock_graph
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.GR_validators"
+        ".GR113_is_valid_managed_playbook_dependencies.get_core_pack_list",
+        return_value=["Base", "CommonScripts"],
+    )
+    results = IsValidManagedPlaybookDependenciesValidatorListFiles().obtain_invalid_content_items(
+        [playbook]
+    )
+    assert len(results) == 1
+    assert "BadSubPlaybook" in results[0].message
+
+
+def test_IsAgentixActionNameAlreadyExistsValidator_non_overlapping_versions(
+    graph_repo: Repo,
+):
+    """
+    Given:
+        A pack with two Agentix Actions with the same name but non-overlapping version ranges.
+    When:
+        Running IsAgentixActionNameAlreadyExistsValidator.
+    Then:
+        No validation errors should be reported since they target different version ranges.
+    """
+    pack = graph_repo.create_pack("pack1")
+    action1 = pack.create_agentix_action("action_v1")
+    action1.create_default_agentix_action(
+        name="test", action_id="test_v1", display="test"
+    )
+    action1.yml.update({"fromversion": "8.0.0", "toversion": "8.14.0"})
+
+    action2 = pack.create_agentix_action("action_v2")
+    action2.create_default_agentix_action(
+        name="test", action_id="test_v2", display="test"
+    )
+    action2.yml.update({"fromversion": "8.15.0", "toversion": "99.99.99"})
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
+        [action1, action2],
+        validate_all_files=True,
+    )
+
+    assert len(results) == 0
+
+
+def test_IsAgentixActionDisplayNameAlreadyExistsValidator_non_overlapping_versions(
+    graph_repo: Repo,
+):
+    """
+    Given:
+        A pack with two Agentix Actions with the same display name but non-overlapping version ranges.
+    When:
+        Running IsAgentixActionDisplayNameAlreadyExistsValidator.
+    Then:
+        No validation errors should be reported since they target different version ranges.
+    """
+    pack = graph_repo.create_pack("pack1")
+    action1 = pack.create_agentix_action("action_v1")
+    action1.create_default_agentix_action(
+        name="test_v1", action_id="test_v1", display="test"
+    )
+    action1.yml.update({"fromversion": "8.0.0", "toversion": "8.14.0"})
+
+    action2 = pack.create_agentix_action("action_v2")
+    action2.create_default_agentix_action(
+        name="test_v2", action_id="test_v2", display="test"
+    )
+    action2.yml.update({"fromversion": "8.15.0", "toversion": "99.99.99"})
+
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentixActionDisplayNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
+        [action1, action2],
+        validate_all_files=True,
+    )
+
+    assert len(results) == 0

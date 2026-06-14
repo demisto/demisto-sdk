@@ -40,6 +40,8 @@ class RelatedFileType(Enum):
     AUTHOR_IMAGE = "author_image_file"
     RELEASE_NOTE = "release_note"
     VERSION_CONFIG = "version_config"
+    SYSTEM_INSTRUCTIONS = "system_instructions"
+    SKILL_CONTENT = "skill_content"
 
 
 class RelatedFile(ABC):
@@ -270,6 +272,40 @@ class DescriptionRelatedFile(TextFiles):
         return [
             self.main_file_path.parent
             / f"{self.main_file_path.parts[-2]}_description.md"
+        ]
+
+
+class SystemInstructionsRelatedFile(TextFiles):
+    """Related file for AgentixAgent system instructions."""
+
+    file_type = RelatedFileType.SYSTEM_INSTRUCTIONS
+
+    def get_optional_paths(self) -> List[Path]:
+        """
+        Get the path to the system instructions file.
+
+        The file should be named: <agent_folder_name>_systeminstructions.md
+        """
+        return [
+            self.main_file_path.parent
+            / f"{self.main_file_path.parts[-2]}_systeminstructions.md"
+        ]
+
+
+class SkillContentRelatedFile(TextFiles):
+    """Related file for AgentixSkill body content (<SkillName>_skill.md)."""
+
+    file_type = RelatedFileType.SKILL_CONTENT
+
+    def get_optional_paths(self) -> List[Path]:
+        """
+        Get the path to the skill body file.
+
+        The file should be named ``<skill_folder_name>_skill.md`` and live next
+        to the skill's ``<SkillName>.yml`` schema file.
+        """
+        return [
+            self.main_file_path.parent / f"{self.main_file_path.parts[-2]}_skill.md"
         ]
 
 

@@ -43,6 +43,11 @@ class Task(BaseModel):
     brand: Optional[str] = None
     issystemtask: Optional[bool] = None
     clonedfrom: Optional[str] = None
+    aiTaskId: Optional[str] = None
+    displayLabel: Optional[str] = None
+    isResponse: Optional[bool] = None
+    requiresIntervention: Optional[bool] = None
+    isSubSection: Optional[bool] = None
     name_xsoar: Optional[str] = None
     name_marketplacev2: Optional[str] = None
     name_xpanse: Optional[str] = None
@@ -83,6 +88,11 @@ class Task(BaseModel):
             "brand": self.brand,
             "issystemtask": self.issystemtask,
             "clonedfrom": self.clonedfrom,
+            "aiTaskId": self.aiTaskId,
+            "displayLabel": self.displayLabel,
+            "isResponse": self.isResponse,
+            "requiresIntervention": self.requiresIntervention,
+            "isSubSection": self.isSubSection,
             "name_xsoar": self.name_xsoar,
             "name_marketplacev2": self.name_marketplacev2,
             "name_xpanse": self.name_xpanse,
@@ -176,9 +186,12 @@ class TaskConfig(BaseModel):
 class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[call-arg]
     version: Optional[int] = 0
     tasks: Dict[str, TaskConfig] = Field([], exclude=True)
+    internal: bool = Field(False)
+    source: str = Field("")
     quiet: bool = Field(False)
     tags: List[str] = Field([])
     tests: List[str] = Field([])
+    adopted: Optional[bool] = Field(None)
 
     def prepare_for_upload(
         self,
@@ -234,6 +247,7 @@ class BasePlaybook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ign
             .union(
                 {
                     "tags",
+                    "internal",
                 }
             )
         )

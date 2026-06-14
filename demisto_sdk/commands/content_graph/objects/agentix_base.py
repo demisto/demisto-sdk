@@ -10,3 +10,4 @@ class AgentixBase(ContentItem):
     description: str
     display_name: str
     disabled: bool = False
+    internal: bool = False

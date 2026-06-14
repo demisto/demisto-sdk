@@ -37,6 +37,9 @@ mapping:
   category:
     type: str
     required: true
+  provider:
+    type: str
+    required: false
   sectionOrder:
     type: seq
     sequence:
@@ -103,6 +106,8 @@ mapping:
         type: bool
       isfetchassets:
         type: bool
+      isfetchcredentials:
+        type: bool
       mcp:
         type: bool
       longRunning:
@@ -158,6 +163,10 @@ mapping:
     type: bool
   hidden:
     type: bool
+  internal:
+    type: bool # Hidden from UI and API
+  source:
+    type: str
   videos:
     type: seq
     sequence:

@@ -56,10 +56,12 @@ from requests.exceptions import HTTPError
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
     ASSETS_MODELING_RULES_DIR,
     CLASSIFIERS_DIR,
+    COLLECTIONS_DIR,
     CONF_JSON_FILE_NAME,
     CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
@@ -135,6 +137,7 @@ from demisto_sdk.commands.common.constants import (
     IdSetKeys,
     MarketplaceVersions,
     PathLevel,
+    PlatformSupportedModules,
     urljoin,
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
@@ -146,6 +149,9 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
+)
+from demisto_sdk.commands.common.handlers.xsoar_handler import (
+    JSONDecodeError,
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.string_to_bool import (
@@ -637,7 +643,11 @@ def get_file_details(
     if not file_content:
         return {}
     if full_file_path.endswith("json"):
-        file_details = json.loads(file_content)
+        try:
+            file_details = json.loads(file_content)
+        except JSONDecodeError:
+            logger.warning(f"{full_file_path} not valid json, trying YAML file types")
+            file_details = yaml.load(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
     elif full_file_path.endswith(".pack-ignore"):
@@ -1727,7 +1737,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     if path.suffix == ".json":
         if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES_CONFIG
-        elif LISTS_DIR in os.path.dirname(path):
+        elif LISTS_DIR in os.path.dirname(path) and not path.stem.endswith("_data"):
             return FileType.LISTS
         elif path.parent.name == JOBS_DIR:
             return FileType.JOB
@@ -1836,7 +1846,16 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.AGENTIX_ACTION
 
         elif AGENTIX_AGENTS_DIR in path.parts:
+            # Skip test files under AgentixAgents - they are not content items
+            if path.stem.endswith("_test"):
+                return None
             return FileType.AGENTIX_AGENT
+
+        elif AGENTIX_SKILLS_DIR in path.parts:
+            return FileType.AGENTIX_SKILL
+
+        elif COLLECTIONS_DIR in path.parts:
+            return FileType.COLLECTION
 
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
@@ -1900,10 +1919,12 @@ def find_type(
     from demisto_sdk.commands.content_graph.objects import (
         AgentixAction,
         AgentixAgent,
+        AgentixSkill,
         CaseField,
         CaseLayout,
         CaseLayoutRule,
         Classifier,
+        Collection,
         CorrelationRule,
         Dashboard,
         GenericDefinition,
@@ -2099,6 +2120,12 @@ def find_type(
 
     if AgentixAction.match(_dict, Path(path)):
         return FileType.AGENTIX_ACTION
+
+    if AgentixSkill.match(_dict, Path(path)):
+        return FileType.AGENTIX_SKILL
+
+    if Collection.match(_dict, Path(path)):
+        return FileType.COLLECTION
 
     return None
 
@@ -4778,3 +4805,46 @@ def should_disable_multiprocessing():
         "DEMISTO_SDK_DISABLE_MULTIPROCESSING", "false"
     ).lower() in ["true", "yes", "1"]
     return disable_multiprocessing
+
+
+def is_private_content_file(file, private_content_path: Path | None = None) -> bool:
+    if not private_content_path:
+        return False
+
+    file_path = Path(file)
+    if file_path.is_file() and file_path.is_relative_to(private_content_path):
+        return True
+
+    if not file_path.exists() and private_content_path:
+        return (private_content_path / file).is_file()
+
+    return False
+
+
+def get_content_item_supported_modules(item) -> set[str]:
+    """
+    Resolves the definitive list of supported modules for an item,
+    falling back to its pack's modules or the platform defaults.
+
+    Args:
+        item: A content item object that has marketplaces, supportedModules,
+              and optionally pack attributes.
+
+    Returns:
+        A set of supported module names, or empty set if not a platform item.
+    """
+    # Import here to avoid circular imports
+    from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+    if MarketplaceVersions.PLATFORM not in item.marketplaces:
+        return set()
+
+    default_modules = [sm.value for sm in PlatformSupportedModules]
+
+    modules = item.supportedModules
+    if not modules and not isinstance(item, Pack):
+        pack = getattr(item, "pack", None)
+        if pack is not None:
+            modules = pack.supportedModules
+
+    return set(modules or default_modules)

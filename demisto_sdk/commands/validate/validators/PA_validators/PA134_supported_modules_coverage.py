@@ -30,7 +30,7 @@ class PackSupportedModulesCoverageValidator(BaseValidator[ContentTypes]):
         "by at least one content item in the pack."
     )
     rationale = (
-        "If a module is declared in the pack's supportedModules but no uploadable "
+        "If a module is declared in the pack's supportedModules but there is no"
         "content item supports it, tenants licensed only for that module will receive an empty pack."
     )
     error_message = (

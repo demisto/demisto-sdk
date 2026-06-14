@@ -285,7 +285,7 @@ class DockerHubClient:
             headers: any custom headers
             params: query parameters
         """
-        logger.info(
+        logger.debug(
             f"dockerhub_client | do_registry_get_request | "
             f"registry_url={self.registry_api_url} | "
             f"is_custom_registry={self._is_custom_registry}"

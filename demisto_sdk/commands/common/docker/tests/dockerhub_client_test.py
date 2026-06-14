@@ -606,7 +606,7 @@ def test_is_custom_registry_flag_gar_in_gitlab_ci_is_false(monkeypatch):
     import demisto_sdk.commands.common.docker.dockerhub_client as dockerhub_client_module
 
     gar_path = (
-        "europe-west4-docker.pkg.dev/xdr-shared-services-prod-eu-01/"
+        "test.pkg.dev/test/"
         "xdr-docker-hub-virtual"
     )
     monkeypatch.setattr(dockerhub_client_module, "IS_CONTENT_GITLAB_CI", "true")

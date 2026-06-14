@@ -27,15 +27,15 @@ class PackSupportedModulesCoverageValidator(BaseValidator[ContentTypes]):
     error_code = "PA134"
     description = (
         "Validate that every supported module declared in the pack metadata is covered "
-        "by at least one individually-uploadable content item."
+        "by at least one uploadable content item."
     )
     rationale = (
-        "If a module is declared in the pack's supportedModules but no individually-uploadable "
+        "If a module is declared in the pack's supportedModules but no uploadable "
         "content item supports it, tenants licensed only for that module will receive an empty pack."
     )
     error_message = (
         "The following supported modules declared in the pack metadata are not covered by any "
-        "individually-uploadable content item: {0}. "
+        "uploadable content item: {0}. "
         "A tenant licensed only for these modules will receive an empty pack."
     )
     fix_message = (
@@ -82,7 +82,7 @@ class PackSupportedModulesCoverageValidator(BaseValidator[ContentTypes]):
 
     def _get_uncovered_modules(self, pack: ContentTypes) -> Set[str]:
         """Return the set of modules declared in the pack but not covered by
-        any individually-uploadable content item.
+        any uploadable content item.
 
         Returns an empty set when the pack is valid (or when the check is
         not applicable).

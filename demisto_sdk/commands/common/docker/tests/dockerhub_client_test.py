@@ -542,13 +542,13 @@ def test_get_image_tag_metadata_custom_registry_uses_registry_api(
     mock_docker_hub = mocker.patch.object(dockerhub_client, "do_docker_hub_get_request")
 
     response = dockerhub_client.get_image_tag_metadata(
-        "xsoar-custom/csirc-common", tag="1.0.0"
+        "xsoar-custom/python3", tag="1.0.0"
     )
 
     # The registry API path must be used for custom registries.
-    mock_get_digest.assert_called_once_with("xsoar-custom/csirc-common", tag="1.0.0")
+    mock_get_digest.assert_called_once_with("xsoar-custom/python3", tag="1.0.0")
     mock_get_blobs.assert_called_once_with(
-        "xsoar-custom/csirc-common", image_digest="sha256:abc123"
+        "xsoar-custom/python3", image_digest="sha256:abc123"
     )
     # The Docker Hub web API must NOT be used for custom registries.
     mock_docker_hub.assert_not_called()

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import ClassVar, Dict, Iterable, List, Set
 
+from demisto_sdk.commands.common.constants import PlatformSupportedModules
 from demisto_sdk.commands.common.tools import get_content_item_supported_modules
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.upload.constants import (
@@ -67,9 +68,17 @@ class PackSupportedModulesCoverageValidator(BaseValidator[ContentTypes]):
 
     def fix(self, content_item: ContentTypes) -> FixResult:
         uncovered = self._uncovered_modules_cache.get(content_item.name, set())
-        content_item.supportedModules = [
-            m for m in (content_item.supportedModules or []) if m not in uncovered
-        ]
+
+        # If the pack metadata doesn't explicitly declare modules,
+        # it means it implicitly supports ALL default platform modules.
+        if content_item.supportedModules is None:
+            base_modules = [sm.value for sm in PlatformSupportedModules]
+        else:
+            base_modules = content_item.supportedModules
+
+        # Keep only the modules that are actually covered
+        content_item.supportedModules = [m for m in base_modules if m not in uncovered]
+
         return FixResult(
             validator=self,
             message=self.fix_message.format(", ".join(sorted(uncovered))),

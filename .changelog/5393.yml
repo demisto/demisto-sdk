@@ -1,0 +1,4 @@
+changes:
+- description: Added Collection content item type.
+  type: internal
+pr_number: 5393

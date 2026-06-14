@@ -122,6 +122,8 @@ CASE_LAYOUTS_DIR = "CaseLayouts"
 CASE_FIELDS_DIR = "CaseFields"
 AGENTIX_ACTIONS_DIR = "AgentixActions"
 AGENTIX_AGENTS_DIR = "AgentixAgents"
+AGENTIX_SKILLS_DIR = "AgentixSkills"
+COLLECTIONS_DIR = "Collections"
 
 # NAMES OF ENTITIES
 
@@ -281,6 +283,8 @@ class FileType(StrEnum):
     VERSION_CONFIG = "version_config"
     AGENTIX_AGENT = "agentixagent"
     AGENTIX_ACTION = "agentixaction"
+    AGENTIX_SKILL = "agentixskill"
+    COLLECTION = "collection"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -323,6 +327,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CASE_LAYOUT: "Case Layouts",
     FileType.AGENTIX_AGENT: "Agents",
     FileType.AGENTIX_ACTION: "Actions",
+    FileType.AGENTIX_SKILL: "Skills",
+    FileType.COLLECTION: "Collections",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -367,6 +373,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.CASE_FIELD.value: CASE_FIELDS_DIR,
     FileType.CASE_LAYOUT.value: CASE_LAYOUTS_DIR,
     FileType.CASE_LAYOUT_RULE.value: CASE_LAYOUT_RULES_DIR,
+    FileType.COLLECTION.value: COLLECTIONS_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -432,6 +439,8 @@ CONTENT_ENTITIES_DIRS = [
     CASE_LAYOUTS_DIR,
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
+    COLLECTIONS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -1632,6 +1641,8 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.CASE_LAYOUT: "8.7.0",
     FileType.AGENTIX_ACTION: "8.12.0",
     FileType.AGENTIX_AGENT: "8.12.0",
+    FileType.AGENTIX_SKILL: "8.15.0",
+    FileType.COLLECTION: "8.15.0",
 }
 
 DEFAULT_PYTHON_VERSION = "3.11"

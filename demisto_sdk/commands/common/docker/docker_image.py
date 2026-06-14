@@ -24,7 +24,10 @@ class DockerImage(str):
     @classmethod
     def _get_dockerhub_client(cls):
         """Get or create the DockerHub client with the appropriate registry and credentials."""
-        if cls._dockerhub_client is None:
+        # Use a truthiness (emptiness) check rather than an identity check against
+        # None so the client is (re)created whenever the cached value is missing or
+        # otherwise falsy, not only when it is exactly None.
+        if not cls._dockerhub_client:
             username = os.getenv("DEMISTO_SDK_CR_USER", "")
             password = os.getenv("DEMISTO_SDK_CR_PASSWORD", "")
             cls._dockerhub_client = DockerHubClient(

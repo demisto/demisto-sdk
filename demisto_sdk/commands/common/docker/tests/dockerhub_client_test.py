@@ -561,7 +561,7 @@ def test_get_image_tag_metadata_default_registry_uses_docker_hub_api(
     """
     Given:
         - A DockerHubClient configured with the default Docker Hub registry
-          (_is_custom_registry is False, not running in GitLab CI)
+          (_is_custom_registry is False, not running in CI)
 
     When:
         - running get_image_tag_metadata
@@ -585,12 +585,12 @@ def test_get_image_tag_metadata_default_registry_uses_docker_hub_api(
     assert response == {"last_updated": "2023-01-01T00:00:00.000000Z"}
 
 
-def test_is_custom_registry_flag_gar_in_gitlab_ci_is_false(monkeypatch):
+def test_is_custom_registry_flag_gar_in_ci_is_false(monkeypatch):
     """
-    Regression test for the GitLab CI GAR 401 failure.
+    Regression test for the CI GAR 401 failure.
 
     Given:
-        - Running inside GitLab CI (IS_CONTENT_GITLAB_CI is truthy) with DOCKER_IO
+        - Running inside CI (IS_CONTENT_GITLAB_CI is truthy) with DOCKER_IO
           pointing at a Google Artifact Registry (GAR) proxy path, exactly as the
           DockerImage / DO104 callers construct the client
           (registry=DOCKER_REGISTRY_URL, which equals the GAR path in CI).
@@ -607,7 +607,7 @@ def test_is_custom_registry_flag_gar_in_gitlab_ci_is_false(monkeypatch):
 
     gar_path = (
         "test.pkg.dev/test/"
-        "xdr-docker-hub-virtual"
+        "test-docker-hub-virtual"
     )
     monkeypatch.setattr(dockerhub_client_module, "IS_CONTENT_GITLAB_CI", "true")
     monkeypatch.setattr(dockerhub_client_module, "DOCKER_IO", gar_path)
@@ -626,7 +626,7 @@ def test_is_custom_registry_flag_gar_in_gitlab_ci_is_false(monkeypatch):
 def test_is_custom_registry_flag_customer_registry_not_in_ci_is_true(monkeypatch):
     """
     Given:
-        - NOT running in GitLab CI (IS_CONTENT_GITLAB_CI is falsy) and a user-provided
+        - NOT running in CI (IS_CONTENT_GITLAB_CI is falsy) and a user-provided
           custom registry URL (e.g., a JFrog/Harbor host:port), as configured by a
           customer via DEMISTO_SDK_CONTAINER_REGISTRY.
 
@@ -653,7 +653,7 @@ def test_is_custom_registry_flag_customer_registry_not_in_ci_is_true(monkeypatch
 def test_is_custom_registry_flag_default_registry_is_false(monkeypatch):
     """
     Given:
-        - NOT running in GitLab CI and no custom registry provided (empty registry),
+        - NOT running in CI and no custom registry provided (empty registry),
           i.e., the local Docker Hub default scenario.
 
     When:

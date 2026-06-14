@@ -27,7 +27,7 @@ class PackSupportedModulesCoverageValidator(BaseValidator[ContentTypes]):
     error_code = "PA134"
     description = (
         "Validate that every supported module declared in the pack metadata is covered "
-        "by at least one uploadable content item."
+        "by at least one content item in the pack."
     )
     rationale = (
         "If a module is declared in the pack's supportedModules but no uploadable "

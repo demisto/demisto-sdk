@@ -1789,6 +1789,132 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
 
 
 @pytest.fixture
+def repo_for_test_gr_109_mismatch_playbook_mixed_commands(graph_repo: Repo):
+    """
+    Creates a test repository with a playbook that uses BOTH an incompatible and a
+    compatible command, to ensure GR109 reports only the genuinely incompatible one.
+
+    This fixture sets up a graph repository with the following structure:
+    - Pack A: Contains an integration with two commands:
+                * command_restricted -> supportedModules: ["module_x"]
+                * command_agnostic   -> no supportedModules (supports everything)
+              and a playbook (playbook1) with supportedModules: ["module_x", "module_y"]
+              that uses both commands on its mandatory execution path.
+              Only command_restricted is incompatible (missing "module_y").
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.set_data(marketplaces=[MarketplaceVersions.PLATFORM.value])
+    integration1 = pack_a.create_integration(name="integration1")
+    integration1.set_data(
+        script={
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "command_restricted",
+                    "description": "description",
+                    "arguments": [],
+                    "supportedModules": ["module_x"],
+                },
+                {
+                    "name": "command_agnostic",
+                    "description": "description",
+                    "arguments": [],
+                },
+            ],
+            "dockerimage": None,
+        }
+    )
+
+    playbook_yml = {
+        "id": "playbook1",
+        "name": "playbook1",
+        "starttaskid": "0",
+        "supportedModules": ["module_x", "module_y"],
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "0",
+                "type": "regular",
+                "nexttasks": {"#none#": ["1"]},
+                "task": {
+                    "id": "0",
+                    "name": "run command_restricted",
+                    "description": "Uses command_restricted",
+                    "script": "command_restricted",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "Integration1",
+                },
+            },
+            "1": {
+                "id": "1",
+                "taskid": "1",
+                "type": "regular",
+                "nexttasks": {"#none#": ["2"]},
+                "task": {
+                    "id": "1",
+                    "name": "run command_agnostic",
+                    "description": "Uses command_agnostic",
+                    "script": "command_agnostic",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "Integration1",
+                },
+            },
+            "2": {
+                "id": "2",
+                "taskid": "2",
+                "type": "title",
+                "task": {
+                    "id": "2",
+                    "name": "Done",
+                    "type": "title",
+                    "iscommand": False,
+                    "brand": "",
+                },
+            },
+        },
+    }
+    pack_a.create_playbook("playbook1", yml=playbook_yml)
+
+    return graph_repo
+
+
+def test_SupportedModulesCompatibility_reports_only_incompatible_commands(
+    repo_for_test_gr_109_mismatch_playbook_mixed_commands: Repo,
+):
+    """
+    Given:
+        A repository where "playbook1" (supportedModules ['module_x', 'module_y'])
+        uses two commands: "command_restricted" (supportedModules ['module_x'],
+        incompatible) and "command_agnostic" (no supportedModules, compatible).
+    When:
+        Running the IsSupportedModulesCompatibility validator on all files.
+    Then:
+        Only "command_restricted" is reported as incompatible; the compatible,
+        module-agnostic "command_agnostic" must NOT appear in the message.
+    """
+    graph_interface = (
+        repo_for_test_gr_109_mismatch_playbook_mixed_commands.create_graph()
+    )
+    BaseValidator.graph_interface = graph_interface
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    command_item_results = [
+        result
+        for result in results
+        if "incompatible commands" in result.message
+    ]
+    assert len(command_item_results) == 1
+    message = command_item_results[0].message
+    assert "command_restricted" in message
+    assert "command_agnostic" not in message
+    assert command_item_results[0].content_object.object_id == "playbook1"
+
+
+@pytest.fixture
 def repo_for_test_gr_114(graph_repo: Repo):
     """
     Creates a test repository for testing GR114 validator (non-mandatory dependencies).

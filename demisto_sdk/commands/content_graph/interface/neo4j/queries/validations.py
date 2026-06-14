@@ -559,7 +559,11 @@ def get_supported_modules_mismatch_content_items(
                           Defaults to True.
 
     Returns:
-        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
+        Tuple[Dict[str, Neo4jRelationshipResult], Dict[str, List[str]]]:
+            - A dictionary mapping content item element IDs to relationship results.
+            - A dictionary mapping content item element IDs to the list of
+              incompatible command names (only the commands that genuinely fail the
+              module compatibility check, not every command the item uses).
     """
     mandatorily_value = str(mandatory).lower()
     query = f"""
@@ -578,10 +582,18 @@ def get_supported_modules_mismatch_content_items(
             // supported modules is NOT in the command's supported module list.
             (any(module IN content_item.supportedModules WHERE NOT module IN r.supportedModules))
         )
-    RETURN content_item, collect(u) AS relationships, collect(c) AS nodes_to"""
+    // Only the command rows (c) that satisfied the WHERE clause above (i.e. the
+    // genuinely incompatible commands) are aggregated here, so both `nodes_to` and
+    // `incompatible_commands` contain exactly the incompatible commands - not every
+    // command the item uses.
+    RETURN content_item,
+           collect(u) AS relationships,
+           collect(c) AS nodes_to,
+           collect(DISTINCT c.object_id) AS incompatible_commands"""
 
     items = run_query(tx, query)
     results = {}
+    incompatible_commands_by_item: Dict[str, List[str]] = {}
     for item in items:
         node_from = item.get("content_item")
         relationships = item.get("relationships")
@@ -591,8 +603,12 @@ def get_supported_modules_mismatch_content_items(
             relationships,
             nodes_to,
         )
-        results[item.get("content_item").element_id] = neo_res
-    return results
+        element_id = item.get("content_item").element_id
+        results[element_id] = neo_res
+        incompatible_commands_by_item[element_id] = item.get(
+            "incompatible_commands", []
+        )
+    return results, incompatible_commands_by_item
 
 
 def get_agentix_actions_using_content_items(

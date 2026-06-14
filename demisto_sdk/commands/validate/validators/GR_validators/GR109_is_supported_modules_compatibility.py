@@ -161,29 +161,35 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         return missing_modules_by_item
 
     def get_commands_with_missing_modules_by_content_item(
-        self, item, commands_with_missing_modules_by_content_item: dict
+        self,
+        item,
+        commands_with_missing_modules_by_content_item: dict,
+        incompatible_commands: list[str],
     ):
-        """Get commands with missing modules for a content item.
+        """Populate the incompatible commands for a content item.
+
+        The set of genuinely module-incompatible commands is computed by the graph
+        query (``get_supported_modules_mismatch_content_items``) using the command's
+        HAS_COMMAND ``supportedModules`` - data that is not available on the loaded
+        content-item object. Therefore this method consumes the precomputed list of
+        incompatible command names rather than re-deriving it from ``item.uses``
+        (which would incorrectly flag every command the item uses, including
+        compatible, module-agnostic ones).
 
         Args:
-            item: The content item to check commands for
-            commands_with_missing_modules_by_content_item: Dictionary to populate with commands that have missing modules
-
-        Returns:
-            dict: A dictionary mapping content item IDs to lists of command IDs
+            item: The content item the incompatible commands belong to.
+            commands_with_missing_modules_by_content_item: Dictionary to populate with
+                commands that have missing modules, keyed by content item object_id.
+            incompatible_commands: The precomputed list of incompatible command names
+                for this content item, as returned by the graph query.
         """
         logger.info(f"[GR109] Getting commands with missing modules for content item: {item.object_id}")
-        for rel in item.uses:
-            command = rel.content_item_to
-            logger.info(f"[GR109] Checking command {command.object_id} for {item.object_id}")
-            # At this point, we assume the mismatch is already established
-            if item.object_id not in commands_with_missing_modules_by_content_item:
-                logger.info(f"[GR109] Missing modules for {item.object_id}: {command.supportedModules}")
-                commands_with_missing_modules_by_content_item[item.object_id] = []
-            # Add the command ID to the list
-            commands_with_missing_modules_by_content_item[item.object_id].append(
-                command.object_id
-            )
+        if not incompatible_commands:
+            logger.info(f"[GR109] No incompatible commands for {item.object_id}.")
+            return
+        commands_with_missing_modules_by_content_item[item.object_id] = list(
+            incompatible_commands
+        )
         logger.info(f"[GR109] Completed commands check for {item.object_id}. Commands with missing modules: {commands_with_missing_modules_by_content_item}")
 
     def format_error_messages(self, missing_modules_dict):
@@ -247,10 +253,11 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             mismatched_commands = []
 
         logger.info("[GR109] Querying graph for content items with module mismatch content items")
-        mismatched_content_items = (
-            self.graph.find_content_items_with_module_mismatch_content_items(
-                target_content_item_ids, self.mandatory_dependency
-            )
+        (
+            mismatched_content_items,
+            incompatible_commands_by_item,
+        ) = self.graph.find_content_items_with_module_mismatch_content_items(
+            target_content_item_ids, self.mandatory_dependency
         )
         logger.info(f"[GR109] Found {len(mismatched_content_items)} items with mismatched content items")
 
@@ -302,7 +309,9 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             logger.info(f"[GR109] Processing invalid item with mismatched content item: {invalid_item.object_id}")
             commands_with_missing_modules: dict[str, list[str]] = {}
             self.get_commands_with_missing_modules_by_content_item(
-                invalid_item, commands_with_missing_modules
+                invalid_item,
+                commands_with_missing_modules,
+                incompatible_commands_by_item.get(invalid_item.object_id, []),
             )
             if commands_with_missing_modules:
                 formatted_message = self.format_commands_error_message(

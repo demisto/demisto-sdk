@@ -2315,6 +2315,35 @@ def test_IsBasePackHasNoNewDependenciesValidatorAllFiles_mixed_deps_flags_only_r
     assert "TestOnlyPack" not in results[0].message
 
 
+def test_IsBasePackHasNoNewDependenciesValidatorListFiles_mixed_deps_flags_only_real(
+    repo_for_test_pa_133_mixed_dependencies: Repo,
+):
+    """
+    Test that PA133 flags real dependencies but excludes test-only dependencies when checking specific packs.
+    Given:
+        - A Base pack with:
+            - A playbook using a command from RealDepPack (real, non-allowed dependency).
+            - A test playbook using a command from TestOnlyPack (test-only dependency).
+
+    When:
+        - Running the IsBasePackHasNoNewDependenciesValidatorListFiles validator on the Base pack.
+
+    Then:
+        - The validator should return exactly 1 result flagging RealDepPack.
+        - TestOnlyPack should NOT appear in the results.
+    """
+    graph_interface = repo_for_test_pa_133_mixed_dependencies.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = (
+        IsBasePackHasNoNewDependenciesValidatorListFiles().obtain_invalid_content_items(
+            [repo_for_test_pa_133_mixed_dependencies.packs[0]]
+        )
+    )
+    assert len(results) == 1
+    assert "RealDepPack" in results[0].message
+    assert "TestOnlyPack" not in results[0].message
+
+
 # ---------------------------------------------------------------------------
 # PA134 – PackSupportedModulesCoverageValidator
 # ---------------------------------------------------------------------------

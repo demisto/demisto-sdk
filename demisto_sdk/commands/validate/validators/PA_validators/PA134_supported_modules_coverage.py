@@ -35,7 +35,7 @@ class PackSupportedModulesCoverageValidator(BaseValidator[ContentTypes]):
     )
     error_message = (
         "The following supported modules declared in the pack metadata are not covered by any "
-        "uploadable content item: {0}. "
+        "content item: {0}. "
         "A tenant licensed only for these modules will receive an empty pack."
     )
     fix_message = (

@@ -53,6 +53,12 @@ class LatestDockerImageTagValidator(DockerValidator[ContentTypes]):
         content_item: ContentTypes,
     ) -> FixResult:
         docker_image = content_item.docker_image
+        if docker_image.is_demistoprivate_repository:
+            return FixResult(
+                validator=self,
+                message=f"Cannot auto-fix docker-image {docker_image} — private image not on DockerHub",
+                content_object=content_item,
+            )
         try:
             latest_numeric_tag = docker_image.latest_tag
             message = self.fix_message.format(

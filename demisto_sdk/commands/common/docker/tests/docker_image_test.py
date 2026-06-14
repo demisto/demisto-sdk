@@ -69,3 +69,117 @@ def test_docker_image_parse_invalid_docker_images(docker_image: str):
     """
     with pytest.raises(ValueError):
         DockerImage(docker_image, raise_if_not_valid=True)
+
+
+class TestDemistoprivateRepository:
+    """Tests for demistoprivate repository support in DockerImage."""
+
+    def test_is_demistoprivate_repository(self):
+        """
+        Given:
+         - A docker image from the demistoprivate repository.
+
+        When:
+         - Checking is_demistoprivate_repository.
+
+        Then:
+         - Returns True.
+        """
+        image = DockerImage("demistoprivate/generic-sql:1.2.0.10029029")
+        assert image.is_demistoprivate_repository is True
+        assert image.is_demisto_repository is False
+
+    def test_is_not_demistoprivate_repository(self):
+        """
+        Given:
+         - A docker image from the demisto repository.
+
+        When:
+         - Checking is_demistoprivate_repository.
+
+        Then:
+         - Returns False.
+        """
+        image = DockerImage("demisto/python3:3.10.13.78960")
+        assert image.is_demistoprivate_repository is False
+        assert image.is_demisto_repository is True
+
+    @pytest.mark.parametrize(
+        "docker_image, expected",
+        [
+            ("demisto/python3:3.10.13.78960", True),
+            ("demistoprivate/generic-sql:1.2.0.10029029", True),
+            ("custom-repo/test-image:7.8.9", False),
+        ],
+    )
+    def test_is_trusted_repository(self, docker_image: str, expected: bool):
+        """
+        Given:
+         - Docker images from demisto, demistoprivate, and custom repositories.
+
+        When:
+         - Checking is_trusted_repository.
+
+        Then:
+         - Returns True for demisto and demistoprivate, False for others.
+        """
+        assert DockerImage(docker_image).is_trusted_repository is expected
+
+    def test_is_image_exist_returns_true_for_private(self):
+        """
+        Given:
+         - A demistoprivate docker image.
+
+        When:
+         - Checking is_image_exist.
+
+        Then:
+         - Returns True without querying DockerHub.
+        """
+        image = DockerImage("demistoprivate/generic-sql:1.2.0.10029029")
+        assert image.is_image_exist is True
+
+    def test_creation_date_returns_none_for_private(self):
+        """
+        Given:
+         - A demistoprivate docker image.
+
+        When:
+         - Accessing creation_date.
+
+        Then:
+         - Returns None without querying DockerHub.
+        """
+        image = DockerImage("demistoprivate/generic-sql:1.2.0.10029029")
+        assert image.creation_date is None
+
+    def test_latest_tag_returns_current_tag_for_private(self):
+        """
+        Given:
+         - A demistoprivate docker image with tag 1.2.0.10029029.
+
+        When:
+         - Accessing latest_tag.
+
+        Then:
+         - Returns the current tag as a Version.
+        """
+        from packaging.version import Version
+
+        image = DockerImage("demistoprivate/generic-sql:1.2.0.10029029")
+        assert image.latest_tag == Version("1.2.0.10029029")
+
+    def test_latest_docker_image_returns_self_for_private(self):
+        """
+        Given:
+         - A demistoprivate docker image.
+
+        When:
+         - Accessing latest_docker_image.
+
+        Then:
+         - Returns self (the same image).
+        """
+        image = DockerImage("demistoprivate/generic-sql:1.2.0.10029029")
+        assert image.latest_docker_image == image
+        assert str(image.latest_docker_image) == "demistoprivate/generic-sql:1.2.0.10029029"

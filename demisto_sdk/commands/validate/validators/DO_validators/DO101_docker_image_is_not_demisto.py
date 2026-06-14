@@ -21,7 +21,7 @@ class DockerImageIsNotDemistoValidator(DockerValidator[ContentTypes]):
         "The Docker image used in a content item should originate from Demisto's Docker repository. "
         "This ensures that the Docker image is trusted, maintained, and compatible with the Demisto platform. "
     )
-    error_message = "docker image {0} is not a valid docker-image, docker-image should start with demisto/"
+    error_message = "docker image {0} is not a valid docker-image, docker-image should start with demisto/ or demistoprivate/"
     related_field = "Docker image"
     is_auto_fixable = False
 
@@ -36,5 +36,5 @@ class DockerImageIsNotDemistoValidator(DockerValidator[ContentTypes]):
             )
             for content_item in content_items
             if not content_item.is_javascript
-            and not content_item.docker_image.is_demisto_repository
+            and not content_item.docker_image.is_trusted_repository
         ]

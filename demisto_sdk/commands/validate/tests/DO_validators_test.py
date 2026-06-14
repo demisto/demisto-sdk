@@ -562,3 +562,124 @@ def test_DockerImageIsNotNativeImageValidator_obtain_invalid_content_items():
         assert content_item.type == "python"
         assert content_item.docker_image == "demisto/py3-native"
         assert content_item.name == "NativeImageDockerIntegrationScript"
+
+
+def test_DockerImageIsNotDemistoValidator_allows_demistoprivate():
+    """
+    Given:
+     - 1 integration using demistoprivate/ docker image
+     - 1 script using demistoprivate/ docker image
+
+    When:
+     - Running the DockerImageIsNotDemistoValidator validator
+
+    Then:
+     - demistoprivate images are treated as trusted and pass validation
+    """
+    from demisto_sdk.commands.validate.validators.DO_validators.DO101_docker_image_is_not_demisto import (
+        DockerImageIsNotDemistoValidator,
+    )
+
+    content_items = [
+        create_integration_object(
+            paths=["script.dockerimage"],
+            values=["demistoprivate/generic-sql:1.2.0.10029029"],
+        ),
+        create_script_object(
+            paths=["dockerimage"],
+            values=["demistoprivate/generic-sql:1.2.0.10029029"],
+        ),
+    ]
+    results = DockerImageIsNotDemistoValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(results) == 0
+
+
+def test_DockerImageDoesNotExistInDockerhubValidator_skips_demistoprivate():
+    """
+    Given:
+     - 1 integration using demistoprivate/ docker image
+     - 1 script using demistoprivate/ docker image
+
+    When:
+     - Running the DockerImageDoesNotExistInDockerhubValidator validator
+
+    Then:
+     - demistoprivate images are skipped (not checked against DockerHub)
+    """
+    from demisto_sdk.commands.validate.validators.DO_validators.DO103_docker_image_does_not_exist_in_dockerhub import (
+        DockerImageDoesNotExistInDockerhubValidator,
+    )
+
+    content_items = [
+        create_integration_object(
+            paths=["script.dockerimage"],
+            values=["demistoprivate/generic-sql:1.2.0.10029029"],
+        ),
+        create_script_object(
+            paths=["dockerimage"],
+            values=["demistoprivate/generic-sql:1.2.0.10029029"],
+        ),
+    ]
+    results = (
+        DockerImageDoesNotExistInDockerhubValidator().obtain_invalid_content_items(
+            content_items
+        )
+    )
+    assert len(results) == 0
+
+
+def test_DockerImageTagIsNotOutdated_skips_demistoprivate():
+    """
+    Given:
+     - 1 integration using demistoprivate/ docker image
+     - 1 script using demistoprivate/ docker image
+
+    When:
+     - Running the DockerImageTagIsNotOutdated validator
+
+    Then:
+     - demistoprivate images are skipped (not checked for latest tag)
+    """
+    from demisto_sdk.commands.validate.validators.DO_validators.DO106_docker_image_is_latest_tag import (
+        DockerImageTagIsNotOutdated,
+    )
+
+    content_items = [
+        create_integration_object(
+            paths=["script.dockerimage"],
+            values=["demistoprivate/generic-sql:1.2.0.10029029"],
+        ),
+        create_script_object(
+            paths=["dockerimage"],
+            values=["demistoprivate/generic-sql:1.2.0.10029029"],
+        ),
+    ]
+    results = DockerImageTagIsNotOutdated().obtain_invalid_content_items(content_items)
+    assert len(results) == 0
+
+
+def test_LatestDockerImageTagValidator_fix_skips_demistoprivate():
+    """
+    Given:
+     - An integration using demistoprivate/ docker image with 'latest' tag.
+
+    When:
+     - Running the LatestDockerImageTagValidator fix.
+
+    Then:
+     - The fix returns a message indicating it cannot auto-fix private images.
+     - The docker image is not modified.
+    """
+    from demisto_sdk.commands.validate.validators.DO_validators.DO100_docker_image_tag_is_not_latest import (
+        LatestDockerImageTagValidator,
+    )
+
+    integration = create_integration_object(
+        paths=["script.dockerimage"],
+        values=["demistoprivate/generic-sql:latest"],
+    )
+    fix_result = LatestDockerImageTagValidator().fix(integration)
+    assert "Cannot auto-fix" in fix_result.message
+    assert integration.docker_image == "demistoprivate/generic-sql:latest"

@@ -94,12 +94,12 @@ class DockerImage(str):
         return self.repository == "demisto"
 
     @property
-    def is_demistoprivate_repository(self) -> bool:
-        return self.repository == "demistoprivate"
+    def is_demistoextended_repository(self) -> bool:
+        return self.repository == "demistoextended"
 
     @property
     def is_trusted_repository(self) -> bool:
-        return self.repository in {"demisto", "demistoprivate"}
+        return self.repository in {"demisto", "demistoextended"}
 
     @property
     def is_python3_image(self) -> bool:
@@ -111,7 +111,7 @@ class DockerImage(str):
 
     @property
     def creation_date(self) -> Optional[datetime]:
-        if self.is_demistoprivate_repository:
+        if self.is_demistoextended_repository:
             logger.debug(
                 f"Cannot query DockerHub for creation date of private image {self}"
             )
@@ -159,15 +159,15 @@ class DockerImage(str):
     def is_image_exist(self) -> bool:
         """
         Returns True if the docker-image exist in dockerhub.
-        For demistoprivate images, returns True (trusted, not on DockerHub).
+        For demistoextended images, returns True (trusted, not on DockerHub).
         """
-        if self.is_demistoprivate_repository:
+        if self.is_demistoextended_repository:
             return True
         return self._dockerhub_client.is_docker_image_exist(self.name, tag=self.tag)
 
     @property
     def latest_tag(self) -> Optional[Version]:
-        if self.is_demistoprivate_repository:
+        if self.is_demistoextended_repository:
             logger.debug(
                 f"Cannot query DockerHub for latest tag of private image {self}"
             )
@@ -178,8 +178,8 @@ class DockerImage(str):
     def latest_docker_image(self) -> "DockerImage":
         """
         Returns the docker image with the latest tag.
-        For demistoprivate images, returns self (cannot query GCR).
+        For demistoextended images, returns self (cannot query GCR).
         """
-        if self.is_demistoprivate_repository:
+        if self.is_demistoextended_repository:
             return self
         return DockerImage(self._dockerhub_client.get_latest_docker_image(self.name))

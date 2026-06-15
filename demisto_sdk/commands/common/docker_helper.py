@@ -767,7 +767,7 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
         return python_version
     logger.debug(f"Could not get python version for {image=} from regex")
 
-    if image and image.startswith("demistoprivate/"):
+    if image and image.startswith("demistoextended/"):
         logger.info(
             f"Private image {image} - cannot query DockerHub, defaulting to Python 3"
         )

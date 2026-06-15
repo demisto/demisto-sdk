@@ -2696,7 +2696,6 @@ def test_PackSupportedModulesCoverageValidator_fix_preserves_covered_modules():
     assert "xsiam" in fix_result.message
     assert set(pack.supportedModules) == {"edr", "tim"}
 
-
 def test_PackSupportedModulesCoverageValidator_fix_creates_supported_modules_when_absent():
     """
     Given

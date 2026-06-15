@@ -39,6 +39,7 @@ ignorable_errors = [
   "PA124",
   "PA125",
   "PA127",
+  "PA134",
   "PB104",
   "PB105",
   "PB106",

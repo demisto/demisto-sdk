@@ -2695,3 +2695,39 @@ def test_PackSupportedModulesCoverageValidator_fix_preserves_covered_modules():
     assert "asm" in fix_result.message
     assert "xsiam" in fix_result.message
     assert set(pack.supportedModules) == {"edr", "tim"}
+
+
+def test_PackSupportedModulesCoverageValidator_fix_creates_supported_modules_when_absent():
+    """
+    Given
+        - A platform pack with NO supportedModules field (None), which implicitly
+          means all default platform modules are supported.
+        - A content item covering only "xsiam".
+
+    When
+        - Calling obtain_invalid_content_items followed by fix.
+
+    Then
+        - The fix creates the supportedModules field with only the covered module ("xsiam").
+        - The fix message mentions the uncovered modules.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces"],
+        values=[["platform"]],
+    )
+    pack.supportedModules = None
+
+    integration = create_integration_object()
+    integration.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration.supportedModules = ["xsiam"]
+    pack.content_items.integration.append(integration)
+
+    validator = PackSupportedModulesCoverageValidator()
+    results = validator.obtain_invalid_content_items([pack])
+    assert len(results) == 1
+
+    fix_result = validator.fix(pack)
+    assert pack.supportedModules == ["xsiam"]
+    # All other default modules should be mentioned as removed
+    assert "edr" in fix_result.message
+    assert "asm" in fix_result.message

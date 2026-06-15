@@ -14,6 +14,8 @@ ignorable_errors = [
   "BA129", # needs to be remove after CRTX-235579 is done
   "SC110",
   "BA130",
+  "BA131",
+  "BA132",
   "GF102",
   "DS108",
   "IF100",
@@ -276,7 +278,7 @@ select = [
   "VC101",
   "BC115"
 ]
-warning = ["RM108", "PB130", "PB131", "GR107", "GR109", "GR103", "GR110", "GR101", "PA133", "AS106", "GR114"]
+warning = ["RM108", "PB130", "PB131", "GR107", "GR109", "GR103", "GR110", "GR101", "PA133", "AS106", "GR114", "BA131", "BA132"]
 
 [support_level]
 
@@ -587,6 +589,8 @@ select = [
   "AS109",
   "MC100",
   "MC101",
-  "BA112"
+  "BA112",
+  "BA131",
+  "BA132"
 ]
 warning = ["PB130", "PB131", "RN116", "BC117", "GR101", "PA133", "AS106", "GR114"]

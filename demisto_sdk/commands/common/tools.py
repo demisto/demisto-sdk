@@ -4798,6 +4798,36 @@ def is_private_content_file(file, private_content_path: Path | None = None) -> b
     return False
 
 
+def get_declared_supported_modules(item) -> set[str]:
+    """
+    Resolves the supported modules explicitly declared for an item through the
+    inheritance chain (item -> pack), WITHOUT falling back to the platform
+    defaults and WITHOUT short-circuiting on the 'platform' marketplace.
+
+    This is useful for detecting whether an item declares supported modules at
+    all (directly on the item or inherited from its pack), regardless of the
+    item's marketplaces.
+
+    Args:
+        item: A content item object that has a supportedModules attribute and
+              optionally a pack attribute.
+
+    Returns:
+        A set of the declared supported module names, or an empty set if neither
+        the item nor its pack declare any.
+    """
+    # Import here to avoid circular imports
+    from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+    modules = item.supportedModules
+    if not modules and not isinstance(item, Pack):
+        pack = getattr(item, "pack", None)
+        if pack is not None:
+            modules = pack.supportedModules
+
+    return set(modules or [])
+
+
 def get_content_item_supported_modules(item) -> set[str]:
     """
     Resolves the definitive list of supported modules for an item,
@@ -4810,18 +4840,9 @@ def get_content_item_supported_modules(item) -> set[str]:
     Returns:
         A set of supported module names, or empty set if not a platform item.
     """
-    # Import here to avoid circular imports
-    from demisto_sdk.commands.content_graph.objects.pack import Pack
-
     if MarketplaceVersions.PLATFORM not in item.marketplaces:
         return set()
 
     default_modules = [sm.value for sm in PlatformSupportedModules]
 
-    modules = item.supportedModules
-    if not modules and not isinstance(item, Pack):
-        pack = getattr(item, "pack", None)
-        if pack is not None:
-            modules = pack.supportedModules
-
-    return set(modules or default_modules)
+    return get_declared_supported_modules(item) or set(default_modules)

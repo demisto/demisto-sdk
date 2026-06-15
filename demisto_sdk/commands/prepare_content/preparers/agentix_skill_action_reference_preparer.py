@@ -12,17 +12,21 @@ ACTION_REFERENCE_REGEX = re.compile(r"<action=([^>]+)>")
 
 
 class AgentixSkillActionReferencePreparer:
-    """Replaces ``<action=action-id>`` tokens in a skill body with action display names.
+    """Rewrites ``<action=action-id>`` tokens in a skill body to ``<action=action-name>``.
 
     A skill's Markdown body (the ``content`` field) may reference actions via
-    ``<action=action-id>`` tokens. During prepare-upload, each token is replaced
-    with the corresponding action's display name, resolved through the content
-    graph (``content_item.uses``) by the action's id.
+    ``<action=action-id>`` tokens. During prepare-upload, the action id inside
+    each token is replaced with the corresponding action's display name (resolved
+    through the content graph via ``content_item.uses`` by the action's id), while
+    the ``<action=...>`` wrapper is kept — producing ``<action=action-name>``.
     """
 
     @staticmethod
     def prepare(content_item: "ContentItem", data: dict) -> dict:
-        """Replace action-reference tokens in ``data["content"]`` with display names.
+        """Rewrite action-reference tokens in ``data["content"]`` to use display names.
+
+        Each ``<action=action-id>`` token is rewritten to ``<action=action-name>``,
+        keeping the wrapper and only substituting the resolved display name.
 
         Args:
             content_item: The skill content item, used to resolve action
@@ -48,36 +52,39 @@ class AgentixSkillActionReferencePreparer:
             action_id = match.group(1).strip()
             display_name = id_to_display_name.get(action_id)
             if display_name is None:
+                # Note: do not embed the raw '<action=...>' token in the log
+                # message, as the angle brackets are interpreted as markup by the
+                # logger and would raise. The action id is sufficient context.
                 logger.warning(
                     f"Could not resolve action id '{action_id}' referenced in skill "
-                    f"'{content_item.object_id}'; leaving token '{match.group(0)}' "
+                    f"'{content_item.object_id}'; leaving its action-reference token "
                     f"unchanged."
                 )
                 return match.group(0)
-            return display_name
+            return f"<action={display_name}>"
 
         data["content"] = ACTION_REFERENCE_REGEX.sub(_replace, content)
         return data
 
     @staticmethod
     def _build_action_display_name_map(
-        content_item: "ContentItem",
+        skill: "ContentItem",
     ) -> Dict[str, str]:
         """Builds an ``action id -> display name`` map from the skill's dependencies.
 
-        Filters ``content_item.uses`` to ``AGENTIX_ACTION`` targets and maps each
+        Filters ``skill.uses`` to ``AGENTIX_ACTION`` targets and maps each
         target node's ``object_id`` to its ``display_name``. If the graph is not
         populated, ``uses`` is empty and an empty map is returned.
         """
         id_to_display_name: Dict[str, str] = {}
-        for relationship in content_item.uses:
+        for relationship in skill.uses:
             node = relationship.content_item_to
             if node.content_type == ContentType.AGENTIX_ACTION:
                 id_to_display_name[node.object_id] = node.display_name  # type: ignore[attr-defined]
         if not id_to_display_name:
             logger.debug(
                 f"No AgentixAction dependencies resolved for skill "
-                f"'{content_item.object_id}'; action-reference tokens (if any) "
+                f"'{skill.object_id}'; action-reference tokens (if any) "
                 f"will be left unchanged."
             )
         return id_to_display_name

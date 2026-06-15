@@ -625,6 +625,79 @@ def test_IsUsingUnknownContentValidator__different_dependency_type__list_files(
 
 
 @pytest.fixture
+def repo_for_test_agentix_skill_unknown_action(graph_repo):
+    """A repository with a single pack containing an AgentixSkill whose body
+    references an action id that does not exist in the repository."""
+    pack = graph_repo.create_pack("SkillPack")
+    skill = pack.create_agentix_skill("MySkill")
+    skill.create_default_agentix_skill(
+        name="My Skill",
+        skill_id="my-skill-id",
+        skill_content="Use <action=does-not-exist-action> to do the thing.",
+    )
+    return graph_repo
+
+
+def test_IsUsingUnknownContentValidator__agentix_skill_missing_action__all_files(
+    repo_for_test_agentix_skill_unknown_action: Repo,
+):
+    """
+    Given:
+        - A content graph with an AgentixSkill whose body references an action id
+          ('does-not-exist-action') that is not present in the repository.
+    When:
+        - The GR103 validation runs across the entire repository (-a).
+    Then:
+        - GR103 reports the skill as using unknown content (the missing action).
+    """
+    graph_interface = repo_for_test_agentix_skill_unknown_action.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+        content_items=[]
+    )
+    assert len(results) == 1
+    assert "does-not-exist-action" in results[0].message
+
+
+def test_IsUsingUnknownContentValidator__agentix_skill_existing_action__all_files(
+    graph_repo,
+):
+    """
+    Given:
+        - A content graph with an AgentixSkill whose body references an action id
+          that DOES exist in the repository (an AgentixAction with that id).
+    When:
+        - The GR103 validation runs across the entire repository (-a).
+    Then:
+        - GR103 reports no unknown-content usage for the skill.
+    """
+    pack = graph_repo.create_pack("SkillPack")
+    action = pack.create_agentix_action("MyAction")
+    action.create_default_agentix_action()
+    # The default action's id comes from its YAML 'commonfields.id'.
+    action_id = action.yml.read_dict()["commonfields"]["id"]
+
+    skill = pack.create_agentix_skill("MySkill")
+    skill.create_default_agentix_skill(
+        name="My Skill",
+        skill_id="my-skill-id",
+        skill_content=f"Use <action={action_id}> to do the thing.",
+    )
+
+    graph_interface = graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+        content_items=[]
+    )
+    # The skill's action reference is resolved, so the skill itself must not be
+    # reported as using unknown content. (The default action may have its own
+    # unrelated unknown 'underlyingcontentitem' dependency, which is not our concern here.)
+    assert not any(
+        "My Skill" in result.message for result in results
+    )
+
+
+@pytest.fixture
 def repo_for_test_gr_107(graph_repo: Repo):
     playbook_dict_using_deprecate_commands = {
         "id": "UsingDeprecatedCommand",

@@ -1915,6 +1915,91 @@ def test_SupportedModulesCompatibility_reports_only_incompatible_commands(
 
 
 @pytest.fixture
+def repo_for_test_gr_109_dependency_partial_module_overlap(graph_repo: Repo):
+    """
+    Creates a test repository to verify the dependency error message lists ONLY the
+    modules genuinely unsupported by the dependency (not all of the dependent
+    item's modules).
+
+    Structure:
+    - Pack A: "ScriptCaller" (supportedModules ['module_x', 'module_y', 'module_z'])
+              uses "ScriptDep" (supportedModules ['module_x', 'module_y']).
+              Only "module_z" is unsupported by the dependency, so the dependency
+              message must mention only "module_z" - not the supported modules.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+        }
+    )
+    caller_yml = {
+        "commonfields": {"id": "ScriptCaller", "version": -1},
+        "name": "ScriptCaller",
+        "comment": "this is script ScriptCaller",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_x", "module_y", "module_z"],
+    }
+    pack_a.create_script(
+        "ScriptCaller", code='demisto.executeCommand("ScriptDep", {})', yml=caller_yml
+    )
+    dep_yml = {
+        "commonfields": {"id": "ScriptDep", "version": -1},
+        "name": "ScriptDep",
+        "comment": "this is script ScriptDep",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+        "supportedModules": ["module_x", "module_y"],
+    }
+    pack_a.create_script(
+        "ScriptDep", code='demisto.executeCommand("ScriptDep", {})', yml=dep_yml
+    )
+
+    return graph_repo
+
+
+def test_SupportedModulesCompatibility_dependency_lists_only_missing_modules(
+    repo_for_test_gr_109_dependency_partial_module_overlap: Repo,
+):
+    """
+    Given:
+        "ScriptCaller" (supportedModules ['module_x', 'module_y', 'module_z']) uses
+        "ScriptDep" (supportedModules ['module_x', 'module_y']). Only 'module_z' is
+        unsupported by the dependency.
+    When:
+        Running the IsSupportedModulesCompatibility validator on all files.
+    Then:
+        The dependency error message lists ONLY 'module_z' as missing - not the
+        supported 'module_x'/'module_y'.
+    """
+    graph_interface = (
+        repo_for_test_gr_109_dependency_partial_module_overlap.create_graph()
+    )
+    BaseValidator.graph_interface = graph_interface
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    dependency_results = [
+        result
+        for result in results
+        if "missing required modules" in result.message
+    ]
+    assert len(dependency_results) == 1
+    message = dependency_results[0].message
+    assert "ScriptDep is missing: [module_z]" in message
+    assert "module_x" not in message
+    assert "module_y" not in message
+    assert dependency_results[0].content_object.object_id == "ScriptCaller"
+
+
+@pytest.fixture
 def repo_for_test_gr_114(graph_repo: Repo):
     """
     Creates a test repository for testing GR114 validator (non-mandatory dependencies).

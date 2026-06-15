@@ -3,11 +3,9 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.constants import PlatformSupportedModules
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
-from demisto_sdk.commands.content_graph.objects.base_content import BaseNode
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -98,37 +96,6 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
     # Controls whether to check mandatory (True) or non-mandatory (False) USES relationships.
     # Subclasses can override this to change the dependency type being validated.
     mandatory_dependency: bool = True
-
-    def get_missing_modules_by_dependency(self, content_item) -> dict[str, list[str]]:
-        """Get missing modules for each dependency of a content item.
-
-        Args:
-            content_item: The content item to check dependencies for
-
-        Returns:
-            dict: A dictionary mapping dependency IDs to lists of missing modules
-        """
-        logger.info(f"[GR109] Checking module compatibility for content item: {content_item.object_id}")
-        missing_modules_by_dependency: dict[str, list[str]] = {}
-        for dependency in content_item.uses:
-            # Filter by mandatory/non-mandatory based on the class member
-            if dependency.mandatorily != self.mandatory_dependency:
-                continue
-            # Get modules supported by the content item but not by its dependency
-            missing_modules = [
-                module
-                for module in content_item.supportedModules
-                or [sm.value for sm in PlatformSupportedModules]
-                if module not in dependency.content_item_to.supportedModules
-            ]
-            if missing_modules:
-                logger.info(f"[GR109] Found missing modules for dependency {dependency.content_item_to.object_id}: {missing_modules}")
-                missing_modules_by_dependency[dependency.content_item_to.object_id] = (
-                    missing_modules
-                )
-
-        logger.info(f"[GR109] Completed dependency check for {content_item.object_id}. Missing modules by dependency: {missing_modules_by_dependency}")
-        return missing_modules_by_dependency
 
     def get_missing_modules_by_command(self, content_item) -> dict[str, list[str]]:
         """Get missing modules for each command of a content item.
@@ -234,10 +201,11 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         logger.info(f"[GR109] Target content item IDs: {target_content_item_ids}")
 
         logger.info("[GR109] Querying graph for content items with module mismatch dependencies")
-        mismatched_dependencies = (
-            self.graph.find_content_items_with_module_mismatch_dependencies(
-                target_content_item_ids, self.mandatory_dependency
-            )
+        (
+            mismatched_dependencies,
+            missing_modules_by_dependency_by_item,
+        ) = self.graph.find_content_items_with_module_mismatch_dependencies(
+            target_content_item_ids, self.mandatory_dependency
         )
         logger.info(f"[GR109] Found {len(mismatched_dependencies)} items with mismatched dependencies")
 
@@ -267,9 +235,19 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         logger.info("[GR109] Processing items with mismatched dependencies")
         for invalid_item in mismatched_dependencies:
             logger.info(f"[GR109] Processing invalid item with mismatched dependency: {invalid_item.object_id}")
-            missing_modules_by_dependency = self.get_missing_modules_by_dependency(
-                invalid_item
-            )
+            # The missing modules per dependency are computed by the graph query
+            # against each dependency's own supportedModules, because that data is
+            # not reliably available on the dependency object once loaded into
+            # memory (e.g. command nodes reached via USES do not carry their
+            # HAS_COMMAND supportedModules). This ensures the message lists only the
+            # modules genuinely unsupported by each dependency.
+            missing_modules_by_dependency = {
+                dependency_id: modules
+                for dependency_id, modules in missing_modules_by_dependency_by_item.get(
+                    invalid_item.object_id, {}
+                ).items()
+                if modules
+            }
             if missing_modules_by_dependency:
                 formatted_messages = self.format_error_messages(
                     missing_modules_by_dependency

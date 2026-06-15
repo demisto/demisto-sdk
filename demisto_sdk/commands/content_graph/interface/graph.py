@@ -329,7 +329,7 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def find_content_items_with_module_mismatch_dependencies(
         self, content_item_ids: List[str], mandatory: bool = True
-    ) -> List[BaseNode]:
+    ) -> Tuple[List[BaseNode], Dict[str, Dict[str, List[str]]]]:
         pass
 
     @abstractmethod

@@ -1,0 +1,6 @@
+changes:
+- description: Fixed an issue where the GR109 validation reported all of a content item's supported modules as missing for a dependency, instead of only the modules genuinely unsupported by that dependency.
+  type: fix
+- description: Fixed an issue where the GR109 validation listed every command used by a content item as incompatible, instead of only the commands that are genuinely module-incompatible.
+  type: fix
+pr_number: 5235

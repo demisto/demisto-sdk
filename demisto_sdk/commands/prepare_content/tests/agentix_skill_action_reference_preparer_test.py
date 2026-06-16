@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock
 
+import pytest
+
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.prepare_content.preparers.agentix_skill_action_reference_preparer import (
     AgentixSkillActionReferencePreparer,
@@ -75,7 +77,7 @@ def test_prepare_rewrites_multiple_tokens():
     assert result["content"] == "First <action=ActionA> then <action=ActionB>."
 
 
-def test_prepare_leaves_unresolved_token_unchanged():
+def test_prepare_raises_on_unresolved_token():
     """
     Given
     - A skill body referencing an action id that does not resolve in the graph.
@@ -84,14 +86,49 @@ def test_prepare_leaves_unresolved_token_unchanged():
     - Running the preparer.
 
     Then
-    - The original '<action=...>' token is left unchanged.
+    - A ValueError is raised, and its message names the skill and the unresolved
+      action id.
     """
     skill = _skill_mock("my-skill", uses=[])
     data = {"content": "Use <action=missing-action> here."}
 
-    result = AgentixSkillActionReferencePreparer.prepare(skill, data)
+    with pytest.raises(ValueError) as exc_info:
+        AgentixSkillActionReferencePreparer.prepare(skill, data)
 
-    assert result["content"] == "Use <action=missing-action> here."
+    message = str(exc_info.value)
+    assert "missing-action" in message
+    assert "my-skill" in message
+
+
+def test_prepare_raises_listing_all_unresolved_tokens():
+    """
+    Given
+    - A skill body referencing several action ids, none of which resolve, plus
+      one resolvable action.
+
+    When
+    - Running the preparer.
+
+    Then
+    - A single ValueError is raised listing every unresolved action id, while the
+      resolvable one is not reported.
+    """
+    skill = _skill_mock(
+        "my-skill", uses=[_action_relationship("action-a", "ActionA")]
+    )
+    data = {
+        "content": (
+            "Use <action=action-a>, <action=missing-one> and <action=missing-two>."
+        )
+    }
+
+    with pytest.raises(ValueError) as exc_info:
+        AgentixSkillActionReferencePreparer.prepare(skill, data)
+
+    message = str(exc_info.value)
+    assert "missing-one" in message
+    assert "missing-two" in message
+    assert "action-a" not in message
 
 
 def test_prepare_no_content_is_noop():

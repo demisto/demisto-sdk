@@ -592,13 +592,8 @@ def get_supported_modules_mismatch_content_items(
               module compatibility check, not every command the item uses).
     """
     mandatorily_value = str(mandatory).lower()
-    # TEMP-GR109-EXPERIMENT: mandatorily filter intentionally dropped to verify
-    # that non-mandatory (conditional-branch) command uses like core-blocklist-files
-    # are the reason they don't appear. REVERT after the experiment:
-    #   change `-[u:{RelationshipType.USES}]->` back to
-    #          `-[u:{RelationshipType.USES}{{mandatorily:{mandatorily_value}}}]->`
     query = f"""
-    MATCH (content_item{{deprecated: false, is_test: false}})-[u:{RelationshipType.USES}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()
+    MATCH (content_item{{deprecated: false, is_test: false}})-[u:{RelationshipType.USES}{{mandatorily:{mandatorily_value}}}]->(c:{ContentType.COMMAND})<-[r:{RelationshipType.HAS_COMMAND}]-()
     WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR content_item.object_id IN {content_item_ids})
         AND 'platform' IN content_item.marketplaces
         // An incompatibility is only possible if the command has a specific module list.

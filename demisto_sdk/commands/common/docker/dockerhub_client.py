@@ -303,13 +303,13 @@ class DockerHubClient:
             if self._is_custom_registry:
                 # For user-provided custom registries (e.g., JFrog), don't send bearer token.
                 # Let get_request() use Basic Auth (self.auth) if credentials are available.
-                logger.info(
+                logger.debug(
                     "Using Basic Auth (skipping bearer token) for custom registry"
                 )
             else:
                 # For Docker Hub default registry and GAR proxy registries,
                 # use bearer token from get_token() (Docker Hub token or GCloud access token).
-                logger.info("Using bearer token authentication")
+                logger.debug("Using bearer token authentication")
                 _headers["Authorization"] = (
                     f"Bearer {self.get_token(docker_image, scope=scope)}"
                 )

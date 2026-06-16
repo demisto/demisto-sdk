@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import RelationshipType
+from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersions
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
@@ -89,6 +89,9 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR114_is_non_mandato
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR114_is_non_mandatory_supported_modules_compatibility_list_files import (
     IsNonMandatorySupportedModulesCompatibilityListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR115_action_name_changed_requires_skill_rn_list_files import (
+    IsActionNameChangedRequiresSkillRNValidatorListFiles,
 )
 from TestSuite.repo import Repo
 
@@ -2713,6 +2716,186 @@ def test_IsAgentixActionDisplayNameAlreadyExistsValidator_non_overlapping_versio
     results = IsAgentixActionDisplayNameAlreadyExistsValidator().obtain_invalid_content_items_using_graph(
         [action1, action2],
         validate_all_files=True,
+    )
+
+    assert len(results) == 0
+
+
+def _build_repo_with_skill_using_action(graph_repo: Repo):
+    """Create a repo with an AgentixAction and an AgentixSkill that references it.
+
+    Returns the (graph_interface, action_object, action_id) tuple, where
+    ``action_object`` is the graph-resolved AgentixAction whose ``used_by``
+    relationship points to the skill.
+    """
+    pack = graph_repo.create_pack("SkillPack")
+    action = pack.create_agentix_action("MyAction")
+    action.create_default_agentix_action()
+    action_id = action.yml.read_dict()["commonfields"]["id"]
+
+    skill = pack.create_agentix_skill("MySkill")
+    skill.create_default_agentix_skill(
+        name="My Skill",
+        skill_id="my-skill-id",
+        skill_content=f"Use <action={action_id}> to do the thing.",
+    )
+
+    graph_interface = graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    action_objects = graph_interface.search(
+        content_type=ContentType.AGENTIX_ACTION, object_id=action_id
+    )
+    assert action_objects, "expected the action to exist in the graph"
+    return graph_interface, action_objects[0], action_id
+
+
+def test_GR115_action_renamed_skill_missing_rn(mocker, graph_repo: Repo):
+    """
+    Given:
+        - A renamed AgentixAction whose dependent skill's pack has NO Release Note.
+    When:
+        - Running the GR115 validator on the renamed action.
+    Then:
+        - A single validation error is returned for the dependent skill.
+    """
+    _, action, _ = _build_repo_with_skill_using_action(graph_repo)
+
+    old_action = mocker.Mock()
+    old_action.object_id = "old-action-id"
+    action.git_status = GitStatuses.MODIFIED
+    action.old_base_content_object = old_action
+
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.GR_validators."
+        "GR115_action_name_changed_requires_skill_rn.was_rn_added",
+        return_value=False,
+    )
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 1
+    assert "old-action-id" in results[0].message
+    assert "My Skill" in results[0].message or "my-skill-id" in results[0].message
+
+
+def test_GR115_action_renamed_skill_has_rn(mocker, graph_repo: Repo):
+    """
+    Given:
+        - A renamed AgentixAction whose dependent skill's pack HAS a Release Note.
+    When:
+        - Running the GR115 validator on the renamed action.
+    Then:
+        - No validation error is returned.
+    """
+    _, action, _ = _build_repo_with_skill_using_action(graph_repo)
+
+    old_action = mocker.Mock()
+    old_action.object_id = "old-action-id"
+    action.git_status = GitStatuses.MODIFIED
+    action.old_base_content_object = old_action
+
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.GR_validators."
+        "GR115_action_name_changed_requires_skill_rn.was_rn_added",
+        return_value=True,
+    )
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 0
+
+
+def test_GR115_action_not_renamed(mocker, graph_repo: Repo):
+    """
+    Given:
+        - A modified AgentixAction whose name (object_id) did NOT change.
+    When:
+        - Running the GR115 validator on the action.
+    Then:
+        - No validation error is returned (no rename means nothing to validate).
+    """
+    _, action, action_id = _build_repo_with_skill_using_action(graph_repo)
+
+    old_action = mocker.Mock()
+    old_action.object_id = action_id  # same id => no rename
+    action.git_status = GitStatuses.MODIFIED
+    action.old_base_content_object = old_action
+
+    rn_mock = mocker.patch(
+        "demisto_sdk.commands.validate.validators.GR_validators."
+        "GR115_action_name_changed_requires_skill_rn.was_rn_added",
+        return_value=False,
+    )
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 0
+    rn_mock.assert_not_called()
+
+
+def test_GR115_action_added(mocker, graph_repo: Repo):
+    """
+    Given:
+        - A newly added AgentixAction (no previous version exists).
+    When:
+        - Running the GR115 validator on the action.
+    Then:
+        - No validation error is returned (a rename requires a previous version).
+    """
+    _, action, _ = _build_repo_with_skill_using_action(graph_repo)
+
+    action.git_status = GitStatuses.ADDED
+    action.old_base_content_object = None
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 0
+
+
+def test_GR115_action_renamed_no_dependent_skills(mocker, graph_repo: Repo):
+    """
+    Given:
+        - A renamed AgentixAction with NO dependent skills.
+    When:
+        - Running the GR115 validator on the action.
+    Then:
+        - No validation error is returned.
+    """
+    pack = graph_repo.create_pack("LonelyActionPack")
+    action_ts = pack.create_agentix_action("LonelyAction")
+    action_ts.create_default_agentix_action()
+    action_id = action_ts.yml.read_dict()["commonfields"]["id"]
+
+    graph_interface = graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    action_objects = graph_interface.search(
+        content_type=ContentType.AGENTIX_ACTION, object_id=action_id
+    )
+    action = action_objects[0]
+
+    old_action = mocker.Mock()
+    old_action.object_id = "old-action-id"
+    action.git_status = GitStatuses.MODIFIED
+    action.old_base_content_object = old_action
+
+    mocker.patch(
+        "demisto_sdk.commands.validate.validators.GR_validators."
+        "GR115_action_name_changed_requires_skill_rn.was_rn_added",
+        return_value=False,
+    )
+
+    results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
+        [action]
     )
 
     assert len(results) == 0

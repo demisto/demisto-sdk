@@ -44,6 +44,7 @@ class ServerType(StrEnum):
     XSOAR = "xsoar-on-prem"
     XSOAR_SAAS = "xsoar-saas"
     XSIAM = "xsiam"
+    PLATFORM = "platform"
 
 
 class ServerAbout(BaseModel):

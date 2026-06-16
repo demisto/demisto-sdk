@@ -94,3 +94,18 @@ class XsiamClientConfig(XsoarSaasClientConfig):
         default=SecretStr(os.getenv(XSIAM_COLLECTOR_TOKEN, "")),
         description="XSIAM HTTP Collector Token",
     )
+
+
+class PlatformClientConfig(XsoarSaasClientConfig):
+    """
+    api client config for platform (covers both xsiam and xsoar-saas tenants).
+    Inherits from XsoarSaasClientConfig — requires api_key and auth_id.
+    """
+
+    token: Optional[SecretStr] = Field(
+        default=SecretStr(os.getenv(XSIAM_TOKEN, "")), description="XSIAM Token"
+    )
+    collector_token: Optional[SecretStr] = Field(
+        default=SecretStr(os.getenv(XSIAM_COLLECTOR_TOKEN, "")),
+        description="XSIAM HTTP Collector Token",
+    )

@@ -6,12 +6,17 @@ from demisto_sdk.commands.prepare_content.preparers.agentix_skill_action_referen
 )
 
 
-def _action_relationship(object_id: str, display_name: str):
-    """Builds a mock skill->action USES relationship."""
+def _action_relationship(object_id: str, name: str):
+    """Builds a mock skill->action USES relationship.
+
+    Sets a different ``display_name`` from ``name`` to prove the preparer uses
+    the action ``name`` (not the display name) for the rewrite.
+    """
     node = MagicMock()
     node.content_type = ContentType.AGENTIX_ACTION
     node.object_id = object_id
-    node.display_name = display_name
+    node.name = name
+    node.display_name = f"Display {name}"
     relationship = MagicMock()
     relationship.content_item_to = node
     return relationship
@@ -28,23 +33,21 @@ def test_prepare_rewrites_token_keeping_wrapper():
     """
     Given
     - A skill whose body references an action via '<action=action-a>', and the
-      action 'action-a' resolves to display name 'Action A' in the graph.
+      action 'action-a' resolves to name 'ActionA' in the graph.
 
     When
     - Running AgentixSkillActionReferencePreparer.prepare.
 
     Then
-    - The token is rewritten to '<action=Action A>' (the wrapper is kept, only the
-      id is replaced with the display name).
+    - The token is rewritten to '<action=ActionA>' (the wrapper is kept, only the
+      id is replaced with the action name, not the display name).
     """
-    skill = _skill_mock(
-        "my-skill", uses=[_action_relationship("action-a", "Action A")]
-    )
+    skill = _skill_mock("my-skill", uses=[_action_relationship("action-a", "ActionA")])
     data = {"content": "Use <action=action-a> to do the thing."}
 
     result = AgentixSkillActionReferencePreparer.prepare(skill, data)
 
-    assert result["content"] == "Use <action=Action A> to do the thing."
+    assert result["content"] == "Use <action=ActionA> to do the thing."
 
 
 def test_prepare_rewrites_multiple_tokens():
@@ -56,20 +59,20 @@ def test_prepare_rewrites_multiple_tokens():
     - Running the preparer.
 
     Then
-    - Both tokens are rewritten to '<action=<display-name>>'.
+    - Both tokens are rewritten to '<action=<action-name>>'.
     """
     skill = _skill_mock(
         "my-skill",
         uses=[
-            _action_relationship("action-a", "Action A"),
-            _action_relationship("action-b", "Action B"),
+            _action_relationship("action-a", "ActionA"),
+            _action_relationship("action-b", "ActionB"),
         ],
     )
     data = {"content": "First <action=action-a> then <action=action-b>."}
 
     result = AgentixSkillActionReferencePreparer.prepare(skill, data)
 
-    assert result["content"] == "First <action=Action A> then <action=Action B>."
+    assert result["content"] == "First <action=ActionA> then <action=ActionB>."
 
 
 def test_prepare_leaves_unresolved_token_unchanged():
@@ -102,9 +105,7 @@ def test_prepare_no_content_is_noop():
     Then
     - The data is returned unchanged.
     """
-    skill = _skill_mock(
-        "my-skill", uses=[_action_relationship("action-a", "Action A")]
-    )
+    skill = _skill_mock("my-skill", uses=[_action_relationship("action-a", "ActionA")])
     data: dict = {"content": ""}
 
     result = AgentixSkillActionReferencePreparer.prepare(skill, data)

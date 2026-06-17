@@ -118,9 +118,7 @@ class ContentGraphInterface(ABC):
             # in production: a parser-hash mismatch means the graph schema the
             # bucket was built with may not match the current SDK, and reusing
             # it can produce subtly incorrect nodes/relationships.
-            if string_to_bool(
-                os.getenv("DEMISTO_SDK_GRAPH_IGNORE_INFRA_HASH"), False
-            ):
+            if string_to_bool(os.getenv("DEMISTO_SDK_GRAPH_IGNORE_INFRA_HASH"), False):
                 logger.warning(
                     "DEMISTO_SDK_GRAPH_IGNORE_INFRA_HASH is set — ignoring the "
                     "content parser hash mismatch and reusing the imported graph. "

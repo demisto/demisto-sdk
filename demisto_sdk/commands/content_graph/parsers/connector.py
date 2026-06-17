@@ -38,9 +38,6 @@ from demisto_sdk.commands.content_graph.objects.connector import (
     SubCapability,
 )
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
-from demisto_sdk.commands.content_graph.strict_objects.connector import (
-    StrictConnector,
-)
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     CapabilitiesRelatedFile,
     ConfigurationsRelatedFile,
@@ -49,6 +46,9 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     SerializerRelatedFile,
     SummaryRelatedFile,
     TriggersRelatedFile,
+)
+from demisto_sdk.commands.content_graph.strict_objects.connector import (
+    StrictConnector,
 )
 
 

@@ -89,7 +89,15 @@ class TestStrictConnectorRequiredFields:
 
     @pytest.mark.parametrize(
         "missing",
-        ["title", "description", "version", "category", "vendor", "publisher", "ownership"],
+        [
+            "title",
+            "description",
+            "version",
+            "category",
+            "vendor",
+            "publisher",
+            "ownership",
+        ],
     )
     def test_missing_required_metadata_field(self, missing: str):
         payload = _valid_payload()
@@ -188,6 +196,9 @@ class TestConnectorParserWiring:
 
         # We can read the property off the class without instantiating
         # the parser (which would need a real filesystem layout).
-        assert ConnectorParser.strict_object.fget(  # type: ignore[union-attr]
-            object.__new__(ConnectorParser)
-        ) is StrictConnector
+        assert (
+            ConnectorParser.strict_object.fget(  # type: ignore[union-attr]
+                object.__new__(ConnectorParser)
+            )
+            is StrictConnector
+        )

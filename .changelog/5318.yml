@@ -1,4 +1,9 @@
 changes:
 - description: Added support for connectors validations.
   type: internal
+- description: Added a strict pydantic schema (`StrictConnector`) for `connector.yaml`
+    and enabled `ST110` for the connector validation sections in `sdk_validation_config.toml`,
+    so unknown or missing fields in `connector.yaml` surface as structure errors like
+    every other content item.
+  type: internal
 pr_number: 5318

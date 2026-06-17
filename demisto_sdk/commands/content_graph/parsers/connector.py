@@ -38,6 +38,9 @@ from demisto_sdk.commands.content_graph.objects.connector import (
     SubCapability,
 )
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
+from demisto_sdk.commands.content_graph.strict_objects.connector import (
+    StrictConnector,
+)
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     CapabilitiesRelatedFile,
     ConfigurationsRelatedFile,
@@ -173,11 +176,11 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
 
     @property
     def strict_object(self):
-        raise NotImplementedError("Connector does not have a strict object yet")
-
-    def validate_structure(self):
-        """Connectors don't have a strict object for structure validation yet."""
-        return []
+        # Phase 1: only ``connector.yaml`` is covered by StrictConnector.
+        # TODO: add strict schemas for the sub-files (connection / capabilities /
+        # configurations / triggers / summary / handler / serializer) and
+        # override ``validate_structure`` to run them all, Pack-style.
+        return StrictConnector
 
     # ============================================================
     # Sub-model parsing

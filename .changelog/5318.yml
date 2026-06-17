@@ -6,4 +6,9 @@ changes:
     so unknown or missing fields in `connector.yaml` surface as structure errors like
     every other content item.
   type: internal
+- description: Wired `Connector` into the `ST110` `SchemaValidator` `ContentTypes`
+    union and made `ConnectorParser.__init__` populate `self.structure_errors` from
+    `StrictConnector`, so `ST110` actually reports connector schema errors instead
+    of crashing on a `FieldInfo` default.
+  type: internal
 pr_number: 5318

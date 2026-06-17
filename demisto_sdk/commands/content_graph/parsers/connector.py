@@ -86,9 +86,13 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             pack_supported_modules=pack_supported_modules or [],
             git_sha=git_sha,
         )
-        # Override structure_errors to be a proper list
-        # (BaseContentParser sets it to a FieldInfo object)
-        self.structure_errors = []
+        # ConnectorParser inherits from ContentItemParser directly, NOT from
+        # Yaml/JsonContentItemParser — so the structure-validation hook in
+        # those classes never runs for us. We have to invoke it explicitly
+        # against ``StrictConnector`` so ST110 sees connector.yaml errors.
+        # (The base ``BaseContentParser`` sets ``self.structure_errors`` to
+        # a pydantic ``FieldInfo`` default that ST110 cannot iterate.)
+        self.structure_errors = self.validate_structure()
 
         # Parse connector.yaml fields
         self.connector_metadata: dict = self.yml_data.get("metadata", {})

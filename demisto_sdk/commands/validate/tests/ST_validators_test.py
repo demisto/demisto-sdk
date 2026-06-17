@@ -1098,25 +1098,25 @@ class TestStandardizedIdAndNameFields:
         assert trigger.id == "test_trigger"
         assert trigger.name == "Test Trigger"
 
-    def test_validate_trigger_missing_required_id_field(self):
+    def test_validate_trigger_missing_optional_id_field(self):
         """
         Given:
-            - A trigger missing the required 'id' field (using only old 'trigger_id').
+            - A trigger without the 'id' field (using only old 'trigger_id').
         When:
             - Instantiating _StrictTrigger.
         Then:
-            - ValidationError is raised indicating 'id' field is required.
+            - Validation passes since 'id' is optional (not supported on XSIAM/Platform tenants).
         """
-        with pytest.raises(ValueError) as exc:
-            _StrictTrigger(  # type: ignore[call-arg]
-                trigger_id="test_trigger",
-                trigger_name="Test Trigger",
-                name="Test Trigger",
-                description="desc",
-                suggestion_reason="reason",
-                playbook_id="Playbook123",
-            )
-        assert "id" in str(exc.value).lower() and "required" in str(exc.value).lower()
+        trigger = _StrictTrigger(  # type: ignore[call-arg]
+            trigger_id="test_trigger",
+            trigger_name="Test Trigger",
+            name="Test Trigger",
+            description="desc",
+            suggestion_reason="reason",
+            playbook_id="Playbook123",
+        )
+        assert trigger.id is None
+        assert trigger.name == "Test Trigger"
 
     def test_validate_xsiam_report_with_standardized_id_and_name_in_templates_data(
         self,
@@ -1145,31 +1145,27 @@ class TestStandardizedIdAndNameFields:
         assert xsiam_report.templates_data[0].id == "test_template"
         assert xsiam_report.templates_data[0].name == "Test Template"
 
-    def test_validate_xsiam_report_missing_required_id_in_templates_data(self):
+    def test_validate_xsiam_report_missing_optional_id_in_templates_data(self):
         """
         Given:
-            - An XSIAM report with templates_data missing the required 'id' field.
+            - An XSIAM report with templates_data without the 'id' and 'name' fields.
         When:
-            - Instantiating TemplatesData without 'id'.
+            - Instantiating TemplatesData without 'id' and 'name'.
         Then:
-            - ValidationError is raised indicating 'id' field is required.
+            - Validation passes since 'id' and 'name' are optional (not supported on XSIAM/Platform tenants).
         """
         from demisto_sdk.commands.content_graph.strict_objects.xsiam_report import (
             TemplatesData,
         )
 
-        with pytest.raises(ValueError) as exc:
-            TemplatesData(  # type: ignore[call-arg]
-                report_name="Test Template",
-                global_id="test_template",
-                time_offset=0,
-                layout=[],
-            )
-        assert (
-            "id" in str(exc.value).lower()
-            and "name" in str(exc.value).lower()
-            and "required" in str(exc.value).lower()
+        template_data = TemplatesData(  # type: ignore[call-arg]
+            report_name="Test Template",
+            global_id="test_template",
+            time_offset=0,
+            layout=[],
         )
+        assert template_data.id is None
+        assert template_data.name is None
 
     def test_validate_xsiam_dashboard_with_standardized_id_and_name_in_dashboards_data(
         self,
@@ -1200,28 +1196,28 @@ class TestStandardizedIdAndNameFields:
         assert xsiam_dashboard.dashboards_data[0].id == "test_dashboard"
         assert xsiam_dashboard.dashboards_data[0].name == "Test Dashboard"
 
-    def test_validate_xsiam_dashboard_missing_required_id_in_dashboards_data(self):
+    def test_validate_xsiam_dashboard_missing_optional_id_in_dashboards_data(self):
         """
         Given:
-            - An XSIAM dashboard with dashboards_data missing the required 'id' field.
+            - An XSIAM dashboard with dashboards_data without the 'id' field.
         When:
             - Instantiating _DashboardsData without 'id'.
         Then:
-            - ValidationError is raised indicating 'id' field is required.
+            - Validation passes since 'id' is optional (not supported on XSIAM/Platform tenants).
         """
         from demisto_sdk.commands.content_graph.strict_objects.xsiam_dashboard import (
             _DashboardsData,
         )
 
-        with pytest.raises(ValueError) as exc:
-            _DashboardsData(  # type: ignore[call-arg]
-                name="Test Dashboard",
-                global_id="test_dashboard",
-                status="active",
-                default_dashboard_id=1,
-                layout=[],
-            )
-        assert "id" in str(exc.value).lower() and "required" in str(exc.value).lower()
+        dashboard_data = _DashboardsData(  # type: ignore[call-arg]
+            name="Test Dashboard",
+            global_id="test_dashboard",
+            status="active",
+            default_dashboard_id=1,
+            layout=[],
+        )
+        assert dashboard_data.id is None
+        assert dashboard_data.name == "Test Dashboard"
 
     def test_validate_layout_rule_with_standardized_id_and_name_valid(self):
         """
@@ -1243,27 +1239,23 @@ class TestStandardizedIdAndNameFields:
         assert layout_rule.id == "test_layout_rule"
         assert layout_rule.name == "Test Layout Rule"
 
-    def test_validate_layout_rule_missing_required_id_field(self):
+    def test_validate_layout_rule_missing_optional_id_field(self):
         """
         Given:
-            - A layout rule missing the required 'id' field (using only old 'rule_id').
+            - A layout rule without the 'id' and 'name' fields (using only old 'rule_id'/'rule_name').
         When:
             - Instantiating _StrictLayoutRule.
         Then:
-            - ValidationError is raised indicating 'id' field is required.
+            - Validation passes since 'id' and 'name' are optional (not supported on XSIAM/Platform tenants).
         """
-        with pytest.raises(ValueError) as exc:
-            _StrictLayoutRule(  # type: ignore[call-arg]
-                rule_id="test_layout_rule",
-                rule_name="Test Layout Rule",
-                layout_id="layout123",
-                fromVersion="6.0.0",
-            )
-        assert (
-            "id" in str(exc.value).lower()
-            and "name" in str(exc.value).lower()
-            and "required" in str(exc.value).lower()
+        layout_rule = _StrictLayoutRule(  # type: ignore[call-arg]
+            rule_id="test_layout_rule",
+            rule_name="Test Layout Rule",
+            layout_id="layout123",
+            fromVersion="6.0.0",
         )
+        assert layout_rule.id is None
+        assert layout_rule.name is None
 
     def test_validate_xdrc_template_with_standardized_id_and_name_valid(self):
         """
@@ -1286,22 +1278,22 @@ class TestStandardizedIdAndNameFields:
         assert xdrc_template.id == "test_xdrc_template"
         assert xdrc_template.name == "Test XDRC Template"
 
-    def test_validate_xdrc_template_missing_required_id_field(self):
+    def test_validate_xdrc_template_missing_optional_id_field(self):
         """
         Given:
-            - An XDRC template missing the required 'id' field.
+            - An XDRC template without the 'id' field.
         When:
             - Instantiating _StrictXDRCTemplate.
         Then:
-            - ValidationError is raised indicating 'id' field is required.
+            - Validation passes since 'id' is optional (not supported on XSIAM/Platform tenants).
         """
-        with pytest.raises(ValueError) as exc:
-            _StrictXDRCTemplate(  # type: ignore[call-arg]
-                name="Test XDRC Template",
-                content_global_id="test_xdrc_template",
-                os_type="Linux",
-                profile_type="profile1",
-                from_xdr_version="1.0.0",
-                yaml_template="template_content",
-            )
-        assert "id" in str(exc.value).lower() and "required" in str(exc.value).lower()
+        xdrc_template = _StrictXDRCTemplate(  # type: ignore[call-arg]
+            name="Test XDRC Template",
+            content_global_id="test_xdrc_template",
+            os_type="Linux",
+            profile_type="profile1",
+            from_xdr_version="1.0.0",
+            yaml_template="template_content",
+        )
+        assert xdrc_template.id is None
+        assert xdrc_template.name == "Test XDRC Template"

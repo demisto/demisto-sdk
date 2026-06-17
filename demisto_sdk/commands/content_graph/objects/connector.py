@@ -9,13 +9,13 @@ summary.yaml, handler.yaml, serializer.yaml) are modeled using a hybrid approach
 * **RelatedFile instances** for file-level concerns (existence, git status, path resolution).
 """
 
-import json
 from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, root_validator
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Nodes,
@@ -30,6 +30,8 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     SummaryRelatedFile,
     TriggersRelatedFile,
 )
+
+json = JSON_Handler()
 
 # ============================================================
 # Shared field sub-models

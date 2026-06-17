@@ -34,9 +34,14 @@ Layout = create_model(
 
 
 class _DashboardsData(BaseStrictModel):
-    global_id: str
+    global_id: Optional[str] = None
+    # NOTE: 'id' should exist in all XSIAM dashboard content items, but is currently not supported
+    # on XSIAM/Platform tenants.
+    id: Optional[str] = None
     status: str
-    name: str
+    # NOTE: 'name' should exist in all XSIAM dashboard content items, but is currently not supported
+    # on XSIAM/Platform tenants.
+    name: Optional[str] = None
     description: Optional[str] = None
     default_dashboard_id: int
     layout: List[Layout]  # type:ignore[valid-type]

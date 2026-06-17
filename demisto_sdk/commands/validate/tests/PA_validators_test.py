@@ -28,6 +28,7 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_pack_object,
     create_playbook_object,
     create_script_object,
+    create_test_playbook_object,
 )
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.commands.validate.validators.PA_validators.PA100_valid_tags_prefixes import (
@@ -113,6 +114,9 @@ from demisto_sdk.commands.validate.validators.PA_validators.PA133_is_base_pack_h
 )
 from demisto_sdk.commands.validate.validators.PA_validators.PA133_is_base_pack_has_no_new_dependencies_list_files import (
     IsBasePackHasNoNewDependenciesValidatorListFiles,
+)
+from demisto_sdk.commands.validate.validators.PA_validators.PA134_supported_modules_coverage import (
+    PackSupportedModulesCoverageValidator,
 )
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -2338,3 +2342,392 @@ def test_IsBasePackHasNoNewDependenciesValidatorListFiles_mixed_deps_flags_only_
     assert len(results) == 1
     assert "RealDepPack" in results[0].message
     assert "TestOnlyPack" not in results[0].message
+
+
+# ---------------------------------------------------------------------------
+# PA134 – PackSupportedModulesCoverageValidator
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "pack_marketplaces, pack_supported_modules, integration_marketplaces, integration_supported_modules, expected_failures",
+    [
+        pytest.param(
+            ["xsoar"],
+            ["edr", "xsiam"],
+            None,
+            None,
+            0,
+            id="non_platform_pack_no_validation",
+        ),
+        pytest.param(
+            ["platform"],
+            ["edr", "xsiam"],
+            [MarketplaceVersions.PLATFORM],
+            ["edr", "xsiam"],
+            0,
+            id="all_modules_covered_by_single_item",
+        ),
+        pytest.param(
+            ["platform"],
+            ["edr"],
+            [MarketplaceVersions.PLATFORM],
+            ["edr"],
+            0,
+            id="single_module_covered",
+        ),
+        pytest.param(
+            ["platform"],
+            ["edr", "xsiam"],
+            None,
+            None,
+            1,
+            id="no_content_items_all_modules_uncovered",
+        ),
+        pytest.param(
+            ["platform"],
+            ["edr", "xsiam", "asm"],
+            [MarketplaceVersions.PLATFORM],
+            ["edr", "xsiam"],
+            1,
+            id="one_module_uncovered",
+        ),
+        pytest.param(
+            ["platform"],
+            ["edr"],
+            [MarketplaceVersions.XSOAR],
+            ["edr"],
+            1,
+            id="content_item_not_in_platform_marketplace",
+        ),
+    ],
+)
+def test_PackSupportedModulesCoverageValidator_obtain_invalid_content_items(
+    pack_marketplaces,
+    pack_supported_modules,
+    integration_marketplaces,
+    integration_supported_modules,
+    expected_failures,
+):
+    """
+    Given
+    content_items.
+        - Case 1: A pack not in the platform marketplace with supportedModules declared.
+        - Case 2: A platform pack with supportedModules ["edr", "xsiam"] and a content item covering both.
+        - Case 3: A platform pack with supportedModules ["edr"] and a content item covering it.
+        - Case 4: A platform pack with supportedModules ["edr", "xsiam"] and no content items.
+        - Case 5: A platform pack with supportedModules ["edr", "xsiam", "asm"] and a content item covering only "edr" and "xsiam".
+        - Case 6: A platform pack with supportedModules ["edr"] and a content item only in xsoar marketplace.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items function.
+
+    Then
+        - Make sure the right amount of pack metadatas failed.
+        - Case 1: Shouldn't fail (non-platform pack).
+        - Case 2: Shouldn't fail (all modules covered).
+        - Case 3: Shouldn't fail (module covered).
+        - Case 4: Should fail (no content items to cover modules).
+        - Case 5: Should fail (asm not covered).
+        - Case 6: Should fail (content item not in platform marketplace).
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[pack_marketplaces, pack_supported_modules],
+    )
+
+    if integration_marketplaces is not None:
+        integration = create_integration_object()
+        integration.marketplaces = integration_marketplaces
+        integration.supportedModules = integration_supported_modules
+        pack.content_items.integration.append(integration)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == expected_failures
+
+
+def test_PackSupportedModulesCoverageValidator_uncovered_module_in_message():
+    """
+    Given
+        - A platform pack declaring supportedModules ["xsiam", "edr", "asm"].
+        - No content items covering any module.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items function.
+
+    Then
+        - The error message lists the uncovered modules in sorted order.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["xsiam", "edr", "asm"]],
+    )
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 1
+    assert "asm, edr, xsiam" in results[0].message
+
+
+def test_PackSupportedModulesCoverageValidator_multiple_items_cover_all_modules():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr", "xsiam"].
+        - Two content items, each covering one of the modules.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items function.
+
+    Then
+        - No validation results are returned (all modules are covered across items).
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam"]],
+    )
+    integration1 = create_integration_object()
+    integration1.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration1.supportedModules = ["edr"]
+
+    integration2 = create_integration_object()
+    integration2.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration2.supportedModules = ["xsiam"]
+
+    pack.content_items.integration.extend([integration1, integration2])
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 0
+
+
+def test_PackSupportedModulesCoverageValidator_content_item_inherits_pack_modules():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr", "xsiam"].
+        - A content item with no explicit supportedModules (None), which should
+          inherit the pack's modules via get_content_item_supported_modules.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items function.
+
+    Then
+        - No validation results are returned because the content item inherits
+          the pack's modules, covering all declared modules.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam"]],
+    )
+    integration = create_integration_object()
+    integration.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration.supportedModules = None
+    integration.pack = pack
+    pack.content_items.integration.append(integration)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 0
+
+
+def test_PackSupportedModulesCoverageValidator_skips_test_playbook():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr"].
+        - A test playbook (excluded from upload) that covers "edr".
+        - No other uploadable content items.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items function.
+
+    Then
+        - One validation result is returned because test playbooks are excluded
+          from upload and should not count toward module coverage.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr"]],
+    )
+    test_pb = create_test_playbook_object()
+    test_pb.marketplaces = [MarketplaceVersions.PLATFORM]
+    test_pb.supportedModules = ["edr"]
+    pack.content_items.test_playbook.append(test_pb)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack]
+    )
+    assert len(results) == 1
+    assert "edr" in results[0].message
+
+
+def test_PackSupportedModulesCoverageValidator_multiple_packs_mixed_results():
+    """
+    Given
+        - Two platform packs:
+          - Pack 1: declares ["edr", "xsiam"], has a content item covering both → valid.
+          - Pack 2: declares ["edr", "asm"], has a content item covering only "edr" → invalid.
+
+    When
+        - Calling the PackSupportedModulesCoverageValidator obtain_invalid_content_items function.
+
+    Then
+        - Exactly one validation result is returned (for Pack 2), mentioning "asm".
+    """
+    pack1 = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam"]],
+    )
+    integration1 = create_integration_object()
+    integration1.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration1.supportedModules = ["edr", "xsiam"]
+    pack1.content_items.integration.append(integration1)
+
+    pack2 = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "asm"]],
+    )
+    integration2 = create_integration_object()
+    integration2.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration2.supportedModules = ["edr"]
+    pack2.content_items.integration.append(integration2)
+
+    results = PackSupportedModulesCoverageValidator().obtain_invalid_content_items(
+        [pack1, pack2]
+    )
+    assert len(results) == 1
+    assert "asm" in results[0].message
+
+
+def test_PackSupportedModulesCoverageValidator_fix_removes_uncovered_modules():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr", "xsiam", "asm"].
+        - Content items covering only "edr" and "xsiam" (not "asm").
+
+    When
+        - Calling obtain_invalid_content_items followed by fix.
+
+    Then
+        - The fix removes "asm" from the pack's supportedModules.
+        - The fix message mentions the removed module.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam", "asm"]],
+    )
+    integration = create_integration_object()
+    integration.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration.supportedModules = ["edr", "xsiam"]
+    pack.content_items.integration.append(integration)
+
+    validator = PackSupportedModulesCoverageValidator()
+    results = validator.obtain_invalid_content_items([pack])
+    assert len(results) == 1
+
+    fix_result = validator.fix(pack)
+    assert "asm" in fix_result.message
+    assert set(pack.supportedModules) == {"edr", "xsiam"}
+
+
+def test_PackSupportedModulesCoverageValidator_fix_removes_all_uncovered_modules():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr", "xsiam"].
+        - No content items covering any module.
+
+    When
+        - Calling obtain_invalid_content_items followed by fix.
+
+    Then
+        - The fix removes all modules from the pack's supportedModules.
+        - The fix message mentions both removed modules.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam"]],
+    )
+
+    validator = PackSupportedModulesCoverageValidator()
+    results = validator.obtain_invalid_content_items([pack])
+    assert len(results) == 1
+
+    fix_result = validator.fix(pack)
+    assert "edr" in fix_result.message
+    assert "xsiam" in fix_result.message
+    assert pack.supportedModules == []
+
+
+def test_PackSupportedModulesCoverageValidator_fix_preserves_covered_modules():
+    """
+    Given
+        - A platform pack declaring supportedModules ["edr", "xsiam", "asm", "tim"].
+        - Content items covering "edr" and "tim" but NOT "xsiam" or "asm".
+
+    When
+        - Calling obtain_invalid_content_items followed by fix.
+
+    Then
+        - The fix removes only "xsiam" and "asm", preserving "edr" and "tim".
+    """
+    pack = create_pack_object(
+        paths=["marketplaces", "supportedModules"],
+        values=[["platform"], ["edr", "xsiam", "asm", "tim"]],
+    )
+    integration1 = create_integration_object()
+    integration1.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration1.supportedModules = ["edr"]
+
+    integration2 = create_integration_object()
+    integration2.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration2.supportedModules = ["tim"]
+
+    pack.content_items.integration.extend([integration1, integration2])
+
+    validator = PackSupportedModulesCoverageValidator()
+    results = validator.obtain_invalid_content_items([pack])
+    assert len(results) == 1
+
+    fix_result = validator.fix(pack)
+    assert "asm" in fix_result.message
+    assert "xsiam" in fix_result.message
+    assert set(pack.supportedModules) == {"edr", "tim"}
+
+
+def test_PackSupportedModulesCoverageValidator_fix_creates_supported_modules_when_absent():
+    """
+    Given
+        - A platform pack with NO supportedModules field (None), which implicitly
+          means all default platform modules are supported.
+        - A content item covering only "xsiam".
+
+    When
+        - Calling obtain_invalid_content_items followed by fix.
+
+    Then
+        - The fix creates the supportedModules field with only the covered module ("xsiam").
+        - The fix message mentions the uncovered modules.
+    """
+    pack = create_pack_object(
+        paths=["marketplaces"],
+        values=[["platform"]],
+    )
+    pack.supportedModules = None
+
+    integration = create_integration_object()
+    integration.marketplaces = [MarketplaceVersions.PLATFORM]
+    integration.supportedModules = ["xsiam"]
+    pack.content_items.integration.append(integration)
+
+    validator = PackSupportedModulesCoverageValidator()
+    results = validator.obtain_invalid_content_items([pack])
+    assert len(results) == 1
+
+    fix_result = validator.fix(pack)
+    assert pack.supportedModules == ["xsiam"]
+    # All other default modules should be mentioned as removed
+    assert "edr" in fix_result.message
+    assert "asm" in fix_result.message

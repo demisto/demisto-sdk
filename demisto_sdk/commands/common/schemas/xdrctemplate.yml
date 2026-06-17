@@ -8,10 +8,14 @@ mapping:
     required: true
   name:
     type: str
-    required: true
+    required: false
+    # NOTE: This field should exist in all XDR template content items, but is currently not supported
+    # on XSIAM/Platform tenants.
   id:
     type: str
-    required: true
+    required: false
+    # NOTE: This field should exist in all XDR template content items, but is currently not supported
+    # on XSIAM/Platform tenants.
   content_global_id:
     type: str
     required: false

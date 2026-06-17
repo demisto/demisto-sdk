@@ -15,9 +15,13 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 class _StrictXDRCTemplate(BaseStrictModel):
     os_type: str
     profile_type: str
-    name: str
+    # NOTE: 'name' should exist in all XDR template content items, but is currently not supported
+    # on XSIAM/Platform tenants.
+    name: Optional[str] = None
     content_global_id: Optional[str] = None
-    id: str
+    # NOTE: 'id' should exist in all XDR template content items, but is currently not supported
+    # on XSIAM/Platform tenants.
+    id: Optional[str] = None
     from_xdr_version: str
     yaml_template: str
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")

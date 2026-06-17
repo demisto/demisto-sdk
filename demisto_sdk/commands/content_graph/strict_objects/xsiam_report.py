@@ -39,9 +39,13 @@ class TimeFrame(BaseStrictModel):
 class TemplatesData(BaseStrictModel):
     metadata: Optional[str] = None
     global_id: Optional[str] = None
-    id: str
+    # NOTE: 'id' should exist in all XSIAM report content items, but is currently not supported
+    # on XSIAM/Platform tenants.
+    id: Optional[str] = None
     report_name: Optional[str] = None
-    name: str
+    # NOTE: 'name' should exist in all XSIAM report content items, but is currently not supported
+    # on XSIAM/Platform tenants.
+    name: Optional[str] = None
     report_description: Optional[str] = None
     default_template_id: Optional[int] = None
     time_frame: Optional[TimeFrame] = None

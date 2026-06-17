@@ -27,15 +27,23 @@ mapping:
 schema;dashboards_data_schema:
   type: map
   mapping:
+    id:
+      type: str
+      required: false
+      # NOTE: This field should exist in all XSIAM dashboard content items, but is currently not supported
+      # on XSIAM/Platform tenants.
     global_id:
       type: str
-      required: true
+      required: false
+      # DEPRECATED: Use 'id' field instead. This field is kept for backward compatibility with existing content items.
     status:
       type: str
       required: true
     name:
       type: str
-      required: true
+      required: false
+      # NOTE: This field should exist in all XSIAM dashboard content items, but is currently not supported
+      # on XSIAM/Platform tenants.
     description:
       type: str
     default_dashboard_id:

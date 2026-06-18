@@ -355,6 +355,9 @@ def _update_content_graph_inner(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
+    # Hoist the declaration so each branch below assigns to the same Set[str]
+    # variable; otherwise mypy treats line ~392's re-annotation as a redefinition.
+    changed_connector_ids: Set[str] = set()
     if (
         use_git
         and (commit := content_graph_interface.commit)
@@ -381,7 +384,7 @@ def _update_content_graph_inner(
                 f"Failed to get changed connectors from git: {e}. "
                 "Continuing without connector updates."
             )
-            changed_connector_ids = set()
+            # changed_connector_ids stays as the empty set initialised above.
     elif explicit_changes_provided:
         logger.info(
             "Skipping git-diff augmentation: changed packs/connectors were "
@@ -389,9 +392,7 @@ def _update_content_graph_inner(
             f"{DEMISTO_SDK_DIFF_FILES_ENV}), so the bucket-commit git diff "
             "is redundant and would fail in shallow CI clones."
         )
-        changed_connector_ids: Set[str] = set()
-    else:
-        changed_connector_ids = set()
+        # changed_connector_ids stays as the empty set initialised above.
     if changed_connector_ids:
         connectors_to_update.extend(changed_connector_ids)
 

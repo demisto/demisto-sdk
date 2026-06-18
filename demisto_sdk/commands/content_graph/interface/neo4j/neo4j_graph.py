@@ -676,7 +676,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def find_content_items_with_module_mismatch_dependencies(
         self, content_item_ids: List[str], mandatory: bool = True
-    ) -> List[BaseNode]:
+    ) -> Tuple[List[BaseNode], Dict[str, Dict[str, List[str]]]]:
         """
         Retrieves content items with invalid dependency relationships based on supported modules.
 
@@ -689,16 +689,27 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             mandatory (bool): If True, checks mandatory USES relationships (default).
                               If False, checks non-mandatory (optional) USES relationships.
         Returns:
-            List[BaseNode]: Content items that have invalid supported module dependencies, if any exist.
-
+            Tuple[List[BaseNode], Dict[str, Dict[str, List[str]]]]:
+                - Content items that have invalid supported module dependencies, if any exist.
+                - A mapping of content item object_id to a per-dependency map of
+                  {dependency object_id: [missing modules]}, computed by the query
+                  (only the modules genuinely unsupported by each dependency).
         """
         with self.driver.session() as session:
-            results = session.execute_read(
+            results, missing_modules_by_element_id = session.execute_read(
                 get_supported_modules_mismatch_dependencies, content_item_ids, mandatory
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
-            return [self._id_to_obj[result] for result in results]
+            invalid_items = [self._id_to_obj[result] for result in results]
+            # Re-key the missing-modules mapping from element_id to object_id,
+            # which is the stable identifier used by the validator.
+            missing_modules_by_object_id: Dict[str, Dict[str, List[str]]] = {
+                self._id_to_obj[element_id].object_id: missing_by_dependency
+                for element_id, missing_by_dependency in missing_modules_by_element_id.items()
+                if element_id in self._id_to_obj
+            }
+            return invalid_items, missing_modules_by_object_id
 
     def find_content_items_with_module_mismatch_commands(
         self, content_item_ids: List[str]
@@ -725,7 +736,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def find_content_items_with_module_mismatch_content_items(
         self, content_item_ids: List[str], mandatory: bool = True
-    ) -> List[BaseNode]:
+    ) -> Tuple[List[BaseNode], Dict[str, List[str]]]:
         """
         Retrieves content items with invalid command relationships based on supported modules.
 
@@ -739,17 +750,29 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                               If False, checks non-mandatory (mandatorily:false) USES relationships.
                               Defaults to True.
         Returns:
-            List[BaseNode]: Content items that have invalid supported module commands, if any exist.
+            Tuple[List[BaseNode], Dict[str, List[str]]]:
+                - Content items that have invalid supported module commands, if any exist.
+                - A mapping of content item object_id to the list of incompatible
+                  command names (only the genuinely incompatible commands, not every
+                  command the item uses).
         """
         with self.driver.session() as session:
-            results = session.execute_read(
+            results, incompatible_commands_by_element_id = session.execute_read(
                 get_supported_modules_mismatch_content_items,
                 content_item_ids,
                 mandatory,
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
-            return [self._id_to_obj[result] for result in results]
+            invalid_items = [self._id_to_obj[result] for result in results]
+            # Re-key the incompatible commands mapping from element_id to object_id,
+            # which is the stable identifier used by the validator.
+            incompatible_commands_by_object_id: Dict[str, List[str]] = {
+                self._id_to_obj[element_id].object_id: commands
+                for element_id, commands in incompatible_commands_by_element_id.items()
+                if element_id in self._id_to_obj
+            }
+            return invalid_items, incompatible_commands_by_object_id
 
     def find_unused_test_playbook(
         self, test_playbook_ids: List[str], test_playbooks_ids_to_skip: List[str]

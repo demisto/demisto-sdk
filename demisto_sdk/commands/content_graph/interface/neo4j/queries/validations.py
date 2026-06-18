@@ -471,24 +471,50 @@ def get_supported_modules_mismatch_dependencies(
                           Defaults to True.
 
     Returns:
-        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
+        Tuple[Dict[str, Neo4jRelationshipResult], Dict[str, Dict[str, List[str]]]]:
+            - A dictionary mapping content item element IDs to relationship results.
+            - A dictionary mapping content item element IDs to a per-dependency map
+              of {dependency object_id: [missing modules]}. The missing modules are
+              computed inside the query against the dependency's own
+              ``supportedModules`` (data that is not reliably available on the
+              dependency object once loaded into memory - e.g. command nodes reached
+              via USES do not carry their HAS_COMMAND supportedModules), so only the
+              modules genuinely unsupported by the dependency are reported.
     """
     mandatorily_value = "true" if mandatory else "false"
+    all_modules = [sm.value for sm in PlatformSupportedModules]
     query = f""" // Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
     MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:{mandatorily_value}}}]->(contentItemB)
     WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItemA.object_id IN {content_item_ids})
       AND contentItemB.supportedModules IS NOT NULL AND 'platform' IN contentItemA.marketplaces
-      AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {[sm.value for sm in PlatformSupportedModules]}) WHERE module IN contentItemB.supportedModules)
-    RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
+      AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {all_modules}) WHERE module IN contentItemB.supportedModules)
+    // Compute, per dependency, exactly which of contentItemA's modules are NOT
+    // supported by the dependency - so the error message lists only the real
+    // offenders rather than all of contentItemA's modules.
+    WITH contentItemA, r, contentItemB,
+         [module IN coalesce(contentItemA.supportedModules, {all_modules})
+          WHERE NOT module IN contentItemB.supportedModules] AS missing_modules
+    RETURN contentItemA,
+           collect(r) AS relationships,
+           collect(contentItemB) AS nodes_to,
+           collect([contentItemB.object_id, missing_modules]) AS missing_modules_by_dependency
     """
-    return {
-        item.get("contentItemA").element_id: Neo4jRelationshipResult(
+    results = {}
+    missing_modules_by_item: Dict[str, Dict[str, List[str]]] = {}
+    for item in run_query(tx, query):
+        element_id = item.get("contentItemA").element_id
+        results[element_id] = Neo4jRelationshipResult(
             node_from=item.get("contentItemA"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
         )
-        for item in run_query(tx, query)
-    }
+        missing_modules_by_item[element_id] = {
+            dependency_id: modules
+            for dependency_id, modules in item.get(
+                "missing_modules_by_dependency", []
+            )
+        }
+    return results, missing_modules_by_item
 
 
 def get_supported_modules_mismatch_commands(
@@ -559,7 +585,11 @@ def get_supported_modules_mismatch_content_items(
                           Defaults to True.
 
     Returns:
-        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
+        Tuple[Dict[str, Neo4jRelationshipResult], Dict[str, List[str]]]:
+            - A dictionary mapping content item element IDs to relationship results.
+            - A dictionary mapping content item element IDs to the list of
+              incompatible command names (only the commands that genuinely fail the
+              module compatibility check, not every command the item uses).
     """
     mandatorily_value = str(mandatory).lower()
     query = f"""
@@ -578,10 +608,18 @@ def get_supported_modules_mismatch_content_items(
             // supported modules is NOT in the command's supported module list.
             (any(module IN content_item.supportedModules WHERE NOT module IN r.supportedModules))
         )
-    RETURN content_item, collect(u) AS relationships, collect(c) AS nodes_to"""
+    // Only the command rows (c) that satisfied the WHERE clause above (i.e. the
+    // genuinely incompatible commands) are aggregated here, so both `nodes_to` and
+    // `incompatible_commands` contain exactly the incompatible commands - not every
+    // command the item uses.
+    RETURN content_item,
+           collect(u) AS relationships,
+           collect(c) AS nodes_to,
+           collect(DISTINCT c.object_id) AS incompatible_commands"""
 
     items = run_query(tx, query)
     results = {}
+    incompatible_commands_by_item: Dict[str, List[str]] = {}
     for item in items:
         node_from = item.get("content_item")
         relationships = item.get("relationships")
@@ -591,8 +629,12 @@ def get_supported_modules_mismatch_content_items(
             relationships,
             nodes_to,
         )
-        results[item.get("content_item").element_id] = neo_res
-    return results
+        element_id = item.get("content_item").element_id
+        results[element_id] = neo_res
+        incompatible_commands_by_item[element_id] = item.get(
+            "incompatible_commands", []
+        )
+    return results, incompatible_commands_by_item
 
 
 def get_agentix_actions_using_content_items(

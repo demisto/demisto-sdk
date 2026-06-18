@@ -2052,6 +2052,7 @@ class PlatformSupportedModules(StrEnum):
     EXPOSURE_MANAGEMENT = "exposure_management"
     TIM = "tim"
     EMAIL_SECURITY = "email_security"
+    XTI = "xti"
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {

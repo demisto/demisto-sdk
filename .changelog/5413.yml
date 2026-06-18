@@ -1,0 +1,4 @@
+changes:
+  - description: Fixed PA134 auto-fix to correctly generate and populate the `supportedModules` field from platform defaults if it is missing from `pack_metadata.json` when removing uncovered modules.
+    type: fix
+pr_number: 5413

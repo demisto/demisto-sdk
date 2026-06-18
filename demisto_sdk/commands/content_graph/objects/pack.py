@@ -724,8 +724,15 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def save(self):
         file_path = self.path / PACK_METADATA_FILENAME
         data = get_file(file_path)
+        # Never inject ``firstCreated`` if it was not already in the original
+        # file.  The field_mapping maps ``created`` → ``firstCreated``, so
+        # excluding ``created`` from _save() prevents the injection.
+        fields_to_exclude = [] if "firstCreated" in data else ["created"]
         super()._save(
-            file_path, data, predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS
+            file_path,
+            data,
+            predefined_keys_to_keep=MANDATORY_PACK_METADATA_FIELDS,
+            fields_to_exclude=fields_to_exclude,
         )  # type: ignore
 
     @cached_property

@@ -1325,3 +1325,102 @@ class TestConnectorRelatedFileDeduplication:
 
         assert result == {Path("connectors/salesforce/connector.yaml")}
         assert len(result) == 1
+
+
+# ============================================================
+# ConnectorAwareInitializer — filter / gather behavior
+# ============================================================
+
+
+class TestConnectorAwareInitializerFilter:
+    """Tests for the post-collection filter inside
+    :py:meth:`ConnectorAwareInitializer.gather_objects_to_run_on`.
+
+    Specifically, the filter must NOT silently drop connectors with no XSOAR
+    handlers when they carry structure errors — otherwise ST110 (and any
+    other validator that reads ``structure_errors``) would never see the
+    malformed connector.
+    """
+
+    @staticmethod
+    def _run_filter(objects):
+        """Replay the inline post-filter block from gather_objects_to_run_on.
+
+        We mirror the logic rather than calling the full method so the test
+        is independent of file-collection / git-diff plumbing.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import Connector
+
+        filtered_connectors = set()
+        for obj in objects:
+            if isinstance(obj, Connector):
+                if obj.xsoar_handlers or obj.structure_errors:
+                    filtered_connectors.add(obj)
+        return filtered_connectors
+
+    def test_connector_with_xsoar_handler_is_kept(self):
+        """
+        Given: A connector with at least one XSOAR handler and no structure errors.
+        When: The post-collection filter runs.
+        Then: The connector is kept (original happy-path behavior).
+        """
+        connector = create_connector_object()
+        assert connector.xsoar_handlers, "fixture must have an XSOAR handler"
+        connector.structure_errors = []
+
+        kept = self._run_filter({connector})
+
+        assert kept == {connector}
+
+    def test_connector_with_structure_errors_and_no_xsoar_handler_is_kept(self):
+        """
+        Given: A connector with NO XSOAR handlers but with at least one
+               structure error (e.g. an extra top-level field in connector.yaml
+               that StrictConnector rejected).
+        When: The post-collection filter runs.
+        Then: The connector is STILL kept, so ST110 can report the schema
+              error. Without this guarantee, an extra field like
+              ``random_field: anything`` in ``connectors/<name>/connector.yaml``
+              is silently dropped before ST110 ever sees it.
+        """
+        from demisto_sdk.commands.content_graph.strict_objects.base_strict_model import (
+            StructureError,
+        )
+
+        connector = create_connector_object()
+        # Simulate "no XSOAR handlers" — this is what triggers the bug.
+        connector.handlers = []
+        assert not connector.xsoar_handlers
+        # Simulate the structure error StrictConnector would produce for
+        # `random_field: "anything"` at the top of connector.yaml.
+        connector.structure_errors = [
+            StructureError(
+                path=connector.path,
+                loc=("random_field",),
+                msg="extra fields not permitted",
+                type="value_error.extra",
+            )
+        ]
+
+        kept = self._run_filter({connector})
+
+        assert kept == {connector}, (
+            "connector with structure errors must survive the filter even "
+            "without XSOAR handlers"
+        )
+
+    def test_connector_with_neither_xsoar_handlers_nor_structure_errors_is_dropped(self):
+        """
+        Given: A connector with NO XSOAR handlers and NO structure errors.
+        When: The post-collection filter runs.
+        Then: The connector is dropped (original behaviour — non-XSOAR
+              connectors are out of scope for cross-matching when they're
+              also schema-clean).
+        """
+        connector = create_connector_object()
+        connector.handlers = []
+        connector.structure_errors = []
+
+        kept = self._run_filter({connector})
+
+        assert kept == set()

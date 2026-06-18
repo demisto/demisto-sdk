@@ -1254,12 +1254,20 @@ class ConnectorAwareInitializer(Initializer):
                         f"not in PLATFORM marketplace."
                     )
             elif isinstance(obj, Connector):
-                if obj.xsoar_handlers:
+                if obj.xsoar_handlers or obj.structure_errors:
+                    # Keep connectors that either (a) have at least one XSOAR
+                    # handler — the original filter intent — OR (b) failed
+                    # structure validation. Without the second clause, a
+                    # malformed connector.yaml is silently dropped here and
+                    # ST110 never gets a chance to report the schema error,
+                    # because cross-matching only makes sense for XSOAR-typed
+                    # connectors. Schema errors are file-level and must
+                    # always surface regardless of handler topology.
                     filtered_connectors.add(obj)
                 else:
                     logger.debug(
                         f"Skipping connector '{obj.object_id}' -- "
-                        f"no XSOAR handlers."
+                        f"no XSOAR handlers and no structure errors."
                     )
 
         # 3. Cross-match and expand with missing counterparts

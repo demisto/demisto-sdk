@@ -11,4 +11,9 @@ changes:
     `StrictConnector`, so `ST110` actually reports connector schema errors instead
     of crashing on a `FieldInfo` default.
   type: internal
+- description: Fixed `ConnectorAwareInitializer.gather_objects_to_run_on` silently
+    dropping connectors with no XSOAR handlers — schema errors (structure_errors)
+    now keep the connector in the working set so `ST110` and any other validator
+    that reads `structure_errors` actually fires for malformed `connector.yaml`.
+  type: internal
 pr_number: 5318

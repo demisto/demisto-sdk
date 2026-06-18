@@ -1177,10 +1177,10 @@ class TestStandardizedIdAndNameFields:
             - Validation passes (no exception) and fields are set correctly.
         """
         from demisto_sdk.commands.content_graph.strict_objects.xsiam_dashboard import (
-            _DashboardsData,
+            DashboardsData,
         )
 
-        dashboard_data = _DashboardsData(
+        dashboard_data = DashboardsData(
             id="test_dashboard",
             global_id="test_dashboard",
             name="Test Dashboard",

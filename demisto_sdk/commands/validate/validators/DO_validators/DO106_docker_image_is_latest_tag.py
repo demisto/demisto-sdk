@@ -67,8 +67,6 @@ class DockerImageTagIsNotOutdated(DockerValidator[ContentTypes]):
         for content_item in content_items:
             if not content_item.is_javascript:
                 docker_image = content_item.docker_image
-                if docker_image.is_demistoextended_repository:
-                    continue
                 if not docker_image.is_valid:
                     invalid_content_items.append(
                         ValidationResult(

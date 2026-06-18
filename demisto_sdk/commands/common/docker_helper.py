@@ -502,6 +502,17 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
+        # Route demistoextended images to private registry
+        if image.startswith("demistoextended/"):
+            extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY", "")
+            if extended_registry and extended_registry not in image:
+                logger.debug(
+                    f"get_image_registry | returned: {extended_registry}/{image}"
+                )
+                return f"{extended_registry}/{image}"
+            logger.debug(f"get_image_registry | returned: {image}")
+            return image
+        # Default routing to Docker Hub proxy
         if DOCKER_REGISTRY_URL not in image:
             logger.debug(
                 f"get_image_registry | returned: {DOCKER_REGISTRY_URL}/{image}"

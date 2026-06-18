@@ -20,6 +20,7 @@ class DockerImage(str):
         r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"  # regex to extract python version for image name
     )
     _dockerhub_client = None
+    _extended_client = None
 
     @classmethod
     def _get_dockerhub_client(cls):
@@ -34,6 +35,24 @@ class DockerImage(str):
                 registry=DOCKER_REGISTRY_URL, username=username, password=password
             )
         return cls._dockerhub_client
+
+    @classmethod
+    def _get_extended_client(cls):
+        """Get or create a DockerHubClient for the private extended registry."""
+        if not cls._extended_client:
+            extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY")
+            if not extended_registry:
+                return None
+            cls._extended_client = DockerHubClient(registry=extended_registry)
+        return cls._extended_client
+
+    def _get_client(self):
+        """Routes to the correct registry client based on repository prefix."""
+        if self.is_demistoextended_repository:
+            if extended_client := self._get_extended_client():
+                return extended_client
+            logger.warning(f"No DEMISTO_SDK_EXTENDED_REGISTRY configured for {self}")
+        return self._get_dockerhub_client()
 
     def __new__(
         cls, docker_image: str, raise_if_not_valid: bool = False
@@ -110,6 +129,14 @@ class DockerImage(str):
         return self.repository == "demisto"
 
     @property
+    def is_demistoextended_repository(self) -> bool:
+        return self.repository == "demistoextended"
+
+    @property
+    def is_trusted_repository(self) -> bool:
+        return self.repository in {"demisto", "demistoextended"}
+
+    @property
     def is_python3_image(self) -> bool:
         return self.is_demisto_repository and self.image_name == "python3"
 
@@ -119,7 +146,7 @@ class DockerImage(str):
 
     @property
     def creation_date(self) -> datetime:
-        return self._get_dockerhub_client().get_docker_image_tag_creation_date(
+        return self._get_client().get_docker_image_tag_creation_date(
             self.name, tag=self.tag
         )
 
@@ -138,7 +165,7 @@ class DockerImage(str):
                 return Version(match.group("python_version"))
 
             logger.debug(f"Could not get python version for image {self} from regex")
-            image_env = self._get_dockerhub_client().get_image_env(
+            image_env = self._get_client().get_image_env(
                 self.name, tag=self.tag
             )
 
@@ -165,13 +192,13 @@ class DockerImage(str):
         """
         Returns True if the docker-image exist in the configured registry
         """
-        return self._get_dockerhub_client().is_docker_image_exist(
+        return self._get_client().is_docker_image_exist(
             self.name, tag=self.tag
         )
 
     @property
     def latest_tag(self) -> Version:
-        return self._get_dockerhub_client().get_latest_docker_image_tag(self.name)
+        return self._get_client().get_latest_docker_image_tag(self.name)
 
     @property
     def latest_docker_image(self) -> "DockerImage":
@@ -179,5 +206,5 @@ class DockerImage(str):
         Returns the docker image with the latest tag
         """
         return DockerImage(
-            self._get_dockerhub_client().get_latest_docker_image(self.name)
+            self._get_client().get_latest_docker_image(self.name)
         )

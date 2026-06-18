@@ -199,3 +199,93 @@ def test_create_docker_container_successfully(
         f"error when executing func create_container, error: {exception_text}, time 3"
         in log_result.call_args.args
     )
+
+
+# --- demistoextended get_image_registry tests ---
+
+
+class TestGetImageRegistryDemistoextended:
+    def test_demistoextended_with_env_prefixes_image(self):
+        """
+        Given:
+         - a demistoextended/ image and DEMISTO_SDK_EXTENDED_REGISTRY is set
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - returns the image prefixed with the extended registry URL
+        """
+        with mock.patch.dict(
+            os.environ,
+            {"DEMISTO_SDK_EXTENDED_REGISTRY": "us.gcr.io/xsoar-registry"},
+        ):
+            result = dhelper.DockerBase.get_image_registry(
+                "demistoextended/accessdata-p:1.1.0.10177564"
+            )
+            assert (
+                result
+                == "us.gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10177564"
+            )
+
+    def test_demistoextended_without_env_returns_unchanged(self):
+        """
+        Given:
+         - a demistoextended/ image and DEMISTO_SDK_EXTENDED_REGISTRY is NOT set
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - returns the image unchanged (no prefix added)
+        """
+        env = os.environ.copy()
+        env.pop("DEMISTO_SDK_EXTENDED_REGISTRY", None)
+        with mock.patch.dict(os.environ, env, clear=True):
+            result = dhelper.DockerBase.get_image_registry(
+                "demistoextended/accessdata-p:1.1.0.10177564"
+            )
+            assert result == "demistoextended/accessdata-p:1.1.0.10177564"
+
+    def test_demistoextended_already_prefixed_skips_extended_branch(self):
+        """
+        Given:
+         - a demistoextended/ image that already contains the registry URL prefix
+         - DEMISTO_SDK_EXTENDED_REGISTRY is set
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - the image does NOT enter the demistoextended branch (startswith guard)
+         - falls through to the default DOCKER_REGISTRY_URL branch
+        """
+        with mock.patch.dict(
+            os.environ,
+            {"DEMISTO_SDK_EXTENDED_REGISTRY": "us.gcr.io/xsoar-registry"},
+        ):
+            already_prefixed = "us.gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10177564"
+            result = dhelper.DockerBase.get_image_registry(already_prefixed)
+            # Since the image doesn't start with "demistoextended/", it goes
+            # through the default branch which prepends DOCKER_REGISTRY_URL
+            assert result == f"{dhelper.DOCKER_REGISTRY_URL}/{already_prefixed}"
+
+    def test_demisto_image_still_gets_docker_registry_prefix(self):
+        """
+        Given:
+         - a demisto/ image (not demistoextended)
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - returns the image prefixed with DOCKER_REGISTRY_URL (existing behavior)
+        """
+        from demisto_sdk.commands.common.constants import DOCKER_REGISTRY_URL
+
+        image = "demisto/python3:3.10.11.54799"
+        result = dhelper.DockerBase.get_image_registry(image)
+        if DOCKER_REGISTRY_URL not in image:
+            assert result == f"{DOCKER_REGISTRY_URL}/{image}"
+        else:
+            assert result == image

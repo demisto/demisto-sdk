@@ -1409,7 +1409,9 @@ class TestConnectorAwareInitializerFilter:
             "without XSOAR handlers"
         )
 
-    def test_connector_with_neither_xsoar_handlers_nor_structure_errors_is_dropped(self):
+    def test_connector_with_neither_xsoar_handlers_nor_structure_errors_is_dropped(
+        self,
+    ):
         """
         Given: A connector with NO XSOAR handlers and NO structure errors.
         When: The post-collection filter runs.

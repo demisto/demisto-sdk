@@ -154,6 +154,7 @@ class TimelineRecord(BaseStrictModel):
     evidence_comment: Optional[str] = Field(None, alias="evidenceComment")
     effective_time: Optional[str] = Field(None, alias="effectiveTime")
     attachments: Optional[str] = None
+    tags: Optional[List[str]] = None
 
 
 class _SubTaskPlaybook(BaseStrictModel):

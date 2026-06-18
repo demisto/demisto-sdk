@@ -406,6 +406,10 @@ mapping:
                 type: str
               attachments:
                 type: str
+              tags:
+                type: seq
+                sequence:
+                - type: str
 
           id:xsoar:
             type: text

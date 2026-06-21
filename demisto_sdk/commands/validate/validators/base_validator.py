@@ -331,9 +331,7 @@ def is_error_ignored(
         return True
 
     if related_file_type:
-        # If the validation should run on a file related to the main content,
-        # will check if the validation's error code is ignored by any of the
-        # related file paths.
+        # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
         for related_file in related_file_type:
             try:
                 related_file_object = getattr(content_item, related_file.value)
@@ -345,8 +343,7 @@ def is_error_ignored(
                 continue
         return False
     else:
-        # If the validation should run on the main content, will check if the
-        # validation's error code is ignored by the file.
+        # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
         return err_code in content_item.ignored_errors
 
 

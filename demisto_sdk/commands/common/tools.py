@@ -4088,7 +4088,7 @@ def extract_error_codes_from_file(pack_name: str) -> Set[str]:
     """
     Args:
         pack_name: a pack name from which to get the pack ignore errors.
-    Returns: error codes set  that in pack.ignore file
+    Returns: error codes set that in pack.ignore file
     """
     error_codes_list = []
     if pack_name and (config := get_pack_ignore_content(pack_name)):
@@ -4103,6 +4103,7 @@ def extract_error_codes_from_file(pack_name: str) -> Set[str]:
                     error_codes = str(config[section][key]).split(",")
                     error_codes_list.extend(error_codes)
 
+        # extract pack-level ignored error codes
         if config.has_section("pack"):
             for key in config["pack"]:
                 if key == "ignore":

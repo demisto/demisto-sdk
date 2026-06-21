@@ -315,12 +315,10 @@ class DockerHook(Hook):
         Returns:
             List[Dict]: List of generated hooks.
         """
-        if image.startswith("demistoextended/") and not os.getenv(
-            "DEMISTO_SDK_EXTENDED_REGISTRY"
-        ):
+        if image.startswith("demistoextended/"):
             logger.info(
                 f"<yellow>Skipping DockerHook for extended image {image} — "
-                f"DEMISTO_SDK_EXTENDED_REGISTRY not configured.</yellow>"
+                f"managed in dockerfiles-private CI.</yellow>"
             )
             return []
         object_to_files = _split_by_objects(

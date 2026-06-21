@@ -805,9 +805,20 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
         return _get_python_version_from_dockerhub_api(image)
     except Exception:
         logger.debug(
-            f"Getting python version from {image=} by pulling its image and query its env"
+            f"Could not get python version for {image=} from dockerhub api"
         )
-        return _get_python_version_from_image_client(image)
+
+    if image.startswith("demistoextended/"):
+        logger.warning(
+            f"Could not determine Python version for extended image {image}, "
+            f"defaulting to Python {DEFAULT_PYTHON_VERSION}"
+        )
+        return Version(DEFAULT_PYTHON_VERSION)
+
+    logger.debug(
+        f"Getting python version from {image=} by pulling its image and query its env"
+    )
+    return _get_python_version_from_image_client(image)
 
 
 def _get_python_version_from_image_client(image: str) -> Version:

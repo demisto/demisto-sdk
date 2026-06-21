@@ -45,13 +45,15 @@ class DockerImage(str):
                 return None
             client = DockerHubClient(registry=extended_registry)
             # Override the registry URL — get_registry_api_url() resolves to
-            # the GAR proxy in CI, but we need the actual GCR endpoint.
-            # GCR V2 API: https://gcr.io/v2/{project}/{image}/tags/list
-            # So for registry="gcr.io/xsoar-registry" → "https://gcr.io/v2/xsoar-registry"
+            # the GAR proxy in CI, but we need the actual registry endpoint.
+            # V2 API: https://{host}/v2/{project}/{image}/tags/list
             parts = extended_registry.rstrip("/").split("/", 1)
             host = parts[0]
             path = parts[1] if len(parts) > 1 else ""
             client.registry_api_url = f"https://{host}/v2/{path}".rstrip("/")
+            logger.info(
+                f"Extended registry client created: registry_api_url={client.registry_api_url}"
+            )
             cls._extended_client = client
         return cls._extended_client
 

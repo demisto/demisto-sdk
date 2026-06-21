@@ -218,14 +218,14 @@ class TestGetImageRegistryDemistoextended:
         """
         with mock.patch.dict(
             os.environ,
-            {"DEMISTO_SDK_EXTENDED_REGISTRY": "us.gcr.io/xsoar-registry"},
+            {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"},
         ):
             result = dhelper.DockerBase.get_image_registry(
                 "demistoextended/accessdata-p:1.1.0.10177564"
             )
             assert (
                 result
-                == "us.gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10177564"
+                == "example-registry.io/test-project/demistoextended/accessdata-p:1.1.0.10177564"
             )
 
     def test_demistoextended_without_env_returns_unchanged(self):
@@ -262,9 +262,9 @@ class TestGetImageRegistryDemistoextended:
         """
         with mock.patch.dict(
             os.environ,
-            {"DEMISTO_SDK_EXTENDED_REGISTRY": "us.gcr.io/xsoar-registry"},
+            {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"},
         ):
-            already_prefixed = "us.gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10177564"
+            already_prefixed = "example-registry.io/test-project/demistoextended/accessdata-p:1.1.0.10177564"
             result = dhelper.DockerBase.get_image_registry(already_prefixed)
             # Since the image doesn't start with "demistoextended/", it goes
             # through the default branch which prepends DOCKER_REGISTRY_URL
@@ -453,7 +453,7 @@ class TestGetPythonVersionDemistoextendedFallback:
         )
         mocker.patch.object(docker_helper, "IS_CONTENT_GITLAB_CI", True)
 
-        env = {"DEMISTO_SDK_EXTENDED_REGISTRY": "gcr.io/xsoar-registry"}
+        env = {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"}
         with mock.patch.dict(os.environ, env):
             with pytest.raises(Exception, match="docker pull failed"):
                 get_python_version(

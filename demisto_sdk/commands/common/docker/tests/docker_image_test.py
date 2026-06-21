@@ -174,7 +174,7 @@ class TestGetExtendedClient:
         """
         with patch.dict(
             os.environ,
-            {"DEMISTO_SDK_EXTENDED_REGISTRY": "us.gcr.io/xsoar-registry"},
+            {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"},
         ):
             client = DockerImage._get_extended_client()
             assert client is not None

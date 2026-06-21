@@ -418,7 +418,11 @@ class DockerHubClient:
                 exception=error,
             )
 
-        return response.get("tags") or []
+        tags = response.get("tags") or []
+        logger.info(
+            f"get_image_tags | {docker_image} | registry={self.registry_api_url} | found {len(tags)} tags"
+        )
+        return tags
 
     def get_image_tag_metadata(self, docker_image: str, tag: str) -> Dict[str, Any]:
         """

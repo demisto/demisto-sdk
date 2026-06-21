@@ -33,12 +33,26 @@ class DockerImage(str):
 
     @classmethod
     def _get_extended_client(cls):
-        """Get or create a DockerHubClient for the private extended registry."""
+        """Get or create a DockerHubClient for the extended registry (GCR).
+
+        In CI, get_registry_api_url() resolves to the GAR proxy instead of
+        the actual GCR URL, so we override registry_api_url after construction.
+        Authentication is handled by get_token() → get_gcloud_access_token().
+        """
         if not cls._extended_client:
             extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY")
             if not extended_registry:
                 return None
-            cls._extended_client = DockerHubClient(registry=extended_registry)
+            client = DockerHubClient(registry=extended_registry)
+            # Override the registry URL — get_registry_api_url() resolves to
+            # the GAR proxy in CI, but we need the actual GCR endpoint.
+            # GCR V2 API: https://gcr.io/v2/{project}/{image}/tags/list
+            # So for registry="gcr.io/xsoar-registry" → "https://gcr.io/v2/xsoar-registry"
+            parts = extended_registry.rstrip("/").split("/", 1)
+            host = parts[0]
+            path = parts[1] if len(parts) > 1 else ""
+            client.registry_api_url = f"https://{host}/v2/{path}".rstrip("/")
+            cls._extended_client = client
         return cls._extended_client
 
     def _get_client(self):

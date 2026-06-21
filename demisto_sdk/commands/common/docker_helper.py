@@ -771,6 +771,14 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
         )
         return None
 
+    if image.startswith("demistoextended/") and not os.getenv(
+        "DEMISTO_SDK_EXTENDED_REGISTRY"
+    ):
+        logger.info(
+            f"Extended image {image} - cannot query DockerHub, defaulting to Python 3"
+        )
+        return Version(DEFAULT_PYTHON_VERSION)
+
     if python_version := DockerImagesMetadata.get_instance().python_version(image):
         return python_version
     logger.debug(

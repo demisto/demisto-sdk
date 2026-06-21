@@ -65,19 +65,6 @@ class DockerImage(str):
             logger.warning(f"No DEMISTO_SDK_EXTENDED_REGISTRY configured for {self}")
         return self._get_dockerhub_client()
 
-    @property
-    def registry_image_name(self) -> str:
-        """Returns the image path used for registry API calls.
-
-        For demistoextended images queried against GCR, returns only the
-        image_name (e.g. 'accessdata-p') since the repository prefix is
-        not part of the GCR path. For standard images, returns the full
-        name (e.g. 'demisto/python3').
-        """
-        if self.is_demistoextended_repository and self._get_extended_client():
-            return self.image_name
-        return self.name
-
     def __new__(
         cls, docker_image: str, raise_if_not_valid: bool = False
     ) -> "DockerImage":
@@ -171,7 +158,7 @@ class DockerImage(str):
     @property
     def creation_date(self) -> datetime:
         return self._get_client().get_docker_image_tag_creation_date(
-            self.registry_image_name, tag=self.tag
+            self.name, tag=self.tag
         )
 
     @property
@@ -190,7 +177,7 @@ class DockerImage(str):
 
             logger.debug(f"Could not get python version for image {self} from regex")
             image_env = self._get_client().get_image_env(
-                self.registry_image_name, tag=self.tag
+                self.name, tag=self.tag
             )
 
             if python_version := next(
@@ -217,17 +204,17 @@ class DockerImage(str):
         Returns True if the docker-image exist in the configured registry
         """
         return self._get_client().is_docker_image_exist(
-            self.registry_image_name, tag=self.tag
+            self.name, tag=self.tag
         )
 
     @property
     def latest_tag(self) -> Version:
-        return self._get_client().get_latest_docker_image_tag(self.registry_image_name)
+        return self._get_client().get_latest_docker_image_tag(self.name)
 
     @property
     def latest_docker_image(self) -> "DockerImage":
         """
         Returns the docker image with the latest tag
         """
-        latest_tag = self._get_client().get_latest_docker_image_tag(self.registry_image_name)
+        latest_tag = self._get_client().get_latest_docker_image_tag(self.name)
         return DockerImage(f"{self.name}:{latest_tag}")

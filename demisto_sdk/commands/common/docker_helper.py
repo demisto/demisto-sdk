@@ -502,8 +502,8 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
-        # Route demistoextended images to private registry
-        if image.startswith("demistoextended/"):
+        # Route demistoextended and devtestdemistoextended images to private registry
+        if image.startswith(("demistoextended/", "devtestdemistoextended/")):
             extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY", "")
             if extended_registry and extended_registry not in image:
                 logger.debug(

@@ -315,14 +315,6 @@ class DockerHook(Hook):
         Returns:
             List[Dict]: List of generated hooks.
         """
-        # TODO: route devtestdemistoextended/ to GCR + grant write permissions,
-        #  then remove this skip so linters run on demistoextended images too.
-        if image.startswith("demistoextended/"):
-            logger.info(
-                f"<yellow>Skipping DockerHook for extended image {image} — "
-                f"no devtestdemistoextended registry to push test images to.</yellow>"
-            )
-            return []
         object_to_files = _split_by_objects(
             files_with_objects,
             config_arg,

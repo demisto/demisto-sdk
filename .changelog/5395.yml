@@ -1,4 +1,0 @@
-changes:
-- description: Fixed ST110 schema validation error for `isArray:<marketplace>` in integration command arguments.
-  type: fix
-pr_number: '5395'

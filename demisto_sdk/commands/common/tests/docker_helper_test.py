@@ -408,3 +408,100 @@ class TestUpdateDockerImageSkipsDemistoextended:
         # If it returned early for demisto/ images, that would be a bug.
         # The image may or may not be updated depending on network,
         # but the key assertion is that it didn't skip.
+
+
+class TestGetPythonVersionDemistoextendedFallback:
+    """Tests that get_python_version defaults to Python 3 for demistoextended
+    images when all resolution methods fail."""
+
+    def test_demistoextended_defaults_to_python3_when_all_methods_fail(self, mocker):
+        """
+        Given:
+         - A demistoextended image with DEMISTO_SDK_EXTENDED_REGISTRY set
+         - All Python version resolution methods fail
+        When:
+         - get_python_version is called
+        Then:
+         - Returns DEFAULT_PYTHON_VERSION instead of crashing
+        """
+        from demisto_sdk.commands.common import docker_helper
+        from demisto_sdk.commands.common.docker_helper import (
+            DEFAULT_PYTHON_VERSION,
+            get_python_version,
+        )
+
+        get_python_version.cache_clear()
+
+        mocker.patch.object(
+            docker_helper,
+            "DockerImagesMetadata",
+        )
+        docker_helper.DockerImagesMetadata.get_instance.return_value.python_version.return_value = (
+            None
+        )
+        mocker.patch.object(
+            docker_helper,
+            "_get_python_version_from_tag_by_regex",
+            return_value=None,
+        )
+        mocker.patch.object(
+            docker_helper,
+            "_get_python_version_from_image_client",
+            side_effect=Exception("docker pull failed"),
+        )
+        mocker.patch.object(
+            docker_helper,
+            "_get_python_version_from_dockerhub_api",
+            side_effect=Exception("dockerhub api failed"),
+        )
+        mocker.patch.object(docker_helper, "IS_CONTENT_GITLAB_CI", True)
+
+        env = {"DEMISTO_SDK_EXTENDED_REGISTRY": "us.gcr.io/xsoar-registry"}
+        with mock.patch.dict(os.environ, env):
+            result = get_python_version(
+                "demistoextended/accessdata-p:1.1.0.10293277"
+            )
+
+        assert result == Version(DEFAULT_PYTHON_VERSION)
+
+    def test_demisto_image_still_raises_when_all_methods_fail(self, mocker):
+        """
+        Given:
+         - A regular demisto image
+         - All Python version resolution methods fail
+        When:
+         - get_python_version is called
+        Then:
+         - Raises an exception (does NOT silently default)
+        """
+        from demisto_sdk.commands.common import docker_helper
+        from demisto_sdk.commands.common.docker_helper import get_python_version
+
+        get_python_version.cache_clear()
+
+        mocker.patch.object(
+            docker_helper,
+            "DockerImagesMetadata",
+        )
+        docker_helper.DockerImagesMetadata.get_instance.return_value.python_version.return_value = (
+            None
+        )
+        mocker.patch.object(
+            docker_helper,
+            "_get_python_version_from_tag_by_regex",
+            return_value=None,
+        )
+        mocker.patch.object(
+            docker_helper,
+            "_get_python_version_from_image_client",
+            side_effect=Exception("docker pull failed"),
+        )
+        mocker.patch.object(
+            docker_helper,
+            "_get_python_version_from_dockerhub_api",
+            side_effect=Exception("dockerhub api failed"),
+        )
+        mocker.patch.object(docker_helper, "IS_CONTENT_GITLAB_CI", False)
+
+        with pytest.raises(Exception, match="docker pull failed"):
+            get_python_version("demisto/python3:3.10.11.54799-unique-test")

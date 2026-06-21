@@ -39,6 +39,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unkno
 from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_list_files import (
     IsUsingUnknownContentValidatorListFiles,
 )
+from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_skill_using_unknown_content_all_files import (
+    IsSkillUsingUnknownContentValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_skill_using_unknown_content_list_files import (
+    IsSkillUsingUnknownContentValidatorListFiles,
+)
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_all_files import (
     IsPackDisplayNameAlreadyExistsValidatorAllFiles,
 )
@@ -698,6 +704,104 @@ def test_IsUsingUnknownContentValidator__agentix_skill_existing_action__all_file
     assert not any(
         "My Skill" in result.message for result in results
     )
+
+
+def test_IsSkillUsingUnknownContentValidator__skill_missing_action__all_files(
+    repo_for_test_agentix_skill_unknown_action: Repo,
+):
+    """
+    Given:
+        - A content graph with an AgentixSkill whose body references an action id
+          ('does-not-exist-action') that is not present in the repository.
+    When:
+        - The GR116 (skill-only) validation runs across the entire repository (-a).
+    Then:
+        - GR116 reports the skill as using unknown content (the missing action).
+    """
+    graph_interface = repo_for_test_agentix_skill_unknown_action.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsSkillUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+        content_items=[]
+    )
+    assert len(results) == 1
+    assert "does-not-exist-action" in results[0].message
+
+
+def test_IsSkillUsingUnknownContentValidator__skill_existing_action__all_files(
+    graph_repo,
+):
+    """
+    Given:
+        - A content graph with an AgentixSkill whose body references an action id
+          that DOES exist in the repository (an AgentixAction with that id).
+    When:
+        - The GR116 (skill-only) validation runs across the entire repository (-a).
+    Then:
+        - GR116 reports no unknown-content usage for the skill.
+    """
+    pack = graph_repo.create_pack("SkillPack")
+    action = pack.create_agentix_action("MyAction")
+    action.create_default_agentix_action()
+    action_id = action.yml.read_dict()["commonfields"]["id"]
+
+    skill = pack.create_agentix_skill("MySkill")
+    skill.create_default_agentix_skill(
+        name="My Skill",
+        skill_id="my-skill-id",
+        skill_content=f"Use <action={action_id}> to do the thing.",
+    )
+
+    graph_interface = graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsSkillUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+        content_items=[]
+    )
+    # The skill's action reference is resolved, so the skill must not be reported.
+    assert not any("My Skill" in result.message for result in results)
+
+
+def test_IsSkillUsingUnknownContentValidator__only_reports_skills__all_files(
+    repo_for_test: Repo,
+):
+    """
+    Given:
+        - A repository where non-skill content items (e.g. scripts/classifiers)
+          reference unknown content (the same data GR103 reports on).
+    When:
+        - The GR116 (skill-only) validation runs across the entire repository (-a).
+    Then:
+        - GR116 reports nothing, because none of the offending items are skills.
+    """
+    graph_interface = repo_for_test.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsSkillUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+        content_items=[]
+    )
+    assert results == []
+
+
+def test_IsSkillUsingUnknownContentValidator__skill_missing_action__list_files(
+    repo_for_test_agentix_skill_unknown_action: Repo,
+):
+    """
+    Given:
+        - A content graph with an AgentixSkill whose body references a missing
+          action id.
+    When:
+        - The GR116 (skill-only) validation runs on the specific skill file.
+    Then:
+        - GR116 reports the skill as using unknown content.
+    """
+    graph_interface = repo_for_test_agentix_skill_unknown_action.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    skill = repo_for_test_agentix_skill_unknown_action.packs[0].agentix_skills[0]
+    results = (
+        IsSkillUsingUnknownContentValidatorListFiles().obtain_invalid_content_items(
+            [skill.get_graph_object(graph_interface)]
+        )
+    )
+    assert len(results) == 1
+    assert "does-not-exist-action" in results[0].message
 
 
 @pytest.fixture

@@ -266,3 +266,57 @@ class TestGetClient:
             # Should fall back to the default dockerhub client
             dockerhub_client = DockerImage._get_dockerhub_client()
             assert client is dockerhub_client
+
+
+class TestRegistryImageName:
+    @pytest.mark.usefixtures("_reset_extended_client")
+    def test_demistoextended_with_extended_client_returns_image_name_only(self):
+        """
+        Given:
+         - a demistoextended/ image and DEMISTO_SDK_EXTENDED_REGISTRY is set
+
+        When:
+         - accessing registry_image_name
+
+        Then:
+         - returns only the image_name (without the repository prefix)
+           because GCR stores images without the 'demistoextended/' prefix
+        """
+        mock_extended = MagicMock(name="extended_client")
+        with patch.object(
+            DockerImage, "_get_extended_client", return_value=mock_extended
+        ):
+            image = DockerImage("demistoextended/accessdata-p:1.1.0.10177564")
+            assert image.registry_image_name == "accessdata-p"
+
+    @pytest.mark.usefixtures("_reset_extended_client")
+    def test_demistoextended_without_extended_client_returns_full_name(self):
+        """
+        Given:
+         - a demistoextended/ image but no DEMISTO_SDK_EXTENDED_REGISTRY
+
+        When:
+         - accessing registry_image_name
+
+        Then:
+         - returns the full name (falls back to Docker Hub path)
+        """
+        with patch.object(
+            DockerImage, "_get_extended_client", return_value=None
+        ):
+            image = DockerImage("demistoextended/accessdata-p:1.1.0.10177564")
+            assert image.registry_image_name == "demistoextended/accessdata-p"
+
+    def test_demisto_image_returns_full_name(self):
+        """
+        Given:
+         - a standard demisto/ image
+
+        When:
+         - accessing registry_image_name
+
+        Then:
+         - returns the full name (repository/image_name)
+        """
+        image = DockerImage("demisto/python3:3.10.11.54799")
+        assert image.registry_image_name == "demisto/python3"

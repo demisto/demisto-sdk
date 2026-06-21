@@ -386,7 +386,7 @@ mapping:
             sequence:
             - type: map
               allowempty: true
-          timelinerecord:
+          timelineRecord:
             required: false
             type: map
             mapping:

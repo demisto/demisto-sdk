@@ -127,7 +127,7 @@ class TaskConfig(BaseModel):
     isautoswitchedtoquietmode: Optional[bool] = None
     quiet: Optional[bool] = None
     evidencedata: Optional[dict] = None
-    timelinerecord: Optional[dict] = None
+    timelineRecord: Optional[dict] = None
     task: Task
     note: Optional[bool] = None
     nexttasks: Optional[Dict[str, List[str]]] = None
@@ -167,7 +167,7 @@ class TaskConfig(BaseModel):
             "isautoswitchedtoquietmode": self.isautoswitchedtoquietmode,
             "quiet": self.quiet,
             "evidencedata": self.evidencedata,
-            "timelinerecord": self.timelinerecord,
+            "timelineRecord": self.timelineRecord,
             "task": self.task.to_raw_dict,
             "note": self.note,
             "nexttasks": self.nexttasks,

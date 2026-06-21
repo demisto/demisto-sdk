@@ -248,7 +248,7 @@ class _TaskPlaybook(BaseStrictModel):
     )
     quiet: Optional[bool] = None
     evidence_data: Optional[EvidenceData] = Field(None, alias="evidencedata")
-    timeline_record: Optional[TimelineRecord] = Field(None, alias="timelinerecord")
+    timeline_record: Optional[TimelineRecord] = Field(None, alias="timelineRecord")
     task: SubTaskPlaybook  # type:ignore[valid-type]
     note: Optional[bool] = None
     next_tasks: Optional[Dict[constr(regex=r".+"), List[str]]] = Field(  # type:ignore[valid-type]

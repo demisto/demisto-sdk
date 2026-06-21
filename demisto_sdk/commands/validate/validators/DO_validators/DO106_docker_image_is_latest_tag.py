@@ -96,6 +96,13 @@ class DockerImageTagIsNotOutdated(DockerValidator[ContentTypes]):
                         )
                     )
                     continue
+                except RuntimeError as error:
+                    if docker_image.is_demistoextended_repository:
+                        logger.warning(
+                            f"DO106 - Could not fetch latest tag for extended image {docker_image}: {error}"
+                        )
+                        continue
+                    raise
                 if (
                     docker_image.tag != docker_image_latest_tag
                     and self.is_docker_image_older_than_three_months(docker_image)

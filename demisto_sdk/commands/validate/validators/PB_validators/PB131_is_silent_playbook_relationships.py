@@ -12,7 +12,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Union[Playbook, Trigger]
-
+#test
 
 class IsSilentPlaybookRelationshipsValidator(BaseValidator[ContentTypes]):
     error_code = "PB131"

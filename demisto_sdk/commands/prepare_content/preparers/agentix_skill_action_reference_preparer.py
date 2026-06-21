@@ -19,9 +19,6 @@ class AgentixSkillActionReferencePreparer:
     each token is replaced with the corresponding action's ``name`` (resolved
     through the content graph via ``content_item.uses`` by the action's id), while
     the ``<action=...>`` wrapper is kept — producing ``<action=action-name>``.
-
-    If any referenced action id cannot be resolved to an action name, prepare-upload
-    fails: all unresolved ids are collected and reported in a single ``ValueError``.
     """
 
     @staticmethod
@@ -37,14 +34,9 @@ class AgentixSkillActionReferencePreparer:
             data: The metadata dict whose ``content`` field holds the skill body.
 
         Returns:
-            The modified ``data`` dict with every action-reference token rewritten
-            to use the resolved action ``name``.
-
-        Raises:
-            ValueError: If any ``<action=action-id>`` token references an action id
-                that cannot be resolved to an action name (e.g. the graph is not
-                populated, or no matching action node exists). All unresolved ids
-                are collected and listed in a single error message.
+            The (possibly modified) ``data`` dict. Tokens whose action id cannot
+            be resolved (e.g. the graph is not populated, or no matching action
+            node exists) are left unchanged.
         """
         content = data.get("content")
         if not content:
@@ -68,16 +60,15 @@ class AgentixSkillActionReferencePreparer:
                 return match.group(0)
             return f"<action={action_name}>"
 
-        rewritten = ACTION_REFERENCE_REGEX.sub(_replace, content)
+        data["content"] = ACTION_REFERENCE_REGEX.sub(_replace, content)
 
         if unresolved:
-            raise ValueError(
+            logger.warning(
                 f"Could not find the following action id(s) referenced in skill "
                 f"'{content_item.object_id}': {', '.join(sorted(unresolved))}. "
                 f"Ensure each referenced action exists and is a dependency of the skill."
             )
 
-        data["content"] = rewritten
         return data
 
     @staticmethod

@@ -1,7 +1,5 @@
 from unittest.mock import MagicMock
 
-import pytest
-
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.prepare_content.preparers.agentix_skill_action_reference_preparer import (
     AgentixSkillActionReferencePreparer,
@@ -77,7 +75,7 @@ def test_prepare_rewrites_multiple_tokens():
     assert result["content"] == "First <action=ActionA> then <action=ActionB>."
 
 
-def test_prepare_raises_on_unresolved_token():
+def test_prepare_warns_on_unresolved_token(caplog):
     """
     Given
     - A skill body referencing an action id that does not resolve in the graph.
@@ -86,21 +84,21 @@ def test_prepare_raises_on_unresolved_token():
     - Running the preparer.
 
     Then
-    - A ValueError is raised, and its message names the skill and the unresolved
-      action id.
+    - No error is raised, the unresolved token is left unchanged, and a warning is
+      logged naming the skill and the unresolved action id.
     """
     skill = _skill_mock("my-skill", uses=[])
     data = {"content": "Use <action=missing-action> here."}
 
-    with pytest.raises(ValueError) as exc_info:
-        AgentixSkillActionReferencePreparer.prepare(skill, data)
+    with caplog.at_level("WARNING"):
+        result = AgentixSkillActionReferencePreparer.prepare(skill, data)
 
-    message = str(exc_info.value)
-    assert "missing-action" in message
-    assert "my-skill" in message
+    assert result["content"] == "Use <action=missing-action> here."
+    assert "missing-action" in caplog.text
+    assert "my-skill" in caplog.text
 
 
-def test_prepare_raises_listing_all_unresolved_tokens():
+def test_prepare_warns_listing_all_unresolved_tokens(caplog):
     """
     Given
     - A skill body referencing several action ids, none of which resolve, plus
@@ -110,8 +108,9 @@ def test_prepare_raises_listing_all_unresolved_tokens():
     - Running the preparer.
 
     Then
-    - A single ValueError is raised listing every unresolved action id, while the
-      resolvable one is not reported.
+    - No error is raised, the resolvable token is rewritten, the unresolved tokens
+      are left unchanged, and a single warning lists every unresolved action id
+      while the resolvable one is not reported.
     """
     skill = _skill_mock(
         "my-skill", uses=[_action_relationship("action-a", "ActionA")]
@@ -122,13 +121,15 @@ def test_prepare_raises_listing_all_unresolved_tokens():
         )
     }
 
-    with pytest.raises(ValueError) as exc_info:
-        AgentixSkillActionReferencePreparer.prepare(skill, data)
+    with caplog.at_level("WARNING"):
+        result = AgentixSkillActionReferencePreparer.prepare(skill, data)
 
-    message = str(exc_info.value)
-    assert "missing-one" in message
-    assert "missing-two" in message
-    assert "action-a" not in message
+    assert result["content"] == (
+        "Use <action=ActionA>, <action=missing-one> and <action=missing-two>."
+    )
+    assert "missing-one" in caplog.text
+    assert "missing-two" in caplog.text
+    assert "action-a" not in caplog.text
 
 
 def test_prepare_no_content_is_noop():

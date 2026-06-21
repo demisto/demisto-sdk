@@ -315,12 +315,6 @@ class DockerHook(Hook):
         Returns:
             List[Dict]: List of generated hooks.
         """
-        if image.startswith("demistoextended/"):
-            logger.info(
-                f"<yellow>Skipping DockerHook for extended image {image} — "
-                f"managed in dockerfiles-private CI.</yellow>"
-            )
-            return []
         object_to_files = _split_by_objects(
             files_with_objects,
             config_arg,

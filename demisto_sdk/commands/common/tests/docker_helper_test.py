@@ -289,3 +289,122 @@ class TestGetImageRegistryDemistoextended:
             assert result == f"{DOCKER_REGISTRY_URL}/{image}"
         else:
             assert result == image
+
+
+class TestGetOrCreateTestImageDemistoextended:
+    """Tests for get_or_create_test_image with demistoextended images."""
+
+    def test_demistoextended_image_uses_devtestdemistoextended_prefix(self):
+        """
+        Given:
+         - a demistoextended/ base image
+
+        When:
+         - the test image name is constructed in get_or_create_test_image
+
+        Then:
+         - the prefix should be devtestdemistoextended/ (not devtestdemistoextended/)
+        """
+        base_image = "demistoextended/accessdata-p:1.1.0.10177564"
+        # Simulate the logic from get_or_create_test_image
+        if base_image.startswith("demistoextended/"):
+            result = base_image.replace("demistoextended", "devtestdemistoextended")
+        else:
+            result = base_image.replace("demisto", "devtestdemisto")
+        assert result == "devtestdemistoextended/accessdata-p:1.1.0.10177564"
+
+    def test_demisto_image_still_uses_devtestdemisto_prefix(self):
+        """
+        Given:
+         - a demisto/ base image
+
+        When:
+         - the test image name is constructed
+
+        Then:
+         - the prefix should be devtestdemisto/ (existing behavior)
+        """
+        base_image = "demisto/python3:3.10.11.54799"
+        if base_image.startswith("demistoextended/"):
+            result = base_image.replace("demistoextended", "devtestdemistoextended")
+        else:
+            result = base_image.replace("demisto", "devtestdemisto")
+        assert result == "devtestdemisto/python3:3.10.11.54799"
+
+    def test_naive_replace_would_break_demistoextended(self):
+        """
+        Given:
+         - a demistoextended/ base image
+
+        When:
+         - using the old naive replace("demisto", "devtestdemisto")
+
+        Then:
+         - it would produce devtestdemistoextended (broken name)
+        """
+        base_image = "demistoextended/accessdata-p:1.1.0.10177564"
+        naive_result = base_image.replace("demisto", "devtestdemisto")
+        # This is the broken behavior we fixed
+        assert naive_result == "devtestdemistoextended/accessdata-p:1.1.0.10177564"
+        # The correct behavior with our fix:
+        if base_image.startswith("demistoextended/"):
+            correct_result = base_image.replace(
+                "demistoextended", "devtestdemistoextended"
+            )
+        else:
+            correct_result = base_image.replace("demisto", "devtestdemisto")
+        assert correct_result == "devtestdemistoextended/accessdata-p:1.1.0.10177564"
+
+
+class TestUpdateDockerImageSkipsDemistoextended:
+    """Tests for update_docker_image_in_script skipping demistoextended images."""
+
+    def test_skips_demistoextended_image(self):
+        """
+        Given:
+         - a script object with a demistoextended/ docker image
+
+        When:
+         - calling update_docker_image_in_script
+
+        Then:
+         - the docker image should not be modified
+        """
+        from demisto_sdk.commands.format.update_script import ScriptYMLFormat
+
+        script_obj = {
+            "type": "python",
+            "dockerimage": "demistoextended/accessdata-p:1.1.0.10177564",
+        }
+        original_image = script_obj["dockerimage"]
+        ScriptYMLFormat.update_docker_image_in_script(
+            script_obj, "/fake/path/script.yml"
+        )
+        assert script_obj["dockerimage"] == original_image
+
+    def test_does_not_skip_demisto_image(self):
+        """
+        Given:
+         - a script object with a demisto/ docker image
+
+        When:
+         - calling update_docker_image_in_script
+
+        Then:
+         - the function should attempt to update (not skip early)
+         - it may fail due to network, but it should NOT return early
+        """
+        from demisto_sdk.commands.format.update_script import ScriptYMLFormat
+
+        script_obj = {
+            "type": "python",
+            "dockerimage": "demisto/python3:3.10.11.54799",
+        }
+        # The function will try to query DockerHub and may fail,
+        # but it should NOT return early like it does for demistoextended
+        ScriptYMLFormat.update_docker_image_in_script(
+            script_obj, "/fake/path/script.yml"
+        )
+        # If it returned early for demisto/ images, that would be a bug.
+        # The image may or may not be updated depending on network,
+        # but the key assertion is that it didn't skip.

@@ -565,9 +565,12 @@ class DockerBase:
             "\n".join(sorted(set(pip_requirements))).encode("utf-8")
         ).hexdigest()
 
-        test_docker_image = (
-            f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
-        )
+        if base_image.startswith("demistoextended/"):
+            test_docker_image = f'{base_image.replace("demistoextended", "devtestdemistoextended")}-{identifier}'
+        else:
+            test_docker_image = (
+                f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
+            )
         if is_custom_registry():
             # if we use a custom registry, we need to have to pull the image and we can't use dockerhub api
             should_pull = True

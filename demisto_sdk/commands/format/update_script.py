@@ -71,6 +71,11 @@ class ScriptYMLFormat(BaseUpdateYML):
                 "<yellow>Skipping docker image update as default docker image is being used.</yellow>"
             )
             return
+        if dockerimage.startswith("demistoextended/"):
+            logger.info(
+                "<yellow>Skipping docker image update for demistoextended image (managed in dockerfiles-private).</yellow>"
+            )
+            return
         image_name = dockerimage.split(":")[0]
         try:
             if is_iron_bank_pack(file_path):

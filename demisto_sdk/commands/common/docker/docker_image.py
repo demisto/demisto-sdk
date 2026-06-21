@@ -6,7 +6,6 @@ from typing import Optional
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
-    DOCKER_REGISTRY_URL,
     NATIVE_IMAGE_DOCKER_NAME,
 )
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
@@ -29,11 +28,7 @@ class DockerImage(str):
         # None so the client is (re)created whenever the cached value is missing or
         # otherwise falsy, not only when it is exactly None.
         if not cls._dockerhub_client:
-            username = os.getenv("DEMISTO_SDK_CR_USER", "")
-            password = os.getenv("DEMISTO_SDK_CR_PASSWORD", "")
-            cls._dockerhub_client = DockerHubClient(
-                registry=DOCKER_REGISTRY_URL, username=username, password=password
-            )
+            cls._dockerhub_client = DockerHubClient.from_environment()
         return cls._dockerhub_client
 
     @classmethod

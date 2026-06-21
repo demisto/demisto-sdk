@@ -10,7 +10,10 @@ from google.auth.transport.requests import Request
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
-from demisto_sdk.commands.common.constants import DEFAULT_DOCKER_REGISTRY_URL
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_DOCKER_REGISTRY_URL,
+    DOCKER_REGISTRY_URL,
+)
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
@@ -76,6 +79,15 @@ class DockerHubClient:
             bool(registry)
             and not IS_CONTENT_GITLAB_CI
             and self.DEFAULT_REGISTRY not in self.registry_api_url
+        )
+
+    @classmethod
+    def from_environment(cls) -> "DockerHubClient":
+        """Create a DockerHubClient configured from environment variables."""
+        return cls(
+            registry=DOCKER_REGISTRY_URL,
+            username=os.getenv("DEMISTO_SDK_CR_USER", ""),
+            password=os.getenv("DEMISTO_SDK_CR_PASSWORD", ""),
         )
 
     def __enter__(self):

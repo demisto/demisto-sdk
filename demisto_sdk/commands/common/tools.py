@@ -4820,7 +4820,10 @@ def get_declared_supported_modules(item) -> set[str]:
     from demisto_sdk.commands.content_graph.objects.pack import Pack
 
     modules = item.supportedModules
-    if not modules and not isinstance(item, Pack):
+    # Only fall back to the pack when the item did not declare the field at all
+    # (None). An explicit empty list means "no modules" and must NOT inherit
+    # from the pack.
+    if modules is None and not isinstance(item, Pack):
         pack = getattr(item, "pack", None)
         if pack is not None:
             modules = pack.supportedModules

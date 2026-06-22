@@ -325,9 +325,7 @@ def is_error_ignored(
         if hasattr(content_item, "pack_level_ignored_errors")
         else getattr(content_item, "in_pack", None)
     )
-    if pack is not None and err_code in getattr(
-        pack, "pack_level_ignored_errors", []
-    ):
+    if pack is not None and err_code in getattr(pack, "pack_level_ignored_errors", []):
         return True
 
     if related_file_type:

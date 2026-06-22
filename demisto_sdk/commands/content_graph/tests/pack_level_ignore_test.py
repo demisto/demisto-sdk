@@ -268,10 +268,7 @@ class TestIsErrorIgnoredPackLevel:
             related_file_ignores=[],  # no per-file ignore
         )
         assert (
-            is_error_ignored(
-                "RM104", ALLOWED, item, [RelatedFileType.README]
-            )
-            is True
+            is_error_ignored("RM104", ALLOWED, item, [RelatedFileType.README]) is True
         )
 
     def test_related_file_per_file_ignore_silences_when_no_pack_level(self):
@@ -289,10 +286,7 @@ class TestIsErrorIgnoredPackLevel:
             related_file_ignores=["RM104"],
         )
         assert (
-            is_error_ignored(
-                "RM104", ALLOWED, item, [RelatedFileType.README]
-            )
-            is True
+            is_error_ignored("RM104", ALLOWED, item, [RelatedFileType.README]) is True
         )
 
     def test_related_file_validation_runs_when_ignored_nowhere(self):
@@ -310,10 +304,7 @@ class TestIsErrorIgnoredPackLevel:
             related_file_ignores=[],
         )
         assert (
-            is_error_ignored(
-                "RM104", ALLOWED, item, [RelatedFileType.README]
-            )
-            is False
+            is_error_ignored("RM104", ALLOWED, item, [RelatedFileType.README]) is False
         )
 
 

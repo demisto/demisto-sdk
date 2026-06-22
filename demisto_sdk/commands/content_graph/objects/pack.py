@@ -187,9 +187,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             for key, value in section.items():
                 if key == "ignore":
                     return [
-                        code.strip()
-                        for code in str(value).split(",")
-                        if code.strip()
+                        code.strip() for code in str(value).split(",") if code.strip()
                     ]
             return []
         except Exception as e:  # pragma: no cover - defensive

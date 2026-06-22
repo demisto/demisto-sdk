@@ -4107,7 +4107,11 @@ def extract_error_codes_from_file(pack_name: str) -> Set[str]:
         if config.has_section("pack"):
             for key in config["pack"]:
                 if key == "ignore":
-                    error_codes = [code.strip() for code in str(config["pack"][key]).split(",") if code.strip()]
+                    error_codes = [
+                        code.strip()
+                        for code in str(config["pack"][key]).split(",")
+                        if code.strip()
+                    ]
                     error_codes_list.extend(error_codes)
 
     return set(error_codes_list)

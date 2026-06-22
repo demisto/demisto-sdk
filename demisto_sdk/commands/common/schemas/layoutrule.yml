@@ -1,11 +1,23 @@
 type: map
 mapping:
+  id:
+    type: str
+    required: false
+    # NOTE: This field should exist in all layout rule content items, but is currently not supported
+    # on XSIAM/Platform tenants.
   rule_id:
     type: str
-    required: true
+    required: false
+    # DEPRECATED: Use 'id' field instead. This field is kept for backward compatibility with existing content items.
+  name:
+    type: str
+    required: false
+    # NOTE: This field should exist in all layout rule content items, but is currently not supported
+    # on XSIAM/Platform tenants.
   rule_name:
     type: str
-    required: true
+    required: false
+    # DEPRECATED: Use 'name' field instead. This field is kept for backward compatibility with existing content items.
   layout_id:
     type: str
     required: true

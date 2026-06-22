@@ -110,6 +110,8 @@ class ContentType(StrEnum):
     AGENTIX_AGENT = "AgentixAgent"
     AGENTIX_ACTION = "AgentixAction"
     AGENTIX_ACTION_TEST = "AgentixActionTest"
+    AGENTIX_SKILL = "AgentixSkill"
+    COLLECTION = "Collection"
 
     @property
     def labels(self) -> List[str]:
@@ -147,6 +149,8 @@ class ContentType(StrEnum):
             return ContentType.PLAYBOOK.server_name
         elif self == ContentType.MAPPER:
             return "classifier-mapper"
+        elif self == ContentType.COLLECTION:
+            return "agentixknowledgecollection"
         return self.lower()
 
     # def __hash__(self) -> int:
@@ -164,6 +168,8 @@ class ContentType(StrEnum):
             return ContentType.PLAYBOOK.server_name
         elif self == ContentType.MAPPER:
             return "classifier"
+        elif self == ContentType.COLLECTION:
+            return "agentixknowledgecollection"
         return self.lower()
 
     @property
@@ -449,7 +455,7 @@ class Nodes(dict):
         self.add_batch(args)  # type: ignore[arg-type]
 
     def add(self, **kwargs):
-        content_type: ContentType = ContentType(kwargs.get("content_type"))
+        content_type: ContentType = ContentType(kwargs["content_type"])
         if content_type not in self.keys():
             self.__setitem__(content_type, [])
         self.__getitem__(content_type).append(kwargs)

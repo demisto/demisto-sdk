@@ -3,4 +3,4 @@ changes:
   type: feature
 - description: Added the BA132 validation, which ensures a content item does not declare supportedModules (directly or inherited from its pack) unless 'platform' is present in its marketplaces.
   type: feature
-pr_number: 'XXXX'
+pr_number: '5425'

@@ -5,4 +5,4 @@ changes:
     into the shared graph cache. The list of incompatible commands is now computed directly
     by the graph query instead of relying on the shared cache.
   type: fix
-pr_number: 'xxxx'
+pr_number: 5424

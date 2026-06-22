@@ -559,7 +559,12 @@ def get_supported_modules_mismatch_content_items(
                           Defaults to True.
 
     Returns:
-        Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
+        Tuple[Dict[str, Neo4jRelationshipResult], Dict[str, List[str]]]:
+            - Dictionary mapping content item element IDs to relationship results.
+            - Dictionary mapping content item element IDs to the list of object IDs of
+              the commands that genuinely have a module mismatch. This is computed
+              directly by the query (per command), so callers must NOT rely on the
+              shared ``item.uses`` cache to determine which commands are incompatible.
     """
     mandatorily_value = str(mandatory).lower()
     query = f"""
@@ -578,10 +583,12 @@ def get_supported_modules_mismatch_content_items(
             // supported modules is NOT in the command's supported module list.
             (any(module IN content_item.supportedModules WHERE NOT module IN r.supportedModules))
         )
-    RETURN content_item, collect(u) AS relationships, collect(c) AS nodes_to"""
+    RETURN content_item, collect(u) AS relationships, collect(c) AS nodes_to,
+        collect(DISTINCT c.object_id) AS mismatched_command_ids"""
 
     items = run_query(tx, query)
     results = {}
+    mismatched_commands_by_item: Dict[str, List[str]] = {}
     for item in items:
         node_from = item.get("content_item")
         relationships = item.get("relationships")
@@ -591,8 +598,10 @@ def get_supported_modules_mismatch_content_items(
             relationships,
             nodes_to,
         )
-        results[item.get("content_item").element_id] = neo_res
-    return results
+        element_id = item.get("content_item").element_id
+        results[element_id] = neo_res
+        mismatched_commands_by_item[element_id] = item.get("mismatched_command_ids")
+    return results, mismatched_commands_by_item
 
 
 def get_agentix_actions_using_content_items(

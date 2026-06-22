@@ -4798,54 +4798,40 @@ def is_private_content_file(file, private_content_path: Path | None = None) -> b
     return False
 
 
-def get_declared_supported_modules(item) -> set[str]:
+def _resolve_declared_supported_modules(item) -> Optional[List[str]]:
+    """Resolve declared modules through item -> pack, keeping None vs [] distinct.
+
+    Returns None if unset everywhere, otherwise the declared list (possibly []).
+    An explicit [] on the item is returned as-is and not inherited from the pack.
     """
-    Resolves the supported modules explicitly declared for an item through the
-    inheritance chain (item -> pack), WITHOUT falling back to the platform
-    defaults and WITHOUT short-circuiting on the 'platform' marketplace.
-
-    This is useful for detecting whether an item declares supported modules at
-    all (directly on the item or inherited from its pack), regardless of the
-    item's marketplaces.
-
-    Args:
-        item: A content item object that has a supportedModules attribute and
-              optionally a pack attribute.
-
-    Returns:
-        A set of the declared supported module names, or an empty set if neither
-        the item nor its pack declare any.
-    """
-    # Import here to avoid circular imports
     from demisto_sdk.commands.content_graph.objects.pack import Pack
 
     modules = item.supportedModules
-    # Only fall back to the pack when the item did not declare the field at all
-    # (None). An explicit empty list means "no modules" and must NOT inherit
-    # from the pack.
     if modules is None and not isinstance(item, Pack):
         pack = getattr(item, "pack", None)
         if pack is not None:
             modules = pack.supportedModules
+    return modules
 
-    return set(modules or [])
+
+def get_declared_supported_modules(item) -> set[str]:
+    """Declared modules (item -> pack), without platform defaults or marketplace check.
+
+    Returns an empty set if nothing was declared or an explicit [] was set.
+    """
+    return set(_resolve_declared_supported_modules(item) or [])
 
 
 def get_content_item_supported_modules(item) -> set[str]:
-    """
-    Resolves the definitive list of supported modules for an item,
-    falling back to its pack's modules or the platform defaults.
+    """Definitive supported modules for an item.
 
-    Args:
-        item: A content item object that has marketplaces, supportedModules,
-              and optionally pack attributes.
-
-    Returns:
-        A set of supported module names, or empty set if not a platform item.
+    Falls back to the platform defaults only when the field is unset (None).
+    An explicit [] is honored as "no modules". Empty set for non-platform items.
     """
     if MarketplaceVersions.PLATFORM not in item.marketplaces:
         return set()
 
-    default_modules = [sm.value for sm in PlatformSupportedModules]
-
-    return get_declared_supported_modules(item) or set(default_modules)
+    declared = _resolve_declared_supported_modules(item)
+    if declared is None:
+        return {sm.value for sm in PlatformSupportedModules}
+    return set(declared)

@@ -145,6 +145,18 @@ class EvidenceData(BaseStrictModel):
     tags: Optional[Dict[str, Any]] = None
 
 
+class TimelineRecord(BaseStrictModel):
+    should_mark_as_record: Optional[bool] = Field(None, alias="shouldMarkAsRecord")
+    record_type: Optional[str] = Field(None, alias="recordType")
+    record_name: Optional[str] = Field(None, alias="recordName")
+    description: Optional[str] = None
+    is_evidence: Optional[bool] = Field(None, alias="isEvidence")
+    evidence_comment: Optional[str] = Field(None, alias="evidenceComment")
+    effective_time: Optional[str] = Field(None, alias="effectiveTime")
+    attachments: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+
 class _SubTaskPlaybook(BaseStrictModel):
     id: str
     version: int
@@ -236,6 +248,7 @@ class _TaskPlaybook(BaseStrictModel):
     )
     quiet: Optional[bool] = None
     evidence_data: Optional[EvidenceData] = Field(None, alias="evidencedata")
+    timeline_record: Optional[TimelineRecord] = Field(None, alias="timelineRecord")
     task: SubTaskPlaybook  # type:ignore[valid-type]
     note: Optional[bool] = None
     next_tasks: Optional[Dict[constr(regex=r".+"), List[str]]] = Field(  # type:ignore[valid-type]

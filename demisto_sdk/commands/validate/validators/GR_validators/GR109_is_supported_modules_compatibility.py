@@ -162,11 +162,7 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
 
         The list of mismatched commands is computed directly by the Branch 3 Cypher
         query (``get_supported_modules_mismatch_content_items``) and passed in as
-        ``mismatched_command_ids``. We deliberately do NOT read ``item.uses`` here:
-        that cache is shared across validators within a single graph session and is
-        append-only, so it may contain USES relationships loaded by other validators
-        (e.g. PB131's ``search()``) for commands that are perfectly compatible. Relying
-        on it caused safe commands to be falsely reported as incompatible.
+        ``mismatched_command_ids``.
 
         Args:
             item: The content item that has at least one incompatible command.

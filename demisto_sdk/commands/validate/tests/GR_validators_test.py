@@ -1799,11 +1799,6 @@ def repo_for_test_gr_109_cache_pollution(graph_repo: Repo):
         - safe_command: no supportedModules         -> supports all, can never mismatch
     - playbook1: supportedModules ["module_x", "module_y"], using BOTH commands on the
       mandatory execution path.
-
-    The bug: when another validator (e.g. PB131) loads ALL of playbook1's USES
-    relationships into the shared graph cache before GR109 runs, the (previously)
-    unguarded Branch 3 handler would list `safe_command` as incompatible even though it
-    supports every module.
     """
     pack_a = graph_repo.create_pack("Pack A")
     pack_a.set_data(marketplaces=[MarketplaceVersions.PLATFORM.value])
@@ -1899,7 +1894,6 @@ def test_GR109_ignores_safe_commands_after_cache_pollution(
         IsSupportedModulesCompatibility validator runs on all files.
     Then:
         Only "command_x" is reported as incompatible; "safe_command" must NOT appear.
-        This guards against the shared-cache pollution regression (GR109 Branch 3).
     """
     graph_interface = repo_for_test_gr_109_cache_pollution.create_graph()
     BaseValidator.graph_interface = graph_interface

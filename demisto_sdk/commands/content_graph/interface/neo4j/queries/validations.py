@@ -562,9 +562,7 @@ def get_supported_modules_mismatch_content_items(
         Tuple[Dict[str, Neo4jRelationshipResult], Dict[str, List[str]]]:
             - Dictionary mapping content item element IDs to relationship results.
             - Dictionary mapping content item element IDs to the list of object IDs of
-              the commands that genuinely have a module mismatch. This is computed
-              directly by the query (per command), so callers must NOT rely on the
-              shared ``item.uses`` cache to determine which commands are incompatible.
+              the commands that genuinely have a module mismatch.
     """
     mandatorily_value = str(mandatory).lower()
     query = f"""

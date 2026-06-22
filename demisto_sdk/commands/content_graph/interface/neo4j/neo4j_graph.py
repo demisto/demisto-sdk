@@ -733,9 +733,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         are not fully included in the `supportedModules` of the parent content item.
 
         The list of mismatched command object IDs is computed directly by the Cypher
-        query (per command), NOT derived from the shared ``item.uses`` cache. This
-        prevents false positives when another validator has previously loaded the
-        content item's full set of USES relationships into the shared graph cache.
+        query (per command).
 
         Args:
             content_item_ids (List[str]): List of content item IDs to check for invalid commands.

@@ -31,7 +31,6 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
-from demisto_sdk.commands.content_graph.objects.pre_process_rule import PreProcessRule
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
@@ -68,7 +67,6 @@ ContentTypes = Union[
     ModelingRule,
     ParsingRule,
     Playbook,
-    PreProcessRule,
     Report,
     Script,
     Trigger,
@@ -127,8 +125,6 @@ ALLOWED_MODULES_BY_TYPE: Dict[type, Set[str]] = {
     Wizard: XSIAM_ONLY,
     XDRCTemplate: XSIAM_ONLY,
     AssetsModelingRule: XSIAM_ONLY,
-    # No modules allowed.
-    PreProcessRule: set(),
 }
 
 
@@ -144,8 +140,8 @@ class InvalidSupportedModulesValidator(BaseValidator[ContentTypes]):
         "content that cannot be loaded correctly by the platform."
     )
     error_message = (
-        "The content item declares the following unsupported modules: {0}. "
-        "The allowed modules for this content item type are: {1}."
+        "The content item '{0}' declares the following unsupported modules: {1}. "
+        "The allowed modules for this content item type are: {2}."
     )
     related_field = "supportedModules"
     is_auto_fixable = False
@@ -191,6 +187,7 @@ class InvalidSupportedModulesValidator(BaseValidator[ContentTypes]):
                     ValidationResult(
                         validator=self,
                         message=self.error_message.format(
+                            content_item.name,
                             ", ".join(sorted(invalid_modules)),
                             ", ".join(sorted(allowed_modules)) or "none",
                         ),

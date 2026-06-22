@@ -14,8 +14,6 @@ ignorable_errors = [
   "BA129", # needs to be remove after CRTX-235579 is done
   "SC110",
   "BA130",
-  "BA131",
-  "BA132",
   "GF102",
   "DS108",
   "IF100",

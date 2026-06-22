@@ -15,11 +15,9 @@ from __future__ import annotations
 
 from configparser import ConfigParser
 from typing import Optional
-from unittest.mock import MagicMock
-
-import pytest
 
 from demisto_sdk.commands.common.tools import extract_error_codes_from_file
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import is_error_ignored
 
 
@@ -85,6 +83,21 @@ class TestPackLevelIgnoredErrorsProperty:
         pack = _make_pack("[pack]\nignore=BA101,RM104,RN107\n")
         assert pack.pack_level_ignored_errors == ["BA101", "RM104", "RN107"]
 
+    def test_pack_level_codes_alongside_file_level_codes(self):
+        """
+        Given a .pack-ignore that contains BOTH a [pack] section and
+        per-file [file:...] sections,
+        When pack_level_ignored_errors is accessed,
+        Then only the codes under the [pack] section are returned (the
+        per-file codes are intentionally NOT included here).
+        """
+        pack = _make_pack(
+            "[pack]\nignore=BA101,RN107\n"
+            "[file:foo.yml]\nignore=RM104\n"
+            "[file:bar.yml]\nignore=BA108,IN122\n"
+        )
+        assert pack.pack_level_ignored_errors == ["BA101", "RN107"]
+
     def test_whitespace_and_empty_entries_are_tolerated(self):
         """
         Given a sloppy ignore line with extra whitespace and empty entries,
@@ -112,10 +125,40 @@ class TestPackLevelIgnoredErrorsProperty:
         assert pack.pack_level_ignored_errors is first
         assert pack.pack_level_ignored_errors == ["BA101"]
 
+    def test_exception_is_logged_and_empty_list_returned(self, mocker):
+        """
+        Given an `ignored_errors_dict` whose access raises an exception,
+        When pack_level_ignored_errors is accessed,
+        Then the failure is logged at debug level with the expected message
+        and an empty list is returned (the validation flow is not broken).
+        """
+        from demisto_sdk.commands.content_graph.objects import pack as pack_module
+
+        debug_mock = mocker.patch.object(pack_module.logger, "debug")
+
+        pack = _make_pack("[pack]\nignore=BA101\n")
+        # Replace the dict with one whose `.get` raises, forcing the
+        # defensive `except` branch in the property.
+        raising_dict = mocker.MagicMock()
+        raising_dict.get.side_effect = RuntimeError("boom")
+        object.__setattr__(pack, "ignored_errors_dict", raising_dict)
+
+        assert pack.pack_level_ignored_errors == []
+        debug_mock.assert_called_once_with(
+            "Failed to extract pack-level ignored errors for TestPack: boom"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Slice 2: is_error_ignored
 # ---------------------------------------------------------------------------
+
+
+class _FakeRelatedFile:
+    """Stand-in for a related-file object (e.g. README/release-note)."""
+
+    def __init__(self, file_path: str):
+        self.file_path = file_path
 
 
 class _FakeContentItem:
@@ -127,12 +170,20 @@ class _FakeContentItem:
         self,
         pack: Optional[object] = None,
         ignored_errors: Optional[list] = None,
+        related_file: Optional[_FakeRelatedFile] = None,
+        related_file_attr: str = "readme",
+        related_file_ignores: Optional[list] = None,
     ):
         self.in_pack = pack
         self.ignored_errors = ignored_errors or []
+        self._related_file_ignores = related_file_ignores or []
+        if related_file is not None:
+            # Expose the related-file object under the attribute name that
+            # `RelatedFileType.<X>.value` resolves to (e.g. "readme").
+            setattr(self, related_file_attr, related_file)
 
-    def ignored_errors_related_files(self, _path):  # pragma: no cover - unused here
-        return []
+    def ignored_errors_related_files(self, _path):
+        return self._related_file_ignores
 
 
 # Codes used across the suite. They must be valid `ALLOWED_IGNORE_ERRORS`
@@ -188,15 +239,82 @@ class TestIsErrorIgnoredPackLevel:
         item = _FakeContentItem(pack=pack)
         assert is_error_ignored("XX999", ALLOWED, item) is False
 
-    def test_content_item_without_pack_falls_back_to_per_file(self):
+    def test_per_file_ignore_used_when_no_pack_level_ignore(self):
         """
-        Given a content item with no parent pack,
+        Given a content item whose pack defines per-file ignores but has
+        NO [pack] section,
         When is_error_ignored is called,
-        Then the per-file `ignored_errors` list is consulted as before.
+        Then the pack-level check does not match and the per-file
+        `ignored_errors` list is consulted as before.
         """
-        item = _FakeContentItem(pack=None, ignored_errors=["BA101"])
+        pack = _make_pack("[file:foo.yml]\nignore=RM104\n")
+        item = _FakeContentItem(pack=pack, ignored_errors=["BA101"])
         assert is_error_ignored("BA101", ALLOWED, item) is True
         assert is_error_ignored("RM104", ALLOWED, item) is False
+
+    def test_pack_level_ignore_silences_related_file_validation(self):
+        """
+        Given a validator that runs on a related file (e.g. README) and a
+        pack that ignores its error code pack-wide,
+        When is_error_ignored is called with the related_file_type,
+        Then the pack-level check short-circuits and returns True, even
+        though the related file itself has no per-file ignore.
+        """
+        pack = _make_pack("[pack]\nignore=RM104\n")
+        item = _FakeContentItem(
+            pack=pack,
+            related_file=_FakeRelatedFile("Packs/Test/README.md"),
+            related_file_attr=RelatedFileType.README.value,
+            related_file_ignores=[],  # no per-file ignore
+        )
+        assert (
+            is_error_ignored(
+                "RM104", ALLOWED, item, [RelatedFileType.README]
+            )
+            is True
+        )
+
+    def test_related_file_per_file_ignore_silences_when_no_pack_level(self):
+        """
+        Given a validator that runs on a related file, no [pack] section,
+        and a per-file ignore for that related file,
+        When is_error_ignored is called with the related_file_type,
+        Then the related file's per-file ignore list silences it (True).
+        """
+        pack = _make_pack("[file:README.md]\nignore=RM104\n")
+        item = _FakeContentItem(
+            pack=pack,
+            related_file=_FakeRelatedFile("Packs/Test/README.md"),
+            related_file_attr=RelatedFileType.README.value,
+            related_file_ignores=["RM104"],
+        )
+        assert (
+            is_error_ignored(
+                "RM104", ALLOWED, item, [RelatedFileType.README]
+            )
+            is True
+        )
+
+    def test_related_file_validation_runs_when_ignored_nowhere(self):
+        """
+        Given a validator that runs on a related file, no [pack] section,
+        and no per-file ignore for that related file,
+        When is_error_ignored is called with the related_file_type,
+        Then the validation is not ignored and must run (False).
+        """
+        pack = _make_pack("")  # empty .pack-ignore: nothing is ignored
+        item = _FakeContentItem(
+            pack=pack,
+            related_file=_FakeRelatedFile("Packs/Test/README.md"),
+            related_file_attr=RelatedFileType.README.value,
+            related_file_ignores=[],
+        )
+        assert (
+            is_error_ignored(
+                "RM104", ALLOWED, item, [RelatedFileType.README]
+            )
+            is False
+        )
 
 
 # ---------------------------------------------------------------------------

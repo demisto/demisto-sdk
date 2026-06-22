@@ -384,6 +384,8 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
                 try:
                     values["metadata"] = json.loads(metadata_json)
                 except (ValueError, TypeError):
+                    # Intentionally ignore malformed/non-JSON metadata here and
+                    # fall back to reconstruction from flattened scalar fields.
                     pass
             if "metadata" not in values:
                 # Last-resort reconstruction from the flattened scalars that
@@ -420,6 +422,8 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
                 try:
                     values["settings"] = json.loads(settings_json)
                 except (ValueError, TypeError):
+                    # Intentionally ignore malformed/non-JSON settings and keep
+                    # the field unset so optional/fallback logic can proceed.
                     pass
             elif "allow_skip_verification" in values:
                 values["settings"] = {
@@ -529,6 +533,8 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
             try:
                 json_dct["settings_json"] = json.dumps(settings, sort_keys=True)
             except (TypeError, ValueError):
+                # Non-serializable settings should not break connector writes;
+                # keep flattened scalar settings (if any) and continue.
                 pass
 
         return json_dct

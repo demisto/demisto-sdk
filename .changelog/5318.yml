@@ -1,19 +1,11 @@
 changes:
-- description: Added support for connectors validations.
-  type: internal
-- description: Added a strict pydantic schema (`StrictConnector`) for `connector.yaml`
-    and enabled `ST110` for the connector validation sections in `sdk_validation_config.toml`,
-    so unknown or missing fields in `connector.yaml` surface as structure errors like
-    every other content item.
-  type: internal
-- description: Wired `Connector` into the `ST110` `SchemaValidator` `ContentTypes`
-    union and made `ConnectorParser.__init__` populate `self.structure_errors` from
-    `StrictConnector`, so `ST110` actually reports connector schema errors instead
-    of crashing on a `FieldInfo` default.
-  type: internal
-- description: Fixed `ConnectorAwareInitializer.gather_objects_to_run_on` silently
-    dropping connectors with no XSOAR handlers — schema errors (structure_errors)
-    now keep the connector in the working set so `ST110` and any other validator
-    that reads `structure_errors` actually fires for malformed `connector.yaml`.
-  type: internal
+- description: Added support for the new **Connector** content item, so connectors
+    are recognized and handled by the SDK like any other content type.
+  type: feature
+- description: Added validations for Connector content items, catching common issues
+    in connector definitions early — before they reach the platform.
+  type: feature
+- description: Added support for updating the content graph with Connector items,
+    so connectors are included in graph builds and updates alongside other content.
+  type: feature
 pr_number: 5318

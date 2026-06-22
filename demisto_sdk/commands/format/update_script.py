@@ -73,7 +73,7 @@ class ScriptYMLFormat(BaseUpdateYML):
             return
         if dockerimage.startswith("demistoextended/"):
             logger.info(
-                "<yellow>Skipping docker image update for demistoextended image (managed in dockerfiles-private).</yellow>"
+                "<yellow>Skipping docker image update for demistoextended image.</yellow>"
             )
             return
         image_name = dockerimage.split(":")[0]

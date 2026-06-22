@@ -97,7 +97,7 @@ class TestIsDemistoextendedRepository:
         Then:
          - returns True
         """
-        image = DockerImage("demistoextended/accessdata-p:1.1.0.10177564")
+        image = DockerImage("demistoextended/accessdata:1.1.0.10177564")
         assert image.is_demistoextended_repository is True
 
     def test_demisto_image_returns_false(self):
@@ -141,7 +141,7 @@ class TestIsTrustedRepository:
         Then:
          - returns True
         """
-        image = DockerImage("demistoextended/accessdata-p:1.1.0.10177564")
+        image = DockerImage("demistoextended/accessdata:1.1.0.10177564")
         assert image.is_trusted_repository is True
 
     def test_unknown_repo_is_not_trusted(self):
@@ -222,7 +222,7 @@ class TestGetClient:
         ), patch.object(
             DockerImage, "_get_dockerhub_client", return_value=mock_dockerhub
         ):
-            image = DockerImage("demistoextended/accessdata-p:1.1.0.10177564")
+            image = DockerImage("demistoextended/accessdata:1.1.0.10177564")
             client = image._get_client()
             assert client is mock_extended
 
@@ -261,7 +261,7 @@ class TestGetClient:
         env = os.environ.copy()
         env.pop("DEMISTO_SDK_EXTENDED_REGISTRY", None)
         with patch.dict(os.environ, env, clear=True):
-            image = DockerImage("demistoextended/accessdata-p:1.1.0.10177564")
+            image = DockerImage("demistoextended/accessdata:1.1.0.10177564")
             client = image._get_client()
             # Should fall back to the default dockerhub client
             dockerhub_client = DockerImage._get_dockerhub_client()

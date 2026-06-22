@@ -584,14 +584,14 @@ def test_DockerImageIsNotDemistoValidator_demistoextended_passes():
             paths=["name", "script.dockerimage"],
             values=[
                 "DemistoExtendedIntegration",
-                "demistoextended/accessdata-p:1.1.0.10177564",
+                "demistoextended/accessdata:1.1.0.10177564",
             ],
         ),
         create_script_object(
             paths=["name", "dockerimage"],
             values=[
                 "DemistoExtendedScript",
-                "demistoextended/accessdata-p:1.1.0.10177564",
+                "demistoextended/accessdata:1.1.0.10177564",
             ],
         ),
     ]

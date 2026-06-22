@@ -221,11 +221,11 @@ class TestGetImageRegistryDemistoextended:
             {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"},
         ):
             result = dhelper.DockerBase.get_image_registry(
-                "demistoextended/accessdata-p:1.1.0.10177564"
+                "demistoextended/accessdata:1.1.0.10177564"
             )
             assert (
                 result
-                == "example-registry.io/test-project/demistoextended/accessdata-p:1.1.0.10177564"
+                == "example-registry.io/test-project/demistoextended/accessdata:1.1.0.10177564"
             )
 
     def test_demistoextended_without_env_returns_unchanged(self):
@@ -243,9 +243,9 @@ class TestGetImageRegistryDemistoextended:
         env.pop("DEMISTO_SDK_EXTENDED_REGISTRY", None)
         with mock.patch.dict(os.environ, env, clear=True):
             result = dhelper.DockerBase.get_image_registry(
-                "demistoextended/accessdata-p:1.1.0.10177564"
+                "demistoextended/accessdata:1.1.0.10177564"
             )
-            assert result == "demistoextended/accessdata-p:1.1.0.10177564"
+            assert result == "demistoextended/accessdata:1.1.0.10177564"
 
     def test_demistoextended_already_prefixed_skips_extended_branch(self):
         """
@@ -264,7 +264,7 @@ class TestGetImageRegistryDemistoextended:
             os.environ,
             {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"},
         ):
-            already_prefixed = "example-registry.io/test-project/demistoextended/accessdata-p:1.1.0.10177564"
+            already_prefixed = "example-registry.io/test-project/demistoextended/accessdata:1.1.0.10177564"
             result = dhelper.DockerBase.get_image_registry(already_prefixed)
             # Since the image doesn't start with "demistoextended/", it goes
             # through the default branch which prepends DOCKER_REGISTRY_URL
@@ -305,13 +305,13 @@ class TestGetOrCreateTestImageDemistoextended:
         Then:
          - the prefix should be devtestdemistoextended/ (not devtestdemistoextended/)
         """
-        base_image = "demistoextended/accessdata-p:1.1.0.10177564"
+        base_image = "demistoextended/accessdata:1.1.0.10177564"
         # Simulate the logic from get_or_create_test_image
         if base_image.startswith("demistoextended/"):
             result = base_image.replace("demistoextended", "devtestdemistoextended")
         else:
             result = base_image.replace("demisto", "devtestdemisto")
-        assert result == "devtestdemistoextended/accessdata-p:1.1.0.10177564"
+        assert result == "devtestdemistoextended/accessdata:1.1.0.10177564"
 
     def test_demisto_image_still_uses_devtestdemisto_prefix(self):
         """
@@ -342,10 +342,10 @@ class TestGetOrCreateTestImageDemistoextended:
         Then:
          - it would produce devtestdemistoextended (broken name)
         """
-        base_image = "demistoextended/accessdata-p:1.1.0.10177564"
+        base_image = "demistoextended/accessdata:1.1.0.10177564"
         naive_result = base_image.replace("demisto", "devtestdemisto")
         # This is the broken behavior we fixed
-        assert naive_result == "devtestdemistoextended/accessdata-p:1.1.0.10177564"
+        assert naive_result == "devtestdemistoextended/accessdata:1.1.0.10177564"
         # The correct behavior with our fix:
         if base_image.startswith("demistoextended/"):
             correct_result = base_image.replace(
@@ -353,7 +353,7 @@ class TestGetOrCreateTestImageDemistoextended:
             )
         else:
             correct_result = base_image.replace("demisto", "devtestdemisto")
-        assert correct_result == "devtestdemistoextended/accessdata-p:1.1.0.10177564"
+        assert correct_result == "devtestdemistoextended/accessdata:1.1.0.10177564"
 
 
 class TestUpdateDockerImageSkipsDemistoextended:
@@ -374,7 +374,7 @@ class TestUpdateDockerImageSkipsDemistoextended:
 
         script_obj = {
             "type": "python",
-            "dockerimage": "demistoextended/accessdata-p:1.1.0.10177564",
+            "dockerimage": "demistoextended/accessdata:1.1.0.10177564",
         }
         original_image = script_obj["dockerimage"]
         ScriptYMLFormat.update_docker_image_in_script(
@@ -457,7 +457,7 @@ class TestGetPythonVersionDemistoextendedFallback:
         with mock.patch.dict(os.environ, env):
             with pytest.raises(Exception, match="docker pull failed"):
                 get_python_version(
-                    "demistoextended/accessdata-p:1.1.0.10293277"
+                    "demistoextended/accessdata:1.1.0.10293277"
                 )
 
     def test_demisto_image_still_raises_when_all_methods_fail(self, mocker):

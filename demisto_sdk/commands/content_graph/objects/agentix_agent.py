@@ -7,8 +7,10 @@ from demisto_sdk.commands.content_graph.objects.agentix_base import AgentixBase
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     SystemInstructionsRelatedFile,
 )
-from demisto_sdk.commands.prepare_content.agentix_agent_unifier import (
-    AgentixAgentUnifier,
+from demisto_sdk.commands.prepare_content.agentix_markdown_unifier import (
+    AGENTIX_AGENT_FILE_SUFFIX,
+    AGENTIX_AGENT_TARGET_FIELD,
+    AgentixMarkdownUnifier,
 )
 
 
@@ -16,12 +18,14 @@ class AgentixAgent(AgentixBase, content_type=ContentType.AGENTIX_AGENT):
     color: str
     visibility: str
     actionids: list[str] = []
+    skillids: list[str] = []
     systeminstructions: str = ""
     conversationstarters: list[str] = []
     builtinactions: list[str] = []
     autoenablenewactions: bool = False
     roles: list[str] = []
     sharedwithroles: list[str] = []
+    collectionids: list[str] = []
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:
@@ -53,5 +57,11 @@ class AgentixAgent(AgentixBase, content_type=ContentType.AGENTIX_AGENT):
             Unified YAML dict with systeminstructions field populated from file
         """
         data = super().prepare_for_upload(current_marketplace)
-        data = AgentixAgentUnifier.unify(self.path, data, current_marketplace)
+        data = AgentixMarkdownUnifier.unify(
+            self.path,
+            data,
+            current_marketplace,
+            target_field=AGENTIX_AGENT_TARGET_FIELD,
+            file_suffix=AGENTIX_AGENT_FILE_SUFFIX,
+        )
         return data

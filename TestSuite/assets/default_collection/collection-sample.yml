@@ -1,0 +1,10 @@
+commonfields:
+  id: sample_collection
+  version: -1
+name: Sample Collection
+description: |-
+    A sample collection for testing purposes.
+marketplaces:
+- platform
+supportedModules:
+- agentix

@@ -20,7 +20,6 @@ from demisto_sdk.commands.common.tools import extract_error_codes_from_file
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import is_error_ignored
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

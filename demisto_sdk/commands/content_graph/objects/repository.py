@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.objects.connector import Connector
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
@@ -19,38 +20,70 @@ USE_MULTIPROCESSING = False  # toggle this for better debugging
 
 
 @lru_cache
-def from_path(path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str]] = None):
+def from_path(
+    path: Path = CONTENT_PATH,
+    packs_to_parse: Optional[Tuple[str]] = None,
+    connectors_to_parse: Optional[Tuple[str, ...]] = None,
+):
     """
-    Returns a ContentDTO object with all the packs of the content repository.
+    Returns a ContentDTO object with all the packs and connectors of the content repository.
 
     This function is outside of the class for better caching.
     The class function uses this function so the behavior is the same.
+
+    Args:
+        path: Repository root.
+        packs_to_parse: Optional subset of pack names. When omitted, all packs
+            are parsed.
+        connectors_to_parse: Optional subset of connector directory names. When
+            omitted *and* ``packs_to_parse`` is also omitted, all connectors
+            under ``connectors/`` are parsed. When ``packs_to_parse`` is
+            provided but ``connectors_to_parse`` is not, no connectors are
+            parsed (callers that want a partial update of both must pass both
+            explicitly, mirroring the pack-narrowing semantics).
     """
     repo_parser = RepositoryParser(path)
     packs = tuple(repo_parser.iter_packs(packs_to_parse))
+    # Narrowing semantics:
+    #   - no packs filter, no connectors filter  -> parse all connectors
+    #   - packs filter,    no connectors filter  -> parse no connectors
+    #   - any case with explicit connectors      -> parse those connectors
+    if connectors_to_parse is None and not packs_to_parse:
+        connectors = tuple(repo_parser.iter_connectors())
+    elif connectors_to_parse is not None:
+        connectors = tuple(repo_parser.iter_connectors(connectors_to_parse))
+    else:
+        connectors = ()
     with tqdm.tqdm(
-        total=len(packs),
-        unit="packs",
-        desc="Parsing packs",
+        total=len(packs) + len(connectors),
+        unit="items",
+        desc="Parsing packs and connectors",
         position=0,
         leave=True,
     ) as progress_bar:
-        repo_parser.parse(packs_to_parse=packs, progress_bar=progress_bar)
+        repo_parser.parse(
+            packs_to_parse=packs,
+            progress_bar=progress_bar,
+            connectors_to_parse=connectors,
+        )
     return ContentDTO.from_orm(repo_parser)
 
 
 class ContentDTO(BaseModel):
     path: DirectoryPath = Path(CONTENT_PATH)  # type: ignore
     packs: List[Pack]
+    connectors: List[Connector] = []
 
     @staticmethod
     def from_path(
-        path: Path = CONTENT_PATH, packs_to_parse: Optional[Tuple[str, ...]] = None
+        path: Path = CONTENT_PATH,
+        packs_to_parse: Optional[Tuple[str, ...]] = None,
+        connectors_to_parse: Optional[Tuple[str, ...]] = None,
     ):
         """
-        Returns a ContentDTO object with all the packs of the content repository.
+        Returns a ContentDTO object with all the packs and connectors of the content repository.
         """
-        return from_path(path, packs_to_parse)
+        return from_path(path, packs_to_parse, connectors_to_parse)
 
     def dump(
         self,

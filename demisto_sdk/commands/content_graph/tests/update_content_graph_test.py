@@ -203,7 +203,9 @@ def repository(mocker) -> ContentDTO:
     pack3.content_items.script.append(mock_script("SampleScript2"))
     repository.packs.extend([pack1, pack2, pack3])
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
+    def mock__create_content_dto(packs_to_update: List[str], **kwargs) -> ContentDTO:
+        # **kwargs absorbs the keyword-only ``connectors`` parameter that
+        # ContentGraphBuilder._create_content_dto now accepts.
         if not packs_to_update:
             return repository
         repo_copy = repository.copy()
@@ -227,7 +229,10 @@ def external_repository(mocker) -> ContentDTO:
     pack1 = mock_pack("ExternalPack")
     repository.packs.extend([pack1])
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+    def mock__create_content_dto(
+        packs_to_update: List[str], **kwargs
+    ) -> List[ContentDTO]:
+        # **kwargs absorbs the keyword-only ``connectors`` parameter.
         if not packs_to_update:
             return [repository]
         repo_copy = repository.copy()
@@ -239,7 +244,8 @@ def external_repository(mocker) -> ContentDTO:
         side_effect=mock__create_content_dto,
     )
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
+    def mock__create_content_dto(packs_to_update: List[str], **kwargs) -> ContentDTO:
+        # **kwargs absorbs the keyword-only ``connectors`` parameter.
         if not packs_to_update:
             return repository
         repo_copy = repository.copy()

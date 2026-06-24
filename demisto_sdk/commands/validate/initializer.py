@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from git import InvalidGitRepositoryError
 
@@ -28,6 +28,7 @@ from demisto_sdk.commands.common.constants import (
     ExecutionMode,
     FileType,
     GitStatuses,
+    MarketplaceVersions,
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
@@ -45,7 +46,13 @@ from demisto_sdk.commands.common.tools import (
     is_private_content_file,
     specify_files_from_directory,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+    _get_connector_dir,
+    _is_connector_path,
+)
+from demisto_sdk.commands.content_graph.objects.connector import Connector
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import (
     ContentDTO,
@@ -617,11 +624,36 @@ class Initializer:
             content_objects_to_run_with_packs.add(content_object)
         return content_objects_to_run_with_packs
 
-    def get_files_using_git(self) -> Tuple[Set[BaseContent], Set[Path], Set[Path]]:
-        """Return all files added/changed/deleted.
+    def _collect_git_statuses(
+        self,
+        path_filter: Optional[Any] = None,
+    ) -> Dict[Union[Path, Tuple[Path, Path]], Union[GitStatuses, None]]:
+        """Collect git-changed files, build status dict, and optionally filter paths.
+
+        This is the shared logic between ``get_files_using_git`` and
+        ``ConnectorAwareInitializer.gather_objects_to_run_on``.
+
+        Args:
+            path_filter: Optional callable ``(Path) -> bool``.  When provided,
+                only paths for which the callable returns True are kept before
+                the expensive parsing step.
 
         Returns:
-            Tuple[Set[BaseContent], Set[Path], Set[Path]]: The sets of all the successful casts, the sets of all failed casts, and the set of non content items.
+            A statuses dict ready to be passed to ``git_paths_to_basecontent_set``.
+            Keys are either a single ``Path`` (for modified/added/deleted files)
+            or a ``(new_path, old_path)`` tuple (for renamed files).
+            Values are ``GitStatuses`` enum members or ``None`` (for implicitly
+            collected items like pack_metadata.json).
+
+            Example::
+
+                {
+                    Path("Packs/MyPack/Integrations/MyInt/MyInt.yml"): GitStatuses.MODIFIED,
+                    Path("Packs/MyPack/pack_metadata.json"): None,
+                    (Path("Packs/MyPack/Integrations/New/New.yml"),
+                     Path("Packs/MyPack/Integrations/Old/Old.yml")): GitStatuses.RENAMED,
+                    Path("connectors/salesforce/connector.yaml"): GitStatuses.ADDED,
+                }
         """
         self.validate_git_installed()
         self.set_prev_ver()
@@ -634,6 +666,16 @@ class Initializer:
             renamed_files,
             deleted_files,
         ) = self.collect_files_to_run(self.file_path)
+
+        # Optional early path filtering to avoid parsing irrelevant files
+        if path_filter is not None:
+            modified_files = {f for f in modified_files if path_filter(f)}
+            added_files = {f for f in added_files if path_filter(f)}
+            renamed_files = {
+                (old, new) for old, new in renamed_files if path_filter(new)
+            }
+            deleted_files = {f for f in deleted_files if path_filter(f)}
+
         file_by_status_dict: Dict[Path, GitStatuses] = {
             file: GitStatuses.MODIFIED for file in modified_files
         }
@@ -662,9 +704,15 @@ class Initializer:
                 )
             else:
                 statuses_dict_with_renamed_files_tuple[path] = status
-        # Parsing the files.
-        basecontent_with_path_set: Set[BaseContent] = set()
-        invalid_content_items: Set[Path] = set()
+        return statuses_dict_with_renamed_files_tuple
+
+    def get_files_using_git(self) -> Tuple[Set[BaseContent], Set[Path], Set[Path]]:
+        """Return all files added/changed/deleted.
+
+        Returns:
+            Tuple[Set[BaseContent], Set[Path], Set[Path]]: The sets of all the successful casts, the sets of all failed casts, and the set of non content items.
+        """
+        statuses_dict_with_renamed_files_tuple = self._collect_git_statuses()
         (
             basecontent_with_path_set,
             invalid_content_items,
@@ -1004,6 +1052,11 @@ class Initializer:
                 paths_set.add(path)
             elif self.is_pack_item(path_str):
                 paths_set.add(self.obtain_metadata_path(path))
+            elif _is_connector_path(path):
+                # Map any connector-related file (handler.yaml, capabilities.yaml, etc.)
+                # to the parent connector.yaml to avoid duplicate parsing.
+                connector_dir = _get_connector_dir(path)
+                paths_set.add(connector_dir / "connector.yaml")
             else:
                 paths_set.add(path)
 
@@ -1018,7 +1071,11 @@ class Initializer:
         Returns:
             bool: True if the item is unrelated. Otherwise, return False.
         """
-        return "Packs" not in path or any(
+        # A path is related if it's under Packs/ or connectors/
+        is_content_path = "Packs" in path or "connectors" in path
+        if not is_content_path:
+            return True
+        return any(
             file in path.lower()
             for file in (
                 "commands_example.txt",
@@ -1115,3 +1172,403 @@ class Initializer:
                 ).replace("//", "/")
                 break
         return Path(path_str)
+
+
+class ConnectorAwareInitializer(Initializer):
+    """Extends Initializer with connector-integration cross-discovery.
+
+    When ``--run-connectors-validation`` is used, this initializer replaces the
+    standard ``Initializer``.  It:
+
+    1. Runs the normal file-collection flow (supports ``-g``, ``-i``, ``-a``).
+    2. Filters the result to only ``Integration`` and ``Connector`` objects.
+    3. Applies marketplace / XSOAR-handler filters.
+    4. Cross-matches connectors and integrations and expands with missing counterparts.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+
+    @staticmethod
+    def _is_relevant_path(path: Path) -> bool:
+        """Return True if the path is an Integration or Connector item."""
+        path_str = str(path)
+        return (
+            f"/{INTEGRATIONS_DIR}/" in path_str
+            or path_str.startswith(f"{INTEGRATIONS_DIR}/")
+            or "connectors/" in path_str
+        )
+
+    def gather_objects_to_run_on(self) -> Tuple[Set[BaseContent], Set[Path]]:
+        """Collect, filter, and cross-match connector and integration objects.
+
+        Overrides the parent ``Initializer.gather_objects_to_run_on`` to:
+
+        1. **Collect** — Use the standard file-collection flow (``-g``, ``-i``,
+           or ``-a``) but pre-filter to only Integration and Connector paths
+           via ``_is_relevant_path``.
+        2. **Post-filter** — Keep only ``Integration`` objects that are in the
+           PLATFORM marketplace and not deprecated, and ``Connector`` objects
+           that have at least one XSOAR handler.
+        3. **Cross-match** — Call ``_cross_match_and_expand`` to link each
+           XSOAR handler to its referenced integration (and vice versa),
+           expanding with graph-discovered counterparts when needed.
+
+        Returns:
+            Tuple of:
+            - ``Set[BaseContent]``: The filtered set of ``Integration`` and
+              ``Connector`` objects with cross-links populated
+              (``handler.related_integration`` and ``integration.related_content``).
+            - ``Set[Path]``: Paths that could not be parsed into valid content items.
+        """
+        # 1. Collect and parse only relevant paths (Integrations + connectors)
+        if self.execution_mode == ExecutionMode.USE_GIT:
+            statuses = self._collect_git_statuses(path_filter=self._is_relevant_path)
+            all_objects, invalid_items, _ = self.git_paths_to_basecontent_set(
+                statuses, prev_ver=self.prev_ver
+            )
+        elif self.execution_mode == ExecutionMode.SPECIFIC_FILES:
+            loaded = self.load_files(self.file_path.split(","))
+            filtered_paths = {p for p in loaded if self._is_relevant_path(p)}
+            all_objects, invalid_items, _ = self.paths_to_basecontent_set(
+                filtered_paths
+            )
+        else:
+            # ALL_FILES or fallback -- use parent as-is
+            all_objects, invalid_items = super().gather_objects_to_run_on()
+
+        # 2. Post-filter: keep only Integration and Connector objects
+        filtered_integrations: Set[Integration] = set()
+        filtered_connectors: Set[Connector] = set()
+        for obj in all_objects:
+            if isinstance(obj, Integration):
+                if obj.deprecated:
+                    logger.debug(
+                        f"Skipping integration '{obj.object_id}' -- deprecated."
+                    )
+                elif MarketplaceVersions.PLATFORM in obj.marketplaces:
+                    filtered_integrations.add(obj)
+                else:
+                    logger.debug(
+                        f"Skipping integration '{obj.object_id}' -- "
+                        f"not in PLATFORM marketplace."
+                    )
+            elif isinstance(obj, Connector):
+                if obj.xsoar_handlers:
+                    filtered_connectors.add(obj)
+                else:
+                    logger.debug(
+                        f"Skipping connector '{obj.object_id}' -- "
+                        f"no XSOAR handlers."
+                    )
+
+        # 3. Cross-match and expand with missing counterparts
+        filtered = self._cross_match_and_expand(
+            filtered_integrations, filtered_connectors
+        )
+
+        return filtered, invalid_items
+
+    def _cross_match_and_expand(
+        self, integrations: Set[Integration], connectors: Set[Connector]
+    ) -> Set[BaseContent]:
+        """Orchestrate the 4-phase handler-integration cross-matching.
+
+        Each XSOAR handler inside a ``Connector`` references an integration via
+        its ``xsoar_integration_id`` field.  This method resolves those references
+        and sets bidirectional cross-links:
+
+        * ``handler.related_integration`` — the ``Integration`` object (1:1).
+        * ``integration.related_content`` — the handler back-reference (1:1).
+
+        **Phases**:
+
+        1. *Direct match* — pair handlers with integrations already in the
+           working set (no graph access needed).
+        2. *Graph-expand connectors* — for integrations that had no handler in
+           the working set, search the content graph for connectors that
+           reference them and add those connectors.
+        3. *Graph-expand integrations* — for handlers that still have no
+           integration after phase 2a, search the graph for the referenced
+           integration and add it.
+        4. *Cleanup* — remove integrations that remain unmatched after all
+           expansion phases.
+
+        Example flow::
+
+            Input:  integrations={A, B}, connectors={C1(handler→A)}
+            Phase 1:  A ↔ C1.handler  (direct match)
+            Phase 2a: B has no handler → graph finds C2(handler→B) → add C2
+            Phase 2b: (nothing left unmatched)
+            Cleanup:  (nothing to remove)
+            Output: {A, B, C1, C2}
+
+        Args:
+            integrations: Mutable set of ``Integration`` objects to match and
+                potentially expand with graph-discovered integrations.
+            connectors: Mutable set of ``Connector`` objects to match and
+                potentially expand with graph-discovered connectors.
+
+        Returns:
+            The union ``integrations | connectors`` with all cross-links set.
+        """
+        # Phase 1: Direct matching
+        matched_ids, matched_keys = self._direct_match(integrations, connectors)
+
+        # Early exit if everything matched
+        unmatched_integrations = {
+            i for i in integrations if i.object_id not in matched_ids
+        }
+        unmatched_handlers = [
+            (c, h)
+            for c in connectors
+            for h in c.xsoar_handlers
+            if h.xsoar_integration_id and f"{c.object_id}::{h.id}" not in matched_keys
+        ]
+
+        if not unmatched_integrations and not unmatched_handlers:
+            logger.debug(
+                "All handlers and integrations matched directly, skipping graph."
+            )
+            return integrations | connectors
+
+        # Phase 2a: Find connectors for unmatched integrations via graph
+        self._graph_expand_connectors(unmatched_integrations, connectors, matched_ids)
+
+        # Phase 2b: Find integrations for still-unmatched handlers via graph
+        self._graph_expand_integrations(connectors, integrations)
+
+        # Cleanup: Drop integrations that never found a handler
+        self._remove_unmatched_integrations(integrations)
+
+        return integrations | connectors
+
+    def _direct_match(
+        self, integrations: Set[Integration], connectors: Set[Connector]
+    ) -> Tuple[Set[str], Set[str]]:
+        """Phase 1: Match handlers to integrations already in the working set.
+
+        For each XSOAR handler that declares an ``xsoar_integration_id``, look
+        up the integration in the current *integrations* set.  If found, set the
+        bidirectional cross-links:
+
+        * ``handler.related_integration = integration``
+        * ``integration.related_content = handler``
+
+        Args:
+            integrations: The current set of ``Integration`` objects.
+            connectors: The current set of ``Connector`` objects whose handlers
+                will be inspected.
+
+        Returns:
+            A tuple of ``(matched_integration_ids, matched_handler_keys)`` where
+            *matched_integration_ids* contains the ``object_id`` of every
+            integration that was paired, and *matched_handler_keys* contains
+            composite keys of the form ``"connector_id::handler_id"`` for every
+            handler that was paired.
+        """
+        integration_by_id: Dict[str, Integration] = {
+            i.object_id: i for i in integrations
+        }
+
+        matched_integration_ids: Set[str] = set()
+        matched_handler_keys: Set[str] = set()  # "connector_id::handler_id"
+
+        for connector in connectors:
+            for handler in connector.xsoar_handlers:
+                int_id = handler.xsoar_integration_id
+                if not int_id:
+                    continue
+                match = integration_by_id.get(int_id)
+                if match:
+                    handler.related_integration = match
+                    match.related_content = handler
+                    matched_integration_ids.add(match.object_id)
+                    matched_handler_keys.add(f"{connector.object_id}::{handler.id}")
+                    logger.debug(
+                        f"Matched handler '{handler.id}' (connector "
+                        f"'{connector.object_id}') -> integration "
+                        f"'{match.object_id}' (direct)."
+                    )
+
+        return matched_integration_ids, matched_handler_keys
+
+    def _graph_expand_connectors(
+        self,
+        unmatched_integrations: Set[Integration],
+        connectors: Set[Connector],
+        matched_ids: Set[str],
+    ) -> None:
+        """Phase 2a: Find connectors for integrations that had no direct match.
+
+        For each unmatched integration, search the content graph for connectors
+        whose XSOAR handlers reference it.  Found connectors are added to the
+        *connectors* set in-place and their handlers are linked to the
+        integration.
+
+        Args:
+            unmatched_integrations: Integrations from the working set that were
+                not paired during Phase 1.
+            connectors: Mutable set of connectors — new graph-discovered
+                connectors are added here.
+            matched_ids: Mutable set of matched integration IDs — updated when
+                a graph-discovered connector matches an integration.
+        """
+        if not unmatched_integrations:
+            return
+
+        logger.debug(
+            f"Searching graph for connectors referencing unmatched "
+            f"integrations: {[i.object_id for i in unmatched_integrations]}"
+        )
+        existing_connector_ids = {c.object_id for c in connectors}
+        for integration in list(unmatched_integrations):
+            found_connectors = self._graph_search_connectors(integration.object_id)
+            for found_connector in found_connectors:
+                if not isinstance(found_connector, Connector):
+                    continue
+                if found_connector.object_id in existing_connector_ids:
+                    continue
+                if not found_connector.xsoar_handlers:
+                    continue
+                for handler in found_connector.xsoar_handlers:
+                    if handler.xsoar_integration_id == integration.object_id:
+                        handler.related_integration = integration
+                        integration.related_content = handler
+                        matched_ids.add(integration.object_id)
+                        logger.debug(
+                            f"Matched handler '{handler.id}' (connector "
+                            f"'{found_connector.object_id}') -> integration "
+                            f"'{integration.object_id}' (graph)."
+                        )
+                connectors.add(found_connector)
+                existing_connector_ids.add(found_connector.object_id)
+
+    def _graph_expand_integrations(
+        self, connectors: Set[Connector], integrations: Set[Integration]
+    ) -> None:
+        """Phase 2b: Find integrations for handlers that still have no match.
+
+        After Phase 2a, recalculate which handlers are still unmatched.  For
+        each, search the content graph for the referenced integration.  Skip
+        deprecated integrations and those not in the ``PLATFORM`` marketplace.
+
+        Found integrations are added to the *integrations* set in-place and
+        linked to their handler.
+
+        Args:
+            connectors: The (possibly expanded) set of connectors whose
+                unmatched handlers will be inspected.
+            integrations: Mutable set of integrations — new graph-discovered
+                integrations are added here.
+        """
+        unmatched_handlers = [
+            (c, h)
+            for c in connectors
+            for h in c.xsoar_handlers
+            if h.xsoar_integration_id and h.related_integration is None
+        ]
+        if not unmatched_handlers:
+            return
+
+        logger.debug(
+            f"Searching graph for integrations referenced by unmatched "
+            f"handlers: {[(c.object_id, h.id) for c, h in unmatched_handlers]}"
+        )
+        for connector, handler in unmatched_handlers:
+            int_id = handler.xsoar_integration_id
+            if not int_id:
+                continue
+            results = self._graph_search_integration(int_id)
+            if results:
+                integration = results[0]
+                if getattr(integration, "deprecated", False):
+                    logger.debug(
+                        f"Skipping graph-found integration "
+                        f"'{integration.object_id}' -- deprecated."
+                    )
+                    continue
+                if hasattr(integration, "marketplaces") and (
+                    MarketplaceVersions.PLATFORM not in integration.marketplaces
+                ):
+                    logger.debug(
+                        f"Skipping graph-found integration "
+                        f"'{integration.object_id}' -- not PLATFORM."
+                    )
+                    continue
+                handler.related_integration = integration
+                if hasattr(integration, "related_content"):
+                    integration.related_content = handler
+                integrations.add(integration)
+                logger.debug(
+                    f"Matched handler '{handler.id}' (connector "
+                    f"'{connector.object_id}') -> integration "
+                    f"'{integration.object_id}' (graph)."
+                )
+
+    @staticmethod
+    def _remove_unmatched_integrations(integrations: Set[Integration]) -> None:
+        """Cleanup: Remove integrations that have no matching connector handler.
+
+        After all matching phases, any integration whose ``related_content`` is
+        ``None`` has no connector handler pointing to it and should be excluded
+        from the validation set.
+
+        Args:
+            integrations: Mutable set of integrations — unmatched entries are
+                removed in-place.
+        """
+        unmatched_final = {i for i in integrations if i.related_content is None}
+        if unmatched_final:
+            logger.debug(
+                f"Removing {len(unmatched_final)} integration(s) with no matching "
+                f"connector handler: {[i.object_id for i in unmatched_final]}"
+            )
+            integrations -= unmatched_final
+
+    @staticmethod
+    def _graph_search_integration(integration_id: str) -> List[Any]:
+        """Graph search for an integration by object_id or name."""
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.validate.validators.base_validator import (
+            BaseValidator,
+        )
+
+        graph = BaseValidator.graph_interface
+        if not graph:
+            logger.debug("Graph interface not available, skipping graph search.")
+            return []
+        results = graph.search(
+            content_type=ContentType.INTEGRATION,
+            object_id=integration_id,
+        )
+        if not results:
+            results = graph.search(
+                content_type=ContentType.INTEGRATION,
+                name=integration_id,
+            )
+        return results
+
+    @staticmethod
+    def _graph_search_connectors(integration_id: str) -> List[Any]:
+        """Graph search for connectors whose XSOAR handlers reference the given integration.
+
+        Searches all connectors in the graph and filters to those with at least
+        one XSOAR handler whose ``xsoar_integration_id`` matches.
+        """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        from demisto_sdk.commands.validate.validators.base_validator import (
+            BaseValidator,
+        )
+
+        graph = BaseValidator.graph_interface
+        if not graph:
+            logger.debug("Graph interface not available, skipping connector search.")
+            return []
+        all_connectors = graph.search(content_type=ContentType.CONNECTOR)
+        return [
+            c
+            for c in all_connectors
+            if hasattr(c, "xsoar_handlers")
+            and any(h.xsoar_integration_id == integration_id for h in c.xsoar_handlers)
+        ]

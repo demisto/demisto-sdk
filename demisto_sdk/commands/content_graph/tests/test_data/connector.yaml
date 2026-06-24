@@ -1,0 +1,19 @@
+id: "test-connector"
+
+metadata:
+  title: "Test Connector"
+  description: "A test connector for unit tests"
+  version: 1.0.0
+  category: "Test"
+  tags:
+    - "test"
+  domain: "test"
+  vendor: "TestVendor"
+  publisher: "TestPublisher"
+  ownership:
+    team: "xsoar"
+    maintainers:
+      - "@test"
+
+settings:
+  allow_skip_verification: true

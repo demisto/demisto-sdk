@@ -4858,3 +4858,35 @@ def get_content_item_supported_modules(item) -> set[str]:
     if declared is None:
         return {sm.value for sm in PlatformSupportedModules}
     return set(declared)
+
+
+def get_parameter_supported_modules(param, item) -> set[str]:
+    """
+    Resolves the definitive supported modules for an integration configuration
+    parameter, following the resolution chain:
+    parameter -> integration (item) -> pack -> platform defaults.
+
+    The parameter's own 'supportedModules' takes precedence. When the parameter
+    does not declare any, the value is inherited from the integration, which in
+    turn falls back to its pack and finally to the platform defaults (all
+    modules), via get_content_item_supported_modules.
+
+    Args:
+        param: An integration configuration parameter that has a
+               supportedModules attribute.
+        item: The integration the parameter belongs to (has marketplaces,
+              supportedModules, and optionally a pack attribute).
+
+    Returns:
+        A set of supported module names, or an empty set if the integration is
+        not a platform item (no 'platform' in its marketplaces), since
+        supportedModules are only meaningful for platform items.
+    """
+    if MarketplaceVersions.PLATFORM not in item.marketplaces:
+        return set()
+
+    param_modules = getattr(param, "supportedModules", None)
+    if param_modules:
+        return set(param_modules)
+
+    return get_content_item_supported_modules(item)

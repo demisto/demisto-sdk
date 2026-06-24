@@ -1202,7 +1202,7 @@ class TestStandardizedIdAndNameFields:
         When:
             - Instantiating _DashboardsData without 'id'.
         Then:
-            - Validation fails since 'id' is now a required field.
+            - Validation fails since 'id' is a required field.
         """
         from demisto_sdk.commands.content_graph.strict_objects.xsiam_dashboard import (
             _DashboardsData,

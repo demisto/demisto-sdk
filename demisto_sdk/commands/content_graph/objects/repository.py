@@ -31,10 +31,18 @@ def from_path(
     This function is outside of the class for better caching.
     The class function uses this function so the behavior is the same.
 
+    Narrowing matrix (must stay symmetric for packs and connectors):
+        - no packs filter, no connectors filter  -> parse ALL packs + ALL connectors
+        - packs filter,    no connectors filter  -> parse those packs, no connectors
+        - no packs filter, connectors filter     -> parse no packs, those connectors
+        - both filters                           -> parse those packs + those connectors
+
     Args:
         path: Repository root.
-        packs_to_parse: Optional subset of pack names. When omitted, all packs
-            are parsed.
+        packs_to_parse: Optional subset of pack names. When omitted *and*
+            ``connectors_to_parse`` is also omitted, all packs are parsed.
+            When ``connectors_to_parse`` is provided but ``packs_to_parse`` is
+            not, no packs are parsed.
         connectors_to_parse: Optional subset of connector directory names. When
             omitted *and* ``packs_to_parse`` is also omitted, all connectors
             under ``connectors/`` are parsed. When ``packs_to_parse`` is
@@ -43,15 +51,19 @@ def from_path(
             explicitly, mirroring the pack-narrowing semantics).
     """
     repo_parser = RepositoryParser(path)
-    packs = tuple(repo_parser.iter_packs(packs_to_parse))
-    # Narrowing semantics:
-    #   - no packs filter, no connectors filter  -> parse all connectors
-    #   - packs filter,    no connectors filter  -> parse no connectors
-    #   - any case with explicit connectors      -> parse those connectors
-    if connectors_to_parse is None and not packs_to_parse:
-        connectors = tuple(repo_parser.iter_connectors())
+    if packs_to_parse:
+        packs = tuple(repo_parser.iter_packs(packs_to_parse))
     elif connectors_to_parse is not None:
+        # connectors-only narrowing: do not parse any packs
+        packs = ()
+    else:
+        # full scan only when both filters are unset
+        packs = tuple(repo_parser.iter_packs(None))
+
+    if connectors_to_parse is not None:
         connectors = tuple(repo_parser.iter_connectors(connectors_to_parse))
+    elif not packs_to_parse:
+        connectors = tuple(repo_parser.iter_connectors())
     else:
         connectors = ()
     with tqdm.tqdm(

@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.tools import (
     is_external_repository,
     is_sdk_defined_working_offline,
 )
+from demisto_sdk.commands.content_graph.interface import ContentGraphInterface
 from demisto_sdk.commands.validate.config_reader import ConfigReader
 from demisto_sdk.commands.validate.initializer import (
     ConnectorAwareInitializer,
@@ -25,6 +26,7 @@ from demisto_sdk.commands.validate.old_validate_manager import OldValidateManage
 from demisto_sdk.commands.validate.private_content_manager import PrivateContentManager
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter
+from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
 from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
@@ -299,11 +301,16 @@ def warn_on_ignored_flags(run_new_validate, run_old_validate, params):
                 )
 
     if not run_old_validate:
+        # NOTE: 'graph' is intentionally NOT in this list. It used to be
+        # warned-and-ignored when the old validation flow was skipped, but the
+        # new flow now honours it too — see attach_graph_interface_if_requested
+        # in run_new_validation(), which wires a live ContentGraphInterface
+        # into BaseValidator.graph_interface so validators like CO100/CO101
+        # can perform graph lookups against an externally-populated Neo4j.
         for flag in [
             "no_backward_comp",
             "no_conf_json",
             "id_set",
-            "graph",
             "skip_pack_release_notes",
             "print_ignored_errors",
             "print_ignored_files",
@@ -358,8 +365,52 @@ def run_old_validation(file_path, is_external_repo, run_with_mp, **kwargs):
     return validator.run_validation()
 
 
+def attach_graph_interface_if_requested(use_graph: bool) -> None:
+    """Wire a live ``ContentGraphInterface`` onto ``BaseValidator`` when -gr/--graph is set.
+
+    The new validation flow's validators (e.g. CO100, CO101, GR*) read
+    ``BaseValidator.graph_interface`` directly. Historically the ``--graph``
+    flag was only consumed by the old validation flow and was warned-and-
+    ignored in the new flow, leaving ``graph_interface`` as ``None`` and
+    causing graph-dependent validators to fall back to "Graph interface not
+    available" no-graph behaviour (which produces false-positive failures
+    like CO101 "pack not found" against packs that *are* in the graph).
+
+    When ``--graph`` is set we attach a ``ContentGraphInterface()`` — which
+    is the concrete ``Neo4jContentGraphInterface`` — so validators see the
+    already-populated Neo4j instance (e.g. one populated by a preceding
+    ``demisto-sdk graph update`` invocation in CI). The graph is *not*
+    rebuilt here; we only connect to the running database. If the connection
+    fails (Neo4j down, wrong credentials, etc.) we log a warning and leave
+    ``graph_interface`` unset so the no-graph fallback path runs instead of
+    crashing the validate command.
+
+    Args:
+        use_graph: Value of the ``--graph`` / ``-gr`` CLI flag.
+    """
+    if not use_graph:
+        return
+    if BaseValidator.graph_interface is not None:
+        # Already wired up (e.g. by a unit test). Don't overwrite.
+        logger.debug(
+            "BaseValidator.graph_interface is already set; skipping --graph attach."
+        )
+        return
+    try:
+        BaseValidator.graph_interface = ContentGraphInterface()
+        logger.info(
+            "--graph: attached live ContentGraphInterface for new-flow validators."
+        )
+    except Exception as e:
+        logger.warning(
+            "--graph was requested but connecting to the content graph failed: "
+            f"{e}. Graph-dependent validators will fall back to no-graph mode."
+        )
+
+
 def run_new_validation(file_path, execution_mode, **kwargs):
     validation_results = ResultWriter(json_file_path=kwargs.get("json_file"))
+    attach_graph_interface_if_requested(bool(kwargs.get("graph")))
     config_reader = ConfigReader(
         path=kwargs.get("config_path"),
         category=kwargs.get("category_to_run"),

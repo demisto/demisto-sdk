@@ -10,6 +10,7 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_agentix_action_object,
     create_agentix_agent_object,
+    create_agentix_skill_object,
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_content_item import (
     IsForbiddenContentItemValidator,
@@ -31,6 +32,21 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG108_is_valid_rgb_c
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG109_is_system_instructions_valid import (
     IsSystemInstructionsValidValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG111_is_skill_content_file_exists import (
+    IsSkillContentFileExistsValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG112_is_skill_total_token_budget import (
+    SKILL_TOKEN_LIMIT,
+    IsSkillTotalTokenBudgetValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG114_is_skill_char_cleanliness import (
+    IsSkillCharCleanlinessValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG115_is_skill_description_length import (
+    DESCRIPTION_MAX_WORDS,
+    DESCRIPTION_MIN_WORDS,
+    IsSkillDescriptionLengthValidator,
 )
 
 
@@ -625,3 +641,190 @@ def test_is_system_instructions_valid():
         f"The system instructions for Agentix Agent 'invalid_agent' exceed the maximum allowed size of {limit} bytes"
         in results[0].message
     )
+
+
+# ---------------------------------------------------------------------------
+# AgentixSkill validators (AG111, AG112, AG114, AG115) — edge cases.
+#
+# These exercise the new skill package layout where the body lives in
+# ``<SkillName>_skill.md`` next to ``<SkillName>.yml``.
+# ---------------------------------------------------------------------------
+
+
+def test_AG111_skill_content_file_exists():
+    """
+    Given
+    - One skill whose body file (<SkillName>_skill.md) exists.
+    - One skill whose body file is missing.
+
+    When
+    - Calling IsSkillContentFileExistsValidator.obtain_invalid_content_items.
+
+    Then
+    - Only the skill with the missing body file is reported.
+    """
+    valid_skill = create_agentix_skill_object(
+        skill_name="valid_skill", skill_content="Some skill body."
+    )
+    missing_body_skill = create_agentix_skill_object(skill_name="missing_body_skill")
+    # Remove the body file *before* the validator accesses the cached
+    # ``skill_content_file`` related-file (whose ``exist`` is computed lazily),
+    # so the validator sees the file as missing. The body lives in
+    # ``<SkillName>_skill.md`` next to the schema yml.
+    skill_dir = missing_body_skill.path.parent
+    (skill_dir / f"{skill_dir.name}_skill.md").unlink()
+
+    results = IsSkillContentFileExistsValidator().obtain_invalid_content_items(
+        [valid_skill, missing_body_skill]
+    )
+
+    assert len(results) == 1
+    assert "missing its content file" in results[0].message
+    assert "missing_body_skill_skill.md" in results[0].message
+
+
+def test_AG112_skill_within_token_budget():
+    """
+    Given
+    - A skill whose body is comfortably within the token budget.
+
+    When
+    - Calling IsSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
+
+    Then
+    - No failures are returned.
+    """
+    skill = create_agentix_skill_object(
+        skill_name="small_skill", skill_content="A short body."
+    )
+
+    results = IsSkillTotalTokenBudgetValidator().obtain_invalid_content_items([skill])
+
+    assert results == []
+
+
+def test_AG112_skill_exceeds_token_budget():
+    """
+    Given
+    - A skill whose body exceeds the estimated token budget
+      (~4 chars per token, so the body must exceed SKILL_TOKEN_LIMIT * 4 chars).
+
+    When
+    - Calling IsSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
+
+    Then
+    - The oversized skill is reported.
+    """
+    oversized_body = "a" * (SKILL_TOKEN_LIMIT * 4 + 4)
+    skill = create_agentix_skill_object(
+        skill_name="big_skill", skill_content=oversized_body
+    )
+
+    results = IsSkillTotalTokenBudgetValidator().obtain_invalid_content_items([skill])
+
+    assert len(results) == 1
+    assert "is too large" in results[0].message
+
+
+@pytest.mark.parametrize(
+    "skill_content, description, expect_failure",
+    [
+        pytest.param(
+            "Plain ASCII body with code `let x = 1;`.",
+            "Plain ASCII description.",
+            False,
+            id="clean-ascii-passes",
+        ),
+        pytest.param(
+            "This body has an emoji 🚀 in the prose.",
+            "Plain ASCII description.",
+            True,
+            id="emoji-in-body-fails",
+        ),
+        pytest.param(
+            "Plain ASCII body.",
+            "Description with curly quote \u201cword\u201d.",
+            True,
+            id="non-ascii-in-description-fails",
+        ),
+        pytest.param(
+            "Body with non-ascii only inside code: ```py\nx = '\u00e9'\n```",
+            "Plain ASCII description.",
+            False,
+            id="non-ascii-inside-code-block-ignored",
+        ),
+    ],
+)
+def test_AG114_skill_char_cleanliness(
+    skill_content: str, description: str, expect_failure: bool
+):
+    """
+    Given
+    - Skills with various ASCII / non-ASCII content in prose and code blocks.
+
+    When
+    - Calling IsSkillCharCleanlinessValidator.obtain_invalid_content_items.
+
+    Then
+    - Non-ASCII characters in prose are flagged, while those inside code blocks
+      are ignored.
+    """
+    skill = create_agentix_skill_object(
+        paths=["description"],
+        values=[description],
+        skill_name="cleanliness_skill",
+        skill_content=skill_content,
+    )
+
+    results = IsSkillCharCleanlinessValidator().obtain_invalid_content_items([skill])
+
+    assert bool(results) is expect_failure
+
+
+@pytest.mark.parametrize(
+    "description, expect_failure",
+    [
+        pytest.param(
+            " ".join(["word"] * DESCRIPTION_MIN_WORDS),
+            False,
+            id="exactly-min-words-passes",
+        ),
+        pytest.param(
+            " ".join(["word"] * DESCRIPTION_MAX_WORDS),
+            False,
+            id="exactly-max-words-passes",
+        ),
+        pytest.param(
+            " ".join(["word"] * (DESCRIPTION_MIN_WORDS - 1)),
+            True,
+            id="below-min-words-fails",
+        ),
+        pytest.param(
+            " ".join(["word"] * (DESCRIPTION_MAX_WORDS + 1)),
+            True,
+            id="above-max-words-fails",
+        ),
+        pytest.param("", True, id="empty-description-fails"),
+    ],
+)
+def test_AG115_skill_description_length(description: str, expect_failure: bool):
+    """
+    Given
+    - Skills with descriptions at the boundaries of the allowed word range.
+
+    When
+    - Calling IsSkillDescriptionLengthValidator.obtain_invalid_content_items.
+
+    Then
+    - Descriptions outside the [MIN, MAX] word range are flagged; boundaries pass.
+    """
+    skill = create_agentix_skill_object(
+        paths=["description"],
+        values=[description],
+        skill_name="description_skill",
+        skill_content="Body.",
+    )
+
+    results = IsSkillDescriptionLengthValidator().obtain_invalid_content_items([skill])
+
+    assert bool(results) is expect_failure

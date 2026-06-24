@@ -83,9 +83,11 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             pack_supported_modules=pack_supported_modules or [],
             git_sha=git_sha,
         )
-        # Override structure_errors to be a proper list
-        # (BaseContentParser sets it to a FieldInfo object)
-        self.structure_errors = []
+        # ConnectorParser inherits from ContentItemParser directly, NOT from
+        # Yaml/JsonContentItemParser, so the structure-validation hook in
+        # those classes never runs for us. Initialise ``structure_errors`` to
+        # an empty list so ``Connector.from_orm`` can pick it up.
+        self.structure_errors: list = []
 
         # Parse connector.yaml fields
         self.connector_metadata: dict = self.yml_data.get("metadata", {})
@@ -170,14 +172,6 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
     @property
     def toversion(self) -> str:
         return DEFAULT_CONTENT_ITEM_TO_VERSION
-
-    @property
-    def strict_object(self):
-        raise NotImplementedError("Connector does not have a strict object yet")
-
-    def validate_structure(self):
-        """Connectors don't have a strict object for structure validation yet."""
-        return []
 
     # ============================================================
     # Sub-model parsing

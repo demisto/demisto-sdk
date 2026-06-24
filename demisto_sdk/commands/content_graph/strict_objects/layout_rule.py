@@ -14,8 +14,14 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
 
 
 class _StrictLayoutRule(BaseStrictModel):
-    rule_id: str
-    rule_name: str
+    rule_id: Optional[str] = None
+    # NOTE: 'id' should exist in all layout rule content items, but is currently not supported
+    # on XSIAM/Platform tenants.
+    id: Optional[str] = None
+    rule_name: Optional[str] = None
+    # NOTE: 'name' should exist in all layout rule content items, but is currently not supported
+    # on XSIAM/Platform tenants.
+    name: Optional[str] = None
     layout_id: str
     from_version: str = Field(
         alias="fromVersion"

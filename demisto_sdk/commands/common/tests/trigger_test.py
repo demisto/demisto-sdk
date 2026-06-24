@@ -13,11 +13,11 @@ def test_is_valid_file(repo):
     dummy_trigger = pack.create_trigger(
         "MyTrigger",
         {
-            "trigger_id": "trigger_id",
+            "id": "trigger_id",
             "playbook_id": "playbook_id",
             "suggestion_reason": "Reason",
             "description": "Description",
-            "trigger_name": "trigger_name",
+            "name": "trigger_name",
             "alerts_filter": {
                 "filter": {
                     "AND": [
@@ -48,11 +48,11 @@ def test_is_valid_file_complicated_schema(repo):
     dummy_trigger = pack.create_trigger(
         "MyTrigger",
         {
-            "trigger_id": "trigger_id",
+            "id": "trigger_id",
             "playbook_id": "playbook_id",
             "suggestion_reason": "Reason",
             "description": "Description",
-            "trigger_name": "trigger_name",
+            "name": "trigger_name",
             "alerts_filter": {
                 "filter": {
                     "OR": [
@@ -106,11 +106,11 @@ def test_is_not_valid_file_complicated_schema(repo):
     dummy_trigger = pack.create_trigger(
         "MyTrigger",
         {
-            "trigger_id": "trigger_id",
+            "id": "trigger_id",
             "playbook_id": "playbook_id",
             "suggestion_reason": "Reason",
             "description": "Description",
-            "trigger_name": "trigger_name",
+            "name": "trigger_name",
             "alerts_filter": {
                 "filter": {
                     "OR": [

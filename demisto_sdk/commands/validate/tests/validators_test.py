@@ -976,6 +976,35 @@ def test_config_reader_ignore_all_flag(
     assert results.support_level_dict == expected_results.support_level_dict
 
 
+def test_is_pack_item_deployment_json():
+    """
+    Given:
+        - A path to a deployment.json file in a pack.
+    When:
+        - Calling is_pack_item with the path.
+    Then:
+        - Should return True, indicating it's a pack-level item.
+    """
+    initializer = Initializer()
+    assert (
+        initializer.is_pack_item(f"Packs/SomePack/{DEPLOYMENT_JSON_FILENAME}") is True
+    )
+
+
+def test_deployment_json_in_zero_depth_files():
+    """
+    Given:
+        - The ZERO_DEPTH_FILES constant.
+    When:
+        - Checking if deployment.json is included.
+    Then:
+        - deployment.json should be in ZERO_DEPTH_FILES.
+    """
+    from demisto_sdk.scripts.validate_content_path import ZERO_DEPTH_FILES
+
+    assert DEPLOYMENT_JSON_FILENAME in ZERO_DEPTH_FILES
+
+
 # ============================================================
 # ConnectorAwareInitializer — initializer function tests
 # ============================================================
@@ -1298,30 +1327,57 @@ class TestConnectorRelatedFileDeduplication:
         assert len(result) == 1
 
 
-def test_is_pack_item_deployment_json():
-    """
-    Given:
-        - A path to a deployment.json file in a pack.
-    When:
-        - Calling is_pack_item with the path.
-    Then:
-        - Should return True, indicating it's a pack-level item.
-    """
-    initializer = Initializer()
-    assert (
-        initializer.is_pack_item(f"Packs/SomePack/{DEPLOYMENT_JSON_FILENAME}") is True
-    )
+# ============================================================
+# ConnectorAwareInitializer — filter / gather behavior
+# ============================================================
 
 
-def test_deployment_json_in_zero_depth_files():
+class TestConnectorAwareInitializerFilter:
+    """Tests for the post-collection filter inside
+    :py:meth:`ConnectorAwareInitializer.gather_objects_to_run_on`.
     """
-    Given:
-        - The ZERO_DEPTH_FILES constant.
-    When:
-        - Checking if deployment.json is included.
-    Then:
-        - deployment.json should be in ZERO_DEPTH_FILES.
-    """
-    from demisto_sdk.scripts.validate_content_path import ZERO_DEPTH_FILES
 
-    assert DEPLOYMENT_JSON_FILENAME in ZERO_DEPTH_FILES
+    @staticmethod
+    def _run_filter(objects):
+        """Replay the inline post-filter block from gather_objects_to_run_on.
+
+        We mirror the logic rather than calling the full method so the test
+        is independent of file-collection / git-diff plumbing.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import Connector
+
+        filtered_connectors = set()
+        for obj in objects:
+            if isinstance(obj, Connector):
+                if obj.xsoar_handlers:
+                    filtered_connectors.add(obj)
+        return filtered_connectors
+
+    def test_connector_with_xsoar_handler_is_kept(self):
+        """
+        Given: A connector with at least one XSOAR handler.
+        When: The post-collection filter runs.
+        Then: The connector is kept (original happy-path behavior).
+        """
+        connector = create_connector_object()
+        assert connector.xsoar_handlers, "fixture must have an XSOAR handler"
+
+        kept = self._run_filter({connector})
+
+        assert kept == {connector}
+
+    def test_connector_with_no_xsoar_handlers_is_dropped(
+        self,
+    ):
+        """
+        Given: A connector with NO XSOAR handlers.
+        When: The post-collection filter runs.
+        Then: The connector is dropped (non-XSOAR connectors are out of
+              scope for cross-matching).
+        """
+        connector = create_connector_object()
+        connector.handlers = []
+
+        kept = self._run_filter({connector})
+
+        assert kept == set()

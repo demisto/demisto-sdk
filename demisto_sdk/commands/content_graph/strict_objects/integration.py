@@ -23,6 +23,7 @@ from demisto_sdk.commands.content_graph.strict_objects.common import (
     DEPRECATED_DYNAMIC_MODEL,
     DESCRIPTION_DYNAMIC_MODEL,
     HIDDEN_DYNAMIC_MODEL,
+    HYBRID_DYNAMIC_MODEL,
     NAME_DYNAMIC_MODEL,
     QUICK_ACTION_DYNAMIC_MODEL,
     REQUIRED_DYNAMIC_MODEL,
@@ -133,6 +134,7 @@ class _Script(BaseStrictModel):
     is_fetch: Optional[bool] = Field(None, alias="isfetch")
     is_fetch_events: Optional[bool] = Field(None, alias="isfetchevents")
     is_fetch_assets: Optional[bool] = Field(None, alias="isfetchassets")
+    is_fetch_credentials: Optional[bool] = Field(None, alias="isfetchcredentials")
     mcp: Optional[bool] = Field(None, alias="mcp")
     long_running: Optional[bool] = Field(None, alias="longRunning")
     long_running_port: Optional[bool] = Field(None, alias="longRunningPort")
@@ -220,7 +222,6 @@ class _StrictIntegration(BaseStrictModel):
     versioned_fields: dict = Field(None, alias="versionedfields")
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")
     script_not_visible: Optional[bool] = Field(None, alias="scriptNotVisible")
-    hybrid: Optional[bool] = None
     supports_quick_actions: Optional[bool] = Field(None, alias="supportsquickactions")
     is_cloud_provider_integration: Optional[bool] = Field(
         False, alias="isCloudProviderIntegration"
@@ -274,5 +275,6 @@ StrictIntegration = create_model(
         IS_FETCH_DYNAMIC_MODEL,
         IS_FETCH_EVENTS_DYNAMIC_MODEL,
         DESCRIPTION_DYNAMIC_MODEL,
+        HYBRID_DYNAMIC_MODEL,
     ),
 )

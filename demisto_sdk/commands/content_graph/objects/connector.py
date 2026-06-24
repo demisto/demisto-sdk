@@ -13,9 +13,14 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, root_validator
 
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    Nodes,
+    Relationships,
+)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     CapabilitiesRelatedFile,
@@ -25,6 +30,8 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     SummaryRelatedFile,
     TriggersRelatedFile,
 )
+
+json = JSON_Handler()
 
 # ============================================================
 # Shared field sub-models
@@ -347,6 +354,84 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
     connector_metadata: ConnectorMetadata = Field(alias="metadata")
     settings: Optional[ConnectorSettings] = None
 
+    @root_validator(pre=True)
+    def _rebuild_nested_from_neo4j(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        """Reconstruct nested sub-models when loading a Connector from Neo4j.
+
+        ``to_dict`` flattens ``ConnectorMetadata`` and ``ConnectorSettings`` so
+        they can be stored as primitive node properties (Neo4j rejects nested
+        maps). To make the round-trip work, ``to_dict`` ALSO stores the full
+        original sub-structures as JSON strings under ``metadata_json`` /
+        ``settings_json``. This validator decodes those strings back into
+        the nested dicts (under the original aliases ``metadata`` /
+        ``settings``) before normal pydantic validation runs — so
+        ``Connector.parse_obj(node_props)`` succeeds even though the raw
+        Neo4j node has no ``metadata`` key.
+
+        If the JSON strings are absent (e.g. a freshly-parsed yaml object,
+        or an old node written before this change), the values dict is
+        returned unchanged and pydantic falls through to its normal path.
+        Pre=True root validators receive a plain dict, so this runs before
+        any per-field validation.
+        """
+        if not isinstance(values, dict):
+            return values
+
+        # metadata: prefer JSON round-trip, else fall back to flattened scalars.
+        if "metadata" not in values and values.get("connector_metadata") is None:
+            metadata_json = values.pop("metadata_json", None)
+            if isinstance(metadata_json, str):
+                try:
+                    values["metadata"] = json.loads(metadata_json)
+                except (ValueError, TypeError):
+                    # Intentionally ignore malformed/non-JSON metadata here and
+                    # fall back to reconstruction from flattened scalar fields.
+                    pass
+            if "metadata" not in values:
+                # Last-resort reconstruction from the flattened scalars that
+                # to_dict promoted. This keeps old nodes parseable too.
+                rebuilt: Dict[str, Any] = {}
+                for key in (
+                    "title",
+                    "description",
+                    "version",
+                    "category",
+                    "vendor",
+                    "publisher",
+                    "domain",
+                    "author_image",
+                    "tags",
+                ):
+                    if key in values:
+                        rebuilt[key] = values[key]
+                team = values.get("ownership_team")
+                maintainers = values.get("ownership_maintainers")
+                if team is not None or maintainers is not None:
+                    rebuilt["ownership"] = {
+                        "team": team or "",
+                        "maintainers": list(maintainers or []),
+                    }
+                # Only inject if we found *something* worth rebuilding.
+                if rebuilt:
+                    values["metadata"] = rebuilt
+
+        # settings: same pattern, but optional, so absence is fine.
+        if "settings" not in values:
+            settings_json = values.pop("settings_json", None)
+            if isinstance(settings_json, str):
+                try:
+                    values["settings"] = json.loads(settings_json)
+                except (ValueError, TypeError):
+                    # Intentionally ignore malformed/non-JSON settings and keep
+                    # the field unset so optional/fallback logic can proceed.
+                    pass
+            elif "allow_skip_verification" in values:
+                values["settings"] = {
+                    "allow_skip_verification": values["allow_skip_verification"]
+                }
+
+        return values
+
     # === Parsed sub-models (populated by parser, excluded from serialization) ===
     connection: Optional[ConnectorConnectionData] = Field(None, exclude=True)
     capabilities: List[CapabilityData] = Field(default_factory=list, exclude=True)
@@ -354,6 +439,105 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
     capability_handler_map: Dict[str, CapabilityHandlerMapping] = Field(
         default_factory=dict, exclude=True
     )
+    # Relationships collected by the parser (REFERENCES_INTEGRATION / REFERENCES_PACK).
+    # Excluded from serialization; consumed by the graph builder.
+    relationships: Relationships = Field(default_factory=Relationships, exclude=True)
+
+    def to_nodes(self) -> Nodes:
+        """Return a ``Nodes`` collection containing this connector's graph node.
+
+        Connectors are top-level content items (not contained in a Pack), so
+        unlike :py:meth:`Pack.to_nodes` we only emit a single node.
+        """
+        return Nodes(self.to_dict())
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize the connector to a Neo4j-safe property dict.
+
+        Neo4j only accepts primitive values (or arrays of primitives) as node
+        properties — it rejects nested maps. The base implementation expands
+        Pydantic sub-models (``ConnectorMetadata``, ``ConnectorSettings``)
+        into nested dicts, which causes ``Neo.ClientError.Statement.TypeError``
+        at node creation time.
+
+        We flatten the structured sub-models into Neo4j-friendly scalars:
+
+        * ``connector_metadata`` → individual top-level properties (``title``,
+          ``description``, ``version``, ``category``, ``vendor``, ``publisher``,
+          ``domain``, ``author_image``) plus ``tags`` (list of strings) and
+          ``ownership_team`` / ``ownership_maintainers`` (flattened ownership).
+        * ``settings`` → ``allow_skip_verification`` as a top-level boolean.
+
+        The original nested attributes remain available on the live Python
+        object for code that consumes them directly (e.g. CO123 reads
+        ``connector.connector_metadata.ownership.maintainers``); only the
+        graph-node representation is flattened.
+        """
+        json_dct = super().to_dict()
+
+        # Drop the nested BaseModel dumps that Neo4j cannot store.
+        metadata = json_dct.pop("metadata", None) or json_dct.pop(
+            "connector_metadata", None
+        )
+        settings = json_dct.pop("settings", None)
+
+        if isinstance(metadata, dict):
+            # Promote primitive metadata fields to top-level node properties.
+            for key in (
+                "title",
+                "description",
+                "version",
+                "category",
+                "vendor",
+                "publisher",
+                "domain",
+                "author_image",
+            ):
+                value = metadata.get(key)
+                if value is not None:
+                    json_dct.setdefault(key, value)
+            tags = metadata.get("tags")
+            if isinstance(tags, list):
+                # Neo4j accepts arrays of primitives — keep only strings.
+                json_dct["tags"] = [t for t in tags if isinstance(t, str)]
+            ownership = metadata.get("ownership")
+            if isinstance(ownership, dict):
+                team = ownership.get("team")
+                if isinstance(team, str):
+                    json_dct["ownership_team"] = team
+                maintainers = ownership.get("maintainers")
+                if isinstance(maintainers, list):
+                    json_dct["ownership_maintainers"] = [
+                        m for m in maintainers if isinstance(m, str)
+                    ]
+
+        if isinstance(settings, dict):
+            allow_skip = settings.get("allow_skip_verification")
+            if isinstance(allow_skip, bool):
+                json_dct["allow_skip_verification"] = allow_skip
+
+        # Store the original nested structures as JSON strings so the
+        # round-trip in _rebuild_nested_from_neo4j can reconstruct them
+        # exactly when this node is later read back via Connector.parse_obj
+        # (used by the graph search path in neo4j_graph.py). Neo4j accepts
+        # strings as property values, so this is safe to store.
+        if isinstance(metadata, dict):
+            try:
+                json_dct["metadata_json"] = json.dumps(metadata, sort_keys=True)
+            except (TypeError, ValueError):
+                # Non-serializable metadata is unusual; skip rather than break
+                # the whole write — the flattened scalars still provide enough
+                # for the reconstruction fallback in _rebuild_nested_from_neo4j.
+                pass
+        if isinstance(settings, dict):
+            try:
+                json_dct["settings_json"] = json.dumps(settings, sort_keys=True)
+            except (TypeError, ValueError):
+                # Non-serializable settings should not break connector writes;
+                # keep flattened scalar settings (if any) and continue.
+                pass
+
+        return json_dct
 
     # === Derived properties ===
 

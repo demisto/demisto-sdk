@@ -176,9 +176,9 @@ class InvalidSupportedModulesValidator(BaseValidator[ContentTypes]):
             # from the platform defaults.
             resolved_modules = get_content_item_supported_modules(content_item)
             if not resolved_modules:
-                # Empty only for non-platform items (no 'platform' marketplace).
-                # Platform items always resolve to their own/pack/default modules,
-                # so there is nothing to validate for non-platform items.
+                # Empty for non-platform items, or for a platform item that
+                # explicitly declares no modules ([]). Either way there are no
+                # modules to be invalid, so there is nothing to validate.
                 continue
 
             invalid_modules = resolved_modules - allowed_modules

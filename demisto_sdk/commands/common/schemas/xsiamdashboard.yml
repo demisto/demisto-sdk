@@ -29,9 +29,7 @@ schema;dashboards_data_schema:
   mapping:
     id:
       type: str
-      required: false
-      # NOTE: This field should exist in all XSIAM dashboard content items, but is currently not supported
-      # on XSIAM/Platform tenants.
+      required: true
     global_id:
       type: str
       required: false
@@ -41,9 +39,7 @@ schema;dashboards_data_schema:
       required: true
     name:
       type: str
-      required: false
-      # NOTE: This field should exist in all XSIAM dashboard content items, but is currently not supported
-      # on XSIAM/Platform tenants.
+      required: true
     description:
       type: str
     default_dashboard_id:

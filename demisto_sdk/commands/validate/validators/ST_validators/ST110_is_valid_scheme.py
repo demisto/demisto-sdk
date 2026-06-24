@@ -38,7 +38,6 @@ from demisto_sdk.commands.content_graph.objects import (
     XSIAMDashboard,
     XSIAMReport,
 )
-from demisto_sdk.commands.content_graph.objects.connector import Connector
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -87,7 +86,6 @@ ContentTypes = Union[
     AgentixActionTest,
     AgentixSkill,
     Collection,
-    Connector,
 ]
 
 

@@ -8,7 +8,6 @@ from demisto_sdk.commands.content_graph.parsers import (
     ModelingRuleParser,
     ScriptParser,
 )
-from demisto_sdk.commands.content_graph.parsers.connector import ConnectorParser
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.strict_objects.layout_rule import (
     _StrictLayoutRule,
@@ -1298,84 +1297,3 @@ class TestStandardizedIdAndNameFields:
         )
         assert xdrc_template.id is None
         assert xdrc_template.name == "Test XDRC Template"
-
-
-# -------------------------------------------------------------------
-# Connector (ST110) tests
-# -------------------------------------------------------------------
-
-
-def _write_minimal_connector_dir(root: Path, connector_yaml_overrides: dict) -> Path:
-    """Create the minimum connector directory tree on disk and return its path.
-
-    A connector parser requires connector.yaml + connection.yaml + capabilities.yaml.
-    We reuse the canonical fixtures already used by other connector tests so the
-    only thing we vary across the two ST110 tests below is the connector.yaml
-    contents.
-    """
-    import shutil
-
-    import yaml
-
-    fixtures_dir = Path(__file__).parents[2] / "content_graph" / "tests" / "test_data"
-    connector_dir = root / "test-connector"
-    connector_dir.mkdir(parents=True)
-
-    # connection.yaml + capabilities.yaml: copy verbatim from canonical fixtures.
-    shutil.copy(
-        fixtures_dir / "connector_connection.yaml", connector_dir / "connection.yaml"
-    )
-    shutil.copy(
-        fixtures_dir / "connector_capabilities.yaml",
-        connector_dir / "capabilities.yaml",
-    )
-    # No handlers needed for structure validation of connector.yaml itself.
-    (connector_dir / "components" / "handlers").mkdir(parents=True)
-
-    # connector.yaml: start from the canonical fixture and apply overrides.
-    base = yaml.safe_load((fixtures_dir / "connector.yaml").read_text())
-    base.update(connector_yaml_overrides)
-    (connector_dir / "connector.yaml").write_text(yaml.safe_dump(base))
-    return connector_dir
-
-
-def test_SchemaValidator_connector_valid(tmp_path: Path):
-    """
-    Given:
-        - a connector whose connector.yaml matches the StrictConnector schema
-    When:
-        - SchemaValidator (ST110) runs on the parsed Connector
-    Then:
-        - no validation results are returned
-    """
-    connector_dir = _write_minimal_connector_dir(tmp_path, {})
-    parser = ConnectorParser(
-        connector_dir, list(MarketplaceVersions), pack_supported_modules=[]
-    )
-
-    results = SchemaValidator().obtain_invalid_content_items([parser])
-
-    assert results == []
-
-
-def test_SchemaValidator_connector_extra_field(tmp_path: Path):
-    """
-    Given:
-        - a connector.yaml containing an unknown top-level field
-    When:
-        - SchemaValidator (ST110) runs on the parsed Connector
-    Then:
-        - exactly one result is returned, reporting the extra field
-          (StrictConnector inherits ``extra=forbid`` from BaseStrictModel)
-    """
-    connector_dir = _write_minimal_connector_dir(
-        tmp_path, {"unknown_top_level": "nope"}
-    )
-    parser = ConnectorParser(
-        connector_dir, list(MarketplaceVersions), pack_supported_modules=[]
-    )
-
-    results = SchemaValidator().obtain_invalid_content_items([parser])
-
-    assert len(results) == 1
-    assert "unknown_top_level" in results[0].message

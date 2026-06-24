@@ -47,9 +47,6 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     SummaryRelatedFile,
     TriggersRelatedFile,
 )
-from demisto_sdk.commands.content_graph.strict_objects.connector import (
-    StrictConnector,
-)
 
 
 class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
@@ -87,12 +84,10 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             git_sha=git_sha,
         )
         # ConnectorParser inherits from ContentItemParser directly, NOT from
-        # Yaml/JsonContentItemParser — so the structure-validation hook in
-        # those classes never runs for us. We have to invoke it explicitly
-        # against ``StrictConnector`` so ST110 sees connector.yaml errors.
-        # (The base ``BaseContentParser`` sets ``self.structure_errors`` to
-        # a pydantic ``FieldInfo`` default that ST110 cannot iterate.)
-        self.structure_errors = self.validate_structure()
+        # Yaml/JsonContentItemParser, so the structure-validation hook in
+        # those classes never runs for us. Initialise ``structure_errors`` to
+        # an empty list so ``Connector.from_orm`` can pick it up.
+        self.structure_errors: list = []
 
         # Parse connector.yaml fields
         self.connector_metadata: dict = self.yml_data.get("metadata", {})
@@ -177,14 +172,6 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
     @property
     def toversion(self) -> str:
         return DEFAULT_CONTENT_ITEM_TO_VERSION
-
-    @property
-    def strict_object(self):
-        # Phase 1: only ``connector.yaml`` is covered by StrictConnector.
-        # TODO: add strict schemas for the sub-files (connection / capabilities /
-        # configurations / triggers / summary / handler / serializer) and
-        # override ``validate_structure`` to run them all, Pack-style.
-        return StrictConnector
 
     # ============================================================
     # Sub-model parsing

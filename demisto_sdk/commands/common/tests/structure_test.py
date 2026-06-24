@@ -953,12 +953,12 @@ class TestXSIAMStructureValidator(TestStructureValidator):
         When:
             Running schema validation.
         Then:
-            Make sure the schema is still valid since id is not required.
+            Make sure the schema is invalid.
         """
         xsiam_report = pack.create_xsiam_report("xsiam_report")
         xsiam_report.remove_field_by_path("templates_data.[0].id")
         validator = StructureValidator(xsiam_report.path)
-        assert validator.is_valid_scheme()
+        assert not validator.is_valid_scheme()
 
     DEPRECATED_WITH_COMMENT = {
         "comment": "Deprecated. No available replacement.",

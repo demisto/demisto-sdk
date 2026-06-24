@@ -44,8 +44,11 @@ class RepositoryParser:
         progress_bar: Optional[tqdm] = None,
         connectors_to_parse: Optional[Tuple[Path, ...]] = None,
     ):
-        if not packs_to_parse:
-            # if no packs to parse were provided, parse all packs
+        if packs_to_parse is None:
+            # No caller intent provided -> default to parsing every pack.
+            # Mirror the ``connectors_to_parse is None`` check below so an
+            # explicit empty tuple (caller-says-"none") is honored instead
+            # of being silently re-expanded to a full scan.
             packs_to_parse = tuple(self.iter_packs())
         try:
             logger.debug("Parsing packs...")

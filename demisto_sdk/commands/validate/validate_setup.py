@@ -303,10 +303,11 @@ def warn_on_ignored_flags(run_new_validate, run_old_validate, params):
     if not run_old_validate:
         # NOTE: 'graph' is intentionally NOT in this list. It used to be
         # warned-and-ignored when the old validation flow was skipped, but the
-        # new flow now honours it too — see attach_graph_interface_if_requested
+        # new flow now honours it too - see attach_graph_interface_if_requested
         # in run_new_validation(), which wires a live ContentGraphInterface
-        # into BaseValidator.graph_interface so validators like CO100/CO101
-        # can perform graph lookups against an externally-populated Neo4j.
+        # into BaseValidator.graph_interface so validators like CO100 (and
+        # other graph-dependent validators) can perform graph lookups against
+        # an externally-populated Neo4j.
         for flag in [
             "no_backward_comp",
             "no_conf_json",
@@ -368,13 +369,13 @@ def run_old_validation(file_path, is_external_repo, run_with_mp, **kwargs):
 def attach_graph_interface_if_requested(use_graph: bool) -> None:
     """Wire a live ``ContentGraphInterface`` onto ``BaseValidator`` when -gr/--graph is set.
 
-    The new validation flow's validators (e.g. CO100, CO101, GR*) read
+    The new validation flow's validators (e.g. CO100, GR*) read
     ``BaseValidator.graph_interface`` directly. Historically the ``--graph``
     flag was only consumed by the old validation flow and was warned-and-
     ignored in the new flow, leaving ``graph_interface`` as ``None`` and
     causing graph-dependent validators to fall back to "Graph interface not
     available" no-graph behaviour (which produces false-positive failures
-    like CO101 "pack not found" against packs that *are* in the graph).
+    against packs that *are* in the graph).
 
     When ``--graph`` is set we attach a ``ContentGraphInterface()`` — which
     is the concrete ``Neo4jContentGraphInterface`` — so validators see the

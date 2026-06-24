@@ -322,8 +322,8 @@ class CapabilityHandlerMapping(BaseModel):
     ``"identity-posture"`` is served by handlers ``["xsoar", "cwp"]``, this
     mapping records that relationship along with auth and config metadata.
 
-    Used by validators (e.g. CO112) to look up which handlers back a
-    capability and whether the capability has XSOAR involvement.
+    Used by validators to look up which handlers back a capability and
+    whether the capability has XSOAR involvement.
     """
 
     capability_id: str  # matches CapabilityData.id
@@ -469,7 +469,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         * ``settings`` → ``allow_skip_verification`` as a top-level boolean.
 
         The original nested attributes remain available on the live Python
-        object for code that consumes them directly (e.g. CO123 reads
+        object for code that consumes them directly (e.g. reading
         ``connector.connector_metadata.ownership.maintainers``); only the
         graph-node representation is flattened.
         """

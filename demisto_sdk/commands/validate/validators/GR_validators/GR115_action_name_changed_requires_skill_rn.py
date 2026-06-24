@@ -20,14 +20,15 @@ ContentTypes = AgentixAction
 class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR115"
     description = (
-        "Validates that when an Agentix Action's name (id) is changed, every "
-        "Agentix Skill that depends on that action bumps its version by adding a "
-        "Release Note."
+        "Validates that when an Agentix Action's 'name' field is changed, every "
+        "Agentix Skill that depends on that action (by the action's id) bumps its "
+        "version by adding a Release Note."
     )
     rationale = (
-        "Skills reference actions by id (via `<action=action-id>` tokens). Renaming "
-        "an action breaks the reference unless the dependent skill is updated and "
-        "released, so the skill's pack must add a Release Note."
+        "Skills reference actions by id (via `<action=action-id>` tokens), but the "
+        "action's display 'name' is what gets surfaced to users at prepare-upload "
+        "time. Changing the action's name therefore changes the behavior of every "
+        "dependent skill, so each dependent skill's pack must add a Release Note."
     )
     error_message = (
         "The Agentix Action name was changed from '{old}' to '{new}', but the "
@@ -57,15 +58,21 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
 
     @staticmethod
     def get_old_name_if_changed(content_item: ContentTypes) -> str | None:
-        """Return the previous action name if it was changed, otherwise None."""
+        """Return the previous action 'name' if it was changed, otherwise None.
+
+        The change is detected on the action's ``name`` field (the user-facing
+        display name), not on its ``object_id`` (``commonfields.id``). Skills
+        depend on actions by id, so the id is intentionally left untouched while
+        the name change is what requires dependent skills to be re-released.
+        """
         if content_item.git_status == GitStatuses.ADDED:
             return None
         old_item = cast(ContentTypes, content_item.old_base_content_object)
         if not old_item:
             return None
-        if old_item.object_id == content_item.object_id:
+        if old_item.name == content_item.name:
             return None
-        return old_item.object_id
+        return old_item.name
 
     def get_results_for_renamed_action(
         self, content_item: ContentTypes, old_name: str

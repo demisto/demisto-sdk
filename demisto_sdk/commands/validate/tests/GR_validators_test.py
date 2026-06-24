@@ -2830,7 +2830,8 @@ def _build_repo_with_skill_using_action(graph_repo: Repo):
 
     Returns the (graph_interface, action_object, action_id) tuple, where
     ``action_object`` is the graph-resolved AgentixAction whose ``used_by``
-    relationship points to the skill.
+    relationship points to the skill. The skill references the action by its id
+    (``commonfields.id``), which is what GR115 uses to resolve dependents.
     """
     pack = graph_repo.create_pack("SkillPack")
     action = pack.create_agentix_action("MyAction")
@@ -2857,7 +2858,8 @@ def _build_repo_with_skill_using_action(graph_repo: Repo):
 def test_GR115_action_renamed_skill_missing_rn(mocker, graph_repo: Repo):
     """
     Given:
-        - A renamed AgentixAction whose dependent skill's pack has NO Release Note.
+        - An AgentixAction whose 'name' field changed and whose dependent skill's
+          pack has NO Release Note.
     When:
         - Running the GR115 validator on the renamed action.
     Then:
@@ -2866,7 +2868,8 @@ def test_GR115_action_renamed_skill_missing_rn(mocker, graph_repo: Repo):
     _, action, _ = _build_repo_with_skill_using_action(graph_repo)
 
     old_action = mocker.Mock()
-    old_action.object_id = "old-action-id"
+    # The action's 'name' changed (its id is intentionally left unchanged).
+    old_action.name = "Old Action Name"
     action.git_status = GitStatuses.MODIFIED
     action.old_base_content_object = old_action
 
@@ -2881,14 +2884,15 @@ def test_GR115_action_renamed_skill_missing_rn(mocker, graph_repo: Repo):
     )
 
     assert len(results) == 1
-    assert "old-action-id" in results[0].message
+    assert "Old Action Name" in results[0].message
     assert "My Skill" in results[0].message or "my-skill-id" in results[0].message
 
 
 def test_GR115_action_renamed_skill_has_rn(mocker, graph_repo: Repo):
     """
     Given:
-        - A renamed AgentixAction whose dependent skill's pack HAS a Release Note.
+        - An AgentixAction whose 'name' field changed and whose dependent skill's
+          pack HAS a Release Note.
     When:
         - Running the GR115 validator on the renamed action.
     Then:
@@ -2897,7 +2901,8 @@ def test_GR115_action_renamed_skill_has_rn(mocker, graph_repo: Repo):
     _, action, _ = _build_repo_with_skill_using_action(graph_repo)
 
     old_action = mocker.Mock()
-    old_action.object_id = "old-action-id"
+    # The action's 'name' changed (its id is intentionally left unchanged).
+    old_action.name = "Old Action Name"
     action.git_status = GitStatuses.MODIFIED
     action.old_base_content_object = old_action
 
@@ -2917,16 +2922,17 @@ def test_GR115_action_renamed_skill_has_rn(mocker, graph_repo: Repo):
 def test_GR115_action_not_renamed(mocker, graph_repo: Repo):
     """
     Given:
-        - A modified AgentixAction whose name (object_id) did NOT change.
+        - A modified AgentixAction whose 'name' field did NOT change (only its id
+          would be irrelevant here).
     When:
         - Running the GR115 validator on the action.
     Then:
-        - No validation error is returned (no rename means nothing to validate).
+        - No validation error is returned (no name change means nothing to validate).
     """
-    _, action, action_id = _build_repo_with_skill_using_action(graph_repo)
+    _, action, _ = _build_repo_with_skill_using_action(graph_repo)
 
     old_action = mocker.Mock()
-    old_action.object_id = action_id  # same id => no rename
+    old_action.name = action.name  # same name => no rename
     action.git_status = GitStatuses.MODIFIED
     action.old_base_content_object = old_action
 
@@ -2988,7 +2994,7 @@ def test_GR115_action_renamed_no_dependent_skills(mocker, graph_repo: Repo):
     action = action_objects[0]
 
     old_action = mocker.Mock()
-    old_action.object_id = "old-action-id"
+    old_action.name = "Old Action Name"  # name changed, but no skills depend on it
     action.git_status = GitStatuses.MODIFIED
     action.old_base_content_object = old_action
 

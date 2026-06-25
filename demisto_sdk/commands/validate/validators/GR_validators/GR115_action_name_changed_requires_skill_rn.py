@@ -5,7 +5,6 @@ from typing import Iterable, List, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.validate.tools import was_rn_added
@@ -41,8 +40,8 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
     ) -> List[ValidationResult]:
-        # A name change can only be detected against the previous (git) version of
-        # the action, so this validation is a no-op when running on all files.
+        # A name change can only be detected against the previous (git) version
+        # of the action, so this validation is a no-op when running on all files.
         if validate_all_files:
             return []
 
@@ -87,7 +86,7 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
                     validator=self,
                     message=self.error_message.format(
                         old=old_name,
-                        new=content_item.object_id,
+                        new=content_item.name,
                         skill=skill.object_id,
                         pack=skill.pack_id,
                     ),
@@ -100,17 +99,16 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
         self, content_item: ContentTypes
     ) -> List[AgentixSkill]:
         """Return the Agentix Skills that depend on the given action via the graph."""
-        action_nodes = self.graph.search(
-            content_type=ContentType.AGENTIX_ACTION,
-            object_id=content_item.object_id,
-        )
         skills: dict[str, AgentixSkill] = {}
-        for action_node in action_nodes:
-            for relationship in action_node.used_by:  # type: ignore[attr-defined]
+        # Graph placeholders (e.g. ``UnknownContent``) lack relationship
+        # attributes, so skip any node that does not expose ``used_by``.
+        used_by = getattr(content_item, "used_by", None)
+        if used_by:
+            for relationship in used_by:
                 skill = relationship.content_item_to
                 if isinstance(skill, AgentixSkill):
                     skills[skill.object_id] = skill
-        logger.debug(
+        logger.info(
             f"GR115: found {len(skills)} dependent skills for action "
             f"'{content_item.object_id}'."
         )

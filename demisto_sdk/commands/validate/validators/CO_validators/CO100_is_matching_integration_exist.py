@@ -40,8 +40,8 @@ class IsMatchingIntegrationExistValidator(BaseValidator[ContentTypes]):
 
         Two failure cases:
         1. Handler has ``xsoar_integration_id`` but ``related_integration`` is
-           None — the referenced integration was not found in the content repo.
-        2. Handler has no ``xsoar_integration_id`` at all — the handler YAML is
+           None - the referenced integration was not found in the content repo.
+        2. Handler has no ``xsoar_integration_id`` at all - the handler YAML is
            missing the ``xsoar-integration-id`` triggering label.
         """
         results: List[ValidationResult] = []

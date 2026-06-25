@@ -377,8 +377,8 @@ def attach_graph_interface_if_requested(use_graph: bool) -> None:
     available" no-graph behaviour (which produces false-positive failures
     against packs that *are* in the graph).
 
-    When ``--graph`` is set we attach a ``ContentGraphInterface()`` — which
-    is the concrete ``Neo4jContentGraphInterface`` — so validators see the
+    When ``--graph`` is set we attach a ``ContentGraphInterface()`` - which
+    is the concrete ``Neo4jContentGraphInterface`` - so validators see the
     already-populated Neo4j instance (e.g. one populated by a preceding
     ``demisto-sdk graph update`` invocation in CI). The graph is *not*
     rebuilt here; we only connect to the running database. If the connection
@@ -441,7 +441,7 @@ def run_new_validation(file_path, execution_mode, **kwargs):
                 "handling_private_repositories", False
             ),
             private_content_path=kwargs.get("private_content_path"),
-        )  # type: ignore[assignment]
+        )
     validator_v2 = ValidateManager(
         file_path=file_path,
         initializer=initializer,

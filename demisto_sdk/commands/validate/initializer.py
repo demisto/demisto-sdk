@@ -1204,13 +1204,13 @@ class ConnectorAwareInitializer(Initializer):
 
         Overrides the parent ``Initializer.gather_objects_to_run_on`` to:
 
-        1. **Collect** — Use the standard file-collection flow (``-g``, ``-i``,
+        1. **Collect** - Use the standard file-collection flow (``-g``, ``-i``,
            or ``-a``) but pre-filter to only Integration and Connector paths
            via ``_is_relevant_path``.
-        2. **Post-filter** — Keep only ``Integration`` objects that are in the
+        2. **Post-filter** - Keep only ``Integration`` objects that are in the
            PLATFORM marketplace and not deprecated, and ``Connector`` objects
            that have at least one XSOAR handler.
-        3. **Cross-match** — Call ``_cross_match_and_expand`` to link each
+        3. **Cross-match** - Call ``_cross_match_and_expand`` to link each
            XSOAR handler to its referenced integration (and vice versa),
            expanding with graph-discovered counterparts when needed.
 
@@ -1278,20 +1278,20 @@ class ConnectorAwareInitializer(Initializer):
         its ``xsoar_integration_id`` field.  This method resolves those references
         and sets bidirectional cross-links:
 
-        * ``handler.related_integration`` — the ``Integration`` object (1:1).
-        * ``integration.related_content`` — the handler back-reference (1:1).
+        * ``handler.related_integration`` - the ``Integration`` object (1:1).
+        * ``integration.related_content`` - the handler back-reference (1:1).
 
         **Phases**:
 
-        1. *Direct match* — pair handlers with integrations already in the
+        1. *Direct match* - pair handlers with integrations already in the
            working set (no graph access needed).
-        2. *Graph-expand connectors* — for integrations that had no handler in
+        2. *Graph-expand connectors* - for integrations that had no handler in
            the working set, search the content graph for connectors that
            reference them and add those connectors.
-        3. *Graph-expand integrations* — for handlers that still have no
+        3. *Graph-expand integrations* - for handlers that still have no
            integration after phase 2a, search the graph for the referenced
            integration and add it.
-        4. *Cleanup* — remove integrations that remain unmatched after all
+        4. *Cleanup* - remove integrations that remain unmatched after all
            expansion phases.
 
         Example flow::
@@ -1409,9 +1409,9 @@ class ConnectorAwareInitializer(Initializer):
         Args:
             unmatched_integrations: Integrations from the working set that were
                 not paired during Phase 1.
-            connectors: Mutable set of connectors — new graph-discovered
+            connectors: Mutable set of connectors - new graph-discovered
                 connectors are added here.
-            matched_ids: Mutable set of matched integration IDs — updated when
+            matched_ids: Mutable set of matched integration IDs - updated when
                 a graph-discovered connector matches an integration.
         """
         if not unmatched_integrations:
@@ -1459,7 +1459,7 @@ class ConnectorAwareInitializer(Initializer):
         Args:
             connectors: The (possibly expanded) set of connectors whose
                 unmatched handlers will be inspected.
-            integrations: Mutable set of integrations — new graph-discovered
+            integrations: Mutable set of integrations - new graph-discovered
                 integrations are added here.
         """
         unmatched_handlers = [
@@ -1515,7 +1515,7 @@ class ConnectorAwareInitializer(Initializer):
         from the validation set.
 
         Args:
-            integrations: Mutable set of integrations — unmatched entries are
+            integrations: Mutable set of integrations - unmatched entries are
                 removed in-place.
         """
         unmatched_final = {i for i in integrations if i.related_content is None}

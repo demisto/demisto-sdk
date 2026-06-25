@@ -1,4 +1,4 @@
-"""Connector content item — models a unified-connectors-content connector.
+"""Connector content item - models a unified-connectors-content connector.
 
 A Connector is a single content item whose main file is ``connector.yaml``.
 Sub-files (connection.yaml, capabilities.yaml, configurations.yaml, triggers.yaml,
@@ -78,7 +78,7 @@ class GeneralConfigurations(BaseModel):
 
 
 # ============================================================
-# Connector identity — from connector.yaml
+# Connector identity - from connector.yaml
 # ============================================================
 
 
@@ -105,7 +105,7 @@ class ConnectorSettings(BaseModel):
 
 
 # ============================================================
-# Connection data — parsed from connection.yaml
+# Connection data - parsed from connection.yaml
 # ============================================================
 
 
@@ -137,7 +137,7 @@ class ConnectorConnectionData(BaseModel):
 
 
 # ============================================================
-# Capability data — parsed from capabilities.yaml
+# Capability data - parsed from capabilities.yaml
 # ============================================================
 
 
@@ -173,7 +173,7 @@ class CapabilityData(BaseModel):
 
 
 # ============================================================
-# Serializer data — parsed from serializer.yaml
+# Serializer data - parsed from serializer.yaml
 # (defined before HandlerData to avoid forward references)
 # ============================================================
 
@@ -220,7 +220,7 @@ class ResolvedParamMapping(BaseModel):
 
 
 # ============================================================
-# Handler data — parsed from components/handlers/<name>/handler.yaml
+# Handler data - parsed from components/handlers/<name>/handler.yaml
 # ============================================================
 
 
@@ -364,7 +364,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         original sub-structures as JSON strings under ``metadata_json`` /
         ``settings_json``. This validator decodes those strings back into
         the nested dicts (under the original aliases ``metadata`` /
-        ``settings``) before normal pydantic validation runs — so
+        ``settings``) before normal pydantic validation runs - so
         ``Connector.parse_obj(node_props)`` succeeds even though the raw
         Neo4j node has no ``metadata`` key.
 
@@ -455,7 +455,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         """Serialize the connector to a Neo4j-safe property dict.
 
         Neo4j only accepts primitive values (or arrays of primitives) as node
-        properties — it rejects nested maps. The base implementation expands
+        properties - it rejects nested maps. The base implementation expands
         Pydantic sub-models (``ConnectorMetadata``, ``ConnectorSettings``)
         into nested dicts, which causes ``Neo.ClientError.Statement.TypeError``
         at node creation time.
@@ -498,7 +498,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
                     json_dct.setdefault(key, value)
             tags = metadata.get("tags")
             if isinstance(tags, list):
-                # Neo4j accepts arrays of primitives — keep only strings.
+                # Neo4j accepts arrays of primitives - keep only strings.
                 json_dct["tags"] = [t for t in tags if isinstance(t, str)]
             ownership = metadata.get("ownership")
             if isinstance(ownership, dict):
@@ -526,7 +526,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
                 json_dct["metadata_json"] = json.dumps(metadata, sort_keys=True)
             except (TypeError, ValueError):
                 # Non-serializable metadata is unusual; skip rather than break
-                # the whole write — the flattened scalars still provide enough
+                # the whole write - the flattened scalars still provide enough
                 # for the reconstruction fallback in _rebuild_nested_from_neo4j.
                 pass
         if isinstance(settings, dict):

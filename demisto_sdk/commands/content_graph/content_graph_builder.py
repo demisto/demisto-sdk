@@ -69,7 +69,7 @@ class ContentGraphBuilder:
 
         Args:
             packs: A list of pack names to parse. If not provided, parses all packs
-                (unless ``connectors`` narrows the parse — see :func:`ContentDTO.from_path`).
+                (unless ``connectors`` narrows the parse - see :func:`ContentDTO.from_path`).
             connectors: Keyword-only. A list of connector directory names to
                 parse. Made keyword-only so test mocks with the original
                 single-positional signature (``mock(packs)``) stay compatible.

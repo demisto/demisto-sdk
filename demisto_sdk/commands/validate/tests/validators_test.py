@@ -1006,7 +1006,7 @@ def test_deployment_json_in_zero_depth_files():
 
 
 # ============================================================
-# ConnectorAwareInitializer — initializer function tests
+# ConnectorAwareInitializer - initializer function tests
 # ============================================================
 
 
@@ -1328,7 +1328,7 @@ class TestConnectorRelatedFileDeduplication:
 
 
 # ============================================================
-# ConnectorAwareInitializer — filter / gather behavior
+# ConnectorAwareInitializer - filter / gather behavior
 # ============================================================
 
 

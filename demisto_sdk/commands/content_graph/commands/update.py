@@ -99,7 +99,7 @@ def _changed_connectors_from_git(git_util: GitUtil, commit: str) -> Set[str]:
     Uses the same diff machinery as
     :py:meth:`GitUtil.get_all_changed_pack_ids`, but filters for the
     ``connectors/`` prefix.  Safe to call even when the repo has no
-    ``connectors/`` folder — returns an empty set in that case.
+    ``connectors/`` folder - returns an empty set in that case.
     """
     try:
         # GitUtil.get_all_changed_files returns Set[Path] of changed paths
@@ -281,7 +281,7 @@ def _update_content_graph_inner(
     # (e.g., pre_commit_command.py already extracts packs from files_to_run).
     # Track whether the changed-items list came from an explicit, trusted source
     # (caller-supplied args or DEMISTO_SDK_DIFF_FILES). When it did, we must NOT
-    # fall back to git-diff augmentation later — in CI the graph's pinned commit
+    # fall back to git-diff augmentation later - in CI the graph's pinned commit
     # is often absent from the local history (shallow clone) and `git diff`
     # fails, which currently tears down the whole import via "Creating from
     # scratch". The env-var path is the single source of truth in that case.
@@ -403,7 +403,7 @@ def _update_content_graph_inner(
         connectors_str = "\n".join([f"- {c}" for c in sorted(connectors_to_update)])
         logger.info(f"Updating the following connectors:\n{connectors_str}")
 
-    # Deduplicate before passing to the builder — git diffs may report the
+    # Deduplicate before passing to the builder - git diffs may report the
     # same pack/connector multiple times across modified/added/renamed buckets.
     packs_tuple: Optional[Tuple[str, ...]] = (
         tuple(sorted(set(packs_to_update))) if packs_to_update else None

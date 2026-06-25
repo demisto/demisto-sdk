@@ -165,7 +165,7 @@ class RepositoryParser:
         """
         connectors_folder: Path = self.path / CONNECTORS_FOLDER
         if not connectors_folder.is_dir():
-            # The connectors folder is optional — most repos won't have one.
+            # The connectors folder is optional - most repos won't have one.
             return
         if connectors_to_parse:
             for connector in connectors_to_parse:

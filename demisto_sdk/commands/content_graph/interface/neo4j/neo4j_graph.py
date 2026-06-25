@@ -311,7 +311,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             # contains items with circular relationships (e.g.
             # Connector -> Pack -> Integration -> Pack -> ...), so the repr
             # walks itself forever and crashes with RecursionError. Log only
-            # the cache size — the full dump was diagnostic, not actionable.
+            # the cache size - the full dump was diagnostic, not actionable.
             logger.debug(f"_id_to_obj cache size: {len(self._id_to_obj)}")
             return
         with Pool(processes=cpu_count()) as pool:

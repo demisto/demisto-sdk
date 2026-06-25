@@ -418,6 +418,10 @@ def run_new_validation(file_path, execution_mode, **kwargs):
         explicitly_selected=(kwargs.get("run_specific_validations") or "").split(","),
         allow_ignore_all_errors=kwargs["allow_ignore_all_errors"],
     )
+    # Explicit base-class annotation: without it mypy infers ``initializer``'s
+    # type from the first branch (the narrower ``ConnectorAwareInitializer``)
+    # and then rejects the ``Initializer`` assignment in the ``else``.
+    initializer: Initializer
     if kwargs.get("run_connectors_validation"):
         initializer = ConnectorAwareInitializer(
             staged=kwargs["staged"],

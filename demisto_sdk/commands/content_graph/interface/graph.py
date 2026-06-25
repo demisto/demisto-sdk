@@ -1,4 +1,3 @@
-import os
 import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -8,7 +7,6 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.common.string_to_bool import string_to_bool
 from demisto_sdk.commands.common.tools import (
     get_file,
     sha1_dir,
@@ -111,20 +109,6 @@ class ContentGraphInterface(ABC):
             logger.warning("The content parser hash is missing.")
         elif self.content_parser_latest_hash != self._get_latest_content_parser_hash():
             logger.warning("The content parser has been changed.")
-            # TEMP/TEST escape hatch: allow forcing reuse of the imported (bucket)
-            # graph despite a parser-hash mismatch so the incremental update path
-            # (e.g. connectors_to_update) can be exercised without rebuilding from
-            # scratch. Intended for local/CI testing only — DO NOT rely on this
-            # in production: a parser-hash mismatch means the graph schema the
-            # bucket was built with may not match the current SDK, and reusing
-            # it can produce subtly incorrect nodes/relationships.
-            if string_to_bool(os.getenv("DEMISTO_SDK_GRAPH_IGNORE_INFRA_HASH"), False):
-                logger.warning(
-                    "DEMISTO_SDK_GRAPH_IGNORE_INFRA_HASH is set — ignoring the "
-                    "content parser hash mismatch and reusing the imported graph. "
-                    "This is unsafe outside of testing."
-                )
-                return False
             return True
         return False
 

@@ -2408,6 +2408,43 @@ def test_gr110_valid_playbook_reference(repo_for_test_gr_110: Repo, mocker):
     assert len(results) == 0
 
 
+def test_gr110_script_action_is_skipped(repo_for_test_gr_110: Repo):
+    """
+    Given:
+        - A script action (AgentixAction with a .py sibling — generates its own script at prepare-content time).
+    When:
+        - Running the GR110 validator.
+    Then:
+        - No validation errors should be reported (the generated script does not exist in the graph yet).
+    """
+    from demisto_sdk.commands.content_graph.objects.agentix_action import (
+        AgentixAction,
+    )
+    from demisto_sdk.commands.content_graph.parsers.agentix_action import (
+        AgentixActionParser,
+    )
+
+    pack = repo_for_test_gr_110.create_pack("ScriptActionPack")
+    agentix_action_ts = pack.create_agentix_action("MyScriptAction")
+    agentix_action_ts.create_script_action()
+
+    parser = AgentixActionParser(
+        agentix_action_ts.path, list(MarketplaceVersions), pack_supported_modules=[]
+    )
+    action = AgentixAction.from_orm(parser)
+    assert action.is_script_action, "Expected is_script_action=True for this fixture"
+
+    graph_interface = repo_for_test_gr_110.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    validator = IsAgentixActionUsingExistingContentItemValidator()
+    results = validator.obtain_invalid_content_items_using_graph([action], False)
+
+    assert (
+        len(results) == 0
+    ), f"GR110 should skip script actions but got errors: {[r.message for r in results]}"
+
+
 def test_IsAgentixActionNameAlreadyExistsValidator_obtain_invalid_content_items_using_graph(
     mocker, graph_repo: Repo
 ):

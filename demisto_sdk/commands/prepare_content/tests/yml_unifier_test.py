@@ -992,6 +992,120 @@ class TestMergeScriptPackageToYMLIntegration:
                     marketplace == MarketplaceVersions.XSOAR
                 )
 
+    @pytest.mark.parametrize(
+        "marketplace, expected_hidden",
+        [
+            (
+                MarketplaceVersions.XSOAR,
+                {
+                    "cmd-always-visible": None,
+                    "cmd-bool-true": True,
+                    "cmd-bool-false": False,
+                    "cmd-hidden-on-xsiam": False,
+                    "cmd-hidden-on-xsoar-family": True,
+                    "cmd-hidden-on-xsoar-and-xsiam": True,
+                    "cmd-hidden-on-platform": False,
+                },
+            ),
+            (
+                MarketplaceVersions.MarketplaceV2,
+                {
+                    "cmd-always-visible": None,
+                    "cmd-bool-true": True,
+                    "cmd-bool-false": False,
+                    "cmd-hidden-on-xsiam": True,
+                    "cmd-hidden-on-xsoar-family": False,
+                    "cmd-hidden-on-xsoar-and-xsiam": True,
+                    "cmd-hidden-on-platform": False,
+                },
+            ),
+            # PLATFORM marketplace is intentionally not exercised here:
+            # `prepare_for_upload` for PLATFORM accesses self.pack.supportedModules,
+            # but the lightweight `create_test_package` fixture used by this test
+            # class does not set up a parent pack object - this is an existing
+            # limitation of the fixture, not of the per-marketplace hidden feature.
+            # The PLATFORM resolution path is covered by the direct unit tests
+            # for `update_hidden_commands_value` further down in this module.
+            (
+                MarketplaceVersions.XSOAR_SAAS,
+                {
+                    "cmd-always-visible": None,
+                    "cmd-bool-true": True,
+                    "cmd-bool-false": False,
+                    "cmd-hidden-on-xsiam": False,
+                    "cmd-hidden-on-xsoar-family": True,
+                    "cmd-hidden-on-xsoar-and-xsiam": True,
+                    "cmd-hidden-on-platform": False,
+                },
+            ),
+        ],
+    )
+    def test_unify_integration__hidden_command(
+        self,
+        marketplace: MarketplaceVersions,
+        expected_hidden: dict,
+        mocker,
+        monkeypatch,
+    ):
+        """
+        Given:
+            - An integration YAML whose `script.commands` contains a mix of:
+                * a command with no `hidden` attribute,
+                * a command with `hidden: true`,
+                * a command with `hidden: false`,
+                * commands with `hidden: [<marketplace>]` lists.
+
+        When:
+            - Running the full prepare-content (unify) pipeline for a specific
+              marketplace.
+
+        Then:
+            - The list-typed `hidden` values are resolved to a boolean reflecting
+              whether the current marketplace appears in the list.
+            - The `xsoar` alias expands to also cover `xsoar_saas` and
+              `xsoar_on_prem` (mirroring the parameter-level behavior).
+            - Pre-existing boolean values are preserved.
+            - This is the end-to-end gate proving the feature works through the
+              YAML schema validation, the strict pydantic model, the parser, and
+              the unifier - not just the unifier helper in isolation.
+        """
+        create_test_package(
+            test_dir=self.test_dir_path,
+            package_name=self.package_name,
+            base_yml=(
+                "demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/"
+                "SampleIntegPackageHiddenCommands.yml"
+            ),
+            script_code=TEST_VALID_CODE,
+            detailed_description=TEST_VALID_DETAILED_DESCRIPTION,
+            image_file=(
+                "demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/"
+                "SampleIntegPackage_image.png"
+            ),
+        )
+
+        mocker.patch.object(
+            IntegrationScript, "get_supported_native_images", return_value=[]
+        )
+        with TemporaryDirectory() as artifact_dir:
+            monkeypatch.setenv("DEMISTO_SDK_CONTENT_PATH", artifact_dir)
+            monkeypatch.setenv("ARTIFACTS_FOLDER", artifact_dir)
+            unified_yml = PrepareUploadManager.prepare_for_upload(
+                input=Path(self.export_dir_path),
+                output=Path(self.test_dir_path),
+                marketplace=marketplace,
+            )
+
+        unified_commands = {
+            cmd["name"]: cmd.get("hidden")
+            for cmd in get_yaml(unified_yml)["script"]["commands"]
+        }
+        for cmd_name, expected in expected_hidden.items():
+            assert unified_commands[cmd_name] is expected, (
+                f"command {cmd_name!r} expected hidden={expected} for "
+                f"marketplace {marketplace.value!r}, got {unified_commands[cmd_name]!r}"
+            )
+
     def test_unify_integration__detailed_description_with_special_char(
         self, mocker, monkeypatch
     ):

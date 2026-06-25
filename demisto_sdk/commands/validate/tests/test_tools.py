@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.tools import set_value
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
@@ -52,6 +53,7 @@ from demisto_sdk.commands.content_graph.parsers.agentix_action import (
     AgentixActionParser,
 )
 from demisto_sdk.commands.content_graph.parsers.agentix_agent import AgentixAgentParser
+from demisto_sdk.commands.content_graph.parsers.agentix_skill import AgentixSkillParser
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.parsers.parsing_rule import (
     ParsingRuleParser,
@@ -996,3 +998,37 @@ def create_agentix_agent_object(
         Path(agentix_agent.path), list(MarketplaceVersions), pack_supported_modules=[]
     )
     return AgentixAgent.from_orm(parser)
+
+
+def create_agentix_skill_object(
+    paths: Optional[List[str]] = None,
+    values: Optional[List[Any]] = None,
+    pack_info: Optional[Dict[str, Any]] = None,
+    skill_name: Optional[str] = None,
+    skill_content: Optional[str] = None,
+) -> AgentixSkill:
+    """Create an AgentixSkill object with altered fields from a default skill metadata
+    fixture.
+
+    Returns:
+        The AgentixSkill object.
+    """
+    metadata = load_yaml("agentix_skill.yml")
+    update_keys(metadata, paths, values)
+    pack = REPO.create_pack()
+    if pack_info:
+        pack.set_data(**pack_info)
+    additional_params = {}
+    if skill_name:
+        additional_params["name"] = skill_name
+
+    agentix_skill = pack.create_agentix_skill(**additional_params)
+    agentix_skill.create_default_agentix_skill()
+    update_obj = dict(metadata)
+    if skill_content is not None:
+        update_obj["content"] = skill_content
+    agentix_skill.update(update_obj)
+    parser = AgentixSkillParser(
+        Path(agentix_skill.path), list(MarketplaceVersions), pack_supported_modules=[]
+    )
+    return AgentixSkill.from_orm(parser)

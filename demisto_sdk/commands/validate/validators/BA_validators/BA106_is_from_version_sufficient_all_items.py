@@ -7,6 +7,7 @@ from packaging.version import Version
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
     AssetsModelingRule,
 )
@@ -14,6 +15,7 @@ from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
+from demisto_sdk.commands.content_graph.objects.collection import Collection
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -77,6 +79,8 @@ ContentTypes = Union[
     CaseLayoutRule,
     AgentixAction,
     AgentixAgent,
+    AgentixSkill,
+    Collection,
 ]
 
 FROM_VERSION_DICT: Dict[ContentType, str] = {
@@ -110,6 +114,8 @@ FROM_VERSION_DICT: Dict[ContentType, str] = {
     ContentType.CASE_LAYOUT_RULE: "8.7.0",
     ContentType.AGENTIX_ACTION: "8.12.0",
     ContentType.AGENTIX_AGENT: "8.12.0",
+    ContentType.AGENTIX_SKILL: "8.15.0",
+    ContentType.COLLECTION: "8.15.0",
 }
 
 

@@ -107,6 +107,8 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "caselayoutrule": BaseUpdateJSON,
     "agentixaction": GenericAgentixFormat,
     "agentixagent": GenericAgentixFormat,
+    "agentixskill": GenericAgentixFormat,
+    "collection": GenericAgentixFormat,
 }
 
 UNFORMATTED_FILES = [

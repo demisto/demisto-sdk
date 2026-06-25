@@ -56,10 +56,12 @@ from requests.exceptions import HTTPError
 from demisto_sdk.commands.common.constants import (
     AGENTIX_ACTIONS_DIR,
     AGENTIX_AGENTS_DIR,
+    AGENTIX_SKILLS_DIR,
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
     ASSETS_MODELING_RULES_DIR,
     CLASSIFIERS_DIR,
+    COLLECTIONS_DIR,
     CONF_JSON_FILE_NAME,
     CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
@@ -147,6 +149,9 @@ from demisto_sdk.commands.common.handlers import DEFAULT_YAML_HANDLER as yaml
 from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
+)
+from demisto_sdk.commands.common.handlers.xsoar_handler import (
+    JSONDecodeError,
 )
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.string_to_bool import (
@@ -638,7 +643,11 @@ def get_file_details(
     if not file_content:
         return {}
     if full_file_path.endswith("json"):
-        file_details = json.loads(file_content)
+        try:
+            file_details = json.loads(file_content)
+        except JSONDecodeError:
+            logger.warning(f"{full_file_path} not valid json, trying YAML file types")
+            file_details = yaml.load(file_content)
     elif full_file_path.endswith(("yml", "yaml")):
         file_details = yaml.load(file_content)
     elif full_file_path.endswith(".pack-ignore"):
@@ -1842,6 +1851,12 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
                 return None
             return FileType.AGENTIX_AGENT
 
+        elif AGENTIX_SKILLS_DIR in path.parts:
+            return FileType.AGENTIX_SKILL
+
+        elif COLLECTIONS_DIR in path.parts:
+            return FileType.COLLECTION
+
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
 
@@ -1904,10 +1919,12 @@ def find_type(
     from demisto_sdk.commands.content_graph.objects import (
         AgentixAction,
         AgentixAgent,
+        AgentixSkill,
         CaseField,
         CaseLayout,
         CaseLayoutRule,
         Classifier,
+        Collection,
         CorrelationRule,
         Dashboard,
         GenericDefinition,
@@ -2103,6 +2120,12 @@ def find_type(
 
     if AgentixAction.match(_dict, Path(path)):
         return FileType.AGENTIX_ACTION
+
+    if AgentixSkill.match(_dict, Path(path)):
+        return FileType.AGENTIX_SKILL
+
+    if Collection.match(_dict, Path(path)):
+        return FileType.COLLECTION
 
     return None
 

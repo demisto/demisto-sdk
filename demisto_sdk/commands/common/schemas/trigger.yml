@@ -4,16 +4,28 @@ mapping:
     type: str
   automation_id:
     type: str
+  id:
+    type: str
+    required: false
+    # NOTE: This field should exist in all trigger content items, but is currently not supported
+    # on XSIAM/Platform tenants.
   trigger_id:
     type: str
-    required: true
+    required: false
+    # DEPRECATED: Use 'id' field instead. This field is kept for backward compatibility with existing content items.
   fromVersion:
     type: str
   toVersion:
     type: str
+  name:
+    type: str
+    required: false
+    # NOTE: This field should exist in all trigger content items, but is currently not supported
+    # on XSIAM/Platform tenants.
   trigger_name:
     type: str
-    required: true
+    required: false
+    # DEPRECATED: Use 'name' field instead. This field is kept for backward compatibility with existing content items.
   playbook_id:
     type: str
   description:

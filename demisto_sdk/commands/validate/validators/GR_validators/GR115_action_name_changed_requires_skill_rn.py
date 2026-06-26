@@ -36,6 +36,7 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
     )
     related_field = "name"
     is_auto_fixable = False
+    expected_git_statuses = [GitStatuses.RENAMED, GitStatuses.MODIFIED]
 
     def obtain_invalid_content_items_using_graph(
         self, content_items: Iterable[ContentTypes], validate_all_files: bool
@@ -64,8 +65,6 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
         depend on actions by id, so the id is intentionally left untouched while
         the name change is what requires dependent skills to be re-released.
         """
-        if content_item.git_status == GitStatuses.ADDED:
-            return None
         old_item = cast(ContentTypes, content_item.old_base_content_object)
         if not old_item:
             return None

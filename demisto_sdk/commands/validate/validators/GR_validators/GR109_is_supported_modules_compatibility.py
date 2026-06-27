@@ -7,7 +7,6 @@ from demisto_sdk.commands.common.constants import PlatformSupportedModules
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
-from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -83,7 +82,6 @@ ContentTypes = Union[
     CaseLayoutRule,
     AgentixAction,
     AgentixAgent,
-    AgentixSkill,
     Collection,
 ]
 

@@ -5,6 +5,7 @@ from typing import Iterable, List, cast
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.validate.tools import was_rn_added
@@ -97,12 +98,25 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
     def get_dependent_skills(
         self, content_item: ContentTypes
     ) -> List[AgentixSkill]:
-        """Return the Agentix Skills that depend on the given action via the graph."""
+        """Return the Agentix Skills that depend on the given action via the graph.
+
+        ``content_item`` is parsed from disk and therefore has no relationships
+        hydrated. We must re-fetch the action node *from the graph* (by its
+        ``object_id``) so its incoming ``USES`` relationships (``used_by``) are
+        populated before we inspect them.
+        """
         skills: dict[str, AgentixSkill] = {}
-        # Graph placeholders (e.g. ``UnknownContent``) lack relationship
-        # attributes, so skip any node that does not expose ``used_by``.
-        used_by = getattr(content_item, "used_by", None)
-        if used_by:
+        # Fetch the action node from the graph so its relationships are loaded.
+        graph_actions = self.graph.search(
+            content_type=ContentType.AGENTIX_ACTION,
+            object_id=content_item.object_id,
+        )
+        for graph_action in graph_actions:
+            # Graph placeholders (e.g. ``UnknownContent``) lack relationship
+            # attributes, so skip any node that does not expose ``used_by``.
+            used_by = getattr(graph_action, "used_by", None)
+            if not used_by:
+                continue
             for relationship in used_by:
                 skill = relationship.content_item_to
                 if isinstance(skill, AgentixSkill):

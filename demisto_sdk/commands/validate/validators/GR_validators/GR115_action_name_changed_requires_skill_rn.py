@@ -90,7 +90,7 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
                 )
                 continue
             if was_rn_added(skill.pack):
-                logger.debug(
+                logger.info(
                     f"GR115: dependent skill '{skill.object_id}' "
                     f"(pack '{skill.pack_id}') already has a Release Note - "
                     f"validation passes for it."

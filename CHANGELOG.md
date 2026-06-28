@@ -1,4 +1,28 @@
 # Changelog
+## 1.39.2 (2026-06-18)
+### Feature
+* Added SC110 validator: Validates that wrapper scripts declare all commands/scripts they call via executeCommand in the "dependson" field. [#5342](https://github.com/demisto/demisto-sdk/pull/5342)
+* Added support for "xti" license. [#5397](https://github.com/demisto/demisto-sdk/pull/5397)
+* Added PA134 validation to detect packs whose declared supportedModules are not covered by any uploadable content item, which would result in an empty pack for tenants licensed only for those modules. The validation is auto-fixable and removes the uncovered modules from the pack's supportedModules. [#5398](https://github.com/demisto/demisto-sdk/pull/5398)
+* Added Skill content item type. [#5394](https://github.com/demisto/demisto-sdk/pull/5394)
+* Extended `AgentixAgent` with a new `skillids` field — a list of registered `AgentixSkill` IDs attached to the agent. [#5394](https://github.com/demisto/demisto-sdk/pull/5394)
+
+### Fix
+* Fixed docker-image validations (DO103, DO104, DO106) failing for users with a custom container registry. [#5408](https://github.com/demisto/demisto-sdk/pull/5408)
+* Fixed all graph-based validators (GR100–GR113, PA124, PA133, PB133, SC109, etc.) not running correctly in nightly (`-a` / ALL_FILES) mode. [#5351](https://github.com/demisto/demisto-sdk/pull/5351)
+* Fixed RM109 validation to point to the expected README file path instead of the content item's YML file when the README is missing. [#5396](https://github.com/demisto/demisto-sdk/pull/5396)
+* Excluded autonomous playbooks from RM109 README existence validation. [#5396](https://github.com/demisto/demisto-sdk/pull/5396)
+* Fixed Pack.save() to not inject the `firstCreated` field into pack_metadata.json when it was not originally present. Previously, any auto-fix (PA134, PA120, PA104, etc.) would silently add `firstCreated` as a side-effect. [#5398](https://github.com/demisto/demisto-sdk/pull/5398)
+* Fixed an issue where `pre-commit` silently skipped hooks targeting non-code files (e.g. `markdownlint-cli2` on `README.md`). [#5405](https://github.com/demisto/demisto-sdk/pull/5405)
+* Fixed PA134 auto-fix to correctly generate and populate the `supportedModules` field from platform defaults if it is missing from `pack_metadata.json` when removing uncovered modules. [#5413](https://github.com/demisto/demisto-sdk/pull/5413)
+* Fixed ST110 schema validation error for `isArray:<marketplace>` in integration command arguments. [#5395](https://github.com/demisto/demisto-sdk/pull/5395)
+* Fixed the download command to fall back to YAML parsing when a JSON-suffixed file fails to parse as JSON. [#5409](https://github.com/demisto/demisto-sdk/pull/5409)
+
+### Internal
+* Updated the content item structure to adopt standardized id and name fields. [#5403](https://github.com/demisto/demisto-sdk/pull/5403)
+* Added Collection content item type. [#5393](https://github.com/demisto/demisto-sdk/pull/5393)
+
+
 ## 1.39.1 (2026-05-31)
 ### Feature
 * Enriched the pack marketplace metadata for classifiers and mappers by adding a `tags` field (set to `["feed"]` when the item is a feed) and exposing the `type` field. [#5367](https://github.com/demisto/demisto-sdk/pull/5367)

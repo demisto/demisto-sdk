@@ -247,18 +247,18 @@ class TestGetImageRegistryDemistoextended:
             )
             assert result == "demistoextended/accessdata:1.1.0.10177564"
 
-    def test_demistoextended_already_prefixed_skips_extended_branch(self):
+    def test_demistoextended_already_prefixed_returns_unchanged(self):
         """
         Given:
-         - a demistoextended/ image that already contains the registry URL prefix
+         - a demistoextended/ image that already contains the extended registry prefix
          - DEMISTO_SDK_EXTENDED_REGISTRY is set
 
         When:
          - calling DockerBase.get_image_registry()
 
         Then:
-         - the image does NOT enter the demistoextended branch (startswith guard)
-         - falls through to the default DOCKER_REGISTRY_URL branch
+         - the image is returned unchanged, avoiding double-prefixing with the
+           extended registry
         """
         with mock.patch.dict(
             os.environ,
@@ -266,9 +266,9 @@ class TestGetImageRegistryDemistoextended:
         ):
             already_prefixed = "example-registry.io/test-project/demistoextended/accessdata:1.1.0.10177564"
             result = dhelper.DockerBase.get_image_registry(already_prefixed)
-            # Since the image doesn't start with "demistoextended/", it goes
-            # through the default branch which prepends DOCKER_REGISTRY_URL
-            assert result == f"{dhelper.DOCKER_REGISTRY_URL}/{already_prefixed}"
+            # The image already carries the extended registry prefix, so it is
+            # returned as-is to avoid double-prefixing.
+            assert result == already_prefixed
 
     def test_demisto_image_still_gets_docker_registry_prefix(self):
         """

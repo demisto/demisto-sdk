@@ -4,10 +4,11 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects import Job
-from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
+from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -84,7 +85,7 @@ ContentTypes = Union[
     AgentixAction,
     AgentixAgent,
     Collection,
-    AgentixSkill
+    AgentixSkill,
 ]
 
 
@@ -115,11 +116,18 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             if dependency.mandatorily != self.mandatory_dependency:
                 continue
             # Get modules supported by the content item but not by its dependency
+            dep_supported_modules = dependency.content_item_to.supportedModules
+            if dep_supported_modules is None:
+                logger.warning(
+                    f"Dependency '{dependency.content_item_to.object_id}' of "
+                    f"'{content_item.object_id}' has supportedModules=None, skipping."
+                )
+                continue
             missing_modules = [
                 module
                 for module in content_item.supportedModules
                 or [sm.value for sm in PlatformSupportedModules]
-                if module not in dependency.content_item_to.supportedModules
+                if module not in dep_supported_modules
             ]
             if missing_modules:
                 missing_modules_by_dependency[dependency.content_item_to.object_id] = (

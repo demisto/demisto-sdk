@@ -809,7 +809,7 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
     logger.debug(
         f"Getting python version from {image=} by pulling its image and query its env"
     )
-        return _get_python_version_from_image_client(image)
+    return _get_python_version_from_image_client(image)
 
 
 def _get_python_version_from_image_client(image: str) -> Version:

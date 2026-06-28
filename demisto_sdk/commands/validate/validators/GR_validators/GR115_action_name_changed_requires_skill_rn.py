@@ -143,20 +143,45 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
         """
         if pack is None:
             # Can't resolve the pack - don't block on missing data.
+            logger.info(
+                "GR115.was_pack_version_bumped: pack is None (could not resolve "
+                "the dependent skill's pack) - treating as satisfied (returning True)."
+            )
             return True
 
+        pack_id = getattr(pack, "pack_id", None) or getattr(pack, "object_id", None)
         old_obj = pack.old_base_content_object
         if old_obj is None:
             # No master baseline => brand-new pack/skill => no bump required.
+            logger.info(
+                f"GR115.was_pack_version_bumped: pack '{pack_id}' has no master "
+                f"baseline (old_base_content_object is None) - treating as a "
+                f"brand-new pack, no bump required (returning True)."
+            )
             return True
 
         current_version = pack.current_version
         old_version = old_obj.current_version  # type: ignore[attr-defined]
+        logger.info(
+            f"GR115.was_pack_version_bumped: pack '{pack_id}' - "
+            f"master currentVersion='{old_version}', "
+            f"branch currentVersion='{current_version}'."
+        )
         if not current_version or not old_version:
             # Missing version data - don't block.
+            logger.info(
+                f"GR115.was_pack_version_bumped: pack '{pack_id}' is missing "
+                f"version data (master='{old_version}', branch='{current_version}') "
+                f"- treating as satisfied (returning True)."
+            )
             return True
 
-        return Version(old_version) < Version(current_version)
+        bumped = Version(old_version) < Version(current_version)
+        logger.info(
+            f"GR115.was_pack_version_bumped: pack '{pack_id}' version comparison "
+            f"{old_version} < {current_version} => bumped={bumped}."
+        )
+        return bumped
 
     def get_dependent_skills(
         self, content_item: ContentTypes

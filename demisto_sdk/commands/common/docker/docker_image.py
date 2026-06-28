@@ -176,9 +176,7 @@ class DockerImage(str):
                 return Version(match.group("python_version"))
 
             logger.debug(f"Could not get python version for image {self} from regex")
-            image_env = self._get_client().get_image_env(
-                self.name, tag=self.tag
-            )
+            image_env = self._get_client().get_image_env(self.name, tag=self.tag)
 
             if python_version := next(
                 (
@@ -203,9 +201,7 @@ class DockerImage(str):
         """
         Returns True if the docker-image exist in the configured registry
         """
-        return self._get_client().is_docker_image_exist(
-            self.name, tag=self.tag
-        )
+        return self._get_client().is_docker_image_exist(self.name, tag=self.tag)
 
     @property
     def latest_tag(self) -> Version:

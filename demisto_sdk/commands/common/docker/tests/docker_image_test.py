@@ -217,10 +217,13 @@ class TestGetClient:
         mock_extended = MagicMock(name="extended_client")
         mock_dockerhub = MagicMock(name="dockerhub_client")
 
-        with patch.object(
-            DockerImage, "_get_extended_client", return_value=mock_extended
-        ), patch.object(
-            DockerImage, "_get_dockerhub_client", return_value=mock_dockerhub
+        with (
+            patch.object(
+                DockerImage, "_get_extended_client", return_value=mock_extended
+            ),
+            patch.object(
+                DockerImage, "_get_dockerhub_client", return_value=mock_dockerhub
+            ),
         ):
             image = DockerImage("demistoextended/accessdata:1.1.0.10177564")
             client = image._get_client()
@@ -241,10 +244,13 @@ class TestGetClient:
         mock_extended = MagicMock(name="extended_client")
         mock_dockerhub = MagicMock(name="dockerhub_client")
 
-        with patch.object(
-            DockerImage, "_get_extended_client", return_value=mock_extended
-        ), patch.object(
-            DockerImage, "_get_dockerhub_client", return_value=mock_dockerhub
+        with (
+            patch.object(
+                DockerImage, "_get_extended_client", return_value=mock_extended
+            ),
+            patch.object(
+                DockerImage, "_get_dockerhub_client", return_value=mock_dockerhub
+            ),
         ):
             image = DockerImage("demisto/python3:3.10.11.54799")
             client = image._get_client()
@@ -266,5 +272,3 @@ class TestGetClient:
             # Should fall back to the default dockerhub client
             dockerhub_client = DockerImage._get_dockerhub_client()
             assert client is dockerhub_client
-
-

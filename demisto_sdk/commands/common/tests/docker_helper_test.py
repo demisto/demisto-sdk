@@ -433,9 +433,7 @@ class TestGetPythonVersionDemistoextendedFallback:
             docker_helper,
             "DockerImagesMetadata",
         )
-        docker_helper.DockerImagesMetadata.get_instance.return_value.python_version.return_value = (
-            None
-        )
+        docker_helper.DockerImagesMetadata.get_instance.return_value.python_version.return_value = None
         mocker.patch.object(
             docker_helper,
             "_get_python_version_from_tag_by_regex",
@@ -456,9 +454,7 @@ class TestGetPythonVersionDemistoextendedFallback:
         env = {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"}
         with mock.patch.dict(os.environ, env):
             with pytest.raises(Exception, match="docker pull failed"):
-                get_python_version(
-                    "demistoextended/accessdata:1.1.0.10293277"
-                )
+                get_python_version("demistoextended/accessdata:1.1.0.10293277")
 
     def test_demisto_image_still_raises_when_all_methods_fail(self, mocker):
         """
@@ -479,9 +475,7 @@ class TestGetPythonVersionDemistoextendedFallback:
             docker_helper,
             "DockerImagesMetadata",
         )
-        docker_helper.DockerImagesMetadata.get_instance.return_value.python_version.return_value = (
-            None
-        )
+        docker_helper.DockerImagesMetadata.get_instance.return_value.python_version.return_value = None
         mocker.patch.object(
             docker_helper,
             "_get_python_version_from_tag_by_regex",

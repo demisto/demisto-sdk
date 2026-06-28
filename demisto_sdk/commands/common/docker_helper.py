@@ -796,9 +796,7 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
         logger.debug(f"get python version for {image=} from dockerhub api")
         return _get_python_version_from_dockerhub_api(image)
     except Exception:
-        logger.debug(
-            f"Could not get python version for {image=} from dockerhub api"
-        )
+        logger.debug(f"Could not get python version for {image=} from dockerhub api")
 
     logger.debug(
         f"Getting python version from {image=} by pulling its image and query its env"

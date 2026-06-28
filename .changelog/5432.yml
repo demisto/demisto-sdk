@@ -1,4 +1,4 @@
 changes:
 - description: Removed the `supportedModules` field from content metadata (pack-level metadata, content item summaries, and integration command entries) in all non-platform marketplace buckets, including the partner marketplace. The field is preserved for the platform marketplace.
   type: fix
-pr_number: 5427
+pr_number: 5432

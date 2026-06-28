@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Iterable, List, cast
+from typing import Iterable, List, Optional, cast
+
+from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import GitStatuses
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
-from demisto_sdk.commands.validate.tools import is_new_pack, was_rn_added
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -76,23 +78,25 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
     def get_results_for_renamed_action(
         self, content_item: ContentTypes, old_name: str
     ) -> List[ValidationResult]:
-        """Find dependent skills missing a Release Note for the renamed action."""
+        """Find dependent skills missing a version bump for the renamed action.
+
+        The dependent skill is resolved from the graph (via the action's
+        ``used_by`` relationship), so it does NOT carry git-status flags - those
+        are only populated by the validate initializer on the disk-parsed items
+        of the local diff, not on graph nodes. We therefore rely on a pack
+        *version comparison* (branch ``currentVersion`` vs. the master baseline)
+        as the canonical, repo-agnostic signal that a Release Note was added.
+        This single check subsumes both the previous "new skill / new pack" skip
+        and the "RN added" check, and works across repositories (e.g. an action
+        in ``content`` whose dependent skill lives in ``content-private``).
+        """
         results: List[ValidationResult] = []
         for skill in self.get_dependent_skills(content_item):
-            # A newly created skill (one that lives in a brand-new pack, or whose
-            # node is flagged as ADDED) is being introduced together with the
-            # action change, so it does not need a Release Note for this rename.
-            if self.is_new_skill(skill):
-                logger.info(
-                    f"GR115: skipping dependent skill '{skill.object_id}' "
-                    f"(pack '{skill.pack_id}') because it is newly created - "
-                    f"no Release Note is required for it."
-                )
-                continue
-            if was_rn_added(skill.pack):
+            if self.was_pack_version_bumped(getattr(skill, "pack", None)):
                 logger.info(
                     f"GR115: dependent skill '{skill.object_id}' "
-                    f"(pack '{skill.pack_id}') already has a Release Note - "
+                    f"(pack '{skill.pack_id}') has a bumped pack version "
+                    f"(Release Note present) or is newly created - "
                     f"validation passes for it."
                 )
                 continue
@@ -116,22 +120,43 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
         return results
 
     @staticmethod
-    def is_new_skill(skill: AgentixSkill) -> bool:
-        """Return True if the dependent skill is newly created.
+    def was_pack_version_bumped(pack: Optional[Pack]) -> bool:
+        """Return True if the dependent skill's pack version was raised vs. master.
 
-        A skill is considered new if either:
-        * its node is flagged as ADDED in git, or
-        * it lives in a brand-new pack (``is_new_pack``).
+        A raised pack ``currentVersion`` is the canonical, repo-agnostic signal
+        that a Release Note was added (every Release Note bumps the pack
+        version). This mirrors PA114's version comparison and, unlike the
+        previous git-status checks (``is_new_skill``/``is_new_pack``/
+        ``was_rn_added``), does NOT rely on git-status flags - which the graph
+        layer never populates on dependency nodes. It therefore also works
+        across repositories, as long as the pack's master baseline
+        (``old_base_content_object``) was parsed.
 
-        Newly created skills are introduced alongside the action change, so they
-        do not require a Release Note for the action's rename.
+        Returns True (treated as "satisfied", i.e. no Release Note required)
+        when:
+        * the pack cannot be resolved (``None``) - to avoid false failures, or
+        * there is no master baseline (a brand-new pack/skill needs no bump), or
+        * either version is missing.
+
+        Otherwise returns whether the branch version is strictly greater than
+        the master version.
         """
-        if skill.git_status == GitStatuses.ADDED:
+        if pack is None:
+            # Can't resolve the pack - don't block on missing data.
             return True
-        pack = getattr(skill, "pack", None)
-        if pack is not None and is_new_pack(pack):
+
+        old_obj = pack.old_base_content_object
+        if old_obj is None:
+            # No master baseline => brand-new pack/skill => no bump required.
             return True
-        return False
+
+        current_version = pack.current_version
+        old_version = old_obj.current_version  # type: ignore[attr-defined]
+        if not current_version or not old_version:
+            # Missing version data - don't block.
+            return True
+
+        return Version(old_version) < Version(current_version)
 
     def get_dependent_skills(
         self, content_item: ContentTypes

@@ -4848,3 +4848,20 @@ def get_content_item_supported_modules(item) -> set[str]:
             modules = pack.supportedModules
 
     return set(modules or default_modules)
+
+
+def is_platform_marketplace(marketplace: MarketplaceVersions) -> bool:
+    """Whether the given marketplace is the platform marketplace.
+
+    ``supportedModules`` is only relevant for the platform marketplace. Any other
+    marketplace (xsoar, xsoar_saas, xsoar_on_prem, marketplacev2, xpanse, and any
+    future partner marketplace) is considered non-platform, so the check is written
+    generically against the single platform value.
+
+    Args:
+        marketplace: The marketplace to check.
+
+    Returns:
+        True if the marketplace is the platform marketplace, False otherwise.
+    """
+    return marketplace == MarketplaceVersions.PLATFORM

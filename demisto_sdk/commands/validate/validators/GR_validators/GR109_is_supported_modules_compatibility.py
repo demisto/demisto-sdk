@@ -111,16 +111,36 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             dict: A dictionary mapping dependency IDs to lists of missing modules
         """
         missing_modules_by_dependency: dict[str, list[str]] = {}
+        logger.debug(
+            f"[GR109] Checking dependencies for '{content_item.object_id}' "
+            f"(content_type={getattr(content_item, 'content_type', 'unknown')}, "
+            f"supportedModules={content_item.supportedModules}, "
+            f"mandatory={self.mandatory_dependency})"
+        )
         for dependency in content_item.uses:
+            dep_item = dependency.content_item_to
             # Filter by mandatory/non-mandatory based on the class member
             if dependency.mandatorily != self.mandatory_dependency:
+                logger.debug(
+                    f"[GR109]   Skipping dependency '{dep_item.object_id}' "
+                    f"(mandatorily={dependency.mandatorily}, expected={self.mandatory_dependency})"
+                )
                 continue
             # Get modules supported by the content item but not by its dependency
-            dep_supported_modules = dependency.content_item_to.supportedModules
+            dep_supported_modules = dep_item.supportedModules
+            logger.debug(
+                f"[GR109]   Dependency '{dep_item.object_id}' "
+                f"(content_type={getattr(dep_item, 'content_type', 'unknown')}, "
+                f"supportedModules={dep_supported_modules}, "
+                f"pack={getattr(dep_item, 'pack_id', getattr(dep_item, 'pack', 'unknown'))})"
+            )
             if dep_supported_modules is None:
                 logger.warning(
-                    f"Dependency '{dependency.content_item_to.object_id}' of "
-                    f"'{content_item.object_id}' has supportedModules=None, skipping."
+                    f"[GR109] Dependency '{dep_item.object_id}' of "
+                    f"'{content_item.object_id}' has supportedModules=None, skipping. "
+                    f"content_item.supportedModules={content_item.supportedModules}, "
+                    f"dep content_type={getattr(dep_item, 'content_type', 'unknown')}, "
+                    f"dep pack={getattr(dep_item, 'pack_id', getattr(dep_item, 'pack', 'unknown'))}"
                 )
                 continue
             missing_modules = [

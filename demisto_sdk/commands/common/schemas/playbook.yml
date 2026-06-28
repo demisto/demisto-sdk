@@ -386,6 +386,30 @@ mapping:
             sequence:
             - type: map
               allowempty: true
+          timelineRecord:
+            required: false
+            type: map
+            mapping:
+              shouldMarkAsRecord:
+                type: bool
+              recordType:
+                type: str
+              recordName:
+                type: str
+              description:
+                type: str
+              isEvidence:
+                type: bool
+              evidenceComment:
+                type: str
+              effectiveTime:
+                type: str
+              attachments:
+                type: str
+              tags:
+                type: seq
+                sequence:
+                - type: str
 
           id:xsoar:
             type: text

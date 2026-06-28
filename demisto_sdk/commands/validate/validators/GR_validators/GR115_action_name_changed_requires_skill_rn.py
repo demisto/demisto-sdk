@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
-from demisto_sdk.commands.validate.tools import was_rn_added
+from demisto_sdk.commands.validate.tools import is_new_pack, was_rn_added
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -79,8 +79,28 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
         """Find dependent skills missing a Release Note for the renamed action."""
         results: List[ValidationResult] = []
         for skill in self.get_dependent_skills(content_item):
-            if was_rn_added(skill.pack):
+            # A newly created skill (one that lives in a brand-new pack, or whose
+            # node is flagged as ADDED) is being introduced together with the
+            # action change, so it does not need a Release Note for this rename.
+            if self.is_new_skill(skill):
+                logger.info(
+                    f"GR115: skipping dependent skill '{skill.object_id}' "
+                    f"(pack '{skill.pack_id}') because it is newly created - "
+                    f"no Release Note is required for it."
+                )
                 continue
+            if was_rn_added(skill.pack):
+                logger.debug(
+                    f"GR115: dependent skill '{skill.object_id}' "
+                    f"(pack '{skill.pack_id}') already has a Release Note - "
+                    f"validation passes for it."
+                )
+                continue
+            logger.info(
+                f"GR115: dependent skill '{skill.object_id}' "
+                f"(pack '{skill.pack_id}') is missing a Release Note for the "
+                f"renamed action '{content_item.object_id}' - reporting failure."
+            )
             results.append(
                 ValidationResult(
                     validator=self,
@@ -94,6 +114,24 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
                 )
             )
         return results
+
+    @staticmethod
+    def is_new_skill(skill: AgentixSkill) -> bool:
+        """Return True if the dependent skill is newly created.
+
+        A skill is considered new if either:
+        * its node is flagged as ADDED in git, or
+        * it lives in a brand-new pack (``is_new_pack``).
+
+        Newly created skills are introduced alongside the action change, so they
+        do not require a Release Note for the action's rename.
+        """
+        if skill.git_status == GitStatuses.ADDED:
+            return True
+        pack = getattr(skill, "pack", None)
+        if pack is not None and is_new_pack(pack):
+            return True
+        return False
 
     def get_dependent_skills(
         self, content_item: ContentTypes

@@ -502,17 +502,25 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
-        # Route demistoextended and devtestdemistoextended images to private registry
-        if image.startswith(("demistoextended/", "devtestdemistoextended/")):
-            extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY", "")
-            if extended_registry and extended_registry not in image:
+        extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY", "")
+        if any(
+            segment in image
+            for segment in ("demistoextended/", "devtestdemistoextended/")
+        ):
+            # Already carries the extended registry prefix - return as-is to avoid
+            # double-prefixing it with the Docker Hub proxy registry.
+            if extended_registry and extended_registry in image:
+                logger.debug(f"get_image_registry | returned: {image}")
+                return image
+            if extended_registry and image.startswith(
+                ("demistoextended/", "devtestdemistoextended/")
+            ):
                 logger.debug(
                     f"get_image_registry | returned: {extended_registry}/{image}"
                 )
                 return f"{extended_registry}/{image}"
             logger.debug(f"get_image_registry | returned: {image}")
             return image
-        # Default routing to Docker Hub proxy
         if DOCKER_REGISTRY_URL not in image:
             logger.debug(
                 f"get_image_registry | returned: {DOCKER_REGISTRY_URL}/{image}"
@@ -801,7 +809,7 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
     logger.debug(
         f"Getting python version from {image=} by pulling its image and query its env"
     )
-    return _get_python_version_from_image_client(image)
+        return _get_python_version_from_image_client(image)
 
 
 def _get_python_version_from_image_client(image: str) -> Version:

@@ -111,7 +111,7 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
                 validator=self,
                 message=self.error_message.format(
                     content_item.object_id,
-                    get_relative_path_from_packs_dir(str(content_item.path)),
+                    get_relative_path_from_packs_dir(str(duplicate.path)),
                 ),
                 content_object=content_item,  # type: ignore[arg-type]
             )

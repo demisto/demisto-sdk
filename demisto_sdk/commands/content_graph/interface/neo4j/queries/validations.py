@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     PlatformSupportedModules,
 )
-from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -475,20 +474,14 @@ def get_supported_modules_mismatch_dependencies(
         Dict[str, Neo4jRelationshipResult]: Dictionary mapping content item IDs to relationship results.
     """
     mandatorily_value = "true" if mandatory else "false"
-    all_platform_modules = [sm.value for sm in PlatformSupportedModules]
-    logger.debug(
-        f"[GR109] get_supported_modules_mismatch_dependencies called: "
-        f"content_item_ids={content_item_ids}, mandatory={mandatory}, "
-        f"all_platform_modules={all_platform_modules}"
-    )
     query = f""" // Check if any module in contentItemA's supportedModules is NOT in contentItemB's supportedModules.
     MATCH (contentItemA{{deprecated: false, is_test: false}})-[r:{RelationshipType.USES}{{mandatorily:{mandatorily_value}}}]->(contentItemB)
     WHERE ({content_item_ids} IS NULL OR size({content_item_ids}) = 0 OR contentItemA.object_id IN {content_item_ids})
       AND contentItemB.supportedModules IS NOT NULL AND 'platform' IN contentItemA.marketplaces
-      AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {all_platform_modules}) WHERE module IN contentItemB.supportedModules)
+      AND NOT ALL(module IN coalesce(contentItemA.supportedModules, {[sm.value for sm in PlatformSupportedModules]}) WHERE module IN contentItemB.supportedModules)
     RETURN contentItemA, collect(r) AS relationships, collect(contentItemB) AS nodes_to
     """
-    results = {
+    return {
         item.get("contentItemA").element_id: Neo4jRelationshipResult(
             node_from=item.get("contentItemA"),
             relationships=item.get("relationships"),
@@ -496,11 +489,6 @@ def get_supported_modules_mismatch_dependencies(
         )
         for item in run_query(tx, query)
     }
-    logger.debug(
-        f"[GR109] get_supported_modules_mismatch_dependencies returned {len(results)} mismatched item(s): "
-        f"{list(results.keys())}"
-    )
-    return results
 
 
 def get_supported_modules_mismatch_commands(

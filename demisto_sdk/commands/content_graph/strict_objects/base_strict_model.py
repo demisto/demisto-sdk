@@ -252,4 +252,4 @@ class AgentixBase(BaseStrictModel):
     from_version: Optional[str] = Field(None, alias="fromversion")
     to_version: Optional[str] = Field(None, alias="toversion")
     marketplaces: Optional[Union[MarketplaceVersions, List[MarketplaceVersions]]] = None
-    supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
+    supportedModules: Optional[List[str]] = None

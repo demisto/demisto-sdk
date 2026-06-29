@@ -80,7 +80,7 @@ ContentTypes = Union[
 # The complete set of platform supported modules.
 ALL_MODULES: Set[str] = {module.value for module in PlatformSupportedModules}
 
-# Content item types that allow every platform supported module.
+# The 'xsiam' and 'agentix' modules.
 XSIAM_AND_AGENTIX: Set[str] = {
     PlatformSupportedModules.XSIAM.value,
     PlatformSupportedModules.AGENTIX.value,
@@ -135,7 +135,7 @@ class InvalidSupportedModulesValidator(BaseValidator[ContentTypes]):
         "module values that are permitted for that content item type."
     )
     rationale = (
-        "Each content item type can only run under a specific set of modules. "
+        "Each content item type can only exist under a specific set of modules. "
         "Declaring a module that is not supported for the item's type results in "
         "content that cannot be loaded correctly by the platform."
     )

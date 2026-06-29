@@ -274,9 +274,11 @@ select = [
   "MC101",
   "VC100",
   "VC101",
-  "BC115"
+  "BC115",
+  "BA131", 
+  "BA132"
 ]
-warning = ["RM108", "PB130", "PB131", "GR107", "GR109", "GR103", "GR110", "GR101", "PA133", "AS106", "GR114", "BA131", "BA132"]
+warning = ["RM108", "PB130", "PB131", "GR107", "GR109", "GR103", "GR110", "GR101", "PA133", "AS106", "GR114"]
 
 [support_level]
 

@@ -218,6 +218,16 @@ class TestIsErrorIgnoredPackLevel:
         item = _FakeContentItem(pack=pack)
         assert is_error_ignored("RM104", ALLOWED, item) is False
 
+    def test_item_with_no_pack_is_not_ignored(self):
+        """
+        Given a content item whose in_pack is None,
+        When is_error_ignored is called,
+        Then the pack-level check is skipped safely (no AttributeError)
+        and the result is False.
+        """
+        item = _FakeContentItem(pack=None)
+        assert is_error_ignored("BA101", ALLOWED, item) is False
+
     def test_always_run_wins_over_pack_level(self):
         """
         Given a code listed in ALWAYS_RUN_ON_ERROR_CODE *and* under [pack],

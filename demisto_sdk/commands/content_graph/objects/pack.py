@@ -190,7 +190,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                         code.strip() for code in str(value).split(",") if code.strip()
                     ]
             return []
-        except Exception as e:  # pragma: no cover - defensive
+        except Exception as e:
             logger.debug(
                 f"Failed to extract pack-level ignored errors for {self.object_id}: {e}"
             )

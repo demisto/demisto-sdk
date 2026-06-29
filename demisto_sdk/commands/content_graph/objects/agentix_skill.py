@@ -32,7 +32,6 @@ class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
     """
 
     content: str = ""
-    supportedModules: Optional[list[str]] = None
 
     @staticmethod
     def match(_dict: dict, path: Path) -> bool:

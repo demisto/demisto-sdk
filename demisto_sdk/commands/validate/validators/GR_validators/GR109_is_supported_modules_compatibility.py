@@ -154,10 +154,10 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
 
     def get_commands_with_missing_modules_by_content_item(
         self,
-        item,
-        mismatched_command_ids,
-        commands_with_missing_modules_by_content_item: dict,
-    ):
+        item: ContentTypes,
+        mismatched_command_ids: list[str],
+        commands_with_missing_modules_by_content_item: dict[str, list[str]],
+    ) -> None:
         """Record the commands that have a module mismatch for a content item.
 
         The list of mismatched commands is computed directly by the Branch 3 Cypher

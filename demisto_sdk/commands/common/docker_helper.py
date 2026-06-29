@@ -50,6 +50,7 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "pre_commit" / "resources"
 DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT") or 300)
+CR_REGISTRY_PREFIX = "gcr.io/xsoar-registry/"
 
 
 class DockerException(Exception):
@@ -503,6 +504,18 @@ class DockerBase:
     @staticmethod
     def get_image_registry(image: str) -> str:
         extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY", "")
+        # Normalize images that hardcode the container-registry prefix
+        # (e.g. "gcr.io/xsoar-registry/demistoextended/accessdata-p:tag") back to
+        # their canonical "demistoextended/..." form, so routing is uniform whether
+        # or not DEMISTO_SDK_EXTENDED_REGISTRY is set. Without this, an unset env var
+        # would leave the hardcoded prefix in place and the runner's Docker mirror
+        # would prepend its own registry, producing a broken double-registry path.
+        if image.startswith(CR_REGISTRY_PREFIX):
+            stripped = image[len(CR_REGISTRY_PREFIX) :]
+            logger.debug(
+                f"get_image_registry | stripped CR prefix: {image} -> {stripped}"
+            )
+            image = stripped
         if any(
             segment in image
             for segment in ("demistoextended/", "devtestdemistoextended/")

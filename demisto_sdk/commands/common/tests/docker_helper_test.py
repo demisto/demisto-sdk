@@ -270,6 +270,78 @@ class TestGetImageRegistryDemistoextended:
             # returned as-is to avoid double-prefixing.
             assert result == already_prefixed
 
+    def test_cr_prefixed_image_normalized_without_env(self):
+        """
+        Given:
+         - a dockerimage hardcoding the CR prefix (gcr.io/xsoar-registry/demistoextended/...)
+         - DEMISTO_SDK_EXTENDED_REGISTRY is NOT set
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - the CR prefix is stripped and the canonical demistoextended/ form is
+           returned (so the runner's Docker mirror won't produce a broken
+           double-registry path)
+        """
+        env = os.environ.copy()
+        env.pop("DEMISTO_SDK_EXTENDED_REGISTRY", None)
+        with mock.patch.dict(os.environ, env, clear=True):
+            result = dhelper.DockerBase.get_image_registry(
+                "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10358491"
+            )
+            assert result == "demistoextended/accessdata-p:1.1.0.10358491"
+
+    def test_cr_prefixed_image_normalized_with_env(self):
+        """
+        Given:
+         - a dockerimage hardcoding the CR prefix (gcr.io/xsoar-registry/demistoextended/...)
+         - DEMISTO_SDK_EXTENDED_REGISTRY is set to gcr.io/xsoar-registry
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - the CR prefix is stripped then re-added via the extended registry,
+           yielding a single, well-formed registry path
+        """
+        with mock.patch.dict(
+            os.environ,
+            {"DEMISTO_SDK_EXTENDED_REGISTRY": "gcr.io/xsoar-registry"},
+        ):
+            result = dhelper.DockerBase.get_image_registry(
+                "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10358491"
+            )
+            assert (
+                result
+                == "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10358491"
+            )
+
+    def test_cr_prefixed_image_normalized_with_different_env(self):
+        """
+        Given:
+         - a dockerimage hardcoding the CR prefix (gcr.io/xsoar-registry/demistoextended/...)
+         - DEMISTO_SDK_EXTENDED_REGISTRY is set to a DIFFERENT registry
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - the hardcoded CR prefix is stripped and the configured extended
+           registry is applied instead (routing stays uniform)
+        """
+        with mock.patch.dict(
+            os.environ,
+            {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"},
+        ):
+            result = dhelper.DockerBase.get_image_registry(
+                "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10358491"
+            )
+            assert (
+                result
+                == "example-registry.io/test-project/demistoextended/accessdata-p:1.1.0.10358491"
+            )
+
     def test_demisto_image_still_gets_docker_registry_prefix(self):
         """
         Given:

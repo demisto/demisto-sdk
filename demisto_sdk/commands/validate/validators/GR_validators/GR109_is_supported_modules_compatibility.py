@@ -164,15 +164,35 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         Returns:
             dict: A dictionary mapping content item IDs to lists of command IDs
         """
+        from demisto_sdk.commands.content_graph.common import ContentType
+        
         for rel in item.uses:
+            if rel.mandatorily != self.mandatory_dependency:
+                continue
+                
             command = rel.content_item_to
-            # At this point, we assume the mismatch is already established
-            if item.object_id not in commands_with_missing_modules_by_content_item:
-                commands_with_missing_modules_by_content_item[item.object_id] = []
-            # Add the command ID to the list
-            commands_with_missing_modules_by_content_item[item.object_id].append(
-                command.object_id
-            )
+            if getattr(command, 'content_type', None) != ContentType.COMMAND:
+                continue
+                
+            # An incompatibility is only possible if the command has a specific module list.
+            # If its list is empty/null, it supports everything and can't be incompatible.
+            if not command.supportedModules:
+                continue
+                
+            item_supported_modules = item.supportedModules or [sm.value for sm in PlatformSupportedModules]
+            missing_modules = [
+                module
+                for module in item_supported_modules
+                if module not in command.supportedModules
+            ]
+            
+            if missing_modules:
+                if item.object_id not in commands_with_missing_modules_by_content_item:
+                    commands_with_missing_modules_by_content_item[item.object_id] = []
+                # Add the command ID to the list
+                commands_with_missing_modules_by_content_item[item.object_id].append(
+                    command.object_id
+                )
 
     def format_error_messages(self, missing_modules_dict):
         """Format error messages for missing modules.

@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     get_file,
     get_relative_path,
+    parse_ignore_list,
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
@@ -186,9 +187,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 return []
             for key, value in section.items():
                 if key == "ignore":
-                    return [
-                        code.strip() for code in str(value).split(",") if code.strip()
-                    ]
+                    return parse_ignore_list(value)
             return []
         except Exception as e:
             logger.debug(

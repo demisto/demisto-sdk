@@ -16,7 +16,10 @@ from __future__ import annotations
 from configparser import ConfigParser
 from typing import Optional
 
-from demisto_sdk.commands.common.tools import extract_error_codes_from_file
+from demisto_sdk.commands.common.tools import (
+    extract_error_codes_from_file,
+    parse_ignore_list,
+)
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import is_error_ignored
 
@@ -364,3 +367,24 @@ class TestExtractErrorCodesFromFile:
             lambda _pack: None,
         )
         assert extract_error_codes_from_file("TestPack") == set()
+
+
+# ---------------------------------------------------------------------------
+# Shared ignore-list parsing helper
+# ---------------------------------------------------------------------------
+
+
+class TestParseIgnoreList:
+    """Verify the shared `[pack]`/`[file:...]` ignore grammar parser."""
+
+    def test_basic_split(self):
+        assert parse_ignore_list("BA101,RM104,RN107") == ["BA101", "RM104", "RN107"]
+
+    def test_whitespace_and_empty_entries_dropped(self):
+        assert parse_ignore_list(" BA101 , RM104 ,") == ["BA101", "RM104"]
+
+    def test_empty_value_returns_empty_list(self):
+        assert parse_ignore_list("") == []
+
+    def test_single_code(self):
+        assert parse_ignore_list("BA101") == ["BA101"]

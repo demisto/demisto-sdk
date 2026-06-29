@@ -1,4 +1,4 @@
-"""Unit tests for the pack-level `.pack-ignore` mechanism (CIAC-17006).
+"""Unit tests for the pack-level `.pack-ignore` mechanism.
 
 These tests cover the three production changes:
 

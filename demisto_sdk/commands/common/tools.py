@@ -4109,12 +4109,6 @@ def is_epoch_datetime(string: str) -> bool:
 
 def parse_ignore_list(value: str) -> List[str]:
     """Parse a comma-separated `ignore=` value from a `.pack-ignore` section.
-
-    Splits on commas and strips whitespace, dropping empty entries. This is the
-    single source of truth for the `[pack]`/`[file:...]` ignore grammar so that
-    every call site stays in sync if the grammar evolves (e.g. comments, globs,
-    line continuations).
-
     Args:
         value: the raw string value of an `ignore=` key.
     Returns: the list of error codes.

@@ -295,7 +295,7 @@ def is_error_ignored(
         2. If ``err_code`` is not in ``ignorable_errors`` -> never ignore.
         3. If ``err_code`` is listed under the new ``[pack]`` section of the
            pack's ``.pack-ignore`` file -> ignore for every item in the pack
-           (and for related files of those items). See ticket CIAC-17006.
+           (and for related files of those items).
         4. If a ``related_file_type`` is provided -> ignore only when the
            code is listed under the related file's per-file section.
         5. Otherwise -> ignore only when the code is listed under the
@@ -315,7 +315,7 @@ def is_error_ignored(
     if (err_code not in ignorable_errors) or (err_code in ALWAYS_RUN_ON_ERROR_CODE):
         return False
 
-    # --- Pack-level ignore (CIAC-17006) ---------------------------------
+    # ------ Pack-level ignore ------
     # Duck-typed to keep this module free of a direct import of `Pack`,
     # which would create a circular import with the content_graph package.
     # `Pack` itself exposes `pack_level_ignored_errors`; every `ContentItem`

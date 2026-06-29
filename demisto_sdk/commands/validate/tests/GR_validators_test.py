@@ -1,7 +1,6 @@
 from collections import defaultdict
-from unittest.mock import MagicMock
-
 from typing import Optional
+from unittest.mock import MagicMock
 
 import pytest
 from pytest_mock import MockerFixture
@@ -40,12 +39,6 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unkno
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR103_is_using_unknown_content_list_files import (
     IsUsingUnknownContentValidatorListFiles,
-)
-from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_skill_using_unknown_content_all_files import (
-    IsSkillUsingUnknownContentValidatorAllFiles,
-)
-from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_skill_using_unknown_content_list_files import (
-    IsSkillUsingUnknownContentValidatorListFiles,
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR104_is_pack_display_name_already_exists_all_files import (
     IsPackDisplayNameAlreadyExistsValidatorAllFiles,
@@ -100,6 +93,12 @@ from demisto_sdk.commands.validate.validators.GR_validators.GR114_is_non_mandato
 )
 from demisto_sdk.commands.validate.validators.GR_validators.GR115_action_name_changed_requires_skill_rn_list_files import (
     IsActionNameChangedRequiresSkillRNValidatorListFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_skill_using_unknown_content_all_files import (
+    IsSkillUsingUnknownContentValidatorAllFiles,
+)
+from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_skill_using_unknown_content_list_files import (
+    IsSkillUsingUnknownContentValidatorListFiles,
 )
 from TestSuite.repo import Repo
 
@@ -703,9 +702,7 @@ def test_IsUsingUnknownContentValidator__agentix_skill_existing_action__all_file
     # The skill's action reference is resolved, so the skill itself must not be
     # reported as using unknown content. (The default action may have its own
     # unrelated unknown 'underlyingcontentitem' dependency, which is not our concern here.)
-    assert not any(
-        "My Skill" in result.message for result in results
-    )
+    assert not any("My Skill" in result.message for result in results)
 
 
 def test_IsSkillUsingUnknownContentValidator__skill_missing_action__all_files(
@@ -722,8 +719,10 @@ def test_IsSkillUsingUnknownContentValidator__skill_missing_action__all_files(
     """
     graph_interface = repo_for_test_agentix_skill_unknown_action.create_graph()
     BaseValidator.graph_interface = graph_interface
-    results = IsSkillUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
-        content_items=[]
+    results = (
+        IsSkillUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+            content_items=[]
+        )
     )
     assert len(results) == 1
     assert "does-not-exist-action" in results[0].message
@@ -755,8 +754,10 @@ def test_IsSkillUsingUnknownContentValidator__skill_existing_action__all_files(
 
     graph_interface = graph_repo.create_graph()
     BaseValidator.graph_interface = graph_interface
-    results = IsSkillUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
-        content_items=[]
+    results = (
+        IsSkillUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+            content_items=[]
+        )
     )
     # The skill's action reference is resolved, so the skill must not be reported.
     assert not any("My Skill" in result.message for result in results)
@@ -776,8 +777,10 @@ def test_IsSkillUsingUnknownContentValidator__only_reports_skills__all_files(
     """
     graph_interface = repo_for_test.create_graph()
     BaseValidator.graph_interface = graph_interface
-    results = IsSkillUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
-        content_items=[]
+    results = (
+        IsSkillUsingUnknownContentValidatorAllFiles().obtain_invalid_content_items(
+            content_items=[]
+        )
     )
     assert results == []
 

@@ -54,9 +54,7 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
             old_name = self.get_old_name_if_changed(content_item)
             if old_name is None:
                 continue
-            results.extend(
-                self.get_results_for_renamed_action(content_item, old_name)
-            )
+            results.extend(self.get_results_for_renamed_action(content_item, old_name))
         return results
 
     @staticmethod
@@ -183,9 +181,7 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
         )
         return bumped
 
-    def get_dependent_skills(
-        self, content_item: ContentTypes
-    ) -> List[AgentixSkill]:
+    def get_dependent_skills(self, content_item: ContentTypes) -> List[AgentixSkill]:
         """Return the Agentix Skills that depend on the given action via the graph.
 
         ``content_item`` is parsed from disk and therefore has no relationships

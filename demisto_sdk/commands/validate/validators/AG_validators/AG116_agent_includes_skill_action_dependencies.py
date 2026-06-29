@@ -14,9 +14,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = AgentixAgent
 
 
-class IsAgentIncludesSkillActionDependenciesValidator(
-    BaseValidator[ContentTypes], ABC
-):
+class IsAgentIncludesSkillActionDependenciesValidator(BaseValidator[ContentTypes], ABC):
     error_code = "AG116"
     description = (
         "Validates that an AgentixAgent which registers an AgentixSkill also "
@@ -87,8 +85,7 @@ class IsAgentIncludesSkillActionDependenciesValidator(
                             agent.display_name,
                             skill_id,
                             ", ".join(
-                                f"'{action_id}'"
-                                for action_id in dict.fromkeys(missing)
+                                f"'{action_id}'" for action_id in dict.fromkeys(missing)
                             ),
                         ),
                         content_object=agent,

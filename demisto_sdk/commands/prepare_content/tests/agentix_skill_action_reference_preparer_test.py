@@ -112,9 +112,7 @@ def test_prepare_warns_listing_all_unresolved_tokens(caplog):
       are left unchanged, and a single warning lists every unresolved action id
       while the resolvable one is not reported.
     """
-    skill = _skill_mock(
-        "my-skill", uses=[_action_relationship("action-a", "ActionA")]
-    )
+    skill = _skill_mock("my-skill", uses=[_action_relationship("action-a", "ActionA")])
     data = {
         "content": (
             "Use <action=action-a>, <action=missing-one> and <action=missing-two>."

@@ -1,0 +1,4 @@
+changes:
+- description: Added support for skill action dependencies.
+  type: feature
+pr_number: 5411

@@ -3163,12 +3163,8 @@ def test_GR115_action_renamed_no_dependent_skills(mocker, graph_repo: Repo):
     action.git_status = GitStatuses.MODIFIED
     action.old_base_content_object = old_action
 
-    mocker.patch(
-        "demisto_sdk.commands.validate.validators.GR_validators."
-        "GR115_action_name_changed_requires_skill_rn.was_rn_added",
-        return_value=False,
-    )
-
+    # The action has no dependent skills, so GR115 must return no results
+    # regardless of any Release Note / pack-version-bump check.
     results = IsActionNameChangedRequiresSkillRNValidatorListFiles().obtain_invalid_content_items(
         [action]
     )

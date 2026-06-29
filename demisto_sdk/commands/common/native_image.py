@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.tools import extract_docker_image_from_text
 
 class NativeImage(BaseModel):
     supported_docker_images: List[str]
-    docker_ref: Optional[str]
+    docker_ref: Optional[str] = None
 
 
 class IgnoredContentItem(BaseModel):
@@ -69,7 +69,10 @@ class NativeImageConfig(PydanticSingleton, BaseModel):
 
     @classmethod
     def from_path(cls, native_image_config_file_path: Path = Path(NATIVE_IMAGE_PATH)):
-        native_image_config = cls.parse_file(native_image_config_file_path)
+        native_image_config_file_path = Path(native_image_config_file_path)
+        native_image_config = cls.model_validate_json(
+            native_image_config_file_path.read_text()
+        )
         native_image_config.__docker_images_to_native_images_support()
         return native_image_config
 

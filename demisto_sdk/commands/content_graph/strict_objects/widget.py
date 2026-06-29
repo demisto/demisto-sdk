@@ -34,11 +34,13 @@ class _StrictWidget(BaseStrictModel):
     modified: Optional[str] = None
     marketplaces: Optional[List[MarketplaceVersions]] = Field(
         None,
-        enum=[
-            MarketplaceVersions.XSOAR,
-            MarketplaceVersions.XSOAR_SAAS,
-            MarketplaceVersions.XSOAR_ON_PREM,
-        ],
+        json_schema_extra={
+            "enum": [
+                MarketplaceVersions.XSOAR,
+                MarketplaceVersions.XSOAR_SAAS,
+                MarketplaceVersions.XSOAR_ON_PREM,
+            ]
+        },
     )
     supportedModules: Optional[List[str]] = Field(None, alias="supportedModules")
 

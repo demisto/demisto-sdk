@@ -48,7 +48,7 @@ class DashboardWidget(BaseStrictModel):
     sequence_number: Optional[int] = Field(None, alias="sequenceNumber")
     size_in_bytes: Optional[int] = Field(None, alias="sizeInBytes")
     to_server_version: Optional[str] = Field(None, alias="toServerVersion")
-    vc_should_keep_item_legacy_prod_machine: Optional[str] = Field(
+    vc_should_keep_item_legacy_prod_machine: Optional[Any] = Field(
         None, alias="vcShouldKeepItemLegacyProdMachine"
     )
     version: Optional[int] = None

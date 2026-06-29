@@ -9,10 +9,10 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class GenericField(ContentItem, content_type=ContentType.GENERIC_FIELD):  # type: ignore[call-arg]
-    definition_id: Optional[str] = Field(alias="definitionId")
-    field_type: Optional[str] = Field(alias="type")
+    definition_id: Optional[str] = Field(None, alias="definitionId")
+    field_type: Optional[str] = Field(None, alias="type")
     version: Optional[int] = 0
-    group: int = Field(None, exclude=True)
+    group: Optional[int] = Field(None, exclude=True)
     unsearchable: Optional[bool] = Field(None, exclude=True)
 
     def metadata_fields(self) -> Set[str]:

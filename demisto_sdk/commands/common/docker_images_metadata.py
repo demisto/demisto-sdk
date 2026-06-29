@@ -64,7 +64,7 @@ class DockerImagesMetadata(PydanticSingleton, BaseModel):
             )
             dockerfiles_metadata = {"docker_images": {}}
 
-        return cls.parse_obj(dockerfiles_metadata)
+        return cls.model_validate(dockerfiles_metadata)
 
     def __get_metadata_value(
         self, docker_image: Union[str, DockerImage], docker_metadata_key: str

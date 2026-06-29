@@ -10,13 +10,13 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class Mapper(ContentItem, content_type=ContentType.MAPPER):  # type: ignore[call-arg]
-    type: Optional[str]
+    type: Optional[str] = None
     version: Optional[int] = 0
     mapping: dict = Field({}, exclude=True)
     feed: bool = Field(False, exclude=True)
 
     definition_id: Optional[str] = Field(
-        alias="definitionId"
+        None, alias="definitionId"
     )  # TODO decide if this should be optional or not
 
     def metadata_fields(self) -> Set[str]:

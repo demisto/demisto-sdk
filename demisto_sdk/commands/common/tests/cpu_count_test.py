@@ -22,5 +22,8 @@ from demisto_sdk.commands.common.cpu_count import (
     ],
 )
 def test_cpu_count(monkeypatch, env_var_value: Optional[str], expected_result: int):
-    monkeypatch.setenv(DEMISTO_SDK_MAX_CPU_CORES, env_var_value)
+    if env_var_value is None:
+        monkeypatch.delenv(DEMISTO_SDK_MAX_CPU_CORES, raising=False)
+    else:
+        monkeypatch.setenv(DEMISTO_SDK_MAX_CPU_CORES, env_var_value)
     assert cpu_count() == expected_result

@@ -44,8 +44,8 @@ class _StrictGenericField(BaseStrictModel):
     hidden: Optional[bool] = None
     columns: Optional[Any] = None
     default_rows: Optional[Any] = Field(None, alias="defaultRows")
-    threshold: Optional[int] = None
-    sla: Optional[int] = None
+    threshold: Optional[float] = None
+    sla: Optional[float] = None
     case_insensitive: Optional[bool] = Field(None, alias="caseInsensitive")
     breach_script: Optional[str] = Field(None, alias="breachScript")
     associated_types: Optional[Any] = Field(None, alias="associatedTypes")

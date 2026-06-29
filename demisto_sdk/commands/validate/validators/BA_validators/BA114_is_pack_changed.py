@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List
+from typing import ClassVar, Iterable, List
 
 from demisto_sdk.commands.common.constants import PACKS_FOLDER
 from demisto_sdk.commands.common.tools import get_pack_name
@@ -23,9 +23,9 @@ class PackNameValidator(BaseValidator[ContentTypes]):
     error_message = "Pack for content item '{0}' and all related files were changed from '{1}' to '{2}', please undo."
     related_field = "path"
     expected_git_statuses = [GitStatuses.RENAMED]
-    new_pack_name = ""
-    old_pack_name = ""
-    new_path = ""
+    new_pack_name: ClassVar[str] = ""
+    old_pack_name: ClassVar[str] = ""
+    new_path: ClassVar[str] = ""
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
@@ -49,7 +49,7 @@ class PackNameValidator(BaseValidator[ContentTypes]):
         new_pack_name = get_pack_name(content_item.path)
         name_has_changed = new_pack_name != old_pack_name
         if name_has_changed:
-            self.new_pack_name = new_pack_name
-            self.old_pack_name = old_pack_name
-            self.new_path = str(content_item.path).split(PACKS_FOLDER)[-1]
+            PackNameValidator.new_pack_name = new_pack_name
+            PackNameValidator.old_pack_name = old_pack_name
+            PackNameValidator.new_path = str(content_item.path).split(PACKS_FOLDER)[-1]
         return name_has_changed

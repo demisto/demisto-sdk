@@ -20,10 +20,10 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 
 
 def _build_minimal_script() -> Script:
-    """Build a Script instance via ``construct()`` (bypasses pydantic
+    """Build a Script instance via ``model_construct()`` (bypasses pydantic
     validation) so we can call its methods without spinning up the content
     graph."""
-    return Script.construct(  # type: ignore[call-arg]
+    return Script.model_construct(  # type: ignore[call-arg]
         object_id="MyScript",
         name="MyScript",
         path=Path("/tmp/MyScript.yml"),

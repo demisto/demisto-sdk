@@ -19,7 +19,7 @@ class NotAJSONError(Exception): ...
 def _validate(path: Path = Path(FILE_NAME)) -> None:
     if path.suffix != ".json":
         raise NotAJSONError
-    XSOAR_Configuration.validate(get_file(path))
+    XSOAR_Configuration.model_validate(get_file(path))
 
 
 def validate(path: Path) -> None:

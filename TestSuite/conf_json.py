@@ -28,7 +28,7 @@ class ConfJSON:
         if skipped_integrations is None:
             skipped_integrations = {}
         if docker_thresholds is None:
-            docker_thresholds = {"_comment": "", "images": []}
+            docker_thresholds = {"_comment": "", "images": {}}
         self._file_path.write_text(
             json.dumps(
                 {
@@ -37,7 +37,7 @@ class ConfJSON:
                     "skipped_integrations": skipped_integrations,
                     "docker_thresholds": docker_thresholds,
                     # the next fields are not modified in tests (hence lack of args), but are structurally required.
-                    "available_tests_fields": [],
+                    "available_tests_fields": {},
                     "testTimeout": 100,
                     "testInterval": 100,
                     "nightly_packs": [],

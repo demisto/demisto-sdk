@@ -75,10 +75,10 @@ class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELIN
                 continue
             try:
                 if file.suffix == ".yml":
-                    StrictModelingRule.parse_obj(get_file(file))
+                    StrictModelingRule.model_validate(get_file(file))
                 elif file.suffix == ".json":
-                    StrictModelingRuleSchema.parse_obj(get_file(file))
-            except pydantic.error_wrappers.ValidationError as e:
+                    StrictModelingRuleSchema.model_validate(get_file(file))
+            except pydantic.ValidationError as e:
                 directory_pydantic_error += [
                     StructureError(path=file, **error) for error in e.errors()
                 ]

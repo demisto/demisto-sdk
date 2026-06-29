@@ -28,6 +28,7 @@ from demisto_sdk.commands.common.tools import (
     get_file,
     get_pack_name,
     get_relative_path,
+    is_platform_marketplace,
     replace_incident_to_alert,
     write_dict,
 )
@@ -291,11 +292,13 @@ class ContentItem(BaseContent):
         data = self.data
         # Replace incorrect marketplace references
         data = replace_marketplace_references(data, current_marketplace, str(self.path))
-        if current_marketplace == MarketplaceVersions.PLATFORM:
+        if is_platform_marketplace(current_marketplace):
             data = append_supported_modules(
                 data, self.supportedModules, self.pack.supportedModules
             )
         else:
+            # `supportedModules` is only relevant for the platform marketplace.
+            # Strip it from non-platform buckets (including partner marketplace).
             if "supportedModules" in data:
                 del data["supportedModules"]
         return MarketplaceSuffixPreparer.prepare(data, current_marketplace)
@@ -314,7 +317,10 @@ class ContentItem(BaseContent):
         """
 
         exclude_fields: Dict[Union[int, str], Any] = {}
-        if not self.supportedModules:
+        # `supportedModules` is only relevant for the platform marketplace.
+        # Exclude it from the summary for any non-platform bucket (including the
+        # partner marketplace) and whenever the item has no supported modules.
+        if not self.supportedModules or not is_platform_marketplace(marketplace):  # type: ignore[arg-type]
             exclude_fields["supportedModules"] = True
 
         summary_res = self.dict(

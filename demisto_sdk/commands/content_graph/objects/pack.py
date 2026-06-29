@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.tools import (
     MarketplaceTagParser,
     get_file,
     get_relative_path,
+    is_platform_marketplace,
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
@@ -252,15 +253,28 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         self.server_min_version = self.server_min_version or min_content_items_version
         self.content_items = PackContentItems(**content_item_dct)
 
-    def _clean_empty_supportedModuels_from_commands(self, content_items: dict):
+    def _clean_supportedModules_from_commands(
+        self, content_items: dict, marketplace: MarketplaceVersions
+    ):
+        """Removes the ``supportedModules`` field from integration commands in the
+        metadata content items.
+
+        ``supportedModules`` is only relevant for the platform marketplace. For any
+        non-platform bucket (including the partner marketplace) the field is removed
+        entirely. For the platform marketplace only empty values are removed.
+
+        Args:
+            content_items (dict): The metadata content items dictionary.
+            marketplace (MarketplaceVersions): The destination marketplace.
+        """
         if not content_items:
             return
+        is_platform = is_platform_marketplace(marketplace)
         for integration in content_items.get("integration", []):
             if "commands" in integration:
                 for command in integration["commands"]:
-                    if (
-                        "supportedModules" in command
-                        and not command["supportedModules"]
+                    if "supportedModules" in command and (
+                        not is_platform or not command["supportedModules"]
                     ):
                         del command["supportedModules"]
 
@@ -356,12 +370,17 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 strip_internal=strip_internal,
             )
         )
-        self._clean_empty_supportedModuels_from_commands(
-            metadata.get("contentItems", {})
+        self._clean_supportedModules_from_commands(
+            metadata.get("contentItems", {}), marketplace
         )
         # Replace incorrect marketplace references
         metadata = replace_marketplace_references(metadata, marketplace, str(self.path))
-        if "supportedModules" in metadata and not metadata["supportedModules"]:
+        # `supportedModules` is only relevant for the platform marketplace. Remove the
+        # pack-level field from non-platform buckets (including the partner marketplace),
+        # and remove it from any bucket when it is empty.
+        if "supportedModules" in metadata and (
+            not is_platform_marketplace(marketplace) or not metadata["supportedModules"]
+        ):
             del metadata["supportedModules"]
         write_dict(path, data=metadata, indent=4, sort_keys=True)
 

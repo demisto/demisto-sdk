@@ -110,6 +110,8 @@ class PackContentItems:
             content_type=ContentType.AGENTIX_ACTION_TEST
         )
         self.agentix_agent = ContentItemsList(content_type=ContentType.AGENTIX_AGENT)
+        self.agentix_skill = ContentItemsList(content_type=ContentType.AGENTIX_SKILL)
+        self.collection = ContentItemsList(content_type=ContentType.COLLECTION)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()
@@ -446,6 +448,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             "preview_only": "previewOnly",
             "excluded_dependencies": "excludedDependencies",
             "modules": "modules",
+            "supportedModules": "supportedModules",
             "disable_monthly": "disableMonthly",
             "content_commit_hash": "contentCommitHash",
             "default_data_source_id": "defaultDataSource",

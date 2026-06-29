@@ -4,11 +4,13 @@ from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
     AgentixActionTest,
     AgentixAgent,
+    AgentixSkill,
     AssetsModelingRule,
     CaseField,
     CaseLayout,
     CaseLayoutRule,
     Classifier,
+    Collection,
     CorrelationRule,
     Dashboard,
     GenericDefinition,
@@ -82,6 +84,8 @@ ContentTypes = Union[
     AgentixAgent,
     AgentixAction,
     AgentixActionTest,
+    AgentixSkill,
+    Collection,
 ]
 
 

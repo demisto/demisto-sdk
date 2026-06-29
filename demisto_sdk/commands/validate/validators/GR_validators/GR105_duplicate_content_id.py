@@ -4,11 +4,16 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
-from demisto_sdk.commands.content_graph.objects import AgentixAction, AgentixAgent
+from demisto_sdk.commands.content_graph.objects import (
+    AgentixAction,
+    AgentixAgent,
+    AgentixSkill,
+)
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
+from demisto_sdk.commands.content_graph.objects.collection import Collection
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.generic_definition import (
@@ -77,6 +82,8 @@ ContentTypes = Union[
     CaseLayoutRule,
     AgentixAction,
     AgentixAgent,
+    AgentixSkill,
+    Collection,
 ]
 
 
@@ -104,7 +111,7 @@ class DuplicateContentIdValidator(BaseValidator[ContentTypes], ABC):
                 validator=self,
                 message=self.error_message.format(
                     content_item.object_id,
-                    get_relative_path_from_packs_dir(str(content_item.path)),
+                    get_relative_path_from_packs_dir(str(duplicate.path)),
                 ),
                 content_object=content_item,  # type: ignore[arg-type]
             )

@@ -23,7 +23,9 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 class CommandParser:
     name: str
     deprecated: bool
-    hidden: bool
+    # `hidden` may be a bool, or a list of marketplace names where the command
+    # should be hidden. Mirrors the same shape allowed on integration parameters.
+    hidden: Any
     description: str
     args: List[dict]
     outputs: List[dict]

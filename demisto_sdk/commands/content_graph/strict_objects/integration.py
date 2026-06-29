@@ -104,6 +104,11 @@ class _Command(BaseStrictModel):
     polling: Optional[bool] = None
     prettyname: Optional[str] = None
     compliantpolicies: Optional[List[str]] = None
+    # `hidden` may be a bool, or a list of marketplace names where the command
+    # should be hidden. Mirrors the same shape allowed on integration parameters
+    # (see `_Configuration.hidden`). The explicit declaration here overrides the
+    # `hidden: Optional[bool]` that HIDDEN_DYNAMIC_MODEL would otherwise add.
+    hidden: Optional[Any] = None
     supportedModules: Optional[
         Annotated[
             List[PlatformSupportedModules],

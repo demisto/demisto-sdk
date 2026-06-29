@@ -72,7 +72,10 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
     outputs: List[IntegrationOutput] = Field([], exclude=True)
 
     deprecated: bool = Field(False)
-    hidden: bool = Field(False)
+    # `hidden` may be a bool, or a list of marketplace names where the command
+    # should be hidden. Mirrors the same shape allowed on integration parameters
+    # (see `Parameter.hidden`).
+    hidden: Any = Field(False)
     description: Optional[str] = Field("")
     supportedModules: Optional[List[str]] = Field([])
 

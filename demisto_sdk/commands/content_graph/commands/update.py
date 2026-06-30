@@ -98,15 +98,16 @@ def _changed_connectors_from_git(git_util: GitUtil, commit: str) -> Set[str]:
 
     Uses the same diff machinery as
     :py:meth:`GitUtil.get_all_changed_pack_ids`, but filters for the
-    ``connectors/`` prefix.  Safe to call even when the repo has no
-    ``connectors/`` folder - returns an empty set in that case.
+    ``connectors/`` prefix. Always returns a set (never raises) so callers
+    can treat it as best-effort; failures are logged at warning level since
+    a silent miss means the graph drops connector updates.
     """
     try:
         # GitUtil.get_all_changed_files returns Set[Path] of changed paths
         # relative to the repo root.
         changed_files = git_util.get_all_changed_files(commit)
     except Exception as e:
-        logger.debug(f"Could not enumerate changed files for connectors: {e}")
+        logger.warning(f"Could not enumerate changed files for connectors: {e}")
         return set()
 
     connector_ids: Set[str] = set()
@@ -124,14 +125,29 @@ def should_update_graph(
     imported_path: Optional[Path] = None,
     packs_to_update: Optional[List[str]] = None,
     connectors_to_update: Optional[List[str]] = None,
+    changed_pack_ids: Optional[Set[str]] = None,
+    changed_connector_ids: Optional[Set[str]] = None,
 ):
-    changed_pack_ids: Set[str] = set()
-    changed_connector_ids: Set[str] = set()
-    if content_graph_interface.commit:
+    """Decide whether the graph needs to be (re)built.
+
+    Args:
+        changed_pack_ids: Pre-computed set of pack ids changed since the
+            graph's pinned commit. When provided, the caller has already
+            done the git work and we reuse it. When ``None``, this function
+            computes it from git (legacy behaviour). Pass the empty set to
+            assert "no changed packs" without triggering a git scan.
+        changed_connector_ids: Same as above for connectors.
+    """
+    if content_graph_interface.commit and (
+        changed_pack_ids is None or changed_connector_ids is None
+    ):
+        # No caller-provided diff results - fall back to scanning git ourselves
+        # so legacy callers (and tests) keep working without changes.
         try:
-            changed_pack_ids = git_util.get_all_changed_pack_ids(
-                content_graph_interface.commit
-            )
+            if changed_pack_ids is None:
+                changed_pack_ids = git_util.get_all_changed_pack_ids(
+                    content_graph_interface.commit
+                )
         except Exception:
             logger.debug(
                 "Failed to get changed packs from git. Setting to update graph."
@@ -142,12 +158,14 @@ def should_update_graph(
             # 3. The graph which is running is a graph that was created from unit-testing
             # Anyway, we cannot trust the current graph, so we need to update it.
             return True
-        # Connectors live outside Packs/, so changes there also warrant an update
-        # when running with --use-git. This call is best-effort and won't fail
-        # the whole decision if it can't enumerate (e.g. no connectors/ folder).
-        changed_connector_ids = _changed_connectors_from_git(
-            git_util, content_graph_interface.commit
-        )
+        if changed_connector_ids is None:
+            # Best-effort: _changed_connectors_from_git never raises.
+            changed_connector_ids = _changed_connectors_from_git(
+                git_util, content_graph_interface.commit
+            )
+    # Normalise to empty sets so the ``any(...)`` checks below never see None.
+    changed_pack_ids = changed_pack_ids or set()
+    changed_connector_ids = changed_connector_ids or set()
     return any(
         (
             not content_graph_interface.is_alive(),  # if neo4j service is not alive, we need to update
@@ -277,8 +295,6 @@ def _update_content_graph_inner(
     # Check for diff files from environment variable
     # This allows CI systems to pass a list of changed files directly,
     # bypassing git-based detection which may not work in all CI environments.
-    # Only read from env var if packs_to_update was not already provided by the caller
-    # (e.g., pre_commit_command.py already extracts packs from files_to_run).
     # Track whether the changed-items list came from an explicit, trusted source
     # (caller-supplied args or DEMISTO_SDK_DIFF_FILES). When it did, we must NOT
     # fall back to git-diff augmentation later - in CI the graph's pinned commit
@@ -287,26 +303,57 @@ def _update_content_graph_inner(
     # scratch". The env-var path is the single source of truth in that case.
     explicit_changes_provided = bool(packs_to_update or connectors_to_update)
 
-    if not packs_to_update and not connectors_to_update:
+    # Read env var if either list is still empty - the two are independent so a
+    # caller that passed --packs only should still pick up connector entries
+    # from DEMISTO_SDK_DIFF_FILES (and vice versa).
+    if not packs_to_update or not connectors_to_update:
         diff_files_env = os.getenv(DEMISTO_SDK_DIFF_FILES_ENV, "")
         if diff_files_env:
-            env_pack_ids = extract_pack_ids_from_diff_files(diff_files_env)
-            if env_pack_ids:
-                logger.info(
-                    f"Extracted {len(env_pack_ids)} pack IDs from {DEMISTO_SDK_DIFF_FILES_ENV} "
-                    f"environment variable: {sorted(env_pack_ids)}"
+            if not packs_to_update:
+                env_pack_ids = extract_pack_ids_from_diff_files(diff_files_env)
+                if env_pack_ids:
+                    logger.info(
+                        f"Extracted {len(env_pack_ids)} pack IDs from {DEMISTO_SDK_DIFF_FILES_ENV} "
+                        f"environment variable: {sorted(env_pack_ids)}"
+                    )
+                    packs_to_update.extend(env_pack_ids)
+                    explicit_changes_provided = True
+            if not connectors_to_update:
+                env_connector_ids = extract_connector_ids_from_diff_files(
+                    diff_files_env
                 )
-                packs_to_update.extend(env_pack_ids)
-            env_connector_ids = extract_connector_ids_from_diff_files(diff_files_env)
-            if env_connector_ids:
-                logger.info(
-                    f"Extracted {len(env_connector_ids)} connector IDs from "
-                    f"{DEMISTO_SDK_DIFF_FILES_ENV} environment variable: "
-                    f"{sorted(env_connector_ids)}"
-                )
-                connectors_to_update.extend(env_connector_ids)
-            if env_pack_ids or env_connector_ids:
-                explicit_changes_provided = True
+                if env_connector_ids:
+                    logger.info(
+                        f"Extracted {len(env_connector_ids)} connector IDs from "
+                        f"{DEMISTO_SDK_DIFF_FILES_ENV} environment variable: "
+                        f"{sorted(env_connector_ids)}"
+                    )
+                    connectors_to_update.extend(env_connector_ids)
+                    explicit_changes_provided = True
+
+    # Compute git-diff change sets once and reuse for both the should-update
+    # decision and the actual augmentation below. Previously this was done in
+    # two places (should_update_graph + here), which meant two `git diff`
+    # walks per `update_content_graph` call.
+    changed_pack_ids: Set[str] = set()
+    changed_connector_ids: Set[str] = set()
+    git_diff_failed = False
+    if (
+        use_git
+        and (commit := content_graph_interface.commit)
+        and not is_external_repo
+        and not explicit_changes_provided
+    ):
+        try:
+            changed_pack_ids = git_util.get_all_changed_pack_ids(commit)
+        except Exception as e:
+            logger.warning(
+                f"Failed to get changed packs from git. Creating from scratch. Error: {e}"
+            )
+            git_diff_failed = True
+        if not git_diff_failed:
+            # Best-effort: _changed_connectors_from_git never raises.
+            changed_connector_ids = _changed_connectors_from_git(git_util, commit)
 
     builder = ContentGraphBuilder(content_graph_interface)
     if not should_update_graph(
@@ -316,6 +363,8 @@ def _update_content_graph_inner(
         imported_path,
         packs_to_update,
         connectors_to_update,
+        changed_pack_ids=changed_pack_ids,
+        changed_connector_ids=changed_connector_ids,
     ):
         logger.info(
             f"Content graph is up-to-date. If you expected an update, make sure your changes are added/committed to git. UI representation is available at {NEO4J_DATABASE_HTTP} "
@@ -355,46 +404,22 @@ def _update_content_graph_inner(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-    # Hoist the declaration so each branch below assigns to the same Set[str]
-    # variable; otherwise mypy treats line ~392's re-annotation as a redefinition.
-    changed_connector_ids: Set[str] = set()
-    if (
-        use_git
-        and (commit := content_graph_interface.commit)
-        and not is_external_repo
-        and not explicit_changes_provided
-    ):
-        try:
-            changed_pack_ids = git_util.get_all_changed_pack_ids(commit)
-        except Exception as e:
-            logger.warning(
-                f"Failed to get changed packs from git. Creating from scratch. Error: {e}"
-            )
-            create_content_graph(
-                content_graph_interface, marketplace, dependencies, output_path
-            )
-            return
-        packs_to_update.extend(changed_pack_ids)
-        # Also pick up any connectors changed since the graph's commit.
-        # Best-effort: failures here shouldn't tear down the whole update.
-        try:
-            changed_connector_ids = _changed_connectors_from_git(git_util, commit)
-        except Exception as e:
-            logger.debug(
-                f"Failed to get changed connectors from git: {e}. "
-                "Continuing without connector updates."
-            )
-            # changed_connector_ids stays as the empty set initialised above.
-    elif explicit_changes_provided:
+    # Apply the change sets computed once above. If the git diff failed,
+    # fall back to creating the graph from scratch (preserves prior behaviour).
+    if git_diff_failed:
+        create_content_graph(
+            content_graph_interface, marketplace, dependencies, output_path
+        )
+        return
+    if explicit_changes_provided and use_git:
         logger.info(
             "Skipping git-diff augmentation: changed packs/connectors were "
             "provided explicitly (via caller args or "
             f"{DEMISTO_SDK_DIFF_FILES_ENV}), so the bucket-commit git diff "
             "is redundant and would fail in shallow CI clones."
         )
-        # changed_connector_ids stays as the empty set initialised above.
-    if changed_connector_ids:
-        connectors_to_update.extend(changed_connector_ids)
+    packs_to_update.extend(changed_pack_ids)
+    connectors_to_update.extend(changed_connector_ids)
 
     if packs_to_update:
         packs_str = "\n".join([f"- {p}" for p in sorted(packs_to_update)])

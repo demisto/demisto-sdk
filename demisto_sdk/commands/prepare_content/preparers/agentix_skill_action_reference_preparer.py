@@ -52,11 +52,9 @@ class AgentixSkillActionReferencePreparer:
             action_id = match.group(1).strip()
             action_name = id_to_name.get(action_id)
             if action_name is None:
-                # Note: collect the action id (not the raw '<action=...>' token):
-                # the angle brackets are interpreted as markup by the logger and
-                # the error message, and the action id is sufficient context.
                 if action_id not in unresolved:
                     unresolved.append(action_id)
+                    
                 return match.group(0)
             return f"<action={action_name}>"
 

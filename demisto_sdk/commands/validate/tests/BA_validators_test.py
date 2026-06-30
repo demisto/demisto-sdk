@@ -4163,6 +4163,41 @@ def test_InvalidSupportedModulesValidator_unmapped_content_type_is_skipped():
     assert len(results) == 0
 
 
+def test_InvalidSupportedModulesValidator_playbook_invalid_module():
+    """
+    Given
+    - A platform Playbook (allows all modules) declaring a module that is not a
+      real PlatformSupportedModules value ('not_a_module').
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - A single failure is returned for the non-existent module.
+    """
+    content_item = _platform_item(create_playbook_object, ["not_a_module"])
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 1
+    assert "not_a_module" in results[0].message
+
+
+def test_InvalidSupportedModulesValidator_platform_item_with_empty_modules_is_valid():
+    """
+    Given
+    - A platform Playbook that explicitly declares no supported modules ([]).
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned: an item with no modules has nothing that can be
+      invalid, and an explicit [] must NOT expand to the platform defaults.
+    """
+    content_item = _platform_item(create_playbook_object, [])
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
 def _dashboard_with_modules(supported_modules):
     """Build a dashboard through the real parser path, injecting the given
     supportedModules into the content (None to omit the field entirely).

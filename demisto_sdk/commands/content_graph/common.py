@@ -378,6 +378,14 @@ class ContentType(StrEnum):
             return "Modules"
         elif self == ContentType.CASE_LAYOUT:
             return "Layouts"
+        elif self == ContentType.AGENTIX_AGENT:
+            return "Agents"
+        elif self == ContentType.AGENTIX_ACTION:
+            return "Actions"
+        elif self == ContentType.AGENTIX_SKILL:
+            return "Skills"
+        elif self == ContentType.COLLECTION:
+            return "Collections"
         separated_str = pascalToSpace(self)
         return f"{separated_str}s"
 
@@ -400,6 +408,14 @@ class ContentType(StrEnum):
             return ContentType.GENERIC_TYPE
         elif header == "Object Fields":
             return ContentType.GENERIC_FIELD
+        elif header == "Agents":
+            return ContentType.AGENTIX_AGENT
+        elif header == "Actions":
+            return ContentType.AGENTIX_ACTION
+        elif header == "Skills":
+            return ContentType.AGENTIX_SKILL
+        elif header == "Collections":
+            return ContentType.COLLECTION
         normalized_header = header.rstrip("s").replace(" ", "_").upper()
         return ContentType[normalized_header]
 

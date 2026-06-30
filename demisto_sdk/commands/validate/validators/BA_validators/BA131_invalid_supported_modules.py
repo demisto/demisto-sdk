@@ -80,7 +80,7 @@ ContentTypes = Union[
 # The complete set of platform supported modules.
 ALL_MODULES: Set[str] = {module.value for module in PlatformSupportedModules}
 
-# Content item types that allow every platform supported module.
+# The 'xsiam' and 'agentix' modules.
 XSIAM_AND_AGENTIX: Set[str] = {
     PlatformSupportedModules.XSIAM.value,
     PlatformSupportedModules.AGENTIX.value,
@@ -135,7 +135,7 @@ class InvalidSupportedModulesValidator(BaseValidator[ContentTypes]):
         "module values that are permitted for that content item type."
     )
     rationale = (
-        "Each content item type can only run under a specific set of modules. "
+        "Each content item type can only exist under a specific set of modules. "
         "Declaring a module that is not supported for the item's type results in "
         "content that cannot be loaded correctly by the platform."
     )
@@ -176,9 +176,9 @@ class InvalidSupportedModulesValidator(BaseValidator[ContentTypes]):
             # from the platform defaults.
             resolved_modules = get_content_item_supported_modules(content_item)
             if not resolved_modules:
-                # Empty only for non-platform items (no 'platform' marketplace).
-                # Platform items always resolve to their own/pack/default modules,
-                # so there is nothing to validate for non-platform items.
+                # Empty for non-platform items, or for a platform item that
+                # explicitly declares no modules ([]). Either way there are no
+                # modules to be invalid, so there is nothing to validate.
                 continue
 
             invalid_modules = resolved_modules - allowed_modules

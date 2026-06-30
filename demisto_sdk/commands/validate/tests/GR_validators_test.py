@@ -1745,6 +1745,91 @@ def test_SupportedModulesCompatibility_supported_module_none_in_content_item_a(
 
 
 @pytest.fixture
+def repo_for_test_gr_109_no_supported_modules_in_pack_a_metadata(graph_repo: Repo):
+    """
+    Creates a test repository for testing GR109 when the caller's pack metadata
+    has no supportedModules key.
+
+    Structure:
+    - Pack A (PLATFORM): no supportedModules in pack metadata.
+                         Script1 has no supportedModules on the item itself either,
+                         so it falls back to ALL platform modules.
+    - Pack B (PLATFORM): supportedModules: ["module_x"] in pack metadata.
+                         SearchIncidents script has no supportedModules on the item,
+                         so it inherits ["module_x"] from its pack.
+
+    Script1 calls demisto.executeCommand("SearchIncidents", {}) creating a dependency.
+    Because Script1 effectively supports ALL platform modules but SearchIncidents only
+    supports ["module_x"], Script1 is invalid.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+            # No supportedModules - falls back to all platform modules
+        }
+    )
+    pack_a.create_script(
+        "Script1", code='demisto.executeCommand("SearchIncidents", {})'
+    )
+
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ],
+            "supportedModules": ["module_x"],
+        }
+    )
+    yml_search_incidents = {
+        "commonfields": {"id": "SearchIncidents", "version": -1},
+        "name": "SearchIncidents",
+        "comment": "this is script SearchIncidents",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+    }
+    pack_b.create_script(
+        "SearchIncidents",
+        code='demisto.executeCommand("SearchIncidents", {})',
+        yml=yml_search_incidents,
+    )
+
+    return graph_repo
+
+
+def test_SupportedModulesCompatibility_no_supported_modules_in_pack_a_metadata(
+    repo_for_test_gr_109_no_supported_modules_in_pack_a_metadata: Repo,
+):
+    """
+    Given:
+        Pack A has no supportedModules in its pack metadata (falls back to all platform
+        modules). Script1 in Pack A depends on SearchIncidents in Pack B, which only
+        supports ["module_x"] (inherited from its pack metadata).
+    When:
+        Running the IsSupportedModulesCompatibility validator on all files.
+    Then:
+        Script1 is invalid because it effectively requires all platform modules but
+        SearchIncidents only supports ["module_x"].
+    """
+    graph_interface = (
+        repo_for_test_gr_109_no_supported_modules_in_pack_a_metadata.create_graph()
+    )
+    BaseValidator.graph_interface = graph_interface
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert results[0].content_object.object_id == "Script1"
+    assert "SearchIncidents is missing:" in results[0].message
+
+
+@pytest.fixture
 def repo_for_test_gr_109_mismatch_command(graph_repo: Repo):
     """
     Creates a test repository with a single pack to test the command mismatch part of GR109 validation.
@@ -1966,6 +2051,138 @@ def test_SupportedModulesCompatibility_invalid_list_files_mismatch_playbook(
         == "Module compatibility issue detected for mandatory dependency: Content item 'playbook1' has incompatible commands: [command_x]. Make sure the commands used are supported by the same modules as the content item."
     )
     assert results[0].content_object.object_id == "playbook1"
+
+
+@pytest.fixture
+def repo_for_test_gr_109_cache_pollution(graph_repo: Repo):
+    """
+    Creates a test repository to reproduce the GR109 shared-cache pollution bug.
+
+    Structure:
+    - Pack A (platform marketplace), one integration with two commands:
+        - command_x: supportedModules ["module_x"]  -> genuine mismatch with playbook1
+        - safe_command: no supportedModules         -> supports all, can never mismatch
+    - playbook1: supportedModules ["module_x", "module_y"], using BOTH commands on the
+      mandatory execution path.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.set_data(marketplaces=[MarketplaceVersions.PLATFORM.value])
+    integration1 = pack_a.create_integration(name="integration1")
+    integration1.set_data(
+        script={
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "command_x",
+                    "description": "description",
+                    "arguments": [],
+                    "supportedModules": ["module_x"],
+                },
+                {
+                    "name": "safe_command",
+                    "description": "description",
+                    "arguments": [],
+                },
+            ],
+            "dockerimage": None,
+        }
+    )
+
+    playbook_yml = {
+        "id": "playbook1",
+        "name": "playbook1",
+        "starttaskid": "0",
+        "supportedModules": ["module_x", "module_y"],
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "0",
+                "type": "regular",
+                "nexttasks": {"#none#": ["1"]},
+                "task": {
+                    "id": "0",
+                    "name": "run command_x",
+                    "description": "Uses command_x",
+                    "script": "command_x",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "Integration1",
+                },
+            },
+            "1": {
+                "id": "1",
+                "taskid": "1",
+                "type": "regular",
+                "nexttasks": {"#none#": ["2"]},
+                "task": {
+                    "id": "1",
+                    "name": "run safe_command",
+                    "description": "Uses safe_command",
+                    "script": "safe_command",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "Integration1",
+                },
+            },
+            "2": {
+                "id": "2",
+                "taskid": "2",
+                "type": "title",
+                "task": {
+                    "id": "2",
+                    "name": "Done",
+                    "type": "title",
+                    "iscommand": False,
+                    "brand": "",
+                },
+            },
+        },
+    }
+    pack_a.create_playbook("playbook1", yml=playbook_yml)
+
+    return graph_repo
+
+
+def test_GR109_ignores_safe_commands_after_cache_pollution(
+    repo_for_test_gr_109_cache_pollution: Repo,
+):
+    """
+    Given:
+        A platform playbook ("playbook1", supportedModules ['module_x', 'module_y'])
+        that uses both "command_x" (supportedModules ['module_x'] -> genuine mismatch)
+        and "safe_command" (no supportedModules -> supports all, never a mismatch).
+    When:
+        Another validator first loads ALL of the playbook's USES relationships into the
+        shared graph cache (simulated via graph.search), and then the
+        IsSupportedModulesCompatibility validator runs on all files.
+    Then:
+        Only "command_x" is reported as incompatible; "safe_command" must NOT appear.
+    """
+    graph_interface = repo_for_test_gr_109_cache_pollution.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    # Simulate a prior validator (e.g. PB131) loading the playbook's full USES set into
+    # the shared, append-only cache.
+    graph_interface.search(content_type=ContentType.PLAYBOOK, object_id="playbook1")
+
+    # Sanity-check that the cache is actually polluted with BOTH commands, so this test
+    # would fail on the pre-fix (unguarded) handler.
+    playbook_obj = next(
+        obj
+        for obj in graph_interface._id_to_obj.values()
+        if getattr(obj, "object_id", None) == "playbook1"
+    )
+    used_command_ids = {rel.content_item_to.object_id for rel in playbook_obj.uses}
+    assert {"command_x", "safe_command"} <= used_command_ids
+
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert results[0].content_object.object_id == "playbook1"
+    assert "command_x" in results[0].message
+    assert "safe_command" not in results[0].message
 
 
 @pytest.fixture

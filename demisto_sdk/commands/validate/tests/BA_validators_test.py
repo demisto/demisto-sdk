@@ -4890,6 +4890,8 @@ def test_InvalidSupportedModulesForFetchTypeValidator_fix_sets_empty_list_when_a
     - Calling obtain_invalid_content_items and then fix.
     Then
     - The param's supportedModules becomes an empty list (not None).
+    - Re-validating the fixed integration yields no error (an explicit [] is
+      honored as "no modules" and is not resolved to the platform defaults).
     """
     from demisto_sdk.commands.content_graph.objects.integration import Parameter
 
@@ -4913,6 +4915,9 @@ def test_InvalidSupportedModulesForFetchTypeValidator_fix_sets_empty_list_when_a
         param for param in integration.params if param.name == "eventFetchInterval"
     )
     assert fixed.supportedModules == []
+
+    re_validation = validator.obtain_invalid_content_items([integration])
+    assert not re_validation
 
 
 def test_InvalidSupportedModulesForFetchTypeValidator_fix_adds_missing_required_param():
@@ -4942,6 +4947,37 @@ def test_InvalidSupportedModulesForFetchTypeValidator_fix_adds_missing_required_
         param for param in integration.params if param.name == "incidentType"
     )
     assert sorted(added.supportedModules) == ["agentix", "xsiam"]
+
+
+def test_InvalidSupportedModulesForFetchTypeValidator_fix_added_param_intersects_item_modules():
+    """
+    Given
+    - A platform fetch-incidents integration whose integration-level
+      supportedModules is restricted to ['xsiam'], missing the required
+      'incidentType' parameter.
+    When
+    - Calling obtain_invalid_content_items and then fix.
+    Then
+    - The added 'incidentType' param's supportedModules is the fetch type's allowed
+      modules intersected with the integration-level modules (only 'xsiam'),
+      not the full allowed set.
+    """
+    validator = InvalidSupportedModulesForFetchTypeValidator()
+    integration = _fetch_integration(
+        {"is_fetch": True},
+        [
+            ("isFetch", ["xsiam"]),
+            ("incidentFetchInterval", ["xsiam"]),
+        ],
+        item_supported_modules=["xsiam"],
+    )
+    validator.obtain_invalid_content_items([integration])
+    validator.fix(integration)
+
+    added = next(
+        param for param in integration.params if param.name == "incidentType"
+    )
+    assert added.supportedModules == ["xsiam"]
 
 
 def test_InvalidSupportedModulesForFetchTypeValidator_all_required_params_have_templates():

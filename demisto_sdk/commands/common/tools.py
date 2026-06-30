@@ -4866,8 +4866,10 @@ def get_parameter_supported_modules(param, item) -> set[str]:
     parameter, following the resolution chain:
     parameter -> integration (item) -> pack -> platform defaults.
 
-    The parameter's own 'supportedModules' takes precedence. When the parameter
-    does not declare any, the value is inherited from the integration, which in
+    The parameter's own 'supportedModules' takes precedence. An explicit empty
+    list ([]) on the parameter is honored as "no modules" and is NOT inherited
+    from the integration/pack. Only when the parameter does not declare the
+    field at all (None) is the value inherited from the integration, which in
     turn falls back to its pack and finally to the platform defaults (all
     modules), via get_content_item_supported_modules.
 
@@ -4886,7 +4888,7 @@ def get_parameter_supported_modules(param, item) -> set[str]:
         return set()
 
     param_modules = getattr(param, "supportedModules", None)
-    if param_modules:
+    if param_modules is not None:
         return set(param_modules)
 
     return get_content_item_supported_modules(item)

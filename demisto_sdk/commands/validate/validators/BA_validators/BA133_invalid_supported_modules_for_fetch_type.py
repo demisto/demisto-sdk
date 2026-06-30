@@ -8,7 +8,10 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     PlatformSupportedModules,
 )
-from demisto_sdk.commands.common.tools import get_parameter_supported_modules
+from demisto_sdk.commands.common.tools import (
+    get_content_item_supported_modules,
+    get_parameter_supported_modules,
+)
 from demisto_sdk.commands.content_graph.objects.integration import (
     Integration,
     Parameter,
@@ -345,6 +348,7 @@ class InvalidSupportedModulesForFetchTypeValidator(BaseValidator[ContentTypes]):
         """
         existing_param_names = {param.name for param in content_item.params}
         messages: List[str] = []
+        resolved_item_modules = get_content_item_supported_modules(content_item)
 
         for fetch_type in active_fetch_types:
             for required_param in sorted(fetch_type.required_params):
@@ -357,7 +361,7 @@ class InvalidSupportedModulesForFetchTypeValidator(BaseValidator[ContentTypes]):
                         )
                     )
                     fix_plan.params_to_add[required_param] = sorted(
-                        allowed_by_param[required_param]
+                        allowed_by_param[required_param] & resolved_item_modules
                     )
 
         return messages

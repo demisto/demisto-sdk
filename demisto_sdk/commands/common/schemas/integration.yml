@@ -196,6 +196,8 @@ mapping:
     type: bool
   supportsquickactions:
       type: bool
+  spec:
+    type: str
 
   triggers:
     type: seq

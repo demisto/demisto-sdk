@@ -1750,6 +1750,91 @@ def test_SupportedModulesCompatibility_supported_module_none_in_content_item_a(
 
 
 @pytest.fixture
+def repo_for_test_gr_109_no_supported_modules_in_pack_a_metadata(graph_repo: Repo):
+    """
+    Creates a test repository for testing GR109 when the caller's pack metadata
+    has no supportedModules key.
+
+    Structure:
+    - Pack A (PLATFORM): no supportedModules in pack metadata.
+                         Script1 has no supportedModules on the item itself either,
+                         so it falls back to ALL platform modules.
+    - Pack B (PLATFORM): supportedModules: ["module_x"] in pack metadata.
+                         SearchIncidents script has no supportedModules on the item,
+                         so it inherits ["module_x"] from its pack.
+
+    Script1 calls demisto.executeCommand("SearchIncidents", {}) creating a dependency.
+    Because Script1 effectively supports ALL platform modules but SearchIncidents only
+    supports ["module_x"], Script1 is invalid.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ]
+            # No supportedModules - falls back to all platform modules
+        }
+    )
+    pack_a.create_script(
+        "Script1", code='demisto.executeCommand("SearchIncidents", {})'
+    )
+
+    pack_b = graph_repo.create_pack("Pack B")
+    pack_b.pack_metadata.update(
+        {
+            "marketplaces": [
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ],
+            "supportedModules": ["module_x"],
+        }
+    )
+    yml_search_incidents = {
+        "commonfields": {"id": "SearchIncidents", "version": -1},
+        "name": "SearchIncidents",
+        "comment": "this is script SearchIncidents",
+        "type": "python",
+        "subtype": "python3",
+        "script": "-",
+        "skipprepare": [],
+    }
+    pack_b.create_script(
+        "SearchIncidents",
+        code='demisto.executeCommand("SearchIncidents", {})',
+        yml=yml_search_incidents,
+    )
+
+    return graph_repo
+
+
+def test_SupportedModulesCompatibility_no_supported_modules_in_pack_a_metadata(
+    repo_for_test_gr_109_no_supported_modules_in_pack_a_metadata: Repo,
+):
+    """
+    Given:
+        Pack A has no supportedModules in its pack metadata (falls back to all platform
+        modules). Script1 in Pack A depends on SearchIncidents in Pack B, which only
+        supports ["module_x"] (inherited from its pack metadata).
+    When:
+        Running the IsSupportedModulesCompatibility validator on all files.
+    Then:
+        Script1 is invalid because it effectively requires all platform modules but
+        SearchIncidents only supports ["module_x"].
+    """
+    graph_interface = (
+        repo_for_test_gr_109_no_supported_modules_in_pack_a_metadata.create_graph()
+    )
+    BaseValidator.graph_interface = graph_interface
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert results[0].content_object.object_id == "Script1"
+    assert "SearchIncidents is missing:" in results[0].message
+
+
+@pytest.fixture
 def repo_for_test_gr_109_mismatch_command(graph_repo: Repo):
     """
     Creates a test repository with a single pack to test the command mismatch part of GR109 validation.

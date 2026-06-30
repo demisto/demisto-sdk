@@ -732,12 +732,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def find_content_items_with_module_mismatch_content_items(
         self, content_item_ids: List[str], mandatory: bool = True
-    ) -> List[BaseNode]:
+    ) -> List[Tuple[BaseNode, List[str]]]:
         """
         Retrieves content items with invalid command relationships based on supported modules.
 
         This method identifies content items where a command's `supportedModules`
         are not fully included in the `supportedModules` of the parent content item.
+
+        The list of mismatched command object IDs is computed directly by the Cypher
+        query (per command).
 
         Args:
             content_item_ids (List[str]): List of content item IDs to check for invalid commands.
@@ -746,17 +749,24 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                               If False, checks non-mandatory (mandatorily:false) USES relationships.
                               Defaults to True.
         Returns:
-            List[BaseNode]: Content items that have invalid supported module commands, if any exist.
+            List[Tuple[BaseNode, List[str]]]: Tuples of (content item, mismatched command
+            object IDs) for content items that have invalid supported module commands.
         """
         with self.driver.session() as session:
-            results = session.execute_read(
+            results, mismatched_commands_by_item = session.execute_read(
                 get_supported_modules_mismatch_content_items,
                 content_item_ids,
                 mandatory,
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
-            return [self._id_to_obj[result] for result in results]
+            return [
+                (
+                    self._id_to_obj[element_id],
+                    mismatched_commands_by_item.get(element_id, []),
+                )
+                for element_id in results
+            ]
 
     def find_unused_test_playbook(
         self, test_playbook_ids: List[str], test_playbooks_ids_to_skip: List[str]

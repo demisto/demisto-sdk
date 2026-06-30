@@ -3,11 +3,13 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_content_item_supported_modules
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
+from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.case_field import CaseField
 from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
@@ -114,6 +116,13 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         for dependency in content_item.uses:
             # Filter by mandatory/non-mandatory based on the class member
             if dependency.mandatorily != self.mandatory_dependency:
+                continue
+            if isinstance(dependency.content_item_to, UnknownContent):
+                logger.debug(
+                    f"GR109: skipping dependency '{dependency.content_item_to.object_id or dependency.content_item_to.name}' "
+                    f"of '{content_item.object_id}' because it is an UnknownContent item "
+                    f"(not found in the repository)."
+                )
                 continue
             dep_modules = get_content_item_supported_modules(dependency.content_item_to)
             # Get modules supported by the content item but not by its dependency

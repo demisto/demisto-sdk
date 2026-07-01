@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.constants import PlatformSupportedModules
+from demisto_sdk.commands.common.tools import get_content_item_supported_modules
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -108,16 +108,15 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
             dict: A dictionary mapping dependency IDs to lists of missing modules
         """
         missing_modules_by_dependency: dict[str, list[str]] = {}
+        item_modules = get_content_item_supported_modules(content_item)
         for dependency in content_item.uses:
             # Filter by mandatory/non-mandatory based on the class member
             if dependency.mandatorily != self.mandatory_dependency:
                 continue
+            dep_modules = get_content_item_supported_modules(dependency.content_item_to)
             # Get modules supported by the content item but not by its dependency
             missing_modules = [
-                module
-                for module in content_item.supportedModules
-                or [sm.value for sm in PlatformSupportedModules]
-                if module not in dependency.content_item_to.supportedModules
+                module for module in item_modules if module not in dep_modules
             ]
             if missing_modules:
                 missing_modules_by_dependency[dependency.content_item_to.object_id] = (
@@ -153,26 +152,29 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         return missing_modules_by_item
 
     def get_commands_with_missing_modules_by_content_item(
-        self, item, commands_with_missing_modules_by_content_item: dict
-    ):
-        """Get commands with missing modules for a content item.
+        self,
+        item: ContentTypes,
+        mismatched_command_ids: list[str],
+        commands_with_missing_modules_by_content_item: dict[str, list[str]],
+    ) -> None:
+        """Record the commands that have a module mismatch for a content item.
+
+        The list of mismatched commands is computed directly by the Branch 3 Cypher
+        query (``get_supported_modules_mismatch_content_items``) and passed in as
+        ``mismatched_command_ids``.
 
         Args:
-            item: The content item to check commands for
-            commands_with_missing_modules_by_content_item: Dictionary to populate with commands that have missing modules
-
-        Returns:
-            dict: A dictionary mapping content item IDs to lists of command IDs
+            item: The content item that has at least one incompatible command.
+            mismatched_command_ids: Object IDs of the commands that genuinely mismatch,
+                as determined by the graph query.
+            commands_with_missing_modules_by_content_item: Dictionary to populate with
+                commands that have missing modules.
         """
-        for rel in item.uses:
-            command = rel.content_item_to
-            # At this point, we assume the mismatch is already established
-            if item.object_id not in commands_with_missing_modules_by_content_item:
-                commands_with_missing_modules_by_content_item[item.object_id] = []
-            # Add the command ID to the list
-            commands_with_missing_modules_by_content_item[item.object_id].append(
-                command.object_id
-            )
+        if not mismatched_command_ids:
+            return
+        commands_with_missing_modules_by_content_item.setdefault(
+            item.object_id, []
+        ).extend(mismatched_command_ids)
 
     def format_error_messages(self, missing_modules_dict):
         """Format error messages for missing modules.
@@ -271,10 +273,10 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
                 )
 
         # Process items with mismatched content_items
-        for invalid_item in mismatched_content_items:
+        for invalid_item, mismatched_command_ids in mismatched_content_items:
             commands_with_missing_modules: dict[str, list[str]] = {}
             self.get_commands_with_missing_modules_by_content_item(
-                invalid_item, commands_with_missing_modules
+                invalid_item, mismatched_command_ids, commands_with_missing_modules
             )
             if commands_with_missing_modules:
                 formatted_message = self.format_commands_error_message(

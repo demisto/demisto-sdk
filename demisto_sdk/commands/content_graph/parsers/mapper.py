@@ -43,6 +43,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         }
 
     def get_filters_and_transformers_from_complex_value(

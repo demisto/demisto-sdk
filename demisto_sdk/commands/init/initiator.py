@@ -327,7 +327,7 @@ class Initiator:
             return template or (
                 self.HELLO_WORLD_EVENT_COLLECTOR_INTEGRATION
                 if self.marketplace
-                in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
+                in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM, MarketplaceVersions.CYBERARK]
                 else self.DEFAULT_INTEGRATION_TEMPLATE
             )
 
@@ -524,6 +524,7 @@ class Initiator:
         if self.marketplace in [
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         ]:
             for directory in self.XSIAM_DIR:
                 path = os.path.join(self.full_output_path, directory)
@@ -560,6 +561,7 @@ class Initiator:
             if self.marketplace not in [
                 MarketplaceVersions.MarketplaceV2,
                 MarketplaceVersions.PLATFORM,
+                MarketplaceVersions.CYBERARK,
             ]:
                 is_same_category = str(
                     input(
@@ -810,6 +812,7 @@ class Initiator:
         if self.marketplace in [
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         ]:
             if not self.dir_name.lower().endswith(EVENT_COLLECTOR.lower()):
                 self.dir_name = f"{self.dir_name}{EVENT_COLLECTOR}"
@@ -859,6 +862,7 @@ class Initiator:
         if self.marketplace not in [
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         ]:
             return True
         if not self.output:
@@ -891,6 +895,7 @@ class Initiator:
         if self.marketplace in [
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         ] and not self.create_initiators_and_init_modeling_parsing_rules(
             product, vendor
         ):
@@ -903,7 +908,7 @@ class Initiator:
                 self.output
                 and re.search(PACKS_DIR_REGEX, self.output)
                 and self.marketplace
-                in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
+                in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM, MarketplaceVersions.CYBERARK]
             ):
                 self.full_output_path = str(
                     find_pack_folder(Path(self.output))
@@ -933,6 +938,7 @@ class Initiator:
             if self.marketplace in [
                 MarketplaceVersions.MarketplaceV2,
                 MarketplaceVersions.PLATFORM,
+                MarketplaceVersions.CYBERARK,
             ]:
                 self.process_files(integration_template_files, local_template_path)
             else:
@@ -1041,6 +1047,7 @@ class Initiator:
         if self.marketplace in [
             MarketplaceVersions.MarketplaceV2,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         ]:
             while not vendor:
                 vendor = str(input("Please enter vendor name: ").lower())
@@ -1146,7 +1153,7 @@ class Initiator:
         )
         if (
             self.marketplace
-            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
+            in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM, MarketplaceVersions.CYBERARK]
             and python_file_path.exists()
         ):
             with open(python_file_path) as fp:
@@ -1214,7 +1221,7 @@ class Initiator:
                 else (
                     ANALYTICS_AND_SIEM_CATEGORY
                     if self.marketplace
-                    in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM]
+                    in [MarketplaceVersions.MarketplaceV2, MarketplaceVersions.PLATFORM, MarketplaceVersions.CYBERARK]
                     else Initiator.get_valid_user_input(
                         options_list=INTEGRATION_CATEGORIES,
                         option_message="\nIntegration category options: \n",

@@ -50,6 +50,7 @@ class IndicatorTypeParser(
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         }
 
     def connect_to_dependencies(self) -> None:

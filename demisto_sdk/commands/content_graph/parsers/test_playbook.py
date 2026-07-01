@@ -52,4 +52,5 @@ class TestPlaybookParser(BasePlaybookParser, content_type=ContentType.TEST_PLAYB
             MarketplaceVersions.XSOAR_SAAS,
             MarketplaceVersions.XSOAR_ON_PREM,
             MarketplaceVersions.PLATFORM,
+            MarketplaceVersions.CYBERARK,
         }

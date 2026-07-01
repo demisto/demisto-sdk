@@ -32,7 +32,7 @@ class AgentixActionTestParser(
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.PLATFORM}
+        return {MarketplaceVersions.PLATFORM, MarketplaceVersions.CYBERARK}
 
     @property
     def strict_object(self):

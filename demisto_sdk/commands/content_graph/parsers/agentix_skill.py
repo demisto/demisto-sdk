@@ -56,12 +56,15 @@ class AgentixSkillParser(AgentixBaseParser, content_type=ContentType.AGENTIX_SKI
         return super().field_mapping
 
     def connect_to_dependencies(self) -> None:
-        """Registers the actions referenced in the skill body as mandatory dependencies.
+        """Registers the actions referenced in the skill body as optional dependencies.
 
         The skill's Markdown body (``<SkillName>_skill.md``) may contain tokens of
         the form ``<action=action-id>``. Each unique referenced action id is
-        registered as a mandatory ``USES_BY_ID`` dependency so that, during
-        prepare-upload, the token can be replaced with the action's display name.
+        registered as an optional (non-mandatory) ``USES_BY_ID`` dependency so
+        that, during prepare-upload, the token can be replaced with the action's
+        display name. The dependency is non-mandatory (mirroring ``AgentixAgent``)
+        so that a reference to an action that does not exist in the repository does
+        not surface as a mandatory unresolved dependency during validation.
         """
         try:
             body = self.content
@@ -78,7 +81,7 @@ class AgentixSkillParser(AgentixBaseParser, content_type=ContentType.AGENTIX_SKI
         ):
             if action_id:
                 self.add_dependency_by_id(
-                    action_id, ContentType.AGENTIX_ACTION, is_mandatory=True
+                    action_id, ContentType.AGENTIX_ACTION, is_mandatory=False
                 )
 
     @property

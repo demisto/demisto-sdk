@@ -36,6 +36,21 @@ class PackMetadata(BaseModel):
     description: Optional[str]
     source: Optional[str] = Field("")
     managed: Optional[bool] = Field(False)
+    # Marketplace-suffixed managed/source fields (e.g. ``managed:platform``,
+    # ``source:platform``). These are resolved into the plain ``managed``/``source``
+    # fields per-marketplace during dump (see MarketplaceSuffixPreparer).
+    managed_xsoar: Optional[bool] = Field(None, alias="managed:xsoar")
+    managed_marketplacev2: Optional[bool] = Field(None, alias="managed:marketplacev2")
+    managed_xpanse: Optional[bool] = Field(None, alias="managed:xpanse")
+    managed_xsoar_saas: Optional[bool] = Field(None, alias="managed:xsoar_saas")
+    managed_xsoar_on_prem: Optional[bool] = Field(None, alias="managed:xsoar_on_prem")
+    managed_platform: Optional[bool] = Field(None, alias="managed:platform")
+    source_xsoar: Optional[str] = Field(None, alias="source:xsoar")
+    source_marketplacev2: Optional[str] = Field(None, alias="source:marketplacev2")
+    source_xpanse: Optional[str] = Field(None, alias="source:xpanse")
+    source_xsoar_saas: Optional[str] = Field(None, alias="source:xsoar_saas")
+    source_xsoar_on_prem: Optional[str] = Field(None, alias="source:xsoar_on_prem")
+    source_platform: Optional[str] = Field(None, alias="source:platform")
     internal: Optional[bool] = Field(False)
     created: Optional[str] = Field(alias="firstCreated")
     updated: Optional[str] = Field("")

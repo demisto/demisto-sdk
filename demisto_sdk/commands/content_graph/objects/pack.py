@@ -62,6 +62,9 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
 from demisto_sdk.commands.prepare_content.markdown_images_handler import (
     update_markdown_images_with_urls_and_rel_paths,
 )
+from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
+    MarketplaceSuffixPreparer,
+)
 from demisto_sdk.commands.upload.constants import (
     CONTENT_TYPES_EXCLUDED_FROM_UPLOAD,
     CONTENT_TYPES_NOT_SUPPORTED_IN_UPLOAD,
@@ -265,29 +268,34 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                         del command["supportedModules"]
 
     def _dump_pack_metadata(
-        self, source: Path, destination: Path, strip_internal: bool = False
+        self,
+        source: Path,
+        destination: Path,
+        marketplace: MarketplaceVersions,
+        strip_internal: bool = False,
     ) -> None:
         """Copies the pack_metadata.json file to the destination.
 
-        When ``strip_internal`` is true, the ``internal`` field is removed so
-        the uploaded pack will be visible to the user. Otherwise the file is
-        copied verbatim.
+        The marketplace-suffixed ``managed``/``source`` fields are resolved into
+        the plain ``managed``/``source`` fields for the given marketplace (see
+        ``MarketplaceSuffixPreparer.prepare_managed_and_source``), so the copied
+        ``pack_metadata.json`` is consistent with the dumped ``metadata.json``.
 
-        Falls back to a plain copy if the source cannot be parsed as JSON,
-        or if ``strip_internal`` is false.
+        When ``strip_internal`` is true, the ``internal`` field is also removed so
+        the uploaded pack will be visible to the user.
+
+        Falls back to a plain copy if the source cannot be parsed as JSON.
 
         Args:
             source (Path): The path to the original pack_metadata.json.
             destination (Path): The path to write the (possibly modified)
                 pack_metadata.json.
+            marketplace (MarketplaceVersions): The marketplace to resolve the
+                suffixed managed/source fields for.
             strip_internal (bool): If true, remove the ``internal`` field from
                 the destination file. Should only be set by the
                 ``demisto-sdk upload`` flow.
         """
-        if not strip_internal:
-            shutil.copy(source, destination)
-            return
-
         try:
             pack_metadata = get_file(source, raise_on_error=True)
         except Exception as e:
@@ -302,7 +310,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             shutil.copy(source, destination)
             return
 
-        if pack_metadata.pop("internal", None):
+        # Resolve marketplace-suffixed managed/source fields for the current
+        # marketplace, consistent with the dumped metadata.json.
+        pack_metadata = MarketplaceSuffixPreparer.prepare_managed_and_source(
+            pack_metadata, marketplace
+        )
+
+        if strip_internal and pack_metadata.pop("internal", None):
             logger.debug(f"Removed 'internal' field from {source} before upload")
         write_dict(destination, data=pack_metadata, indent=4)
 
@@ -348,6 +362,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             }
 
         metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
+        # Resolve marketplace-suffixed managed/source fields into the plain
+        # managed/source fields for the current marketplace.
+        metadata = MarketplaceSuffixPreparer.prepare_managed_and_source(
+            metadata, marketplace
+        )
         metadata.update(
             self._format_metadata(
                 marketplace,
@@ -489,6 +508,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             self._dump_pack_metadata(
                 self.path / PACK_METADATA_FILENAME,
                 path / PACK_METADATA_FILENAME,
+                marketplace,
                 strip_internal=strip_internal,
             )
             try:

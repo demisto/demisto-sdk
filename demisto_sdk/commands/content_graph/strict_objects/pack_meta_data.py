@@ -103,3 +103,18 @@ class StrictPackMetadata(BaseStrictModel):
     source: Optional[str] = Field("", alias="source")
     managed: Optional[bool] = Field(False, alias="managed")
     internal: Optional[bool] = Field(False, alias="internal")
+
+    # Marketplace-suffixed managed/source fields (e.g. ``managed:platform``).
+    # Resolved into the plain managed/source per-marketplace during dump.
+    managed_xsoar: Optional[bool] = Field(None, alias="managed:xsoar")
+    managed_marketplacev2: Optional[bool] = Field(None, alias="managed:marketplacev2")
+    managed_xpanse: Optional[bool] = Field(None, alias="managed:xpanse")
+    managed_xsoar_saas: Optional[bool] = Field(None, alias="managed:xsoar_saas")
+    managed_xsoar_on_prem: Optional[bool] = Field(None, alias="managed:xsoar_on_prem")
+    managed_platform: Optional[bool] = Field(None, alias="managed:platform")
+    source_xsoar: Optional[str] = Field(None, alias="source:xsoar")
+    source_marketplacev2: Optional[str] = Field(None, alias="source:marketplacev2")
+    source_xpanse: Optional[str] = Field(None, alias="source:xpanse")
+    source_xsoar_saas: Optional[str] = Field(None, alias="source:xsoar_saas")
+    source_xsoar_on_prem: Optional[str] = Field(None, alias="source:xsoar_on_prem")
+    source_platform: Optional[str] = Field(None, alias="source:platform")

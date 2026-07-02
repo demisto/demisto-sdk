@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Optional
 
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -58,8 +58,17 @@ class IsAgentIncludesSkillActionDependenciesValidator(BaseValidator[ContentTypes
 
         # Build a map of skill object_id -> the action object_ids that skill depends on.
         # Skills are fetched directly from the graph so that their own ``uses``
-        # relationships (skill -> action) are populated.
-        skill_to_action_ids = self._build_skill_to_action_ids_map()
+        # relationships (skill -> action) are populated. When validating a subset
+        # of files, only the skills the validated agents actually register are
+        # fetched (instead of every skill in the repository).
+        required_skill_ids = (
+            None
+            if validate_all_files
+            else {skill_id for agent in agents for skill_id in agent.skillids or []}
+        )
+        if required_skill_ids is not None and not required_skill_ids:
+            return []
+        skill_to_action_ids = self._build_skill_to_action_ids_map(required_skill_ids)
 
         results: List[ValidationResult] = []
         for agent in agents:
@@ -94,14 +103,21 @@ class IsAgentIncludesSkillActionDependenciesValidator(BaseValidator[ContentTypes
 
         return results
 
-    def _build_skill_to_action_ids_map(self) -> Dict[str, List[str]]:
+    def _build_skill_to_action_ids_map(
+        self, skill_ids: Optional[set] = None
+    ) -> Dict[str, List[str]]:
         """Maps each skill's ``object_id`` to the action ids it depends on.
 
-        Fetches all ``AGENTIX_SKILL`` nodes from the graph (which includes their
+        Fetches ``AGENTIX_SKILL`` nodes from the graph (which includes their
         relationships) and collects each skill's ``AGENTIX_ACTION`` ``uses`` targets.
+        When ``skill_ids`` is provided, only those skills are fetched instead of
+        every skill in the repository.
         """
         skill_to_action_ids: Dict[str, List[str]] = {}
-        skills = self.graph.search(content_type=ContentType.AGENTIX_SKILL)
+        search_kwargs: Dict = {"content_type": ContentType.AGENTIX_SKILL}
+        if skill_ids is not None:
+            search_kwargs["object_id"] = list(skill_ids)
+        skills = self.graph.search(**search_kwargs)
         for skill in skills:
             if not isinstance(skill, AgentixSkill):
                 continue

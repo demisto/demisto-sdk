@@ -90,7 +90,7 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
         """
         results: List[ValidationResult] = []
         for skill in self.get_dependent_skills(content_item):
-            if self.was_pack_version_bumped(getattr(skill, "pack", None)):
+            if self.was_pack_version_bumped(skill.in_pack):
                 logger.debug(
                     f"GR115: dependent skill '{skill.object_id}' "
                     f"(pack '{skill.pack_id}') has a bumped pack version "

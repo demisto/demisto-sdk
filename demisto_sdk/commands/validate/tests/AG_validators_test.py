@@ -931,3 +931,65 @@ def test_AG116_agent_includes_all_skill_actions_is_valid(graph_repo):
     )
 
     assert not results
+
+
+def test_AG116_list_files_fetches_only_required_skills(graph_repo, mocker):
+    """
+    Given
+    - Two agents each registering a different skill, but only one agent is passed
+      to the (git/specific-files) list-files validation.
+
+    When
+    - Running the AG116 list-files validation on the single changed agent.
+
+    Then
+    - Only the skill registered by the validated agent is fetched from the graph
+      (the other skill is not queried), and the missing action is reported.
+    """
+    from demisto_sdk.commands.content_graph.common import ContentType
+    from demisto_sdk.commands.validate.validators.AG_validators.AG116_agent_includes_skill_action_dependencies_list_files import (
+        IsAgentIncludesSkillActionDependenciesValidatorListFiles,
+    )
+    from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
+
+    pack = graph_repo.create_pack("AgentPack")
+    _ag116_build_action(pack, "ActionA", "action-a")
+    _ag116_build_action(pack, "ActionB", "action-b")
+    _ag116_build_skill(pack, "SkillOne", "skill-one", ["action-a"])
+    _ag116_build_skill(pack, "SkillTwo", "skill-two", ["action-b"])
+    changed_agent = _ag116_build_agent(
+        pack,
+        "ChangedAgent",
+        "changed-agent-id",
+        skill_ids=["skill-one"],
+        action_ids=[],  # missing 'action-a'
+    )
+    _ag116_build_agent(
+        pack,
+        "OtherAgent",
+        "other-agent-id",
+        skill_ids=["skill-two"],
+        action_ids=["action-b"],
+    )
+
+    graph_interface = graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    search_spy = mocker.spy(graph_interface, "search")
+    agent_object = changed_agent.get_graph_object(graph_interface)
+
+    results = IsAgentIncludesSkillActionDependenciesValidatorListFiles().obtain_invalid_content_items(
+        [agent_object]
+    )
+
+    assert len(results) == 1
+    assert "action-a" in results[0].message
+
+    skill_search_calls = [
+        call
+        for call in search_spy.call_args_list
+        if call.kwargs.get("content_type") == ContentType.AGENTIX_SKILL
+    ]
+    assert skill_search_calls, "expected the validator to query the graph for skills"
+    assert all(
+        call.kwargs.get("object_id") == ["skill-one"] for call in skill_search_calls
+    ), "expected only the validated agent's skill to be fetched"

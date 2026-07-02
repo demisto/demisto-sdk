@@ -139,6 +139,8 @@ mapping:
         type: bool
       resetContext:
         type: bool
+      spec:
+        type: str
       isfetch:xsoar:
         type: bool
       isfetch:marketplacev2:

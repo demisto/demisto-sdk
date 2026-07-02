@@ -68,6 +68,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         )
         self.internal: bool = self.yml_data.get("internal", False)
         self.source: str = self.yml_data.get("source", "")
+        self.spec: Optional[str] = self.script_info.get("spec")
 
         self.commands: List[CommandParser] = []
         self.connect_to_commands()

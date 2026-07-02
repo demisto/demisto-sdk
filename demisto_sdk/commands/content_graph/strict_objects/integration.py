@@ -152,6 +152,7 @@ class _Script(BaseStrictModel):
     feed: Optional[bool] = None
     is_fetch_samples: Optional[bool] = Field(None, alias="isFetchSamples")
     reset_context: Optional[bool] = Field(None, alias="resetContext")
+    spec: Optional[str] = None
 
 
 Script = create_model(

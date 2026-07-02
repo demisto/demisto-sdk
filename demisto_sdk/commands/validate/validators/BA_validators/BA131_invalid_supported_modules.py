@@ -86,7 +86,6 @@ ALLOWED_MODULES_BY_TYPE: Dict[type, Set[str]] = {
     # xsiam + agentix.
     Classifier: XSIAM_AND_AGENTIX_MODULES,
     CorrelationRule: XSIAM_AND_AGENTIX_MODULES,
-    Dashboard: XSIAM_AND_AGENTIX_MODULES,
     IncidentField: XSIAM_AND_AGENTIX_MODULES,
     IncidentType: XSIAM_AND_AGENTIX_MODULES,
     IndicatorField: XSIAM_AND_AGENTIX_MODULES,
@@ -94,8 +93,6 @@ ALLOWED_MODULES_BY_TYPE: Dict[type, Set[str]] = {
     Job: XSIAM_AND_AGENTIX_MODULES,
     ListObject: XSIAM_AND_AGENTIX_MODULES,
     Mapper: XSIAM_AND_AGENTIX_MODULES,
-    Report: XSIAM_AND_AGENTIX_MODULES,
-    Widget: XSIAM_AND_AGENTIX_MODULES,
     CaseField: XSIAM_AND_AGENTIX_MODULES,
     CaseLayoutRule: XSIAM_AND_AGENTIX_MODULES,
     # xsiam only.
@@ -103,7 +100,6 @@ ALLOWED_MODULES_BY_TYPE: Dict[type, Set[str]] = {
     ParsingRule: XSIAM_ONLY_MODULES,
     XSIAMDashboard: XSIAM_ONLY_MODULES,
     XSIAMReport: XSIAM_ONLY_MODULES,
-    Wizard: XSIAM_ONLY_MODULES,
     XDRCTemplate: XSIAM_ONLY_MODULES,
     AssetsModelingRule: XSIAM_ONLY_MODULES,
 }

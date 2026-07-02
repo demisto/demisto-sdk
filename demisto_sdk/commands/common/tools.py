@@ -4822,24 +4822,33 @@ def is_private_content_file(file, private_content_path: Path | None = None) -> b
 
 
 def get_content_item_supported_modules(item) -> set[str]:
-    """Definitive supported modules for an item.
-
-    Resolves the declared modules through the item -> pack chain (an explicit []
-    on the item is honored as "no modules" and not inherited from the pack), and
-    falls back to the platform defaults only when the field is unset (None).
-    Returns an empty set for non-platform items.
     """
+    Resolves the definitive list of supported modules for an item,
+    falling back to its pack's modules or the platform defaults.
+
+    An explicit empty list ([]) on the item is honored as "no modules" and is
+    not inherited from the pack; the platform defaults are used only when the
+    field is unset (None).
+
+    Args:
+        item: A content item object that has marketplaces, supportedModules,
+              and optionally pack attributes.
+
+    Returns:
+        A set of supported module names, or empty set if not a platform item.
+    """
+    # Import here to avoid circular imports
     from demisto_sdk.commands.content_graph.objects.pack import Pack
 
     if MarketplaceVersions.PLATFORM not in item.marketplaces:
         return set()
 
-    declared = item.supportedModules
-    if declared is None and not isinstance(item, Pack):
+    default_modules = [sm.value for sm in PlatformSupportedModules]
+
+    modules = item.supportedModules
+    if modules is None and not isinstance(item, Pack):
         pack = getattr(item, "pack", None)
         if pack is not None:
-            declared = pack.supportedModules
+            modules = pack.supportedModules
 
-    if declared is None:
-        return {sm.value for sm in PlatformSupportedModules}
-    return set(declared)
+    return set(default_modules if modules is None else modules)

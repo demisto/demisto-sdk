@@ -4197,16 +4197,21 @@ def _incident_field_with_modules(supported_modules):
     """Build an incident field through the real parser path, injecting the given
     supportedModules into the content (None to omit the field entirely).
 
-    The marketplaces are left to resolve naturally through the parser: the
-    incident field asset declares no marketplaces, so they are resolved through
-    the inheritance chain (which expands to the xsoar family). The resolved
-    marketplaces therefore do NOT include 'platform'.
+    The marketplaces are pinned to the xsoar family (which does NOT include
+    'platform')
     """
     if supported_modules is None:
-        return create_incident_field_object()
-    return create_incident_field_object(
-        paths=["supportedModules"], values=[supported_modules]
-    )
+        content_item = create_incident_field_object()
+    else:
+        content_item = create_incident_field_object(
+            paths=["supportedModules"], values=[supported_modules]
+        )
+    content_item.marketplaces = [
+        MarketplaceVersions.XSOAR,
+        MarketplaceVersions.XSOAR_ON_PREM,
+        MarketplaceVersions.XSOAR_SAAS,
+    ]
+    return content_item
 
 
 @pytest.mark.parametrize(

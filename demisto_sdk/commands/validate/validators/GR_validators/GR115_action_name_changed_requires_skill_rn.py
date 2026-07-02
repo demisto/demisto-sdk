@@ -154,7 +154,9 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
             return True
 
         current_version = pack.current_version
-        old_version = old_obj.current_version  # type: ignore[attr-defined]
+        if not isinstance(old_obj, Pack):
+            return True
+        old_version = old_obj.current_version
         if not current_version or not old_version:
             return True
 

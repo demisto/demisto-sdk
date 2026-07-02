@@ -288,20 +288,47 @@ def is_error_ignored(
     content_item: ContentTypes,
     related_file_type: Optional[List[RelatedFileType]] = None,
 ) -> bool:
-    """
-    Check if the given validation error code is ignored by the current item ignored error list.
-    Note: If the validation's error code is in ALWAYS_RUN_ON_ERROR_CODE, the function will always return False.
+    """Check whether the given validation error code is ignored for the
+    given content item.
+
+    Resolution order (first match wins):
+        1. If ``err_code`` is in ``ALWAYS_RUN_ON_ERROR_CODE`` -> never ignore.
+        2. If ``err_code`` is not in ``ignorable_errors`` -> never ignore.
+        3. If ``err_code`` is listed under the new ``[pack]`` section of the
+           pack's ``.pack-ignore`` file -> ignore for every item in the pack
+           (and for related files of those items).
+        4. If a ``related_file_type`` is provided -> ignore only when the
+           code is listed under the related file's per-file section.
+        5. Otherwise -> ignore only when the code is listed under the
+           content item's per-file section.
 
     Args:
-        err_code (str): The validation's error code.
-        ignored_errors (list): The list of the content item ignored errors.
-        ignorable_errors (list): The list of the ignorable errors.
+        err_code: The validation's error code.
+        ignorable_errors: Codes that may legally be ignored at all
+            (the project-level allow-list).
+        content_item: The item being validated. May be a ``ContentItem``
+            *or* a ``Pack`` (for PA-validators that run on packs).
+        related_file_type: Optional related-file scope (e.g. README, image).
 
     Returns:
-        bool: True if the given error code should and allow to be ignored by the given item. Otherwise, return False.
+        True when the error should be ignored for this item; False otherwise.
     """
     if (err_code not in ignorable_errors) or (err_code in ALWAYS_RUN_ON_ERROR_CODE):
         return False
+
+    # ------ Pack-level ignore ------
+    # Duck-typed to keep this module free of a direct import of `Pack`,
+    # which would create a circular import with the content_graph package.
+    # `Pack` itself exposes `pack_level_ignored_errors`; every `ContentItem`
+    # reaches its pack via `in_pack`.
+    pack = (
+        content_item
+        if hasattr(content_item, "pack_level_ignored_errors")
+        else getattr(content_item, "in_pack", None)
+    )
+    if pack is not None and err_code in getattr(pack, "pack_level_ignored_errors", []):
+        return True
+
     if related_file_type:
         # If the validation should run on a file related to the main content, will check if the validation's error code is ignored by any of the related file paths.
         for related_file in related_file_type:

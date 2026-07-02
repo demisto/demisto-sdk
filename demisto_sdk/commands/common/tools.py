@@ -4107,11 +4107,20 @@ def is_epoch_datetime(string: str) -> bool:
         return False
 
 
+def parse_ignore_list(value: str) -> List[str]:
+    """Parse a comma-separated `ignore=` value from a `.pack-ignore` section.
+    Args:
+        value: the raw string value of an `ignore=` key.
+    Returns: the list of error codes.
+    """
+    return [code.strip() for code in str(value).split(",") if code.strip()]
+
+
 def extract_error_codes_from_file(pack_name: str) -> Set[str]:
     """
     Args:
         pack_name: a pack name from which to get the pack ignore errors.
-    Returns: error codes set  that in pack.ignore file
+    Returns: error codes set that in pack.ignore file
     """
     error_codes_list = []
     if pack_name and (config := get_pack_ignore_content(pack_name)):
@@ -4125,6 +4134,12 @@ def extract_error_codes_from_file(pack_name: str) -> Set[str]:
                     # group ignore codes to a list
                     error_codes = str(config[section][key]).split(",")
                     error_codes_list.extend(error_codes)
+
+        # extract pack-level ignored error codes
+        if config.has_section("pack"):
+            for key in config["pack"]:
+                if key == "ignore":
+                    error_codes_list.extend(parse_ignore_list(config["pack"][key]))
 
     return set(error_codes_list)
 

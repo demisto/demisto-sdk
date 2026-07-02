@@ -1,0 +1,49 @@
+category: Authentication
+commonfields:
+  id: TestIntegPackageHiddenCommands
+  version: -1
+provider: Test Provider
+configuration:
+- defaultvalue: https://example.net
+  display: Server URL (e.g. https://example.net)
+  name: url
+  required: true
+  type: 0
+description: Sample integration used to exercise per-marketplace hidden on commands.
+display: TestIntegPackageHiddenCommands
+name: TestIntegPackageHiddenCommands
+script:
+  commands:
+  - name: cmd-always-visible
+    description: No hidden attribute - should remain visible everywhere.
+  - name: cmd-bool-true
+    description: hidden=true - hidden on every marketplace.
+    hidden: true
+  - name: cmd-bool-false
+    description: hidden=false - visible on every marketplace.
+    hidden: false
+  - name: cmd-hidden-on-xsiam
+    description: Hidden only on the XSIAM marketplace.
+    hidden:
+      - marketplacev2
+  - name: cmd-hidden-on-xsoar-family
+    description: Hidden on all XSOAR-flavored marketplaces.
+    hidden:
+      - xsoar
+  - name: cmd-hidden-on-xsoar-and-xsiam
+    description: Hidden on xsoar + marketplacev2.
+    hidden:
+      - xsoar
+      - marketplacev2
+  - name: cmd-hidden-on-platform
+    description: Hidden only on the platform marketplace.
+    hidden:
+      - platform
+  isfetch: false
+  runonce: false
+  script: '-'
+  type: python
+  subtype: python3
+  dockerimage: demisto/python3:3.9.9.25564
+tests:
+- No tests (auto formatted)

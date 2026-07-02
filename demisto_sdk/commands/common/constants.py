@@ -2055,6 +2055,19 @@ class PlatformSupportedModules(StrEnum):
     XTI = "xti"
 
 
+# The complete set of platform supported modules.
+ALL_SUPPORTED_MODULES: set = {module.value for module in PlatformSupportedModules}
+
+# The 'xsiam' and 'agentix' modules.
+XSIAM_AND_AGENTIX_MODULES: set = {
+    PlatformSupportedModules.XSIAM.value,
+    PlatformSupportedModules.AGENTIX.value,
+}
+
+# The 'xsiam' module only.
+XSIAM_ONLY_MODULES: set = {PlatformSupportedModules.XSIAM.value}
+
+
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
     "html": Version("6.1.0"),
     "grid": Version("5.5.0"),

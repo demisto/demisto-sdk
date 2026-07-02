@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import ClassVar, Iterable, List, Union
+from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.constants import (
-    GitStatuses,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.tools import get_declared_supported_modules
@@ -97,11 +96,6 @@ class SupportedModulesWithoutPlatformValidator(BaseValidator[ContentTypes]):
     )
     related_field = "supportedModules"
     is_auto_fixable = False
-    expected_git_statuses: ClassVar[List[GitStatuses]] = [
-        GitStatuses.ADDED,
-        GitStatuses.RENAMED,
-        GitStatuses.MODIFIED,
-    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

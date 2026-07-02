@@ -56,11 +56,6 @@ class IsAgentIncludesSkillActionDependenciesValidator(BaseValidator[ContentTypes
         if not agents:
             return []
 
-        # Build a map of skill object_id -> the action object_ids that skill depends on.
-        # Skills are fetched directly from the graph so that their own ``uses``
-        # relationships (skill -> action) are populated. When validating a subset
-        # of files, only the skills the validated agents actually register are
-        # fetched (instead of every skill in the repository).
         required_skill_ids = (
             None
             if validate_all_files

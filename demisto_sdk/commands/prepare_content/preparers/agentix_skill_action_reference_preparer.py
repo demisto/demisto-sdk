@@ -54,7 +54,7 @@ class AgentixSkillActionReferencePreparer:
             if action_name is None:
                 if action_id not in unresolved:
                     unresolved.append(action_id)
-                    
+
                 return match.group(0)
             return f"<action={action_name}>"
 

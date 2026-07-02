@@ -51,6 +51,7 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "pre_commit" / "resources"
 DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT") or 300)
 CR_REGISTRY_PREFIX = "gcr.io/xsoar-registry/"
+EXTENDED_REPOSITORY_SEGMENT = "demistoextended/"
 
 
 class DockerException(Exception):
@@ -502,45 +503,56 @@ class DockerBase:
         return image
 
     @staticmethod
+    def _normalize_cr_prefix(image: str) -> str:
+        """Strip a hardcoded container-registry prefix back to the canonical form.
+
+        Images that hardcode the CR prefix (e.g.
+        "gcr.io/xsoar-registry/demistoextended/accessdata-p:tag") are normalized
+        back to their canonical "demistoextended/..." form, so routing is uniform
+        whether or not DEMISTO_SDK_EXTENDED_REGISTRY is set. Without this, an unset
+        env var would leave the hardcoded prefix in place and the runner's Docker
+        mirror would prepend its own registry, producing a broken double-registry
+        path.
+        """
+        if image.startswith(CR_REGISTRY_PREFIX):
+            return image[len(CR_REGISTRY_PREFIX) :]
+        return image
+
+    @staticmethod
     def get_image_registry(image: str) -> str:
         extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY", "")
-        # Normalize images that hardcode the container-registry prefix
-        # (e.g. "gcr.io/xsoar-registry/demistoextended/accessdata-p:tag") back to
-        # their canonical "demistoextended/..." form, so routing is uniform whether
-        # or not DEMISTO_SDK_EXTENDED_REGISTRY is set. Without this, an unset env var
-        # would leave the hardcoded prefix in place and the runner's Docker mirror
-        # would prepend its own registry, producing a broken double-registry path.
-        if image.startswith(CR_REGISTRY_PREFIX):
-            stripped = image[len(CR_REGISTRY_PREFIX) :]
-            logger.debug(
-                f"get_image_registry | stripped CR prefix: {image} -> {stripped}"
-            )
-            image = stripped
-        if any(
-            segment in image
-            for segment in ("demistoextended/", "devtestdemistoextended/")
-        ):
+        image = DockerBase._normalize_cr_prefix(image)
+        # "demistoextended/" is a substring of both "devtestdemistoextended/" and
+        # "devdemistoextended/", so checking for it alone covers all extended repos.
+        if EXTENDED_REPOSITORY_SEGMENT in image:
             # Already carries the extended registry prefix - return as-is to avoid
-            # double-prefixing it with the Docker Hub proxy registry.
+            # dou - the prefix should be devtestdemistoextended/ (not devble-prefixing it with the Docker Hub proxy registry.
             if extended_registry and extended_registry in image:
-                logger.debug(f"get_image_registry | returned: {image}")
                 return image
-            if extended_registry and image.startswith(
-                ("demistoextended/", "devtestdemistoextended/")
-            ):
-                logger.debug(
-                    f"get_image_registry | returned: {extended_registry}/{image}"
-                )
+            if extended_registry and image.startswith(EXTENDED_REPOSITORY_SEGMENT):
                 return f"{extended_registry}/{image}"
-            logger.debug(f"get_image_registry | returned: {image}")
             return image
         if DOCKER_REGISTRY_URL not in image:
-            logger.debug(
-                f"get_image_registry | returned: {DOCKER_REGISTRY_URL}/{image}"
-            )
             return f"{DOCKER_REGISTRY_URL}/{image}"
-        logger.debug(f"get_image_registry | returned: {image}")
         return image
+
+    @staticmethod
+    def build_test_image_name(base_image: str, identifier: str) -> str:
+        """Build the dev/test image name from a base image and a requirements hash.
+
+        Extended images ("demistoextended/...") map to "devtestdemistoextended/...".
+        A naive replace("demisto", "devtestdemisto") would corrupt them into
+        "devtestdemistoextended" via the inner "demisto", so extended images are
+        handled explicitly. All other images keep the existing "demisto" ->
+        "devtestdemisto" mapping.
+        """
+        if base_image.startswith(EXTENDED_REPOSITORY_SEGMENT):
+            renamed = base_image.replace(
+                "demistoextended", "devtestdemistoextended"
+            )
+        else:
+            renamed = base_image.replace("demisto", "devtestdemisto")
+        return f"{renamed}-{identifier}"
 
     def get_or_create_test_image(
         self,
@@ -586,12 +598,7 @@ class DockerBase:
             "\n".join(sorted(set(pip_requirements))).encode("utf-8")
         ).hexdigest()
 
-        if base_image.startswith("demistoextended/"):
-            test_docker_image = f'{base_image.replace("demistoextended", "devtestdemistoextended")}-{identifier}'
-        else:
-            test_docker_image = (
-                f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
-            )
+        test_docker_image = self.build_test_image_name(base_image, identifier)
         if is_custom_registry():
             # if we use a custom registry, we need to have to pull the image and we can't use dockerhub api
             should_pull = True

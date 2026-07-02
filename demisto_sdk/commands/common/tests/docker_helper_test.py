@@ -372,18 +372,16 @@ class TestGetOrCreateTestImageDemistoextended:
          - a demistoextended/ base image
 
         When:
-         - the test image name is constructed in get_or_create_test_image
+         - calling the real build_test_image_name helper
 
         Then:
-         - the prefix should be devtestdemistoextended/ (not devtestdemistoextended/)
+         - the prefix is devtestdemistoextended/ (the inner "demisto" is not
+           corrupted into devtestdemistoextended)
         """
-        base_image = "demistoextended/accessdata:1.1.0.10177564"
-        # Simulate the logic from get_or_create_test_image
-        if base_image.startswith("demistoextended/"):
-            result = base_image.replace("demistoextended", "devtestdemistoextended")
-        else:
-            result = base_image.replace("demisto", "devtestdemisto")
-        assert result == "devtestdemistoextended/accessdata:1.1.0.10177564"
+        result = dhelper.DockerBase.build_test_image_name(
+            "demistoextended/accessdata:1.1.0.10177564", "abc123"
+        )
+        assert result == "devtestdemistoextended/accessdata:1.1.0.10177564-abc123"
 
     def test_demisto_image_still_uses_devtestdemisto_prefix(self):
         """
@@ -391,41 +389,15 @@ class TestGetOrCreateTestImageDemistoextended:
          - a demisto/ base image
 
         When:
-         - the test image name is constructed
+         - calling the real build_test_image_name helper
 
         Then:
-         - the prefix should be devtestdemisto/ (existing behavior)
+         - the prefix is devtestdemisto/ (existing behavior)
         """
-        base_image = "demisto/python3:3.10.11.54799"
-        if base_image.startswith("demistoextended/"):
-            result = base_image.replace("demistoextended", "devtestdemistoextended")
-        else:
-            result = base_image.replace("demisto", "devtestdemisto")
-        assert result == "devtestdemisto/python3:3.10.11.54799"
-
-    def test_naive_replace_would_break_demistoextended(self):
-        """
-        Given:
-         - a demistoextended/ base image
-
-        When:
-         - using the old naive replace("demisto", "devtestdemisto")
-
-        Then:
-         - it would produce devtestdemistoextended (broken name)
-        """
-        base_image = "demistoextended/accessdata:1.1.0.10177564"
-        naive_result = base_image.replace("demisto", "devtestdemisto")
-        # This is the broken behavior we fixed
-        assert naive_result == "devtestdemistoextended/accessdata:1.1.0.10177564"
-        # The correct behavior with our fix:
-        if base_image.startswith("demistoextended/"):
-            correct_result = base_image.replace(
-                "demistoextended", "devtestdemistoextended"
-            )
-        else:
-            correct_result = base_image.replace("demisto", "devtestdemisto")
-        assert correct_result == "devtestdemistoextended/accessdata:1.1.0.10177564"
+        result = dhelper.DockerBase.build_test_image_name(
+            "demisto/python3:3.10.11.54799", "abc123"
+        )
+        assert result == "devtestdemisto/python3:3.10.11.54799-abc123"
 
 
 class TestUpdateDockerImageSkipsDemistoextended:
@@ -454,32 +426,40 @@ class TestUpdateDockerImageSkipsDemistoextended:
         )
         assert script_obj["dockerimage"] == original_image
 
-    def test_does_not_skip_demisto_image(self):
+    def test_does_not_skip_demisto_image(self, mocker):
         """
         Given:
          - a script object with a demisto/ docker image
+         - the DockerHub latest-tag lookup is mocked (no real network)
 
         When:
          - calling update_docker_image_in_script
 
         Then:
-         - the function should attempt to update (not skip early)
-         - it may fail due to network, but it should NOT return early
+         - the early-return branch is NOT taken: the DockerHub lookup is invoked
+           and the image is updated to the mocked latest tag
         """
+        from demisto_sdk.commands.format import update_script
         from demisto_sdk.commands.format.update_script import ScriptYMLFormat
+
+        mocker.patch.object(update_script, "is_iron_bank_pack", return_value=False)
+        latest_tag_mock = mocker.patch.object(
+            update_script.DockerImageValidator,
+            "get_docker_image_latest_tag_request",
+            return_value="3.10.11.99999",
+        )
 
         script_obj = {
             "type": "python",
             "dockerimage": "demisto/python3:3.10.11.54799",
         }
-        # The function will try to query DockerHub and may fail,
-        # but it should NOT return early like it does for demistoextended
         ScriptYMLFormat.update_docker_image_in_script(
             script_obj, "/fake/path/script.yml"
         )
-        # If it returned early for demisto/ images, that would be a bug.
-        # The image may or may not be updated depending on network,
-        # but the key assertion is that it didn't skip.
+
+        # Proves the demistoextended early-return branch was not taken.
+        latest_tag_mock.assert_called_once_with("demisto/python3")
+        assert script_obj["dockerimage"] == "demisto/python3:3.10.11.99999"
 
 
 class TestGetPythonVersionDemistoextendedFallback:

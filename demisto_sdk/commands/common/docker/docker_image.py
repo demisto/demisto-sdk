@@ -12,6 +12,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.common.logger import logger
 
+DEMISTO_REPOSITORY = "demisto"
+DEMISTO_EXTENDED_REPOSITORY = "demistoextended"
+
 
 class DockerImage(str):
     # regex to extract parts of any docker-image in the following structure (repo/image-name:tag)
@@ -147,15 +150,15 @@ class DockerImage(str):
 
     @property
     def is_demisto_repository(self) -> bool:
-        return self.repository == "demisto"
+        return self.repository == DEMISTO_REPOSITORY
 
     @property
     def is_demistoextended_repository(self) -> bool:
-        return self.repository == "demistoextended"
+        return self.repository == DEMISTO_EXTENDED_REPOSITORY
 
     @property
     def is_trusted_repository(self) -> bool:
-        return self.repository in {"demisto", "demistoextended"}
+        return self.repository in {DEMISTO_REPOSITORY, DEMISTO_EXTENDED_REPOSITORY}
 
     @property
     def is_python3_image(self) -> bool:

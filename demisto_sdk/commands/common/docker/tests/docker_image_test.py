@@ -181,6 +181,12 @@ class TestGetExtendedClient:
             # DockerHubClient is @lru_cache-wrapped so isinstance() won't work;
             # verify by checking a known attribute instead.
             assert hasattr(client, "registry_api_url")
+            # The override this method exists to produce: the extended registry
+            # (host/project) is turned into the V2 API URL host/v2/project.
+            assert (
+                client.registry_api_url
+                == "https://example-registry.io/v2/test-project"
+            )
 
     @pytest.mark.usefixtures("_reset_extended_client")
     def test_without_env_var_returns_none(self):

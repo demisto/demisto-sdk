@@ -12,7 +12,7 @@ ACTION_REFERENCE_REGEX = re.compile(r"<action=([^>]+)>")
 
 
 class AgentixSkillActionReferencePreparer:
-    """Rewrites ``<action=action-id>`` tokens in a skill body to ``<action=action-name>``.
+    """Rewrites ``<action=action-id>`` phrase in a skill body to ``<action=action-name>``.
 
     A skill's Markdown body (the ``content`` field) may reference actions via
     ``<action=action-id>`` tokens. During prepare-upload, the action id inside

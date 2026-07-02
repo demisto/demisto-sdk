@@ -526,7 +526,7 @@ class DockerBase:
         # "devdemistoextended/", so checking for it alone covers all extended repos.
         if EXTENDED_REPOSITORY_SEGMENT in image:
             # Already carries the extended registry prefix - return as-is to avoid
-            # dou - the prefix should be devtestdemistoextended/ (not devble-prefixing it with the Docker Hub proxy registry.
+            # double-prefixing it with the Docker Hub proxy registry.
             if extended_registry and extended_registry in image:
                 return image
             if extended_registry and image.startswith(EXTENDED_REPOSITORY_SEGMENT):

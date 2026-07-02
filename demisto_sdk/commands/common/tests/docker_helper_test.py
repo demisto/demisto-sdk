@@ -400,21 +400,71 @@ class TestGetOrCreateTestImageDemistoextended:
         assert result == "devtestdemisto/python3:3.10.11.54799-abc123"
 
 
-class TestUpdateDockerImageSkipsDemistoextended:
-    """Tests for update_docker_image_in_script skipping demistoextended images."""
+class TestUpdateDockerImageDemistoextended:
+    """Tests for update_docker_image_in_script resolving demistoextended images
+    against the extended instead of skipping them."""
 
-    def test_skips_demistoextended_image(self):
+    def test_updates_demistoextended_via_extended_registry(self, mocker):
         """
         Given:
          - a script object with a demistoextended/ docker image
+         - DockerImage.latest_tag is mocked
 
         When:
          - calling update_docker_image_in_script
 
         Then:
-         - the docker image should not be modified
+         - the image is updated to the mocked latest tag from the extended registry
+         - the DockerHub path (get_docker_image_latest_tag_request) is NOT used
         """
+        from demisto_sdk.commands.common.docker import docker_image
+        from demisto_sdk.commands.format import update_script
         from demisto_sdk.commands.format.update_script import ScriptYMLFormat
+
+        mocker.patch.object(
+            docker_image.DockerImage,
+            "latest_tag",
+            new_callable=mock.PropertyMock,
+            return_value=Version("1.1.0.99999"),
+        )
+        dockerhub_mock = mocker.patch.object(
+            update_script.DockerImageValidator,
+            "get_docker_image_latest_tag_request",
+        )
+
+        script_obj = {
+            "type": "python",
+            "dockerimage": "demistoextended/accessdata:1.1.0.10177564",
+        }
+        ScriptYMLFormat.update_docker_image_in_script(
+            script_obj, "/fake/path/script.yml"
+        )
+
+        assert (
+            script_obj["dockerimage"] == "demistoextended/accessdata:1.1.0.99999"
+        )
+        dockerhub_mock.assert_not_called()
+
+    def test_demistoextended_lookup_failure_leaves_image_unchanged(self, mocker):
+        """
+        Given:
+         - a demistoextended/ image whose extended-registry lookup raises
+
+        When:
+         - calling update_docker_image_in_script
+
+        Then:
+         - the image is left unchanged (no broken tag written) and no error is raised
+        """
+        from demisto_sdk.commands.common.docker import docker_image
+        from demisto_sdk.commands.format.update_script import ScriptYMLFormat
+
+        mocker.patch.object(
+            docker_image.DockerImage,
+            "latest_tag",
+            new_callable=mock.PropertyMock,
+            side_effect=Exception("extended registry unreachable"),
+        )
 
         script_obj = {
             "type": "python",
@@ -436,9 +486,11 @@ class TestUpdateDockerImageSkipsDemistoextended:
          - calling update_docker_image_in_script
 
         Then:
-         - the early-return branch is NOT taken: the DockerHub lookup is invoked
-           and the image is updated to the mocked latest tag
+         - a demisto/ image keeps the original DockerHub behavior unchanged:
+           the DockerHub lookup is invoked and the image is updated
+         - the extended path is NOT touched for demisto/ images
         """
+        from demisto_sdk.commands.common.docker import docker_image
         from demisto_sdk.commands.format import update_script
         from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 
@@ -447,6 +499,12 @@ class TestUpdateDockerImageSkipsDemistoextended:
             update_script.DockerImageValidator,
             "get_docker_image_latest_tag_request",
             return_value="3.10.11.99999",
+        )
+        # demisto/ must never reach the extended registry path.
+        extended_mock = mocker.patch.object(
+            docker_image.DockerImage,
+            "latest_tag",
+            new_callable=mock.PropertyMock,
         )
 
         script_obj = {
@@ -457,9 +515,11 @@ class TestUpdateDockerImageSkipsDemistoextended:
             script_obj, "/fake/path/script.yml"
         )
 
-        # Proves the demistoextended early-return branch was not taken.
+        # demisto/ still goes through DockerHub, exactly as before.
         latest_tag_mock.assert_called_once_with("demisto/python3")
         assert script_obj["dockerimage"] == "demisto/python3:3.10.11.99999"
+        # ...and never touches the extended
+        extended_mock.assert_not_called()
 
 
 class TestGetPythonVersionDemistoextendedFallback:

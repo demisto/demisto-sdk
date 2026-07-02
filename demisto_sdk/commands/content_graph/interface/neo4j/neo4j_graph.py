@@ -305,7 +305,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             logger.debug(
                 "No nodes to parse packs because all of them in mapping",
             )
-            logger.debug("{}", f"{self._id_to_obj=}")  # noqa: PLE1205
+            # Log only the cache size; a full repr of _id_to_obj recurses
+            # forever on circular relationships (e.g. Connector -> Pack -> ...).
+            logger.debug(f"_id_to_obj cache size: {len(self._id_to_obj)}")
             return
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(

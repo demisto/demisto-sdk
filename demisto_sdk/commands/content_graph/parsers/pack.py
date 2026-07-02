@@ -208,21 +208,7 @@ class PackMetadataParser:
         # Marketplace-suffixed managed/source fields. Kept as-is here; they are
         # resolved into the plain managed/source per-marketplace during dump
         # (see MarketplaceSuffixPreparer.prepare_managed_and_source).
-        self.managed_xsoar: Optional[bool] = metadata.get("managed:xsoar")
-        self.managed_marketplacev2: Optional[bool] = metadata.get(
-            "managed:marketplacev2"
-        )
-        self.managed_xpanse: Optional[bool] = metadata.get("managed:xpanse")
-        self.managed_xsoar_saas: Optional[bool] = metadata.get("managed:xsoar_saas")
-        self.managed_xsoar_on_prem: Optional[bool] = metadata.get(
-            "managed:xsoar_on_prem"
-        )
         self.managed_platform: Optional[bool] = metadata.get("managed:platform")
-        self.source_xsoar: Optional[str] = metadata.get("source:xsoar")
-        self.source_marketplacev2: Optional[str] = metadata.get("source:marketplacev2")
-        self.source_xpanse: Optional[str] = metadata.get("source:xpanse")
-        self.source_xsoar_saas: Optional[str] = metadata.get("source:xsoar_saas")
-        self.source_xsoar_on_prem: Optional[str] = metadata.get("source:xsoar_on_prem")
         self.source_platform: Optional[str] = metadata.get("source:platform")
 
     @property

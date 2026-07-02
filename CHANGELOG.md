@@ -1,5 +1,5 @@
 # Changelog
-# 1.39.2 (2026-06-18)
+## 1.39.2 (2026-06-18)
 ### Feature
 * Added SC110 validator: Validates that wrapper scripts declare all commands/scripts they call via executeCommand in the "dependson" field. [#5342](https://github.com/demisto/demisto-sdk/pull/5342)
 * Added support for "xti" license. [#5397](https://github.com/demisto/demisto-sdk/pull/5397)

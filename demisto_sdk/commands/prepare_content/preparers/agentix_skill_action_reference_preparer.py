@@ -3,12 +3,12 @@ from typing import TYPE_CHECKING, Dict
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.prepare_content.agentix_markdown_unifier import (
+    ACTION_REFERENCE_REGEX,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-
-# Matches ``<action=action-id>`` tokens in a skill's Markdown body.
-ACTION_REFERENCE_REGEX = re.compile(r"<action=([^>]+)>")
 
 
 class AgentixSkillActionReferencePreparer:

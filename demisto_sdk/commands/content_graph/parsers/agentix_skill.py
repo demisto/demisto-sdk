@@ -1,4 +1,3 @@
-import re
 from functools import cached_property
 from pathlib import Path
 from typing import List, Optional
@@ -13,12 +12,10 @@ from demisto_sdk.commands.content_graph.strict_objects.agentix_skill import (
     StrictAgentixSkill,
 )
 from demisto_sdk.commands.prepare_content.agentix_markdown_unifier import (
+    ACTION_REFERENCE_REGEX,
     AGENTIX_SKILL_FILE_SUFFIX,
     AgentixMarkdownUnifier,
 )
-
-# Matches ``<action=action-id>`` tokens in a skill's Markdown body.
-ACTION_REFERENCE_REGEX = re.compile(r"<action=([^>]+)>")
 
 
 class AgentixSkillParser(AgentixBaseParser, content_type=ContentType.AGENTIX_SKILL):

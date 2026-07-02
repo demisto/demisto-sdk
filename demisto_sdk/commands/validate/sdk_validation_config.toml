@@ -83,6 +83,18 @@ ignorable_errors = [
 select = []
 warning = []
 
+[connectors_path_based_validations]
+select = [
+  "CO100"
+]
+warning = []
+
+[connectors_use_git]
+select = [
+  "CO100"
+]
+warning = []
+
 [path_based_validations]
 select = [
   "IN100",

@@ -94,7 +94,7 @@ class IsAgentIncludesSkillActionDependenciesValidator(BaseValidator[ContentTypes
                             agent.display_name,
                             skill_id,
                             ", ".join(
-                                f"'{action_id}'" for action_id in dict.fromkeys(missing)
+                                f"'{action_id}'" for action_id in sorted(set(missing))
                             ),
                         ),
                         content_object=agent,

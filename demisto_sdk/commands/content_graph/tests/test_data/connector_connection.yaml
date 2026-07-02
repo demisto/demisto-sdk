@@ -1,0 +1,14 @@
+metadata:
+  title: "Connection"
+  description: "Test connection"
+
+profiles:
+  - id: "default"
+    type: "basic"
+    title: "Default Profile"
+    description: "Default connection profile"
+    configurations:
+      - fields:
+          - id: "api_url"
+            title: "API URL"
+            field_type: "input"

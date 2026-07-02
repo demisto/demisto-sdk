@@ -83,6 +83,18 @@ ignorable_errors = [
 select = []
 warning = []
 
+[connectors_path_based_validations]
+select = [
+  "CO100"
+]
+warning = []
+
+[connectors_use_git]
+select = [
+  "CO100"
+]
+warning = []
+
 [path_based_validations]
 select = [
   "IN100",
@@ -283,7 +295,7 @@ select = [
   "VC101",
   "BC115"
 ]
-warning = ["RM108", "PB130", "PB131", "GR107", "GR109", "GR103", "GR110", "GR101", "PA133", "AS106", "GR114"]
+warning = ["RM108", "PB130", "PB131", "GR107", "GR109", "GR103", "GR110", "GR101", "PA133", "AS106", "GR114", "BA131", "BA132"]
 
 [support_level]
 
@@ -601,6 +613,8 @@ select = [
   "AS109",
   "MC100",
   "MC101",
-  "BA112"
+  "BA112",
+  "BA131",
+  "BA132"
 ]
 warning = ["PB130", "PB131", "RN116", "BC117", "GR101", "PA133", "AS106", "GR114"]

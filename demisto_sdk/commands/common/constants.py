@@ -967,6 +967,7 @@ AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
 DEPLOYMENT_JSON_FILENAME = "deployment.json"
 PACKS_FOLDER = "Packs"
 PRIVATE_PACKS_FOLDER = "PrivatePacks"
+CONNECTORS_FOLDER = "connectors"
 GIT_IGNORE_FILE_NAME = ".gitignore"
 
 # Private Repository Status Files
@@ -2053,6 +2054,19 @@ class PlatformSupportedModules(StrEnum):
     TIM = "tim"
     EMAIL_SECURITY = "email_security"
     XTI = "xti"
+
+
+# The complete set of platform supported modules.
+ALL_SUPPORTED_MODULES: set = {module.value for module in PlatformSupportedModules}
+
+# The 'xsiam' and 'agentix' modules.
+XSIAM_AND_AGENTIX_MODULES: set = {
+    PlatformSupportedModules.XSIAM.value,
+    PlatformSupportedModules.AGENTIX.value,
+}
+
+# The 'xsiam' module only.
+XSIAM_ONLY_MODULES: set = {PlatformSupportedModules.XSIAM.value}
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {

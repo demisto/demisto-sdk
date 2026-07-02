@@ -199,3 +199,351 @@ def test_create_docker_container_successfully(
         f"error when executing func create_container, error: {exception_text}, time 3"
         in log_result.call_args.args
     )
+
+
+# --- demistoextended get_image_registry tests ---
+
+
+class TestGetImageRegistryDemistoextended:
+    def test_demistoextended_with_env_prefixes_image(self):
+        """
+        Given:
+         - a demistoextended/ image and DEMISTO_SDK_EXTENDED_REGISTRY is set
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - returns the image prefixed with the extended registry URL
+        """
+        with mock.patch.dict(
+            os.environ,
+            {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"},
+        ):
+            result = dhelper.DockerBase.get_image_registry(
+                "demistoextended/accessdata:1.1.0.10177564"
+            )
+            assert (
+                result
+                == "example-registry.io/test-project/demistoextended/accessdata:1.1.0.10177564"
+            )
+
+    def test_demistoextended_without_env_returns_unchanged(self):
+        """
+        Given:
+         - a demistoextended/ image and DEMISTO_SDK_EXTENDED_REGISTRY is NOT set
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - returns the image unchanged (no prefix added)
+        """
+        env = os.environ.copy()
+        env.pop("DEMISTO_SDK_EXTENDED_REGISTRY", None)
+        with mock.patch.dict(os.environ, env, clear=True):
+            result = dhelper.DockerBase.get_image_registry(
+                "demistoextended/accessdata:1.1.0.10177564"
+            )
+            assert result == "demistoextended/accessdata:1.1.0.10177564"
+
+    def test_demistoextended_already_prefixed_returns_unchanged(self):
+        """
+        Given:
+         - a demistoextended/ image that already contains the extended registry prefix
+         - DEMISTO_SDK_EXTENDED_REGISTRY is set
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - the image is returned unchanged, avoiding double-prefixing with the
+           extended registry
+        """
+        with mock.patch.dict(
+            os.environ,
+            {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"},
+        ):
+            already_prefixed = "example-registry.io/test-project/demistoextended/accessdata:1.1.0.10177564"
+            result = dhelper.DockerBase.get_image_registry(already_prefixed)
+            # The image already carries the extended registry prefix, so it is
+            # returned as-is to avoid double-prefixing.
+            assert result == already_prefixed
+
+    def test_cr_prefixed_image_normalized_without_env(self):
+        """
+        Given:
+         - a dockerimage hardcoding the CR prefix (gcr.io/xsoar-registry/demistoextended/...)
+         - DEMISTO_SDK_EXTENDED_REGISTRY is NOT set
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - the CR prefix is stripped and the canonical demistoextended/ form is
+           returned (so the runner's Docker mirror won't produce a broken
+           double-registry path)
+        """
+        env = os.environ.copy()
+        env.pop("DEMISTO_SDK_EXTENDED_REGISTRY", None)
+        with mock.patch.dict(os.environ, env, clear=True):
+            result = dhelper.DockerBase.get_image_registry(
+                "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10358491"
+            )
+            assert result == "demistoextended/accessdata-p:1.1.0.10358491"
+
+    def test_cr_prefixed_image_normalized_with_env(self):
+        """
+        Given:
+         - a dockerimage hardcoding the CR prefix (gcr.io/xsoar-registry/demistoextended/...)
+         - DEMISTO_SDK_EXTENDED_REGISTRY is set to gcr.io/xsoar-registry
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - the CR prefix is stripped then re-added via the extended registry,
+           yielding a single, well-formed registry path
+        """
+        with mock.patch.dict(
+            os.environ,
+            {"DEMISTO_SDK_EXTENDED_REGISTRY": "gcr.io/xsoar-registry"},
+        ):
+            result = dhelper.DockerBase.get_image_registry(
+                "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10358491"
+            )
+            assert (
+                result
+                == "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10358491"
+            )
+
+    def test_cr_prefixed_image_normalized_with_different_env(self):
+        """
+        Given:
+         - a dockerimage hardcoding the CR prefix (gcr.io/xsoar-registry/demistoextended/...)
+         - DEMISTO_SDK_EXTENDED_REGISTRY is set to a DIFFERENT registry
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - the hardcoded CR prefix is stripped and the configured extended
+           registry is applied instead (routing stays uniform)
+        """
+        with mock.patch.dict(
+            os.environ,
+            {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"},
+        ):
+            result = dhelper.DockerBase.get_image_registry(
+                "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10358491"
+            )
+            assert (
+                result
+                == "example-registry.io/test-project/demistoextended/accessdata-p:1.1.0.10358491"
+            )
+
+    def test_demisto_image_still_gets_docker_registry_prefix(self):
+        """
+        Given:
+         - a demisto/ image (not demistoextended)
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - returns the image prefixed with DOCKER_REGISTRY_URL (existing behavior)
+        """
+        from demisto_sdk.commands.common.constants import DOCKER_REGISTRY_URL
+
+        image = "demisto/python3:3.10.11.54799"
+        result = dhelper.DockerBase.get_image_registry(image)
+        if DOCKER_REGISTRY_URL not in image:
+            assert result == f"{DOCKER_REGISTRY_URL}/{image}"
+        else:
+            assert result == image
+
+
+class TestGetOrCreateTestImageDemistoextended:
+    """Tests for get_or_create_test_image with demistoextended images."""
+
+    def test_demistoextended_image_uses_devtestdemistoextended_prefix(self):
+        """
+        Given:
+         - a demistoextended/ base image
+
+        When:
+         - calling the real build_test_image_name helper
+
+        Then:
+         - the prefix is devtestdemistoextended/ (the inner "demisto" is not
+           corrupted into devtestdemistoextended)
+        """
+        result = dhelper.DockerBase.build_test_image_name(
+            "demistoextended/accessdata:1.1.0.10177564", "abc123"
+        )
+        assert result == "devtestdemistoextended/accessdata:1.1.0.10177564-abc123"
+
+    def test_demisto_image_still_uses_devtestdemisto_prefix(self):
+        """
+        Given:
+         - a demisto/ base image
+
+        When:
+         - calling the real build_test_image_name helper
+
+        Then:
+         - the prefix is devtestdemisto/ (existing behavior)
+        """
+        result = dhelper.DockerBase.build_test_image_name(
+            "demisto/python3:3.10.11.54799", "abc123"
+        )
+        assert result == "devtestdemisto/python3:3.10.11.54799-abc123"
+
+
+class TestUpdateDockerImageSkipsDemistoextended:
+    """Tests for update_docker_image_in_script skipping demistoextended images."""
+
+    def test_skips_demistoextended_image(self):
+        """
+        Given:
+         - a script object with a demistoextended/ docker image
+
+        When:
+         - calling update_docker_image_in_script
+
+        Then:
+         - the docker image should not be modified
+        """
+        from demisto_sdk.commands.format.update_script import ScriptYMLFormat
+
+        script_obj = {
+            "type": "python",
+            "dockerimage": "demistoextended/accessdata:1.1.0.10177564",
+        }
+        original_image = script_obj["dockerimage"]
+        ScriptYMLFormat.update_docker_image_in_script(
+            script_obj, "/fake/path/script.yml"
+        )
+        assert script_obj["dockerimage"] == original_image
+
+    def test_does_not_skip_demisto_image(self, mocker):
+        """
+        Given:
+         - a script object with a demisto/ docker image
+         - the DockerHub latest-tag lookup is mocked (no real network)
+
+        When:
+         - calling update_docker_image_in_script
+
+        Then:
+         - the early-return branch is NOT taken: the DockerHub lookup is invoked
+           and the image is updated to the mocked latest tag
+        """
+        from demisto_sdk.commands.format import update_script
+        from demisto_sdk.commands.format.update_script import ScriptYMLFormat
+
+        mocker.patch.object(update_script, "is_iron_bank_pack", return_value=False)
+        latest_tag_mock = mocker.patch.object(
+            update_script.DockerImageValidator,
+            "get_docker_image_latest_tag_request",
+            return_value="3.10.11.99999",
+        )
+
+        script_obj = {
+            "type": "python",
+            "dockerimage": "demisto/python3:3.10.11.54799",
+        }
+        ScriptYMLFormat.update_docker_image_in_script(
+            script_obj, "/fake/path/script.yml"
+        )
+
+        # Proves the demistoextended early-return branch was not taken.
+        latest_tag_mock.assert_called_once_with("demisto/python3")
+        assert script_obj["dockerimage"] == "demisto/python3:3.10.11.99999"
+
+
+class TestGetPythonVersionDemistoextendedFallback:
+    """Tests that get_python_version raises for demistoextended images
+    when all resolution methods fail (no silent fallback)."""
+
+    def test_demistoextended_raises_when_all_methods_fail(self, mocker):
+        """
+        Given:
+         - A demistoextended image with DEMISTO_SDK_EXTENDED_REGISTRY set
+         - All Python version resolution methods fail
+        When:
+         - get_python_version is called
+        Then:
+         - Raises an exception (no silent fallback)
+        """
+        from demisto_sdk.commands.common import docker_helper
+        from demisto_sdk.commands.common.docker_helper import get_python_version
+
+        get_python_version.cache_clear()
+
+        mocker.patch.object(
+            docker_helper,
+            "DockerImagesMetadata",
+        )
+        docker_helper.DockerImagesMetadata.get_instance.return_value.python_version.return_value = None
+        mocker.patch.object(
+            docker_helper,
+            "_get_python_version_from_tag_by_regex",
+            return_value=None,
+        )
+        mocker.patch.object(
+            docker_helper,
+            "_get_python_version_from_image_client",
+            side_effect=Exception("docker pull failed"),
+        )
+        mocker.patch.object(
+            docker_helper,
+            "_get_python_version_from_dockerhub_api",
+            side_effect=Exception("dockerhub api failed"),
+        )
+        mocker.patch.object(docker_helper, "IS_CONTENT_GITLAB_CI", True)
+
+        env = {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"}
+        with mock.patch.dict(os.environ, env):
+            with pytest.raises(Exception, match="docker pull failed"):
+                get_python_version("demistoextended/accessdata:1.1.0.10293277")
+
+    def test_demisto_image_still_raises_when_all_methods_fail(self, mocker):
+        """
+        Given:
+         - A regular demisto image
+         - All Python version resolution methods fail
+        When:
+         - get_python_version is called
+        Then:
+         - Raises an exception (does NOT silently default)
+        """
+        from demisto_sdk.commands.common import docker_helper
+        from demisto_sdk.commands.common.docker_helper import get_python_version
+
+        get_python_version.cache_clear()
+
+        mocker.patch.object(
+            docker_helper,
+            "DockerImagesMetadata",
+        )
+        docker_helper.DockerImagesMetadata.get_instance.return_value.python_version.return_value = None
+        mocker.patch.object(
+            docker_helper,
+            "_get_python_version_from_tag_by_regex",
+            return_value=None,
+        )
+        mocker.patch.object(
+            docker_helper,
+            "_get_python_version_from_image_client",
+            side_effect=Exception("docker pull failed"),
+        )
+        mocker.patch.object(
+            docker_helper,
+            "_get_python_version_from_dockerhub_api",
+            side_effect=Exception("dockerhub api failed"),
+        )
+        mocker.patch.object(docker_helper, "IS_CONTENT_GITLAB_CI", False)
+
+        with pytest.raises(Exception, match="docker pull failed"):
+            get_python_version("demisto/python3:3.10.11.54799-unique-test")

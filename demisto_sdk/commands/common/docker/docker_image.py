@@ -12,6 +12,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.common.logger import logger
 
+DEMISTO_REPOSITORY = "demisto"
+DEMISTO_EXTENDED_REPOSITORY = "demistoextended"
+
 
 class DockerImage(str):
     # regex to extract parts of any docker-image in the following structure (repo/image-name:tag)
@@ -20,6 +23,7 @@ class DockerImage(str):
         r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+(\.\d+)?)"  # regex to extract python version for image name
     )
     _dockerhub_client = None
+    _extended_client = None
 
     @classmethod
     def _get_dockerhub_client(cls):
@@ -28,12 +32,51 @@ class DockerImage(str):
         # None so the client is (re)created whenever the cached value is missing or
         # otherwise falsy, not only when it is exactly None.
         if not cls._dockerhub_client:
-            username = os.getenv("DEMISTO_SDK_CR_USER", "")
-            password = os.getenv("DEMISTO_SDK_CR_PASSWORD", "")
+            # NOTE: DockerHubClient is @lru_cache-wrapped, which replaces the class
+            # with a callable cache wrapper. The wrapper supports __call__ (i.e.
+            # `DockerHubClient(...)`), but attribute access for @classmethod members
+            # such as `from_environment` returns the raw, non-callable descriptor.
+            # We therefore construct the client directly instead of via the classmethod.
             cls._dockerhub_client = DockerHubClient(
-                registry=DOCKER_REGISTRY_URL, username=username, password=password
+                registry=DOCKER_REGISTRY_URL,
+                username=os.getenv("DEMISTO_SDK_CR_USER", ""),
+                password=os.getenv("DEMISTO_SDK_CR_PASSWORD", ""),
             )
         return cls._dockerhub_client
+
+    @classmethod
+    def _get_extended_client(cls):
+        """Get or create a DockerHubClient for the extended registry (GCR).
+
+        In CI, get_registry_api_url() resolves to the GAR proxy instead of
+        the actual GCR URL, so we override registry_api_url after construction.
+        Authentication is handled by get_token() → get_gcloud_access_token().
+        """
+        if not cls._extended_client:
+            extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY")
+            if not extended_registry:
+                return None
+            client = DockerHubClient(registry=extended_registry)
+            # Override the registry URL — get_registry_api_url() resolves to
+            # the GAR proxy in CI, but we need the actual registry endpoint.
+            # V2 API: https://{host}/v2/{project}/{image}/tags/list
+            parts = extended_registry.rstrip("/").split("/", 1)
+            host = parts[0]
+            path = parts[1] if len(parts) > 1 else ""
+            client.registry_api_url = f"https://{host}/v2/{path}".rstrip("/")
+            logger.info(
+                f"Extended registry client created: registry_api_url={client.registry_api_url}"
+            )
+            cls._extended_client = client
+        return cls._extended_client
+
+    def _get_client(self):
+        """Routes to the correct registry client based on repository prefix."""
+        if self.is_demistoextended_repository:
+            if extended_client := self._get_extended_client():
+                return extended_client
+            logger.warning(f"No DEMISTO_SDK_EXTENDED_REGISTRY configured for {self}")
+        return self._get_dockerhub_client()
 
     def __new__(
         cls, docker_image: str, raise_if_not_valid: bool = False
@@ -107,7 +150,15 @@ class DockerImage(str):
 
     @property
     def is_demisto_repository(self) -> bool:
-        return self.repository == "demisto"
+        return self.repository == DEMISTO_REPOSITORY
+
+    @property
+    def is_demistoextended_repository(self) -> bool:
+        return self.repository == DEMISTO_EXTENDED_REPOSITORY
+
+    @property
+    def is_trusted_repository(self) -> bool:
+        return self.repository in {DEMISTO_REPOSITORY, DEMISTO_EXTENDED_REPOSITORY}
 
     @property
     def is_python3_image(self) -> bool:
@@ -119,7 +170,7 @@ class DockerImage(str):
 
     @property
     def creation_date(self) -> datetime:
-        return self._get_dockerhub_client().get_docker_image_tag_creation_date(
+        return self._get_client().get_docker_image_tag_creation_date(
             self.name, tag=self.tag
         )
 
@@ -138,9 +189,7 @@ class DockerImage(str):
                 return Version(match.group("python_version"))
 
             logger.debug(f"Could not get python version for image {self} from regex")
-            image_env = self._get_dockerhub_client().get_image_env(
-                self.name, tag=self.tag
-            )
+            image_env = self._get_client().get_image_env(self.name, tag=self.tag)
 
             if python_version := next(
                 (
@@ -165,19 +214,16 @@ class DockerImage(str):
         """
         Returns True if the docker-image exist in the configured registry
         """
-        return self._get_dockerhub_client().is_docker_image_exist(
-            self.name, tag=self.tag
-        )
+        return self._get_client().is_docker_image_exist(self.name, tag=self.tag)
 
     @property
     def latest_tag(self) -> Version:
-        return self._get_dockerhub_client().get_latest_docker_image_tag(self.name)
+        return self._get_client().get_latest_docker_image_tag(self.name)
 
     @property
     def latest_docker_image(self) -> "DockerImage":
         """
         Returns the docker image with the latest tag
         """
-        return DockerImage(
-            self._get_dockerhub_client().get_latest_docker_image(self.name)
-        )
+        latest_tag = self._get_client().get_latest_docker_image_tag(self.name)
+        return DockerImage(f"{self.name}:{latest_tag}")

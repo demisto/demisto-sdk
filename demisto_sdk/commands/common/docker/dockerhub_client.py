@@ -10,7 +10,9 @@ from google.auth.transport.requests import Request
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
-from demisto_sdk.commands.common.constants import DEFAULT_DOCKER_REGISTRY_URL
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_DOCKER_REGISTRY_URL,
+)
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
@@ -406,7 +408,11 @@ class DockerHubClient:
                 exception=error,
             )
 
-        return response.get("tags") or []
+        tags = response.get("tags") or []
+        logger.info(
+            f"get_image_tags | {docker_image} | registry={self.registry_api_url} | found {len(tags)} tags"
+        )
+        return tags
 
     def get_image_tag_metadata(self, docker_image: str, tag: str) -> Dict[str, Any]:
         """

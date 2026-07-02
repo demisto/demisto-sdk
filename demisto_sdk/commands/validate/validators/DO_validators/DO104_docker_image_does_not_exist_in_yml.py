@@ -28,12 +28,15 @@ class DockerImageExistValidator(DockerValidator[ContentTypes]):
     @staticmethod
     def get_latest_image(content_item):
         docker_name = f"demisto/{content_item.subtype if content_item.type == 'python' else 'powershell'}"
-
-        return DockerHubClient(
+        # NOTE: DockerHubClient is @lru_cache-wrapped, so attribute access for
+        # @classmethod members (e.g. from_environment) returns a non-callable
+        # descriptor. Construct the client directly instead.
+        client = DockerHubClient(
             registry=DOCKER_REGISTRY_URL,
             username=os.getenv("DEMISTO_SDK_CR_USER", ""),
             password=os.getenv("DEMISTO_SDK_CR_PASSWORD", ""),
-        ).get_latest_docker_image(docker_name)
+        )
+        return client.get_latest_docker_image(docker_name)
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

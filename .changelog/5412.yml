@@ -1,0 +1,4 @@
+changes:
+- description: Added support for routing `demistoextended` docker images to a configurable registry via the `DEMISTO_SDK_EXTENDED_REGISTRY` environment variable.
+  type: feature
+pr_number: 5412

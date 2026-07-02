@@ -16,6 +16,9 @@ from demisto_sdk.commands.prepare_content.agentix_markdown_unifier import (
     AGENTIX_SKILL_TARGET_FIELD,
     AgentixMarkdownUnifier,
 )
+from demisto_sdk.commands.prepare_content.preparers.agentix_skill_action_reference_preparer import (
+    AgentixSkillActionReferencePreparer,
+)
 
 
 class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
@@ -73,4 +76,5 @@ class AgentixSkill(AgentixBase, content_type=ContentType.AGENTIX_SKILL):
             target_field=AGENTIX_SKILL_TARGET_FIELD,
             file_suffix=AGENTIX_SKILL_FILE_SUFFIX,
         )
+        data = AgentixSkillActionReferencePreparer.prepare(self, data)
         return data

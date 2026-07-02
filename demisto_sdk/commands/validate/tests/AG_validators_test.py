@@ -828,3 +828,168 @@ def test_AG115_skill_description_length(description: str, expect_failure: bool):
     results = IsSkillDescriptionLengthValidator().obtain_invalid_content_items([skill])
 
     assert bool(results) is expect_failure
+
+
+def _ag116_build_action(pack, folder_name: str, action_id: str):
+    action = pack.create_agentix_action(folder_name)
+    action.create_default_agentix_action()
+    action.set_data(**{"commonfields.id": action_id})
+    return action
+
+
+def _ag116_build_skill(pack, folder_name: str, skill_id: str, action_ids):
+    body = " ".join(f"<action={action_id}>" for action_id in action_ids)
+    skill = pack.create_agentix_skill(folder_name)
+    skill.create_default_agentix_skill(
+        name=folder_name,
+        skill_id=skill_id,
+        skill_content=f"Skill body. {body}",
+    )
+    return skill
+
+
+def _ag116_build_agent(pack, folder_name: str, agent_id: str, skill_ids, action_ids):
+    agent = pack.create_agentix_agent(folder_name)
+    agent.create_default_agentix_agent(name=folder_name, agent_id=agent_id)
+    agent.update({"skillids": list(skill_ids), "actionids": list(action_ids)})
+    return agent
+
+
+def test_AG116_agent_missing_skill_action_is_invalid(graph_repo):
+    """
+    Given
+    - An agent registering a skill that depends on two actions, but the agent's
+      'actionids' includes only one of them.
+
+    When
+    - Running the AG116 validation across the entire repository.
+
+    Then
+    - AG116 reports the agent as missing the second action dependency.
+    """
+    from demisto_sdk.commands.validate.validators.AG_validators.AG116_agent_includes_skill_action_dependencies_all_files import (
+        IsAgentIncludesSkillActionDependenciesValidatorAllFiles,
+    )
+    from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
+
+    pack = graph_repo.create_pack("AgentPack")
+    _ag116_build_action(pack, "ActionA", "action-a")
+    _ag116_build_action(pack, "ActionB", "action-b")
+    _ag116_build_skill(pack, "MySkill", "my-skill-id", ["action-a", "action-b"])
+    _ag116_build_agent(
+        pack,
+        "MyAgent",
+        "my-agent-id",
+        skill_ids=["my-skill-id"],
+        action_ids=["action-a"],  # missing 'action-b'
+    )
+
+    graph_interface = graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsAgentIncludesSkillActionDependenciesValidatorAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert len(results) == 1
+    assert "action-b" in results[0].message
+    assert "action-a" not in results[0].message
+
+
+def test_AG116_agent_includes_all_skill_actions_is_valid(graph_repo):
+    """
+    Given
+    - An agent registering a skill that depends on two actions, and the agent's
+      'actionids' includes both of them.
+
+    When
+    - Running the AG116 validation across the entire repository.
+
+    Then
+    - AG116 reports no problem for the agent.
+    """
+    from demisto_sdk.commands.validate.validators.AG_validators.AG116_agent_includes_skill_action_dependencies_all_files import (
+        IsAgentIncludesSkillActionDependenciesValidatorAllFiles,
+    )
+    from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
+
+    pack = graph_repo.create_pack("AgentPack")
+    _ag116_build_action(pack, "ActionA", "action-a")
+    _ag116_build_action(pack, "ActionB", "action-b")
+    _ag116_build_skill(pack, "MySkill", "my-skill-id", ["action-a", "action-b"])
+    _ag116_build_agent(
+        pack,
+        "MyAgent",
+        "my-agent-id",
+        skill_ids=["my-skill-id"],
+        action_ids=["action-a", "action-b"],
+    )
+
+    graph_interface = graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    results = IsAgentIncludesSkillActionDependenciesValidatorAllFiles().obtain_invalid_content_items(
+        []
+    )
+
+    assert not results
+
+
+def test_AG116_list_files_fetches_only_required_skills(graph_repo, mocker):
+    """
+    Given
+    - Two agents each registering a different skill, but only one agent is passed
+      to the (git/specific-files) list-files validation.
+
+    When
+    - Running the AG116 list-files validation on the single changed agent.
+
+    Then
+    - Only the skill registered by the validated agent is fetched from the graph
+      (the other skill is not queried), and the missing action is reported.
+    """
+    from demisto_sdk.commands.content_graph.common import ContentType
+    from demisto_sdk.commands.validate.validators.AG_validators.AG116_agent_includes_skill_action_dependencies_list_files import (
+        IsAgentIncludesSkillActionDependenciesValidatorListFiles,
+    )
+    from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
+
+    pack = graph_repo.create_pack("AgentPack")
+    _ag116_build_action(pack, "ActionA", "action-a")
+    _ag116_build_action(pack, "ActionB", "action-b")
+    _ag116_build_skill(pack, "SkillOne", "skill-one", ["action-a"])
+    _ag116_build_skill(pack, "SkillTwo", "skill-two", ["action-b"])
+    changed_agent = _ag116_build_agent(
+        pack,
+        "ChangedAgent",
+        "changed-agent-id",
+        skill_ids=["skill-one"],
+        action_ids=[],  # missing 'action-a'
+    )
+    _ag116_build_agent(
+        pack,
+        "OtherAgent",
+        "other-agent-id",
+        skill_ids=["skill-two"],
+        action_ids=["action-b"],
+    )
+
+    graph_interface = graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+    search_spy = mocker.spy(graph_interface, "search")
+    agent_object = changed_agent.get_graph_object(graph_interface)
+
+    results = IsAgentIncludesSkillActionDependenciesValidatorListFiles().obtain_invalid_content_items(
+        [agent_object]
+    )
+
+    assert len(results) == 1
+    assert "action-a" in results[0].message
+
+    skill_search_calls = [
+        call
+        for call in search_spy.call_args_list
+        if call.kwargs.get("content_type") == ContentType.AGENTIX_SKILL
+    ]
+    assert skill_search_calls, "expected the validator to query the graph for skills"
+    assert all(
+        call.kwargs.get("object_id") == ["skill-one"] for call in skill_search_calls
+    ), "expected only the validated agent's skill to be fetched"

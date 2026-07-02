@@ -4850,6 +4850,7 @@ def get_content_item_supported_modules(item) -> set[str]:
         pack = getattr(item, "pack", None)
         if pack is not None:
             modules = pack.supportedModules
+
     return set(default_modules if modules is None else modules)
 
 

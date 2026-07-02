@@ -4,9 +4,10 @@ from dataclasses import dataclass, field
 from typing import ClassVar, Dict, Iterable, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import (
-    GitStatuses,
+    XSIAM_AND_AGENTIX_MODULES,
+    XSIAM_AND_EXPOSURE_MANAGEMENT_MODULES,
+    XSIAM_ONLY_MODULES,
     MarketplaceVersions,
-    PlatformSupportedModules,
 )
 from demisto_sdk.commands.common.tools import (
     get_content_item_supported_modules,
@@ -23,16 +24,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 )
 
 ContentTypes = Integration
-
-AGENTIX_AND_XSIAM: Set[str] = {
-    PlatformSupportedModules.AGENTIX.value,
-    PlatformSupportedModules.XSIAM.value,
-}
-XSIAM_ONLY: Set[str] = {PlatformSupportedModules.XSIAM.value}
-XSIAM_AND_EXPOSURE_MANAGEMENT: Set[str] = {
-    PlatformSupportedModules.XSIAM.value,
-    PlatformSupportedModules.EXPOSURE_MANAGEMENT.value,
-}
 
 MAX_FETCH_PARAM = "max_fetch"
 # Fetch Credentials has no top-level flag; it is active when this param exists.
@@ -186,27 +177,27 @@ FETCH_TYPES: List[FetchType] = [
     FetchType(
         flag_attr="is_fetch",
         display_name="Fetch Incidents",
-        allowed_modules=AGENTIX_AND_XSIAM,
+        allowed_modules=XSIAM_AND_AGENTIX_MODULES,
         required_params={"isFetch", "incidentFetchInterval", "incidentType"},
         optional_params={MAX_FETCH_PARAM},
     ),
     FetchType(
         flag_attr="is_fetch_events",
         display_name="Fetch Events",
-        allowed_modules=XSIAM_ONLY,
+        allowed_modules=XSIAM_ONLY_MODULES,
         required_params={"isFetchEvents", "eventFetchInterval"},
         optional_params={MAX_FETCH_PARAM},
     ),
     FetchType(
         flag_attr="is_fetch_assets",
         display_name="Fetch Assets",
-        allowed_modules=XSIAM_AND_EXPOSURE_MANAGEMENT,
+        allowed_modules=XSIAM_AND_EXPOSURE_MANAGEMENT_MODULES,
         required_params={"isFetchAssets", "assetsFetchInterval"},
     ),
     FetchType(
         flag_attr="is_feed",
         display_name="Fetch Indicators",
-        allowed_modules=AGENTIX_AND_XSIAM,
+        allowed_modules=XSIAM_AND_AGENTIX_MODULES,
         required_params={
             "feed",
             "feedReliability",
@@ -223,7 +214,7 @@ FETCH_TYPES: List[FetchType] = [
     FetchType(
         activation_param=IS_FETCH_CREDENTIALS_PARAM,
         display_name="Fetch Credentials",
-        allowed_modules=AGENTIX_AND_XSIAM,
+        allowed_modules=XSIAM_AND_AGENTIX_MODULES,
         optional_params={
             IS_FETCH_CREDENTIALS_PARAM,
             "credential_names",
@@ -272,11 +263,6 @@ class InvalidSupportedModulesForFetchTypeValidator(BaseValidator[ContentTypes]):
     fix_message = "Fixed the following fetch-related parameters in '{0}': {1}."
     related_field = "supportedModules"
     is_auto_fixable = True
-    expected_git_statuses: ClassVar[List[GitStatuses]] = [
-        GitStatuses.ADDED,
-        GitStatuses.RENAMED,
-        GitStatuses.MODIFIED,
-    ]
     fix_plans: ClassVar[Dict[str, FixPlan]] = {}
 
     def obtain_invalid_content_items(

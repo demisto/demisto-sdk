@@ -155,6 +155,12 @@ class IsActionNameChangedRequiresSkillRNValidator(BaseValidator[ContentTypes], A
 
         current_version = pack.current_version
         if not isinstance(old_obj, Pack):
+            logger.warning(
+                f"GR115.was_pack_version_bumped: pack '{pack_id}' master baseline "
+                f"(old_base_content_object) is not a Pack (got "
+                f"'{type(old_obj).__name__}') - cannot compare versions, treating "
+                f"as no bump required (returning True)."
+            )
             return True
         old_version = old_obj.current_version
         if not current_version or not old_version:

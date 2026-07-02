@@ -14,6 +14,7 @@ These tests cover the three production changes:
 from __future__ import annotations
 
 from configparser import ConfigParser
+from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.tools import (
@@ -241,6 +242,17 @@ class TestIsErrorIgnoredPackLevel:
         item = _FakeContentItem(pack=pack)
         assert is_error_ignored("GR109", ALLOWED + ["GR109"], item) is False
 
+    def test_pa135_cannot_be_ignored_via_pack_level(self):
+        """
+        Given PA135 (the pack-level-ignore guard) listed under [pack],
+        When is_error_ignored is called for PA135,
+        Then it is NOT ignored (PA135 is in ALWAYS_RUN_ON_ERROR_CODE), so a user
+        cannot silence the guard via the section it protects.
+        """
+        pack = _make_pack("[pack]\nignore=PA135\n")
+        item = _FakeContentItem(pack=pack)
+        assert is_error_ignored("PA135", ALLOWED + ["PA135"], item) is False
+
     def test_non_ignorable_code_not_silenced_even_via_pack_level(self):
         """
         Given a code that is NOT in the ignorable whitelist,
@@ -388,3 +400,123 @@ class TestParseIgnoreList:
 
     def test_single_code(self):
         assert parse_ignore_list("BA101") == ["BA101"]
+
+
+# ---------------------------------------------------------------------------
+# PA135 support: Pack.old_pack_level_ignored_errors (reads old .pack-ignore)
+# ---------------------------------------------------------------------------
+
+
+class TestOldPackLevelIgnoredErrors:
+    """Verify reading the previous-version [pack] codes straight from git."""
+
+    @staticmethod
+    def _make_pack_with_path():
+        from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+        pack = Pack.__new__(Pack)  # bypass Pydantic init
+        object.__setattr__(pack, "object_id", "TestPack")
+        object.__setattr__(pack, "path", Path("Packs/TestPack"))
+        return pack
+
+    @staticmethod
+    def _fake_git(mocker, *, exists=True, content=b"", raises=None):
+        """Build a mocked GitUtil.
+
+        `handle_prev_ver` is stubbed to return a concrete (remote, branch)
+        tuple so `_read_pack_ignore_at_ref` can unpack it. Callers can override
+        `.handle_prev_ver` afterwards to exercise remote/local fallback.
+        """
+        fake_git = mocker.Mock()
+        fake_git.handle_prev_ver.return_value = ("origin", "master")
+        fake_git.is_file_exist_in_commit_or_branch.return_value = exists
+        if raises is not None:
+            fake_git.read_file_content.side_effect = raises
+        else:
+            fake_git.read_file_content.return_value = content
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack.GitUtil.from_content_path",
+            return_value=fake_git,
+        )
+        return fake_git
+
+    def test_no_prev_ver_returns_empty(self, mocker):
+        pack = self._make_pack_with_path()
+        git_util = mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack.GitUtil.from_content_path"
+        )
+        assert pack.old_pack_level_ignored_errors(None) == []
+        git_util.assert_not_called()
+
+    def test_old_file_missing_returns_empty(self, mocker):
+        pack = self._make_pack_with_path()
+        fake_git = self._fake_git(mocker, exists=False)
+        assert pack.old_pack_level_ignored_errors("abc123") == []
+        fake_git.read_file_content.assert_not_called()
+
+    def test_old_file_without_pack_section_returns_empty(self, mocker):
+        pack = self._make_pack_with_path()
+        self._fake_git(mocker, content=b"[file:foo.yml]\nignore=BA101\n")
+        assert pack.old_pack_level_ignored_errors("abc123") == []
+
+    def test_old_file_with_pack_section_returns_codes(self, mocker):
+        pack = self._make_pack_with_path()
+        self._fake_git(mocker, content=b"[pack]\nignore= BA101 , RM104 ,\n")
+        assert pack.old_pack_level_ignored_errors("abc123") == ["BA101", "RM104"]
+
+    def test_git_read_raises_returns_empty_and_logs(self, mocker):
+        pack = self._make_pack_with_path()
+        self._fake_git(mocker, raises=RuntimeError("boom"))
+        debug = mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack.logger.debug"
+        )
+        assert pack.old_pack_level_ignored_errors("abc123") == []
+        assert debug.called
+
+    def test_prev_ver_is_resolved_via_handle_prev_ver(self, mocker):
+        """A bare branch name is normalized to `<remote>/<branch>` before reading.
+
+        Regression for the fork/pack-ignore-only false-negative: the old file
+        must be looked up on the resolved remote ref, not read as a raw string.
+        """
+        pack = self._make_pack_with_path()
+        fake_git = self._fake_git(
+            mocker, content=b"[pack]\nignore=BA101\n"
+        )
+        fake_git.handle_prev_ver.return_value = ("myfork", "master")
+        pack.old_pack_level_ignored_errors("master")
+        fake_git.handle_prev_ver.assert_called_once_with("master")
+        # First lookup must target the resolved remote ref, from_remote=True.
+        first_call = fake_git.is_file_exist_in_commit_or_branch.call_args_list[0]
+        assert first_call.args[1] == "myfork/master"
+        assert first_call.args[2] is True
+
+    def test_falls_back_to_local_ref_when_remote_missing(self, mocker):
+        """When the file is absent on the remote ref, read the local branch ref.
+
+        Covers forks/offline runs where `origin/master` does not carry the old
+        `.pack-ignore`, but the local `master` does.
+        """
+        pack = self._make_pack_with_path()
+        fake_git = self._fake_git(mocker)
+        fake_git.handle_prev_ver.return_value = ("origin", "master")
+        # Missing on remote ref, present on local branch ref.
+        fake_git.is_file_exist_in_commit_or_branch.side_effect = (
+            lambda _path, ref, from_remote=True: (ref == "master" and not from_remote)
+        )
+        fake_git.read_file_content.return_value = b"[pack]\nignore=RM104\n"
+        assert pack.old_pack_level_ignored_errors("master") == ["RM104"]
+        # The successful read used the local ref (from_remote=False).
+        read_call = fake_git.read_file_content.call_args
+        assert read_call.args[1] == "master"
+        assert read_call.args[2] is False
+
+    def test_sha_prev_ver_read_without_remote_prefix(self, mocker):
+        """A 40-char sha resolves with an empty remote, so the ref is the sha itself."""
+        pack = self._make_pack_with_path()
+        sha = "a" * 40
+        fake_git = self._fake_git(mocker, content=b"[pack]\nignore=BA101\n")
+        fake_git.handle_prev_ver.return_value = (None, sha)
+        assert pack.old_pack_level_ignored_errors(sha) == ["BA101"]
+        first_call = fake_git.is_file_exist_in_commit_or_branch.call_args_list[0]
+        assert first_call.args[1] == sha

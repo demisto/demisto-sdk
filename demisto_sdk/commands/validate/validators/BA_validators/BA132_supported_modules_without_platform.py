@@ -15,7 +15,6 @@ from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
-from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
@@ -29,11 +28,8 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
-from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
-from demisto_sdk.commands.content_graph.objects.widget import Widget
-from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
@@ -51,7 +47,6 @@ ContentTypes = Union[
     CaseLayoutRule,
     Classifier,
     CorrelationRule,
-    Dashboard,
     IncidentField,
     IncidentType,
     IndicatorField,
@@ -65,11 +60,8 @@ ContentTypes = Union[
     ModelingRule,
     ParsingRule,
     Playbook,
-    Report,
     Script,
     Trigger,
-    Widget,
-    Wizard,
     XDRCTemplate,
     XSIAMDashboard,
     XSIAMReport,

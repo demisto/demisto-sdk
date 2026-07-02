@@ -440,9 +440,7 @@ class TestUpdateDockerImageDemistoextended:
             script_obj, "/fake/path/script.yml"
         )
 
-        assert (
-            script_obj["dockerimage"] == "demistoextended/accessdata:1.1.0.99999"
-        )
+        assert script_obj["dockerimage"] == "demistoextended/accessdata:1.1.0.99999"
         dockerhub_mock.assert_not_called()
 
     def test_demistoextended_lookup_failure_leaves_image_unchanged(self, mocker):

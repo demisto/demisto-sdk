@@ -547,9 +547,7 @@ class DockerBase:
         "devtestdemisto" mapping.
         """
         if base_image.startswith(EXTENDED_REPOSITORY_SEGMENT):
-            renamed = base_image.replace(
-                "demistoextended", "devtestdemistoextended"
-            )
+            renamed = base_image.replace("demistoextended", "devtestdemistoextended")
         else:
             renamed = base_image.replace("demisto", "devtestdemisto")
         return f"{renamed}-{identifier}"

@@ -141,7 +141,6 @@ mapping:
         type: bool
       spec:
         type: str
-        enum: ['S', 'M', 'L']
       isfetch:xsoar:
         type: bool
       isfetch:marketplacev2:

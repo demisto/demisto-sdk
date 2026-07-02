@@ -152,6 +152,7 @@ class _Script(BaseStrictModel):
     feed: Optional[bool] = None
     is_fetch_samples: Optional[bool] = Field(None, alias="isFetchSamples")
     reset_context: Optional[bool] = Field(None, alias="resetContext")
+    spec: Optional[str] = None
 
 
 Script = create_model(
@@ -223,7 +224,6 @@ class _StrictIntegration(BaseStrictModel):
     hidden: Optional[bool] = None
     internal: Optional[bool] = None
     source: Optional[str] = None
-    spec: Optional[str] = None
     videos: Optional[List[str]] = None
     versioned_fields: dict = Field(None, alias="versionedfields")
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")

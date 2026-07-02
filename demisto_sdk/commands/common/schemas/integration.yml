@@ -139,6 +139,9 @@ mapping:
         type: bool
       resetContext:
         type: bool
+      spec:
+        type: str
+        enum: ['S', 'M', 'L']
       isfetch:xsoar:
         type: bool
       isfetch:marketplacev2:
@@ -196,8 +199,6 @@ mapping:
     type: bool
   supportsquickactions:
       type: bool
-  spec:
-    type: str
 
   triggers:
     type: seq

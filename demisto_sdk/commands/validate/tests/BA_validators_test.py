@@ -4007,14 +4007,14 @@ def _platform_item(create_func, supported_modules):
             id="integration_allows_all_modules_valid",
         ),
         pytest.param(
-            [_platform_item(create_dashboard_object, ["xsiam", "agentix"])],
+            [_platform_item(create_incident_field_object, ["xsiam", "agentix"])],
             0,
-            id="dashboard_xsiam_and_agentix_valid",
+            id="incident_field_xsiam_and_agentix_valid",
         ),
         pytest.param(
-            [_platform_item(create_dashboard_object, ["xsiam", "edr"])],
+            [_platform_item(create_incident_field_object, ["xsiam", "edr"])],
             1,
-            id="dashboard_with_disallowed_module_invalid",
+            id="incident_field_with_disallowed_module_invalid",
         ),
         pytest.param(
             [_platform_item(create_modeling_rule_object, ["xsiam"])],
@@ -4029,7 +4029,7 @@ def _platform_item(create_func, supported_modules):
         pytest.param(
             [
                 _platform_item(create_integration_object, ["xsiam"]),
-                _platform_item(create_dashboard_object, ["edr"]),
+                _platform_item(create_incident_field_object, ["edr"]),
                 _platform_item(create_modeling_rule_object, ["tim"]),
             ],
             2,
@@ -4044,8 +4044,8 @@ def test_InvalidSupportedModulesValidator_obtain_invalid_content_items(
     Given
     - content_items list with various content types and supportedModules.
         - Case 1: Integration allows every module - valid.
-        - Case 2: Dashboard with xsiam + agentix (its allowed set) - valid.
-        - Case 3: Dashboard with edr (not in its allowed set) - invalid.
+        - Case 2: IncidentField with xsiam + agentix (its allowed set) - valid.
+        - Case 3: IncidentField with edr (not in its allowed set) - invalid.
         - Case 4: ModelingRule with xsiam only (its allowed set) - valid.
         - Case 5: ModelingRule with agentix (not allowed) - invalid.
         - Case 6: Mixed - one valid, two invalid.
@@ -4063,14 +4063,14 @@ def test_InvalidSupportedModulesValidator_obtain_invalid_content_items(
 def test_InvalidSupportedModulesValidator_error_message():
     """
     Given
-    - A Dashboard (allowed: xsiam, agentix) declaring an invalid module 'edr'.
+    - An IncidentField (allowed: xsiam, agentix) declaring an invalid module 'edr'.
     When
     - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
     Then
     - A single failure is returned, and the message lists the invalid module and
       the allowed modules for the content item type.
     """
-    content_item = _platform_item(create_dashboard_object, ["xsiam", "edr"])
+    content_item = _platform_item(create_incident_field_object, ["xsiam", "edr"])
     results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
         [content_item]
     )
@@ -4083,14 +4083,14 @@ def test_InvalidSupportedModulesValidator_error_message():
 def test_InvalidSupportedModulesValidator_non_platform_item_is_skipped():
     """
     Given
-    - A Dashboard that is NOT a platform item (no 'platform' marketplace), even
-      though it declares a module that would otherwise be invalid.
+    - An IncidentField that is NOT a platform item (no 'platform' marketplace),
+      even though it declares a module that would otherwise be invalid.
     When
     - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
     Then
     - No failures are returned, because non-platform items are skipped.
     """
-    content_item = create_dashboard_object()
+    content_item = create_incident_field_object()
     content_item.marketplaces = [MarketplaceVersions.XSOAR]
     content_item.supportedModules = ["edr"]
     results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
@@ -4102,14 +4102,14 @@ def test_InvalidSupportedModulesValidator_non_platform_item_is_skipped():
 def test_InvalidSupportedModulesValidator_inherits_modules_from_pack():
     """
     Given
-    - A Dashboard that is a platform item with no supportedModules of its own,
+    - An IncidentField that is a platform item with no supportedModules of its own,
       but whose pack declares an invalid module ('edr').
     When
     - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
     Then
     - A single failure is returned, because the modules are resolved from the pack.
     """
-    content_item = create_dashboard_object()
+    content_item = create_incident_field_object()
     pack = create_pack_object()
     pack.supportedModules = ["edr"]
     content_item.pack = pack
@@ -4125,14 +4125,14 @@ def test_InvalidSupportedModulesValidator_inherits_modules_from_pack():
 def test_InvalidSupportedModulesValidator_pack_declares_only_valid_modules():
     """
     Given
-    - A Dashboard that is a platform item with no supportedModules of its own,
-      whose pack declares only modules allowed for a Dashboard ('xsiam', 'agentix').
+    - An IncidentField that is a platform item with no supportedModules of its own,
+      whose pack declares only modules allowed for an IncidentField ('xsiam', 'agentix').
     When
     - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
     Then
     - No failures are returned, because the inherited pack modules are all valid.
     """
-    content_item = create_dashboard_object()
+    content_item = create_incident_field_object()
     pack = create_pack_object()
     pack.supportedModules = ["xsiam", "agentix"]
     content_item.pack = pack
@@ -4198,20 +4198,25 @@ def test_InvalidSupportedModulesValidator_platform_item_with_empty_modules_is_va
     assert len(results) == 0
 
 
-def _dashboard_with_modules(supported_modules):
-    """Build a dashboard through the real parser path, injecting the given
+def _incident_field_with_modules(supported_modules):
+    """Build an incident field through the real parser path, injecting the given
     supportedModules into the content (None to omit the field entirely).
 
-    The marketplaces are left to resolve naturally through the parser: the
-    dashboard asset declares no marketplaces, so they are resolved through the
-    inheritance chain (which expands to the xsoar family). The resolved
-    marketplaces therefore do NOT include 'platform'.
+    The marketplaces are pinned to the xsoar family (which does NOT include
+    'platform')
     """
     if supported_modules is None:
-        return create_dashboard_object()
-    return create_dashboard_object(
-        paths=["supportedModules"], values=[supported_modules]
-    )
+        content_item = create_incident_field_object()
+    else:
+        content_item = create_incident_field_object(
+            paths=["supportedModules"], values=[supported_modules]
+        )
+    content_item.marketplaces = [
+        MarketplaceVersions.XSOAR,
+        MarketplaceVersions.XSOAR_ON_PREM,
+        MarketplaceVersions.XSOAR_SAAS,
+    ]
+    return content_item
 
 
 @pytest.mark.parametrize(
@@ -4298,7 +4303,7 @@ def test_SupportedModulesWithoutPlatformValidator_obtain_invalid_content_items(
     Then
     - Make sure the right amount of failures return.
     """
-    content_item = _dashboard_with_modules(supported_modules)
+    content_item = _incident_field_with_modules(supported_modules)
     if override_marketplaces is not None:
         content_item.marketplaces = override_marketplaces
     results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
@@ -4307,7 +4312,7 @@ def test_SupportedModulesWithoutPlatformValidator_obtain_invalid_content_items(
     assert len(results) == expected_number_of_failures
 
 
-def test_SupportedModulesWithoutPlatformValidator_inherits_modules_from_pack():
+def test_SupportedModulesWithoutPlatformValidator_pack_modules_are_not_inherited():
     """
     Given
     - A content item with no supportedModules of its own and only the xsoar
@@ -4315,10 +4320,10 @@ def test_SupportedModulesWithoutPlatformValidator_inherits_modules_from_pack():
     When
     - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
     Then
-    - A single failure is returned, because the modules are inherited from the
-      pack while 'platform' is absent from the marketplaces.
+    - No failures are returned, because only the item's own supportedModules are
+      checked; values inherited from the pack are not considered.
     """
-    content_item = create_dashboard_object()
+    content_item = create_incident_field_object()
     pack = create_pack_object()
     pack.supportedModules = ["edr"]
     content_item.pack = pack
@@ -4327,7 +4332,30 @@ def test_SupportedModulesWithoutPlatformValidator_inherits_modules_from_pack():
     results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
         [content_item]
     )
-    assert len(results) == 1
+    assert len(results) == 0
+
+
+def test_SupportedModulesWithoutPlatformValidator_empty_modules_list_is_valid():
+    """
+    Given
+    - A content item with only the xsoar marketplace whose own supportedModules
+      is an explicit empty list, while its pack declares supportedModules.
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because an explicit empty list means the item
+      declares no modules of its own, and pack values are not inherited.
+    """
+    content_item = create_incident_field_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["edr"]
+    content_item.pack = pack
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    content_item.supportedModules = []
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
 
 
 def test_SupportedModulesWithoutPlatformValidator_inherits_modules_from_pack_with_platform():
@@ -4340,7 +4368,7 @@ def test_SupportedModulesWithoutPlatformValidator_inherits_modules_from_pack_wit
     Then
     - No failures are returned, because 'platform' is present in the marketplaces.
     """
-    content_item = create_dashboard_object()
+    content_item = create_incident_field_object()
     pack = create_pack_object()
     pack.supportedModules = ["xsiam"]
     content_item.pack = pack
@@ -4362,7 +4390,7 @@ def test_SupportedModulesWithoutPlatformValidator_error_message():
     - A single failure is returned, and the message mentions 'supportedModules'
       and 'platform'.
     """
-    content_item = _dashboard_with_modules(["edr"])
+    content_item = _incident_field_with_modules(["edr"])
     content_item.marketplaces = [MarketplaceVersions.XSOAR]
     results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
         [content_item]
@@ -4382,13 +4410,13 @@ def test_SupportedModulesWithoutPlatformValidator_multiple_items():
     Then
     - Exactly one failure is returned.
     """
-    invalid_item = _dashboard_with_modules(["edr"])
+    invalid_item = _incident_field_with_modules(["edr"])
     invalid_item.marketplaces = [MarketplaceVersions.XSOAR]
 
-    valid_platform_item = _dashboard_with_modules(["xsiam"])
+    valid_platform_item = _incident_field_with_modules(["xsiam"])
     valid_platform_item.marketplaces = [MarketplaceVersions.PLATFORM]
 
-    valid_no_modules_item = create_dashboard_object()
+    valid_no_modules_item = create_incident_field_object()
     valid_no_modules_item.marketplaces = [MarketplaceVersions.XSOAR]
 
     content_items = [invalid_item, valid_platform_item, valid_no_modules_item]

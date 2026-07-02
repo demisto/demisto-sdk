@@ -4821,43 +4821,36 @@ def is_private_content_file(file, private_content_path: Path | None = None) -> b
     return False
 
 
-def _resolve_declared_supported_modules(item) -> Optional[List[str]]:
-    """Resolve declared modules through item -> pack, keeping None vs [] distinct.
-
-    Returns None if unset everywhere, otherwise the declared list (possibly []).
-    An explicit [] on the item is returned as-is and not inherited from the pack.
+def get_content_item_supported_modules(item) -> set[str]:
     """
+    Resolves the definitive list of supported modules for an item,
+    falling back to its pack's modules or the platform defaults.
+
+    An explicit empty list ([]) on the item is honored as "no modules" and is
+    not inherited from the pack; the platform defaults are used only when the
+    field is unset (None).
+
+    Args:
+        item: A content item object that has marketplaces, supportedModules,
+              and optionally pack attributes.
+
+    Returns:
+        A set of supported module names, or empty set if not a platform item.
+    """
+    # Import here to avoid circular imports
     from demisto_sdk.commands.content_graph.objects.pack import Pack
+
+    if MarketplaceVersions.PLATFORM not in item.marketplaces:
+        return set()
+
+    default_modules = [sm.value for sm in PlatformSupportedModules]
 
     modules = item.supportedModules
     if modules is None and not isinstance(item, Pack):
         pack = getattr(item, "pack", None)
         if pack is not None:
             modules = pack.supportedModules
-    return modules
-
-
-def get_declared_supported_modules(item) -> set[str]:
-    """Declared modules (item -> pack), without platform defaults or marketplace check.
-
-    Returns an empty set if nothing was declared or an explicit [] was set.
-    """
-    return set(_resolve_declared_supported_modules(item) or [])
-
-
-def get_content_item_supported_modules(item) -> set[str]:
-    """Definitive supported modules for an item.
-
-    Falls back to the platform defaults only when the field is unset (None).
-    An explicit [] is honored as "no modules". Empty set for non-platform items.
-    """
-    if MarketplaceVersions.PLATFORM not in item.marketplaces:
-        return set()
-
-    declared = _resolve_declared_supported_modules(item)
-    if declared is None:
-        return {sm.value for sm in PlatformSupportedModules}
-    return set(declared)
+    return set(default_modules if modules is None else modules)
 
 
 def get_parameter_supported_modules(param, item) -> set[str]:

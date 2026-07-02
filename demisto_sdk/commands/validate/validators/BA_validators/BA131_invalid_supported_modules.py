@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from typing import ClassVar, Dict, Iterable, List, Set, Union
+from typing import Dict, Iterable, List, Set, Union
 
 from demisto_sdk.commands.common.constants import (
-    GitStatuses,
-    PlatformSupportedModules,
+    ALL_SUPPORTED_MODULES,
+    XSIAM_AND_AGENTIX_MODULES,
+    XSIAM_ONLY_MODULES,
 )
 from demisto_sdk.commands.common.tools import get_content_item_supported_modules
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
@@ -17,7 +18,6 @@ from demisto_sdk.commands.content_graph.objects.case_layout import CaseLayout
 from demisto_sdk.commands.content_graph.objects.case_layout_rule import CaseLayoutRule
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
-from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
 from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
 from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
@@ -31,11 +31,8 @@ from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
-from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
-from demisto_sdk.commands.content_graph.objects.widget import Widget
-from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
@@ -53,7 +50,6 @@ ContentTypes = Union[
     CaseLayoutRule,
     Classifier,
     CorrelationRule,
-    Dashboard,
     IncidentField,
     IncidentType,
     IndicatorField,
@@ -67,64 +63,45 @@ ContentTypes = Union[
     ModelingRule,
     ParsingRule,
     Playbook,
-    Report,
     Script,
     Trigger,
-    Widget,
-    Wizard,
     XDRCTemplate,
     XSIAMDashboard,
     XSIAMReport,
 ]
 
-# The complete set of platform supported modules.
-ALL_MODULES: Set[str] = {module.value for module in PlatformSupportedModules}
-
-# The 'xsiam' and 'agentix' modules.
-XSIAM_AND_AGENTIX: Set[str] = {
-    PlatformSupportedModules.XSIAM.value,
-    PlatformSupportedModules.AGENTIX.value,
-}
-
-# Content item types that allow only the 'xsiam' module.
-XSIAM_ONLY: Set[str] = {PlatformSupportedModules.XSIAM.value}
-
 # Mapping of content item type to the set of modules it is allowed to declare in
 # its 'supportedModules' field, based on the finalized per-content-type table.
 ALLOWED_MODULES_BY_TYPE: Dict[type, Set[str]] = {
     # Full set of modules.
-    Integration: ALL_MODULES,
-    Script: ALL_MODULES,
-    Playbook: ALL_MODULES,
-    Layout: ALL_MODULES,
-    LayoutRule: ALL_MODULES,
-    CaseLayout: ALL_MODULES,
-    Trigger: ALL_MODULES,
-    AgentixAgent: ALL_MODULES,
-    AgentixAction: ALL_MODULES,
+    Integration: ALL_SUPPORTED_MODULES,
+    Script: ALL_SUPPORTED_MODULES,
+    Playbook: ALL_SUPPORTED_MODULES,
+    Layout: ALL_SUPPORTED_MODULES,
+    LayoutRule: ALL_SUPPORTED_MODULES,
+    CaseLayout: ALL_SUPPORTED_MODULES,
+    Trigger: ALL_SUPPORTED_MODULES,
+    AgentixAgent: ALL_SUPPORTED_MODULES,
+    AgentixAction: ALL_SUPPORTED_MODULES,
     # xsiam + agentix.
-    Classifier: XSIAM_AND_AGENTIX,
-    CorrelationRule: XSIAM_AND_AGENTIX,
-    Dashboard: XSIAM_AND_AGENTIX,
-    IncidentField: XSIAM_AND_AGENTIX,
-    IncidentType: XSIAM_AND_AGENTIX,
-    IndicatorField: XSIAM_AND_AGENTIX,
-    IndicatorType: XSIAM_AND_AGENTIX,
-    Job: XSIAM_AND_AGENTIX,
-    ListObject: XSIAM_AND_AGENTIX,
-    Mapper: XSIAM_AND_AGENTIX,
-    Report: XSIAM_AND_AGENTIX,
-    Widget: XSIAM_AND_AGENTIX,
-    CaseField: XSIAM_AND_AGENTIX,
-    CaseLayoutRule: XSIAM_AND_AGENTIX,
+    Classifier: XSIAM_AND_AGENTIX_MODULES,
+    CorrelationRule: XSIAM_AND_AGENTIX_MODULES,
+    IncidentField: XSIAM_AND_AGENTIX_MODULES,
+    IncidentType: XSIAM_AND_AGENTIX_MODULES,
+    IndicatorField: XSIAM_AND_AGENTIX_MODULES,
+    IndicatorType: XSIAM_AND_AGENTIX_MODULES,
+    Job: XSIAM_AND_AGENTIX_MODULES,
+    ListObject: XSIAM_AND_AGENTIX_MODULES,
+    Mapper: XSIAM_AND_AGENTIX_MODULES,
+    CaseField: XSIAM_AND_AGENTIX_MODULES,
+    CaseLayoutRule: XSIAM_AND_AGENTIX_MODULES,
     # xsiam only.
-    ModelingRule: XSIAM_ONLY,
-    ParsingRule: XSIAM_ONLY,
-    XSIAMDashboard: XSIAM_ONLY,
-    XSIAMReport: XSIAM_ONLY,
-    Wizard: XSIAM_ONLY,
-    XDRCTemplate: XSIAM_ONLY,
-    AssetsModelingRule: XSIAM_ONLY,
+    ModelingRule: XSIAM_ONLY_MODULES,
+    ParsingRule: XSIAM_ONLY_MODULES,
+    XSIAMDashboard: XSIAM_ONLY_MODULES,
+    XSIAMReport: XSIAM_ONLY_MODULES,
+    XDRCTemplate: XSIAM_ONLY_MODULES,
+    AssetsModelingRule: XSIAM_ONLY_MODULES,
 }
 
 
@@ -145,11 +122,6 @@ class InvalidSupportedModulesValidator(BaseValidator[ContentTypes]):
     )
     related_field = "supportedModules"
     is_auto_fixable = False
-    expected_git_statuses: ClassVar[List[GitStatuses]] = [
-        GitStatuses.ADDED,
-        GitStatuses.RENAMED,
-        GitStatuses.MODIFIED,
-    ]
 
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]

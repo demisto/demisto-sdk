@@ -4821,40 +4821,25 @@ def is_private_content_file(file, private_content_path: Path | None = None) -> b
     return False
 
 
-def _resolve_declared_supported_modules(item) -> Optional[List[str]]:
-    """Resolve declared modules through item -> pack, keeping None vs [] distinct.
-
-    Returns None if unset everywhere, otherwise the declared list (possibly []).
-    An explicit [] on the item is returned as-is and not inherited from the pack.
-    """
-    from demisto_sdk.commands.content_graph.objects.pack import Pack
-
-    modules = item.supportedModules
-    if modules is None and not isinstance(item, Pack):
-        pack = getattr(item, "pack", None)
-        if pack is not None:
-            modules = pack.supportedModules
-    return modules
-
-
-def get_declared_supported_modules(item) -> set[str]:
-    """Declared modules (item -> pack), without platform defaults or marketplace check.
-
-    Returns an empty set if nothing was declared or an explicit [] was set.
-    """
-    return set(_resolve_declared_supported_modules(item) or [])
-
-
 def get_content_item_supported_modules(item) -> set[str]:
     """Definitive supported modules for an item.
 
-    Falls back to the platform defaults only when the field is unset (None).
-    An explicit [] is honored as "no modules". Empty set for non-platform items.
+    Resolves the declared modules through the item -> pack chain (an explicit []
+    on the item is honored as "no modules" and not inherited from the pack), and
+    falls back to the platform defaults only when the field is unset (None).
+    Returns an empty set for non-platform items.
     """
+    from demisto_sdk.commands.content_graph.objects.pack import Pack
+
     if MarketplaceVersions.PLATFORM not in item.marketplaces:
         return set()
 
-    declared = _resolve_declared_supported_modules(item)
+    declared = item.supportedModules
+    if declared is None and not isinstance(item, Pack):
+        pack = getattr(item, "pack", None)
+        if pack is not None:
+            declared = pack.supportedModules
+
     if declared is None:
         return {sm.value for sm in PlatformSupportedModules}
     return set(declared)

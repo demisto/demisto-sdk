@@ -5,7 +5,6 @@ from typing import Iterable, List, Union
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.tools import get_declared_supported_modules
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.assets_modeling_rule import (
@@ -102,11 +101,8 @@ class SupportedModulesWithoutPlatformValidator(BaseValidator[ContentTypes]):
     ) -> List[ValidationResult]:
         """Identify content items that declare supportedModules without platform.
 
-        The 'supportedModules' are resolved through the inheritance chain
-        (item -> pack), so an item that inherits its modules from its pack is
-        treated the same as one that declares them directly. The platform
-        default ('all modules') is intentionally NOT applied here - only
-        explicitly declared modules count.
+        Only the item's own 'supportedModules' field is checked; values inherited
+        from the pack are intentionally not considered.
 
         Args:
             content_items (Iterable[ContentTypes]): The content items to validate.
@@ -124,5 +120,5 @@ class SupportedModulesWithoutPlatformValidator(BaseValidator[ContentTypes]):
             )
             for content_item in content_items
             if MarketplaceVersions.PLATFORM not in content_item.marketplaces
-            and get_declared_supported_modules(content_item)
+            and content_item.supportedModules
         ]

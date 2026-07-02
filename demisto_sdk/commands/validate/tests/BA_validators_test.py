@@ -4302,7 +4302,7 @@ def test_SupportedModulesWithoutPlatformValidator_obtain_invalid_content_items(
     assert len(results) == expected_number_of_failures
 
 
-def test_SupportedModulesWithoutPlatformValidator_inherits_modules_from_pack():
+def test_SupportedModulesWithoutPlatformValidator_pack_modules_are_not_inherited():
     """
     Given
     - A content item with no supportedModules of its own and only the xsoar
@@ -4310,8 +4310,8 @@ def test_SupportedModulesWithoutPlatformValidator_inherits_modules_from_pack():
     When
     - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
     Then
-    - A single failure is returned, because the modules are inherited from the
-      pack while 'platform' is absent from the marketplaces.
+    - No failures are returned, because only the item's own supportedModules are
+      checked; values inherited from the pack are not considered.
     """
     content_item = create_dashboard_object()
     pack = create_pack_object()
@@ -4322,7 +4322,30 @@ def test_SupportedModulesWithoutPlatformValidator_inherits_modules_from_pack():
     results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
         [content_item]
     )
-    assert len(results) == 1
+    assert len(results) == 0
+
+
+def test_SupportedModulesWithoutPlatformValidator_empty_modules_list_is_valid():
+    """
+    Given
+    - A content item with only the xsoar marketplace whose own supportedModules
+      is an explicit empty list, while its pack declares supportedModules.
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because an explicit empty list means the item
+      declares no modules of its own, and pack values are not inherited.
+    """
+    content_item = create_dashboard_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["edr"]
+    content_item.pack = pack
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    content_item.supportedModules = []
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
 
 
 def test_SupportedModulesWithoutPlatformValidator_inherits_modules_from_pack_with_platform():

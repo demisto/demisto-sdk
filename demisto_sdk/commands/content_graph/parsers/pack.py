@@ -205,6 +205,11 @@ class PackMetadataParser:
         self.source: str = metadata.get("source", "")
         self.managed: bool = metadata.get("managed", False)
         self.internal: bool = metadata.get("internal", False)
+        # Marketplace-suffixed managed/source fields. Kept as-is here; they are
+        # resolved into the plain managed/source per-marketplace during dump
+        # (see MarketplaceSuffixPreparer.prepare_managed_and_source).
+        self.managed_platform: Optional[bool] = metadata.get("managed:platform")
+        self.source_platform: Optional[str] = metadata.get("source:platform")
 
     @property
     def url(self) -> str:

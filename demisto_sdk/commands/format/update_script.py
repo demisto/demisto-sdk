@@ -120,13 +120,17 @@ class ScriptYMLFormat(BaseUpdateYML):
         from demisto_sdk.commands.common.docker.docker_image import DockerImage
 
         try:
-            return str(DockerImage(dockerimage).latest_docker_image)
+            latest_image = DockerImage(dockerimage).latest_docker_image
         except Exception as e:
             logger.info(
                 f"<yellow>Failed getting latest tag for extended image "
                 f"{dockerimage}. {e}</yellow>"
             )
             return ""
+        if not latest_image.tag:
+            logger.info("<yellow>Failed getting docker image latest tag</yellow>")
+            return ""
+        return str(latest_image)
 
     @staticmethod
     def _apply_docker_image_update(

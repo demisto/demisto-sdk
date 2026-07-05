@@ -560,9 +560,7 @@ class DockerBase:
                 DEMISTO_EXTENDED_REPOSITORY, DEVTEST_DEMISTO_EXTENDED_REPOSITORY
             )
         else:
-            renamed = base_image.replace(
-                DEMISTO_REPOSITORY, DEVTEST_DEMISTO_REPOSITORY
-            )
+            renamed = base_image.replace(DEMISTO_REPOSITORY, DEVTEST_DEMISTO_REPOSITORY)
         return f"{renamed}-{identifier}"
 
     def get_or_create_test_image(

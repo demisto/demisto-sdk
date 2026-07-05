@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import GitStatuses, MarketplaceVersio
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import UnknownContent
 from demisto_sdk.commands.content_graph.objects.conf_json import ConfJSON
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 from demisto_sdk.commands.validate.tests.test_tools import (
@@ -2978,27 +2979,31 @@ def _make_skill_with_pack_versions(
     """Build a mock dependent AgentixSkill whose pack exposes versions.
 
     ``was_pack_version_bumped`` reads ``pack.current_version`` and
-    ``pack.old_base_content_object.current_version``. This helper lets tests
-    control those two values directly (repo-agnostic), simulate a brand-new
-    pack (no master baseline) or a missing pack.
+    ``pack.old_base_content_object.current_version``, where ``pack`` is the
+    skill's ``in_pack`` property. This helper lets tests control those two
+    values directly (repo-agnostic), simulate a brand-new pack (no master
+    baseline) or a missing pack.
     """
     skill = mocker.Mock()
     skill.object_id = "my-skill-id"
     skill.pack_id = "SkillPack"
 
     if pack != "__unset__":
-        skill.pack = pack
+        skill.in_pack = pack
         return skill
 
     pack_mock = mocker.Mock()
     pack_mock.current_version = current_version
     if has_old_baseline:
-        old_baseline = mocker.Mock()
+        # ``was_pack_version_bumped`` requires the master baseline to be a real
+        # ``Pack`` (it guards with ``isinstance(old_obj, Pack)``), so spec the
+        # mock to that class for the isinstance check to pass.
+        old_baseline = mocker.Mock(spec=Pack)
         old_baseline.current_version = old_version
         pack_mock.old_base_content_object = old_baseline
     else:
         pack_mock.old_base_content_object = None
-    skill.pack = pack_mock
+    skill.in_pack = pack_mock
     return skill
 
 
@@ -3089,7 +3094,7 @@ def test_GR115_cross_repo_skill_with_bump_passes(mocker, graph_repo: Repo):
         mocker, old_version="2.3.0", current_version="2.3.1"
     )
     skill.git_status = None  # cross-repo / graph node: no local git status
-    skill.pack.git_status = None
+    skill.in_pack.git_status = None
     mocker.patch.object(
         IsActionNameChangedRequiresSkillRNValidatorListFiles,
         "get_dependent_skills",
@@ -3119,7 +3124,7 @@ def test_GR115_cross_repo_skill_without_bump_fails(mocker, graph_repo: Repo):
         mocker, old_version="2.3.0", current_version="2.3.0"
     )
     skill.git_status = None
-    skill.pack.git_status = None
+    skill.in_pack.git_status = None
     mocker.patch.object(
         IsActionNameChangedRequiresSkillRNValidatorListFiles,
         "get_dependent_skills",

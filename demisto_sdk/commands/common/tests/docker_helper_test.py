@@ -579,8 +579,7 @@ class TestGetPythonVersionDemistoextendedFallback:
         env = {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"}
         with mock.patch.dict(os.environ, env):
             assert (
-                get_python_version("demistoextended/accessdata:1.1.0.10293277")
-                is None
+                get_python_version("demistoextended/accessdata:1.1.0.10293277") is None
             )
 
     def test_demistoextended_routes_to_dockerimage_client(self, mocker):

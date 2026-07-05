@@ -103,9 +103,7 @@ class DockerHubClient:
         )
         if IS_CONTENT_GITLAB_CI:
             # If running in a CI environment, try using the Google Cloud access token
-            logger.info(
-                f"get_token | attempting Google Cloud access token for {repo=}"
-            )
+            logger.info(f"get_token | attempting Google Cloud access token for {repo=}")
             try:
                 if gcloud_access_token := get_gcloud_access_token():
                     logger.info(f"get_token | using gcloud access token for {repo=}")
@@ -712,7 +710,9 @@ def get_gcloud_access_token() -> Optional[str]:
                    is caught and logged, but not re-raised.
     """
     try:
-        logger.info("get_gcloud_access_token | resolving credentials via google.auth.default()")
+        logger.info(
+            "get_gcloud_access_token | resolving credentials via google.auth.default()"
+        )
         # Automatically obtain credentials from the environment
         credentials, project_id = google.auth.default()
         service_account = getattr(credentials, "service_account_email", None)
@@ -737,7 +737,9 @@ def get_gcloud_access_token() -> Optional[str]:
             )
             return None
     except Exception as e:
-        logger.warning(f"get_gcloud_access_token | failed to get access token: {str(e)}")
+        logger.warning(
+            f"get_gcloud_access_token | failed to get access token: {str(e)}"
+        )
         return None
 
 

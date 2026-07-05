@@ -408,7 +408,7 @@ class TestUpdateDockerImageDemistoextended:
         """
         Given:
          - a script object with a demistoextended/ docker image
-         - DockerImage.latest_tag is mocked
+         - the extended registry latest-tag lookup is mocked
 
         When:
          - calling update_docker_image_in_script
@@ -423,9 +423,12 @@ class TestUpdateDockerImageDemistoextended:
 
         mocker.patch.object(
             docker_image.DockerImage,
-            "latest_tag",
-            new_callable=mock.PropertyMock,
-            return_value=Version("1.1.0.99999"),
+            "_get_client",
+            return_value=mock.Mock(
+                get_latest_docker_image_tag=mock.Mock(
+                    return_value=Version("1.1.0.99999")
+                )
+            ),
         )
         dockerhub_mock = mocker.patch.object(
             update_script.DockerImageValidator,
@@ -459,9 +462,12 @@ class TestUpdateDockerImageDemistoextended:
 
         mocker.patch.object(
             docker_image.DockerImage,
-            "latest_tag",
-            new_callable=mock.PropertyMock,
-            side_effect=Exception("extended registry unreachable"),
+            "_get_client",
+            return_value=mock.Mock(
+                get_latest_docker_image_tag=mock.Mock(
+                    side_effect=Exception("extended registry unreachable")
+                )
+            ),
         )
 
         script_obj = {
@@ -501,8 +507,7 @@ class TestUpdateDockerImageDemistoextended:
         # demisto/ must never reach the extended registry path.
         extended_mock = mocker.patch.object(
             docker_image.DockerImage,
-            "latest_tag",
-            new_callable=mock.PropertyMock,
+            "_get_client",
         )
 
         script_obj = {

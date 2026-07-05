@@ -14,6 +14,8 @@ from demisto_sdk.commands.common.logger import logger
 
 DEMISTO_REPOSITORY = "demisto"
 DEMISTO_EXTENDED_REPOSITORY = "demistoextended"
+DEVTEST_DEMISTO_REPOSITORY = "devtestdemisto"
+DEVTEST_DEMISTO_EXTENDED_REPOSITORY = "devtestdemistoextended"
 
 
 class DockerImage(str):

@@ -27,6 +27,12 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON2,
     TYPE_PYTHON3,
 )
+from demisto_sdk.commands.common.docker.docker_image import (
+    DEMISTO_EXTENDED_REPOSITORY,
+    DEMISTO_REPOSITORY,
+    DEVTEST_DEMISTO_EXTENDED_REPOSITORY,
+    DEVTEST_DEMISTO_REPOSITORY,
+)
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import retry
@@ -51,7 +57,8 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "pre_commit" / "resources"
 DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT") or 300)
 CR_REGISTRY_PREFIX = "gcr.io/xsoar-registry/"
-EXTENDED_REPOSITORY_SEGMENT = "demistoextended/"
+EXTENDED_REPOSITORY_SEGMENT = f"{DEMISTO_EXTENDED_REPOSITORY}/"
+DEVTEST_EXTENDED_REPOSITORY_SEGMENT = f"{DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/"
 
 
 class DockerException(Exception):
@@ -529,7 +536,9 @@ class DockerBase:
             # double-prefixing it with the Docker Hub proxy registry.
             if extended_registry and extended_registry in image:
                 return image
-            if extended_registry and image.startswith(EXTENDED_REPOSITORY_SEGMENT):
+            if extended_registry and image.startswith(
+                (EXTENDED_REPOSITORY_SEGMENT, DEVTEST_EXTENDED_REPOSITORY_SEGMENT)
+            ):
                 return f"{extended_registry}/{image}"
             return image
         if DOCKER_REGISTRY_URL not in image:
@@ -547,9 +556,13 @@ class DockerBase:
         "devtestdemisto" mapping.
         """
         if base_image.startswith(EXTENDED_REPOSITORY_SEGMENT):
-            renamed = base_image.replace("demistoextended", "devtestdemistoextended")
+            renamed = base_image.replace(
+                DEMISTO_EXTENDED_REPOSITORY, DEVTEST_DEMISTO_EXTENDED_REPOSITORY
+            )
         else:
-            renamed = base_image.replace("demisto", "devtestdemisto")
+            renamed = base_image.replace(
+                DEMISTO_REPOSITORY, DEVTEST_DEMISTO_REPOSITORY
+            )
         return f"{renamed}-{identifier}"
 
     def get_or_create_test_image(

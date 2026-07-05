@@ -6,16 +6,13 @@ from typing import Optional
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
+    DEMISTO_EXTENDED_REPOSITORY,
+    DEMISTO_REPOSITORY,
     DOCKER_REGISTRY_URL,
     NATIVE_IMAGE_DOCKER_NAME,
 )
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.common.logger import logger
-
-DEMISTO_REPOSITORY = "demisto"
-DEMISTO_EXTENDED_REPOSITORY = "demistoextended"
-DEVTEST_DEMISTO_REPOSITORY = "devtestdemisto"
-DEVTEST_DEMISTO_EXTENDED_REPOSITORY = "devtestdemistoextended"
 
 
 class DockerImage(str):
@@ -30,15 +27,7 @@ class DockerImage(str):
     @classmethod
     def _get_dockerhub_client(cls):
         """Get or create the DockerHub client with the appropriate registry and credentials."""
-        # Use a truthiness (emptiness) check rather than an identity check against
-        # None so the client is (re)created whenever the cached value is missing or
-        # otherwise falsy, not only when it is exactly None.
         if not cls._dockerhub_client:
-            # NOTE: DockerHubClient is @lru_cache-wrapped, which replaces the class
-            # with a callable cache wrapper. The wrapper supports __call__ (i.e.
-            # `DockerHubClient(...)`), but attribute access for @classmethod members
-            # such as `from_environment` returns the raw, non-callable descriptor.
-            # We therefore construct the client directly instead of via the classmethod.
             cls._dockerhub_client = DockerHubClient(
                 registry=DOCKER_REGISTRY_URL,
                 username=os.getenv("DEMISTO_SDK_CR_USER", ""),
@@ -48,20 +37,14 @@ class DockerImage(str):
 
     @classmethod
     def _get_extended_client(cls):
-        """Get or create a DockerHubClient for the extended registry (GCR).
-
-        In CI, get_registry_api_url() resolves to the GAR proxy instead of
-        the actual GCR URL, so we override registry_api_url after construction.
-        Authentication is handled by get_token() → get_gcloud_access_token().
-        """
+        """Get or create a DockerHubClient for the extended registry (GCR)."""
         if not cls._extended_client:
             extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY")
             if not extended_registry:
                 return None
             client = DockerHubClient(registry=extended_registry)
-            # Override the registry URL — get_registry_api_url() resolves to
-            # the GAR proxy in CI, but we need the actual registry endpoint.
-            # V2 API: https://{host}/v2/{project}/{image}/tags/list
+            # get_registry_api_url() resolves to the GAR proxy in CI, so override
+            # with the actual registry V2 endpoint: https://{host}/v2/{path}
             parts = extended_registry.rstrip("/").split("/", 1)
             host = parts[0]
             path = parts[1] if len(parts) > 1 else ""

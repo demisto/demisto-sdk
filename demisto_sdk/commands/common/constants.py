@@ -46,6 +46,11 @@ DOCKER_REGISTRY_URL = os.getenv(
     os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
 )
 
+DEMISTO_REPOSITORY = "demisto"
+DEMISTO_EXTENDED_REPOSITORY = "demistoextended"
+DEVTEST_DEMISTO_REPOSITORY = "devtestdemisto"
+DEVTEST_DEMISTO_EXTENDED_REPOSITORY = "devtestdemistoextended"
+
 
 # Authentication
 DEMISTO_BASE_URL = "DEMISTO_BASE_URL"

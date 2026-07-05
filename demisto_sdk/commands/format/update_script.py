@@ -109,14 +109,10 @@ class ScriptYMLFormat(BaseUpdateYML):
 
     @staticmethod
     def _get_extended_image_latest_full_name(dockerimage: str) -> str:
-        """Resolve the latest ``repo:tag`` for a demistoextended image.
+        """Resolve the latest ``repo:tag`` for a demistoextended image via the extended registry.
 
-        Uses :class:`DockerImage`, which routes to the extended via
-        ``_get_extended_client``. Returns an empty string on any failure (e.g. the
-        extended registry is not configured), so the caller leaves the image
-        unchanged instead of writing a broken tag.
+        Returns an empty string on any failure, so the caller leaves the image unchanged.
         """
-        # Imported lazily to avoid a heavy import on the common format hot path.
         from demisto_sdk.commands.common.docker.docker_image import DockerImage
 
         try:

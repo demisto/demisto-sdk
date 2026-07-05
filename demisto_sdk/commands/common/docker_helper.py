@@ -20,18 +20,16 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_DOCKER_REGISTRY_URL,
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
+    DEMISTO_EXTENDED_REPOSITORY,
+    DEMISTO_REPOSITORY,
+    DEVTEST_DEMISTO_EXTENDED_REPOSITORY,
+    DEVTEST_DEMISTO_REPOSITORY,
     DOCKER_REGISTRY_URL,
     DOCKERFILES_INFO_REPO,
     TYPE_PWSH,
     TYPE_PYTHON,
     TYPE_PYTHON2,
     TYPE_PYTHON3,
-)
-from demisto_sdk.commands.common.docker.docker_image import (
-    DEMISTO_EXTENDED_REPOSITORY,
-    DEMISTO_REPOSITORY,
-    DEVTEST_DEMISTO_EXTENDED_REPOSITORY,
-    DEVTEST_DEMISTO_REPOSITORY,
 )
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
@@ -511,16 +509,7 @@ class DockerBase:
 
     @staticmethod
     def _normalize_cr_prefix(image: str) -> str:
-        """Strip a hardcoded container-registry prefix back to the canonical form.
-
-        Images that hardcode the CR prefix (e.g.
-        "gcr.io/xsoar-registry/demistoextended/accessdata-p:tag") are normalized
-        back to their canonical "demistoextended/..." form, so routing is uniform
-        whether or not DEMISTO_SDK_EXTENDED_REGISTRY is set. Without this, an unset
-        env var would leave the hardcoded prefix in place and the runner's Docker
-        mirror would prepend its own registry, producing a broken double-registry
-        path.
-        """
+        """Strip a hardcoded CR prefix back to the canonical "demistoextended/..." form."""
         if image.startswith(CR_REGISTRY_PREFIX):
             return image[len(CR_REGISTRY_PREFIX) :]
         return image
@@ -529,11 +518,8 @@ class DockerBase:
     def get_image_registry(image: str) -> str:
         extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY", "")
         image = DockerBase._normalize_cr_prefix(image)
-        # "demistoextended/" is a substring of both "devtestdemistoextended/" and
-        # "devdemistoextended/", so checking for it alone covers all extended repos.
         if EXTENDED_REPOSITORY_SEGMENT in image:
-            # Already carries the extended registry prefix - return as-is to avoid
-            # double-prefixing it with the Docker Hub proxy registry.
+            # Return as-is if already prefixed, to avoid double-prefixing.
             if extended_registry and extended_registry in image:
                 return image
             if extended_registry and image.startswith(
@@ -547,14 +533,7 @@ class DockerBase:
 
     @staticmethod
     def build_test_image_name(base_image: str, identifier: str) -> str:
-        """Build the dev/test image name from a base image and a requirements hash.
-
-        Extended images ("demistoextended/...") map to "devtestdemistoextended/...".
-        A naive replace("demisto", "devtestdemisto") would corrupt them into
-        "devtestdemistoextended" via the inner "demisto", so extended images are
-        handled explicitly. All other images keep the existing "demisto" ->
-        "devtestdemisto" mapping.
-        """
+        """Build the dev/test image name, mapping extended images to devtestdemistoextended/."""
         if base_image.startswith(EXTENDED_REPOSITORY_SEGMENT):
             renamed = base_image.replace(
                 DEMISTO_EXTENDED_REPOSITORY, DEVTEST_DEMISTO_EXTENDED_REPOSITORY

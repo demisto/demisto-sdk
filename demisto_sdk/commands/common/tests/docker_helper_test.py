@@ -526,10 +526,11 @@ class TestUpdateDockerImageDemistoextended:
 
 
 class TestGetPythonVersionDemistoextendedFallback:
-    """Tests that get_python_version raises for demistoextended images
-    when all resolution methods fail (no silent fallback)."""
+    """Tests that get_python_version returns None (does not raise) for
+    demistoextended images when all resolution methods fail, so callers that do
+    `if python_version := get_python_version(...)` are not crashed."""
 
-    def test_demistoextended_raises_when_all_methods_fail(self, mocker):
+    def test_demistoextended_returns_none_when_all_methods_fail(self, mocker):
         """
         Given:
          - A demistoextended image with DEMISTO_SDK_EXTENDED_REGISTRY set
@@ -537,7 +538,7 @@ class TestGetPythonVersionDemistoextendedFallback:
         When:
          - get_python_version is called
         Then:
-         - Raises an exception (no silent fallback)
+         - Returns None (does NOT raise, so the caller is not crashed)
         """
         from demisto_sdk.commands.common import docker_helper
         from demisto_sdk.commands.common.docker_helper import get_python_version
@@ -566,10 +567,57 @@ class TestGetPythonVersionDemistoextendedFallback:
         )
         mocker.patch.object(docker_helper, "IS_CONTENT_GITLAB_CI", True)
 
+        from demisto_sdk.commands.common.docker import docker_image
+
+        mocker.patch.object(
+            docker_image.DockerImage,
+            "python_version",
+            new_callable=mock.PropertyMock,
+            side_effect=Exception("extended registry unreachable"),
+        )
+
         env = {"DEMISTO_SDK_EXTENDED_REGISTRY": "example-registry.io/test-project"}
         with mock.patch.dict(os.environ, env):
-            with pytest.raises(Exception, match="docker pull failed"):
+            assert (
                 get_python_version("demistoextended/accessdata:1.1.0.10293277")
+                is None
+            )
+
+    def test_demistoextended_routes_to_dockerimage_client(self, mocker):
+        """
+        Given:
+         - A demistoextended image
+        When:
+         - get_python_version is called
+        Then:
+         - It resolves via DockerImage.python_version (the extended/GAR registry
+           client) and does NOT fall through to the Docker-Hub-only path
+        """
+        from demisto_sdk.commands.common import docker_helper
+        from demisto_sdk.commands.common.docker import docker_image
+        from demisto_sdk.commands.common.docker_helper import get_python_version
+
+        get_python_version.cache_clear()
+
+        mocker.patch.object(docker_helper, "DockerImagesMetadata")
+        docker_helper.DockerImagesMetadata.get_instance.return_value.python_version.return_value = None
+        mocker.patch.object(
+            docker_helper, "_get_python_version_from_tag_by_regex", return_value=None
+        )
+        mocker.patch.object(
+            docker_image.DockerImage,
+            "python_version",
+            new_callable=mock.PropertyMock,
+            return_value=Version("3.11"),
+        )
+        dockerhub_api = mocker.patch.object(
+            docker_helper, "_get_python_version_from_dockerhub_api"
+        )
+
+        assert get_python_version(
+            "demistoextended/accessdata:1.1.0.10293277"
+        ) == Version("3.11")
+        dockerhub_api.assert_not_called()
 
     def test_demisto_image_still_raises_when_all_methods_fail(self, mocker):
         """
@@ -579,7 +627,7 @@ class TestGetPythonVersionDemistoextendedFallback:
         When:
          - get_python_version is called
         Then:
-         - Raises an exception (does NOT silently default)
+         - Raises (unchanged master behavior; only demistoextended is routed to None)
         """
         from demisto_sdk.commands.common import docker_helper
         from demisto_sdk.commands.common.docker_helper import get_python_version

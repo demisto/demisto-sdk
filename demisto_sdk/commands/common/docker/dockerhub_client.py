@@ -97,15 +97,23 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
+        logger.info(
+            f"get_token | {IS_CONTENT_GITLAB_CI=} for {repo=} {scope=} "
+            f"(registry_api_url={self.registry_api_url})"
+        )
         if IS_CONTENT_GITLAB_CI:
             # If running in a CI environment, try using the Google Cloud access token
-            logger.debug(
-                "Attempting to use Google Cloud access token for Docker Hub proxy authentication"
+            logger.info(
+                f"get_token | attempting Google Cloud access token for {repo=}"
             )
             try:
                 if gcloud_access_token := get_gcloud_access_token():
-                    logger.debug("returning gcloud_access_token")
+                    logger.info(f"get_token | using gcloud access token for {repo=}")
                     return gcloud_access_token
+                logger.warning(
+                    f"get_token | gcloud access token empty for {repo=}, "
+                    "falling back to Docker Hub token endpoint"
+                )
             except Exception as e:
                 logger.error(f"Failed to get gcloud access token: {e}")
 
@@ -287,9 +295,10 @@ class DockerHubClient:
             headers: any custom headers
             params: query parameters
         """
-        logger.debug(
+        logger.info(
             f"dockerhub_client | do_registry_get_request | "
             f"registry_url={self.registry_api_url} | "
+            f"docker_image={docker_image} | url_suffix={url_suffix} | "
             f"is_custom_registry={self._is_custom_registry}"
         )
         if not url_suffix.startswith("/"):
@@ -305,19 +314,23 @@ class DockerHubClient:
             if self._is_custom_registry:
                 # For user-provided custom registries (e.g., JFrog), don't send bearer token.
                 # Let get_request() use Basic Auth (self.auth) if credentials are available.
-                logger.debug(
-                    "Using Basic Auth (skipping bearer token) for custom registry"
+                logger.info(
+                    "do_registry_get_request | Using Basic Auth (skipping bearer token) for custom registry"
                 )
             else:
                 # For Docker Hub default registry and GAR proxy registries,
                 # use bearer token from get_token() (Docker Hub token or GCloud access token).
-                logger.debug("Using bearer token authentication")
-                _headers["Authorization"] = (
-                    f"Bearer {self.get_token(docker_image, scope=scope)}"
+                token = self.get_token(docker_image, scope=scope)
+                logger.info(
+                    f"do_registry_get_request | using bearer token for {docker_image} "
+                    f"(token_present={bool(token)})"
                 )
+                _headers["Authorization"] = f"Bearer {token}"
 
+        full_url = f"{self.registry_api_url}/{docker_image}{url_suffix}"
+        logger.info(f"do_registry_get_request | GET {full_url}")
         return self.get_request(
-            f"{self.registry_api_url}/{docker_image}{url_suffix}",
+            full_url,
             headers=_headers,
             params={key: value for key, value in params} if params else None,
         )
@@ -699,24 +712,32 @@ def get_gcloud_access_token() -> Optional[str]:
                    is caught and logged, but not re-raised.
     """
     try:
-        logger.debug("Trying to retrieve a Google Cloud access token.")
+        logger.info("get_gcloud_access_token | resolving credentials via google.auth.default()")
         # Automatically obtain credentials from the environment
         credentials, project_id = google.auth.default()
+        service_account = getattr(credentials, "service_account_email", None)
+        logger.info(
+            f"get_gcloud_access_token | resolved credentials {project_id=} "
+            f"{service_account=} type={type(credentials).__name__}"
+        )
 
         # Refresh the token if needed (ensures the token is valid)
         credentials.refresh(Request())
         # Extract the access token
         access_token = credentials.token
         if access_token:
-            logger.debug(
-                f"Successfully obtained Google Cloud access token, {project_id=}."
+            logger.info(
+                f"get_gcloud_access_token | obtained access token {project_id=} "
+                f"{service_account=} (len={len(access_token)})"
             )
             return access_token
         else:
-            logger.debug("Failed to obtain Google Cloud access token.")
+            logger.warning(
+                "get_gcloud_access_token | credentials refreshed but token is empty"
+            )
             return None
     except Exception as e:
-        logger.debug(f"Failed to get access token: {str(e)}")
+        logger.warning(f"get_gcloud_access_token | failed to get access token: {str(e)}")
         return None
 
 

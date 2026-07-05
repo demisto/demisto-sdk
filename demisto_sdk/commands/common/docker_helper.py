@@ -17,6 +17,7 @@ from requests import JSONDecodeError
 from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
+    CR_REGISTRY_PREFIX,
     DEFAULT_DOCKER_REGISTRY_URL,
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
@@ -54,7 +55,6 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "pre_commit" / "resources"
 DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT") or 300)
-CR_REGISTRY_PREFIX = "gcr.io/xsoar-registry/"
 EXTENDED_REPOSITORY_SEGMENT = f"{DEMISTO_EXTENDED_REPOSITORY}/"
 DEVTEST_EXTENDED_REPOSITORY_SEGMENT = f"{DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/"
 
@@ -797,6 +797,28 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
         return python_version
     logger.debug(f"Could not get python version for {image=} from regex")
 
+    if EXTENDED_REPOSITORY_SEGMENT in image:
+        logger.info(
+            f"get_python_version | routing extended {image=} to the "
+            "DockerImage registry client (GAR via gcloud)"
+        )
+        try:
+            from demisto_sdk.commands.common.docker.docker_image import DockerImage
+
+            if python_version := DockerImage(image).python_version:
+                logger.info(
+                    f"get_python_version | resolved extended {image=} -> {python_version}"
+                )
+                return python_version
+            logger.warning(
+                f"get_python_version | extended {image=} returned no python version"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Could not get python version for extended {image=} from its registry: {e}"
+            )
+        return None
+
     if IS_CONTENT_GITLAB_CI:
         try:
             logger.debug(
@@ -814,10 +836,10 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
     except Exception:
         logger.debug(f"Could not get python version for {image=} from dockerhub api")
 
-    logger.debug(
-        f"Getting python version from {image=} by pulling its image and query its env"
-    )
-    return _get_python_version_from_image_client(image)
+        logger.debug(
+            f"Getting python version from {image=} by pulling its image and query its env"
+        )
+        return _get_python_version_from_image_client(image)
 
 
 def _get_python_version_from_image_client(image: str) -> Version:

@@ -45,6 +45,7 @@ DOCKER_REGISTRY_URL = os.getenv(
     "DEMISTO_SDK_CONTAINER_REGISTRY",
     os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
 )
+CR_REGISTRY_PREFIX = "gcr.io/xsoar-registry/"
 
 DEMISTO_REPOSITORY = "demisto"
 DEMISTO_EXTENDED_REPOSITORY = "demistoextended"

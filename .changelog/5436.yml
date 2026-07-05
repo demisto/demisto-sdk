@@ -1,0 +1,4 @@
+changes:
+- description: Add a spec field for Integration and Script
+  type: feature
+pr_number: 5436

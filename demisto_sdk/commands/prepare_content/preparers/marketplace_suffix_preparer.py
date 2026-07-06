@@ -8,8 +8,8 @@ SEPARATOR = ":"
 MANAGED_KEY = "managed"
 SOURCE_KEY = "source"
 
-# Marketplaces that are always considered unmanaged. For these marketplaces the
-# pack is forced to `managed: false` and the `source` field is removed, without
+# Marketplaces designated as unmanaged. For these marketplaces,
+# packs are forced to `managed: false` and the `source` field is removed, without
 # any further suffix resolution.
 ALWAYS_UNMANAGED_MARKETPLACES = {
     MarketplaceVersions.XSOAR,
@@ -114,7 +114,7 @@ class MarketplaceSuffixPreparer:
         pack metadata into their final, marketplace-specific values.
 
         The pack metadata may contain ``managed``/``source`` keys with an optional
-        marketplace suffix (e.g. ``managed:platform``, ``source:platform``). This
+        marketplace suffix (e.g. ``managed:platform:true``, ``source:platform:foo``). This
         method collapses those into a single, plain ``managed`` (bool) and
         ``source`` (str) according to the current marketplace.
 
@@ -146,7 +146,9 @@ class MarketplaceSuffixPreparer:
             current_marketplace: The marketplace the pack is being prepared for.
 
         Returns:
-            The (possibly modified) pack metadata dictionary.
+            The same pack metadata dictionary, with ``managed``/``source``
+            resolved to their plain, marketplace-specific values. It is returned
+            unchanged when neither ``managed`` nor ``source`` is present.
         """
         valid_suffixes = {
             f"{SEPARATOR}{mp.value}"
@@ -183,10 +185,12 @@ class MarketplaceSuffixPreparer:
             plain keys and any suffixed ones (including always-unmanaged and
             ``None``-valued keys). The resolved values are set back afterwards."""
             for key in list(data.keys()):
-                for field in (MANAGED_KEY, SOURCE_KEY):
-                    if key == field or key.startswith(f"{field}{SEPARATOR}"):
-                        data.pop(key, None)
-                        break
+                if (
+                    key in (MANAGED_KEY, SOURCE_KEY)
+                    or key.startswith(f"{MANAGED_KEY}{SEPARATOR}")
+                    or key.startswith(f"{SOURCE_KEY}{SEPARATOR}")
+                ):
+                    data.pop(key, None)
 
         managed_keys = collect_keys(MANAGED_KEY)
         source_keys = collect_keys(SOURCE_KEY)
@@ -203,10 +207,14 @@ class MarketplaceSuffixPreparer:
         # A suffixed managed requires a plain managed as the default for all
         # other marketplaces.
         if any(managed_keys) and "" not in managed_keys:
+            suffixed_managed = next(
+                (managed_keys[suffix] for suffix in managed_keys if suffix), None
+            )
             raise ValueError(
-                "Pack metadata has a marketplace-suffixed 'managed' field but is "
-                "missing a plain 'managed' field. A plain 'managed' value is "
-                "required as the default for all other marketplaces."
+                f"Pack metadata has a marketplace-suffixed 'managed' field "
+                f"('{suffixed_managed}') but is missing a plain 'managed' field. "
+                f"A plain 'managed' value is required as the default for all "
+                f"other marketplaces."
             )
 
         current_suffix = f"{SEPARATOR}{current_marketplace.value}"

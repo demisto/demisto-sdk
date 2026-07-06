@@ -1,0 +1,4 @@
+changes:
+- description: Added support for marketplace-suffixed **managed** and **source** pack metadata fields (e.g. `'managed:platform':true`, `'source:platform':foo`), which are resolved into the plain `managed`/`source` fields per marketplace when a pack is dumped or uploaded.
+  type: feature
+pr_number: 5437

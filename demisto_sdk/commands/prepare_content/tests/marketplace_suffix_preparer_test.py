@@ -460,9 +460,10 @@ MANAGED_SOURCE_INVALID_CASES = [
     pytest.param(
         MANAGED_TEST_MARKETPLACE,
         {"managed:testmp": True, "source:testmp": "testmp-source"},
-        "Pack metadata has a marketplace-suffixed 'managed' field but is "
-        "missing a plain 'managed' field. A plain 'managed' value is "
-        "required as the default for all other marketplaces.",
+        "Pack metadata has a marketplace-suffixed 'managed' field "
+        "('managed:testmp') but is missing a plain 'managed' field. "
+        "A plain 'managed' value is required as the default for all "
+        "other marketplaces.",
         id="suffixed managed without plain managed",
     ),
     pytest.param(
@@ -515,9 +516,10 @@ MANAGED_SOURCE_INVALID_CASES = [
             "managed:testmp": True,
             "source:testmp": "testmp-source",
         },
-        "Pack metadata has a marketplace-suffixed 'managed' field but is "
-        "missing a plain 'managed' field. A plain 'managed' value is "
-        "required as the default for all other marketplaces.",
+        "Pack metadata has a marketplace-suffixed 'managed' field "
+        "('managed:testmp') but is missing a plain 'managed' field. "
+        "A plain 'managed' value is required as the default for all "
+        "other marketplaces.",
         id="None plain managed (absent) + suffixed managed true",
     ),
     pytest.param(

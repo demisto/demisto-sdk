@@ -170,7 +170,7 @@ class MarketplaceSuffixPreparer:
                 if key == field:
                     collected[""] = key
                 elif key.startswith(f"{field}{SEPARATOR}"):
-                    suffix = key[len(field):]
+                    suffix = key[len(field) :]
                     if suffix not in valid_suffixes:
                         raise ValueError(
                             f"Invalid marketplace suffix in pack metadata field "

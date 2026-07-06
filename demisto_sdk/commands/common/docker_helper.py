@@ -19,10 +19,12 @@ from requests.exceptions import RequestException
 from demisto_sdk.commands.common.constants import (
     CR_REGISTRY_PREFIX,
     DEFAULT_DOCKER_REGISTRY_URL,
+    DEFAULT_EXTENDED_REGISTRY,
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
     DEMISTO_EXTENDED_REPOSITORY,
     DEMISTO_REPOSITORY,
+    DEMISTO_SDK_EXTENDED_REGISTRY_ENV,
     DEVTEST_DEMISTO_EXTENDED_REPOSITORY,
     DEVTEST_DEMISTO_REPOSITORY,
     DOCKER_REGISTRY_URL,
@@ -516,14 +518,19 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
-        extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY", "")
+        extended_registry = os.getenv(
+            DEMISTO_SDK_EXTENDED_REGISTRY_ENV, DEFAULT_EXTENDED_REGISTRY
+        )
         image = DockerBase._normalize_cr_prefix(image)
         if EXTENDED_REPOSITORY_SEGMENT in image:
             # Return as-is if already prefixed, to avoid double-prefixing.
             if extended_registry and extended_registry in image:
                 return image
             if extended_registry and image.startswith(
-                (EXTENDED_REPOSITORY_SEGMENT, DEVTEST_EXTENDED_REPOSITORY_SEGMENT)
+                (
+                    EXTENDED_REPOSITORY_SEGMENT,
+                    DEVTEST_EXTENDED_REPOSITORY_SEGMENT,
+                )
             ):
                 return f"{extended_registry}/{image}"
             return image

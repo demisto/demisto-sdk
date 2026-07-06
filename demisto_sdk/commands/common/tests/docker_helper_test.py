@@ -228,7 +228,7 @@ class TestGetImageRegistryDemistoextended:
                 == "example-registry.io/test-project/demistoextended/accessdata:1.1.0.10177564"
             )
 
-    def test_demistoextended_without_env_returns_unchanged(self):
+    def test_demistoextended_without_env_uses_default_registry(self):
         """
         Given:
          - a demistoextended/ image and DEMISTO_SDK_EXTENDED_REGISTRY is NOT set
@@ -237,7 +237,7 @@ class TestGetImageRegistryDemistoextended:
          - calling DockerBase.get_image_registry()
 
         Then:
-         - returns the image unchanged (no prefix added)
+         - the image is prefixed with the default extended registry (gcr.io/xsoar-registry)
         """
         env = os.environ.copy()
         env.pop("DEMISTO_SDK_EXTENDED_REGISTRY", None)
@@ -245,7 +245,10 @@ class TestGetImageRegistryDemistoextended:
             result = dhelper.DockerBase.get_image_registry(
                 "demistoextended/accessdata:1.1.0.10177564"
             )
-            assert result == "demistoextended/accessdata:1.1.0.10177564"
+            assert (
+                result
+                == "gcr.io/xsoar-registry/demistoextended/accessdata:1.1.0.10177564"
+            )
 
     def test_demistoextended_already_prefixed_returns_unchanged(self):
         """
@@ -280,9 +283,9 @@ class TestGetImageRegistryDemistoextended:
          - calling DockerBase.get_image_registry()
 
         Then:
-         - the CR prefix is stripped and the canonical demistoextended/ form is
-           returned (so the runner's Docker mirror won't produce a broken
-           double-registry path)
+         - the CR prefix is stripped to its canonical demistoextended/ form and then
+           re-prefixed with the default extended registry (which is the same
+           gcr.io/xsoar-registry), avoiding a broken double-registry path
         """
         env = os.environ.copy()
         env.pop("DEMISTO_SDK_EXTENDED_REGISTRY", None)
@@ -290,7 +293,10 @@ class TestGetImageRegistryDemistoextended:
             result = dhelper.DockerBase.get_image_registry(
                 "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10358491"
             )
-            assert result == "demistoextended/accessdata-p:1.1.0.10358491"
+            assert (
+                result
+                == "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.1.0.10358491"
+            )
 
     def test_cr_prefixed_image_normalized_with_env(self):
         """

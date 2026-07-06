@@ -7,8 +7,10 @@ from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     CR_REGISTRY_PREFIX,
+    DEFAULT_EXTENDED_REGISTRY,
     DEMISTO_EXTENDED_REPOSITORY,
     DEMISTO_REPOSITORY,
+    DEMISTO_SDK_EXTENDED_REGISTRY_ENV,
     DOCKER_REGISTRY_URL,
     NATIVE_IMAGE_DOCKER_NAME,
 )
@@ -40,7 +42,9 @@ class DockerImage(str):
     def _get_extended_client(cls):
         """Get or create a DockerHubClient for the extended registry (GCR)."""
         if not cls._extended_client:
-            extended_registry = os.getenv("DEMISTO_SDK_EXTENDED_REGISTRY")
+            extended_registry = os.getenv(
+                DEMISTO_SDK_EXTENDED_REGISTRY_ENV, DEFAULT_EXTENDED_REGISTRY
+            )
             if not extended_registry:
                 return None
             client = DockerHubClient(registry=extended_registry)

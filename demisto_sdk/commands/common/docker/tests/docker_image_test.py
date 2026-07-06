@@ -188,7 +188,7 @@ class TestGetExtendedClient:
             )
 
     @pytest.mark.usefixtures("_reset_extended_client")
-    def test_without_env_var_returns_none(self):
+    def test_without_env_var_uses_default_registry(self):
         """
         Given:
          - DEMISTO_SDK_EXTENDED_REGISTRY env var is NOT set
@@ -197,13 +197,15 @@ class TestGetExtendedClient:
          - calling _get_extended_client()
 
         Then:
-         - returns None
+         - a client is still created using the default extended registry
+           (gcr.io/xsoar-registry), not None
         """
         with patch.dict(os.environ, {}, clear=False):
             # Ensure the env var is absent
             os.environ.pop("DEMISTO_SDK_EXTENDED_REGISTRY", None)
             client = DockerImage._get_extended_client()
-            assert client is None
+            assert client is not None
+            assert client.registry_api_url == "https://gcr.io/v2/xsoar-registry"
 
 
 class TestGetClient:
@@ -261,19 +263,20 @@ class TestGetClient:
             client = image._get_client()
             assert client is mock_dockerhub
 
-    def test_falls_back_to_dockerhub_when_extended_not_configured(
+    def test_uses_default_extended_registry_when_env_not_configured(
         self, _reset_extended_client
     ):
         """
         Given: A demistoextended image and no DEMISTO_SDK_EXTENDED_REGISTRY env var
         When: _get_client() is called
-        Then: Falls back to the default DockerHub client
+        Then: Uses the extended client backed by the default extended registry
+              (gcr.io/xsoar-registry), NOT the default DockerHub client
         """
         env = os.environ.copy()
         env.pop("DEMISTO_SDK_EXTENDED_REGISTRY", None)
         with patch.dict(os.environ, env, clear=True):
             image = DockerImage("demistoextended/accessdata:1.1.0.10177564")
             client = image._get_client()
-            # Should fall back to the default dockerhub client
             dockerhub_client = DockerImage._get_dockerhub_client()
-            assert client is dockerhub_client
+            assert client is not dockerhub_client
+            assert client.registry_api_url == "https://gcr.io/v2/xsoar-registry"

@@ -1,4 +1,0 @@
-changes:
-- description: Add the `spec` field for Integrations and Scripts.
-  type: feature
-pr_number: 5436

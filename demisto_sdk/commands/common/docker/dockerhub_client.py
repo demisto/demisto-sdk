@@ -67,17 +67,16 @@ class DockerHubClient:
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
         # A truly custom registry is one explicitly provided by the user (e.g., JFrog),
-        # NOT one resolved from the DOCKER_IO env var (e.g., in CI).
-        # In CI the registry URL is the GAR proxy (resolved from DOCKER_IO) and
-        # requires a gcloud bearer token, so it must NEVER be treated as a custom
-        # registry. We therefore explicitly exclude the CI environment here,
-        # mirroring the canonical is_custom_registry() logic in docker_helper.py.
-        # Note: callers (DockerImage, DO104) always pass registry=DOCKER_REGISTRY_URL,
-        # which equals the GAR path in CI, so bool(registry) alone is insufficient.
+        # NOT Docker Hub and NOT a Google Artifact Registry (GAR / gcr.io) target.
+        # GAR registries (the CI proxy resolved from DOCKER_IO, and the demistoextended
+        # gcr.io/xsoar-registry target both in CI and locally) require a gcloud bearer
+        # token, so they must NEVER be treated as a custom registry (which would use
+        # Basic Auth). Note: callers (DockerImage, DO104) always pass
+        # registry=DOCKER_REGISTRY_URL, so bool(registry) alone is insufficient.
         self._is_custom_registry = (
             bool(registry)
-            and not IS_CONTENT_GITLAB_CI
             and self.DEFAULT_REGISTRY not in self.registry_api_url
+            and not _is_gar_registry(self.registry_api_url)
         )
 
     def __enter__(self):
@@ -101,8 +100,10 @@ class DockerHubClient:
             f"get_token | {IS_CONTENT_GITLAB_CI=} for {repo=} {scope=} "
             f"(registry_api_url={self.registry_api_url})"
         )
-        if IS_CONTENT_GITLAB_CI:
-            # If running in a CI environment, try using the Google Cloud access token
+        if IS_CONTENT_GITLAB_CI or _is_gar_registry(self.registry_api_url):
+            # Google Artifact Registry (the CI proxy, and the demistoextended
+            # gcr.io/xsoar-registry target both in CI and locally) authenticates
+            # with a gcloud access token rather than a Docker Hub token.
             logger.info(f"get_token | attempting Google Cloud access token for {repo=}")
             try:
                 if gcloud_access_token := get_gcloud_access_token():
@@ -306,8 +307,14 @@ class DockerHubClient:
             _headers = {key: value for key, value in headers}
         else:
             _headers = {
+                # Accept both Docker v2 and OCI manifest media types. GAR
+                # (gcr.io) stores demistoextended images as OCI manifests and
+                # returns MANIFEST_UNKNOWN (404) if only the Docker v2 types are
+                # requested.
                 "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
-                "application/vnd.docker.distribution.manifest.list.v2+json",
+                "application/vnd.docker.distribution.manifest.list.v2+json,"
+                "application/vnd.oci.image.manifest.v1+json,"
+                "application/vnd.oci.image.index.v1+json",
             }
             if self._is_custom_registry:
                 # For user-provided custom registries (e.g., JFrog), don't send bearer token.
@@ -636,6 +643,18 @@ def _try_resolve_ci_registry() -> Optional[str]:
             exc_info=True,
         )
     return None
+
+
+def _is_gar_registry(registry_url: str) -> bool:
+    """
+    Return True if the registry URL points at Google Artifact Registry / GCR.
+
+    GAR-hosted registries (canonical ``gcr.io`` and the ``*.pkg.dev`` proxies)
+    require a gcloud bearer token for auth rather than Docker Hub Basic Auth.
+    This holds regardless of whether we run inside CI, so demistoextended images
+    resolve correctly both in CI and locally.
+    """
+    return "gcr.io" in registry_url or ".pkg.dev" in registry_url
 
 
 def _normalize_registry_url(registry: str) -> str:

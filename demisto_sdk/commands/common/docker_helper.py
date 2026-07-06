@@ -210,6 +210,61 @@ def docker_login(docker_client) -> bool:
 
 
 @functools.lru_cache
+def gar_daemon_login(docker_client, registry: str) -> bool:
+    """Log the Docker daemon into a Google Artifact Registry (GAR / gcr.io) host
+    using a short-lived gcloud access token.
+
+    Unlike ``docker_login`` (which handles Docker Hub / a single user-provided
+    custom registry via username/password), this authenticates the daemon
+    against a GAR host so it can ``pull`` demistoextended images. GAR uses the
+    fixed username ``oauth2accesstoken`` with the gcloud bearer token as the
+    password.
+
+    Args:
+        docker_client: The Docker client whose daemon should be authenticated.
+        registry: The GAR host to log in to (e.g. ``gcr.io``).
+
+    Returns:
+        bool: True if the daemon logged in successfully, False otherwise.
+    """
+    # Imported lazily to avoid any import-time coupling with the HTTP client.
+    from demisto_sdk.commands.common.docker.dockerhub_client import (
+        get_gcloud_access_token,
+    )
+
+    token = get_gcloud_access_token()
+    if not token:
+        logger.warning(
+            f"gar_daemon_login | no gcloud access token available, cannot log the "
+            f"docker daemon in to {registry}"
+        )
+        return False
+    try:
+        docker_client.login(
+            username="oauth2accesstoken",
+            password=token,
+            registry=registry,
+        )
+        logger.debug(f"gar_daemon_login | successfully logged the daemon in to {registry}")
+        return True
+    except docker.errors.APIError:
+        logger.warning(
+            f"gar_daemon_login | failed to log the docker daemon in to {registry}",
+            exc_info=True,
+        )
+        return False
+
+
+def _gar_registry_host(image: str) -> Optional[str]:
+    """Return the GAR host of an image (e.g. ``gcr.io`` or ``*.pkg.dev``), or
+    None when the image does not target a Google Artifact Registry."""
+    from demisto_sdk.commands.common.docker.dockerhub_client import _is_gar_registry
+
+    host = image.split("/", 1)[0]
+    return host if _is_gar_registry(host) else None
+
+
+@functools.lru_cache
 def get_pip_requirements_from_file(requirements_file: Path) -> List[str]:
     """
     Get the pip requirements from a requirements file.
@@ -315,6 +370,12 @@ class DockerBase:
 
         except docker.errors.ImageNotFound:
             logger.debug(f"docker {image=} not found locally, pulling")
+            # GAR (gcr.io / *.pkg.dev) images require the daemon to be
+            # authenticated with a gcloud token. Unlike the demisto/ proxy pull
+            # (authenticated externally by the CI runner), the daemon has no
+            # credentials for the demistoextended gcr.io host, so log it in here.
+            if gar_host := _gar_registry_host(image):
+                gar_daemon_login(docker_client, gar_host)
             ret = docker_client.images.pull(image)
             logger.debug(f"pulled docker {image=} successfully")
             return ret

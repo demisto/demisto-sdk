@@ -136,6 +136,101 @@ def test_custom_container_registry(mocker):
 
 
 @pytest.mark.parametrize(
+    "image, expected_host",
+    [
+        ("gcr.io/xsoar-registry/demistoextended/accessdata-p:1.0", "gcr.io"),
+        (
+            "europe-west4-docker.pkg.dev/proj/repo/demistoextended/foo:1.0",
+            "europe-west4-docker.pkg.dev",
+        ),
+        ("demisto/python3:3.10.0.12345", None),
+        ("alpine:3.7", None),
+    ],
+)
+def test_gar_registry_host(image: str, expected_host):
+    """
+    Given:
+        - A docker image reference (GAR or non-GAR).
+    When:
+        - Resolving its GAR host via _gar_registry_host.
+    Then:
+        - GAR images return their host; non-GAR images return None.
+    """
+    from demisto_sdk.commands.common import docker_helper
+
+    assert docker_helper._gar_registry_host(image) == expected_host
+
+
+def test_pull_image_gar_logs_daemon_in(mocker):
+    """
+    Given:
+        - A GAR (gcr.io) demistoextended image not present locally.
+    When:
+        - pull_image is called.
+    Then:
+        - The daemon is logged in to the GAR host with a gcloud token before pull.
+    """
+    import docker
+
+    from demisto_sdk.commands.common import docker_helper
+
+    docker_helper.gar_daemon_login.cache_clear()
+
+    docker_client_mock = mock.MagicMock()
+    docker_client_mock.images.get.side_effect = docker.errors.ImageNotFound("missing")
+    mocker.patch.object(
+        docker_helper, "init_global_docker_client", return_value=docker_client_mock
+    )
+    mocker.patch(
+        "demisto_sdk.commands.common.docker.dockerhub_client.get_gcloud_access_token",
+        return_value="fake-gcloud-token",
+    )
+
+    image = "gcr.io/xsoar-registry/demistoextended/accessdata-p:1.0"
+    docker_helper.DockerBase.pull_image(image)
+
+    docker_client_mock.login.assert_called_once_with(
+        username="oauth2accesstoken",
+        password="fake-gcloud-token",
+        registry="gcr.io",
+    )
+    docker_client_mock.images.pull.assert_called_once_with(image)
+
+
+def test_pull_image_non_gar_does_not_login(mocker):
+    """
+    Given:
+        - A regular demisto/ image not present locally.
+    When:
+        - pull_image is called.
+    Then:
+        - No GAR daemon login is performed (demisto/ behavior unchanged).
+    """
+    import docker
+
+    from demisto_sdk.commands.common import docker_helper
+
+    docker_helper.gar_daemon_login.cache_clear()
+
+    docker_client_mock = mock.MagicMock()
+    docker_client_mock.images.get.side_effect = docker.errors.ImageNotFound("missing")
+    mocker.patch.object(
+        docker_helper, "init_global_docker_client", return_value=docker_client_mock
+    )
+    gcloud_mock = mocker.patch(
+        "demisto_sdk.commands.common.docker.dockerhub_client.get_gcloud_access_token",
+        return_value="fake-gcloud-token",
+    )
+
+    image = "demisto/python3:3.10.0.12345"
+    docker_helper.DockerBase.pull_image(image)
+
+    docker_client_mock.login.assert_not_called()
+    gcloud_mock.assert_not_called()
+    docker_client_mock.images.pull.assert_called_once_with(image)
+
+
+@pytest.mark.parametrize(
     "image_name, container_name, exception, exception_text",
     [
         (

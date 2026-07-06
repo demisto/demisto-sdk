@@ -6,6 +6,7 @@ from typing import Optional
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
+    CR_REGISTRY_PREFIX,
     DEMISTO_EXTENDED_REPOSITORY,
     DEMISTO_REPOSITORY,
     DOCKER_REGISTRY_URL,
@@ -73,6 +74,14 @@ class DockerImage(str):
             docker_image: the full docker image
             raise_if_not_valid: if True, will raise ValueError if the docker-image has an invalid structure.
         """
+        # TEMPORARY: strip the hardcoded CR prefix (e.g. "gcr.io/xsoar-registry/") so the
+        # image parses to its canonical "demistoextended/..." form. Without this the regex
+        # would set repository="gcr.io", routing to the wrong client and building a
+        # malformed registry URL. This stopgap MUST be removed once content stops emitting
+        # images with the CR_REGISTRY_PREFIX (see the GAR migration ticket).
+        if docker_image.startswith(CR_REGISTRY_PREFIX):
+            docker_image = docker_image[len(CR_REGISTRY_PREFIX) :]
+
         docker_image_instance = super().__new__(cls, docker_image)
         pattern = re.compile(cls.DOCKER_IMAGE_REGX)
         if matches := pattern.match(docker_image):

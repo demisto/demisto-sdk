@@ -31,38 +31,48 @@ IS_FETCH_CREDENTIALS_PARAM = "isFetchCredentials"
 
 # Default field templates used by the auto-fix when adding a missing required param.
 SERVER_LEVEL_PARAM_TEMPLATES: Dict[str, Dict] = {
-    "isFetch": {"display": "Fetch incidents", "type": 8, "required": False, "section": "Collect"},
-    "incidentType": {"display": "Incident type", "type": 13, "required": False, "section": "Connect"},
+    "isFetch": {
+        "display": "Fetch incidents",
+        "type": 8,
+        "required": False,
+        "section": "Collect",
+    },
+    "incidentType": {
+        "display": "Incident type",
+        "type": 13,
+        "required": False,
+        "section": "Connect",
+    },
     "incidentFetchInterval": {
         "display": "Incidents Fetch Interval",
         "type": 19,
         "required": False,
-        "defaultvalue": '1',
+        "defaultvalue": "1",
         "advanced": True,
-        "section": "Collect"
+        "section": "Collect",
     },
     "isFetchEvents": {
         "display": "Fetch events",
         "type": 8,
         "required": False,
         "section": "Collect",
-        "hidden": ["xsoar"]
+        "hidden": ["xsoar"],
     },
     "eventFetchInterval": {
         "display": "Events Fetch Interval",
         "type": 19,
         "required": False,
-        "defaultvalue": '1',
+        "defaultvalue": "1",
         "advanced": True,
         "section": "Collect",
-        "hidden": ["xsoar"]
+        "hidden": ["xsoar"],
     },
     "isFetchAssets": {
         "display": "Fetch assets and vulnerabilities",
         "type": 8,
         "required": False,
         "section": "Collect",
-        "hidden": ["xsoar"]
+        "hidden": ["xsoar"],
     },
     "assetsFetchInterval": {
         "display": "Assets and vulnerabilities fetch interval",
@@ -71,14 +81,14 @@ SERVER_LEVEL_PARAM_TEMPLATES: Dict[str, Dict] = {
         "advanced": True,
         "section": "Collect",
         "defaultvalue": "1440",
-        "hidden": ["xsoar"]
+        "hidden": ["xsoar"],
     },
     "feed": {
         "display": "Fetch indicators",
         "type": 8,
         "required": False,
         "defaultvalue": "true",
-        "section": "Collect"
+        "section": "Collect",
     },
     "feedReliability": {
         "display": "Source Reliability",
@@ -86,13 +96,15 @@ SERVER_LEVEL_PARAM_TEMPLATES: Dict[str, Dict] = {
         "required": True,
         "additionalinfo": "Reliability of the source providing the intelligence data",
         "defaultvalue": "F - Reliability cannot be judged",
-        "options": ["A - Completely reliable",
-                    "B - Usually reliable",
-                    "C - Fairly reliable",
-                    "D - Not usually reliable",
-                    "E - Unreliable",
-                    "F - Reliability cannot be judged"],
-        "section": "Collect"
+        "options": [
+            "A - Completely reliable",
+            "B - Usually reliable",
+            "C - Fairly reliable",
+            "D - Not usually reliable",
+            "E - Unreliable",
+            "F - Reliability cannot be judged",
+        ],
+        "section": "Collect",
     },
     "feedReputation": {
         "display": "Indicator Reputation",
@@ -101,42 +113,42 @@ SERVER_LEVEL_PARAM_TEMPLATES: Dict[str, Dict] = {
         "additionalinfo": "Indicators from this integration instance will be marked with this reputation",
         "defaultvalue": "Bad",
         "options": ["None", "Good", "Suspicious", "Bad"],
-        "section": "Collect"
+        "section": "Collect",
     },
     "feedFetchInterval": {
         "display": "Feed Fetch Interval",
         "type": 19,
         "required": False,
         "defaultvalue": "240",
-        "section": "Collect"
+        "section": "Collect",
     },
     "feedExpirationPolicy": {
         "display": "",
         "type": 17,
         "required": False,
         "options": ["never", "interval", "indicatorType", "suddenDeath"],
-        "section": "Collect"
+        "section": "Collect",
     },
     "feedExpirationInterval": {
         "display": "",
         "type": 1,
         "required": False,
         "defaultvalue": "20160",
-        "section": "Collect"
+        "section": "Collect",
     },
     "feedBypassExclusionList": {
         "display": "Bypass exclusion list",
         "type": 8,
         "required": False,
         "additionalinfo": "When selected, the exclusion list is ignored for indicators from this feed.",
-        "section": "Collect"
+        "section": "Collect",
     },
     "feedTags": {
         "display": "Tags",
         "type": 0,
         "required": False,
         "additionalinfo": "Supports CSV values.",
-        "section": "Collect"
+        "section": "Collect",
     },
     "tlp_color": {
         "display": "Traffic Light Protocol Color",
@@ -144,7 +156,7 @@ SERVER_LEVEL_PARAM_TEMPLATES: Dict[str, Dict] = {
         "required": False,
         "additionalinfo": "The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed",
         "options": ["RED", "AMBER", "GREEN", "WHITE"],
-        "section": "Collect"
+        "section": "Collect",
     },
 }
 
@@ -401,8 +413,7 @@ class InvalidSupportedModulesForFetchTypeValidator(BaseValidator[ContentTypes]):
         for fetch_type in active_fetch_types:
             for param_name in fetch_type.all_params:
                 allowed_by_param[param_name] = (
-                    allowed_by_param.get(param_name, set())
-                    | fetch_type.allowed_modules
+                    allowed_by_param.get(param_name, set()) | fetch_type.allowed_modules
                 )
         return allowed_by_param
 

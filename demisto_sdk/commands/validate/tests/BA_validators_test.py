@@ -128,13 +128,13 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA130_marketplacev2_
 from demisto_sdk.commands.validate.validators.BA_validators.BA131_invalid_supported_modules import (
     InvalidSupportedModulesValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA132_supported_modules_without_platform import (
+    SupportedModulesWithoutPlatformValidator,
+)
 from demisto_sdk.commands.validate.validators.BA_validators.BA133_invalid_supported_modules_for_fetch_type import (
     FETCH_TYPES,
     SERVER_LEVEL_PARAM_TEMPLATES,
     InvalidSupportedModulesForFetchTypeValidator,
-)
-from demisto_sdk.commands.validate.validators.BA_validators.BA132_supported_modules_without_platform import (
-    SupportedModulesWithoutPlatformValidator,
 )
 from TestSuite.repo import ChangeCWD
 
@@ -4520,8 +4520,7 @@ def _complete_fetch_integration(
     for flag_name, value in fetch_flags.items():
         if value:
             params.extend(
-                (name, param_modules)
-                for name in _REQUIRED_PARAMS_BY_FLAG[flag_name]
+                (name, param_modules) for name in _REQUIRED_PARAMS_BY_FLAG[flag_name]
             )
     params.extend(extra_params or [])
     return _fetch_integration(
@@ -4754,9 +4753,7 @@ def test_InvalidSupportedModulesForFetchTypeValidator_multi_fetch_type():
     )
     # Override eventFetchInterval to an invalid module for fetch-events.
     integration.params = [
-        param
-        for param in integration.params
-        if param.name != "eventFetchInterval"
+        param for param in integration.params if param.name != "eventFetchInterval"
     ]
     integration.params.append(
         Parameter(name="eventFetchInterval", supportedModules=["agentix"])
@@ -4964,9 +4961,7 @@ def test_InvalidSupportedModulesForFetchTypeValidator_fix_sets_empty_list_when_a
         ["xsiam"],
     )
     integration.params = [
-        param
-        for param in integration.params
-        if param.name != "eventFetchInterval"
+        param for param in integration.params if param.name != "eventFetchInterval"
     ]
     integration.params.append(
         Parameter(name="eventFetchInterval", supportedModules=["agentix"])
@@ -5006,9 +5001,7 @@ def test_InvalidSupportedModulesForFetchTypeValidator_fix_adds_missing_required_
 
     param_names = {param.name for param in integration.params}
     assert "incidentType" in param_names
-    added = next(
-        param for param in integration.params if param.name == "incidentType"
-    )
+    added = next(param for param in integration.params if param.name == "incidentType")
     assert sorted(added.supportedModules) == ["agentix", "xsiam"]
 
 
@@ -5037,9 +5030,7 @@ def test_InvalidSupportedModulesForFetchTypeValidator_fix_added_param_intersects
     validator.obtain_invalid_content_items([integration])
     validator.fix(integration)
 
-    added = next(
-        param for param in integration.params if param.name == "incidentType"
-    )
+    added = next(param for param in integration.params if param.name == "incidentType")
     assert added.supportedModules == ["xsiam"]
 
 

@@ -245,7 +245,9 @@ def gar_daemon_login(docker_client, registry: str) -> bool:
             password=token,
             registry=registry,
         )
-        logger.debug(f"gar_daemon_login | successfully logged the daemon in to {registry}")
+        logger.debug(
+            f"gar_daemon_login | successfully logged the daemon in to {registry}"
+        )
         return True
     except docker.errors.APIError:
         logger.warning(

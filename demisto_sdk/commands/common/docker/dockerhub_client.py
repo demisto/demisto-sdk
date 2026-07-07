@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timedelta
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 import dateparser
 import google.auth
@@ -640,15 +641,15 @@ def _try_resolve_ci_registry() -> Optional[str]:
 
 
 def _is_gar_registry(registry_url: str) -> bool:
-    """
-    Return True if the registry URL points at Google Artifact Registry / GCR.
+    """Return True if the URL/host points at Google Artifact Registry / GCR.
 
-    GAR-hosted registries (canonical ``gcr.io`` and the ``*.pkg.dev`` proxies)
-    require a gcloud bearer token for auth rather than Docker Hub Basic Auth.
-    This holds regardless of whether we run inside CI, so demistoextended images
-    resolve correctly both in CI and locally.
+    Matches on the parsed host (not a substring) so lookalikes like
+    ``gcr.io.evil.com`` are not misclassified. Accepts full URLs and bare hosts.
     """
-    return "gcr.io" in registry_url or ".pkg.dev" in registry_url
+    # "//" makes urlparse treat a bare host as netloc, not a path.
+    url_to_parse = registry_url if "://" in registry_url else f"//{registry_url}"
+    host = (urlparse(url_to_parse).hostname or "").lower()
+    return host in {"gcr.io", "pkg.dev"} or host.endswith((".gcr.io", ".pkg.dev"))
 
 
 def _normalize_registry_url(registry: str) -> str:

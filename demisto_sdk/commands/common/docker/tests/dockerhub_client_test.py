@@ -7,13 +7,15 @@ from freezegun import freeze_time
 from packaging.version import Version
 from requests import Response, Session
 
-import demisto_sdk.commands.common.docker.dockerhub_client as dockerhub_client_module
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubClient,
+    _is_gar_registry,
     get_registry_api_url,
     iso8601_to_datetime_str,
 )
 from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
+
+_DOCKERHUB_CLIENT_MODULE = "demisto_sdk.commands.common.docker.dockerhub_client"
 
 
 @pytest.fixture()
@@ -606,8 +608,8 @@ def test_is_custom_registry_flag_gar_in_ci_is_false(monkeypatch):
           401 Unauthorized against the GAR proxy.
     """
     gar_path = "test.pkg.dev/test/" "test-docker-hub-virtual"
-    monkeypatch.setattr(dockerhub_client_module, "IS_CONTENT_GITLAB_CI", "true")
-    monkeypatch.setattr(dockerhub_client_module, "DOCKER_IO", gar_path)
+    monkeypatch.setattr(f"{_DOCKERHUB_CLIENT_MODULE}.IS_CONTENT_GITLAB_CI", "true")
+    monkeypatch.setattr(f"{_DOCKERHUB_CLIENT_MODULE}.DOCKER_IO", gar_path)
 
     # Use a unique docker_hub_api_url to avoid the @lru_cache returning a cached
     # instance built under different env conditions in another test.
@@ -638,8 +640,8 @@ def test_is_custom_registry_flag_gar_local_not_in_ci_is_false(monkeypatch):
           even locally. Treating gcr.io as a custom registry would send Basic Auth
           and yield a 401 Unauthorized.
     """
-    monkeypatch.setattr(dockerhub_client_module, "IS_CONTENT_GITLAB_CI", None)
-    monkeypatch.setattr(dockerhub_client_module, "DOCKER_IO", "")
+    monkeypatch.setattr(f"{_DOCKERHUB_CLIENT_MODULE}.IS_CONTENT_GITLAB_CI", None)
+    monkeypatch.setattr(f"{_DOCKERHUB_CLIENT_MODULE}.DOCKER_IO", "")
 
     client = DockerHubClient(
         docker_hub_api_url="https://gar-local-test.example/v2",
@@ -662,10 +664,9 @@ def test_get_token_uses_gcloud_for_gar_registry_locally(mocker, monkeypatch):
     Then:
         - The gcloud access token is used, not the Docker Hub token endpoint.
     """
-    monkeypatch.setattr(dockerhub_client_module, "IS_CONTENT_GITLAB_CI", None)
-    mock_gcloud = mocker.patch.object(
-        dockerhub_client_module,
-        "get_gcloud_access_token",
+    monkeypatch.setattr(f"{_DOCKERHUB_CLIENT_MODULE}.IS_CONTENT_GITLAB_CI", None)
+    mock_gcloud = mocker.patch(
+        f"{_DOCKERHUB_CLIENT_MODULE}.get_gcloud_access_token",
         return_value="gcloud-token-123",
     )
     client = DockerHubClient(
@@ -696,7 +697,7 @@ def test_is_gar_registry_matches_host_not_substring(registry, expected):
     gcr.io.evil.com or evil.com/gcr.io are not treated as GAR (CodeQL: incomplete
     URL substring sanitization).
     """
-    assert dockerhub_client_module._is_gar_registry(registry) is expected
+    assert _is_gar_registry(registry) is expected
 
 
 def test_is_custom_registry_flag_customer_registry_not_in_ci_is_true(monkeypatch):
@@ -712,8 +713,8 @@ def test_is_custom_registry_flag_customer_registry_not_in_ci_is_true(monkeypatch
     Then:
         - _is_custom_registry MUST be True so Basic Auth is used for the custom registry
     """
-    monkeypatch.setattr(dockerhub_client_module, "IS_CONTENT_GITLAB_CI", None)
-    monkeypatch.setattr(dockerhub_client_module, "DOCKER_IO", "")
+    monkeypatch.setattr(f"{_DOCKERHUB_CLIENT_MODULE}.IS_CONTENT_GITLAB_CI", None)
+    monkeypatch.setattr(f"{_DOCKERHUB_CLIENT_MODULE}.DOCKER_IO", "")
 
     client = DockerHubClient(
         docker_hub_api_url="https://customreg-test.example/v2",
@@ -736,8 +737,8 @@ def test_is_custom_registry_flag_default_registry_is_false(monkeypatch):
     Then:
         - _is_custom_registry MUST be False so the Docker Hub bearer token is used.
     """
-    monkeypatch.setattr(dockerhub_client_module, "IS_CONTENT_GITLAB_CI", None)
-    monkeypatch.setattr(dockerhub_client_module, "DOCKER_IO", "")
+    monkeypatch.setattr(f"{_DOCKERHUB_CLIENT_MODULE}.IS_CONTENT_GITLAB_CI", None)
+    monkeypatch.setattr(f"{_DOCKERHUB_CLIENT_MODULE}.DOCKER_IO", "")
 
     client = DockerHubClient(
         docker_hub_api_url="https://default-test.example/v2",

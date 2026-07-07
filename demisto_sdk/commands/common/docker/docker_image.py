@@ -30,11 +30,14 @@ class DockerImage(str):
     @classmethod
     def _get_dockerhub_client(cls):
         """Get or create the DockerHub client with the appropriate registry and credentials."""
+        # Use a truthiness (emptiness) check rather than an identity check against
+        # None so the client is (re)created whenever the cached value is missing or
+        # otherwise falsy, not only when it is exactly None.
         if not cls._dockerhub_client:
+            username = os.getenv("DEMISTO_SDK_CR_USER", "")
+            password = os.getenv("DEMISTO_SDK_CR_PASSWORD", "")
             cls._dockerhub_client = DockerHubClient(
-                registry=DOCKER_REGISTRY_URL,
-                username=os.getenv("DEMISTO_SDK_CR_USER", ""),
-                password=os.getenv("DEMISTO_SDK_CR_PASSWORD", ""),
+                registry=DOCKER_REGISTRY_URL, username=username, password=password
             )
         return cls._dockerhub_client
 
@@ -78,11 +81,8 @@ class DockerImage(str):
             docker_image: the full docker image
             raise_if_not_valid: if True, will raise ValueError if the docker-image has an invalid structure.
         """
-        # TEMPORARY: strip the hardcoded CR prefix (e.g. "gcr.io/xsoar-registry/") so the
-        # image parses to its canonical "demistoextended/..." form. Without this the regex
-        # would set repository="gcr.io", routing to the wrong client and building a
-        # malformed registry URL. This stopgap MUST be removed once content stops emitting
-        # images with the CR_REGISTRY_PREFIX (see the GAR migration ticket).
+        # TEMPORARY: strip the CR prefix so the image parses to its canonical
+        # "demistoextended/..." form. Remove once content stops emitting it.
         if docker_image.startswith(CR_REGISTRY_PREFIX):
             docker_image = docker_image[len(CR_REGISTRY_PREFIX) :]
 

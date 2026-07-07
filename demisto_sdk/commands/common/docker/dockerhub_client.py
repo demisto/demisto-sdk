@@ -10,9 +10,7 @@ from google.auth.transport.requests import Request
 from packaging.version import InvalidVersion, Version
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_DOCKER_REGISTRY_URL,
-)
+from demisto_sdk.commands.common.constants import DEFAULT_DOCKER_REGISTRY_URL
 from demisto_sdk.commands.common.handlers.xsoar_handler import JSONDecodeError
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.StrEnum import StrEnum
@@ -66,13 +64,9 @@ class DockerHubClient:
         self._session = requests.Session()
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
-        # A truly custom registry is one explicitly provided by the user (e.g., JFrog),
-        # NOT Docker Hub and NOT a Google Artifact Registry (GAR / gcr.io) target.
-        # GAR registries (the CI proxy resolved from DOCKER_IO, and the demistoextended
-        # gcr.io/xsoar-registry target both in CI and locally) require a gcloud bearer
-        # token, so they must NEVER be treated as a custom registry (which would use
-        # Basic Auth). Note: callers (DockerImage, DO104) always pass
-        # registry=DOCKER_REGISTRY_URL, so bool(registry) alone is insufficient.
+        # A custom registry is one explicitly provided by the user (e.g., JFrog),
+        # NOT Docker Hub and NOT a GAR (gcr.io / *.pkg.dev) target. GAR uses a
+        # gcloud bearer token, so it must never be treated as custom (Basic Auth).
         self._is_custom_registry = (
             bool(registry)
             and self.DEFAULT_REGISTRY not in self.registry_api_url
@@ -96,18 +90,19 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
-        logger.info(
+        logger.debug(
             f"get_token | {IS_CONTENT_GITLAB_CI=} for {repo=} {scope=} "
             f"(registry_api_url={self.registry_api_url})"
         )
         if IS_CONTENT_GITLAB_CI or _is_gar_registry(self.registry_api_url):
-            # Google Artifact Registry (the CI proxy, and the demistoextended
-            # gcr.io/xsoar-registry target both in CI and locally) authenticates
+            # GAR (CI proxy and the demistoextended gcr.io target) authenticates
             # with a gcloud access token rather than a Docker Hub token.
-            logger.info(f"get_token | attempting Google Cloud access token for {repo=}")
+            logger.debug(
+                f"get_token | attempting Google Cloud access token for {repo=}"
+            )
             try:
                 if gcloud_access_token := get_gcloud_access_token():
-                    logger.info(f"get_token | using gcloud access token for {repo=}")
+                    logger.debug(f"get_token | using gcloud access token for {repo=}")
                     return gcloud_access_token
                 logger.warning(
                     f"get_token | gcloud access token empty for {repo=}, "
@@ -294,7 +289,7 @@ class DockerHubClient:
             headers: any custom headers
             params: query parameters
         """
-        logger.info(
+        logger.debug(
             f"dockerhub_client | do_registry_get_request | "
             f"registry_url={self.registry_api_url} | "
             f"docker_image={docker_image} | url_suffix={url_suffix} | "
@@ -307,10 +302,9 @@ class DockerHubClient:
             _headers = {key: value for key, value in headers}
         else:
             _headers = {
-                # Accept both Docker v2 and OCI manifest media types. GAR
-                # (gcr.io) stores demistoextended images as OCI manifests and
-                # returns MANIFEST_UNKNOWN (404) if only the Docker v2 types are
-                # requested.
+                # Accept both Docker v2 and OCI manifest media types. GAR stores
+                # demistoextended images as OCI manifests and returns 404 if only
+                # the Docker v2 types are requested.
                 "Accept": "application/vnd.docker.distribution.manifest.v2+json,"
                 "application/vnd.docker.distribution.manifest.list.v2+json,"
                 "application/vnd.oci.image.manifest.v1+json,"
@@ -319,21 +313,21 @@ class DockerHubClient:
             if self._is_custom_registry:
                 # For user-provided custom registries (e.g., JFrog), don't send bearer token.
                 # Let get_request() use Basic Auth (self.auth) if credentials are available.
-                logger.info(
+                logger.debug(
                     "do_registry_get_request | Using Basic Auth (skipping bearer token) for custom registry"
                 )
             else:
                 # For Docker Hub default registry and GAR proxy registries,
                 # use bearer token from get_token() (Docker Hub token or GCloud access token).
                 token = self.get_token(docker_image, scope=scope)
-                logger.info(
+                logger.debug(
                     f"do_registry_get_request | using bearer token for {docker_image} "
                     f"(token_present={bool(token)})"
                 )
                 _headers["Authorization"] = f"Bearer {token}"
 
         full_url = f"{self.registry_api_url}/{docker_image}{url_suffix}"
-        logger.info(f"do_registry_get_request | GET {full_url}")
+        logger.debug(f"do_registry_get_request | GET {full_url}")
         return self.get_request(
             full_url,
             headers=_headers,
@@ -427,7 +421,7 @@ class DockerHubClient:
             )
 
         tags = response.get("tags") or []
-        logger.info(
+        logger.debug(
             f"get_image_tags | {docker_image} | registry={self.registry_api_url} | found {len(tags)} tags"
         )
         return tags
@@ -729,13 +723,13 @@ def get_gcloud_access_token() -> Optional[str]:
                    is caught and logged, but not re-raised.
     """
     try:
-        logger.info(
+        logger.debug(
             "get_gcloud_access_token | resolving credentials via google.auth.default()"
         )
         # Automatically obtain credentials from the environment
         credentials, project_id = google.auth.default()
         service_account = getattr(credentials, "service_account_email", None)
-        logger.info(
+        logger.debug(
             f"get_gcloud_access_token | resolved credentials {project_id=} "
             f"{service_account=} type={type(credentials).__name__}"
         )
@@ -745,9 +739,9 @@ def get_gcloud_access_token() -> Optional[str]:
         # Extract the access token
         access_token = credentials.token
         if access_token:
-            logger.info(
+            logger.debug(
                 f"get_gcloud_access_token | obtained access token {project_id=} "
-                f"{service_account=} (len={len(access_token)})"
+                f"{service_account=}"
             )
             return access_token
         else:

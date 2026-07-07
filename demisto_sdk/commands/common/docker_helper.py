@@ -211,21 +211,9 @@ def docker_login(docker_client) -> bool:
 
 @functools.lru_cache
 def gar_daemon_login(docker_client, registry: str) -> bool:
-    """Log the Docker daemon into a Google Artifact Registry (GAR / gcr.io) host
-    using a short-lived gcloud access token.
-
-    Unlike ``docker_login`` (which handles Docker Hub / a single user-provided
-    custom registry via username/password), this authenticates the daemon
-    against a GAR host so it can ``pull`` demistoextended images. GAR uses the
-    fixed username ``oauth2accesstoken`` with the gcloud bearer token as the
-    password.
-
-    Args:
-        docker_client: The Docker client whose daemon should be authenticated.
-        registry: The GAR host to log in to (e.g. ``gcr.io``).
-
-    Returns:
-        bool: True if the daemon logged in successfully, False otherwise.
+    """Log the Docker daemon into a GAR host so it can ``pull`` demistoextended
+    images, using ``oauth2accesstoken`` + a gcloud access token. Returns True on
+    success. (``docker_login`` only handles Docker Hub / custom user registries.)
     """
     # Imported lazily to avoid any import-time coupling with the HTTP client.
     from demisto_sdk.commands.common.docker.dockerhub_client import (
@@ -868,7 +856,7 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
     logger.debug(f"Could not get python version for {image=} from regex")
 
     if EXTENDED_REPOSITORY_SEGMENT in image:
-        logger.info(
+        logger.debug(
             f"get_python_version | routing extended {image=} to the "
             "DockerImage registry client (GAR via gcloud)"
         )
@@ -904,8 +892,6 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
         logger.debug(f"get python version for {image=} from dockerhub api")
         return _get_python_version_from_dockerhub_api(image)
     except Exception:
-        logger.debug(f"Could not get python version for {image=} from dockerhub api")
-
         logger.debug(
             f"Getting python version from {image=} by pulling its image and query its env"
         )

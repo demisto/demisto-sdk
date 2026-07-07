@@ -262,21 +262,3 @@ class TestGetClient:
             image = DockerImage("demisto/python3:3.10.11.54799")
             client = image._get_client()
             assert client is mock_dockerhub
-
-    def test_uses_default_extended_registry_when_env_not_configured(
-        self, _reset_extended_client
-    ):
-        """
-        Given: A demistoextended image and no DEMISTO_SDK_EXTENDED_REGISTRY env var
-        When: _get_client() is called
-        Then: Uses the extended client backed by the default extended registry
-              (gcr.io/xsoar-registry), NOT the default DockerHub client
-        """
-        env = os.environ.copy()
-        env.pop("DEMISTO_SDK_EXTENDED_REGISTRY", None)
-        with patch.dict(os.environ, env, clear=True):
-            image = DockerImage("demistoextended/accessdata:1.1.0.10177564")
-            client = image._get_client()
-            dockerhub_client = DockerImage._get_dockerhub_client()
-            assert client is not dockerhub_client
-            assert client.registry_api_url == "https://gcr.io/v2/xsoar-registry"

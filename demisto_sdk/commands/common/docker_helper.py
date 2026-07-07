@@ -237,10 +237,9 @@ def gar_daemon_login(docker_client, registry: str) -> bool:
             f"gar_daemon_login | successfully logged the daemon in to {registry}"
         )
         return True
-    except docker.errors.APIError:
-        logger.warning(
-            f"gar_daemon_login | failed to log the docker daemon in to {registry}",
-            exc_info=True,
+    except docker.errors.DockerException as e:
+        logger.debug(
+            f"gar_daemon_login | could not log the docker daemon in to {registry}: {e}"
         )
         return False
 
@@ -360,10 +359,7 @@ class DockerBase:
 
         except docker.errors.ImageNotFound:
             logger.debug(f"docker {image=} not found locally, pulling")
-            # GAR (gcr.io / *.pkg.dev) images require the daemon to be
-            # authenticated with a gcloud token. Unlike the demisto/ proxy pull
-            # (authenticated externally by the CI runner), the daemon has no
-            # credentials for the demistoextended gcr.io host, so log it in here.
+            # The daemon has no gcloud credentials for GAR hosts, so log it in first.
             if gar_host := _gar_registry_host(image):
                 gar_daemon_login(docker_client, gar_host)
             ret = docker_client.images.pull(image)
@@ -658,7 +654,10 @@ class DockerBase:
                 f"{log_prompt} - Trying to pull existing image {test_docker_image}"
             )
             self.pull_image(test_docker_image)
-        except (docker.errors.APIError, docker.errors.ImageNotFound):
+        except docker.errors.DockerException:
+            # DockerException is the base class (APIError, ImageNotFound, and
+            # credential-store failures such as a missing docker-credential-gcloud),
+            # so a failed GAR pull falls back to building instead of crashing.
             logger.info(
                 f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
             )
@@ -672,9 +671,16 @@ class DockerBase:
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
-                logger.exception(  # noqa: PLE1205
-                    "{}", f"<red>{log_prompt} - Build errors occurred: {errors}</red>"
-                )
+                if EXTENDED_REPOSITORY_SEGMENT in base_image:
+                    # Quiet for GAR images; the caller decides skip (local) vs fail (CI).
+                    logger.debug(
+                        f"{log_prompt} - could not prepare {base_image}: {errors}"
+                    )
+                else:
+                    logger.exception(  # noqa: PLE1205
+                        "{}",
+                        f"<red>{log_prompt} - Build errors occurred: {errors}</red>",
+                    )
         return test_docker_image, errors
 
 

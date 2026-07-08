@@ -41,7 +41,7 @@ SERVER_LEVEL_PARAM_TEMPLATES: Dict[str, Dict] = {
         "display": "Incident type",
         "type": 13,
         "required": False,
-        "section": "Connect",
+        "section": "Collect",
     },
     "incidentFetchInterval": {
         "display": "Incidents Fetch Interval",

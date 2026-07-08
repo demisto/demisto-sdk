@@ -223,5 +223,4 @@ class DockerImage(str):
         """
         Returns the docker image with the latest tag
         """
-        latest_tag = self._get_client().get_latest_docker_image_tag(self.name)
-        return DockerImage(f"{self.name}:{latest_tag}")
+        return DockerImage(self._get_client().get_latest_docker_image(self.name))

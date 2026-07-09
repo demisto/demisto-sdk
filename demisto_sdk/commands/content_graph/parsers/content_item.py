@@ -92,14 +92,39 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self.git_sha: Optional[str] = git_sha
 
     @staticmethod
+    def _resolve_pack_defaults(
+        path: Path,
+    ) -> tuple[List[MarketplaceVersions], Optional[List[str]]]:
+        """Resolve the pack's marketplaces and supported modules from the item's
+        `pack_metadata.json`. Falls back to all marketplaces when not in a pack.
+        """
+        from demisto_sdk.commands.common.tools import get_pack_metadata
+        from demisto_sdk.commands.content_graph.parsers.pack import (
+            PackMetadataParser,
+        )
+
+        metadata = get_pack_metadata(str(path))
+        if not metadata:
+            return list(MarketplaceVersions), None
+
+        return (
+            PackMetadataParser.resolve_marketplaces(metadata),
+            metadata.get("supportedModules"),
+        )
+
+    @staticmethod
     def from_path(
         path: Path,
-        pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
+        pack_marketplaces: Optional[List[MarketplaceVersions]] = None,
         pack_supported_modules: Optional[List[str]] = None,
         git_sha: Optional[str] = None,
     ) -> "ContentItemParser":
         """Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
+
+        When `pack_marketplaces` is not provided (standalone parsing), the
+        marketplaces and supported modules are resolved from the item's own
+        `pack_metadata.json`.
 
         Returns:
             Optional[ContentItemParser]: The parsed content item.
@@ -108,6 +133,14 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         from demisto_sdk.commands.content_graph.common import ContentType
 
         logger.debug(f"Parsing content item {path}")
+
+        if pack_marketplaces is None:
+            (
+                pack_marketplaces,
+                resolved_supported_modules,
+            ) = ContentItemParser._resolve_pack_defaults(path)
+            if pack_supported_modules is None:
+                pack_supported_modules = resolved_supported_modules
 
         # Skip test files under AgentixAgents - they are not content items
         if AGENTIX_AGENTS_DIR in path.parts and ContentType._is_agentix_agent_test_path(

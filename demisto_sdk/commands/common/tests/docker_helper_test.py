@@ -526,8 +526,8 @@ class TestUpdateDockerImageDemistoextended:
             docker_image.DockerImage,
             "_get_client",
             return_value=mock.Mock(
-                get_latest_docker_image_tag=mock.Mock(
-                    return_value=Version("1.1.0.99999")
+                get_latest_docker_image=mock.Mock(
+                    return_value="demistoextended/accessdata:1.1.0.99999"
                 )
             ),
         )
@@ -565,7 +565,7 @@ class TestUpdateDockerImageDemistoextended:
             docker_image.DockerImage,
             "_get_client",
             return_value=mock.Mock(
-                get_latest_docker_image_tag=mock.Mock(
+                get_latest_docker_image=mock.Mock(
                     side_effect=Exception("extended registry unreachable")
                 )
             ),

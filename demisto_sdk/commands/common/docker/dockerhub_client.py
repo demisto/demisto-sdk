@@ -65,11 +65,12 @@ class DockerHubClient:
         self._session = requests.Session()
         self._docker_hub_auth_tokens: Dict[str, Any] = {}
         self.verify_ssl = verify_ssl
-        # A custom registry is one explicitly provided by the user (e.g., JFrog),
-        # NOT Docker Hub and NOT a GAR (gcr.io / *.pkg.dev) target. GAR uses a
-        # gcloud bearer token, so it must never be treated as custom (Basic Auth).
+        # A custom registry is one explicitly provided by the user (e.g., JFrog):
+        # NOT Docker Hub (demisto/) and NOT a GAR target (demistoextended/), since
+        # GAR uses a gcloud bearer token and must never get Basic Auth.
         self._is_custom_registry = (
             bool(registry)
+            and not IS_CONTENT_GITLAB_CI
             and self.DEFAULT_REGISTRY not in self.registry_api_url
             and not _is_gar_registry(self.registry_api_url)
         )
@@ -642,6 +643,9 @@ def _try_resolve_ci_registry() -> Optional[str]:
 
 def _is_gar_registry(registry_url: str) -> bool:
     """Return True if the URL/host points at Google Artifact Registry / GCR.
+
+    GAR is where ``demistoextended/`` images live and it authenticates with a
+    gcloud access token (bearer), NOT a Docker Hub token and NOT Basic Auth.
 
     Matches on the parsed host (not a substring) so lookalikes like
     ``gcr.io.evil.com`` are not misclassified. Accepts full URLs and bare hosts.

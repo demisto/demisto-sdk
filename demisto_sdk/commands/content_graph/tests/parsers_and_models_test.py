@@ -778,9 +778,7 @@ class TestParsersAndModels:
         assert model.is_fetch_assets is True
         assert model.internal is False
 
-    def test_from_path_inherits_pack_marketplaces_when_not_declared(
-        self, pack: Pack
-    ):
+    def test_from_path_inherits_pack_marketplaces_when_not_declared(self, pack: Pack):
         """
         Given:
             - A pack whose metadata declares marketplaces ['xsoar', 'platform']

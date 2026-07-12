@@ -40,13 +40,17 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG112_is_skill_total
     SKILL_TOKEN_LIMIT,
     IsSkillTotalTokenBudgetValidator,
 )
-from demisto_sdk.commands.validate.validators.AG_validators.AG114_is_skill_char_cleanliness import (
+from demisto_sdk.commands.validate.validators.AG_validators.AG114_is_char_cleanliness import (
     IsSkillCharCleanlinessValidator,
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG115_is_skill_description_length import (
     DESCRIPTION_MAX_WORDS,
     DESCRIPTION_MIN_WORDS,
     IsSkillDescriptionLengthValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG117_is_valid_max_args import (
+    MAX_ACTION_ARGS,
+    IsValidMaxArgsValidator,
 )
 
 
@@ -993,3 +997,60 @@ def test_AG116_list_files_fetches_only_required_skills(graph_repo, mocker):
     assert all(
         call.kwargs.get("object_id") == ["skill-one"] for call in skill_search_calls
     ), "expected only the validated agent's skill to be fetched"
+
+
+def _make_args(count: int):
+    """Build a list of `count` distinct argument dicts for an agentix action."""
+    return [
+        {
+            "name": f"arg_{index}",
+            "description": f"Argument number {index}.",
+            "underlyingargname": f"arg_{index}",
+        }
+        for index in range(count)
+    ]
+
+
+def test_AG117_action_with_max_args_passes():
+    """
+    Given
+    - An agentix action with exactly MAX_ACTION_ARGS arguments.
+
+    When
+    - Calling IsValidMaxArgsValidator.obtain_invalid_content_items.
+
+    Then
+    - The action is not flagged (the boundary value is allowed).
+    """
+    action = create_agentix_action_object(
+        paths=["args"],
+        values=[_make_args(MAX_ACTION_ARGS)],
+    )
+
+    results = IsValidMaxArgsValidator().obtain_invalid_content_items([action])
+
+    assert not results
+
+
+def test_AG117_action_with_too_many_args_fails():
+    """
+    Given
+    - An agentix action with MAX_ACTION_ARGS + 1 arguments.
+
+    When
+    - Calling IsValidMaxArgsValidator.obtain_invalid_content_items.
+
+    Then
+    - The action is flagged, and the message states both the limit and the count.
+    """
+    too_many = MAX_ACTION_ARGS + 1
+    action = create_agentix_action_object(
+        paths=["args"],
+        values=[_make_args(too_many)],
+    )
+
+    results = IsValidMaxArgsValidator().obtain_invalid_content_items([action])
+
+    assert len(results) == 1
+    assert str(too_many) in results[0].message
+    assert str(MAX_ACTION_ARGS) in results[0].message

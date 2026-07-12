@@ -1,4 +1,0 @@
-changes:
-- description: Improve GR109 validation by leveraging get_content_item_supported_modules from tools.py
-  type: internal
-pr_number: 5434

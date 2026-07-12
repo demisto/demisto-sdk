@@ -1,4 +1,26 @@
 # Changelog
+## 1.39.3 (2026-07-06)
+### Feature
+* Added support for skill action dependencies. [#5411](https://github.com/demisto/demisto-sdk/pull/5411)
+* Added support for the new **Connector** content item, so connectors are recognized and handled by the SDK like any other content type. [#5318](https://github.com/demisto/demisto-sdk/pull/5318)
+* Added validations for Connector content items, catching common issues in connector definitions early - before they reach the platform. [#5318](https://github.com/demisto/demisto-sdk/pull/5318)
+* Added support for updating the content graph with Connector items, so connectors are included in graph builds and updates alongside other content. [#5318](https://github.com/demisto/demisto-sdk/pull/5318)
+* Added the BA131 validation, which ensures a content item's supportedModules field only contains module values permitted for that content item type. [#5425](https://github.com/demisto/demisto-sdk/pull/5425)
+* Added the BA132 validation, which ensures a content item does not declare supportedModules unless 'platform' is present in its marketplaces. [#5425](https://github.com/demisto/demisto-sdk/pull/5425)
+* Added support for hiding integration commands per marketplace. The command-level `hidden` field now accepts a list of marketplace names (mirroring the existing parameter-level behavior); listed marketplaces resolve to `hidden=true` for that marketplace during unify, while others resolve to `hidden=false`. Pre-existing boolean `hidden` values are left untouched. [#5430](https://github.com/demisto/demisto-sdk/pull/5430)
+* Add the `spec` field for Integrations and Scripts. [#5436](https://github.com/demisto/demisto-sdk/pull/5436)
+* Added support for the new `timelinerecord` object on playbook tasks, including schema validation, strict model, and content graph model. [#5419](https://github.com/demisto/demisto-sdk/pull/5419)
+
+### Fix
+* Fixed an issue where the **RN114** validator failed on valid release note headers for Agentix content (Actions, Agents, Skills) and Collections. [#5429](https://github.com/demisto/demisto-sdk/pull/5429)
+* Fixed an issue where the GR109 (IsSupportedModulesCompatibility) validator falsely reported module-compatible commands (e.g. Set, Print, ReadFile) as incompatible when another validator had already loaded the content item's full set of USES relationships into the shared graph cache. The list of incompatible commands is now computed directly by the graph query instead of relying on the shared cache. [#5424](https://github.com/demisto/demisto-sdk/pull/5424)
+* Fix the error message in the **GR105** validator to be more clear. [#5343](https://github.com/demisto/demisto-sdk/pull/5343)
+
+### Internal
+* Improve GR109 validation by leveraging get_content_item_supported_modules from tools.py [#5434](https://github.com/demisto/demisto-sdk/pull/5434)
+* Updated the content item structure to adopt standardized id and name fields. [#5426](https://github.com/demisto/demisto-sdk/pull/5426)
+
+
 ## 1.39.2 (2026-06-18)
 ### Feature
 * Added SC110 validator: Validates that wrapper scripts declare all commands/scripts they call via executeCommand in the "dependson" field. [#5342](https://github.com/demisto/demisto-sdk/pull/5342)

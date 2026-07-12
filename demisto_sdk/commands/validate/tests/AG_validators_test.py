@@ -6,7 +6,6 @@ from demisto_sdk.commands.content_graph.objects.agentix_action import (
     AgentixAction,
 )
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
-from demisto_sdk.commands.content_graph.objects.collection import Collection
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.validate.tests.test_tools import (
     create_agentix_action_object,
@@ -41,20 +40,13 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG112_is_skill_total
     SKILL_TOKEN_LIMIT,
     IsSkillTotalTokenBudgetValidator,
 )
-from demisto_sdk.commands.validate.validators.AG_validators.AG114_is_char_cleanliness import (
-    IsCharCleanlinessValidator,
+from demisto_sdk.commands.validate.validators.AG_validators.AG114_is_skill_char_cleanliness import (
     IsSkillCharCleanlinessValidator,
-    collect_text_fields,
-    find_disallowed_chars,
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG115_is_skill_description_length import (
     DESCRIPTION_MAX_WORDS,
     DESCRIPTION_MIN_WORDS,
     IsSkillDescriptionLengthValidator,
-)
-from demisto_sdk.commands.validate.validators.AG_validators.AG116_is_valid_max_args import (
-    MAX_ACTION_ARGS,
-    IsValidMaxArgsValidator,
 )
 
 
@@ -789,216 +781,6 @@ def test_AG114_skill_char_cleanliness(
     assert bool(results) is expect_failure
 
 
-def test_AG114_backward_compatible_alias():
-    """
-    Given
-    - The legacy validator class name IsSkillCharCleanlinessValidator.
-
-    When
-    - Comparing it to the generalized IsCharCleanlinessValidator.
-
-    Then
-    - Both names refer to the same validator class.
-    """
-    # given / when / then
-    assert IsSkillCharCleanlinessValidator is IsCharCleanlinessValidator
-
-
-def test_AG114_action_clean_ascii_passes():
-    """
-    Given
-    - An AgentixAction whose text fields contain only plain ASCII.
-
-    When
-    - Calling IsCharCleanlinessValidator.obtain_invalid_content_items.
-
-    Then
-    - No failures are returned.
-    """
-    # given
-    action = create_agentix_action_object()
-
-    # when
-    results = IsCharCleanlinessValidator().obtain_invalid_content_items([action])
-
-    # then
-    assert results == []
-
-
-def test_AG114_action_emoji_in_description_fails():
-    """
-    Given
-    - An AgentixAction with an emoji in its description.
-
-    When
-    - Calling IsCharCleanlinessValidator.obtain_invalid_content_items.
-
-    Then
-    - The action is flagged and the offending field is the description.
-    """
-    # given
-    action = create_agentix_action_object(
-        paths=["description"],
-        values=["Enrich a CVE with threat intel \U0001f680."],
-    )
-
-    # when
-    results = IsCharCleanlinessValidator().obtain_invalid_content_items([action])
-
-    # then
-    assert len(results) == 1
-    assert "description" in results[0].message
-
-
-def test_AG114_action_smart_quote_in_arg_description_fails():
-    """
-    Given
-    - An AgentixAction with a smart quote in an argument description.
-
-    When
-    - Calling IsCharCleanlinessValidator.obtain_invalid_content_items.
-
-    Then
-    - The action is flagged and the offending field is the argument description.
-    """
-    # given
-    action = create_agentix_action_object(
-        paths=["args"],
-        values=[
-            [
-                {
-                    "name": "cve",
-                    "required": True,
-                    "description": "The \u201cCVE\u201d identifier to look up.",
-                    "type": "string",
-                    "underlyingargname": "cve",
-                }
-            ]
-        ],
-    )
-
-    # when
-    results = IsCharCleanlinessValidator().obtain_invalid_content_items([action])
-
-    # then
-    assert len(results) == 1
-    assert "arg 'cve' description" in results[0].message
-
-
-def test_AG114_action_em_dash_in_output_fails():
-    """
-    Given
-    - An AgentixAction with an em-dash in an output description.
-
-    When
-    - Calling IsCharCleanlinessValidator.obtain_invalid_content_items.
-
-    Then
-    - The action is flagged and the offending field is the output description.
-    """
-    # given
-    action = create_agentix_action_object(
-        paths=["outputs"],
-        values=[
-            [
-                {
-                    "underlyingoutputcontextpath": "CVE.ID",
-                    "description": "The CVE ID \u2014 unique per record.",
-                    "type": "string",
-                    "name": "CVE.ID",
-                }
-            ]
-        ],
-    )
-
-    # when
-    results = IsCharCleanlinessValidator().obtain_invalid_content_items([action])
-
-    # then
-    assert len(results) == 1
-    assert "output 'CVE.ID' description" in results[0].message
-
-
-def test_AG114_action_accented_letter_in_name_fails():
-    """
-    Given
-    - An AgentixAction whose name contains an accented letter.
-
-    When
-    - Calling IsCharCleanlinessValidator.obtain_invalid_content_items.
-
-    Then
-    - The action is flagged and the offending field is the name.
-    """
-    # given
-    action = create_agentix_action_object(paths=["name"], values=["Enrichm\u00e9nt"])
-
-    # when
-    results = IsCharCleanlinessValidator().obtain_invalid_content_items([action])
-
-    # then
-    assert len(results) == 1
-    assert "name" in results[0].message
-
-
-def test_AG114_knowledge_clean_ascii_passes():
-    """
-    Given
-    - A knowledge (Collection) item with only plain ASCII text fields.
-
-    When
-    - Collecting its text fields and checking each for disallowed characters.
-
-    Then
-    - No disallowed characters are found in any field.
-    """
-    # given
-    knowledge = Collection.construct(
-        name="ThreatKnowledge",
-        display_name="Threat Knowledge",
-        description="Plain ASCII knowledge description.",
-    )
-
-    # when
-    disallowed = [
-        ch
-        for _, text in collect_text_fields(knowledge)
-        for ch in find_disallowed_chars(text)
-    ]
-
-    # then
-    assert disallowed == []
-
-
-def test_AG114_knowledge_non_ascii_in_description_fails():
-    """
-    Given
-    - A knowledge (Collection) item with a non-breaking space in its description.
-
-    When
-    - Collecting its text fields and checking each for disallowed characters.
-
-    Then
-    - The non-breaking space is reported on the description field.
-    """
-    # given
-    knowledge = Collection.construct(
-        name="ThreatKnowledge",
-        display_name="Threat Knowledge",
-        description="Knowledge\u00a0description.",
-    )
-
-    # when
-    offending = {
-        field_name
-        for field_name, text in collect_text_fields(knowledge)
-        if find_disallowed_chars(text)
-    }
-
-    # then
-    assert offending == {"description"}
-
-
 @pytest.mark.parametrize(
     "description, expect_failure",
     [
@@ -1046,67 +828,3 @@ def test_AG115_skill_description_length(description: str, expect_failure: bool):
     results = IsSkillDescriptionLengthValidator().obtain_invalid_content_items([skill])
 
     assert bool(results) is expect_failure
-
-
-def _make_args(count: int) -> list:
-    """Build a list of `count` valid AgentixAction argument dicts."""
-    return [
-        {
-            "name": f"arg_{i}",
-            "required": False,
-            "description": f"Argument number {i}.",
-            "type": "string",
-            "underlyingargname": f"arg_{i}",
-        }
-        for i in range(count)
-    ]
-
-
-def test_AG116_action_with_max_args_passes():
-    """
-    Given
-    - An AgentixAction with exactly MAX_ACTION_ARGS (10) arguments.
-
-    When
-    - Calling IsValidMaxArgsValidator.obtain_invalid_content_items.
-
-    Then
-    - The action is not flagged (boundary case, 10 args = pass).
-    """
-    # given
-    action = create_agentix_action_object(
-        paths=["args"],
-        values=[_make_args(MAX_ACTION_ARGS)],
-    )
-
-    # when
-    results = IsValidMaxArgsValidator().obtain_invalid_content_items([action])
-
-    # then
-    assert results == []
-
-
-def test_AG116_action_with_too_many_args_fails():
-    """
-    Given
-    - An AgentixAction with MAX_ACTION_ARGS + 1 (11) arguments.
-
-    When
-    - Calling IsValidMaxArgsValidator.obtain_invalid_content_items.
-
-    Then
-    - The action is flagged and the message states the limit and the actual count.
-    """
-    # given
-    action = create_agentix_action_object(
-        paths=["args"],
-        values=[_make_args(MAX_ACTION_ARGS + 1)],
-    )
-
-    # when
-    results = IsValidMaxArgsValidator().obtain_invalid_content_items([action])
-
-    # then
-    assert len(results) == 1
-    assert str(MAX_ACTION_ARGS + 1) in results[0].message
-    assert str(MAX_ACTION_ARGS) in results[0].message

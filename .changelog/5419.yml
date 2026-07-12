@@ -1,4 +1,0 @@
-changes:
-- description: Added support for the new `timelinerecord` object on playbook tasks, including schema validation, strict model, and content graph model.
-  type: feature
-pr_number: 5419

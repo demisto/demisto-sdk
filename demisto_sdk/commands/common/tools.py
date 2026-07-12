@@ -4826,6 +4826,10 @@ def get_content_item_supported_modules(item) -> set[str]:
     Resolves the definitive list of supported modules for an item,
     falling back to its pack's modules or the platform defaults.
 
+    An explicit empty list ([]) on the item is honored as "no modules" and is
+    not inherited from the pack; the platform defaults are used only when the
+    field is unset (None).
+
     Args:
         item: A content item object that has marketplaces, supportedModules,
               and optionally pack attributes.
@@ -4842,26 +4846,9 @@ def get_content_item_supported_modules(item) -> set[str]:
     default_modules = [sm.value for sm in PlatformSupportedModules]
 
     modules = item.supportedModules
-    if not modules and not isinstance(item, Pack):
+    if modules is None and not isinstance(item, Pack):
         pack = getattr(item, "pack", None)
         if pack is not None:
             modules = pack.supportedModules
 
-    return set(modules or default_modules)
-
-
-def is_platform_marketplace(marketplace: MarketplaceVersions) -> bool:
-    """Whether the given marketplace is the platform marketplace.
-
-    ``supportedModules`` is only relevant for the platform marketplace. Any other
-    marketplace (xsoar, xsoar_saas, xsoar_on_prem, marketplacev2, xpanse, and any
-    future partner marketplace) is considered non-platform, so the check is written
-    generically against the single platform value.
-
-    Args:
-        marketplace: The marketplace to check.
-
-    Returns:
-        True if the marketplace is the platform marketplace, False otherwise.
-    """
-    return marketplace == MarketplaceVersions.PLATFORM
+    return set(default_modules if modules is None else modules)

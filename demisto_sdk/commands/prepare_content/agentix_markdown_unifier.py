@@ -1,4 +1,5 @@
 import copy
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -10,6 +11,9 @@ from demisto_sdk.commands.prepare_content.unifier import Unifier
 # AgentixSkill: skill body lives in "<folder>_skill.md" and is unified into "content".
 AGENTIX_SKILL_TARGET_FIELD = "content"
 AGENTIX_SKILL_FILE_SUFFIX = "_skill.md"
+
+# Matches ``<action=action-id>`` tokens in a skill's Markdown body.
+ACTION_REFERENCE_REGEX = re.compile(r"<action=([^>]+)>")
 
 # AgentixAgent: system instructions live in "<folder>_systeminstructions.md"
 # and are unified into "systeminstructions".

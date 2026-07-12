@@ -335,7 +335,7 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def find_content_items_with_module_mismatch_content_items(
         self, content_item_ids: List[str], mandatory: bool = True
-    ) -> List[BaseNode]:
+    ) -> List[Tuple[BaseNode, List[str]]]:
         pass
 
     @abstractmethod

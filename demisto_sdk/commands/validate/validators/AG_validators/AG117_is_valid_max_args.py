@@ -15,7 +15,7 @@ MAX_ACTION_ARGS = 10
 
 
 class IsValidMaxArgsValidator(BaseValidator[ContentTypes]):
-    error_code = "AG116"
+    error_code = "AG117"
     description = (
         f"Enforce a maximum of {MAX_ACTION_ARGS} arguments per Agentix Action."
     )

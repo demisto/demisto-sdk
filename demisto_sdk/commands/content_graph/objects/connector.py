@@ -499,9 +499,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
             categories = metadata.get("categories")
             if isinstance(categories, list):
                 # Neo4j accepts arrays of primitives - keep only strings.
-                json_dct["categories"] = [
-                    c for c in categories if isinstance(c, str)
-                ]
+                json_dct["categories"] = [c for c in categories if isinstance(c, str)]
             tags = metadata.get("tags")
             if isinstance(tags, list):
                 # Neo4j accepts arrays of primitives - keep only strings.

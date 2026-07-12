@@ -41,7 +41,7 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG112_is_skill_total
     SKILL_TOKEN_LIMIT,
     IsSkillTotalTokenBudgetValidator,
 )
-from demisto_sdk.commands.validate.validators.AG_validators.AG114_is_skill_char_cleanliness import (
+from demisto_sdk.commands.validate.validators.AG_validators.AG114_is_char_cleanliness import (
     IsCharCleanlinessValidator,
     IsSkillCharCleanlinessValidator,
     collect_text_fields,
@@ -51,6 +51,10 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG115_is_skill_descr
     DESCRIPTION_MAX_WORDS,
     DESCRIPTION_MIN_WORDS,
     IsSkillDescriptionLengthValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG116_is_valid_max_args import (
+    MAX_ACTION_ARGS,
+    IsValidMaxArgsValidator,
 )
 
 
@@ -1042,3 +1046,67 @@ def test_AG115_skill_description_length(description: str, expect_failure: bool):
     results = IsSkillDescriptionLengthValidator().obtain_invalid_content_items([skill])
 
     assert bool(results) is expect_failure
+
+
+def _make_args(count: int) -> list:
+    """Build a list of `count` valid AgentixAction argument dicts."""
+    return [
+        {
+            "name": f"arg_{i}",
+            "required": False,
+            "description": f"Argument number {i}.",
+            "type": "string",
+            "underlyingargname": f"arg_{i}",
+        }
+        for i in range(count)
+    ]
+
+
+def test_AG116_action_with_max_args_passes():
+    """
+    Given
+    - An AgentixAction with exactly MAX_ACTION_ARGS (10) arguments.
+
+    When
+    - Calling IsValidMaxArgsValidator.obtain_invalid_content_items.
+
+    Then
+    - The action is not flagged (boundary case, 10 args = pass).
+    """
+    # given
+    action = create_agentix_action_object(
+        paths=["args"],
+        values=[_make_args(MAX_ACTION_ARGS)],
+    )
+
+    # when
+    results = IsValidMaxArgsValidator().obtain_invalid_content_items([action])
+
+    # then
+    assert results == []
+
+
+def test_AG116_action_with_too_many_args_fails():
+    """
+    Given
+    - An AgentixAction with MAX_ACTION_ARGS + 1 (11) arguments.
+
+    When
+    - Calling IsValidMaxArgsValidator.obtain_invalid_content_items.
+
+    Then
+    - The action is flagged and the message states the limit and the actual count.
+    """
+    # given
+    action = create_agentix_action_object(
+        paths=["args"],
+        values=[_make_args(MAX_ACTION_ARGS + 1)],
+    )
+
+    # when
+    results = IsValidMaxArgsValidator().obtain_invalid_content_items([action])
+
+    # then
+    assert len(results) == 1
+    assert str(MAX_ACTION_ARGS + 1) in results[0].message
+    assert str(MAX_ACTION_ARGS) in results[0].message

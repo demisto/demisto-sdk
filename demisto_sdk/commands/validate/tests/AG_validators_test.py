@@ -1005,6 +1005,7 @@ def _make_args(count: int):
         {
             "name": f"arg_{index}",
             "description": f"Argument number {index}.",
+            "type": "string",
             "underlyingargname": f"arg_{index}",
         }
         for index in range(count)

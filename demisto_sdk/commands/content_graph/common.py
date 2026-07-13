@@ -1,3 +1,4 @@
+import enum
 import os
 import re
 from pathlib import Path
@@ -318,6 +319,21 @@ class ContentType(StrEnum):
     def content_items() -> Iterator["ContentType"]:
         return ContentType.non_abstracts(include_non_content_items=False)
 
+    @property
+    def is_tightly_coupled(self) -> bool:
+        """Whether this content type travels with the pack to Managed Content."""
+        return self in TIGHTLY_COUPLED_TYPES
+
+    @classmethod
+    def tightly_coupled_types(cls) -> "frozenset[ContentType]":
+        """Return the frozenset of tightly coupled content types."""
+        return TIGHTLY_COUPLED_TYPES
+
+    @classmethod
+    def loosely_coupled_types(cls) -> "frozenset[ContentType]":
+        """Return content item types that are loosely coupled — Marketplace only."""
+        return frozenset(cls.content_items()) - TIGHTLY_COUPLED_TYPES
+
     @staticmethod
     def threat_intel_report_types() -> List["ContentType"]:
         return [ContentType.GENERIC_FIELD, ContentType.GENERIC_TYPE]
@@ -421,6 +437,38 @@ class ContentType(StrEnum):
             return ContentType.COLLECTION
         normalized_header = header.rstrip("s").replace(" ", "_").upper()
         return ContentType[normalized_header]
+
+
+# ---------------------------------------------------------------------------
+# Coupling classification — which content types travel with the pack to
+# Managed Content vs. staying in Marketplace only.
+# ---------------------------------------------------------------------------
+
+TIGHTLY_COUPLED_TYPES: frozenset[ContentType] = frozenset(
+    {
+        ContentType.INTEGRATION,
+        ContentType.MODELING_RULE,
+        ContentType.PARSING_RULE,
+        ContentType.CORRELATION_RULE,
+        ContentType.TRIGGER,
+        ContentType.XDRC_TEMPLATE,
+        ContentType.ASSETS_MODELING_RULE,
+        ContentType.MAPPER,
+    }
+)
+
+
+class PackDestination(str, enum.Enum):
+    """Describes where a pack's content is destined during the build process."""
+
+    MARKETPLACE = "marketplace"
+    MANAGED_CONTENT = "managed_content"
+
+
+DERIVED_PACK_SUFFIX = "Managed"
+
+# Feature flag: when False, derived pack generation is skipped entirely.
+ENABLE_SPLIT_PACKS = os.getenv("ENABLE_SPLIT_PACKS", "false").lower() == "true"
 
 
 class Relationship(BaseModel):

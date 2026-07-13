@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.logger import logging_setup_decorator
 from demisto_sdk.commands.common.tools import find_type, parse_marketplace_kwargs
+from demisto_sdk.commands.content_graph.common import PackDestination
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.prepare_content.generic_module_unifier import (
     GenericModuleUnifier,
@@ -90,6 +91,11 @@ def prepare_content(
         "--private-packs-path",
         help="Path to pack folder in private packs repo (optional).",
     ),
+    destination: str = typer.Option(
+        "all",
+        "--destination",
+        help="Filter packs by destination: 'marketplace', 'managed', or 'all' (default).",
+    ),
 ):
     """
     This command prepares content to upload to the platform. If the content item is a pack, prepare-content creates the pack zip file. If the content item is an integration/script/rule, prepare-content creates the unified YAML file.
@@ -102,12 +108,32 @@ def prepare_content(
 
     # Process `all` option
     if all:
+        # Map CLI destination string to PackDestination enum
+        destination_map = {
+            "marketplace": PackDestination.MARKETPLACE,
+            "managed": PackDestination.MANAGED_CONTENT,
+            "all": None,
+        }
+        pack_destination = destination_map.get(destination.lower())
+        if destination.lower() not in destination_map:
+            raise typer.BadParameter(
+                f"Invalid destination '{destination}'. Must be one of: marketplace, managed, all."
+            )
+
         content_dto = ContentDTO.from_path()
         output_path = output or Path(".")
+        dump_dir = output_path / "prepare-content-tmp"
         content_dto.dump(
-            dir=output_path / "prepare-content-tmp",
+            dir=dump_dir,
             marketplace=parse_marketplace_kwargs({"marketplace": marketplace}),
+            destination=pack_destination,
         )
+
+        # Write pack_destinations.json alongside the output
+        content_dto.write_pack_destinations(
+            output_path / "pack_destinations.json"
+        )
+
         raise typer.Exit(0)
 
     # Split and process inputs

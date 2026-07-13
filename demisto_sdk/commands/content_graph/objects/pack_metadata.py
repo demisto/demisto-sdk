@@ -66,6 +66,9 @@ class PackMetadata(BaseModel):
     hybrid: bool = Field(False, alias="hybrid")
     default_data_source_id: Optional[str] = Field("", alias="defaultDataSource")
     default_data_source_name: Optional[str] = Field("", exclude=True)
+    coupling_overrides: Optional[Dict[str, str]] = Field(
+        None, alias="coupling_overrides"
+    )
 
     # For private packs
     premium: Optional[bool]

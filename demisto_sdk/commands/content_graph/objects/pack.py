@@ -28,10 +28,13 @@ from demisto_sdk.commands.common.tools import (
     write_dict,
 )
 from demisto_sdk.commands.content_graph.common import (
+    DERIVED_PACK_SUFFIX,
     PACK_METADATA_FILENAME,
+    TIGHTLY_COUPLED_TYPES,
     VERSION_CONFIG_FILENAME,
     ContentType,
     Nodes,
+    PackDestination,
     Relationships,
     RelationshipType,
     replace_marketplace_references,
@@ -137,6 +140,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     )
     pack_metadata_dict: Optional[dict] = Field({}, exclude=True)
 
+    # Split-pack / derived-pack fields
+    is_derived: bool = False
+    derived_from: Optional[str] = None
+
     @classmethod
     def from_orm(cls, obj) -> "Pack":
         pack = super().from_orm(obj)
@@ -159,6 +166,21 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     @property
     def pack_id(self) -> str:
         return self.object_id
+
+    @property
+    def destination(self) -> PackDestination:
+        """Determine where this pack's artifacts should be routed."""
+        if self.managed:
+            return PackDestination.MANAGED_CONTENT
+        return PackDestination.MARKETPLACE
+
+    def _is_item_tightly_coupled(self, content_item: ContentItem) -> bool:
+        """Check if a content item is tightly coupled, respecting overrides."""
+        overrides = self.coupling_overrides or {}
+        item_id = content_item.object_id
+        if item_id in overrides:
+            return overrides[item_id] == "tightly_coupled"
+        return content_item.content_type.is_tightly_coupled
 
     @property
     def ignored_errors(self) -> List[str]:
@@ -462,6 +484,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                         f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
                         f"to destination {marketplace=}"
                         f" - content item has marketplaces {content_item.marketplaces}"
+                    )
+                    continue
+
+                # Derived packs only include tightly coupled items
+                if self.is_derived and not self._is_item_tightly_coupled(content_item):
+                    logger.debug(
+                        f"SKIPPING dump {content_item.content_type} {content_item.normalize_name}"
+                        f" — derived pack only includes tightly coupled items"
                     )
                     continue
 

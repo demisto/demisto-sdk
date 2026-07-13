@@ -1,12 +1,4 @@
 # Changelog
-## 1.39.4 (2026-07-12)
-### Breaking
-* Renamed the Connector's ``metadata.category`` field to ``metadata.categories`` (a list of strings, at least one required) to match the updated Connector schema. [#5442](https://github.com/demisto/demisto-sdk/pull/5442)
-
-### Internal
-* Move MC101 validation to warning level as it is a broken validation [#5443](https://github.com/demisto/demisto-sdk/pull/5443)
-
-
 ## 1.39.3 (2026-07-06)
 ### Feature
 * Added support for skill action dependencies. [#5411](https://github.com/demisto/demisto-sdk/pull/5411)

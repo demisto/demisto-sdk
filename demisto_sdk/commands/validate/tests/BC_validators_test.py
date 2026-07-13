@@ -596,10 +596,7 @@ def test_WasMarketplaceModifiedValidator__old_and_modified_items_have_all_market
             create_integration_object(pack_info={"marketplaces": in_pack_marketplaces}),
             create_script_object(pack_info={"marketplaces": in_pack_marketplaces}),
         ]
-        old_content_items = [
-            create_integration_object(pack_info={"marketplaces": in_pack_marketplaces}),
-            create_script_object(pack_info={"marketplaces": in_pack_marketplaces}),
-        ]
+        old_content_items = [create_integration_object(), create_script_object()]
 
         create_old_file_pointers(modified_content_items, old_content_items)
 
@@ -1833,14 +1830,11 @@ def test_IsSupportedModulesRemoved_with_removed_modules():
     - Return a ValidationResult inicdating which modules were removed.
     """
     new_item = create_integration_object(
-        paths=["supportedModules"],
-        values=[["Cloud", "asm", "agentix"]],
-        pack_info={"marketplaces": ["xsoar", "marketplacev2", "platform"]},
+        paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]
     )
     new_item.old_base_content_object = create_integration_object(
         paths=["supportedModules"],
         values=[["Cloud", "asm", "agentix", "edr", "cloud_posture"]],
-        pack_info={"marketplaces": ["xsoar", "marketplacev2", "platform"]},
     )
 
     res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
@@ -1890,16 +1884,12 @@ def test_IsSupportedModulesRemoved_with_pack_fallback():
     """
     with ChangeCWD(REPO.path):
         new_item = create_integration_object(
-            pack_info={
-                "supportedModules": ["Cloud", "asm"],
-                "marketplaces": ["xsoar", "marketplacev2", "platform"],
-            }
+            pack_info={"supportedModules": ["Cloud", "asm"]}
         )
 
         new_item.old_base_content_object = create_integration_object(
             paths=["supportedModules"],
             values=[["Cloud", "asm", "edr", "cloud_posture"]],
-            pack_info={"marketplaces": ["xsoar", "marketplacev2", "platform"]},
         )
 
         res = IsSupportedModulesRemoved().obtain_invalid_content_items([new_item])
@@ -1988,16 +1978,12 @@ def test_IsSupportedModulesRemoved_mixed_explicit_and_fallback():
         new_item = create_integration_object(
             paths=["supportedModules"],
             values=[["Cloud", "asm"]],
-            pack_info={
-                "supportedModules": ["Cloud", "asm", "agentix", "edr"],
-                "marketplaces": ["xsoar", "marketplacev2", "platform"],
-            },
+            pack_info={"supportedModules": ["Cloud", "asm", "agentix", "edr"]},
         )
 
         old_item = create_integration_object(
             pack_info={
-                "supportedModules": ["Cloud", "asm", "agentix", "edr", "cloud_posture"],
-                "marketplaces": ["xsoar", "marketplacev2", "platform"],
+                "supportedModules": ["Cloud", "asm", "agentix", "edr", "cloud_posture"]
             }
         )
         old_item.supportedModules = None
@@ -2053,12 +2039,9 @@ def test_IsSupportedModulesAdded_with_added_modules():
     new_item = create_integration_object(
         paths=["supportedModules"],
         values=[["Cloud", "asm", "agentix", "edr", "cloud_posture"]],
-        pack_info={"marketplaces": ["xsoar", "marketplacev2", "platform"]},
     )
     new_item.old_base_content_object = create_integration_object(
-        paths=["supportedModules"],
-        values=[["Cloud", "asm", "agentix"]],
-        pack_info={"marketplaces": ["xsoar", "marketplacev2", "platform"]},
+        paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]
     )
 
     res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])
@@ -2181,13 +2164,10 @@ def test_IsSupportedModulesAdded_renamed_with_added_modules():
     new_item = create_integration_object(
         paths=["supportedModules"],
         values=[["Cloud", "asm", "agentix", "edr"]],
-        pack_info={"marketplaces": ["xsoar", "marketplacev2", "platform"]},
     )
     new_item.git_status = GitStatuses.RENAMED
     new_item.old_base_content_object = create_integration_object(
-        paths=["supportedModules"],
-        values=[["Cloud", "asm", "agentix"]],
-        pack_info={"marketplaces": ["xsoar", "marketplacev2", "platform"]},
+        paths=["supportedModules"], values=[["Cloud", "asm", "agentix"]]
     )
 
     res = IsSupportedModulesAdded().obtain_invalid_content_items([new_item])

@@ -96,7 +96,8 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         path: Path,
     ) -> tuple[List[MarketplaceVersions], Optional[List[str]]]:
         """Resolve the pack's marketplaces and supported modules from the item's
-        `pack_metadata.json`. Falls back to all marketplaces when not in a pack.
+        `pack_metadata.json`. Falls back to all marketplaces when not in a pack,
+        or when the pack does not declare a `marketplaces` key.
         """
         from demisto_sdk.commands.common.tools import get_pack_metadata
         from demisto_sdk.commands.content_graph.parsers.pack import (
@@ -104,7 +105,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         )
 
         metadata = get_pack_metadata(str(path))
-        if not metadata:
+        if not metadata or not metadata.get("marketplaces"):
             return list(MarketplaceVersions), None
 
         return (

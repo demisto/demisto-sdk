@@ -1095,7 +1095,9 @@ class TestConnectorAwareInitializerCrossMatch:
         Then: Phase 2b graph search is invoked for the integration ID.
         """
         connector = create_connector_object()
-        graph_integration = create_integration_object()
+        graph_integration = create_integration_object(
+            pack_info={"marketplaces": ["xsoar", "marketplacev2", "platform"]}
+        )
 
         initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
 

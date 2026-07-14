@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     PlatformSupportedModules,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -112,9 +113,17 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
 def get_items_using_deprecated(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[graph.Node]]]:
-    return get_items_using_deprecated_commands(
+    logger.debug(
+        f"[GR107] get_items_using_deprecated called with file_paths={file_paths}"
+    )
+    results = get_items_using_deprecated_commands(
         tx, file_paths
     ) + get_items_using_deprecated_content_items(tx, file_paths)
+    logger.debug(
+        f"[GR107] get_items_using_deprecated returned {len(results)} deprecated item(s): "
+        f"{[dep_id for dep_id, _ in results]}"
+    )
+    return results
 
 
 def get_items_using_deprecated_commands(
@@ -143,6 +152,10 @@ def get_items_using_deprecated_commands(
     files_filter = (
         f"AND (p.path IN {file_paths} OR c.path IN {file_paths})" if file_paths else ""
     )
+    # For comparison: what the BROKEN filter (before the parentheses fix) would have been
+    broken_files_filter = (
+        f"AND p.path IN {file_paths} OR c.path IN {file_paths}" if file_paths else ""
+    )
 
     command_query = f"""// Returning all the items which using deprecated commands
 MATCH (p{{deprecated: false}})-[:USES]->(c:Command)<-[:HAS_COMMAND{{deprecated: true}}]-(i:Integration) WHERE NOT p.is_test
@@ -152,13 +165,25 @@ WITH p, c, i2
 WHERE i2 IS NULL
 {files_filter}
 RETURN c.object_id AS deprecated_command, collect(p) AS object_using_deprecated"""
-    return [
+    logger.debug(
+        f"[GR107-commands] Running query with files_filter={repr(files_filter)}"
+    )
+    logger.debug(
+        f"[GR107-commands] BROKEN files_filter would have been={repr(broken_files_filter)}"
+    )
+    logger.debug(f"[GR107-commands] Full query:\n{command_query}")
+    results = [
         (
             item.get("deprecated_command"),
             item.get("object_using_deprecated"),
         )
         for item in run_query(tx, command_query)
     ]
+    logger.debug(
+        f"[GR107-commands] Query returned {len(results)} row(s): "
+        f"{[(dep_id, [n.get('object_id', '?') for n in nodes]) for dep_id, nodes in results]}"
+    )
+    return results
 
 
 def get_items_using_deprecated_content_items(
@@ -187,6 +212,10 @@ def get_items_using_deprecated_content_items(
     files_filter = (
         f"AND (p.path IN {file_paths} OR d.path IN {file_paths})" if file_paths else ""
     )
+    # For comparison: what the BROKEN filter (before the parentheses fix) would have been
+    broken_files_filter = (
+        f"AND p.path IN {file_paths} OR d.path IN {file_paths}" if file_paths else ""
+    )
 
     query = f"""
     MATCH (p{{deprecated: false}})-[:USES]->(d{{deprecated: true}}) WHERE not p.is_test
@@ -197,13 +226,25 @@ WHERE c1 IS NULL
 {files_filter}
 RETURN d.object_id AS deprecated_content, collect(p) AS object_using_deprecated
     """
-    return [
+    logger.debug(
+        f"[GR107-content-items] Running query with files_filter={repr(files_filter)}"
+    )
+    logger.debug(
+        f"[GR107-content-items] BROKEN files_filter would have been={repr(broken_files_filter)}"
+    )
+    logger.debug(f"[GR107-content-items] Full query:\n{query}")
+    results = [
         (
             item.get("deprecated_content"),
             item.get("object_using_deprecated"),
         )
         for item in run_query(tx, query)
     ]
+    logger.debug(
+        f"[GR107-content-items] Query returned {len(results)} row(s): "
+        f"{[(dep_id, [n.get('object_id', '?') for n in nodes]) for dep_id, nodes in results]}"
+    )
+    return results
 
 
 def validate_marketplaces(tx: Transaction, pack_ids: List[str]):

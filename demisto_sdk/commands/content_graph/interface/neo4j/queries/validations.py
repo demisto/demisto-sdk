@@ -113,13 +113,13 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
 def get_items_using_deprecated(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[graph.Node]]]:
-    logger.debug(
+    logger.info(
         f"[GR107] get_items_using_deprecated called with file_paths={file_paths}"
     )
     results = get_items_using_deprecated_commands(
         tx, file_paths
     ) + get_items_using_deprecated_content_items(tx, file_paths)
-    logger.debug(
+    logger.info(
         f"[GR107] get_items_using_deprecated returned {len(results)} deprecated item(s): "
         f"{[dep_id for dep_id, _ in results]}"
     )
@@ -165,13 +165,13 @@ WITH p, c, i2
 WHERE i2 IS NULL
 {files_filter}
 RETURN c.object_id AS deprecated_command, collect(p) AS object_using_deprecated"""
-    logger.debug(
+    logger.info(
         f"[GR107-commands] Running query with files_filter={repr(files_filter)}"
     )
-    logger.debug(
+    logger.info(
         f"[GR107-commands] BROKEN files_filter would have been={repr(broken_files_filter)}"
     )
-    logger.debug(f"[GR107-commands] Full query:\n{command_query}")
+    logger.info(f"[GR107-commands] Full query:\n{command_query}")
     results = [
         (
             item.get("deprecated_command"),
@@ -179,7 +179,7 @@ RETURN c.object_id AS deprecated_command, collect(p) AS object_using_deprecated"
         )
         for item in run_query(tx, command_query)
     ]
-    logger.debug(
+    logger.info(
         f"[GR107-commands] Query returned {len(results)} row(s): "
         f"{[(dep_id, [n.get('object_id', '?') for n in nodes]) for dep_id, nodes in results]}"
     )
@@ -226,13 +226,13 @@ WHERE c1 IS NULL
 {files_filter}
 RETURN d.object_id AS deprecated_content, collect(p) AS object_using_deprecated
     """
-    logger.debug(
+    logger.info(
         f"[GR107-content-items] Running query with files_filter={repr(files_filter)}"
     )
-    logger.debug(
+    logger.info(
         f"[GR107-content-items] BROKEN files_filter would have been={repr(broken_files_filter)}"
     )
-    logger.debug(f"[GR107-content-items] Full query:\n{query}")
+    logger.info(f"[GR107-content-items] Full query:\n{query}")
     results = [
         (
             item.get("deprecated_content"),
@@ -240,7 +240,7 @@ RETURN d.object_id AS deprecated_content, collect(p) AS object_using_deprecated
         )
         for item in run_query(tx, query)
     ]
-    logger.debug(
+    logger.info(
         f"[GR107-content-items] Query returned {len(results)} row(s): "
         f"{[(dep_id, [n.get('object_id', '?') for n in nodes]) for dep_id, nodes in results]}"
     )

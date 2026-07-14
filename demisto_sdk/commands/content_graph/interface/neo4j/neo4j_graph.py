@@ -372,7 +372,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
         logger.info("Creating graph nodes...")
         pack_ids = [p.get("object_id") for p in nodes.get(ContentType.PACK, [])]
-        logger.debug(f"[graph-update] create_nodes called for pack_ids={pack_ids}")
+        logger.info(f"[graph-update] create_nodes called for pack_ids={pack_ids}")
         with self.driver.session() as session:
             self._rels_to_preserve = session.execute_read(
                 get_relationships_to_preserve, pack_ids
@@ -390,7 +390,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     pack_ids=pack_ids,
                 )
                 for record in result:
-                    logger.debug(
+                    logger.info(
                         f"[graph-update] After create_nodes: integration "
                         f"object_id={record['id']}, deprecated={record['deprecated']}"
                     )

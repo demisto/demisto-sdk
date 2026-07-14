@@ -302,7 +302,7 @@ def _update_content_graph_inner(
     # fails, which currently tears down the whole import via "Creating from
     # scratch". The env-var path is the single source of truth in that case.
     explicit_changes_provided = bool(packs_to_update or connectors_to_update)
-    logger.debug(
+    logger.info(
         f"[graph-update] initial packs_to_update={packs_to_update}, "
         f"connectors_to_update={connectors_to_update}, "
         f"explicit_changes_provided={explicit_changes_provided}"
@@ -313,7 +313,7 @@ def _update_content_graph_inner(
     # from DEMISTO_SDK_DIFF_FILES (and vice versa).
     if not packs_to_update or not connectors_to_update:
         diff_files_env = os.getenv(DEMISTO_SDK_DIFF_FILES_ENV, "")
-        logger.debug(
+        logger.info(
             f"[graph-update] {DEMISTO_SDK_DIFF_FILES_ENV}="
             f"{repr(diff_files_env[:200]) if diff_files_env else '(not set)'}"
         )
@@ -347,7 +347,7 @@ def _update_content_graph_inner(
     changed_pack_ids: Set[str] = set()
     changed_connector_ids: Set[str] = set()
     git_diff_failed = False
-    logger.debug(
+    logger.info(
         f"[graph-update] use_git={use_git}, "
         f"commit={getattr(content_graph_interface, 'commit', 'N/A')}, "
         f"is_external_repo={is_external_repo}, "
@@ -359,10 +359,10 @@ def _update_content_graph_inner(
         and not is_external_repo
         and not explicit_changes_provided
     ):
-        logger.debug(f"[graph-update] Running git diff from commit={commit}")
+        logger.info(f"[graph-update] Running git diff from commit={commit}")
         try:
             changed_pack_ids = git_util.get_all_changed_pack_ids(commit)
-            logger.debug(
+            logger.info(
                 f"[graph-update] git diff found changed_pack_ids={sorted(changed_pack_ids)}"
             )
         except Exception as e:
@@ -373,11 +373,11 @@ def _update_content_graph_inner(
         if not git_diff_failed:
             # Best-effort: _changed_connectors_from_git never raises.
             changed_connector_ids = _changed_connectors_from_git(git_util, commit)
-            logger.debug(
+            logger.info(
                 f"[graph-update] git diff found changed_connector_ids={sorted(changed_connector_ids)}"
             )
     else:
-        logger.debug(
+        logger.info(
             f"[graph-update] Skipping git diff "
             f"(use_git={use_git}, has_commit={bool(getattr(content_graph_interface, 'commit', None))}, "
             f"is_external_repo={is_external_repo}, explicit_changes_provided={explicit_changes_provided})"
@@ -464,7 +464,7 @@ def _update_content_graph_inner(
     connectors_tuple: Optional[Tuple[str, ...]] = (
         tuple(sorted(set(connectors_to_update))) if connectors_to_update else None
     )
-    logger.debug(
+    logger.info(
         f"[graph-update] Calling builder.update_graph with "
         f"packs_to_update={packs_tuple}, connectors_to_update={connectors_tuple}"
     )
@@ -478,7 +478,7 @@ def _update_content_graph_inner(
         packs_to_update=packs_tuple,
         connectors_to_update=connectors_tuple,
     )
-    logger.debug("[graph-update] builder.update_graph completed")
+    logger.info("[graph-update] builder.update_graph completed")
 
     if dependencies:
         content_graph_interface.create_pack_dependencies()

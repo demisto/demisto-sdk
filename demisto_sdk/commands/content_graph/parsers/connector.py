@@ -48,7 +48,9 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     SummaryRelatedFile,
     TriggersRelatedFile,
 )
-from demisto_sdk.commands.content_graph.strict_objects.connector import StrictConnector
+from demisto_sdk.commands.content_graph.strict_objects.connector import (
+    get_strict_connector,
+)
 
 
 class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
@@ -93,9 +95,10 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
         # finding at validate time. When StrictConnector is None (the
         # generated schema module has not been produced yet), skip
         # validation rather than crash import.
-        if StrictConnector is not None:
+        strict_cls = get_strict_connector()
+        if strict_cls is not None:
             self.structure_errors = validate_structure(
-                StrictConnector, self.yml_data, self.path / "connector.yaml"
+                strict_cls, self.yml_data, self.path / "connector.yaml"
             )
         else:
             self.structure_errors = []
@@ -136,12 +139,12 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
     def strict_object(self):
         """Return the strict Pydantic model for ``connector.yaml``.
 
-        Used by :func:`validate_structure` (called from ``__init__`` above)
-        to populate ``structure_errors``. May be ``None`` when the
-        auto-generated schema module has not yet been produced by
-        ``regenerate.sh``; the caller in ``__init__`` handles that case.
+        Resolved lazily by :func:`get_strict_connector`; may return
+        ``None`` when the UCC schemas are unavailable (no
+        ``$UCC_SCHEMAS_DIR``, no local fallback, or
+        ``datamodel-code-generator`` not installed).
         """
-        return StrictConnector
+        return get_strict_connector()
 
     @property
     def raw_data(self) -> dict:

@@ -1,26 +1,18 @@
 """Drift detection between the hand-written Connector Pydantic models in
 `demisto_sdk/commands/content_graph/objects/connector.py` and the models
-auto-generated from the upstream UCC JSON Schemas in
-`demisto_sdk/commands/content_graph/strict_objects/schemas/`.
+built at runtime from the upstream UCC JSON Schemas via
+[`../schema_loader.py`](../schema_loader.py).
 
-The generated models live under
-`demisto_sdk/commands/content_graph/strict_objects/_generated/`. Because that
-package is populated by an infra-side CI job (see
-[`../schemas/README.md`](../schemas/README.md)), individual generated modules
-may or may not be present at test time. Every test in this file therefore uses
-`pytest.importorskip(...)` so a missing schema is a skip, not a failure.
+The generated models are produced in-memory by the loader (either from the
+committed fallback schemas under `../schemas/` or from `$UCC_SCHEMAS_DIR`),
+so every test uses `pytest.importorskip` semantics: if the loader has
+nothing to work with (no schemas + no codegen dep), the test skips.
 
 When a test fails, the fix is one of:
-  - Add the missing field(s) to the hand-written class in `objects/connector.py`
-    (preferred short-term), OR
-  - Run `bash demisto_sdk/commands/content_graph/strict_objects/regenerate.sh`
-    to refresh the generated model against the local schema copy, OR
-  - Update the local schema copy in `schemas/` if it drifted from upstream.
-
-New schemas dropped in by the infra job in the future can be covered by
-appending a new tuple to `SCHEMA_TO_HAND_MODEL_MAP` and pointing it at the
-corresponding hand-written class in `objects/connector.py`. No other change is
-required here.
+  - Add the missing field(s) to the hand-written class in
+    `objects/connector.py` (short-term).
+  - Refresh the committed fallback schema, OR
+  - Bump the upstream schema in the infra CI job and re-run.
 """
 from typing import Set, Type
 
@@ -38,26 +30,29 @@ def _missing(hand: Type[pydantic.BaseModel], upstream: Type[pydantic.BaseModel])
     return _field_names(upstream) - _field_names(hand)
 
 
-# ---------------------------------------------------------------------------
-# connector.schema.json  <->  ConnectorMetadata / ConnectorSettings / ConnectorOwnership
-# ---------------------------------------------------------------------------
-def _import_connector_schema():
-    """Import the generated connector schema module, or skip the test."""
-    return pytest.importorskip(
-        "demisto_sdk.commands.content_graph.strict_objects._generated.connector_schema",
-        reason=(
-            "Generated connector schema module not present. Run "
-            "`bash demisto_sdk/commands/content_graph/strict_objects/regenerate.sh` "
-            "after the infra CI has copied connector.schema.json into "
-            "strict_objects/schemas/."
-        ),
+def _load_connector_schema_module():
+    """Return the runtime-loaded connector schema module, or skip the test."""
+    from demisto_sdk.commands.content_graph.strict_objects.schema_loader import (
+        SchemaLoaderError,
+        get_generated_module,
     )
+
+    try:
+        module = get_generated_module("connector")
+    except SchemaLoaderError as exc:
+        pytest.skip(f"Schema loader unavailable: {exc}")
+    if module is None:
+        pytest.skip(
+            "No connector schema available. Set $UCC_SCHEMAS_DIR or commit a "
+            "fallback under strict_objects/schemas/connector.schema.json."
+        )
+    return module
 
 
 def test_connector_metadata_covers_all_upstream_fields():
     from demisto_sdk.commands.content_graph.objects.connector import ConnectorMetadata
 
-    upstream = _import_connector_schema().Metadata
+    upstream = _load_connector_schema_module().Metadata
     missing = _missing(ConnectorMetadata, upstream)
     assert not missing, (
         f"objects/connector.py::ConnectorMetadata is missing fields that exist "
@@ -70,7 +65,7 @@ def test_connector_metadata_covers_all_upstream_fields():
 def test_connector_settings_covers_all_upstream_fields():
     from demisto_sdk.commands.content_graph.objects.connector import ConnectorSettings
 
-    upstream = _import_connector_schema().Settings
+    upstream = _load_connector_schema_module().Settings
     missing = _missing(ConnectorSettings, upstream)
     assert not missing, (
         f"objects/connector.py::ConnectorSettings is missing fields that exist "
@@ -81,7 +76,7 @@ def test_connector_settings_covers_all_upstream_fields():
 def test_connector_ownership_covers_all_upstream_fields():
     from demisto_sdk.commands.content_graph.objects.connector import ConnectorOwnership
 
-    upstream = _import_connector_schema().Ownership
+    upstream = _load_connector_schema_module().Ownership
     missing = _missing(ConnectorOwnership, upstream)
     assert not missing, (
         f"objects/connector.py::ConnectorOwnership is missing fields that exist "
@@ -100,7 +95,7 @@ def test_report_hand_written_fields_not_in_upstream(hand_model_name, capsys):
     fields), but prints them so a reviewer can decide whether they are drift
     or intentional additions.
     """
-    module = _import_connector_schema()
+    module = _load_connector_schema_module()
     from demisto_sdk.commands.content_graph.objects import connector as objects_connector
 
     hand = getattr(objects_connector, hand_model_name)

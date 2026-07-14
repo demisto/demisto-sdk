@@ -1,67 +1,86 @@
-# UCC Connector Schemas - Ingestion Contract
+# UCC schemas (runtime-loaded)
 
-This folder receives the JSON Schema files that describe the shape of the
-`connector.yaml`, `connection.yaml`, `capabilities.yaml`, `configurations.yaml`,
-`handler.yaml`, `serializer.yaml`, `triggers.yaml`, `summary.yaml`,
-`availability.yaml`, and `services.yaml` files consumed by the UCC (Unified
-Content Connectors) tooling. It is the **single source of truth** for the
-Pydantic classes generated into
-[`../_generated/`](../_generated/) via [`../regenerate.sh`](../regenerate.sh).
+This folder is a **local development fallback** for the UCC (Unified Content
+Connectors) JSON Schema files. In real CI runs the schemas are provided at
+runtime by the *infra* CI job and loaded in-memory - see below.
 
-The SDK never edits these files by hand. They are copied in from the UCC
-repository as part of a CI job on the infra side, then this SDK's own CI
-regenerates the Python models and (in future phases) runs the drift tests.
+## How the SDK finds schemas at runtime
 
-## Expected layout
+Resolution is handled by
+[`../schema_loader.py`](../schema_loader.py) and happens in this order:
 
-```
-schemas/
-├── README.md                       (this file)
-├── availability.schema.json        (Tier 3)
-├── capabilities.schema.json        (Tier 1)
-├── configurations.schema.json      (Tier 1)
-├── connection.schema.json          (Tier 1)
-├── connector.schema.json           (Tier 1, already present)
-├── handler.schema.json             (Tier 1)
-├── serializer.schema.json          (Tier 1)
-├── services.schema.json            (Tier 3)
-├── summary.schema.json             (Tier 2)
-├── triggers.schema.json            (Tier 2)
-└── definitions/
-    └── *.json                      (shared $ref targets)
-```
+1. **`$UCC_SCHEMAS_DIR` environment variable** (production path).
+   Points at a directory that contains:
+   ```
+   $UCC_SCHEMAS_DIR/
+     connector.schema.json
+     connection.schema.json
+     capabilities.schema.json
+     configurations.schema.json
+     handler.schema.json
+     serializer.schema.json
+     triggers.schema.json
+     summary.schema.json
+     availability.schema.json
+     services.schema.json
+     definitions/
+       field.schema.json
+       field-options.schema.json
+       metadata.schema.json
+       validation.schema.json
+   ```
+   Every `*.schema.json` at the top level becomes a Pydantic module. Files
+   under `definitions/` are preserved as a subfolder so cross-file `$ref`
+   like `{"$ref": "definitions/field.json"}` resolves correctly.
 
-## Contract for the infra-side CI job
+2. **This folder** (`strict_objects/schemas/`), used only when
+   `$UCC_SCHEMAS_DIR` is unset. It holds a snapshot of `connector.schema.json`
+   so `pytest`, IDE checks, and local runs work without infra plumbing.
 
-The infra job that populates this folder must:
+3. **Neither present** -> `StrictConnector` is `None`, strict validation is
+   silently skipped, and the `Connector` graph object degrades to
+   conservative hand-written field shapes.
 
-1. Copy every `*.schema.json` file from `<ucc-repo>/schema/` into this folder,
-   preserving filenames exactly.
-2. Copy the entire contents of `<ucc-repo>/schema/definitions/` into
-   `definitions/` here, preserving the sub-folder structure.
-3. Not modify the JSON content in any way. If a schema needs to be tweaked for
-   the SDK, do it via a downstream override, not by editing the file here.
-4. Commit the result to a branch of this SDK repo (or open a PR) whenever the
-   upstream files change. The SDK CI will then re-run
-   [`../regenerate.sh`](../regenerate.sh), fail if the generated files diverge,
-   and run the drift tests in [`../tests/`](../tests/).
+## Contract for the infra CI job
 
-## Contract for the SDK-side developer
+Your CI job MUST:
 
-If you are working on `objects/connector.py` and want to check parity against
-upstream locally:
+1. Copy every `<UCC>/schema/*.schema.json` into `$UCC_SCHEMAS_DIR/`.
+2. Copy every `<UCC>/schema/definitions/*.schema.json` into
+   `$UCC_SCHEMAS_DIR/definitions/` (preserve the subfolder).
+3. NOT rename files. Python module names are derived from stems:
+   `connector.schema.json` -> `ConnectorYaml` class.
+4. NOT modify the JSON. It is the source of truth.
+5. Export `UCC_SCHEMAS_DIR=<absolute path>` before invoking the SDK.
+6. Ensure `datamodel-code-generator==0.25.9` is installed alongside the SDK
+   (pinned because 0.26+ dropped the Pydantic v1 output target).
 
+Recommended CI shell:
 ```bash
-poetry run pip install 'datamodel-code-generator==0.25.9'
-bash demisto_sdk/commands/content_graph/strict_objects/regenerate.sh
-poetry run pytest demisto_sdk/commands/content_graph/strict_objects/tests/ -v
+rsync -a --delete <UCC>/schema/ "$UCC_SCHEMAS_DIR/"
+pip install 'datamodel-code-generator==0.25.9'
+export UCC_SCHEMAS_DIR
+demisto-sdk validate ...
 ```
 
-## Why the schemas live inside the SDK repo (rather than being fetched at runtime)
+## What happens automatically once schemas are loaded
 
-- The generated Pydantic classes are static artifacts that participate in the
-  same static-typing story as every other SDK model (IDE autocomplete, `mypy`).
-- Changes to the upstream schema become **diff-reviewable PRs** on the SDK repo.
-- The SDK can be installed and run in air-gapped environments without needing
-  network access to the UCC repo at import time.
-- CI drift-detection is a simple `git diff --exit-code` on the generated files.
+- The runtime loader stages the schemas into a tmp dir, runs
+  `datamodel-codegen`, and imports the generated `.py` files as real
+  modules under `demisto_sdk.commands.content_graph.strict_objects._runtime_generated.*`.
+- [`StrictConnector`](../connector.py) picks up the generated `ConnectorYaml`
+  as its base, so every upstream field + constraint becomes live.
+- The `Connector` graph object's `ConnectorMetadata` / `ConnectorSettings` /
+  `ConnectorOwnership` inherit from the generated types, so any new upstream
+  field on `Metadata` (e.g. `documentation`, `is_recommended`) appears as a
+  typed attribute on the graph object with zero SDK code changes.
+- `ConnectorParser` calls `validate_structure(StrictConnector, ...)` on
+  every parsed `connector.yaml`, populating `structure_errors`.
+- ST110 (`SchemaValidator`) reads those errors and surfaces upstream drift
+  as validation failures on the offending connector.
+
+## Do NOT edit anything in this folder by hand
+
+The committed `connector.schema.json` here is a byte-identical copy of the
+UCC upstream file. To refresh it locally, re-copy from the UCC repo. All
+production runs go through `$UCC_SCHEMAS_DIR` and ignore this snapshot.

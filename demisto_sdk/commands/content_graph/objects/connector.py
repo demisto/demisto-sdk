@@ -87,30 +87,64 @@ class FieldGroup(BaseModel):
 # infra CI has produced the generated file (in that case, the hand-written
 # fallback classes below are used, and drift tests will flag the gap).
 # ============================================================
-try:
-    from demisto_sdk.commands.content_graph.strict_objects._generated.connector_schema import (
-        Metadata as _GeneratedMetadata,
-        Ownership as _GeneratedOwnership,
-        Settings as _GeneratedSettings,
+# The Metadata/Ownership/Settings shapes come from the UCC
+# `connector.schema.json` file that the infra CI job drops at the path
+# pointed to by `$UCC_SCHEMAS_DIR`. See
+# [`strict_objects/schema_loader.py`](../strict_objects/schema_loader.py)
+# for the full contract.
+#
+# We resolve them **once at import time** via the runtime loader, which:
+#   * returns real Pydantic v1 model classes when the schema is available;
+#   * returns `None` when the infra CI has not exported `UCC_SCHEMAS_DIR`
+#     and no local fallback exists (fresh clone, package install without
+#     `datamodel-code-generator`, etc.).
+#
+# The `None` branch drops back to conservative hand-written shapes so the
+# Connector graph object can still be constructed. The drift tests will
+# flag any schema addition that these fallbacks are missing.
+#
+# NOTE: `_resolve_generated_types()` is called at import time, but the
+# underlying loader is memoized so repeated imports (or later access from
+# the strict-object side) don't repeat the codegen work.
+def _resolve_generated_types():
+    """Return (Metadata, Ownership, Settings) generated classes or (None, None, None)."""
+    try:
+        from demisto_sdk.commands.content_graph.strict_objects.schema_loader import (
+            get_generated_module,
+        )
+
+        module = get_generated_module("connector")
+    except Exception:  # pragma: no cover - degrade to hand-written fallbacks
+        return None, None, None
+    if module is None:
+        return None, None, None
+    return (
+        getattr(module, "Metadata", None),
+        getattr(module, "Ownership", None),
+        getattr(module, "Settings", None),
     )
+
+
+_GeneratedMetadata, _GeneratedOwnership, _GeneratedSettings = _resolve_generated_types()
+
+if _GeneratedOwnership is not None:
 
     class ConnectorOwnership(_GeneratedOwnership):  # type: ignore[misc,valid-type]
         pass
 
-    class ConnectorMetadata(_GeneratedMetadata):  # type: ignore[misc,valid-type]
-        pass
+else:  # pragma: no cover - only triggered when schemas are unavailable
 
-    class ConnectorSettings(_GeneratedSettings):  # type: ignore[misc,valid-type]
-        pass
-
-except ImportError:  # pragma: no cover - only triggered pre-regenerate
-    # Fallback shapes for a fresh clone where regenerate.sh has not run
-    # yet. These are intentionally minimal (only what the code below
-    # references) and WILL be caught by the drift tests, prompting a
-    # regenerate.
     class ConnectorOwnership(BaseModel):  # type: ignore[no-redef]
         team: str = ""
         maintainers: List[str] = []
+
+
+if _GeneratedMetadata is not None:
+
+    class ConnectorMetadata(_GeneratedMetadata):  # type: ignore[misc,valid-type]
+        pass
+
+else:  # pragma: no cover - only triggered when schemas are unavailable
 
     class ConnectorMetadata(BaseModel):  # type: ignore[no-redef]
         title: str = ""
@@ -123,6 +157,14 @@ except ImportError:  # pragma: no cover - only triggered pre-regenerate
         publisher: str = ""
         author_image: Optional[str] = None
         ownership: ConnectorOwnership = ConnectorOwnership()
+
+
+if _GeneratedSettings is not None:
+
+    class ConnectorSettings(_GeneratedSettings):  # type: ignore[misc,valid-type]
+        pass
+
+else:  # pragma: no cover - only triggered when schemas are unavailable
 
     class ConnectorSettings(BaseModel):  # type: ignore[no-redef]
         allow_skip_verification: bool = False

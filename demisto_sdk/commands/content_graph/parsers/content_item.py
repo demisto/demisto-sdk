@@ -95,9 +95,8 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     def _resolve_pack_defaults(
         path: Path,
     ) -> List[MarketplaceVersions]:
-        """Resolve the pack's marketplaces from the item's `pack_metadata.json`.
-        Falls back to all marketplaces when not in a pack, or when the pack does
-        not declare a `marketplaces` key.
+        """Resolve the pack's marketplaces from the item's `pack_metadata.json`,
+        falling back to all marketplaces when unavailable.
         """
         from demisto_sdk.commands.common.tools import get_pack_metadata
         from demisto_sdk.commands.content_graph.parsers.pack import (
@@ -121,8 +120,8 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         If during the attempt we detected the file is not a content item, `None` is returned.
 
         When `pack_marketplaces` is not provided (standalone parsing), the
-        marketplaces and supported modules are resolved from the item's own
-        `pack_metadata.json`.
+        marketplaces are resolved from the `pack_metadata.json` of the pack
+        containing the item.
 
         Returns:
             Optional[ContentItemParser]: The parsed content item.

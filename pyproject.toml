@@ -126,6 +126,13 @@ ruff = "^0.6.6"
 pytest-github-actions-annotate-failures = "^0.2.0"
 pytest-sugar = "^1.0.0"
 pytest-loguru = "^0.4.0"
+# Pinned to 0.25.9 because releases from 0.26 dropped the `pydantic.BaseModel`
+# output target. Used by `demisto_sdk/commands/content_graph/strict_objects/regenerate.sh`
+# to (re)generate Pydantic models from the UCC JSON schemas under
+# `demisto_sdk/commands/content_graph/strict_objects/schemas/`.
+# When the SDK migrates to Pydantic v2, bump this pin AND change the
+# --output-model-type flag in regenerate.sh to `pydantic_v2.BaseModel`.
+datamodel-code-generator = "0.25.9"
 
 [tool.poetry.group.types.dependencies]
 types-requests = "^2.31.0.20240311"

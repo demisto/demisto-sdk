@@ -102,6 +102,13 @@ def _changed_connectors_from_git(git_util: GitUtil, commit: str) -> Set[str]:
     can treat it as best-effort; failures are logged at warning level since
     a silent miss means the graph drops connector updates.
     """
+    # Skip the git scan (and its noisy warning) when the connectors folder
+    # isn't present in this checkout - e.g. the run-validations CI job which
+    # doesn't copy connectors in. Connector diffing only matters when the
+    # folder actually exists locally.
+    if not (CONTENT_PATH / CONNECTORS_FOLDER).is_dir():
+        return set()
+
     try:
         # GitUtil.get_all_changed_files returns Set[Path] of changed paths
         # relative to the repo root.

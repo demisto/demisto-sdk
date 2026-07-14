@@ -331,30 +331,6 @@ def _update_content_graph_inner(
                     connectors_to_update.extend(env_connector_ids)
                     explicit_changes_provided = True
 
-    # Compute git-diff change sets once and reuse for both the should-update
-    # decision and the actual augmentation below. Previously this was done in
-    # two places (should_update_graph + here), which meant two `git diff`
-    # walks per `update_content_graph` call.
-    changed_pack_ids: Set[str] = set()
-    changed_connector_ids: Set[str] = set()
-    git_diff_failed = False
-    if (
-        use_git
-        and (commit := content_graph_interface.commit)
-        and not is_external_repo
-        and not explicit_changes_provided
-    ):
-        try:
-            changed_pack_ids = git_util.get_all_changed_pack_ids(commit)
-        except Exception as e:
-            logger.warning(
-                f"Failed to get changed packs from git. Creating from scratch. Error: {e}"
-            )
-            git_diff_failed = True
-        if not git_diff_failed:
-            # Best-effort: _changed_connectors_from_git never raises.
-            changed_connector_ids = _changed_connectors_from_git(git_util, commit)
-
     builder = ContentGraphBuilder(content_graph_interface)
     if not should_update_graph(
         content_graph_interface,
@@ -363,8 +339,6 @@ def _update_content_graph_inner(
         imported_path,
         packs_to_update,
         connectors_to_update,
-        changed_pack_ids=changed_pack_ids,
-        changed_connector_ids=changed_connector_ids,
     ):
         logger.info(
             f"Content graph is up-to-date. If you expected an update, make sure your changes are added/committed to git. UI representation is available at {NEO4J_DATABASE_HTTP} "
@@ -404,22 +378,39 @@ def _update_content_graph_inner(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-    # Apply the change sets computed once above. If the git diff failed,
-    # fall back to creating the graph from scratch (preserves prior behaviour).
-    if git_diff_failed:
-        create_content_graph(
-            content_graph_interface, marketplace, dependencies, output_path
-        )
-        return
-    if explicit_changes_provided and use_git:
+    # Compute changed packs/connectors via git-diff now that the graph has
+    # been imported and ``content_graph_interface.commit`` is populated with
+    # the bucket's pinned commit. When the caller (or DEMISTO_SDK_DIFF_FILES)
+    # already provided an explicit list, skip the git diff - in shallow CI
+    # clones the bucket commit is often absent and ``git diff`` would fail,
+    # which would incorrectly tear down the whole import via "creating from
+    # scratch".
+    if (
+        use_git
+        and (commit := content_graph_interface.commit)
+        and not is_external_repo
+        and not explicit_changes_provided
+    ):
+        try:
+            changed_pack_ids = git_util.get_all_changed_pack_ids(commit)
+        except Exception as e:
+            logger.warning(
+                f"Failed to get changed packs from git. Creating from scratch. Error: {e}"
+            )
+            create_content_graph(
+                content_graph_interface, marketplace, dependencies, output_path
+            )
+            return
+        packs_to_update.extend(changed_pack_ids)
+        # Best-effort: _changed_connectors_from_git never raises.
+        connectors_to_update.extend(_changed_connectors_from_git(git_util, commit))
+    elif explicit_changes_provided and use_git:
         logger.info(
             "Skipping git-diff augmentation: changed packs/connectors were "
             "provided explicitly (via caller args or "
             f"{DEMISTO_SDK_DIFF_FILES_ENV}), so the bucket-commit git diff "
             "is redundant and would fail in shallow CI clones."
         )
-    packs_to_update.extend(changed_pack_ids)
-    connectors_to_update.extend(changed_connector_ids)
 
     if packs_to_update:
         packs_str = "\n".join([f"- {p}" for p in sorted(packs_to_update)])

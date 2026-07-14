@@ -178,11 +178,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         Codes returned here are ignored for the pack itself and for every
         content item belonging to it (including their related files).
 
-        The `.pack-ignore` file is parsed with `configparser`, so the values
-        of `ignored_errors_dict` are `configparser.SectionProxy` objects
-        (NOT plain dicts); this method intentionally accesses them through
-        `.items()` to stay compatible with that representation, matching
-        the access pattern in `ContentItem.get_ignored_errors`.
         """
         try:
             section = self.ignored_errors_dict.get("pack")
@@ -199,23 +194,19 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             return []
 
     def old_pack_level_ignored_errors(self, prev_ver: Optional[str]) -> List[str]:
-        """Error codes under the [pack] section of `.pack-ignore` at `prev_ver`.
+        """The [pack]-section error codes from `.pack-ignore` as of `prev_ver`.
 
-        Reads the previous-version `.pack-ignore` straight from git. The parser's
-        `ignored_errors_dict` (and therefore `pack_level_ignored_errors`) only
-        reflects the working tree, so it cannot be used to diff against the old
-        version; this method goes to git directly.
+        Reads the previous version straight from git (the parsed
+        `pack_level_ignored_errors` only reflects the working tree, so it can't
+        be used as the "before" side of a diff).
 
-        The `prev_ver` is resolved with `GitUtil.handle_prev_ver`, matching the
-        rest of the validate flow: a bare branch name (e.g. `master`) or a
-        `remote/branch` string is normalized to the repo's actual remote, and a
-        40-char sha is used as-is. The old file is looked up on the remote ref
-        first and, if not found there (e.g. a fork whose remote is behind, or an
-        offline run), on the equivalent local ref, so the comparison baseline is
-        stable regardless of remote/fork setup.
+        Args:
+            prev_ver: the git ref to read the old file from (branch,
+                `remote/branch`, or sha). None means "no previous version".
 
-        Returns [] when there is no previous version, the file did not exist at
-        that ref, or it had no [pack] section.
+        Returns:
+            The old [pack] codes, or [] when `prev_ver` is None, the file did
+            not exist at that ref, or it had no [pack] section.
         """
         if not prev_ver:
             return []
@@ -242,15 +233,19 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def _read_pack_ignore_at_ref(
         git_util: GitUtil, pack_ignore_path: Path, prev_ver: str
     ) -> Optional[str]:
-        """Read the `.pack-ignore` text at `prev_ver`, tolerating remote/fork setups.
+        """Read `.pack-ignore` text at `prev_ver`, tolerating fork/offline setups.
 
-        `prev_ver` is normalized through `handle_prev_ver` (turning a bare branch
-        or `remote/branch` into the repo's real remote ref, leaving a sha as-is).
-        The file is read from the remote ref first, falling back to the local ref
-        so the baseline stays correct even when the configured remote does not
-        contain the old version (a common case on forks or offline runs).
+        Resolves `prev_ver` via `handle_prev_ver`, then reads the remote ref
+        first and falls back to the local ref, so the baseline is still found
+        when the remote is behind (forks) or unreachable (offline).
 
-        Returns the file text, or None when it does not exist at that ref.
+        Args:
+            git_util: the GitUtil used to resolve refs and read file content.
+            pack_ignore_path: path to the pack's `.pack-ignore` file.
+            prev_ver: the git ref to read from (branch, `remote/branch`, or sha).
+
+        Returns:
+            The file text, or None if it does not exist at that ref.
         """
         remote, branch = git_util.handle_prev_ver(prev_ver)
         ref = f"{remote}/{branch}" if remote else branch

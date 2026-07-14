@@ -19,25 +19,34 @@ class PackLevelIgnoreAddedValidator(BaseValidator[ContentTypes]):
         "[pack] section of the .pack-ignore file."
     )
     rationale = (
-        "Ignoring validations for an entire pack is a significant decision. In "
-        "the demisto/content repo, this requires a force-merge approved by a "
-        "manager."
+        "Ignoring validations for an entire pack is not recommended, as it "
+        "could lead to unintended consequences. Therefore this requires a force-merge approved by a manager."
     )
     error_message = (
         "New pack-level ignored validation(s) were added to the [pack] section "
-        "of .pack-ignore: {0}. Ignoring validations at the pack level requires a "
+        "of .pack-ignore: {0}. Ignoring validations at the pack level is not " "recommended and requires a "
         "force merge. Please remove the additions or request a force merge."
     )
     related_field = "pack_ignore"
     is_auto_fixable = False
-    # NOTE: intentionally NOT restricted by `expected_git_statuses`.
-    # A `.pack-ignore` change maps to the pack's `pack_metadata.json`, but the
-    # metadata file itself is often unchanged. In that case the collected Pack
-    # has `git_status is None` (it was pulled in via the changed related file),
-    # so gating on [ADDED, MODIFIED, RENAMED] would skip PA135 exactly for the
-    # pack-ignore-only change we need to catch. Instead we run on every pack and
-    # let `_added_pack_level_codes` decide via the git diff (no [pack] -> pass;
-    # unchanged -> pass; new/added codes -> fail).
+    # `expected_git_statuses` is left as None on purpose (i.e. "run on any git
+    # status"). Here's why restricting it would break this validator:
+    #
+    # A change to `.pack-ignore` is not collected as its own item; validate
+    # attributes it to the pack's main file, `pack_metadata.json`. The Pack
+    # object's `git_status` therefore reflects the *metadata* file, not the
+    # `.pack-ignore` file:
+    #   - If only `.pack-ignore` changed (metadata untouched), the pack is still
+    #     collected, but its `git_status` is None.
+    #   - If the metadata also changed, `git_status` is MODIFIED/ADDED/RENAMED.
+    #
+    # So restricting to [ADDED, MODIFIED, RENAMED] would skip the pack whenever
+    # ONLY `.pack-ignore` changed - which is the exact case this validator exists
+    # to catch. We run on every pack instead and let `_added_pack_level_codes`
+    # make the real decision by diffing the [pack] section against prev_ver:
+    #   - no [pack] section now                -> nothing added -> pass
+    #   - [pack] section exists                -> nothing added -> pass
+    #   - codes added to [pack] section        -> fail
     expected_git_statuses = None
     related_file_type = [RelatedFileType.PACK_IGNORE]
 
@@ -66,24 +75,18 @@ class PackLevelIgnoreAddedValidator(BaseValidator[ContentTypes]):
         additions; a brand-new pack has no previous version, so all current
         codes count as additions.
 
-        The previous ref is taken from `old_base_content_object.git_sha`, which
-        the initializer sets to the run's `prev_ver`. It can be missing in two
-        cases that both mean "no previous version to diff against" (so every
-        current code is an addition):
-          - a brand-new pack (ADDED), which has no `old_base_content_object`;
-          - a pack-ignore-only change where the metadata baseline was not
-            git-resolved, leaving `git_sha` empty. Falling back to the pack's
-            own `git_sha` keeps the comparison anchored to the run's prev_ver
-            instead of silently reading the working tree.
+        The "before" ref is `old_base_content_object.git_sha`. The validate
+        initializer always sets this to the run's `prev_ver` (e.g. origin/master)
+        whenever an old object exists - including the pack-ignore-only case,
+        where the pack is collected via its unchanged `pack_metadata.json` but
+        the old object is still built from `prev_ver`. When there is no old
+        object at all (a brand-new pack), there is nothing to diff against, so
+        every current code counts as an addition.
         """
         new_codes = set(pack.pack_level_ignored_errors)
         if not new_codes:
             return set()  # nothing in [pack] now -> nothing was added
-        old_object = pack.old_base_content_object
+        old_object = pack.old_base_content_object  # the same pack from prev_ver (e.g. origin/master)
         prev_ver = old_object.git_sha if old_object else None
-        if not prev_ver and old_object is not None:
-            # old object exists but its ref was not populated; fall back to the
-            # pack's own recorded ref so we still diff against git, not the WT.
-            prev_ver = pack.git_sha
         old_codes = set(pack.old_pack_level_ignored_errors(prev_ver))
         return new_codes - old_codes

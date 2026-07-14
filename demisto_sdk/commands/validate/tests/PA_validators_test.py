@@ -2881,20 +2881,21 @@ def test_PA135_uses_old_object_git_sha_as_prev_ver(mocker):
     pack.old_pack_level_ignored_errors.assert_called_once_with("origin/master")
 
 
-def test_PA135_pack_ignore_only_change_falls_back_to_pack_git_sha(mocker):
+def test_PA135_pack_ignore_only_change_uses_old_object_prev_ver(mocker):
     """
-    Given a pack-ignore-only change where the old object's ref was not populated
-    (git_sha empty) - the regression scenario that previously read the working
-    tree and produced a false negative,
+    Given a pack-ignore-only change: the pack is collected via its unchanged
+    pack_metadata.json, but the initializer still builds old_base_content_object
+    from prev_ver and sets its git_sha accordingly,
     When PA135 computes the added codes,
-    Then it falls back to the pack's own git_sha so the diff stays anchored to
-    git (and the added code is still flagged).
+    Then it diffs against that prev_ver (origin/master) and flags the added code.
+
+    This is the fork/pack-ignore-only regression that previously produced a
+    false negative.
     """
     pack = _make_pack_with_ignores(
         mocker, new_codes=["BA101", "RM104"], old_codes=["BA101"]
     )
-    pack.old_base_content_object.git_sha = None
-    pack.git_sha = "origin/master"
+    pack.old_base_content_object.git_sha = "origin/master"
     results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
     pack.old_pack_level_ignored_errors.assert_called_once_with("origin/master")
     assert len(results) == 1

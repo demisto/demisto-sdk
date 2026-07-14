@@ -3383,38 +3383,23 @@ def test_GR116_agent_exceeds_token_budget_is_invalid(graph_repo: Repo):
     assert str(AGENT_TOKEN_LIMIT) in results[0].message
 
 
-def _gr116_fake_dependency(mocker, object_id: str, used_by_agents):
-    """Build a graph node stub with a ``used_by`` edge to each given agent."""
-    node = mocker.Mock()
-    node.object_id = object_id
-    node.used_by = []
-    for agent in used_by_agents:
-        rel = mocker.Mock()
-        rel.content_item_to = agent
-        node.used_by.append(rel)
-    return node
+def _gr116_validator_with_query(mocker, query_rows):
+    """Return a GR116 list-files validator whose graph is fully mocked.
 
-
-def _gr116_fake_agent(mocker, object_id: str):
-    """Build an AgentixAgent stub identifiable by ``object_id`` and isinstance."""
-    from demisto_sdk.commands.content_graph.objects.agentix_agent import (
-        AgentixAgent,
-    )
-
-    agent = mocker.Mock(spec=AgentixAgent)
-    agent.object_id = object_id
-    return agent
-
-
-def _gr116_validator_with_graph(mocker, search_side_effect):
-    """Return a GR116 list-files validator whose graph.search is mocked."""
+    ``graph.run_single_query`` returns ``query_rows`` (the single structure
+    query result: ``[{"agent_id", "deps": [{"id","type"}, ...]}, ...]``) and
+    ``graph.search`` returns nothing (hydration is irrelevant to the structure
+    tests). The mocked graph is reachable via ``validator.graph`` so tests can
+    assert on the number/shape of the single ``run_single_query`` call.
+    """
     from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget_list_files import (
         IsAgentTotalTokenBudgetValidatorListFiles,
     )
 
     validator = IsAgentTotalTokenBudgetValidatorListFiles()
     graph = mocker.Mock()
-    graph.search.side_effect = search_side_effect
+    graph.run_single_query.return_value = query_rows
+    graph.search.return_value = []
     mocker.patch.object(
         type(validator),
         "graph",
@@ -3424,198 +3409,217 @@ def _gr116_validator_with_graph(mocker, search_side_effect):
     return validator
 
 
-def test_GR116_many_modified_actions_of_one_agent_dedupe_to_single_agent(mocker):
+def _gr116_action_dep(object_id: str) -> dict:
+    """A structure-query dep row for an action."""
+    return {"id": object_id, "type": ContentType.AGENTIX_ACTION.value}
+
+
+def _gr116_skill_dep(object_id: str) -> dict:
+    """A structure-query dep row for a skill."""
+    return {"id": object_id, "type": ContentType.AGENTIX_SKILL.value}
+
+
+def test_GR116_single_structure_query_for_all_modified_dependencies(mocker):
     """
     Given
-    - One agent that directly registers 8 actions.
-    - All 8 actions are modified in the same run.
+    - Several modified actions and skills belonging to two agents.
 
     When
-    - Collecting the affected agents for GR116 (list/git mode).
+    - Resolving the affected agents and their dependencies for GR116.
 
     Then
-    - The agent is collected exactly once (not 8 times), proving dedup by id.
+    - Exactly ONE graph query (run_single_query) is issued for the whole
+      structure, and it receives every changed id.
+    - The result maps each agent to all of its direct action/skill deps.
     """
     from demisto_sdk.commands.content_graph.objects.agentix_action import (
         AgentixAction,
     )
+    from demisto_sdk.commands.content_graph.objects.agentix_skill import (
+        AgentixSkill,
+    )
 
     # given
-    agent = _gr116_fake_agent(mocker, "my-agent-id")
-    action_ids = [f"action-{i}" for i in range(8)]
-    nodes_by_id = {
-        aid: _gr116_fake_dependency(mocker, aid, [agent]) for aid in action_ids
-    }
-
-    def search(content_type, object_id, **_):
-        return [nodes_by_id[object_id]]
-
-    validator = _gr116_validator_with_graph(mocker, search)
-    modified_actions = [
-        mocker.Mock(spec=AgentixAction, object_id=aid) for aid in action_ids
+    query_rows = [
+        {
+            "agent_id": "agent-1",
+            "deps": [_gr116_action_dep("action-1"), _gr116_skill_dep("skill-1")],
+        },
+        {"agent_id": "agent-2", "deps": [_gr116_action_dep("action-2")]},
     ]
+    validator = _gr116_validator_with_query(mocker, query_rows)
+    changed_ids = {"action-1", "action-2", "skill-1"}
 
     # when
-    affected = validator._collect_affected_agents(modified_actions)
+    agent_to_deps = validator._affected_agents_with_dependencies(
+        changed_ids, validate_all=False
+    )
 
-    # then
-    assert list(affected.keys()) == ["my-agent-id"]
+    # then: a single structure query, receiving every changed id
+    assert validator.graph.run_single_query.call_count == 1
+    _, kwargs = validator.graph.run_single_query.call_args
+    assert sorted(kwargs["changed_ids"]) == sorted(changed_ids)
+    assert kwargs["validate_all"] is False
+    # and the per-agent dependency table
+    assert set(agent_to_deps) == {"agent-1", "agent-2"}
+    assert agent_to_deps["agent-1"].actions == {"action-1"}
+    assert agent_to_deps["agent-1"].skills == {"skill-1"}
+    assert agent_to_deps["agent-2"].actions == {"action-2"}
+    assert agent_to_deps["agent-2"].skills == set()
+    # sanity: the mocked object types exist for the union registration
+    assert AgentixAction and AgentixSkill
 
 
-def test_GR116_modified_action_flags_its_direct_agent(mocker):
+def test_GR116_validate_all_files_passes_empty_changed_ids(mocker):
     """
     Given
-    - An agent that directly registers a single action, which is modified.
+    - validate-all-files mode (no specific content items).
 
     When
-    - Collecting the affected agents for GR116.
+    - Obtaining invalid items.
 
     Then
-    - The agent owning the action is collected.
+    - The single structure query is called with an empty ``changed_ids`` list,
+      which the Cypher treats as "every agent".
+    """
+    # given: no agents returned so the run short-circuits after the one query
+    validator = _gr116_validator_with_query(mocker, [])
+
+    # when
+    results = validator.obtain_invalid_content_items_using_graph(
+        [], validate_all_files=True
+    )
+
+    # then
+    assert results == []
+    assert validator.graph.run_single_query.call_count == 1
+    _, kwargs = validator.graph.run_single_query.call_args
+    assert kwargs["changed_ids"] == []
+    assert kwargs["validate_all"] is True
+
+
+def test_GR116_modified_agent_itself_is_included(mocker):
+    """
+    Given
+    - An agent that was modified directly (no dependency changes).
+
+    When
+    - Resolving the affected agents.
+
+    Then
+    - The agent id is passed as a changed id, and the agent appears in the
+      resulting dependency table (Cypher includes agents modified themselves).
+    """
+    from demisto_sdk.commands.content_graph.objects.agentix_agent import (
+        AgentixAgent,
+    )
+
+    # given: the query returns the modified agent (Cypher matched it by its id)
+    query_rows = [{"agent_id": "agent-1", "deps": [_gr116_action_dep("action-1")]}]
+    validator = _gr116_validator_with_query(mocker, query_rows)
+    modified_agent = mocker.Mock(spec=AgentixAgent, object_id="agent-1")
+
+    # when
+    changed_ids = {
+        ci.object_id for ci in [modified_agent] if isinstance(ci, AgentixAgent)
+    }
+    agent_to_deps = validator._affected_agents_with_dependencies(
+        changed_ids, validate_all=False
+    )
+
+    # then
+    _, kwargs = validator.graph.run_single_query.call_args
+    assert kwargs["changed_ids"] == ["agent-1"]
+    assert set(agent_to_deps) == {"agent-1"}
+    assert agent_to_deps["agent-1"].actions == {"action-1"}
+
+
+def test_GR116_agent_without_dependencies_has_empty_dep_sets(mocker):
+    """
+    Given
+    - An affected agent with no action/skill dependencies (OPTIONAL MATCH yields
+      a single null dep row).
+
+    When
+    - Resolving the affected agents.
+
+    Then
+    - The agent is present with empty action and skill sets (the null dep is
+      ignored, not counted as a dependency).
+    """
+    # given: a null dep row, as OPTIONAL MATCH returns for a depless agent
+    query_rows = [{"agent_id": "agent-1", "deps": [{"id": None, "type": None}]}]
+    validator = _gr116_validator_with_query(mocker, query_rows)
+
+    # when
+    agent_to_deps = validator._affected_agents_with_dependencies(
+        {"agent-1"}, validate_all=False
+    )
+
+    # then
+    assert set(agent_to_deps) == {"agent-1"}
+    assert agent_to_deps["agent-1"].actions == set()
+    assert agent_to_deps["agent-1"].skills == set()
+
+
+def test_GR116_no_affected_agents_returns_no_results(mocker):
+    """
+    Given
+    - A changed dependency that no agent uses (empty structure query result).
+
+    When
+    - Obtaining invalid items.
+
+    Then
+    - No results and no hydration reads are performed.
     """
     from demisto_sdk.commands.content_graph.objects.agentix_action import (
         AgentixAction,
     )
 
     # given
-    agent = _gr116_fake_agent(mocker, "agent-1")
-    action_node = _gr116_fake_dependency(mocker, "action-a", [agent])
-    validator = _gr116_validator_with_graph(
-        mocker, lambda content_type, object_id, **_: [action_node]
-    )
-    modified = [mocker.Mock(spec=AgentixAction, object_id="action-a")]
+    validator = _gr116_validator_with_query(mocker, [])
+    modified = [mocker.Mock(spec=AgentixAction, object_id="orphan-action")]
 
     # when
-    affected = validator._collect_affected_agents(modified)
+    results = validator.obtain_invalid_content_items_using_graph(
+        modified, validate_all_files=False
+    )
 
     # then
-    assert list(affected.keys()) == ["agent-1"]
+    assert results == []
+    assert validator.graph.run_single_query.call_count == 1
+    validator.graph.search.assert_not_called()
 
 
-def test_GR116_modified_skill_flags_its_direct_agent(mocker):
+def test_GR116_list_mode_with_no_agentix_items_validates_nothing(mocker):
     """
     Given
-    - An agent that directly registers a single skill, which is modified.
+    - List/git mode where the changed content items are NONE of
+      AgentixAgent/Action/Skill (so the scoped changed-id set is empty).
 
     When
-    - Collecting the affected agents for GR116.
+    - Obtaining invalid items.
 
     Then
-    - The agent owning the skill is collected.
+    - No graph query is issued at all and no agent is validated - crucially the
+      empty scope must NOT be treated as "validate all agents" (that fallback is
+      reserved for validate_all_files).
     """
-    from demisto_sdk.commands.content_graph.objects.agentix_skill import (
-        AgentixSkill,
+    from demisto_sdk.commands.content_graph.objects.integration import (
+        Integration,
     )
 
-    # given
-    agent = _gr116_fake_agent(mocker, "agent-1")
-    skill_node = _gr116_fake_dependency(mocker, "skill-a", [agent])
-    validator = _gr116_validator_with_graph(
-        mocker, lambda content_type, object_id, **_: [skill_node]
-    )
-    modified = [mocker.Mock(spec=AgentixSkill, object_id="skill-a")]
+    # given: a changed integration, which GR116 does not care about
+    validator = _gr116_validator_with_query(mocker, [])
+    unrelated = [mocker.Mock(spec=Integration, object_id="some-integration")]
 
     # when
-    affected = validator._collect_affected_agents(modified)
-
-    # then
-    assert list(affected.keys()) == ["agent-1"]
-
-
-def test_GR116_action_reached_only_via_skill_does_not_flag_agent(mocker):
-    """
-    Given
-    - An action used by a skill (agent -> skill -> action), but the action is
-      NOT directly registered on the agent.
-    - The action is modified.
-
-    When
-    - Collecting the affected agents for GR116.
-
-    Then
-    - No agent is collected: only DIRECT agent -> action / agent -> skill edges
-      trigger the validation, not the transitive agent -> skill -> action path.
-    """
-    from demisto_sdk.commands.content_graph.objects.agentix_action import (
-        AgentixAction,
-    )
-    from demisto_sdk.commands.content_graph.objects.agentix_skill import (
-        AgentixSkill,
+    results = validator.obtain_invalid_content_items_using_graph(
+        unrelated, validate_all_files=False
     )
 
-    # given: the action's only ``used_by`` target is a skill, not an agent.
-    skill = mocker.Mock(spec=AgentixSkill)
-    skill.object_id = "skill-a"
-    action_node = _gr116_fake_dependency(mocker, "action-a", [skill])
-    validator = _gr116_validator_with_graph(
-        mocker, lambda content_type, object_id, **_: [action_node]
-    )
-    modified = [mocker.Mock(spec=AgentixAction, object_id="action-a")]
-
-    # when
-    affected = validator._collect_affected_agents(modified)
-
-    # then
-    assert affected == {}
-
-
-def test_GR116_modified_agent_and_its_action_do_not_double_count(mocker):
-    """
-    Given
-    - Both an agent and one of its directly-registered actions are modified in
-      the same run.
-
-    When
-    - Collecting the affected agents for GR116.
-
-    Then
-    - The agent appears exactly once (the direct object and the reverse-resolved
-      object share the same id and collapse into a single entry).
-    """
-    from demisto_sdk.commands.content_graph.objects.agentix_action import (
-        AgentixAction,
-    )
-
-    # given
-    agent = _gr116_fake_agent(mocker, "agent-1")
-    action_node = _gr116_fake_dependency(mocker, "action-a", [agent])
-    validator = _gr116_validator_with_graph(
-        mocker, lambda content_type, object_id, **_: [action_node]
-    )
-    modified = [agent, mocker.Mock(spec=AgentixAction, object_id="action-a")]
-
-    # when
-    affected = validator._collect_affected_agents(modified)
-
-    # then
-    assert list(affected.keys()) == ["agent-1"]
-
-
-def test_GR116_dependency_without_used_by_flags_no_agent(mocker):
-    """
-    Given
-    - A modified action whose graph node is a placeholder lacking ``used_by``
-      (e.g. UnknownContent).
-
-    When
-    - Collecting the affected agents for GR116.
-
-    Then
-    - No agent is collected and no error is raised.
-    """
-    from demisto_sdk.commands.content_graph.objects.agentix_action import (
-        AgentixAction,
-    )
-
-    # given
-    placeholder = mocker.Mock(spec=[])  # no ``used_by`` attribute
-    validator = _gr116_validator_with_graph(
-        mocker, lambda content_type, object_id, **_: [placeholder]
-    )
-    modified = [mocker.Mock(spec=AgentixAction, object_id="action-a")]
-
-    # when
-    affected = validator._collect_affected_agents(modified)
-
-    # then
-    assert affected == {}
+    # then: short-circuited before touching the graph
+    assert results == []
+    validator.graph.run_single_query.assert_not_called()
+    validator.graph.search.assert_not_called()

@@ -1,6 +1,7 @@
 import gc
 from typing import Optional, Tuple
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import Nodes, Relationships
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.repository import (
@@ -38,6 +39,18 @@ class ContentGraphBuilder:
         At least one of the two must be non-empty for any work to happen.
         """
         if not packs_to_update and not connectors_to_update:
+            # Intentional no-op. Callers that reach here with empty inputs
+            # under ``use_git`` should have already been redirected to a
+            # full rebuild by ``_update_content_graph_inner`` (see the
+            # ``interface.commit is None`` safety-net there); this branch
+            # is now reserved for callers that explicitly asked for no
+            # changes (e.g. connector-only refreshes with no matching
+            # entries in this repo). Log at debug so unexpected hits are
+            # still visible when debug logging is enabled.
+            logger.debug(
+                "ContentGraphBuilder.update_graph called with no packs and no "
+                "connectors - returning without touching the graph."
+            )
             return
         self._parse_and_model_content(packs_to_update, connectors_to_update)
         self._create_or_update_graph()

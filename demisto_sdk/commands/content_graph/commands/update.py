@@ -331,29 +331,18 @@ def _update_content_graph_inner(
                     connectors_to_update.extend(env_connector_ids)
                     explicit_changes_provided = True
 
-    # Compute git-diff change sets once and reuse for both the should-update
-    # decision and the actual augmentation below. Previously this was done in
-    # two places (should_update_graph + here), which meant two `git diff`
-    # walks per `update_content_graph` call.
+    # Placeholders for the git-diff change sets. We DO NOT compute them yet:
+    # ``content_graph_interface.commit`` is read from the ``metadata.json`` that
+    # is only written to the import directory when ``import_graph`` runs below.
+    # Computing the diff here (as we used to) means that on a fresh CI runner
+    # with an empty import dir, ``commit`` is ``None``, the diff is silently
+    # skipped, and ``builder.update_graph`` is called with empty lists - which
+    # after the connectors refactor became a hard no-op, leaving the graph at
+    # the bucket's master state. Instead, we compute the diff post-import,
+    # once ``interface.commit`` is populated.
     changed_pack_ids: Set[str] = set()
     changed_connector_ids: Set[str] = set()
     git_diff_failed = False
-    if (
-        use_git
-        and (commit := content_graph_interface.commit)
-        and not is_external_repo
-        and not explicit_changes_provided
-    ):
-        try:
-            changed_pack_ids = git_util.get_all_changed_pack_ids(commit)
-        except Exception as e:
-            logger.warning(
-                f"Failed to get changed packs from git. Creating from scratch. Error: {e}"
-            )
-            git_diff_failed = True
-        if not git_diff_failed:
-            # Best-effort: _changed_connectors_from_git never raises.
-            changed_connector_ids = _changed_connectors_from_git(git_util, commit)
 
     builder = ContentGraphBuilder(content_graph_interface)
     if not should_update_graph(
@@ -363,8 +352,8 @@ def _update_content_graph_inner(
         imported_path,
         packs_to_update,
         connectors_to_update,
-        changed_pack_ids=changed_pack_ids,
-        changed_connector_ids=changed_connector_ids,
+        changed_pack_ids=None,
+        changed_connector_ids=None,
     ):
         logger.info(
             f"Content graph is up-to-date. If you expected an update, make sure your changes are added/committed to git. UI representation is available at {NEO4J_DATABASE_HTTP} "
@@ -404,13 +393,60 @@ def _update_content_graph_inner(
                     content_graph_interface, marketplace, dependencies, output_path
                 )
                 return
-    # Apply the change sets computed once above. If the git diff failed,
-    # fall back to creating the graph from scratch (preserves prior behaviour).
+    # Post-import: the bucket import (or the caller-provided ``imported_path``)
+    # has now populated ``metadata.json`` under the import directory, so
+    # ``content_graph_interface.commit`` finally returns the pinned commit.
+    # THIS is the only safe moment to compute the git diff.
+    if (
+        use_git
+        and (commit := content_graph_interface.commit)
+        and not is_external_repo
+        and not explicit_changes_provided
+    ):
+        try:
+            changed_pack_ids = git_util.get_all_changed_pack_ids(commit)
+        except Exception as e:
+            logger.warning(
+                f"Failed to get changed packs from git. Creating from scratch. Error: {e}"
+            )
+            git_diff_failed = True
+        if not git_diff_failed:
+            # Best-effort: _changed_connectors_from_git never raises.
+            changed_connector_ids = _changed_connectors_from_git(git_util, commit)
+
+    # If the git diff failed, fall back to creating the graph from scratch
+    # (preserves prior behaviour).
     if git_diff_failed:
         create_content_graph(
             content_graph_interface, marketplace, dependencies, output_path
         )
         return
+
+    # Safety net: if we were asked to sync from git but the imported graph
+    # has no pinned ``commit`` in its metadata, we cannot perform a valid
+    # git-diff at all. Without this guard we would silently fall through
+    # to ``builder.update_graph`` with empty lists (which is now a hard
+    # no-op after the connectors refactor), and return a stale graph that
+    # still reflects the bucket's master state. Rebuild from scratch to
+    # guarantee correctness. This mirrors the ``git_diff_failed`` branch
+    # above.
+    if (
+        use_git
+        and not is_external_repo
+        and not explicit_changes_provided
+        and content_graph_interface.commit is None
+    ):
+        logger.warning(
+            "use_git=True but the imported graph has no pinned commit in its "
+            "metadata (interface.commit is None), so we cannot compute a "
+            "git-diff. Falling back to a full rebuild to avoid returning a "
+            "stale graph."
+        )
+        create_content_graph(
+            content_graph_interface, marketplace, dependencies, output_path
+        )
+        return
+
     if explicit_changes_provided and use_git:
         logger.info(
             "Skipping git-diff augmentation: changed packs/connectors were "

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 from unittest.mock import MagicMock, PropertyMock
 from zipfile import ZipFile
 
@@ -1045,6 +1045,178 @@ class TestUpdateContentGraphCommitHandling:
         assert (
             True not in commit_args
         ), "get_all_changed_pack_ids should not be called with boolean True"
+
+    def test_git_diff_computed_after_import_populates_commit(self, mocker):
+        """
+        Regression test for the "diff computed before import" bug.
+
+        Given:
+            - use_git=True, no explicit packs/connectors provided.
+            - A content graph interface whose ``commit`` returns None BEFORE
+              ``import_graph`` is called (simulating a fresh CI runner where
+              the import directory has no metadata.json yet) and returns a
+              real commit hash AFTER ``import_graph`` succeeds.
+            - GitUtil would report a changed pack if consulted with the
+              real commit.
+        When:
+            - _update_content_graph_inner runs with use_git=True.
+        Then:
+            - get_all_changed_pack_ids IS called (post-import), with the
+              post-import commit hash.
+            - builder.update_graph is called with a non-empty packs tuple
+              (i.e. the diff was applied), NOT with (None, None) which was
+              the silent-no-op bug.
+        """
+        commit_hash = "postimportcommit1234567890abcdefabcdef12"
+
+        # Simulate metadata.json not existing until import_graph runs.
+        commit_state: Dict[str, Optional[str]] = {"value": None}
+
+        def commit_getter():
+            return commit_state["value"]
+
+        mock_interface = MagicMock()
+        # Use PropertyMock with a callable via side_effect so each access
+        # re-evaluates against commit_state.
+        type(mock_interface).commit = PropertyMock(side_effect=commit_getter)
+        mock_interface.is_alive.return_value = True
+        type(mock_interface).content_parser_latest_hash = PropertyMock(
+            return_value="hash1"
+        )
+        # Force should_update_graph to return True via parser-hash mismatch,
+        # so we actually reach the import/diff path.
+        mock_interface._get_latest_content_parser_hash.return_value = "hash2"
+
+        def flip_commit_after_import(*args, **kwargs):
+            commit_state["value"] = commit_hash
+            return True
+
+        mock_interface.import_graph.side_effect = flip_commit_after_import
+
+        mock_git_util = MagicMock()
+        mock_git_util.get_all_changed_pack_ids.return_value = {"MyChangedPack"}
+        mock_git_util.get_all_changed_files.return_value = set()
+
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.commands.update.GitUtil",
+            return_value=mock_git_util,
+        )
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.commands.update.is_external_repository",
+            return_value=False,
+        )
+        mock_builder_cls = mocker.patch(
+            "demisto_sdk.commands.content_graph.commands.update.ContentGraphBuilder"
+        )
+
+        from demisto_sdk.commands.content_graph.commands.update import (
+            _update_content_graph_inner,
+        )
+
+        _update_content_graph_inner(
+            content_graph_interface=mock_interface,
+            use_git=True,
+            dependencies=False,
+        )
+
+        # get_all_changed_pack_ids must have been called with the POST-import
+        # commit hash, not skipped due to a None pre-import commit.
+        calls = mock_git_util.get_all_changed_pack_ids.call_args_list
+        commit_args = [call.args[0] for call in calls if call.args]
+        assert commit_hash in commit_args, (
+            "Expected get_all_changed_pack_ids to be called with the "
+            f"post-import commit hash '{commit_hash}', but was called with: "
+            f"{commit_args}. This indicates the diff is still being computed "
+            "before import_graph populates interface.commit."
+        )
+
+        # builder.update_graph must have been called with the changed pack.
+        # The bug manifested as update_graph(packs_to_update=None,
+        # connectors_to_update=None) - a silent no-op.
+        mock_builder_instance = mock_builder_cls.return_value
+        update_calls = mock_builder_instance.update_graph.call_args_list
+        assert len(update_calls) == 1, (
+            f"Expected exactly one call to builder.update_graph, got "
+            f"{len(update_calls)}"
+        )
+        kwargs = update_calls[0].kwargs
+        assert kwargs.get("packs_to_update") == ("MyChangedPack",), (
+            "builder.update_graph was called with "
+            f"packs_to_update={kwargs.get('packs_to_update')!r}; expected "
+            "('MyChangedPack',). The silent-no-op regression is back."
+        )
+
+    def test_full_rebuild_when_use_git_and_no_commit_after_import(self, mocker):
+        """
+        Safety-net regression test.
+
+        Given:
+            - use_git=True, no explicit packs/connectors provided.
+            - A content graph interface whose ``commit`` returns None even
+              AFTER import_graph runs (simulating a corrupted/empty
+              metadata.json, or shallow clone where the pinned commit is
+              unknown to the local repo).
+        When:
+            - _update_content_graph_inner runs.
+        Then:
+            - We fall back to create_content_graph (full rebuild) instead
+              of silently no-op'ing with a stale bucket graph.
+            - builder.update_graph is NEVER called (we returned early via
+              the safety-net).
+        """
+        mock_interface = MagicMock()
+        # commit stays None throughout - simulates the failure mode.
+        type(mock_interface).commit = PropertyMock(return_value=None)
+        mock_interface.is_alive.return_value = True
+        type(mock_interface).content_parser_latest_hash = PropertyMock(
+            return_value="hash1"
+        )
+        # Force should_update_graph -> True via parser-hash mismatch so we
+        # actually reach the import + safety-net path.
+        mock_interface._get_latest_content_parser_hash.return_value = "hash2"
+        mock_interface.import_graph.return_value = True
+
+        mock_git_util = MagicMock()
+        # Should never be called - safety-net triggers before diff.
+        mock_git_util.get_all_changed_pack_ids.return_value = set()
+
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.commands.update.GitUtil",
+            return_value=mock_git_util,
+        )
+        mocker.patch(
+            "demisto_sdk.commands.content_graph.commands.update.is_external_repository",
+            return_value=False,
+        )
+        mock_builder_cls = mocker.patch(
+            "demisto_sdk.commands.content_graph.commands.update.ContentGraphBuilder"
+        )
+        mock_create = mocker.patch(
+            "demisto_sdk.commands.content_graph.commands.update.create_content_graph"
+        )
+
+        from demisto_sdk.commands.content_graph.commands.update import (
+            _update_content_graph_inner,
+        )
+
+        _update_content_graph_inner(
+            content_graph_interface=mock_interface,
+            use_git=True,
+            dependencies=False,
+        )
+
+        # Safety net must have triggered the full rebuild.
+        assert mock_create.call_count == 1, (
+            "Expected create_content_graph to be called exactly once as the "
+            f"safety-net fallback, got {mock_create.call_count} calls."
+        )
+        # And builder.update_graph must NOT have been called (we returned
+        # early after the safety-net).
+        mock_builder_instance = mock_builder_cls.return_value
+        assert mock_builder_instance.update_graph.call_count == 0, (
+            "builder.update_graph must not be called when the safety-net "
+            "fallback fires - we returned early."
+        )
 
 
 class TestExtractPackIdsFromDiffFiles:

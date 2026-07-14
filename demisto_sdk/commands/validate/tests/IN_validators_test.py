@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     ParameterType,
 )
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.validate.tests.test_tools import (
     REPO,
     create_integration_object,
@@ -4577,6 +4577,112 @@ def test_IsValidHiddenValueValidator_obtain_invalid_content_items(
             result.message == expected_msg
             for result, expected_msg in zip(results, expected_msgs)
         ]
+    )
+
+
+@pytest.mark.parametrize(
+    "hidden_value, expected_invalid",
+    [
+        # valid shapes -> not in invalid_commands
+        (None, False),
+        (False, False),
+        (True, False),
+        ([MarketplaceVersions.XSOAR.value], False),
+        (
+            [
+                MarketplaceVersions.XSOAR.value,
+                MarketplaceVersions.MarketplaceV2.value,
+                MarketplaceVersions.PLATFORM.value,
+            ],
+            False,
+        ),
+        ("true", False),
+        ("false", False),
+        # invalid shapes -> reported
+        ("yes", True),
+        ("flase", True),
+        (1, True),
+        ([False], True),
+        (["not-a-marketplace"], True),
+        (
+            [MarketplaceVersions.XSOAR.value, "bogus"],
+            True,
+        ),
+    ],
+)
+def test_IsValidHiddenValueValidator_command_level_hidden(
+    hidden_value, expected_invalid
+):
+    """
+    Given:
+        - An integration whose script.commands contains a single command with a
+          `hidden` field set to a variety of valid and invalid shapes (bool,
+          string, int, list of marketplace names, list with bogus values, etc.).
+
+    When:
+        - Running IN156's `get_invalid_commands` against that integration's
+          commands.
+
+    Then:
+        - Valid shapes (bool, None, list of valid marketplace names, the
+          strings "true"/"false") are NOT reported.
+        - Invalid shapes (arbitrary strings, ints, lists of non-marketplace
+          strings) ARE reported.
+        - This mirrors the existing parameter-level coverage so that the same
+          set of `hidden` values is allowed/rejected on commands too.
+    """
+    integration = create_integration_object()
+    command = Command(name="my-cmd", description="desc", hidden=hidden_value)
+    integration.commands = [command]
+
+    invalid = IsValidHiddenValueValidator().get_invalid_commands(integration.commands)
+
+    assert ("my-cmd" in invalid) is expected_invalid
+
+
+def test_IsValidHiddenValueValidator_reports_both_params_and_commands():
+    """
+    Given:
+        - An integration with one invalid parameter `hidden` value AND one
+          invalid command `hidden` value.
+
+    When:
+        - Running IN156's `obtain_invalid_content_items` against it.
+
+    Then:
+        - A single ValidationResult is emitted for the integration whose message
+          lists BOTH the invalid param and the invalid command, so authors get
+          one consolidated error per integration rather than two duplicates.
+    """
+    integration = create_integration_object(
+        paths=["configuration"],
+        values=[
+            [
+                {
+                    "name": "bad-param",
+                    "type": 8,
+                    "display": "bad",
+                    "required": False,
+                    "hidden": "yes",
+                }
+            ]
+        ],
+    )
+    integration.commands = [
+        Command(name="bad-cmd", description="desc", hidden="yes"),
+    ]
+
+    results = IsValidHiddenValueValidator().obtain_invalid_content_items([integration])
+
+    assert len(results) == 1
+    message = results[0].message
+    assert (
+        "The param bad-param contains the following invalid hidden value: yes"
+        in message
+    )
+    assert (
+        "The command bad-cmd contains the following invalid hidden value: yes"
+        in message
     )
 
 

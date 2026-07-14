@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.tools import get_all_content_objects_paths_in_d
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
     AgentixAgent,
+    AgentixSkill,
     CaseField,
     CaseLayout,
     CaseLayoutRule,
@@ -79,6 +80,7 @@ ContentTypes = Union[
     CaseLayoutRule,
     AgentixAction,
     AgentixAgent,
+    AgentixSkill,
 ]
 
 

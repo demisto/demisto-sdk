@@ -72,7 +72,10 @@ class Command(BaseNode, content_type=ContentType.COMMAND):  # type: ignore[call-
     outputs: List[IntegrationOutput] = Field([], exclude=True)
 
     deprecated: bool = Field(False)
-    hidden: bool = Field(False)
+    # `hidden` may be a bool, or a list of marketplace names where the command
+    # should be hidden. Mirrors the same shape allowed on integration parameters
+    # (see `Parameter.hidden`).
+    hidden: Any = Field(False)
     description: Optional[str] = Field("")
     supportedModules: Optional[List[str]] = Field([])
 
@@ -127,12 +130,16 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     category: str
     internal: bool = Field(False)
     source: str = Field("")
+    spec: Optional[str] = None
     provider: Optional[str] = None
     commands: List[Command] = []
     params: List[Parameter] = Field([], exclude=True)
     is_cloud_provider_integration: bool = Field(
         False, alias="isCloudProviderIntegration"
     )
+
+    # === Cross-link to matched handler (set by ConnectorAwareInitializer) ===
+    related_content: Optional[Any] = Field(None, exclude=True)
 
     @property
     def imports(self) -> List["Script"]:

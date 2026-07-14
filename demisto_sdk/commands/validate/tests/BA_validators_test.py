@@ -125,6 +125,12 @@ from demisto_sdk.commands.validate.validators.BA_validators.BA129_missing_compli
 from demisto_sdk.commands.validate.validators.BA_validators.BA130_marketplacev2_without_platform import (
     MarketplaceV2WithoutPlatformValidator,
 )
+from demisto_sdk.commands.validate.validators.BA_validators.BA131_invalid_supported_modules import (
+    InvalidSupportedModulesValidator,
+)
+from demisto_sdk.commands.validate.validators.BA_validators.BA132_supported_modules_without_platform import (
+    SupportedModulesWithoutPlatformValidator,
+)
 from TestSuite.repo import ChangeCWD
 
 VALUE_WITH_TRAILING_SPACE = "field_with_space_should_fail "
@@ -3975,3 +3981,441 @@ def test_MarketplaceV2WithoutPlatformValidator_fix_has_platform_none_supported_m
     MarketplaceV2WithoutPlatformValidator().fix(content_item)
 
     assert sorted(content_item.supportedModules) == ["edr", "xsiam"]
+
+
+def _platform_item(create_func, supported_modules):
+    """Helper to create a content item that is a platform item with the given
+    supportedModules set directly on the item.
+    """
+    item = create_func()
+    item.marketplaces = [MarketplaceVersions.PLATFORM]
+    item.supportedModules = supported_modules
+    return item
+
+
+@pytest.mark.parametrize(
+    "content_items, expected_number_of_failures",
+    [
+        pytest.param(
+            [_platform_item(create_integration_object, ["xsiam", "edr", "cloud"])],
+            0,
+            id="integration_allows_all_modules_valid",
+        ),
+        pytest.param(
+            [_platform_item(create_incident_field_object, ["xsiam", "agentix"])],
+            0,
+            id="incident_field_xsiam_and_agentix_valid",
+        ),
+        pytest.param(
+            [_platform_item(create_incident_field_object, ["xsiam", "edr"])],
+            1,
+            id="incident_field_with_disallowed_module_invalid",
+        ),
+        pytest.param(
+            [_platform_item(create_modeling_rule_object, ["xsiam"])],
+            0,
+            id="modeling_rule_xsiam_only_valid",
+        ),
+        pytest.param(
+            [_platform_item(create_modeling_rule_object, ["xsiam", "agentix"])],
+            1,
+            id="modeling_rule_with_agentix_invalid",
+        ),
+        pytest.param(
+            [
+                _platform_item(create_integration_object, ["xsiam"]),
+                _platform_item(create_incident_field_object, ["edr"]),
+                _platform_item(create_modeling_rule_object, ["tim"]),
+            ],
+            2,
+            id="mixed_items_two_invalid",
+        ),
+    ],
+)
+def test_InvalidSupportedModulesValidator_obtain_invalid_content_items(
+    content_items, expected_number_of_failures
+):
+    """
+    Given
+    - content_items list with various content types and supportedModules.
+        - Case 1: Integration allows every module - valid.
+        - Case 2: IncidentField with xsiam + agentix (its allowed set) - valid.
+        - Case 3: IncidentField with edr (not in its allowed set) - invalid.
+        - Case 4: ModelingRule with xsiam only (its allowed set) - valid.
+        - Case 5: ModelingRule with agentix (not allowed) - invalid.
+        - Case 6: Mixed - one valid, two invalid.
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failures return.
+    """
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(results) == expected_number_of_failures
+
+
+def test_InvalidSupportedModulesValidator_error_message():
+    """
+    Given
+    - An IncidentField (allowed: xsiam, agentix) declaring an invalid module 'edr'.
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - A single failure is returned, and the message lists the invalid module and
+      the allowed modules for the content item type.
+    """
+    content_item = _platform_item(create_incident_field_object, ["xsiam", "edr"])
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 1
+    assert "edr" in results[0].message
+    assert "agentix" in results[0].message
+    assert "xsiam" in results[0].message
+
+
+def test_InvalidSupportedModulesValidator_non_platform_item_is_skipped():
+    """
+    Given
+    - An IncidentField that is NOT a platform item (no 'platform' marketplace),
+      even though it declares a module that would otherwise be invalid.
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because non-platform items are skipped.
+    """
+    content_item = create_incident_field_object()
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    content_item.supportedModules = ["edr"]
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesValidator_inherits_modules_from_pack():
+    """
+    Given
+    - An IncidentField that is a platform item with no supportedModules of its own,
+      but whose pack declares an invalid module ('edr').
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - A single failure is returned, because the modules are resolved from the pack.
+    """
+    content_item = create_incident_field_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["edr"]
+    content_item.pack = pack
+    content_item.marketplaces = [MarketplaceVersions.PLATFORM]
+    content_item.supportedModules = None
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 1
+    assert "edr" in results[0].message
+
+
+def test_InvalidSupportedModulesValidator_pack_declares_only_valid_modules():
+    """
+    Given
+    - An IncidentField that is a platform item with no supportedModules of its own,
+      whose pack declares only modules allowed for an IncidentField ('xsiam', 'agentix').
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because the inherited pack modules are all valid.
+    """
+    content_item = create_incident_field_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["xsiam", "agentix"]
+    content_item.pack = pack
+    content_item.marketplaces = [MarketplaceVersions.PLATFORM]
+    content_item.supportedModules = None
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesValidator_unmapped_content_type_is_skipped():
+    """
+    Given
+    - A GenericField content item, whose type is not covered by the per-content-type
+      table, that is a platform item declaring an otherwise-invalid module.
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because content types absent from the table are skipped.
+    """
+    content_item = create_generic_field_object()
+    content_item.marketplaces = [MarketplaceVersions.PLATFORM]
+    content_item.supportedModules = ["edr"]
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_InvalidSupportedModulesValidator_playbook_invalid_module():
+    """
+    Given
+    - A platform Playbook (allows all modules) declaring a module that is not a
+      real PlatformSupportedModules value ('not_a_module').
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - A single failure is returned for the non-existent module.
+    """
+    content_item = _platform_item(create_playbook_object, ["not_a_module"])
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 1
+    assert "not_a_module" in results[0].message
+
+
+def test_InvalidSupportedModulesValidator_platform_item_with_empty_modules_is_valid():
+    """
+    Given
+    - A platform Playbook that explicitly declares no supported modules ([]).
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned: an item with no modules has nothing that can be
+      invalid, and an explicit [] must NOT expand to the platform defaults.
+    """
+    content_item = _platform_item(create_playbook_object, [])
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def _incident_field_with_modules(supported_modules):
+    """Build an incident field through the real parser path, injecting the given
+    supportedModules into the content (None to omit the field entirely).
+
+    The marketplaces are pinned to the xsoar family (which does NOT include
+    'platform')
+    """
+    if supported_modules is None:
+        content_item = create_incident_field_object()
+    else:
+        content_item = create_incident_field_object(
+            paths=["supportedModules"], values=[supported_modules]
+        )
+    content_item.marketplaces = [
+        MarketplaceVersions.XSOAR,
+        MarketplaceVersions.XSOAR_ON_PREM,
+        MarketplaceVersions.XSOAR_SAAS,
+    ]
+    return content_item
+
+
+@pytest.mark.parametrize(
+    "supported_modules, override_marketplaces, expected_number_of_failures",
+    [
+        pytest.param(
+            None,
+            None,
+            0,
+            id="resolved_xsoar_family_marketplaces_no_supported_modules_valid",
+        ),
+        pytest.param(
+            ["edr"],
+            None,
+            1,
+            id="resolved_xsoar_family_marketplaces_with_supported_modules_invalid",
+        ),
+        pytest.param(
+            [],
+            None,
+            0,
+            id="resolved_xsoar_family_marketplaces_empty_supported_modules_valid",
+        ),
+        pytest.param(
+            None,
+            [MarketplaceVersions.XSOAR],
+            0,
+            id="xsoar_only_no_supported_modules_valid",
+        ),
+        pytest.param(
+            ["edr"],
+            [MarketplaceVersions.XSOAR],
+            1,
+            id="xsoar_only_with_supported_modules_invalid",
+        ),
+        pytest.param(
+            None,
+            [MarketplaceVersions.PLATFORM],
+            0,
+            id="platform_only_no_supported_modules_valid",
+        ),
+        pytest.param(
+            ["xsiam"],
+            [MarketplaceVersions.PLATFORM],
+            0,
+            id="platform_only_with_supported_modules_valid",
+        ),
+        pytest.param(
+            ["edr"],
+            [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
+            1,
+            id="multiple_non_platform_marketplaces_with_supported_modules_invalid",
+        ),
+        pytest.param(
+            ["xsiam"],
+            [MarketplaceVersions.PLATFORM, MarketplaceVersions.XSOAR],
+            0,
+            id="platform_among_marketplaces_with_supported_modules_valid",
+        ),
+    ],
+)
+def test_SupportedModulesWithoutPlatformValidator_obtain_invalid_content_items(
+    supported_modules, override_marketplaces, expected_number_of_failures
+):
+    """
+    Given
+    - A content item built through the real parser path with various
+      combinations of marketplaces and supportedModules:
+        - Case 1: marketplaces resolved to the xsoar family (no platform), no
+          modules - valid.
+        - Case 2: marketplaces resolved to the xsoar family (no platform),
+          modules declared - invalid (the resolved marketplaces do not include
+          platform).
+        - Case 3: marketplaces resolved to the xsoar family (no platform), empty
+          modules list - valid (nothing declared).
+        - Case 4: xsoar only, no modules - valid.
+        - Case 5: xsoar only, modules declared - invalid (no platform).
+        - Case 6: platform only, no modules - valid.
+        - Case 7: platform only, modules declared - valid.
+        - Case 8: multiple non-platform marketplaces, modules declared - invalid.
+        - Case 9: platform among marketplaces, modules declared - valid.
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - Make sure the right amount of failures return.
+    """
+    content_item = _incident_field_with_modules(supported_modules)
+    if override_marketplaces is not None:
+        content_item.marketplaces = override_marketplaces
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == expected_number_of_failures
+
+
+def test_SupportedModulesWithoutPlatformValidator_pack_modules_are_not_inherited():
+    """
+    Given
+    - A content item with no supportedModules of its own and only the xsoar
+      marketplace, but whose pack declares supportedModules.
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because only the item's own supportedModules are
+      checked; values inherited from the pack are not considered.
+    """
+    content_item = create_incident_field_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["edr"]
+    content_item.pack = pack
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    content_item.supportedModules = None
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_SupportedModulesWithoutPlatformValidator_empty_modules_list_is_valid():
+    """
+    Given
+    - A content item with only the xsoar marketplace whose own supportedModules
+      is an explicit empty list, while its pack declares supportedModules.
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because an explicit empty list means the item
+      declares no modules of its own, and pack values are not inherited.
+    """
+    content_item = create_incident_field_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["edr"]
+    content_item.pack = pack
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    content_item.supportedModules = []
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_SupportedModulesWithoutPlatformValidator_inherits_modules_from_pack_with_platform():
+    """
+    Given
+    - A content item with no supportedModules of its own that includes the
+      platform marketplace, whose pack declares supportedModules.
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because 'platform' is present in the marketplaces.
+    """
+    content_item = create_incident_field_object()
+    pack = create_pack_object()
+    pack.supportedModules = ["xsiam"]
+    content_item.pack = pack
+    content_item.marketplaces = [MarketplaceVersions.PLATFORM]
+    content_item.supportedModules = None
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
+def test_SupportedModulesWithoutPlatformValidator_error_message():
+    """
+    Given
+    - A content item with the xsoar marketplace declaring supportedModules.
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - A single failure is returned, and the message mentions 'supportedModules'
+      and 'platform'.
+    """
+    content_item = _incident_field_with_modules(["edr"])
+    content_item.marketplaces = [MarketplaceVersions.XSOAR]
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 1
+    assert "supportedModules" in results[0].message
+    assert "platform" in results[0].message
+
+
+def test_SupportedModulesWithoutPlatformValidator_multiple_items():
+    """
+    Given
+    - A list of content items: one invalid (xsoar + modules), one valid
+      (platform + modules), and one valid (xsoar + no modules).
+    When
+    - Calling the SupportedModulesWithoutPlatformValidator obtain_invalid_content_items function.
+    Then
+    - Exactly one failure is returned.
+    """
+    invalid_item = _incident_field_with_modules(["edr"])
+    invalid_item.marketplaces = [MarketplaceVersions.XSOAR]
+
+    valid_platform_item = _incident_field_with_modules(["xsiam"])
+    valid_platform_item.marketplaces = [MarketplaceVersions.PLATFORM]
+
+    valid_no_modules_item = create_incident_field_object()
+    valid_no_modules_item.marketplaces = [MarketplaceVersions.XSOAR]
+
+    content_items = [invalid_item, valid_platform_item, valid_no_modules_item]
+    results = SupportedModulesWithoutPlatformValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(results) == 1

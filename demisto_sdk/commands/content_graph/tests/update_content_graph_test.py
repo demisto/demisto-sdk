@@ -12,6 +12,8 @@ from demisto_sdk.commands.content_graph.commands.create import (
     create_content_graph,
 )
 from demisto_sdk.commands.content_graph.commands.update import (
+    _changed_connectors_from_git,
+    extract_connector_ids_from_diff_files,
     extract_pack_ids_from_diff_files,
     should_update_graph,
     update_content_graph,
@@ -203,7 +205,9 @@ def repository(mocker) -> ContentDTO:
     pack3.content_items.script.append(mock_script("SampleScript2"))
     repository.packs.extend([pack1, pack2, pack3])
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
+    def mock__create_content_dto(packs_to_update: List[str], **kwargs) -> ContentDTO:
+        # **kwargs absorbs the keyword-only ``connectors`` parameter that
+        # ContentGraphBuilder._create_content_dto now accepts.
         if not packs_to_update:
             return repository
         repo_copy = repository.copy()
@@ -227,7 +231,10 @@ def external_repository(mocker) -> ContentDTO:
     pack1 = mock_pack("ExternalPack")
     repository.packs.extend([pack1])
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> List[ContentDTO]:
+    def mock__create_content_dto(
+        packs_to_update: List[str], **kwargs
+    ) -> List[ContentDTO]:
+        # **kwargs absorbs the keyword-only ``connectors`` parameter.
         if not packs_to_update:
             return [repository]
         repo_copy = repository.copy()
@@ -239,7 +246,8 @@ def external_repository(mocker) -> ContentDTO:
         side_effect=mock__create_content_dto,
     )
 
-    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
+    def mock__create_content_dto(packs_to_update: List[str], **kwargs) -> ContentDTO:
+        # **kwargs absorbs the keyword-only ``connectors`` parameter.
         if not packs_to_update:
             return repository
         repo_copy = repository.copy()
@@ -1153,3 +1161,243 @@ Packs/MyPack/pack_metadata.json"""
         result = extract_pack_ids_from_diff_files(diff_files)
         assert result == {"MyPack"}
         assert len(result) == 1
+
+
+class TestExtractConnectorIdsFromDiffFiles:
+    """Tests for the extract_connector_ids_from_diff_files function."""
+
+    def test_extract_connector_ids_space_separated(self):
+        """
+        Given:
+            - A space-separated string of file paths under connectors/ folder.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns a set of unique connector directory names extracted from the paths.
+        """
+        diff_files = (
+            "connectors/salesforce/connector.yaml "
+            "connectors/okta/handler.yaml "
+            "connectors/salesforce/connection.yaml"
+        )
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == {"salesforce", "okta"}
+
+    def test_extract_connector_ids_newline_separated(self):
+        """
+        Given:
+            - A newline-separated string of file paths under connectors/ folder.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns a set of unique connector directory names.
+        """
+        diff_files = """connectors/salesforce/connector.yaml
+connectors/salesforce/handler.yaml
+connectors/okta/connection.yaml"""
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == {"salesforce", "okta"}
+
+    def test_extract_connector_ids_mixed_separators(self):
+        """
+        Given:
+            - A string with mixed space and newline separators.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns a set of unique connector directory names.
+        """
+        diff_files = (
+            "connectors/c1/file.yaml\nconnectors/c2/file.yaml connectors/c3/file.yaml"
+        )
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == {"c1", "c2", "c3"}
+
+    def test_extract_connector_ids_non_connector_files_ignored(self):
+        """
+        Given:
+            - A string containing file paths, some under connectors/ and some not.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Only returns connector dir names from files under connectors/ folder.
+        """
+        diff_files = (
+            "connectors/salesforce/connector.yaml "
+            "Packs/MyPack/file.py "
+            ".github/workflows/ci.yml "
+            "README.md"
+        )
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == {"salesforce"}
+
+    def test_extract_connector_ids_empty_string(self):
+        """
+        Given:
+            - An empty string.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns an empty set.
+        """
+        result = extract_connector_ids_from_diff_files("")
+        assert result == set()
+
+    def test_extract_connector_ids_no_connector_files(self):
+        """
+        Given:
+            - A string with file paths that are not under connectors/ folder.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns an empty set.
+        """
+        diff_files = "Packs/MyPack/file.py .github/workflows/ci.yml README.md"
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == set()
+
+    def test_extract_connector_ids_folder_only(self):
+        """
+        Given:
+            - A string with just "connectors/" without a connector name.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns an empty set (no valid connector dir name).
+        """
+        result = extract_connector_ids_from_diff_files("connectors/")
+        assert result == set()
+
+    def test_extract_connector_ids_deduplication(self):
+        """
+        Given:
+            - A string with multiple files from the same connector.
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns a set with the connector dir name appearing only once.
+        """
+        diff_files = """connectors/salesforce/connector.yaml
+connectors/salesforce/handler.yaml
+connectors/salesforce/connection.yaml
+connectors/salesforce/capabilities.yaml"""
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == {"salesforce"}
+        assert len(result) == 1
+
+    def test_extract_connector_ids_case_sensitive_folder(self):
+        """
+        Given:
+            - File paths under capital-C ``Connectors/`` (wrong case).
+        When:
+            - Calling extract_connector_ids_from_diff_files.
+        Then:
+            - Returns an empty set - the helper is case-sensitive and the
+              canonical folder name is lowercase ``connectors``.
+        """
+        diff_files = "Connectors/salesforce/connector.yaml"
+        result = extract_connector_ids_from_diff_files(diff_files)
+        assert result == set()
+
+
+class TestChangedConnectorsFromGit:
+    """Tests for the _changed_connectors_from_git helper."""
+
+    def test_changed_connectors_basic(self):
+        """
+        Given:
+            - A git_util whose ``get_all_changed_files`` returns a mix of
+              pack and connector file paths.
+        When:
+            - Calling _changed_connectors_from_git with a commit hash.
+        Then:
+            - Returns only the connector directory names, deduplicated.
+        """
+        mock_git_util = MagicMock()
+        mock_git_util.get_all_changed_files.return_value = {
+            Path("Packs/MyPack/file.py"),
+            Path("connectors/salesforce/connector.yaml"),
+            Path("connectors/salesforce/handler.yaml"),
+            Path("connectors/okta/connection.yaml"),
+            Path("README.md"),
+        }
+
+        result = _changed_connectors_from_git(mock_git_util, "abc123")
+
+        assert result == {"salesforce", "okta"}
+        mock_git_util.get_all_changed_files.assert_called_once_with("abc123")
+
+    def test_changed_connectors_no_connector_changes(self):
+        """
+        Given:
+            - A git_util that reports only non-connector file changes.
+        When:
+            - Calling _changed_connectors_from_git.
+        Then:
+            - Returns an empty set.
+        """
+        mock_git_util = MagicMock()
+        mock_git_util.get_all_changed_files.return_value = {
+            Path("Packs/MyPack/file.py"),
+            Path("README.md"),
+        }
+
+        result = _changed_connectors_from_git(mock_git_util, "abc123")
+
+        assert result == set()
+
+    def test_changed_connectors_empty_diff(self):
+        """
+        Given:
+            - A git_util that reports no changed files.
+        When:
+            - Calling _changed_connectors_from_git.
+        Then:
+            - Returns an empty set.
+        """
+        mock_git_util = MagicMock()
+        mock_git_util.get_all_changed_files.return_value = set()
+
+        result = _changed_connectors_from_git(mock_git_util, "abc123")
+
+        assert result == set()
+
+    def test_changed_connectors_git_failure_swallowed(self, caplog):
+        """
+        Given:
+            - A git_util whose ``get_all_changed_files`` raises an exception
+              (e.g. shallow clone, commit unreachable).
+        When:
+            - Calling _changed_connectors_from_git.
+        Then:
+            - Returns an empty set instead of propagating the exception,
+              so the broader update flow can proceed best-effort.
+        """
+        mock_git_util = MagicMock()
+        mock_git_util.get_all_changed_files.side_effect = Exception(
+            "fatal: commit not found"
+        )
+
+        result = _changed_connectors_from_git(mock_git_util, "abc123")
+
+        assert result == set()
+
+    def test_changed_connectors_ignores_root_level_connectors_path(self):
+        """
+        Given:
+            - A changed file path that is literally ``connectors/`` with no
+              connector directory beneath it.
+        When:
+            - Calling _changed_connectors_from_git.
+        Then:
+            - That path is skipped (no valid connector dir name).
+        """
+        mock_git_util = MagicMock()
+        mock_git_util.get_all_changed_files.return_value = {
+            Path("connectors"),
+            Path("connectors/real_one/file.yaml"),
+        }
+
+        result = _changed_connectors_from_git(mock_git_util, "abc123")
+
+        assert result == {"real_one"}

@@ -86,6 +86,7 @@ class IntegrationScriptUnifier(Unifier):
         if not is_script_package:  # integration
             # Change data in place
             IntegrationScriptUnifier.update_hidden_parameters_value(data, marketplace)
+            IntegrationScriptUnifier.update_hidden_commands_value(data, marketplace)
             IntegrationScriptUnifier.remove_mirroring_commands_and_settings(
                 data, marketplace
             )
@@ -172,6 +173,44 @@ class IntegrationScriptUnifier(Unifier):
                     data["configuration"][i].pop("hidden")
                 else:  # type-4 param
                     data["configuration"][i]["hidden"] = marketplace in hidden
+
+    @staticmethod
+    def update_hidden_commands_value(
+        data: dict, marketplace: MarketplaceVersions = None
+    ) -> None:
+        """
+        The `hidden` attribute of each command may be a bool (hiding the command across all
+        marketplaces), or a list of marketplaces where the command should be hidden.
+
+        This method replaces a list-typed `hidden` value with a boolean that matches the
+        current marketplace. Boolean values are left untouched.
+
+        The XSOAR family aliases (`xsoar`, `xsoar_saas`, `xsoar_on_prem`) are expanded
+        in the same way as for integration parameters, so a single `xsoar` entry hides
+        the command on all XSOAR-flavored marketplaces.
+
+        Args:
+            data (dict): The integration data.
+            marketplace (MarketplaceVersions): The current marketplace.
+        """
+        if not marketplace:
+            return
+
+        commands = data.get("script", {}).get("commands") or []
+        for i, command in enumerate(commands):
+            if isinstance(hidden := command.get("hidden"), list):
+                # converts list to bool, mirroring update_hidden_parameters_value
+                if MarketplaceVersions.XSOAR.value in hidden:
+                    hidden.extend(
+                        [
+                            MarketplaceVersions.XSOAR_SAAS,
+                            MarketplaceVersions.XSOAR_ON_PREM,
+                        ]
+                    )
+                if MarketplaceVersions.XSOAR_ON_PREM.value in hidden:
+                    hidden.append(MarketplaceVersions.XSOAR)
+
+                data["script"]["commands"][i]["hidden"] = marketplace in hidden
 
     @staticmethod
     def remove_mirroring_commands_and_settings(

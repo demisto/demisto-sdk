@@ -3285,3 +3285,95 @@ def test_GR115_action_renamed_no_dependent_skills(mocker, graph_repo: Repo):
     )
 
     assert len(results) == 0
+
+
+def _build_agent_with_dependencies(
+    graph_repo: Repo, *, system_instructions: str
+) -> Repo:
+    """Build a repo with an agent that registers one skill and one action.
+
+    The agent's system instructions size is controlled by the caller so a test
+    can push the agent's total token budget over or under the GR116 limit.
+    """
+    pack = graph_repo.create_pack("AgentPack")
+
+    action = pack.create_agentix_action("MyAction")
+    action.create_default_agentix_action()
+    action.set_data(**{"commonfields.id": "action-a"})
+
+    skill = pack.create_agentix_skill("MySkill")
+    skill.create_default_agentix_skill(
+        name="MySkill",
+        skill_id="my-skill-id",
+        skill_content="Use <action=action-a> to do the thing.",
+    )
+
+    agent = pack.create_agentix_agent("MyAgent")
+    agent.create_default_agentix_agent(name="MyAgent", agent_id="my-agent-id")
+    agent.update(
+        {
+            "skillids": ["my-skill-id"],
+            "actionids": ["action-a"],
+            "systeminstructions": system_instructions,
+        }
+    )
+    return graph_repo
+
+
+def test_GR116_agent_within_token_budget_is_valid(graph_repo: Repo):
+    """
+    Given
+    - An agent with small system instructions and small dependencies.
+
+    When
+    - Running the GR116 validation across the entire repository.
+
+    Then
+    - The agent is not flagged.
+    """
+    from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget import (
+        AGENT_TOKEN_LIMIT,
+    )
+    from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget_all_files import (
+        IsAgentTotalTokenBudgetValidatorAllFiles,
+    )
+
+    _build_agent_with_dependencies(
+        graph_repo, system_instructions="You are a helpful agent."
+    )
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentTotalTokenBudgetValidatorAllFiles().obtain_invalid_content_items([])
+
+    assert not results
+    assert AGENT_TOKEN_LIMIT == 50000  # guards the documented limit
+
+
+def test_GR116_agent_exceeds_token_budget_is_invalid(graph_repo: Repo):
+    """
+    Given
+    - An agent whose system instructions alone far exceed the token limit.
+
+    When
+    - Running the GR116 validation across the entire repository.
+
+    Then
+    - The agent is flagged, and the message states the limit.
+    """
+    from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget import (
+        AGENT_TOKEN_LIMIT,
+    )
+    from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget_all_files import (
+        IsAgentTotalTokenBudgetValidatorAllFiles,
+    )
+
+    oversized_instructions = "word " * (AGENT_TOKEN_LIMIT * 4)
+    _build_agent_with_dependencies(
+        graph_repo, system_instructions=oversized_instructions
+    )
+    BaseValidator.graph_interface = graph_repo.create_graph()
+
+    results = IsAgentTotalTokenBudgetValidatorAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert str(AGENT_TOKEN_LIMIT) in results[0].message

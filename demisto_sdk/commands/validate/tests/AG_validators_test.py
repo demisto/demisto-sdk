@@ -12,6 +12,10 @@ from demisto_sdk.commands.validate.tests.test_tools import (
     create_agentix_agent_object,
     create_agentix_skill_object,
 )
+from demisto_sdk.commands.validate.tools import (
+    CHARS_PER_TOKEN,
+    estimate_tokens,
+)
 from demisto_sdk.commands.validate.validators.AG_validators.AG100_is_forbidden_content_item import (
     IsForbiddenContentItemValidator,
 )
@@ -36,9 +40,10 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG109_is_system_inst
 from demisto_sdk.commands.validate.validators.AG_validators.AG111_is_skill_content_file_exists import (
     IsSkillContentFileExistsValidator,
 )
-from demisto_sdk.commands.validate.validators.AG_validators.AG112_is_skill_total_token_budget import (
+from demisto_sdk.commands.validate.validators.AG_validators.AG112_is_action_or_skill_total_token_budget import (
+    ACTION_TOKEN_LIMIT,
     SKILL_TOKEN_LIMIT,
-    IsSkillTotalTokenBudgetValidator,
+    IsActionOrSkillTotalTokenBudgetValidator,
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG114_is_char_cleanliness import (
     IsSkillCharCleanlinessValidator,
@@ -693,7 +698,7 @@ def test_AG112_skill_within_token_budget():
     - A skill whose body is comfortably within the token budget.
 
     When
-    - Calling IsSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
+    - Calling IsActionOrSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
 
     Then
     - No failures are returned.
@@ -702,7 +707,7 @@ def test_AG112_skill_within_token_budget():
         skill_name="small_skill", skill_content="A short body."
     )
 
-    results = IsSkillTotalTokenBudgetValidator().obtain_invalid_content_items([skill])
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items([skill])
 
     assert results == []
 
@@ -714,7 +719,7 @@ def test_AG112_skill_exceeds_token_budget():
       (~4 chars per token, so the body must exceed SKILL_TOKEN_LIMIT * 4 chars).
 
     When
-    - Calling IsSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
+    - Calling IsActionOrSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
 
     Then
     - The oversized skill is reported.
@@ -724,7 +729,7 @@ def test_AG112_skill_exceeds_token_budget():
         skill_name="big_skill", skill_content=oversized_body
     )
 
-    results = IsSkillTotalTokenBudgetValidator().obtain_invalid_content_items([skill])
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items([skill])
 
     assert len(results) == 1
     assert "is too large" in results[0].message
@@ -1055,3 +1060,96 @@ def test_AG117_action_with_too_many_args_fails():
     assert len(results) == 1
     assert str(too_many) in results[0].message
     assert str(MAX_ACTION_ARGS) in results[0].message
+
+
+def test_estimate_tokens_uses_chars_per_token_heuristic():
+    """
+    Given
+    - A string whose length is a known multiple of CHARS_PER_TOKEN, and an empty
+      string.
+
+    When
+    - Calling the generic estimate_tokens helper.
+
+    Then
+    - The token count is the char count divided by CHARS_PER_TOKEN (rounded up),
+      and empty text is zero tokens.
+    """
+    # given
+    text = "a" * (CHARS_PER_TOKEN * 5)
+
+    # when / then
+    assert estimate_tokens(text) == 5
+    assert estimate_tokens("a" * (CHARS_PER_TOKEN * 5 + 1)) == 6  # rounds up
+    assert estimate_tokens("") == 0
+
+
+def test_AG112_action_within_token_budget_passes():
+    """
+    Given
+    - An AgentixAction whose name, description, args, and outputs are small.
+
+    When
+    - Calling IsActionOrSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
+
+    Then
+    - The action is not flagged.
+    """
+    action = create_agentix_action_object(
+        paths=["description"],
+        values=["A short description."],
+    )
+
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items([action])
+
+    assert not results
+
+
+def test_AG112_action_exceeds_token_budget_fails():
+    """
+    Given
+    - An AgentixAction whose description alone is far above the token limit.
+
+    When
+    - Calling IsActionOrSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
+
+    Then
+    - The action is flagged, and the message states the action limit.
+    """
+    oversized_description = "word " * (ACTION_TOKEN_LIMIT * CHARS_PER_TOKEN)
+    action = create_agentix_action_object(
+        paths=["description"],
+        values=[oversized_description],
+    )
+
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items([action])
+
+    assert len(results) == 1
+    assert str(ACTION_TOKEN_LIMIT) in results[0].message
+
+
+def test_AG112_skill_description_counts_toward_budget():
+    """
+    Given
+    - An AgentixSkill with a tiny body but an oversized description, so only the
+      consolidated (name + description + body) budget can exceed the limit.
+
+    When
+    - Calling IsActionOrSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
+
+    Then
+    - The skill is flagged, proving AG112 now counts the description (and name),
+      not just the skill body.
+    """
+    oversized_description = "word " * (SKILL_TOKEN_LIMIT * CHARS_PER_TOKEN)
+    skill = create_agentix_skill_object(
+        paths=["description"],
+        values=[oversized_description],
+        skill_name="verbose_skill",
+        skill_content="Tiny body.",
+    )
+
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items([skill])
+
+    assert len(results) == 1
+    assert "is too large" in results[0].message

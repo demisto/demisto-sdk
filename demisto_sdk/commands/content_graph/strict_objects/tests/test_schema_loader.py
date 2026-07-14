@@ -78,7 +78,16 @@ def test_env_var_resolves_to_correct_dir(tmp_path, monkeypatch):
 
 
 def test_definitions_subfolder_is_staged_and_generated(tmp_path, monkeypatch):
-    """Files under `definitions/` must also produce generated modules."""
+    """Top-level schemas produce generated modules; orphan `definitions/`
+    files (not referenced by any top-level schema) are staged for peer-`$ref`
+    resolution but not codegen'd as standalone modules.
+
+    Rationale: only top-level `<name>.schema.json` files are contract
+    surfaces. Files under `definitions/` exist to be `$ref`-ed; codegen
+    pulls them in transitively when a top-level schema references them,
+    so calling codegen on them separately produces empty stub modules
+    that collide with the transitively-generated ones.
+    """
     _write_schema_tree(tmp_path)
     monkeypatch.setenv(ENV_VAR, str(tmp_path))
 
@@ -87,14 +96,12 @@ def test_definitions_subfolder_is_staged_and_generated(tmp_path, monkeypatch):
     assert sample_cls is not None
     assert issubclass(sample_cls, pydantic.BaseModel)
 
-    tag_module = modules.get("tag")
-    assert tag_module is not None, f"got module keys: {sorted(modules)}"
-    tag_cls = getattr(tag_module, "Tag", None)
-    assert tag_cls is not None
-    assert tag_cls(name="prod").name == "prod"
-
     instance = sample_cls(id="abc", meta={"name": "my-thing"})
     assert instance.meta.name == "my-thing"
+
+    # `tag.schema.json` is under `definitions/` and no top-level schema
+    # references it, so it is intentionally not exposed as a module.
+    assert "tag" not in modules, f"unexpected orphan module: keys={sorted(modules)}"
 
 
 def test_bad_env_var_path_raises_loudly(monkeypatch, tmp_path):
@@ -109,3 +116,111 @@ def test_unset_env_var_returns_empty(monkeypatch):
     monkeypatch.delenv(ENV_VAR, raising=False)
     assert get_schemas_dir() is None
     assert load_generated_modules() == {}
+
+
+# --- Regression: definitions files referenced via sibling `$ref` -------------
+# The upstream UCC schemas reference `definitions/*.schema.json` peers as
+# `"$ref": "foo.schema.json"` (not `"definitions/foo.schema.json"`). Before
+# the fix, `_stage_schemas` only copied definitions under `stage/definitions/`,
+# so datamodel-codegen crashed with `[Errno 2] No such file or directory:
+# '<stage>/foo.schema.json'`. The loader must mirror definitions to the stage
+# root so sibling-style refs resolve.
+
+_PEER_REF_MAIN = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "widget.schema.json",
+    "title": "Widget",
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["id", "tag"],
+    "properties": {
+        "id": {"type": "string", "minLength": 1},
+        # Sibling-style ref, matching the upstream UCC pattern.
+        "tag": {"$ref": "tag.schema.json"},
+    },
+}
+
+_PEER_REF_TAG = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    # No `$id` on purpose: the upstream UCC definitions schemas rely on the
+    # file's on-disk location for URI resolution, not on a self-declared $id.
+    # Setting `$id: "tag.schema.json"` here would make datamodel-codegen see
+    # two files with identical $ids at different paths (stage root and
+    # stage/definitions/) and mangle the relative resolution.
+    "title": "Tag",
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["name"],
+    "properties": {"name": {"type": "string", "minLength": 1}},
+}
+
+
+def test_definitions_resolvable_via_sibling_ref(tmp_path, monkeypatch):
+    """Definitions referenced as siblings (no `definitions/` prefix) must resolve.
+
+    Regression for the UCC schema layout that broke codegen in CI:
+    `connector.schema.json` references `metadata.schema.json` as a peer file
+    via `"$ref": "metadata.schema.json"`, but staging only placed the file
+    under `definitions/`, so codegen crashed with `[Errno 2] No such file or
+    directory: '<stage>/metadata.schema.json'`. The loader must mirror
+    definitions to the stage root so sibling-style refs resolve.
+    """
+    (tmp_path / "definitions").mkdir()
+    (tmp_path / "widget.schema.json").write_text(json.dumps(_PEER_REF_MAIN))
+    (tmp_path / "definitions" / "tag.schema.json").write_text(json.dumps(_PEER_REF_TAG))
+    monkeypatch.setenv(ENV_VAR, str(tmp_path))
+
+    # Codegen must succeed - previously raised SchemaLoaderError with
+    # `[Errno 2] No such file or directory: '<stage>/tag.schema.json'`.
+    modules = load_generated_modules()
+    assert "widget" in modules, f"got module keys: {sorted(modules)}"
+    widget_cls = getattr(modules["widget"], "Widget", None)
+    assert widget_cls is not None
+    instance = widget_cls(id="w1", tag={"name": "prod"})
+    assert instance.tag.name == "prod"
+
+
+def test_get_generated_module_hard_fails_when_env_var_set(tmp_path, monkeypatch):
+    """When the operator opted in via `$UCC_SCHEMAS_DIR`, codegen failures
+    must NOT be swallowed silently by `get_generated_module`.
+
+    Silent swallow was the reason CI showed `All validations passed` even
+    though `[UCC-schema-loader] datamodel-codegen failed ...` had just been
+    logged - a false-green run that hid the fact that strict validation
+    never actually ran.
+    """
+    from demisto_sdk.commands.content_graph.strict_objects.schema_loader import (
+        get_generated_module,
+    )
+
+    # Deliberately broken JSON schema -> codegen will raise, wrapped as
+    # SchemaLoaderError by load_generated_modules.
+    (tmp_path / "broken.schema.json").write_text(
+        json.dumps(
+            {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "$id": "broken.schema.json",
+                "type": "object",
+                # Reference a peer file that does not exist anywhere.
+                "properties": {"x": {"$ref": "nowhere.schema.json"}},
+            }
+        )
+    )
+    monkeypatch.setenv(ENV_VAR, str(tmp_path))
+
+    with pytest.raises(SchemaLoaderError):
+        get_generated_module("broken")
+
+
+def test_get_generated_module_silent_when_env_var_unset(monkeypatch):
+    """When `$UCC_SCHEMAS_DIR` is unset, `get_generated_module` stays silent.
+
+    This is the non-strict / opt-out mode. Only the opt-in path (env var set)
+    should propagate SchemaLoaderError.
+    """
+    from demisto_sdk.commands.content_graph.strict_objects.schema_loader import (
+        get_generated_module,
+    )
+
+    monkeypatch.delenv(ENV_VAR, raising=False)
+    assert get_generated_module("anything") is None

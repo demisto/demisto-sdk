@@ -22,7 +22,7 @@ import tempfile
 from functools import lru_cache
 from pathlib import Path
 from types import ModuleType
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Tuple
 
 from demisto_sdk.commands.common.logger import logger
 
@@ -53,25 +53,60 @@ def get_schemas_dir() -> Optional[Path]:
     return candidate
 
 
-def _stage_schemas(src: Path) -> Path:
+def _stage_schemas(src: Path) -> Tuple[Path, List[str]]:
     """Copy `*.schema.json` (and `definitions/`) into a fresh temp dir.
 
     Filters out README.md / .py so datamodel-codegen's directory walker
     doesn't try to parse them as JSON.
+
+    Definitions are mirrored at BOTH `<stage>/definitions/<name>` and
+    `<stage>/<name>` so that both `"$ref": "definitions/foo.schema.json"`
+    and `"$ref": "foo.schema.json"` styles resolve at codegen time. The
+    upstream UCC schemas use the sibling (`"$ref": "metadata.schema.json"`)
+    style; the loader must not assume the `definitions/`-prefixed style.
+    A top-level file with the same name is never clobbered.
+
+    Returns `(stage_dir, top_level_names)` where `top_level_names` lists
+    only the *original* top-level schema filenames (from `src/*.schema.json`).
+    Mirrored `definitions/*.schema.json` copies are intentionally excluded:
+    they exist purely to satisfy peer `$ref` resolution and must not be
+    fed to codegen as inputs (that produces empty stub modules that
+    collide with model files generated transitively from the real
+    top-level schemas).
     """
     stage = Path(tempfile.mkdtemp(prefix="ucc_schemas_"))
+    top_level_names: List[str] = []
     for f in src.glob("*.schema.json"):
         shutil.copy(f, stage / f.name)
+        top_level_names.append(f.name)
     defs = src / "definitions"
     if defs.is_dir():
         shutil.copytree(defs, stage / "definitions")
-    if not any(stage.glob("*.schema.json")):
+        for f in defs.glob("*.schema.json"):
+            target = stage / f.name
+            if not target.exists():
+                shutil.copy(f, target)
+    if not top_level_names:
         raise SchemaLoaderError(f"No *.schema.json files found in {src!r}.")
-    return stage
+    return stage, sorted(top_level_names)
 
 
-def _run_codegen(stage_dir: Path, out_dir: Path) -> None:
-    """Invoke `datamodel-codegen` against the staged schemas."""
+def _run_codegen(stage_dir: Path, out_dir: Path, top_level_names: List[str]) -> None:
+    """Invoke `datamodel-codegen` against each top-level staged schema.
+
+    IMPORTANT: We invoke codegen per top-level schema file with `cwd` set
+    to `stage_dir`, not once against the whole directory. Passing a
+    directory to datamodel-codegen 0.25.9 triggers a bug where sibling
+    `$ref`s (e.g. `"$ref": "metadata.schema.json"` from `connector.schema.json`)
+    are resolved against a mangled path that walks `..` for every URI
+    segment, producing `[Errno 2] No such file or directory:
+    '<stage>/../../../../../../<abs-path>/metadata.schema.json'`.
+    Per-file invocation with a stable cwd resolves peer refs correctly.
+
+    Definitions files (already mirrored to `stage_dir/` by
+    :func:`_stage_schemas`) are pulled in transitively via the top-level
+    files' `$ref`s, so we do not need to codegen them separately.
+    """
     try:
         from datamodel_code_generator import (
             DataModelType,
@@ -85,17 +120,61 @@ def _run_codegen(stage_dir: Path, out_dir: Path) -> None:
             "Install with: pip install 'datamodel-code-generator==0.25.9'"
         ) from exc
 
+    if not top_level_names:
+        raise SchemaLoaderError(f"No top-level schemas to codegen in {stage_dir!r}.")
+
     # Pinned to 0.25.9: newer releases dropped the pydantic v1 output.
-    generate(
-        input_=stage_dir,
-        input_file_type=InputFileType.JsonSchema,
-        output=out_dir,
-        output_model_type=DataModelType.PydanticBaseModel,
-        target_python_version=PythonVersion.PY_39,
-        use_schema_description=True,
-        use_default_kwarg=True,
-        reuse_model=True,
-    )
+    # One output namespace per input schema (either a `<name>.py` file for
+    # schemas with no external `$ref`s, or a `<name>/` package when refs
+    # produce submodules) so overlapping targets from different top-level
+    # schemas don't collide on the same output filename.
+    #
+    # datamodel-codegen 0.25.9 quirk: for a schema with NO peer `$ref`s
+    # it wants `output` to be a plain `.py` file and raises
+    # `IsADirectoryError` if given a directory; for a schema WITH peer
+    # `$ref`s it needs a directory to place the sibling submodules and
+    # raises "Modular references require an output directory" otherwise.
+    # We try file-mode first, retry as directory-mode on the specific
+    # modular-refs error.
+    original_cwd = Path.cwd()
+    try:
+        os.chdir(stage_dir)
+        for name in top_level_names:
+            # `<name>.schema.json` -> `<name>`; matches the public naming
+            # used by `get_generated_module("connector")`.
+            stem = name[: -len(".schema.json")]
+            file_out = out_dir / f"{stem}.py"
+            try:
+                generate(
+                    input_=Path(name),  # relative to cwd=stage_dir
+                    input_file_type=InputFileType.JsonSchema,
+                    output=file_out,
+                    output_model_type=DataModelType.PydanticBaseModel,
+                    target_python_version=PythonVersion.PY_39,
+                    use_schema_description=True,
+                    use_default_kwarg=True,
+                    reuse_model=True,
+                )
+            except Exception as exc:
+                if "Modular references require an output directory" not in str(exc):
+                    raise
+                # Schema has peer `$ref`s -> retry with a package directory.
+                if file_out.exists():
+                    file_out.unlink()
+                pkg_out = out_dir / stem
+                pkg_out.mkdir(parents=True, exist_ok=True)
+                generate(
+                    input_=Path(name),
+                    input_file_type=InputFileType.JsonSchema,
+                    output=pkg_out,
+                    output_model_type=DataModelType.PydanticBaseModel,
+                    target_python_version=PythonVersion.PY_39,
+                    use_schema_description=True,
+                    use_default_kwarg=True,
+                    reuse_model=True,
+                )
+    finally:
+        os.chdir(original_cwd)
 
 
 def _register_generated_modules(out_dir: Path) -> Dict[str, ModuleType]:
@@ -116,26 +195,55 @@ def _register_generated_modules(out_dir: Path) -> Dict[str, ModuleType]:
         sys.modules[_GENERATED_PACKAGE] = pkg
 
     modules: Dict[str, ModuleType] = {}
+    # First pass: register every non-__init__ generated module. These are the
+    # `$ref` targets that codegen emitted as separate files (e.g. a
+    # widget.schema.json that $refs tag.schema.json produces `widget/tag.py`
+    # containing the Tag model).
+    # Second pass (below): register each per-schema `__init__.py` under the
+    # subdir name (e.g. `widget/__init__.py` -> key `"widget"`). Codegen
+    # places the top-level schema's root model there when the schema has
+    # `$ref`s to peer files, so we MUST NOT skip __init__.py or the caller
+    # (`get_generated_module("connector")`) will see None even though codegen
+    # succeeded.
     for py in sorted(out_dir.rglob("*.py")):
-        if py.name == "__init__.py":
-            continue
         rel_parts = py.relative_to(out_dir).with_suffix("").parts
-        qualname = ".".join([_GENERATED_PACKAGE, *rel_parts])
+        is_init = py.name == "__init__.py"
+
+        if is_init:
+            # `<subdir>/__init__.py` -> parts = ("<subdir>", "__init__");
+            # keep only the subdir(s) so qualname is the package.
+            pkg_parts = rel_parts[:-1]
+            if not pkg_parts:
+                # Root-level __init__.py (shouldn't exist here, defensive).
+                continue
+            qualname = ".".join([_GENERATED_PACKAGE, *pkg_parts])
+            key = ".".join(pkg_parts)
+            leaf_key = pkg_parts[-1]
+        else:
+            qualname = ".".join([_GENERATED_PACKAGE, *rel_parts])
+            stem = rel_parts[-1]
+            clean_stem = stem[: -len("_schema")] if stem.endswith("_schema") else stem
+            key = (
+                clean_stem
+                if len(rel_parts) == 1
+                else ".".join([*rel_parts[:-1], clean_stem])
+            )
+            leaf_key = clean_stem
 
         spec = importlib.util.spec_from_file_location(qualname, py)
         if spec is None or spec.loader is None:
             continue
         mod = importlib.util.module_from_spec(spec)
-        sys.modules[qualname] = mod
+        # Packages need __path__ so their submodules import cleanly.
+        if is_init:
+            mod.__path__ = [str(py.parent)]  # type: ignore[attr-defined]
+            sys.modules[qualname] = mod
+        else:
+            sys.modules[qualname] = mod
         spec.loader.exec_module(mod)
 
-        stem = py.stem
-        clean_stem = stem[: -len("_schema")] if stem.endswith("_schema") else stem
-        # Files under `definitions/` are keyed as `definitions.<stem>` AND
-        # by their leaf name for convenience.
-        key = clean_stem if len(rel_parts) == 1 else ".".join([*rel_parts[:-1], clean_stem])
         modules[key] = mod
-        modules.setdefault(clean_stem, mod)
+        modules.setdefault(leaf_key, mod)
 
     return modules
 
@@ -169,10 +277,10 @@ def load_generated_modules() -> Dict[str, ModuleType]:
         f"defs={[f.name for f in defs_files]}"
     )
 
-    stage = _stage_schemas(src)
+    stage, top_level_names = _stage_schemas(src)
     out_dir = Path(tempfile.mkdtemp(prefix="ucc_generated_"))
     try:
-        _run_codegen(stage, out_dir)
+        _run_codegen(stage, out_dir, top_level_names)
     except SchemaLoaderError:
         raise
     except Exception as exc:
@@ -192,11 +300,22 @@ def load_generated_modules() -> Dict[str, ModuleType]:
 
 
 def get_generated_module(schema_stem: str) -> Optional[ModuleType]:
-    """Return the generated module for `<schema_stem>.schema.json`, or None."""
+    """Return the generated module for `<schema_stem>.schema.json`, or None.
+
+    Behaviour:
+      * `$UCC_SCHEMAS_DIR` unset -> return None (strict validation is off,
+        by design; the SDK runs in non-strict mode).
+      * `$UCC_SCHEMAS_DIR` set + codegen fails -> re-raise. The operator
+        opted in to strict validation; silently degrading would produce
+        false-green CI runs where `demisto-sdk validate` reports success
+        while never actually running the strict-connector validators.
+    """
     try:
         return load_generated_modules().get(schema_stem)
     except SchemaLoaderError:
-        return None
+        if get_schemas_dir() is None:
+            return None
+        raise
 
 
 def reset_cache() -> None:

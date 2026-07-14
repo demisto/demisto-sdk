@@ -1,0 +1,16 @@
+changes:
+- description: Fix the UCC schema loader so `$UCC_SCHEMAS_DIR` layouts with sibling
+    `$ref`s into `definitions/` (the upstream UCC pattern used by `connector.schema.json`
+    -> `metadata.schema.json`) actually run codegen instead of failing with
+    `[Errno 2] No such file or directory`. Definitions files are now mirrored to
+    the stage root, codegen is invoked per top-level schema with `cwd` set to the
+    stage dir (avoids a datamodel-codegen 0.25.9 quirk that mangles relative refs
+    when passed a directory input), and the output layout is picked per-schema
+    (file for standalone schemas, package directory for schemas with peer refs).
+    Also stop `get_generated_module` from silently swallowing codegen failures
+    when the operator explicitly opted in via `$UCC_SCHEMAS_DIR`, which previously
+    produced false-green `demisto-sdk validate` runs where the CI log showed
+    `[UCC-schema-loader] datamodel-codegen failed ...` immediately followed by
+    `All validations passed`.
+  type: fix
+pr_number: 5452

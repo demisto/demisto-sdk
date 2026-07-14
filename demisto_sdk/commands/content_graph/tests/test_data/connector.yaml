@@ -4,7 +4,8 @@ metadata:
   title: "Test Connector"
   description: "A test connector for unit tests"
   version: 1.0.0
-  category: "Test"
+  categories:
+    - "Test"
   tags:
     - "test"
   domain: "test"

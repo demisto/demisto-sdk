@@ -94,10 +94,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     @staticmethod
     def _resolve_pack_defaults(
         path: Path,
-    ) -> tuple[List[MarketplaceVersions], Optional[List[str]]]:
-        """Resolve the pack's marketplaces and supported modules from the item's
-        `pack_metadata.json`. Falls back to all marketplaces when not in a pack,
-        or when the pack does not declare a `marketplaces` key.
+    ) -> List[MarketplaceVersions]:
+        """Resolve the pack's marketplaces from the item's `pack_metadata.json`.
+        Falls back to all marketplaces when not in a pack, or when the pack does
+        not declare a `marketplaces` key.
         """
         from demisto_sdk.commands.common.tools import get_pack_metadata
         from demisto_sdk.commands.content_graph.parsers.pack import (
@@ -106,12 +106,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
         metadata = get_pack_metadata(str(path))
         if not metadata or not metadata.get("marketplaces"):
-            return list(MarketplaceVersions), None
+            return list(MarketplaceVersions)
 
-        return (
-            PackMetadataParser.resolve_marketplaces(metadata),
-            metadata.get("supportedModules"),
-        )
+        return PackMetadataParser.resolve_marketplaces(metadata)
 
     @staticmethod
     def from_path(
@@ -136,12 +133,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         logger.debug(f"Parsing content item {path}")
 
         if pack_marketplaces is None:
-            (
-                pack_marketplaces,
-                resolved_supported_modules,
-            ) = ContentItemParser._resolve_pack_defaults(path)
-            if pack_supported_modules is None:
-                pack_supported_modules = resolved_supported_modules
+            pack_marketplaces = ContentItemParser._resolve_pack_defaults(path)
 
         # Skip test files under AgentixAgents - they are not content items
         if AGENTIX_AGENTS_DIR in path.parts and ContentType._is_agentix_agent_test_path(

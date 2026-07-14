@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "connector.schema.json",
+  "title": "connector.yaml",
+  "description": "Schema for the connector.yaml file - defines connector identity and metadata.",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the connector is enabled and available in the platform. Defaults to true. Set to false for example connectors."
+    },
+    "id": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Unique identifier for the connector."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Connector metadata.",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Display name."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "description": "Brief description."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Semantic version (e.g., '1.0.0'). Validated as major.minor.patch."
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "description": "Classification categories."
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Searchable tags."
+        },
+        "domain": {
+          "type": "string",
+          "description": "Domain classification."
+        },
+        "vendor": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The vendor of the service being integrated."
+        },
+        "publisher": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The publisher of this connector definition."
+        },
+        "author_image": {
+          "oneOf": [
+            { "const": "" },
+            {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_.-]+\\.(png|jpg|jpeg|svg)$"
+            }
+          ],
+          "description": "Filename of the connector icon image in the connector root directory. Must match an actual image file. Allowed formats: png, jpg, jpeg, svg. Empty string means no icon."
+        },
+        "documentation": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the connector's external documentation page."
+        },
+        "ownership": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "team": {
+              "type": "string"
+            },
+            "maintainers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "is_recommended": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the connector is recommended to users. When true, the connector is highlighted in the Data Sources Catalog list. Defaults to false."
+        }
+      },
+      "required": ["title", "description", "version", "categories", "ownership", "vendor", "publisher"],
+      "additionalProperties": false
+    },
+    "settings": {
+      "type": "object",
+      "description": "Optional connector settings.",
+      "properties": {
+        "allow_skip_verification": {
+          "type": "boolean",
+          "description": "Allow skipping connection test."
+        },
+        "skip_cut_off_check": {
+          "type": "boolean",
+          "description": "When true, the platform skips the cut-off date check for this connector, making it available to all customers (new and existing) regardless of their onboarding date."
+        },
+        "required_features": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "List of tenant features that must be active for this connector to be visible. All listed features must be active (AND logic). If empty or omitted, the connector is always visible."
+        },
+        "grouped": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, this connector is a Grouped Connector - both connection.yaml and configurations.yaml must declare their own top-level view_groups registry, every FieldGroup row in those files must declare a view_group, and every auth_options[] entry in every handler.yaml must declare a view_group. FieldGroup rows in connection.yaml resolve against connection.yaml view_groups; FieldGroup rows in configurations.yaml resolve against configurations.yaml view_groups; handler auth_options[].view_group resolve only against connection.yaml view_groups. When false or absent, no view_groups registry, FieldGroup view_group, or auth_option view_group may appear anywhere. Defaults to false."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["id", "metadata"],
+  "additionalProperties": false
+}

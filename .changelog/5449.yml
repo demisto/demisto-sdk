@@ -1,0 +1,6 @@
+changes:
+- description: Build the connector Pydantic model at runtime from the UCC JSON schemas
+    exposed via `$UCC_SCHEMAS_DIR`, so ST110 and the Connector graph object auto-sync
+    with the upstream UCC schema without any SDK code changes.
+  type: feature
+pr_number: 5449

@@ -6,10 +6,9 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
-from demisto_sdk.commands.validate.validators.AG_validators.agentix_token_utils import (
-    CHARS_PER_TOKEN,  # noqa: F401  # re-exported for backwards compatibility
-    estimate_action_tokens,
-    estimate_skill_tokens,
+from demisto_sdk.commands.validate.tools import (
+    CHARS_PER_TOKEN,  # noqa: F401
+    estimate_content_tokens,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
@@ -57,12 +56,11 @@ class IsActionOrSkillTotalTokenBudgetValidator(BaseValidator[ContentTypes]):
                 item_type = "AgentixAction"
                 limit = ACTION_TOKEN_LIMIT
                 counted_fields = ACTION_COUNTED_FIELDS
-                total_tokens = estimate_action_tokens(content_item)
             else:
                 item_type = "AgentixSkill"
                 limit = SKILL_TOKEN_LIMIT
                 counted_fields = SKILL_COUNTED_FIELDS
-                total_tokens = estimate_skill_tokens(content_item)
+            total_tokens = estimate_content_tokens(content_item)
             logger.debug(
                 f"[{self.error_code}] {item_type} '{content_item.name}': "
                 f"estimated {total_tokens} tokens (limit {limit})."

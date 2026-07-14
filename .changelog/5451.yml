@@ -1,0 +1,10 @@
+changes:
+- description: >-
+    Fixed an issue where **validate -g** silently skipped applying git-diff
+    updates to the content graph when the imported graph had no pinned
+    commit yet (e.g. fresh CI runner). The diff is now computed after
+    **import_graph** populates the commit, and a full-rebuild fallback
+    protects against the same silent no-op if the commit is still unknown
+    post-import.
+  type: fix
+pr_number: 5451

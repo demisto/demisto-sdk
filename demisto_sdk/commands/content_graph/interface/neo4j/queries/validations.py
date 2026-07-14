@@ -141,7 +141,7 @@ def get_items_using_deprecated_commands(
     """
     # find items for both sides of the relationship where a non-deprecated item uses deprecated item.
     files_filter = (
-        f"AND p.path IN {file_paths} OR c.path IN {file_paths}" if file_paths else ""
+        f"AND (p.path IN {file_paths} OR c.path IN {file_paths})" if file_paths else ""
     )
 
     command_query = f"""// Returning all the items which using deprecated commands
@@ -185,7 +185,7 @@ def get_items_using_deprecated_content_items(
     """
     # find items for both sides of the relationship where a non-deprecated item uses deprecated item.
     files_filter = (
-        f"AND p.path IN {file_paths} OR d.path IN {file_paths}" if file_paths else ""
+        f"AND (p.path IN {file_paths} OR d.path IN {file_paths})" if file_paths else ""
     )
 
     query = f"""

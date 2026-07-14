@@ -1052,6 +1052,65 @@ demisto.execute_command("AnotherDeprecatedScript", dArgs)
     assert len(validation_results) == 1
 
 
+def test_GR107_no_false_positive_when_un_deprecating_integration(
+    graph_repo: Repo,
+):
+    """
+    Regression test for the Cypher files_filter operator-precedence bug.
+
+    Given:
+    - A repository where a non-deprecated integration is used by a non-deprecated playbook.
+      The integration was previously deprecated (bucket state) but is now deprecated=false (PR state).
+
+    When:
+    - Running GR107_IsDeprecatedContentItemInUsageValidatorListFiles with the integration
+      as the changed content item (simulating USE_GIT / list_files mode).
+
+    Then:
+    - No validation errors are returned.
+      Before the fix the broken files_filter
+      "AND p.path IN [...] OR d.path IN [...]" (missing parentheses) caused the playbook
+      to be reported as a violator because the OR arm bypassed the c1 IS NULL guard.
+      After the fix "AND (p.path IN [...] OR d.path IN [...])" the query is correct.
+    """
+    pack_1 = graph_repo.create_pack("PackWithIntegration")
+    integration = pack_1.create_integration("NonDeprecatedIntegration")
+    integration.set_commands(["non-deprecated-command"])
+
+    pack_2 = graph_repo.create_pack("PackWithPlaybook")
+    pack_2.create_playbook(
+        "PlaybookUsingIntegration",
+        yml={
+            "id": "PlaybookUsingIntegration",
+            "name": "PlaybookUsingIntegration",
+            "tasks": {
+                "0": {
+                    "id": "0",
+                    "taskid": "0",
+                    "task": {
+                        "id": "0",
+                        "script": "|||non-deprecated-command",
+                    },
+                }
+            },
+        },
+    )
+
+    graph_interface = graph_repo.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    # Simulate list_files mode: the changed content item is the integration itself
+    integration_graph_obj = pack_1.integrations[0].get_graph_object(graph_interface)
+    validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
+        [integration_graph_obj]
+    )
+
+    assert len(validation_results) == 0, (
+        "GR107 must not report a false positive when the changed item (integration) "
+        "is not deprecated and the playbook using it is also not deprecated."
+    )
+
+
 def test_GR107_IsDeprecatedContentItemInUsageValidatorAllFiles_is_invalid(
     repo_for_test_gr_107: Repo,
 ):

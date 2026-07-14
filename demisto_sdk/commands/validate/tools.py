@@ -1,7 +1,7 @@
 import re
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, Iterable, List, Optional, Set, Union
 
 from packaging.version import parse
 
@@ -308,3 +308,160 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
     ) or (isinstance(content_item, Script) and content_item.is_llm):
         return True
     return content_item.git_status is None
+
+
+# Token estimation heuristic from the skill authoring guide: ~4 chars per token.
+CHARS_PER_TOKEN = 4
+
+
+def estimate_tokens(text: str) -> int:
+    """Estimate the token count of a string using the ~4-chars-per-token heuristic.
+
+    Args:
+        text: The text to estimate. ``None``/empty is treated as zero tokens.
+
+    Returns:
+        The estimated number of tokens (rounded up).
+    """
+    if not text:
+        return 0
+    return (len(text) + CHARS_PER_TOKEN - 1) // CHARS_PER_TOKEN
+
+
+def estimate_tokens_for_texts(texts: Iterable[Optional[str]]) -> int:
+    """Estimate the combined token count of several text fragments.
+
+    Each fragment is estimated independently and summed, which keeps the
+    per-fragment rounding consistent with how the individual fields are authored.
+
+    Args:
+        texts: An iterable of text fragments (``None`` fragments are ignored).
+
+    Returns:
+        The summed estimated token count across all fragments.
+    """
+    return sum(estimate_tokens(text or "") for text in texts)
+
+
+def action_text_fragments(action: AgentixAction) -> List[str]:
+    """Collect the token-bearing text fragments of an AgentixAction.
+
+    Includes the action name and description plus the args schema
+    (each arg's name, type, and description) and the outputs schema
+    (each output's name, type, and description).
+
+    Args:
+        action: The AgentixAction to inspect.
+
+    Returns:
+        A flat list of text fragments contributing to the action's token budget.
+    """
+    fragments: List[str] = [action.name, action.description]
+    for arg in action.args or []:
+        fragments.extend([arg.name, arg.type, arg.description])
+    for output in action.outputs or []:
+        fragments.extend([output.name, output.type, output.description])
+    return fragments
+
+
+def skill_text_fragments(skill: AgentixSkill) -> List[str]:
+    """Collect the token-bearing text fragments of an AgentixSkill.
+
+    Includes the skill name, description, and full skill body content.
+    The skill body is read from the related ``*_skill.md`` file when available,
+    falling back to the model's ``content`` field.
+
+    Args:
+        skill: The AgentixSkill to inspect.
+
+    Returns:
+        A flat list of text fragments contributing to the skill's token budget.
+    """
+    body = skill.content
+    try:
+        related = skill.skill_content_file
+        if related is not None and related.file_content:
+            body = related.file_content
+    except Exception:  # missing/unreadable related file -> use model content
+        pass
+    return [skill.name, skill.description, body]
+
+
+def estimate_content_tokens(item: Union[AgentixAction, AgentixSkill]) -> int:
+    """Estimate the total token budget consumed by an AgentixAction or AgentixSkill.
+
+    Dispatches on the item's type to the matching fragment collector:
+    - AgentixAction: name, description, args schema, and outputs schema
+      (see :func:`action_text_fragments`).
+    - AgentixSkill: name, description, and skill body
+      (see :func:`skill_text_fragments`).
+
+    Args:
+        item: The AgentixAction or AgentixSkill to inspect.
+
+    Returns:
+        The estimated total token count for the item's definition.
+    """
+    if isinstance(item, AgentixAction):
+        fragments = action_text_fragments(item)
+    else:
+        fragments = skill_text_fragments(item)
+    return estimate_tokens_for_texts(fragments)
+
+
+def agent_text_fragments(agent: AgentixAgent) -> List[str]:
+    """Collect the AgentixAgent's own token-bearing text fragments.
+
+    Includes the agent name, description, and system instructions. The system
+    instructions are read from the related file when available, falling back to
+    the model's ``systeminstructions`` field. This does NOT include the agent's
+    graph dependencies (dependent actions/skills); see
+    :func:`estimate_agent_total_tokens` for the full, dependency-aware budget.
+
+    Args:
+        agent: The AgentixAgent to inspect.
+
+    Returns:
+        A flat list of the agent's own text fragments.
+    """
+    instructions = agent.systeminstructions
+    try:
+        related = agent.system_instructions_file
+        if related is not None and related.file_content:
+            instructions = related.file_content
+    except Exception:  # missing/unreadable related file -> use model field
+        pass
+    return [agent.name, agent.description, instructions]
+
+
+def estimate_agent_total_tokens(
+    agent: AgentixAgent,
+    dependent_actions: Iterable[AgentixAction] = (),
+    dependent_skills: Iterable[AgentixSkill] = (),
+) -> int:
+    """Estimate the total token budget consumed by an AgentixAgent context.
+
+    The total includes:
+    - The agent's own name, description, and system instructions.
+    - For each dependent action: its full definition (name, description, args
+      schema, and outputs schema), as counted by :func:`action_text_fragments`.
+    - For each dependent skill: its full definition (name, description, and skill
+      body), as counted by :func:`skill_text_fragments`.
+
+    Dependencies are passed in explicitly (already resolved from the content
+    graph) so this helper stays decoupled from graph traversal and easy to test.
+
+    Args:
+        agent: The AgentixAgent to inspect.
+        dependent_actions: The actions the agent depends on (via the graph).
+        dependent_skills: The skills the agent depends on (via the graph).
+
+    Returns:
+        The estimated total token count for the agent's full context.
+    """
+    fragments: List[str] = list(agent_text_fragments(agent))
+    for action in dependent_actions:
+        fragments.extend(action_text_fragments(action))
+    for skill in dependent_skills:
+        fragments.extend(skill_text_fragments(skill))
+    return estimate_tokens_for_texts(fragments)

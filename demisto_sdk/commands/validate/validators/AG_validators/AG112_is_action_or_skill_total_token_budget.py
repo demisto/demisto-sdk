@@ -7,7 +7,6 @@ from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAct
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.tools import (
-    CHARS_PER_TOKEN,  # noqa: F401
     estimate_content_tokens,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (

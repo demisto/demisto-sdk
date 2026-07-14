@@ -72,49 +72,19 @@ class FieldGroup(BaseModel):
     fields: List[ConnectorField]
 
 
-# ============================================================
-# Auto-synced sub-models from connector.schema.json
-# ------------------------------------------------------------
-# ConnectorOwnership / ConnectorMetadata / ConnectorSettings mirror the
-# `ownership` / `metadata` / `settings` blocks of the upstream UCC
-# `connector.schema.json`. To keep them in sync automatically, we subclass
-# the auto-generated Pydantic models produced by `regenerate.sh` into
-# `strict_objects/_generated/connector_schema.py`. Any new upstream field
-# becomes an attribute here after the next regeneration, with zero edits
-# to this file.
-#
-# The import is guarded so this module can still be imported before the
-# infra CI has produced the generated file (in that case, the hand-written
-# fallback classes below are used, and drift tests will flag the gap).
-# ============================================================
-# The Metadata/Ownership/Settings shapes come from the UCC
-# `connector.schema.json` file that the infra CI job drops at the path
-# pointed to by `$UCC_SCHEMAS_DIR`. See
-# [`strict_objects/schema_loader.py`](../strict_objects/schema_loader.py)
-# for the full contract.
-#
-# We resolve them **once at import time** via the runtime loader, which:
-#   * returns real Pydantic v1 model classes when the schema is available;
-#   * returns `None` when the infra CI has not exported `UCC_SCHEMAS_DIR`
-#     and no local fallback exists (fresh clone, package install without
-#     `datamodel-code-generator`, etc.).
-#
-# The `None` branch drops back to conservative hand-written shapes so the
-# Connector graph object can still be constructed. The drift tests will
-# flag any schema addition that these fallbacks are missing.
-#
-# NOTE: `_resolve_generated_types()` is called at import time, but the
-# underlying loader is memoized so repeated imports (or later access from
-# the strict-object side) don't repeat the codegen work.
+# ConnectorOwnership / ConnectorMetadata / ConnectorSettings inherit from
+# the Pydantic classes built at runtime from $UCC_SCHEMAS_DIR/connector.schema.json.
+# See strict_objects/schema_loader.py for the loader contract.
+# When schemas are unavailable (env var unset, codegen dep missing), fall
+# back to minimal hand-written shapes so the graph object still constructs.
 def _resolve_generated_types():
-    """Return (Metadata, Ownership, Settings) generated classes or (None, None, None)."""
     try:
         from demisto_sdk.commands.content_graph.strict_objects.schema_loader import (
             get_generated_module,
         )
 
         module = get_generated_module("connector")
-    except Exception:  # pragma: no cover - degrade to hand-written fallbacks
+    except Exception:  # pragma: no cover
         return None, None, None
     if module is None:
         return None, None, None
@@ -132,7 +102,7 @@ if _GeneratedOwnership is not None:
     class ConnectorOwnership(_GeneratedOwnership):  # type: ignore[misc,valid-type]
         pass
 
-else:  # pragma: no cover - only triggered when schemas are unavailable
+else:  # pragma: no cover
 
     class ConnectorOwnership(BaseModel):  # type: ignore[no-redef]
         team: str = ""
@@ -144,7 +114,7 @@ if _GeneratedMetadata is not None:
     class ConnectorMetadata(_GeneratedMetadata):  # type: ignore[misc,valid-type]
         pass
 
-else:  # pragma: no cover - only triggered when schemas are unavailable
+else:  # pragma: no cover
 
     class ConnectorMetadata(BaseModel):  # type: ignore[no-redef]
         title: str = ""
@@ -164,7 +134,7 @@ if _GeneratedSettings is not None:
     class ConnectorSettings(_GeneratedSettings):  # type: ignore[misc,valid-type]
         pass
 
-else:  # pragma: no cover - only triggered when schemas are unavailable
+else:  # pragma: no cover
 
     class ConnectorSettings(BaseModel):  # type: ignore[no-redef]
         allow_skip_verification: bool = False

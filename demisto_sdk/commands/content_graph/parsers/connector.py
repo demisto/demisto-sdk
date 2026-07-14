@@ -87,14 +87,11 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             pack_supported_modules=pack_supported_modules or [],
             git_sha=git_sha,
         )
-        # ConnectorParser inherits from ContentItemParser directly, NOT from
-        # Yaml/JsonContentItemParser, so the structure-validation hook in
-        # those classes never runs for us automatically. Run it explicitly
-        # against ``connector.yaml`` using StrictConnector (auto-generated
-        # from the upstream UCC JSON Schema) so any drift becomes an ST110
-        # finding at validate time. When StrictConnector is None (the
-        # generated schema module has not been produced yet), skip
-        # validation rather than crash import.
+        # ConnectorParser inherits from ContentItemParser directly (not
+        # Yaml/JsonContentItemParser), so the structure-validation hook in
+        # those classes never runs for us automatically. Trigger it here
+        # against connector.yaml so any UCC-schema drift becomes an ST110
+        # finding. Skips if StrictConnector is None (schemas unavailable).
         strict_cls = get_strict_connector()
         if strict_cls is not None:
             self.structure_errors = validate_structure(
@@ -137,13 +134,7 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
 
     @property
     def strict_object(self):
-        """Return the strict Pydantic model for ``connector.yaml``.
-
-        Resolved lazily by :func:`get_strict_connector`; may return
-        ``None`` when the UCC schemas are unavailable (no
-        ``$UCC_SCHEMAS_DIR``, no local fallback, or
-        ``datamodel-code-generator`` not installed).
-        """
+        """Strict Pydantic model for connector.yaml (may be None)."""
         return get_strict_connector()
 
     @property

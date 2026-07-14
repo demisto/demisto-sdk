@@ -1052,44 +1052,61 @@ demisto.execute_command("AnotherDeprecatedScript", dArgs)
     assert len(validation_results) == 1
 
 
-def test_GR107_no_false_positive_when_un_deprecating_integration(
+def test_GR107_no_false_positive_command_usage_bypasses_c1_is_null_guard(
     graph_repo: Repo,
 ):
     """
-    Regression test for the Cypher files_filter operator-precedence bug.
+    Regression test for the Cypher files_filter operator-precedence bug in
+    get_items_using_deprecated_content_items.
+
+    The query excludes USES relationships that are caused by a command (c1 IS NOT NULL)
+    because those are handled by the dedicated get_items_using_deprecated_commands query.
+    The broken files_filter:
+        AND p.path IN {file_paths} OR d.path IN {file_paths}
+    is evaluated (due to AND > OR precedence) as:
+        (c1 IS NULL AND p.path IN {file_paths}) OR (d.path IN {file_paths})
+    The second arm has no c1 IS NULL guard, so when d.path is in file_paths the row
+    is returned even when c1 IS NOT NULL - i.e. the integration is also reported as a
+    deprecated content item in the error message, even though the relationship is via a
+    command and should be excluded from the content-items query.
 
     Given:
-    - A repository where a non-deprecated integration is used by a non-deprecated playbook.
-      The integration was previously deprecated (bucket state) but is now deprecated=false (PR state).
+    - A deprecated integration d with a deprecated command.
+    - A non-deprecated playbook p that uses the deprecated command (c1 IS NOT NULL).
+    - file_paths contains d.path (the deprecated integration is the changed file).
 
     When:
-    - Running GR107_IsDeprecatedContentItemInUsageValidatorListFiles with the integration
-      as the changed content item (simulating USE_GIT / list_files mode).
+    - Running GR107_IsDeprecatedContentItemInUsageValidatorListFiles with the deprecated
+      integration as the changed content item.
 
     Then:
-    - No validation errors are returned.
-      Before the fix the broken files_filter
-      "AND p.path IN [...] OR d.path IN [...]" (missing parentheses) caused the playbook
-      to be reported as a violator because the OR arm bypassed the c1 IS NULL guard.
-      After the fix "AND (p.path IN [...] OR d.path IN [...])" the query is correct.
+    - Exactly 1 validation result is returned for the playbook.
+    - The error message mentions only the deprecated command, NOT the integration itself.
+      Before the fix the content-items query also fired (bypassing c1 IS NULL via the
+      broken OR arm), so the integration ID was also added to the deprecated_items set,
+      producing a message like "deprecated-command, DeprecatedIntegration".
+      After the fix the content-items query correctly excludes the row (c1 IS NOT NULL),
+      so only "deprecated-command" appears in the message.
     """
-    pack_1 = graph_repo.create_pack("PackWithIntegration")
-    integration = pack_1.create_integration("NonDeprecatedIntegration")
-    integration.set_commands(["non-deprecated-command"])
+    pack_1 = graph_repo.create_pack("PackWithDeprecatedIntegration")
+    integration = pack_1.create_integration("DeprecatedIntegration")
+    integration.set_commands(["deprecated-command"])
+    # Mark the integration and its command as deprecated
+    integration.set_data(**{"deprecated": True, "script.commands[0].deprecated": True})
 
     pack_2 = graph_repo.create_pack("PackWithPlaybook")
     pack_2.create_playbook(
-        "PlaybookUsingIntegration",
+        "PlaybookUsingDeprecatedCommand",
         yml={
-            "id": "PlaybookUsingIntegration",
-            "name": "PlaybookUsingIntegration",
+            "id": "PlaybookUsingDeprecatedCommand",
+            "name": "PlaybookUsingDeprecatedCommand",
             "tasks": {
                 "0": {
                     "id": "0",
                     "taskid": "0",
                     "task": {
                         "id": "0",
-                        "script": "|||non-deprecated-command",
+                        "script": "|||deprecated-command",
                     },
                 }
             },
@@ -1099,16 +1116,23 @@ def test_GR107_no_false_positive_when_un_deprecating_integration(
     graph_interface = graph_repo.create_graph()
     BaseValidator.graph_interface = graph_interface
 
-    # Simulate list_files mode: the changed content item is the integration itself
+    # Simulate list_files mode: the changed content item is the deprecated integration
+    # (d.path is in file_paths - this is the exact condition that triggers the bug)
     integration_graph_obj = pack_1.integrations[0].get_graph_object(graph_interface)
     validation_results = GR107_IsDeprecatedContentItemInUsageValidatorListFiles().obtain_invalid_content_items(
         [integration_graph_obj]
     )
 
-    assert len(validation_results) == 0, (
-        "GR107 must not report a false positive when the changed item (integration) "
-        "is not deprecated and the playbook using it is also not deprecated."
+    assert len(validation_results) == 1
+    # The error must only mention the deprecated command, not the integration itself.
+    # Before the fix the content-items query also fired (bypassing c1 IS NULL), so the
+    # integration ID "DeprecatedIntegration" was also included in the message.
+    assert "DeprecatedIntegration" not in validation_results[0].message, (
+        "The integration must not appear as a deprecated item in the error message. "
+        "Only the deprecated command should be reported (via the commands query). "
+        "The content-items query must exclude this row because c1 IS NOT NULL."
     )
+    assert "deprecated-command" in validation_results[0].message
 
 
 def test_GR107_IsDeprecatedContentItemInUsageValidatorAllFiles_is_invalid(

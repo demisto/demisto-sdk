@@ -37,6 +37,7 @@ from demisto_sdk.commands.content_graph.objects.connector import (
     SerializerData,
     SubCapability,
 )
+from demisto_sdk.commands.content_graph.parsers.base_content import validate_structure
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     CapabilitiesRelatedFile,
@@ -47,6 +48,7 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     SummaryRelatedFile,
     TriggersRelatedFile,
 )
+from demisto_sdk.commands.content_graph.strict_objects.connector import StrictConnector
 
 
 class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
@@ -85,9 +87,18 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
         )
         # ConnectorParser inherits from ContentItemParser directly, NOT from
         # Yaml/JsonContentItemParser, so the structure-validation hook in
-        # those classes never runs for us. Initialise ``structure_errors`` to
-        # an empty list so ``Connector.from_orm`` can pick it up.
-        self.structure_errors: list = []
+        # those classes never runs for us automatically. Run it explicitly
+        # against ``connector.yaml`` using StrictConnector (auto-generated
+        # from the upstream UCC JSON Schema) so any drift becomes an ST110
+        # finding at validate time. When StrictConnector is None (the
+        # generated schema module has not been produced yet), skip
+        # validation rather than crash import.
+        if StrictConnector is not None:
+            self.structure_errors = validate_structure(
+                StrictConnector, self.yml_data, self.path / "connector.yaml"
+            )
+        else:
+            self.structure_errors = []
 
         # Parse connector.yaml fields
         self.connector_metadata: dict = self.yml_data.get("metadata", {})
@@ -120,6 +131,17 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
     @cached_property
     def yml_data(self) -> dict:
         return get_yaml(str(self.path / "connector.yaml"), git_sha=self.git_sha)
+
+    @property
+    def strict_object(self):
+        """Return the strict Pydantic model for ``connector.yaml``.
+
+        Used by :func:`validate_structure` (called from ``__init__`` above)
+        to populate ``structure_errors``. May be ``None`` when the
+        auto-generated schema module has not yet been produced by
+        ``regenerate.sh``; the caller in ``__init__`` handles that case.
+        """
+        return StrictConnector
 
     @property
     def raw_data(self) -> dict:

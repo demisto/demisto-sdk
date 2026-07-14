@@ -72,6 +72,62 @@ class FieldGroup(BaseModel):
     fields: List[ConnectorField]
 
 
+# ============================================================
+# Auto-synced sub-models from connector.schema.json
+# ------------------------------------------------------------
+# ConnectorOwnership / ConnectorMetadata / ConnectorSettings mirror the
+# `ownership` / `metadata` / `settings` blocks of the upstream UCC
+# `connector.schema.json`. To keep them in sync automatically, we subclass
+# the auto-generated Pydantic models produced by `regenerate.sh` into
+# `strict_objects/_generated/connector_schema.py`. Any new upstream field
+# becomes an attribute here after the next regeneration, with zero edits
+# to this file.
+#
+# The import is guarded so this module can still be imported before the
+# infra CI has produced the generated file (in that case, the hand-written
+# fallback classes below are used, and drift tests will flag the gap).
+# ============================================================
+try:
+    from demisto_sdk.commands.content_graph.strict_objects._generated.connector_schema import (
+        Metadata as _GeneratedMetadata,
+        Ownership as _GeneratedOwnership,
+        Settings as _GeneratedSettings,
+    )
+
+    class ConnectorOwnership(_GeneratedOwnership):  # type: ignore[misc,valid-type]
+        pass
+
+    class ConnectorMetadata(_GeneratedMetadata):  # type: ignore[misc,valid-type]
+        pass
+
+    class ConnectorSettings(_GeneratedSettings):  # type: ignore[misc,valid-type]
+        pass
+
+except ImportError:  # pragma: no cover - only triggered pre-regenerate
+    # Fallback shapes for a fresh clone where regenerate.sh has not run
+    # yet. These are intentionally minimal (only what the code below
+    # references) and WILL be caught by the drift tests, prompting a
+    # regenerate.
+    class ConnectorOwnership(BaseModel):  # type: ignore[no-redef]
+        team: str = ""
+        maintainers: List[str] = []
+
+    class ConnectorMetadata(BaseModel):  # type: ignore[no-redef]
+        title: str = ""
+        description: str = ""
+        version: str = ""
+        categories: List[str] = []
+        tags: List[str] = []
+        domain: Optional[str] = None
+        vendor: str = ""
+        publisher: str = ""
+        author_image: Optional[str] = None
+        ownership: ConnectorOwnership = ConnectorOwnership()
+
+    class ConnectorSettings(BaseModel):  # type: ignore[no-redef]
+        allow_skip_verification: bool = False
+
+
 class GeneralConfigurations(BaseModel):
     description: Optional[str] = None
     configurations: List[FieldGroup] = []
@@ -82,26 +138,10 @@ class GeneralConfigurations(BaseModel):
 # ============================================================
 
 
-class ConnectorOwnership(BaseModel):
-    team: str
-    maintainers: List[str] = []
-
-
-class ConnectorMetadata(BaseModel):
-    title: str
-    description: str
-    version: str  # semver e.g. "1.0.0"
-    categories: List[str]  # classification categories, at least one required
-    tags: List[str] = []
-    domain: Optional[str] = None
-    vendor: str
-    publisher: str
-    author_image: Optional[str] = None
-    ownership: ConnectorOwnership
-
-
-class ConnectorSettings(BaseModel):
-    allow_skip_verification: bool = True
+# NOTE: ConnectorOwnership / ConnectorMetadata / ConnectorSettings are now
+# defined higher up in this file (via the auto-generated
+# `_generated.connector_schema` module) so they stay in sync with the
+# upstream UCC JSON Schema automatically. Do not re-declare them here.
 
 
 # ============================================================

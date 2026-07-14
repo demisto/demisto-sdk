@@ -34,11 +34,7 @@ class ContentGraphBuilder:
             packs_to_update: Pack ids to refresh. ``None``/empty means "no packs".
             connectors_to_update: Connector directory names (under ``connectors/``)
                 to refresh. ``None``/empty means "no connectors".
-
-        At least one of the two must be non-empty for any work to happen.
         """
-        if not packs_to_update and not connectors_to_update:
-            return
         self._parse_and_model_content(packs_to_update, connectors_to_update)
         self._create_or_update_graph()
 

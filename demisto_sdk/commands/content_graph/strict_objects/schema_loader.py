@@ -42,6 +42,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Dict, Optional
 
+from demisto_sdk.commands.common.logger import logger
+
 # Environment variable the infra CI job sets to point at the UCC schemas dir.
 ENV_VAR = "UCC_SCHEMAS_DIR"
 
@@ -209,10 +211,35 @@ def load_generated_modules() -> Dict[str, ModuleType]:
 
     Returns an empty dict if no schemas dir is available so callers can
     degrade gracefully to a no-op.
+
+    Logs at INFO level so CI can grep for `[UCC-schema-loader]` to prove
+    the schemas were discovered + generated as expected.
     """
     src = get_schemas_dir()
     if src is None:
+        logger.info(
+            "[UCC-schema-loader] no schemas dir available "
+            f"(${ENV_VAR} unset and no local fallback). Strict connector "
+            "validation will be skipped."
+        )
         return {}
+
+    source = "$" + ENV_VAR if os.environ.get(ENV_VAR) else "local fallback"
+    schema_files = sorted(src.glob("*.schema.json"))
+    defs_files = (
+        sorted((src / "definitions").glob("*.schema.json"))
+        if (src / "definitions").is_dir()
+        else []
+    )
+    logger.info(
+        f"[UCC-schema-loader] resolving schemas from {source}: {src}"
+    )
+    logger.info(
+        f"[UCC-schema-loader] discovered {len(schema_files)} top-level "
+        f"schema(s) + {len(defs_files)} definitions/ file(s): "
+        f"top={[f.name for f in schema_files]} "
+        f"defs={[f.name for f in defs_files]}"
+    )
 
     stage = _stage_schemas(src)
     out_dir = Path(tempfile.mkdtemp(prefix="ucc_generated_"))
@@ -221,11 +248,20 @@ def load_generated_modules() -> Dict[str, ModuleType]:
     except SchemaLoaderError:
         raise
     except Exception as exc:
+        logger.error(
+            f"[UCC-schema-loader] datamodel-codegen failed while processing "
+            f"{src!r}: {exc}"
+        )
         raise SchemaLoaderError(
             f"datamodel-codegen failed while processing {src!r}: {exc}"
         ) from exc
 
-    return _register_generated_modules(out_dir)
+    modules = _register_generated_modules(out_dir)
+    logger.info(
+        f"[UCC-schema-loader] generated {len(modules)} Pydantic module(s) "
+        f"in-memory: {sorted(modules)}"
+    )
+    return modules
 
 
 def get_generated_module(schema_stem: str) -> Optional[ModuleType]:

@@ -14,6 +14,7 @@ Contract for the infra CI job:
 """
 from __future__ import annotations
 
+import ast
 import importlib.util
 import os
 import shutil
@@ -25,6 +26,16 @@ from types import ModuleType
 from typing import Dict, List, Optional, Tuple
 
 from demisto_sdk.commands.common.logger import logger
+
+# Pydantic v1 raises `ValueError: ... field constraints are set but not
+# enforced: <name>` at class-creation time when these kwargs appear on a
+# `Field(...)` whose annotation is `List[...]` (especially with forward
+# references / recursive models, e.g. triggers.ConditionGroup.children).
+# datamodel-codegen 0.25.9 emits them anyway, so we strip them post-codegen.
+# Keys mirror the pydantic v1 kwargs; both aliases are dropped defensively.
+_UNENFORCED_LIST_FIELD_KWARGS: frozenset[str] = frozenset(
+    {"min_items", "max_items", "min_length", "max_length", "unique_items"}
+)
 
 ENV_VAR = "UCC_SCHEMAS_DIR"
 
@@ -177,6 +188,103 @@ def _run_codegen(stage_dir: Path, out_dir: Path, top_level_names: List[str]) -> 
         os.chdir(original_cwd)
 
 
+def _annotation_is_list(node: Optional[ast.AST]) -> bool:
+    """True if `node` is a `List[...]` / `list[...]` / `Optional[List[...]]`
+    annotation (recursive), as emitted by datamodel-codegen 0.25.9.
+
+    Handles the common shapes:
+      * `List[X]`                  -> Subscript(Name("List"), ...)
+      * `Optional[List[X]]`        -> Subscript(Name("Optional"), Subscript(...))
+      * `Union[List[X], None]`     -> Subscript(Name("Union"), Tuple(...))
+    """
+    if node is None:
+        return False
+    if isinstance(node, ast.Subscript):
+        value = node.value
+        if isinstance(value, ast.Name) and value.id in {"List", "list"}:
+            return True
+        if isinstance(value, ast.Name) and value.id in {"Optional", "Union"}:
+            slc = node.slice
+            # py3.9+: slice is the expression directly, not an ast.Index.
+            if isinstance(slc, ast.Tuple):
+                return any(_annotation_is_list(elt) for elt in slc.elts)
+            return _annotation_is_list(slc)
+    return False
+
+
+def _sanitize_generated_file(path: Path) -> bool:
+    """Strip pydantic-v1 unenforced constraints from `List[...]` Field()s.
+
+    datamodel-codegen 0.25.9 emits things like::
+
+        children: List[ConditionNode] = Field(..., min_items=1)
+
+    which pydantic v1 rejects at class-creation time because it cannot
+    enforce `min_items` on that annotation shape (see
+    `_UNENFORCED_LIST_FIELD_KWARGS`). We rewrite the file in place,
+    dropping only the offending kwargs from `Field(...)` calls whose
+    target annotation is a `List[...]`. All other lines are preserved.
+
+    Returns True iff the file was modified.
+    """
+    try:
+        source = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return False
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return False
+
+    changed = False
+
+    def _clean_field_call(call: ast.Call) -> bool:
+        """Drop unenforced kwargs from a `Field(...)` call; True if changed."""
+        func = call.func
+        is_field = (
+            (isinstance(func, ast.Name) and func.id == "Field")
+            or (isinstance(func, ast.Attribute) and func.attr == "Field")
+        )
+        if not is_field:
+            return False
+        new_kwargs = [
+            kw for kw in call.keywords
+            if kw.arg not in _UNENFORCED_LIST_FIELD_KWARGS
+        ]
+        if len(new_kwargs) != len(call.keywords):
+            call.keywords = new_kwargs
+            return True
+        return False
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.AnnAssign) and _annotation_is_list(node.annotation):
+            value = node.value
+            if isinstance(value, ast.Call) and _clean_field_call(value):
+                changed = True
+
+    if not changed:
+        return False
+
+    try:
+        new_source = ast.unparse(tree)
+    except AttributeError:
+        # `ast.unparse` requires py3.9+. Loader already targets 3.9+, but
+        # if unparse is unavailable we skip rather than corrupt the file.
+        return False
+    path.write_text(new_source, encoding="utf-8")
+    logger.debug(
+        f"[UCC-schema-loader] sanitized unenforced List Field constraints "
+        f"in {path}"
+    )
+    return True
+
+
+def _sanitize_generated_tree(out_dir: Path) -> None:
+    """Run :func:`_sanitize_generated_file` on every generated `.py`."""
+    for py in sorted(out_dir.rglob("*.py")):
+        _sanitize_generated_file(py)
+
+
 def _register_generated_modules(out_dir: Path) -> Dict[str, ModuleType]:
     """Import every generated `.py` file under `out_dir` as a real module.
 
@@ -290,6 +398,12 @@ def load_generated_modules() -> Dict[str, ModuleType]:
         raise SchemaLoaderError(
             f"datamodel-codegen failed while processing {src!r}: {exc}"
         ) from exc
+
+    # Post-codegen: strip pydantic-v1 unenforced List Field kwargs (e.g.
+    # `min_items=1` on `List[ConditionNode]`) that would otherwise raise
+    # `ValueError: ... field constraints are set but not enforced` at
+    # module import time in `_register_generated_modules` below.
+    _sanitize_generated_tree(out_dir)
 
     modules = _register_generated_modules(out_dir)
     logger.info(

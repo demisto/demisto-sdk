@@ -114,7 +114,6 @@ class IsUsingInvalidToVersionValidator(BaseValidator[ContentTypes], ABC):
         invalid_content_items = self.graph.find_uses_paths_with_invalid_toversion(
             file_paths=file_paths_to_validate, for_supported_versions=True
         )
-        logger.info(f"{file_paths_to_validate=}")
         result = []
         for content_item in invalid_content_items:
             used_content_items = [

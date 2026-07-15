@@ -3383,15 +3383,38 @@ def test_GR116_agent_exceeds_token_budget_is_invalid(graph_repo: Repo):
     assert str(AGENT_TOKEN_LIMIT) in results[0].message
 
 
+def _gr116_agent_row(mocker, agent_id: str, deps: list, **agent_fields) -> dict:
+    """A structure-query row: the (mocked) full agent node plus its deps.
+
+    The row carries the whole agent node, which GR116 reconstructs into an
+    ``AgentixAgent`` object supplying both the token-bearing fields
+    (name/description/systeminstructions/conversationstarters) and the
+    ``content_object`` for a flagged result - so GR116 never issues a second
+    graph query for the agent. The node is a Mock stamped with the same
+    ``object_id`` so ``_parse_agent`` (patched in the fixture) can map it back.
+    """
+    from demisto_sdk.commands.content_graph.objects.agentix_agent import (
+        AgentixAgent,
+    )
+
+    agent = mocker.Mock(spec=AgentixAgent)
+    agent.object_id = agent_id
+    agent.name = agent_fields.get("name")
+    agent.description = agent_fields.get("description")
+    agent.systeminstructions = agent_fields.get("systeminstructions")
+    agent.conversationstarters = agent_fields.get("conversationstarters")
+    return {"agent": {"object_id": agent_id, "_mock": agent}, "deps": deps}
+
+
 def _gr116_validator_with_query(mocker, query_rows):
     """Return a GR116 list-files validator whose graph is fully mocked.
 
     ``graph.run_single_query`` returns ``query_rows`` (the single structure
-    query result: ``[{"agent_id", "deps": [{"id","name","description","path",
-    "type"}, ...]}, ...]``). ``graph.search`` (used only to fetch the affected
-    agents themselves) returns nothing by default. The mocked graph is reachable
-    via ``validator.graph`` so tests can assert on the single
-    ``run_single_query`` call.
+    query result: ``[{"agent": <node>, "deps": [{"id","name","description",
+    "path","type"}, ...]}, ...]``). ``_parse_agent`` is patched to return the
+    ``AgentixAgent`` Mock carried on each row (avoiding a real ``parse_obj`` of
+    a hand-built node). The mocked graph is reachable via ``validator.graph`` so
+    tests can assert on the single ``run_single_query`` call.
     """
     from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget_list_files import (
         IsAgentTotalTokenBudgetValidatorListFiles,
@@ -3406,6 +3429,11 @@ def _gr116_validator_with_query(mocker, query_rows):
         "graph",
         new_callable=mocker.PropertyMock,
         return_value=graph,
+    )
+    mocker.patch.object(
+        IsAgentTotalTokenBudgetValidatorListFiles,
+        "_parse_agent",
+        side_effect=lambda node: node.get("_mock") if node else None,
     )
     return validator
 
@@ -3459,42 +3487,51 @@ def test_GR116_single_structure_query_for_all_modified_dependencies(mocker):
     """
     # given
     query_rows = [
-        {
-            "agent_id": "agent-1",
-            "deps": [
+        _gr116_agent_row(
+            mocker,
+            "agent-1",
+            [
                 _gr116_action_dep("action-1", path="p/action-1.yml"),
                 _gr116_skill_dep("skill-1", name="Skill 1", description="s1 desc"),
                 _gr116_collection_dep(
                     "collection-1", name="Coll 1", description="c1 desc"
                 ),
             ],
-        },
-        {
-            "agent_id": "agent-2",
-            "deps": [_gr116_action_dep("action-2", path="p/action-2.yml")],
-        },
+            name="Agent 1",
+        ),
+        _gr116_agent_row(
+            mocker,
+            "agent-2",
+            [_gr116_action_dep("action-2", path="p/action-2.yml")],
+            name="Agent 2",
+        ),
     ]
     validator = _gr116_validator_with_query(mocker, query_rows)
-    changed_ids = {"action-1", "action-2", "skill-1", "collection-1"}
+    changed_ids = ["action-1", "action-2", "skill-1", "collection-1"]
 
-    # when: fold the query rows into the per-agent grouped dependencies
-    agent_to_deps = validator._affected_agents_with_dependencies(
+    # when: fold the query rows into the per-agent (agent, grouped deps) list
+    affected = validator._affected_agents_with_dependencies(
         changed_ids, validate_all=False
     )
+    by_id = {agent.object_id: (agent, deps) for agent, deps in affected}
 
     # then: a single structure query, receiving every changed id
     assert validator.graph.run_single_query.call_count == 1
     _, kwargs = validator.graph.run_single_query.call_args
     assert sorted(kwargs["changed_ids"]) == sorted(changed_ids)
     assert kwargs["validate_all"] is False
-    # and the per-agent grouped dependencies
-    assert set(agent_to_deps) == {"agent-1", "agent-2"}
-    assert agent_to_deps["agent-1"].action_paths == ["p/action-1.yml"]
-    assert agent_to_deps["agent-1"].skill_summaries == [("Skill 1", "s1 desc")]
-    assert agent_to_deps["agent-1"].collection_summaries == [("Coll 1", "c1 desc")]
-    assert agent_to_deps["agent-2"].action_paths == ["p/action-2.yml"]
-    assert agent_to_deps["agent-2"].skill_summaries == []
-    assert agent_to_deps["agent-2"].collection_summaries == []
+    # and the per-agent (agent object + grouped dependencies)
+    assert set(by_id) == {"agent-1", "agent-2"}
+    agent_1, deps_1 = by_id["agent-1"]
+    assert agent_1.object_id == "agent-1"
+    assert agent_1.name == "Agent 1"
+    assert deps_1.action_paths == ["p/action-1.yml"]
+    assert deps_1.skill_summaries == [("Skill 1", "s1 desc")]
+    assert deps_1.collection_summaries == [("Coll 1", "c1 desc")]
+    _, deps_2 = by_id["agent-2"]
+    assert deps_2.action_paths == ["p/action-2.yml"]
+    assert deps_2.skill_summaries == []
+    assert deps_2.collection_summaries == []
 
 
 def test_GR116_validate_all_files_passes_empty_changed_ids(mocker):
@@ -3543,10 +3580,12 @@ def test_GR116_modified_agent_itself_is_included(mocker):
 
     # given: the query returns the modified agent (Cypher matched it by its id)
     query_rows = [
-        {
-            "agent_id": "agent-1",
-            "deps": [_gr116_action_dep("action-1", path="p/action-1.yml")],
-        }
+        _gr116_agent_row(
+            mocker,
+            "agent-1",
+            [_gr116_action_dep("action-1", path="p/action-1.yml")],
+            name="Agent 1",
+        )
     ]
     validator = _gr116_validator_with_query(mocker, query_rows)
     modified_agent = mocker.Mock(spec=AgentixAgent, object_id="agent-1")
@@ -3555,15 +3594,17 @@ def test_GR116_modified_agent_itself_is_included(mocker):
     changed_ids = [
         ci.object_id for ci in [modified_agent] if isinstance(ci, AgentixAgent)
     ]
-    agent_to_deps = validator._affected_agents_with_dependencies(
+    affected = validator._affected_agents_with_dependencies(
         changed_ids, validate_all=False
     )
+    by_id = {agent.object_id: (agent, deps) for agent, deps in affected}
 
     # then
     _, kwargs = validator.graph.run_single_query.call_args
     assert kwargs["changed_ids"] == ["agent-1"]
-    assert set(agent_to_deps) == {"agent-1"}
-    assert agent_to_deps["agent-1"].action_paths == ["p/action-1.yml"]
+    assert set(by_id) == {"agent-1"}
+    _, deps = by_id["agent-1"]
+    assert deps.action_paths == ["p/action-1.yml"]
 
 
 def test_GR116_agent_without_dependencies_has_empty_dep_groups(mocker):
@@ -3581,9 +3622,10 @@ def test_GR116_agent_without_dependencies_has_empty_dep_groups(mocker):
     """
     # given: a null dep row, as OPTIONAL MATCH returns for a depless agent
     query_rows = [
-        {
-            "agent_id": "agent-1",
-            "deps": [
+        _gr116_agent_row(
+            mocker,
+            "agent-1",
+            [
                 {
                     "id": None,
                     "name": None,
@@ -3592,20 +3634,23 @@ def test_GR116_agent_without_dependencies_has_empty_dep_groups(mocker):
                     "type": None,
                 }
             ],
-        }
+            name="Agent 1",
+        )
     ]
     validator = _gr116_validator_with_query(mocker, query_rows)
 
     # when
-    agent_to_deps = validator._affected_agents_with_dependencies(
-        {"agent-1"}, validate_all=False
+    affected = validator._affected_agents_with_dependencies(
+        ["agent-1"], validate_all=False
     )
+    by_id = {agent.object_id: (agent, deps) for agent, deps in affected}
 
     # then
-    assert set(agent_to_deps) == {"agent-1"}
-    assert agent_to_deps["agent-1"].action_paths == []
-    assert agent_to_deps["agent-1"].skill_summaries == []
-    assert agent_to_deps["agent-1"].collection_summaries == []
+    assert set(by_id) == {"agent-1"}
+    _, deps = by_id["agent-1"]
+    assert deps.action_paths == []
+    assert deps.skill_summaries == []
+    assert deps.collection_summaries == []
 
 
 def test_GR116_no_affected_agents_returns_no_results(mocker):
@@ -3677,9 +3722,6 @@ def test_GR116_actions_reparsed_from_path_skills_collections_from_graph(mocker):
     from demisto_sdk.commands.content_graph.objects.agentix_action import (
         AgentixAction,
     )
-    from demisto_sdk.commands.content_graph.objects.agentix_agent import (
-        AgentixAgent,
-    )
 
     # given: a parsed action carrying an arg + output (only present via YAML)
     parsed_action = mocker.Mock(spec=AgentixAction)
@@ -3699,28 +3741,26 @@ def test_GR116_actions_reparsed_from_path_skills_collections_from_graph(mocker):
     )
 
     query_rows = [
-        {
-            "agent_id": "agent-1",
-            "deps": [
+        _gr116_agent_row(
+            mocker,
+            "agent-1",
+            [
                 _gr116_action_dep("action-1", path="p/action-1.yml"),
                 _gr116_skill_dep("skill-1", name="Skill 1", description="s1 desc"),
                 _gr116_collection_dep(
                     "collection-1", name="Coll 1", description="c1 desc"
                 ),
             ],
-        }
+            name="Agent 1",
+            description="agent desc",
+            systeminstructions="agent instructions",
+            conversationstarters=["starter one", "starter two"],
+        )
     ]
     validator = _gr116_validator_with_query(mocker, query_rows)
-    deps = validator._affected_agents_with_dependencies(
-        {"action-1"}, validate_all=False
-    )["agent-1"]
-
-    agent = mocker.Mock(spec=AgentixAgent)
-    agent.object_id = "agent-1"
-    agent.name = "Agent 1"
-    agent.description = "agent desc"
-    agent.systeminstructions = "agent instructions"
-    agent.system_instructions_file = None
+    agent, deps = validator._affected_agents_with_dependencies(
+        ["action-1"], validate_all=False
+    )[0]
 
     # when
     fragments = validator._agent_fragments(agent, deps)
@@ -3733,6 +3773,8 @@ def test_GR116_actions_reparsed_from_path_skills_collections_from_graph(mocker):
     # the skill and collection contribute their graph name+description directly
     assert "Skill 1" in fragments and "s1 desc" in fragments
     assert "Coll 1" in fragments and "c1 desc" in fragments
+    # the agent's conversation starters count toward its token budget
+    assert "starter one" in fragments and "starter two" in fragments
 
 
 def test_GR116_unparseable_action_path_is_skipped(mocker):
@@ -3747,10 +3789,6 @@ def test_GR116_unparseable_action_path_is_skipped(mocker):
     - The unparseable action contributes no fragments (it is skipped) rather
       than failing the whole validation.
     """
-    from demisto_sdk.commands.content_graph.objects.agentix_agent import (
-        AgentixAgent,
-    )
-
     # given: from_path returns None (unparseable / not an action)
     mocker.patch(
         "demisto_sdk.commands.validate.validators.GR_validators."
@@ -3758,22 +3796,19 @@ def test_GR116_unparseable_action_path_is_skipped(mocker):
         return_value=None,
     )
     query_rows = [
-        {
-            "agent_id": "agent-1",
-            "deps": [_gr116_action_dep("action-1", path="p/broken.yml")],
-        }
+        _gr116_agent_row(
+            mocker,
+            "agent-1",
+            [_gr116_action_dep("action-1", path="p/broken.yml")],
+            name="Agent 1",
+            description="agent desc",
+            systeminstructions="agent instructions",
+        )
     ]
     validator = _gr116_validator_with_query(mocker, query_rows)
-    deps = validator._affected_agents_with_dependencies(
-        {"action-1"}, validate_all=False
-    )["agent-1"]
-
-    agent = mocker.Mock(spec=AgentixAgent)
-    agent.object_id = "agent-1"
-    agent.name = "Agent 1"
-    agent.description = "agent desc"
-    agent.systeminstructions = "agent instructions"
-    agent.system_instructions_file = None
+    agent, deps = validator._affected_agents_with_dependencies(
+        ["action-1"], validate_all=False
+    )[0]
 
     # when
     fragments = validator._agent_fragments(agent, deps)

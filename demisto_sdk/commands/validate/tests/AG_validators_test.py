@@ -707,7 +707,9 @@ def test_AG112_skill_within_token_budget():
         skill_name="small_skill", skill_content="A short body."
     )
 
-    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items([skill])
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items(
+        [skill]
+    )
 
     assert results == []
 
@@ -729,7 +731,9 @@ def test_AG112_skill_exceeds_token_budget():
         skill_name="big_skill", skill_content=oversized_body
     )
 
-    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items([skill])
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items(
+        [skill]
+    )
 
     assert len(results) == 1
     assert "is too large" in results[0].message
@@ -1100,7 +1104,9 @@ def test_AG112_action_within_token_budget_passes():
         values=["A short description."],
     )
 
-    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items([action])
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items(
+        [action]
+    )
 
     assert not results
 
@@ -1122,7 +1128,9 @@ def test_AG112_action_exceeds_token_budget_fails():
         values=[oversized_description],
     )
 
-    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items([action])
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items(
+        [action]
+    )
 
     assert len(results) == 1
     assert str(ACTION_TOKEN_LIMIT) in results[0].message
@@ -1149,7 +1157,9 @@ def test_AG112_skill_description_counts_toward_budget():
         skill_content="Tiny body.",
     )
 
-    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items([skill])
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items(
+        [skill]
+    )
 
     assert len(results) == 1
     assert "is too large" in results[0].message

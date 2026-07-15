@@ -3,6 +3,7 @@ exposes at least one pydantic.BaseModel with a resolvable schema.
 
 Skips when the loader has nothing (no `$UCC_SCHEMAS_DIR`, missing dep).
 """
+
 import pydantic
 import pytest
 
@@ -37,6 +38,8 @@ def test_every_generated_module_exposes_a_basemodel():
             and issubclass(obj, pydantic.BaseModel)
             and obj is not pydantic.BaseModel
         ]
-        assert model_classes, f"module {stem!r} defines no pydantic.BaseModel subclasses"
+        assert (
+            model_classes
+        ), f"module {stem!r} defines no pydantic.BaseModel subclasses"
         for cls in model_classes:
             cls.schema()

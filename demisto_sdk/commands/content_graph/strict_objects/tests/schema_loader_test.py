@@ -1,10 +1,11 @@
 """Tests for the runtime UCC schema loader ($UCC_SCHEMAS_DIR flow)."""
-import json
+
 from pathlib import Path
 
 import pydantic
 import pytest
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.strict_objects.schema_loader import (
     ENV_VAR,
     SchemaLoaderError,
@@ -12,6 +13,8 @@ from demisto_sdk.commands.content_graph.strict_objects.schema_loader import (
     load_generated_modules,
     reset_cache,
 )
+
+json = JSON_Handler()
 
 # Minimal self-contained schemas: no $ref (avoids datamodel-codegen URI
 # quirks). Real UCC schemas exercise $ref end-to-end via the drift tests.

@@ -73,10 +73,9 @@ class FieldGroup(BaseModel):
 
 
 # ConnectorOwnership / ConnectorMetadata / ConnectorSettings inherit from
-# the Pydantic classes built at runtime from $UCC_SCHEMAS_DIR/connector.schema.json.
-# See strict_objects/schema_loader.py for the loader contract.
-# When schemas are unavailable (env var unset, codegen dep missing), fall
-# back to minimal hand-written shapes so the graph object still constructs.
+# the Pydantic classes built at runtime from $UCC_SCHEMAS_DIR (see
+# strict_objects/schema_loader.py). Fall back to hand-written shapes when
+# schemas are unavailable so the graph object still constructs.
 def _resolve_generated_types():
     try:
         from demisto_sdk.commands.content_graph.strict_objects.schema_loader import (
@@ -150,10 +149,8 @@ class GeneralConfigurations(BaseModel):
 # ============================================================
 
 
-# NOTE: ConnectorOwnership / ConnectorMetadata / ConnectorSettings are now
-# defined higher up in this file (via the auto-generated
-# `_generated.connector_schema` module) so they stay in sync with the
-# upstream UCC JSON Schema automatically. Do not re-declare them here.
+# ConnectorOwnership / ConnectorMetadata / ConnectorSettings are defined
+# above via the runtime UCC schema loader. Do not re-declare them here.
 
 
 # ============================================================

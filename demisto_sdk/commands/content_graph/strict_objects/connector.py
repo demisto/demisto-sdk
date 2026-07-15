@@ -1,13 +1,8 @@
 """Strict Pydantic model for `connector.yaml`, built at runtime from
-`$UCC_SCHEMAS_DIR/connector.schema.json`.
-
-Resolved lazily via :func:`get_strict_connector` so importing this module
-never triggers codegen. Returns `None` when the loader has nothing (env
-var unset, codegen dep missing) so callers can degrade gracefully.
-
-Wired into `ConnectorParser.strict_object`; ST110 surfaces upstream schema
-drift as `structure_errors`.
+`$UCC_SCHEMAS_DIR/connector.schema.json`. Resolved lazily; returns None
+when the loader has nothing so callers can degrade gracefully.
 """
+
 from typing import Optional, Type
 
 from demisto_sdk.commands.content_graph.strict_objects.common import BaseStrictModel

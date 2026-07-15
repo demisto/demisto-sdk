@@ -4,6 +4,7 @@
 
 Skips when the schemas / codegen dep are unavailable.
 """
+
 from typing import Set, Type
 
 import pydantic
@@ -14,7 +15,9 @@ def _field_names(model: Type[pydantic.BaseModel]) -> Set[str]:
     return set(model.__fields__.keys())
 
 
-def _missing(hand: Type[pydantic.BaseModel], upstream: Type[pydantic.BaseModel]) -> Set[str]:
+def _missing(
+    hand: Type[pydantic.BaseModel], upstream: Type[pydantic.BaseModel]
+) -> Set[str]:
     return _field_names(upstream) - _field_names(hand)
 
 
@@ -39,9 +42,9 @@ def test_connector_metadata_covers_all_upstream_fields():
 
     upstream = _load_connector_schema_module().Metadata
     missing = _missing(ConnectorMetadata, upstream)
-    assert not missing, (
-        f"ConnectorMetadata is missing upstream fields: {sorted(missing)}"
-    )
+    assert (
+        not missing
+    ), f"ConnectorMetadata is missing upstream fields: {sorted(missing)}"
 
 
 def test_connector_settings_covers_all_upstream_fields():
@@ -49,9 +52,9 @@ def test_connector_settings_covers_all_upstream_fields():
 
     upstream = _load_connector_schema_module().Settings
     missing = _missing(ConnectorSettings, upstream)
-    assert not missing, (
-        f"ConnectorSettings is missing upstream fields: {sorted(missing)}"
-    )
+    assert (
+        not missing
+    ), f"ConnectorSettings is missing upstream fields: {sorted(missing)}"
 
 
 def test_connector_ownership_covers_all_upstream_fields():
@@ -59,19 +62,21 @@ def test_connector_ownership_covers_all_upstream_fields():
 
     upstream = _load_connector_schema_module().Ownership
     missing = _missing(ConnectorOwnership, upstream)
-    assert not missing, (
-        f"ConnectorOwnership is missing upstream fields: {sorted(missing)}"
-    )
+    assert (
+        not missing
+    ), f"ConnectorOwnership is missing upstream fields: {sorted(missing)}"
 
 
 @pytest.mark.parametrize(
     "hand_model_name",
     ["ConnectorMetadata", "ConnectorSettings", "ConnectorOwnership"],
 )
-def test_report_hand_written_fields_not_in_upstream(hand_model_name, capsys):
-    """Informational: hand-written fields upstream doesn't know about."""
+def test_hand_written_fields_are_subset_of_upstream(hand_model_name):
+    """Hand-written model should not declare fields upstream doesn't know."""
     module = _load_connector_schema_module()
-    from demisto_sdk.commands.content_graph.objects import connector as objects_connector
+    from demisto_sdk.commands.content_graph.objects import (
+        connector as objects_connector,
+    )
 
     hand = getattr(objects_connector, hand_model_name)
     upstream_map = {
@@ -80,5 +85,6 @@ def test_report_hand_written_fields_not_in_upstream(hand_model_name, capsys):
         "ConnectorOwnership": module.Ownership,
     }
     extras = _field_names(hand) - _field_names(upstream_map[hand_model_name])
-    if extras:
-        print(f"\n[INFO] {hand_model_name} declares extra fields: {sorted(extras)}")
+    assert (
+        not extras
+    ), f"{hand_model_name} declares fields not in upstream schema: {sorted(extras)}"

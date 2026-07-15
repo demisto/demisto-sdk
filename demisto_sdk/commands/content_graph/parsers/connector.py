@@ -87,11 +87,9 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             pack_supported_modules=pack_supported_modules or [],
             git_sha=git_sha,
         )
-        # ConnectorParser inherits from ContentItemParser directly (not
-        # Yaml/JsonContentItemParser), so the structure-validation hook in
-        # those classes never runs for us automatically. Trigger it here
-        # against connector.yaml so any UCC-schema drift becomes an ST110
-        # finding. Skips if StrictConnector is None (schemas unavailable).
+        # ConnectorParser doesn't inherit from Yaml/JsonContentItemParser,
+        # so trigger structure validation manually. Skips when the strict
+        # class is unavailable (schemas not loaded).
         strict_cls = get_strict_connector()
         if strict_cls is not None:
             self.structure_errors = validate_structure(

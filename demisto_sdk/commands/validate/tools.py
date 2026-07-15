@@ -387,6 +387,42 @@ def skill_text_fragments(skill: AgentixSkill) -> List[str]:
     return [skill.name, skill.description, body]
 
 
+def skill_summary_fragments(skill: AgentixSkill) -> List[str]:
+    """Collect the summary-only text fragments of an AgentixSkill.
+
+    Includes ONLY the skill name and description, deliberately excluding the
+    skill body. This is used for the agent's total token budget (GR116), where a
+    dependent skill contributes only its name and description to the agent's
+    context. For the standalone skill token budget (AG112) use
+    :func:`skill_text_fragments`, which also counts the full skill body.
+
+    Args:
+        skill: The AgentixSkill to inspect.
+
+    Returns:
+        A flat list of the skill's name and description only.
+    """
+    return [skill.name, skill.description]
+
+
+def collection_summary_fragments(collection: Collection) -> List[Optional[str]]:
+    """Collect the summary-only text fragments of a Collection.
+
+    Includes ONLY the collection name and description. This is used for the
+    agent's total token budget (GR116), where a dependent collection contributes
+    only its name and description to the agent's context.
+
+    Args:
+        collection: The Collection to inspect.
+
+    Returns:
+        A flat list of the collection's name and description only. The
+        description may be ``None`` (it is optional in the collection schema),
+        which :func:`estimate_tokens_for_texts` treats as empty.
+    """
+    return [collection.name, collection.description]
+
+
 def estimate_content_tokens(item: Union[AgentixAction, AgentixSkill]) -> int:
     """Estimate the total token budget consumed by an AgentixAction or AgentixSkill.
 
@@ -438,6 +474,7 @@ def estimate_agent_total_tokens(
     agent: AgentixAgent,
     dependent_actions: Iterable[AgentixAction] = (),
     dependent_skills: Iterable[AgentixSkill] = (),
+    dependent_collections: Iterable[Collection] = (),
 ) -> int:
     """Estimate the total token budget consumed by an AgentixAgent context.
 
@@ -445,8 +482,13 @@ def estimate_agent_total_tokens(
     - The agent's own name, description, and system instructions.
     - For each dependent action: its full definition (name, description, args
       schema, and outputs schema), as counted by :func:`action_text_fragments`.
-    - For each dependent skill: its full definition (name, description, and skill
-      body), as counted by :func:`skill_text_fragments`.
+    - For each dependent skill: ONLY its name and description, as counted by
+      :func:`skill_summary_fragments`. The skill body is deliberately excluded
+      here because it is not injected into the agent's context; the full skill
+      body is only counted by the standalone skill budget (AG112, via
+      :func:`skill_text_fragments`).
+    - For each dependent collection: ONLY its name and description, as counted by
+      :func:`collection_summary_fragments`.
 
     Dependencies are passed in explicitly (already resolved from the content
     graph) so this helper stays decoupled from graph traversal and easy to test.
@@ -455,13 +497,17 @@ def estimate_agent_total_tokens(
         agent: The AgentixAgent to inspect.
         dependent_actions: The actions the agent depends on (via the graph).
         dependent_skills: The skills the agent depends on (via the graph).
+        dependent_collections: The collections the agent depends on (via the
+            graph).
 
     Returns:
         The estimated total token count for the agent's full context.
     """
-    fragments: List[str] = list(agent_text_fragments(agent))
+    fragments: List[Optional[str]] = list(agent_text_fragments(agent))
     for action in dependent_actions:
         fragments.extend(action_text_fragments(action))
     for skill in dependent_skills:
-        fragments.extend(skill_text_fragments(skill))
+        fragments.extend(skill_summary_fragments(skill))
+    for collection in dependent_collections:
+        fragments.extend(collection_summary_fragments(collection))
     return estimate_tokens_for_texts(fragments)

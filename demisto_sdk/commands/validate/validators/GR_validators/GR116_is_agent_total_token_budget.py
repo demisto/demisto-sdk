@@ -1,31 +1,61 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Iterable, NamedTuple
+from pathlib import Path
+from typing import Iterable, List, NamedTuple, Optional
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
-from demisto_sdk.commands.validate.tools import estimate_agent_total_tokens
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.collection import Collection
+from demisto_sdk.commands.validate.tools import (
+    action_text_fragments,
+    agent_text_fragments,
+    estimate_tokens_for_texts,
+)
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
 
-class _DepIds(NamedTuple):
-    """The direct action/skill dependency ids of a single agent."""
+class _Dep(NamedTuple):
+    """A single agent dependency as returned by the structure query.
 
-    actions: set[str]
-    skills: set[str]
+    ``name``/``description`` are graph node properties (sufficient to score
+    skills and collections). ``path`` points at the dependency's source file so
+    an action can be re-parsed from disk to recover its args/outputs schema,
+    which is deliberately excluded from the graph and therefore unavailable on
+    graph-property objects.
+    """
+
+    id: str
+    name: Optional[str]
+    description: Optional[str]
+    path: Optional[str]
+    type: Optional[str]
 
 
-# The union lets modified actions/skills (not just agents) reach this validator:
-# should_run keeps an item only if it is an instance of ContentTypes, and GR116
-# must also run when an agent's dependency changes (mirrors GR110's union).
-ContentTypes = AgentixAgent | AgentixAction | AgentixSkill
+class _Deps(NamedTuple):
+    """The direct dependencies of one agent, grouped for token estimation.
+
+    - ``action_paths``: source-file paths of dependent actions; each is
+      re-parsed from disk so its args/outputs (excluded from the graph) count
+      toward the budget.
+    - ``skill_summaries`` / ``collection_summaries``: ``(name, description)``
+      pairs read straight from the graph, which is all a skill/collection
+      contributes to the agent total.
+    """
+
+    action_paths: list[str]
+    skill_summaries: list[tuple[Optional[str], Optional[str]]]
+    collection_summaries: list[tuple[Optional[str], Optional[str]]]
+
+
+ContentTypes = AgentixAgent | AgentixAction | AgentixSkill | Collection
 
 AGENT_TOKEN_LIMIT = 50000
 
@@ -33,7 +63,10 @@ AGENT_TOKEN_LIMIT = 50000
 #   step 1 - the affected agents: when $validate_all is true, every agent;
 #            otherwise each agent that was modified itself, or that directly
 #            uses a modified action/skill (both bound in $changed_ids).
-#   step 2 - for every affected agent, all its direct action/skill dependencies.
+#   step 2 - for every affected agent, all its direct action/skill/collection
+#            dependencies, returned with the graph-node fields the token budget
+#            needs (name + description) plus the source path (used to re-parse an
+#            action's args/outputs, which are not stored in the graph).
 # $validate_all (not the emptiness of $changed_ids) drives the validate-all-files
 # fallback: in list/git mode $changed_ids can legitimately be empty and must then
 # select NO agents rather than all of them.
@@ -48,10 +81,17 @@ WITH a WHERE is_affected
 WITH DISTINCT a
 OPTIONAL MATCH (a)-[:{RelationshipType.USES}]->(dep)
 WHERE dep.content_type IN [
-    '{ContentType.AGENTIX_ACTION}', '{ContentType.AGENTIX_SKILL}'
+    '{ContentType.AGENTIX_ACTION}', '{ContentType.AGENTIX_SKILL}',
+    '{ContentType.COLLECTION}'
 ]
 RETURN a.object_id AS agent_id,
-       collect(DISTINCT {{id: dep.object_id, type: dep.content_type}}) AS deps
+       collect(DISTINCT {{
+           id: dep.object_id,
+           name: dep.name,
+           description: dep.description,
+           path: dep.path,
+           type: dep.content_type
+       }}) AS deps
 """
 
 
@@ -59,19 +99,21 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
     error_code = "GR116"
     description = (
         "Checks that an AgentixAgent's total context - its name, description, and "
-        "system instructions plus the name and description of every action and skill "
-        f"it depends on - does not exceed {AGENT_TOKEN_LIMIT} estimated tokens."
+        "system instructions plus the name and description of every action, skill, "
+        "and collection it depends on (and, for actions, their args/outputs "
+        f"schema) - does not exceed {AGENT_TOKEN_LIMIT} estimated tokens."
     )
     rationale = (
         "At runtime the agent's own definition and the definitions of all its "
-        "registered actions and skills are injected into the LLM context. If the "
-        "combined size is too large it displaces task data in the context window "
-        "and degrades the agent's performance."
+        "registered actions, skills, and collections are injected into the LLM "
+        "context. If the combined size is too large it displaces task data in the "
+        "context window and degrades the agent's performance."
     )
     error_message = (
         "The AgentixAgent '{0}' has a total estimated context of {1} tokens, which "
         f"exceeds the maximum allowed of {AGENT_TOKEN_LIMIT}. Reduce the agent's "
-        "system instructions or the number/size of its actions and skills."
+        "system instructions or the number/size of its actions, skills, and "
+        "collections."
     )
     related_field = "systeminstructions"
     is_auto_fixable = False
@@ -81,14 +123,32 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         content_items: Iterable[ContentTypes],
         validate_all_files: bool = False,
     ) -> list[ValidationResult]:
-        changed_ids = self._changed_agentix_ids(content_items)
+        logger.info(
+            f"[{self.error_code}] START obtain_invalid_content_items_using_graph "
+            f"(validate_all_files={validate_all_files})."
+        )
+        changed_ids = (
+            []
+            if validate_all_files
+            else [content_item.object_id for content_item in content_items]
+        )
+        logger.info(
+            f"[{self.error_code}] Computed changed_ids ({len(changed_ids)}): "
+            f"{sorted(changed_ids)}."
+        )
+
         if not validate_all_files and not changed_ids:
             logger.info(
-                f"[{self.error_code}] No modified agents/actions/skills - "
-                "nothing to validate."
+                f"[{self.error_code}] No modified agents/actions/skills/collections - "
+                "nothing to validate. Returning [] (no graph query issued)."
             )
             return []
 
+        logger.info(
+            f"[{self.error_code}] Resolving affected agents and their "
+            f"dependencies via the single structure query "
+            f"(validate_all={validate_all_files})."
+        )
         agent_to_deps = self._affected_agents_with_dependencies(
             changed_ids, validate_all_files
         )
@@ -96,7 +156,7 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             logger.info(
                 f"[{self.error_code}] No affected agents to validate "
                 f"(validate_all_files={validate_all_files}, "
-                f"changed_ids={sorted(changed_ids)})."
+                f"changed_ids={sorted(changed_ids)}). Returning []."
             )
             return []
 
@@ -104,52 +164,37 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             f"[{self.error_code}] Validating {len(agent_to_deps)} agent(s): "
             f"{sorted(agent_to_deps)}."
         )
-        agents, actions_by_id, skills_by_id = self._hydrate(agent_to_deps)
+        agents = self._fetch_agents(set(agent_to_deps))
+        logger.info(
+            f"[{self.error_code}] Fetched {len(agents)} agent object(s) from the "
+            f"graph for {len(agent_to_deps)} affected agent id(s)."
+        )
 
         results = [
             result
             for agent in agents
-            if (
-                result := self._validate_agent(
-                    agent, agent_to_deps, actions_by_id, skills_by_id
-                )
-            )
+            if (result := self._validate_agent(agent, agent_to_deps))
         ]
         logger.info(
-            f"[{self.error_code}] Finished. Found {len(results)} invalid item(s)."
+            f"[{self.error_code}] Finished. Found {len(results)} invalid item(s) "
+            f"out of {len(agents)} validated agent(s)."
         )
         return results
-
-    @staticmethod
-    def _changed_agentix_ids(content_items: Iterable[ContentTypes]) -> set[str]:
-        """The object_ids of the modified AgentixAgent/Action/Skill items."""
-        return {
-            content_item.object_id
-            for content_item in content_items
-            if isinstance(content_item, (AgentixAgent, AgentixAction, AgentixSkill))
-        }
 
     def _validate_agent(
         self,
         agent: AgentixAgent,
-        agent_to_deps: dict[str, _DepIds],
-        actions_by_id: dict[str, AgentixAction],
-        skills_by_id: dict[str, AgentixSkill],
+        agent_to_deps: dict[str, _Deps],
     ) -> ValidationResult | None:
         """Estimate the agent's total token budget; flag it when over the limit."""
-        deps = agent_to_deps.get(agent.object_id, _DepIds(set(), set()))
-        dependent_actions = [
-            actions_by_id[i] for i in deps.actions if i in actions_by_id
-        ]
-        dependent_skills = [skills_by_id[i] for i in deps.skills if i in skills_by_id]
-        total_tokens = estimate_agent_total_tokens(
-            agent, dependent_actions, dependent_skills
-        )
+        deps = agent_to_deps.get(agent.object_id, _Deps([], [], []))
+        total_tokens = estimate_tokens_for_texts(self._agent_fragments(agent, deps))
         logger.info(
             f"[{self.error_code}] Agent '{agent.display_name}' "
             f"(id='{agent.object_id}'): estimated {total_tokens} tokens across "
-            f"{len(dependent_actions)} action(s) and {len(dependent_skills)} "
-            f"skill(s) (limit {AGENT_TOKEN_LIMIT})."
+            f"{len(deps.action_paths)} action(s), {len(deps.skill_summaries)} "
+            f"skill(s), and {len(deps.collection_summaries)} collection(s) "
+            f"(limit {AGENT_TOKEN_LIMIT})."
         )
         if total_tokens <= AGENT_TOKEN_LIMIT:
             return None
@@ -164,66 +209,146 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             content_object=agent,
         )
 
+    @staticmethod
+    def _agent_fragments(agent: AgentixAgent, deps: _Deps) -> List[Optional[str]]:
+        """All token-bearing text fragments of the agent and its dependencies.
+
+        The agent's own fields and each dependency's name/description come from
+        the graph; each action is additionally re-parsed from its source path so
+        its args/outputs schema (excluded from the graph) is included.
+        """
+        fragments: List[Optional[str]] = list(agent_text_fragments(agent))
+        logger.info(
+            f"[GR116] Building fragments for agent '{agent.object_id}': "
+            f"{len(fragments)} own fragment(s), then {len(deps.action_paths)} "
+            f"action path(s), {len(deps.skill_summaries)} skill summary(ies), "
+            f"{len(deps.collection_summaries)} collection summary(ies)."
+        )
+        for action_path in deps.action_paths:
+            action = IsAgentTotalTokenBudgetValidator._parse_action(action_path)
+            if action is None:
+                logger.info(
+                    f"[GR116] Action path '{action_path}' did not parse into an "
+                    "AgentixAction - contributing no tokens."
+                )
+                continue
+            action_fragments = action_text_fragments(action)
+            logger.info(
+                f"[GR116] Re-parsed action '{action.object_id}' from "
+                f"'{action_path}': +{len(action_fragments)} fragment(s) "
+                "(incl. args/outputs)."
+            )
+            fragments.extend(action_fragments)
+        for name, description in deps.skill_summaries:
+            logger.info(f"[GR116] Adding skill summary (name='{name}') from the graph.")
+            fragments.extend([name, description])
+        for name, description in deps.collection_summaries:
+            logger.info(
+                f"[GR116] Adding collection summary (name='{name}') from the graph."
+            )
+            fragments.extend([name, description])
+        logger.info(
+            f"[GR116] Agent '{agent.object_id}' assembled {fragments} total "
+            "text fragment(s) for token estimation."
+        )
+        return fragments
+
+    @staticmethod
+    def _parse_action(path: str) -> Optional[AgentixAction]:
+        """Parse an AgentixAction from disk so its args/outputs are populated.
+
+        The graph stores an action's scalar fields but excludes its args/outputs
+        schema, so those must be recovered by re-parsing the source YAML. A path
+        that cannot be parsed into an AgentixAction is skipped (it just does not
+        contribute tokens) rather than failing the whole validation.
+        """
+        try:
+            parsed = BaseContent.from_path(Path(path))
+        except Exception:  # unreadable/invalid path -> contribute no tokens
+            logger.debug(f"[GR116] Could not parse action from '{path}'.")
+            return None
+        return parsed if isinstance(parsed, AgentixAction) else None
+
     def _affected_agents_with_dependencies(
-        self, changed_ids: set[str], validate_all: bool
-    ) -> dict[str, _DepIds]:
-        """Return ``{agent_id: _DepIds(actions, skills)}`` in one graph query.
+        self, changed_ids: list[str], validate_all: bool
+    ) -> dict[str, _Deps]:
+        """Return ``{agent_id: _Deps(...)}`` from a single structure query.
 
         Runs :data:`_AGENT_DEPENDENCIES_QUERY` (every agent when ``validate_all``,
         otherwise those modified themselves or owning a directly-modified
-        dependency) and folds the result into a per-agent dependency table.
+        dependency) and folds each agent's dependency rows into the grouped
+        :class:`_Deps`: action source paths (re-parsed later for args/outputs) and
+        skill/collection ``(name, description)`` summaries read straight from the
+        graph.
         """
+        logger.info(
+            f"[GR116] Running structure query "
+            f"(validate_all={validate_all}, changed_ids={sorted(changed_ids)})."
+        )
         rows = self.graph.run_single_query(
             _AGENT_DEPENDENCIES_QUERY,
-            changed_ids=list(changed_ids),
+            changed_ids=changed_ids,
             validate_all=validate_all,
         )
-        agent_to_deps: dict[str, _DepIds] = {}
-        for row in rows or []:
-            deps = agent_to_deps.setdefault(row["agent_id"], _DepIds(set(), set()))
-            for dep in row.get("deps") or []:
-                # OPTIONAL MATCH yields a null dep for a dependency-less agent.
-                if dep.get("id") is None:
-                    continue
-                if dep["type"] == ContentType.AGENTIX_ACTION.value:
-                    deps.actions.add(dep["id"])
-                elif dep["type"] == ContentType.AGENTIX_SKILL.value:
-                    deps.skills.add(dep["id"])
+        rows = rows or []
+        logger.info(f"[GR116] Structure query returned {len(rows)} agent row(s).")
+        agent_to_deps: dict[str, _Deps] = {}
+        for row in rows:
+            agent_id = row["agent_id"]
+            deps = agent_to_deps.setdefault(agent_id, _Deps([], [], []))
+            raw_deps = row.get("deps") or []
+            logger.info(
+                f"[GR116] Agent '{agent_id}': routing {len(raw_deps)} raw "
+                "dependency row(s)."
+            )
+            for raw in raw_deps:
+                self._route_dep(_Dep(**raw), deps)
+            logger.info(
+                f"[GR116] Agent '{agent_id}' grouped deps: "
+                f"{len(deps.action_paths)} action(s), "
+                f"{len(deps.skill_summaries)} skill(s), "
+                f"{len(deps.collection_summaries)} collection(s)."
+            )
         return agent_to_deps
 
-    def _hydrate(
-        self, agent_to_deps: dict[str, _DepIds]
-    ) -> tuple[
-        list[AgentixAgent],
-        dict[str, AgentixAction],
-        dict[str, AgentixSkill],
-    ]:
-        """Batch-fetch the model objects needed for token estimation.
+    @staticmethod
+    def _route_dep(dep: _Dep, deps: _Deps) -> None:
+        """Add a single dependency row to the agent's grouped ``_Deps``."""
+        # OPTIONAL MATCH yields a null dep for a dependency-less agent.
+        if dep.id is None:
+            logger.info("[GR116] Skipping null dependency row (agent has no deps).")
+            return
+        if dep.type == ContentType.AGENTIX_ACTION.value and dep.path:
+            logger.info(
+                f"[GR116] Routing action dep '{dep.id}' -> re-parse path "
+                f"'{dep.path}'."
+            )
+            deps.action_paths.append(dep.path)
+        elif dep.type == ContentType.AGENTIX_SKILL.value:
+            logger.info(
+                f"[GR116] Routing skill dep '{dep.id}' (name='{dep.name}') "
+                "-> graph name+description."
+            )
+            deps.skill_summaries.append((dep.name, dep.description))
+        elif dep.type == ContentType.COLLECTION.value:
+            logger.info(
+                f"[GR116] Routing collection dep '{dep.id}' (name='{dep.name}') "
+                "-> graph name+description."
+            )
+            deps.collection_summaries.append((dep.name, dep.description))
+        else:
+            logger.info(
+                f"[GR116] Ignoring dependency '{dep.id}' of unhandled type "
+                f"'{dep.type}' (or action without a path)."
+            )
 
-        The graph nodes only store scalar properties, but the token budget also
-        depends on each action's args/outputs schema and each skill's/agent's
-        related-file bodies, which live on the parsed model objects. Fetch the
-        agents and the union of their dependency ids in one read per type.
-        """
-        action_ids = set().union(*(d.actions for d in agent_to_deps.values()), set())
-        skill_ids = set().union(*(d.skills for d in agent_to_deps.values()), set())
-
-        agents = [
+    def _fetch_agents(self, agent_ids: set[str]) -> list[AgentixAgent]:
+        """Fetch the affected AgentixAgent model objects by object_id."""
+        return [
             node
-            for node in self._search(ContentType.AGENTIX_AGENT, set(agent_to_deps))
+            for node in self._search(ContentType.AGENTIX_AGENT, agent_ids)
             if isinstance(node, AgentixAgent)
         ]
-        actions_by_id = {
-            node.object_id: node
-            for node in self._search(ContentType.AGENTIX_ACTION, action_ids)
-            if isinstance(node, AgentixAction)
-        }
-        skills_by_id = {
-            node.object_id: node
-            for node in self._search(ContentType.AGENTIX_SKILL, skill_ids)
-            if isinstance(node, AgentixSkill)
-        }
-        return agents, actions_by_id, skills_by_id
 
     def _search(self, content_type: ContentType, object_ids: set[str]) -> list:
         """Fetch graph nodes of ``content_type`` for the given object ids."""

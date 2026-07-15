@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     PlatformSupportedModules,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import replace_alert_to_incident
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -112,9 +113,18 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
 def get_items_using_deprecated(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[graph.Node]]]:
-    return get_items_using_deprecated_commands(
+    logger.info(
+        "[GR107] get_items_using_deprecated called with file_paths={}", file_paths
+    )
+    results = get_items_using_deprecated_commands(
         tx, file_paths
     ) + get_items_using_deprecated_content_items(tx, file_paths)
+    logger.info(
+        "[GR107] get_items_using_deprecated returned {} deprecated item(s): {}",
+        len(results),
+        [dep_id for dep_id, _ in results],
+    )
+    return results
 
 
 def get_items_using_deprecated_commands(
@@ -152,13 +162,25 @@ WITH p, c, i2
 WHERE i2 IS NULL
 {files_filter}
 RETURN c.object_id AS deprecated_command, collect(p) AS object_using_deprecated"""
-    return [
+    logger.info("[GR107-commands] files_filter={}", repr(files_filter))
+    # Use {} arg form to avoid loguru parsing Cypher <> as color tags
+    logger.info("[GR107-commands] query:\n{}", command_query)
+    results = [
         (
             item.get("deprecated_command"),
             item.get("object_using_deprecated"),
         )
         for item in run_query(tx, command_query)
     ]
+    logger.info(
+        "[GR107-commands] returned {} row(s): {}",
+        len(results),
+        [
+            (dep_id, [n.get("object_id", "?") for n in nodes])
+            for dep_id, nodes in results
+        ],
+    )
+    return results
 
 
 def get_items_using_deprecated_content_items(
@@ -197,13 +219,25 @@ WHERE c1 IS NULL
 {files_filter}
 RETURN d.object_id AS deprecated_content, collect(p) AS object_using_deprecated
     """
-    return [
+    logger.info("[GR107-content-items] files_filter={}", repr(files_filter))
+    # Use {} arg form to avoid loguru parsing Cypher <> as color tags
+    logger.info("[GR107-content-items] query:\n{}", query)
+    results = [
         (
             item.get("deprecated_content"),
             item.get("object_using_deprecated"),
         )
         for item in run_query(tx, query)
     ]
+    logger.info(
+        "[GR107-content-items] returned {} row(s): {}",
+        len(results),
+        [
+            (dep_id, [n.get("object_id", "?") for n in nodes])
+            for dep_id, nodes in results
+        ],
+    )
+    return results
 
 
 def validate_marketplaces(tx: Transaction, pack_ids: List[str]):

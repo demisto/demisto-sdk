@@ -372,6 +372,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
         logger.info("Creating graph nodes...")
         pack_ids = [p.get("object_id") for p in nodes.get(ContentType.PACK, [])]
+        logger.info(f"[graph-update] create_nodes called for pack_ids={pack_ids}")
         with self.driver.session() as session:
             self._rels_to_preserve = session.execute_read(
                 get_relationships_to_preserve, pack_ids
@@ -379,6 +380,20 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(remove_packs_before_creation, pack_ids)
             session.execute_write(create_nodes, nodes)
             session.execute_write(remove_empty_properties)
+        # Log the deprecated state of all integrations in the updated packs
+        if pack_ids:
+            with self.driver.session() as session:
+                result = session.run(
+                    "MATCH (n:Integration)-[:IN_PACK]->(p:Pack) "
+                    "WHERE p.object_id IN $pack_ids "
+                    "RETURN n.object_id AS id, n.deprecated AS deprecated",
+                    pack_ids=pack_ids,
+                )
+                for record in result:
+                    logger.info(
+                        f"[graph-update] After create_nodes: integration "
+                        f"object_id={record['id']}, deprecated={record['deprecated']}"
+                    )
 
     def get_relationships_by_path(
         self,

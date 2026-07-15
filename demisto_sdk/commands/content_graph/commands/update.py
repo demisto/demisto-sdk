@@ -302,12 +302,21 @@ def _update_content_graph_inner(
     # fails, which currently tears down the whole import via "Creating from
     # scratch". The env-var path is the single source of truth in that case.
     explicit_changes_provided = bool(packs_to_update or connectors_to_update)
+    logger.info(
+        f"[graph-update] initial packs_to_update={packs_to_update}, "
+        f"connectors_to_update={connectors_to_update}, "
+        f"explicit_changes_provided={explicit_changes_provided}"
+    )
 
     # Read env var if either list is still empty - the two are independent so a
     # caller that passed --packs only should still pick up connector entries
     # from DEMISTO_SDK_DIFF_FILES (and vice versa).
     if not packs_to_update or not connectors_to_update:
         diff_files_env = os.getenv(DEMISTO_SDK_DIFF_FILES_ENV, "")
+        logger.info(
+            f"[graph-update] {DEMISTO_SDK_DIFF_FILES_ENV}="
+            f"{repr(diff_files_env[:200]) if diff_files_env else '(not set)'}"
+        )
         if diff_files_env:
             if not packs_to_update:
                 env_pack_ids = extract_pack_ids_from_diff_files(diff_files_env)
@@ -338,14 +347,24 @@ def _update_content_graph_inner(
     changed_pack_ids: Set[str] = set()
     changed_connector_ids: Set[str] = set()
     git_diff_failed = False
+    logger.info(
+        f"[graph-update] use_git={use_git}, "
+        f"commit={getattr(content_graph_interface, 'commit', 'N/A')}, "
+        f"is_external_repo={is_external_repo}, "
+        f"explicit_changes_provided={explicit_changes_provided}"
+    )
     if (
         use_git
         and (commit := content_graph_interface.commit)
         and not is_external_repo
         and not explicit_changes_provided
     ):
+        logger.info(f"[graph-update] Running git diff from commit={commit}")
         try:
             changed_pack_ids = git_util.get_all_changed_pack_ids(commit)
+            logger.info(
+                f"[graph-update] git diff found changed_pack_ids={sorted(changed_pack_ids)}"
+            )
         except Exception as e:
             logger.warning(
                 f"Failed to get changed packs from git. Creating from scratch. Error: {e}"
@@ -354,6 +373,15 @@ def _update_content_graph_inner(
         if not git_diff_failed:
             # Best-effort: _changed_connectors_from_git never raises.
             changed_connector_ids = _changed_connectors_from_git(git_util, commit)
+            logger.info(
+                f"[graph-update] git diff found changed_connector_ids={sorted(changed_connector_ids)}"
+            )
+    else:
+        logger.info(
+            f"[graph-update] Skipping git diff "
+            f"(use_git={use_git}, has_commit={bool(getattr(content_graph_interface, 'commit', None))}, "
+            f"is_external_repo={is_external_repo}, explicit_changes_provided={explicit_changes_provided})"
+        )
 
     builder = ContentGraphBuilder(content_graph_interface)
     if not should_update_graph(
@@ -436,10 +464,21 @@ def _update_content_graph_inner(
     connectors_tuple: Optional[Tuple[str, ...]] = (
         tuple(sorted(set(connectors_to_update))) if connectors_to_update else None
     )
+    logger.info(
+        f"[graph-update] Calling builder.update_graph with "
+        f"packs_to_update={packs_tuple}, connectors_to_update={connectors_tuple}"
+    )
+    if not packs_tuple and not connectors_tuple:
+        logger.warning(
+            "[graph-update] WARNING: packs_to_update and connectors_to_update are both empty/None. "
+            "builder.update_graph will return early without updating the graph. "
+            "The graph retains the bucket state (deprecated values from master)."
+        )
     builder.update_graph(
         packs_to_update=packs_tuple,
         connectors_to_update=connectors_tuple,
     )
+    logger.info("[graph-update] builder.update_graph completed")
 
     if dependencies:
         content_graph_interface.create_pack_dependencies()

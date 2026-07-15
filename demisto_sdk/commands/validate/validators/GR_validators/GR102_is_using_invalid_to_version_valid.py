@@ -121,7 +121,6 @@ class IsUsingInvalidToVersionValidator(BaseValidator[ContentTypes], ABC):
                 relationship.content_item_to.object_id
                 for relationship in content_item.uses
             ]
-            logger.info(f"Found invalid use of content item '{content_item.name}' with to_version '{content_item.toversion}'")
             result.append(
                 ValidationResult(
                     validator=self,

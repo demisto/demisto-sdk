@@ -4075,6 +4075,25 @@ def test_InvalidSupportedModulesValidator_error_message():
     assert "xsiam" in results[0].message
 
 
+def test_InvalidSupportedModulesValidator_list_allows_all_modules():
+    """
+    Given
+    - A platform List content item declaring modules from the full supported set,
+      including 'edr' which is not part of the xsiam + agentix set that List was
+      previously restricted to.
+    When
+    - Calling the InvalidSupportedModulesValidator obtain_invalid_content_items function.
+    Then
+    - No failures are returned, because a List is now allowed to declare any of
+      the supported modules.
+    """
+    content_item = _platform_item(create_list_object, ["xsiam", "agentix", "edr"])
+    results = InvalidSupportedModulesValidator().obtain_invalid_content_items(
+        [content_item]
+    )
+    assert len(results) == 0
+
+
 def test_InvalidSupportedModulesValidator_non_platform_item_is_skipped():
     """
     Given

@@ -101,7 +101,7 @@ class IsUsingInvalidToVersionValidator(BaseValidator[ContentTypes], ABC):
         self, content_items: Iterable[ContentTypes], validate_all_files: bool = False
     ) -> List[ValidationResult]:
         for content_item in content_items:
-            logger.info(f"Validating content item '{content_item.name}' with to_version '{content_item.toversion}'")
+            logger.info(f"Validating content item '{content_item.name}''")
         file_paths_to_validate = (
             []
             if validate_all_files

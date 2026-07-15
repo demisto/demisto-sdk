@@ -355,11 +355,6 @@ def get_files_in_dir(
         for exclude_item in exclude_all_list:
             exclude_pattern = f"**/{exclude_item}/" + pattern
             excludes.extend([str(f) for f in glob_function(exclude_pattern)])
-        if ignore_test_files:
-            # Exclude test files whose name ends with `_test` (e.g. foo_test.py)
-            excludes.extend(
-                [str(f) for f in glob_function(f"*_test.{file_type}")]
-            )
         files.extend([str(f) for f in glob_function(pattern)])
     return list(set(files) - set(excludes))
 

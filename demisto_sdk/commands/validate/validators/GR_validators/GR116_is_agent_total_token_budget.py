@@ -56,7 +56,8 @@ class _GroupedDependencies(NamedTuple):
 
 ContentTypes = AgentixAgent | AgentixAction | AgentixSkill | Collection
 
-AGENT_TOKEN_LIMIT = 50000
+# AGENT_TOKEN_LIMIT = 50000
+AGENT_TOKEN_LIMIT = 35000  ### for demo only
 
 # One Cypher round trip resolves the whole structure GR116 needs:
 #   step 1 - the affected agents: when $validate_all is true, every agent;
@@ -130,54 +131,23 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         content_items: Iterable[ContentTypes],
         validate_all_files: bool = False,
     ) -> list[ValidationResult]:
-        # colors=False on every log line: ids/paths/names are free-form content
-        # that may contain angle brackets, which loguru would parse as color tags.
-        logger.opt(colors=False).info(
-            f"[{self.error_code}] START obtain_invalid_content_items_using_graph "
-            f"(validate_all_files={validate_all_files})."
-        )
         changed_ids = (
             []
             if validate_all_files
             else [content_item.object_id for content_item in content_items]
         )
-        logger.opt(colors=False).info(
-            f"[{self.error_code}] Computed changed_ids ({len(changed_ids)}): "
-            f"{sorted(changed_ids)}."
-        )
 
         if not validate_all_files and not changed_ids:
-            logger.opt(colors=False).info(
-                f"[{self.error_code}] No modified agents/actions/skills/collections - "
-                "nothing to validate. Returning [] (no graph query issued)."
-            )
             return []
 
         affected_agents = self._affected_agents_with_dependencies(
             changed_ids, validate_all_files
         )
-        if not affected_agents:
-            logger.opt(colors=False).info(
-                f"[{self.error_code}] No affected agents to validate "
-                f"(validate_all_files={validate_all_files}, "
-                f"changed_ids={sorted(changed_ids)}). Returning []."
-            )
-            return []
-
-        logger.opt(colors=False).info(
-            f"[{self.error_code}] Validating {len(affected_agents)} agent(s): "
-            f"{sorted(agent.object_id for agent, _ in affected_agents)}."
-        )
-        results = [
+        return [
             result
             for agent, deps in affected_agents
             if (result := self._validate_agent(agent, deps))
         ]
-        logger.opt(colors=False).info(
-            f"[{self.error_code}] Finished. Found {len(results)} invalid item(s) "
-            f"out of {len(affected_agents)} validated agent(s)."
-        )
-        return results
 
     def _validate_agent(
         self,
@@ -185,23 +155,22 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         deps: _GroupedDependencies,
     ) -> ValidationResult | None:
         """Estimate the agent's total token budget; flag it when over the limit."""
-        total_tokens = estimate_tokens_for_texts(self._agent_fragments(agent, deps))
-        # colors=False: agent/dependency names are free-form content that may
-        # contain angle brackets, which loguru would otherwise parse as color tags.
+        fragments = self._agent_fragments(agent, deps)
+        total_tokens = estimate_tokens_for_texts(fragments)
+        # One summary line per agent. colors=False: the agent name is free-form
+        # content that may contain angle brackets, which loguru would otherwise
+        # parse as color tags.
         logger.opt(colors=False).info(
-            f"[{self.error_code}] Agent '{agent.name}' "
-            f"(id='{agent.object_id}'): estimated {total_tokens} tokens across "
-            f"{len(deps.action_paths)} action(s), {len(deps.skill_summaries)} "
-            f"skill(s), and {len(deps.collection_summaries)} collection(s) "
+            f"[{self.error_code}] Agent '{agent.name}' (id='{agent.object_id}'): "
+            f"checked {len(deps.action_paths)} action(s), "
+            f"{len(deps.skill_summaries)} skill(s), "
+            f"{len(deps.collection_summaries)} collection(s) -> "
+            f"{len(fragments)} fragment(s), {total_tokens} token(s) "
             f"(limit {AGENT_TOKEN_LIMIT})."
         )
         if total_tokens <= AGENT_TOKEN_LIMIT:
             return None
 
-        logger.opt(colors=False).info(
-            f"[{self.error_code}] Agent '{agent.name}' EXCEEDS the "
-            f"limit ({total_tokens} > {AGENT_TOKEN_LIMIT}) - flagging it."
-        )
         return ValidationResult(
             validator=self,
             message=self.error_message.format(agent.name, total_tokens),
@@ -225,46 +194,17 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             agent.systeminstructions,
             *(agent.conversationstarters or []),
         ]
-        logger.opt(colors=False).info(
-            f"[GR116] Agent '{agent.object_id}': {len(fragments)} own fragment(s) "
-            f"(incl. {len(agent.conversationstarters or [])} conversation starter(s)); "
-            f"adding {len(deps.action_paths)} action(s), "
-            f"{len(deps.skill_summaries)} skill(s), "
-            f"{len(deps.collection_summaries)} collection(s)."
-        )
-
-        # colors=False throughout: names/paths are free-form content that may
-        # contain angle brackets, which loguru would parse as color tags.
         for path in deps.action_paths:
             action = self._parse_action_from_path(path)
             if action is None:
-                logger.opt(colors=False).info(
-                    f"[GR116] Action path '{path}' did not parse into an "
-                    "AgentixAction - contributing no tokens."
-                )
                 continue
-            action_fragments = action_text_fragments(action)
-            logger.opt(colors=False).info(
-                f"[GR116] Re-parsed action '{action.object_id}' from '{path}': "
-                f"+{len(action_fragments)} fragment(s) (incl. args/outputs)."
-            )
-            fragments.extend(action_fragments)
+            fragments.extend(action_text_fragments(action))
 
         for name, description in deps.skill_summaries:
-            logger.opt(colors=False).info(
-                f"[GR116] Adding skill summary (name='{name}') from the graph."
-            )
             fragments.extend([name, description])
         for name, description in deps.collection_summaries:
-            logger.opt(colors=False).info(
-                f"[GR116] Adding collection summary (name='{name}') from the graph."
-            )
             fragments.extend([name, description])
 
-        logger.opt(colors=False).info(
-            f"[GR116] Agent '{agent.object_id}' assembled {len(fragments)} total "
-            "text fragment(s) for token estimation."
-        )
         return fragments
 
     @staticmethod
@@ -298,10 +238,6 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         args/outputs) and skill/collection ``(name, description)`` summaries read
         straight from the graph.
         """
-        logger.opt(colors=False).info(
-            f"[GR116] Running structure query "
-            f"(validate_all={validate_all}, changed_ids={sorted(changed_ids)})."
-        )
         rows = (
             self.graph.run_single_query(
                 _AGENT_DEPENDENCIES_QUERY,
@@ -310,34 +246,16 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             )
             or []
         )
-        logger.opt(colors=False).info(
-            f"[GR116] Structure query returned {len(rows)} agent row(s)."
-        )
 
         affected: list[tuple[AgentixAgent, _GroupedDependencies]] = []
         for row in rows:
             agent = self._parse_agent(row.get("agent"))
             if agent is None:
-                logger.opt(colors=False).info(
-                    "[GR116] Skipping a row whose agent node could not be parsed "
-                    "into an AgentixAgent."
-                )
                 continue
 
-            raw_deps = row.get("deps") or []
             deps = _GroupedDependencies([], [], [])
-            logger.opt(colors=False).info(
-                f"[GR116] Agent '{agent.object_id}': routing {len(raw_deps)} raw "
-                "dependency row(s)."
-            )
-            for raw in raw_deps:
+            for raw in row.get("deps") or []:
                 self._route_dependency(_Dependency(**raw), deps)
-            logger.opt(colors=False).info(
-                f"[GR116] Agent '{agent.object_id}' grouped deps: "
-                f"{len(deps.action_paths)} action(s), "
-                f"{len(deps.skill_summaries)} skill(s), "
-                f"{len(deps.collection_summaries)} collection(s)."
-            )
             affected.append((agent, deps))
         return affected
 
@@ -362,31 +280,15 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         """Add a single dependency row to the agent's grouped dependencies."""
         # OPTIONAL MATCH yields a null dep for a dependency-less agent.
         if dep.id is None:
-            logger.opt(colors=False).info(
-                "[GR116] Skipping null dependency row (agent has no deps)."
-            )
             return
-        # colors=False throughout: dep names/paths are free-form content that may
-        # contain angle brackets, which loguru would parse as color tags.
         if dep.type == ContentType.AGENTIX_ACTION.value and dep.path:
-            logger.opt(colors=False).info(
-                f"[GR116] Routing action dep '{dep.id}' -> re-parse path '{dep.path}'."
-            )
             deps.action_paths.append(dep.path)
         elif dep.type == ContentType.AGENTIX_SKILL.value:
-            logger.opt(colors=False).info(
-                f"[GR116] Routing skill dep '{dep.id}' (name='{dep.name}') "
-                "-> graph name+description."
-            )
             deps.skill_summaries.append((dep.name, dep.description))
         elif dep.type == ContentType.COLLECTION.value:
-            logger.opt(colors=False).info(
-                f"[GR116] Routing collection dep '{dep.id}' (name='{dep.name}') "
-                "-> graph name+description."
-            )
             deps.collection_summaries.append((dep.name, dep.description))
         else:
-            logger.opt(colors=False).info(
+            logger.opt(colors=False).debug(
                 f"[GR116] Ignoring dependency '{dep.id}' of unhandled type "
                 f"'{dep.type}' (or action without a path)."
             )

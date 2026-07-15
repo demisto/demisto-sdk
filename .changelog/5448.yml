@@ -1,0 +1,4 @@
+changes:
+- description: Removed the `source` field from non-pack content items (Integration, Script, Playbook, List) and the related MC100 validation and format auto-fix. The `source` field is now defined only at the pack level in `pack_metadata`.
+  type: breaking
+pr_number: 5448

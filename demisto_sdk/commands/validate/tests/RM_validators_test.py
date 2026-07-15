@@ -489,17 +489,21 @@ def test_IsReadmeExistsValidator_obtain_invalid_content_items(
 def test_IsReadmeExistsValidator_excludes_autonomous_playbooks():
     """
     Given:
-        - An autonomous playbook without a README file
+        - A playbook without a README file, inside an autonomous pack
+          (managed: true, source: 'autonomous')
     When:
         - run obtain_invalid_content_items method from IsReadmeExistsValidator
     Then:
-        - Ensure that no ValidationResult is returned (autonomous playbooks are excluded)
+        - Ensure that no ValidationResult is returned (items in autonomous packs are excluded)
     """
-    content_items = [
-        create_playbook_object(paths=["source"], values=["autonomous"]),
-    ]
-    content_items[0].readme.exist = False
-    results = IsReadmeExistsValidator().obtain_invalid_content_items(content_items)
+    pack = create_pack_object(
+        paths=["managed", "source"],
+        values=[True, "autonomous"],
+    )
+    playbook = create_playbook_object()
+    playbook.pack = pack
+    playbook.readme.exist = False
+    results = IsReadmeExistsValidator().obtain_invalid_content_items([playbook])
     assert len(results) == 0
 
 

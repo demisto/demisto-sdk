@@ -223,7 +223,6 @@ class _StrictIntegration(BaseStrictModel):
     script: Script  # type:ignore[valid-type]
     hidden: Optional[bool] = None
     internal: Optional[bool] = None
-    source: Optional[str] = None
     videos: Optional[List[str]] = None
     versioned_fields: dict = Field(None, alias="versionedfields")
     default_enabled: Optional[bool] = Field(None, alias="defaultEnabled")

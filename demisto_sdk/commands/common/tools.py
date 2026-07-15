@@ -336,7 +336,6 @@ def get_files_in_dir(
         project_dir: String path to the project_dir
         file_endings: List of file endings to search for in a given directory
         recursive: Indicates whether search should be recursive or not
-        ignore_test_files: When True, excludes test/doc directories and files whose name ends with `_test`.
         exclude_list: List of file/directory names to exclude.
     :return: The path of files with file_endings in the current dir
     """

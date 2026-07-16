@@ -2812,9 +2812,7 @@ def test_PA135_runs_on_pack_with_no_git_status(mocker):
 
     validator = PackLevelIgnoreAddedValidator()
     assert validator.expected_git_statuses is None
-    assert (
-        should_run_according_to_status(None, validator.expected_git_statuses) is True
-    )
+    assert should_run_according_to_status(None, validator.expected_git_statuses) is True
 
 
 def test_PA135_brand_new_pack_with_pack_section_fails(mocker):
@@ -2860,9 +2858,7 @@ def test_PA135_unchanged_pack_section_passes(mocker):
     When PA135 runs,
     Then it passes.
     """
-    pack = _make_pack_with_ignores(
-        mocker, new_codes=["BA101"], old_codes=["BA101"]
-    )
+    pack = _make_pack_with_ignores(mocker, new_codes=["BA101"], old_codes=["BA101"])
     results = PackLevelIgnoreAddedValidator().obtain_invalid_content_items([pack])
     assert results == []
 

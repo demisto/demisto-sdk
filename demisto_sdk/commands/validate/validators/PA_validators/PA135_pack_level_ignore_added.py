@@ -24,7 +24,8 @@ class PackLevelIgnoreAddedValidator(BaseValidator[ContentTypes]):
     )
     error_message = (
         "New pack-level ignored validation(s) were added to the [pack] section "
-        "of .pack-ignore: {0}. Ignoring validations at the pack level is not " "recommended and requires a "
+        "of .pack-ignore: {0}. Ignoring validations at the pack level is not "
+        "recommended and requires a "
         "force merge. Please remove the additions or request a force merge."
     )
     related_field = "pack_ignore"
@@ -86,7 +87,9 @@ class PackLevelIgnoreAddedValidator(BaseValidator[ContentTypes]):
         new_codes = set(pack.pack_level_ignored_errors)
         if not new_codes:
             return set()  # nothing in [pack] now -> nothing was added
-        old_object = pack.old_base_content_object  # the same pack from prev_ver (e.g. origin/master)
+        old_object = (
+            pack.old_base_content_object
+        )  # the same pack from prev_ver (e.g. origin/master)
         prev_ver = old_object.git_sha if old_object else None
         old_codes = set(pack.old_pack_level_ignored_errors(prev_ver))
         return new_codes - old_codes

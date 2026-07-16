@@ -213,7 +213,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         try:
             git_util = GitUtil.from_content_path()
             pack_ignore_path = self.path / PACKS_PACK_IGNORE_FILE_NAME
-            old_text = self._read_pack_ignore_at_ref(git_util, pack_ignore_path, prev_ver)
+            old_text = self._read_pack_ignore_at_ref(
+                git_util, pack_ignore_path, prev_ver
+            )
             if old_text is None:
                 return []
             config = ConfigParser(allow_no_value=True)

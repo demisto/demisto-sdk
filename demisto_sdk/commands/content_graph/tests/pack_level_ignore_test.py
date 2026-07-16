@@ -480,9 +480,7 @@ class TestOldPackLevelIgnoredErrors:
         must be looked up on the resolved remote ref, not read as a raw string.
         """
         pack = self._make_pack_with_path()
-        fake_git = self._fake_git(
-            mocker, content=b"[pack]\nignore=BA101\n"
-        )
+        fake_git = self._fake_git(mocker, content=b"[pack]\nignore=BA101\n")
         fake_git.handle_prev_ver.return_value = ("myfork", "master")
         pack.old_pack_level_ignored_errors("master")
         fake_git.handle_prev_ver.assert_called_once_with("master")

@@ -17,6 +17,8 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import Optional
 
+import pytest
+
 from demisto_sdk.commands.common.tools import (
     extract_error_codes_from_file,
     parse_ignore_list,
@@ -128,28 +130,24 @@ class TestPackLevelIgnoredErrorsProperty:
         assert pack.pack_level_ignored_errors is first
         assert pack.pack_level_ignored_errors == ["BA101"]
 
-    def test_exception_is_logged_and_empty_list_returned(self, mocker):
+    def test_unexpected_error_propagates(self, mocker):
         """
-        Given an `ignored_errors_dict` whose access raises an exception,
+        Given an `ignored_errors_dict` whose access raises an unexpected error,
         When pack_level_ignored_errors is accessed,
-        Then the failure is logged at debug level with the expected message
-        and an empty list is returned (the validation flow is not broken).
+        Then the error propagates (it is a bug and must surface, not be
+        silently swallowed).
+
+        The `.pack-ignore` is validated as well-formed INI by configparser when
+        the pack is parsed, so this property deliberately has no defensive
+        `except`: any error here signals a real bug.
         """
-        from demisto_sdk.commands.content_graph.objects import pack as pack_module
-
-        debug_mock = mocker.patch.object(pack_module.logger, "debug")
-
         pack = _make_pack("[pack]\nignore=BA101\n")
-        # Replace the dict with one whose `.get` raises, forcing the
-        # defensive `except` branch in the property.
         raising_dict = mocker.MagicMock()
         raising_dict.get.side_effect = RuntimeError("boom")
         object.__setattr__(pack, "ignored_errors_dict", raising_dict)
 
-        assert pack.pack_level_ignored_errors == []
-        debug_mock.assert_called_once_with(
-            "Failed to extract pack-level ignored errors for TestPack: boom"
-        )
+        with pytest.raises(RuntimeError, match="boom"):
+            _ = pack.pack_level_ignored_errors
 
 
 # ---------------------------------------------------------------------------
@@ -464,14 +462,41 @@ class TestOldPackLevelIgnoredErrors:
         self._fake_git(mocker, content=b"[pack]\nignore= BA101 , RM104 ,\n")
         assert pack.old_pack_level_ignored_errors("abc123") == ["BA101", "RM104"]
 
-    def test_git_read_raises_returns_empty_and_logs(self, mocker):
+    def test_git_read_raises_expected_error_returns_empty_and_logs(self, mocker):
+        """An expected git read error (ref/file missing) -> empty + debug log."""
+        from demisto_sdk.commands.common.git_util import GitFileNotFoundError
+
         pack = self._make_pack_with_path()
-        self._fake_git(mocker, raises=RuntimeError("boom"))
+        self._fake_git(
+            mocker, raises=GitFileNotFoundError("abc123", ".pack-ignore")
+        )
         debug = mocker.patch(
             "demisto_sdk.commands.content_graph.objects.pack.logger.debug"
         )
         assert pack.old_pack_level_ignored_errors("abc123") == []
         assert debug.called
+
+    def test_old_file_malformed_returns_empty_and_logs(self, mocker):
+        """A malformed old .pack-ignore (bad INI) -> empty + debug log.
+
+        This is a data-driven failure of a committed file, not a bug, so it is
+        caught (configparser.Error) rather than propagated.
+        """
+        pack = self._make_pack_with_path()
+        # Missing section header -> configparser.MissingSectionHeaderError.
+        self._fake_git(mocker, content=b"ignore=BA101\n")
+        debug = mocker.patch(
+            "demisto_sdk.commands.content_graph.objects.pack.logger.debug"
+        )
+        assert pack.old_pack_level_ignored_errors("abc123") == []
+        assert debug.called
+
+    def test_git_read_unexpected_error_propagates(self, mocker):
+        """An unexpected error while reading is a bug and must propagate."""
+        pack = self._make_pack_with_path()
+        self._fake_git(mocker, raises=RuntimeError("boom"))
+        with pytest.raises(RuntimeError, match="boom"):
+            pack.old_pack_level_ignored_errors("abc123")
 
     def test_prev_ver_is_resolved_via_handle_prev_ver(self, mocker):
         """A bare branch name is normalized to `<remote>/<branch>` before reading.

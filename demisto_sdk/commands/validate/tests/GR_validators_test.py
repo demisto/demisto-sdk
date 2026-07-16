@@ -3446,10 +3446,13 @@ def _gr116_action_dep(object_id: str, path: str = "", **fields) -> dict:
         "description": fields.get("description"),
         "path": path or f"Packs/P/AgentixActions/{object_id}/{object_id}.yml",
         "type": ContentType.AGENTIX_ACTION.value,
+        "fromversion": fields.get("fromversion"),
     }
 
 
-def _gr116_skill_dep(object_id: str, name=None, description=None) -> dict:
+def _gr116_skill_dep(
+    object_id: str, name=None, description=None, fromversion=None
+) -> dict:
     """A structure-query dep row for a skill (scored from name+description)."""
     return {
         "id": object_id,
@@ -3457,10 +3460,13 @@ def _gr116_skill_dep(object_id: str, name=None, description=None) -> dict:
         "description": description,
         "path": f"Packs/P/AgentixSkills/{object_id}/{object_id}.yml",
         "type": ContentType.AGENTIX_SKILL.value,
+        "fromversion": fromversion,
     }
 
 
-def _gr116_collection_dep(object_id: str, name=None, description=None) -> dict:
+def _gr116_collection_dep(
+    object_id: str, name=None, description=None, fromversion=None
+) -> dict:
     """A structure-query dep row for a collection (scored from name+desc)."""
     return {
         "id": object_id,
@@ -3468,6 +3474,7 @@ def _gr116_collection_dep(object_id: str, name=None, description=None) -> dict:
         "description": description,
         "path": f"Packs/P/Collections/{object_id}/{object_id}.json",
         "type": ContentType.COLLECTION.value,
+        "fromversion": fromversion,
     }
 
 
@@ -3525,13 +3532,13 @@ def test_GR116_single_structure_query_for_all_modified_dependencies(mocker):
     agent_1, deps_1 = by_id["agent-1"]
     assert agent_1.object_id == "agent-1"
     assert agent_1.name == "Agent 1"
-    assert deps_1.action_paths == ["p/action-1.yml"]
-    assert deps_1.skill_summaries == [("Skill 1", "s1 desc")]
-    assert deps_1.collection_summaries == [("Coll 1", "c1 desc")]
+    assert deps_1.action_paths == {"action-1": ("p/action-1.yml", None)}
+    assert deps_1.skill_summaries == {"skill-1": ("Skill 1", "s1 desc", None)}
+    assert deps_1.collection_summaries == {"collection-1": ("Coll 1", "c1 desc", None)}
     _, deps_2 = by_id["agent-2"]
-    assert deps_2.action_paths == ["p/action-2.yml"]
-    assert deps_2.skill_summaries == []
-    assert deps_2.collection_summaries == []
+    assert deps_2.action_paths == {"action-2": ("p/action-2.yml", None)}
+    assert deps_2.skill_summaries == {}
+    assert deps_2.collection_summaries == {}
 
 
 def test_GR116_validate_all_files_passes_empty_changed_ids(mocker):
@@ -3604,7 +3611,7 @@ def test_GR116_modified_agent_itself_is_included(mocker):
     assert kwargs["changed_ids"] == ["agent-1"]
     assert set(by_id) == {"agent-1"}
     _, deps = by_id["agent-1"]
-    assert deps.action_paths == ["p/action-1.yml"]
+    assert deps.action_paths == {"action-1": ("p/action-1.yml", None)}
 
 
 def test_GR116_agent_without_dependencies_has_empty_dep_groups(mocker):
@@ -3648,9 +3655,9 @@ def test_GR116_agent_without_dependencies_has_empty_dep_groups(mocker):
     # then
     assert set(by_id) == {"agent-1"}
     _, deps = by_id["agent-1"]
-    assert deps.action_paths == []
-    assert deps.skill_summaries == []
-    assert deps.collection_summaries == []
+    assert deps.action_paths == {}
+    assert deps.skill_summaries == {}
+    assert deps.collection_summaries == {}
 
 
 def test_GR116_no_affected_agents_returns_no_results(mocker):

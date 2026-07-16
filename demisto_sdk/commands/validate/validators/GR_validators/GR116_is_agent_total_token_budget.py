@@ -42,25 +42,30 @@ class _Dependency(NamedTuple):
     description: Optional[str]
     path: Optional[str]
     type: Optional[str]
-    fromversion: Optional[str]
+    fromversion: Optional[str] = None
 
 
 class _GroupedDependencies(NamedTuple):
     """The direct dependencies of one agent, grouped for token estimation.
 
-    - ``action_paths``: source-file path per dependent action, keyed by action
-      ``id`` and deduplicated to the highest-``fromversion`` file so a single
-      logical action is counted once even when several version-variant files
-      share its ``id``. Each surviving path is re-parsed from disk so its
-      args/outputs (excluded from the graph) count toward the budget.
-    - ``skill_summaries`` / ``collection_summaries``: ``(name, description)``
-      pairs read straight from the graph, which is all a skill/collection
-      contributes to the agent total.
+    Every group is keyed by the dependency ``id`` and deduplicated to the
+    highest-``fromversion`` entry, so a single logical action/skill/collection
+    is counted once even when several version-variant files share its ``id``
+    (e.g. ``SearchCases`` and ``SearchCases_8_15``, or the same id in both a
+    vendor pack and a standalone ``AgentixAction_*`` pack). This mirrors what
+    the platform loads at runtime.
+
+    - ``action_paths``: ``id -> (path, fromversion)``. Each surviving path is
+      re-parsed from disk so its args/outputs (excluded from the graph) count
+      toward the budget.
+    - ``skill_summaries`` / ``collection_summaries``: ``id -> (name,
+      description, fromversion)`` read straight from the graph, which is all a
+      skill/collection contributes to the agent total.
     """
 
     action_paths: Dict[str, Tuple[str, Optional[str]]]
-    skill_summaries: list[tuple[Optional[str], Optional[str]]]
-    collection_summaries: list[tuple[Optional[str], Optional[str]]]
+    skill_summaries: Dict[str, Tuple[Optional[str], Optional[str], Optional[str]]]
+    collection_summaries: Dict[str, Tuple[Optional[str], Optional[str], Optional[str]]]
 
 
 ContentTypes = AgentixAgent | AgentixAction | AgentixSkill | Collection
@@ -233,16 +238,16 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             )
             fragments.extend(action_fragments)
 
-        for name, description in deps.skill_summaries:
+        for name, description, fromversion in deps.skill_summaries.values():
             logger.opt(colors=False).debug(
-                f"[GR116][breakdown] skill '{name}': "
+                f"[GR116][breakdown] skill '{name}' (fromversion='{fromversion}'): "
                 f"{estimate_tokens_for_texts([name, description])} token(s) "
                 f"(name+description only)."
             )
             fragments.extend([name, description])
-        for name, description in deps.collection_summaries:
+        for name, description, fromversion in deps.collection_summaries.values():
             logger.opt(colors=False).debug(
-                f"[GR116][breakdown] collection '{name}': "
+                f"[GR116][breakdown] collection '{name}' (fromversion='{fromversion}'): "
                 f"{estimate_tokens_for_texts([name, description])} token(s)."
             )
             fragments.extend([name, description])
@@ -295,7 +300,7 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             if agent is None:
                 continue
 
-            deps = _GroupedDependencies({}, [], [])
+            deps = _GroupedDependencies({}, {}, {})
             for raw in row.get("deps") or []:
                 self._route_dependency(_Dependency(**raw), deps)
             affected.append((agent, deps))
@@ -321,11 +326,11 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
     def _route_dependency(dep: _Dependency, deps: _GroupedDependencies) -> None:
         """Add a single dependency row to the agent's grouped dependencies.
 
-        Actions are keyed by ``id`` and deduplicated to the highest
-        ``fromversion``: when several files expose the same action id (version
-        variants, or the same id living in both a vendor pack and a standalone
-        ``AgentixAction_*`` pack), only the newest is counted, matching what the
-        platform loads at runtime.
+        Every dependency kind (action, skill, collection) is keyed by ``id`` and
+        deduplicated to the highest ``fromversion``: when several files expose
+        the same id (version variants, or the same id living in both a vendor
+        pack and a standalone ``AgentixAction_*``/vendor pack), only the newest
+        is counted, matching what the platform loads at runtime.
         """
         # OPTIONAL MATCH yields a null dep for a dependency-less agent.
         if dep.id is None:
@@ -335,9 +340,23 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             if existing is None or _is_newer(dep.fromversion, existing[1]):
                 deps.action_paths[dep.id] = (dep.path, dep.fromversion)
         elif dep.type == ContentType.AGENTIX_SKILL.value:
-            deps.skill_summaries.append((dep.name, dep.description))
+            existing_skill = deps.skill_summaries.get(dep.id)
+            if existing_skill is None or _is_newer(dep.fromversion, existing_skill[2]):
+                deps.skill_summaries[dep.id] = (
+                    dep.name,
+                    dep.description,
+                    dep.fromversion,
+                )
         elif dep.type == ContentType.COLLECTION.value:
-            deps.collection_summaries.append((dep.name, dep.description))
+            existing_collection = deps.collection_summaries.get(dep.id)
+            if existing_collection is None or _is_newer(
+                dep.fromversion, existing_collection[2]
+            ):
+                deps.collection_summaries[dep.id] = (
+                    dep.name,
+                    dep.description,
+                    dep.fromversion,
+                )
         else:
             logger.opt(colors=False).debug(
                 f"[GR116] Ignoring dependency '{dep.id}' of unhandled type "

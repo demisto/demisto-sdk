@@ -1,7 +1,7 @@
 variables:
-  CURRENT_BRANCH_NAME: "test-dsk"
+  CURRENT_BRANCH_NAME: "${INFRA_BRANCH}"
 
 include:
   - file: "/.gitlab/ci/demisto-sdk/.gitlab-ci.yml"
-    ref: "test-dsk"
+    ref: "${INFRA_BRANCH}"
     project: "${CI_PROJECT_NAMESPACE}/infra"

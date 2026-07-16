@@ -5,6 +5,7 @@ import re
 import shutil
 import tarfile
 import tempfile
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -410,6 +411,7 @@ class DockerBase:
         logger.info(
             f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository."
         )
+        push_succeeded = False
         for attempt in range(2):
             try:
                 docker_push_output = init_global_docker_client().images.push(
@@ -426,13 +428,14 @@ class DockerBase:
                     logger.error(
                         f"{log_prompt} - Error pushing image {test_image_name_to_push}: {error_line}"
                     )
-                    raise Exception(
+                    raise DockerException(
                         f"Failed to push image {test_image_name_to_push} to repository."
                     )
                 else:
                     logger.success(
                         f"{log_prompt} - Attempt {attempt + 1}: Successfully pushed image {test_image_name_to_push} to repository."
                     )
+                push_succeeded = True
                 break
             except (
                 requests.exceptions.ConnectionError,
@@ -443,6 +446,89 @@ class DockerBase:
                     f"{log_prompt} - Attempt {attempt + 1}: Failed to push image {test_image_name_to_push} to repository due to {type(e).__name__}",
                     exc_info=True,
                 )
+
+        if not push_succeeded:
+            raise DockerException(
+                f"{log_prompt} - All push attempts failed for image {test_image_name_to_push}."
+            )
+
+        # After a successful push, verify the image is pullable from the registry.
+        # Registry propagation can take a few minutes, so we retry with delays.
+        self._verify_image_available_after_push(
+            test_image_name_to_push, log_prompt=log_prompt
+        )
+
+    def _verify_image_available_after_push(
+        self,
+        image: str,
+        log_prompt: str = "",
+        max_retries: int = 10,
+        delay_seconds: int = 30,
+    ) -> None:
+        """Verify a pushed image is pullable from the registry by attempting to pull it.
+
+        After pushing, the registry may take a few minutes to propagate the image.
+        This method removes the local copy and retries pulling until the image is
+        available or retries are exhausted.
+
+        Args:
+            image (str): The image name (without registry prefix) to verify.
+            log_prompt (str): Log prompt prefix for messages.
+            max_retries (int): Maximum number of pull attempts. Defaults to 10.
+            delay_seconds (int): Seconds to wait between retries. Defaults to 30.
+        """
+        docker_client = init_global_docker_client(
+            log_prompt="verify_image_after_push"
+        )
+
+        # Remove the local image so we force a real pull from the registry
+        try:
+            docker_client.images.remove(image=image, force=True)
+            logger.debug(
+                f"{log_prompt} - Removed local image {image} to force pull verification."
+            )
+        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+            logger.debug(
+                f"{log_prompt} - Could not remove local image {image} ({type(e).__name__}), "
+                f"proceeding with pull verification."
+            )
+
+        logger.info(
+            f"{log_prompt} - Verifying pushed image {image} is pullable from registry "
+            f"(up to {max_retries} attempts, {delay_seconds}s apart)."
+        )
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                docker_client.images.pull(image)
+                logger.success(
+                    f"{log_prompt} - Pull verification succeeded for {image} on attempt {attempt}."
+                )
+                return
+            except docker.errors.ImageNotFound:
+                logger.info(
+                    f"{log_prompt} - Pull verification attempt {attempt}/{max_retries}: "
+                    f"image {image} not yet available. Retrying in {delay_seconds}s..."
+                )
+            except (
+                requests.exceptions.ConnectionError,
+                urllib3.exceptions.ReadTimeoutError,
+                requests.exceptions.ReadTimeout,
+            ) as e:
+                logger.warning(
+                    f"{log_prompt} - Pull verification attempt {attempt}/{max_retries}: "
+                    f"failed due to {type(e).__name__}. Retrying in {delay_seconds}s...",
+                    exc_info=True,
+                )
+
+            if attempt < max_retries:
+                time.sleep(delay_seconds)
+
+        raise DockerException(
+            f"{log_prompt} - Pull verification failed: image {image} was not pullable "
+            f"after {max_retries} attempts ({max_retries * delay_seconds}s total). "
+            f"The registry may not have propagated the image in time."
+        )
 
     def create_image(
         self,

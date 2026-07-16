@@ -846,17 +846,10 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
     logger.debug(f"Could not get python version for {image=} from regex")
 
     if EXTENDED_REPOSITORY_SEGMENT in image:
-        logger.debug(
-            f"get_python_version | routing extended {image=} to the "
-            "DockerImage registry client (GAR via gcloud)"
-        )
         try:
             from demisto_sdk.commands.common.docker.docker_image import DockerImage
 
             if python_version := DockerImage(image).python_version:
-                logger.info(
-                    f"get_python_version | resolved extended {image=} -> {python_version}"
-                )
                 return python_version
             logger.warning(
                 f"get_python_version | extended {image=} returned no python version"

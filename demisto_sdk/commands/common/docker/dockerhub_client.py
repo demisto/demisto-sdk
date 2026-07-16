@@ -92,19 +92,11 @@ class DockerHubClient:
             repo: the repository to retrieve the token for.
             scope: the scope needed for the repository
         """
-        logger.debug(
-            f"get_token | {IS_CONTENT_GITLAB_CI=} for {repo=} {scope=} "
-            f"(registry_api_url={self.registry_api_url})"
-        )
         if IS_CONTENT_GITLAB_CI or _is_gar_registry(self.registry_api_url):
             # GAR (CI proxy and the demistoextended gcr.io target) authenticates
             # with a gcloud access token rather than a Docker Hub token.
-            logger.debug(
-                f"get_token | attempting Google Cloud access token for {repo=}"
-            )
             try:
                 if gcloud_access_token := get_gcloud_access_token():
-                    logger.debug(f"get_token | using gcloud access token for {repo=}")
                     return gcloud_access_token
                 logger.warning(
                     f"get_token | gcloud access token empty for {repo=}, "
@@ -294,7 +286,6 @@ class DockerHubClient:
         logger.debug(
             f"dockerhub_client | do_registry_get_request | "
             f"registry_url={self.registry_api_url} | "
-            f"docker_image={docker_image} | url_suffix={url_suffix} | "
             f"is_custom_registry={self._is_custom_registry}"
         )
         if not url_suffix.startswith("/"):
@@ -321,17 +312,12 @@ class DockerHubClient:
             else:
                 # For Docker Hub default registry and GAR proxy registries,
                 # use bearer token from get_token() (Docker Hub token or GCloud access token).
-                token = self.get_token(docker_image, scope=scope)
-                logger.debug(
-                    f"do_registry_get_request | using bearer token for {docker_image} "
-                    f"(token_present={bool(token)})"
+                _headers["Authorization"] = (
+                    f"Bearer {self.get_token(docker_image, scope=scope)}"
                 )
-                _headers["Authorization"] = f"Bearer {token}"
 
-        full_url = f"{self.registry_api_url}/{docker_image}{url_suffix}"
-        logger.debug(f"do_registry_get_request | GET {full_url}")
         return self.get_request(
-            full_url,
+            f"{self.registry_api_url}/{docker_image}{url_suffix}",
             headers=_headers,
             params={key: value for key, value in params} if params else None,
         )
@@ -422,11 +408,7 @@ class DockerHubClient:
                 exception=error,
             )
 
-        tags = response.get("tags") or []
-        logger.debug(
-            f"get_image_tags | {docker_image} | registry={self.registry_api_url} | found {len(tags)} tags"
-        )
-        return tags
+        return response.get("tags") or []
 
     def get_image_tag_metadata(self, docker_image: str, tag: str) -> Dict[str, Any]:
         """
@@ -728,32 +710,22 @@ def get_gcloud_access_token() -> Optional[str]:
                    is caught and logged, but not re-raised.
     """
     try:
-        logger.debug(
-            "get_gcloud_access_token | resolving credentials via google.auth.default()"
-        )
+        logger.debug("Trying to retrieve a Google Cloud access token.")
         # Automatically obtain credentials from the environment
         credentials, project_id = google.auth.default()
-        service_account = getattr(credentials, "service_account_email", None)
-        logger.debug(
-            f"get_gcloud_access_token | resolved credentials {project_id=} "
-            f"{service_account=} type={type(credentials).__name__}"
-        )
-
         # Refresh the token if needed (ensures the token is valid)
         credentials.refresh(Request())
         # Extract the access token
         access_token = credentials.token
         if access_token:
             logger.debug(
-                f"get_gcloud_access_token | obtained access token {project_id=} "
-                f"{service_account=}"
+                f"Successfully obtained Google Cloud access token, {project_id=}."
             )
             return access_token
-        else:
-            logger.warning(
-                "get_gcloud_access_token | credentials refreshed but token is empty"
-            )
-            return None
+        logger.warning(
+            "get_gcloud_access_token | credentials refreshed but token is empty"
+        )
+        return None
     except Exception as e:
         logger.warning(
             f"get_gcloud_access_token | failed to get access token: {str(e)}"

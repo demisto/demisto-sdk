@@ -57,9 +57,6 @@ class DockerImage(str):
             host = parts[0]
             path = parts[1] if len(parts) > 1 else ""
             client.registry_api_url = f"https://{host}/v2/{path}".rstrip("/")
-            logger.info(
-                f"Extended registry client created: registry_api_url={client.registry_api_url}"
-            )
             cls._extended_client = client
         return cls._extended_client
 

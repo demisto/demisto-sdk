@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from abc import ABC
 from pathlib import Path
-from typing import Iterable, List, NamedTuple, Optional
+from typing import Dict, Iterable, List, NamedTuple, Optional, Tuple
+
+from packaging.version import InvalidVersion, Version
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -29,7 +31,10 @@ class _Dependency(NamedTuple):
     skills and collections). ``path`` points at the dependency's source file so
     an action can be re-parsed from disk to recover its args/outputs schema,
     which is deliberately excluded from the graph and therefore unavailable on
-    graph-property objects.
+    graph-property objects. ``fromversion`` is used to pick a single winner when
+    several files expose the same action ``id`` (e.g. version variants like
+    ``SearchCases`` and ``SearchCases_8_15``): only the highest ``fromversion``
+    is counted, mirroring what the platform loads at runtime.
     """
 
     id: str
@@ -37,20 +42,23 @@ class _Dependency(NamedTuple):
     description: Optional[str]
     path: Optional[str]
     type: Optional[str]
+    fromversion: Optional[str]
 
 
 class _GroupedDependencies(NamedTuple):
     """The direct dependencies of one agent, grouped for token estimation.
 
-    - ``action_paths``: source-file paths of dependent actions; each is
-      re-parsed from disk so its args/outputs (excluded from the graph) count
-      toward the budget.
+    - ``action_paths``: source-file path per dependent action, keyed by action
+      ``id`` and deduplicated to the highest-``fromversion`` file so a single
+      logical action is counted once even when several version-variant files
+      share its ``id``. Each surviving path is re-parsed from disk so its
+      args/outputs (excluded from the graph) count toward the budget.
     - ``skill_summaries`` / ``collection_summaries``: ``(name, description)``
       pairs read straight from the graph, which is all a skill/collection
       contributes to the agent total.
     """
 
-    action_paths: list[str]
+    action_paths: Dict[str, Tuple[str, Optional[str]]]
     skill_summaries: list[tuple[Optional[str], Optional[str]]]
     collection_summaries: list[tuple[Optional[str], Optional[str]]]
 
@@ -58,7 +66,7 @@ class _GroupedDependencies(NamedTuple):
 ContentTypes = AgentixAgent | AgentixAction | AgentixSkill | Collection
 
 # AGENT_TOKEN_LIMIT = 50000
-AGENT_TOKEN_LIMIT = 35000  ### for demo only
+AGENT_TOKEN_LIMIT = 23000  ### for demo only
 
 # Only agents available from this platform version onward are budget-checked;
 # earlier agents predate the token-budget contract this validator enforces.
@@ -103,7 +111,8 @@ RETURN a AS agent,
         name: dep.name,
         description: dep.description,
         path: dep.path,
-        type: dep.content_type
+        type: dep.content_type,
+        fromversion: dep.fromversion
     }}) AS deps
 """
 
@@ -208,7 +217,7 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             f"(name+description+systeminstructions+{len(agent.conversationstarters or [])} "
             f"conversationstarters)."
         )
-        for path in deps.action_paths:
+        for path, fromversion in deps.action_paths.values():
             action = self._parse_action_from_path(path)
             if action is None:
                 logger.opt(colors=False).debug(
@@ -218,7 +227,8 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             action_fragments = action_text_fragments(action)
             logger.opt(colors=False).debug(
                 f"[GR116][breakdown] action '{action.object_id}' "
-                f"(path='{path}'): {estimate_tokens_for_texts(action_fragments)} "
+                f"(path='{path}', fromversion='{fromversion}'): "
+                f"{estimate_tokens_for_texts(action_fragments)} "
                 f"token(s), {len(action_fragments)} fragment(s)."
             )
             fragments.extend(action_fragments)
@@ -285,7 +295,7 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             if agent is None:
                 continue
 
-            deps = _GroupedDependencies([], [], [])
+            deps = _GroupedDependencies({}, [], [])
             for raw in row.get("deps") or []:
                 self._route_dependency(_Dependency(**raw), deps)
             affected.append((agent, deps))
@@ -309,12 +319,21 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
 
     @staticmethod
     def _route_dependency(dep: _Dependency, deps: _GroupedDependencies) -> None:
-        """Add a single dependency row to the agent's grouped dependencies."""
+        """Add a single dependency row to the agent's grouped dependencies.
+
+        Actions are keyed by ``id`` and deduplicated to the highest
+        ``fromversion``: when several files expose the same action id (version
+        variants, or the same id living in both a vendor pack and a standalone
+        ``AgentixAction_*`` pack), only the newest is counted, matching what the
+        platform loads at runtime.
+        """
         # OPTIONAL MATCH yields a null dep for a dependency-less agent.
         if dep.id is None:
             return
         if dep.type == ContentType.AGENTIX_ACTION.value and dep.path:
-            deps.action_paths.append(dep.path)
+            existing = deps.action_paths.get(dep.id)
+            if existing is None or _is_newer(dep.fromversion, existing[1]):
+                deps.action_paths[dep.id] = (dep.path, dep.fromversion)
         elif dep.type == ContentType.AGENTIX_SKILL.value:
             deps.skill_summaries.append((dep.name, dep.description))
         elif dep.type == ContentType.COLLECTION.value:
@@ -324,3 +343,20 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
                 f"[GR116] Ignoring dependency '{dep.id}' of unhandled type "
                 f"'{dep.type}' (or action without a path)."
             )
+
+
+def _is_newer(candidate: Optional[str], current: Optional[str]) -> bool:
+    """Return True when ``candidate`` is a strictly higher version than ``current``.
+
+    Used to pick the highest-``fromversion`` file among duplicate action ids. An
+    unparseable/missing version sorts lowest, so a valid version always wins over
+    a missing one, and a missing one never displaces an existing pick.
+    """
+
+    def _parse(value: Optional[str]) -> Version:
+        try:
+            return Version(value) if value else Version("0")
+        except InvalidVersion:
+            return Version("0")
+
+    return _parse(candidate) > _parse(current)

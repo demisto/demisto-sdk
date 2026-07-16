@@ -43,6 +43,8 @@ def _collect_skill_fields(item: AgentixSkill) -> List[Tuple[str, str]]:
     blocks are stripped before checking.
     """
     fields: List[Tuple[str, str]] = []
+    if item.name:
+        fields.append(("name", item.name))
     if item.description:
         fields.append(("description", strip_code_blocks(item.description)))
     try:

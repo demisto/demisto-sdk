@@ -463,6 +463,30 @@ class TestGetImageRegistryDemistoextended:
         else:
             assert result == image
 
+    def test_devdemistoextended_image_is_routed_to_extended_registry(self):
+        """
+        Given:
+         - a devdemistoextended/ image (any image whose name *contains* the
+           "demistoextended" substring) and DEMISTO_SDK_EXTENDED_REGISTRY is NOT set
+
+        When:
+         - calling DockerBase.get_image_registry()
+
+        Then:
+         - it IS routed to the extended (GAR) registry, prefixed with the default
+           extended registry (gcr.io/xsoar-registry), like every demistoextended image
+        """
+        env = os.environ.copy()
+        env.pop("DEMISTO_SDK_EXTENDED_REGISTRY", None)
+        with mock.patch.dict(os.environ, env, clear=True):
+            result = dhelper.DockerBase.get_image_registry(
+                "devdemistoextended/accessdata-p:1.1.0.10358491"
+            )
+            assert (
+                result
+                == "gcr.io/xsoar-registry/devdemistoextended/accessdata-p:1.1.0.10358491"
+            )
+
 
 class TestGetOrCreateTestImageDemistoextended:
     """Tests for get_or_create_test_image with demistoextended images."""

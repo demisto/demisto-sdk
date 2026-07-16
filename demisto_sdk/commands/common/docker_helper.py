@@ -58,7 +58,6 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "pre_commit" / "resources"
 DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT") or 300)
 EXTENDED_REPOSITORY_SEGMENT = f"{DEMISTO_EXTENDED_REPOSITORY}/"
-DEVTEST_EXTENDED_REPOSITORY_SEGMENT = f"{DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/"
 
 
 class DockerException(Exception):
@@ -557,32 +556,17 @@ class DockerBase:
         return image
 
     @staticmethod
-    def _normalize_cr_prefix(image: str) -> str:
-        """Strip a hardcoded CR prefix back to the canonical "demistoextended/..." form."""
-        if image.startswith(CR_REGISTRY_PREFIX):
-            return image[len(CR_REGISTRY_PREFIX) :]
-        return image
-
-    @staticmethod
     def get_image_registry(image: str) -> str:
-        extended_registry = os.getenv(
-            DEMISTO_SDK_EXTENDED_REGISTRY_ENV, DEFAULT_EXTENDED_REGISTRY
+        # Strip the hardcoded CR prefix back to the canonical "demistoextended/" form.
+        image = image.removeprefix(CR_REGISTRY_PREFIX)
+        # "demistoextended" images -> extended (GAR) registry; everything else -> Docker.
+        registry = (
+            os.getenv(DEMISTO_SDK_EXTENDED_REGISTRY_ENV, DEFAULT_EXTENDED_REGISTRY)
+            if DEMISTO_EXTENDED_REPOSITORY in image
+            else DOCKER_REGISTRY_URL
         )
-        image = DockerBase._normalize_cr_prefix(image)
-        if EXTENDED_REPOSITORY_SEGMENT in image:
-            # Return as-is if already prefixed, to avoid double-prefixing.
-            if extended_registry and extended_registry in image:
-                return image
-            if extended_registry and image.startswith(
-                (
-                    EXTENDED_REPOSITORY_SEGMENT,
-                    DEVTEST_EXTENDED_REPOSITORY_SEGMENT,
-                )
-            ):
-                return f"{extended_registry}/{image}"
-            return image
-        if DOCKER_REGISTRY_URL not in image:
-            return f"{DOCKER_REGISTRY_URL}/{image}"
+        if registry and registry not in image:
+            return f"{registry}/{image}"
         return image
 
     @staticmethod

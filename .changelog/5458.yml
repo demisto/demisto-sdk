@@ -1,0 +1,6 @@
+changes:
+- description: Added post-push pull verification for Docker images with retry logic to ensure registry propagation before proceeding.
+  type: feature
+- description: Fixed silent push failure in DockerBase.push_image that would proceed to pull verification even when all push attempts failed.
+  type: fix
+pr_number: 5458

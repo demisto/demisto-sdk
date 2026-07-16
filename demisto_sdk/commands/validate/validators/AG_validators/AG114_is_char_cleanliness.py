@@ -25,8 +25,65 @@ _FENCED_CODE_BLOCK = re.compile(r"```.*?```", re.DOTALL)
 _INLINE_CODE = re.compile(r"`[^`]*`")
 
 
+class IsCharCleanlinessValidator(BaseValidator[ContentTypes]):
+    error_code = "AG114"
+    description = (
+        "Checks that Agentix action, skill, and knowledge definitions contain "
+        "only plain ASCII characters across all text fields (name, display "
+        "name, description, argument names/descriptions, enum/default values, "
+        "and output content). Prose bodies are checked excluding code blocks."
+    )
+    rationale = (
+        "Emojis, decorative Unicode, smart quotes, em-dashes, accented letters, "
+        "and non-breaking spaces waste tokens and can confuse the LLM. Use ASCII "
+        "substitutes instead (-- for em-dash, -> for arrow, straight quotes)."
+    )
+    error_message = (
+        "The {0} '{1}' contains disallowed non-ASCII characters.\n"
+        "Offending field(s):\n{2}\n"
+        "Remove emojis, decorative Unicode, smart quotes, em-dashes, and accented "
+        "letters, or replace them with ASCII substitutes."
+    )
+    related_field = "content"
+    related_file_type = [RelatedFileType.SKILL_CONTENT]
+
+    def obtain_invalid_content_items(
+        self, content_items: Iterable[ContentTypes]
+    ) -> List[ValidationResult]:
+        content_items = list(content_items)
+        logger.debug(f"[{self.error_code}] Running on {len(content_items)} item(s).")
+        results: List[ValidationResult] = []
+        for content_item in content_items:
+            offending: List[str] = []
+            for field_name, text in collect_text_fields(content_item):
+                disallowed = find_disallowed_chars(text)
+                if disallowed:
+                    chars = " ".join(repr(ch) for ch in disallowed)
+                    offending.append(f"  - {field_name}: {chars}")
+            logger.debug(
+                f"[{self.error_code}] '{content_item.display_name}': "
+                f"{len(offending)} offending field(s)."
+            )
+            if offending:
+                results.append(
+                    ValidationResult(
+                        validator=self,
+                        message=self.error_message.format(
+                            content_item.content_type.value,
+                            content_item.display_name,
+                            "\n".join(offending),
+                        ),
+                        content_object=content_item,
+                    )
+                )
+        logger.debug(
+            f"[{self.error_code}] Finished. Found {len(results)} invalid item(s)."
+        )
+        return results
+
+
 def strip_code_blocks(text: str) -> str:
-    """Remove fenced and inline code so prose-only checks ignore code samples."""
+    """Remove fenced and inline code so narrative-text checks ignore code samples."""
     without_fenced = _FENCED_CODE_BLOCK.sub(" ", text)
     return _INLINE_CODE.sub(" ", without_fenced)
 
@@ -37,10 +94,10 @@ def find_disallowed_chars(text: str) -> List[str]:
 
 
 def _collect_skill_fields(item: AgentixSkill) -> List[Tuple[str, str]]:
-    """Return (field_name, prose) pairs for a skill.
+    """Return (field_name, narrative text) pairs for a skill.
 
-    The description and the ``<SKILL_NAME>_skill.md`` body are prose, so code
-    blocks are stripped before checking.
+    The description and the ``<SKILL_NAME>_skill.md`` body are narrative text, so
+    code blocks are stripped before checking.
     """
     fields: List[Tuple[str, str]] = []
     if item.name:
@@ -60,8 +117,8 @@ def _collect_action_fields(item: AgentixAction) -> List[Tuple[str, str]]:
     """Return (field_name, text) pairs for an action.
 
     Structured fields (names, enum/default values) are checked verbatim so a
-    banned character can never be hidden; the description is prose and has its
-    code blocks stripped.
+    banned character can never be hidden; the description is narrative text and
+    has its code blocks stripped.
     """
     fields: List[Tuple[str, str]] = []
     if item.name:
@@ -92,9 +149,6 @@ def _collect_action_fields(item: AgentixAction) -> List[Tuple[str, str]]:
                     strip_code_blocks(output.description),
                 )
             )
-    for i, few_shot in enumerate(item.few_shots or []):
-        if few_shot:
-            fields.append((f"few_shots[{i}]", strip_code_blocks(few_shot)))
     return fields
 
 
@@ -119,62 +173,6 @@ def collect_text_fields(item: ContentTypes) -> List[Tuple[str, str]]:
     if isinstance(item, AgentixAction):
         return _collect_action_fields(item)
     return _collect_knowledge_fields(item)
-
-
-class IsCharCleanlinessValidator(BaseValidator[ContentTypes]):
-    error_code = "AG114"
-    description = (
-        "Checks that Agentix action, skill, and knowledge definitions contain "
-        "only plain ASCII characters across all text fields (name, display "
-        "name, description, argument names/descriptions, enum/default values, "
-        "and output content). Prose bodies are checked excluding code blocks."
-    )
-    rationale = (
-        "Emojis, decorative Unicode, smart quotes, em-dashes, accented letters, "
-        "and non-breaking spaces waste tokens and can confuse the LLM. Use ASCII "
-        "substitutes instead (-- for em-dash, -> for arrow, straight quotes)."
-    )
-    error_message = (
-        "The {0} '{1}' contains disallowed non-ASCII characters. Offending "
-        "field(s): {2}. Remove emojis, decorative Unicode, smart quotes, "
-        "em-dashes, and accented letters, or replace them with ASCII substitutes."
-    )
-    related_field = "content"
-    related_file_type = [RelatedFileType.SKILL_CONTENT]
-
-    def obtain_invalid_content_items(
-        self, content_items: Iterable[ContentTypes]
-    ) -> List[ValidationResult]:
-        content_items = list(content_items)
-        logger.debug(f"[{self.error_code}] Running on {len(content_items)} item(s).")
-        results: List[ValidationResult] = []
-        for content_item in content_items:
-            offending: List[str] = []
-            for field_name, text in collect_text_fields(content_item):
-                disallowed = find_disallowed_chars(text)
-                if disallowed:
-                    chars = " ".join(repr(ch) for ch in disallowed)
-                    offending.append(f"{field_name}: {chars}")
-            logger.debug(
-                f"[{self.error_code}] '{content_item.display_name}': "
-                f"{len(offending)} offending field(s)."
-            )
-            if offending:
-                results.append(
-                    ValidationResult(
-                        validator=self,
-                        message=self.error_message.format(
-                            content_item.content_type.value,
-                            content_item.display_name,
-                            "; ".join(offending),
-                        ),
-                        content_object=content_item,
-                    )
-                )
-        logger.debug(
-            f"[{self.error_code}] Finished. Found {len(results)} invalid item(s)."
-        )
-        return results
 
 
 # Backward-compatible alias for the previous skill-only class name.

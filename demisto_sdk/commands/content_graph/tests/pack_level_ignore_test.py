@@ -467,9 +467,7 @@ class TestOldPackLevelIgnoredErrors:
         from demisto_sdk.commands.common.git_util import GitFileNotFoundError
 
         pack = self._make_pack_with_path()
-        self._fake_git(
-            mocker, raises=GitFileNotFoundError("abc123", ".pack-ignore")
-        )
+        self._fake_git(mocker, raises=GitFileNotFoundError("abc123", ".pack-ignore"))
         debug = mocker.patch(
             "demisto_sdk.commands.content_graph.objects.pack.logger.debug"
         )

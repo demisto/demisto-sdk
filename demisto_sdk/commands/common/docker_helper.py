@@ -17,7 +17,6 @@ from requests import JSONDecodeError
 from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
-    CR_REGISTRY_PREFIX,
     DEFAULT_DOCKER_REGISTRY_URL,
     DEFAULT_EXTENDED_REGISTRY,
     DEFAULT_PYTHON2_VERSION,
@@ -33,6 +32,7 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     TYPE_PYTHON2,
     TYPE_PYTHON3,
+    strip_cr_registry_prefix,
 )
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
@@ -557,8 +557,7 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
-        # Strip the hardcoded CR prefix back to the canonical "demistoextended/" form.
-        image = image.removeprefix(CR_REGISTRY_PREFIX)
+        image = strip_cr_registry_prefix(image)
         # "demistoextended" images -> extended (GAR) registry; everything else -> Docker.
         registry = (
             os.getenv(DEMISTO_SDK_EXTENDED_REGISTRY_ENV, DEFAULT_EXTENDED_REGISTRY)

@@ -56,6 +56,11 @@ DEFAULT_EXTENDED_REGISTRY = "gcr.io/xsoar-registry"
 CR_REGISTRY_PREFIX = f"{DEFAULT_EXTENDED_REGISTRY}/"
 
 
+def strip_cr_registry_prefix(image: str) -> str:
+    """TEMPORARY: strip the CR host prefix back to the canonical "demistoextended/" form."""
+    return image.removeprefix(CR_REGISTRY_PREFIX)
+
+
 # Authentication
 DEMISTO_BASE_URL = "DEMISTO_BASE_URL"
 DEMISTO_USERNAME = "DEMISTO_USERNAME"

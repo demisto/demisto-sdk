@@ -6,13 +6,13 @@ from typing import Optional
 from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
-    CR_REGISTRY_PREFIX,
     DEFAULT_EXTENDED_REGISTRY,
     DEMISTO_EXTENDED_REPOSITORY,
     DEMISTO_REPOSITORY,
     DEMISTO_SDK_EXTENDED_REGISTRY_ENV,
     DOCKER_REGISTRY_URL,
     NATIVE_IMAGE_DOCKER_NAME,
+    strip_cr_registry_prefix,
 )
 from demisto_sdk.commands.common.docker.dockerhub_client import DockerHubClient
 from demisto_sdk.commands.common.logger import logger
@@ -78,10 +78,7 @@ class DockerImage(str):
             docker_image: the full docker image
             raise_if_not_valid: if True, will raise ValueError if the docker-image has an invalid structure.
         """
-        # TEMPORARY: strip the CR prefix so the image parses to its canonical
-        # "demistoextended/..." form. Remove once content stops emitting it.
-        if docker_image.startswith(CR_REGISTRY_PREFIX):
-            docker_image = docker_image[len(CR_REGISTRY_PREFIX) :]
+        docker_image = strip_cr_registry_prefix(docker_image)
 
         docker_image_instance = super().__new__(cls, docker_image)
         pattern = re.compile(cls.DOCKER_IMAGE_REGX)

@@ -6,6 +6,7 @@ from typing import Iterable, List, NamedTuple, Optional
 
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import versioned
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
@@ -59,6 +60,10 @@ ContentTypes = AgentixAgent | AgentixAction | AgentixSkill | Collection
 # AGENT_TOKEN_LIMIT = 50000
 AGENT_TOKEN_LIMIT = 35000  ### for demo only
 
+# Only agents available from this platform version onward are budget-checked;
+# earlier agents predate the token-budget contract this validator enforces.
+MIN_AGENT_FROMVERSION = "8.15.0"
+
 # One Cypher round trip resolves the whole structure GR116 needs:
 #   step 1 - the affected agents: when $validate_all is true, every agent;
 #            otherwise each agent that was modified itself, or that directly
@@ -79,11 +84,12 @@ AGENT_TOKEN_LIMIT = 35000  ### for demo only
 # select NO agents rather than all of them.
 _AGENT_DEPENDENCIES_QUERY = f"""
 MATCH (a:{ContentType.AGENTIX_AGENT})
+WHERE {versioned("a.fromversion")} >= {versioned(MIN_AGENT_FROMVERSION)}
 OPTIONAL MATCH (a)-[:{RelationshipType.USES}]->(changed)
 WITH a,
-     $validate_all
-     OR (a.object_id IN $changed_ids)
-     OR (changed IS NOT NULL AND changed.object_id IN $changed_ids) AS is_affected
+    $validate_all
+    OR (a.object_id IN $changed_ids)
+    OR (changed IS NOT NULL AND changed.object_id IN $changed_ids) AS is_affected
 WITH a WHERE is_affected
 WITH DISTINCT a
 OPTIONAL MATCH (a)-[:{RelationshipType.USES}]->(dep)
@@ -92,13 +98,13 @@ WHERE dep.content_type IN [
     '{ContentType.COLLECTION}'
 ]
 RETURN a AS agent,
-       collect(DISTINCT {{
-           id: dep.object_id,
-           name: dep.name,
-           description: dep.description,
-           path: dep.path,
-           type: dep.content_type
-       }}) AS deps
+    collect(DISTINCT {{
+        id: dep.object_id,
+        name: dep.name,
+        description: dep.description,
+        path: dep.path,
+        type: dep.content_type
+    }}) AS deps
 """
 
 
@@ -194,15 +200,41 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             agent.systeminstructions,
             *(agent.conversationstarters or []),
         ]
+        # TEMP: per-item token breakdown so a verbose validate run prints exactly
+        # how many tokens each agent field / action / skill contributes.
+        logger.opt(colors=False).debug(
+            f"[GR116][breakdown] agent '{agent.name}': own fields = "
+            f"{estimate_tokens_for_texts(fragments)} token(s) "
+            f"(name+description+systeminstructions+{len(agent.conversationstarters or [])} "
+            f"conversationstarters)."
+        )
         for path in deps.action_paths:
             action = self._parse_action_from_path(path)
             if action is None:
+                logger.opt(colors=False).debug(
+                    f"[GR116][breakdown] action path '{path}': UNPARSEABLE -> 0 tokens."
+                )
                 continue
-            fragments.extend(action_text_fragments(action))
+            action_fragments = action_text_fragments(action)
+            logger.opt(colors=False).debug(
+                f"[GR116][breakdown] action '{action.object_id}' "
+                f"(path='{path}'): {estimate_tokens_for_texts(action_fragments)} "
+                f"token(s), {len(action_fragments)} fragment(s)."
+            )
+            fragments.extend(action_fragments)
 
         for name, description in deps.skill_summaries:
+            logger.opt(colors=False).debug(
+                f"[GR116][breakdown] skill '{name}': "
+                f"{estimate_tokens_for_texts([name, description])} token(s) "
+                f"(name+description only)."
+            )
             fragments.extend([name, description])
         for name, description in deps.collection_summaries:
+            logger.opt(colors=False).debug(
+                f"[GR116][breakdown] collection '{name}': "
+                f"{estimate_tokens_for_texts([name, description])} token(s)."
+            )
             fragments.extend([name, description])
 
         return fragments

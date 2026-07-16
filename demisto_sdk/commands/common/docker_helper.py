@@ -477,9 +477,7 @@ class DockerBase:
             max_retries (int): Maximum number of pull attempts. Defaults to 10.
             delay_seconds (int): Seconds to wait between retries. Defaults to 30.
         """
-        docker_client = init_global_docker_client(
-            log_prompt="verify_image_after_push"
-        )
+        docker_client = init_global_docker_client(log_prompt="verify_image_after_push")
 
         # Remove the local image so we force a real pull from the registry
         try:

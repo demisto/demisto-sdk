@@ -3293,7 +3293,7 @@ def _build_agent_with_dependencies(
     """Build a repo with an agent that registers one skill and one action.
 
     The agent's system instructions size is controlled by the caller so a test
-    can push the agent's total token budget over or under the GR116 limit.
+    can push the agent's total char budget over or under the GR116 limit.
     """
     pack = graph_repo.create_pack("AgentPack")
 
@@ -3315,12 +3315,16 @@ def _build_agent_with_dependencies(
             "skillids": ["my-skill-id"],
             "actionids": ["action-a"],
             "systeminstructions": system_instructions,
+            # GR116 only budget-checks agents at or above MIN_AGENT_FROMVERSION
+            # (8.15.0); the default sample agent has no fromversion, so it would
+            # be filtered out of the query without this.
+            "fromversion": "8.15.0",
         }
     )
     return graph_repo
 
 
-def test_GR116_agent_within_token_budget_is_valid(graph_repo: Repo):
+def test_GR116_agent_within_char_budget_is_valid(graph_repo: Repo):
     """
     Given
     - An agent with small system instructions and small dependencies.
@@ -3332,7 +3336,7 @@ def test_GR116_agent_within_token_budget_is_valid(graph_repo: Repo):
     - The agent is not flagged.
     """
     from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget import (
-        AGENT_TOKEN_LIMIT,
+        AGENT_CHAR_LIMIT,
     )
     from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget_all_files import (
         IsAgentTotalTokenBudgetValidatorAllFiles,
@@ -3348,13 +3352,13 @@ def test_GR116_agent_within_token_budget_is_valid(graph_repo: Repo):
     )
 
     assert not results
-    assert AGENT_TOKEN_LIMIT == 50000  # guards the documented limit
+    assert AGENT_CHAR_LIMIT == 200000  # guards the documented limit
 
 
-def test_GR116_agent_exceeds_token_budget_is_invalid(graph_repo: Repo):
+def test_GR116_agent_exceeds_char_budget_is_invalid(graph_repo: Repo):
     """
     Given
-    - An agent whose system instructions alone far exceed the token limit.
+    - An agent whose system instructions alone far exceed the char limit.
 
     When
     - Running the GR116 validation across the entire repository.
@@ -3363,13 +3367,13 @@ def test_GR116_agent_exceeds_token_budget_is_invalid(graph_repo: Repo):
     - The agent is flagged, and the message states the limit.
     """
     from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget import (
-        AGENT_TOKEN_LIMIT,
+        AGENT_CHAR_LIMIT,
     )
     from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget_all_files import (
         IsAgentTotalTokenBudgetValidatorAllFiles,
     )
 
-    oversized_instructions = "word " * (AGENT_TOKEN_LIMIT * 4)
+    oversized_instructions = "a" * (AGENT_CHAR_LIMIT + 1)
     _build_agent_with_dependencies(
         graph_repo, system_instructions=oversized_instructions
     )
@@ -3380,7 +3384,7 @@ def test_GR116_agent_exceeds_token_budget_is_invalid(graph_repo: Repo):
     )
 
     assert len(results) == 1
-    assert str(AGENT_TOKEN_LIMIT) in results[0].message
+    assert str(AGENT_CHAR_LIMIT) in results[0].message
 
 
 def _gr116_agent_row(mocker, agent_id: str, deps: list, **agent_fields) -> dict:
@@ -3403,6 +3407,9 @@ def _gr116_agent_row(mocker, agent_id: str, deps: list, **agent_fields) -> dict:
     agent.description = agent_fields.get("description")
     agent.systeminstructions = agent_fields.get("systeminstructions")
     agent.conversationstarters = agent_fields.get("conversationstarters")
+    # No related instructions file: agent_text_fragments then reads the model's
+    # systeminstructions field (a Mock file_content would poison the char count).
+    agent.system_instructions_file = None
     return {"agent": {"object_id": agent_id, "_mock": agent}, "deps": deps}
 
 
@@ -3439,13 +3446,17 @@ def _gr116_validator_with_query(mocker, query_rows):
 
 
 def _gr116_action_dep(object_id: str, path: str = "", **fields) -> dict:
-    """A structure-query dep row for an action (path drives the YAML re-parse)."""
+    """A structure-query dep node for an action (path drives the YAML re-parse).
+
+    The structure query returns each dependency as its full graph node, so the
+    dep uses the node property names (``object_id``/``content_type``).
+    """
     return {
-        "id": object_id,
+        "object_id": object_id,
         "name": fields.get("name"),
         "description": fields.get("description"),
         "path": path or f"Packs/P/AgentixActions/{object_id}/{object_id}.yml",
-        "type": ContentType.AGENTIX_ACTION.value,
+        "content_type": ContentType.AGENTIX_ACTION.value,
         "fromversion": fields.get("fromversion"),
     }
 
@@ -3453,13 +3464,13 @@ def _gr116_action_dep(object_id: str, path: str = "", **fields) -> dict:
 def _gr116_skill_dep(
     object_id: str, name=None, description=None, fromversion=None
 ) -> dict:
-    """A structure-query dep row for a skill (scored from name+description)."""
+    """A structure-query dep node for a skill (scored from name+description)."""
     return {
-        "id": object_id,
+        "object_id": object_id,
         "name": name,
         "description": description,
         "path": f"Packs/P/AgentixSkills/{object_id}/{object_id}.yml",
-        "type": ContentType.AGENTIX_SKILL.value,
+        "content_type": ContentType.AGENTIX_SKILL.value,
         "fromversion": fromversion,
     }
 
@@ -3467,13 +3478,13 @@ def _gr116_skill_dep(
 def _gr116_collection_dep(
     object_id: str, name=None, description=None, fromversion=None
 ) -> dict:
-    """A structure-query dep row for a collection (scored from name+desc)."""
+    """A structure-query dep node for a collection (scored from name+desc)."""
     return {
-        "id": object_id,
+        "object_id": object_id,
         "name": name,
         "description": description,
         "path": f"Packs/P/Collections/{object_id}/{object_id}.json",
-        "type": ContentType.COLLECTION.value,
+        "content_type": ContentType.COLLECTION.value,
         "fromversion": fromversion,
     }
 
@@ -3520,25 +3531,28 @@ def test_GR116_single_structure_query_for_all_modified_dependencies(mocker):
     affected = validator._affected_agents_with_dependencies(
         changed_ids, validate_all=False
     )
-    by_id = {agent.object_id: (agent, deps) for agent, deps in affected}
+    by_id = {agent.object_id: (agent, dep_nodes) for agent, dep_nodes in affected}
 
     # then: a single structure query, receiving every changed id
     assert validator.graph.run_single_query.call_count == 1
     _, kwargs = validator.graph.run_single_query.call_args
     assert sorted(kwargs["changed_ids"]) == sorted(changed_ids)
     assert kwargs["validate_all"] is False
-    # and the per-agent (agent object + grouped dependencies)
+    # and the per-agent (agent object + deduped {dep_id: full dep node})
     assert set(by_id) == {"agent-1", "agent-2"}
-    agent_1, deps_1 = by_id["agent-1"]
+    agent_1, dep_nodes_1 = by_id["agent-1"]
     assert agent_1.object_id == "agent-1"
     assert agent_1.name == "Agent 1"
-    assert deps_1.action_paths == {"action-1": ("p/action-1.yml", None)}
-    assert deps_1.skill_summaries == {"skill-1": ("Skill 1", "s1 desc", None)}
-    assert deps_1.collection_summaries == {"collection-1": ("Coll 1", "c1 desc", None)}
-    _, deps_2 = by_id["agent-2"]
-    assert deps_2.action_paths == {"action-2": ("p/action-2.yml", None)}
-    assert deps_2.skill_summaries == {}
-    assert deps_2.collection_summaries == {}
+    assert set(dep_nodes_1) == {"action-1", "skill-1", "collection-1"}
+    assert dep_nodes_1["action-1"]["path"] == "p/action-1.yml"
+    assert dep_nodes_1["action-1"]["content_type"] == ContentType.AGENTIX_ACTION.value
+    assert dep_nodes_1["skill-1"]["name"] == "Skill 1"
+    assert dep_nodes_1["skill-1"]["description"] == "s1 desc"
+    assert dep_nodes_1["collection-1"]["name"] == "Coll 1"
+    assert dep_nodes_1["collection-1"]["description"] == "c1 desc"
+    _, dep_nodes_2 = by_id["agent-2"]
+    assert set(dep_nodes_2) == {"action-2"}
+    assert dep_nodes_2["action-2"]["path"] == "p/action-2.yml"
 
 
 def test_GR116_validate_all_files_passes_empty_changed_ids(mocker):
@@ -3604,14 +3618,15 @@ def test_GR116_modified_agent_itself_is_included(mocker):
     affected = validator._affected_agents_with_dependencies(
         changed_ids, validate_all=False
     )
-    by_id = {agent.object_id: (agent, deps) for agent, deps in affected}
+    by_id = {agent.object_id: (agent, dep_nodes) for agent, dep_nodes in affected}
 
     # then
     _, kwargs = validator.graph.run_single_query.call_args
     assert kwargs["changed_ids"] == ["agent-1"]
     assert set(by_id) == {"agent-1"}
-    _, deps = by_id["agent-1"]
-    assert deps.action_paths == {"action-1": ("p/action-1.yml", None)}
+    _, dep_nodes = by_id["agent-1"]
+    assert set(dep_nodes) == {"action-1"}
+    assert dep_nodes["action-1"]["path"] == "p/action-1.yml"
 
 
 def test_GR116_agent_without_dependencies_has_empty_dep_groups(mocker):
@@ -3624,21 +3639,21 @@ def test_GR116_agent_without_dependencies_has_empty_dep_groups(mocker):
     - Resolving the affected agents.
 
     Then
-    - The agent is present with empty dependency groups (the null dep is ignored,
+    - The agent is present with no dependencies (the null dep is ignored,
       not counted as a dependency).
     """
-    # given: a null dep row, as OPTIONAL MATCH returns for a depless agent
+    # given: a null dep node, as OPTIONAL MATCH returns for a depless agent
     query_rows = [
         _gr116_agent_row(
             mocker,
             "agent-1",
             [
                 {
-                    "id": None,
+                    "object_id": None,
                     "name": None,
                     "description": None,
                     "path": None,
-                    "type": None,
+                    "content_type": None,
                 }
             ],
             name="Agent 1",
@@ -3650,14 +3665,12 @@ def test_GR116_agent_without_dependencies_has_empty_dep_groups(mocker):
     affected = validator._affected_agents_with_dependencies(
         ["agent-1"], validate_all=False
     )
-    by_id = {agent.object_id: (agent, deps) for agent, deps in affected}
+    by_id = {agent.object_id: (agent, dep_nodes) for agent, dep_nodes in affected}
 
     # then
     assert set(by_id) == {"agent-1"}
-    _, deps = by_id["agent-1"]
-    assert deps.action_paths == {}
-    assert deps.skill_summaries == {}
-    assert deps.collection_summaries == {}
+    _, dep_nodes = by_id["agent-1"]
+    assert dep_nodes == {}
 
 
 def test_GR116_no_affected_agents_returns_no_results(mocker):
@@ -3737,13 +3750,13 @@ def test_GR116_actions_reparsed_from_path_skills_collections_from_graph(mocker):
     parsed_action.description = "action desc"
     arg = mocker.Mock()
     arg.name, arg.type, arg.description = "arg1", "string", "arg desc"
+    arg.default_value = "arg default"
     out = mocker.Mock()
     out.name, out.type, out.description = "out1", "string", "out desc"
     parsed_action.args = [arg]
     parsed_action.outputs = [out]
     from_path = mocker.patch(
-        "demisto_sdk.commands.validate.validators.GR_validators."
-        "GR116_is_agent_total_token_budget.BaseContent.from_path",
+        "demisto_sdk.commands.validate.tools.BaseContent.from_path",
         return_value=parsed_action,
     )
 
@@ -3772,7 +3785,9 @@ def test_GR116_actions_reparsed_from_path_skills_collections_from_graph(mocker):
     # when
     fragments = validator._agent_fragments(agent, deps)
 
-    # then: the action was re-parsed from its path (not fetched via graph.search)
+    # then: the action was re-parsed from its path (not fetched via graph.search).
+    # Skills/collections are read straight from their node (no parse_obj), so the
+    # action is the only dependency that hits from_path.
     from_path.assert_called_once()
     validator.graph.search.assert_not_called()
     # the action's args/outputs (YAML-only) are present in the fragments
@@ -3784,7 +3799,7 @@ def test_GR116_actions_reparsed_from_path_skills_collections_from_graph(mocker):
     assert "starter one" in fragments and "starter two" in fragments
 
 
-def test_GR116_unparseable_action_path_is_skipped(mocker):
+def test_GR116_unparseable_action_path_falls_back_to_name_description(mocker):
     """
     Given
     - An affected agent depending on an action whose YAML cannot be parsed.
@@ -3793,33 +3808,43 @@ def test_GR116_unparseable_action_path_is_skipped(mocker):
     - Building the agent's token fragments.
 
     Then
-    - The unparseable action contributes no fragments (it is skipped) rather
-      than failing the whole validation.
+    - The unparseable action contributes no args/outputs (it is not re-parsed)
+      and falls back to the graph node's name + description rather than failing
+      the whole validation.
     """
     # given: from_path returns None (unparseable / not an action)
     mocker.patch(
-        "demisto_sdk.commands.validate.validators.GR_validators."
-        "GR116_is_agent_total_token_budget.BaseContent.from_path",
+        "demisto_sdk.commands.validate.tools.BaseContent.from_path",
         return_value=None,
     )
     query_rows = [
         _gr116_agent_row(
             mocker,
             "agent-1",
-            [_gr116_action_dep("action-1", path="p/broken.yml")],
+            [
+                _gr116_action_dep(
+                    "action-1",
+                    path="p/broken.yml",
+                    name="Action 1",
+                    description="action desc",
+                )
+            ],
             name="Agent 1",
             description="agent desc",
             systeminstructions="agent instructions",
         )
     ]
     validator = _gr116_validator_with_query(mocker, query_rows)
-    agent, deps = validator._affected_agents_with_dependencies(
+    agent, dep_nodes = validator._affected_agents_with_dependencies(
         ["action-1"], validate_all=False
     )[0]
 
     # when
-    fragments = validator._agent_fragments(agent, deps)
+    fragments = validator._agent_fragments(agent, dep_nodes)
 
-    # then: only the agent's own fragments remain; the action added nothing
+    # then: no args/outputs (not re-parsed); falls back to node name+description
     assert "arg1" not in fragments
-    assert list(fragments) == ["Agent 1", "agent desc", "agent instructions"]
+    assert "Action 1" in fragments and "action desc" in fragments
+    # the agent's own fields are still present
+    assert "Agent 1" in fragments and "agent desc" in fragments
+    assert "agent instructions" in fragments

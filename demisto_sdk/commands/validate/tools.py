@@ -1,7 +1,7 @@
 import re
 from collections import Counter
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Union
+from typing import Dict, Iterable, List, Optional, Set
 
 from packaging.version import parse
 
@@ -16,12 +16,14 @@ from demisto_sdk.commands.common.tools import (
     filter_out_falsy_values,
     get_approved_tags_from_branch,
 )
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_action_test import (
     AgentixActionTest,
 )
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.collection import Collection
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import (
@@ -310,73 +312,61 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
     return content_item.git_status is None
 
 
-# Token estimation heuristic from the skill authoring guide: ~4 chars per token.
-CHARS_PER_TOKEN = 4
+def count_chars_for_texts(texts: Iterable[Optional[str]]) -> int:
+    """Count the combined number of characters across several text fragments.
 
-
-def estimate_tokens(text: str) -> int:
-    """Estimate the token count of a string using the ~4-chars-per-token heuristic.
-
-    Args:
-        text: The text to estimate. ``None``/empty is treated as zero tokens.
-
-    Returns:
-        The estimated number of tokens (rounded up).
-    """
-    if not text:
-        return 0
-    return (len(text) + CHARS_PER_TOKEN - 1) // CHARS_PER_TOKEN
-
-
-def estimate_tokens_for_texts(texts: Iterable[Optional[str]]) -> int:
-    """Estimate the combined token count of several text fragments.
-
-    Each fragment is estimated independently and summed, which keeps the
-    per-fragment rounding consistent with how the individual fields are authored.
+    Each fragment is counted independently and summed; ``None``/empty fragments
+    contribute zero.
 
     Args:
         texts: An iterable of text fragments (``None`` fragments are ignored).
 
     Returns:
-        The summed estimated token count across all fragments.
+        The summed character count across all fragments.
     """
-    return sum(estimate_tokens(text or "") for text in texts)
+    return sum(len(text) for text in texts if text)
 
 
 def action_text_fragments(action: AgentixAction) -> List[str]:
-    """Collect the token-bearing text fragments of an AgentixAction.
+    """Collect the character-bearing text fragments of an AgentixAction.
 
-    Includes the action name and description plus the args schema
-    (each arg's name, type, and description) and the outputs schema
-    (each output's name, type, and description).
+    Includes the action name and description plus the args schema (each arg's
+    name, description, type, and default value) and the outputs schema (each
+    output's name, description, and type). This is the single action collector
+    shared by AG112, AG114, and GR116.
 
     Args:
         action: The AgentixAction to inspect.
 
     Returns:
-        A flat list of text fragments contributing to the action's token budget.
+        A flat list of text fragments contributing to the action's char budget.
     """
     fragments: List[str] = [action.name, action.description]
     for arg in action.args or []:
-        fragments.extend([arg.name, arg.type, arg.description])
+        fragments.extend([arg.name, arg.description, arg.type, arg.default_value or ""])
     for output in action.outputs or []:
-        fragments.extend([output.name, output.type, output.description])
+        fragments.extend([output.name, output.description, output.type])
     return fragments
 
 
 def skill_text_fragments(skill: AgentixSkill) -> List[str]:
-    """Collect the token-bearing text fragments of an AgentixSkill.
+    """Collect the character-bearing text fragments of an AgentixSkill.
 
-    Includes the skill name, description, and full skill body content.
-    The skill body is read from the related ``*_skill.md`` file when available,
-    falling back to the model's ``content`` field.
+    Includes the skill name, description, and the full skill body. The body is
+    read from the related ``*_skill.md`` file if available, falling back to the
+    model's ``content`` field.
+
+    Used by AG112, which counts the body toward a single skill's own budget.
+    GR116 deliberately excludes a skill's body from an agent's aggregate budget
+    and scores skills straight from their graph node, so it does not call this.
 
     Args:
         skill: The AgentixSkill to inspect.
 
     Returns:
-        A flat list of text fragments contributing to the skill's token budget.
+        A flat list of text fragments contributing to the skill's char budget.
     """
+    fragments = [skill.name or "", skill.description or ""]
     body = skill.content
     try:
         related = skill.skill_content_file
@@ -384,39 +374,68 @@ def skill_text_fragments(skill: AgentixSkill) -> List[str]:
             body = related.file_content
     except Exception:  # missing/unreadable related file -> use model content
         pass
-    return [skill.name, skill.description, body]
+    fragments.append(body or "")
+    return fragments
 
 
-def estimate_content_tokens(item: Union[AgentixAction, AgentixSkill]) -> int:
-    """Estimate the total token budget consumed by an AgentixAction or AgentixSkill.
+def dependency_text_fragments(node: dict) -> List[str]:
+    """Collect the char-bearing fragments of one agent dependency graph node.
 
-    Dispatches on the item's type to the matching fragment collector:
-    - AgentixAction: name, description, args schema, and outputs schema
-      (see :func:`action_text_fragments`).
-    - AgentixSkill: name, description, and skill body
-      (see :func:`skill_text_fragments`).
+    ``node`` is a full dependency node as returned by GR116's structure query
+    (its keys are graph property names, e.g. ``content_type``/``path``). What the
+    agent char budget needs per dependency kind differs:
+
+    - AgentixAction: its args/outputs schema is excluded from the graph, so the
+      action is re-parsed from ``node['path']`` and scored via
+      :func:`action_text_fragments`. If the path cannot be parsed into an
+      AgentixAction, it falls back to the node's name + description.
+    - AgentixSkill / Collection: only their name + description count toward an
+      agent's budget (a skill's body is deliberately excluded), and both are
+      plain properties on the graph node - so they are read straight from the
+      node. Reconstructing the full object via ``parse_obj`` is avoided on
+      purpose: it triggers a filesystem ``from_path`` lookup (pack resolution)
+      per dependency and yields nothing beyond name + description here.
+
+    Any other/unknown type contributes nothing.
 
     Args:
-        item: The AgentixAction or AgentixSkill to inspect.
+        node: A full dependency graph node.
 
     Returns:
-        The estimated total token count for the item's definition.
+        A flat list of text fragments contributing to the agent's char budget.
     """
-    if isinstance(item, AgentixAction):
-        fragments = action_text_fragments(item)
-    else:
-        fragments = skill_text_fragments(item)
-    return estimate_tokens_for_texts(fragments)
+    content_type = node.get("content_type")
+    name_description = [node.get("name") or "", node.get("description") or ""]
+    if content_type == ContentType.AGENTIX_ACTION.value:
+        path = node.get("path")
+        if path:
+            try:
+                parsed = BaseContent.from_path(Path(path))
+            except Exception:  # unreadable/invalid path -> fall back below
+                parsed = None
+            if isinstance(parsed, AgentixAction):
+                return action_text_fragments(parsed)
+        # No path or unparseable: fall back to the node's name + description.
+        return name_description
+    if content_type in (
+        ContentType.AGENTIX_SKILL.value,
+        ContentType.COLLECTION.value,
+    ):
+        return name_description
+    logger.opt(colors=False).debug(
+        f"[GR116] Ignoring dependency of unhandled type '{content_type}'."
+    )
+    return []
 
 
 def agent_text_fragments(agent: AgentixAgent) -> List[str]:
-    """Collect the AgentixAgent's own token-bearing text fragments.
+    """Collect the AgentixAgent's own character-bearing text fragments.
 
     Includes the agent name, description, and system instructions. The system
     instructions are read from the related file when available, falling back to
     the model's ``systeminstructions`` field. This does NOT include the agent's
     graph dependencies (dependent actions/skills/collections); the full,
-    dependency-aware budget is computed by the GR116 validator.
+    dependency-aware char budget is computed by the GR116 validator.
 
     Args:
         agent: The AgentixAgent to inspect.

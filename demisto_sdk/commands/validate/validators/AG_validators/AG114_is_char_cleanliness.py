@@ -137,6 +137,8 @@ def _collect_action_fields(item: AgentixAction) -> List[Tuple[str, str]]:
                     strip_code_blocks(arg.description),
                 )
             )
+        if arg.type:
+            fields.append((f"arg '{arg.name}' type", arg.type))
         if arg.default_value:
             fields.append((f"arg '{arg.name}' default_value", arg.default_value))
     for output in item.outputs or []:
@@ -149,10 +151,12 @@ def _collect_action_fields(item: AgentixAction) -> List[Tuple[str, str]]:
                     strip_code_blocks(output.description),
                 )
             )
+        if output.type:
+            fields.append((f"output '{output.name}' type", output.type))
     return fields
 
 
-def _collect_knowledge_fields(item: Collection) -> List[Tuple[str, str]]:
+def _collect_collection_fields(item: Collection) -> List[Tuple[str, str]]:
     """Return (field_name, text) pairs for a knowledge (Collection) item.
 
     Collection has a minimal, evolving schema, so text fields are gathered
@@ -172,7 +176,7 @@ def collect_text_fields(item: ContentTypes) -> List[Tuple[str, str]]:
         return _collect_skill_fields(item)
     if isinstance(item, AgentixAction):
         return _collect_action_fields(item)
-    return _collect_knowledge_fields(item)
+    return _collect_collection_fields(item)
 
 
 # Backward-compatible alias for the previous skill-only class name.

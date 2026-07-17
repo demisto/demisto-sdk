@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from pathlib import Path
-from typing import Dict, Iterable, List, NamedTuple, Optional, Tuple
+from typing import Dict, Iterable, List, Optional
 
 from packaging.version import InvalidVersion, Version
 
@@ -12,69 +11,23 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import ve
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.collection import Collection
 from demisto_sdk.commands.validate.tools import (
-    action_text_fragments,
-    estimate_tokens_for_texts,
+    agent_text_fragments,
+    count_chars_for_texts,
+    dependency_text_fragments,
 )
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
 )
 
-
-class _Dependency(NamedTuple):
-    """A single agent dependency as returned by the structure query.
-
-    ``name``/``description`` are graph node properties (sufficient to score
-    skills and collections). ``path`` points at the dependency's source file so
-    an action can be re-parsed from disk to recover its args/outputs schema,
-    which is deliberately excluded from the graph and therefore unavailable on
-    graph-property objects. ``fromversion`` is used to pick a single winner when
-    several files expose the same action ``id`` (e.g. version variants like
-    ``SearchCases`` and ``SearchCases_8_15``): only the highest ``fromversion``
-    is counted, mirroring what the platform loads at runtime.
-    """
-
-    id: str
-    name: Optional[str]
-    description: Optional[str]
-    path: Optional[str]
-    type: Optional[str]
-    fromversion: Optional[str] = None
-
-
-class _GroupedDependencies(NamedTuple):
-    """The direct dependencies of one agent, grouped for token estimation.
-
-    Every group is keyed by the dependency ``id`` and deduplicated to the
-    highest-``fromversion`` entry, so a single logical action/skill/collection
-    is counted once even when several version-variant files share its ``id``
-    (e.g. ``SearchCases`` and ``SearchCases_8_15``, or the same id in both a
-    vendor pack and a standalone ``AgentixAction_*`` pack). This mirrors what
-    the platform loads at runtime.
-
-    - ``action_paths``: ``id -> (path, fromversion)``. Each surviving path is
-      re-parsed from disk so its args/outputs (excluded from the graph) count
-      toward the budget.
-    - ``skill_summaries`` / ``collection_summaries``: ``id -> (name,
-      description, fromversion)`` read straight from the graph, which is all a
-      skill/collection contributes to the agent total.
-    """
-
-    action_paths: Dict[str, Tuple[str, Optional[str]]]
-    skill_summaries: Dict[str, Tuple[Optional[str], Optional[str], Optional[str]]]
-    collection_summaries: Dict[str, Tuple[Optional[str], Optional[str], Optional[str]]]
-
-
 ContentTypes = AgentixAgent | AgentixAction | AgentixSkill | Collection
 
-# AGENT_TOKEN_LIMIT = 50000
-AGENT_TOKEN_LIMIT = 23000  ### for demo only
+AGENT_CHAR_LIMIT = 200000
 
 # Only agents available from this platform version onward are budget-checked;
-# earlier agents predate the token-budget contract this validator enforces.
+# earlier agents predate the char-budget contract this validator enforces.
 MIN_AGENT_FROMVERSION = "8.15.0"
 
 # One Cypher round trip resolves the whole structure GR116 needs:
@@ -84,14 +37,14 @@ MIN_AGENT_FROMVERSION = "8.15.0"
 #   step 2 - for every affected agent, the full agent node (so it is
 #            reconstructed into an AgentixAgent object - the same object other
 #            graph validators attach to their ValidationResult - carrying the
-#            agent's own token-bearing fields: name, description, system
+#            agent's own char-bearing fields: name, description, system
 #            instructions, conversation starters) plus all its direct action/
-#            skill/collection dependencies, returned with the graph-node fields
-#            the token budget needs (name + description) plus the source path
-#            (used to re-parse an action's args/outputs, which are not stored in
-#            the graph).
-# Returning the full agent node here means GR116 never has to issue a second
-# graph query to fetch the agent objects.
+#            skill/collection dependencies, each returned as its full graph node.
+#            Each dependency node is then reconstructed into its real object and
+#            scored by the shared fragment collectors (an action is re-parsed
+#            from its path so its args/outputs, excluded from the graph, count).
+# Returning the full agent and dependency nodes here means GR116 never has to
+# issue a second graph query to fetch those objects.
 # $validate_all (not the emptiness of $changed_ids) drives the validate-all-files
 # fallback: in list/git mode $changed_ids can legitimately be empty and must then
 # select NO agents rather than all of them.
@@ -110,15 +63,7 @@ WHERE dep.content_type IN [
     '{ContentType.AGENTIX_ACTION}', '{ContentType.AGENTIX_SKILL}',
     '{ContentType.COLLECTION}'
 ]
-RETURN a AS agent,
-    collect(DISTINCT {{
-        id: dep.object_id,
-        name: dep.name,
-        description: dep.description,
-        path: dep.path,
-        type: dep.content_type,
-        fromversion: dep.fromversion
-    }}) AS deps
+RETURN a AS agent, collect(DISTINCT dep) AS deps
 """
 
 
@@ -129,17 +74,18 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         "system instructions, and conversation starters plus the name and "
         "description of every action, skill, and collection it depends on (and, "
         "for actions, their args/outputs schema) - does not exceed "
-        f"{AGENT_TOKEN_LIMIT} estimated tokens."
+        f"{AGENT_CHAR_LIMIT} characters."
     )
     rationale = (
         "At runtime the agent's own definition and the definitions of all its "
         "registered actions, skills, and collections are injected into the LLM "
         "context. If the combined size is too large it displaces task data in the "
-        "context window and degrades the agent's performance."
+        "context window and degrades the agent's performance. The budget is in "
+        "characters (~4 chars = 1 token) as a proxy for token cost."
     )
     error_message = (
-        "The AgentixAgent '{0}' has a total estimated context of {1} tokens, which "
-        f"exceeds the maximum allowed of {AGENT_TOKEN_LIMIT}. Reduce the agent's "
+        "The AgentixAgent '{0}' has a total context of {1} characters, which "
+        f"exceeds the maximum allowed of {AGENT_CHAR_LIMIT}. Reduce the agent's "
         "system instructions or the number/size of its actions, skills, and "
         "collections."
     )
@@ -165,125 +111,86 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         )
         return [
             result
-            for agent, deps in affected_agents
-            if (result := self._validate_agent(agent, deps))
+            for agent, dep_nodes in affected_agents
+            if (result := self._validate_agent(agent, dep_nodes))
         ]
 
     def _validate_agent(
         self,
         agent: AgentixAgent,
-        deps: _GroupedDependencies,
+        dep_nodes: Dict[str, dict],
     ) -> ValidationResult | None:
-        """Estimate the agent's total token budget; flag it when over the limit."""
-        fragments = self._agent_fragments(agent, deps)
-        total_tokens = estimate_tokens_for_texts(fragments)
+        """Count the agent's total char budget; flag it when over the limit."""
+        fragments = self._agent_fragments(agent, dep_nodes)
+        total_chars = count_chars_for_texts(fragments)
         # One summary line per agent. colors=False: the agent name is free-form
         # content that may contain angle brackets, which loguru would otherwise
         # parse as color tags.
         logger.opt(colors=False).info(
             f"[{self.error_code}] Agent '{agent.name}' (id='{agent.object_id}'): "
-            f"checked {len(deps.action_paths)} action(s), "
-            f"{len(deps.skill_summaries)} skill(s), "
-            f"{len(deps.collection_summaries)} collection(s) -> "
-            f"{len(fragments)} fragment(s), {total_tokens} token(s) "
-            f"(limit {AGENT_TOKEN_LIMIT})."
+            f"checked {len(dep_nodes)} dependency(ies) -> "
+            f"{len(fragments)} fragment(s), {total_chars} char(s) "
+            f"(limit {AGENT_CHAR_LIMIT})."
         )
-        if total_tokens <= AGENT_TOKEN_LIMIT:
+        if total_chars <= AGENT_CHAR_LIMIT:
             return None
 
         return ValidationResult(
             validator=self,
-            message=self.error_message.format(agent.name, total_tokens),
+            message=self.error_message.format(agent.name, total_chars),
             content_object=agent,
         )
 
     def _agent_fragments(
-        self, agent: AgentixAgent, deps: _GroupedDependencies
+        self, agent: AgentixAgent, dep_nodes: Dict[str, dict]
     ) -> List[Optional[str]]:
-        """All token-bearing text fragments of the agent and its dependencies.
+        """All char-bearing text fragments of the agent and its dependencies.
 
         The agent's own fields (name, description, system instructions, and
-        conversation starters) and each dependency's name/description come from
-        the graph. Each action is additionally re-parsed from its source path so
-        its args/outputs schema (excluded from the graph) is included; a path
-        that does not parse into an AgentixAction contributes nothing.
+        conversation starters) come from the graph node. Every deduplicated
+        dependency node is then routed through :func:`dependency_text_fragments`,
+        which reconstructs the real object and scores it with the shared fragment
+        collectors (an action is re-parsed from its path so its args/outputs,
+        excluded from the graph, count).
         """
         fragments: List[Optional[str]] = [
-            agent.name,
-            agent.description,
-            agent.systeminstructions,
+            *agent_text_fragments(agent),
             *(agent.conversationstarters or []),
         ]
-        # TEMP: per-item token breakdown so a verbose validate run prints exactly
-        # how many tokens each agent field / action / skill contributes.
+        # TEMP: per-item char breakdown so a verbose validate run prints exactly
+        # how many chars each agent field / dependency contributes.
         logger.opt(colors=False).debug(
             f"[GR116][breakdown] agent '{agent.name}': own fields = "
-            f"{estimate_tokens_for_texts(fragments)} token(s) "
+            f"{count_chars_for_texts(fragments)} char(s) "
             f"(name+description+systeminstructions+{len(agent.conversationstarters or [])} "
             f"conversationstarters)."
         )
-        for path, fromversion in deps.action_paths.values():
-            action = self._parse_action_from_path(path)
-            if action is None:
-                logger.opt(colors=False).debug(
-                    f"[GR116][breakdown] action path '{path}': UNPARSEABLE -> 0 tokens."
-                )
-                continue
-            action_fragments = action_text_fragments(action)
+        for dep_id, node in dep_nodes.items():
+            dep_fragments = dependency_text_fragments(node)
             logger.opt(colors=False).debug(
-                f"[GR116][breakdown] action '{action.object_id}' "
-                f"(path='{path}', fromversion='{fromversion}'): "
-                f"{estimate_tokens_for_texts(action_fragments)} "
-                f"token(s), {len(action_fragments)} fragment(s)."
+                f"[GR116][breakdown] dependency '{dep_id}' "
+                f"(type='{node.get('content_type')}', "
+                f"fromversion='{node.get('fromversion')}'): "
+                f"{count_chars_for_texts(dep_fragments)} char(s), "
+                f"{len(dep_fragments)} fragment(s)."
             )
-            fragments.extend(action_fragments)
-
-        for name, description, fromversion in deps.skill_summaries.values():
-            logger.opt(colors=False).debug(
-                f"[GR116][breakdown] skill '{name}' (fromversion='{fromversion}'): "
-                f"{estimate_tokens_for_texts([name, description])} token(s) "
-                f"(name+description only)."
-            )
-            fragments.extend([name, description])
-        for name, description, fromversion in deps.collection_summaries.values():
-            logger.opt(colors=False).debug(
-                f"[GR116][breakdown] collection '{name}' (fromversion='{fromversion}'): "
-                f"{estimate_tokens_for_texts([name, description])} token(s)."
-            )
-            fragments.extend([name, description])
+            fragments.extend(dep_fragments)
 
         return fragments
 
-    @staticmethod
-    def _parse_action_from_path(path: str) -> Optional[AgentixAction]:
-        """Parse an AgentixAction from disk so its args/outputs are populated.
-
-        The graph stores an action's scalar fields but excludes its args/outputs
-        schema, so those must be recovered by re-parsing the source YAML. A path
-        that cannot be parsed into an AgentixAction returns ``None`` (it just does
-        not contribute tokens) rather than failing the whole validation.
-        """
-        try:
-            parsed = BaseContent.from_path(Path(path))
-        except Exception:  # unreadable/invalid path -> contribute no tokens
-            logger.debug(f"[GR116] Could not parse action from '{path}'.")
-            return None
-        return parsed if isinstance(parsed, AgentixAction) else None
-
     def _affected_agents_with_dependencies(
         self, changed_ids: list[str], validate_all: bool
-    ) -> list[tuple[AgentixAgent, _GroupedDependencies]]:
-        """Return ``[(AgentixAgent, _GroupedDependencies), ...]`` from one query.
+    ) -> list[tuple[AgentixAgent, Dict[str, dict]]]:
+        """Return ``[(AgentixAgent, {dep_id: dep_node}), ...]`` from one query.
 
         Runs :data:`_AGENT_DEPENDENCIES_QUERY` (every agent when ``validate_all``,
         otherwise those modified themselves or owning a directly-modified
         dependency). Each row carries the full agent node - reconstructed into an
         :class:`AgentixAgent` object so it can both score the agent's own fields
         and be attached to the ValidationResult without a second graph fetch -
-        plus its dependency rows, which are grouped into a
-        :class:`_GroupedDependencies`: action source paths (re-parsed later for
-        args/outputs) and skill/collection ``(name, description)`` summaries read
-        straight from the graph.
+        plus its dependency rows as full graph nodes, deduplicated by ``id`` to
+        the highest-``fromversion`` node (mirroring what the platform loads at
+        runtime when several files share the same id).
         """
         rows = (
             self.graph.run_single_query(
@@ -294,16 +201,16 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             or []
         )
 
-        affected: list[tuple[AgentixAgent, _GroupedDependencies]] = []
+        affected: list[tuple[AgentixAgent, Dict[str, dict]]] = []
         for row in rows:
             agent = self._parse_agent(row.get("agent"))
             if agent is None:
                 continue
 
-            deps = _GroupedDependencies({}, {}, {})
+            dep_nodes: Dict[str, dict] = {}
             for raw in row.get("deps") or []:
-                self._route_dependency(_Dependency(**raw), deps)
-            affected.append((agent, deps))
+                self._dedupe_dependency(dict(raw), dep_nodes)
+            affected.append((agent, dep_nodes))
         return affected
 
     @staticmethod
@@ -323,45 +230,23 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             return None
 
     @staticmethod
-    def _route_dependency(dep: _Dependency, deps: _GroupedDependencies) -> None:
-        """Add a single dependency row to the agent's grouped dependencies.
+    def _dedupe_dependency(node: dict, dep_nodes: Dict[str, dict]) -> None:
+        """Keep, per dependency ``id``, only the highest-``fromversion`` node.
 
-        Every dependency kind (action, skill, collection) is keyed by ``id`` and
-        deduplicated to the highest ``fromversion``: when several files expose
-        the same id (version variants, or the same id living in both a vendor
-        pack and a standalone ``AgentixAction_*``/vendor pack), only the newest
-        is counted, matching what the platform loads at runtime.
+        When several files expose the same id (version variants, or the same id
+        living in both a vendor pack and a standalone ``AgentixAction_*``/vendor
+        pack), only the newest is counted, matching what the platform loads at
+        runtime.
         """
+        dep_id = node.get("object_id")
         # OPTIONAL MATCH yields a null dep for a dependency-less agent.
-        if dep.id is None:
+        if dep_id is None:
             return
-        if dep.type == ContentType.AGENTIX_ACTION.value and dep.path:
-            existing = deps.action_paths.get(dep.id)
-            if existing is None or _is_newer(dep.fromversion, existing[1]):
-                deps.action_paths[dep.id] = (dep.path, dep.fromversion)
-        elif dep.type == ContentType.AGENTIX_SKILL.value:
-            existing_skill = deps.skill_summaries.get(dep.id)
-            if existing_skill is None or _is_newer(dep.fromversion, existing_skill[2]):
-                deps.skill_summaries[dep.id] = (
-                    dep.name,
-                    dep.description,
-                    dep.fromversion,
-                )
-        elif dep.type == ContentType.COLLECTION.value:
-            existing_collection = deps.collection_summaries.get(dep.id)
-            if existing_collection is None or _is_newer(
-                dep.fromversion, existing_collection[2]
-            ):
-                deps.collection_summaries[dep.id] = (
-                    dep.name,
-                    dep.description,
-                    dep.fromversion,
-                )
-        else:
-            logger.opt(colors=False).debug(
-                f"[GR116] Ignoring dependency '{dep.id}' of unhandled type "
-                f"'{dep.type}' (or action without a path)."
-            )
+        existing = dep_nodes.get(dep_id)
+        if existing is None or _is_newer(
+            node.get("fromversion"), existing.get("fromversion")
+        ):
+            dep_nodes[dep_id] = node
 
 
 def _is_newer(candidate: Optional[str], current: Optional[str]) -> bool:

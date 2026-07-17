@@ -97,23 +97,51 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         content_items: Iterable[ContentTypes],
         validate_all_files: bool = False,
     ) -> list[ValidationResult]:
+        content_items = list(content_items)
+        # TEMP[GR116-debug]: entry state - mode + the exact content items received.
+        logger.opt(colors=False).debug(
+            f"[GR116][debug] obtain_invalid_content_items_using_graph called: "
+            f"validate_all_files={validate_all_files}, "
+            f"received {len(content_items)} content item(s): "
+            f"{[getattr(ci, 'object_id', '<no-object_id>') for ci in content_items]}"
+        )
         changed_ids = (
             []
             if validate_all_files
             else [content_item.object_id for content_item in content_items]
         )
+        # TEMP[GR116-debug]: the computed changed_ids the query will be run with.
+        logger.opt(colors=False).debug(
+            f"[GR116][debug] computed changed_ids ({len(changed_ids)}): {changed_ids}"
+        )
 
         if not validate_all_files and not changed_ids:
+            logger.opt(colors=False).debug(
+                "[GR116][debug] early-return: not validate_all_files and empty "
+                "changed_ids -> no agents to check."
+            )
             return []
 
         affected_agents = self._affected_agents_with_dependencies(
             changed_ids, validate_all_files
         )
-        return [
+        # TEMP[GR116-debug]: how many agents the query selected, and which.
+        logger.opt(colors=False).debug(
+            f"[GR116][debug] _affected_agents_with_dependencies returned "
+            f"{len(affected_agents)} agent(s): "
+            f"{[a.object_id for a, _ in affected_agents]}"
+        )
+        results = [
             result
             for agent, dep_nodes in affected_agents
             if (result := self._validate_agent(agent, dep_nodes))
         ]
+        # TEMP[GR116-debug]: how many agents ended up flagged over budget.
+        logger.opt(colors=False).debug(
+            f"[GR116][debug] finished: {len(results)} agent(s) exceeded the budget "
+            f"out of {len(affected_agents)} checked."
+        )
+        return results
 
     def _validate_agent(
         self,
@@ -192,6 +220,11 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         the highest-``fromversion`` node (mirroring what the platform loads at
         runtime when several files share the same id).
         """
+        # TEMP[GR116-debug]: log the exact query params before running it.
+        logger.opt(colors=False).debug(
+            f"[GR116][debug] running _AGENT_DEPENDENCIES_QUERY with "
+            f"validate_all={validate_all}, changed_ids={changed_ids}"
+        )
         rows = (
             self.graph.run_single_query(
                 _AGENT_DEPENDENCIES_QUERY,
@@ -200,16 +233,41 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             )
             or []
         )
+        rows = list(rows)
+        # TEMP[GR116-debug]: raw number of rows the query returned (one per agent).
+        logger.opt(colors=False).debug(
+            f"[GR116][debug] query returned {len(rows)} raw row(s)."
+        )
 
         affected: list[tuple[AgentixAgent, Dict[str, dict]]] = []
-        for row in rows:
-            agent = self._parse_agent(row.get("agent"))
+        for index, row in enumerate(rows):
+            raw_agent = row.get("agent")
+            # TEMP[GR116-debug]: identify each raw agent node before parsing.
+            raw_agent_id = dict(raw_agent).get("object_id") if raw_agent else None
+            raw_deps = row.get("deps") or []
+            logger.opt(colors=False).debug(
+                f"[GR116][debug] row #{index}: raw agent id="
+                f"{raw_agent_id!r}, raw dep count={len(raw_deps)}."
+            )
+            agent = self._parse_agent(raw_agent)
             if agent is None:
+                # TEMP[GR116-debug]: a row was dropped because its agent node
+                # could not be reconstructed - this hides an agent from results.
+                logger.opt(colors=False).debug(
+                    f"[GR116][debug] row #{index}: agent id={raw_agent_id!r} "
+                    f"could NOT be parsed -> row skipped."
+                )
                 continue
 
             dep_nodes: Dict[str, dict] = {}
-            for raw in row.get("deps") or []:
+            for raw in raw_deps:
                 self._dedupe_dependency(dict(raw), dep_nodes)
+            # TEMP[GR116-debug]: post-dedup dependency ids for this agent.
+            logger.opt(colors=False).debug(
+                f"[GR116][debug] row #{index}: parsed agent "
+                f"'{agent.object_id}', {len(dep_nodes)} deduped dependency(ies): "
+                f"{list(dep_nodes.keys())}"
+            )
             affected.append((agent, dep_nodes))
         return affected
 
@@ -222,11 +280,20 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         any additional graph query.
         """
         if not node:
+            # TEMP[GR116-debug]: a null/empty agent node reached the parser.
+            logger.opt(colors=False).debug(
+                "[GR116][debug] _parse_agent received an empty/None node."
+            )
             return None
         try:
             return AgentixAgent.parse_obj(dict(node))
-        except Exception:  # malformed node -> cannot validate/flag this agent
-            logger.debug("[GR116] Could not parse an agent node into an AgentixAgent.")
+        except Exception as exc:  # malformed node -> cannot validate/flag this agent
+            # TEMP[GR116-debug]: log the concrete parse error + offending id.
+            node_id = dict(node).get("object_id")
+            logger.opt(colors=False).debug(
+                f"[GR116][debug] _parse_agent FAILED for agent id={node_id!r}: "
+                f"{type(exc).__name__}: {exc}"
+            )
             return None
 
     @staticmethod

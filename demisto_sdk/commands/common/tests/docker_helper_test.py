@@ -788,5 +788,3 @@ class TestGetPythonVersionDemistoextendedFallback:
 
         with pytest.raises(Exception, match="docker pull failed"):
             get_python_version("demisto/python3:3.10.11.54799-unique-test")
-
-

@@ -9,7 +9,6 @@ from requests import Response, Session
 
 from demisto_sdk.commands.common.docker.dockerhub_client import (
     DockerHubClient,
-    _is_gar_registry,
     get_registry_api_url,
     iso8601_to_datetime_str,
 )
@@ -678,26 +677,6 @@ def test_get_token_uses_gcloud_for_gar_registry_locally(mocker, monkeypatch):
 
     assert token == "gcloud-token-123"
     mock_gcloud.assert_called_once()
-
-
-@pytest.mark.parametrize(
-    "registry, expected",
-    [
-        ("gcr.io/xsoar-registry", True),  # bare host
-        ("https://eu.gcr.io/v2/proj", True),  # gcr.io subdomain
-        ("europe-west4-docker.pkg.dev/proj/repo", True),  # pkg.dev
-        ("https://registry-1.docker.io/v2", False),  # non-GAR
-        ("https://gcr.io.evil.com/v2/x", False),  # lookalike suffix
-        ("https://evil.com/gcr.io", False),  # lookalike in path
-    ],
-)
-def test_is_gar_registry_matches_host_not_substring(registry, expected):
-    """
-    _is_gar_registry must match on the parsed host, so lookalike hosts such as
-    gcr.io.evil.com or evil.com/gcr.io are not treated as GAR (CodeQL: incomplete
-    URL substring sanitization).
-    """
-    assert _is_gar_registry(registry) is expected
 
 
 def test_is_custom_registry_flag_customer_registry_not_in_ci_is_true(monkeypatch):

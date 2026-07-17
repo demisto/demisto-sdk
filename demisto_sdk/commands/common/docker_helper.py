@@ -7,6 +7,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
+from urllib.parse import urlparse
 
 import docker
 import requests
@@ -243,11 +244,24 @@ def gar_daemon_login(docker_client, registry: str) -> bool:
         return False
 
 
+def _is_gar_registry(registry_url: str) -> bool:
+    """Return True if the URL/host points at Google Artifact Registry / GCR.
+
+    GAR is where ``demistoextended/`` images live and it authenticates with a
+    gcloud access token (bearer), NOT a Docker Hub token and NOT Basic Auth.
+
+    Matches on the parsed host (not a substring) so lookalikes like
+    ``gcr.io.evil.com`` are not misclassified. Accepts full URLs and bare hosts.
+    """
+    # "//" makes urlparse treat a bare host as netloc, not a path.
+    url_to_parse = registry_url if "://" in registry_url else f"//{registry_url}"
+    host = (urlparse(url_to_parse).hostname or "").lower()
+    return host in {"gcr.io", "pkg.dev"} or host.endswith((".gcr.io", ".pkg.dev"))
+
+
 def _gar_registry_host(image: str) -> Optional[str]:
     """Return the GAR host of an image (e.g. ``gcr.io`` or ``*.pkg.dev``), or
     None when the image does not target a Google Artifact Registry."""
-    from demisto_sdk.commands.common.docker.dockerhub_client import _is_gar_registry
-
     host = image.split("/", 1)[0]
     return host if _is_gar_registry(host) else None
 

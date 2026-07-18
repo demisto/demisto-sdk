@@ -233,7 +233,7 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             )
             or []
         )
-        rows = list(rows)
+        # rows = list(rows)
         # TEMP[GR116-debug]: raw number of rows the query returned (one per agent).
         logger.opt(colors=False).debug(
             f"[GR116][debug] query returned {len(rows)} raw row(s)."

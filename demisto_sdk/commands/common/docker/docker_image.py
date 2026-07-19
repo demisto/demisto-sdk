@@ -49,14 +49,15 @@ class DockerImage(str):
                 DEMISTO_SDK_EXTENDED_REGISTRY_ENV, DEFAULT_EXTENDED_REGISTRY
             )
             if not extended_registry:
+                logger.warning(f"No {DEMISTO_SDK_EXTENDED_REGISTRY_ENV} configured")
                 return None
             client = DockerHubClient(registry=extended_registry)
             # get_registry_api_url() resolves to the GAR proxy in CI, so override
             # with the actual registry V2 endpoint: https://{host}/v2/{path}
-            parts = extended_registry.rstrip("/").split("/", 1)
-            host = parts[0]
-            path = parts[1] if len(parts) > 1 else ""
-            client.registry_api_url = f"https://{host}/v2/{path}".rstrip("/")
+            host, *path = extended_registry.rstrip("/").split("/", 1)
+            client.registry_api_url = (
+                f"https://{host}/v2{f'/{path[0]}' if path else ''}"
+            )
             cls._extended_client = client
         return cls._extended_client
 
@@ -65,7 +66,6 @@ class DockerImage(str):
         if self.is_demistoextended_repository:
             if extended_client := self._get_extended_client():
                 return extended_client
-            logger.warning(f"No DEMISTO_SDK_EXTENDED_REGISTRY configured for {self}")
         return self._get_dockerhub_client()
 
     def __new__(

@@ -713,9 +713,7 @@ def get_gcloud_access_token() -> Optional[str]:
         )
         return None
     except Exception as e:
-        logger.warning(
-            f"get_gcloud_access_token | failed to get access token: {str(e)}"
-        )
+        logger.debug(f"Failed to get access token: {str(e)}")
         return None
 
 

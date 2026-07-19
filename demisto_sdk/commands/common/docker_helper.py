@@ -561,6 +561,9 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
+        # TEMPORARY (CIAC-17352): content may currently send images already prefixed
+        # with the CR host; strip it back to the canonical form so we re-add the
+        # correct registry below. Remove this line once content stops prefixing.
         image = strip_cr_registry_prefix(image)
         # "demistoextended" images -> extended (GAR) registry; everything else -> Docker.
         registry = (
@@ -659,7 +662,8 @@ class DockerBase:
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
                 if EXTENDED_REPOSITORY_SEGMENT in base_image:
-                    # Quiet for GAR images; the caller decides skip (local) vs fail (CI).
+                    # GAR images may legitimately fail (e.g. no credentials); log at
+                    # debug and return `errors` for the caller to skip or fail.
                     logger.debug(
                         f"{log_prompt} - could not prepare {base_image}: {errors}"
                     )

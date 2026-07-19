@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Union
 
 from packaging.version import InvalidVersion, Version
 
@@ -22,7 +22,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
     ValidationResult,
 )
 
-ContentTypes = AgentixAgent | AgentixAction | AgentixSkill | Collection
+ContentTypes = Union[AgentixAgent, AgentixAction, AgentixSkill, Collection]
 
 AGENT_CHAR_LIMIT = 200000
 

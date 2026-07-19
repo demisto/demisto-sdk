@@ -1,6 +1,0 @@
-changes:
-- description: Added the BA131 validation, which ensures a content item's supportedModules field only contains module values permitted for that content item type.
-  type: feature
-- description: Added the BA132 validation, which ensures a content item does not declare supportedModules unless 'platform' is present in its marketplaces.
-  type: feature
-pr_number: '5425'

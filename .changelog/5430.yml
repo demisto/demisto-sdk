@@ -1,4 +1,0 @@
-changes:
-- description: "Added support for hiding integration commands per marketplace. The command-level `hidden` field now accepts a list of marketplace names (mirroring the existing parameter-level behavior); listed marketplaces resolve to `hidden=true` for that marketplace during unify, while others resolve to `hidden=false`. Pre-existing boolean `hidden` values are left untouched."
-  type: feature
-pr_number: 5430

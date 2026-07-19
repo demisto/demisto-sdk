@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Iterable, List, Union
 
-from demisto_sdk.commands.common.tools import get_all_content_objects_paths_in_dir
+from demisto_sdk.commands.common.tools import get_relative_path_from_packs_dir
 from demisto_sdk.commands.content_graph.objects import (
     AgentixAction,
     AgentixAgent,
@@ -102,9 +102,10 @@ class IsUsingInvalidToVersionValidator(BaseValidator[ContentTypes], ABC):
         file_paths_to_validate = (
             []
             if validate_all_files
-            else get_all_content_objects_paths_in_dir(
-                str(content_item.path) for content_item in content_items
-            )
+            else [
+                get_relative_path_from_packs_dir(str(content_item.path))
+                for content_item in content_items
+            ]
         )
 
         invalid_content_items = self.graph.find_uses_paths_with_invalid_toversion(

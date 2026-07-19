@@ -244,12 +244,14 @@ class TestIsErrorIgnoredPackLevel:
         """
         Given PA135 (the pack-level-ignore guard) listed under [pack],
         When is_error_ignored is called for PA135,
-        Then it is NOT ignored (PA135 is in ALWAYS_RUN_ON_ERROR_CODE), so a user
-        cannot silence the guard via the section it protects.
+        Then it is NOT ignored: PA135 is not part of the ignorable-errors
+        allow-list, so a user cannot silence the guard via the section it
+        protects (even when the code appears under [pack]).
         """
         pack = _make_pack("[pack]\nignore=PA135\n")
         item = _FakeContentItem(pack=pack)
-        assert is_error_ignored("PA135", ALLOWED + ["PA135"], item) is False
+        # PA135 is intentionally absent from the allow-list (`ALLOWED`).
+        assert is_error_ignored("PA135", ALLOWED, item) is False
 
     def test_non_ignorable_code_not_silenced_even_via_pack_level(self):
         """

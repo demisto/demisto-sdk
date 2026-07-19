@@ -1303,7 +1303,7 @@ connectors/salesforce/capabilities.yaml"""
 class TestChangedConnectorsFromGit:
     """Tests for the _changed_connectors_from_git helper."""
 
-    def test_changed_connectors_basic(self):
+    def test_changed_connectors_basic(self, mocker):
         """
         Given:
             - A git_util whose ``get_all_changed_files`` returns a mix of
@@ -1313,6 +1313,9 @@ class TestChangedConnectorsFromGit:
         Then:
             - Returns only the connector directory names, deduplicated.
         """
+        # The helper short-circuits when the connectors/ folder is absent
+        # from the checkout; pretend it exists so the git scan runs.
+        mocker.patch("pathlib.Path.is_dir", return_value=True)
         mock_git_util = MagicMock()
         mock_git_util.get_all_changed_files.return_value = {
             Path("Packs/MyPack/file.py"),
@@ -1382,7 +1385,7 @@ class TestChangedConnectorsFromGit:
 
         assert result == set()
 
-    def test_changed_connectors_ignores_root_level_connectors_path(self):
+    def test_changed_connectors_ignores_root_level_connectors_path(self, mocker):
         """
         Given:
             - A changed file path that is literally ``connectors/`` with no
@@ -1392,6 +1395,9 @@ class TestChangedConnectorsFromGit:
         Then:
             - That path is skipped (no valid connector dir name).
         """
+        # The helper short-circuits when the connectors/ folder is absent
+        # from the checkout; pretend it exists so the git scan runs.
+        mocker.patch("pathlib.Path.is_dir", return_value=True)
         mock_git_util = MagicMock()
         mock_git_util.get_all_changed_files.return_value = {
             Path("connectors"),

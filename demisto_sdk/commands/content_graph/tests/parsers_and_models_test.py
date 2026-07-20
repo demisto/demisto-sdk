@@ -778,6 +778,31 @@ class TestParsersAndModels:
         assert model.is_fetch_assets is True
         assert model.internal is False
 
+    def test_from_path_inherits_pack_marketplaces_when_not_declared(self, pack: Pack):
+        """
+        Given:
+            - A pack whose metadata declares marketplaces ['xsoar', 'platform']
+              and an integration whose YAML does NOT declare a marketplaces field.
+        When:
+            - Parsing the integration standalone via ContentItemParser.from_path
+              (i.e. without passing pack_marketplaces explicitly).
+        Then:
+            - The resolved marketplaces are inherited from the pack metadata and
+              do NOT include 'marketplacev2', so it is not falsely treated as a
+              marketplacev2 item (regression test for false BA130 failures).
+        """
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+
+        pack.set_data(marketplaces=["xsoar", "platform"])
+        integration = pack.create_integration(yml=load_yaml("integration.yml"))
+
+        model = BaseContent.from_path(Path(integration.path))
+
+        assert isinstance(model, Integration)
+        assert MarketplaceVersions.MarketplaceV2 not in model.marketplaces
+        assert MarketplaceVersions.PLATFORM in model.marketplaces
+        assert MarketplaceVersions.XSOAR in model.marketplaces
+
     def test_unified_integration_parser(self, pack: Pack):
         """
         Given:

@@ -18,14 +18,21 @@ from requests.exceptions import RequestException
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_DOCKER_REGISTRY_URL,
+    DEFAULT_EXTENDED_REGISTRY,
     DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
+    DEMISTO_EXTENDED_REPOSITORY,
+    DEMISTO_REPOSITORY,
+    DEMISTO_SDK_EXTENDED_REGISTRY_ENV,
+    DEVTEST_DEMISTO_EXTENDED_REPOSITORY,
+    DEVTEST_DEMISTO_REPOSITORY,
     DOCKER_REGISTRY_URL,
     DOCKERFILES_INFO_REPO,
     TYPE_PWSH,
     TYPE_PYTHON,
     TYPE_PYTHON2,
     TYPE_PYTHON3,
+    strip_cr_registry_prefix,
 )
 from demisto_sdk.commands.common.docker_images_metadata import DockerImagesMetadata
 from demisto_sdk.commands.common.logger import logger
@@ -50,6 +57,7 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "pre_commit" / "resources"
 DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT") or 300)
+EXTENDED_REPOSITORY_SEGMENT = f"{DEMISTO_EXTENDED_REPOSITORY}/"
 
 
 class DockerException(Exception):
@@ -201,6 +209,54 @@ def docker_login(docker_client) -> bool:
 
 
 @functools.lru_cache
+def gar_daemon_login(docker_client, registry: str) -> bool:
+    """Log the Docker daemon into a GAR host so it can ``pull`` demistoextended
+    images, using ``oauth2accesstoken`` + a gcloud access token. Returns True on
+    success. (``docker_login`` only handles Docker Hub / custom user registries.)
+    """
+    # Imported lazily to avoid any import-time coupling with the HTTP client.
+    from demisto_sdk.commands.common.docker.dockerhub_client import (
+        get_gcloud_access_token,
+    )
+
+    token = get_gcloud_access_token()
+    if not token:
+        logger.warning(
+            f"gar_daemon_login | no gcloud access token available, cannot log the "
+            f"docker daemon in to {registry}"
+        )
+        return False
+    try:
+        docker_client.login(
+            username="oauth2accesstoken",
+            password=token,
+            registry=registry,
+        )
+        logger.debug(
+            f"gar_daemon_login | successfully logged the daemon in to {registry}"
+        )
+        return True
+    except docker.errors.DockerException as e:
+        logger.debug(
+            f"gar_daemon_login | could not log the docker daemon in to {registry}: {e}"
+        )
+        return False
+
+
+def _gar_registry_host(image: str) -> Optional[str]:
+    """Return the image's GCR host (``gcr.io`` / ``*.gcr.io``) when it targets
+    the extended registry and the Docker daemon needs a gcloud login before pull,
+    or None otherwise. Matches on the exact host so lookalikes like
+    ``gcr.io.evil.com`` are not misclassified.
+
+    (The CI ``*.pkg.dev`` proxy is intentionally excluded: there the daemon is
+    already logged in, so no extra ``gar_daemon_login`` is needed.)
+    """
+    host = image.split("/", 1)[0].lower()
+    return host if host == "gcr.io" or host.endswith(".gcr.io") else None
+
+
+@functools.lru_cache
 def get_pip_requirements_from_file(requirements_file: Path) -> List[str]:
     """
     Get the pip requirements from a requirements file.
@@ -306,6 +362,9 @@ class DockerBase:
 
         except docker.errors.ImageNotFound:
             logger.debug(f"docker {image=} not found locally, pulling")
+            # The daemon has no gcloud credentials for GAR hosts, so log it in first.
+            if gar_host := _gar_registry_host(image):
+                gar_daemon_login(docker_client, gar_host)
             ret = docker_client.images.pull(image)
             logger.debug(f"pulled docker {image=} successfully")
             return ret
@@ -502,13 +561,30 @@ class DockerBase:
 
     @staticmethod
     def get_image_registry(image: str) -> str:
-        if DOCKER_REGISTRY_URL not in image:
-            logger.debug(
-                f"get_image_registry | returned: {DOCKER_REGISTRY_URL}/{image}"
-            )
-            return f"{DOCKER_REGISTRY_URL}/{image}"
-        logger.debug(f"get_image_registry | returned: {image}")
+        # TEMPORARY (CIAC-17352): content may currently send images already prefixed
+        # with the CR host; strip it back to the canonical form so we re-add the
+        # correct registry below. Remove this line once content stops prefixing.
+        image = strip_cr_registry_prefix(image)
+        # "demistoextended" images -> extended (GAR) registry; everything else -> Docker.
+        registry = (
+            os.getenv(DEMISTO_SDK_EXTENDED_REGISTRY_ENV, DEFAULT_EXTENDED_REGISTRY)
+            if DEMISTO_EXTENDED_REPOSITORY in image
+            else DOCKER_REGISTRY_URL
+        )
+        if registry and registry not in image:
+            return f"{registry}/{image}"
         return image
+
+    @staticmethod
+    def build_test_image_name(base_image: str, identifier: str) -> str:
+        """Build the dev/test image name, mapping extended images to devtestdemistoextended/."""
+        if base_image.startswith(EXTENDED_REPOSITORY_SEGMENT):
+            renamed = base_image.replace(
+                DEMISTO_EXTENDED_REPOSITORY, DEVTEST_DEMISTO_EXTENDED_REPOSITORY
+            )
+        else:
+            renamed = base_image.replace(DEMISTO_REPOSITORY, DEVTEST_DEMISTO_REPOSITORY)
+        return f"{renamed}-{identifier}"
 
     def get_or_create_test_image(
         self,
@@ -554,9 +630,7 @@ class DockerBase:
             "\n".join(sorted(set(pip_requirements))).encode("utf-8")
         ).hexdigest()
 
-        test_docker_image = (
-            f'{base_image.replace("demisto", "devtestdemisto")}-{identifier}'
-        )
+        test_docker_image = self.build_test_image_name(base_image, identifier)
         if is_custom_registry():
             # if we use a custom registry, we need to have to pull the image and we can't use dockerhub api
             should_pull = True
@@ -570,7 +644,10 @@ class DockerBase:
                 f"{log_prompt} - Trying to pull existing image {test_docker_image}"
             )
             self.pull_image(test_docker_image)
-        except (docker.errors.APIError, docker.errors.ImageNotFound):
+        except docker.errors.DockerException:
+            # DockerException is the base class (APIError, ImageNotFound, and
+            # credential-store failures such as a missing docker-credential-gcloud),
+            # so a failed GAR pull falls back to building instead of crashing.
             logger.info(
                 f"{log_prompt} - Unable to find image {test_docker_image}. Creating image based on {base_image} - Could take 2-3 minutes at first"
             )
@@ -584,9 +661,17 @@ class DockerBase:
                 )
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
                 errors = str(e)
-                logger.exception(  # noqa: PLE1205
-                    "{}", f"<red>{log_prompt} - Build errors occurred: {errors}</red>"
-                )
+                if EXTENDED_REPOSITORY_SEGMENT in base_image:
+                    # GAR images may legitimately fail (e.g. no credentials); log at
+                    # debug and return `errors` for the caller to skip or fail.
+                    logger.debug(
+                        f"{log_prompt} - could not prepare {base_image}: {errors}"
+                    )
+                else:
+                    logger.exception(  # noqa: PLE1205
+                        "{}",
+                        f"<red>{log_prompt} - Build errors occurred: {errors}</red>",
+                    )
         return test_docker_image, errors
 
 
@@ -766,6 +851,21 @@ def get_python_version(image: Optional[str]) -> Optional[Version]:
     if python_version := _get_python_version_from_tag_by_regex(image):
         return python_version
     logger.debug(f"Could not get python version for {image=} from regex")
+
+    if EXTENDED_REPOSITORY_SEGMENT in image:
+        try:
+            from demisto_sdk.commands.common.docker.docker_image import DockerImage
+
+            if python_version := DockerImage(image).python_version:
+                return python_version
+            logger.warning(
+                f"get_python_version | extended {image=} returned no python version"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Could not get python version for extended {image=} from its registry: {e}"
+            )
+        return None
 
     if IS_CONTENT_GITLAB_CI:
         try:

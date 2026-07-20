@@ -1,4 +1,0 @@
-changes:
-- description: Fixed an issue where the **RN114** validator failed on valid release note headers for Agentix content (Actions, Agents, Skills) and Collections.
-  type: fix
-pr_number: 5429

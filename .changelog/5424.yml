@@ -1,8 +1,0 @@
-changes:
-- description: Fixed an issue where the GR109 (IsSupportedModulesCompatibility) validator
-    falsely reported module-compatible commands (e.g. Set, Print, ReadFile) as incompatible
-    when another validator had already loaded the content item's full set of USES relationships
-    into the shared graph cache. The list of incompatible commands is now computed directly
-    by the graph query instead of relying on the shared cache.
-  type: fix
-pr_number: 5424

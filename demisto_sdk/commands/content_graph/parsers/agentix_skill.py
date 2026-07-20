@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.agentix_base import (
     AgentixBaseParser,
@@ -11,6 +12,7 @@ from demisto_sdk.commands.content_graph.strict_objects.agentix_skill import (
     StrictAgentixSkill,
 )
 from demisto_sdk.commands.prepare_content.agentix_markdown_unifier import (
+    ACTION_REFERENCE_REGEX,
     AGENTIX_SKILL_FILE_SUFFIX,
     AgentixMarkdownUnifier,
 )
@@ -43,11 +45,41 @@ class AgentixSkillParser(AgentixBaseParser, content_type=ContentType.AGENTIX_SKI
             path, pack_marketplaces, pack_supported_modules, git_sha=git_sha
         )
         self.internal: bool = self.yml_data.get("internal", False)
+        self.connect_to_dependencies()
 
     @cached_property
     def field_mapping(self):
         super().field_mapping.update({"display": "name"})
         return super().field_mapping
+
+    def connect_to_dependencies(self) -> None:
+        """Registers the actions referenced in the skill body as optional dependencies.
+
+        The skill's Markdown body (``<SkillName>_skill.md``) may contain tokens of
+        the form ``<action=action-id>``. Each unique referenced action id is
+        registered as an optional (non-mandatory) ``USES_BY_ID`` dependency so
+        that, during prepare-upload, the token can be replaced with the action's
+        display name. The dependency is non-mandatory (mirroring ``AgentixAgent``)
+        so that a reference to an action that does not exist in the repository does
+        not surface as a mandatory unresolved dependency during validation.
+        """
+        try:
+            body = self.content
+        except Exception as e:
+            logger.debug(
+                f"Could not read skill body for {self.path} to extract action "
+                f"references: {e}"
+            )
+            return
+        if not body:
+            return
+        for action_id in dict.fromkeys(
+            match.group(1).strip() for match in ACTION_REFERENCE_REGEX.finditer(body)
+        ):
+            if action_id:
+                self.add_dependency_by_id(
+                    action_id, ContentType.AGENTIX_ACTION, is_mandatory=False
+                )
 
     @property
     def content(self) -> str:

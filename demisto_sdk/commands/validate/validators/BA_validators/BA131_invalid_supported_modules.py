@@ -83,6 +83,7 @@ ALLOWED_MODULES_BY_TYPE: Dict[type, Set[str]] = {
     Trigger: ALL_SUPPORTED_MODULES,
     AgentixAgent: ALL_SUPPORTED_MODULES,
     AgentixAction: ALL_SUPPORTED_MODULES,
+    ListObject: ALL_SUPPORTED_MODULES,
     # xsiam + agentix.
     Classifier: XSIAM_AND_AGENTIX_MODULES,
     CorrelationRule: XSIAM_AND_AGENTIX_MODULES,
@@ -91,7 +92,6 @@ ALLOWED_MODULES_BY_TYPE: Dict[type, Set[str]] = {
     IndicatorField: XSIAM_AND_AGENTIX_MODULES,
     IndicatorType: XSIAM_AND_AGENTIX_MODULES,
     Job: XSIAM_AND_AGENTIX_MODULES,
-    ListObject: XSIAM_AND_AGENTIX_MODULES,
     Mapper: XSIAM_AND_AGENTIX_MODULES,
     CaseField: XSIAM_AND_AGENTIX_MODULES,
     CaseLayoutRule: XSIAM_AND_AGENTIX_MODULES,

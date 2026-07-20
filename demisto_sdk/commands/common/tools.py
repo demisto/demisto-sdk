@@ -1843,6 +1843,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.CORRELATION_RULE
 
         elif AGENTIX_ACTIONS_DIR in path.parts:
+            # Skip test files under AgentixActions - they are not content items
+            if path.stem.endswith("_test"):
+                return None
             return FileType.AGENTIX_ACTION
 
         elif AGENTIX_AGENTS_DIR in path.parts:

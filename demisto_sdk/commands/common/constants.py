@@ -45,6 +45,24 @@ DOCKER_REGISTRY_URL = os.getenv(
     "DEMISTO_SDK_CONTAINER_REGISTRY",
     os.getenv("DOCKER_IO", DEFAULT_DOCKER_REGISTRY_URL),
 )
+DEMISTO_REPOSITORY = "demisto"
+DEVTEST_DEMISTO_REPOSITORY = "devtestdemisto"
+DEMISTO_EXTENDED_REPOSITORY = "demistoextended"
+DEVTEST_DEMISTO_EXTENDED_REPOSITORY = "devtestdemistoextended"
+DEMISTO_SDK_EXTENDED_REGISTRY_ENV = "DEMISTO_SDK_EXTENDED_REGISTRY"
+DEFAULT_EXTENDED_REGISTRY = "gcr.io/xsoar-registry"
+# TEMPORARY (CIAC-17352): the raw host prefix content currently emits on images.
+# To be removed once content stops prefixing images with the gcr.io host.
+CR_REGISTRY_PREFIX = f"{DEFAULT_EXTENDED_REGISTRY}/"
+
+
+def strip_cr_registry_prefix(image: str) -> str:
+    """Strip the CR host prefix back to the canonical "demistoextended/" form.
+
+    TEMPORARY (CIAC-17352): remove once content stops prefixing images with the
+    gcr.io host.
+    """
+    return image.removeprefix(CR_REGISTRY_PREFIX)
 
 
 # Authentication

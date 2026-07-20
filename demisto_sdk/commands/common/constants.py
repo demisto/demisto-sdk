@@ -2086,6 +2086,12 @@ XSIAM_AND_AGENTIX_MODULES: set = {
 # The 'xsiam' module only.
 XSIAM_ONLY_MODULES: set = {PlatformSupportedModules.XSIAM.value}
 
+# The 'xsiam' and 'exposure_management' modules.
+XSIAM_AND_EXPOSURE_MANAGEMENT_MODULES: set = {
+    PlatformSupportedModules.XSIAM.value,
+    PlatformSupportedModules.EXPOSURE_MANAGEMENT.value,
+}
+
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
     "html": Version("6.1.0"),

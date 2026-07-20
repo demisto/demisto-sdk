@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where the graph update did not pick up changed packs/connectors in CI validation jobs because the git-diff computation ran before the graph was imported (so ``content_graph_interface.commit`` was ``None``), leaving ``builder.update_graph`` to short-circuit on empty inputs and keeping the stale bucket state.
+  type: fix
+pr_number: '5453'

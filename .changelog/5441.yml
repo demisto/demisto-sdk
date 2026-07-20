@@ -1,0 +1,4 @@
+changes:
+- description: Fixed standalone content item parsing to resolve marketplaces and supported modules from the item's pack_metadata.json instead of assuming all marketplaces, preventing false BA130 failures.
+  type: fix
+pr_number: 5441

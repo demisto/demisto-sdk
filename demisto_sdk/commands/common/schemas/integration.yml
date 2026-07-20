@@ -139,6 +139,8 @@ mapping:
         type: bool
       resetContext:
         type: bool
+      spec:
+        type: str
       isfetch:xsoar:
         type: bool
       isfetch:marketplacev2:
@@ -368,7 +370,9 @@ schema;command_schema:
     timeout:
       type: int
     hidden:
-      type: bool
+      # Either a bool, or a list of marketplace names where the command is hidden.
+      # Mirrors the same shape allowed on integration parameters (see _configuration_schema).
+      type: any
     hidden_x2:
       type: bool
     polling:

@@ -1843,6 +1843,9 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.CORRELATION_RULE
 
         elif AGENTIX_ACTIONS_DIR in path.parts:
+            # Skip test files under AgentixActions - they are not content items
+            if path.stem.endswith("_test"):
+                return None
             return FileType.AGENTIX_ACTION
 
         elif AGENTIX_AGENTS_DIR in path.parts:
@@ -4826,6 +4829,10 @@ def get_content_item_supported_modules(item) -> set[str]:
     Resolves the definitive list of supported modules for an item,
     falling back to its pack's modules or the platform defaults.
 
+    An explicit empty list ([]) on the item is honored as "no modules" and is
+    not inherited from the pack; the platform defaults are used only when the
+    field is unset (None).
+
     Args:
         item: A content item object that has marketplaces, supportedModules,
               and optionally pack attributes.
@@ -4842,9 +4849,9 @@ def get_content_item_supported_modules(item) -> set[str]:
     default_modules = [sm.value for sm in PlatformSupportedModules]
 
     modules = item.supportedModules
-    if not modules and not isinstance(item, Pack):
+    if modules is None and not isinstance(item, Pack):
         pack = getattr(item, "pack", None)
         if pack is not None:
             modules = pack.supportedModules
 
-    return set(modules or default_modules)
+    return set(default_modules if modules is None else modules)

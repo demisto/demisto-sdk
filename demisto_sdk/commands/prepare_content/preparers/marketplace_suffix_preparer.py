@@ -20,6 +20,65 @@ ALWAYS_UNMANAGED_MARKETPLACES = {
 }
 
 
+def _valid_suffixes() -> set:
+    """Returns the marketplace suffixes allowed on `managed`/`source` keys.
+
+    A suffix looks like `:platform`. Always-unmanaged marketplaces are excluded,
+    as they never carry these fields. Computed on each call (reads the current
+    `MarketplaceVersions`) so that dynamically registered marketplaces are honored.
+    """
+    return {
+        f"{SEPARATOR}{mp.value}"
+        for mp in MarketplaceVersions
+        if mp not in ALWAYS_UNMANAGED_MARKETPLACES
+    }
+
+
+def _map_field_keys_by_suffix(data: dict, field: str) -> dict:
+    """Finds all set keys for ``field`` and maps each marketplace suffix to its key.
+
+    For example, ``managed`` and ``managed:platform`` become
+    ``{"": "managed", ":platform": "managed:platform"}``. The empty-string key is
+    the plain (default) value; a suffix like ``:platform`` is marketplace-specific.
+
+    Keys whose value is ``None`` are skipped (they only exist because the model
+    declares them). Returns the mapping so the caller can pick the right key per
+    marketplace. Raises ``ValueError`` on an unknown suffix.
+    """
+    valid_suffixes = _valid_suffixes()
+    collected: dict = {}
+    for key in data:
+        if data[key] is None:
+            continue
+        if key == field:
+            collected[""] = key
+        elif key.startswith(f"{field}{SEPARATOR}"):
+            suffix = key[len(field) :]
+            if suffix not in valid_suffixes:
+                raise ValueError(
+                    f"Invalid marketplace suffix in pack metadata field "
+                    f"'{key}'. The suffix must be one of: "
+                    f"{sorted(s.lstrip(SEPARATOR) for s in valid_suffixes)}."
+                )
+            collected[suffix] = key
+    return collected
+
+
+def _remove_managed_and_source_keys(data: dict) -> None:
+    """Removes every ``managed``/``source`` key from ``data`` (plain and suffixed).
+
+    Used to clear all variants before writing back the single resolved values,
+    so the output has only a plain ``managed`` and ``source``.
+    """
+    for key in list(data.keys()):
+        if (
+            key in (MANAGED_KEY, SOURCE_KEY)
+            or key.startswith(f"{MANAGED_KEY}{SEPARATOR}")
+            or key.startswith(f"{SOURCE_KEY}{SEPARATOR}")
+        ):
+            data.pop(key, None)
+
+
 class MarketplaceSuffixPreparer:
     @staticmethod
     def prepare(
@@ -110,90 +169,39 @@ class MarketplaceSuffixPreparer:
         current_marketplace: MarketplaceVersions,
     ) -> dict:
         """
-        Resolves the marketplace-suffixed ``managed`` and ``source`` fields of a
-        pack metadata into their final, marketplace-specific values.
+        Sets the final ``managed`` and ``source`` values for the current marketplace.
 
-        The pack metadata may contain ``managed``/``source`` keys with an optional
-        marketplace suffix (e.g. ``managed:platform:true``, ``source:platform:foo``). This
-        method collapses those into a single, plain ``managed`` (bool) and
-        ``source`` (str) according to the current marketplace.
+        The pack metadata can hold ``managed``/``source`` keys with a marketplace
+        suffix (e.g. ``managed:platform``, ``source:platform``). This method picks the
+        right value for ``current_marketplace`` and leaves a single plain
+        ``managed`` (bool) and ``source`` (str).
 
-        Resolution rules:
+        How a value is picked:
+        - A suffixed key wins for its own marketplace; the plain key is the default
+          for every other marketplace.
+        - Marketplaces in ``ALWAYS_UNMANAGED_MARKETPLACES`` are always forced to
+          ``managed: false``.
+        - ``source`` is kept only when the result is ``managed: true``; otherwise it
+          is dropped.
+        - All suffixed keys are removed at the end, leaving only the plain values.
 
-        - A suffixed key (e.g. ``managed:platform``) overrides the plain key for
-          that specific marketplace. The plain key is the default for every
-          marketplace that has no specific suffix.
-        - For marketplaces in ``ALWAYS_UNMANAGED_MARKETPLACES`` the pack is forced
-          to ``managed: false`` and ``source`` is removed, without any resolution.
-        - When the resolved ``managed`` is ``False``, the ``source`` field is
-          removed entirely.
-        - When the resolved ``managed`` is ``True``, the resolved ``source`` (the
-          suffixed value if present, otherwise the plain value) is kept.
-        - All suffixed ``managed``/``source`` keys are removed from the output.
-          Suffixes belonging to ``ALWAYS_UNMANAGED_MARKETPLACES`` are not valid
-          for ``managed``/``source`` and are simply stripped (never resolved).
-
-        Validation rules (raise ``ValueError``):
-
-        - A suffix that is not a valid ``MarketplaceVersions`` value.
-        - A suffixed ``managed`` without a plain ``managed`` default.
-        - A ``source`` (plain or suffixed) without any ``managed`` at all.
-        - A resolved ``managed: true`` without a resolved ``source``.
-        - A resolved ``source`` while the resolved ``managed`` is ``false``.
+        Raises ``ValueError`` when:
+        - A suffix is not a valid marketplace.
+        - A suffixed ``managed`` exists without a plain ``managed`` default.
+        - A ``source`` exists without any ``managed``.
+        - The result is ``managed: true`` but has no ``source``.
+        - There is a ``source`` for this marketplace but the result is ``managed: false``.
 
         Args:
             data: The pack metadata dictionary.
             current_marketplace: The marketplace the pack is being prepared for.
 
         Returns:
-            The same pack metadata dictionary, with ``managed``/``source``
-            resolved to their plain, marketplace-specific values. It is returned
-            unchanged when neither ``managed`` nor ``source`` is present.
+            The same dictionary with ``managed``/``source`` resolved to plain
+            values. Returned unchanged when neither field is present.
         """
-        valid_suffixes = {
-            f"{SEPARATOR}{mp.value}"
-            for mp in MarketplaceVersions
-            if mp not in ALWAYS_UNMANAGED_MARKETPLACES
-        }
-
-        def collect_keys(field: str) -> dict:
-            """Maps each set key of ``field`` to its suffix (``""`` for the plain
-            key, e.g. ``:platform`` for a suffixed one).
-
-            Keys whose value is ``None`` are treated as absent (they only exist
-            because the model declares them). An invalid suffix raises.
-            """
-            collected: dict = {}
-            for key in data:
-                if data[key] is None:
-                    continue
-                if key == field:
-                    collected[""] = key
-                elif key.startswith(f"{field}{SEPARATOR}"):
-                    suffix = key[len(field) :]
-                    if suffix not in valid_suffixes:
-                        raise ValueError(
-                            f"Invalid marketplace suffix in pack metadata field "
-                            f"'{key}'. The suffix must be one of: "
-                            f"{sorted(s.lstrip(SEPARATOR) for s in valid_suffixes)}."
-                        )
-                    collected[suffix] = key
-            return collected
-
-        def remove_managed_and_source_keys() -> None:
-            """Removes every ``managed``/``source`` key from ``data`` - both the
-            plain keys and any suffixed ones (including always-unmanaged and
-            ``None``-valued keys). The resolved values are set back afterwards."""
-            for key in list(data.keys()):
-                if (
-                    key in (MANAGED_KEY, SOURCE_KEY)
-                    or key.startswith(f"{MANAGED_KEY}{SEPARATOR}")
-                    or key.startswith(f"{SOURCE_KEY}{SEPARATOR}")
-                ):
-                    data.pop(key, None)
-
-        managed_keys = collect_keys(MANAGED_KEY)
-        source_keys = collect_keys(SOURCE_KEY)
+        managed_keys = _map_field_keys_by_suffix(data, MANAGED_KEY)
+        source_keys = _map_field_keys_by_suffix(data, SOURCE_KEY)
 
         if source_keys and not managed_keys:
             raise ValueError(
@@ -245,7 +253,7 @@ class MarketplaceSuffixPreparer:
             )
 
         # Collapse to the resolved plain values only.
-        remove_managed_and_source_keys()
+        _remove_managed_and_source_keys(data)
         data[MANAGED_KEY] = resolved_managed
         if resolved_managed:
             data[SOURCE_KEY] = resolved_source

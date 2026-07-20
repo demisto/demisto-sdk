@@ -26,28 +26,11 @@ ContentTypes = Union[AgentixAgent, AgentixAction, AgentixSkill, Collection]
 
 AGENT_CHAR_LIMIT = 200000
 
-# Only agents available from this platform version onward are budget-checked;
-# earlier agents predate the char-budget contract this validator enforces.
 MIN_AGENT_FROMVERSION = "8.15.0"
 
-# One Cypher round trip resolves the whole structure GR116 needs:
-#   step 1 - the affected agents: when $validate_all is true, every agent;
-#            otherwise each agent that was modified itself, or that directly
-#            uses a modified action/skill (both bound in $changed_ids).
-#   step 2 - for every affected agent, the full agent node (so it is
-#            reconstructed into an AgentixAgent object - the same object other
-#            graph validators attach to their ValidationResult - carrying the
-#            agent's own char-bearing fields: name, description, system
-#            instructions, conversation starters) plus all its direct action/
-#            skill/collection dependencies, each returned as its full graph node.
-#            Each dependency node is then reconstructed into its real object and
-#            scored by the shared fragment collectors (an action is re-parsed
-#            from its path so its args/outputs, excluded from the graph, count).
-# Returning the full agent and dependency nodes here means GR116 never has to
-# issue a second graph query to fetch those objects.
-# $validate_all (not the emptiness of $changed_ids) drives the validate-all-files
-# fallback: in list/git mode $changed_ids can legitimately be empty and must then
-# select NO agents rather than all of them.
+# Step 1: select affected agents - all if $validate_all, else those in
+# $changed_ids or using a changed action/skill.
+# Step 2: return each agent's node plus its dependency nodes, scored in one query.
 _AGENT_DEPENDENCIES_QUERY = f"""
 MATCH (a:{ContentType.AGENTIX_AGENT})
 WHERE {versioned("a.fromversion")} >= {versioned(MIN_AGENT_FROMVERSION)}

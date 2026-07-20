@@ -542,6 +542,15 @@ def group_by_language(
         if python_version := integration_script.python_version:
             version = Version(python_version)
             language = f"{version.major}.{version.minor}"
+        elif integration_script.type == "python":
+            version = Version(DEFAULT_PYTHON_VERSION)
+            language = f"{version.major}.{version.minor}"
+            logger.warning(
+                f"Could not resolve the python version for "
+                f"{integration_script.path} (docker image "
+                f"{integration_script.docker_image!r}); assuming "
+                f"{DEFAULT_PYTHON_VERSION} for pre-commit."
+            )
         else:
             language = integration_script.type
         language_to_files[language].update(

@@ -35,6 +35,7 @@ class BaseScript(IntegrationScript, content_type=ContentType.BASE_SCRIPT):  # ty
     args: List[Argument] = Field([], exclude=True)
     outputs: List[Output] = Field([], exclude=True)
     compliantpolicies: Optional[list[str]] = Field([])
+    spec: Optional[str] = None
 
     def save(self):
         """Save the script, excluding args and outputs which are already in the YAML data."""

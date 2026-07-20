@@ -1,4 +1,0 @@
-changes:
-- description: Fix the error message in the **GR105** validator to be more clear.
-  type: fix
-pr_number: 5343

@@ -4824,6 +4824,21 @@ def is_private_content_file(file, private_content_path: Path | None = None) -> b
     return False
 
 
+def is_platform_marketplace(marketplace: MarketplaceVersions) -> bool:
+    """Return whether the given marketplace is the platform marketplace.
+
+    Any non-platform marketplace (including future partner marketplaces) is
+    treated as non-platform automatically.
+
+    Args:
+        marketplace: The marketplace to check.
+
+    Returns:
+        True if the marketplace is ``MarketplaceVersions.PLATFORM``, else False.
+    """
+    return marketplace == MarketplaceVersions.PLATFORM
+
+
 def get_content_item_supported_modules(item) -> set[str]:
     """
     Resolves the definitive list of supported modules for an item,

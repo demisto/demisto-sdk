@@ -9,9 +9,10 @@ summary.yaml, handler.yaml, serializer.yaml) are modeled using a hybrid approach
 * **RelatedFile instances** for file-level concerns (existence, git status, path resolution).
 """
 
+from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, root_validator
 
@@ -34,42 +35,233 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
 json = JSON_Handler()
 
 # ============================================================
+# Enums (constrained strings from the UCP schema)
+#
+# NOTE: These enums use ``str`` as a mixin so that instances serialize as
+# their raw string value (Neo4j / JSON friendly) and compare equal to plain
+# strings. Per the alignment decision, models do NOT enforce required fields
+# or reject unknown enum values at parse time - UCP schema validation owns
+# that. To stay tolerant of new/unknown values, parsing keeps the raw string
+# on the model (the enums exist mainly for validators to reference).
+# ============================================================
+
+
+class FieldTypeEnum(str, Enum):
+    """field.schema.json#/$defs/FieldType"""
+
+    INPUT = "input"
+    TEXT_AREA = "text_area"
+    SELECT = "select"
+    MULTI_SELECT = "multi_select"
+    RADIO = "radio"
+    CHECKBOX = "checkbox"
+    CHECKBOX_GROUP = "checkbox_group"
+    TOGGLE = "toggle"
+    LABEL = "label"
+    SWITCH = "switch"
+    FILE_UPLOAD = "file_upload"
+    DURATION = "duration"
+
+
+class ProfileTypeEnum(str, Enum):
+    """connection.schema.json Profile.type"""
+
+    OAUTH2_CLIENT_CREDENTIALS = "oauth2_client_credentials"
+    OAUTH2_AUTHORIZATION_CODE = "oauth2_authorization_code"
+    OAUTH2_JWT_BEARER = "oauth2_jwt_bearer"
+    OAUTH2_REFRESH_TOKEN = "oauth2_refresh_token"
+    PLAIN = "plain"
+    API_KEY = "api_key"
+    EXTERNAL_AUTH = "external_auth"
+    PASSTHROUGH = "passthrough"
+
+
+class TriggeringTypeEnum(str, Enum):
+    """handler.schema.json Triggering.type"""
+
+    ZERO_SCALE = "ZERO_SCALE"
+    PUB_SUB = "PUB_SUB"
+
+
+class TestConnectionTypeEnum(str, Enum):
+    """handler.schema.json TestConnection.type"""
+
+    ENDPOINT = "endpoint"
+    SERVICE = "service"
+
+
+class ActionTypeEnum(str, Enum):
+    """handler.schema.json Action.type"""
+
+    RESET_INTEGRATION_CONTEXT = "reset_integration_context"
+    RESET_ASSETS_LAST_RUN = "reset_assets_last_run"
+    RESET_INCIDENTS_LAST_RUN = "reset_incidents_last_run"
+    RESET_FEED_LAST_RUN = "reset_feed_last_run"
+    RESET_EVENTS_LAST_RUN = "reset_events_last_run"
+
+
+class RequiredLicenseEnum(str, Enum):
+    """capabilities.schema.json CapabilityConfig.required_license"""
+
+    DATA_SECURITY = "data_security"
+    AGENTIX = "agentix"
+    ASM = "asm"
+    CLOUD = "cloud"
+    CLOUD_APPSEC = "cloud_appsec"
+    CLOUD_POSTURE = "cloud_posture"
+    CLOUD_RUNTIME_SECURITY = "cloud_runtime_security"
+    COLD_RTN = "cold_rtn"
+    COMPUTE_UNIT = "compute_unit"
+    EDR = "edr"
+    ENDPOINT_DLP = "endpoint_dlp"
+    EPP = "epp"
+    EXPOSURE_MANAGEMENT = "exposure_management"
+    FORENSICS = "forensics"
+    HOST_INSIGHTS = "host_insights"
+    IDENTITY_THREAT = "identity_threat"
+    RTN = "rtn"
+    TIM = "tim"
+    XDR = "xdr"
+    XSIAM = "xsiam"
+    XSOAR = "xsoar"
+
+
+class ValidationRuleTypeEnum(str, Enum):
+    """validation.schema.json ValidationRule.type"""
+
+    PATTERN = "pattern"
+    MIN_LENGTH = "minLength"
+    MAX_LENGTH = "maxLength"
+    ASYNC = "async"
+
+
+# ============================================================
 # Shared field sub-models
 # ============================================================
 
 
 class FieldModifiers(BaseModel):
-    required: bool = False
-    hidden: bool = False
-    read_only: bool = False
+    """field-options.schema.json#/$defs/Modifiers"""
+
+    required: Optional[bool] = None
+    hidden: Optional[bool] = None
+    read_only: Optional[bool] = None
+
+
+class FieldLayout(BaseModel):
+    """field-options.schema.json#/$defs/FieldLayout"""
+
+    cols: Optional[int] = None
+    row_span: Optional[int] = None
 
 
 class FieldOptions(BaseModel):
-    mask: Optional[bool] = None
-    placeholder: Optional[str] = None
+    """field-options.schema.json#/$defs/FieldOptions.
+
+    All keys optional; the UCP schema enforces per-field-type constraints.
+    """
+
     description: Optional[str] = None
     help_text: Optional[str] = None
+    placeholder: Optional[str] = None
     default_value: Optional[Any] = None
-    hint: Optional[str] = None
     values: Optional[List[dict]] = None
+    units: Optional[List[str]] = None
+    output_format: Optional[str] = None
+    hint: Optional[str] = None
+    fluid: Optional[bool] = None
+    is_number_input: Optional[bool] = None
+    clearable: Optional[bool] = None
+    limit: Optional[bool] = None
+    searchable: Optional[bool] = None
+    orientation: Optional[str] = None
+    mask: Optional[bool] = None
+    variant: Optional[str] = None
+    mode: Optional[str] = None
+    query_params: Optional[dict] = None
+    formats: Optional[str] = None
+    multiple: Optional[bool] = None
+    file_upload_hint: Optional[str] = None
+    empty_values_message: Optional[str] = None
+    layout: Optional[FieldLayout] = None
     create_modifiers: Optional[FieldModifiers] = None
     edit_modifiers: Optional[FieldModifiers] = None
 
 
-class ConnectorField(BaseModel):
-    """A single field definition used across connection, capabilities, and configurations."""
+class FieldBehavior(BaseModel):
+    """field.schema.json#/$defs/Behavior - UI-only behavior config."""
+
+    type: Optional[str] = None  # currently only "apply"
+    label: Optional[str] = None
+
+
+class ValidationRule(BaseModel):
+    """validation.schema.json#/$defs/ValidationRule"""
+
+    type: Optional[str] = None  # ValidationRuleTypeEnum
+    value: Optional[Any] = None  # regex string or integer
+    message: Optional[str] = None
+    validation_type: Optional[str] = None  # e.g. "uniqueness"
+    options: Optional[dict] = None  # ValidationOptions{debounce, showLoading}
+
+
+class ValidationEntry(BaseModel):
+    """validation.schema.json#/$defs/ValidationEntry - trigger-grouped rules."""
+
+    trigger: Optional[str] = None  # "change" | "blur"
+    rules: List[ValidationRule] = []
+
+
+class CheckboxGroupItemOptions(BaseModel):
+    """field.schema.json#/$defs/CheckboxGroupItemOptions"""
+
+    description: Optional[str] = None
+    create_modifiers: Optional[FieldModifiers] = None
+    edit_modifiers: Optional[FieldModifiers] = None
+
+
+class CheckboxGroupItem(BaseModel):
+    """field.schema.json#/$defs/CheckboxGroupItem"""
 
     id: str
-    title: str
-    field_type: str  # "input", "select", "checkbox", "switch"
-    metadata: Optional[dict] = None
+    title: Optional[str] = None
+    options: Optional[CheckboxGroupItemOptions] = None
+
+
+class ConnectorField(BaseModel):
+    """A single field definition used across connection, capabilities, and configurations.
+
+    Mirrors ``field.schema.json#/$defs/Field``. ``field_type`` is kept as a
+    plain string (values come from :class:`FieldTypeEnum`) so unknown/new
+    types don't break parsing.
+    """
+
+    id: str
+    title: Optional[str] = None
+    field_type: Optional[str] = None  # FieldTypeEnum values
+    metadata: Optional[dict] = None  # FieldMetadata (free-form, platform+handler keys)
     options: Optional[FieldOptions] = None
-    validations: Optional[List[dict]] = None
-    behavior: Optional[dict] = None
+    validations: Optional[List[ValidationEntry]] = None
+    behavior: Optional[FieldBehavior] = None
+    # Checkbox items for checkbox_group fields.
+    fields: Optional[List[CheckboxGroupItem]] = None
 
 
 class FieldGroup(BaseModel):
-    fields: List[ConnectorField]
+    """field.schema.json#/$defs/FieldGroup - a row of fields."""
+
+    fields: List[ConnectorField] = []
+    view_group: Optional[str] = None  # grouped connectors only
+    required_for_capabilities: Optional[List[str]] = None
+    advanced: Optional[bool] = None
+
+
+class ViewGroup(BaseModel):
+    """A view-group (tile) registry entry from connection.yaml / configurations.yaml."""
+
+    id: str
+    label: Optional[str] = None
+    help_text: Optional[str] = None
 
 
 class GeneralConfigurations(BaseModel):
@@ -83,25 +275,39 @@ class GeneralConfigurations(BaseModel):
 
 
 class ConnectorOwnership(BaseModel):
-    team: str
+    team: Optional[str] = None
     maintainers: List[str] = []
 
 
 class ConnectorMetadata(BaseModel):
-    title: str
-    description: str
-    version: str  # semver e.g. "1.0.0"
-    categories: List[str]  # classification categories, at least one required
+    """connector.schema.json metadata block.
+
+    Kept permissive (optional fields) - the UCP schema enforces required
+    fields (title, description, version, categories, vendor, publisher,
+    ownership).
+    """
+
+    title: Optional[str] = None
+    description: Optional[str] = None
+    version: Optional[str] = None  # semver e.g. "1.0.0"
+    categories: List[str] = []  # classification categories
     tags: List[str] = []
     domain: Optional[str] = None
-    vendor: str
-    publisher: str
+    vendor: Optional[str] = None
+    publisher: Optional[str] = None
     author_image: Optional[str] = None
-    ownership: ConnectorOwnership
+    documentation: Optional[str] = None  # URL to external docs
+    is_recommended: bool = False
+    ownership: ConnectorOwnership = ConnectorOwnership()
 
 
 class ConnectorSettings(BaseModel):
-    allow_skip_verification: bool = True
+    """connector.schema.json settings block."""
+
+    allow_skip_verification: Optional[bool] = None
+    skip_cut_off_check: Optional[bool] = None
+    required_features: List[str] = []
+    grouped: bool = False
 
 
 # ============================================================
@@ -109,29 +315,58 @@ class ConnectorSettings(BaseModel):
 # ============================================================
 
 
+class ProfileOptions(BaseModel):
+    """connection.schema.json#/$defs/ProfileOptions"""
+
+    use_base64_header: Optional[bool] = None
+    allow_scopes: Optional[bool] = None
+    default_token_expiry: Optional[int] = None
+
+
+class VaultMappingFields(BaseModel):
+    """connection.schema.json VaultMapping.map"""
+
+    user: Optional[str] = None
+    password: Optional[str] = None
+    sshkey: Optional[str] = None
+
+
+class VaultMapping(BaseModel):
+    """connection.schema.json#/$defs/VaultMapping - passthrough profiles only."""
+
+    id: str
+    map: Optional[VaultMappingFields] = None
+
+
 class ConnectionProfile(BaseModel):
     """An authentication profile from connection.yaml."""
 
     id: str  # e.g. "oauth2_client_credentials.identity"
-    type: str  # "oauth2_client_credentials", "plain", "api_key", etc.
-    title: str
+    type: Optional[str] = None  # ProfileTypeEnum values
+    title: Optional[str] = None
     description: Optional[str] = None
+    view_group: Optional[str] = None  # grouped connectors only
+    vault_support: Optional[bool] = None
+    vault_mappings: List[VaultMapping] = []
     discovery_url: Optional[str] = None
     token_endpoint: Optional[str] = None
     authorization_endpoint: Optional[str] = None
     client_id: Optional[str] = None
     client_secret: Optional[str] = None
     refresh_token_scope: Optional[str] = None
-    options: Optional[dict] = None
+    options: Optional[ProfileOptions] = None
+    # Handler-namespaced free-form profile metadata (keyed by module name).
+    metadata: Optional[dict] = None
     configurations: List[FieldGroup] = []
 
 
 class ConnectorConnectionData(BaseModel):
     """Parsed structured data from connection.yaml."""
 
-    title: str
-    description: str
+    title: Optional[str] = None
+    description: Optional[str] = None
     help: Optional[str] = None
+    view_groups: List[ViewGroup] = []
     general_configurations: Optional[GeneralConfigurations] = None
     profiles: List[ConnectionProfile] = []
 
@@ -141,15 +376,41 @@ class ConnectorConnectionData(BaseModel):
 # ============================================================
 
 
-class SubCapability(BaseModel):
+class LabelTooltip(BaseModel):
+    """capabilities.schema.json Labels object-form tooltip."""
+
     id: str
-    title: str
-    default_enabled: bool = False
-    required: bool = False
-    required_license: List[str] = []  # own value, or inherited from parent capability
+    params: Optional[Dict[str, str]] = None
+
+
+class Label(BaseModel):
+    """Object form of a capability label: ``{id, tooltip?}``.
+
+    Labels may also be plain strings; parsing normalizes both forms into a
+    ``List[Label]`` where the string form is stored under ``id``.
+    """
+
+    id: str
+    tooltip: Optional[LabelTooltip] = None
 
 
 class CapabilityConfig(BaseModel):
+    """capabilities.schema.json#/$defs/CapabilityConfig"""
+
+    required_license: List[str] = []  # RequiredLicenseEnum values
+    required_features: List[str] = []
+
+
+class SubCapability(BaseModel):
+    id: str
+    title: Optional[str] = None
+    default_enabled: bool = False
+    required: bool = False
+    read_only: bool = False
+    labels: List[Label] = []
+    config: Optional[CapabilityConfig] = None
+    # Effective license list: own value, or inherited from parent capability
+    # (populated by the parser).
     required_license: List[str] = []
 
 
@@ -162,14 +423,24 @@ class CapabilityData(BaseModel):
     """
 
     id: str
-    title: str
-    description: str
+    title: Optional[str] = None
+    description: Optional[str] = None
     default_enabled: bool = False
     required: bool = False
-    labels: List[str] = []
+    read_only: bool = False
+    labels: List[Label] = []
     config: Optional[CapabilityConfig] = None
     sub_capabilities: List[SubCapability] = []
+    # Multi-service connector fields.
+    is_global: bool = Field(default=False, alias="global")
+    partial: bool = False
+    author_image: Optional[str] = None
+    global_message: Optional[str] = None
+    service_ids: List[str] = []
     configurations: List[FieldGroup] = []  # unified: general + per-capability configs
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 # ============================================================
@@ -179,18 +450,45 @@ class CapabilityData(BaseModel):
 
 
 class FieldMapping(BaseModel):
-    """Raw serializer entry from serializer.yaml."""
+    """Raw serializer entry from serializer.yaml (SerializerEntry).
+
+    The schema requires only ``id`` and at least one of ``field_name`` /
+    ``field_value``, so ``field_name`` is optional here (transform-only
+    entries omit it).
+    """
 
     id: str  # connector field ID (connector_param_name)
-    field_name: (
-        str  # value to transform integration parameter name (content_param_name) to
-    )
+    # Target field name for the handler (rename). Optional for transform-only
+    # entries.
+    field_name: Optional[str] = None
     field_value: Optional[str] = None  # optional value transform (e.g. "toString")
 
 
+class ComputedCondition(BaseModel):
+    """serializer.schema.json#/$defs/Condition"""
+
+    type: Optional[str] = None  # "capability" | "field"
+    options: Optional[dict] = None  # CapabilityOptions | FieldConditionOptions
+
+
+class ComputedConditionGroup(BaseModel):
+    """serializer.schema.json#/$defs/ConditionGroup (AND logic within group)."""
+
+    conditions: List[ComputedCondition] = []
+
+
+class ComputedOutput(BaseModel):
+    """serializer.schema.json#/$defs/ComputedOutput"""
+
+    id: str
+    value: Optional[Any] = None
+
+
 class ComputedFieldRule(BaseModel):
-    output: List[dict]
-    any_of: List[dict] = []
+    """serializer.schema.json#/$defs/ComputedFieldRule."""
+
+    output: List[ComputedOutput] = []
+    any_of: List[ComputedConditionGroup] = []  # OR logic across groups
 
 
 class SerializerData(BaseModel):
@@ -234,36 +532,59 @@ class HandlerOwnership(BaseModel):
 class HandlerMetadata(BaseModel):
     """Typed metadata from a handler.yaml ``metadata`` block."""
 
-    version: str = "1.0.0"
+    # Schema allows string OR number for version.
+    version: Optional[Union[str, float, int]] = None
     description: str = ""
     module: Optional[str] = None
     tags: List[str] = []
+    labels: Optional[dict] = None  # handler-specific metadata labels
     ownership: HandlerOwnership = HandlerOwnership()
 
 
 class HandlerTriggering(BaseModel):
-    type: str = "PUB_SUB"
+    type: Optional[str] = None  # TriggeringTypeEnum: "ZERO_SCALE" | "PUB_SUB"
     labels: Optional[Dict[str, str]] = None
     args: Optional[dict] = None
 
 
+class HandlerAuthMethod(BaseModel):
+    """Object form of an auth_options[].methods[] entry."""
+
+    id: str
+    scopes: List[str] = []
+
+
 class HandlerAuthOption(BaseModel):
     id: str  # references connection profile ID
-    scopes: Optional[List[str]] = []
+    scopes: List[str] = []
     workloads: List[str] = []
-    methods: Optional[List[str]] = []
+    # Schema allows each method to be a string OR an object {id, scopes[]}.
+    methods: List[Union[str, HandlerAuthMethod]] = []
+
+
+class HandlerAction(BaseModel):
+    """handler.schema.json#/$defs/Action."""
+
+    type: Optional[str] = None  # ActionTypeEnum
+    display: Optional[str] = None
+    description: Optional[str] = None
 
 
 class HandlerCapability(BaseModel):
     id: str  # references capability ID
+    # "none" for the anonymous shape; mutually exclusive with auth_options.
+    auth: Optional[str] = None
     auth_options: List[HandlerAuthOption] = []
+    # Capability-level workloads (only for the anonymous auth: "none" shape).
+    workloads: List[str] = []
+    actions: List[HandlerAction] = []
 
 
 class HandlerTestConnection(BaseModel):
-    type: str  # "endpoint" or "service"
+    type: Optional[str] = None  # TestConnectionTypeEnum: "endpoint" | "service"
     host: Optional[str] = None
     service: Optional[str] = None
-    endpoint: str
+    endpoint: Optional[str] = None
     headers: Optional[Dict[str, str]] = None
 
 
@@ -273,10 +594,15 @@ class HandlerData(BaseModel):
     id: str
     metadata: HandlerMetadata = HandlerMetadata()
     enabled: bool = True
-    triggering: HandlerTriggering
+    triggering: HandlerTriggering = HandlerTriggering()
     capabilities: List[HandlerCapability] = []
-    test_connection: HandlerTestConnection
+    test_connection: HandlerTestConnection = HandlerTestConnection()
+    # Metro (multi-tenant) override for connection testing.
+    test_connection_metro: Optional[HandlerTestConnection] = None
     serializer: Optional[SerializerData] = None
+    # Multi-service connector fields (mutually exclusive per schema).
+    service_ids: List[str] = []
+    is_general: bool = False
     handler_dir_name: str  # directory name for path resolution
     resolved_params: List[ResolvedParamMapping] = []  # built by parser
 
@@ -351,6 +677,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
     """
 
     # === Fields from connector.yaml ===
+    enabled: bool = True
     connector_metadata: ConnectorMetadata = Field(alias="metadata")
     settings: Optional[ConnectorSettings] = None
 
@@ -400,6 +727,8 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
                     "publisher",
                     "domain",
                     "author_image",
+                    "documentation",
+                    "is_recommended",
                     "tags",
                 ):
                     if key in values:
@@ -425,10 +754,19 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
                     # Intentionally ignore malformed/non-JSON settings and keep
                     # the field unset so optional/fallback logic can proceed.
                     pass
-            elif "allow_skip_verification" in values:
-                values["settings"] = {
-                    "allow_skip_verification": values["allow_skip_verification"]
-                }
+            else:
+                # Last-resort reconstruction from flattened scalar settings.
+                rebuilt_settings: Dict[str, Any] = {}
+                for key in (
+                    "allow_skip_verification",
+                    "skip_cut_off_check",
+                    "grouped",
+                    "required_features",
+                ):
+                    if key in values:
+                        rebuilt_settings[key] = values[key]
+                if rebuilt_settings:
+                    values["settings"] = rebuilt_settings
 
         return values
 
@@ -492,6 +830,8 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
                 "publisher",
                 "domain",
                 "author_image",
+                "documentation",
+                "is_recommended",
             ):
                 value = metadata.get(key)
                 if value is not None:
@@ -516,9 +856,19 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
                     ]
 
         if isinstance(settings, dict):
-            allow_skip = settings.get("allow_skip_verification")
-            if isinstance(allow_skip, bool):
-                json_dct["allow_skip_verification"] = allow_skip
+            for key in (
+                "allow_skip_verification",
+                "skip_cut_off_check",
+                "grouped",
+            ):
+                value = settings.get(key)
+                if isinstance(value, bool):
+                    json_dct[key] = value
+            required_features = settings.get("required_features")
+            if isinstance(required_features, list):
+                json_dct["required_features"] = [
+                    f for f in required_features if isinstance(f, str)
+                ]
 
         # Store the original nested structures as JSON strings so the
         # round-trip in _rebuild_nested_from_neo4j can reconstruct them

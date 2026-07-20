@@ -3,7 +3,10 @@ from typing import Any, Dict, List, Union
 from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common.clients.xsiam.xsiam_api_client import XsiamClient
-from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import ServerType
+from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import (
+    ServerType,
+    XsoarClient,
+)
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.logger import logger
 
@@ -69,10 +72,6 @@ class PlatformClient(XsiamClient):
         On a PlatformClient the tenant may be XSOAR SaaS, so incident polling
         must remain available.  Delegates directly to XsoarClient.poll_incident_state.
         """
-        from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import (
-            XsoarClient,
-        )
-
         return XsoarClient.poll_incident_state(self, *args, **kwargs)
 
     def delete_incidents(
@@ -89,10 +88,6 @@ class PlatformClient(XsiamClient):
         support incident deletion).  On a PlatformClient the tenant may be XSOAR
         SaaS where deletion is valid, so we delegate to XsoarClient.delete_incidents.
         """
-        from demisto_sdk.commands.common.clients.xsoar.xsoar_api_client import (
-            XsoarClient,
-        )
-
         return XsoarClient.delete_incidents(
             self, incident_ids, filters=filters, _all=_all, response_type=response_type
         )

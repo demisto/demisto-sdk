@@ -155,7 +155,8 @@ SERVER_LEVEL_PARAM_TEMPLATES: Dict[str, Dict] = {
         "type": 15,
         "required": False,
         "additionalinfo": "The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the feed",
-        "options": ["RED", "AMBER", "GREEN", "WHITE"],
+        "options": ["RED", "AMBER+STRICT", "AMBER", "GREEN", "CLEAR"],
+        "defaultvalue": "CLEAR",
         "section": "Collect",
     },
 }

@@ -65,7 +65,6 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
                 "quiet": "quiet",
                 "tests": "tests",
                 "internal": "internal",
-                "source": "source",
                 "adopted": "adopted",
             }
         )
@@ -99,10 +98,6 @@ class BasePlaybookParser(YAMLContentItemParser, content_type=ContentType.BASE_PL
     @property
     def internal(self) -> bool:
         return get_value(self.yml_data, self.field_mapping.get("internal", ""), False)
-
-    @property
-    def source(self) -> str:
-        return get_value(self.yml_data, self.field_mapping.get("source", ""), "")
 
     @property
     def adopted(self) -> Optional[bool]:

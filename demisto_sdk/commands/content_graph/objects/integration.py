@@ -129,7 +129,6 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     long_running: bool = False
     category: str
     internal: bool = Field(False)
-    source: str = Field("")
     spec: Optional[str] = None
     provider: Optional[str] = None
     commands: List[Command] = []

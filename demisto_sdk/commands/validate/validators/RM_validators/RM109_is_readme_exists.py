@@ -46,6 +46,18 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
                 )
                 and (not content_item.readme.exist)
                 and (not content_item.is_silent)
-                and getattr(content_item, "source", "") != "autonomous"
+                and not self._is_in_autonomous_pack(content_item)
             )
         ]
+
+    @staticmethod
+    def _is_in_autonomous_pack(content_item: ContentTypes) -> bool:
+        """Check whether the content item belongs to an autonomous pack
+        (managed: true, source: 'autonomous')."""
+        pack_metadata = getattr(content_item.in_pack, "pack_metadata_dict", None)
+        if not pack_metadata:
+            return False
+        return (
+            pack_metadata.get("managed", False) is True
+            and pack_metadata.get("source", "") == "autonomous"
+        )

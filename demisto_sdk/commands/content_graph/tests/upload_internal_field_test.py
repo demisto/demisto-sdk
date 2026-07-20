@@ -37,7 +37,6 @@ def _build_minimal_script() -> Script:
         is_llm=False,
         is_internal=False,
         internal=False,
-        source="",
     )
 
 

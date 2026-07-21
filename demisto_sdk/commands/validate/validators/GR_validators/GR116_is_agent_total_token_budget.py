@@ -106,12 +106,27 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         collectors (an action is re-parsed from its path so its args/outputs,
         excluded from the graph, count).
         """
-        fragments: List[Optional[str]] = [
+        own_fragments: List[Optional[str]] = [
             *agent_text_fragments(agent),
             *(agent.conversationstarters or []),
         ]
-        for node in dep_nodes.values():
-            fragments.extend(dependency_text_fragments(node))
+        logger.debug(
+            f"[{self.error_code}] Agent '{agent.name}' (id='{agent.object_id}'): "
+            f"own fields contribute {count_chars_for_texts(own_fragments)} char(s) "
+            f"across {len(own_fragments)} fragment(s)."
+        )
+
+        fragments: List[Optional[str]] = list(own_fragments)
+        for dep_id, node in dep_nodes.items():
+            dep_fragments = dependency_text_fragments(node)
+            logger.debug(
+                f"[{self.error_code}] Agent '{agent.name}': dependency "
+                f"id='{dep_id}' type='{node.get('content_type')}' "
+                f"path='{node.get('path')}' fromversion='{node.get('fromversion')}' "
+                f"contributes {count_chars_for_texts(dep_fragments)} char(s) "
+                f"across {len(dep_fragments)} fragment(s)."
+            )
+            fragments.extend(dep_fragments)
 
         return fragments
 
@@ -130,6 +145,11 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         the platform loads at runtime when several files share the same id).
         """
         rows = self.graph.get_agent_budget_dependencies(changed_ids) or []
+        scope = "all agents" if not changed_ids else f"{len(changed_ids)} changed id(s)"
+        logger.debug(
+            f"[{self.error_code}] Structure query ({scope}) returned "
+            f"{len(rows)} agent row(s)."
+        )
 
         affected: list[tuple[AgentixAgent, Dict[str, dict]]] = []
         for row in rows:
@@ -137,11 +157,33 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             # AgentixAgent (see neo4j_graph.get_agent_budget_dependencies).
             agent = row.get("agent")
             if agent is None:
+                logger.debug(
+                    f"[{self.error_code}] Skipping a row with no agent node."
+                )
                 continue
 
+            raw_deps = row.get("deps") or []
             dep_nodes: Dict[str, dict] = {}
-            for raw in row.get("deps") or []:
-                self._dedupe_dependency(dict(raw), dep_nodes)
+            for raw in raw_deps:
+                node = dict(raw)
+                # Log every RAW dep (id + path) before dedup: two files for the
+                # "same" action that re-parse to DIVERGENT object_ids (e.g.
+                # CortexListIssues.yml -> 'SearchIssues') both survive the
+                # id-based dedup and inflate the count. This line makes that gap
+                # visible - a single logical action appearing under >1 id/path.
+                logger.debug(
+                    f"[{self.error_code}] Agent '{agent.name}': raw dep "
+                    f"id='{node.get('object_id')}' "
+                    f"type='{node.get('content_type')}' "
+                    f"path='{node.get('path')}' "
+                    f"fromversion='{node.get('fromversion')}'."
+                )
+                self._dedupe_dependency(node, dep_nodes)
+            logger.debug(
+                f"[{self.error_code}] Agent '{agent.name}' (id='{agent.object_id}'): "
+                f"{len(raw_deps)} raw dep(s) deduped to {len(dep_nodes)} "
+                f"(kept newest per id) -> ids={sorted(dep_nodes)}."
+            )
             affected.append((agent, dep_nodes))
         return affected
 

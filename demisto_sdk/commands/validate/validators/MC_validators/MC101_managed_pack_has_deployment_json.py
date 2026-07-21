@@ -4,6 +4,7 @@ from typing import Iterable, List
 
 from demisto_sdk.commands.common.constants import DEPLOYMENT_JSON_FILENAME
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.validate.tools import get_platform_managed_and_source
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -48,15 +49,21 @@ def is_managed_pack_with_deployment_json(pack: ContentTypes) -> bool:
     """
     Check if a managed pack has a deployment.json file in its folder.
 
+    The managed check is resolved for the PLATFORM marketplace only: the pack is
+    considered managed when its platform-specific ``managed`` (``managed:platform``
+    if present, otherwise the plain ``managed``) is true.
+
     Args:
         pack: The pack to validate.
 
     Returns:
-        bool: True if the pack is valid (either not managed, or managed and has deployment.json),
-              False if the pack is managed but missing deployment.json.
+        bool: True if the pack is valid (either not managed for platform, or
+              managed and has deployment.json), False if the pack is managed for
+              platform but missing deployment.json.
     """
-    if not pack.managed:
-        # Not a managed pack — no deployment.json required
+    managed, _ = get_platform_managed_and_source(pack)
+    if not managed:
+        # Not a managed pack for the platform marketplace — no deployment.json required
         return True
 
     deployment_json_path = pack.path / DEPLOYMENT_JSON_FILENAME

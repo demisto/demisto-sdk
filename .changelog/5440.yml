@@ -1,8 +1,0 @@
-changes:
-- description: Added the **AG117** validation that verifies an AgentixAction does not exceed the maximum allowed number of arguments.
-  type: feature
-- description: Extended the **AG112** total token budget validation to cover AgentixActions in addition to AgentixSkills.
-  type: feature
-- description: Extended the **AG114** character cleanliness validation to cover AgentixActions and Collections in addition to AgentixSkills.
-  type: feature
-pr_number: 5440

@@ -50,8 +50,6 @@ class IsCharCleanlinessValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        content_items = list(content_items)
-        logger.debug(f"[{self.error_code}] Running on {len(content_items)} item(s).")
         results: List[ValidationResult] = []
         for content_item in content_items:
             offending: List[str] = []
@@ -60,10 +58,7 @@ class IsCharCleanlinessValidator(BaseValidator[ContentTypes]):
                 if disallowed:
                     chars = " ".join(repr(ch) for ch in disallowed)
                     offending.append(f"  - {field_name}: {chars}")
-            logger.debug(
-                f"[{self.error_code}] '{content_item.display_name}': "
-                f"{len(offending)} offending field(s)."
-            )
+                    
             if offending:
                 results.append(
                     ValidationResult(

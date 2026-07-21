@@ -6,8 +6,6 @@ from typing import Dict, Iterable, List, Optional, Union
 from packaging.version import InvalidVersion, Version
 
 from demisto_sdk.commands.common.logger import logger
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import versioned
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
 from demisto_sdk.commands.content_graph.objects.agentix_skill import AgentixSkill
@@ -25,29 +23,6 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 ContentTypes = Union[AgentixAgent, AgentixAction, AgentixSkill, Collection]
 
 AGENT_CHAR_LIMIT = 200000
-
-MIN_AGENT_FROMVERSION = "8.15.0"
-
-# Step 1: select affected agents - all if $validate_all, else those in
-# $changed_ids or using a changed action/skill.
-# Step 2: return each agent's node plus its dependency nodes, scored in one query.
-_AGENT_DEPENDENCIES_QUERY = f"""
-MATCH (a:{ContentType.AGENTIX_AGENT})
-WHERE {versioned("a.fromversion")} >= {versioned(MIN_AGENT_FROMVERSION)}
-OPTIONAL MATCH (a)-[:{RelationshipType.USES}]->(changed)
-WITH a,
-    $validate_all
-    OR (a.object_id IN $changed_ids)
-    OR (changed IS NOT NULL AND changed.object_id IN $changed_ids) AS is_affected
-WITH a WHERE is_affected
-WITH DISTINCT a
-OPTIONAL MATCH (a)-[:{RelationshipType.USES}]->(dep)
-WHERE dep.content_type IN [
-    '{ContentType.AGENTIX_ACTION}', '{ContentType.AGENTIX_SKILL}',
-    '{ContentType.COLLECTION}'
-]
-RETURN a AS agent, collect(DISTINCT dep) AS deps
-"""
 
 
 class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
@@ -80,7 +55,6 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         content_items: Iterable[ContentTypes],
         validate_all_files: bool = False,
     ) -> list[ValidationResult]:
-        content_items = list(content_items)
         changed_ids = (
             []
             if validate_all_files
@@ -90,9 +64,7 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         if not validate_all_files and not changed_ids:
             return []
 
-        affected_agents = self._affected_agents_with_dependencies(
-            changed_ids, validate_all_files
-        )
+        affected_agents = self._affected_agents_with_dependencies(changed_ids)
         return [
             result
             for agent, dep_nodes in affected_agents
@@ -107,10 +79,7 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         """Count the agent's total char budget; flag it when over the limit."""
         fragments = self._agent_fragments(agent, dep_nodes)
         total_chars = count_chars_for_texts(fragments)
-        # One summary line per agent. colors=False: the agent name is free-form
-        # content that may contain angle brackets, which loguru would otherwise
-        # parse as color tags.
-        logger.opt(colors=False).debug(
+        logger.debug(
             f"[{self.error_code}] Agent '{agent.name}' (id='{agent.object_id}'): "
             f"checked {len(dep_nodes)} dependency(ies) -> "
             f"{len(fragments)} fragment(s), {total_chars} char(s) "
@@ -147,31 +116,26 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
         return fragments
 
     def _affected_agents_with_dependencies(
-        self, changed_ids: list[str], validate_all: bool
+        self, changed_ids: list[str]
     ) -> list[tuple[AgentixAgent, Dict[str, dict]]]:
         """Return ``[(AgentixAgent, {dep_id: dep_node}), ...]`` from one query.
 
-        Runs :data:`_AGENT_DEPENDENCIES_QUERY` (every agent when ``validate_all``,
-        otherwise those modified themselves or owning a directly-modified
-        dependency). Each row carries the full agent node - reconstructed into an
-        :class:`AgentixAgent` object so it can both score the agent's own fields
-        and be attached to the ValidationResult without a second graph fetch -
-        plus its dependency rows as full graph nodes, deduplicated by ``id`` to
-        the highest-``fromversion`` node (mirroring what the platform loads at
-        runtime when several files share the same id).
+        Runs ``graph.get_agent_budget_dependencies`` (every agent when
+        ``changed_ids`` is empty, otherwise those modified themselves or owning a
+        directly-modified dependency). Each row carries the full agent node -
+        reconstructed into an :class:`AgentixAgent` object so it can both score
+        the agent's own fields and be attached to the ValidationResult without a
+        second graph fetch - plus its dependency rows as full graph nodes,
+        deduplicated by ``id`` to the highest-``fromversion`` node (mirroring what
+        the platform loads at runtime when several files share the same id).
         """
-        rows = (
-            self.graph.run_single_query(
-                _AGENT_DEPENDENCIES_QUERY,
-                changed_ids=changed_ids,
-                validate_all=validate_all,
-            )
-            or []
-        )
+        rows = self.graph.get_agent_budget_dependencies(changed_ids) or []
 
         affected: list[tuple[AgentixAgent, Dict[str, dict]]] = []
         for row in rows:
-            agent = self._parse_agent(row.get("agent"))
+            # The interface reconstructs each row's agent node into a real
+            # AgentixAgent (see neo4j_graph.get_agent_budget_dependencies).
+            agent = row.get("agent")
             if agent is None:
                 continue
 
@@ -180,26 +144,6 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
                 self._dedupe_dependency(dict(raw), dep_nodes)
             affected.append((agent, dep_nodes))
         return affected
-
-    @staticmethod
-    def _parse_agent(node: Optional[dict]) -> Optional[AgentixAgent]:
-        """Reconstruct an AgentixAgent object from its graph node properties.
-
-        The structure query returns the full agent node, so the same object type
-        other graph validators attach to their results is available here without
-        any additional graph query.
-        """
-        if not node:
-            return None
-        try:
-            return AgentixAgent.parse_obj(dict(node))
-        except Exception as exc:  # malformed node -> cannot validate/flag this agent
-            node_id = dict(node).get("object_id")
-            logger.opt(colors=False).debug(
-                f"[{IsAgentTotalTokenBudgetValidator.error_code}] could not parse "
-                f"agent id={node_id!r}: {type(exc).__name__}: {exc}"
-            )
-            return None
 
     @staticmethod
     def _dedupe_dependency(node: dict, dep_nodes: Dict[str, dict]) -> None:
@@ -236,3 +180,8 @@ def _is_newer(candidate: Optional[str], current: Optional[str]) -> bool:
             return Version("0")
 
     return _parse(candidate) > _parse(current)
+
+
+# move the graph query to a graph function
+# remove validate_all from the graph query - use changed_ids = [] instead
+# remove parse_agent

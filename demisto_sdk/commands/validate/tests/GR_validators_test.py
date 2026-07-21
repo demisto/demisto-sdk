@@ -3410,18 +3410,17 @@ def _gr116_agent_row(mocker, agent_id: str, deps: list, **agent_fields) -> dict:
     # No related instructions file: agent_text_fragments then reads the model's
     # systeminstructions field (a Mock file_content would poison the char count).
     agent.system_instructions_file = None
-    return {"agent": {"object_id": agent_id, "_mock": agent}, "deps": deps}
+    return {"agent": agent, "deps": deps}
 
 
 def _gr116_validator_with_query(mocker, query_rows):
     """Return a GR116 list-files validator whose graph is fully mocked.
 
-    ``graph.run_single_query`` returns ``query_rows`` (the single structure
-    query result: ``[{"agent": <node>, "deps": [{"id","name","description",
-    "path","type"}, ...]}, ...]``). ``_parse_agent`` is patched to return the
-    ``AgentixAgent`` Mock carried on each row (avoiding a real ``parse_obj`` of
-    a hand-built node). The mocked graph is reachable via ``validator.graph`` so
-    tests can assert on the single ``run_single_query`` call.
+    ``graph.get_agent_budget_dependencies`` returns ``query_rows`` (the single
+    structure query result: ``[{"agent": <node>, "deps": [{"object_id","name",
+    "description","path","content_type"}, ...]}, ...]``). The mocked graph is
+    reachable via ``validator.graph`` so tests can assert on the single
+    ``get_agent_budget_dependencies`` call.
     """
     from demisto_sdk.commands.validate.validators.GR_validators.GR116_is_agent_total_token_budget_list_files import (
         IsAgentTotalTokenBudgetValidatorListFiles,
@@ -3429,18 +3428,13 @@ def _gr116_validator_with_query(mocker, query_rows):
 
     validator = IsAgentTotalTokenBudgetValidatorListFiles()
     graph = mocker.Mock()
-    graph.run_single_query.return_value = query_rows
+    graph.get_agent_budget_dependencies.return_value = query_rows
     graph.search.return_value = []
     mocker.patch.object(
         type(validator),
         "graph",
         new_callable=mocker.PropertyMock,
         return_value=graph,
-    )
-    mocker.patch.object(
-        IsAgentTotalTokenBudgetValidatorListFiles,
-        "_parse_agent",
-        side_effect=lambda node: node.get("_mock") if node else None,
     )
     return validator
 
@@ -3498,7 +3492,7 @@ def test_GR116_single_structure_query_for_all_modified_dependencies(mocker):
     - Resolving the affected agents and their dependencies for GR116.
 
     Then
-    - Exactly ONE graph query (run_single_query) is issued for the whole
+    - Exactly ONE graph query (get_agent_budget_dependencies) is issued for the whole
       structure, and it receives every changed id.
     - The result maps each agent to its action source paths and its skill/
       collection (name, description) summaries.
@@ -3528,16 +3522,13 @@ def test_GR116_single_structure_query_for_all_modified_dependencies(mocker):
     changed_ids = ["action-1", "action-2", "skill-1", "collection-1"]
 
     # when: fold the query rows into the per-agent (agent, grouped deps) list
-    affected = validator._affected_agents_with_dependencies(
-        changed_ids, validate_all=False
-    )
+    affected = validator._affected_agents_with_dependencies(changed_ids)
     by_id = {agent.object_id: (agent, dep_nodes) for agent, dep_nodes in affected}
 
     # then: a single structure query, receiving every changed id
-    assert validator.graph.run_single_query.call_count == 1
-    _, kwargs = validator.graph.run_single_query.call_args
-    assert sorted(kwargs["changed_ids"]) == sorted(changed_ids)
-    assert kwargs["validate_all"] is False
+    assert validator.graph.get_agent_budget_dependencies.call_count == 1
+    args, _ = validator.graph.get_agent_budget_dependencies.call_args
+    assert sorted(args[0]) == sorted(changed_ids)
     # and the per-agent (agent object + deduped {dep_id: full dep node})
     assert set(by_id) == {"agent-1", "agent-2"}
     agent_1, dep_nodes_1 = by_id["agent-1"]
@@ -3577,10 +3568,9 @@ def test_GR116_validate_all_files_passes_empty_changed_ids(mocker):
 
     # then
     assert results == []
-    assert validator.graph.run_single_query.call_count == 1
-    _, kwargs = validator.graph.run_single_query.call_args
-    assert kwargs["changed_ids"] == []
-    assert kwargs["validate_all"] is True
+    assert validator.graph.get_agent_budget_dependencies.call_count == 1
+    args, _ = validator.graph.get_agent_budget_dependencies.call_args
+    assert args[0] == []
 
 
 def test_GR116_modified_agent_itself_is_included(mocker):
@@ -3615,14 +3605,12 @@ def test_GR116_modified_agent_itself_is_included(mocker):
     changed_ids = [
         ci.object_id for ci in [modified_agent] if isinstance(ci, AgentixAgent)
     ]
-    affected = validator._affected_agents_with_dependencies(
-        changed_ids, validate_all=False
-    )
+    affected = validator._affected_agents_with_dependencies(changed_ids)
     by_id = {agent.object_id: (agent, dep_nodes) for agent, dep_nodes in affected}
 
     # then
-    _, kwargs = validator.graph.run_single_query.call_args
-    assert kwargs["changed_ids"] == ["agent-1"]
+    args, _ = validator.graph.get_agent_budget_dependencies.call_args
+    assert args[0] == ["agent-1"]
     assert set(by_id) == {"agent-1"}
     _, dep_nodes = by_id["agent-1"]
     assert set(dep_nodes) == {"action-1"}
@@ -3662,9 +3650,7 @@ def test_GR116_agent_without_dependencies_has_empty_dep_groups(mocker):
     validator = _gr116_validator_with_query(mocker, query_rows)
 
     # when
-    affected = validator._affected_agents_with_dependencies(
-        ["agent-1"], validate_all=False
-    )
+    affected = validator._affected_agents_with_dependencies(["agent-1"])
     by_id = {agent.object_id: (agent, dep_nodes) for agent, dep_nodes in affected}
 
     # then
@@ -3699,7 +3685,7 @@ def test_GR116_no_affected_agents_returns_no_results(mocker):
 
     # then
     assert results == []
-    assert validator.graph.run_single_query.call_count == 1
+    assert validator.graph.get_agent_budget_dependencies.call_count == 1
     validator.graph.search.assert_not_called()
 
     from demisto_sdk.commands.content_graph.objects.integration import (
@@ -3718,9 +3704,9 @@ def test_GR116_no_affected_agents_returns_no_results(mocker):
     # then: the structure query runs with the changed id but matches no agent,
     # so nothing is validated and no agent object is fetched.
     assert results == []
-    assert validator.graph.run_single_query.call_count == 1
-    _, kwargs = validator.graph.run_single_query.call_args
-    assert kwargs["changed_ids"] == ["some-integration"]
+    assert validator.graph.get_agent_budget_dependencies.call_count == 1
+    args, _ = validator.graph.get_agent_budget_dependencies.call_args
+    assert args[0] == ["some-integration"]
     validator.graph.search.assert_not_called()
 
 
@@ -3778,9 +3764,7 @@ def test_GR116_actions_reparsed_from_path_skills_collections_from_graph(mocker):
         )
     ]
     validator = _gr116_validator_with_query(mocker, query_rows)
-    agent, deps = validator._affected_agents_with_dependencies(
-        ["action-1"], validate_all=False
-    )[0]
+    agent, deps = validator._affected_agents_with_dependencies(["action-1"])[0]
 
     # when
     fragments = validator._agent_fragments(agent, deps)
@@ -3835,9 +3819,7 @@ def test_GR116_unparseable_action_path_falls_back_to_name_description(mocker):
         )
     ]
     validator = _gr116_validator_with_query(mocker, query_rows)
-    agent, dep_nodes = validator._affected_agents_with_dependencies(
-        ["action-1"], validate_all=False
-    )[0]
+    agent, dep_nodes = validator._affected_agents_with_dependencies(["action-1"])[0]
 
     # when
     fragments = validator._agent_fragments(agent, dep_nodes)

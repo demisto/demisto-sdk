@@ -48,8 +48,6 @@ class IsActionOrSkillTotalTokenBudgetValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        content_items = list(content_items)
-        logger.debug(f"[{self.error_code}] Running on {len(content_items)} item(s).")
         results: List[ValidationResult] = []
         for content_item in content_items:
             if isinstance(content_item, AgentixAction):
@@ -63,10 +61,6 @@ class IsActionOrSkillTotalTokenBudgetValidator(BaseValidator[ContentTypes]):
                 counted_fields = SKILL_COUNTED_FIELDS
                 fragments = skill_text_fragments(content_item)
             total_chars = count_chars_for_texts(fragments)
-            logger.debug(
-                f"[{self.error_code}] {item_type} '{content_item.name}': "
-                f"{total_chars} characters (limit {limit})."
-            )
             if total_chars > limit:
                 results.append(
                     ValidationResult(

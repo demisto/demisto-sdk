@@ -35,11 +35,7 @@ class ContentGraphBuilder:
             connectors_to_update: Connector directory names (under ``connectors/``)
                 to refresh. ``None``/empty means "no connectors".
 
-        At least one of the two must be non-empty for any work to happen -
-        otherwise ``_parse_and_model_content`` would fall through to
-        ``ContentDTO.from_path(None, None)`` and reparse the entire repo,
-        which is both expensive and, when merging an imported graph, would
-        duplicate packs that only live in the caller's repo checkout.
+        At least one of the two must be non-empty for any work to happen.
         """
         if not packs_to_update and not connectors_to_update:
             return

@@ -1,0 +1,4 @@
+changes:
+- description: Added the BA133 validation, which ensures fetch-related configuration parameters in an integration exist as required by their fetch type and resolve to supportedModules that are consistent with that fetch type. The validation is auto-fixable - it removes un-allowed supportedModules values and adds missing required server-level parameters with the correct supportedModules.
+  type: feature
+pr_number: '5438'

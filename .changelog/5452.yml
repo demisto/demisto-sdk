@@ -1,0 +1,4 @@
+changes:
+- description: Fixed an issue where Agentix action test files were wrongly collected as content items during validation.
+  type: fix
+pr_number: '5452'

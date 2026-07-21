@@ -37,6 +37,59 @@ from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlayboo
 from demisto_sdk.commands.content_graph.objects.test_script import TestScript
 
 
+def get_platform_managed_and_source(pack: Pack) -> tuple[bool, str]:
+    """
+    Resolve the ``managed``/``source`` values specific to the PLATFORM marketplace.
+
+    The marketplace-suffixed attributes (``managed_platform`` / ``source_platform``,
+    aliased from ``managed:platform`` / ``source:platform``) take precedence when
+    present, otherwise the plain (default) ``managed``/``source`` attributes are
+    used. This mirrors the resolution done at prepare time by
+    ``MarketplaceSuffixPreparer.prepare_managed_and_source``, but for validations
+    which run before prepare.
+
+    When the pack is not managed, ``source`` is always ``""``: an unmanaged pack
+    never has a source.
+
+    Args:
+        pack: The pack object (may carry suffixed managed/source attributes).
+
+    Returns:
+        tuple: (managed, source) resolved for the platform marketplace.
+    """
+    managed = pack.managed_platform
+    if managed is None:
+        managed = pack.managed
+
+    source = pack.source_platform
+    if source is None:
+        source = pack.source
+
+    if not managed:
+        return False, ""
+
+    return True, source or ""
+
+
+def is_autonomous_pack(pack: Optional[Pack]) -> bool:
+    """
+    Check whether a pack is an autonomous pack for the PLATFORM marketplace.
+
+    A pack is autonomous when its resolved (platform-specific) ``managed`` is
+    ``True`` and its resolved ``source`` is ``"autonomous"``.
+
+    Args:
+        pack: The pack object (may carry suffixed managed/source attributes).
+
+    Returns:
+        bool: True if the pack is autonomous, False otherwise.
+    """
+    if not pack:
+        return False
+    managed, source = get_platform_managed_and_source(pack)
+    return managed is True and source == "autonomous"
+
+
 def collect_all_inputs_in_use(content_item: Playbook) -> Set[str]:
     """
     Args:

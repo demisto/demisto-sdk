@@ -1,0 +1,6 @@
+changes:
+- description: Support pack-level validation ignores via a new `[pack]` section in `.pack-ignore` file. Error codes listed there are ignored for the pack itself and for every content item it contains, in addition to the existing per-file `[file:<path>]` mechanism.
+  type: feature
+- description: Added a new validation (PA135) that fails when pack-level ignored validations are added to the `[pack]` section of a `.pack-ignore` file (the section is added for the first time, or a new error code is added to it). Ignoring validations at the pack level now requires a force merge. PA135 cannot itself be ignored.
+  type: feature
+pr_number: 5406

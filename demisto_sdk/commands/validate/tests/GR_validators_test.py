@@ -3285,4 +3285,3 @@ def test_GR115_action_renamed_no_dependent_skills(mocker, graph_repo: Repo):
     )
 
     assert len(results) == 0
-

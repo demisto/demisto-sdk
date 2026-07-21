@@ -58,7 +58,7 @@ class IsCharCleanlinessValidator(BaseValidator[ContentTypes]):
                 if disallowed:
                     chars = " ".join(repr(ch) for ch in disallowed)
                     offending.append(f"  - {field_name}: {chars}")
-                    
+
             if offending:
                 results.append(
                     ValidationResult(

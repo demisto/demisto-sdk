@@ -1,6 +1,4 @@
 changes:
-- description: Added the **GR116** graph validation that verifies an AgentixAgent's total character budget (its own fields plus all referenced actions, skills, and collections) stays within the allowed limit.
-  type: feature
 - description: Added the **AG117** validation that verifies an AgentixAction does not exceed the maximum allowed number of arguments.
   type: feature
 - description: Extended the **AG112** total token budget validation to cover AgentixActions in addition to AgentixSkills.

@@ -471,14 +471,8 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
 
-    # Human-readable summary on stderr so it always shows up in the log.
-    print(
-        f"::notice title=SDK Nightly Gate::"
-        f"tier={classification.tier} status={decision.status} "
-        f"must_hits={len(classification.matched_must)} "
-        f"recommended_hits={len(classification.matched_recommended)}",
-        file=sys.stderr,
-    )
+    _emit_log_summary(classification, decision, labels)
+    _emit_step_summary(classification, decision, labels)
 
     write_github_output(
         {
@@ -494,6 +488,167 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     return decision.exit_code
+
+
+# ---------------------------------------------------------------------------
+# Human-readable log output
+# ---------------------------------------------------------------------------
+
+
+def _emit_log_summary(
+    classification: Classification,
+    decision: Decision,
+    labels: list[str],
+) -> None:
+    """Print a human-readable block into the workflow log.
+
+    Uses GitHub Actions ``::group::`` / ``::error::`` / ``::notice::``
+    workflow commands so the important information is visible in the
+    log stream *and* pinned to the run's annotations panel.
+    """
+    labels_display = ", ".join(labels) if labels else "(none)"
+
+    # A collapsible group makes the block scan-friendly in the log.
+    print("::group::SDK Nightly Gate result", file=sys.stderr)
+    print(f"Tier          : {classification.tier}", file=sys.stderr)
+    print(f"Status        : {decision.status}", file=sys.stderr)
+    print(f"PR labels     : {labels_display}", file=sys.stderr)
+    print(
+        f"Must hits     : {len(classification.matched_must)}",
+        file=sys.stderr,
+    )
+    for f in classification.matched_must:
+        print(f"  - {f}", file=sys.stderr)
+    print(
+        f"Recommended   : {len(classification.matched_recommended)}",
+        file=sys.stderr,
+    )
+    for f in classification.matched_recommended:
+        print(f"  - {f}", file=sys.stderr)
+    print("::endgroup::", file=sys.stderr)
+
+    if decision.status == "fail":
+        # `::error::` pins a red annotation to the top of the run page
+        # so the author sees it without scrolling.
+        first_hit = (
+            classification.matched_must[0]
+            if classification.matched_must
+            else "(unknown)"
+        )
+        n = len(classification.matched_must)
+        others = f" (+{n - 1} more)" if n > 1 else ""
+        msg = (
+            f"SDK Nightly required: this PR changes '{first_hit}'"
+            f"{others}, which is on the Must list. Run the SDK "
+            f"Nightly pipeline against this branch and add the "
+            f"'{LABEL_PASSED}' label (or '{LABEL_SKIPPED}' with "
+            f"reviewer approval). See the PR comment posted by "
+            f"'nightly-gate-bot' for the full list and instructions. "
+            f"This check re-runs when a label is added or removed."
+        )
+        # `::error::` messages must be single-line.
+        print(f"::error title=SDK Nightly Gate failed::{msg}", file=sys.stderr)
+    elif decision.status == "warn":
+        first_hit = (
+            classification.matched_recommended[0]
+            if classification.matched_recommended
+            else "(unknown)"
+        )
+        n = len(classification.matched_recommended)
+        others = f" (+{n - 1} more)" if n > 1 else ""
+        msg = (
+            f"SDK Nightly recommended: this PR changes '{first_hit}'"
+            f"{others}, which is on the Recommended list. Please add "
+            f"'{LABEL_PASSED}' (after running the nightly and pasting "
+            f"the link in the PR description) or '{LABEL_SKIPPED}' if "
+            f"you chose not to run it."
+        )
+        print(
+            f"::warning title=SDK Nightly recommended::{msg}",
+            file=sys.stderr,
+        )
+    else:
+        print(
+            f"::notice title=SDK Nightly Gate::status={decision.status} "
+            f"tier={classification.tier}",
+            file=sys.stderr,
+        )
+
+
+def _emit_step_summary(
+    classification: Classification,
+    decision: Decision,
+    labels: list[str],
+) -> None:
+    """Write a Markdown summary to ``$GITHUB_STEP_SUMMARY``.
+
+    This appears in a dedicated 'Summary' panel on the Actions run
+    page - much more visible than log lines.
+    """
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not summary_path:
+        return
+
+    lines: list[str] = []
+    if decision.status == "fail":
+        lines.append("## 🚫 SDK Nightly Gate: FAILED\n")
+        lines.append(
+            "This PR modifies files that **require** the SDK Nightly "
+            "pipeline to be run before it can be merged.\n"
+        )
+    elif decision.status == "warn":
+        lines.append("## ⚠️ SDK Nightly Gate: recommended\n")
+        lines.append(
+            "This PR modifies files where the SDK Nightly pipeline "
+            "is **recommended** but not required.\n"
+        )
+    elif decision.status == "ok":
+        lines.append("## ✅ SDK Nightly Gate: acknowledged\n")
+        lines.append(
+            f"A `{LABEL_PASSED}` or `{LABEL_SKIPPED}` label is "
+            "present; the gate is satisfied.\n"
+        )
+    else:  # noop
+        lines.append("## ✅ SDK Nightly Gate: not applicable\n")
+        lines.append("No gated files were changed in this PR.\n")
+
+    lines.append(f"- **Tier:** `{classification.tier}`")
+    lines.append(f"- **Status:** `{decision.status}`")
+    lines.append(
+        f"- **PR labels:** "
+        f"{', '.join(f'`{l}`' for l in labels) if labels else '_(none)_'}"
+    )
+
+    if classification.matched_must:
+        lines.append("\n### Must-tier files touched")
+        for f in classification.matched_must:
+            lines.append(f"- `{f}`")
+
+    if classification.matched_recommended:
+        lines.append("\n### Recommended-tier files touched")
+        for f in classification.matched_recommended:
+            lines.append(f"- `{f}`")
+
+    if decision.status in ("fail", "warn"):
+        lines.append("\n### What to do")
+        lines.append(
+            "1. Run the **SDK Nightly** pipeline against this branch."
+        )
+        lines.append(
+            "2. Paste the link to the nightly run in the PR description."
+        )
+        lines.append(
+            f"3. Add the **`{LABEL_PASSED}`** label once it passes "
+            f"(or **`{LABEL_SKIPPED}`** if you have a documented "
+            "reason not to run it, with reviewer approval)."
+        )
+        lines.append(
+            "\n_This check re-runs automatically when a label is "
+            "added or removed - no push required._"
+        )
+
+    with open(summary_path, "a", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
 
 
 if __name__ == "__main__":  # pragma: no cover

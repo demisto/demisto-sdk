@@ -1,0 +1,4 @@
+changes:
+- description: Added the **SDK Nightly Gate** GitHub Actions workflow. It classifies files changed in a PR against `.github/nightly-gate-paths.yml` and enforces the `nightly-run-passed` / `nightly-run-skipped` label policy - hard-failing PRs that touch Must-tier paths (content-graph internals, GR validators, docker, neo4j, etc.) without one of the two labels, and posting a non-blocking sticky reminder comment for Recommended-tier paths.
+  type: internal
+pr_number: '5464'

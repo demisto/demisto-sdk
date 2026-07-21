@@ -17,7 +17,7 @@
 * Fixed standalone content item parsing to resolve marketplaces and supported modules from the item's pack_metadata.json instead of assuming all marketplaces, preventing false BA130 failures. [#5441](https://github.com/demisto/demisto-sdk/pull/5441)
 
 ### Internal
-* Removed the automatic addition of the **source** field in the **format** command, and removed the **MC100** validation. [#5461](https://github.com/demisto/demisto-sdk/pull/5461)
+* Removed the automatic addition of the **source** field to managed content items from the **format** command, and removed the **MC100** validation that validates the existence of a **source** field in managed content items. [#5461](https://github.com/demisto/demisto-sdk/pull/5461)
 
 
 ## 1.39.4 (2026-07-12)

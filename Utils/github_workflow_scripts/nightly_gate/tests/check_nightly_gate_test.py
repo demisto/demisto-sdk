@@ -15,11 +15,11 @@ import pytest
 
 from Utils.github_workflow_scripts.nightly_gate.check_nightly_gate import (
     COMMENT_MARKER,
+    LABEL_PASSED,
+    LABEL_SKIPPED,
     Classification,
     Decision,
     GateConfig,
-    LABEL_PASSED,
-    LABEL_SKIPPED,
     _glob_to_regex,
     classify,
     decide,
@@ -84,9 +84,7 @@ class TestGlobToRegex:
             ),
         ],
     )
-    def test_matches(
-        self, pattern: str, path: str, expected: bool
-    ) -> None:
+    def test_matches(self, pattern: str, path: str, expected: bool) -> None:
         rx = _glob_to_regex(pattern)
         assert bool(rx.match(path)) is expected
 
@@ -138,16 +136,12 @@ def sample_config() -> GateConfig:
 
 
 class TestClassify:
-    def test_no_files_yields_none_tier(
-        self, sample_config: GateConfig
-    ) -> None:
+    def test_no_files_yields_none_tier(self, sample_config: GateConfig) -> None:
         result = classify([], sample_config)
         assert result.tier == "none"
         assert result == Classification(tier="none")
 
-    def test_must_hit_wins_over_recommended(
-        self, sample_config: GateConfig
-    ) -> None:
+    def test_must_hit_wins_over_recommended(self, sample_config: GateConfig) -> None:
         result = classify(
             [
                 "demisto_sdk/commands/content_graph/objects/pack.py",
@@ -159,9 +153,7 @@ class TestClassify:
         assert result.matched_must == [
             "demisto_sdk/commands/content_graph/objects/pack.py"
         ]
-        assert result.matched_recommended == [
-            "demisto_sdk/commands/validate/foo.py"
-        ]
+        assert result.matched_recommended == ["demisto_sdk/commands/validate/foo.py"]
 
     def test_recommended_only(self, sample_config: GateConfig) -> None:
         result = classify(
@@ -188,12 +180,8 @@ class TestClassify:
         assert result.matched_must == []
         assert len(result.matched_skip) == 2
 
-    def test_only_unmatched_files_yields_none(
-        self, sample_config: GateConfig
-    ) -> None:
-        result = classify(
-            ["some/other/file.py", "toplevel_file.txt"], sample_config
-        )
+    def test_only_unmatched_files_yields_none(self, sample_config: GateConfig) -> None:
+        result = classify(["some/other/file.py", "toplevel_file.txt"], sample_config)
         assert result.tier == "none"
         assert result.matched_must == []
         assert result.matched_recommended == []
@@ -212,14 +200,10 @@ class TestClassify:
             sample_config,
         )
         assert result.tier == "recommended"
-        assert result.matched_recommended == [
-            "demisto_sdk/commands/validate/foo.py"
-        ]
+        assert result.matched_recommended == ["demisto_sdk/commands/validate/foo.py"]
         assert len(result.matched_skip) == 2
 
-    def test_blank_lines_are_ignored(
-        self, sample_config: GateConfig
-    ) -> None:
+    def test_blank_lines_are_ignored(self, sample_config: GateConfig) -> None:
         result = classify(
             ["", "  ", "demisto_sdk/commands/common/docker_helper.py"],
             sample_config,
@@ -227,9 +211,7 @@ class TestClassify:
         assert result.tier == "must"
         assert len(result.matched_must) == 1
 
-    def test_docker_prefix_pattern(
-        self, sample_config: GateConfig
-    ) -> None:
+    def test_docker_prefix_pattern(self, sample_config: GateConfig) -> None:
         # `docker**` should also match nested files.
         result = classify(
             ["demisto_sdk/commands/common/docker_helper/utils.py"],
@@ -247,12 +229,8 @@ class TestDecide:
     def _cls(self, tier: str) -> Classification:
         return Classification(
             tier=tier,
-            matched_must=(
-                ["a/must.py"] if tier == "must" else []
-            ),
-            matched_recommended=(
-                ["a/rec.py"] if tier == "recommended" else []
-            ),
+            matched_must=(["a/must.py"] if tier == "must" else []),
+            matched_recommended=(["a/rec.py"] if tier == "recommended" else []),
         )
 
     def test_must_no_label_fails(self) -> None:
@@ -283,9 +261,7 @@ class TestDecide:
         assert "recommended" in decision.comment_body.lower()
 
     def test_recommended_with_label_ok(self) -> None:
-        decision = decide(
-            self._cls("recommended"), labels=[LABEL_PASSED]
-        )
+        decision = decide(self._cls("recommended"), labels=[LABEL_PASSED])
         assert decision.exit_code == 0
         assert decision.status == "ok"
 
@@ -303,23 +279,17 @@ class TestDecide:
         assert decision.delete_comment is True
 
     def test_unrelated_labels_do_not_satisfy_gate(self) -> None:
-        decision = decide(
-            self._cls("must"), labels=["bug", "documentation"]
-        )
+        decision = decide(self._cls("must"), labels=["bug", "documentation"])
         assert decision.status == "fail"
 
     def test_label_matching_is_case_insensitive(self) -> None:
-        decision = decide(
-            self._cls("must"), labels=["NIGHTLY-RUN-PASSED"]
-        )
+        decision = decide(self._cls("must"), labels=["NIGHTLY-RUN-PASSED"])
         assert decision.status == "ok"
 
     def test_decision_dataclass_shape(self) -> None:
         # Sanity check the Decision dataclass surface stays stable
         # (workflow YAML parses its string fields).
-        d = Decision(
-            exit_code=1, status="fail", comment_body="x", delete_comment=False
-        )
+        d = Decision(exit_code=1, status="fail", comment_body="x", delete_comment=False)
         assert d.exit_code == 1
         assert d.status == "fail"
         assert d.comment_body == "x"
@@ -331,9 +301,7 @@ class TestDecide:
 # ---------------------------------------------------------------------------
 
 
-REAL_CONFIG = (
-    Path(__file__).resolve().parents[4] / ".github" / "nightly-gate-paths.yml"
-)
+REAL_CONFIG = Path(__file__).resolve().parents[4] / ".github" / "nightly-gate-paths.yml"
 
 
 class TestRealConfig:
@@ -393,9 +361,7 @@ class TestRealConfig:
             "demisto_sdk/commands/content_graph/images/graph.png",
         ],
     )
-    def test_real_skip_files_ignored(
-        self, cfg: GateConfig, changed_file: str
-    ) -> None:
+    def test_real_skip_files_ignored(self, cfg: GateConfig, changed_file: str) -> None:
         # Either skip_only (if it's the only file) or the file falls out
         # of the must/recommended lists entirely.
         result = classify([changed_file], cfg)
@@ -404,6 +370,4 @@ class TestRealConfig:
         assert result.matched_recommended == []
 
     def test_real_unrelated_file_is_noop(self, cfg: GateConfig) -> None:
-        assert (
-            classify(["demisto_sdk/utils/utils.py"], cfg).tier == "none"
-        )
+        assert classify(["demisto_sdk/utils/utils.py"], cfg).tier == "none"

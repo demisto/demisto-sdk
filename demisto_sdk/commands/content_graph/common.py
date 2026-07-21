@@ -698,5 +698,3 @@ def append_supported_modules(
         if "supportedModules" in data:
             del data["supportedModules"]
     return data
-
-# Touched by SDK Nightly Gate demo commit - safe to revert.

@@ -227,9 +227,7 @@ class Decision:
     delete_comment: bool = False
 
 
-def decide(
-    classification: Classification, labels: Iterable[str]
-) -> Decision:
+def decide(classification: Classification, labels: Iterable[str]) -> Decision:
     """Given a classification and the PR's labels, decide the outcome.
 
     Rules:
@@ -260,9 +258,7 @@ def decide(
             return Decision(
                 exit_code=0,
                 status="ok",
-                comment_body=_render_ok_comment(
-                    classification, tier="recommended"
-                ),
+                comment_body=_render_ok_comment(classification, tier="recommended"),
             )
         return Decision(
             exit_code=0,
@@ -272,9 +268,7 @@ def decide(
 
     # tier == 'none' or 'skip_only': nothing to enforce; remove any
     # stale comment from previous runs.
-    return Decision(
-        exit_code=0, status="noop", comment_body=None, delete_comment=True
-    )
+    return Decision(exit_code=0, status="noop", comment_body=None, delete_comment=True)
 
 
 # ---------------------------------------------------------------------------
@@ -481,9 +475,7 @@ def main(argv: list[str] | None = None) -> int:
             "delete_comment": "true" if decision.delete_comment else "false",
             "comment_body": decision.comment_body or "",
             "matched_must": "\n".join(classification.matched_must),
-            "matched_recommended": "\n".join(
-                classification.matched_recommended
-            ),
+            "matched_recommended": "\n".join(classification.matched_recommended),
         }
     )
 
@@ -616,7 +608,7 @@ def _emit_step_summary(
     lines.append(f"- **Status:** `{decision.status}`")
     lines.append(
         f"- **PR labels:** "
-        f"{', '.join(f'`{l}`' for l in labels) if labels else '_(none)_'}"
+        f"{', '.join(f'`{label}`' for label in labels) if labels else '_(none)_'}"
     )
 
     if classification.matched_must:
@@ -631,12 +623,8 @@ def _emit_step_summary(
 
     if decision.status in ("fail", "warn"):
         lines.append("\n### What to do")
-        lines.append(
-            "1. Run the **SDK Nightly** pipeline against this branch."
-        )
-        lines.append(
-            "2. Paste the link to the nightly run in the PR description."
-        )
+        lines.append("1. Run the **SDK Nightly** pipeline against this branch.")
+        lines.append("2. Paste the link to the nightly run in the PR description.")
         lines.append(
             f"3. Add the **`{LABEL_PASSED}`** label once it passes "
             f"(or **`{LABEL_SKIPPED}`** if you have a documented "

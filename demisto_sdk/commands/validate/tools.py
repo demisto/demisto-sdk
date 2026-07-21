@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.tools import (
     filter_out_falsy_values,
     get_approved_tags_from_branch,
 )
-from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_action_test import (
     AgentixActionTest,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from enum import Enum
 from pathlib import Path
 from typing import (
     ClassVar,
@@ -12,7 +13,7 @@ from typing import (
     get_args,
 )
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     ALWAYS_RUN_ON_ERROR_CODE,
@@ -223,6 +224,70 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         return self.error_code[:2]
 
 
+class ConnectorType(str, Enum):
+    """The supported connector types to validate against.
+
+    Maps to the boolean `grouped` field on the connector's settings:
+    True -> GROUPED, False -> STANDARD.
+    """
+
+    STANDARD = "standard"
+    GROUPED = "grouped"
+
+
+class ConnectorsValidator(BaseValidator[ContentTypes], ABC):
+    """Base validator for connector content items.
+
+    In addition to the generic `should_run` checks, it validates the connector
+    against `connectors_type_to_validate` based on the connector's `grouped`
+    setting.
+    """
+
+    connectors_type_to_validate: List[ConnectorType] = Field(
+        default_factory=lambda: list(ConnectorType)
+    )
+
+    def should_run(
+        self,
+        content_item: ContentTypes,
+        ignorable_errors: list,
+        support_level_dict: dict,
+        running_execution_mode: Optional[ExecutionMode],
+    ) -> bool:
+        """Check whether to run the validation on the given connector content item.
+
+        Runs the generic `should_run` checks and, additionally, validates that
+        the connector's type (derived from its `grouped` setting) is included in
+        `connectors_type_to_validate`.
+        """
+        return (
+            super().should_run(
+                content_item,
+                ignorable_errors,
+                support_level_dict,
+                running_execution_mode,
+            )
+            and should_run_on_connector_type(
+                content_item, self.connectors_type_to_validate
+            )
+            and not self.is_error_ignored(
+                self.error_code,
+                ignorable_errors,
+                content_item,
+                self.related_file_type,
+            )
+        )
+
+    def is_error_ignored(
+        self,
+        err_code: str,
+        ignorable_errors: List[str],
+        content_item: ContentTypes,
+        related_file_type: Optional[List[RelatedFileType]] = None,
+    ) -> Optional[bool]:
+        pass
+
+
 def get_all_validators() -> List[BaseValidator]:
     validators = []
     for validator in BaseValidator.__subclasses__():
@@ -399,6 +464,31 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
     if content_item.deprecated and not run_on_deprecated:
         return False
     return True
+
+
+def should_run_on_connector_type(
+    content_item: ContentTypes,
+    connectors_type_to_validate: List[ConnectorType],
+) -> bool:
+    """
+    Check if the given connector's type is in the given connectors types to validate.
+
+    The connector's type is derived from its `grouped` setting:
+    True -> ConnectorType.GROUPED, False -> ConnectorType.STANDARD.
+
+    Args:
+        content_item (ContentTypes): The connector content item to check.
+        connectors_type_to_validate (List[ConnectorType]): The connector types the validation should run on.
+
+    Returns:
+        bool: True if the connector's type is in connectors_type_to_validate. Otherwise, return False.
+    """
+    connector_type = (
+        ConnectorType.GROUPED
+        if getattr(getattr(content_item, "settings", None), "grouped", False)
+        else ConnectorType.STANDARD
+    )
+    return connector_type in connectors_type_to_validate
 
 
 def should_run_on_execution_mode(

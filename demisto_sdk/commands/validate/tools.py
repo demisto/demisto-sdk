@@ -48,6 +48,9 @@ def get_platform_managed_and_source(pack: Pack) -> tuple[bool, str]:
     ``MarketplaceSuffixPreparer.prepare_managed_and_source``, but for validations
     which run before prepare.
 
+    When the pack is not managed, ``source`` is always ``""``: an unmanaged pack
+    never has a source.
+
     Args:
         pack: The pack object (may carry suffixed managed/source attributes).
 
@@ -62,7 +65,10 @@ def get_platform_managed_and_source(pack: Pack) -> tuple[bool, str]:
     if source is None:
         source = pack.source
 
-    return bool(managed), source or ""
+    if not managed:
+        return False, ""
+
+    return True, source or ""
 
 
 def is_autonomous_pack(pack: Optional[Pack]) -> bool:

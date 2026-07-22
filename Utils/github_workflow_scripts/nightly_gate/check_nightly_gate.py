@@ -366,13 +366,12 @@ _CONTENT_BUILD_ALTERNATIVE = f"""\
 **Alternative:** if your change is scoped (e.g. a single new validator or a \
 small bug fix), you can run a **Content build against this SDK branch** \
 instead of the full SDK Nightly pipeline. When your change is a new \
-validator, make sure it is registered in \
-[`sdk_validation_config.toml`](../demisto_sdk/commands/validate/sdk_validation_config.toml) \
-so the Content build's `run-validations` job picks it up via \
-`demisto-sdk validate -a` (the `-a` "all files" mode is what \
-`run-validations` uses; a `-g` "git-diff" run will not exercise your new \
-validator on unchanged files). Once the Content build is green, add the \
-**`{LABEL_PASSED}`** label to satisfy this gate."""
+validator, make sure it is registered in the Content repo's \
+`validation_config.toml` so the Content build's `run-validations` job \
+picks it up via `demisto-sdk validate -a` (the `-a` "all files" mode is \
+what `run-validations` uses; a `-g` "git-diff" run will not exercise \
+your new validator on unchanged files). Once the Content build is \
+green, add the **`{LABEL_PASSED}`** label to satisfy this gate."""
 
 
 def _render_fail_comment(cls: Classification) -> str:
@@ -774,10 +773,10 @@ def _emit_step_summary(
         lines.append(
             "\n**Alternative:** for scoped changes (e.g. a single new "
             "validator), a **Content build against this SDK branch** is "
-            "usually enough. New validators must be registered in "
-            "`demisto_sdk/commands/validate/sdk_validation_config.toml` "
-            "so the Content build's `run-validations` job exercises them "
-            "via `demisto-sdk validate -a`."
+            "usually enough. New validators must be registered in the "
+            "Content repo's `validation_config.toml` so the Content "
+            "build's `run-validations` job exercises them via "
+            "`demisto-sdk validate -a`."
         )
         lines.append(
             "\n_This check re-runs automatically when a label is "

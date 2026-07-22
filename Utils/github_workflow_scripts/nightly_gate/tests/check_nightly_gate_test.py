@@ -399,7 +399,13 @@ class TestDecide:
         # The alternative escape hatch must be surfaced so authors know
         # they don't necessarily have to run the full nightly.
         assert "Content build" in decision.comment_body
-        assert "sdk_validation_config.toml" in decision.comment_body
+        # The Content build's config file is `validation_config.toml`
+        # (which lives in the Content repo, not the SDK's
+        # `sdk_validation_config.toml`). Pin the correct filename so a
+        # future refactor doesn't accidentally flip it back to the
+        # SDK-side name.
+        assert "validation_config.toml" in decision.comment_body
+        assert "sdk_validation_config.toml" not in decision.comment_body
         # And it must explicitly call out the `-a` requirement so no one
         # tries to use `-g` (which wouldn't exercise a new validator on
         # unchanged files).
@@ -429,7 +435,8 @@ class TestDecide:
         # Must still mention the Content-build alternative so the author
         # sees the recommended way to move to `nightly-run-passed`.
         assert "Content build" in decision.comment_body
-        assert "sdk_validation_config.toml" in decision.comment_body
+        assert "validation_config.toml" in decision.comment_body
+        assert "sdk_validation_config.toml" not in decision.comment_body
 
     def test_must_with_both_labels_prefers_passed(self) -> None:
         decision = decide(self._cls("must"), labels=[LABEL_PASSED, LABEL_SKIPPED])
@@ -451,7 +458,8 @@ class TestDecide:
         decision = decide(self._cls("recommended"), labels=[])
         assert decision.comment_body is not None
         assert "Content build" in decision.comment_body
-        assert "sdk_validation_config.toml" in decision.comment_body
+        assert "validation_config.toml" in decision.comment_body
+        assert "sdk_validation_config.toml" not in decision.comment_body
 
     def test_recommended_with_passed_label_ok(self) -> None:
         decision = decide(self._cls("recommended"), labels=[LABEL_PASSED])
@@ -531,7 +539,8 @@ class TestRenderOkComment:
         assert "does not block merge" in out
         # Alternative footer is embedded here too.
         assert "Content build" in out
-        assert "sdk_validation_config.toml" in out
+        assert "validation_config.toml" in out
+        assert "sdk_validation_config.toml" not in out
 
     def test_recommended_passed_is_plain_ack(self) -> None:
         out = _render_ok_comment(

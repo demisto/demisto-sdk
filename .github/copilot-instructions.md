@@ -536,13 +536,14 @@ branch**. This is often enough when the change is scoped (e.g. a single
 new validator or a small bug fix).
 
 **Critical:** if the change adds a **new validator**, it *must* be
-registered in
-[`sdk_validation_config.toml`](../demisto_sdk/commands/validate/sdk_validation_config.toml)
-so that the Content build's `run-validations` job actually exercises it.
-`run-validations` invokes `demisto-sdk validate -a` (all files); a `-g`
-"git-diff" run would not touch pre-existing content and would silently
-give the new validator a free pass. Once the Content build is green, add
-the `nightly-run-passed` label to satisfy the gate.
+registered in the **Content repo's `validation_config.toml`** (not the
+SDK's own [`sdk_validation_config.toml`](../demisto_sdk/commands/validate/sdk_validation_config.toml),
+which is copied into Content by [`.github/actions/validate/action.yml`](actions/validate/action.yml)
+and controls what runs when validating *this SDK repo*). `run-validations`
+in the Content build invokes `demisto-sdk validate -a` (all files); a
+`-g` "git-diff" run would not touch pre-existing content and would
+silently give the new validator a free pass. Once the Content build is
+green, add the `nightly-run-passed` label to satisfy the gate.
 
 ### 12.4 Sticky-comment invariant
 

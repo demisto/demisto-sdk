@@ -383,7 +383,11 @@ def _call_dump_pack_metadata(
     ``Pack``."""
     fake_self = MagicMock()
     Pack._dump_pack_metadata(
-        fake_self, source, destination, strip_internal=strip_internal
+        fake_self,
+        source,
+        destination,
+        MarketplaceVersions.XSOAR,
+        strip_internal=strip_internal,
     )
 
 
@@ -428,8 +432,9 @@ def test_dump_pack_metadata_keeps_internal_when_flag_false(tmp_path):
           ``strip_internal`` (the default for prepare-content / artifact
           builds).
     Then:
-        - The destination ``pack_metadata.json`` is a verbatim copy of the
-          source - the ``internal`` field is preserved.
+        - The destination ``pack_metadata.json`` preserves the ``internal``
+          field (it is only resolved for managed/source suffixes, which are
+          absent here, so the content is unchanged).
     """
     source = tmp_path / "pack_metadata.json"
     destination = tmp_path / "out" / "pack_metadata.json"
@@ -444,9 +449,9 @@ def test_dump_pack_metadata_keeps_internal_when_flag_false(tmp_path):
 
     _call_dump_pack_metadata(source, destination)  # strip_internal=False (default)
 
-    # Verbatim copy: bytes match exactly.
-    assert destination.read_text() == source.read_text()
+    # Content is preserved (no managed/source suffixes to resolve).
     written = get_json(destination)
+    assert written == metadata
     assert written.get("internal") is True
 
 

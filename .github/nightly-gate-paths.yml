@@ -1,50 +1,41 @@
 # Configuration for the SDK Nightly Gate workflow.
 #
-# Every file changed in a PR is bucketed into one of three tiers:
+# Classifies files changed in a PR into three tiers:
 #
 #   must         -> hard fail unless the PR carries `nightly-run-passed`
 #                   or `nightly-run-skipped` label.
 #   recommended  -> pass, but post a warning comment when neither label
 #                   is present; the author is expected to add one of them.
 #   skip         -> matches are ignored (highest precedence). Use this to
-#                   exclude tests, docs, test fixtures, CI, etc.
+#                   exclude tests, docs, test fixtures, etc.
 #
-# ---------------------------------------------------------------------------
-# Model: "everything requires nightly, except..."
-# ---------------------------------------------------------------------------
-#
-# The gate now assumes that ANY change to SDK code potentially affects the
-# nightly pipeline, so `must` defaults to `**` (match everything).
-#
-# * If a file matches `skip`, it is ignored entirely (docs, tests, CI configs,
-#   changelog fragments, plans, etc.). No gate applies.
-# * If it matches `must_exclude`, it is downgraded from `must` to
-#   `recommended` (a warning is posted but the check does not fail).
-# * If it matches neither, it is treated as `must` (hard fail without label).
-#
-# Precedence (per file, highest wins):
-#   1. skip          -> ignored
-#   2. must_exclude  -> recommended
-#   3. must          -> must
-#
-# ---------------------------------------------------------------------------
-# Legacy `recommended:` list is still honored for backwards compatibility.
-# If `must_exclude` is empty AND `recommended` is populated, the classifier
-# falls back to the old "explicit list per tier" mode. New entries should
-# be added under `must_exclude` or `skip` instead.
-# ---------------------------------------------------------------------------
+# Precedence rules applied by `check_nightly_gate.py`:
+#   1. If a file matches any `skip` glob, it is ignored entirely.
+#   2. Otherwise, if it matches any `must` glob, the PR tier is `must`.
+#   3. Otherwise, if it matches any `recommended` glob, the PR tier is
+#      `recommended` (unless a Must match is found on another file).
+#   4. Otherwise the file is not relevant to the gate.
 #
 # Glob syntax: gitignore-style. `**` matches any number of directory
 # levels; `*` matches within a single path segment.
 
 must:
-  - "**"
+  - "demisto_sdk/commands/validate/private_content_manager.py"
+  - "demisto_sdk/commands/validate/validators/GR_validators/**"
+  - "demisto_sdk/commands/content_graph/parsers/**"
+  - "demisto_sdk/commands/content_graph/objects/**"
+  - "demisto_sdk/commands/content_graph/interface/**"
+  - "demisto_sdk/commands/content_graph/strict_objects/**"
+  - "demisto_sdk/commands/content_graph/commands/**"
+  - "demisto_sdk/commands/content_graph/content_graph_builder.py"
+  - "demisto_sdk/commands/content_graph/common.py"
+  - "demisto_sdk/commands/content_graph/neo4j_service.py"
+  - "demisto_sdk/commands/common/docker**"
 
-# Anything matching one of these globs is treated as `recommended` instead
-# of `must`. Use this for SDK areas whose failure modes are already covered
-# by other checks (e.g. `on-push.yml` unit tests) and don't warrant a
-# nightly-blocking gate.
-must_exclude:
+recommended:
+  # `demisto_sdk/commands/validate/**` intentionally overlaps with the Must
+  # entries above. When a file matches both, Must wins (see precedence).
+  - "demisto_sdk/commands/validate/**"
   - "demisto_sdk/commands/prepare_content/**"
   - "demisto_sdk/commands/upload/**"
   - "demisto_sdk/commands/create_artifacts/**"
@@ -54,52 +45,9 @@ must_exclude:
   - "demisto_sdk/commands/common/tools.py"
   - "demisto_sdk/commands/common/constants.py"
 
-# Legacy tier list, kept for backwards compatibility. New entries should go
-# under `must_exclude`. Ignored when `must_exclude` is non-empty.
-recommended: []
-
-# Files that never need the nightly gate. This is the "exclude list" that
-# grows over time as we discover more categories of noise.
 skip:
-  # Tests and fixtures
   - "**/tests/**"
   - "**/test_data/**"
-  - "**/test_files/**"
-  - "**/tests_end_to_end/**"
-  - "**/TestSuite/**"
-  - "**/conftest.py"
-  - "**/*_test.py"
-  # Documentation
   - "**/*.md"
   - "**/README*"
-  - "**/CHANGELOG*"
-  - "docs/**"
-  - "plans/**"
-  # Changelog fragments (per-PR YAML entries under `.changelog/`)
-  - ".changelog/**"
-  # CI, GitHub, and repo metadata
-  - ".github/**"
-  - ".gitlab/**"
-  - ".gitlab-ci.yml"
-  - ".pre-commit-config.yaml"
-  - ".pre-commit-hooks.yaml"
-  - ".gitignore"
-  - ".git-blame-ignore-revs"
-  - ".sourcery.yaml"
-  - ".coveragerc"
-  # Editor/tooling metadata
-  - ".idex/**"
-  - ".vscode/**"
-  - ".idea/**"
-  # Utilities that are not part of the shipped wheel
-  - "Utils/**"
-  # Package/project files (not runtime SDK code)
-  - "pyproject.toml"
-  - "poetry.lock"
-  - "poetry.toml"
-  - "package.json"
-  - "package-lock.json"
-  - "LICENSE"
-  - "CONTRIBUTION.md"
-  # Assets that ship with the SDK but don't affect nightly behavior
   - "demisto_sdk/commands/content_graph/images/**"

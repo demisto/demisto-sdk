@@ -565,10 +565,11 @@ REAL_CONFIG = Path(__file__).resolve().parents[4] / ".github" / "nightly-gate-pa
 class TestRealConfig:
     """Smoke tests against the actual `.github/nightly-gate-paths.yml`.
 
-    The real config is currently in **modern mode**: `must: ['**']` plus
-    a small `must_exclude` list and a broad `skip` list. These tests
-    encode that expectation so a future config change that regresses the
-    posture fails loudly.
+    The shipping config uses the legacy explicit-list model (`must` and
+    `recommended` are enumerated per-path). The classifier's modern
+    `must_exclude` model is still fully implemented and exercised by
+    `TestClassifyModernMode` above, but is NOT enabled in the real
+    config right now.
     """
 
     @pytest.fixture(scope="class")
@@ -577,24 +578,12 @@ class TestRealConfig:
 
     def test_config_loads(self, cfg: GateConfig) -> None:
         assert cfg.must, "Must list should not be empty"
+        assert cfg.recommended, "Recommended list should not be empty"
         assert cfg.skip, "Skip list should not be empty"
-
-    def test_config_is_in_modern_mode(self, cfg: GateConfig) -> None:
-        """Guardrail: the shipping config should be `must: ['**']` + excludes."""
-        assert cfg.must == ["**"], (
-            "Real config should use the modern `must: ['**']` model; "
-            "found: {!r}".format(cfg.must)
-        )
-        assert cfg.must_exclude, (
-            "Real config should populate `must_exclude`; leaving it empty "
-            "falls back to legacy explicit-list mode."
-        )
 
     @pytest.mark.parametrize(
         "changed_file",
         [
-            # These historically-must files should still be must-tier
-            # (they are not in `must_exclude`, and are not skipped).
             "demisto_sdk/commands/content_graph/objects/pack.py",
             "demisto_sdk/commands/content_graph/parsers/integration_parser.py",
             "demisto_sdk/commands/content_graph/common.py",
@@ -602,10 +591,6 @@ class TestRealConfig:
             "demisto_sdk/commands/validate/private_content_manager.py",
             "demisto_sdk/commands/validate/validators/GR_validators/GR105_x.py",
             "demisto_sdk/commands/common/docker_helper.py",
-            # And now, thanks to `must: ['**']`, ANY unlisted SDK file is
-            # also must-tier by default.
-            "demisto_sdk/commands/validate/validators/BA_validators/BA100.py",
-            "demisto_sdk/commands/validate/validators/IN_validators/IN170.py",
         ],
     )
     def test_real_must_files_hit_must_tier(
@@ -616,8 +601,7 @@ class TestRealConfig:
     @pytest.mark.parametrize(
         "changed_file",
         [
-            # Everything in `must_exclude` should be downgraded to
-            # recommended, matching the historical "recommended" list.
+            "demisto_sdk/commands/validate/validators/BA_validators/BA100.py",
             "demisto_sdk/commands/prepare_content/prepare_upload_manager.py",
             "demisto_sdk/commands/upload/upload.py",
             "demisto_sdk/commands/create_artifacts/content_artifacts_creator.py",
@@ -636,22 +620,10 @@ class TestRealConfig:
     @pytest.mark.parametrize(
         "changed_file",
         [
-            # Tests / fixtures / docs / images / CI / changelog / plans
-            # are all skipped by the real config.
             "demisto_sdk/commands/content_graph/objects/tests/pack_test.py",
             "demisto_sdk/commands/content_graph/objects/test_data/x.json",
             "demisto_sdk/commands/validate/README.md",
             "demisto_sdk/commands/content_graph/images/graph.png",
-            "docs/development_guide.md",
-            "plans/some-plan.md",
-            ".changelog/1234.yml",
-            ".github/workflows/nightly-gate.yml",
-            ".github/copilot-instructions.md",
-            "Utils/github_workflow_scripts/nightly_gate/check_nightly_gate.py",
-            "pyproject.toml",
-            "poetry.lock",
-            "CONTRIBUTION.md",
-            "TestSuite/pack.py",
         ],
     )
     def test_real_skip_files_ignored(self, cfg: GateConfig, changed_file: str) -> None:
@@ -662,9 +634,5 @@ class TestRealConfig:
         assert result.matched_must == []
         assert result.matched_recommended == []
 
-    def test_arbitrary_top_level_file_is_must_by_default(self, cfg: GateConfig) -> None:
-        """Under `must: ['**']`, an unrecognized shipped-code path is
-        must-tier - this is the whole point of the modern model."""
-        # `demisto_sdk/utils/utils.py` used to fall into `none`; now that
-        # `**` is the default, it's a must-hit (nothing excludes it).
-        assert classify(["demisto_sdk/utils/utils.py"], cfg).tier == "must"
+    def test_real_unrelated_file_is_noop(self, cfg: GateConfig) -> None:
+        assert classify(["demisto_sdk/utils/utils.py"], cfg).tier == "none"

@@ -483,19 +483,28 @@ check" answers.
   (unit-tested in
   [`tests/check_nightly_gate_test.py`](../Utils/github_workflow_scripts/nightly_gate/tests/check_nightly_gate_test.py)).
 
-Model: **"every SDK change requires nightly, except..."**. The config sets
-`must: ['**']` and then narrows it with two exclusion lists:
+The config uses **explicit per-tier path lists**:
 
-- **`must_exclude`** - files where nightly is only *recommended* (downgraded
-  to a non-blocking warning). Currently: `prepare_content/`, `upload/`,
-  `create_artifacts/`, `update_release_notes/`, `pre_commit/`, and the
-  cross-cutting `git_util.py`, `tools.py`, `constants.py`.
-- **`skip`** - files completely ignored by the gate: tests, fixtures,
-  `**/*.md`, docs/, plans/, `.changelog/`, `.github/`, `.gitlab/`, CI
-  config, editor metadata, `Utils/`, `pyproject.toml`, `poetry.lock`, and
-  packaging metadata.
+- **`must`** - files that hard-fail the check without a label. Currently:
+  `content_graph/parsers/`, `content_graph/objects/`, `content_graph/interface/`,
+  `content_graph/strict_objects/`, `content_graph/commands/`,
+  `content_graph_builder.py`, `content_graph/common.py`,
+  `content_graph/neo4j_service.py`, `validate/private_content_manager.py`,
+  `validate/validators/GR_validators/`, and anything under
+  `common/docker**`.
+- **`recommended`** - files that trigger a non-blocking warning. Currently:
+  `validate/`, `prepare_content/`, `upload/`, `create_artifacts/`,
+  `update_release_notes/`, `pre_commit/`, and the cross-cutting
+  `git_util.py`, `tools.py`, `constants.py`.
+- **`skip`** - files ignored by the gate: `**/tests/**`, `**/test_data/**`,
+  `**/*.md`, `**/README*`, and `content_graph/images/`.
 
-Per-file precedence (highest wins): `skip > must_exclude > must`.
+Per-file precedence (highest wins): `skip > must > recommended`.
+
+> The classifier also supports a **modern `must_exclude` model**
+> (`must: ['**']` + an exclude list), which flips on automatically when
+> `must_exclude` is populated in the YAML. It is fully implemented and
+> unit-tested but not enabled in the shipping config today.
 
 ### 12.2 Labels and outcomes
 

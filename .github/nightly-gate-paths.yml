@@ -16,20 +16,26 @@
 #      `recommended` (unless a Must match is found on another file).
 #   4. Otherwise the file is not relevant to the gate.
 #
+# Style guide: prefer broad `<subtree>/**` globs and let `skip:` prune
+# noise (tests, fixtures, docs, images). This keeps the tier lists short
+# and self-explanatory - "everything in this area needs nightly, except
+# what the global `skip` list already handles".
+#
 # Glob syntax: gitignore-style. `**` matches any number of directory
 # levels; `*` matches within a single path segment.
 
 must:
+  # Entire content_graph subtree. Tests and images are already pruned by
+  # `skip:` below, so this covers parsers, objects, interface,
+  # strict_objects, commands, and the top-level .py files in one line.
+  - "demisto_sdk/commands/content_graph/**"
+
+  # Validate-side "must" bits (the rest of `validate/` is recommended).
   - "demisto_sdk/commands/validate/private_content_manager.py"
   - "demisto_sdk/commands/validate/validators/GR_validators/**"
-  - "demisto_sdk/commands/content_graph/parsers/**"
-  - "demisto_sdk/commands/content_graph/objects/**"
-  - "demisto_sdk/commands/content_graph/interface/**"
-  - "demisto_sdk/commands/content_graph/strict_objects/**"
-  - "demisto_sdk/commands/content_graph/commands/**"
-  - "demisto_sdk/commands/content_graph/content_graph_builder.py"
-  - "demisto_sdk/commands/content_graph/common.py"
-  - "demisto_sdk/commands/content_graph/neo4j_service.py"
+
+  # Docker helpers under commands/common. `docker**` covers both
+  # `docker.py` and the `docker_helper/` package.
   - "demisto_sdk/commands/common/docker**"
 
 recommended:
@@ -41,6 +47,8 @@ recommended:
   - "demisto_sdk/commands/create_artifacts/**"
   - "demisto_sdk/commands/update_release_notes/**"
   - "demisto_sdk/commands/pre_commit/**"
+  # Cross-cutting helpers that half the SDK imports. Kept as individual
+  # entries because `common/**` would sweep in unrelated files.
   - "demisto_sdk/commands/common/git_util.py"
   - "demisto_sdk/commands/common/tools.py"
   - "demisto_sdk/commands/common/constants.py"

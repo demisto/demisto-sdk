@@ -483,23 +483,26 @@ check" answers.
   (unit-tested in
   [`tests/check_nightly_gate_test.py`](../Utils/github_workflow_scripts/nightly_gate/tests/check_nightly_gate_test.py)).
 
-The config uses **explicit per-tier path lists**:
+The config uses **explicit per-tier path lists**, favouring broad
+`subtree/**` globs so each tier stays short and readable. Noise (tests,
+fixtures, docs, images) is pruned by the global `skip:` list rather
+than by enumerating individual files under each tier.
 
 - **`must`** - files that hard-fail the check without a label. Currently:
-  `content_graph/parsers/`, `content_graph/objects/`, `content_graph/interface/`,
-  `content_graph/strict_objects/`, `content_graph/commands/`,
-  `content_graph_builder.py`, `content_graph/common.py`,
-  `content_graph/neo4j_service.py`, `validate/private_content_manager.py`,
-  `validate/validators/GR_validators/`, and anything under
-  `common/docker**`.
+  the whole `content_graph/**` subtree, `validate/private_content_manager.py`,
+  `validate/validators/GR_validators/**`, and `common/docker**` (matches
+  `docker.py` and the `docker_helper/` package).
 - **`recommended`** - files that trigger a non-blocking warning. Currently:
-  `validate/`, `prepare_content/`, `upload/`, `create_artifacts/`,
-  `update_release_notes/`, `pre_commit/`, and the cross-cutting
-  `git_util.py`, `tools.py`, `constants.py`.
+  `validate/**`, `prepare_content/**`, `upload/**`, `create_artifacts/**`,
+  `update_release_notes/**`, `pre_commit/**`, and the cross-cutting
+  `common/git_util.py`, `common/tools.py`, `common/constants.py`.
 - **`skip`** - files ignored by the gate: `**/tests/**`, `**/test_data/**`,
-  `**/*.md`, `**/README*`, and `content_graph/images/`.
+  `**/*.md`, `**/README*`, `content_graph/images/**`.
 
-Per-file precedence (highest wins): `skip > must > recommended`.
+Per-file precedence (highest wins): `skip > must > recommended`. When
+adding new paths, prefer a broad `subtree/**` glob and rely on `skip:`
+to prune what shouldn't be gated; only fall back to individual file
+entries when a subtree's tier is genuinely mixed (as with `common/`).
 
 > The classifier also supports a **modern `must_exclude` model**
 > (`must: ['**']` + an exclude list), which flips on automatically when

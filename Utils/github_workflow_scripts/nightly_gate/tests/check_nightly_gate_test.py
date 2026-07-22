@@ -584,13 +584,23 @@ class TestRealConfig:
     @pytest.mark.parametrize(
         "changed_file",
         [
+            # Historically-must files under content_graph.
             "demisto_sdk/commands/content_graph/objects/pack.py",
             "demisto_sdk/commands/content_graph/parsers/integration_parser.py",
             "demisto_sdk/commands/content_graph/common.py",
             "demisto_sdk/commands/content_graph/neo4j_service.py",
+            "demisto_sdk/commands/content_graph/content_graph_builder.py",
+            "demisto_sdk/commands/content_graph/interface/graph.py",
+            "demisto_sdk/commands/content_graph/strict_objects/pack.py",
+            "demisto_sdk/commands/content_graph/commands/create.py",
+            # New: `content_graph/**` now sweeps in any other top-level
+            # .py in that subtree (previously not listed at all).
+            "demisto_sdk/commands/content_graph/content_graph_setup.py",
+            # Non-content_graph must files.
             "demisto_sdk/commands/validate/private_content_manager.py",
             "demisto_sdk/commands/validate/validators/GR_validators/GR105_x.py",
             "demisto_sdk/commands/common/docker_helper.py",
+            "demisto_sdk/commands/common/docker.py",
         ],
     )
     def test_real_must_files_hit_must_tier(

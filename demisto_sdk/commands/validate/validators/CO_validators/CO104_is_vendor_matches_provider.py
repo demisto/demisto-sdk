@@ -56,7 +56,7 @@ class IsVendorMatchesProviderValidator(ConnectorsValidator[ContentTypes]):
                     f"handlers reference integrations with differing "
                     f"providers {sorted(providers)}"
                 )
-            elif vendor not in providers:
+            elif len(providers) == 1 and vendor not in providers:
                 (provider,) = tuple(providers)
                 details.append(
                     f"metadata.vendor '{vendor}' does not match integration "

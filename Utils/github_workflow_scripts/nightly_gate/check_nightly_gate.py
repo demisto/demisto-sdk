@@ -362,16 +362,24 @@ def _render_file_list(files: list[str], limit: int = 25) -> str:
 #: Reusable footer explaining the Content-build escape hatch. Emitted on
 #: every non-ack comment so authors know they have an alternative to a
 #: full nightly run when the change is small (e.g. one new validator).
+# Rendered inside every fail / warn / skipped-anyway comment. Kept in a
+# `<details>` block so the primary "what do I need to do" instructions
+# stay above the fold and this longer explanation is opt-in.
 _CONTENT_BUILD_ALTERNATIVE = f"""\
-**Alternative:** if your change is scoped (e.g. a single new validator or a \
-small bug fix), you can run a **Content build against this SDK branch** \
-instead of the full SDK Nightly pipeline. When your change is a new \
-validator, make sure it is registered in the Content repo's \
+<details>
+<summary><strong>Alternative:</strong> run a Content build instead of the full SDK Nightly (click to expand)</summary>
+
+If your change is scoped (e.g. a single new validator or a small bug \
+fix), you can run a **Content build against this SDK branch** instead \
+of the full SDK Nightly pipeline. When your change is a new validator, \
+make sure it is registered in the Content repo's \
 `validation_config.toml` so the Content build's `run-validations` job \
 picks it up via `demisto-sdk validate -a` (the `-a` "all files" mode is \
 what `run-validations` uses; a `-g` "git-diff" run will not exercise \
 your new validator on unchanged files). Once the Content build is \
-green, add the **`{LABEL_PASSED}`** label to satisfy this gate."""
+green, add the **`{LABEL_PASSED}`** label to satisfy this gate.
+
+</details>"""
 
 
 def _render_fail_comment(cls: Classification) -> str:

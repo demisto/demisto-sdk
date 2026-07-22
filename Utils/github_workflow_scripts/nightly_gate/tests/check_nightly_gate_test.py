@@ -399,6 +399,11 @@ class TestDecide:
         # The alternative escape hatch must be surfaced so authors know
         # they don't necessarily have to run the full nightly.
         assert "Content build" in decision.comment_body
+        # It must be wrapped in a collapsible `<details>` block so the
+        # primary "here's what you need to do" instructions stay above
+        # the fold in the sticky PR comment.
+        assert "<details>" in decision.comment_body
+        assert "click to expand" in decision.comment_body
         # The Content build's config file is `validation_config.toml`
         # (which lives in the Content repo, not the SDK's
         # `sdk_validation_config.toml`). Pin the correct filename so a

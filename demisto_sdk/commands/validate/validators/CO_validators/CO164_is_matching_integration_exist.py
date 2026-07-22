@@ -12,7 +12,7 @@ ContentTypes = Connector
 
 
 class IsMatchingIntegrationExistValidator(ConnectorsValidator[ContentTypes]):
-    error_code = "CO100"
+    error_code = "CO1164"
     description = (
         "Validates that each XSOAR handler in a connector has an "
         "xsoar-integration-id label and that the referenced integration "

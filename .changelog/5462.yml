@@ -1,0 +1,4 @@
+changes:
+- description: Added new Connectors validations and connector validations infra improvements.
+  type: internal
+pr_number: 5642

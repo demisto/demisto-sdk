@@ -48,11 +48,6 @@ class IsVendorMatchesProviderValidator(ConnectorsValidator[ContentTypes]):
                 and handler.related_integration.provider
             }
 
-            if not providers:
-                # No resolved integrations / no providers to compare against -
-                # nothing to validate here (CO164 covers unresolved handlers).
-                continue
-
             details: List[str] = []
 
             # Flag if providers differ across handlers.

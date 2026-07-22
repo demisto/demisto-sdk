@@ -399,6 +399,43 @@ class TestCO103IsConnectorIdTitleAligned:
 
         assert len(results) == 0
 
+    def test_valid_id_with_parentheses_stripped(self):
+        """
+        Given: A title containing parentheses, which are stripped and the
+               surrounding dash-run collapsed (e.g. real UCP connector
+               "Trellix Endpoint (HX)" -> "trellix-endpoint-hx").
+        When: CO103 runs.
+        Then: The connector whose id matches the stripped/collapsed slug is
+              valid.
+        """
+        connector = create_connector_object(
+            connector_id="trellix-endpoint-hx",
+            connector_overrides={"metadata": {"title": "Trellix Endpoint (HX)"}},
+        )
+
+        validator = IsConnectorIdTitleAlignedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_invalid_id_keeps_parentheses(self):
+        """
+        Given: A connector id that (incorrectly) keeps the parentheses from the
+               title instead of stripping them.
+        When: CO103 runs.
+        Then: A validation error with the expected stripped id is returned.
+        """
+        connector = create_connector_object(
+            connector_id="saas-security-(aperture)",
+            connector_overrides={"metadata": {"title": "SaaS Security (Aperture)"}},
+        )
+
+        validator = IsConnectorIdTitleAlignedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "saas-security-aperture" in results[0].message
+
 
 # ============================================================
 # CO104 - IsVendorMatchesProviderValidator
@@ -961,7 +998,7 @@ class TestCO190NoReservedParamNames:
                     {"display": "Engine", "name": "engine", "type": 0},
                     {"display": "Engine Mode", "name": "engine_mode", "type": 0},
                     {"display": "Instance Name", "name": "instance_name", "type": 0},
-                    {"display": "Engine Group", "name": "engine_group", "type": 0},
+                    {"display": "Engine Group", "name": "enginegroup", "type": 0},
                 ]
             ],
         )
@@ -974,4 +1011,4 @@ class TestCO190NoReservedParamNames:
         assert "engine" in msg
         assert "engine_mode" in msg
         assert "instance_name" in msg
-        assert "engine_group" in msg
+        assert "enginegroup" in msg

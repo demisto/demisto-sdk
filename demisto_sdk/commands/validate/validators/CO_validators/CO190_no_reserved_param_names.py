@@ -18,7 +18,7 @@ RESERVED_PARAM_NAMES = frozenset(
         "engine",
         "engine_mode",
         "instance_name",
-        "engine_group",
+        "enginegroup",
     }
 )
 
@@ -28,7 +28,7 @@ class NoReservedParamNamesValidator(BaseValidator[ContentTypes]):
     description = (
         "Ensure an integration does not define parameters using names "
         "reserved by the connector platform (engine, engine_mode, "
-        "instance_name, engine_group)."
+        "instance_name, enginegroup)."
     )
     rationale = (
         "The connector platform injects the engine / instance-identity "
@@ -36,7 +36,7 @@ class NoReservedParamNamesValidator(BaseValidator[ContentTypes]):
         "of these reserved names collides with the platform-managed field."
     )
     error_message = (
-        "Integration '{integration_id}' uses reserved parameter name(s): "
+        "The integration uses reserved parameter name(s): "
         "{reserved}. Rename these parameters to avoid colliding with "
         "platform-managed connector fields."
     )
@@ -54,7 +54,7 @@ class NoReservedParamNamesValidator(BaseValidator[ContentTypes]):
                 {
                     param.name
                     for param in integration.params
-                    if param.name in RESERVED_PARAM_NAMES
+                    if param.name.lower() in RESERVED_PARAM_NAMES
                 }
             )
             if reserved_used:

@@ -14,8 +14,7 @@ ContentTypes = Connector
 class IsAuthorImagePresentValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO101"
     description = (
-        "Validates that a connector's metadata.author_image is present and "
-        "non-empty."
+        "Validates that a connector's metadata.author_image is present and non-empty."
     )
     rationale = (
         "Every connector must declare an author image so the platform can "

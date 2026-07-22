@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Iterable, List
 
 from demisto_sdk.commands.content_graph.objects.connector import Connector
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
     ValidationResult,
@@ -34,6 +35,7 @@ class IsValidConnectionMetadataValidator(ConnectorsValidator[ContentTypes]):
     )
     related_field = "metadata"
     is_auto_fixable = False
+    related_file_type = [RelatedFileType.CONNECTOR_CONNECTION]
 
     def obtain_invalid_content_items(
         self,
@@ -74,6 +76,7 @@ class IsValidConnectionMetadataValidator(ConnectorsValidator[ContentTypes]):
                             details="; ".join(details),
                         ),
                         content_object=connector,
+                        path=connector.connection_file.file_path,
                     )
                 )
 

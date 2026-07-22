@@ -22,9 +22,7 @@ class IsConnectorOwnershipFieldsAlignValidator(ConnectorsValidator[ContentTypes]
     )
     rationale = (
         "Since a collected connector is assumed to have an XSOAR handler, its "
-        "ownership must reflect that the XSOAR content team maintains it. The "
-        "'@xsoar-content' maintainer must therefore appear in "
-        "metadata.ownership.maintainers."
+        "ownership must reflect that the XSOAR content team maintains it."
     )
     error_message = (
         "Connector '{connector_id}' metadata.ownership.maintainers must "

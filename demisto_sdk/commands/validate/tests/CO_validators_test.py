@@ -61,6 +61,7 @@ def _stub_integration(provider=None, categories=None, tags=None):
         )
     return SimpleNamespace(provider=provider, in_pack=in_pack)
 
+
 # ============================================================
 # CO1164 - IsMatchingIntegrationExistValidator
 # ============================================================
@@ -455,8 +456,14 @@ class TestCO104IsVendorMatchesProvider:
         connector = create_connector_object(
             connector_overrides={"metadata": {"vendor": "ProviderA"}},
             handlers=[
-                {"id": "xsoar-a", "triggering": {"labels": {"xsoar-integration-id": "A"}}},
-                {"id": "xsoar-b", "triggering": {"labels": {"xsoar-integration-id": "B"}}},
+                {
+                    "id": "xsoar-a",
+                    "triggering": {"labels": {"xsoar-integration-id": "A"}},
+                },
+                {
+                    "id": "xsoar-b",
+                    "triggering": {"labels": {"xsoar-integration-id": "B"}},
+                },
             ],
         )
         connector.handlers[0].related_integration = _stub_integration(
@@ -545,8 +552,14 @@ class TestCO105IsCategoriesUnionSupersetOfPacks:
         connector = create_connector_object(
             connector_overrides={"metadata": {"categories": ["Cat A"]}},
             handlers=[
-                {"id": "xsoar-a", "triggering": {"labels": {"xsoar-integration-id": "A"}}},
-                {"id": "xsoar-b", "triggering": {"labels": {"xsoar-integration-id": "B"}}},
+                {
+                    "id": "xsoar-a",
+                    "triggering": {"labels": {"xsoar-integration-id": "A"}},
+                },
+                {
+                    "id": "xsoar-b",
+                    "triggering": {"labels": {"xsoar-integration-id": "B"}},
+                },
             ],
         )
         connector.handlers[0].related_integration = _stub_integration(
@@ -794,9 +807,7 @@ class TestCO177NoRemovedCapabilities:
         Then: No validation errors (additions are allowed).
         """
         old_connector = create_connector_object(
-            capabilities_data=_capabilities_payload(
-                [{"id": "cap-a", "title": "Cap A"}]
-            )
+            capabilities_data=_capabilities_payload([{"id": "cap-a", "title": "Cap A"}])
         )
         connector = create_connector_object(
             capabilities_data=_capabilities_payload(
@@ -828,9 +839,7 @@ class TestCO177NoRemovedCapabilities:
             )
         )
         connector = create_connector_object(
-            capabilities_data=_capabilities_payload(
-                [{"id": "cap-a", "title": "Cap A"}]
-            )
+            capabilities_data=_capabilities_payload([{"id": "cap-a", "title": "Cap A"}])
         )
         connector.old_base_content_object = old_connector
 

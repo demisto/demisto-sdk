@@ -24,8 +24,7 @@ class IsAuthorImagePresentValidator(ConnectorsValidator[ContentTypes]):
         "identity."
     )
     error_message = (
-        "Connector '{connector_id}' must have a non-empty "
-        "metadata.author_image."
+        "Connector '{connector_id}' must have a non-empty " "metadata.author_image."
     )
     related_field = "metadata.author_image"
     is_auto_fixable = False

@@ -16,8 +16,7 @@ EXPECTED_PUBLISHER = "Palo Alto Networks"
 class IsPublisherValidValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO102"
     description = (
-        "Validates that a connector's metadata.publisher is "
-        "'Palo Alto Networks'."
+        "Validates that a connector's metadata.publisher is " "'Palo Alto Networks'."
     )
     rationale = (
         "Per the connector migration guide (§3.3), every connector is "

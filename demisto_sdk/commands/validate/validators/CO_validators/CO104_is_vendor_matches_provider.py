@@ -26,8 +26,7 @@ class IsVendorMatchesProviderValidator(ConnectorsValidator[ContentTypes]):
         "underlying integrations."
     )
     error_message = (
-        "Connector '{connector_id}' has a vendor/provider mismatch: "
-        "{details}."
+        "Connector '{connector_id}' has a vendor/provider mismatch: " "{details}."
     )
     related_field = "metadata.vendor"
     is_auto_fixable = False

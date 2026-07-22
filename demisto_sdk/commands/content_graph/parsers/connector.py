@@ -849,9 +849,7 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
                 )
                 for r in entry.get("rules", [])
             ]
-            entries.append(
-                ValidationEntry(trigger=entry.get("trigger"), rules=rules)
-            )
+            entries.append(ValidationEntry(trigger=entry.get("trigger"), rules=rules))
         return entries
 
     @staticmethod

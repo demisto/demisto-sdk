@@ -39,9 +39,7 @@ class NoRemovedCapabilitiesValidator(ConnectorsValidator[ContentTypes]):
         results: List[ValidationResult] = []
 
         for connector in content_items:
-            old_connector = cast(
-                ContentTypes, connector.old_base_content_object
-            )
+            old_connector = cast(ContentTypes, connector.old_base_content_object)
             if old_connector is None:
                 # No prior version to compare against - cannot be a removal.
                 continue

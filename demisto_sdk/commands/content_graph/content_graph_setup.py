@@ -1,3 +1,5 @@
+# Trivial touch to exercise the SDK Nightly Gate on a must-tier file
+# (covered by the `content_graph/**` glob in .github/nightly-gate-paths.yml).
 import typer
 
 from demisto_sdk.commands.content_graph.commands.create import create

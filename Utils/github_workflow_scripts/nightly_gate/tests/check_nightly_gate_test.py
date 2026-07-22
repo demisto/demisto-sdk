@@ -2,9 +2,17 @@
 Unit tests for ``check_nightly_gate.py``.
 
 The tests are deliberately focused on the two pure functions that
-carry all the business logic (``classify`` and ``decide``) plus a few
-targeted checks on the glob compiler, since a subtle bug there would
-either let must-files slip through or block innocent PRs.
+carry all the business logic (``classify`` and ``decide``) plus:
+
+* A few targeted checks on the glob compiler, since a subtle bug there
+  would either let must-files slip through or block innocent PRs.
+* Coverage of the modern ``must_exclude`` model (``must: ['**']`` +
+  exclusions), the legacy explicit-list model, and the mixed backwards-
+  compat behavior.
+* Coverage of the "skipped-anyway" acknowledgement wording for a
+  must-tier PR that only carries the ``nightly-run-skipped`` label.
+* Assertion that the Content-build alternative footer is present in
+  every fail/warn/skipped-anyway comment.
 """
 
 from __future__ import annotations
@@ -21,6 +29,7 @@ from Utils.github_workflow_scripts.nightly_gate.check_nightly_gate import (
     Decision,
     GateConfig,
     _glob_to_regex,
+    _render_ok_comment,
     classify,
     decide,
     load_config,
@@ -109,8 +118,11 @@ class TestGlobToRegex:
 
 
 @pytest.fixture
-def sample_config() -> GateConfig:
-    """A minimal config exercising all three tiers and overlaps."""
+def legacy_config() -> GateConfig:
+    """A minimal *legacy-mode* config (explicit lists per tier).
+
+    Exercises the old precedence: ``skip > must > recommended``.
+    """
     return GateConfig(
         must=[
             "demisto_sdk/commands/content_graph/objects/**",
@@ -130,24 +142,55 @@ def sample_config() -> GateConfig:
     )
 
 
+@pytest.fixture
+def modern_config() -> GateConfig:
+    """A *modern-mode* config: ``must: ['**']`` + ``must_exclude`` + ``skip``.
+
+    Encodes the current real-world posture: any SDK change requires
+    nightly by default, with a small exclude list downgrading a few
+    well-tested subtrees to `recommended`, and a broad skip list for
+    docs / tests / CI / etc.
+    """
+    return GateConfig(
+        must=["**"],
+        must_exclude=[
+            "demisto_sdk/commands/prepare_content/**",
+            "demisto_sdk/commands/common/tools.py",
+        ],
+        # `recommended` is intentionally empty in modern mode; presence
+        # of `must_exclude` is what flips the classifier over.
+        recommended=[],
+        skip=[
+            "**/tests/**",
+            "**/test_data/**",
+            "**/*.md",
+            ".changelog/**",
+            ".github/**",
+            "Utils/**",
+        ],
+    )
+
+
 # ---------------------------------------------------------------------------
-# classify()
+# classify() - legacy mode
 # ---------------------------------------------------------------------------
 
 
-class TestClassify:
-    def test_no_files_yields_none_tier(self, sample_config: GateConfig) -> None:
-        result = classify([], sample_config)
+class TestClassifyLegacyMode:
+    """Preserve the explicit-lists behavior for callers still on the old config."""
+
+    def test_no_files_yields_none_tier(self, legacy_config: GateConfig) -> None:
+        result = classify([], legacy_config)
         assert result.tier == "none"
         assert result == Classification(tier="none")
 
-    def test_must_hit_wins_over_recommended(self, sample_config: GateConfig) -> None:
+    def test_must_hit_wins_over_recommended(self, legacy_config: GateConfig) -> None:
         result = classify(
             [
                 "demisto_sdk/commands/content_graph/objects/pack.py",
                 "demisto_sdk/commands/validate/foo.py",
             ],
-            sample_config,
+            legacy_config,
         )
         assert result.tier == "must"
         assert result.matched_must == [
@@ -155,33 +198,33 @@ class TestClassify:
         ]
         assert result.matched_recommended == ["demisto_sdk/commands/validate/foo.py"]
 
-    def test_recommended_only(self, sample_config: GateConfig) -> None:
+    def test_recommended_only(self, legacy_config: GateConfig) -> None:
         result = classify(
             [
                 "demisto_sdk/commands/validate/foo.py",
                 "demisto_sdk/commands/common/tools.py",
             ],
-            sample_config,
+            legacy_config,
         )
         assert result.tier == "recommended"
         assert not result.matched_must
         assert len(result.matched_recommended) == 2
 
-    def test_skip_beats_must(self, sample_config: GateConfig) -> None:
+    def test_skip_beats_must(self, legacy_config: GateConfig) -> None:
         """A test file under a Must path should not trigger the gate."""
         result = classify(
             [
                 "demisto_sdk/commands/content_graph/objects/tests/pack_test.py",
                 "demisto_sdk/commands/content_graph/objects/pack.md",
             ],
-            sample_config,
+            legacy_config,
         )
         assert result.tier == "skip_only"
         assert result.matched_must == []
         assert len(result.matched_skip) == 2
 
-    def test_only_unmatched_files_yields_none(self, sample_config: GateConfig) -> None:
-        result = classify(["some/other/file.py", "toplevel_file.txt"], sample_config)
+    def test_only_unmatched_files_yields_none(self, legacy_config: GateConfig) -> None:
+        result = classify(["some/other/file.py", "toplevel_file.txt"], legacy_config)
         assert result.tier == "none"
         assert result.matched_must == []
         assert result.matched_recommended == []
@@ -189,7 +232,7 @@ class TestClassify:
         assert len(result.unmatched) == 2
 
     def test_mixed_skip_and_recommended_is_recommended(
-        self, sample_config: GateConfig
+        self, legacy_config: GateConfig
     ) -> None:
         result = classify(
             [
@@ -197,27 +240,135 @@ class TestClassify:
                 "demisto_sdk/commands/validate/tests/foo_test.py",
                 "docs/CHANGELOG.md",
             ],
-            sample_config,
+            legacy_config,
         )
         assert result.tier == "recommended"
         assert result.matched_recommended == ["demisto_sdk/commands/validate/foo.py"]
         assert len(result.matched_skip) == 2
 
-    def test_blank_lines_are_ignored(self, sample_config: GateConfig) -> None:
+    def test_blank_lines_are_ignored(self, legacy_config: GateConfig) -> None:
         result = classify(
             ["", "  ", "demisto_sdk/commands/common/docker_helper.py"],
-            sample_config,
+            legacy_config,
         )
         assert result.tier == "must"
         assert len(result.matched_must) == 1
 
-    def test_docker_prefix_pattern(self, sample_config: GateConfig) -> None:
+    def test_docker_prefix_pattern(self, legacy_config: GateConfig) -> None:
         # `docker**` should also match nested files.
         result = classify(
             ["demisto_sdk/commands/common/docker_helper/utils.py"],
-            sample_config,
+            legacy_config,
         )
         assert result.tier == "must"
+
+
+# ---------------------------------------------------------------------------
+# classify() - modern mode (must: ['**'] + must_exclude)
+# ---------------------------------------------------------------------------
+
+
+class TestClassifyModernMode:
+    """The `must: ['**']` + `must_exclude` semantics.
+
+    Under this model, **any** SDK change is a must-hit unless it is
+    explicitly downgraded via `must_exclude` or ignored via `skip`.
+    """
+
+    def test_arbitrary_sdk_file_is_must(self, modern_config: GateConfig) -> None:
+        # A file that used to not be listed at all in the legacy config
+        # (e.g. any random validator) is now must-tier by default.
+        result = classify(
+            ["demisto_sdk/commands/validate/validators/BA_validators/BA100.py"],
+            modern_config,
+        )
+        assert result.tier == "must"
+        assert result.matched_must == [
+            "demisto_sdk/commands/validate/validators/BA_validators/BA100.py"
+        ]
+        assert result.matched_recommended == []
+
+    def test_must_exclude_downgrades_to_recommended(
+        self, modern_config: GateConfig
+    ) -> None:
+        result = classify(
+            ["demisto_sdk/commands/prepare_content/prepare_upload_manager.py"],
+            modern_config,
+        )
+        assert result.tier == "recommended"
+        assert result.matched_must == []
+        assert result.matched_recommended == [
+            "demisto_sdk/commands/prepare_content/prepare_upload_manager.py"
+        ]
+
+    def test_skip_beats_must_and_must_exclude(self, modern_config: GateConfig) -> None:
+        """A test file must be skipped even though `**` also matches it."""
+        result = classify(
+            [
+                "demisto_sdk/commands/prepare_content/tests/foo_test.py",
+                "docs/README.md",
+                ".github/copilot-instructions.md",
+                ".changelog/1234.yml",
+                "Utils/github_workflow_scripts/some_script.py",
+            ],
+            modern_config,
+        )
+        assert result.tier == "skip_only"
+        assert result.matched_must == []
+        assert result.matched_recommended == []
+        assert len(result.matched_skip) == 5
+
+    def test_must_and_must_exclude_together(self, modern_config: GateConfig) -> None:
+        """Must wins over must_exclude at the overall-tier level.
+
+        Any single must-hit forces the whole PR into `must`, even when
+        every other file was downgraded.
+        """
+        result = classify(
+            [
+                # Must-hit (not in must_exclude, not in skip).
+                "demisto_sdk/commands/content_graph/objects/pack.py",
+                # Downgraded to recommended.
+                "demisto_sdk/commands/common/tools.py",
+                # Skipped.
+                "README.md",
+            ],
+            modern_config,
+        )
+        assert result.tier == "must"
+        assert result.matched_must == [
+            "demisto_sdk/commands/content_graph/objects/pack.py"
+        ]
+        assert result.matched_recommended == ["demisto_sdk/commands/common/tools.py"]
+        assert result.matched_skip == ["README.md"]
+
+    def test_only_excluded_files_is_recommended(
+        self, modern_config: GateConfig
+    ) -> None:
+        result = classify(
+            [
+                "demisto_sdk/commands/common/tools.py",
+                "demisto_sdk/commands/prepare_content/prepare_upload_manager.py",
+            ],
+            modern_config,
+        )
+        assert result.tier == "recommended"
+        assert result.matched_must == []
+        assert len(result.matched_recommended) == 2
+
+    def test_only_skipped_files_is_skip_only(self, modern_config: GateConfig) -> None:
+        result = classify(
+            [
+                "README.md",
+                "docs/architecture.md",
+                ".github/workflows/nightly-gate.yml",
+            ],
+            modern_config,
+        )
+        assert result.tier == "skip_only"
+
+    def test_empty_input_is_none(self, modern_config: GateConfig) -> None:
+        assert classify([], modern_config).tier == "none"
 
 
 # ---------------------------------------------------------------------------
@@ -242,16 +393,52 @@ class TestDecide:
         assert LABEL_PASSED in decision.comment_body
         assert LABEL_SKIPPED in decision.comment_body
 
+    def test_must_fail_comment_mentions_content_build_alternative(self) -> None:
+        decision = decide(self._cls("must"), labels=[])
+        assert decision.comment_body is not None
+        # The alternative escape hatch must be surfaced so authors know
+        # they don't necessarily have to run the full nightly.
+        assert "Content build" in decision.comment_body
+        assert "sdk_validation_config.toml" in decision.comment_body
+        # And it must explicitly call out the `-a` requirement so no one
+        # tries to use `-g` (which wouldn't exercise a new validator on
+        # unchanged files).
+        assert "validate -a" in decision.comment_body
+
     def test_must_with_passed_label_ok(self) -> None:
         decision = decide(self._cls("must"), labels=[LABEL_PASSED])
         assert decision.exit_code == 0
         assert decision.status == "ok"
         assert decision.comment_body is not None
+        # Passed-label path: acknowledgement is a clean ✅, no pushback.
+        assert "acknowledged (required)" in decision.comment_body
+        assert "reconsider" not in decision.comment_body
 
-    def test_must_with_skipped_label_ok(self) -> None:
+    def test_must_with_skipped_label_is_ok_but_pushes_back(self) -> None:
+        """`nightly-run-skipped` on a must-tier PR must not fail the check,
+        but should nudge the author to reconsider and mention the
+        Content-build alternative."""
         decision = decide(self._cls("must"), labels=[LABEL_SKIPPED])
         assert decision.exit_code == 0
         assert decision.status == "ok"
+        assert decision.comment_body is not None
+        # Distinct header + explicit "reconsider" wording so it's not
+        # confused with a plain acknowledgement.
+        assert "SDK Nightly skipped for a required change" in decision.comment_body
+        assert "reconsider" in decision.comment_body
+        # Must still mention the Content-build alternative so the author
+        # sees the recommended way to move to `nightly-run-passed`.
+        assert "Content build" in decision.comment_body
+        assert "sdk_validation_config.toml" in decision.comment_body
+
+    def test_must_with_both_labels_prefers_passed(self) -> None:
+        decision = decide(self._cls("must"), labels=[LABEL_PASSED, LABEL_SKIPPED])
+        # Both labels present: treat as "passed" (pipeline actually ran),
+        # so no pushback wording.
+        assert decision.status == "ok"
+        assert decision.comment_body is not None
+        assert "acknowledged (required)" in decision.comment_body
+        assert "reconsider" not in decision.comment_body
 
     def test_recommended_no_label_warns(self) -> None:
         decision = decide(self._cls("recommended"), labels=[])
@@ -260,10 +447,27 @@ class TestDecide:
         assert decision.comment_body is not None
         assert "recommended" in decision.comment_body.lower()
 
-    def test_recommended_with_label_ok(self) -> None:
+    def test_recommended_warn_comment_mentions_content_build_alternative(self) -> None:
+        decision = decide(self._cls("recommended"), labels=[])
+        assert decision.comment_body is not None
+        assert "Content build" in decision.comment_body
+        assert "sdk_validation_config.toml" in decision.comment_body
+
+    def test_recommended_with_passed_label_ok(self) -> None:
         decision = decide(self._cls("recommended"), labels=[LABEL_PASSED])
         assert decision.exit_code == 0
         assert decision.status == "ok"
+        assert decision.comment_body is not None
+        assert "acknowledged (recommended)" in decision.comment_body
+
+    def test_recommended_with_skipped_label_ok(self) -> None:
+        decision = decide(self._cls("recommended"), labels=[LABEL_SKIPPED])
+        assert decision.exit_code == 0
+        assert decision.status == "ok"
+        assert decision.comment_body is not None
+        # Distinct header so authors know the pipeline was intentionally
+        # skipped rather than run + passed.
+        assert "recommended, skipped" in decision.comment_body
 
     def test_none_tier_is_noop_and_deletes_stale_comment(self) -> None:
         decision = decide(self._cls("none"), labels=[])
@@ -297,6 +501,60 @@ class TestDecide:
 
 
 # ---------------------------------------------------------------------------
+# _render_ok_comment
+# ---------------------------------------------------------------------------
+
+
+class TestRenderOkComment:
+    """Directly cover the branches of the OK-comment renderer so the
+    tier x label matrix is fully exercised even for edge cases that
+    `decide()` never emits."""
+
+    def _cls(self, tier: str) -> Classification:
+        return Classification(
+            tier=tier,
+            matched_must=(["x/must.py"] if tier == "must" else []),
+            matched_recommended=(["x/rec.py"] if tier == "recommended" else []),
+        )
+
+    def test_must_passed_is_plain_ack(self) -> None:
+        out = _render_ok_comment(self._cls("must"), tier="must", label=LABEL_PASSED)
+        assert "acknowledged (required)" in out
+        assert "reconsider" not in out
+        # Files list is included in a `<details>` block.
+        assert "x/must.py" in out
+
+    def test_must_skipped_pushes_back(self) -> None:
+        out = _render_ok_comment(self._cls("must"), tier="must", label=LABEL_SKIPPED)
+        assert "SDK Nightly skipped for a required change" in out
+        assert "reconsider" in out
+        assert "does not block merge" in out
+        # Alternative footer is embedded here too.
+        assert "Content build" in out
+        assert "sdk_validation_config.toml" in out
+
+    def test_recommended_passed_is_plain_ack(self) -> None:
+        out = _render_ok_comment(
+            self._cls("recommended"), tier="recommended", label=LABEL_PASSED
+        )
+        assert "acknowledged (recommended)" in out
+        assert "skipped" not in out
+
+    def test_recommended_skipped_is_distinct_ack(self) -> None:
+        out = _render_ok_comment(
+            self._cls("recommended"), tier="recommended", label=LABEL_SKIPPED
+        )
+        assert "recommended, skipped" in out
+
+    def test_default_label_argument_is_passed(self) -> None:
+        # Guards against accidental default flip (would silently turn
+        # every ack into the "skipped-anyway" pushback).
+        out = _render_ok_comment(self._cls("must"), tier="must")
+        assert "acknowledged (required)" in out
+        assert "reconsider" not in out
+
+
+# ---------------------------------------------------------------------------
 # Real config file
 # ---------------------------------------------------------------------------
 
@@ -305,7 +563,13 @@ REAL_CONFIG = Path(__file__).resolve().parents[4] / ".github" / "nightly-gate-pa
 
 
 class TestRealConfig:
-    """Smoke tests against the actual `.github/nightly-gate-paths.yml`."""
+    """Smoke tests against the actual `.github/nightly-gate-paths.yml`.
+
+    The real config is currently in **modern mode**: `must: ['**']` plus
+    a small `must_exclude` list and a broad `skip` list. These tests
+    encode that expectation so a future config change that regresses the
+    posture fails loudly.
+    """
 
     @pytest.fixture(scope="class")
     def cfg(self) -> GateConfig:
@@ -313,12 +577,24 @@ class TestRealConfig:
 
     def test_config_loads(self, cfg: GateConfig) -> None:
         assert cfg.must, "Must list should not be empty"
-        assert cfg.recommended, "Recommended list should not be empty"
         assert cfg.skip, "Skip list should not be empty"
+
+    def test_config_is_in_modern_mode(self, cfg: GateConfig) -> None:
+        """Guardrail: the shipping config should be `must: ['**']` + excludes."""
+        assert cfg.must == ["**"], (
+            "Real config should use the modern `must: ['**']` model; "
+            "found: {!r}".format(cfg.must)
+        )
+        assert cfg.must_exclude, (
+            "Real config should populate `must_exclude`; leaving it empty "
+            "falls back to legacy explicit-list mode."
+        )
 
     @pytest.mark.parametrize(
         "changed_file",
         [
+            # These historically-must files should still be must-tier
+            # (they are not in `must_exclude`, and are not skipped).
             "demisto_sdk/commands/content_graph/objects/pack.py",
             "demisto_sdk/commands/content_graph/parsers/integration_parser.py",
             "demisto_sdk/commands/content_graph/common.py",
@@ -326,6 +602,10 @@ class TestRealConfig:
             "demisto_sdk/commands/validate/private_content_manager.py",
             "demisto_sdk/commands/validate/validators/GR_validators/GR105_x.py",
             "demisto_sdk/commands/common/docker_helper.py",
+            # And now, thanks to `must: ['**']`, ANY unlisted SDK file is
+            # also must-tier by default.
+            "demisto_sdk/commands/validate/validators/BA_validators/BA100.py",
+            "demisto_sdk/commands/validate/validators/IN_validators/IN170.py",
         ],
     )
     def test_real_must_files_hit_must_tier(
@@ -336,7 +616,8 @@ class TestRealConfig:
     @pytest.mark.parametrize(
         "changed_file",
         [
-            "demisto_sdk/commands/validate/validators/BA_validators/BA100.py",
+            # Everything in `must_exclude` should be downgraded to
+            # recommended, matching the historical "recommended" list.
             "demisto_sdk/commands/prepare_content/prepare_upload_manager.py",
             "demisto_sdk/commands/upload/upload.py",
             "demisto_sdk/commands/create_artifacts/content_artifacts_creator.py",
@@ -355,10 +636,22 @@ class TestRealConfig:
     @pytest.mark.parametrize(
         "changed_file",
         [
+            # Tests / fixtures / docs / images / CI / changelog / plans
+            # are all skipped by the real config.
             "demisto_sdk/commands/content_graph/objects/tests/pack_test.py",
             "demisto_sdk/commands/content_graph/objects/test_data/x.json",
             "demisto_sdk/commands/validate/README.md",
             "demisto_sdk/commands/content_graph/images/graph.png",
+            "docs/development_guide.md",
+            "plans/some-plan.md",
+            ".changelog/1234.yml",
+            ".github/workflows/nightly-gate.yml",
+            ".github/copilot-instructions.md",
+            "Utils/github_workflow_scripts/nightly_gate/check_nightly_gate.py",
+            "pyproject.toml",
+            "poetry.lock",
+            "CONTRIBUTION.md",
+            "TestSuite/pack.py",
         ],
     )
     def test_real_skip_files_ignored(self, cfg: GateConfig, changed_file: str) -> None:
@@ -369,5 +662,9 @@ class TestRealConfig:
         assert result.matched_must == []
         assert result.matched_recommended == []
 
-    def test_real_unrelated_file_is_noop(self, cfg: GateConfig) -> None:
-        assert classify(["demisto_sdk/utils/utils.py"], cfg).tier == "none"
+    def test_arbitrary_top_level_file_is_must_by_default(self, cfg: GateConfig) -> None:
+        """Under `must: ['**']`, an unrecognized shipped-code path is
+        must-tier - this is the whole point of the modern model."""
+        # `demisto_sdk/utils/utils.py` used to fall into `none`; now that
+        # `**` is the default, it's a must-hit (nothing excludes it).
+        assert classify(["demisto_sdk/utils/utils.py"], cfg).tier == "must"

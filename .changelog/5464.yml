@@ -1,4 +1,23 @@
 changes:
-- description: Added the **SDK Nightly Gate** GitHub Actions workflow. It classifies files changed in a PR against `.github/nightly-gate-paths.yml` and enforces the `nightly-run-passed` / `nightly-run-skipped` label policy - hard-failing PRs that touch Must-tier paths (content-graph internals, GR validators, docker, neo4j, etc.) without one of the two labels, and posting a non-blocking sticky reminder comment for Recommended-tier paths.
+- description: >-
+    Added the **SDK Nightly Gate** GitHub Actions workflow. It classifies files
+    changed in a PR against `.github/nightly-gate-paths.yml` and enforces the
+    `nightly-run-passed` / `nightly-run-skipped` label policy - hard-failing
+    PRs that touch Must-tier paths without one of the two labels, and posting a
+    non-blocking sticky reminder comment for Recommended-tier paths. The gate
+    uses a "must-by-default" model (`must: ['**']`) with an explicit
+    `must_exclude` list downgrading well-tested subtrees to `recommended` and a
+    broad `skip` list for docs, tests, CI configs, changelog fragments,
+    `plans/`, `Utils/`, and packaging metadata. When a Must-tier PR carries
+    the `nightly-run-skipped` label the check passes with a distinct pushback
+    comment (does not block merge) instead of a plain acknowledgement, so
+    authors and reviewers can reconsider the trade-off. Every fail / warn /
+    skipped-anyway comment surfaces the **Content-build alternative** (running
+    a Content build against the SDK branch), with an explicit reminder that
+    new validators must be registered in `sdk_validation_config.toml` so
+    `run-validations` exercises them via `demisto-sdk validate -a`. The
+    sticky-comment upsert enforces "exactly one gate comment per PR" -
+    duplicates are collapsed to the oldest one and every stale comment is
+    removed when the PR no longer touches a gated path.
   type: internal
 pr_number: '5464'

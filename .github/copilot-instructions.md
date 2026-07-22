@@ -467,7 +467,101 @@ that: do not introduce Pydantic v2 syntax there.
 
 ---
 
-## 12. Things Copilot should NOT suggest
+## 12. SDK Nightly Gate (PR label workflow)
+
+Every PR to this repo is evaluated by the **SDK Nightly Gate**, a small
+GitHub Actions workflow that decides whether the change requires a run of
+the SDK Nightly pipeline before merge. Copilot should be aware of it when
+suggesting PR workflows, changelog wording, or "how do I unblock this
+check" answers.
+
+### 12.1 How it works
+
+- Workflow: [`.github/workflows/nightly-gate.yml`](workflows/nightly-gate.yml).
+- Configuration: [`.github/nightly-gate-paths.yml`](nightly-gate-paths.yml).
+- Classifier + policy: [`Utils/github_workflow_scripts/nightly_gate/check_nightly_gate.py`](../Utils/github_workflow_scripts/nightly_gate/check_nightly_gate.py)
+  (unit-tested in
+  [`tests/check_nightly_gate_test.py`](../Utils/github_workflow_scripts/nightly_gate/tests/check_nightly_gate_test.py)).
+
+Model: **"every SDK change requires nightly, except..."**. The config sets
+`must: ['**']` and then narrows it with two exclusion lists:
+
+- **`must_exclude`** - files where nightly is only *recommended* (downgraded
+  to a non-blocking warning). Currently: `prepare_content/`, `upload/`,
+  `create_artifacts/`, `update_release_notes/`, `pre_commit/`, and the
+  cross-cutting `git_util.py`, `tools.py`, `constants.py`.
+- **`skip`** - files completely ignored by the gate: tests, fixtures,
+  `**/*.md`, docs/, plans/, `.changelog/`, `.github/`, `.gitlab/`, CI
+  config, editor metadata, `Utils/`, `pyproject.toml`, `poetry.lock`, and
+  packaging metadata.
+
+Per-file precedence (highest wins): `skip > must_exclude > must`.
+
+### 12.2 Labels and outcomes
+
+Two PR labels are recognised (auto-created by the workflow if missing):
+
+- **`nightly-run-passed`** - "I ran the SDK Nightly pipeline against this
+  branch and it passed" (paste the run URL in the PR description).
+- **`nightly-run-skipped`** - "I consciously chose not to run it".
+
+Outcome matrix:
+
+| Tier          | No label            | `nightly-run-passed` | `nightly-run-skipped` |
+|---------------|---------------------|----------------------|-----------------------|
+| `must`        | ❌ **Fail**         | ✅ Pass (ack)         | ✅ Pass with pushback: comment says "please reconsider" and points at the Content-build alternative. Does **not** block merge. |
+| `recommended` | ⚠️ Warn (non-fail)  | ✅ Pass (ack)         | ✅ Pass (ack, "skipped" wording) |
+| `skip_only` / `none` | ✅ Noop; any stale gate comment is deleted | (same) | (same) |
+
+The check re-runs on `labeled` / `unlabeled` events, so a red check turns
+green as soon as the correct label is applied - **no push is required**.
+
+### 12.3 The Content-build escape hatch
+
+Every fail/warn/skipped-anyway comment surfaces a lighter alternative to
+the full SDK Nightly pipeline: run a **Content build against this SDK
+branch**. This is often enough when the change is scoped (e.g. a single
+new validator or a small bug fix).
+
+**Critical:** if the change adds a **new validator**, it *must* be
+registered in
+[`sdk_validation_config.toml`](../demisto_sdk/commands/validate/sdk_validation_config.toml)
+so that the Content build's `run-validations` job actually exercises it.
+`run-validations` invokes `demisto-sdk validate -a` (all files); a `-g`
+"git-diff" run would not touch pre-existing content and would silently
+give the new validator a free pass. Once the Content build is green, add
+the `nightly-run-passed` label to satisfy the gate.
+
+### 12.4 Sticky-comment invariant
+
+The workflow keeps **exactly one** `<!-- nightly-gate-bot -->` comment per
+PR at any time:
+
+- On each run it finds every existing bot comment, updates the oldest one
+  in place (so its URL is stable), and deletes any duplicates.
+- When the PR no longer touches a gated path (tier becomes `none` /
+  `skip_only`), every gate comment is deleted.
+
+Copilot suggestions that touch this workflow must preserve that invariant:
+never post a second comment when one already exists, and never leave stale
+comments behind when the tier drops back to noop.
+
+### 12.5 Changing the gate config
+
+- Small tweaks (adding a new path to `must_exclude` or `skip`) go in
+  [`.github/nightly-gate-paths.yml`](nightly-gate-paths.yml) and should
+  come with a test in
+  [`check_nightly_gate_test.py::TestRealConfig`](../Utils/github_workflow_scripts/nightly_gate/tests/check_nightly_gate_test.py)
+  pinning the expected tier for at least one representative path.
+- Do **not** move an entry out of `must` (via `must_exclude`) without
+  reviewer sign-off - the whole point of the modern model is
+  "must-by-default".
+- The legacy explicit-`must`/`recommended` mode is still supported for
+  backwards compatibility but new configs should not use it.
+
+---
+
+## 13. Things Copilot should NOT suggest
 
 - New top-level dependencies without a clear justification — adding to
   `pyproject.toml` requires a `poetry lock` and reviewer approval.
@@ -485,7 +579,7 @@ that: do not introduce Pydantic v2 syntax there.
 
 ---
 
-## 13. When in doubt
+## 14. When in doubt
 
 Cross-reference these authoritative sources, in order:
 

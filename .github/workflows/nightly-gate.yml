@@ -130,18 +130,39 @@ jobs:
           set -euo pipefail
           marker='<!-- nightly-gate-bot -->'
 
-          # Find any existing bot comment (there should be at most one).
-          existing_id=$(gh api \
+          # Find every existing bot comment. In practice there should be
+          # at most one, but historical bugs or a race between multiple
+          # `synchronize` events could leave duplicates behind. We
+          # collect ALL of them so we can enforce "exactly one bot
+          # comment on this PR" as a hard invariant.
+          #
+          # Result: newline-separated list of comment IDs, oldest first
+          # (GitHub returns issue comments in creation order).
+          existing_ids=$(gh api \
             "repos/${GH_REPO}/issues/${PR_NUMBER}/comments" \
             --paginate \
-            --jq "map(select(.body | contains(\"${marker}\"))) | .[0].id // empty")
+            --jq "map(select(.body | contains(\"${marker}\"))) | .[].id")
+
+          # Split into an array without failing on empty input.
+          mapfile -t existing_id_array < <(printf '%s\n' "${existing_ids}" | grep -v '^$' || true)
+          existing_count=${#existing_id_array[@]}
+          echo "Found ${existing_count} existing gate comment(s) on PR #${PR_NUMBER}."
+
+          delete_comment_id () {
+            local id="$1"
+            echo "Deleting gate comment ${id}"
+            gh api -X DELETE \
+              "repos/${GH_REPO}/issues/comments/${id}" >/dev/null
+          }
 
           if [[ "${DELETE_COMMENT}" == "true" ]]; then
-            # Files no longer touch any gated path: clean up.
-            if [[ -n "${existing_id}" ]]; then
-              echo "Deleting stale gate comment ${existing_id}"
-              gh api -X DELETE \
-                "repos/${GH_REPO}/issues/comments/${existing_id}" >/dev/null
+            # Files no longer touch any gated path (e.g. author reverted
+            # the change). Clean up EVERY stale gate comment so the PR
+            # is left with none.
+            if (( existing_count > 0 )); then
+              for id in "${existing_id_array[@]}"; do
+                delete_comment_id "${id}"
+              done
             else
               echo "No gated files and no existing comment - nothing to do."
             fi
@@ -155,11 +176,22 @@ jobs:
 
           # `gh` reads the body from stdin via `-F body=@-` to preserve
           # newlines and avoid shell-quoting issues with Markdown.
-          if [[ -n "${existing_id}" ]]; then
-            echo "Updating existing gate comment ${existing_id}"
+          if (( existing_count > 0 )); then
+            # Keep the OLDEST comment (first in the array) so its URL is
+            # stable across runs, edit it in place, and delete every
+            # extra duplicate. This enforces "exactly one gate comment".
+            keep_id="${existing_id_array[0]}"
+            echo "Updating existing gate comment ${keep_id}"
             printf '%s' "${COMMENT_BODY}" | gh api -X PATCH \
-              "repos/${GH_REPO}/issues/comments/${existing_id}" \
+              "repos/${GH_REPO}/issues/comments/${keep_id}" \
               -F body=@-  >/dev/null
+
+            if (( existing_count > 1 )); then
+              echo "Deduplicating: removing $((existing_count - 1)) stale duplicate comment(s)."
+              for id in "${existing_id_array[@]:1}"; do
+                delete_comment_id "${id}"
+              done
+            fi
           else
             echo "Creating new gate comment"
             printf '%s' "${COMMENT_BODY}" | gh api -X POST \

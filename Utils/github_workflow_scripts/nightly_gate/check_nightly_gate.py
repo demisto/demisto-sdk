@@ -20,6 +20,27 @@ The classifier is intentionally kept small and dependency-light (only
 are compiled to regex with support for `**` (recursive) and `*`
 (single segment) so the script does not require `pathspec` or
 `wcmatch` to be installed.
+
+Config model
+------------
+The gate supports two config shapes:
+
+* **Modern (preferred):** `must: ['**']` plus a `must_exclude` list of
+  paths that should be downgraded to `recommended`, plus a `skip` list
+  of paths that are ignored entirely. Rationale: SDK changes are
+  nightly-relevant by default; the exclude list encodes the rare
+  exceptions.
+* **Legacy:** explicit `must` and `recommended` lists (both taking
+  gitignore-style globs), plus `skip`. Kept working for backwards
+  compatibility with older `.github/nightly-gate-paths.yml` snapshots.
+
+When `must_exclude` is non-empty, the modern precedence applies:
+
+    skip > must_exclude > must
+
+Otherwise the classifier falls back to the legacy precedence:
+
+    skip > must > recommended
 """
 
 from __future__ import annotations
@@ -43,7 +64,8 @@ from ruamel.yaml import YAML
 LABEL_PASSED = "nightly-run-passed"
 
 #: Label the author adds when the SDK nightly run was intentionally skipped
-#: (only meaningful for the `recommended` tier).
+#: (only meaningful for the `recommended` tier, or as an explicit override
+#: for the `must` tier with reviewer approval).
 LABEL_SKIPPED = "nightly-run-skipped"
 
 #: Hidden marker used to identify the sticky comment posted by the workflow.
@@ -59,9 +81,19 @@ COMMENT_MARKER = "<!-- nightly-gate-bot -->"
 
 @dataclass
 class GateConfig:
-    """Path globs for each tier, as loaded from the YAML config."""
+    """Path globs for each tier, as loaded from the YAML config.
+
+    * ``must``          -> globs of paths that require a nightly run
+                           (defaults to ``['**']`` under the modern model).
+    * ``must_exclude``  -> globs downgraded from ``must`` to
+                           ``recommended`` (modern model only).
+    * ``recommended``   -> legacy explicit-list mode. Ignored when
+                           ``must_exclude`` is non-empty.
+    * ``skip``          -> globs ignored entirely by the gate.
+    """
 
     must: list[str] = field(default_factory=list)
+    must_exclude: list[str] = field(default_factory=list)
     recommended: list[str] = field(default_factory=list)
     skip: list[str] = field(default_factory=list)
 
@@ -87,12 +119,12 @@ def _glob_to_regex(pattern: str) -> re.Pattern[str]:
 
     Supports:
 
-    * ``**`` — matches any number of characters including path
+    * ``**`` - matches any number of characters including path
       separators (recursive descent). When it appears as a whole path
       segment (e.g. ``a/**/b``), the surrounding ``/`` is consumed so
       that ``a/b`` also matches.
-    * ``*``  — matches any character except ``/`` (single path segment).
-    * ``?``  — matches a single character except ``/``.
+    * ``*``  - matches any character except ``/`` (single path segment).
+    * ``?``  - matches a single character except ``/``.
     * All other regex metacharacters are escaped.
 
     The returned regex is anchored (``^...$``) and case-sensitive, to
@@ -164,8 +196,14 @@ def _matches_any(path: str, compiled: list[re.Pattern[str]]) -> bool:
 def classify(files: Iterable[str], config: GateConfig) -> Classification:
     """Classify a set of changed files against the gate configuration.
 
-    Precedence (per file):
-        skip > must > recommended > none
+    Two modes are supported:
+
+    * **Modern** (``must_exclude`` is non-empty). Per-file precedence:
+      ``skip > must_exclude (-> recommended) > must``. A file that is
+      not skipped and not excluded is `must` (which typically comes
+      from ``must: ['**']``).
+    * **Legacy** (``must_exclude`` is empty). Per-file precedence:
+      ``skip > must > recommended``, matching the old semantics.
 
     Overall tier is the highest hit across all non-skipped files:
         * ``must``        - at least one file matches a Must glob.
@@ -176,7 +214,10 @@ def classify(files: Iterable[str], config: GateConfig) -> Classification:
     """
     skip_rx = _compile_patterns(config.skip)
     must_rx = _compile_patterns(config.must)
+    must_exclude_rx = _compile_patterns(config.must_exclude)
     rec_rx = _compile_patterns(config.recommended)
+
+    modern_mode = bool(config.must_exclude)
 
     result = Classification(tier="none")
 
@@ -185,10 +226,25 @@ def classify(files: Iterable[str], config: GateConfig) -> Classification:
         if not path:
             continue
 
+        # Skip always wins.
         if _matches_any(path, skip_rx):
             result.matched_skip.append(path)
             continue
 
+        if modern_mode:
+            # Modern: must_exclude downgrades to recommended, otherwise
+            # anything matching `must` (usually `**`) is a must-hit.
+            if _matches_any(path, must_exclude_rx):
+                result.matched_recommended.append(path)
+                continue
+            if _matches_any(path, must_rx):
+                result.matched_must.append(path)
+                continue
+            # Nothing matched (only possible if `must` is not `**`).
+            result.unmatched.append(path)
+            continue
+
+        # Legacy: explicit lists per tier.
         if _matches_any(path, must_rx):
             result.matched_must.append(path)
             continue
@@ -231,21 +287,35 @@ def decide(classification: Classification, labels: Iterable[str]) -> Decision:
     """Given a classification and the PR's labels, decide the outcome.
 
     Rules:
-        * tier == 'must' + label present  -> ok (post ack comment)
-        * tier == 'must' + no label       -> fail (post required-action comment)
-        * tier == 'recommended' + label   -> ok (post ack comment)
-        * tier == 'recommended' + no lbl  -> warn (post reminder comment)
-        * tier in {'none', 'skip_only'}   -> noop (delete any existing comment)
+        * tier == 'must' + `nightly-run-passed`   -> ok (ack comment)
+        * tier == 'must' + `nightly-run-skipped`  -> ok, but the ack
+          comment gently pushes back: the file *does* warrant a nightly
+          run; author may want to reconsider. Does NOT fail the check.
+        * tier == 'must' + no label               -> fail
+        * tier == 'recommended' + label           -> ok (ack comment)
+        * tier == 'recommended' + no label        -> warn (reminder)
+        * tier in {'none', 'skip_only'}           -> noop
+          (workflow deletes any stale comment)
     """
-    label_set = {lbl.lower() for lbl in labels}
-    has_label = LABEL_PASSED in label_set or LABEL_SKIPPED in label_set
+    # Normalize once so we can look up which specific label satisfied
+    # the gate (needed for the "skipped anyway" acknowledgement).
+    normalized_labels = {lbl.lower() for lbl in labels}
+    has_passed = LABEL_PASSED in normalized_labels
+    has_skipped = LABEL_SKIPPED in normalized_labels
+    has_label = has_passed or has_skipped
 
     if classification.tier == "must":
         if has_label:
             return Decision(
                 exit_code=0,
                 status="ok",
-                comment_body=_render_ok_comment(classification, tier="must"),
+                comment_body=_render_ok_comment(
+                    classification,
+                    tier="must",
+                    # `passed` wins over `skipped` when both are set,
+                    # since the pipeline actually ran.
+                    label=LABEL_PASSED if has_passed else LABEL_SKIPPED,
+                ),
             )
         return Decision(
             exit_code=1,
@@ -258,7 +328,11 @@ def decide(classification: Classification, labels: Iterable[str]) -> Decision:
             return Decision(
                 exit_code=0,
                 status="ok",
-                comment_body=_render_ok_comment(classification, tier="recommended"),
+                comment_body=_render_ok_comment(
+                    classification,
+                    tier="recommended",
+                    label=LABEL_PASSED if has_passed else LABEL_SKIPPED,
+                ),
             )
         return Decision(
             exit_code=0,
@@ -285,6 +359,22 @@ def _render_file_list(files: list[str], limit: int = 25) -> str:
     return "\n".join(lines)
 
 
+#: Reusable footer explaining the Content-build escape hatch. Emitted on
+#: every non-ack comment so authors know they have an alternative to a
+#: full nightly run when the change is small (e.g. one new validator).
+_CONTENT_BUILD_ALTERNATIVE = f"""\
+**Alternative:** if your change is scoped (e.g. a single new validator or a \
+small bug fix), you can run a **Content build against this SDK branch** \
+instead of the full SDK Nightly pipeline. When your change is a new \
+validator, make sure it is registered in \
+[`sdk_validation_config.toml`](../demisto_sdk/commands/validate/sdk_validation_config.toml) \
+so the Content build's `run-validations` job picks it up via \
+`demisto-sdk validate -a` (the `-a` "all files" mode is what \
+`run-validations` uses; a `-g` "git-diff" run will not exercise your new \
+validator on unchanged files). Once the Content build is green, add the \
+**`{LABEL_PASSED}`** label to satisfy this gate."""
+
+
 def _render_fail_comment(cls: Classification) -> str:
     return f"""{COMMENT_MARKER}
 ### 🚫 SDK Nightly required
@@ -301,6 +391,8 @@ be run before it can be merged:
 3. Add the **`{LABEL_PASSED}`** label once the run has passed \
 (or **`{LABEL_SKIPPED}`** if you have a documented reason not to run \
 it, with reviewer approval).
+
+{_CONTENT_BUILD_ALTERNATIVE}
 
 This check will re-run automatically when a label is added or removed.
 """
@@ -323,27 +415,75 @@ PR description and apply the **`{LABEL_PASSED}`** label.
 **`{LABEL_SKIPPED}`** label so reviewers know it was skipped on \
 purpose.
 
+{_CONTENT_BUILD_ALTERNATIVE}
+
 This check is non-blocking, but reviewers may request one of the \
 labels before merging. It will re-evaluate automatically when a \
 label is added or removed.
 """
 
 
-def _render_ok_comment(cls: Classification, tier: str) -> str:
+def _render_ok_comment(
+    cls: Classification, tier: str, label: str = LABEL_PASSED
+) -> str:
+    """Render the "gate satisfied" acknowledgement comment.
+
+    ``label`` is the label that satisfied the gate. When a must-tier PR
+    is satisfied by ``nightly-run-skipped`` (rather than
+    ``nightly-run-passed``), we still let the check pass but the comment
+    explicitly flags the trade-off so the author and reviewers can
+    reconsider before merging.
+    """
     if tier == "must":
-        header = "### ✅ SDK Nightly acknowledged (required)"
         files_block = _render_file_list(cls.matched_must)
-        tier_note = "This PR touches files that **require** a nightly run."
+
+        if label == LABEL_SKIPPED:
+            # "Skipped anyway" - do NOT fail, but push back explicitly.
+            header = "### ⚠️ SDK Nightly skipped for a required change"
+            body = (
+                f"This PR touches files that **require** a nightly run, "
+                f"and the **`{LABEL_SKIPPED}`** label has been applied "
+                f"to bypass the requirement. The check is passing so it "
+                f"does not block merge, but **please reconsider**: the "
+                f"changed files are on the nightly-required list because "
+                f"regressions in them are historically hard to catch "
+                f"without a full nightly run.\n\n"
+                f"If a full nightly run is genuinely disproportionate, "
+                f"the Content-build alternative below is usually enough "
+                f"to satisfy reviewers - if it applies to your change, "
+                f"switch the label to **`{LABEL_PASSED}`** after the "
+                f"Content build is green.\n\n"
+                f"{_CONTENT_BUILD_ALTERNATIVE}"
+            )
+        else:
+            header = "### ✅ SDK Nightly acknowledged (required)"
+            body = (
+                f"This PR touches files that **require** a nightly run. "
+                f"The **`{LABEL_PASSED}`** label is present, so this "
+                f"check is satisfied."
+            )
     else:
-        header = "### ✅ SDK Nightly acknowledged (recommended)"
         files_block = _render_file_list(cls.matched_recommended)
-        tier_note = "This PR touches files where nightly is **recommended**."
+
+        if label == LABEL_SKIPPED:
+            header = "### ✅ SDK Nightly acknowledged (recommended, skipped)"
+            body = (
+                f"This PR touches files where nightly is **recommended**. "
+                f"The **`{LABEL_SKIPPED}`** label is present, so this "
+                f"check is satisfied and no nightly run is expected."
+            )
+        else:
+            header = "### ✅ SDK Nightly acknowledged (recommended)"
+            body = (
+                f"This PR touches files where nightly is **recommended**. "
+                f"The **`{LABEL_PASSED}`** label is present, so this "
+                f"check is satisfied."
+            )
 
     return f"""{COMMENT_MARKER}
 {header}
 
-{tier_note} A `{LABEL_PASSED}` or `{LABEL_SKIPPED}` label is present, \
-so this check is satisfied.
+{body}
 
 <details>
 <summary>Files considered</summary>
@@ -370,6 +510,7 @@ def load_config(path: Path) -> GateConfig:
         )
     return GateConfig(
         must=list(raw.get("must") or []),
+        must_exclude=list(raw.get("must_exclude") or []),
         recommended=list(raw.get("recommended") or []),
         skip=list(raw.get("skip") or []),
     )
@@ -629,6 +770,14 @@ def _emit_step_summary(
             f"3. Add the **`{LABEL_PASSED}`** label once it passes "
             f"(or **`{LABEL_SKIPPED}`** if you have a documented "
             "reason not to run it, with reviewer approval)."
+        )
+        lines.append(
+            "\n**Alternative:** for scoped changes (e.g. a single new "
+            "validator), a **Content build against this SDK branch** is "
+            "usually enough. New validators must be registered in "
+            "`demisto_sdk/commands/validate/sdk_validation_config.toml` "
+            "so the Content build's `run-validations` job exercises them "
+            "via `demisto-sdk validate -a`."
         )
         lines.append(
             "\n_This check re-runs automatically when a label is "

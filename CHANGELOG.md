@@ -1,4 +1,25 @@
 # Changelog
+## 1.39.5 (2026-07-21)
+### Feature
+* Added the BA133 validation, which ensures fetch-related configuration parameters in an integration exist as required by their fetch type and resolve to supportedModules that are consistent with that fetch type. The validation is auto-fixable - it removes un-allowed supportedModules values and adds missing required server-level parameters with the correct supportedModules. [#5438](https://github.com/demisto/demisto-sdk/pull/5438)
+* Added the **AG117** validation that verifies an AgentixAction does not exceed the maximum allowed number of arguments. [#5440](https://github.com/demisto/demisto-sdk/pull/5440)
+* Extended the **AG112** total token budget validation to cover AgentixActions in addition to AgentixSkills. [#5440](https://github.com/demisto/demisto-sdk/pull/5440)
+* Extended the **AG114** character cleanliness validation to cover AgentixActions and Collections in addition to AgentixSkills. [#5440](https://github.com/demisto/demisto-sdk/pull/5440)
+* Added support for routing `demistoextended` docker images to a configurable registry via the `DEMISTO_SDK_EXTENDED_REGISTRY` environment variable. [#5412](https://github.com/demisto/demisto-sdk/pull/5412)
+* Added support for marketplace-suffixed **managed** and **source** pack metadata fields (e.g. `'managed:platform':true`, `'source:platform':foo`), which are resolved into the plain `managed`/`source` fields per marketplace when a pack is dumped or uploaded. [#5437](https://github.com/demisto/demisto-sdk/pull/5437)
+* Support pack-level validation ignores via a new `[pack]` section in `.pack-ignore` file. Error codes listed there are ignored for the pack itself and for every content item it contains, in addition to the existing per-file `[file:<path>]` mechanism. [#5406](https://github.com/demisto/demisto-sdk/pull/5406)
+* Added a new validation (PA135) that fails when pack-level ignored validations are added to the `[pack]` section of a `.pack-ignore` file (the section is added for the first time, or a new error code is added to it). Ignoring validations at the pack level now requires a force merge. PA135 cannot itself be ignored. [#5406](https://github.com/demisto/demisto-sdk/pull/5406)
+
+### Fix
+* Fixed an issue where Agentix action test files were wrongly collected as content items during validation. [#5452](https://github.com/demisto/demisto-sdk/pull/5452)
+* Updated the BA131 validation so that the List content item is allowed to declare all supported modules. [#5456](https://github.com/demisto/demisto-sdk/pull/5456)
+* Fixed an issue where the graph update did not pick up changed packs/connectors in CI validation jobs because the git-diff computation ran before the graph was imported (so ``content_graph_interface.commit`` was ``None``), leaving ``builder.update_graph`` to short-circuit on empty inputs and keeping the stale bucket state. [#5453](https://github.com/demisto/demisto-sdk/pull/5453)
+* Fixed standalone content item parsing to resolve marketplaces and supported modules from the item's pack_metadata.json instead of assuming all marketplaces, preventing false BA130 failures. [#5441](https://github.com/demisto/demisto-sdk/pull/5441)
+
+### Internal
+* Removed the automatic addition of the **source** field to managed content items from the **format** command, and removed the **MC100** validation that validates the existence of a **source** field in managed content items. [#5461](https://github.com/demisto/demisto-sdk/pull/5461)
+
+
 ## 1.39.4 (2026-07-12)
 ### Breaking
 * Renamed the Connector's ``metadata.category`` field to ``metadata.categories`` (a list of strings, at least one required) to match the updated Connector schema. [#5442](https://github.com/demisto/demisto-sdk/pull/5442)

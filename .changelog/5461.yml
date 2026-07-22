@@ -1,4 +1,0 @@
-changes:
-- description: Removed the automatic addition of the **source** field in the **format** command, and removed the **MC100** validation.
-  type: internal
-pr_number: 5461

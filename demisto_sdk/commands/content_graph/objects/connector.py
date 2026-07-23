@@ -957,7 +957,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
             config.read(ignore_path)
             for section in config.sections():
                 result[section] = dict(config[section])
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.debug(
                 f"Failed to parse {CONNECTOR_IGNORE_FILE_NAME} for {self.object_id}"
             )

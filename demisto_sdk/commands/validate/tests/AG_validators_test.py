@@ -53,6 +53,9 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG117_is_valid_max_a
     MAX_ACTION_ARGS,
     IsValidMaxArgsValidator,
 )
+from demisto_sdk.commands.validate.validators.AG_validators.AG118_is_action_evaluator_test_file_exists import (
+    IsActionEvaluatorTestFileExistsValidator,
+)
 
 
 def test_is_forbidden_content_item():
@@ -759,6 +762,46 @@ def test_AG111_skill_content_file_exists():
     assert len(results) == 1
     assert "missing its content file" in results[0].message
     assert "missing_body_skill_skill.md" in results[0].message
+
+
+def test_AG118_action_evaluator_test_file_exists():
+    """
+    Given
+    - One action whose evaluator test file (<ActionName>_test.yml) exists.
+    - One action whose evaluator test file is missing.
+
+    When
+    - Calling IsActionEvaluatorTestFileExistsValidator.obtain_invalid_content_items.
+
+    Then
+    - Only the action with the missing evaluator test file is reported.
+    """
+    # given
+    valid_action = create_agentix_action_object(
+        paths=["display"], values=["ValidAction"]
+    )
+    # The evaluator test file lives at ``<action_folder>/<action_folder>_test.yml``
+    # next to the action yml. Create it for the valid action so the validator
+    # sees it as present.
+    valid_action_dir = valid_action.path.parent
+    (valid_action_dir / f"{valid_action_dir.name}_test.yml").write_text(
+        "scenarios: []\n"
+    )
+
+    missing_test_action = create_agentix_action_object(
+        paths=["display"], values=["MissingTestAction"]
+    )
+
+    # when
+    results = IsActionEvaluatorTestFileExistsValidator().obtain_invalid_content_items(
+        [valid_action, missing_test_action]
+    )
+
+    # then
+    assert len(results) == 1
+    assert "missing its evaluator test file" in results[0].message
+    missing_action_dir_name = missing_test_action.path.parent.name
+    assert f"{missing_action_dir_name}_test.yml" in results[0].message
 
 
 def test_AG112_skill_within_char_budget():

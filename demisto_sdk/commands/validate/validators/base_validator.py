@@ -4,12 +4,14 @@ from abc import ABC
 from enum import Enum
 from pathlib import Path
 from typing import (
+    Callable,
     ClassVar,
     Generic,
     Iterable,
     List,
     Optional,
     TypeVar,
+    cast,
     get_args,
 )
 
@@ -284,8 +286,95 @@ class ConnectorsValidator(BaseValidator[ContentTypes], ABC):
         ignorable_errors: List[str],
         content_item: ContentTypes,
         related_file_type: Optional[List[RelatedFileType]] = None,
-    ) -> Optional[bool]:
-        pass
+    ) -> bool:
+        """Check whether the given error code is ignored for the connector content item.
+
+        The ignore rules are read from the connector's ``.connector-ignore``
+        file (parsed lazily by ``Connector.ignored_errors_dict``). Each section
+        header maps to a connector sub-file:
+
+        * Single sub-files (connection.yaml, capabilities.yaml,
+          configurations.yaml, triggers.yaml, summary.yaml) are keyed by their
+          bare filename.
+        * Handler files are keyed by ``<handler_dir>/handler.yaml`` and
+          serializer files by ``<handler_dir>/serializer.yaml``. Because a
+          connector may have multiple handlers/serializers, it is sufficient for
+          **any** of them to ignore the error for this to return ``True``.
+
+        When ``related_file_type`` is not provided the check falls back to the
+        connector's main file (``connector.yaml``).
+
+        Note: if the error code is not in ``ignorable_errors`` or is in
+        ``ALWAYS_RUN_ON_ERROR_CODE``, the error can never be ignored.
+
+        Args:
+            err_code: The validation's error code.
+            ignorable_errors: The list of errors that are allowed to be ignored.
+            content_item: The connector content item.
+            related_file_type: The related file types the validation runs on.
+
+        Returns:
+            bool: True if the error should and is allowed to be ignored.
+        """
+        if err_code not in ignorable_errors:
+            return False
+
+        raw_getter = getattr(content_item, "get_ignored_errors", None)
+        if not callable(raw_getter):
+            return False
+        get_ignored_errors = cast(Callable[[str], List[str]], raw_getter)
+
+        if not related_file_type:
+            # No related file - check the connector's main file.
+            return err_code in get_ignored_errors("connector.yaml")
+
+        for related_file in related_file_type:
+            file_keys = self._resolve_ignore_file_keys(related_file, content_item)
+            # For handlers/serializers there may be several candidate keys; a
+            # single match is sufficient to consider the error ignored.
+            for file_key in file_keys:
+                if err_code in get_ignored_errors(file_key):
+                    return True
+        return False
+
+    @staticmethod
+    def _resolve_ignore_file_keys(
+        related_file: RelatedFileType,
+        content_item: ContentTypes,
+    ) -> List[str]:
+        """Map a ``RelatedFileType`` to the ``.connector-ignore`` section keys.
+
+        Returns a list of file keys (without the ``file:`` prefix) to look up
+        in the connector's ignore file. Handlers and serializers expand into one
+        key per handler directory the connector defines.
+        """
+        single_file_map = {
+            RelatedFileType.CONNECTOR_CONNECTION: "connection.yaml",
+            RelatedFileType.CONNECTOR_CAPABILITIES: "capabilities.yaml",
+            RelatedFileType.CONNECTOR_CONFIGURATIONS: "configurations.yaml",
+            RelatedFileType.CONNECTOR_TRIGGERS: "triggers.yaml",
+            RelatedFileType.CONNECTOR_SUMMARY: "summary.yaml",
+        }
+        if related_file in single_file_map:
+            return [single_file_map[related_file]]
+
+        if related_file in (
+            RelatedFileType.CONNECTOR_HANDLER,
+            RelatedFileType.CONNECTOR_SERIALIZER,
+        ):
+            filename = (
+                "handler.yaml"
+                if related_file == RelatedFileType.CONNECTOR_HANDLER
+                else "serializer.yaml"
+            )
+            keys: List[str] = []
+            for handler_file in getattr(content_item, "handler_files", []) or []:
+                handler_dir = getattr(handler_file, "_handler_dir_name", None)
+                if handler_dir:
+                    keys.append(f"{handler_dir}/{filename}")
+            return keys
+
+        return []
 
 
 def get_all_validators() -> List[BaseValidator]:

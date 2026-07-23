@@ -9,6 +9,7 @@ summary.yaml, handler.yaml, serializer.yaml) are modeled using a hybrid approach
 * **RelatedFile instances** for file-level concerns (existence, git status, path resolution).
 """
 
+from configparser import ConfigParser
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
@@ -16,7 +17,9 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, root_validator
 
+from demisto_sdk.commands.common.constants import CONNECTOR_IGNORE_FILE_NAME
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Nodes,
@@ -917,6 +920,68 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
     @property
     def all_connection_profile_ids(self) -> List[str]:
         return [p.id for p in (self.connection.profiles if self.connection else [])]
+
+    # === Ignored errors (.connector-ignore) ===
+
+    @cached_property
+    def ignored_errors_dict(self) -> Dict[str, Dict[str, str]]:
+        """Parse the connector's ``.connector-ignore`` file.
+
+        The file is an INI-style config living at the connector root
+        (sibling of ``connector.yaml``). Each section is keyed by a
+        ``file:<relative-path>`` header, for example::
+
+            [file:capabilities.yaml]
+            ignore=BA127,ST111
+
+            [file:xsoar-zoom-feed/handler.yaml]
+            ignore=BA127
+
+            [file:xsoar-zoom_iam/serializer.yaml]
+            ignore=BA127
+
+        Sub-files (connection.yaml, capabilities.yaml, ...) are keyed by
+        their bare filename, while handler / serializer files are keyed by
+        ``<handler_dir_name>/handler.yaml`` and
+        ``<handler_dir_name>/serializer.yaml`` respectively.
+
+        Returns an empty dict when the file does not exist (graceful
+        fallback) or cannot be parsed.
+        """
+        ignore_path = self.path / CONNECTOR_IGNORE_FILE_NAME
+        result: Dict[str, Dict[str, str]] = {}
+        if not ignore_path.exists():
+            return result
+        try:
+            config = ConfigParser(allow_no_value=True)
+            config.read(ignore_path)
+            for section in config.sections():
+                result[section] = dict(config[section])
+        except Exception:  # noqa: BLE001
+            logger.debug(
+                f"Failed to parse {CONNECTOR_IGNORE_FILE_NAME} for {self.object_id}"
+            )
+            return {}
+        return result
+
+    def get_ignored_errors(self, file_key: str) -> List[str]:
+        """Return the list of ignored error codes for a given ``.connector-ignore`` file key.
+
+        Args:
+            file_key: The relative file key used in the ignore section header
+                (without the ``file:`` prefix), e.g. ``capabilities.yaml`` or
+                ``xsoar-zoom-feed/handler.yaml``.
+
+        Returns:
+            A list of ignored error codes (empty if none / not found).
+        """
+        section = self.ignored_errors_dict.get(f"file:{file_key}")
+        if not section:
+            return []
+        ignore_value = section.get("ignore")
+        if not ignore_value:
+            return []
+        return [code.strip() for code in ignore_value.split(",") if code.strip()]
 
     # === RelatedFile cached properties ===
 

@@ -447,16 +447,89 @@ def test_is_type_valid():
     # Validate first message content
     assert (
         "The following Agentix action 'InvalidAction' contains invalid types:\n"
-        "Arguments with invalid types: arg_invalid. Possible argument types: unknown, keyValue, textArea, string, number, date, boolean.\nOutputs with invalid types: output_invalid. "
+        "Arguments with invalid types: arg_invalid. Possible argument types: unknown, string, number, date, boolean.\nOutputs with invalid types: output_invalid. "
         "Possible output types: unknown, string, number, date, boolean, json."
     ) in results[0].message
 
     # Validate second message content
     assert (
         "The following Agentix action 'MixedAction' contains invalid types:\n"
-        "Arguments with invalid types: arg_bad. Possible argument types: unknown, keyValue, textArea, string, number, date, boolean.\n"
+        "Arguments with invalid types: arg_bad. Possible argument types: unknown, string, number, date, boolean.\n"
         "Outputs with invalid types: output_bad. Possible output types: unknown, string, number, date, boolean, json."
     ) in results[1].message
+
+
+def test_is_type_valid_rejects_removed_and_capitalized_types():
+    """
+    Given
+    - An AgentixAction whose args use the removed "keyValue"/"textArea" types and
+      capitalized variants ("String"), and whose output uses a capitalized "Number".
+
+    When
+    - Calling the IsTypeValid obtain_invalid_content_items function.
+
+    Then
+    - Ensure a single validation failure is returned.
+    - Ensure "keyValue", "textArea", "String" args and the "Number" output are all
+      flagged as invalid, and the lowercase "string" arg is not flagged.
+    """
+    # given
+    action = create_agentix_action_object(
+        paths=["display", "args", "outputs"],
+        values=[
+            "CaseAndRemovedTypesAction",
+            [
+                {
+                    "name": "arg_key_value",
+                    "type": "keyValue",
+                    "description": "arg_key_value",
+                    "underlyingargname": "arg_key_value",
+                },
+                {
+                    "name": "arg_text_area",
+                    "type": "textArea",
+                    "description": "arg_text_area",
+                    "underlyingargname": "arg_text_area",
+                },
+                {
+                    "name": "arg_capitalized",
+                    "type": "String",
+                    "description": "arg_capitalized",
+                    "underlyingargname": "arg_capitalized",
+                },
+                {
+                    "name": "arg_ok",
+                    "type": "string",
+                    "description": "arg_ok",
+                    "underlyingargname": "arg_ok",
+                },
+            ],
+            [
+                {
+                    "name": "output_capitalized",
+                    "type": "Number",
+                    "description": "output_capitalized",
+                    "underlyingoutputcontextpath": "output_capitalized",
+                }
+            ],
+        ],
+        action_name="case_and_removed_types_action",
+    )
+
+    # when
+    results = IsTypeValid().obtain_invalid_content_items([action])
+
+    # then
+    assert len(results) == 1
+    message = results[0].message
+    assert "arg_key_value" in message
+    assert "arg_text_area" in message
+    assert "arg_capitalized" in message
+    assert "output_capitalized" in message
+    assert "arg_ok" not in message
+    # keyValue/textArea must no longer be advertised as valid argument types
+    assert "keyValue" not in message
+    assert "textArea" not in message
 
 
 @pytest.mark.parametrize(

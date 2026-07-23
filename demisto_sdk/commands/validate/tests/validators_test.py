@@ -1326,6 +1326,53 @@ class TestConnectorRelatedFileDeduplication:
         assert result == {Path("connectors/salesforce/connector.yaml")}
         assert len(result) == 1
 
+    def test_get_items_status_maps_connector_files_to_connector_yaml(self):
+        """
+        Given: Connector-related files collected by the git flow -- a renamed
+            connector image (png) and a modified handler.yaml.
+        When: get_items_status (the ``-g`` reducer) is called.
+        Then: Both resolve to the single connectors/<name>/connector.yaml path,
+            the raw png is NOT collected (so it is never handed to the parser),
+            and no pack_metadata.json is added for connector paths.
+        """
+        initializer = Initializer()
+
+        png_path = Path(
+            "connectors/aws-automation-and-collection/"
+            "aws-automation-and-collection.png"
+        )
+        handler_path = Path(
+            "connectors/aws-automation-and-collection/"
+            "components/handlers/xsoar/handler.yaml"
+        )
+        connector_yaml = Path("connectors/aws-automation-and-collection/connector.yaml")
+
+        with (
+            patch(
+                "demisto_sdk.commands.validate.initializer._is_connector_path",
+                return_value=True,
+            ),
+            patch(
+                "demisto_sdk.commands.validate.initializer._get_connector_dir",
+                return_value=Path("connectors/aws-automation-and-collection"),
+            ),
+            patch.object(initializer, "is_unrelated_path", return_value=False),
+            patch.object(initializer, "is_pack_item", return_value=False),
+        ):
+            results = initializer.get_items_status(
+                {
+                    png_path: GitStatuses.RENAMED,
+                    handler_path: GitStatuses.MODIFIED,
+                }
+            )
+
+        # Only the connector.yaml is collected.
+        assert set(results.keys()) == {connector_yaml}
+        # The raw png must never reach the parser.
+        assert png_path not in results
+        # No bogus pack_metadata.json is produced for connector paths.
+        assert not any("pack_metadata.json" in str(p) for p in results)
+
 
 # ============================================================
 # ConnectorAwareInitializer - filter / gather behavior

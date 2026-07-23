@@ -944,6 +944,21 @@ class Initializer:
             elif PACKS_PACK_META_FILE_NAME in path_str:
                 # If the file is a pack metadata, collect it.
                 statuses_dict[path] = git_status
+            elif _is_connector_path(path):
+                # Map any connector-related file (connector.yaml, handler.yaml,
+                # capabilities.yaml, connector image, etc.) to the parent
+                # connector.yaml so the parser is never handed a non-content file
+                # (e.g. a renamed .png). Multiple connector files collapse to a
+                # single connector.yaml entry.
+                connector_dir = _get_connector_dir(path)
+                path = connector_dir / "connector.yaml"
+                if path not in statuses_dict:
+                    statuses_dict[path] = (
+                        git_status if git_status != GitStatuses.RENAMED else None
+                    )
+                # Connectors do not live under Packs/, so there is no
+                # pack_metadata.json to collect for them.
+                continue
             elif not self.is_pack_item(path_str):
                 # If the file is not a pack item, collect it as well.
                 statuses_dict[path] = git_status

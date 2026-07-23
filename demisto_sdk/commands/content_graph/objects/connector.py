@@ -964,7 +964,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
             return {}
         return result
 
-    def get_ignored_errors(self, file_key: str) -> List[str]:
+    def get_ignored_errors(self, file_key: Union[str, Path]) -> List[str]:
         """Return the list of ignored error codes for a given ``.connector-ignore`` file key.
 
         Args:

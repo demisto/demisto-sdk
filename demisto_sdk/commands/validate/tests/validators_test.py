@@ -23,6 +23,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.content_graph.tests.test_tools import load_yaml
 from demisto_sdk.commands.validate.config_reader import (
     ConfigReader,
@@ -1428,3 +1429,226 @@ class TestConnectorAwareInitializerFilter:
         kept = self._run_filter({connector})
 
         assert kept == set()
+
+
+class TestConnectorHandlerIgnoreFiltering:
+    """Tests for filtering ignored connector handler/serializer results.
+
+    Covers:
+    * ``ConnectorsValidator.resolve_ignore_key_from_path`` path -> key mapping.
+    * ``ConnectorsValidator.is_error_ignored`` honoring ALWAYS_RUN_ON_ERROR_CODE.
+    * ``ValidateManager.filter_validation_results`` per-handler / per-serializer
+      filtering, including keeping non-ignored handlers and honoring the
+      content object's main ``ignored_errors`` list.
+    """
+
+    @staticmethod
+    def _make_result(
+        error_code: str,
+        path: Optional[Path],
+        ignored_map: Dict[str, List[str]],
+        main_ignored: Optional[List[str]] = None,
+        related_file_type: Optional[list] = None,
+    ):
+        """Build a lightweight stand-in for a ValidationResult.
+
+        ``filter_validation_results`` only reads
+        ``result.validator.error_code``, ``result.validator.related_file_type``,
+        ``result.path``, ``result.content_object.ignored_errors`` and
+        ``result.content_object.is_handler_error_ignored(error_code, path)``, so
+        a SimpleNamespace fake avoids the cost of constructing a full connector
+        fixture. The fake reuses the real ``Connector.resolve_handler_ignore_key``
+        logic to map paths to ``.connector-ignore`` keys.
+        """
+        from types import SimpleNamespace
+
+        from demisto_sdk.commands.content_graph.objects.connector import Connector
+
+        def is_handler_error_ignored(code: str, file_path: Optional[Path]) -> bool:
+            key = Connector.resolve_handler_ignore_key(file_path)
+            if key is None:
+                return False
+            return code in ignored_map.get(key, [])
+
+        return SimpleNamespace(
+            validator=SimpleNamespace(
+                error_code=error_code,
+                related_file_type=related_file_type,
+            ),
+            path=path,
+            content_object=SimpleNamespace(
+                ignored_errors=main_ignored or [],
+                is_handler_error_ignored=is_handler_error_ignored,
+            ),
+        )
+
+    @pytest.mark.parametrize(
+        "path, expected_key",
+        [
+            (
+                Path(
+                    "/repo/connectors/foo/components/handlers/my_handler/handler.yaml"
+                ),
+                "my_handler/handler.yaml",
+            ),
+            (
+                Path(
+                    "/repo/connectors/foo/components/handlers/my_handler/serializer.yaml"
+                ),
+                "my_handler/serializer.yaml",
+            ),
+            (Path("/repo/connectors/foo/connector.yaml"), None),
+            (Path("/repo/connectors/foo/components/handlers/my_handler"), None),
+            (None, None),
+        ],
+    )
+    def test_resolve_handler_ignore_key(self, path, expected_key):
+        """
+        Given: A ValidationResult path.
+        When: Connector.resolve_handler_ignore_key maps it to a .connector-ignore key.
+        Then: Handler/serializer paths yield '<folder>/handler.yaml' /
+              '<folder>/serializer.yaml'; anything else yields None.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import Connector
+
+        assert Connector.resolve_handler_ignore_key(path) == expected_key
+
+    def test_is_error_ignored_respects_always_run_on_error_code(self, mocker):
+        """
+        Given: An error code that is in ALWAYS_RUN_ON_ERROR_CODE and is also
+               listed in the connector's ignore file for a handler.
+        When: ConnectorsValidator.is_error_ignored is called.
+        Then: It returns False - the error must always run.
+        """
+        from demisto_sdk.commands.common.constants import ALWAYS_RUN_ON_ERROR_CODE
+        from demisto_sdk.commands.content_graph.parsers.related_files import (
+            RelatedFileType,
+        )
+        from demisto_sdk.commands.validate.validators.CO_validators.CO157_is_handler_description_templated import (
+            IsHandlerDescriptionTemplatedValidator,
+        )
+
+        validator = IsHandlerDescriptionTemplatedValidator()
+        always_run_code = ALWAYS_RUN_ON_ERROR_CODE[0]
+
+        content_item = mocker.Mock()
+        content_item.get_ignored_errors.return_value = [always_run_code]
+
+        assert (
+            validator.is_error_ignored(
+                always_run_code,
+                [always_run_code],
+                content_item,
+                [RelatedFileType.CONNECTOR_HANDLER],
+            )
+            is False
+        )
+
+    def test_filter_keeps_non_ignored_handler_and_drops_ignored_one(self, mocker):
+        """
+        Given: Two per-handler results (handler_a and handler_b) for the same
+               error code, where only handler_a is ignored in .connector-ignore.
+        When: filter_validation_results runs.
+        Then: handler_a's result is dropped and handler_b's result is kept.
+        """
+        manager = get_validate_manager(mocker)
+
+        ignored_map = {"handler_a/handler.yaml": ["CO157"]}
+        result_a = self._make_result(
+            "CO157",
+            Path("/repo/connectors/foo/components/handlers/handler_a/handler.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
+        )
+        result_b = self._make_result(
+            "CO157",
+            Path("/repo/connectors/foo/components/handlers/handler_b/handler.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
+        )
+
+        filtered = manager.filter_validation_results([result_a, result_b])
+
+        assert result_a not in filtered
+        assert result_b in filtered
+
+    def test_filter_drops_ignored_serializer(self, mocker):
+        """
+        Given: A per-serializer result whose error code is ignored via the
+               '<folder>/serializer.yaml' key.
+        When: filter_validation_results runs.
+        Then: The serializer result is dropped.
+        """
+        manager = get_validate_manager(mocker)
+
+        ignored_map = {"handler_a/serializer.yaml": ["CO157"]}
+        result = self._make_result(
+            "CO157",
+            Path("/repo/connectors/foo/components/handlers/handler_a/serializer.yaml"),
+            ignored_map,
+            related_file_type=[RelatedFileType.CONNECTOR_SERIALIZER],
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert filtered == []
+
+    def test_filter_drops_result_ignored_via_main_ignored_errors(self, mocker):
+        """
+        Given: A result whose error code is in the content object's main
+               ``ignored_errors`` list (the pre-existing filter behavior).
+        When: filter_validation_results runs.
+        Then: The result is dropped.
+        """
+        manager = get_validate_manager(mocker)
+
+        result = self._make_result(
+            "GR107",
+            Path("/repo/connectors/foo/connector.yaml"),
+            {},
+            main_ignored=["GR107"],
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert filtered == []
+
+    def test_filter_keeps_result_when_no_ignore_file(self, mocker):
+        """
+        Given: A per-handler result but the connector has no matching ignore
+               entry (empty ignore map, mimicking a missing .connector-ignore).
+        When: filter_validation_results runs.
+        Then: The result is kept.
+        """
+        manager = get_validate_manager(mocker)
+
+        result = self._make_result(
+            "CO157",
+            Path("/repo/connectors/foo/components/handlers/handler_a/handler.yaml"),
+            {},
+            related_file_type=[RelatedFileType.CONNECTOR_HANDLER],
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert result in filtered
+
+    def test_filter_keeps_non_handler_result_not_in_main_ignored(self, mocker):
+        """
+        Given: A result whose path is not a handler/serializer file and whose
+               error code is not in the main ``ignored_errors`` list.
+        When: filter_validation_results runs.
+        Then: The result is left untouched (kept) - the handler/serializer key
+              lookup does not apply to non-handler paths.
+        """
+        manager = get_validate_manager(mocker)
+
+        result = self._make_result(
+            "CO157",
+            Path("/repo/connectors/foo/connector.yaml"),
+            {"connector.yaml": ["CO157"]},
+        )
+
+        filtered = manager.filter_validation_results([result])
+
+        assert result in filtered

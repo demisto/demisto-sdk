@@ -11,7 +11,7 @@ from demisto_sdk.commands.validate.validators.base_validator import (
 
 ContentTypes = Connector
 
-DESCRIPTION_TEMPLATE = "XSOAR handler for {name} integration"
+DESCRIPTION_TEMPLATE = "XSOAR handler for {name}."
 
 
 class IsHandlerDescriptionTemplatedValidator(ConnectorsValidator[ContentTypes]):
@@ -48,7 +48,7 @@ class IsHandlerDescriptionTemplatedValidator(ConnectorsValidator[ContentTypes]):
 
         Handlers whose ``related_integration`` is not resolved are skipped -
         the expected ``<name>`` cannot be determined without it (that case is
-        covered by CO1164).
+        covered by CO164).
         """
         results: List[ValidationResult] = []
 

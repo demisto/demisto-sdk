@@ -316,7 +316,9 @@ class ConnectorsValidator(BaseValidator[ContentTypes], ABC):
         Returns:
             bool: True if the error should and is allowed to be ignored.
         """
-        if err_code not in ignorable_errors:
+        # Error codes in ALWAYS_RUN_ON_ERROR_CODE must always run and can never
+        # be ignored, regardless of what the .connector-ignore file declares.
+        if (err_code not in ignorable_errors) or (err_code in ALWAYS_RUN_ON_ERROR_CODE):
             return False
 
         raw_getter = getattr(content_item, "get_ignored_errors", None)

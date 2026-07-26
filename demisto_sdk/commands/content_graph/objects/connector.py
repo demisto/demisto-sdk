@@ -1121,6 +1121,44 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
             return []
         return [code.strip() for code in ignore_value.split(",") if code.strip()]
 
+    @staticmethod
+    def resolve_handler_ignore_key(file_path: Optional[Path]) -> Optional[str]:
+        """Map a handler/serializer file path to its ``.connector-ignore`` key.
+
+        Handler/serializer validators emit one result per handler whose ``path``
+        points at ``.../components/handlers/<folder_name>/handler.yaml`` or
+        ``.../serializer.yaml``. The matching ``.connector-ignore`` section is
+        keyed by ``<folder_name>/handler.yaml`` / ``<folder_name>/serializer.yaml``
+        (see :meth:`ignored_errors_dict`). This resolves that key from the path.
+
+        Returns ``None`` when the path is not a connector handler/serializer file.
+        """
+        if file_path is None:
+            return None
+        filename = file_path.name
+        if filename not in ("handler.yaml", "serializer.yaml"):
+            return None
+        parent = file_path.parent
+        if parent is None or not parent.name:
+            return None
+        return f"{parent.name}/{filename}"
+
+    def is_handler_error_ignored(
+        self, error_code: str, file_path: Optional[Path]
+    ) -> bool:
+        """Whether ``error_code`` is ignored for a specific handler/serializer file.
+
+        Resolves the ``<folder_name>/handler.yaml`` / ``<folder_name>/serializer.yaml``
+        key from ``file_path`` and looks it up in the connector's
+        ``.connector-ignore``. Returns ``False`` when ``file_path`` is not a
+        handler/serializer file. Missing ignore files are handled gracefully
+        (``get_ignored_errors`` returns ``[]``).
+        """
+        ignore_key = self.resolve_handler_ignore_key(file_path)
+        if ignore_key is None:
+            return False
+        return error_code in self.get_ignored_errors(ignore_key)
+
     # === RelatedFile cached properties ===
 
     @cached_property

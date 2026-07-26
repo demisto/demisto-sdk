@@ -1203,7 +1203,7 @@ class TestCO157IsHandlerDescriptionTemplated:
                related_integration.
         When: CO157 runs.
         Then: No error is produced for that handler - the template <name>
-              cannot be determined without a resolved integration (CO1164
+              cannot be determined without a resolved integration (CO164
               covers the unresolved-integration case).
         """
         connector = create_connector_object(

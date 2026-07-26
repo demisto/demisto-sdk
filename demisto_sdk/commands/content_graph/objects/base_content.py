@@ -189,9 +189,7 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
                     # happens for content that lives in a *separate* repo (e.g.
                     # connectors in unified-connectors-content). Relativize
                     # against the item's own repo root instead of crashing.
-                    json_dct["path"] = self._relativize_external_path(
-                        content_item_path
-                    )
+                    json_dct["path"] = self._relativize_external_path(content_item_path)
             else:
                 json_dct["path"] = str(content_item_path)
         json_dct["content_type"] = self.content_type

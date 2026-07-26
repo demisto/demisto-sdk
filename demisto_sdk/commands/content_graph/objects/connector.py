@@ -612,6 +612,30 @@ class HandlerData(BaseModel):
     # Cross-link to matched Integration (set by ConnectorAwareInitializer)
     related_integration: Optional[Any] = None
 
+    # Absolute path to the owning connector's root directory. Stamped by the
+    # parent ``Connector`` (see ``_stamp_handler_paths``) so a handler can
+    # resolve its own on-disk ``handler.yaml`` without the caller needing to
+    # know the connector layout. Reusable by every handler-level validator.
+    connector_path: Optional[Path] = None
+
+    @property
+    def file_path(self) -> Optional[Path]:
+        """Absolute path to this handler's ``handler.yaml``.
+
+        Returns ``None`` when the owning connector's path is unknown (e.g. a
+        handler constructed in isolation). Mirrors ``HandlerRelatedFile``'s
+        ``<connector>/components/handlers/<dir>/handler.yaml`` layout.
+        """
+        if self.connector_path is None:
+            return None
+        return (
+            self.connector_path
+            / "components"
+            / "handlers"
+            / self.handler_dir_name
+            / "handler.yaml"
+        )
+
     @property
     def module(self) -> Optional[str]:
         return self.metadata.module
@@ -924,7 +948,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
     # === Path resolution ===
 
     @validator("path", always=True)
-    def validate_path(cls, v: Path, values) -> Path:  # noqa: N805
+    def validate_path(cls, v: Path, values) -> Path:
         """Resolve the connector's path to its real on-disk location.
 
         The base :class:`ContentItem` validator re-bases *relative* paths onto
@@ -958,6 +982,21 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         if not CONTENT_PATH.name:
             return CONTENT_PATH / v
         return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
+
+    @root_validator(skip_on_failure=True)
+    def _stamp_handler_paths(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        """Back-reference the connector's resolved path onto each handler.
+
+        Runs after field validation so ``path`` is already resolved by
+        ``validate_path``. This lets any handler-level validator use
+        ``handler.file_path`` to locate its ``handler.yaml`` without knowing
+        the connector directory layout.
+        """
+        connector_path = values.get("path")
+        if connector_path is not None:
+            for handler in values.get("handlers") or []:
+                handler.connector_path = connector_path
+        return values
 
     # === Ignored errors overrides ===
 

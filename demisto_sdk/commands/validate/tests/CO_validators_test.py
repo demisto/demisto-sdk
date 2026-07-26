@@ -1,5 +1,6 @@
-"""Tests for CO (Connector) validators - CO100-CO106, CO1164."""
+"""Tests for CO (Connector) validators - CO100-CO106, CO164."""
 
+from pathlib import Path
 from types import SimpleNamespace
 
 from demisto_sdk.commands.validate.tests.test_tools import (
@@ -29,6 +30,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO106_is_tags_union_
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO118_is_valid_connection_metadata import (
     IsValidConnectionMetadataValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO157_is_handler_description_templated import (
+    IsHandlerDescriptionTemplatedValidator,
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO164_is_matching_integration_exist import (
     IsMatchingIntegrationExistValidator,
@@ -63,17 +67,17 @@ def _stub_integration(provider=None, categories=None, tags=None):
 
 
 # ============================================================
-# CO1164 - IsMatchingIntegrationExistValidator
+# CO164 - IsMatchingIntegrationExistValidator
 # ============================================================
 
 
-class TestCO1164IsMatchingIntegrationExist:
-    """Tests for CO1164 validator: every XSOAR handler must have a resolved integration."""
+class TestCO164IsMatchingIntegrationExist:
+    """Tests for CO164 validator: every XSOAR handler must have a resolved integration."""
 
     def test_valid_handler_with_matched_integration(self):
         """
         Given: A connector whose XSOAR handler has related_integration set.
-        When: CO1164 runs.
+        When: CO164 runs.
         Then: No validation errors are returned.
         """
         connector = create_connector_object()
@@ -89,7 +93,7 @@ class TestCO1164IsMatchingIntegrationExist:
         """
         Given: A connector whose XSOAR handler has xsoar_integration_id but
                related_integration is None (integration not found in repo).
-        When: CO1164 runs.
+        When: CO164 runs.
         Then: A validation error is returned mentioning the integration ID.
         """
         connector = create_connector_object()
@@ -107,7 +111,7 @@ class TestCO1164IsMatchingIntegrationExist:
         """
         Given: A connector with two XSOAR handlers - one with an unresolved
                integration ID and one missing the ID entirely.
-        When: CO1164 runs.
+        When: CO164 runs.
         Then: A single ValidationResult is returned containing both issues.
         """
         connector = create_connector_object(
@@ -142,7 +146,7 @@ class TestCO1164IsMatchingIntegrationExist:
     def test_non_xsoar_handler_ignored(self):
         """
         Given: A connector with a non-XSOAR handler (module != 'xsoar').
-        When: CO1164 runs.
+        When: CO164 runs.
         Then: No validation errors - non-XSOAR handlers are not checked.
         """
         connector = create_connector_object(
@@ -169,7 +173,7 @@ class TestCO1164IsMatchingIntegrationExist:
     def test_multiple_connectors_independent_results(self):
         """
         Given: Two connectors - one valid (handler linked), one invalid (unresolved).
-        When: CO1164 runs on both.
+        When: CO164 runs on both.
         Then: Only the invalid connector produces a validation error.
         """
         valid_connector = create_connector_object(connector_id="valid-conn")
@@ -985,3 +989,234 @@ class TestCO190NoReservedParamNames:
         assert "engine_mode" in msg
         assert "instance_name" in msg
         assert "enginegroup" in msg
+
+
+# ============================================================
+# CO157 - IsHandlerDescriptionTemplatedValidator
+# ============================================================
+
+
+class TestCO157IsHandlerDescriptionTemplated:
+    """Tests for CO157: each XSOAR handler's metadata.description must follow
+    the template 'XSOAR handler for <name> integration', where <name> is the
+    resolved related integration's name. One error is emitted per failing
+    handler (not per connector).
+    """
+
+    def test_valid_handler_description(self):
+        """
+        Given: A connector whose XSOAR handler has a resolved integration and a
+               description matching 'XSOAR handler for <name> integration'.
+        When: CO157 runs.
+        Then: No validation errors are returned.
+        """
+        integration = create_integration_object()
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-test",
+                    "metadata": {
+                        "description": (
+                            f"XSOAR handler for {integration.name} integration"
+                        ),
+                    },
+                },
+            ]
+        )
+        connector.handlers[0].related_integration = integration
+
+        validator = IsHandlerDescriptionTemplatedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_invalid_handler_description(self):
+        """
+        Given: A connector whose XSOAR handler has a resolved integration but a
+               description that does not match the template.
+        When: CO157 runs.
+        Then: A single validation error is returned referencing the handler and
+              the expected description.
+        """
+        integration = create_integration_object()
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-test",
+                    "metadata": {
+                        "description": "Some other description",
+                    },
+                },
+            ]
+        )
+        connector.handlers[0].related_integration = integration
+
+        validator = IsHandlerDescriptionTemplatedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "xsoar-test" in msg
+        assert f"XSOAR handler for {integration.name} integration" in msg
+        # The handler.yaml path is surfaced via ValidationResult.path (like CO118),
+        # sourced from the reusable HandlerData.file_path property.
+        assert results[0].path is not None
+        assert results[0].path == connector.handlers[0].file_path
+        expected_suffix = (
+            Path("components") / "handlers" / "xsoar_test" / "handler.yaml"
+        )
+        assert str(results[0].path).endswith(str(expected_suffix))
+
+    def test_handler_file_path_property_is_stamped(self):
+        """
+        Given: A connector parsed from disk.
+        When: Accessing handler.file_path on its handlers.
+        Then: Each handler resolves its own handler.yaml under the connector,
+              proving the connector stamps connector_path onto every handler
+              (reusable by all handler-level validators).
+        """
+        connector = create_connector_object(
+            handlers=[{"id": "xsoar-test", "metadata": {"description": "x"}}]
+        )
+
+        handler = connector.handlers[0]
+        assert handler.connector_path == connector.path
+        assert handler.file_path == (
+            connector.path
+            / "components"
+            / "handlers"
+            / handler.handler_dir_name
+            / "handler.yaml"
+        )
+
+    def test_handler_file_path_none_without_connector(self):
+        """
+        Given: A HandlerData constructed in isolation (no connector).
+        When: Accessing file_path.
+        Then: It returns None rather than raising.
+        """
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerData,
+        )
+
+        handler = HandlerData(id="lonely", handler_dir_name="lonely")
+        assert handler.connector_path is None
+        assert handler.file_path is None
+
+    def test_error_per_handler_not_per_connector(self):
+        """
+        Given: A connector with two XSOAR handlers, both with invalid
+               descriptions.
+        When: CO157 runs.
+        Then: Two validation errors are returned (one per failing handler),
+              not a single connector-level error.
+        """
+        integration = create_integration_object()
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-handler-a",
+                    "metadata": {"description": "wrong A"},
+                },
+                {
+                    "id": "xsoar-handler-b",
+                    "metadata": {"description": "wrong B"},
+                },
+            ]
+        )
+        for handler in connector.handlers:
+            handler.related_integration = integration
+
+        validator = IsHandlerDescriptionTemplatedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 2
+        handler_ids_in_messages = {
+            hid
+            for hid in ("xsoar-handler-a", "xsoar-handler-b")
+            if any(hid in r.message for r in results)
+        }
+        assert handler_ids_in_messages == {"xsoar-handler-a", "xsoar-handler-b"}
+
+    def test_mixed_valid_and_invalid_handlers(self):
+        """
+        Given: A connector with one valid handler description and one invalid.
+        When: CO157 runs.
+        Then: Only the invalid handler produces an error.
+        """
+        integration = create_integration_object()
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-good",
+                    "metadata": {
+                        "description": (
+                            f"XSOAR handler for {integration.name} integration"
+                        ),
+                    },
+                },
+                {
+                    "id": "xsoar-bad",
+                    "metadata": {"description": "nope"},
+                },
+            ]
+        )
+        for handler in connector.handlers:
+            handler.related_integration = integration
+
+        validator = IsHandlerDescriptionTemplatedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "xsoar-bad" in results[0].message
+        assert "xsoar-good" not in results[0].message
+
+    def test_non_xsoar_handler_ignored(self):
+        """
+        Given: A connector with a non-XSOAR handler (module != 'xsoar').
+        When: CO157 runs.
+        Then: No validation errors - non-XSOAR handlers are not checked.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "other-handler",
+                    "metadata": {
+                        "module": "other",
+                        "description": "arbitrary description",
+                        "ownership": {"team": "other-team"},
+                    },
+                    "triggering": {"labels": None},
+                },
+            ]
+        )
+        assert len(connector.xsoar_handlers) == 0
+
+        validator = IsHandlerDescriptionTemplatedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_handler_without_resolved_integration_skipped(self):
+        """
+        Given: A connector whose XSOAR handler has no resolved
+               related_integration.
+        When: CO157 runs.
+        Then: No error is produced for that handler - the template <name>
+              cannot be determined without a resolved integration (CO1164
+              covers the unresolved-integration case).
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "xsoar-test",
+                    "metadata": {"description": "whatever"},
+                },
+            ]
+        )
+        assert connector.handlers[0].related_integration is None
+
+        validator = IsHandlerDescriptionTemplatedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0

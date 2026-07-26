@@ -15,7 +15,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from demisto_sdk.commands.common.constants import CONNECTOR_IGNORE_FILE_NAME
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -921,7 +921,106 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
     def all_connection_profile_ids(self) -> List[str]:
         return [p.id for p in (self.connection.profiles if self.connection else [])]
 
+    # === Path resolution ===
+
+    @validator("path", always=True)
+    def validate_path(cls, v: Path, values) -> Path:  # noqa: N805
+        """Resolve the connector's path to its real on-disk location.
+
+        The base :class:`ContentItem` validator re-bases *relative* paths onto
+        the content repo (``CONTENT_PATH.with_name(source_repo)``). That is
+        wrong for connectors: they live in the **separate**
+        unified-connectors-content (UCP) repo, not under ``content/``. Blindly
+        rebasing makes ``self.path`` point at ``content/connectors/<name>``,
+        which does not exist on disk - so file-level lookups such as
+        ``.connector-ignore`` silently resolve to nothing.
+
+        Resolution order:
+
+        1. Absolute paths are trusted as-is (matches base behavior).
+        2. A relative path is resolved against the current working directory
+           (during discovery the CWD is the real repo root). If that resolves
+           to an existing connector directory (contains ``connector.yaml``),
+           use it - this correctly anchors on the UCP repo.
+        3. Otherwise fall back to the base ``ContentItem`` behavior so classic
+           content resolution is unchanged.
+        """
+        if v.is_absolute():
+            return v
+
+        cwd_candidate = (Path.cwd() / v).resolve()
+        if (cwd_candidate / "connector.yaml").exists():
+            return cwd_candidate
+
+        # Fall back to the classic content-repo rebasing.
+        from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+
+        if not CONTENT_PATH.name:
+            return CONTENT_PATH / v
+        return CONTENT_PATH.with_name(values.get("source_repo", "content")) / v
+
+    # === Ignored errors overrides ===
+
+    @property
+    def ignored_errors(self) -> List[str]:
+        """Ignored error codes for the connector's main file (``connector.yaml``).
+
+        Overrides :class:`ContentItem` so it does NOT call
+        ``get_relative_path(self.path, CONTENT_PATH)`` - connectors live in a
+        separate repo, so that relativization raises ``ValueError``. The
+        connector ignore scheme keys the main file by its bare filename and
+        :meth:`get_ignored_errors` returns ``[]`` when no ``.connector-ignore``
+        exists, so a missing file is handled gracefully.
+        """
+        return self.get_ignored_errors("connector.yaml")
+
+    def ignored_errors_related_files(self, file_path: Path) -> List[str]:
+        """Ignored error codes for a connector sub-file, keyed by bare filename.
+
+        Like :attr:`ignored_errors`, this avoids ``CONTENT_PATH`` relativization
+        and gracefully returns ``[]`` when the ignore file is absent.
+        """
+        return self.get_ignored_errors(Path(file_path).name)
+
+    def _relativize_external_path(self, absolute_path: Path) -> str:
+        """Relativize a connector path against the UCP repo root.
+
+        Connectors live in the separate unified-connectors-content repo, so
+        their absolute ``path`` is not under ``CONTENT_PATH``. Keep the
+        ``connectors/<name>`` tail so the serialized value is stable and
+        repo-relative rather than filesystem-absolute.
+        """
+        parts = absolute_path.parts
+        if "connectors" in parts:
+            idx = parts.index("connectors")
+            return Path(*parts[idx:]).as_posix()
+        return super()._relativize_external_path(absolute_path)
+
     # === Ignored errors (.connector-ignore) ===
+
+    def _resolve_ignore_path(self) -> Optional[Path]:
+        """Locate the connector's ``.connector-ignore`` file on disk.
+
+        ``self.path`` should already point at the real connector directory
+        (see :meth:`validate_path`), but as a defensive fallback - e.g. when a
+        connector is reconstructed from the Neo4j graph where ``path`` may have
+        been re-based onto the content repo - we also probe a CWD-anchored
+        candidate. Returns the first existing candidate, or ``None``.
+        """
+        candidates = [self.path / CONNECTOR_IGNORE_FILE_NAME]
+
+        # CWD-anchored fallback using the connectors/<name> tail of the path,
+        # which survives content-repo re-basing.
+        parts = self.path.parts
+        if "connectors" in parts:
+            idx = parts.index("connectors")
+            tail = Path(*parts[idx:])
+            candidates.append((Path.cwd() / tail / CONNECTOR_IGNORE_FILE_NAME))
+
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        return candidates[0]
 
     @cached_property
     def ignored_errors_dict(self) -> Dict[str, Dict[str, str]]:
@@ -948,9 +1047,9 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         Returns an empty dict when the file does not exist (graceful
         fallback) or cannot be parsed.
         """
-        ignore_path = self.path / CONNECTOR_IGNORE_FILE_NAME
+        ignore_path = self._resolve_ignore_path()
         result: Dict[str, Dict[str, str]] = {}
-        if not ignore_path.exists():
+        if ignore_path is None or not ignore_path.exists():
             return result
         try:
             config = ConfigParser(allow_no_value=True)

@@ -4666,7 +4666,14 @@ def get_relative_path(file_path: Union[str, Path], relative_to: Path) -> Path:
     """
     file_path = Path(file_path)
     if file_path.is_absolute():
-        file_path = file_path.relative_to(relative_to)
+        try:
+            file_path = file_path.relative_to(relative_to)
+        except ValueError:
+            # The path is absolute but not under ``relative_to`` - e.g. content
+            # that lives in a separate repository (connectors in
+            # unified-connectors-content). Return the path unchanged rather than
+            # raising, so callers degrade gracefully.
+            return file_path
     return file_path
 
 

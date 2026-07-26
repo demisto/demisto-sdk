@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Set
 
+from demisto_sdk.commands.common.tools import capital_case
 from demisto_sdk.commands.content_graph.objects.connector import Connector
 from demisto_sdk.commands.validate.validators.base_validator import (
     ConnectorsValidator,
@@ -52,8 +53,23 @@ class IsCategoriesUnionSupersetOfPacksValidator(ConnectorsValidator[ContentTypes
                 # No linked parent-pack categories to compare against.
                 continue
 
-            connector_categories = set(connector.connector_metadata.categories)
-            missing = packs_categories - connector_categories
+            # Compare case-insensitively. Pack categories are already normalized
+            # to capital case by the pack parser (Pack.categories applies
+            # ``capital_case``), whereas the connector's metadata.categories are
+            # taken verbatim from connector.yaml. Without normalizing both sides,
+            # a mere casing difference (e.g. pack "Messaging And Conferencing"
+            # vs connector "Messaging and Conferencing") produces a false
+            # positive. We normalize for the membership check but keep the
+            # original pack-side values in the error message so it stays readable.
+            connector_categories_normalized = {
+                capital_case(category)
+                for category in connector.connector_metadata.categories
+            }
+            missing = {
+                category
+                for category in packs_categories
+                if capital_case(category) not in connector_categories_normalized
+            }
 
             if missing:
                 results.append(

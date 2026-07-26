@@ -630,6 +630,67 @@ class TestCO105IsCategoriesUnionSupersetOfPacks:
 
         assert len(results) == 0
 
+    def test_category_casing_difference_not_flagged(self):
+        """
+        Given: A parent-pack category that is capital-cased by the pack parser
+               ("Messaging And Conferencing") while the connector declares the
+               same category with lowercase joiners ("Messaging and
+               Conferencing") -- the exact zoom scenario.
+        When: CO105 runs.
+        Then: No validation error is returned; the comparison is
+              case-insensitive so a mere casing difference is not a mismatch.
+        """
+        connector = create_connector_object(
+            connector_overrides={
+                "metadata": {
+                    "categories": [
+                        "Messaging and Conferencing",
+                        "Data Enrichment & Threat Intelligence",
+                    ]
+                }
+            }
+        )
+        # Pack side arrives capital-cased (as Pack.categories does in prod).
+        connector.handlers[0].related_integration = _stub_integration(
+            categories=[
+                "Messaging And Conferencing",
+                "Data Enrichment & Threat Intelligence",
+            ]
+        )
+
+        validator = IsCategoriesUnionSupersetOfPacksValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_genuinely_missing_category_still_flagged_despite_casing(self):
+        """
+        Given: A connector that matches one pack category only by casing but is
+               genuinely missing a second, different pack category.
+        When: CO105 runs.
+        Then: The genuinely missing category is still flagged (the case-
+              insensitive fix must not suppress real misses).
+        """
+        connector = create_connector_object(
+            connector_overrides={
+                "metadata": {"categories": ["messaging and conferencing"]}
+            }
+        )
+        connector.handlers[0].related_integration = _stub_integration(
+            categories=["Messaging And Conferencing", "Network Security"]
+        )
+
+        validator = IsCategoriesUnionSupersetOfPacksValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        # The genuinely-missing category is flagged.
+        missing_part = results[0].message.split("Parent-pack categories union")[0]
+        assert "Network Security" in missing_part
+        # The casing-only match must NOT be reported as missing (it may still
+        # appear in the informational union list, so only check the missing part).
+        assert "Messaging" not in missing_part
+
 
 # ============================================================
 # CO106 - IsTagsUnionSupersetOfPacksValidator

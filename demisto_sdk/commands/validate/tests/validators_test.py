@@ -1375,6 +1375,143 @@ class TestConnectorRelatedFileDeduplication:
         assert not any("pack_metadata.json" in str(p) for p in results)
 
 
+class TestConnectorStatusMergePrecedence:
+    """Tests that a connector changed under multiple git statuses is reported once."""
+
+    @pytest.mark.parametrize(
+        "existing, incoming, expected",
+        [
+            (GitStatuses.MODIFIED, GitStatuses.ADDED, GitStatuses.MODIFIED),
+            (GitStatuses.ADDED, GitStatuses.MODIFIED, GitStatuses.MODIFIED),
+            (GitStatuses.ADDED, GitStatuses.RENAMED, GitStatuses.RENAMED),
+            (GitStatuses.ADDED, None, GitStatuses.ADDED),
+            (None, GitStatuses.ADDED, GitStatuses.ADDED),
+            (None, None, None),
+            (GitStatuses.MODIFIED, GitStatuses.RENAMED, GitStatuses.MODIFIED),
+        ],
+    )
+    def test_merge_git_statuses_precedence(self, existing, incoming, expected):
+        """
+        Given: Two git statuses that collapse onto the same content item.
+        When: _merge_git_statuses resolves them.
+        Then: The higher-precedence status is returned (MODIFIED always wins).
+        """
+        from demisto_sdk.commands.validate.initializer import _merge_git_statuses
+
+        assert _merge_git_statuses(existing, incoming) == expected
+
+    @pytest.mark.parametrize(
+        "file_statuses",
+        [
+            # MODIFIED handler first, then ADDED .connector-ignore
+            [
+                (
+                    Path("connectors/zoom/components/handlers/xsoar/handler.yaml"),
+                    GitStatuses.MODIFIED,
+                ),
+                (Path("connectors/zoom/.connector-ignore"), GitStatuses.ADDED),
+            ],
+            # Reversed order: ADDED .connector-ignore first, then MODIFIED handler
+            [
+                (Path("connectors/zoom/.connector-ignore"), GitStatuses.ADDED),
+                (
+                    Path("connectors/zoom/components/handlers/xsoar/handler.yaml"),
+                    GitStatuses.MODIFIED,
+                ),
+            ],
+        ],
+    )
+    def test_added_and_modified_connector_collapses_to_modified(self, file_statuses):
+        """
+        Given: A connector with a MODIFIED handler.yaml and a newly ADDED
+            .connector-ignore file (the exact scenario reported for zoom).
+        When: get_items_status reduces the changed files -- in either iteration
+            order.
+        Then: A single connector.yaml entry is produced, and its status is
+            MODIFIED (never ADDED), because the connector already exists.
+        """
+        initializer = Initializer()
+        connector_yaml = Path("connectors/zoom/connector.yaml")
+
+        with (
+            patch(
+                "demisto_sdk.commands.validate.initializer._is_connector_path",
+                return_value=True,
+            ),
+            patch(
+                "demisto_sdk.commands.validate.initializer._get_connector_dir",
+                return_value=Path("connectors/zoom"),
+            ),
+            patch.object(initializer, "is_unrelated_path", return_value=False),
+            patch.object(initializer, "is_pack_item", return_value=False),
+        ):
+            results = initializer.get_items_status(dict(file_statuses))
+
+        assert set(results.keys()) == {connector_yaml}
+        assert results[connector_yaml] == GitStatuses.MODIFIED
+
+
+class TestDedupByObjectId:
+    """Tests for ConnectorAwareInitializer._dedup_by_object_id."""
+
+    class _FakeObj:
+        """Minimal stand-in for BaseContent with object identity fields.
+
+        Real BaseContent objects that differ only by ``git_status`` are unequal
+        under Pydantic field-based equality, so both survive a ``set``. This fake
+        reproduces that behavior deterministically for the dedup test.
+        """
+
+        def __init__(self, content_type, object_id, git_status):
+            self.content_type = content_type
+            self.object_id = object_id
+            self.git_status = git_status
+
+    def test_dedup_prefers_modified_over_added(self):
+        """
+        Given: Two objects with the same content_type and object_id, one ADDED
+            and one MODIFIED (as produced when a connector's files carry
+            different git statuses).
+        When: _dedup_by_object_id collapses them.
+        Then: Exactly one object remains, with status MODIFIED.
+        """
+        added = self._FakeObj("connector", "zoom", GitStatuses.ADDED)
+        modified = self._FakeObj("connector", "zoom", GitStatuses.MODIFIED)
+
+        result = ConnectorAwareInitializer._dedup_by_object_id({added, modified})
+
+        assert len(result) == 1
+        assert next(iter(result)).git_status == GitStatuses.MODIFIED
+
+    def test_dedup_keeps_distinct_object_ids(self):
+        """
+        Given: Objects with different object_ids.
+        When: _dedup_by_object_id runs.
+        Then: All objects are preserved (nothing is collapsed).
+        """
+        a = self._FakeObj("connector", "zoom", GitStatuses.MODIFIED)
+        b = self._FakeObj("connector", "okta", GitStatuses.ADDED)
+
+        result = ConnectorAwareInitializer._dedup_by_object_id({a, b})
+
+        assert len(result) == 2
+        assert {o.object_id for o in result} == {"zoom", "okta"}
+
+    def test_dedup_distinguishes_by_content_type(self):
+        """
+        Given: Two objects sharing an object_id but with different content types
+            (e.g. an Integration and a Connector both named "zoom").
+        When: _dedup_by_object_id runs.
+        Then: Both are kept because they are different content items.
+        """
+        integration = self._FakeObj("integration", "zoom", GitStatuses.MODIFIED)
+        connector = self._FakeObj("connector", "zoom", GitStatuses.ADDED)
+
+        result = ConnectorAwareInitializer._dedup_by_object_id({integration, connector})
+
+        assert len(result) == 2
+
+
 # ============================================================
 # ConnectorAwareInitializer - filter / gather behavior
 # ============================================================

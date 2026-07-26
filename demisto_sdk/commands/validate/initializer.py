@@ -62,6 +62,56 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
     NotAContentItemException,
 )
 
+# Precedence for merging conflicting git statuses that collapse onto the same
+# content item (e.g. several files inside a single connector directory). A lower
+# number means higher precedence. The rationale:
+#   - MODIFIED wins over everything: if a content item that already exists gets
+#     any change, the item as a whole is "modified".
+#   - RENAMED outranks ADDED because a rename implies the item pre-existed.
+#   - ADDED outranks a bare None (an implicitly-collected related file).
+#   - None (implicitly collected) has the lowest precedence.
+# DELETED is intentionally not part of this precedence: a deleted file that
+# collapses onto an otherwise present item should never mask a real change, and
+# fully-deleted items are handled separately.
+_GIT_STATUS_PRECEDENCE: Dict[Union[GitStatuses, None], int] = {
+    GitStatuses.MODIFIED: 0,
+    GitStatuses.RENAMED: 1,
+    GitStatuses.ADDED: 2,
+    None: 3,
+}
+
+
+def _merge_git_statuses(
+    existing: Union[GitStatuses, None], incoming: Union[GitStatuses, None]
+) -> Union[GitStatuses, None]:
+    """Merge two git statuses that resolve to the same content item.
+
+    When multiple changed files collapse onto a single content item (most
+    notably a connector directory where, for example, ``handler.yaml`` is
+    MODIFIED while ``.connector-ignore`` is ADDED), the item must be represented
+    by a single status. Choosing the first-seen status is order-dependent and
+    can incorrectly mark an existing, modified connector as ADDED.
+
+    This helper resolves such conflicts deterministically using
+    ``_GIT_STATUS_PRECEDENCE`` so that, for instance, ``ADDED`` + ``MODIFIED``
+    always yields ``MODIFIED``.
+
+    Args:
+        existing: The status already recorded for the item (or ``None`` if the
+            item has not been seen yet / was only implicitly collected).
+        incoming: The status of the newly-processed file.
+
+    Returns:
+        The status with the highest precedence between the two.
+    """
+    if existing is None and incoming is None:
+        return None
+    # Treat an "unseen" item (not yet a key in the dict) the same as None so the
+    # incoming status is adopted on first sight.
+    existing_rank = _GIT_STATUS_PRECEDENCE.get(existing, len(_GIT_STATUS_PRECEDENCE))
+    incoming_rank = _GIT_STATUS_PRECEDENCE.get(incoming, len(_GIT_STATUS_PRECEDENCE))
+    return existing if existing_rank <= incoming_rank else incoming
+
 
 def _process_status_file(
     status_file: Path, modified_files: Set, added_files: Set, renamed_files: Set
@@ -952,10 +1002,20 @@ class Initializer:
                 # single connector.yaml entry.
                 connector_dir = _get_connector_dir(path)
                 path = connector_dir / "connector.yaml"
-                if path not in statuses_dict:
-                    statuses_dict[path] = (
-                        git_status if git_status != GitStatuses.RENAMED else None
-                    )
+                # A single connector directory may contain files with different
+                # git statuses (e.g. a modified handler.yaml alongside a newly
+                # added .connector-ignore). All of them collapse to the same
+                # connector.yaml key, so we must merge the statuses with a
+                # deterministic precedence instead of letting the first-seen
+                # status win. A connector that is both ADDED and MODIFIED should
+                # be treated as MODIFIED (the connector already exists and is
+                # being changed).
+                resolved_status = (
+                    git_status if git_status != GitStatuses.RENAMED else None
+                )
+                statuses_dict[path] = _merge_git_statuses(
+                    statuses_dict.get(path), resolved_status
+                )
                 # Connectors do not live under Packs/, so there is no
                 # pack_metadata.json to collect for them.
                 continue
@@ -1252,6 +1312,16 @@ class ConnectorAwareInitializer(Initializer):
             # ALL_FILES or fallback -- use parent as-is
             all_objects, invalid_items = super().gather_objects_to_run_on()
 
+        # 1b. De-duplicate objects that share the same content type + object_id.
+        # A single connector directory can yield more than one BaseContent object
+        # when its files carry different git statuses (e.g. a modified handler
+        # plus a newly added .connector-ignore). Because BaseContent equality is
+        # field-based, two such objects differ only by ``git_status`` and both
+        # survive the ``set`` in ``git_paths_to_basecontent_set``. Collapse them
+        # into a single object, preferring the higher-precedence status
+        # (MODIFIED over ADDED) so a modified connector is never reported twice.
+        all_objects = self._dedup_by_object_id(all_objects)
+
         # 2. Post-filter: keep only Integration and Connector objects
         filtered_integrations: Set[Integration] = set()
         filtered_connectors: Set[Connector] = set()
@@ -1283,6 +1353,57 @@ class ConnectorAwareInitializer(Initializer):
         )
 
         return filtered, invalid_items
+
+    @staticmethod
+    def _dedup_by_object_id(objects: Set[BaseContent]) -> Set[BaseContent]:
+        """Collapse objects sharing the same content type and object_id.
+
+        Two ``BaseContent`` objects that represent the same content item but were
+        built from files with different git statuses (e.g. a connector whose
+        handler is MODIFIED while its ``.connector-ignore`` is ADDED) are not
+        equal under Pydantic's field-based equality and therefore both remain in
+        the input ``set``. This method keeps a single object per
+        ``(content_type, object_id)`` pair, choosing the one whose ``git_status``
+        has the highest precedence via :func:`_merge_git_statuses` (so MODIFIED
+        beats ADDED).
+
+        Args:
+            objects: The set of collected content objects, possibly containing
+                duplicates that differ only by ``git_status``.
+
+        Returns:
+            A new set with at most one object per ``(content_type, object_id)``.
+        """
+        best_by_key: Dict[Tuple[Any, str], BaseContent] = {}
+        for obj in objects:
+            key = (getattr(obj, "content_type", type(obj)), obj.object_id)
+            current = best_by_key.get(key)
+            if current is None:
+                best_by_key[key] = obj
+                continue
+            # Both objects share the same identity; keep the one whose status
+            # wins the precedence merge. If the merged (winning) status matches
+            # the incoming object's status, prefer the incoming one; otherwise
+            # keep the current one.
+            merged_status = _merge_git_statuses(
+                getattr(current, "git_status", None),
+                getattr(obj, "git_status", None),
+            )
+            if merged_status == getattr(
+                obj, "git_status", None
+            ) and merged_status != getattr(current, "git_status", None):
+                logger.debug(
+                    f"De-duplicating '{obj.object_id}': replacing status "
+                    f"{getattr(current, 'git_status', None)} with {merged_status}."
+                )
+                best_by_key[key] = obj
+            else:
+                logger.debug(
+                    f"De-duplicating '{obj.object_id}': keeping status "
+                    f"{getattr(current, 'git_status', None)} over "
+                    f"{getattr(obj, 'git_status', None)}."
+                )
+        return set(best_by_key.values())
 
     def _cross_match_and_expand(
         self, integrations: Set[Integration], connectors: Set[Connector]

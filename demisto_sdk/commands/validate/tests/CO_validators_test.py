@@ -693,12 +693,12 @@ class TestCO106IsTagsUnionSupersetOfPacks:
 
 
 class TestCO118IsValidConnectionMetadata:
-    """Tests for CO118: connection.yaml metadata title/description/help."""
+    """Tests for CO118: connection.yaml metadata title/description."""
 
     def test_valid_connection_metadata(self):
         """
-        Given: A connector whose connection metadata has the correct title,
-               description, and a non-empty help.
+        Given: A connector whose connection metadata has the correct title
+               and description.
         When: CO118 runs.
         Then: No validation errors are returned.
         """
@@ -707,7 +707,6 @@ class TestCO118IsValidConnectionMetadata:
                 "metadata": {
                     "title": "Connection",
                     "description": VALID_CONNECTION_DESCRIPTION,
-                    "help": "Follow these steps to authorize.",
                 }
             }
         )
@@ -728,7 +727,6 @@ class TestCO118IsValidConnectionMetadata:
                 "metadata": {
                     "title": "Wrong Title",
                     "description": VALID_CONNECTION_DESCRIPTION,
-                    "help": "Some help text.",
                 }
             }
         )
@@ -750,7 +748,6 @@ class TestCO118IsValidConnectionMetadata:
                 "metadata": {
                     "title": "Connection",
                     "description": "Wrong description",
-                    "help": "Some help text.",
                 }
             }
         )
@@ -761,40 +758,17 @@ class TestCO118IsValidConnectionMetadata:
         assert len(results) == 1
         assert "metadata.description" in results[0].message
 
-    def test_missing_help(self):
-        """
-        Given: A connector whose connection metadata.help is empty/missing.
-        When: CO118 runs.
-        Then: A validation error mentioning help is returned.
-        """
-        connector = create_connector_object(
-            connection_data={
-                "metadata": {
-                    "title": "Connection",
-                    "description": VALID_CONNECTION_DESCRIPTION,
-                    "help": "   ",
-                }
-            }
-        )
-
-        validator = IsValidConnectionMetadataValidator()
-        results = validator.obtain_invalid_content_items([connector])
-
-        assert len(results) == 1
-        assert "metadata.help" in results[0].message
-
     def test_all_invalid_combined(self):
         """
         Given: A connector whose connection metadata is wrong on all counts.
         When: CO118 runs.
-        Then: A single ValidationResult reports all three problems.
+        Then: A single ValidationResult reports both problems.
         """
         connector = create_connector_object(
             connection_data={
                 "metadata": {
                     "title": "Nope",
                     "description": "Nope",
-                    "help": "",
                 }
             }
         )
@@ -806,7 +780,6 @@ class TestCO118IsValidConnectionMetadata:
         msg = results[0].message
         assert "metadata.title" in msg
         assert "metadata.description" in msg
-        assert "metadata.help" in msg
 
 
 # ============================================================

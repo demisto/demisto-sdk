@@ -53,6 +53,7 @@ class NoRemovedCapabilitiesValidator(ConnectorsValidator[ContentTypes]):
                             connector_id=connector.object_id,
                             removed=", ".join(map(repr, sorted(removed))),
                         ),
+                        path=connector.capabilities_file.file_path,
                         content_object=connector,
                     )
                 )

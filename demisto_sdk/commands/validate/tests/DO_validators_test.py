@@ -562,3 +562,40 @@ def test_DockerImageIsNotNativeImageValidator_obtain_invalid_content_items():
         assert content_item.type == "python"
         assert content_item.docker_image == "demisto/py3-native"
         assert content_item.name == "NativeImageDockerIntegrationScript"
+
+
+def test_DockerImageIsNotDemistoValidator_demistoextended_passes():
+    """
+    Given:
+     - 1 integration and 1 script using demistoextended/ docker images
+
+    When:
+     - Running the DockerImageIsNotDemistoValidator validator
+
+    Then:
+     - demistoextended images should pass validation (trusted repository)
+    """
+    from demisto_sdk.commands.validate.validators.DO_validators.DO101_docker_image_is_not_demisto import (
+        DockerImageIsNotDemistoValidator,
+    )
+
+    content_items = [
+        create_integration_object(
+            paths=["name", "script.dockerimage"],
+            values=[
+                "DemistoExtendedIntegration",
+                "demistoextended/accessdata:1.1.0.10177564",
+            ],
+        ),
+        create_script_object(
+            paths=["name", "dockerimage"],
+            values=[
+                "DemistoExtendedScript",
+                "demistoextended/accessdata:1.1.0.10177564",
+            ],
+        ),
+    ]
+    results = DockerImageIsNotDemistoValidator().obtain_invalid_content_items(
+        content_items
+    )
+    assert len(results) == 0

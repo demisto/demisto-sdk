@@ -109,6 +109,11 @@ pygithub = "^2.2.0"
 setuptools = ">=80.9.0"
 python-gitlab = "^8.0.0" # import gitlab
 jira = "^3.8.0"
+# Pin: 0.26+ dropped the `pydantic.BaseModel` output target, which the
+# runtime UCC schema loader (strict_objects/schema_loader.py) relies on.
+# When the SDK moves to Pydantic v2, bump this pin and switch the loader
+# to `DataModelType.PydanticV2BaseModel`.
+datamodel-code-generator = "0.25.9"
 
 [tool.poetry.extras]
 build = ["gsutil"]

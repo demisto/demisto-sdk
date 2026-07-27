@@ -72,6 +72,73 @@ class FieldGroup(BaseModel):
     fields: List[ConnectorField]
 
 
+# ConnectorOwnership / ConnectorMetadata / ConnectorSettings inherit from
+# the Pydantic classes built at runtime from $UCC_SCHEMAS_DIR (see
+# strict_objects/schema_loader.py). Fall back to hand-written shapes when
+# schemas are unavailable so the graph object still constructs.
+def _resolve_generated_types():
+    try:
+        from demisto_sdk.commands.content_graph.strict_objects.schema_loader import (
+            get_generated_module,
+        )
+
+        module = get_generated_module("connector")
+    except Exception:  # pragma: no cover
+        return None, None, None
+    if module is None:
+        return None, None, None
+    return (
+        getattr(module, "Metadata", None),
+        getattr(module, "Ownership", None),
+        getattr(module, "Settings", None),
+    )
+
+
+_GeneratedMetadata, _GeneratedOwnership, _GeneratedSettings = _resolve_generated_types()
+
+if _GeneratedOwnership is not None:
+
+    class ConnectorOwnership(_GeneratedOwnership):  # type: ignore[misc,valid-type]
+        pass
+
+else:  # pragma: no cover
+
+    class ConnectorOwnership(BaseModel):  # type: ignore[no-redef]
+        team: str = ""
+        maintainers: List[str] = []
+
+
+if _GeneratedMetadata is not None:
+
+    class ConnectorMetadata(_GeneratedMetadata):  # type: ignore[misc,valid-type]
+        pass
+
+else:  # pragma: no cover
+
+    class ConnectorMetadata(BaseModel):  # type: ignore[no-redef]
+        title: str = ""
+        description: str = ""
+        version: str = ""
+        categories: List[str] = []
+        tags: List[str] = []
+        domain: Optional[str] = None
+        vendor: str = ""
+        publisher: str = ""
+        author_image: Optional[str] = None
+        ownership: ConnectorOwnership = ConnectorOwnership()
+
+
+if _GeneratedSettings is not None:
+
+    class ConnectorSettings(_GeneratedSettings):  # type: ignore[misc,valid-type]
+        pass
+
+else:  # pragma: no cover
+
+    class ConnectorSettings(BaseModel):  # type: ignore[no-redef]
+        allow_skip_verification: bool = False
+
+
 class GeneralConfigurations(BaseModel):
     description: Optional[str] = None
     configurations: List[FieldGroup] = []
@@ -82,26 +149,8 @@ class GeneralConfigurations(BaseModel):
 # ============================================================
 
 
-class ConnectorOwnership(BaseModel):
-    team: str
-    maintainers: List[str] = []
-
-
-class ConnectorMetadata(BaseModel):
-    title: str
-    description: str
-    version: str  # semver e.g. "1.0.0"
-    categories: List[str]  # classification categories, at least one required
-    tags: List[str] = []
-    domain: Optional[str] = None
-    vendor: str
-    publisher: str
-    author_image: Optional[str] = None
-    ownership: ConnectorOwnership
-
-
-class ConnectorSettings(BaseModel):
-    allow_skip_verification: bool = True
+# ConnectorOwnership / ConnectorMetadata / ConnectorSettings are defined
+# above via the runtime UCC schema loader. Do not re-declare them here.
 
 
 # ============================================================

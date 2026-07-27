@@ -37,6 +37,7 @@ from demisto_sdk.commands.content_graph.objects.connector import (
     SerializerData,
     SubCapability,
 )
+from demisto_sdk.commands.content_graph.parsers.base_content import validate_structure
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
 from demisto_sdk.commands.content_graph.parsers.related_files import (
     CapabilitiesRelatedFile,
@@ -46,6 +47,9 @@ from demisto_sdk.commands.content_graph.parsers.related_files import (
     SerializerRelatedFile,
     SummaryRelatedFile,
     TriggersRelatedFile,
+)
+from demisto_sdk.commands.content_graph.strict_objects.connector import (
+    get_strict_connector,
 )
 
 
@@ -83,11 +87,16 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             pack_supported_modules=pack_supported_modules or [],
             git_sha=git_sha,
         )
-        # ConnectorParser inherits from ContentItemParser directly, NOT from
-        # Yaml/JsonContentItemParser, so the structure-validation hook in
-        # those classes never runs for us. Initialise ``structure_errors`` to
-        # an empty list so ``Connector.from_orm`` can pick it up.
-        self.structure_errors: list = []
+        # ConnectorParser doesn't inherit from Yaml/JsonContentItemParser,
+        # so trigger structure validation manually. Skips when the strict
+        # class is unavailable (schemas not loaded).
+        strict_cls = get_strict_connector()
+        if strict_cls is not None:
+            self.structure_errors = validate_structure(
+                strict_cls, self.yml_data, self.path / "connector.yaml"
+            )
+        else:
+            self.structure_errors = []
 
         # Parse connector.yaml fields
         self.connector_metadata: dict = self.yml_data.get("metadata", {})
@@ -120,6 +129,11 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
     @cached_property
     def yml_data(self) -> dict:
         return get_yaml(str(self.path / "connector.yaml"), git_sha=self.git_sha)
+
+    @property
+    def strict_object(self):
+        """Strict Pydantic model for connector.yaml (may be None)."""
+        return get_strict_connector()
 
     @property
     def raw_data(self) -> dict:

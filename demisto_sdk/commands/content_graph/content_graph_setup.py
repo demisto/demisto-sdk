@@ -20,5 +20,6 @@ graph_cmd_group.command("update", no_args_is_help=False)(update)
 graph_cmd_group.command("get-relationships", no_args_is_help=True)(get_relationships)
 graph_cmd_group.command("get-dependencies", no_args_is_help=True)(get_dependencies)
 
+# nightly-gate: touch to trigger must-tier classification (revert before merge)
 if __name__ == "__main__":
     graph_cmd_group()

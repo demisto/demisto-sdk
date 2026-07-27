@@ -27,8 +27,10 @@ from Utils.github_workflow_scripts.nightly_gate.check_nightly_gate import (
     LABEL_SKIPPED,
     Classification,
     Decision,
+    DecisionStatus,
     GateConfig,
     _glob_to_regex,
+    _parse_labels,
     _render_ok_comment,
     classify,
     decide,
@@ -506,11 +508,78 @@ class TestDecide:
     def test_decision_dataclass_shape(self) -> None:
         # Sanity check the Decision dataclass surface stays stable
         # (workflow YAML parses its string fields).
-        d = Decision(exit_code=1, status="fail", comment_body="x", delete_comment=False)
+        d = Decision(
+            exit_code=1,
+            status=DecisionStatus.FAIL,
+            comment_body="x",
+            delete_comment=False,
+        )
         assert d.exit_code == 1
+        # Enum inherits from `str`, so string comparison must still hold
+        # for every downstream caller that predates the enum introduction.
         assert d.status == "fail"
+        assert d.status is DecisionStatus.FAIL
         assert d.comment_body == "x"
         assert d.delete_comment is False
+
+    def test_decision_status_enum_is_str_subclass(self) -> None:
+        # Guard the DecisionStatus contract: values ARE strings so
+        # existing `== "fail"` checks, `in ("fail", "warn")` membership
+        # tests, and JSON serialization keep working unchanged.
+        assert issubclass(DecisionStatus, str)
+        assert DecisionStatus.OK == "ok"
+        assert DecisionStatus.WARN == "warn"
+        assert DecisionStatus.FAIL == "fail"
+        assert DecisionStatus.NOOP == "noop"
+        assert DecisionStatus.FAIL in ("fail", "warn")
+
+
+# ---------------------------------------------------------------------------
+# _parse_labels
+# ---------------------------------------------------------------------------
+
+
+class TestParseLabels:
+    """Cover the JSON-first label parser used by the GitHub Actions
+    workflow so the shell no longer has to munge comma-containing
+    labels."""
+
+    def test_json_takes_precedence_over_csv(self) -> None:
+        assert _parse_labels(
+            '["nightly-run-passed", "foo"]', "ignored,csv"
+        ) == ["nightly-run-passed", "foo"]
+
+    def test_empty_json_falls_back_to_csv(self) -> None:
+        assert _parse_labels("", "a, b, c") == ["a", "b", "c"]
+
+    def test_whitespace_only_json_falls_back_to_csv(self) -> None:
+        assert _parse_labels("   ", "x,y") == ["x", "y"]
+
+    def test_json_preserves_labels_with_commas(self) -> None:
+        # The whole point of switching to JSON: a shell CSV round-trip
+        # would split "weird, label" into two bogus labels.
+        assert _parse_labels('["weird, label", "clean"]', "") == [
+            "weird, label",
+            "clean",
+        ]
+
+    def test_empty_json_array_yields_empty_list(self) -> None:
+        assert _parse_labels("[]", "ignored") == []
+
+    def test_both_empty_yields_empty_list(self) -> None:
+        assert _parse_labels("", "") == []
+
+    def test_invalid_json_raises_systemexit(self) -> None:
+        with pytest.raises(SystemExit):
+            _parse_labels("not json", "")
+
+    def test_non_array_json_raises_systemexit(self) -> None:
+        with pytest.raises(SystemExit):
+            _parse_labels('{"not": "an array"}', "")
+
+    def test_json_array_with_non_strings_raises_systemexit(self) -> None:
+        with pytest.raises(SystemExit):
+            _parse_labels('["ok", 42]', "")
 
 
 # ---------------------------------------------------------------------------

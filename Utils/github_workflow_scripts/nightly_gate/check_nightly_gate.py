@@ -46,6 +46,7 @@ Otherwise the classifier falls back to the legacy precedence:
 from __future__ import annotations
 
 import argparse
+import enum
 import json
 import os
 import re
@@ -114,6 +115,47 @@ class Classification:
 # ---------------------------------------------------------------------------
 
 
+#: Table of gitignore-style glob tokens and the regex fragments they
+#: translate to. Order matters: multi-character tokens must precede
+#: their single-character prefixes so ``**`` is not tokenized as two
+#: ``*``. Each entry is ``(token, replacement)`` where ``replacement``
+#: is a callable so it can look at surrounding context (only ``**/``
+#: and ``/**/`` need this to collapse the surrounding slash).
+# NOTE on alternation order: multi-character tokens must come before
+# single-character ones so ``**`` is never split into two ``*``.
+# ``/`` is its own token (rather than being absorbed into ``literal``)
+# so ``/**/`` cannot be pre-consumed as ``literal(/) + double_star(**)
+# + literal(/)`` - that would lose the "zero-directory" collapsing
+# semantics required by e.g. ``a/**/b`` matching ``a/b``.
+_GLOB_TOKENIZER = re.compile(
+    r"""
+      (?P<double_star_dir>    /\*\*/  )   # /**/ - zero-or-more path segments
+    | (?P<lead_double_star>   ^\*\*/  )   # leading **/ - optional prefix
+    | (?P<double_star>        \*\*    )   # bare ** - match anything
+    | (?P<star>               \*      )   # * - single path segment
+    | (?P<question>           \?      )   # ? - single non-slash char
+    | (?P<slash>              /       )   # / - literal path separator
+    | (?P<literal>            [^*?/]+ )   # everything else, escaped verbatim
+    """,
+    re.VERBOSE,
+)
+
+_GLOB_REPLACEMENTS: dict[str, str] = {
+    # "a/**/b" -> "a(?:/.*)?/b" so both "a/b" and "a/x/y/b" match.
+    "double_star_dir": r"(?:/.*)?/",
+    # "**/foo" at start -> "(?:.*/)?foo".
+    "lead_double_star": r"(?:.*/)?",
+    # Bare "**" at end or unusual middle position: match anything.
+    "double_star": r".*",
+    # Single "*": match anything within a path segment.
+    "star": r"[^/]*",
+    # Single "?": match one char that is not a path separator.
+    "question": r"[^/]",
+    # Literal "/" - no escaping needed, but must be a distinct token.
+    "slash": "/",
+}
+
+
 def _glob_to_regex(pattern: str) -> re.Pattern[str]:
     """Convert a gitignore-style glob into a compiled regex.
 
@@ -121,61 +163,35 @@ def _glob_to_regex(pattern: str) -> re.Pattern[str]:
 
     * ``**`` - matches any number of characters including path
       separators (recursive descent). When it appears as a whole path
-      segment (e.g. ``a/**/b``), the surrounding ``/`` is consumed so
-      that ``a/b`` also matches.
+      segment (``a/**/b`` or ``**/b``), the surrounding ``/`` is
+      collapsed so ``a/b`` (zero-directory) also matches - matching
+      gitignore semantics.
     * ``*``  - matches any character except ``/`` (single path segment).
     * ``?``  - matches a single character except ``/``.
-    * All other regex metacharacters are escaped.
+    * All other regex metacharacters are escaped verbatim.
 
     The returned regex is anchored (``^...$``) and case-sensitive, to
     match POSIX file semantics used by git on Linux CI runners.
-    """
-    # Special-case bare `**` -> match anything (including empty).
-    if pattern == "**":
-        return re.compile(r"^.*$")
 
-    # We tokenize by walking the string so we can handle `**` before `*`.
-    i = 0
-    out: list[str] = ["^"]
-    n = len(pattern)
-    while i < n:
-        c = pattern[i]
-        if c == "*":
-            # Look ahead for `**`.
-            if i + 1 < n and pattern[i + 1] == "*":
-                # `**` -> match anything (including `/`). If the pattern
-                # is `a/**/b`, we want `a/b` to match too, so we consume
-                # the trailing `/` if we're at the start of a segment.
-                # Consume an immediately-preceding "/" that we just wrote
-                # and an immediately-following "/", collapsing to `(?:.*/)?`.
-                trailing_slash = i + 2 < n and pattern[i + 2] == "/"
-                preceding_slash = out and out[-1] == "/"
-                if preceding_slash and trailing_slash:
-                    # Rewrite "a/**/b" -> "a(?:/.*)?/b" so both "a/b"
-                    # and "a/x/y/b" match.
-                    out.pop()  # drop the "/"
-                    out.append(r"(?:/.*)?/")
-                    i += 3  # skip **/
-                elif trailing_slash:
-                    # "**/foo" at start -> optional prefix.
-                    out.append(r"(?:.*/)?")
-                    i += 3
-                else:
-                    # Bare `**` at end or in middle without trailing "/".
-                    out.append(r".*")
-                    i += 2
-            else:
-                # Single `*` -> match anything except `/`.
-                out.append(r"[^/]*")
-                i += 1
-        elif c == "?":
-            out.append(r"[^/]")
-            i += 1
+    Implementation note: this stays a small hand-rolled translator on
+    purpose. ``fnmatch`` has no concept of ``**`` and treats ``*`` as
+    "any character including /", which is the wrong semantics for
+    gitignore-style path globs. ``glob`` walks the real filesystem,
+    which we do not have (paths come from ``git diff --name-only``).
+    ``pathlib.PurePosixPath.full_match`` supports ``**`` but only
+    landed in Python 3.13, and the project targets 3.10+.
+    """
+    parts: list[str] = ["^"]
+    for match in _GLOB_TOKENIZER.finditer(pattern):
+        kind = match.lastgroup
+        assert kind is not None  # every char is covered by the alternation
+        token = match.group(kind)
+        if kind == "literal":
+            parts.append(re.escape(token))
         else:
-            out.append(re.escape(c))
-            i += 1
-    out.append("$")
-    return re.compile("".join(out))
+            parts.append(_GLOB_REPLACEMENTS[kind])
+    parts.append("$")
+    return re.compile("".join(parts))
 
 
 def _compile_patterns(patterns: Iterable[str]) -> list[re.Pattern[str]]:
@@ -273,12 +289,28 @@ def classify(files: Iterable[str], config: GateConfig) -> Classification:
 # ---------------------------------------------------------------------------
 
 
+class DecisionStatus(str, enum.Enum):
+    """Enumerated outcome states surfaced by :func:`decide`.
+
+    Inherits from :class:`str` so existing string comparisons
+    (``decision.status == "fail"``, ``in ("fail", "warn")``, JSON
+    serialization) continue to work unchanged - the enum values ARE
+    strings. Python 3.11+ ships :class:`enum.StrEnum` which would be
+    slightly nicer, but the project targets 3.10+.
+    """
+
+    OK = "ok"
+    WARN = "warn"
+    FAIL = "fail"
+    NOOP = "noop"
+
+
 @dataclass
 class Decision:
     """Final decision for the workflow step."""
 
     exit_code: int
-    status: str  # "ok" | "warn" | "fail" | "noop"
+    status: DecisionStatus
     comment_body: str | None
     delete_comment: bool = False
 
@@ -303,46 +335,53 @@ def decide(classification: Classification, labels: Iterable[str]) -> Decision:
     has_passed = LABEL_PASSED in normalized_labels
     has_skipped = LABEL_SKIPPED in normalized_labels
     has_label = has_passed or has_skipped
+    # `passed` wins over `skipped` when both are set, since the pipeline
+    # actually ran.
+    satisfying_label = LABEL_PASSED if has_passed else LABEL_SKIPPED
 
-    if classification.tier == "must":
-        if has_label:
+    # Structural-pattern-match on the (tier, has_label) decision table.
+    # Each `case` below is one row of that table, which reads much closer
+    # to the docstring's rule list than the previous nested if/else.
+    match classification.tier, has_label:
+        case "must", True:
             return Decision(
                 exit_code=0,
-                status="ok",
+                status=DecisionStatus.OK,
                 comment_body=_render_ok_comment(
-                    classification,
-                    tier="must",
-                    # `passed` wins over `skipped` when both are set,
-                    # since the pipeline actually ran.
-                    label=LABEL_PASSED if has_passed else LABEL_SKIPPED,
+                    classification, tier="must", label=satisfying_label
                 ),
             )
-        return Decision(
-            exit_code=1,
-            status="fail",
-            comment_body=_render_fail_comment(classification),
-        )
-
-    if classification.tier == "recommended":
-        if has_label:
+        case "must", False:
+            return Decision(
+                exit_code=1,
+                status=DecisionStatus.FAIL,
+                comment_body=_render_fail_comment(classification),
+            )
+        case "recommended", True:
             return Decision(
                 exit_code=0,
-                status="ok",
+                status=DecisionStatus.OK,
                 comment_body=_render_ok_comment(
                     classification,
                     tier="recommended",
-                    label=LABEL_PASSED if has_passed else LABEL_SKIPPED,
+                    label=satisfying_label,
                 ),
             )
-        return Decision(
-            exit_code=0,
-            status="warn",
-            comment_body=_render_warn_comment(classification),
-        )
-
-    # tier == 'none' or 'skip_only': nothing to enforce; remove any
-    # stale comment from previous runs.
-    return Decision(exit_code=0, status="noop", comment_body=None, delete_comment=True)
+        case "recommended", False:
+            return Decision(
+                exit_code=0,
+                status=DecisionStatus.WARN,
+                comment_body=_render_warn_comment(classification),
+            )
+        case _:
+            # tier in {'none', 'skip_only'}: nothing to enforce; remove
+            # any stale comment left over from previous runs.
+            return Decision(
+                exit_code=0,
+                status=DecisionStatus.NOOP,
+                comment_body=None,
+                delete_comment=True,
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -441,11 +480,16 @@ def _render_ok_comment(
     explicitly flags the trade-off so the author and reviewers can
     reconsider before merging.
     """
-    if tier == "must":
-        files_block = _render_file_list(cls.matched_must)
-
-        if label == LABEL_SKIPPED:
+    # Structural-pattern-match on (tier, label) so each of the four
+    # cells of the 2x2 render table (must/recommended x passed/skipped)
+    # is one `case` that reads top-to-bottom in the source. Anything
+    # other than `LABEL_SKIPPED` is treated as `LABEL_PASSED` per the
+    # existing behavior (label defaults to `LABEL_PASSED` at the
+    # signature).
+    match tier, label:
+        case "must", label_val if label_val == LABEL_SKIPPED:
             # "Skipped anyway" - do NOT fail, but push back explicitly.
+            files_block = _render_file_list(cls.matched_must)
             header = "### ⚠️ SDK Nightly skipped for a required change"
             body = (
                 f"This PR touches files that **require** a nightly run, "
@@ -462,24 +506,24 @@ def _render_ok_comment(
                 f"Content build is green.\n\n"
                 f"{_CONTENT_BUILD_ALTERNATIVE}"
             )
-        else:
+        case "must", _:
+            files_block = _render_file_list(cls.matched_must)
             header = "### ✅ SDK Nightly acknowledged (required)"
             body = (
                 f"This PR touches files that **require** a nightly run. "
                 f"The **`{LABEL_PASSED}`** label is present, so this "
                 f"check is satisfied."
             )
-    else:
-        files_block = _render_file_list(cls.matched_recommended)
-
-        if label == LABEL_SKIPPED:
+        case _, label_val if label_val == LABEL_SKIPPED:
+            files_block = _render_file_list(cls.matched_recommended)
             header = "### ✅ SDK Nightly acknowledged (recommended, skipped)"
             body = (
                 f"This PR touches files where nightly is **recommended**. "
                 f"The **`{LABEL_SKIPPED}`** label is present, so this "
                 f"check is satisfied and no nightly run is expected."
             )
-        else:
+        case _:
+            files_block = _render_file_list(cls.matched_recommended)
             header = "### ✅ SDK Nightly acknowledged (recommended)"
             body = (
                 f"This PR touches files where nightly is **recommended**. "
@@ -525,8 +569,11 @@ def load_config(path: Path) -> GateConfig:
 
 def load_changed_files(path: Path) -> list[str]:
     """Load the list of changed files from a newline-delimited file."""
-    with path.open("r", encoding="utf-8") as fh:
-        return [line.strip() for line in fh if line.strip()]
+    return [
+        line.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 def write_github_output(pairs: dict[str, str]) -> None:
@@ -558,6 +605,36 @@ def write_github_output(pairs: dict[str, str]) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _parse_labels(labels_json: str, labels_csv: str) -> list[str]:
+    """Return the effective label list, preferring the JSON form.
+
+    ``labels_json`` is expected to be the raw output of
+    ``toJSON(github.event.pull_request.labels.*.name)`` in a GitHub
+    Actions workflow (a JSON array of strings). When non-empty it is
+    used exclusively - this avoids the shell-level CSV munging that
+    breaks on labels containing commas or whitespace.
+
+    ``labels_csv`` is the legacy comma-separated fallback so existing
+    CLI callers (and tests) keep working unchanged.
+    """
+    if labels_json.strip():
+        try:
+            parsed = json.loads(labels_json)
+        except json.JSONDecodeError as exc:
+            raise SystemExit(
+                f"--labels-json is not valid JSON: {exc}"
+            ) from exc
+        if not isinstance(parsed, list) or not all(
+            isinstance(item, str) for item in parsed
+        ):
+            raise SystemExit(
+                "--labels-json must be a JSON array of strings, "
+                f"got: {parsed!r}"
+            )
+        return [item.strip() for item in parsed if item.strip()]
+    return [lbl.strip() for lbl in labels_csv.split(",") if lbl.strip()]
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -577,7 +654,17 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="",
         help=(
             "Comma-separated list of labels currently on the PR. "
-            "Empty string means no labels."
+            "Empty string means no labels. Ignored if --labels-json is given."
+        ),
+    )
+    parser.add_argument(
+        "--labels-json",
+        default="",
+        help=(
+            "JSON array of labels currently on the PR (e.g. the raw output "
+            "of `toJSON(github.event.pull_request.labels.*.name)` in a "
+            "GitHub Actions workflow). Preferred over --labels because it "
+            "handles labels containing commas or whitespace correctly."
         ),
     )
     parser.add_argument(
@@ -593,7 +680,7 @@ def main(argv: list[str] | None = None) -> int:
 
     config = load_config(args.config)
     files = load_changed_files(args.changed_files)
-    labels = [lbl.strip() for lbl in args.labels.split(",") if lbl.strip()]
+    labels = _parse_labels(args.labels_json, args.labels)
 
     classification = classify(files, config)
     decision = decide(classification, labels)

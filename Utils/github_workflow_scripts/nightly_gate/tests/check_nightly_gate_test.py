@@ -545,9 +545,10 @@ class TestParseLabels:
     labels."""
 
     def test_json_takes_precedence_over_csv(self) -> None:
-        assert _parse_labels(
-            '["nightly-run-passed", "foo"]', "ignored,csv"
-        ) == ["nightly-run-passed", "foo"]
+        assert _parse_labels('["nightly-run-passed", "foo"]', "ignored,csv") == [
+            "nightly-run-passed",
+            "foo",
+        ]
 
     def test_empty_json_falls_back_to_csv(self) -> None:
         assert _parse_labels("", "a, b, c") == ["a", "b", "c"]

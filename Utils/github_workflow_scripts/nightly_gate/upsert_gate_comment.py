@@ -67,9 +67,7 @@ class GitHubHTTPError(RuntimeError):
     """Raised when the GitHub API returns a non-2xx response."""
 
     def __init__(self, method: str, url: str, status: int, body: str) -> None:
-        super().__init__(
-            f"GitHub API {method} {url} failed with HTTP {status}: {body}"
-        )
+        super().__init__(f"GitHub API {method} {url} failed with HTTP {status}: {body}")
         self.method = method
         self.url = url
         self.status = status
@@ -102,9 +100,7 @@ def _github_request(
         data = json.dumps(payload).encode("utf-8")
         headers["Content-Type"] = "application/json"
 
-    request = urllib.request.Request(  # noqa: S310 (URL is a constant API host)
-        url, data=data, headers=headers, method=method
-    )
+    request = urllib.request.Request(url, data=data, headers=headers, method=method)
     do_open = opener or urllib.request.urlopen
     try:
         with do_open(request) as response:
@@ -241,10 +237,7 @@ def upsert_sticky_comment(
     existing_ids = _find_marker_comment_ids(
         api_base, repo, pr_number, token, marker, opener=opener
     )
-    log(
-        f"Found {len(existing_ids)} existing gate comment(s) "
-        f"on PR #{pr_number}."
-    )
+    log(f"Found {len(existing_ids)} existing gate comment(s) " f"on PR #{pr_number}.")
 
     if delete:
         # Files no longer touch any gated path (e.g. author reverted the
@@ -277,9 +270,7 @@ def upsert_sticky_comment(
             )
             for comment_id in duplicates:
                 log(f"Deleting gate comment {comment_id}")
-                _delete_comment(
-                    api_base, repo, comment_id, token, opener=opener
-                )
+                _delete_comment(api_base, repo, comment_id, token, opener=opener)
         return
 
     log("Creating new gate comment")
@@ -340,16 +331,12 @@ def main(argv: list[str] | None = None) -> int:
             f"PR_NUMBER must be an integer, got: {pr_number_str!r}"
         ) from exc
 
-    api_base = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip(
-        "/"
-    )
+    api_base = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")
 
     # Environment variables are the primary transport from the workflow
     # (multi-line-safe, no shell-quoting risk). CLI flags override for
     # local debugging.
-    body = args.body if args.body is not None else os.environ.get(
-        "COMMENT_BODY", ""
-    )
+    body = args.body if args.body is not None else os.environ.get("COMMENT_BODY", "")
     delete = args.delete or _env_flag("DELETE_COMMENT")
 
     upsert_sticky_comment(

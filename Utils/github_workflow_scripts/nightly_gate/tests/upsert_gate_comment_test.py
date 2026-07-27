@@ -33,7 +33,7 @@ from Utils.github_workflow_scripts.nightly_gate.upsert_gate_comment import (
 API = "https://api.github.com"
 REPO = "demisto/demisto-sdk"
 PR = 1234
-TOKEN = "fake-token"  # noqa: S105 (test fixture, not a real secret)
+TOKEN = "fake-token"
 
 
 # ---------------------------------------------------------------------------
@@ -138,9 +138,7 @@ class TestCreateBranch:
         assert len(opener.calls) == 2
         get_call, post_call = opener.calls
         assert get_call[0] == "GET"
-        assert get_call[1].startswith(
-            f"{API}/repos/{REPO}/issues/{PR}/comments"
-        )
+        assert get_call[1].startswith(f"{API}/repos/{REPO}/issues/{PR}/comments")
         assert post_call == (
             "POST",
             f"{API}/repos/{REPO}/issues/{PR}/comments",
@@ -158,7 +156,7 @@ class TestUpdateBranch:
     def test_updates_oldest_and_deletes_duplicates(self) -> None:
         # Two existing marker comments (dupe scenario) + one unrelated.
         comments = [
-            _comment(101, f"unrelated body"),
+            _comment(101, "unrelated body"),
             _comment(202, f"first marker {COMMENT_MARKER} body"),
             _comment(303, f"second marker {COMMENT_MARKER} body"),
         ]
@@ -193,17 +191,13 @@ class TestUpdateBranch:
             f"{API}/repos/{REPO}/issues/comments/303",
             None,
         )
-        assert any(
-            "Updating existing gate comment 202" in line for line in logs
-        )
+        assert any("Updating existing gate comment 202" in line for line in logs)
         assert any("Deduplicating" in line for line in logs)
 
     def test_single_existing_comment_is_updated_without_deletes(self) -> None:
         opener = _FakeOpener(
             [
-                _list_response(
-                    [_comment(42, f"{COMMENT_MARKER} old body")]
-                ),
+                _list_response([_comment(42, f"{COMMENT_MARKER} old body")]),
                 _FakeResponse(200, "{}"),  # PATCH only
             ]
         )
@@ -285,9 +279,7 @@ class TestSkipBranch:
     def test_empty_body_without_delete_only_lists_and_returns(self) -> None:
         opener = _FakeOpener(
             [
-                _list_response(
-                    [_comment(9, f"{COMMENT_MARKER} still here")]
-                ),
+                _list_response([_comment(9, f"{COMMENT_MARKER} still here")]),
             ]
         )
         logs: list[str] = []
@@ -316,12 +308,8 @@ class TestPagination:
         page2 = f"{API}/repos/{REPO}/issues/{PR}/comments?per_page=100&page=2"
         opener = _FakeOpener(
             [
-                _list_response(
-                    [_comment(1, "unrelated")], next_url=page2
-                ),
-                _list_response(
-                    [_comment(2, f"{COMMENT_MARKER} on page 2")]
-                ),
+                _list_response([_comment(1, "unrelated")], next_url=page2),
+                _list_response([_comment(2, f"{COMMENT_MARKER} on page 2")]),
                 _FakeResponse(200, "{}"),  # PATCH on the found comment
             ]
         )
@@ -348,9 +336,7 @@ class TestNextLink:
         assert _next_link(header) == "https://api.example/x?page=2"
 
     def test_returns_none_when_no_next(self) -> None:
-        assert (
-            _next_link('<https://api.example/x?page=5>; rel="last"') is None
-        )
+        assert _next_link('<https://api.example/x?page=5>; rel="last"') is None
 
     def test_returns_none_for_empty_header(self) -> None:
         assert _next_link("") is None

@@ -621,15 +621,12 @@ def _parse_labels(labels_json: str, labels_csv: str) -> list[str]:
         try:
             parsed = json.loads(labels_json)
         except json.JSONDecodeError as exc:
-            raise SystemExit(
-                f"--labels-json is not valid JSON: {exc}"
-            ) from exc
+            raise SystemExit(f"--labels-json is not valid JSON: {exc}") from exc
         if not isinstance(parsed, list) or not all(
             isinstance(item, str) for item in parsed
         ):
             raise SystemExit(
-                "--labels-json must be a JSON array of strings, "
-                f"got: {parsed!r}"
+                "--labels-json must be a JSON array of strings, " f"got: {parsed!r}"
             )
         return [item.strip() for item in parsed if item.strip()]
     return [lbl.strip() for lbl in labels_csv.split(",") if lbl.strip()]

@@ -30,8 +30,17 @@ on:
       - unlabeled
 
 # Cancel superseded runs on the same PR to save CI minutes.
+#
+# NOTE: The concurrency group intentionally includes `github.event.action`.
+# Without it, a rapid `labeled` + `unlabeled` pair (e.g. swapping
+# `nightly-run-skipped` for `nightly-run-passed`) collides in the same
+# group, and `cancel-in-progress: true` kills the first run before it
+# can upsert the sticky comment - leaving a stale comment on the PR.
+# Keying on the action lets each label event finish its own comment
+# refresh while still cancelling superseded pushes (`synchronize` vs
+# `synchronize`, etc.).
 concurrency:
-  group: nightly-gate-${{ github.head_ref || github.ref }}
+  group: nightly-gate-${{ github.head_ref || github.ref }}-${{ github.event.action }}
   cancel-in-progress: true
 
 # Least-privilege token: we need to read PR metadata, write comments,

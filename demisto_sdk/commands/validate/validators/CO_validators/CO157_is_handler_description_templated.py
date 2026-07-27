@@ -18,13 +18,13 @@ class IsHandlerDescriptionTemplatedValidator(ConnectorsValidator[ContentTypes]):
     error_code = "CO157"
     description = (
         "Validates that each XSOAR handler's metadata.description follows the "
-        "template 'XSOAR handler for <name> integration', where <name> is the "
+        "template 'XSOAR handler for <name>.', where <name> is the "
         "name of the handler's related integration."
     )
     rationale = (
         "XSOAR handler descriptions are auto-generated from a fixed template "
         "so they stay consistent across all connectors. A description that "
-        "deviates from 'XSOAR handler for <name> integration' indicates the "
+        "deviates from 'XSOAR handler for <name>.' indicates the "
         "handler.yaml was edited manually or generated incorrectly."
     )
     error_message = (

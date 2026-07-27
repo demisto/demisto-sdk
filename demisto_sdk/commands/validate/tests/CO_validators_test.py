@@ -1059,7 +1059,7 @@ class TestCO190NoReservedParamNames:
 
 class TestCO157IsHandlerDescriptionTemplated:
     """Tests for CO157: each XSOAR handler's metadata.description must follow
-    the template 'XSOAR handler for <name> integration', where <name> is the
+    the template 'XSOAR handler for <name>.', where <name> is the
     resolved related integration's name. One error is emitted per failing
     handler (not per connector).
     """
@@ -1067,7 +1067,7 @@ class TestCO157IsHandlerDescriptionTemplated:
     def test_valid_handler_description(self):
         """
         Given: A connector whose XSOAR handler has a resolved integration and a
-               description matching 'XSOAR handler for <name> integration'.
+               description matching 'XSOAR handler for <name>.'.
         When: CO157 runs.
         Then: No validation errors are returned.
         """
@@ -1077,9 +1077,7 @@ class TestCO157IsHandlerDescriptionTemplated:
                 {
                     "id": "xsoar-test",
                     "metadata": {
-                        "description": (
-                            f"XSOAR handler for {integration.name} integration"
-                        ),
+                        "description": (f"XSOAR handler for {integration.name}."),
                     },
                 },
             ]
@@ -1118,7 +1116,7 @@ class TestCO157IsHandlerDescriptionTemplated:
         assert len(results) == 1
         msg = results[0].message
         assert "xsoar-test" in msg
-        assert f"XSOAR handler for {integration.name} integration" in msg
+        assert f"XSOAR handler for {integration.name}." in msg
         # The handler.yaml path is surfaced via ValidationResult.path (like CO118),
         # sourced from the reusable HandlerData.file_path property.
         assert results[0].path is not None
@@ -1211,9 +1209,7 @@ class TestCO157IsHandlerDescriptionTemplated:
                 {
                     "id": "xsoar-good",
                     "metadata": {
-                        "description": (
-                            f"XSOAR handler for {integration.name} integration"
-                        ),
+                        "description": (f"XSOAR handler for {integration.name}."),
                     },
                 },
                 {

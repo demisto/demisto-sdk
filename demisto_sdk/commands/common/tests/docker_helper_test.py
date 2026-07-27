@@ -467,12 +467,8 @@ def test_is_image_available_with_registry_prefix_when_pull_succeeds(mocker):
 
     # Then
     assert result is True
-    get_registry_mock.assert_called_once_with(
-        "devtestdemistoextended/python3:1.0.0"
-    )
-    pull_mock.assert_called_once_with(
-        "registry/devtestdemistoextended/python3:1.0.0"
-    )
+    get_registry_mock.assert_called_once_with("devtestdemistoextended/python3:1.0.0")
+    pull_mock.assert_called_once_with("registry/devtestdemistoextended/python3:1.0.0")
     dockerhub_api_mock.assert_not_called()
 
 
@@ -605,7 +601,9 @@ def test_verify_image_available_after_push_when_available_returns(mocker):
     sleep_mock = mocker.patch.object(dhelper.time, "sleep")
 
     # When
-    dhelper.DockerBase._verify_image_available_after_push("devtestdemisto/python3:1.0.0")
+    dhelper.DockerBase._verify_image_available_after_push(
+        "devtestdemisto/python3:1.0.0"
+    )
 
     # Then
     api_mock.assert_called_once_with("devtestdemisto/python3", "1.0.0")

@@ -312,6 +312,26 @@ class DockerBase:
             return ret
 
     @staticmethod
+    def _is_image_available_on_registry(repo: str, tag: str) -> bool:
+        """Check whether an image manifest exists on DockerHub via the Registry API.
+
+        This queries the DockerHub Registry API directly, bypassing the local
+        Docker daemon and any proxy/virtual registry configured in it.
+
+        Args:
+            repo (str): The repository name, e.g. ``devtestdemisto/python3``.
+            tag (str): The image tag, e.g. ``3.10.0.12345-abcdef``.
+
+        Returns:
+            bool: True if the image manifest is available on DockerHub.
+
+        Raises:
+            RuntimeError: If the token or digest could not be obtained.
+        """
+        token = _get_docker_hub_token(repo)
+        return bool(_get_image_digest(repo, tag, token))
+
+    @staticmethod
     def is_image_available(
         image: str,
     ) -> bool:
@@ -328,8 +348,7 @@ class DockerBase:
             else:
                 try:
                     repo, tag = image.split(":")
-                    token = _get_docker_hub_token(repo)
-                    if _get_image_digest(repo, tag, token):
+                    if DockerBase._is_image_available_on_registry(repo, tag):
                         return True
                 except RuntimeError as e:
                     logger.debug(f"Error getting image data {image}: {e}")
@@ -481,8 +500,10 @@ class DockerBase:
         """
         if ":" not in image:
             repo, tag = image, "latest"
+        elif image.count(":") > 1:
+            raise ValueError(f"Invalid docker image: {image}")
         else:
-            repo, tag = image.rsplit(":", 1)
+            repo, tag = image.split(":")
 
         logger.info(
             f"{log_prompt} - Verifying pushed image {image} is available on DockerHub "
@@ -491,12 +512,7 @@ class DockerBase:
 
         for attempt in range(1, max_retries + 1):
             try:
-                token = _get_docker_hub_token(repo)
-                if not token:
-                    raise RuntimeError(
-                        f"Failed to obtain DockerHub token for repo {repo}"
-                    )
-                _get_image_digest(repo, tag, token)
+                DockerBase._is_image_available_on_registry(repo, tag)
                 logger.success(
                     f"{log_prompt} - Image verification succeeded for {image} "
                     f"on attempt {attempt}."

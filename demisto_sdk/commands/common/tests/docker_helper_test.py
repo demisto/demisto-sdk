@@ -388,6 +388,83 @@ def test_verify_image_available_after_push_when_never_available_raises(mocker):
     assert sleep_mock.call_count == 2
 
 
+def test_verify_image_available_after_push_when_multiple_colons_raises(mocker):
+    """
+    Given:
+        - An image name containing more than one ':'.
+    When:
+        - _verify_image_available_after_push is called.
+    Then:
+        - A ValueError is raised and no registry/token lookups are attempted.
+    """
+    # Given
+    token_mock = mocker.patch.object(dhelper, "_get_docker_hub_token")
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When / Then
+    with pytest.raises(ValueError, match="Invalid docker image"):
+        dhelper.DockerBase._verify_image_available_after_push(
+            "devtestdemisto/python3:1.0.0:extra"
+        )
+
+    token_mock.assert_not_called()
+    sleep_mock.assert_not_called()
+
+
+def test_is_image_available_on_registry_when_present_returns_true(mocker):
+    """
+    Given:
+        - A repo/tag whose token and digest lookups succeed.
+    When:
+        - _is_image_available_on_registry is called.
+    Then:
+        - It returns True after querying the DockerHub Registry API directly.
+    """
+    # Given
+    token_mock = mocker.patch.object(
+        dhelper, "_get_docker_hub_token", return_value="tok"
+    )
+    digest_mock = mocker.patch.object(
+        dhelper, "_get_image_digest", return_value="sha256:abc"
+    )
+
+    # When
+    result = dhelper.DockerBase._is_image_available_on_registry(
+        "devtestdemisto/python3", "1.0.0"
+    )
+
+    # Then
+    assert result is True
+    token_mock.assert_called_once_with("devtestdemisto/python3")
+    digest_mock.assert_called_once_with("devtestdemisto/python3", "1.0.0", "tok")
+
+
+def test_is_image_available_on_registry_when_token_lookup_fails_propagates(mocker):
+    """
+    Given:
+        - A token lookup that raises RuntimeError.
+    When:
+        - _is_image_available_on_registry is called.
+    Then:
+        - The RuntimeError propagates and the digest is never queried.
+    """
+    # Given
+    mocker.patch.object(
+        dhelper,
+        "_get_docker_hub_token",
+        side_effect=RuntimeError("Failed to get docker hub token"),
+    )
+    digest_mock = mocker.patch.object(dhelper, "_get_image_digest")
+
+    # When / Then
+    with pytest.raises(RuntimeError, match="Failed to get docker hub token"):
+        dhelper.DockerBase._is_image_available_on_registry(
+            "devtestdemisto/python3", "1.0.0"
+        )
+
+    digest_mock.assert_not_called()
+
+
 def test_verify_image_available_after_push_retries_on_network_error(mocker):
     """
     Given:

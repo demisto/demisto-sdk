@@ -201,6 +201,160 @@ def test_create_docker_container_successfully(
     )
 
 
+def test_is_image_available_with_registry_prefix_when_pull_succeeds(mocker):
+    """
+    Given:
+        - An image and use_registry_prefix=True, where pulling the
+          registry-qualified image succeeds.
+    When:
+        - is_image_available is called.
+    Then:
+        - It returns True, resolves the registry via get_image_registry, and does
+          not query the DockerHub API.
+    """
+    # Given
+    get_registry_mock = mocker.patch.object(
+        dhelper.DockerBase,
+        "get_image_registry",
+        return_value="registry/devtestdemistoextended/python3:1.0.0",
+    )
+    pull_mock = mocker.patch.object(dhelper.DockerBase, "pull_image")
+    dockerhub_api_mock = mocker.patch.object(
+        dhelper.DockerBase, "_is_image_available_on_registry"
+    )
+
+    # When
+    result = dhelper.DockerBase.is_image_available(
+        "devtestdemistoextended/python3:1.0.0", use_registry_prefix=True
+    )
+
+    # Then
+    assert result is True
+    get_registry_mock.assert_called_once_with(
+        "devtestdemistoextended/python3:1.0.0"
+    )
+    pull_mock.assert_called_once_with(
+        "registry/devtestdemistoextended/python3:1.0.0"
+    )
+    dockerhub_api_mock.assert_not_called()
+
+
+def test_is_image_available_with_registry_prefix_when_not_found_returns_false(mocker):
+    """
+    Given:
+        - use_registry_prefix=True where pulling raises docker NotFound.
+    When:
+        - is_image_available is called.
+    Then:
+        - It returns False.
+    """
+    # Given
+    mocker.patch.object(
+        dhelper.DockerBase,
+        "get_image_registry",
+        return_value="registry/devtestdemistoextended/python3:1.0.0",
+    )
+    mocker.patch.object(
+        dhelper.DockerBase,
+        "pull_image",
+        side_effect=dhelper.docker.errors.NotFound("nope"),
+    )
+
+    # When
+    result = dhelper.DockerBase.is_image_available(
+        "devtestdemistoextended/python3:1.0.0", use_registry_prefix=True
+    )
+
+    # Then
+    assert result is False
+
+
+def test_verify_image_available_after_push_for_gar_image_uses_daemon(mocker):
+    """
+    Given:
+        - A GAR-hosted image (repo starts with the GAR prefix).
+    When:
+        - _verify_image_available_after_push is called and the image is available.
+    Then:
+        - Verification is done via is_image_available(use_registry_prefix=True)
+          and the DockerHub Registry API is not queried.
+    """
+    # Given
+    is_available_mock = mocker.patch.object(
+        dhelper.DockerBase, "is_image_available", return_value=True
+    )
+    dockerhub_api_mock = mocker.patch.object(
+        dhelper.DockerBase, "_is_image_available_on_registry"
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When
+    dhelper.DockerBase._verify_image_available_after_push(
+        f"{dhelper.GAR_IMAGE_REPO_PREFIX}/python3:1.0.0"
+    )
+
+    # Then
+    is_available_mock.assert_called_once_with(
+        f"{dhelper.GAR_IMAGE_REPO_PREFIX}/python3:1.0.0", use_registry_prefix=True
+    )
+    dockerhub_api_mock.assert_not_called()
+    sleep_mock.assert_not_called()
+
+
+def test_verify_image_available_after_push_for_gar_image_retries_then_raises(mocker):
+    """
+    Given:
+        - A GAR-hosted image that is never available via the daemon.
+    When:
+        - _verify_image_available_after_push is called with a small retry budget.
+    Then:
+        - It retries and finally raises DockerException.
+    """
+    # Given
+    is_available_mock = mocker.patch.object(
+        dhelper.DockerBase, "is_image_available", return_value=False
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When / Then
+    with pytest.raises(dhelper.DockerException, match="Image verification failed"):
+        dhelper.DockerBase._verify_image_available_after_push(
+            f"{dhelper.GAR_IMAGE_REPO_PREFIX}/python3:1.0.0",
+            max_retries=3,
+            delay_seconds=5,
+        )
+
+    assert is_available_mock.call_count == 3
+    assert sleep_mock.call_count == 2
+
+
+def test_verify_image_available_after_push_for_dockerhub_image_uses_api(mocker):
+    """
+    Given:
+        - A non-GAR (DockerHub) image.
+    When:
+        - _verify_image_available_after_push is called and the image is available.
+    Then:
+        - Verification is done via the DockerHub Registry API and the daemon-based
+          is_image_available is not used.
+    """
+    # Given
+    dockerhub_api_mock = mocker.patch.object(
+        dhelper.DockerBase, "_is_image_available_on_registry", return_value=True
+    )
+    is_available_mock = mocker.patch.object(dhelper.DockerBase, "is_image_available")
+    mocker.patch.object(dhelper.time, "sleep")
+
+    # When
+    dhelper.DockerBase._verify_image_available_after_push(
+        "devtestdemisto/python3:1.0.0"
+    )
+
+    # Then
+    dockerhub_api_mock.assert_called_once_with("devtestdemisto/python3", "1.0.0")
+    is_available_mock.assert_not_called()
+
+
 def test_push_image_when_push_succeeds_verifies_image(mocker):
     """
     Given:

@@ -51,6 +51,9 @@ DEMISTO_PYTHON_BASE_IMAGE_REGEX = re.compile(
 
 TEST_REQUIREMENTS_DIR = Path(__file__).parent.parent / "pre_commit" / "resources"
 DOCKER_CONTAINER_TIMEOUT = int(os.getenv("DOCKER_CONTAINER_TIMEOUT") or 300)
+# Repositories under this prefix are hosted in GAR (not DockerHub), so their
+# availability cannot be verified via the DockerHub Registry API.
+GAR_IMAGE_REPO_PREFIX = "devtestdemistoextended"
 
 
 class DockerException(Exception):
@@ -334,7 +337,34 @@ class DockerBase:
     @staticmethod
     def is_image_available(
         image: str,
+        use_registry_prefix: bool = False,
     ) -> bool:
+        """Check whether an image is available.
+
+        By default, this checks the local Docker daemon and falls back to the
+        DockerHub Registry API. For images that live in a non-DockerHub registry
+        (e.g. GAR-hosted ``devtestdemistoextended`` images), set
+        ``use_registry_prefix=True`` to resolve the image through the configured
+        registry (via :meth:`get_image_registry`) and pull it, instead of
+        querying the DockerHub API which cannot see such images.
+
+        Args:
+            image (str): The image name, e.g. ``devtestdemisto/python3:1.0.0``.
+            use_registry_prefix (bool): When True, verify availability by pulling
+                the registry-qualified image instead of using the DockerHub API.
+
+        Returns:
+            bool: True if the image is available.
+        """
+        if use_registry_prefix:
+            registry_image = DockerBase.get_image_registry(image)
+            try:
+                DockerBase.pull_image(registry_image)
+                return True
+            except (docker.errors.NotFound, docker.errors.ImageNotFound):
+                logger.debug(f"Image {registry_image} not found in registry")
+                return False
+
         docker_client = init_global_docker_client(log_prompt="get_image")
         try:
             docker_client.images.get(image)
@@ -484,12 +514,15 @@ class DockerBase:
         max_retries: int = 10,
         delay_seconds: int = 30,
     ) -> None:
-        """Verify a pushed image exists on DockerHub by querying the registry API.
+        """Verify a pushed image is available in its registry.
 
         After pushing, the registry may take a few minutes to propagate the image.
-        This method queries the DockerHub Registry API directly (bypassing any
-        proxy/virtual registry configured in the Docker daemon) to confirm the
-        image manifest is available.
+        For DockerHub-hosted images this queries the DockerHub Registry API
+        directly (bypassing any proxy/virtual registry configured in the Docker
+        daemon). For images hosted in a non-DockerHub registry (e.g. GAR-hosted
+        ``devtestdemistoextended`` images), the DockerHub API cannot see them, so
+        verification is done by resolving and pulling the registry-qualified
+        image via :meth:`is_image_available`.
 
         Args:
             image (str): The image name (without registry prefix), e.g.
@@ -505,14 +538,27 @@ class DockerBase:
         else:
             repo, tag = image.split(":")
 
+        # GAR-hosted images are not visible via the DockerHub Registry API, so
+        # verify them through the configured registry (daemon pull) instead.
+        is_gar_image = repo.startswith(GAR_IMAGE_REPO_PREFIX)
+        registry_name = "the registry (GAR)" if is_gar_image else "DockerHub"
+
         logger.info(
-            f"{log_prompt} - Verifying pushed image {image} is available on DockerHub "
-            f"(up to {max_retries} attempts, {delay_seconds}s apart)."
+            f"{log_prompt} - Verifying pushed image {image} is available on "
+            f"{registry_name} (up to {max_retries} attempts, {delay_seconds}s apart)."
         )
 
         for attempt in range(1, max_retries + 1):
             try:
-                DockerBase._is_image_available_on_registry(repo, tag)
+                if is_gar_image:
+                    if not DockerBase.is_image_available(
+                        image, use_registry_prefix=True
+                    ):
+                        raise RuntimeError(
+                            f"Image {image} not yet available in registry"
+                        )
+                else:
+                    DockerBase._is_image_available_on_registry(repo, tag)
                 logger.success(
                     f"{log_prompt} - Image verification succeeded for {image} "
                     f"on attempt {attempt}."
@@ -540,7 +586,9 @@ class DockerBase:
 
         raise DockerException(
             f"{log_prompt} - Image verification failed: {image} was not found on DockerHub "
-            f"after {max_retries} attempts ({max_retries * delay_seconds}s total). "
+            f"after {max_retries} attempts "
+            f"(~{(max_retries - 1) * delay_seconds}s of delay between attempts, "
+            f"excluding request time). "
             f"The registry may not have propagated the image in time."
         )
 

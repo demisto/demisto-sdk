@@ -61,9 +61,7 @@ def wire_mocks(mocker):
     mocker.patch.object(
         validate_setup, "is_sdk_defined_working_offline", return_value=False
     )
-    mocker.patch.object(
-        validate_setup, "is_external_repository", return_value=False
-    )
+    mocker.patch.object(validate_setup, "is_external_repository", return_value=False)
     mocker.patch.object(validate_setup, "validate_paths", return_value=None)
     mocker.patch.object(
         validate_setup, "update_command_args_from_config_file", return_value=None
@@ -73,9 +71,7 @@ def wire_mocks(mocker):
         "determine_execution_mode",
         return_value=ExecutionMode.ALL_FILES,
     )
-    mocker.patch.object(
-        validate_setup, "warn_on_ignored_flags", return_value=None
-    )
+    mocker.patch.object(validate_setup, "warn_on_ignored_flags", return_value=None)
     mocker.patch.object(validate_setup, "run_new_validation", return_value=0)
     mocker.patch.object(validate_setup, "run_old_validation", return_value=0)
 

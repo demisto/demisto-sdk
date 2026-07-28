@@ -52,9 +52,7 @@ def fake_ucc(tmp_path: Path) -> Path:
 
     datadog_handler = connectors / "datadog" / "components" / "handlers" / "xsoar"
     datadog_handler.mkdir(parents=True)
-    (connectors / "datadog" / "connector.yaml").write_text(
-        "name: datadog\n"
-    )
+    (connectors / "datadog" / "connector.yaml").write_text("name: datadog\n")
     (datadog_handler / "handler.yaml").write_text("handler: datadog\n")
 
     (connectors / "okta").mkdir(parents=True)
@@ -114,12 +112,7 @@ class TestCopyConnectors:
         assert dest_root.is_dir()
         assert (dest_root / "datadog" / "connector.yaml").is_file()
         assert (
-            dest_root
-            / "datadog"
-            / "components"
-            / "handlers"
-            / "xsoar"
-            / "handler.yaml"
+            dest_root / "datadog" / "components" / "handlers" / "xsoar" / "handler.yaml"
         ).is_file()
         assert (dest_root / "okta" / "connector.yaml").is_file()
 
@@ -179,16 +172,10 @@ class TestCopyConnectors:
         manager.copy_connectors()
 
         # Existing file untouched.
-        assert (
-            dest_connector / "connector.yaml"
-        ).read_text() == "name: EXISTING\n"
+        assert (dest_connector / "connector.yaml").read_text() == "name: EXISTING\n"
         # New handler subtree copied in.
         assert (
-            dest_connector
-            / "components"
-            / "handlers"
-            / "xsoar"
-            / "handler.yaml"
+            dest_connector / "components" / "handlers" / "xsoar" / "handler.yaml"
         ).is_file()
 
         # Okta is fully new: whole dir copied at the top level.
@@ -345,9 +332,7 @@ class TestCleanup:
         assert not (fake_content / CONNECTORS_FOLDER / "datadog").exists()
         assert not (fake_content / CONNECTORS_FOLDER / "okta").exists()
 
-    def test_cleanup_is_idempotent(
-        self, fake_ucc: Path, fake_content: Path
-    ) -> None:
+    def test_cleanup_is_idempotent(self, fake_ucc: Path, fake_content: Path) -> None:
         manager = UnifiedConnectorContentManager(
             connectors_content_path=fake_ucc,
             content_path=fake_content,
@@ -386,9 +371,9 @@ class TestNestedWithPrivateContentManager:
         # PrivateContentManager can enter without raising).
         content_private = tmp_path / "content-private"
         (content_private / "Packs" / "MyPrivatePack").mkdir(parents=True)
-        (
-            content_private / "Packs" / "MyPrivatePack" / "pack_metadata.json"
-        ).write_text("{}")
+        (content_private / "Packs" / "MyPrivatePack" / "pack_metadata.json").write_text(
+            "{}"
+        )
 
         # Lazy import to keep the test file's top-level cheap.
         from demisto_sdk.commands.validate.private_content_manager import (
@@ -469,9 +454,9 @@ class TestNestedWithPrivateContentManager:
 
         priv.__enter__()
         priv_handler = signal.getsignal(signal.SIGINT)
-        assert priv_handler is not original_sigint, (
-            "PrivateContentManager should have installed its own SIGINT handler."
-        )
+        assert (
+            priv_handler is not original_sigint
+        ), "PrivateContentManager should have installed its own SIGINT handler."
 
         try:
             ucc.__enter__()

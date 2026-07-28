@@ -136,9 +136,7 @@ class UnifiedConnectorContentManager:
         if not dest_connectors_path.exists():
             dest_connectors_path.mkdir(parents=True, exist_ok=False)
             self._created_dest_root = True
-            logger.debug(
-                f"Created destination connectors root: {dest_connectors_path}"
-            )
+            logger.debug(f"Created destination connectors root: {dest_connectors_path}")
 
         self.copied_paths.clear()
 
@@ -176,9 +174,7 @@ class UnifiedConnectorContentManager:
                     f"{destination.relative_to(self.content_path)}"
                 )
             except Exception as e:
-                logger.error(
-                    f"Failed to copy '{source.name}' to '{destination}': {e}"
-                )
+                logger.error(f"Failed to copy '{source.name}' to '{destination}': {e}")
                 raise
 
         elif source.is_dir():
@@ -223,9 +219,7 @@ class UnifiedConnectorContentManager:
                             self.git_util.repo.git.add(str(relative_path))
                             staged_files.append(str(relative_path))
                         except Exception as e:
-                            logger.error(
-                                f"Failed to stage file '{file_path}': {e}"
-                            )
+                            logger.error(f"Failed to stage file '{file_path}': {e}")
 
         self.staged_files = staged_files
         logger.info(
@@ -299,9 +293,7 @@ class UnifiedConnectorContentManager:
                 if copied_path.exists():
                     if copied_path.is_dir():
                         shutil.rmtree(copied_path)
-                        logger.debug(
-                            f"Removed copied directory: {copied_path.name}"
-                        )
+                        logger.debug(f"Removed copied directory: {copied_path.name}")
                     else:
                         copied_path.unlink()
                         logger.debug(f"Removed copied file: {copied_path.name}")
@@ -372,13 +364,9 @@ class UnifiedConnectorContentManager:
 
         original_handler = None
         if signum == signal.SIGINT:
-            original_handler = (
-                UnifiedConnectorContentManager._original_sigint_handler
-            )
+            original_handler = UnifiedConnectorContentManager._original_sigint_handler
         elif signum == signal.SIGTERM:
-            original_handler = (
-                UnifiedConnectorContentManager._original_sigterm_handler
-            )
+            original_handler = UnifiedConnectorContentManager._original_sigterm_handler
 
         if original_handler and callable(original_handler):
             original_handler(signum, frame)

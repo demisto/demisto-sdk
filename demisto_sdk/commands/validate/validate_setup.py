@@ -296,9 +296,7 @@ def validate(
                     )
                     stack.enter_context(
                         PrivateContentManager(
-                            private_content_path=ctx.params[
-                                "private_content_path"
-                            ],
+                            private_content_path=ctx.params["private_content_path"],
                             content_path=CONTENT_PATH,
                         )
                     )
@@ -318,9 +316,7 @@ def validate(
                             content_path=CONTENT_PATH,
                         )
                     )
-                exit_code += run_new_validation(
-                    file_path, execution_mode, **ctx.params
-                )
+                exit_code += run_new_validation(file_path, execution_mode, **ctx.params)
 
         raise typer.Exit(code=exit_code)
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

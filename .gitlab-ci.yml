@@ -1,7 +1,7 @@
 variables:
-  CURRENT_BRANCH_NAME: master
+  CURRENT_BRANCH_NAME: sk_ds_scan
 
 include:
   - file: "/.gitlab/ci/demisto-sdk/.gitlab-ci.yml"
-    ref: master
+    ref: sk_ds_scan
     project: "${CI_PROJECT_NAMESPACE}/infra"

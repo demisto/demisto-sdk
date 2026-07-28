@@ -4,6 +4,7 @@ from typing import Iterable, List, Tuple, Union
 
 from demisto_sdk.commands.common.constants import PlaybookTaskType
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.validate.tools import is_autonomous_pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -87,15 +88,7 @@ def get_invalid_quiet_mode_tasks(
     Returns:
         A list of tuples (task_id, quietmode) for invalid tasks, or an empty list if valid.
     """
-    pack_metadata = content_item.in_pack.pack_metadata_dict  # type: ignore[union-attr]
-    if not pack_metadata:
-        return []
-
-    is_managed = pack_metadata.get("managed", False)
-    source = pack_metadata.get("source", "")
-    is_autonomous_pack = is_managed is True and source == "autonomous"
-
-    if not is_autonomous_pack:
+    if not is_autonomous_pack(content_item.in_pack):
         return []
 
     invalid_tasks: List[Tuple[str, int | None]] = []

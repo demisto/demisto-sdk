@@ -613,8 +613,10 @@ class DockerBase:
                         raise RuntimeError(
                             f"Image {image} not yet available in registry"
                         )
-                else:
-                    DockerBase._is_image_available_on_registry(repo, tag)
+                elif not DockerBase._is_image_available_on_registry(repo, tag):
+                    raise RuntimeError(
+                        f"Image {image} not yet available on {registry_name}"
+                    )
                 logger.success(
                     f"{log_prompt} - Image verification succeeded for {image} "
                     f"on attempt {attempt}."
@@ -623,13 +625,14 @@ class DockerBase:
             except RuntimeError:
                 logger.info(
                     f"{log_prompt} - Verification attempt {attempt}/{max_retries}: "
-                    f"image {image} not yet available on DockerHub. "
+                    f"image {image} not yet available on {registry_name}. "
                     f"Retrying in {delay_seconds}s..."
                 )
             except (
                 requests.exceptions.ConnectionError,
                 requests.exceptions.Timeout,
                 RequestException,
+                docker.errors.APIError,
             ) as e:
                 logger.warning(
                     f"{log_prompt} - Verification attempt {attempt}/{max_retries}: "
@@ -641,7 +644,7 @@ class DockerBase:
                 time.sleep(delay_seconds)
 
         raise DockerException(
-            f"{log_prompt} - Image verification failed: {image} was not found on DockerHub "
+            f"{log_prompt} - Image verification failed: {image} was not found on {registry_name} "
             f"after {max_retries} attempts "
             f"(~{(max_retries - 1) * delay_seconds}s of delay between attempts, "
             f"excluding request time). "

@@ -1,6 +1,7 @@
 import os
 from unittest import mock
 
+import docker
 import pytest
 import requests
 from packaging.version import Version
@@ -557,6 +558,73 @@ def test_verify_image_available_after_push_for_gar_image_retries_then_raises(moc
     assert sleep_mock.call_count == 2
 
 
+def test_verify_image_available_after_push_for_gar_image_retries_on_api_error_then_succeeds(
+    mocker,
+):
+    """
+    Given:
+        - A GAR-hosted image whose availability check raises a transient
+          docker.errors.APIError (e.g. a failed GAR daemon login / registry 5xx)
+          on the first attempt, then reports available on the second.
+    When:
+        - _verify_image_available_after_push is called.
+    Then:
+        - The APIError is treated as a retryable error (not crashing the loop),
+          the call is retried after sleeping once, and it finally succeeds.
+    """
+    # Given
+    image = f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0"
+    is_available_mock = mocker.patch.object(
+        dhelper.DockerBase,
+        "is_image_available",
+        side_effect=[docker.errors.APIError("gar daemon login failed"), True],
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When
+    dhelper.DockerBase._verify_image_available_after_push(
+        image, max_retries=3, delay_seconds=5
+    )
+
+    # Then
+    assert is_available_mock.call_count == 2
+    sleep_mock.assert_called_once_with(5)
+
+
+def test_verify_image_available_after_push_for_gar_image_api_error_every_attempt_raises(
+    mocker,
+):
+    """
+    Given:
+        - A GAR-hosted image whose availability check raises a transient
+          docker.errors.APIError on every attempt (a failed GAR pull that never
+          recovers).
+    When:
+        - _verify_image_available_after_push is called with a small retry budget.
+    Then:
+        - The APIError does not propagate/crash the loop; instead it is retried
+          the full budget (sleeping max_retries - 1 times) and finally a
+          DockerException is raised.
+    """
+    # Given
+    image = f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0"
+    is_available_mock = mocker.patch.object(
+        dhelper.DockerBase,
+        "is_image_available",
+        side_effect=docker.errors.APIError("gar daemon login failed"),
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When / Then
+    with pytest.raises(dhelper.DockerException, match="Image verification failed"):
+        dhelper.DockerBase._verify_image_available_after_push(
+            image, max_retries=3, delay_seconds=5
+        )
+
+    assert is_available_mock.call_count == 3
+    assert sleep_mock.call_count == 2
+
+
 def test_verify_image_available_after_push_for_dockerhub_image_uses_api(mocker):
     """
     Given:
@@ -661,6 +729,38 @@ def test_verify_image_available_after_push_when_never_available_raises(mocker):
             "devtestdemisto/python3:1.0.0", max_retries=3, delay_seconds=5
         )
 
+    assert sleep_mock.call_count == 2
+
+
+def test_verify_image_available_after_push_when_registry_returns_false_retries_then_raises(
+    mocker,
+):
+    """
+    Given:
+        - A DockerHub image whose registry lookup returns False on every attempt
+          (the image is never found, without raising).
+    When:
+        - _verify_image_available_after_push is called with a small retry budget.
+    Then:
+        - A False return value is treated as "not available", so it retries the
+          full budget (sleeping max_retries - 1 times) and finally raises a
+          DockerException instead of falsely reporting success.
+    """
+    # Given
+    api_mock = mocker.patch.object(
+        dhelper.DockerBase,
+        "_is_image_available_on_registry",
+        return_value=False,
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When / Then
+    with pytest.raises(dhelper.DockerException, match="Image verification failed"):
+        dhelper.DockerBase._verify_image_available_after_push(
+            "devtestdemisto/python3:1.0.0", max_retries=3, delay_seconds=5
+        )
+
+    assert api_mock.call_count == 3
     assert sleep_mock.call_count == 2
 
 

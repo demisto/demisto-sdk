@@ -47,6 +47,9 @@ from demisto_sdk.commands.validate.validators.RN_validators.RN115_is_valid_rn_he
 from demisto_sdk.commands.validate.validators.RN_validators.RN116_first_level_header_missing import (
     FirstLevelHeaderMissingValidator,
 )
+from demisto_sdk.commands.validate.validators.RN_validators.RN117_rn_docker_entry_without_yml_change import (
+    RNDockerEntryWithoutYmlChangeValidator,
+)
 
 
 @pytest.mark.parametrize(
@@ -652,9 +655,8 @@ def test_IsDockerEntryMatchYmlValidator_fix(mocker):
             [
                 "The release notes regarding the docker image are not correct. Docker version in release notes should be demisto/python3:3.9.7.24071, found: demisto/python3:3.9.7.24076",
                 "The release notes regarding the docker image are not correct. Docker version in release notes should be demisto/python3:3.9.7.24076, found: No docker entry found",
-                "The release notes regarding the docker image are not correct. There should be no release notes docker update entry, found: demisto/python3:3.9.7.24076",
             ],
-            3,
+            2,
         ),
         (None, [], 0),
     ],
@@ -669,7 +671,8 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items(
         - pack 2: An integration without docker modification.
         - pack 3: A script with modified docker where the docker image entry in the rn match the on in the yml.
         - pack 4: A script with modified docker where no docker image entry appear in the rn.
-        - pack 5: A script that didn't modify the docker an RN that says it did
+        - pack 5: A script that didn't modify the docker with an RN that says it did.
+          RN111 does not fail this case (RN117 owns it), so it should pass here.
         Split into two cases:
         - Case 1: The RNs were Added.
         - Case 2: The RNs git status is None (i.e no new rn).
@@ -679,7 +682,7 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items(
 
     Then:
     - Make sure the right amount of pack metadata failed, and that the right error message is returned.
-        - Case 1: packs 1, 4, and 5 should fail.
+        - Case 1: packs 1 and 4 should fail.
         - Case 2: No failures.
     """
     integration_1 = create_integration_object(
@@ -757,6 +760,98 @@ def test_IsDockerEntryMatchYmlValidator_obtain_invalid_content_items(
     ]
     create_old_file_pointers(content_items, old_content_items)
     validator = IsDockerEntryMatchYmlValidator()
+    results = validator.obtain_invalid_content_items(content_items)
+    assert len(results) == expected_number_of_failures
+    assert all(
+        [res_msg in expected_msgs for res_msg in [result.message for result in results]]
+    )
+
+
+@pytest.mark.parametrize(
+    "git_status, expected_msgs, expected_number_of_failures",
+    [
+        (
+            GitStatuses.ADDED,
+            [
+                "The release notes mention a docker image update ('demisto/python3:3.9.7.24076') but the docker image in the yml file was not changed. Remove the docker update entry from the release notes or update the docker image in the yml file."
+            ],
+            1,
+        ),
+        (None, [], 0),
+    ],
+)
+def test_RNDockerEntryWithoutYmlChangeValidator_obtain_invalid_content_items(
+    mocker, git_status, expected_msgs, expected_number_of_failures
+):
+    """
+    Given:
+    - content_items list with 3 packs, each with RN with different content.
+        - Case A (should FAIL): A script whose yml docker image is unchanged
+          (old == new) but whose RN contains a docker update entry.
+        - Case B (should PASS): An integration whose yml docker image was
+          changed (old != new) and whose RN correctly mentions the update.
+        - Case C (should PASS): A script whose yml docker was unchanged and
+          whose RN contains no docker entry.
+        Split into two cases:
+        - Case 1: The RNs were Added.
+        - Case 2: The RNs git status is None (i.e no new rn).
+
+    When:
+    - Calling the RNDockerEntryWithoutYmlChangeValidator obtain_invalid_content_items function.
+
+    Then:
+    - Make sure the right amount of content items failed, and that the right error message is returned.
+        - Case 1: only case A should fail.
+        - Case 2: No failures.
+    """
+    # Case A: unchanged docker (old == new), but RN claims an update -> violation.
+    script_a = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24076"]
+    )
+    old_script_a = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24076"]
+    )
+    pack_a = create_pack_object(
+        paths=["currentVersion"],
+        values=["2.0.5"],
+        release_note_content=f"#### Scripts\n##### {script_a.name}\n- Updated the Docker image to: *demisto/python3:3.9.7.24076*.",
+    )
+    # Case B: docker changed (old != new) with a matching RN entry -> no failure.
+    integration_b = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24076"]
+    )
+    old_integration_b = create_integration_object(
+        paths=["script.dockerimage"], values=["demisto/python3:3.9.7.24071"]
+    )
+    pack_b = create_pack_object(
+        paths=["currentVersion"],
+        values=["2.0.5"],
+        release_note_content=f"#### Integration\n##### {integration_b.name}\n- Updated the Docker image to: *demisto/python3:3.9.7.24076*.",
+    )
+    # Case C: unchanged docker (old == new) and no RN docker entry -> no failure.
+    script_c = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24076"]
+    )
+    old_script_c = create_script_object(
+        paths=["dockerimage"], values=["demisto/python3:3.9.7.24076"]
+    )
+    pack_c = create_pack_object(
+        paths=["currentVersion"],
+        values=["2.0.5"],
+        release_note_content=f"#### Scripts\n##### {script_c.name}\n- Entry not related to docker image update.",
+    )
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.parsers.related_files.RNRelatedFile.git_status",
+        new_callable=mocker.PropertyMock,
+        return_value=git_status,
+    )
+    script_a.pack = pack_a
+    integration_b.pack = pack_b
+    script_c.pack = pack_c
+    content_items = [script_a, integration_b, script_c]
+    old_content_items = [old_script_a, old_integration_b, old_script_c]
+    create_old_file_pointers(content_items, old_content_items)
+    validator = RNDockerEntryWithoutYmlChangeValidator()
     results = validator.obtain_invalid_content_items(content_items)
     assert len(results) == expected_number_of_failures
     assert all(

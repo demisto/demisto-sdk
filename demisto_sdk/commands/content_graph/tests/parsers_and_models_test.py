@@ -803,6 +803,35 @@ class TestParsersAndModels:
         assert MarketplaceVersions.PLATFORM in model.marketplaces
         assert MarketplaceVersions.XSOAR in model.marketplaces
 
+    def test_from_path_platform_only_pack_excludes_xsoar(self, pack: Pack):
+        """
+        Given:
+            - A pack whose metadata declares marketplaces ['platform'] only
+              and a fetch integration whose YAML does NOT declare a marketplaces
+              field.
+        When:
+            - Parsing the integration standalone via BaseContent.from_path
+              (as the validate `-g` flow does), without passing
+              pack_marketplaces explicitly.
+        Then:
+            - The resolved marketplaces are inherited from the pack metadata as
+              ['platform'] and contain no XSOAR marketplace, so IN121 selects the
+              alert (not incident) required-params format (regression test for
+              the `-g` vs `-i` IN121 discrepancy on platform-only packs).
+        """
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+
+        pack.set_data(marketplaces=["platform"])
+        integration = pack.create_integration(yml=load_yaml("integration.yml"))
+
+        model = BaseContent.from_path(Path(integration.path))
+
+        assert isinstance(model, Integration)
+        assert model.marketplaces == [MarketplaceVersions.PLATFORM]
+        assert MarketplaceVersions.XSOAR not in model.marketplaces
+        assert MarketplaceVersions.XSOAR_SAAS not in model.marketplaces
+        assert MarketplaceVersions.XSOAR_ON_PREM not in model.marketplaces
+
     def test_unified_integration_parser(self, pack: Pack):
         """
         Given:

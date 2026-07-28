@@ -71,7 +71,6 @@ def release_notes_mismatch_error(content_item: IntegrationScript):
     Raises an error if:
     1: the image in the rn doesnt match what was bumped
     2: if an image was bumped but no release notes exist
-    3: or if release notes exist but the image wasnt bumped
     """
     should_be_entry = release_notes_shouldbe_entry(content_item)
     image_entry = get_docker_image_entry(
@@ -82,8 +81,6 @@ def release_notes_mismatch_error(content_item: IntegrationScript):
         should_be_entry != image_entry or image_entry == NO_DOCKER_ENTRY_FOUND
     ):
         return f"Docker version in release notes should be {should_be_entry}, found: {image_entry}"
-    if not should_be_entry and image_entry and not image_entry == NO_DOCKER_ENTRY_FOUND:
-        return f"There should be no release notes docker update entry, found: {image_entry}"
 
 
 class IsDockerEntryMatchYmlValidator(BaseValidator[ContentTypes]):

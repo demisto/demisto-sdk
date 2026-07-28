@@ -18,14 +18,27 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.connector import (
+    CapabilityConfig,
     CapabilityData,
     CapabilityHandlerMapping,
+    CheckboxGroupItem,
+    CheckboxGroupItemOptions,
+    ComputedCondition,
+    ComputedConditionGroup,
     ComputedFieldRule,
+    ComputedOutput,
     ConnectionProfile,
     ConnectorConnectionData,
+    ConnectorField,
+    FieldBehavior,
     FieldGroup,
+    FieldLayout,
     FieldMapping,
+    FieldModifiers,
+    FieldOptions,
     GeneralConfigurations,
+    HandlerAction,
+    HandlerAuthMethod,
     HandlerAuthOption,
     HandlerCapability,
     HandlerData,
@@ -33,9 +46,17 @@ from demisto_sdk.commands.content_graph.objects.connector import (
     HandlerOwnership,
     HandlerTestConnection,
     HandlerTriggering,
+    Label,
+    LabelTooltip,
+    ProfileOptions,
     ResolvedParamMapping,
     SerializerData,
     SubCapability,
+    ValidationEntry,
+    ValidationRule,
+    VaultMapping,
+    VaultMappingFields,
+    ViewGroup,
 )
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
 from demisto_sdk.commands.content_graph.parsers.related_files import (
@@ -130,6 +151,10 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
         return self.yml_data.get("id")
 
     @property
+    def enabled(self) -> bool:
+        return self.yml_data.get("enabled", True)
+
+    @property
     def name(self) -> Optional[str]:
         return self.connector_metadata.get("title")
 
@@ -188,11 +213,13 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             data.get("general_configurations")
         )
         profiles = [self._parse_connection_profile(p) for p in data.get("profiles", [])]
+        view_groups = self._parse_view_groups(data.get("view_groups"))
 
         return ConnectorConnectionData(
-            title=metadata.get("title", ""),
-            description=metadata.get("description", ""),
+            title=metadata.get("title"),
+            description=metadata.get("description"),
             help=metadata.get("help"),
+            view_groups=view_groups,
             general_configurations=general_configs,
             profiles=profiles,
         )
@@ -202,18 +229,47 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
         configurations = [
             self._parse_field_group(fg) for fg in profile_data.get("configurations", [])
         ]
+
+        options = None
+        if raw_options := profile_data.get("options"):
+            options = ProfileOptions(
+                use_base64_header=raw_options.get("use_base64_header"),
+                allow_scopes=raw_options.get("allow_scopes"),
+                default_token_expiry=raw_options.get("default_token_expiry"),
+            )
+
+        vault_mappings = [
+            VaultMapping(
+                id=vm["id"],
+                map=(
+                    VaultMappingFields(
+                        user=vm.get("map", {}).get("user"),
+                        password=vm.get("map", {}).get("password"),
+                        sshkey=vm.get("map", {}).get("sshkey"),
+                    )
+                    if vm.get("map") is not None
+                    else None
+                ),
+            )
+            for vm in profile_data.get("vault_mappings", [])
+        ]
+
         return ConnectionProfile(
             id=profile_data["id"],
-            type=profile_data["type"],
-            title=profile_data.get("title", ""),
+            type=profile_data.get("type"),
+            title=profile_data.get("title"),
             description=profile_data.get("description"),
+            view_group=profile_data.get("view_group"),
+            vault_support=profile_data.get("vault_support"),
+            vault_mappings=vault_mappings,
             discovery_url=profile_data.get("discovery_url"),
             token_endpoint=profile_data.get("token_endpoint"),
             authorization_endpoint=profile_data.get("authorization_endpoint"),
             client_id=profile_data.get("client_id"),
             client_secret=profile_data.get("client_secret"),
             refresh_token_scope=profile_data.get("refresh_token_scope"),
-            options=profile_data.get("options"),
+            options=options,
+            metadata=profile_data.get("metadata"),
             configurations=configurations,
         )
 
@@ -256,30 +312,31 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
         result: List[CapabilityData] = []
         for cap in cap_data.get("capabilities", []):
             config = cap.get("config")
-            cap_config = None
-            parent_license: List[str] = []
-            if config:
-                from demisto_sdk.commands.content_graph.objects.connector import (
-                    CapabilityConfig,
-                )
+            cap_config = self._parse_capability_config(config)
+            parent_license: List[str] = (
+                cap_config.required_license if cap_config else []
+            )
 
-                parent_license = config.get("required_license", [])
-                cap_config = CapabilityConfig(required_license=parent_license)
-
-            sub_caps = [
-                SubCapability(
-                    id=sc["id"],
-                    title=sc.get("title", ""),
-                    default_enabled=sc.get("default_enabled", False),
-                    required=sc.get("required", False),
-                    # Use sub-capability's own required_license if present,
-                    # otherwise inherit from the parent capability.
-                    required_license=(
-                        sc.get("config", {}).get("required_license") or parent_license
-                    ),
+            sub_caps = []
+            for sc in cap.get("sub_capabilities", []):
+                sc_config = self._parse_capability_config(sc.get("config"))
+                sub_caps.append(
+                    SubCapability(
+                        id=sc["id"],
+                        title=sc.get("title"),
+                        default_enabled=sc.get("default_enabled", False),
+                        required=sc.get("required", False),
+                        read_only=sc.get("read_only", False),
+                        labels=self._parse_labels(sc.get("labels")),
+                        config=sc_config,
+                        # Use sub-capability's own required_license if present,
+                        # otherwise inherit from the parent capability.
+                        required_license=(
+                            (sc_config.required_license if sc_config else [])
+                            or parent_license
+                        ),
+                    )
                 )
-                for sc in cap.get("sub_capabilities", [])
-            ]
 
             # Unified configurations: general + per-capability
             unified_configs = list(general_field_groups)  # copy
@@ -289,17 +346,69 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             result.append(
                 CapabilityData(
                     id=cap["id"],
-                    title=cap.get("title", ""),
-                    description=cap.get("description", ""),
+                    title=cap.get("title"),
+                    description=cap.get("description"),
                     default_enabled=cap.get("default_enabled", False),
                     required=cap.get("required", False),
-                    labels=cap.get("labels", []),
+                    read_only=cap.get("read_only", False),
+                    labels=self._parse_labels(cap.get("labels")),
                     config=cap_config,
                     sub_capabilities=sub_caps,
+                    is_global=cap.get("global", False),
+                    partial=cap.get("partial", False),
+                    author_image=cap.get("author_image"),
+                    global_message=cap.get("global_message"),
+                    service_ids=cap.get("service_ids", []),
                     configurations=unified_configs,
                 )
             )
         return result
+
+    @staticmethod
+    def _parse_capability_config(
+        config: Optional[dict],
+    ) -> Optional[CapabilityConfig]:
+        """Parse a capabilities.yaml ``config`` block."""
+        if not config:
+            return None
+        return CapabilityConfig(
+            required_license=config.get("required_license", []),
+            required_features=config.get("required_features", []),
+        )
+
+    @staticmethod
+    def _parse_labels(raw_labels: Optional[list]) -> List[Label]:
+        """Normalize the two label forms (string list / object list) to List[Label]."""
+        if not raw_labels:
+            return []
+        labels: List[Label] = []
+        for lbl in raw_labels:
+            if isinstance(lbl, str):
+                labels.append(Label(id=lbl))
+            elif isinstance(lbl, dict):
+                tooltip = None
+                if raw_tt := lbl.get("tooltip"):
+                    tooltip = LabelTooltip(
+                        id=raw_tt.get("id", ""),
+                        params=raw_tt.get("params"),
+                    )
+                labels.append(Label(id=lbl.get("id", ""), tooltip=tooltip))
+        return labels
+
+    @staticmethod
+    def _parse_view_groups(raw: Optional[list]) -> List[ViewGroup]:
+        """Parse a top-level ``view_groups`` registry."""
+        if not raw:
+            return []
+        return [
+            ViewGroup(
+                id=vg["id"],
+                label=vg.get("label"),
+                help_text=vg.get("help_text"),
+            )
+            for vg in raw
+            if isinstance(vg, dict) and "id" in vg
+        ]
 
     def _parse_handlers(self) -> List[HandlerData]:
         """Discover and parse all handler directories."""
@@ -320,7 +429,7 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             hdata = handler_rf.file_content
             triggering_data = hdata.get("triggering", {})
             triggering = HandlerTriggering(
-                type=triggering_data.get("type", ""),
+                type=triggering_data.get("type"),
                 labels=triggering_data.get("labels"),
                 args=triggering_data.get("args"),
             )
@@ -332,56 +441,47 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
                         id=ao["id"],
                         scopes=ao.get("scopes", []),
                         workloads=ao.get("workloads", []),
-                        methods=ao.get("methods"),
+                        methods=self._parse_auth_methods(ao.get("methods")),
                     )
                     for ao in hcap.get("auth_options", [])
                 ]
+                actions = [
+                    HandlerAction(
+                        type=act.get("type"),
+                        display=act.get("display"),
+                        description=act.get("description"),
+                    )
+                    for act in hcap.get("actions", [])
+                ]
                 handler_caps.append(
-                    HandlerCapability(id=hcap["id"], auth_options=auth_options)
+                    HandlerCapability(
+                        id=hcap["id"],
+                        auth=hcap.get("auth"),
+                        auth_options=auth_options,
+                        workloads=hcap.get("workloads", []),
+                        actions=actions,
+                    )
                 )
 
-            tc_data = hdata.get("test_connection", {})
-            test_connection = HandlerTestConnection(
-                type=tc_data.get("type", ""),
-                host=tc_data.get("host"),
-                service=tc_data.get("service"),
-                endpoint=tc_data.get("endpoint", ""),
-                headers=tc_data.get("headers"),
+            test_connection = self._parse_test_connection(
+                hdata.get("test_connection", {})
             )
+            test_connection_metro = None
+            if "test_connection_metro" in hdata:
+                test_connection_metro = self._parse_test_connection(
+                    hdata.get("test_connection_metro", {})
+                )
 
             # Parse serializer if exists
-            serializer: Optional[SerializerData] = None
-            ser_rf = SerializerRelatedFile(
-                self.path, handler_dir.name, git_sha=self.git_sha
-            )
-            if ser_rf.exist and ser_rf.file_content:
-                ser_data = ser_rf.file_content
-                field_mappings = [
-                    FieldMapping(
-                        id=fm["id"],
-                        field_name=fm["field_name"],
-                        field_value=fm.get("field_value"),
-                    )
-                    for fm in ser_data.get("field_mappings", [])
-                ]
-                computed_fields = [
-                    ComputedFieldRule(
-                        output=cf.get("output", []),
-                        any_of=cf.get("any_of", []),
-                    )
-                    for cf in ser_data.get("computed_fields", [])
-                ]
-                serializer = SerializerData(
-                    field_mappings=field_mappings,
-                    computed_fields=computed_fields,
-                )
+            serializer = self._parse_serializer(handler_dir.name)
 
             raw_meta = hdata.get("metadata", {})
             handler_metadata = HandlerMetadata(
-                version=raw_meta.get("version", "1.0.0"),
+                version=raw_meta.get("version"),
                 description=raw_meta.get("description", ""),
                 module=raw_meta.get("module"),
                 tags=raw_meta.get("tags", []),
+                labels=raw_meta.get("labels"),
                 ownership=HandlerOwnership(
                     team=raw_meta.get("ownership", {}).get("team", ""),
                     maintainers=raw_meta.get("ownership", {}).get("maintainers", []),
@@ -395,7 +495,10 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
                 triggering=triggering,
                 capabilities=handler_caps,
                 test_connection=test_connection,
+                test_connection_metro=test_connection_metro,
                 serializer=serializer,
+                service_ids=hdata.get("service_ids", []),
+                is_general=hdata.get("general", False),
                 handler_dir_name=handler_dir.name,
             )
 
@@ -404,6 +507,78 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
             handlers.append(handler_data)
 
         return handlers
+
+    @staticmethod
+    def _parse_auth_methods(
+        raw_methods: Optional[list],
+    ) -> List:
+        """Parse auth_options[].methods, which may be strings or {id, scopes} objects."""
+        if not raw_methods:
+            return []
+        methods: List = []
+        for m in raw_methods:
+            if isinstance(m, dict):
+                methods.append(
+                    HandlerAuthMethod(id=m.get("id", ""), scopes=m.get("scopes", []))
+                )
+            else:
+                methods.append(m)
+        return methods
+
+    @staticmethod
+    def _parse_test_connection(tc_data: dict) -> HandlerTestConnection:
+        """Parse a test_connection / test_connection_metro block."""
+        tc_data = tc_data or {}
+        return HandlerTestConnection(
+            type=tc_data.get("type"),
+            host=tc_data.get("host"),
+            service=tc_data.get("service"),
+            endpoint=tc_data.get("endpoint"),
+            headers=tc_data.get("headers"),
+        )
+
+    def _parse_serializer(self, handler_dir_name: str) -> Optional[SerializerData]:
+        """Parse a handler's serializer.yaml if present."""
+        ser_rf = SerializerRelatedFile(
+            self.path, handler_dir_name, git_sha=self.git_sha
+        )
+        if not ser_rf.exist or not ser_rf.file_content:
+            return None
+
+        ser_data = ser_rf.file_content
+        field_mappings = [
+            FieldMapping(
+                id=fm["id"],
+                field_name=fm.get("field_name"),
+                field_value=fm.get("field_value"),
+            )
+            for fm in ser_data.get("field_mappings", [])
+        ]
+        computed_fields = [
+            ComputedFieldRule(
+                output=[
+                    ComputedOutput(id=o.get("id", ""), value=o.get("value"))
+                    for o in cf.get("output", [])
+                ],
+                any_of=[
+                    ComputedConditionGroup(
+                        conditions=[
+                            ComputedCondition(
+                                type=cond.get("type"),
+                                options=cond.get("options"),
+                            )
+                            for cond in group.get("conditions", [])
+                        ]
+                    )
+                    for group in cf.get("any_of", [])
+                ],
+            )
+            for cf in ser_data.get("computed_fields", [])
+        ]
+        return SerializerData(
+            field_mappings=field_mappings,
+            computed_fields=computed_fields,
+        )
 
     # ============================================================
     # Resolved parameter mapping
@@ -563,49 +738,156 @@ class ConnectorParser(ContentItemParser, content_type=ContentType.CONNECTOR):
     # Helpers
     # ============================================================
 
-    @staticmethod
+    @classmethod
     def _parse_general_configurations(
+        cls,
         data: Optional[dict],
     ) -> Optional[GeneralConfigurations]:
         """Parse a general_configurations block."""
         if not data:
             return None
-        from demisto_sdk.commands.content_graph.objects.connector import ConnectorField
 
-        field_groups: List[FieldGroup] = []
-        for fg in data.get("configurations", []):
-            fields = [
-                ConnectorField(
-                    id=f["id"],
-                    title=f.get("title", ""),
-                    field_type=f.get("field_type", "input"),
-                    metadata=f.get("metadata"),
-                    validations=f.get("validations"),
-                    behavior=f.get("behavior"),
-                )
-                for f in fg.get("fields", [])
-            ]
-            field_groups.append(FieldGroup(fields=fields))
-
+        field_groups = [
+            cls._parse_field_group(fg) for fg in data.get("configurations", [])
+        ]
         return GeneralConfigurations(
             description=data.get("description"),
             configurations=field_groups,
         )
 
-    @staticmethod
-    def _parse_field_group(fg_data: dict) -> FieldGroup:
-        """Parse a single field group."""
-        from demisto_sdk.commands.content_graph.objects.connector import ConnectorField
+    @classmethod
+    def _parse_field_group(cls, fg_data: dict) -> FieldGroup:
+        """Parse a single field group (FieldGroup)."""
+        fields = [cls._parse_field(f) for f in fg_data.get("fields", [])]
+        return FieldGroup(
+            fields=fields,
+            view_group=fg_data.get("view_group"),
+            required_for_capabilities=fg_data.get("required_for_capabilities"),
+            advanced=fg_data.get("advanced"),
+        )
 
-        fields = [
-            ConnectorField(
-                id=f["id"],
-                title=f.get("title", ""),
-                field_type=f.get("field_type", "input"),
-                metadata=f.get("metadata"),
-                validations=f.get("validations"),
-                behavior=f.get("behavior"),
+    @classmethod
+    def _parse_field(cls, f: dict) -> ConnectorField:
+        """Parse a single Field, including its typed options/validations/behavior."""
+        return ConnectorField(
+            id=f["id"],
+            title=f.get("title"),
+            field_type=f.get("field_type"),
+            metadata=f.get("metadata"),
+            options=cls._parse_field_options(f.get("options")),
+            validations=cls._parse_validations(f.get("validations")),
+            behavior=cls._parse_behavior(f.get("behavior")),
+            fields=cls._parse_checkbox_group_items(f.get("fields")),
+        )
+
+    @staticmethod
+    def _parse_field_options(opts: Optional[dict]) -> Optional[FieldOptions]:
+        """Parse a field ``options`` block into a FieldOptions model."""
+        if not opts:
+            return None
+
+        def _modifiers(raw: Optional[dict]) -> Optional[FieldModifiers]:
+            if not raw:
+                return None
+            return FieldModifiers(
+                required=raw.get("required"),
+                hidden=raw.get("hidden"),
+                read_only=raw.get("read_only"),
             )
-            for f in fg_data.get("fields", [])
-        ]
-        return FieldGroup(fields=fields)
+
+        layout = None
+        if raw_layout := opts.get("layout"):
+            layout = FieldLayout(
+                cols=raw_layout.get("cols"),
+                row_span=raw_layout.get("row_span"),
+            )
+
+        return FieldOptions(
+            description=opts.get("description"),
+            help_text=opts.get("help_text"),
+            placeholder=opts.get("placeholder"),
+            default_value=opts.get("default_value"),
+            values=opts.get("values"),
+            units=opts.get("units"),
+            output_format=opts.get("output_format"),
+            hint=opts.get("hint"),
+            fluid=opts.get("fluid"),
+            is_number_input=opts.get("is_number_input"),
+            clearable=opts.get("clearable"),
+            limit=opts.get("limit"),
+            searchable=opts.get("searchable"),
+            orientation=opts.get("orientation"),
+            mask=opts.get("mask"),
+            variant=opts.get("variant"),
+            mode=opts.get("mode"),
+            query_params=opts.get("query_params"),
+            formats=opts.get("formats"),
+            multiple=opts.get("multiple"),
+            file_upload_hint=opts.get("file_upload_hint"),
+            empty_values_message=opts.get("empty_values_message"),
+            layout=layout,
+            create_modifiers=_modifiers(opts.get("create_modifiers")),
+            edit_modifiers=_modifiers(opts.get("edit_modifiers")),
+        )
+
+    @staticmethod
+    def _parse_validations(
+        raw: Optional[list],
+    ) -> Optional[List[ValidationEntry]]:
+        """Parse a field ``validations`` list (trigger-grouped rules)."""
+        if not raw:
+            return None
+        entries: List[ValidationEntry] = []
+        for entry in raw:
+            rules = [
+                ValidationRule(
+                    type=r.get("type"),
+                    value=r.get("value"),
+                    message=r.get("message"),
+                    validation_type=r.get("validation_type"),
+                    options=r.get("options"),
+                )
+                for r in entry.get("rules", [])
+            ]
+            entries.append(ValidationEntry(trigger=entry.get("trigger"), rules=rules))
+        return entries
+
+    @staticmethod
+    def _parse_behavior(raw: Optional[dict]) -> Optional[FieldBehavior]:
+        """Parse a field ``behavior`` block."""
+        if not raw:
+            return None
+        return FieldBehavior(type=raw.get("type"), label=raw.get("label"))
+
+    @staticmethod
+    def _parse_checkbox_group_items(
+        raw: Optional[list],
+    ) -> Optional[List[CheckboxGroupItem]]:
+        """Parse the nested ``fields`` of a checkbox_group field."""
+        if not raw:
+            return None
+        items: List[CheckboxGroupItem] = []
+        for item in raw:
+            options = None
+            if raw_opts := item.get("options"):
+                options = CheckboxGroupItemOptions(
+                    description=raw_opts.get("description"),
+                    create_modifiers=(
+                        FieldModifiers(**raw_opts["create_modifiers"])
+                        if raw_opts.get("create_modifiers")
+                        else None
+                    ),
+                    edit_modifiers=(
+                        FieldModifiers(**raw_opts["edit_modifiers"])
+                        if raw_opts.get("edit_modifiers")
+                        else None
+                    ),
+                )
+            items.append(
+                CheckboxGroupItem(
+                    id=item["id"],
+                    title=item.get("title"),
+                    options=options,
+                )
+            )
+        return items

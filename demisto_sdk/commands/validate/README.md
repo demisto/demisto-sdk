@@ -45,6 +45,12 @@ A comma separated list of validations to run stated the error codes.
 An error code to not run. To ignore more than one error, repeat this option (e.g. `--ignore AA123 --ignore BC321`)
 * **--private-content-path**
 Path to a private content repository.
+* **-ccp, --connectors-content-path**
+Path to a Unified Connector Content (UCC) repository (containing a `connectors/` directory).
+Use this to validate an external UCC checkout together with a plain content checkout: the
+UCC connectors are temporarily synced into the main content repo for the duration of the run
+(and automatically cleaned up on exit).
+This flag currently only affects `-a/--validate-all`.
 
 ### Validation Error Codes
 Each error found by validate has an error code attached to it. The code can be found in brackets preceding the error itself.  
@@ -124,3 +130,9 @@ Validates all files in the repository using the settings configured in the confi
 
 `demisto-sdk validate --private-content-path /path/to/private-content -g`
 Validates changes using git while including private content packs in the content graph. The private packs are temporarily copied and staged, then automatically cleaned up after validation.
+
+`demisto-sdk validate -a --connectors-content-path /path/to/unified-connectors-content`
+Validates all files while including an external Unified Connector Content (UCC) checkout. The UCC connectors (under `connectors/`) are temporarily copied and staged into the main content repo, then automatically cleaned up after validation.
+
+`demisto-sdk validate -a --private-content-path /path/to/content-private --connectors-content-path /path/to/unified-connectors-content`
+Validates all files while including both private content packs and external UCC connectors. Both external sources are temporarily merged into the working tree and cleaned up (in LIFO order) on exit. Note: on a "unified" CI branch that already contains both `Packs/**` and `connectors/**` in a single checkout, use plain `demisto-sdk validate -a` - no external-repo flags are needed.

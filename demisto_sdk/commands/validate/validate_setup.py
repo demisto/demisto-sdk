@@ -1,3 +1,4 @@
+import contextlib
 import os
 import sys
 from pathlib import Path
@@ -24,6 +25,9 @@ from demisto_sdk.commands.validate.initializer import (
 )
 from demisto_sdk.commands.validate.old_validate_manager import OldValidateManager
 from demisto_sdk.commands.validate.private_content_manager import PrivateContentManager
+from demisto_sdk.commands.validate.unified_connector_content_manager import (
+    UnifiedConnectorContentManager,
+)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.validate.validation_results import ResultWriter
 from demisto_sdk.commands.validate.validators.base_validator import BaseValidator
@@ -31,7 +35,9 @@ from demisto_sdk.utils.utils import update_command_args_from_config_file
 
 
 def validate_paths(
-    input_paths: Optional[str], private_content_path: Optional[Path]
+    input_paths: Optional[str],
+    private_content_path: Optional[Path],
+    connectors_content_path: Optional[Path] = None,
 ) -> Optional[str]:
     if not input_paths:  # If no input is provided, just return None
         return None
@@ -39,12 +45,18 @@ def validate_paths(
     paths = input_paths.split(",")
     for path in paths:
         path_obj = Path(path)
-        if not path_obj.exists():
-            if not (
-                private_content_path
-                and (Path(private_content_path) / path_obj).exists()
-            ):
-                raise typer.BadParameter(f"The path '{path}' does not exist.")
+        if path_obj.exists():
+            continue
+        # Fall back to checking under any external repo the user provided:
+        # content-private (private_content_path) or UCC (connectors_content_path).
+        if private_content_path and (Path(private_content_path) / path_obj).exists():
+            continue
+        if (
+            connectors_content_path
+            and (Path(connectors_content_path) / path_obj).exists()
+        ):
+            continue
+        raise typer.BadParameter(f"The path '{path}' does not exist.")
 
     return input_paths
 
@@ -166,6 +178,18 @@ def validate(
     private_content_path: Path = typer.Option(
         None, help="Path to the private content repository."
     ),
+    connectors_content_path: Path = typer.Option(
+        None,
+        "-ccp",
+        "--connectors-content-path",
+        help=(
+            "Path to the Unified Connector Content (UCC) repository "
+            "(containing a 'connectors/' directory). Use this to validate an "
+            "external UCC checkout together with a plain content checkout: "
+            "connectors are temporarily synced into the main content repo for "
+            "the duration of the run and cleaned up on exit."
+        ),
+    ),
     ignore_support_level: bool = typer.Option(
         False, help="Skip validations based on support level."
     ),
@@ -211,7 +235,7 @@ def validate(
     if file_paths and not input:
         input = file_paths
 
-    validate_paths(input, private_content_path)
+    validate_paths(input, private_content_path, connectors_content_path)
 
     run_with_mp = not no_multiprocessing
     update_command_args_from_config_file("validate", ctx.params)
@@ -252,23 +276,51 @@ def validate(
 
         # Run new validation flow
         if run_new_validate:
-            # When using -a flag (ALL_FILES mode) with private content, wrap with PrivateContentManager
-            # This ensures private content files are copied before ContentDTO.from_path() is called
-            if execution_mode == ExecutionMode.ALL_FILES and ctx.params.get(
-                "private_content_path"
-            ):
-                logger.info(
-                    f"Using PrivateContentManager for ALL_FILES mode with private content path: {ctx.params['private_content_path']}"
-                )
-                with PrivateContentManager(
-                    private_content_path=ctx.params["private_content_path"],
-                    content_path=CONTENT_PATH,
+            # When using -a flag (ALL_FILES mode) with an external repo path
+            # (private content for Packs/, unified connector content for
+            # connectors/), wrap the run in the matching context manager so the
+            # external files are copied+staged before ContentDTO.from_path() is
+            # called and cleaned up afterwards (even on Ctrl+C).
+            #
+            # Both flags are independent - either, both, or neither may be set.
+            # When both are set the managers nest inside a single ExitStack so
+            # cleanup happens in LIFO order.
+            with contextlib.ExitStack() as stack:
+                if execution_mode == ExecutionMode.ALL_FILES and ctx.params.get(
+                    "private_content_path"
                 ):
-                    exit_code += run_new_validation(
-                        file_path, execution_mode, **ctx.params
+                    logger.info(
+                        f"Using PrivateContentManager for ALL_FILES mode with "
+                        f"private content path: "
+                        f"{ctx.params['private_content_path']}"
                     )
-            else:
-                exit_code += run_new_validation(file_path, execution_mode, **ctx.params)
+                    stack.enter_context(
+                        PrivateContentManager(
+                            private_content_path=ctx.params[
+                                "private_content_path"
+                            ],
+                            content_path=CONTENT_PATH,
+                        )
+                    )
+                if execution_mode == ExecutionMode.ALL_FILES and ctx.params.get(
+                    "connectors_content_path"
+                ):
+                    logger.info(
+                        f"Using UnifiedConnectorContentManager for ALL_FILES "
+                        f"mode with connectors content path: "
+                        f"{ctx.params['connectors_content_path']}"
+                    )
+                    stack.enter_context(
+                        UnifiedConnectorContentManager(
+                            connectors_content_path=ctx.params[
+                                "connectors_content_path"
+                            ],
+                            content_path=CONTENT_PATH,
+                        )
+                    )
+                exit_code += run_new_validation(
+                    file_path, execution_mode, **ctx.params
+                )
 
         raise typer.Exit(code=exit_code)
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

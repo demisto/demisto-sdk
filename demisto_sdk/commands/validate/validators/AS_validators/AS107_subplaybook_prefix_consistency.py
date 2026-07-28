@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Iterable, List, Tuple
 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.validate.tools import is_autonomous_pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -105,12 +106,7 @@ def _check_subplaybook_prefix_consistency(
         Returns ([], []) if not in an autonomous pack or if consistent.
     """
     # Check if this is an autonomous pack
-    pack_metadata = content_item.in_pack.pack_metadata_dict  # type: ignore[union-attr]
-    is_managed = pack_metadata.get("managed", False)  # type: ignore[union-attr]
-    source = pack_metadata.get("source", "")  # type: ignore[union-attr]
-    is_autonomous_pack = is_managed is True and source == "autonomous"
-
-    if not is_autonomous_pack:
+    if not is_autonomous_pack(content_item.in_pack):
         return [], []
 
     has_prefix = []

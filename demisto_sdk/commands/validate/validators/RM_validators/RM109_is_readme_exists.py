@@ -6,6 +6,7 @@ from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
+from demisto_sdk.commands.validate.tools import is_autonomous_pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     ValidationResult,
@@ -46,6 +47,6 @@ class IsReadmeExistsValidator(BaseValidator[ContentTypes]):
                 )
                 and (not content_item.readme.exist)
                 and (not content_item.is_silent)
-                and getattr(content_item, "source", "") != "autonomous"
+                and not is_autonomous_pack(content_item.in_pack)
             )
         ]

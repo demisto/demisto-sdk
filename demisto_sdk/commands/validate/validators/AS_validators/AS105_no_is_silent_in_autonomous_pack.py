@@ -4,6 +4,7 @@ from typing import Iterable, List, Union
 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
+from demisto_sdk.commands.validate.tools import is_autonomous_pack
 from demisto_sdk.commands.validate.validators.base_validator import (
     BaseValidator,
     FixResult,
@@ -81,10 +82,4 @@ def is_invalid_silent_in_autonomous_pack(content_item: ContentTypes) -> bool:
     if not content_item.is_silent:
         return False
 
-    pack_metadata = content_item.in_pack.pack_metadata_dict  # type: ignore[union-attr]
-    if not pack_metadata:
-        return False
-
-    is_managed = pack_metadata.get("managed", False)
-    pack_source = pack_metadata.get("source", "")
-    return is_managed is True and pack_source == "autonomous"
+    return is_autonomous_pack(content_item.in_pack)

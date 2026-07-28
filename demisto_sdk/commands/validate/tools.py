@@ -1,7 +1,7 @@
 import re
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, Iterable, List, Optional, Set
 
 from packaging.version import parse
 
@@ -35,6 +35,59 @@ from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.test_script import TestScript
+
+
+def get_platform_managed_and_source(pack: Pack) -> tuple[bool, str]:
+    """
+    Resolve the ``managed``/``source`` values specific to the PLATFORM marketplace.
+
+    The marketplace-suffixed attributes (``managed_platform`` / ``source_platform``,
+    aliased from ``managed:platform`` / ``source:platform``) take precedence when
+    present, otherwise the plain (default) ``managed``/``source`` attributes are
+    used. This mirrors the resolution done at prepare time by
+    ``MarketplaceSuffixPreparer.prepare_managed_and_source``, but for validations
+    which run before prepare.
+
+    When the pack is not managed, ``source`` is always ``""``: an unmanaged pack
+    never has a source.
+
+    Args:
+        pack: The pack object (may carry suffixed managed/source attributes).
+
+    Returns:
+        tuple: (managed, source) resolved for the platform marketplace.
+    """
+    managed = pack.managed_platform
+    if managed is None:
+        managed = pack.managed
+
+    source = pack.source_platform
+    if source is None:
+        source = pack.source
+
+    if not managed:
+        return False, ""
+
+    return True, source or ""
+
+
+def is_autonomous_pack(pack: Optional[Pack]) -> bool:
+    """
+    Check whether a pack is an autonomous pack for the PLATFORM marketplace.
+
+    A pack is autonomous when its resolved (platform-specific) ``managed`` is
+    ``True`` and its resolved ``source`` is ``"autonomous"``.
+
+    Args:
+        pack: The pack object (may carry suffixed managed/source attributes).
+
+    Returns:
+        bool: True if the pack is autonomous, False otherwise.
+    """
+    if not pack:
+        return False
+    managed, source = get_platform_managed_and_source(pack)
+    return managed is True and source == "autonomous"
 
 
 def collect_all_inputs_in_use(content_item: Playbook) -> Set[str]:
@@ -308,3 +361,69 @@ def should_skip_rn_check(content_item: ContentItem) -> bool:
     ) or (isinstance(content_item, Script) and content_item.is_llm):
         return True
     return content_item.git_status is None
+
+
+def count_chars_for_texts(texts: Iterable[Optional[str]]) -> int:
+    """Count the combined number of characters across several text fragments.
+
+    Each fragment is counted independently and summed; ``None``/empty fragments
+    contribute zero.
+
+    Args:
+        texts: An iterable of text fragments (``None`` fragments are ignored).
+
+    Returns:
+        The summed character count across all fragments.
+    """
+    return sum(len(text) for text in texts if text)
+
+
+def action_text_fragments(action: AgentixAction) -> List[str]:
+    """Collect the character-bearing text fragments of an AgentixAction.
+
+    Includes the action name and description plus the args schema (each arg's
+    name, description, type, and default value) and the outputs schema (each
+    output's name, description, and type). This is the single action collector
+    shared by AG112, AG114, and GR116.
+
+    Args:
+        action: The AgentixAction to inspect.
+
+    Returns:
+        A flat list of text fragments contributing to the action's char budget.
+    """
+    fragments: List[str] = [action.name, action.description]
+    for arg in action.args or []:
+        fragments.extend([arg.name, arg.description, arg.type, arg.default_value or ""])
+    for output in action.outputs or []:
+        fragments.extend([output.name, output.description, output.type])
+    return fragments
+
+
+def skill_text_fragments(skill: AgentixSkill) -> List[str]:
+    """Collect the character-bearing text fragments of an AgentixSkill.
+
+    Includes the skill name, description, and the full skill body. The body is
+    read from the related ``*_skill.md`` file if available, falling back to the
+    model's ``content`` field.
+
+    Used by AG112, which counts the body toward a single skill's own budget.
+    GR116 deliberately excludes a skill's body from an agent's aggregate budget
+    and scores skills straight from their graph node, so it does not call this.
+
+    Args:
+        skill: The AgentixSkill to inspect.
+
+    Returns:
+        A flat list of text fragments contributing to the skill's char budget.
+    """
+    fragments = [skill.name or "", skill.description or ""]
+    body = skill.content
+    try:
+        related = skill.skill_content_file
+        if related is not None and related.file_content:
+            body = related.file_content
+    except Exception:  # missing/unreadable related file -> use model content
+        pass
+    fragments.append(body or "")
+    return fragments

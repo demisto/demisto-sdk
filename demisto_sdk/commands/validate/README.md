@@ -54,12 +54,24 @@ For example: This .pack-ignore will not fail ipinfo_v2.yml on the validations wi
 [file:ipinfo_v2.yml]
 ignore=BA108,BA109
 
+#### Pack-level ignored validations (strongly discouraged)
+> [!WARNING]
+> **Ignoring a validation for an entire pack is strongly discouraged and should be avoided.**
+> A pack-level ignore silences the validation for the pack itself **and for every content item in it** - present and future - which almost always hides real problems and lets low-quality content slip in. Prefer the per-file `[file:...]` ignore above, scoped to the single file that genuinely needs it. Reach for a pack-level ignore only as a last resort, when the validation is truly not applicable to the whole pack.
+
+The `.pack-ignore` file supports an optional `[pack]` section whose codes are ignored across the whole pack, in addition to the per-file `[file:...]` mechanism. The listed codes must also appear in the **ignorable_errors** section of the config-file.
+For example: This .pack-ignore will not fail any file in the pack on the validations with the codes BA108 & BA109.
+[pack]
+ignore=BA108,BA109
+
+Because this is a deliberate, high-impact decision, it is gated by validation **PA135**: adding a `[pack]` section for the first time, or adding a new code to an existing one, fails validation and **cannot be ignored**. Merging such a change requires a force-merge approved by a manager. Removing codes from the `[pack]` section is always allowed.
+
 ### Validation Config file
 You can define a config file to suit your business needs. If no file is defined, the  [default config file](default_config.toml) will be used.
 The default configuration covers basic validations, which prevents unsuccessful uploads of the validated content to Cortex XSOAR.
 #### How to define a configuration file
 You can define the following sections:
-**ignorable_errors** - a list of the error codes that can be ignored for individual content items in the .pack-ignore file.
+**ignorable_errors** - a list of the error codes that can be ignored in the .pack-ignore file, either per file (`[file:...]`) or, in rare cases and strongly discouraged, for the whole pack (`[pack]`, gated by PA135 - see [Validation Error Codes](#validation-error-codes)).
 **path_based_validations** - the configurations to run when running with -a / -i flags.
 **use_git** - the configurations to run when running with -g flag.
 You can also define custom sections - which can be configured to run with the **category-to-run** flag.

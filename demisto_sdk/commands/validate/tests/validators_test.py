@@ -1119,6 +1119,77 @@ class TestConnectorAwareInitializerCrossMatch:
         assert handler.related_integration is graph_integration
         assert graph_integration in result
 
+    def test_graph_found_deprecated_integration_is_linked_but_not_validated(self):
+        """
+        Given: A connector handler whose referenced integration is found in the
+               graph but is DEPRECATED.
+        When: _cross_match_and_expand runs the graph-expand phase.
+        Then: The handler's related_integration is populated (so CO164 sees it
+              as existing), but the deprecated integration is NOT added to the
+              returned validation set (integration validators must not run on
+              it).
+        """
+        connector = create_connector_object()
+        deprecated_integration = create_integration_object()
+        deprecated_integration.deprecated = True
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with (
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_connectors",
+                return_value=[],
+            ),
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_integration",
+                return_value=[deprecated_integration],
+            ),
+        ):
+            result = initializer._cross_match_and_expand(set(), {connector})
+
+        handler = connector.xsoar_handlers[0]
+        # Linked so CO164 can distinguish "exists" from "missing".
+        assert handler.related_integration is deprecated_integration
+        # But NOT a validation target.
+        assert deprecated_integration not in result
+
+    def test_graph_found_non_platform_integration_is_neither_linked_nor_added(self):
+        """
+        Given: A connector handler whose referenced integration is found in the
+               graph but is NOT in the PLATFORM marketplace.
+        When: _cross_match_and_expand runs the graph-expand phase.
+        Then: The integration is treated as out of scope: it is neither linked
+              to the handler nor added to the validation set.
+        """
+        from demisto_sdk.commands.common.constants import MarketplaceVersions
+
+        connector = create_connector_object()
+        non_platform_integration = create_integration_object()
+        non_platform_integration.deprecated = False
+        non_platform_integration.marketplaces = [MarketplaceVersions.XSOAR]
+
+        initializer = ConnectorAwareInitializer.__new__(ConnectorAwareInitializer)
+
+        with (
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_connectors",
+                return_value=[],
+            ),
+            patch.object(
+                ConnectorAwareInitializer,
+                "_graph_search_integration",
+                return_value=[non_platform_integration],
+            ),
+        ):
+            result = initializer._cross_match_and_expand(set(), {connector})
+
+        handler = connector.xsoar_handlers[0]
+        assert handler.related_integration is None
+        assert non_platform_integration not in result
+
     def test_multiple_handlers_each_matched_independently(self):
         """
         Given: A connector with 2 XSOAR handlers referencing different integrations,

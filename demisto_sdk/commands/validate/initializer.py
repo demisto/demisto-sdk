@@ -1586,17 +1586,33 @@ class ConnectorAwareInitializer(Initializer):
         """Phase 2b: Find integrations for handlers that still have no match.
 
         After Phase 2a, recalculate which handlers are still unmatched.  For
-        each, search the content graph for the referenced integration.  Skip
-        deprecated integrations and those not in the ``PLATFORM`` marketplace.
+        each, search the content graph for the referenced integration.
 
-        Found integrations are added to the *integrations* set in-place and
-        linked to their handler.
+        A graph-found integration is *always* linked to its handler (so
+        ``handler.related_integration`` is populated) when the referenced
+        integration exists in the graph -- **including deprecated
+        integrations**. This is deliberate: connector-aware validators such as
+        CO164 must be able to tell "the referenced integration exists" apart
+        from "it is missing", and a handler that references a deprecated
+        integration should still resolve rather than be reported as *not
+        found*.
+
+        The distinction is between *link resolution* and *validation target
+        selection*:
+
+        * **Deprecated** integrations are linked to the handler but are **not**
+          added to the ``integrations`` validation set, so integration-level
+          validators do not run on them.
+        * **Non-PLATFORM** integrations are considered out of scope for the
+          connector flow entirely and are neither linked nor added.
+        * All other (active, PLATFORM) integrations are both linked and added
+          to the validation set.
 
         Args:
             connectors: The (possibly expanded) set of connectors whose
                 unmatched handlers will be inspected.
             integrations: Mutable set of integrations - new graph-discovered
-                integrations are added here.
+                (active, PLATFORM) integrations are added here.
         """
         unmatched_handlers = [
             (c, h)
@@ -1618,12 +1634,8 @@ class ConnectorAwareInitializer(Initializer):
             results = self._graph_search_integration(int_id)
             if results:
                 integration = results[0]
-                if getattr(integration, "deprecated", False):
-                    logger.debug(
-                        f"Skipping graph-found integration "
-                        f"'{integration.object_id}' -- deprecated."
-                    )
-                    continue
+                # Non-PLATFORM integrations are out of scope for the connector
+                # flow -- do not link and do not add them.
                 if hasattr(integration, "marketplaces") and (
                     MarketplaceVersions.PLATFORM not in integration.marketplaces
                 ):
@@ -1632,9 +1644,27 @@ class ConnectorAwareInitializer(Initializer):
                         f"'{integration.object_id}' -- not PLATFORM."
                     )
                     continue
+
+                # Always resolve the link so the handler's related_integration
+                # is populated, even for deprecated integrations. This lets
+                # connector validators (e.g. CO164) distinguish "exists" from
+                # "missing".
                 handler.related_integration = integration
                 if hasattr(integration, "related_content"):
                     integration.related_content = handler
+
+                is_deprecated = getattr(integration, "deprecated", False)
+                if is_deprecated:
+                    # Linked, but NOT added to the validation set: integration
+                    # validators must not run on a deprecated integration.
+                    logger.debug(
+                        f"Linked handler '{handler.id}' (connector "
+                        f"'{connector.object_id}') -> deprecated integration "
+                        f"'{integration.object_id}' (graph); not adding it as a "
+                        f"validation target."
+                    )
+                    continue
+
                 integrations.add(integration)
                 logger.debug(
                     f"Matched handler '{handler.id}' (connector "

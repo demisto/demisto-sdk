@@ -22,6 +22,7 @@ from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import (
+    CONNECTORS_FOLDER,
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
     PACKS_PACK_META_FILE_NAME,
@@ -189,7 +190,12 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
                     # happens for content that lives in a *separate* repo (e.g.
                     # connectors in unified-connectors-content). Relativize
                     # against the item's own repo root instead of crashing.
-                    json_dct["path"] = self._relativize_external_path(content_item_path)
+                    if CONNECTORS_FOLDER in content_item_path.parts:
+                        json_dct["path"] = self._relativize_external_path(
+                            content_item_path
+                        )
+                    else:
+                        raise
             else:
                 json_dct["path"] = str(content_item_path)
         json_dct["content_type"] = self.content_type

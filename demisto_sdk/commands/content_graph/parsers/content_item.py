@@ -133,11 +133,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         from demisto_sdk.commands.content_graph.common import ContentType
 
         logger.debug(f"Parsing content item {path}, {pack_marketplaces=}, {pack_supported_modules=}")
+        
+        
+        resolve_pack_marketplaces, resolved_supported_modules= ContentItemParser._resolve_pack_defaults(path)
         if pack_marketplaces is None:
-            (
-                pack_marketplaces,
-                resolved_supported_modules,
-            ) = ContentItemParser._resolve_pack_defaults(path)
+            logger.debug(f"The pack_marketplaces of the {path} is empty, assign {resolve_pack_marketplaces=}")
+            pack_marketplaces = resolve_pack_marketplaces
         if pack_supported_modules is None:
             logger.debug(f"The pack_supported_modules of the {path} is empty, assign {resolved_supported_modules=}")
             pack_supported_modules = resolved_supported_modules

@@ -107,6 +107,11 @@ class StrictPackMetadata(BaseStrictModel):
         None, alias="coupling_overrides"
     )
 
+    # Marketplace-suffixed managed/source fields (e.g. ``managed:platform``).
+    # Resolved into the plain managed/source per-marketplace during dump.
+    managed_platform: Optional[bool] = Field(None, alias="managed:platform")
+    source_platform: Optional[str] = Field(None, alias="source:platform")
+
     @root_validator
     def validate_coupling_overrides(cls, values):
         """
@@ -123,3 +128,4 @@ class StrictPackMetadata(BaseStrictModel):
                         f"Must be one of: {', '.join(sorted(valid_values))}."
                     )
         return values
+

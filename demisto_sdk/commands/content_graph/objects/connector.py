@@ -91,7 +91,7 @@ class ConnectorMetadata(BaseModel):
     title: str
     description: str
     version: str  # semver e.g. "1.0.0"
-    category: str
+    categories: List[str]  # classification categories, at least one required
     tags: List[str] = []
     domain: Optional[str] = None
     vendor: str
@@ -395,7 +395,7 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
                     "title",
                     "description",
                     "version",
-                    "category",
+                    "categories",
                     "vendor",
                     "publisher",
                     "domain",
@@ -463,9 +463,10 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
         We flatten the structured sub-models into Neo4j-friendly scalars:
 
         * ``connector_metadata`` → individual top-level properties (``title``,
-          ``description``, ``version``, ``category``, ``vendor``, ``publisher``,
-          ``domain``, ``author_image``) plus ``tags`` (list of strings) and
-          ``ownership_team`` / ``ownership_maintainers`` (flattened ownership).
+          ``description``, ``version``, ``vendor``, ``publisher``,
+          ``domain``, ``author_image``) plus ``categories`` and ``tags`` (lists
+          of strings) and ``ownership_team`` / ``ownership_maintainers``
+          (flattened ownership).
         * ``settings`` → ``allow_skip_verification`` as a top-level boolean.
 
         The original nested attributes remain available on the live Python
@@ -487,7 +488,6 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
                 "title",
                 "description",
                 "version",
-                "category",
                 "vendor",
                 "publisher",
                 "domain",
@@ -496,6 +496,10 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
                 value = metadata.get(key)
                 if value is not None:
                     json_dct.setdefault(key, value)
+            categories = metadata.get("categories")
+            if isinstance(categories, list):
+                # Neo4j accepts arrays of primitives - keep only strings.
+                json_dct["categories"] = [c for c in categories if isinstance(c, str)]
             tags = metadata.get("tags")
             if isinstance(tags, list):
                 # Neo4j accepts arrays of primitives - keep only strings.

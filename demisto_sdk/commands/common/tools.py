@@ -63,6 +63,7 @@ from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     COLLECTIONS_DIR,
     CONF_JSON_FILE_NAME,
+    CONNECTORS_FOLDER,
     CONTENT_ENTITIES_DIRS,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
@@ -4684,11 +4685,13 @@ def get_relative_path(file_path: Union[str, Path], relative_to: Path) -> Path:
         try:
             file_path = file_path.relative_to(relative_to)
         except ValueError:
+            if CONNECTORS_FOLDER in file_path.parts:
+                return file_path
             # The path is absolute but not under ``relative_to`` - e.g. content
             # that lives in a separate repository (connectors in
             # unified-connectors-content). Return the path unchanged rather than
             # raising, so callers degrade gracefully.
-            return file_path
+            raise
     return file_path
 
 

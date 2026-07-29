@@ -28,7 +28,6 @@ from demisto_sdk.commands.validate.unified_connector_content_manager import (
     UnifiedConnectorContentManager,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

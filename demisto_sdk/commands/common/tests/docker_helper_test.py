@@ -652,6 +652,53 @@ def test_verify_image_available_after_push_for_dockerhub_image_uses_api(mocker):
     is_available_mock.assert_not_called()
 
 
+def test_verify_image_available_after_push_for_gar_hosted_devtestdemisto_uses_daemon(
+    mocker,
+):
+    """
+    Given:
+        - A regular ``devtestdemisto/*`` image (NOT the extended repo) that resolves
+          to a non-DockerHub registry (the GAR virtual proxy), i.e.
+          get_image_registry() prefixes it with a GAR host.
+    When:
+        - _verify_image_available_after_push is called and the image is available.
+    Then:
+        - Verification is done via the configured registry (daemon pull) using
+          is_image_available(use_registry_prefix=True), and the DockerHub Registry
+          API is NOT queried (querying it would be a false positive against the
+          DockerHub devtestdemisto namespace).
+
+    This is a regression test for first-time pushes racing GAR propagation: the
+    prefix-only classifier previously mislabeled GAR-hosted ``devtestdemisto/*``
+    images as DockerHub images and "verified" them via the DockerHub API,
+    returning success before the manifest had propagated to GAR.
+    """
+    # Given
+    image = "devtestdemisto/sane-pdf-reports:1.0.0-abcdef"
+    gar_image = (
+        "europe-west4-docker.pkg.dev/xdr-shared-services-prod-eu-01/"
+        "xdr-docker-hub-virtual/" + image
+    )
+    mocker.patch.object(
+        dhelper.DockerBase, "get_image_registry", return_value=gar_image
+    )
+    is_available_mock = mocker.patch.object(
+        dhelper.DockerBase, "is_image_available", return_value=True
+    )
+    dockerhub_api_mock = mocker.patch.object(
+        dhelper.DockerBase, "_is_image_available_on_registry"
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When
+    dhelper.DockerBase._verify_image_available_after_push(image)
+
+    # Then
+    is_available_mock.assert_called_once_with(image, use_registry_prefix=True)
+    dockerhub_api_mock.assert_not_called()
+    sleep_mock.assert_not_called()
+
+
 def test_verify_image_available_after_push_when_available_returns(mocker):
     """
     Given:

@@ -594,9 +594,14 @@ class DockerBase:
         else:
             repo, tag = image.split(":")
 
-        # GAR-hosted (extended) images are not visible via the DockerHub Registry
-        # API, so verify them through the configured registry (daemon pull) instead.
-        is_gar_image = repo.startswith(DEVTEST_DEMISTO_EXTENDED_REPOSITORY)
+        registry_qualified_image = DockerBase.get_image_registry(image)
+        if registry_qualified_image.endswith(f"/{image}"):
+            registry_host = registry_qualified_image[: -(len(image) + 1)]
+        else:
+            registry_host = ""
+        is_gar_image = bool(registry_host) and not registry_host.endswith(
+            DEFAULT_DOCKER_REGISTRY_URL
+        )
         registry_name = "the registry (GAR)" if is_gar_image else "DockerHub"
 
         logger.info(

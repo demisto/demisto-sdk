@@ -3,4 +3,10 @@ changes:
   type: feature
 - description: Docker image push now fails loudly when the push did not succeed.
   type: fix
+- description: Post-push image verification now correctly routes GAR-hosted devtestdemisto
+    images through a registry (daemon) pull instead of the DockerHub Registry API,
+    preventing a false-positive verification that let first-time-pushed images race
+    registry propagation and fail docker-in-docker pre-commit hooks with "manifest
+    unknown".
+  type: fix
 pr_number: 5458

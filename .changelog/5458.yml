@@ -9,4 +9,8 @@ changes:
     registry propagation and fail docker-in-docker pre-commit hooks with "manifest
     unknown".
   type: fix
+- description: Increased the post-push image propagation-wait window to ~10 minutes
+    (20 attempts) to accommodate slow propagation of large first-time-pushed images
+    (e.g. chromium) through the GAR virtual registry.
+  type: fix
 pr_number: 5458

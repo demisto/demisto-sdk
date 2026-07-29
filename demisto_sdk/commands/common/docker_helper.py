@@ -567,7 +567,7 @@ class DockerBase:
     def _verify_image_available_after_push(
         image: str,
         log_prompt: str = "",
-        max_retries: int = 10,
+        max_retries: int = 20,
         delay_seconds: int = 30,
     ) -> None:
         """Verify a pushed image is available in its registry.
@@ -584,7 +584,9 @@ class DockerBase:
             image (str): The image name (without registry prefix), e.g.
                 ``devtestdemisto/python3:3.10.0.12345-abcdef``.
             log_prompt (str): Log prompt prefix for messages.
-            max_retries (int): Maximum number of verification attempts. Defaults to 10.
+            max_retries (int): Maximum number of verification attempts. Defaults to
+                20 (~10 minutes of total delay), which accommodates slow propagation
+                of large images (e.g. chromium) through the GAR virtual registry.
             delay_seconds (int): Seconds to wait between retries. Defaults to 30.
         """
         if ":" not in image:

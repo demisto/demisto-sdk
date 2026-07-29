@@ -50,7 +50,7 @@ Path to a Unified Connector Content (UCC) repository (containing a `connectors/`
 Use this to validate an external UCC checkout together with a plain content checkout: the
 UCC connectors are temporarily synced into the main content repo for the duration of the run
 (and automatically cleaned up on exit).
-This flag currently only affects `-a/--validate-all`.
+This flag works with both `-a/--validate-all` (all synced connectors are validated) and `-g/--use-git` (only the connectors changed in the UCC repo's own git diff are validated).
 
 ### Validation Error Codes
 Each error found by validate has an error code attached to it. The code can be found in brackets preceding the error itself.  

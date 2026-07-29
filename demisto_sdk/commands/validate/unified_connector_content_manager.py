@@ -183,8 +183,16 @@ class UnifiedConnectorContentManager:
                 self._copy_first_missing_level(item, destination / item.name)
 
         else:
-            # File exists in both destination and source; skip it
-            logger.debug(f"Skipping existing file: {destination.name}")
+            # File exists in both destination and source. We keep the existing
+            # local copy (mirroring PrivateContentManager), but warn loudly:
+            # otherwise validation would silently run against a stale local
+            # connector instead of the UCC version the user pointed at.
+            logger.warning(
+                f"Connector file already exists locally and will NOT be "
+                f"overwritten by the UCC version: "
+                f"{destination.relative_to(self.content_path)}. "
+                f"Validation will run against the existing local copy."
+            )
 
     def stage_copied_files(self) -> List[str]:
         """

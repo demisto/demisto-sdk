@@ -1,4 +1,6 @@
 changes:
-- description: Added a new `-ccp/--connectors-content-path` option to `demisto-sdk validate -a`. Pointing at an external Unified Connector Content (UCC) repository temporarily syncs its `connectors/**` into the main content repo for the duration of the run, mirroring the existing `--private-content-path` mechanism for `Packs/**`. Both flags are independent and can be combined; a "unified" CI branch that already contains both `Packs/**` and `connectors/**` in one checkout still works with plain `validate -a` without any flag.
+- description: Added a new `-ccp/--connectors-content-path` option to `demisto-sdk validate` so an external Unified Connector Content (UCC) repository can be validated together with a plain content checkout. Works with both `-a` (all UCC connectors are temporarily synced into the content repo) and `-g` (only the connectors changed in the UCC repo's git diff are validated), mirroring the existing `--private-content-path` behavior for `Packs/**`. Copied files are automatically cleaned up on exit, and the flag can be combined with `--private-content-path`.
   type: feature
+- description: Fixed `demisto-sdk validate -a` silently skipping connectors, so connector-only validations (such as `CO100`) now run under `-a` as they already did under `-g`.
+  type: fix
 pr_number: '5468'

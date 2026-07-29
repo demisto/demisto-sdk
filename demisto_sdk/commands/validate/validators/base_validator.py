@@ -262,23 +262,54 @@ class ConnectorsValidator(BaseValidator[ContentTypes], ABC):
         the connector's type (derived from its `grouped` setting) is included in
         `connectors_type_to_validate`.
         """
-        return (
-            super().should_run(
-                content_item,
-                ignorable_errors,
-                support_level_dict,
-                running_execution_mode,
-            )
-            and should_run_on_connector_type(
-                content_item, self.connectors_type_to_validate
-            )
-            and not self.is_error_ignored(
-                self.error_code,
-                ignorable_errors,
-                content_item,
-                self.related_file_type,
-            )
+        connector_id = getattr(content_item, "object_id", content_item)
+        logger.debug(
+            f"[ConnectorsValidator] Evaluating validation '{self.error_code}' "
+            f"({type(self).__name__}) on connector '{connector_id}'."
         )
+
+        generic_should_run = super().should_run(
+            content_item,
+            ignorable_errors,
+            support_level_dict,
+            running_execution_mode,
+        )
+        if not generic_should_run:
+            logger.debug(
+                f"[ConnectorsValidator] Skipping validation '{self.error_code}' "
+                f"on connector '{connector_id}': generic should_run checks failed."
+            )
+            return False
+
+        type_matches = should_run_on_connector_type(
+            content_item, self.connectors_type_to_validate
+        )
+        if not type_matches:
+            logger.debug(
+                f"[ConnectorsValidator] Skipping validation '{self.error_code}' "
+                f"on connector '{connector_id}': connector type not in "
+                f"{self.connectors_type_to_validate}."
+            )
+            return False
+
+        error_ignored = self.is_error_ignored(
+            self.error_code,
+            ignorable_errors,
+            content_item,
+            self.related_file_type,
+        )
+        if error_ignored:
+            logger.debug(
+                f"[ConnectorsValidator] Skipping validation '{self.error_code}' "
+                f"on connector '{connector_id}': error code is ignored."
+            )
+            return False
+
+        logger.debug(
+            f"[ConnectorsValidator] Running validation '{self.error_code}' "
+            f"on connector '{connector_id}'."
+        )
+        return True
 
     def is_error_ignored(
         self,

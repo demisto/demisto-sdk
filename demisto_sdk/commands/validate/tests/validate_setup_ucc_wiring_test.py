@@ -27,7 +27,6 @@ import typer
 from demisto_sdk.commands.common.constants import ExecutionMode
 from demisto_sdk.commands.validate import validate_setup
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -299,17 +298,19 @@ class TestValidateAllWithConnectorsContentPath:
         wire_mocks["ucc_cls"].assert_not_called()
         assert wire_mocks["call_log"] == []
 
-    def test_ccp_not_used_when_not_in_all_files_mode(
+    def test_ccp_used_in_use_git_mode(
         self,
         mocker,
         wire_mocks,
         fake_ucc: Path,
     ) -> None:
         """
-        Given: ``connectors_content_path`` is set but execution mode is
-               ``USE_GIT`` (not ``-a``).
-        Then:  The UCC manager is NOT constructed - the wrap is only for
-               ``-a``, mirroring the existing private-content behavior.
+        Given: ``connectors_content_path`` is set and execution mode is
+               ``USE_GIT`` (``-g``, not ``-a``).
+        Then:  The UCC manager IS constructed and entered/exited once, so that
+               the UCC repo can be git-diffed (mirroring the existing
+               content-private ``-g`` support). PrivateContentManager is NOT
+               constructed.
         """
         # Override the execution-mode fixture default.
         mocker.patch.object(
@@ -326,5 +327,9 @@ class TestValidateAllWithConnectorsContentPath:
         exit_code = _invoke_validate(kwargs)
         assert exit_code == 0
 
-        wire_mocks["ucc_cls"].assert_not_called()
+        wire_mocks["ucc_cls"].assert_called_once()
+        ucc_kwargs = wire_mocks["ucc_cls"].call_args.kwargs
+        assert ucc_kwargs["connectors_content_path"] == fake_ucc
+
         wire_mocks["priv_cls"].assert_not_called()
+        assert wire_mocks["call_log"] == ["UCC.enter", "UCC.exit"]

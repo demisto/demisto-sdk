@@ -282,6 +282,7 @@ class Initializer:
         execution_mode: Optional[ExecutionMode] = None,
         handling_private_repositories: bool = False,
         private_content_path: Optional[Path] = None,
+        connectors_content_path: Optional[Path] = None,
     ):
         self.staged = staged
         self.file_path = file_path
@@ -293,6 +294,13 @@ class Initializer:
             Path(private_content_path) if private_content_path else None
         )
         self.private_content_files: set[Path] = set()
+        # Unified Connector Content (UCC) repo path. When set (via -ccp with -g),
+        # the UCC repo is git-diffed directly so only connectors actually changed
+        # there are collected - mirroring the private_content_path handling.
+        self.connectors_content_path = (
+            Path(connectors_content_path) if connectors_content_path else None
+        )
+        self.connectors_content_files: set[Path] = set()
 
         # Set environment variable to enable private repo mode when handling private repositories
         if handling_private_repositories:
@@ -381,6 +389,20 @@ class Initializer:
             added_files = added_files.union(private_added_files)
             renamed_files = renamed_files.union(private_renamed_files)
 
+        if self.connectors_content_path:
+            (
+                connectors_modified_files,
+                connectors_added_files,
+                connectors_renamed_files,
+            ) = self.get_unfiltered_changed_files_from_git(self.connectors_content_path)
+            self.connectors_content_files = connectors_modified_files.union(
+                connectors_added_files
+            ).union(connectors_renamed_files)
+
+            modified_files = modified_files.union(connectors_modified_files)
+            added_files = added_files.union(connectors_added_files)
+            renamed_files = renamed_files.union(connectors_renamed_files)
+
         # filter to only specified paths if given
         if file_path:
             (modified_files, added_files, renamed_files) = self.specify_files_by_status(
@@ -402,6 +424,16 @@ class Initializer:
             )
             self.private_content_files.update(private_deleted_files)
             deleted_files = deleted_files.union(private_deleted_files)
+
+        if self.connectors_content_path:
+            connectors_git_util = GitUtil(self.connectors_content_path)
+            connectors_deleted_files = connectors_git_util.deleted_files(
+                prev_ver=self.prev_ver,
+                committed_only=self.committed_only,
+                staged_only=self.staged,
+            )
+            self.connectors_content_files.update(connectors_deleted_files)
+            deleted_files = deleted_files.union(connectors_deleted_files)
 
         # Handle deleted files for private repositories
         if self.handling_private_repositories:
@@ -847,6 +879,11 @@ class Initializer:
                     and self.private_content_path
                 ):
                     chdir_path = self.private_content_path
+                elif (
+                    file_path in self.connectors_content_files
+                    and self.connectors_content_path
+                ):
+                    chdir_path = self.connectors_content_path
                 else:
                     chdir_path = Path(get_content_path())
 
@@ -862,6 +899,13 @@ class Initializer:
                         ):
                             obj.path_to_read = (
                                 Path(self.private_content_path) / file_path
+                            )
+                        elif (
+                            file_path in self.connectors_content_files
+                            and self.connectors_content_path
+                        ):
+                            obj.path_to_read = (
+                                Path(self.connectors_content_path) / file_path
                             )
 
                         obj.git_sha = current_git_sha

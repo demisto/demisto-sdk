@@ -187,7 +187,9 @@ def validate(
             "(containing a 'connectors/' directory). Use this to validate an "
             "external UCC checkout together with a plain content checkout: "
             "connectors are temporarily synced into the main content repo for "
-            "the duration of the run and cleaned up on exit."
+            "the duration of the run and cleaned up on exit. Works with both "
+            "-a (validate all synced connectors) and -g (validate only the "
+            "connectors changed in the UCC repo's own git diff)."
         ),
     ),
     ignore_support_level: bool = typer.Option(
@@ -276,22 +278,32 @@ def validate(
 
         # Run new validation flow
         if run_new_validate:
-            # When using -a flag (ALL_FILES mode) with an external repo path
-            # (private content for Packs/, unified connector content for
+            # When using -a (ALL_FILES) or -g (USE_GIT) with an external repo
+            # path (private content for Packs/, unified connector content for
             # connectors/), wrap the run in the matching context manager so the
-            # external files are copied+staged before ContentDTO.from_path() is
-            # called and cleaned up afterwards (even on Ctrl+C).
+            # external files are copied+staged before ContentDTO.from_path() /
+            # the git-diff collection runs, and cleaned up afterwards (even on
+            # Ctrl+C).
+            #
+            # In USE_GIT mode the managers still copy+stage the external repo,
+            # but the initializer additionally git-diffs the external repo
+            # directly so only the connectors/packs actually changed there are
+            # validated (see Initializer.collect_files_to_run).
             #
             # Both flags are independent - either, both, or neither may be set.
             # When both are set the managers nest inside a single ExitStack so
             # cleanup happens in LIFO order.
+            external_repo_modes = (
+                ExecutionMode.ALL_FILES,
+                ExecutionMode.USE_GIT,
+            )
             with contextlib.ExitStack() as stack:
-                if execution_mode == ExecutionMode.ALL_FILES and ctx.params.get(
+                if execution_mode in external_repo_modes and ctx.params.get(
                     "private_content_path"
                 ):
                     logger.info(
-                        f"Using PrivateContentManager for ALL_FILES mode with "
-                        f"private content path: "
+                        f"Using PrivateContentManager for {execution_mode} mode "
+                        f"with private content path: "
                         f"{ctx.params['private_content_path']}"
                     )
                     stack.enter_context(
@@ -300,12 +312,12 @@ def validate(
                             content_path=CONTENT_PATH,
                         )
                     )
-                if execution_mode == ExecutionMode.ALL_FILES and ctx.params.get(
+                if execution_mode in external_repo_modes and ctx.params.get(
                     "connectors_content_path"
                 ):
                     logger.info(
-                        f"Using UnifiedConnectorContentManager for ALL_FILES "
-                        f"mode with connectors content path: "
+                        f"Using UnifiedConnectorContentManager for "
+                        f"{execution_mode} mode with connectors content path: "
                         f"{ctx.params['connectors_content_path']}"
                     )
                     stack.enter_context(
@@ -481,6 +493,7 @@ def run_new_validation(file_path, execution_mode, **kwargs):
                 "handling_private_repositories", False
             ),
             private_content_path=kwargs.get("private_content_path"),
+            connectors_content_path=kwargs.get("connectors_content_path"),
         )
     else:
         initializer = Initializer(

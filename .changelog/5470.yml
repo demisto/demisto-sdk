@@ -1,0 +1,4 @@
+changes:
+- description: Extended the `-ccp/--connectors-content-path` option of `demisto-sdk validate` to also work in git mode (`-g`), in addition to `-a`. In `-g` mode the external Unified Connector Content (UCC) repository is git-diffed directly so only the connectors actually changed in the UCC repo are validated alongside the main content repo's changes, mirroring the existing `--private-content-path` behavior for `Packs/**`.
+  type: feature
+pr_number: '5470'

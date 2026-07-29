@@ -836,6 +836,84 @@ def test_get_unfiltered_changed_files_from_git_case_untracked_files_identify(moc
             Path.unlink(temp_file)
 
 
+def test_collect_files_to_run_merges_connectors_content_repo_diff(mocker):
+    """
+    Given:
+        An Initializer with ``connectors_content_path`` set (the -ccp flag used
+        together with -g), where the main content repo has one changed file and
+        the UCC repo has its own changed connector files.
+    When:
+        Calling collect_files_to_run.
+    Then:
+        Ensure the UCC repo is git-diffed directly (via
+        get_unfiltered_changed_files_from_git on the UCC path) and its changed
+        connector files are merged into the returned modified/added/renamed sets
+        and tracked in ``connectors_content_files`` - so only the connectors
+        actually changed in the UCC repo are collected, mirroring the
+        content-private behavior.
+    """
+    ucc_path = Path("/tmp/ucc")
+    content_modified = {Path("Packs/MyPack/Integrations/MyInt/MyInt.yml")}
+    ucc_modified = {Path("connectors/datadog/connector.yaml")}
+    ucc_added = {Path("connectors/okta/connector.yaml")}
+
+    initializer = Initializer(connectors_content_path=ucc_path)
+    initializer.validate_git_installed()
+
+    # First call: main content repo diff. Second call: UCC repo diff.
+    mocker.patch.object(
+        initializer,
+        "get_unfiltered_changed_files_from_git",
+        side_effect=[
+            (content_modified, set(), set()),
+            (ucc_modified, ucc_added, set()),
+        ],
+    )
+    mocker.patch.object(GitUtil, "deleted_files", return_value=set())
+    # The UCC deleted-files branch constructs a fresh GitUtil on the UCC path.
+    mocker.patch(
+        "demisto_sdk.commands.validate.initializer.GitUtil",
+        return_value=mocker.MagicMock(deleted_files=lambda **_: set()),
+    )
+
+    modified_files, added_files, renamed_files, deleted_files = (
+        initializer.collect_files_to_run(file_path="")
+    )
+
+    # UCC changes merged into the combined result.
+    assert ucc_modified.issubset(modified_files)
+    assert content_modified.issubset(modified_files)
+    assert ucc_added.issubset(added_files)
+    # UCC changes tracked separately so path redirection can target the UCC repo.
+    assert initializer.connectors_content_files == ucc_modified | ucc_added
+
+
+def test_collect_files_to_run_skips_connectors_diff_when_no_ccp(mocker):
+    """
+    Given:
+        An Initializer WITHOUT ``connectors_content_path`` set.
+    When:
+        Calling collect_files_to_run.
+    Then:
+        Ensure the UCC repo is never git-diffed (the content repo is diffed
+        exactly once) and ``connectors_content_files`` stays empty - a
+        regression guard that -ccp has no effect unless provided.
+    """
+    initializer = Initializer()
+    initializer.validate_git_installed()
+    diff_mock = mocker.patch.object(
+        initializer,
+        "get_unfiltered_changed_files_from_git",
+        return_value=(set(), set(), set()),
+    )
+    mocker.patch.object(GitUtil, "deleted_files", return_value=set())
+
+    initializer.collect_files_to_run(file_path="")
+
+    diff_mock.assert_called_once_with()
+    assert initializer.connectors_content_files == set()
+
+
 def test_ignored_with_run_all(mocker):
     """
     This UT verifies that when running with -a on validators that run on all files,

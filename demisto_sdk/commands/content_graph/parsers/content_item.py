@@ -132,15 +132,15 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         from demisto_sdk.commands.common.constants import AGENTIX_AGENTS_DIR
         from demisto_sdk.commands.content_graph.common import ContentType
 
-        logger.debug(f"Parsing content item {path}")
-
+        logger.debug(f"Parsing content item {path}, {pack_marketplaces=}, {pack_supported_modules=}")
         if pack_marketplaces is None:
             (
                 pack_marketplaces,
                 resolved_supported_modules,
             ) = ContentItemParser._resolve_pack_defaults(path)
-            if pack_supported_modules is None:
-                pack_supported_modules = resolved_supported_modules
+        if pack_supported_modules is None:
+            logger.debug(f"The pack_supported_modules of the {path} is empty, assign {resolved_supported_modules=}")
+            pack_supported_modules = resolved_supported_modules
 
         # Skip test files under AgentixAgents - they are not content items
         if AGENTIX_AGENTS_DIR in path.parts and ContentType._is_agentix_agent_test_path(

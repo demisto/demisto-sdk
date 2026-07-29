@@ -134,13 +134,13 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
         logger.debug(f"Parsing content item {path}")
 
-         if pack_marketplaces is None:
+        if pack_marketplaces is None:
             (
                 pack_marketplaces,
                 resolved_supported_modules,
             ) = ContentItemParser._resolve_pack_defaults(path)
-        if pack_supported_modules is None:
-            pack_supported_modules = resolved_supported_modules
+            if pack_supported_modules is None:
+                pack_supported_modules = resolved_supported_modules
 
         # Skip test files under AgentixAgents - they are not content items
         if AGENTIX_AGENTS_DIR in path.parts and ContentType._is_agentix_agent_test_path(

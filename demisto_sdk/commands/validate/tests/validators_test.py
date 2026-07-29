@@ -652,6 +652,31 @@ def test_object_collection_with_pack_path(repo):
     assert obj_types == {ContentType.INTEGRATION, ContentType.PACK}
 
 
+def test_all_files_gather_includes_connectors(mocker):
+    """
+    Given:
+    - ALL_FILES (-a) execution mode where ContentDTO.from_path parses both a
+      pack and a connector from the repository.
+    When:
+    - Calling the base Initializer.gather_objects_to_run_on.
+    Then:
+    - Make sure the parsed Connector object is included in the returned set and
+      is not discarded (so connector-only validators such as CO100 run under -a
+      exactly as they do under -g).
+    """
+    from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+
+    pack = create_pack_object()
+    connector = create_connector_object()
+    fake_dto = ContentDTO.construct(packs=[pack], connectors=[connector])
+    mocker.patch.object(ContentDTO, "from_path", return_value=fake_dto)
+
+    initializer = Initializer(execution_mode=ExecutionMode.ALL_FILES)
+    obj_set, _ = initializer.gather_objects_to_run_on()
+
+    assert connector in obj_set
+
+
 def test_load_files_with_pack_path(repo):
     """
     Given:

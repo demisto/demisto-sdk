@@ -663,7 +663,13 @@ class Initializer:
             content_dto = ContentDTO.from_path()
             if not isinstance(content_dto, ContentDTO):
                 raise Exception("no content found")
-            content_objects_to_run = set(content_dto.packs)
+            # Include connectors alongside packs so connector-only validators
+            # (e.g. CO100) run under -a exactly as they do under -g. Without
+            # this, content_dto.connectors would be silently discarded and no
+            # Connector object would ever reach the validation loop.
+            content_objects_to_run = set(content_dto.packs) | set(
+                content_dto.connectors
+            )
         else:
             self.execution_mode = ExecutionMode.USE_GIT
             self.committed_only = True

@@ -1,0 +1,9 @@
+changes:
+- description: Fixed an issue where the GR109 (IsSupportedModulesCompatibility) and GR114
+    (IsNonMandatorySupportedModulesCompatibility) validators falsely reported every module
+    of a content item as missing for command dependencies. A Command node never stores
+    supportedModules (the value lives on the HAS_COMMAND relationship), so command
+    dependencies are now skipped when computing missing modules per dependency; command
+    module compatibility is still checked by the dedicated graph query.
+  type: fix
+pr_number: 5466

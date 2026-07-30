@@ -2082,6 +2082,316 @@ def test_GR109_ignores_safe_commands_after_cache_pollution(
 
 
 @pytest.fixture
+def repo_for_test_gr_109_branch1_command_dependencies(graph_repo: Repo):
+    """
+    Creates a test repository reproducing the GR109 Branch 1 (dependencies) false positive.
+
+    Structure:
+    - Pack A (platform marketplace, supportedModules ["module_x", "module_y"]):
+        - integration1: an integration whose yml omits "module_y" from its
+          supportedModules -> a GENUINE Branch 1 mismatch with playbook1.
+        - playbook1: inherits the pack's supportedModules, and on its mandatory
+          execution path it uses integration1 plus two BRANDLESS commands
+          ("|||brandless_command_a" / "|||brandless_command_b").
+
+    Brandless command tasks create a USES relationship straight to a Command node.
+    Command nodes never carry `supportedModules` (it lives on the HAS_COMMAND
+    relationship), so Branch 1 must skip them; otherwise every module of the
+    caller is falsely reported as missing.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.set_data(
+        marketplaces=[MarketplaceVersions.PLATFORM.value],
+        supportedModules=["module_x", "module_y"],
+    )
+
+    # Genuine Branch 1 mismatch: the integration does not support "module_y".
+    integration1 = pack_a.create_integration(name="integration1")
+    integration1.set_data(
+        supportedModules=["module_x"],
+        script={
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "brandless_command_a",
+                    "description": "description",
+                    "arguments": [],
+                },
+                {
+                    "name": "brandless_command_b",
+                    "description": "description",
+                    "arguments": [],
+                },
+            ],
+            "dockerimage": None,
+        },
+    )
+
+    playbook_yml = {
+        "id": "playbook1",
+        "name": "playbook1",
+        "starttaskid": "0",
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "0",
+                "type": "regular",
+                "nexttasks": {"#none#": ["1"]},
+                "task": {
+                    "id": "0",
+                    "name": "run integration1 command",
+                    "description": "Uses integration1",
+                    "script": "integration1|||branded_command",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "integration1",
+                },
+            },
+            "1": {
+                "id": "1",
+                "taskid": "1",
+                "type": "regular",
+                "nexttasks": {"#none#": ["2"]},
+                "task": {
+                    "id": "1",
+                    "name": "run brandless_command_a",
+                    "description": "Uses brandless_command_a",
+                    "script": "|||brandless_command_a",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "",
+                },
+            },
+            "2": {
+                "id": "2",
+                "taskid": "2",
+                "type": "regular",
+                "nexttasks": {"#none#": ["3"]},
+                "task": {
+                    "id": "2",
+                    "name": "run brandless_command_b",
+                    "description": "Uses brandless_command_b",
+                    "script": "|||brandless_command_b",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "",
+                },
+            },
+            "3": {
+                "id": "3",
+                "taskid": "3",
+                "type": "title",
+                "task": {
+                    "id": "3",
+                    "name": "Done",
+                    "type": "title",
+                    "iscommand": False,
+                    "brand": "",
+                },
+            },
+        },
+    }
+    pack_a.create_playbook("playbook1", yml=playbook_yml)
+
+    return graph_repo
+
+
+def test_GR109_branch1_ignores_command_dependencies(
+    repo_for_test_gr_109_branch1_command_dependencies: Repo,
+):
+    """
+    Given:
+        A platform playbook ("playbook1") that inherits its pack's supportedModules
+        (['module_x', 'module_y']) and, on its mandatory path, uses both
+        "integration1" (supportedModules ['module_x'] -> genuine mismatch) and two
+        brandless commands, which resolve to Command nodes.
+    When:
+        Running the IsSupportedModulesCompatibility validator on all files.
+    Then:
+        Only "integration1" is reported as missing "module_y". The brandless commands
+        must NOT be reported: Command nodes never store supportedModules on the node,
+        so treating them as Branch 1 dependencies falsely flags every caller module.
+    """
+    graph_interface = repo_for_test_gr_109_branch1_command_dependencies.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert results[0].content_object.object_id == "playbook1"
+    assert (
+        results[0].message
+        == "The following mandatory dependencies missing required modules: integration1 is missing: [module_y]"
+    )
+    assert "brandless_command_a" not in results[0].message
+    assert "brandless_command_b" not in results[0].message
+
+
+def test_GR109_branch1_ignores_command_dependencies_after_cache_pollution(
+    repo_for_test_gr_109_branch1_command_dependencies: Repo,
+):
+    """
+    Given:
+        The same repository as test_GR109_branch1_ignores_command_dependencies.
+    When:
+        Another validator first loads ALL of the playbook's USES relationships into the
+        shared, append-only graph cache (simulated via graph.search), and then the
+        IsSupportedModulesCompatibility validator runs on all files.
+    Then:
+        Only "integration1" is reported. The brandless commands must still be absent,
+        even though the polluted cache now exposes them on `content_item.uses`.
+    """
+    graph_interface = repo_for_test_gr_109_branch1_command_dependencies.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    # Simulate a prior validator (e.g. PB131) loading the playbook's full USES set into
+    # the shared, append-only cache.
+    graph_interface.search(content_type=ContentType.PLAYBOOK, object_id="playbook1")
+
+    # Sanity-check that the cache is actually polluted with the Command edges, so this
+    # test cannot pass vacuously.
+    playbook_obj = next(
+        obj
+        for obj in graph_interface._id_to_obj.values()
+        if getattr(obj, "object_id", None) == "playbook1"
+    )
+    used_ids = {rel.content_item_to.object_id for rel in playbook_obj.uses}
+    assert {"brandless_command_a", "brandless_command_b"} <= used_ids
+
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert results[0].content_object.object_id == "playbook1"
+    assert (
+        results[0].message
+        == "The following mandatory dependencies missing required modules: integration1 is missing: [module_y]"
+    )
+    assert "brandless_command_a" not in results[0].message
+    assert "brandless_command_b" not in results[0].message
+
+
+@pytest.fixture
+def repo_for_test_gr_109_narrower_command_modules(graph_repo: Repo):
+    """
+    Reproduces the real-world "core-blocklist-files" shape, where a command declares
+    its own per-command `supportedModules` that are NARROWER than the caller's.
+
+    Structure:
+    - Pack A (platform marketplace, supportedModules ["module_x", "module_y"]):
+        - integration1: supportedModules ["module_x", "module_y"] (matches the pack,
+          so there is NO Branch 1 integration-level mismatch).
+            - narrow_command: per-command supportedModules ["module_x"] only.
+        - playbook1: inherits the pack's supportedModules (["module_x", "module_y"])
+          and BRANDLESSLY calls "narrow_command" ("|||narrow_command").
+
+    "module_y" is supported by the playbook but NOT by narrow_command, so this is a
+    genuine violation that must still be caught by Branch 3 after Branch 1 stopped
+    inspecting Command dependencies.
+    """
+    pack_a = graph_repo.create_pack("Pack A")
+    pack_a.set_data(
+        marketplaces=[MarketplaceVersions.PLATFORM.value],
+        supportedModules=["module_x", "module_y"],
+    )
+
+    integration1 = pack_a.create_integration(name="integration1")
+    integration1.set_data(
+        # Deliberately identical to the pack so Branch 1 has nothing to report.
+        supportedModules=["module_x", "module_y"],
+        script={
+            "type": "python",
+            "subtype": "python3",
+            "script": "-",
+            "commands": [
+                {
+                    "name": "narrow_command",
+                    "description": "description",
+                    "arguments": [],
+                    # Narrower than the caller: missing "module_y".
+                    "supportedModules": ["module_x"],
+                }
+            ],
+            "dockerimage": None,
+        },
+    )
+
+    playbook_yml = {
+        "id": "playbook1",
+        "name": "playbook1",
+        "starttaskid": "0",
+        "tasks": {
+            "0": {
+                "id": "0",
+                "taskid": "0",
+                "type": "regular",
+                "nexttasks": {"#none#": ["1"]},
+                "task": {
+                    "id": "0",
+                    "name": "run narrow_command",
+                    "description": "Uses narrow_command",
+                    "script": "|||narrow_command",
+                    "type": "regular",
+                    "iscommand": True,
+                    "brand": "",
+                },
+            },
+            "1": {
+                "id": "1",
+                "taskid": "1",
+                "type": "title",
+                "task": {
+                    "id": "1",
+                    "name": "Done",
+                    "type": "title",
+                    "iscommand": False,
+                    "brand": "",
+                },
+            },
+        },
+    }
+    pack_a.create_playbook("playbook1", yml=playbook_yml)
+
+    return graph_repo
+
+
+def test_GR109_still_detects_command_with_narrower_supported_modules(
+    repo_for_test_gr_109_narrower_command_modules: Repo,
+):
+    """
+    Given:
+        A platform playbook ("playbook1") that inherits its pack's supportedModules
+        (['module_x', 'module_y']) and brandlessly calls "narrow_command", whose
+        per-command supportedModules are ['module_x'] only. The owning integration
+        itself supports both modules, so Branch 1 has nothing to report.
+    When:
+        Running the IsSupportedModulesCompatibility validator on all files, after
+        Branch 1 stopped inspecting Command dependencies.
+    Then:
+        The violation is STILL reported, by Branch 3, which reads supportedModules
+        from the HAS_COMMAND relationship. The message must name the offending
+        command and must NOT claim the caller's full module set is missing.
+    """
+    graph_interface = repo_for_test_gr_109_narrower_command_modules.create_graph()
+    BaseValidator.graph_interface = graph_interface
+
+    results = IsSupportedModulesCompatibilityAllFiles().obtain_invalid_content_items([])
+
+    assert len(results) == 1
+    assert results[0].content_object.object_id == "playbook1"
+    assert (
+        results[0].message
+        == "Module compatibility issue detected for mandatory dependency: Content item "
+        "'playbook1' has incompatible commands: [narrow_command]. Make sure the commands "
+        "used are supported by the same modules as the content item."
+    )
+    # The Branch 1 false positive reported the caller's entire module list as missing.
+    # Branch 3 must not regress into that behaviour.
+    assert "is missing: [module_x, module_y]" not in results[0].message
+
+
+@pytest.fixture
 def repo_for_test_gr_114(graph_repo: Repo):
     """
     Creates a test repository for testing GR114 validator (non-mandatory dependencies).

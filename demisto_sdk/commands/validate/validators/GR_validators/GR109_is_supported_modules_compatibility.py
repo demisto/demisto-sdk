@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Iterable, List, Union
 
 from demisto_sdk.commands.common.tools import get_content_item_supported_modules
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects import Job
 from demisto_sdk.commands.content_graph.objects.agentix_action import AgentixAction
 from demisto_sdk.commands.content_graph.objects.agentix_agent import AgentixAgent
@@ -112,6 +113,12 @@ class IsSupportedModulesCompatibility(BaseValidator[ContentTypes], ABC):
         for dependency in content_item.uses:
             # Filter by mandatory/non-mandatory based on the class member
             if dependency.mandatorily != self.mandatory_dependency:
+                continue
+            # Commands have a dedicated check: their supportedModules live on the
+            # HAS_COMMAND relationship, not on the Command node (a single node is
+            # shared by many integrations), so the node value here is always empty
+            # and would falsely report every module as missing.
+            if dependency.content_item_to.content_type == ContentType.COMMAND:
                 continue
             dep_modules = get_content_item_supported_modules(dependency.content_item_to)
             # Get modules supported by the content item but not by its dependency

@@ -691,7 +691,9 @@ def test_get_test_image_registry_qualifies_extended_devtest_image(monkeypatch):
           both pushed and pulled.
     """
     # Given
-    monkeypatch.setenv(dhelper.DEMISTO_SDK_EXTENDED_REGISTRY_ENV, "gcr.io/xsoar-registry")
+    monkeypatch.setenv(
+        dhelper.DEMISTO_SDK_EXTENDED_REGISTRY_ENV, "gcr.io/xsoar-registry"
+    )
     image = f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0-abcdef"
 
     # When

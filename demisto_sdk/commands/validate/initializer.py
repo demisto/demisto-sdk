@@ -41,6 +41,7 @@ from demisto_sdk.commands.common.tools import (
     find_type_by_path,
     get_content_path,
     get_file_by_status,
+    get_relative_path_from_connectors_dir,
     get_relative_path_from_packs_dir,
     is_external_repo,
     is_private_content_file,
@@ -833,8 +834,15 @@ class Initializer:
                 is_private = is_private_content_file(
                     file_path, self.private_content_path
                 )
+                is_connector = bool(
+                    self.connectors_content_path
+                    and path.is_relative_to(self.connectors_content_path)
+                    and _is_connector_path(path)
+                )
                 if is_private and self.private_content_path:
                     chdir_path = self.private_content_path
+                elif is_connector and self.connectors_content_path:
+                    chdir_path = self.connectors_content_path
                 else:
                     chdir_path = Path(get_content_path())
 
@@ -847,6 +855,8 @@ class Initializer:
                     else:
                         if is_private and self.private_content_path:
                             temp_obj.path_to_read = self.private_content_path / path
+                        elif is_connector and self.connectors_content_path:
+                            temp_obj.path_to_read = path
                         basecontent_with_path_set.add(temp_obj)
             except NotAContentItemException:
                 non_content_items.add(file_path)  # type: ignore[arg-type]
@@ -1096,15 +1106,17 @@ class Initializer:
         """Recursively load all files from a given list of paths.
 
         This method resolves each path to determine if it belongs to the private
-        content directory. If a directory exists in both the standard and
-        private content locations, the files from both locations are merged.
+        content directory or the Unified Connector Content (UCC) directory. If a
+        directory exists in both the standard and an external content location,
+        the files from both locations are merged.
 
         Args:
             files (List[str]): A list of file or directory paths (relative or absolute).
 
         Returns:
             Set[Path]: A unique set of Path objects for all discovered files.
-                    Private files are also tracked in `self.private_content_files`.
+                    Private files are also tracked in `self.private_content_files`
+                    and connector files in `self.connectors_content_files`.
         """
         loaded_files: Set[Path] = set()
 
@@ -1114,7 +1126,19 @@ class Initializer:
 
             file_level = detect_file_level(resolved_file_str)
 
-            if file_level in {PathLevel.FILE, PathLevel.PACK}:
+            # A plain FILE that resolves to an existing path is added as-is.
+            # PACK-level inputs are only shortcut here when there is no external
+            # repo to consult; otherwise they must fall through so the
+            # private/connector merge blocks below can resolve them against the
+            # external repo (e.g. `-i Packs/CommonScripts --private-content-path`
+            # or `-i connectors/foo -ccp <ucc>`, where the relative path does not
+            # exist in the main content checkout).
+            has_external_repo = bool(
+                self.private_content_path or self.connectors_content_path
+            )
+            if file_level == PathLevel.FILE or (
+                file_level == PathLevel.PACK and not has_external_repo
+            ):
                 loaded_files.add(file_path)
                 continue
 
@@ -1137,7 +1161,42 @@ class Initializer:
                     loaded_files.update(private_found)
                     self.private_content_files.update(private_found)
 
+            if self.connectors_content_path:
+                connector_found = self._load_connector_files_from_ucc(resolved_file_str)
+                loaded_files.update(connector_found)
+                self.connectors_content_files.update(connector_found)
+
         return loaded_files
+
+    def _load_connector_files_from_ucc(self, resolved_file_str: str) -> Set[Path]:
+        """Resolve a (possibly relative) connectors path against the UCC repo.
+
+        Supports inputs such as ``connectors/foo`` or
+        ``connectors/foo/connector.yaml`` that do not exist in the main content
+        checkout but do exist under ``<connectors_content_path>/connectors/``.
+
+        Args:
+            resolved_file_str (str): The user-provided input path.
+
+        Returns:
+            Set[Path]: The set of connector files found under the UCC repo
+                (empty if the path is not a connectors path or does not exist
+                there).
+        """
+        if not self.connectors_content_path:
+            return set()
+
+        rel_path = get_relative_path_from_connectors_dir(resolved_file_str)
+        if rel_path is None:
+            return set()
+
+        connector_obj = self.connectors_content_path / rel_path
+        if not connector_obj.exists():
+            return set()
+
+        if connector_obj.is_file():
+            return {connector_obj}
+        return {p for p in connector_obj.rglob("*") if p.is_file()}
 
     def collect_related_files_main_items(self, file_paths: Set[Path]) -> Set[Path]:
         """Convert the given file path to the main item its related to.

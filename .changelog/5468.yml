@@ -3,4 +3,6 @@ changes:
   type: feature
 - description: Fixed `demisto-sdk validate -a` silently skipping connectors, so connector-only validations (such as `CO100`) now run under `-a` as they already did under `-g`.
   type: fix
+- description: Fixed `demisto-sdk validate -i` not supporting a relative connectors path (e.g. `connectors/foo/connector.yaml`) together with `--connectors-content-path`, nor a pack-level path (e.g. `Packs/CommonScripts`) together with `--private-content-path`.
+  type: fix
 pr_number: '5468'

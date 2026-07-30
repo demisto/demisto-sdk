@@ -351,8 +351,12 @@ class UnifiedConnectorContentManager:
         # Unregister atexit handler
         try:
             atexit.unregister(self._atexit_cleanup)
-        except Exception:
-            pass
+        except ValueError:
+            # Best-effort cleanup: handler may already be unregistered.
+            logger.debug("Atexit cleanup handler was already unregistered.")
+        except Exception as e:
+            # Do not fail teardown, but keep visibility into unexpected issues.
+            logger.debug(f"Failed to unregister atexit cleanup handler: {e}")
 
     @staticmethod
     def _signal_handler(signum: int, frame) -> None:

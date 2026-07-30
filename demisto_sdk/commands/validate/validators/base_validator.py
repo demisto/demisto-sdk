@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 from abc import ABC
+from enum import Enum
 from pathlib import Path
 from typing import (
+    Callable,
     ClassVar,
     Generic,
     Iterable,
     List,
     Optional,
     TypeVar,
+    cast,
     get_args,
 )
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     ALWAYS_RUN_ON_ERROR_CODE,
@@ -223,6 +226,159 @@ class BaseValidator(ABC, BaseModel, Generic[ContentTypes]):
         return self.error_code[:2]
 
 
+class ConnectorType(str, Enum):
+    """The supported connector types to validate against.
+
+    Maps to the boolean `grouped` field on the connector's settings:
+    True -> GROUPED, False -> STANDARD.
+    """
+
+    STANDARD = "standard"
+    GROUPED = "grouped"
+
+
+class ConnectorsValidator(BaseValidator[ContentTypes], ABC):
+    """Base validator for connector content items.
+
+    In addition to the generic `should_run` checks, it validates the connector
+    against `connectors_type_to_validate` based on the connector's `grouped`
+    setting.
+    """
+
+    connectors_type_to_validate: List[ConnectorType] = Field(
+        default_factory=lambda: list(ConnectorType)
+    )
+
+    def should_run(
+        self,
+        content_item: ContentTypes,
+        ignorable_errors: list,
+        support_level_dict: dict,
+        running_execution_mode: Optional[ExecutionMode],
+    ) -> bool:
+        """Check whether to run the validation on the given connector content item.
+
+        Runs the generic `should_run` checks and, additionally, validates that
+        the connector's type (derived from its `grouped` setting) is included in
+        `connectors_type_to_validate`.
+        """
+        return (
+            super().should_run(
+                content_item,
+                ignorable_errors,
+                support_level_dict,
+                running_execution_mode,
+            )
+            and should_run_on_connector_type(
+                content_item, self.connectors_type_to_validate
+            )
+            and not self.is_error_ignored(
+                self.error_code,
+                ignorable_errors,
+                content_item,
+                self.related_file_type,
+            )
+        )
+
+    def is_error_ignored(
+        self,
+        err_code: str,
+        ignorable_errors: List[str],
+        content_item: ContentTypes,
+        related_file_type: Optional[List[RelatedFileType]] = None,
+    ) -> bool:
+        """Check whether the given error code is ignored for the connector content item.
+
+        The ignore rules are read from the connector's ``.connector-ignore``
+        file (parsed lazily by ``Connector.ignored_errors_dict``). Each section
+        header maps to a connector sub-file:
+
+        * Single sub-files (connection.yaml, capabilities.yaml,
+          configurations.yaml, triggers.yaml, summary.yaml) are keyed by their
+          bare filename.
+        * Handler files are keyed by ``<handler_dir>/handler.yaml`` and
+          serializer files by ``<handler_dir>/serializer.yaml``. Because a
+          connector may have multiple handlers/serializers, it is sufficient for
+          **any** of them to ignore the error for this to return ``True``.
+
+        When ``related_file_type`` is not provided the check falls back to the
+        connector's main file (``connector.yaml``).
+
+        Note: if the error code is not in ``ignorable_errors`` or is in
+        ``ALWAYS_RUN_ON_ERROR_CODE``, the error can never be ignored.
+
+        Args:
+            err_code: The validation's error code.
+            ignorable_errors: The list of errors that are allowed to be ignored.
+            content_item: The connector content item.
+            related_file_type: The related file types the validation runs on.
+
+        Returns:
+            bool: True if the error should and is allowed to be ignored.
+        """
+        # Error codes in ALWAYS_RUN_ON_ERROR_CODE must always run and can never
+        # be ignored, regardless of what the .connector-ignore file declares.
+        if (err_code not in ignorable_errors) or (err_code in ALWAYS_RUN_ON_ERROR_CODE):
+            return False
+
+        raw_getter = getattr(content_item, "get_ignored_errors", None)
+        if not callable(raw_getter):
+            return False
+        get_ignored_errors = cast(Callable[[str], List[str]], raw_getter)
+
+        if not related_file_type:
+            # No related file - check the connector's main file.
+            return err_code in get_ignored_errors("connector.yaml")
+
+        for related_file in related_file_type:
+            file_keys = self._resolve_ignore_file_keys(related_file, content_item)
+            # For handlers/serializers there may be several candidate keys; a
+            # single match is sufficient to consider the error ignored.
+            for file_key in file_keys:
+                if err_code in get_ignored_errors(file_key):
+                    return True
+        return False
+
+    @staticmethod
+    def _resolve_ignore_file_keys(
+        related_file: RelatedFileType,
+        content_item: ContentTypes,
+    ) -> List[str]:
+        """Map a ``RelatedFileType`` to the ``.connector-ignore`` section keys.
+
+        Returns a list of file keys (without the ``file:`` prefix) to look up
+        in the connector's ignore file. Handlers and serializers expand into one
+        key per handler directory the connector defines.
+        """
+        single_file_map = {
+            RelatedFileType.CONNECTOR_CONNECTION: "connection.yaml",
+            RelatedFileType.CONNECTOR_CAPABILITIES: "capabilities.yaml",
+            RelatedFileType.CONNECTOR_CONFIGURATIONS: "configurations.yaml",
+            RelatedFileType.CONNECTOR_TRIGGERS: "triggers.yaml",
+            RelatedFileType.CONNECTOR_SUMMARY: "summary.yaml",
+        }
+        if related_file in single_file_map:
+            return [single_file_map[related_file]]
+
+        if related_file in (
+            RelatedFileType.CONNECTOR_HANDLER,
+            RelatedFileType.CONNECTOR_SERIALIZER,
+        ):
+            filename = (
+                "handler.yaml"
+                if related_file == RelatedFileType.CONNECTOR_HANDLER
+                else "serializer.yaml"
+            )
+            keys: List[str] = []
+            for handler_file in getattr(content_item, "handler_files", []) or []:
+                handler_dir = getattr(handler_file, "_handler_dir_name", None)
+                if handler_dir:
+                    keys.append(f"{handler_dir}/{filename}")
+            return keys
+
+        return []
+
+
 def get_all_validators() -> List[BaseValidator]:
     validators = []
     for validator in BaseValidator.__subclasses__():
@@ -426,6 +582,31 @@ def should_run_on_deprecated(run_on_deprecated, content_item):
     if content_item.deprecated and not run_on_deprecated:
         return False
     return True
+
+
+def should_run_on_connector_type(
+    content_item: ContentTypes,
+    connectors_type_to_validate: List[ConnectorType],
+) -> bool:
+    """
+    Check if the given connector's type is in the given connectors types to validate.
+
+    The connector's type is derived from its `grouped` setting:
+    True -> ConnectorType.GROUPED, False -> ConnectorType.STANDARD.
+
+    Args:
+        content_item (ContentTypes): The connector content item to check.
+        connectors_type_to_validate (List[ConnectorType]): The connector types the validation should run on.
+
+    Returns:
+        bool: True if the connector's type is in connectors_type_to_validate. Otherwise, return False.
+    """
+    connector_type = (
+        ConnectorType.GROUPED
+        if getattr(getattr(content_item, "settings", None), "grouped", False)
+        else ConnectorType.STANDARD
+    )
+    return connector_type in connectors_type_to_validate
 
 
 def should_run_on_execution_mode(

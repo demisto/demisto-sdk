@@ -34,10 +34,6 @@ class IsActionEvaluatorTestFileExistsValidator(BaseValidator[ContentTypes]):
     def obtain_invalid_content_items(
         self, content_items: Iterable[ContentTypes]
     ) -> List[ValidationResult]:
-        content_items = list(content_items)
-        logger.debug(
-            f"[{self.error_code}] Running on {len(content_items)} AgentixAction item(s)."
-        )
         results: List[ValidationResult] = []
         for content_item in content_items:
             expected_test_file_name = (
@@ -45,10 +41,6 @@ class IsActionEvaluatorTestFileExistsValidator(BaseValidator[ContentTypes]):
             )
             test_file_path = content_item.path.with_name(expected_test_file_name)
             exists = self.case_sensitive_exists(test_file_path)
-            logger.debug(
-                f"[{self.error_code}] Action '{content_item.display_name}': "
-                f"evaluator test file exists={exists}."
-            )
             if not exists:
                 results.append(
                     ValidationResult(
@@ -60,9 +52,6 @@ class IsActionEvaluatorTestFileExistsValidator(BaseValidator[ContentTypes]):
                         content_object=content_item,
                     )
                 )
-        logger.debug(
-            f"[{self.error_code}] Finished. Found {len(results)} invalid item(s)."
-        )
         return results
 
     def case_sensitive_exists(self, test_file_path: Path) -> bool:

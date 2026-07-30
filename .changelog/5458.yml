@@ -3,14 +3,10 @@ changes:
   type: feature
 - description: Docker image push now fails loudly when the push did not succeed.
   type: fix
-- description: Post-push image verification now correctly routes GAR-hosted devtestdemisto
-    images through a registry (daemon) pull instead of the DockerHub Registry API,
-    preventing a false-positive verification that let first-time-pushed images race
-    registry propagation and fail docker-in-docker pre-commit hooks with "manifest
-    unknown".
-  type: fix
-- description: Increased the post-push image propagation-wait window to ~10 minutes
-    (20 attempts) to accommodate slow propagation of large first-time-pushed images
-    (e.g. chromium) through the GAR virtual registry.
+- description: Dev/test images are now pulled from the same registry they were pushed
+    to, instead of through a configured Docker Hub pull-through proxy. This fixes
+    docker-in-docker pre-commit hooks failing with "manifest unknown" the first time
+    a newly built image is pushed, which previously only succeeded on a retry once
+    the proxy had cached the new tag.
   type: fix
 pr_number: 5458

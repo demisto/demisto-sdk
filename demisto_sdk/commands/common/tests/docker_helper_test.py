@@ -652,51 +652,53 @@ def test_verify_image_available_after_push_for_dockerhub_image_uses_api(mocker):
     is_available_mock.assert_not_called()
 
 
-def test_verify_image_available_after_push_for_gar_hosted_devtestdemisto_uses_daemon(
-    mocker,
-):
+def test_get_test_image_registry_keeps_dockerhub_devtest_image_unqualified(monkeypatch):
     """
     Given:
-        - A regular ``devtestdemisto/*`` image (NOT the extended repo) that resolves
-          to a non-DockerHub registry (the GAR virtual proxy), i.e.
-          get_image_registry() prefixes it with a GAR host.
+        - A regular ``devtestdemisto/*`` dev-test image, and a configured (proxy)
+          container registry such as the CI GAR Docker Hub pull-through proxy.
     When:
-        - _verify_image_available_after_push is called and the image is available.
+        - get_test_image_registry is called.
     Then:
-        - Verification is done via the configured registry (daemon pull) using
-          is_image_available(use_registry_prefix=True), and the DockerHub Registry
-          API is NOT queried (querying it would be a false positive against the
-          DockerHub devtestdemisto namespace).
+        - The image is returned unqualified, so it is pulled from Docker Hub - the
+          exact registry it was pushed to.
 
-    This is a regression test for first-time pushes racing GAR propagation: the
-    prefix-only classifier previously mislabeled GAR-hosted ``devtestdemisto/*``
-    images as DockerHub images and "verified" them via the DockerHub API,
-    returning success before the manifest had propagated to GAR.
+    Regression test: qualifying a freshly pushed dev-test image with the
+    pull-through proxy made the docker hooks pull a tag the proxy had not fetched
+    yet, failing the first run with "manifest unknown" and only passing on a retry.
     """
     # Given
-    image = "devtestdemisto/sane-pdf-reports:1.0.0-abcdef"
-    gar_image = (
-        "europe-west4-docker.pkg.dev/xdr-shared-services-prod-eu-01/"
-        "xdr-docker-hub-virtual/" + image
+    monkeypatch.setattr(
+        dhelper,
+        "DOCKER_REGISTRY_URL",
+        "europe-west4-docker.pkg.dev/xdr-shared-services-prod-eu-01/xdr-docker-hub-virtual",
     )
-    mocker.patch.object(
-        dhelper.DockerBase, "get_image_registry", return_value=gar_image
-    )
-    is_available_mock = mocker.patch.object(
-        dhelper.DockerBase, "is_image_available", return_value=True
-    )
-    dockerhub_api_mock = mocker.patch.object(
-        dhelper.DockerBase, "_is_image_available_on_registry"
-    )
-    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+    image = "devtestdemisto/opencv:1.0.0.11446070-abcdef"
+
+    # When / Then
+    assert dhelper.DockerBase.get_test_image_registry(image) == image
+
+
+def test_get_test_image_registry_qualifies_extended_devtest_image(monkeypatch):
+    """
+    Given:
+        - An extended ``devtestdemistoextended/*`` dev-test image, which is hosted
+          only in the extended (GAR) registry.
+    When:
+        - get_test_image_registry is called.
+    Then:
+        - The image keeps its extended-registry prefix, since that is where it is
+          both pushed and pulled.
+    """
+    # Given
+    monkeypatch.setenv(dhelper.DEMISTO_SDK_EXTENDED_REGISTRY_ENV, "gcr.io/xsoar-registry")
+    image = f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0-abcdef"
 
     # When
-    dhelper.DockerBase._verify_image_available_after_push(image)
+    result = dhelper.DockerBase.get_test_image_registry(image)
 
     # Then
-    is_available_mock.assert_called_once_with(image, use_registry_prefix=True)
-    dockerhub_api_mock.assert_not_called()
-    sleep_mock.assert_not_called()
+    assert result == f"gcr.io/xsoar-registry/{image}"
 
 
 def test_verify_image_available_after_push_when_available_returns(mocker):

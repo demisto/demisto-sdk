@@ -567,7 +567,7 @@ class DockerBase:
     def _verify_image_available_after_push(
         image: str,
         log_prompt: str = "",
-        max_retries: int = 20,
+        max_retries: int = 10,
         delay_seconds: int = 30,
     ) -> None:
         """Verify a pushed image is available in its registry.
@@ -584,9 +584,7 @@ class DockerBase:
             image (str): The image name (without registry prefix), e.g.
                 ``devtestdemisto/python3:3.10.0.12345-abcdef``.
             log_prompt (str): Log prompt prefix for messages.
-            max_retries (int): Maximum number of verification attempts. Defaults to
-                20 (~10 minutes of total delay), which accommodates slow propagation
-                of large images (e.g. chromium) through the GAR virtual registry.
+            max_retries (int): Maximum number of verification attempts. Defaults to 10.
             delay_seconds (int): Seconds to wait between retries. Defaults to 30.
         """
         if ":" not in image:
@@ -596,14 +594,15 @@ class DockerBase:
         else:
             repo, tag = image.split(":")
 
-        registry_qualified_image = DockerBase.get_image_registry(image)
-        if registry_qualified_image.endswith(f"/{image}"):
-            registry_host = registry_qualified_image[: -(len(image) + 1)]
-        else:
-            registry_host = ""
-        is_gar_image = bool(registry_host) and not registry_host.endswith(
-            DEFAULT_DOCKER_REGISTRY_URL
-        )
+        # Extended (``devtestdemistoextended/*``) images are hosted ONLY on GCR
+        # (``gcr.io/xsoar-registry``) and are not visible via the DockerHub Registry
+        # API, so they must be verified through the configured registry (daemon
+        # pull). Regular ``devtestdemisto/*`` images are pushed to and served from
+        # DockerHub, so they are verified via the DockerHub Registry API directly -
+        # which queries DockerHub itself, bypassing any DockerHub pull-through proxy
+        # (e.g. the CI ``xdr-docker-hub-virtual`` GAR proxy) that cannot serve a
+        # freshly pushed tag.
+        is_gar_image = repo.startswith(DEVTEST_DEMISTO_EXTENDED_REPOSITORY)
         registry_name = "the registry (GAR)" if is_gar_image else "DockerHub"
 
         logger.info(
@@ -731,6 +730,33 @@ class DockerBase:
         return image
 
     @staticmethod
+    def get_test_image_registry(image: str) -> str:
+        """Resolve the registry for a *dev/test* image that we build, push and then
+        immediately pull back.
+
+        Unlike base images (which are pre-existing and may safely be pulled through
+        a Docker Hub pull-through proxy), a dev/test image is created seconds before
+        it is consumed. It must therefore be pulled from the exact registry it was
+        pushed to, otherwise a pull-through proxy - which has not yet fetched the
+        brand-new tag - answers ``manifest unknown`` and the docker hooks fail on
+        first-time pushes (they only succeed on a later retry, once the proxy has
+        caught up).
+
+        ``devtestdemistoextended/*`` images live only in the extended (GAR) registry,
+        so they keep their registry prefix. Regular ``devtestdemisto/*`` images are
+        pushed to Docker Hub, so they are left unqualified and pulled straight from
+        Docker Hub - keeping the push target and the pull target identical.
+        """
+        image = strip_cr_registry_prefix(image)
+        if DEMISTO_EXTENDED_REPOSITORY in image:
+            registry = os.getenv(
+                DEMISTO_SDK_EXTENDED_REGISTRY_ENV, DEFAULT_EXTENDED_REGISTRY
+            )
+            if registry and registry not in image:
+                return f"{registry}/{image}"
+        return image
+
+    @staticmethod
     def build_test_image_name(base_image: str, identifier: str) -> str:
         """Build the dev/test image name, mapping extended images to devtestdemistoextended/."""
         if base_image.startswith(EXTENDED_REPOSITORY_SEGMENT):
@@ -791,8 +817,12 @@ class DockerBase:
             should_pull = True
         if not should_pull and self.is_image_available(test_docker_image):
             return test_docker_image, errors
+        # The base image already exists, so it may safely be pulled through the
+        # configured (proxy) registry. The dev/test image, however, is pushed and
+        # then immediately pulled back, so it must resolve to the same registry it
+        # was pushed to - see get_test_image_registry.
         base_image = self.get_image_registry(base_image)
-        test_docker_image = self.get_image_registry(test_docker_image)
+        test_docker_image = self.get_test_image_registry(test_docker_image)
 
         try:
             logger.debug(

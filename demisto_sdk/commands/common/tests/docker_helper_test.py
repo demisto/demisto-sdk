@@ -668,6 +668,9 @@ def test_get_test_image_registry_keeps_dockerhub_devtest_image_unqualified(monke
     yet, failing the first run with "manifest unknown" and only passing on a retry.
     """
     # Given
+    # A proxy registry is configured on purpose: the point of this test is that a
+    # dev/test image stays unqualified *even when* DOCKER_REGISTRY_URL is set, so a
+    # future change that starts honouring it here would fail this test.
     monkeypatch.setattr(
         dhelper,
         "DOCKER_REGISTRY_URL",
@@ -701,6 +704,30 @@ def test_get_test_image_registry_qualifies_extended_devtest_image(monkeypatch):
 
     # Then
     assert result == f"gcr.io/xsoar-registry/{image}"
+
+
+def test_get_test_image_registry_extended_image_falls_back_to_default_registry(
+    monkeypatch,
+):
+    """
+    Given:
+        - An extended ``devtestdemistoextended/*`` dev-test image, and no
+          DEMISTO_SDK_EXTENDED_REGISTRY override in the environment.
+    When:
+        - get_test_image_registry is called.
+    Then:
+        - The image is qualified with DEFAULT_EXTENDED_REGISTRY, which is the branch
+          that runs in most environments.
+    """
+    # Given
+    monkeypatch.delenv(dhelper.DEMISTO_SDK_EXTENDED_REGISTRY_ENV, raising=False)
+    image = f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0-abcdef"
+
+    # When
+    result = dhelper.DockerBase.get_test_image_registry(image)
+
+    # Then
+    assert result == f"{dhelper.DEFAULT_EXTENDED_REGISTRY}/{image}"
 
 
 def test_verify_image_available_after_push_when_available_returns(mocker):

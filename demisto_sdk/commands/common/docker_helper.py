@@ -748,13 +748,10 @@ class DockerBase:
         Docker Hub - keeping the push target and the pull target identical.
         """
         image = strip_cr_registry_prefix(image)
-        if DEMISTO_EXTENDED_REPOSITORY in image:
-            registry = os.getenv(
-                DEMISTO_SDK_EXTENDED_REGISTRY_ENV, DEFAULT_EXTENDED_REGISTRY
-            )
-            if registry and registry not in image:
-                return f"{registry}/{image}"
-        return image
+        if DEMISTO_EXTENDED_REPOSITORY not in image:
+            return image
+        # Extended images resolve to the same registry as any other extended image.
+        return DockerBase.get_image_registry(image)
 
     @staticmethod
     def build_test_image_name(base_image: str, identifier: str) -> str:

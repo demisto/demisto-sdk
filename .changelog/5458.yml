@@ -3,10 +3,7 @@ changes:
   type: feature
 - description: Docker image push now fails loudly when the push did not succeed.
   type: fix
-- description: Dev/test images are now pulled from the same registry they were pushed
-    to, instead of through a configured Docker Hub pull-through proxy. This fixes
-    docker-in-docker pre-commit hooks failing with "manifest unknown" the first time
-    a newly built image is pushed, which previously only succeeded on a retry once
-    the proxy had cached the new tag.
+- description: Dev/test docker images are now pulled from the registry they were pushed
+    to, fixing intermittent "manifest unknown" failures on first-time pushes.
   type: fix
 pr_number: 5458

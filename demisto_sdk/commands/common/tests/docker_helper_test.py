@@ -1,6 +1,7 @@
 import os
 from unittest import mock
 
+import docker
 import pytest
 import requests
 from packaging.version import Version
@@ -302,7 +303,568 @@ def test_create_docker_container_successfully(
     )
 
 
-# --- demistoextended get_image_registry tests ---
+def test_push_image_when_push_succeeds_verifies_image(mocker):
+    """
+    Given:
+        - A docker client whose push returns a successful (no errorDetail) output.
+    When:
+        - push_image is called.
+    Then:
+        - The image is pushed once (registry prefix stripped) and the post-push
+          verification is invoked with the stripped image name.
+    """
+    # Given: a client that pushes successfully and a stubbed verification step
+    push_mock = mock.MagicMock(return_value="pushed layer\r\nlatest: digest: sha256")
+    client_mock = mock.MagicMock()
+    client_mock.images.push = push_mock
+    mocker.patch.object(dhelper, "init_global_docker_client", return_value=client_mock)
+    verify_mock = mocker.patch.object(
+        dhelper.DockerBase, "_verify_image_available_after_push"
+    )
+
+    # When: pushing an image that carries the registry prefix
+    dhelper.DockerBase().push_image(
+        f"{dhelper.DOCKER_REGISTRY_URL}/devtestdemisto/python3:1.0.0", log_prompt="lp"
+    )
+
+    # Then: the registry prefix is stripped and verification is triggered
+    push_mock.assert_called_once_with("devtestdemisto/python3:1.0.0")
+    verify_mock.assert_called_once_with("devtestdemisto/python3:1.0.0", log_prompt="lp")
+
+
+def test_push_image_when_all_attempts_fail_raises(mocker):
+    """
+    Given:
+        - A docker client whose push always raises a connection error.
+    When:
+        - push_image is called.
+    Then:
+        - A DockerException is raised indicating all push attempts failed and
+          verification is never attempted.
+    """
+    # Given: a client that always fails to push with a retryable network error
+    client_mock = mock.MagicMock()
+    client_mock.images.push.side_effect = requests.exceptions.ConnectionError("boom")
+    mocker.patch.object(dhelper, "init_global_docker_client", return_value=client_mock)
+    verify_mock = mocker.patch.object(
+        dhelper.DockerBase, "_verify_image_available_after_push"
+    )
+
+    # When / Then: all attempts exhausted -> DockerException, no verification
+    with pytest.raises(dhelper.DockerException, match="All push attempts failed"):
+        dhelper.DockerBase().push_image("devtestdemisto/python3:1.0.0")
+
+    assert client_mock.images.push.call_count == 2
+    verify_mock.assert_not_called()
+
+
+def test_push_image_when_output_has_error_detail_raises(mocker):
+    """
+    Given:
+        - A docker client whose push output contains an errorDetail line.
+    When:
+        - push_image is called.
+    Then:
+        - A DockerException is raised indicating the push failed and verification
+          is never attempted.
+    """
+    # Given: push output that reports an errorDetail
+    client_mock = mock.MagicMock()
+    client_mock.images.push.return_value = (
+        'layer\r\n{"errorDetail": {"message": "denied"}}'
+    )
+    mocker.patch.object(dhelper, "init_global_docker_client", return_value=client_mock)
+    verify_mock = mocker.patch.object(
+        dhelper.DockerBase, "_verify_image_available_after_push"
+    )
+
+    # When / Then: errorDetail present -> DockerException, no verification
+    with pytest.raises(dhelper.DockerException, match="Failed to push image"):
+        dhelper.DockerBase().push_image("devtestdemisto/python3:1.0.0")
+
+    verify_mock.assert_not_called()
+
+
+def test_is_image_available_on_registry_when_present_returns_true(mocker):
+    """
+    Given:
+        - A repo/tag whose token and digest lookups succeed.
+    When:
+        - _is_image_available_on_registry is called.
+    Then:
+        - It returns True after querying the DockerHub Registry API directly.
+    """
+    # Given
+    token_mock = mocker.patch.object(
+        dhelper, "_get_docker_hub_token", return_value="tok"
+    )
+    digest_mock = mocker.patch.object(
+        dhelper, "_get_image_digest", return_value="sha256:abc"
+    )
+
+    # When
+    result = dhelper.DockerBase._is_image_available_on_registry(
+        "devtestdemisto/python3", "1.0.0"
+    )
+
+    # Then
+    assert result is True
+    token_mock.assert_called_once_with("devtestdemisto/python3")
+    digest_mock.assert_called_once_with("devtestdemisto/python3", "1.0.0", "tok")
+
+
+def test_is_image_available_on_registry_when_token_lookup_fails_propagates(mocker):
+    """
+    Given:
+        - A token lookup that raises RuntimeError.
+    When:
+        - _is_image_available_on_registry is called.
+    Then:
+        - The RuntimeError propagates and the digest is never queried.
+    """
+    # Given
+    mocker.patch.object(
+        dhelper,
+        "_get_docker_hub_token",
+        side_effect=RuntimeError("Failed to get docker hub token"),
+    )
+    digest_mock = mocker.patch.object(dhelper, "_get_image_digest")
+
+    # When / Then
+    with pytest.raises(RuntimeError, match="Failed to get docker hub token"):
+        dhelper.DockerBase._is_image_available_on_registry(
+            "devtestdemisto/python3", "1.0.0"
+        )
+
+    digest_mock.assert_not_called()
+
+
+def test_is_image_available_with_registry_prefix_when_pull_succeeds(mocker):
+    """
+    Given:
+        - An image and use_registry_prefix=True, where pulling the
+          registry-qualified image succeeds.
+    When:
+        - is_image_available is called.
+    Then:
+        - It returns True, resolves the registry via get_image_registry, and does
+          not query the DockerHub API.
+    """
+    # Given
+    get_registry_mock = mocker.patch.object(
+        dhelper.DockerBase,
+        "get_image_registry",
+        return_value="registry/devtestdemistoextended/python3:1.0.0",
+    )
+    pull_mock = mocker.patch.object(dhelper.DockerBase, "pull_image")
+    dockerhub_api_mock = mocker.patch.object(
+        dhelper.DockerBase, "_is_image_available_on_registry"
+    )
+
+    # When
+    result = dhelper.DockerBase.is_image_available(
+        "devtestdemistoextended/python3:1.0.0", use_registry_prefix=True
+    )
+
+    # Then
+    assert result is True
+    get_registry_mock.assert_called_once_with("devtestdemistoextended/python3:1.0.0")
+    pull_mock.assert_called_once_with("registry/devtestdemistoextended/python3:1.0.0")
+    dockerhub_api_mock.assert_not_called()
+
+
+def test_is_image_available_with_registry_prefix_when_not_found_returns_false(mocker):
+    """
+    Given:
+        - use_registry_prefix=True where pulling raises docker NotFound.
+    When:
+        - is_image_available is called.
+    Then:
+        - It returns False.
+    """
+    # Given
+    mocker.patch.object(
+        dhelper.DockerBase,
+        "get_image_registry",
+        return_value="registry/devtestdemistoextended/python3:1.0.0",
+    )
+    mocker.patch.object(
+        dhelper.DockerBase,
+        "pull_image",
+        side_effect=dhelper.docker.errors.NotFound("nope"),
+    )
+
+    # When
+    result = dhelper.DockerBase.is_image_available(
+        "devtestdemistoextended/python3:1.0.0", use_registry_prefix=True
+    )
+
+    # Then
+    assert result is False
+
+
+def test_verify_image_available_after_push_for_gar_image_uses_daemon(mocker):
+    """
+    Given:
+        - A GAR-hosted image (repo starts with the extended/dev-test prefix).
+    When:
+        - _verify_image_available_after_push is called and the image is available.
+    Then:
+        - Verification is done via is_image_available(use_registry_prefix=True)
+          and the DockerHub Registry API is not queried.
+    """
+    # Given
+    image = f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0"
+    is_available_mock = mocker.patch.object(
+        dhelper.DockerBase, "is_image_available", return_value=True
+    )
+    dockerhub_api_mock = mocker.patch.object(
+        dhelper.DockerBase, "_is_image_available_on_registry"
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When
+    dhelper.DockerBase._verify_image_available_after_push(image)
+
+    # Then
+    is_available_mock.assert_called_once_with(image, use_registry_prefix=True)
+    dockerhub_api_mock.assert_not_called()
+    sleep_mock.assert_not_called()
+
+
+def test_verify_image_available_after_push_for_gar_image_retries_then_raises(mocker):
+    """
+    Given:
+        - A GAR-hosted image that is never available via the daemon.
+    When:
+        - _verify_image_available_after_push is called with a small retry budget.
+    Then:
+        - It retries and finally raises DockerException.
+    """
+    # Given
+    image = f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0"
+    is_available_mock = mocker.patch.object(
+        dhelper.DockerBase, "is_image_available", return_value=False
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When / Then
+    with pytest.raises(dhelper.DockerException, match="Image verification failed"):
+        dhelper.DockerBase._verify_image_available_after_push(
+            image, max_retries=3, delay_seconds=5
+        )
+
+    assert is_available_mock.call_count == 3
+    assert sleep_mock.call_count == 2
+
+
+def test_verify_image_available_after_push_for_gar_image_retries_on_api_error_then_succeeds(
+    mocker,
+):
+    """
+    Given:
+        - A GAR-hosted image whose availability check raises a transient
+          docker.errors.APIError (e.g. a failed GAR daemon login / registry 5xx)
+          on the first attempt, then reports available on the second.
+    When:
+        - _verify_image_available_after_push is called.
+    Then:
+        - The APIError is treated as a retryable error (not crashing the loop),
+          the call is retried after sleeping once, and it finally succeeds.
+    """
+    # Given
+    image = f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0"
+    is_available_mock = mocker.patch.object(
+        dhelper.DockerBase,
+        "is_image_available",
+        side_effect=[docker.errors.APIError("gar daemon login failed"), True],
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When
+    dhelper.DockerBase._verify_image_available_after_push(
+        image, max_retries=3, delay_seconds=5
+    )
+
+    # Then
+    assert is_available_mock.call_count == 2
+    sleep_mock.assert_called_once_with(5)
+
+
+def test_verify_image_available_after_push_for_gar_image_api_error_every_attempt_raises(
+    mocker,
+):
+    """
+    Given:
+        - A GAR-hosted image whose availability check raises a transient
+          docker.errors.APIError on every attempt (a failed GAR pull that never
+          recovers).
+    When:
+        - _verify_image_available_after_push is called with a small retry budget.
+    Then:
+        - The APIError does not propagate/crash the loop; instead it is retried
+          the full budget (sleeping max_retries - 1 times) and finally a
+          DockerException is raised.
+    """
+    # Given
+    image = f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0"
+    is_available_mock = mocker.patch.object(
+        dhelper.DockerBase,
+        "is_image_available",
+        side_effect=docker.errors.APIError("gar daemon login failed"),
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When / Then
+    with pytest.raises(dhelper.DockerException, match="Image verification failed"):
+        dhelper.DockerBase._verify_image_available_after_push(
+            image, max_retries=3, delay_seconds=5
+        )
+
+    assert is_available_mock.call_count == 3
+    assert sleep_mock.call_count == 2
+
+
+def test_verify_image_available_after_push_for_dockerhub_image_uses_api(mocker):
+    """
+    Given:
+        - A non-GAR (DockerHub) image.
+    When:
+        - _verify_image_available_after_push is called and the image is available.
+    Then:
+        - Verification is done via the DockerHub Registry API and the daemon-based
+          is_image_available is not used.
+    """
+    # Given
+    dockerhub_api_mock = mocker.patch.object(
+        dhelper.DockerBase, "_is_image_available_on_registry", return_value=True
+    )
+    is_available_mock = mocker.patch.object(dhelper.DockerBase, "is_image_available")
+    mocker.patch.object(dhelper.time, "sleep")
+
+    # When
+    dhelper.DockerBase._verify_image_available_after_push(
+        "devtestdemisto/python3:1.0.0"
+    )
+
+    # Then
+    dockerhub_api_mock.assert_called_once_with("devtestdemisto/python3", "1.0.0")
+    is_available_mock.assert_not_called()
+
+
+def test_get_test_image_registry_keeps_dockerhub_devtest_image_unqualified(monkeypatch):
+    """
+    Given:
+        - A regular ``devtestdemisto/*`` dev-test image, and a configured (proxy)
+          container registry such as the CI GAR Docker Hub pull-through proxy.
+    When:
+        - get_test_image_registry is called.
+    Then:
+        - The image is returned unqualified, so it is pulled from Docker Hub - the
+          exact registry it was pushed to.
+
+    Regression test: qualifying a freshly pushed dev-test image with the
+    pull-through proxy made the docker hooks pull a tag the proxy had not fetched
+    yet, failing the first run with "manifest unknown" and only passing on a retry.
+    """
+    # Given
+    # A proxy registry is configured on purpose: the point of this test is that a
+    # dev/test image stays unqualified *even when* DOCKER_REGISTRY_URL is set, so a
+    # future change that starts honouring it here would fail this test.
+    monkeypatch.setattr(
+        dhelper,
+        "DOCKER_REGISTRY_URL",
+        "europe-west4-docker.pkg.dev/xdr-shared-services-prod-eu-01/xdr-docker-hub-virtual",
+    )
+    image = "devtestdemisto/opencv:1.0.0.11446070-abcdef"
+
+    # When / Then
+    assert dhelper.DockerBase.get_test_image_registry(image) == image
+
+
+def test_get_test_image_registry_qualifies_extended_devtest_image(monkeypatch):
+    """
+    Given:
+        - An extended ``devtestdemistoextended/*`` dev-test image, which is hosted
+          only in the extended (GAR) registry.
+    When:
+        - get_test_image_registry is called.
+    Then:
+        - The image keeps its extended-registry prefix, since that is where it is
+          both pushed and pulled.
+    """
+    # Given
+    monkeypatch.setenv(
+        dhelper.DEMISTO_SDK_EXTENDED_REGISTRY_ENV, "gcr.io/xsoar-registry"
+    )
+    image = f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0-abcdef"
+
+    # When
+    result = dhelper.DockerBase.get_test_image_registry(image)
+
+    # Then
+    assert result == f"gcr.io/xsoar-registry/{image}"
+
+
+def test_get_test_image_registry_extended_image_falls_back_to_default_registry(
+    monkeypatch,
+):
+    """
+    Given:
+        - An extended ``devtestdemistoextended/*`` dev-test image, and no
+          DEMISTO_SDK_EXTENDED_REGISTRY override in the environment.
+    When:
+        - get_test_image_registry is called.
+    Then:
+        - The image is qualified with DEFAULT_EXTENDED_REGISTRY, which is the branch
+          that runs in most environments.
+    """
+    # Given
+    monkeypatch.delenv(dhelper.DEMISTO_SDK_EXTENDED_REGISTRY_ENV, raising=False)
+    image = f"{dhelper.DEVTEST_DEMISTO_EXTENDED_REPOSITORY}/python3:1.0.0-abcdef"
+
+    # When
+    result = dhelper.DockerBase.get_test_image_registry(image)
+
+    # Then
+    assert result == f"{dhelper.DEFAULT_EXTENDED_REGISTRY}/{image}"
+
+
+def test_verify_image_available_after_push_when_available_returns(mocker):
+    """
+    Given:
+        - A tagged DockerHub image whose registry lookup succeeds on the first try.
+    When:
+        - _verify_image_available_after_push is called.
+    Then:
+        - The repo/tag are parsed correctly, no delay occurs, and it returns
+          without raising.
+    """
+    # Given
+    api_mock = mocker.patch.object(
+        dhelper.DockerBase, "_is_image_available_on_registry", return_value=True
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When
+    dhelper.DockerBase._verify_image_available_after_push(
+        "devtestdemisto/python3:1.0.0"
+    )
+
+    # Then
+    api_mock.assert_called_once_with("devtestdemisto/python3", "1.0.0")
+    sleep_mock.assert_not_called()
+
+
+def test_verify_image_available_after_push_retries_then_succeeds(mocker):
+    """
+    Given:
+        - Registry lookup that raises RuntimeError once, then succeeds.
+    When:
+        - _verify_image_available_after_push is called.
+    Then:
+        - It retries after sleeping once and returns successfully.
+    """
+    # Given
+    api_mock = mocker.patch.object(
+        dhelper.DockerBase,
+        "_is_image_available_on_registry",
+        side_effect=[RuntimeError("not found"), True],
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When
+    dhelper.DockerBase._verify_image_available_after_push(
+        "devtestdemisto/python3:1.0.0", delay_seconds=30
+    )
+
+    # Then
+    assert api_mock.call_count == 2
+    sleep_mock.assert_called_once_with(30)
+
+
+def test_verify_image_available_after_push_when_never_available_raises(mocker):
+    """
+    Given:
+        - Registry lookup that always raises RuntimeError.
+    When:
+        - _verify_image_available_after_push is called with a small retry budget.
+    Then:
+        - A DockerException is raised after exhausting retries, sleeping only
+          between attempts (max_retries - 1 times).
+    """
+    # Given
+    mocker.patch.object(
+        dhelper.DockerBase,
+        "_is_image_available_on_registry",
+        side_effect=RuntimeError("not found"),
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When / Then
+    with pytest.raises(dhelper.DockerException, match="Image verification failed"):
+        dhelper.DockerBase._verify_image_available_after_push(
+            "devtestdemisto/python3:1.0.0", max_retries=3, delay_seconds=5
+        )
+
+    assert sleep_mock.call_count == 2
+
+
+def test_verify_image_available_after_push_when_registry_returns_false_retries_then_raises(
+    mocker,
+):
+    """
+    Given:
+        - A DockerHub image whose registry lookup returns False on every attempt
+          (the image is never found, without raising).
+    When:
+        - _verify_image_available_after_push is called with a small retry budget.
+    Then:
+        - A False return value is treated as "not available", so it retries the
+          full budget (sleeping max_retries - 1 times) and finally raises a
+          DockerException instead of falsely reporting success.
+    """
+    # Given
+    api_mock = mocker.patch.object(
+        dhelper.DockerBase,
+        "_is_image_available_on_registry",
+        return_value=False,
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When / Then
+    with pytest.raises(dhelper.DockerException, match="Image verification failed"):
+        dhelper.DockerBase._verify_image_available_after_push(
+            "devtestdemisto/python3:1.0.0", max_retries=3, delay_seconds=5
+        )
+
+    assert api_mock.call_count == 3
+    assert sleep_mock.call_count == 2
+
+
+def test_verify_image_available_after_push_when_multiple_colons_raises(mocker):
+    """
+    Given:
+        - An image name containing more than one ':'.
+    When:
+        - _verify_image_available_after_push is called.
+    Then:
+        - A ValueError is raised and no registry lookup or sleep is attempted.
+    """
+    # Given
+    api_mock = mocker.patch.object(
+        dhelper.DockerBase, "_is_image_available_on_registry"
+    )
+    sleep_mock = mocker.patch.object(dhelper.time, "sleep")
+
+    # When / Then
+    with pytest.raises(ValueError, match="Invalid docker image"):
+        dhelper.DockerBase._verify_image_available_after_push(
+            "devtestdemisto/python3:1.0.0:extra"
+        )
+
+    api_mock.assert_not_called()
+    sleep_mock.assert_not_called()
 
 
 class TestGetImageRegistryDemistoextended:

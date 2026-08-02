@@ -495,11 +495,14 @@ def test_IsReadmeExistsValidator_excludes_autonomous_playbooks():
     Then:
         - Ensure that no ValidationResult is returned (autonomous playbooks are excluded)
     """
-    content_items = [
-        create_playbook_object(paths=["source"], values=["autonomous"]),
-    ]
-    content_items[0].readme.exist = False
-    results = IsReadmeExistsValidator().obtain_invalid_content_items(content_items)
+    pack = create_pack_object(
+        paths=["managed", "source"],
+        values=[True, "autonomous"],
+    )
+    playbook = create_playbook_object()
+    playbook.pack = pack
+    playbook.readme.exist = False
+    results = IsReadmeExistsValidator().obtain_invalid_content_items([playbook])
     assert len(results) == 0
 
 

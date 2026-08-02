@@ -1,4 +1,0 @@
-changes:
-- description: Updated the BA131 validation so that the List content item is allowed to declare all supported modules.
-  type: fix
-pr_number: 5456

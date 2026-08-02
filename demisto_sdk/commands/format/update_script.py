@@ -170,7 +170,6 @@ class ScriptYMLFormat(BaseUpdateYML):
             )
             self.update_tests()
             self.update_docker_image()
-            self.add_source_field_for_managed_pack()
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:

@@ -36,17 +36,25 @@ from demisto_sdk.commands.validate.validators.AG_validators.AG109_is_system_inst
 from demisto_sdk.commands.validate.validators.AG_validators.AG111_is_skill_content_file_exists import (
     IsSkillContentFileExistsValidator,
 )
-from demisto_sdk.commands.validate.validators.AG_validators.AG112_is_skill_total_token_budget import (
-    SKILL_TOKEN_LIMIT,
-    IsSkillTotalTokenBudgetValidator,
+from demisto_sdk.commands.validate.validators.AG_validators.AG112_is_action_or_skill_total_token_budget import (
+    ACTION_CHAR_LIMIT,
+    SKILL_CHAR_LIMIT,
+    IsActionOrSkillTotalTokenBudgetValidator,
 )
-from demisto_sdk.commands.validate.validators.AG_validators.AG114_is_skill_char_cleanliness import (
+from demisto_sdk.commands.validate.validators.AG_validators.AG114_is_char_cleanliness import (
     IsSkillCharCleanlinessValidator,
 )
 from demisto_sdk.commands.validate.validators.AG_validators.AG115_is_skill_description_length import (
     DESCRIPTION_MAX_WORDS,
     DESCRIPTION_MIN_WORDS,
     IsSkillDescriptionLengthValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG117_is_valid_max_args import (
+    MAX_ACTION_ARGS,
+    IsValidMaxArgsValidator,
+)
+from demisto_sdk.commands.validate.validators.AG_validators.AG118_is_action_evaluator_test_file_exists import (
+    IsActionEvaluatorTestFileExistsValidator,
 )
 
 
@@ -442,16 +450,89 @@ def test_is_type_valid():
     # Validate first message content
     assert (
         "The following Agentix action 'InvalidAction' contains invalid types:\n"
-        "Arguments with invalid types: arg_invalid. Possible argument types: unknown, keyValue, textArea, string, number, date, boolean.\nOutputs with invalid types: output_invalid. "
+        "Arguments with invalid types: arg_invalid. Possible argument types: unknown, string, number, date, boolean.\nOutputs with invalid types: output_invalid. "
         "Possible output types: unknown, string, number, date, boolean, json."
     ) in results[0].message
 
     # Validate second message content
     assert (
         "The following Agentix action 'MixedAction' contains invalid types:\n"
-        "Arguments with invalid types: arg_bad. Possible argument types: unknown, keyValue, textArea, string, number, date, boolean.\n"
+        "Arguments with invalid types: arg_bad. Possible argument types: unknown, string, number, date, boolean.\n"
         "Outputs with invalid types: output_bad. Possible output types: unknown, string, number, date, boolean, json."
     ) in results[1].message
+
+
+def test_is_type_valid_rejects_removed_and_capitalized_types():
+    """
+    Given
+    - An AgentixAction whose args use the removed "keyValue"/"textArea" types and
+      capitalized variants ("String"), and whose output uses a capitalized "Number".
+
+    When
+    - Calling the IsTypeValid obtain_invalid_content_items function.
+
+    Then
+    - Ensure a single validation failure is returned.
+    - Ensure "keyValue", "textArea", "String" args and the "Number" output are all
+      flagged as invalid, and the lowercase "string" arg is not flagged.
+    """
+    # given
+    action = create_agentix_action_object(
+        paths=["display", "args", "outputs"],
+        values=[
+            "CaseAndRemovedTypesAction",
+            [
+                {
+                    "name": "arg_key_value",
+                    "type": "keyValue",
+                    "description": "arg_key_value",
+                    "underlyingargname": "arg_key_value",
+                },
+                {
+                    "name": "arg_text_area",
+                    "type": "textArea",
+                    "description": "arg_text_area",
+                    "underlyingargname": "arg_text_area",
+                },
+                {
+                    "name": "arg_capitalized",
+                    "type": "String",
+                    "description": "arg_capitalized",
+                    "underlyingargname": "arg_capitalized",
+                },
+                {
+                    "name": "arg_ok",
+                    "type": "string",
+                    "description": "arg_ok",
+                    "underlyingargname": "arg_ok",
+                },
+            ],
+            [
+                {
+                    "name": "output_capitalized",
+                    "type": "Number",
+                    "description": "output_capitalized",
+                    "underlyingoutputcontextpath": "output_capitalized",
+                }
+            ],
+        ],
+        action_name="case_and_removed_types_action",
+    )
+
+    # when
+    results = IsTypeValid().obtain_invalid_content_items([action])
+
+    # then
+    assert len(results) == 1
+    message = results[0].message
+    assert "arg_key_value" in message
+    assert "arg_text_area" in message
+    assert "arg_capitalized" in message
+    assert "output_capitalized" in message
+    assert "arg_ok" not in message
+    # keyValue/textArea must no longer be advertised as valid argument types
+    assert "keyValue" not in message
+    assert "textArea" not in message
 
 
 @pytest.mark.parametrize(
@@ -683,13 +764,53 @@ def test_AG111_skill_content_file_exists():
     assert "missing_body_skill_skill.md" in results[0].message
 
 
-def test_AG112_skill_within_token_budget():
+def test_AG118_action_evaluator_test_file_exists():
     """
     Given
-    - A skill whose body is comfortably within the token budget.
+    - One action whose evaluator test file (<ActionName>_test.yml) exists.
+    - One action whose evaluator test file is missing.
 
     When
-    - Calling IsSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
+    - Calling IsActionEvaluatorTestFileExistsValidator.obtain_invalid_content_items.
+
+    Then
+    - Only the action with the missing evaluator test file is reported.
+    """
+    # given
+    valid_action = create_agentix_action_object(
+        paths=["display"], values=["ValidAction"]
+    )
+    # The evaluator test file lives at ``<action_folder>/<action_folder>_test.yml``
+    # next to the action yml. Create it for the valid action so the validator
+    # sees it as present.
+    valid_action_dir = valid_action.path.parent
+    (valid_action_dir / f"{valid_action_dir.name}_test.yml").write_text(
+        "scenarios: []\n"
+    )
+
+    missing_test_action = create_agentix_action_object(
+        paths=["display"], values=["MissingTestAction"]
+    )
+
+    # when
+    results = IsActionEvaluatorTestFileExistsValidator().obtain_invalid_content_items(
+        [valid_action, missing_test_action]
+    )
+
+    # then
+    assert len(results) == 1
+    assert "missing its evaluator test file" in results[0].message
+    missing_action_dir_name = missing_test_action.path.parent.name
+    assert f"{missing_action_dir_name}_test.yml" in results[0].message
+
+
+def test_AG112_skill_within_char_budget():
+    """
+    Given
+    - A skill whose body is comfortably within the char budget.
+
+    When
+    - Calling IsActionOrSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
 
     Then
     - No failures are returned.
@@ -698,29 +819,33 @@ def test_AG112_skill_within_token_budget():
         skill_name="small_skill", skill_content="A short body."
     )
 
-    results = IsSkillTotalTokenBudgetValidator().obtain_invalid_content_items([skill])
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items(
+        [skill]
+    )
 
     assert results == []
 
 
-def test_AG112_skill_exceeds_token_budget():
+def test_AG112_skill_exceeds_char_budget():
     """
     Given
-    - A skill whose body exceeds the estimated token budget
-      (~4 chars per token, so the body must exceed SKILL_TOKEN_LIMIT * 4 chars).
+    - A skill whose body exceeds the char budget
+      (the body must exceed SKILL_CHAR_LIMIT chars).
 
     When
-    - Calling IsSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
+    - Calling IsActionOrSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
 
     Then
     - The oversized skill is reported.
     """
-    oversized_body = "a" * (SKILL_TOKEN_LIMIT * 4 + 4)
+    oversized_body = "a" * (SKILL_CHAR_LIMIT + 4)
     skill = create_agentix_skill_object(
         skill_name="big_skill", skill_content=oversized_body
     )
 
-    results = IsSkillTotalTokenBudgetValidator().obtain_invalid_content_items([skill])
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items(
+        [skill]
+    )
 
     assert len(results) == 1
     assert "is too large" in results[0].message
@@ -993,3 +1118,138 @@ def test_AG116_list_files_fetches_only_required_skills(graph_repo, mocker):
     assert all(
         call.kwargs.get("object_id") == ["skill-one"] for call in skill_search_calls
     ), "expected only the validated agent's skill to be fetched"
+
+
+def _make_args(count: int):
+    """Build a list of `count` distinct argument dicts for an agentix action."""
+    return [
+        {
+            "name": f"arg_{index}",
+            "description": f"Argument number {index}.",
+            "type": "string",
+            "underlyingargname": f"arg_{index}",
+        }
+        for index in range(count)
+    ]
+
+
+def test_AG117_action_with_max_args_passes():
+    """
+    Given
+    - An agentix action with exactly MAX_ACTION_ARGS arguments.
+
+    When
+    - Calling IsValidMaxArgsValidator.obtain_invalid_content_items.
+
+    Then
+    - The action is not flagged (the boundary value is allowed).
+    """
+    action = create_agentix_action_object(
+        paths=["args"],
+        values=[_make_args(MAX_ACTION_ARGS)],
+    )
+
+    results = IsValidMaxArgsValidator().obtain_invalid_content_items([action])
+
+    assert not results
+
+
+def test_AG117_action_with_too_many_args_fails():
+    """
+    Given
+    - An agentix action with MAX_ACTION_ARGS + 1 arguments.
+
+    When
+    - Calling IsValidMaxArgsValidator.obtain_invalid_content_items.
+
+    Then
+    - The action is flagged, and the message states both the limit and the count.
+    """
+    too_many = MAX_ACTION_ARGS + 1
+    action = create_agentix_action_object(
+        paths=["args"],
+        values=[_make_args(too_many)],
+    )
+
+    results = IsValidMaxArgsValidator().obtain_invalid_content_items([action])
+
+    assert len(results) == 1
+    assert str(too_many) in results[0].message
+    assert str(MAX_ACTION_ARGS) in results[0].message
+
+
+def test_AG112_action_within_char_budget_passes():
+    """
+    Given
+    - An AgentixAction whose name, description, args, and outputs are small.
+
+    When
+    - Calling IsActionOrSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
+
+    Then
+    - The action is not flagged.
+    """
+    action = create_agentix_action_object(
+        paths=["description"],
+        values=["A short description."],
+    )
+
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert not results
+
+
+def test_AG112_action_exceeds_char_budget_fails():
+    """
+    Given
+    - An AgentixAction whose description alone is far above the char limit.
+
+    When
+    - Calling IsActionOrSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
+
+    Then
+    - The action is flagged, and the message states the action limit.
+    """
+    oversized_description = "a" * (ACTION_CHAR_LIMIT + 1)
+    action = create_agentix_action_object(
+        paths=["description"],
+        values=[oversized_description],
+    )
+
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items(
+        [action]
+    )
+
+    assert len(results) == 1
+    assert str(ACTION_CHAR_LIMIT) in results[0].message
+
+
+def test_AG112_skill_description_counts_toward_budget():
+    """
+    Given
+    - An AgentixSkill with a tiny body but an oversized description, so only the
+      consolidated (name + description + body) budget can exceed the limit.
+
+    When
+    - Calling IsActionOrSkillTotalTokenBudgetValidator.obtain_invalid_content_items.
+
+    Then
+    - The skill is flagged, proving AG112 now counts the description (and name),
+      not just the skill body.
+    """
+    oversized_description = "a" * (SKILL_CHAR_LIMIT + 1)
+    skill = create_agentix_skill_object(
+        paths=["description"],
+        values=[oversized_description],
+        skill_name="verbose_skill",
+        skill_content="Tiny body.",
+    )
+
+    results = IsActionOrSkillTotalTokenBudgetValidator().obtain_invalid_content_items(
+        [skill]
+    )
+
+    assert len(results) == 1
+    assert "is too large" in results[0].message

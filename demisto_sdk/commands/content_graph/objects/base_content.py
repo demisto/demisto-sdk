@@ -22,6 +22,7 @@ from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import (
+    CONNECTORS_FOLDER,
     MARKETPLACE_MIN_VERSION,
     PACKS_FOLDER,
     PACKS_PACK_META_FILE_NAME,
@@ -179,13 +180,46 @@ class BaseNode(ABC, BaseModel, metaclass=BaseContentMetaclass):
         )
         content_item_path = json_dct.get("path")
         if content_item_path and isinstance(content_item_path, Path):
-            json_dct["path"] = (
-                content_item_path.relative_to(CONTENT_PATH).as_posix()
-                if content_item_path.is_absolute()
-                else str(content_item_path)
-            )
+            if content_item_path.is_absolute():
+                try:
+                    json_dct["path"] = content_item_path.relative_to(
+                        CONTENT_PATH
+                    ).as_posix()
+                except ValueError:
+                    # The path is absolute but not under CONTENT_PATH - this
+                    # happens for content that lives in a *separate* repo (e.g.
+                    # connectors in unified-connectors-content). Relativize
+                    # against the item's own repo root instead of crashing.
+                    if CONNECTORS_FOLDER in content_item_path.parts:
+                        json_dct["path"] = self._relativize_external_path(
+                            content_item_path
+                        )
+                    else:
+                        raise
+            else:
+                json_dct["path"] = str(content_item_path)
         json_dct["content_type"] = self.content_type
         return json_dct
+
+    def _relativize_external_path(self, absolute_path: Path) -> str:
+        """Relativize an absolute path that is not under ``CONTENT_PATH``.
+
+        Content that lives in a separate repository (e.g. connectors in
+        unified-connectors-content) has an absolute ``path`` that is not a
+        subpath of the content repo, so ``relative_to(CONTENT_PATH)`` raises.
+
+        The default implementation relativizes against the parent of the repo
+        root (i.e. keeps the ``<repo-name>/...`` tail) so the stored value is
+        stable and repo-qualified. Subclasses may override for more specific
+        behavior.
+        """
+        # Best-effort: keep the path relative to its own repo's parent so the
+        # leading component identifies the source repo. Falls back to the raw
+        # posix string if that is not possible.
+        try:
+            return absolute_path.relative_to(absolute_path.anchor).as_posix()
+        except ValueError:
+            return absolute_path.as_posix()
 
     def add_relationship(
         self, relationship_type: RelationshipType, relationship: "RelationshipData"

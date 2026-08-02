@@ -248,7 +248,7 @@ class TestChangedOnlyCopy:
             changed_only=True,
         )
         _stub_git_util(manager)
-        manager._get_changed_connector_names = lambda: set()  # type: ignore[method-assign]
+        manager._get_changed_connector_names = set  # type: ignore[method-assign]
 
         copied = manager.copy_connectors()
 

@@ -70,9 +70,7 @@ def _stub_git_util(manager: PrivateContentManager) -> MagicMock:
 
 
 class TestChangedOnlyCopy:
-    def test_changed_only_copies_only_changed_packs(
-        self, tmp_path: Path
-    ) -> None:
+    def test_changed_only_copies_only_changed_packs(self, tmp_path: Path) -> None:
         """
         Given: a private repo with two packs (PackA, PackB) and only ``PackA``
                reported as changed by the private repo's git diff.
@@ -116,7 +114,7 @@ class TestChangedOnlyCopy:
             changed_only=True,
         )
         _stub_git_util(manager)
-        manager._get_changed_pack_names = lambda: set()  # type: ignore[method-assign]
+        manager._get_changed_pack_names = set  # type: ignore[method-assign]
 
         copied = manager.copy_private_packs()
 

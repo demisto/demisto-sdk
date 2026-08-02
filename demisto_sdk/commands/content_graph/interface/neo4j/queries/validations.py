@@ -702,7 +702,6 @@ RETURN playbook AS content_item_from, pack.source AS source, collect(r) AS relat
     return results, sources
 
 
-
 def get_agent_budget_dependencies(
     tx: Transaction, changed_ids: List[str]
 ) -> List[dict]:

@@ -379,6 +379,21 @@ class ConnectorConnectionData(BaseModel):
 # ============================================================
 
 
+class ConnectorCapabilitiesData(BaseModel):
+    """Parsed metadata block from capabilities.yaml.
+
+    Mirrors ``ConnectorConnectionData`` but only carries the file-level
+    ``metadata`` block (title/description/help) and the file-level
+    ``general_configurations`` block. The individual capability items live on
+    ``Connector.capabilities`` (``List[CapabilityData]``).
+    """
+
+    title: Optional[str] = None
+    description: Optional[str] = None
+    help: Optional[str] = None
+    general_configurations: Optional[GeneralConfigurations] = None
+
+
 class LabelTooltip(BaseModel):
     """capabilities.schema.json Labels object-form tooltip."""
 
@@ -799,6 +814,9 @@ class Connector(ContentItem, content_type=ContentType.CONNECTOR):  # type: ignor
 
     # === Parsed sub-models (populated by parser, excluded from serialization) ===
     connection: Optional[ConnectorConnectionData] = Field(None, exclude=True)
+    capabilities_metadata: Optional[ConnectorCapabilitiesData] = Field(
+        None, exclude=True
+    )
     capabilities: List[CapabilityData] = Field(default_factory=list, exclude=True)
     handlers: List[HandlerData] = Field(default_factory=list, exclude=True)
     capability_handler_map: Dict[str, CapabilityHandlerMapping] = Field(

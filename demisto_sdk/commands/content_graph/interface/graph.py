@@ -166,6 +166,10 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def get_agent_budget_dependencies(self, changed_ids: List[str]) -> List[dict]:
+        pass
+
+    @abstractmethod
     def get_duplicate_pack_display_name(
         self, file_paths: List[str]
     ) -> List[Tuple[str, List[str]]]:

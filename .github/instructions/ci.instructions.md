@@ -19,6 +19,9 @@ CI pipelines, and the pre-commit configurations.
   - [`release-to-pypi.yml`](../workflows/release-to-pypi.yml) — publishes
     `demisto-sdk` to PyPI.
   - [`sdk-release.yml`](../workflows/sdk-release.yml) — release flow.
+  - [`nightly-gate.yml`](../workflows/nightly-gate.yml) — enforces the
+    SDK Nightly policy on PRs (see the "SDK Nightly gate" section
+    below).
 - **Composite actions** ([`.github/actions/`](../actions))
   - [`setup_environment`](../actions/setup_environment) — installs Poetry,
     Python, deps.
@@ -70,6 +73,37 @@ When updating hook revisions:
    findings.
 3. Add a `internal` (or `fix`/`feature`, as appropriate) changelog entry
    via `poetry run sdk-changelog --init -n <PR>`.
+
+## SDK Nightly gate
+
+The [`nightly-gate.yml`](../workflows/nightly-gate.yml) workflow reads
+[`.github/nightly-gate-paths.yml`](../nightly-gate-paths.yml) and
+classifies the PR's changed files into three tiers:
+
+- **Must** — the check fails until the PR carries either
+  `nightly-run-passed` or `nightly-run-skipped`.
+- **Recommended** — the check passes but posts a sticky warning
+  comment when neither label is present.
+- **Skip** — the file is ignored (tests, docs, images, etc.).
+
+The author is responsible for actually running the SDK Nightly
+pipeline and pasting a link to the run in the PR description before
+adding the `nightly-run-passed` label. The workflow re-runs
+automatically on `labeled` / `unlabeled` events, so applying the
+label immediately flips the check from red to green - no rebase or
+re-push required.
+
+When editing
+[`.github/nightly-gate-paths.yml`](../nightly-gate-paths.yml):
+
+1. Prefer minimal, targeted globs; broad additions can force the
+   nightly on every PR.
+2. `skip` beats `must`, and `must` beats `recommended`, so use
+   `skip` (e.g. `**/tests/**`) to carve out safe subtrees inside a
+   Must-listed directory.
+3. Add a `feature` / `internal` changelog entry describing why the
+   policy changed. The [`CODEOWNERS`](../CODEOWNERS) file requires
+   infra-team review for changes to the config file.
 
 ## Hard rules
 

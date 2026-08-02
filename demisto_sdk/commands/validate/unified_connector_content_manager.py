@@ -74,6 +74,7 @@ class UnifiedConnectorContentManager:
         self,
         connectors_content_path: Path,
         content_path: Path,
+        changed_only: bool = False,
     ):
         """
         Initialize the UnifiedConnectorContentManager.
@@ -82,9 +83,16 @@ class UnifiedConnectorContentManager:
             connectors_content_path: Path to the Unified Connector Content
                 repository (must contain a ``connectors/`` directory).
             content_path: Path to the main content repository.
+            changed_only: When ``True`` (used for ``-g``/USE_GIT), copy only the
+                connectors that were actually changed in the UCC repo's own git
+                diff, instead of copying every connector. When ``False`` (used
+                for ``-a``/ALL_FILES), copy all connectors. In ``-g`` the graph
+                only reparses the changed connectors, so copying the unchanged
+                ones is unnecessary work.
         """
         self.connectors_content_path = Path(connectors_content_path)
         self.content_path = Path(content_path)
+        self.changed_only = changed_only
         self.copied_paths: Set[Path] = set()
         self.staged_files: List[str] = []
         self._git_util: Optional["GitUtil"] = None
@@ -110,6 +118,33 @@ class UnifiedConnectorContentManager:
         """Get the connectors/ directory in the main content repo."""
         return self.content_path / CONNECTORS_FOLDER
 
+    def _get_changed_connector_names(self) -> Set[str]:
+        """
+        Compute the set of top-level connector directory names that were changed
+        in the UCC repo's own git diff (modified/added/renamed).
+
+        Used only when ``changed_only`` is set (``-g``/USE_GIT) to scope the
+        copy to the connectors that actually changed. The diff is run against
+        the UCC repo itself (not the main content repo), mirroring
+        ``Initializer.collect_files_to_run``.
+
+        Returns:
+            Set of connector directory names (e.g. ``{"MyConnector"}``). An
+            empty set means nothing under ``connectors/`` changed.
+        """
+        from demisto_sdk.commands.common.git_util import GitUtil
+
+        connectors_git_util = GitUtil(self.connectors_content_path)
+        changed_files = connectors_git_util.get_all_changed_files()
+
+        connector_names: Set[str] = set()
+        for changed_file in changed_files:
+            parts = changed_file.parts
+            # We only care about files under connectors/<connector_name>/...
+            if len(parts) >= 2 and parts[0] == CONNECTORS_FOLDER:
+                connector_names.add(parts[1])
+        return connector_names
+
     def copy_connectors(self) -> Set[Path]:
         """
         Entry point to copy UCC connectors.
@@ -119,6 +154,10 @@ class UnifiedConnectorContentManager:
 
         Creates ``<content>/connectors/`` if it does not exist yet and records
         that fact so cleanup can undo it.
+
+        When ``changed_only`` is set (``-g``/USE_GIT), only the connectors
+        changed in the UCC repo's git diff are copied - the graph only reparses
+        those, so copying the unchanged connectors would be wasted work.
         """
         source_connectors_path = self._get_source_connectors_path()
         dest_connectors_path = self._get_dest_connectors_path()
@@ -140,7 +179,20 @@ class UnifiedConnectorContentManager:
 
         self.copied_paths.clear()
 
+        changed_connector_names: Optional[Set[str]] = None
+        if self.changed_only:
+            changed_connector_names = self._get_changed_connector_names()
+            logger.info(
+                f"USE_GIT mode: copying only {len(changed_connector_names)} "
+                f"changed connector(s): {sorted(changed_connector_names)}"
+            )
+
         for connector_dir in source_connectors_path.iterdir():
+            if changed_connector_names is not None and (
+                connector_dir.name not in changed_connector_names
+            ):
+                # In USE_GIT mode, skip connectors that were not changed.
+                continue
             if connector_dir.is_dir():
                 destination_connector = dest_connectors_path / connector_dir.name
                 # Start the recursive search for the first missing level

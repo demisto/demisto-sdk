@@ -285,10 +285,15 @@ def validate(
             # the git-diff collection runs, and cleaned up afterwards (even on
             # Ctrl+C).
             #
-            # In USE_GIT mode the managers still copy+stage the external repo,
-            # but the initializer additionally git-diffs the external repo
-            # directly so only the connectors/packs actually changed there are
-            # validated (see Initializer.collect_files_to_run).
+            # In USE_GIT mode the managers copy+stage only the external
+            # packs/connectors that were actually changed in the external repo's
+            # own git diff (changed_only=True), because in -g the graph only
+            # reparses the changed items - copying the unchanged ones would be
+            # wasted work. The initializer additionally git-diffs the external
+            # repo directly so only those changed items are validated (see
+            # Initializer.collect_files_to_run). In ALL_FILES mode the managers
+            # copy+stage every external pack/connector (changed_only=False),
+            # since the whole repo is reparsed.
             #
             # Both flags are independent - either, both, or neither may be set.
             # When both are set the managers nest inside a single ExitStack so
@@ -297,6 +302,7 @@ def validate(
                 ExecutionMode.ALL_FILES,
                 ExecutionMode.USE_GIT,
             )
+            changed_only = execution_mode == ExecutionMode.USE_GIT
             with contextlib.ExitStack() as stack:
                 if execution_mode in external_repo_modes and ctx.params.get(
                     "private_content_path"
@@ -310,6 +316,7 @@ def validate(
                         PrivateContentManager(
                             private_content_path=ctx.params["private_content_path"],
                             content_path=CONTENT_PATH,
+                            changed_only=changed_only,
                         )
                     )
                 if execution_mode in external_repo_modes and ctx.params.get(
@@ -326,6 +333,7 @@ def validate(
                                 "connectors_content_path"
                             ],
                             content_path=CONTENT_PATH,
+                            changed_only=changed_only,
                         )
                     )
                 exit_code += run_new_validation(file_path, execution_mode, **ctx.params)

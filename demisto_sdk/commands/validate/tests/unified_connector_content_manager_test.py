@@ -203,6 +203,82 @@ class TestCopyConnectors:
 
 
 # ---------------------------------------------------------------------------
+# copy_connectors() with changed_only=True (-g / USE_GIT)
+# ---------------------------------------------------------------------------
+
+
+class TestChangedOnlyCopy:
+    def test_changed_only_copies_only_changed_connectors(
+        self, fake_ucc: Path, fake_content: Path
+    ) -> None:
+        """
+        Given: a UCC with two connectors (datadog, okta) and only ``datadog``
+               reported as changed by the UCC repo's git diff.
+        When:  copy_connectors() runs with changed_only=True.
+        Then:  only ``datadog`` is copied; ``okta`` is skipped entirely.
+        """
+        manager = UnifiedConnectorContentManager(
+            connectors_content_path=fake_ucc,
+            content_path=fake_content,
+            changed_only=True,
+        )
+        _stub_git_util(manager)
+        manager._get_changed_connector_names = lambda: {"datadog"}  # type: ignore[method-assign]
+
+        copied = manager.copy_connectors()
+
+        dest_root = fake_content / CONNECTORS_FOLDER
+        assert (dest_root / "datadog" / "connector.yaml").is_file()
+        # okta was not changed, so it must NOT be copied.
+        assert not (dest_root / "okta").exists()
+        assert copied == {dest_root / "datadog"}
+
+    def test_changed_only_copies_nothing_when_no_connectors_changed(
+        self, fake_ucc: Path, fake_content: Path
+    ) -> None:
+        """
+        Given: a UCC with connectors but the git diff reports no changed
+               connectors.
+        When:  copy_connectors() runs with changed_only=True.
+        Then:  nothing is copied.
+        """
+        manager = UnifiedConnectorContentManager(
+            connectors_content_path=fake_ucc,
+            content_path=fake_content,
+            changed_only=True,
+        )
+        _stub_git_util(manager)
+        manager._get_changed_connector_names = lambda: set()  # type: ignore[method-assign]
+
+        copied = manager.copy_connectors()
+
+        assert copied == set()
+        dest_root = fake_content / CONNECTORS_FOLDER
+        assert not (dest_root / "datadog").exists()
+        assert not (dest_root / "okta").exists()
+
+    def test_default_copies_all_connectors(
+        self, fake_ucc: Path, fake_content: Path
+    ) -> None:
+        """
+        Given: a UCC with two connectors and the default changed_only=False
+               (``-a``/ALL_FILES).
+        When:  copy_connectors() runs.
+        Then:  both connectors are copied (no git diff is consulted).
+        """
+        manager = UnifiedConnectorContentManager(
+            connectors_content_path=fake_ucc,
+            content_path=fake_content,
+        )
+        _stub_git_util(manager)
+
+        copied = manager.copy_connectors()
+
+        dest_root = fake_content / CONNECTORS_FOLDER
+        assert copied == {dest_root / "datadog", dest_root / "okta"}
+
+
+# ---------------------------------------------------------------------------
 # stage_copied_files()
 # ---------------------------------------------------------------------------
 

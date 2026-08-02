@@ -53,6 +53,7 @@ class PrivateContentManager:
         self,
         private_content_path: Path,
         content_path: Path,
+        changed_only: bool = False,
     ):
         """
         Initialize the PrivateContentManager.
@@ -60,9 +61,16 @@ class PrivateContentManager:
         Args:
             private_content_path: Path to the private content repository containing Packs/
             content_path: Path to the main content repository
+            changed_only: When ``True`` (used for ``-g``/USE_GIT), copy only the
+                private packs that were actually changed in the private repo's
+                own git diff, instead of copying every private pack. When
+                ``False`` (used for ``-a``/ALL_FILES), copy all private packs.
+                In ``-g`` the graph only reparses the changed packs, so copying
+                the unchanged ones is unnecessary work.
         """
         self.private_content_path = Path(private_content_path)
         self.content_path = content_path
+        self.changed_only = changed_only
         self.copied_paths: Set[Path] = set()
         self.staged_files: List[str] = []
         self._git_util: Optional["GitUtil"] = None
@@ -85,6 +93,33 @@ class PrivateContentManager:
         """Get the Packs directory from the main content path."""
         return self.content_path / PACKS_DIR
 
+    def _get_changed_pack_names(self) -> Set[str]:
+        """
+        Compute the set of top-level pack directory names that were changed in
+        the private repo's own git diff (modified/added/renamed).
+
+        Used only when ``changed_only`` is set (``-g``/USE_GIT) to scope the
+        copy to the packs that actually changed. The diff is run against the
+        private repo itself (not the main content repo), mirroring
+        ``Initializer.collect_files_to_run``.
+
+        Returns:
+            Set of pack directory names (e.g. ``{"MyPack"}``). An empty set
+            means nothing under ``Packs/`` changed.
+        """
+        from demisto_sdk.commands.common.git_util import GitUtil
+
+        private_git_util = GitUtil(self.private_content_path)
+        changed_files = private_git_util.get_all_changed_files()
+
+        pack_names: Set[str] = set()
+        for changed_file in changed_files:
+            parts = changed_file.parts
+            # We only care about files under Packs/<pack_name>/...
+            if len(parts) >= 2 and parts[0] == PACKS_DIR:
+                pack_names.add(parts[1])
+        return pack_names
+
     def _should_ignore_path(self, path: Path) -> bool:
         """
         Check if the file/folder should be ignored based on the pattern:
@@ -100,6 +135,10 @@ class PrivateContentManager:
         """
         Entry point to copy private packs.
         Tries to copy the highest level of 'new' content found.
+
+        When ``changed_only`` is set (``-g``/USE_GIT), only the packs changed in
+        the private repo's git diff are copied - the graph only reparses those,
+        so copying the unchanged packs would be wasted work.
         """
         private_packs_path = self._get_private_packs_path()
         content_packs_path = self._get_content_packs_path()
@@ -110,8 +149,22 @@ class PrivateContentManager:
 
         self.copied_paths.clear()
 
+        changed_pack_names: Optional[Set[str]] = None
+        if self.changed_only:
+            changed_pack_names = self._get_changed_pack_names()
+            logger.info(
+                f"USE_GIT mode: copying only {len(changed_pack_names)} changed "
+                f"private pack(s): {sorted(changed_pack_names)}"
+            )
+
         for pack_dir in private_packs_path.iterdir():
             if pack_dir.is_dir():
+                if (
+                    changed_pack_names is not None
+                    and pack_dir.name not in changed_pack_names
+                ):
+                    # In USE_GIT mode, skip packs that were not changed.
+                    continue
                 destination_pack = content_packs_path / pack_dir.name
                 # Start the recursive search for the first missing level
                 self._copy_first_missing_level(pack_dir, destination_pack)

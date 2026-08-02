@@ -54,7 +54,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  gate:
+  nightly_gate:
     name: Check SDK Nightly gate
     runs-on: ubuntu-latest
     steps:
@@ -97,7 +97,7 @@ jobs:
           changed_path="${RUNNER_TEMP}/nightly-gate-changed.txt"
           mkdir -p "$(dirname "${changed_path}")"
           printf '%s\n' "${CHANGED_FILES}" > "${changed_path}"
-          echo "Changed files ($(grep -c . "${changed_path}" || true) total):"
+          echo "Changed files ($(wc -l < "${changed_path}") total):"
           cat "${changed_path}"
 
           echo "PR labels (raw JSON): ${PR_LABELS_JSON}"

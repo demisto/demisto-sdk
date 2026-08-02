@@ -700,3 +700,51 @@ RETURN playbook AS content_item_from, pack.source AS source, collect(r) AS relat
         )
         sources[element_id] = item.get("source", "")
     return results, sources
+
+
+def get_agent_budget_dependencies(
+    tx: Transaction, changed_ids: List[str]
+) -> List[dict]:
+    """Return, for GR116, each affected AgentixAgent with its dependency nodes.
+
+    Step 1: select affected agents - an empty ``changed_ids`` means every agent
+    (validate-all-files), otherwise only those in ``changed_ids`` or using a
+    changed action/skill.
+    Step 2: return each agent's full node plus its action/skill/collection
+    dependency nodes, so GR116 reconstructs and scores them in one query.
+
+    Args:
+        tx: The Transaction to contact the graph with.
+        changed_ids: object_ids of the modified content items. An empty list
+            selects every agent (validate-all-files mode).
+
+    Returns:
+        Raw rows ``[{"agent": <node>, "deps": [<node>, ...]}, ...]``. Nodes are
+        returned as-is (not reconstructed) because GR116 needs each dependency's
+        ``path`` (to re-parse action args/outputs), ``fromversion`` (to dedupe to
+        the newest), and ``content_type``, and re-parses the agent node itself.
+    """
+    # Only agents from this platform version onward are budget-checked (GR116);
+    # earlier agents predate the char-budget contract.
+    _MIN_AGENT_FROMVERSION = "8.15.0"
+    query = f"""
+MATCH (a:{ContentType.AGENTIX_AGENT})
+WHERE {versioned("a.fromversion")} >= {versioned(_MIN_AGENT_FROMVERSION)}
+OPTIONAL MATCH (a)-[:{RelationshipType.USES}]->(changed)
+WITH a,
+    size($changed_ids) = 0
+    OR (a.object_id IN $changed_ids)
+    OR (changed IS NOT NULL AND changed.object_id IN $changed_ids) AS is_affected
+WITH a WHERE is_affected
+WITH DISTINCT a
+OPTIONAL MATCH (a)-[:{RelationshipType.USES}]->(dep)
+WHERE dep.content_type IN [
+    '{ContentType.AGENTIX_ACTION}', '{ContentType.AGENTIX_SKILL}',
+    '{ContentType.COLLECTION}'
+]
+RETURN a AS agent, collect(DISTINCT dep) AS deps
+"""
+    return [
+        {"agent": item.get("agent"), "deps": item.get("deps") or []}
+        for item in run_query(tx, query, changed_ids=changed_ids)
+    ]

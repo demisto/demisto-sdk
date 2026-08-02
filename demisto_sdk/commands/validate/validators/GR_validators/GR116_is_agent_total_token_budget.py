@@ -157,9 +157,7 @@ class IsAgentTotalTokenBudgetValidator(BaseValidator[ContentTypes], ABC):
             # AgentixAgent (see neo4j_graph.get_agent_budget_dependencies).
             agent = row.get("agent")
             if agent is None:
-                logger.debug(
-                    f"[{self.error_code}] Skipping a row with no agent node."
-                )
+                logger.debug(f"[{self.error_code}] Skipping a row with no agent node.")
                 continue
 
             raw_deps = row.get("deps") or []
@@ -222,8 +220,3 @@ def _is_newer(candidate: Optional[str], current: Optional[str]) -> bool:
             return Version("0")
 
     return _parse(candidate) > _parse(current)
-
-
-# move the graph query to a graph function
-# remove validate_all from the graph query - use changed_ids = [] instead
-# remove parse_agent

@@ -63,6 +63,34 @@ class AgentixAction(TestSuiteBase):
     def set_agentix_action_display(self, display: str):
         self.yml.update({"display": display})
 
+    def create_script_action(
+        self,
+        name: str = "SampleScriptAction",
+        action_id: str = "SampleScriptAction",
+        display: str = "Sample Script Action",
+        dockerimage: str = "demisto/python3:3.12.12.6391686",
+    ):
+        """Creates a new script action with a script: sub-key and a .py sibling file.
+
+        Args:
+            name: The name of the script action.
+            action_id: The ID of the script action.
+            display: The display name of the script action.
+            dockerimage: The docker image for the script.
+        """
+        default_dir = Path(__file__).parent / "assets" / "default_agentix_action"
+        with open(default_dir / "agentix_script_action-sample.yml") as f:
+            yml = yaml.load(f)
+            yml["commonfields"]["id"] = action_id
+            yml["name"] = name
+            yml["display"] = display
+            yml["script"]["dockerimage"] = dockerimage
+            self.build(yml=yml)
+        # Create the .py sibling file
+        py_src = default_dir / "agentix_script_action-sample.py"
+        py_dest = self.dir_path / f"{self.name}.py"
+        py_dest.write_text(py_src.read_text())
+
     def set_data(self, **key_path_to_val):
         yml_contents = self.yml.read_dict()
         for key_path, val in key_path_to_val.items():

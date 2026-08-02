@@ -1,0 +1,29 @@
+commonfields:
+  id: SampleScriptAction
+  version: -1
+name: SampleScriptAction
+display: Sample Script Action
+category: Endpoint
+description: A sample script action for testing.
+args:
+- name: endpoint_id
+  description: The ID of the endpoint.
+  required: true
+  type: string
+  underlyingargname: endpoint_id
+outputs:
+- name: Result.endpoint_id
+  description: The ID of the endpoint.
+  type: String
+  underlyingoutputcontextpath: Result.endpoint_id
+marketplaces:
+- platform
+supportedModules:
+- xsiam
+fromversion: 8.12.0
+underlyingcontentitem:
+  id: SampleScriptAction
+  name: SampleScriptAction
+  type: script
+  version: -1
+  command: ''

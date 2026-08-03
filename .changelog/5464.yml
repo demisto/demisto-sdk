@@ -1,4 +1,0 @@
-changes:
-- description: Added the **SDK Nightly Gate** GitHub Actions workflow, which flags PRs that modify SDK code and requires either a `nightly-run-passed` or `nightly-run-skipped` label (or a Content build against the SDK branch) before merge.
-  type: internal
-pr_number: '5464'

@@ -322,7 +322,7 @@ class TestUploadCustomIntegrationEntity:
         """
         GIVEN an integration YAML with valid '_copy' markers
         WHEN upload_custom_integration_entity is called
-        THEN upload_content_entity is called exactly once with the correct input
+        THEN upload_content_entity is called exactly once with the resolved YAML path
         """
         yaml_path = _write_integration_yaml(
             tmp_path, "MyIntegration_copy", "MyIntegration_copy"
@@ -331,12 +331,7 @@ class TestUploadCustomIntegrationEntity:
             "demisto_sdk.commands.upload.upload.upload_content_entity"
         )
 
-        upload_custom_integration_entity(
-            input=yaml_path,
-            force_id=False,
-            zip=False,
-            tpb=False,
-        )
+        upload_custom_integration_entity(input=yaml_path)
 
         mock_upload.assert_called_once()
         call_kwargs = mock_upload.call_args[1]
@@ -356,23 +351,17 @@ class TestUploadCustomIntegrationEntity:
             "demisto_sdk.commands.upload.upload.upload_content_entity"
         )
 
-        upload_custom_integration_entity(
-            input=integration_dir,
-            force_id=False,
-            zip=False,
-            tpb=False,
-        )
+        upload_custom_integration_entity(input=integration_dir)
 
         mock_upload.assert_called_once()
         call_kwargs = mock_upload.call_args[1]
-        # The resolved path must be a file, not the directory
         assert call_kwargs["input"].is_file()
         assert call_kwargs["input"].suffix == ".yml"
 
     def test_missing_copy_marker_raises_without_force(self, tmp_path, mocker):
         """
         GIVEN an integration YAML without '_copy' markers
-        WHEN upload_custom_integration_entity is called with force_id=False
+        WHEN upload_custom_integration_entity is called with force_id=False (default)
         THEN typer.BadParameter is raised and upload_content_entity is NOT called
         """
         yaml_path = _write_integration_yaml(tmp_path, "MyIntegration", "MyIntegration")
@@ -381,12 +370,7 @@ class TestUploadCustomIntegrationEntity:
         )
 
         with pytest.raises(typer.BadParameter):
-            upload_custom_integration_entity(
-                input=yaml_path,
-                force_id=False,
-                zip=False,
-                tpb=False,
-            )
+            upload_custom_integration_entity(input=yaml_path)
 
         mock_upload.assert_not_called()
 
@@ -406,12 +390,7 @@ class TestUploadCustomIntegrationEntity:
             "demisto_sdk.commands.upload.integration_copy_validator.logger"
         )
 
-        upload_custom_integration_entity(
-            input=yaml_path,
-            force_id=True,
-            zip=False,
-            tpb=False,
-        )
+        upload_custom_integration_entity(input=yaml_path, force_id=True)
 
         mock_logger.warning.assert_called_once()
         mock_upload.assert_called_once()
@@ -428,12 +407,7 @@ class TestUploadCustomIntegrationEntity:
         )
 
         with pytest.raises(typer.BadParameter) as exc_info:
-            upload_custom_integration_entity(
-                input=yaml_path,
-                force_id=False,
-                zip=False,
-                tpb=False,
-            )
+            upload_custom_integration_entity(input=yaml_path)
 
         assert "integration YAML" in str(exc_info.value)
         mock_upload.assert_not_called()
@@ -449,11 +423,6 @@ class TestUploadCustomIntegrationEntity:
         )
 
         with pytest.raises(typer.BadParameter):
-            upload_custom_integration_entity(
-                input=None,
-                force_id=False,
-                zip=False,
-                tpb=False,
-            )
+            upload_custom_integration_entity(input=None)
 
         mock_upload.assert_not_called()

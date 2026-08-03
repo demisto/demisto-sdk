@@ -99,17 +99,32 @@ class IsMatchingLicenseValidator(ConnectorsValidator[ContentTypes]):
     ) -> List[str]:
         """Check one capability/sub-capability against its subscribing handlers.
 
-        For every handler that subscribes to ``entry_id``, the entry's effective
-        required licenses must be a subset of the backing integration's supported
-        modules (resolved via ``get_content_item_supported_modules``, which falls
-        back from the integration's own ``supportedModules`` to the parent pack's
-        and finally to the platform defaults).
+        For every **XSOAR** handler that subscribes to ``entry_id``, the entry's
+        effective required licenses must be a subset of the backing integration's
+        supported modules (resolved via ``get_content_item_supported_modules``,
+        which falls back from the integration's own ``supportedModules`` to the
+        parent pack's and finally to the platform defaults).
 
         An entry with no ``required_license`` is treated as requiring **all**
         modules (``ALL_SUPPORTED_MODULES``): it claims support under every
-        license, so the integration must support all of them. A subscribing
-        handler whose integration cannot be resolved is flagged (never silently
-        skipped).
+        license, so the integration must support all of them.
+
+        Handler-scope rules:
+
+        * **Non-XSOAR handlers** (``handler.is_xsoar`` is ``False`` — e.g.
+          SaaS identity / data-security / posture handlers whose
+          ``metadata.module`` is not ``"xsoar"``) are skipped entirely. They
+          have no backing XSOAR integration, so the concept of "the
+          integration's supported modules must include this license" does
+          not apply to them at all.
+        * **XSOAR handlers with no declared** ``xsoar-integration-id``: this
+          is a real content bug (every XSOAR handler MUST label its backing
+          integration) and is flagged explicitly rather than skipped.
+        * **XSOAR handlers whose declared integration did not resolve** in
+          the graph is flagged as unverifiable; the most common cause is
+          that the integration's ``marketplaces`` do not include
+          ``PLATFORM`` (see the connector-flow filter in
+          ``ConnectorAwareInitializer._graph_expand_integrations``).
         """
         details: List[str] = []
 
@@ -123,7 +138,7 @@ class IsMatchingLicenseValidator(ConnectorsValidator[ContentTypes]):
         handler_ids = self._subscribing_handler_ids(connector, entry_id)
         if not handler_ids:
             # No handler subscribes to this entry. The "must have a subscriber"
-            # rule is owned by CO115; here there is nothing to check.
+            # rule is handled within UCP itself; here there is nothing to check.
             return details
 
         for handler_id in handler_ids:
@@ -133,13 +148,31 @@ class IsMatchingLicenseValidator(ConnectorsValidator[ContentTypes]):
             if handler is None:
                 continue
 
+            # Non-XSOAR handlers (SaaS identity/data-security/posture etc.)
+            # have no backing XSOAR integration -- the license-vs-modules
+            # concept does not apply to them, so skip entirely.
+            if not handler.is_xsoar:
+                continue
+
+            # An XSOAR handler MUST declare its backing integration id; a
+            # missing id is a real content bug, not something to skip.
+            if not handler.xsoar_integration_id:
+                details.append(
+                    f"'{entry_id}' cannot be verified: the subscribing XSOAR "
+                    f"handler '{handler_id}' does not declare an "
+                    f"'xsoar-integration-id' (every XSOAR handler must label "
+                    f"its backing integration)"
+                )
+                continue
+
             integration = handler.related_integration
             if integration is None:
                 details.append(
                     f"'{entry_id}' required_license cannot be verified: the "
                     f"subscribing handler '{handler_id}' references integration "
                     f"'{handler.xsoar_integration_id}' which was not resolved "
-                    f"(ensure the content graph is built)"
+                    f"(check the integration exists in the graph and its "
+                    f"'marketplaces' include 'PLATFORM')"
                 )
                 continue
 
@@ -159,15 +192,6 @@ class IsMatchingLicenseValidator(ConnectorsValidator[ContentTypes]):
             # connector flow filters out); treat that as "supports all" too.
             supported = get_content_item_supported_modules(integration) or set(
                 ALL_SUPPORTED_MODULES
-            )
-            import sys as _sys
-
-            print(
-                f"[CO114-DEBUG] entry={entry_id} int={handler.xsoar_integration_id} "
-                f"int.supportedModules={getattr(integration, 'supportedModules', 'NO_ATTR')} "
-                f"resolved={sorted(supported)} required={sorted(required_set)} "
-                f"missing={sorted(required_set - supported)}",
-                file=_sys.stderr,
             )
             missing = required_set - supported
             if missing:

@@ -4,6 +4,8 @@ import copy
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from demisto_sdk.commands.common.constants import (
     ALL_SUPPORTED_MODULES,
     MarketplaceVersions,
@@ -52,8 +54,17 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO112_has_sub_capabi
 from demisto_sdk.commands.validate.validators.CO_validators.CO113_is_sub_capability_id_derived import (
     IsSubCapabilityIdDerivedValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO194_is_sub_capability_title_derived import (
+    IsSubCapabilityTitleDerivedValidator,
+)
 from demisto_sdk.commands.validate.validators.CO_validators.CO114_is_matching_license import (
     IsMatchingLicenseValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO116_is_connector_matches_integration_flags import (
+    IsConnectorMatchesIntegrationFlagsValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO117_is_capability_title_valid import (
+    IsCapabilityTitleValidValidator,
 )
 from demisto_sdk.commands.validate.validators.CO_validators.CO118_is_valid_connection_metadata import (
     IsValidConnectionMetadataValidator,
@@ -1391,18 +1402,26 @@ def _grouped_connector_with_sub_capability(sub_id, sub_title):
 
 class TestCO113IsSubCapabilityIdDerived:
     """Tests for CO113: sub-capability id must be
-    '<capability_id>_<normalized_integration_id>' and title must equal the
-    integration display name."""
+    '<capability_id>_<normalized_integration_id>'.
 
-    def test_valid_sub_capability_id_and_title(self):
+    Title correctness lives in CO194 (not this validator). CO113 is
+    scoped to newly-added connectors via ``expected_git_statuses`` at the
+    class level; the tests below drive ``obtain_invalid_content_items``
+    directly to exercise the pure logic — the git-status gate is applied
+    by the base ``BaseValidator.should_run`` path and is verified in a
+    separate test.
+    """
+
+    def test_valid_sub_capability_id(self):
         """
-        Given: A grouped connector whose sub-capability id and title are both
-               correctly derived.
+        Given: A grouped connector whose sub-capability id is correctly
+               derived (mismatched title is intentionally ignored — CO194 owns
+               titles).
         When: CO113 runs.
         Then: No validation errors are returned.
         """
         connector = _grouped_connector_with_sub_capability(
-            "fetch-issues_myint", "My Integration"
+            "fetch-issues_myint", "Wrong Title But Ignored"
         )
 
         validator = IsSubCapabilityIdDerivedValidator()
@@ -1427,43 +1446,42 @@ class TestCO113IsSubCapabilityIdDerived:
         assert len(results) == 1
         assert "fetch-issues_myint" in results[0].message
 
-    def test_invalid_sub_capability_title(self):
+    def test_title_mismatch_is_not_flagged(self):
         """
-        Given: A grouped connector whose sub-capability title does not match the
-               integration display name.
+        Given: A grouped connector whose sub-capability id is correct but
+               whose title does not match the integration display name.
         When: CO113 runs.
-        Then: A validation error naming the expected title is returned.
+        Then: No validation errors are returned — title checks now live in
+              CO194.
         """
         connector = _grouped_connector_with_sub_capability(
-            "fetch-issues_myint", "Wrong Title"
+            "fetch-issues_myint", "Some Other Title"
         )
 
         validator = IsSubCapabilityIdDerivedValidator()
         results = validator.obtain_invalid_content_items([connector])
 
-        assert len(results) == 1
-        assert "My Integration" in results[0].message
+        assert len(results) == 0
 
-    def test_unresolved_integration_is_flagged(self):
+    def test_unresolved_integration_does_not_fail_id_check(self):
         """
-        Given: A grouped connector whose sub-capability has a subscribing
-               handler, but the handler's referenced integration was NOT
-               resolved (related_integration is None, e.g. no content graph).
+        Given: A grouped connector whose sub-capability id is correct and
+               whose backing integration didn't resolve (no content graph).
         When: CO113 runs.
-        Then: The title check is reported as unverifiable rather than silently
-              skipped - a validation error is returned.
+        Then: No validation error is returned. Unlike the old behaviour,
+              CO113 no longer flags unresolved integrations because those
+              only affect the title check (now in CO194); the id itself was
+              already validated structurally against the handler.
         """
         connector = _grouped_connector_with_sub_capability(
             "fetch-issues_myint", "My Integration"
         )
-        # Simulate the no-graph case: the integration never resolved.
         connector.handlers[0].related_integration = None
 
         validator = IsSubCapabilityIdDerivedValidator()
         results = validator.obtain_invalid_content_items([connector])
 
-        assert len(results) == 1
-        assert "could not be verified" in results[0].message
+        assert len(results) == 0
 
     def test_structural_pattern_failure_without_handler(self):
         """
@@ -1471,7 +1489,7 @@ class TestCO113IsSubCapabilityIdDerived:
                with '<capability_id>_' and has no subscribing handler.
         When: CO113 runs.
         Then: The structural id pattern is enforced (no silent pass), even
-              though the '>=1 handler' rule is owned by CO115.
+              though the '>=1 handler' rule is handled within UCP itself.
         """
         connector = _grouped_connector_with_sub_capability(
             "fetch-issues_myint", "My Integration"
@@ -1501,6 +1519,272 @@ class TestCO113IsSubCapabilityIdDerived:
         results = validator.obtain_invalid_content_items([connector])
 
         assert len(results) == 0
+
+    def test_expected_git_statuses_is_added_only(self):
+        """
+        Given: The CO113 validator class.
+        When: Its ``expected_git_statuses`` attribute is inspected.
+        Then: It is restricted to ``GitStatuses.ADDED`` so the SDK's
+              ``should_run_according_to_status`` gate skips CO113 for any
+              already-published (MODIFIED / RENAMED / no-status) connector.
+              This is what grandfathers existing non-mechanical ids.
+        """
+        from demisto_sdk.commands.common.constants import GitStatuses
+
+        assert IsSubCapabilityIdDerivedValidator.expected_git_statuses == [
+            GitStatuses.ADDED
+        ]
+
+
+class TestNormalizeIntegrationId:
+    """Direct tests for the new mechanical normalization rule."""
+
+    @pytest.mark.parametrize(
+        "integration_id, expected",
+        [
+            # Basic lowercase + space -> dash.
+            ("MyInt", "myint"),
+            ("My Integration", "my-integration"),
+            # Dashes with surrounding spaces collapse.
+            ("AWS - Athena - Beta", "aws-athena-beta"),
+            ("Cortex XDR - IOC", "cortex-xdr-ioc"),
+            ("MailListener - POP3", "maillistener-pop3"),
+            # Periods are stripped.
+            ("Tenable.io", "tenable-io"),
+            ("Tenable.sc", "tenable-sc"),
+            ("AppSentinels.ai", "appsentinels-ai"),
+            ("OpenCTI Feed 4.X", "opencti-feed-4-x"),
+            ("abuse.ch SSL Blacklist Feed", "abuse-ch-ssl-blacklist-feed"),
+            # Parentheses are stripped.
+            ("Mail Sender (New)", "mail-sender-new"),
+            (
+                "Microsoft Management Activity API (O365 Azure Events)",
+                "microsoft-management-activity-api-o365-azure-events",
+            ),
+            ("Skyhigh Secure Web Gateway (On Prem)", "skyhigh-secure-web-gateway-on-prem"),
+            ("Server Message Block (SMB) v2", "server-message-block-smb-v2"),
+            (
+                "VMware Workspace ONE UEM (AirWatch MDM)",
+                "vmware-workspace-one-uem-airwatch-mdm",
+            ),
+            # Question marks are stripped.
+            ("Have I Been Pwned? V2", "have-i-been-pwned-v2"),
+            # Ampersands are stripped mechanically (ATT&CK -> att-ck, NOT
+            # attack; grandfathered content is unaffected because CO113
+            # runs on ADDED only).
+            ("MITRE ATT&CK v2", "mitre-att-ck-v2"),
+            # Multiple runs collapse.
+            ("A  B", "a-b"),
+            ("A--B", "a-b"),
+            # Leading/trailing punctuation trims.
+            ("  hello  ", "hello"),
+            ("--x--", "x"),
+        ],
+    )
+    def test_mechanical_normalization(self, integration_id, expected):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO113_is_sub_capability_id_derived import (
+            normalize_integration_id,
+        )
+
+        assert normalize_integration_id(integration_id) == expected
+
+
+# ============================================================
+# CO194 - IsSubCapabilityTitleDerivedValidator
+# ============================================================
+
+
+class TestCO194IsSubCapabilityTitleDerived:
+    """Tests for CO194: sub-capability title must equal the linked
+    integration's display name, enforced on ALL grouped connectors (no
+    git-status gate — titles are display-only and safe to change)."""
+
+    def test_valid_title(self):
+        """
+        Given: A grouped connector whose sub-capability title matches the
+               integration display name.
+        When: CO194 runs.
+        Then: No validation errors are returned.
+        """
+        connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_myint", "My Integration"
+        )
+
+        validator = IsSubCapabilityTitleDerivedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_invalid_title(self):
+        """
+        Given: A grouped connector whose sub-capability title does NOT match
+               the integration display name.
+        When: CO194 runs.
+        Then: A validation error naming the expected title is returned.
+        """
+        connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_myint", "Wrong Title"
+        )
+
+        validator = IsSubCapabilityTitleDerivedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "My Integration" in results[0].message
+        assert "Wrong Title" in results[0].message
+
+    def test_bad_id_but_correct_title_passes(self):
+        """
+        Given: A grouped connector whose sub-capability id is mis-derived but
+               whose title matches the integration display name.
+        When: CO194 runs.
+        Then: No validation errors are returned — CO194 owns titles only;
+              id derivation is CO113's concern.
+        """
+        connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_wrong", "My Integration"
+        )
+        # The subscribing handler still points at 'fetch-issues_wrong', so we
+        # do find the handler and its resolved integration display name.
+
+        validator = IsSubCapabilityTitleDerivedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_unresolved_integration_is_flagged_as_unverifiable(self):
+        """
+        Given: A grouped connector whose sub-capability has a subscribing
+               handler, but the handler's referenced integration was NOT
+               resolved (related_integration is None, e.g. no content graph).
+        When: CO194 runs.
+        Then: A validation error is returned describing the check as
+              unverifiable (no silent pass on a missing graph).
+        """
+        connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_myint", "My Integration"
+        )
+        connector.handlers[0].related_integration = None
+
+        validator = IsSubCapabilityTitleDerivedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "could not be verified" in results[0].message
+
+    def test_no_subscribing_handler_is_skipped(self):
+        """
+        Given: A grouped connector whose sub-capability has no subscribing
+               handler (the '>=1 handler' rule lives in UCP itself).
+        When: CO194 runs.
+        Then: No validation errors are returned — we have nothing to compare
+              the title to.
+        """
+        connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_myint", "Any Title"
+        )
+        # Rename the sub-cap to a slug no handler subscribes to.
+        connector.capabilities[0].sub_capabilities[0].id = "fetch-issues_orphan"
+
+        validator = IsSubCapabilityTitleDerivedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_non_grouped_short_circuits(self):
+        """
+        Given: A non-grouped connector with a mismatched sub-capability title.
+        When: CO194 runs.
+        Then: No validation errors are returned - CO194 is grouped-only.
+        """
+        connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_myint", "Wrong Title"
+        )
+        connector.settings.grouped = False
+
+        validator = IsSubCapabilityTitleDerivedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_no_git_status_gate(self):
+        """
+        Given: The CO194 validator class.
+        When: Its ``expected_git_statuses`` attribute is inspected.
+        Then: It is empty/None so CO194 runs on ALL grouped connectors
+              regardless of git status (unlike CO113, which is ADDED-only).
+        """
+        # Default in BaseValidator is [] which means "run on any status".
+        assert not IsSubCapabilityTitleDerivedValidator.expected_git_statuses
+
+    def test_non_xsoar_handler_is_skipped(self):
+        """
+        Given: A grouped connector whose sub-capability's only subscribing
+               handler is a non-XSOAR (SaaS identity / data-security / posture)
+               handler with no backing XSOAR integration.
+        When: CO194 runs.
+        Then: No validation errors are returned — non-XSOAR handlers have no
+              integration display_name to compare against.
+        """
+        connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_myint", "Any Title"
+        )
+        # Convert the sole subscribing handler into a non-XSOAR SaaS handler.
+        h = connector.handlers[0]
+        h.metadata.module = "identity"
+        h.metadata.ownership.team = "identity"
+        h.triggering.labels = {"identity-content-id": "gsuite"}
+        h.related_integration = None
+        assert not h.is_xsoar  # sanity — precondition
+
+        validator = IsSubCapabilityTitleDerivedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_xsoar_handler_missing_integration_id_is_flagged(self):
+        """
+        Given: An XSOAR handler subscribing to a sub-capability but declaring
+               NO ``xsoar-integration-id`` label.
+        When: CO194 runs.
+        Then: A validation error is returned — every XSOAR handler MUST label
+              its backing integration; a missing id is a real content bug, not
+              something to silently skip.
+        """
+        connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_myint", "Any Title"
+        )
+        connector.handlers[0].triggering.labels = {"xsoar-pack-id": "MyPack"}
+        connector.handlers[0].related_integration = None
+        assert connector.handlers[0].is_xsoar  # still XSOAR
+        assert not connector.handlers[0].xsoar_integration_id  # no int-id
+
+        validator = IsSubCapabilityTitleDerivedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "does not" in results[0].message
+        assert "xsoar-integration-id" in results[0].message
+
+    def test_unresolved_integration_message_mentions_platform(self):
+        """
+        Given: An XSOAR sub-capability whose subscribing handler references an
+               integration id but the integration didn't resolve (e.g. its
+               ``marketplaces`` don't include ``PLATFORM``).
+        When: CO194 runs.
+        Then: The error message mentions the ``PLATFORM`` marketplaces hint so
+              content authors know exactly what to check.
+        """
+        connector = _grouped_connector_with_sub_capability(
+            "fetch-issues_myint", "My Integration"
+        )
+        connector.handlers[0].related_integration = None
+
+        validator = IsSubCapabilityTitleDerivedValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "PLATFORM" in results[0].message
 
 
 # ============================================================
@@ -1658,10 +1942,11 @@ class TestCO114IsMatchingLicense:
 
     def test_unresolved_integration_is_flagged(self):
         """
-        Given: A sub-capability whose subscribing handler's integration was not
-               resolved (related_integration is None).
+        Given: An XSOAR sub-capability whose subscribing handler's integration
+               was not resolved (related_integration is None).
         When: CO114 runs.
-        Then: A validation error is returned (never silently skipped).
+        Then: A validation error is returned (never silently skipped) and the
+              message mentions the marketplaces=PLATFORM hint.
         """
         connector = _connector_with_license(["xsiam"], resolve=False)
 
@@ -1670,6 +1955,398 @@ class TestCO114IsMatchingLicense:
 
         assert len(results) == 1
         assert "cannot be verified" in results[0].message
+        assert "PLATFORM" in results[0].message
+
+    def test_non_xsoar_handler_is_skipped(self):
+        """
+        Given: A sub-capability whose only subscribing handler is a non-XSOAR
+               (e.g. SaaS identity / data-security / posture) handler, so it has
+               no backing XSOAR integration whose modules we could compare
+               against.
+        When: CO114 runs.
+        Then: No validation errors are returned — non-XSOAR handlers are out of
+              scope for CO114 (they don't have an XSOAR integration to license
+              against).
+        """
+        connector = _connector_with_license(
+            ["xsiam"], integration=_stub_integration_modules(["xsiam"])
+        )
+        # Convert the sole subscribing handler into a non-XSOAR SaaS handler.
+        h = connector.handlers[0]
+        h.metadata.module = "identity"
+        h.metadata.ownership.team = "identity"
+        # Drop the xsoar-integration-id label since non-XSOAR handlers don't
+        # have one; the check must bail before touching this either way.
+        h.triggering.labels = {"identity-content-id": "gsuite"}
+        h.related_integration = None
+        assert not h.is_xsoar  # sanity — precondition for this test
+
+        validator = IsMatchingLicenseValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_xsoar_handler_missing_integration_id_is_flagged(self):
+        """
+        Given: An XSOAR handler subscribing to a sub-capability but declaring
+               NO ``xsoar-integration-id`` label.
+        When: CO114 runs.
+        Then: A validation error is returned — every XSOAR handler MUST label
+              its backing integration; a missing id is a real content bug, not
+              something to silently skip (which would hide the real issue).
+        """
+        connector = _connector_with_license(["xsiam"], resolve=False)
+        # Blank the xsoar-integration-id but keep the handler XSOAR.
+        connector.handlers[0].triggering.labels = {"xsoar-pack-id": "MyPack"}
+        assert connector.handlers[0].is_xsoar  # still XSOAR
+        assert not connector.handlers[0].xsoar_integration_id  # but no int-id
+
+        validator = IsMatchingLicenseValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "does not declare an 'xsoar-integration-id'" in results[0].message
+
+
+# ============================================================
+# CO116 - IsConnectorMatchesIntegrationFlagsValidator
+# ============================================================
+
+
+def _stub_integration_flags(**flags):
+    """Build a minimal integration stub exposing fetch-flag attributes.
+
+    Any flag not provided defaults to False, mirroring the content-graph
+    Integration model defaults (is_fetch, is_fetch_events, is_fetch_assets,
+    is_fetch_credentials, is_feed).
+    """
+    defaults = {
+        "is_fetch": False,
+        "is_fetch_events": False,
+        "is_fetch_assets": False,
+        "is_fetch_credentials": False,
+        "is_feed": False,
+    }
+    defaults.update(flags)
+    return SimpleNamespace(**defaults)
+
+
+def _connector_with_collection_sub_capability(
+    cap_id, sub_id, integration=None, resolve=True
+):
+    """Grouped connector with a single collection capability whose sub-capability
+    is subscribed to by an XSOAR handler, optionally backed by a resolved
+    integration stub."""
+    connector = create_connector_object(
+        connector_overrides={"settings": {"grouped": True}},
+        capabilities_data={
+            "capabilities": [
+                {
+                    "id": cap_id,
+                    "title": cap_id,
+                    "description": "desc",
+                    "default_enabled": False,
+                    "required": False,
+                    "sub_capabilities": [
+                        {
+                            "id": sub_id,
+                            "title": sub_id,
+                            "default_enabled": False,
+                            "required": False,
+                        }
+                    ],
+                }
+            ]
+        },
+        handlers=[
+            {
+                "id": "xsoar-myint",
+                "triggering": {
+                    "type": "PUB_SUB",
+                    "labels": {
+                        "xsoar-integration-id": "MyInt",
+                        "xsoar-pack-id": "MyPack",
+                    },
+                },
+                "capabilities": [
+                    {
+                        "id": sub_id,
+                        "auth_options": [
+                            {"id": "test-auth", "workloads": ["test-workload"]}
+                        ],
+                    }
+                ],
+            }
+        ],
+    )
+    if resolve:
+        connector.handlers[0].related_integration = (
+            integration
+            if integration is not None
+            else _stub_integration_flags()
+        )
+    else:
+        connector.handlers[0].related_integration = None
+    return connector
+
+
+class TestCO116IsConnectorMatchesIntegrationFlags:
+    """Tests for CO116: a declared collection capability/sub-capability must be
+    backed by the integration's matching fetch flag."""
+
+    def test_log_collection_with_flag_enabled_is_valid(self):
+        """
+        Given: A log-collection sub-capability whose integration has
+               is_fetch_events (isfetchevents) enabled.
+        When: CO116 runs.
+        Then: No validation errors are returned.
+        """
+        connector = _connector_with_collection_sub_capability(
+            "log-collection",
+            "log-collection_myint",
+            integration=_stub_integration_flags(is_fetch_events=True),
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_log_collection_with_flag_disabled_is_flagged(self):
+        """
+        Given: A log-collection sub-capability whose integration has
+               is_fetch_events disabled.
+        When: CO116 runs.
+        Then: A validation error naming isfetchevents is returned.
+        """
+        connector = _connector_with_collection_sub_capability(
+            "log-collection",
+            "log-collection_myint",
+            integration=_stub_integration_flags(is_fetch_events=False),
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "isfetchevents" in results[0].message
+        assert "log-collection_myint" in results[0].message
+
+    def test_fetch_issues_with_flag_enabled_is_valid(self):
+        """
+        Given: A fetch-issues sub-capability whose integration has is_fetch
+               (isfetch) enabled.
+        When: CO116 runs.
+        Then: No validation errors are returned.
+        """
+        connector = _connector_with_collection_sub_capability(
+            "fetch-issues",
+            "fetch-issues_myint",
+            integration=_stub_integration_flags(is_fetch=True),
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_non_collection_capability_is_skipped(self):
+        """
+        Given: An automation-and-remediation sub-capability (not a collection
+               capability) whose integration has every fetch flag disabled.
+        When: CO116 runs.
+        Then: No validation errors are returned - non-collection capabilities
+              are not checked.
+        """
+        connector = _connector_with_collection_sub_capability(
+            "automation-and-remediation",
+            "automation-and-remediation_myint",
+            integration=_stub_integration_flags(),
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_unresolved_integration_is_flagged(self):
+        """
+        Given: A collection sub-capability whose subscribing handler's
+               integration was not resolved.
+        When: CO116 runs.
+        Then: A validation error is returned (never silently skipped).
+        """
+        connector = _connector_with_collection_sub_capability(
+            "log-collection", "log-collection_myint", resolve=False
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "cannot be verified" in results[0].message
+
+    def test_feed_capability_uses_is_feed_flag(self):
+        """
+        Given: A threat-intelligence-and-enrichment sub-capability whose
+               integration has is_feed (feed) disabled.
+        When: CO116 runs.
+        Then: A validation error naming the 'feed' flag is returned.
+        """
+        connector = _connector_with_collection_sub_capability(
+            "threat-intelligence-and-enrichment",
+            "threat-intelligence-and-enrichment_myint",
+            integration=_stub_integration_flags(is_feed=False),
+        )
+
+        validator = IsConnectorMatchesIntegrationFlagsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "feed" in results[0].message
+
+
+# ============================================================
+# CO117 - IsCapabilityTitleValidValidator
+# ============================================================
+
+
+def _connector_with_capability_title(cap_id, title):
+    """Connector with a single (leaf) capability having the given id and title."""
+    return create_connector_object(
+        capabilities_data={
+            "capabilities": [
+                {
+                    "id": cap_id,
+                    "title": title,
+                    "description": "desc",
+                    "default_enabled": False,
+                    "required": False,
+                }
+            ]
+        },
+    )
+
+
+class TestCO117IsCapabilityTitleValid:
+    """Tests for CO117: a capability's title must be the Title Case of its id,
+    with the connector word 'and' kept lowercase."""
+
+    def test_valid_simple_title(self):
+        """
+        Given: A capability 'fetch-issues' with title 'Fetch Issues'.
+        When: CO117 runs.
+        Then: No validation errors are returned.
+        """
+        connector = _connector_with_capability_title(
+            "fetch-issues", "Fetch Issues"
+        )
+
+        validator = IsCapabilityTitleValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_valid_title_with_lowercase_and(self):
+        """
+        Given: A capability 'automation-and-remediation' with title
+               'Automation and Remediation' (the 'and' kept lowercase).
+        When: CO117 runs.
+        Then: No validation errors are returned.
+        """
+        connector = _connector_with_capability_title(
+            "automation-and-remediation", "Automation and Remediation"
+        )
+
+        validator = IsCapabilityTitleValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_valid_multi_word_title_with_and(self):
+        """
+        Given: A capability 'threat-intelligence-and-enrichment' with title
+               'Threat Intelligence and Enrichment'.
+        When: CO117 runs.
+        Then: No validation errors are returned.
+        """
+        connector = _connector_with_capability_title(
+            "threat-intelligence-and-enrichment",
+            "Threat Intelligence and Enrichment",
+        )
+
+        validator = IsCapabilityTitleValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_invalid_title_wrong_casing(self):
+        """
+        Given: A capability 'fetch-issues' with title 'fetch issues'.
+        When: CO117 runs.
+        Then: A validation error naming the expected title is returned.
+        """
+        connector = _connector_with_capability_title(
+            "fetch-issues", "fetch issues"
+        )
+
+        validator = IsCapabilityTitleValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "Fetch Issues" in results[0].message
+
+    def test_invalid_title_capitalized_and(self):
+        """
+        Given: A capability 'automation-and-remediation' whose title
+               capitalizes 'And' ('Automation And Remediation').
+        When: CO117 runs.
+        Then: A validation error is returned - 'and' must be lowercase.
+        """
+        connector = _connector_with_capability_title(
+            "automation-and-remediation", "Automation And Remediation"
+        )
+
+        validator = IsCapabilityTitleValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "Automation and Remediation" in results[0].message
+
+    def test_sub_capability_titles_are_not_checked(self):
+        """
+        Given: A capability whose sub-capability title is the integration
+               display name (not a title-cased id).
+        When: CO117 runs.
+        Then: No validation errors are returned - CO117 checks parent
+              capabilities only.
+        """
+        connector = create_connector_object(
+            capabilities_data={
+                "capabilities": [
+                    {
+                        "id": "fetch-issues",
+                        "title": "Fetch Issues",
+                        "description": "desc",
+                        "default_enabled": False,
+                        "required": False,
+                        "sub_capabilities": [
+                            {
+                                "id": "fetch-issues_jira-v3",
+                                "title": "Atlassian Jira v3",
+                                "default_enabled": False,
+                                "required": False,
+                            }
+                        ],
+                    }
+                ]
+            },
+        )
+
+        validator = IsCapabilityTitleValidValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
 
 
 # ============================================================

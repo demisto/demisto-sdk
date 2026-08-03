@@ -278,33 +278,30 @@ def validate(
 
         # Run new validation flow
         if run_new_validate:
-            # When using -a (ALL_FILES) or -g (USE_GIT) with an external repo
-            # path (private content for Packs/, unified connector content for
-            # connectors/), wrap the run in the matching context manager so the
-            # external files are copied+staged before ContentDTO.from_path() /
-            # the git-diff collection runs, and cleaned up afterwards (even on
-            # Ctrl+C).
+            # Wrap the run in the matching context manager so external repo files
+            # are copied+staged before ContentDTO.from_path() / the git-diff
+            # collection runs, and cleaned up afterwards (even on Ctrl+C).
             #
-            # In USE_GIT mode the managers copy+stage only the external
-            # packs/connectors that were actually changed in the external repo's
-            # own git diff (changed_only=True), because in -g the graph only
-            # reparses the changed items - copying the unchanged ones would be
-            # wasted work. The initializer additionally git-diffs the external
-            # repo directly so only those changed items are validated (see
-            # Initializer.collect_files_to_run). In ALL_FILES mode the managers
-            # copy+stage every external pack/connector (changed_only=False),
-            # since the whole repo is reparsed.
+            # Private content (Packs/) is only copied in -a (ALL_FILES) mode.
+            # In -g (USE_GIT) the private content flow is left untouched: the
+            # initializer git-diffs the private repo directly (see
+            # Initializer.collect_files_to_run), so no copy is needed.
             #
-            # Both flags are independent - either, both, or neither may be set.
-            # When both are set the managers nest inside a single ExitStack so
-            # cleanup happens in LIFO order.
-            external_repo_modes = (
+            # Unified connector content (connectors/) is copied in both -a and
+            # -g. In -g only the connectors actually changed in the UCC repo's
+            # own git diff are copied+staged (changed_only=True), since the graph
+            # only reparses the changed items. In -a every connector is copied
+            # (changed_only=False), since the whole repo is reparsed.
+            #
+            # When both apply they nest inside a single ExitStack so cleanup
+            # happens in LIFO order.
+            connectors_repo_modes = (
                 ExecutionMode.ALL_FILES,
                 ExecutionMode.USE_GIT,
             )
             changed_only = execution_mode == ExecutionMode.USE_GIT
             with contextlib.ExitStack() as stack:
-                if execution_mode in external_repo_modes and ctx.params.get(
+                if execution_mode == ExecutionMode.ALL_FILES and ctx.params.get(
                     "private_content_path"
                 ):
                     logger.info(
@@ -316,10 +313,9 @@ def validate(
                         PrivateContentManager(
                             private_content_path=ctx.params["private_content_path"],
                             content_path=CONTENT_PATH,
-                            changed_only=changed_only,
                         )
                     )
-                if execution_mode in external_repo_modes and ctx.params.get(
+                if execution_mode in connectors_repo_modes and ctx.params.get(
                     "connectors_content_path"
                 ):
                     logger.info(

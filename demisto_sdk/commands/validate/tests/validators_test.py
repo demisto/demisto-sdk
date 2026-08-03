@@ -652,6 +652,31 @@ def test_object_collection_with_pack_path(repo):
     assert obj_types == {ContentType.INTEGRATION, ContentType.PACK}
 
 
+def test_all_files_gather_includes_connectors(mocker):
+    """
+    Given:
+    - ALL_FILES (-a) execution mode where ContentDTO.from_path parses both a
+      pack and a connector from the repository.
+    When:
+    - Calling the base Initializer.gather_objects_to_run_on.
+    Then:
+    - Make sure the parsed Connector object is included in the returned set and
+      is not discarded (so connector-only validators such as CO100 run under -a
+      exactly as they do under -g).
+    """
+    from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+
+    pack = create_pack_object()
+    connector = create_connector_object()
+    fake_dto = ContentDTO.construct(packs=[pack], connectors=[connector])
+    mocker.patch.object(ContentDTO, "from_path", return_value=fake_dto)
+
+    initializer = Initializer(execution_mode=ExecutionMode.ALL_FILES)
+    obj_set, _ = initializer.gather_objects_to_run_on()
+
+    assert connector in obj_set
+
+
 def test_load_files_with_pack_path(repo):
     """
     Given:
@@ -693,6 +718,68 @@ def test_load_files_with_integration_dir(repo):
             integration.description.path,
         )
     )
+
+
+def test_load_files_with_private_pack_path(repo, tmp_path):
+    """
+    Given:
+    - A relative PACK-level path (e.g. ``Packs/MyPack``) that only exists under
+      an external ``--private-content-path`` repository (not in the main
+      checkout).
+    When:
+    - Calling load_files with ``private_content_path`` set.
+    Then:
+    - The files are resolved from the private repo and tracked in
+      ``private_content_files`` (regression for pack-level private input that
+      was previously short-circuited).
+    """
+    private_root = tmp_path / "content-private"
+    pack_dir = private_root / "Packs" / "MyPack" / "Scripts" / "MyScript"
+    pack_dir.mkdir(parents=True)
+    script_yml = pack_dir / "MyScript.yml"
+    script_yml.write_text("commonfields:\n  id: MyScript\n")
+
+    initializer = Initializer(private_content_path=private_root)
+    loaded = initializer.load_files(["Packs/MyPack"])
+
+    assert script_yml in loaded
+    assert script_yml in initializer.private_content_files
+
+
+def test_load_files_with_relative_connectors_path(tmp_path):
+    """
+    Given:
+    - A relative connectors path (e.g. ``connectors/foo`` or
+      ``connectors/foo/connector.yaml``) that only exists under an external
+      ``--connectors-content-path`` (UCC) repository.
+    When:
+    - Calling load_files with ``connectors_content_path`` set.
+    Then:
+    - The connector files are resolved from the UCC repo and tracked in
+      ``connectors_content_files`` (regression for the -ccp relative-path case).
+    """
+    ucc_root = tmp_path / "unified-connectors-content"
+    connector_dir = ucc_root / "connectors" / "foo"
+    connector_dir.mkdir(parents=True)
+    connector_yaml = connector_dir / "connector.yaml"
+    connector_yaml.write_text("name: foo\n")
+    handler = connector_dir / "components" / "handlers" / "xsoar"
+    handler.mkdir(parents=True)
+    handler_yaml = handler / "handler.yaml"
+    handler_yaml.write_text("handler: foo\n")
+
+    # Relative directory input.
+    initializer = Initializer(connectors_content_path=ucc_root)
+    loaded = initializer.load_files(["connectors/foo"])
+    assert connector_yaml in loaded
+    assert handler_yaml in loaded
+    assert connector_yaml in initializer.connectors_content_files
+
+    # Relative single-file input.
+    initializer_file = Initializer(connectors_content_path=ucc_root)
+    loaded_file = initializer_file.load_files(["connectors/foo/connector.yaml"])
+    assert loaded_file == {connector_yaml}
+    assert connector_yaml in initializer_file.connectors_content_files
 
 
 def test_collect_related_files_main_items(repo):
@@ -834,6 +921,84 @@ def test_get_unfiltered_changed_files_from_git_case_untracked_files_identify(moc
     finally:
         if Path.exists(temp_file):
             Path.unlink(temp_file)
+
+
+def test_collect_files_to_run_merges_connectors_content_repo_diff(mocker):
+    """
+    Given:
+        An Initializer with ``connectors_content_path`` set (the -ccp flag used
+        together with -g), where the main content repo has one changed file and
+        the UCC repo has its own changed connector files.
+    When:
+        Calling collect_files_to_run.
+    Then:
+        Ensure the UCC repo is git-diffed directly (via
+        get_unfiltered_changed_files_from_git on the UCC path) and its changed
+        connector files are merged into the returned modified/added/renamed sets
+        and tracked in ``connectors_content_files`` - so only the connectors
+        actually changed in the UCC repo are collected, mirroring the
+        content-private behavior.
+    """
+    ucc_path = Path("/tmp/ucc")
+    content_modified = {Path("Packs/MyPack/Integrations/MyInt/MyInt.yml")}
+    ucc_modified = {Path("connectors/datadog/connector.yaml")}
+    ucc_added = {Path("connectors/okta/connector.yaml")}
+
+    initializer = Initializer(connectors_content_path=ucc_path)
+    initializer.validate_git_installed()
+
+    # First call: main content repo diff. Second call: UCC repo diff.
+    mocker.patch.object(
+        initializer,
+        "get_unfiltered_changed_files_from_git",
+        side_effect=[
+            (content_modified, set(), set()),
+            (ucc_modified, ucc_added, set()),
+        ],
+    )
+    mocker.patch.object(GitUtil, "deleted_files", return_value=set())
+    # The UCC deleted-files branch constructs a fresh GitUtil on the UCC path.
+    mocker.patch(
+        "demisto_sdk.commands.validate.initializer.GitUtil",
+        return_value=mocker.MagicMock(deleted_files=lambda **_: set()),
+    )
+
+    modified_files, added_files, renamed_files, deleted_files = (
+        initializer.collect_files_to_run(file_path="")
+    )
+
+    # UCC changes merged into the combined result.
+    assert ucc_modified.issubset(modified_files)
+    assert content_modified.issubset(modified_files)
+    assert ucc_added.issubset(added_files)
+    # UCC changes tracked separately so path redirection can target the UCC repo.
+    assert initializer.connectors_content_files == ucc_modified | ucc_added
+
+
+def test_collect_files_to_run_skips_connectors_diff_when_no_ccp(mocker):
+    """
+    Given:
+        An Initializer WITHOUT ``connectors_content_path`` set.
+    When:
+        Calling collect_files_to_run.
+    Then:
+        Ensure the UCC repo is never git-diffed (the content repo is diffed
+        exactly once) and ``connectors_content_files`` stays empty - a
+        regression guard that -ccp has no effect unless provided.
+    """
+    initializer = Initializer()
+    initializer.validate_git_installed()
+    diff_mock = mocker.patch.object(
+        initializer,
+        "get_unfiltered_changed_files_from_git",
+        return_value=(set(), set(), set()),
+    )
+    mocker.patch.object(GitUtil, "deleted_files", return_value=set())
+
+    initializer.collect_files_to_run(file_path="")
+
+    diff_mock.assert_called_once_with()
+    assert initializer.connectors_content_files == set()
 
 
 def test_ignored_with_run_all(mocker):

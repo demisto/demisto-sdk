@@ -297,10 +297,13 @@ def is_error_ignored(
         3. If ``err_code`` is listed under the new ``[pack]`` section of the
            pack's ``.pack-ignore`` file -> ignore for every item in the pack
            (and for related files of those items).
-        4. If a ``related_file_type`` is provided -> ignore only when the
-           code is listed under the related file's per-file section.
-        5. Otherwise -> ignore only when the code is listed under the
-           content item's per-file section.
+        4. If a ``related_file_type`` is provided -> ignore when the code is
+           listed under any of the related files' per-file sections. If none
+           of the related files match (e.g. the related file does not exist
+           for this content type, such as an AgentixAction which has no
+           SKILL_CONTENT), fall through to rule 5.
+        5. Ignore when the code is listed under the content item's own
+           per-file section.
 
     Args:
         err_code: The validation's error code.
@@ -340,10 +343,13 @@ def is_error_ignored(
                     return True
             except Exception:
                 continue
-        return False
-    else:
-        # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
-        return err_code in content_item.ignored_errors
+        # None of the related files carried the ignore (e.g. the related file
+        # does not exist for this content type, such as an AgentixAction which
+        # has no SKILL_CONTENT). Fall through to the main content's per-file
+        # ignore so a `[file:...]` section on the item itself is still honored.
+
+    # If the validation should run on the main content, will check if the validation's error code is ignored by the file.
+    return err_code in content_item.ignored_errors
 
 
 class ValidationResult(BaseResult, BaseModel):

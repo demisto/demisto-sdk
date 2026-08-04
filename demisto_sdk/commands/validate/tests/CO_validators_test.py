@@ -87,6 +87,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO123_is_profile_fie
 from demisto_sdk.commands.validate.validators.CO_validators.CO124_is_valid_grouped_connector_auth import (
     IsValidGroupedConnectorAuthValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO125_is_auth_profile_has_engine import (
+    IsAuthProfileHasEngineValidator,
+)
 from demisto_sdk.commands.validate.validators.CO_validators.CO157_is_handler_description_templated import (
     IsHandlerDescriptionTemplatedValidator,
 )
@@ -4456,3 +4459,368 @@ class TestCO124IsValidGroupedConnectorAuth:
         results = validator.obtain_invalid_content_items([connector])
 
         assert results == []
+
+
+# ============================================================
+# CO125 - IsAuthProfileHasEngineValidator
+# ============================================================
+
+
+def _engine_field(field_id: str) -> dict:
+    """Minimal engine-triplet field dict."""
+    return {"id": field_id, "field_type": "select"}
+
+
+def _standard_general_configurations(field_ids: list) -> dict:
+    """Build a connection.yaml general_configurations block containing
+    the given field ids as a single FieldGroup."""
+    return {
+        "description": "Common configs",
+        "configurations": [
+            {"fields": [_engine_field(fid) for fid in field_ids]},
+        ],
+    }
+
+
+def _grouped_profile(profile_id: str, field_ids: list) -> dict:
+    """Grouped-connector profile block with the given field ids inside
+    its own ``configurations``."""
+    return {
+        "id": profile_id,
+        "type": "plain",
+        "title": "T",
+        "configurations": [
+            {"fields": [_engine_field(fid) for fid in field_ids]},
+        ],
+    }
+
+
+class TestCO125IsAuthProfileHasEngine:
+    """Tests for CO125: every auth profile must expose the engine triplet
+    (``engine_mode``, ``engine``, ``engine_group`` / ``engineGroup``).
+
+    Grouped connectors: checked per-profile inside
+    ``profile.configurations``. Standard connectors: checked once at
+    ``connection.general_configurations``. Appendix G integrations
+    (EDL, TAXII Server, etc.) are skipped by CO125 - CO127 handles them.
+    """
+
+    # ------------------------------------------------------------------
+    # Standard (non-grouped) - general_configurations
+    # ------------------------------------------------------------------
+
+    def test_standard_all_three_engine_ids_passes(self):
+        """
+        Given: A standard connector whose general_configurations exposes
+               engine_mode, engine, AND engine_group.
+        When: CO125 runs.
+        Then: No validation errors are returned.
+        """
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_general_configurations(
+                    ["engine_mode", "engine", "engine_group"]
+                ),
+            }
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_standard_accepts_camelcase_engine_group(self):
+        """
+        Given: A standard connector using the camelCase ``engineGroup``
+               spelling instead of ``engine_group``.
+        When: CO125 runs.
+        Then: No validation errors are returned - both spellings accepted.
+        """
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_general_configurations(
+                    ["engine_mode", "engine", "engineGroup"]
+                ),
+            }
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_standard_missing_engine_mode_fails(self):
+        """
+        Given: A standard connector whose general_configurations has
+               ``engine`` + ``engine_group`` but NO ``engine_mode``.
+        When: CO125 runs.
+        Then: A single ValidationResult naming ``engine_mode`` as missing.
+        """
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_general_configurations(
+                    ["engine", "engine_group"]
+                ),
+            }
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "engine_mode" in msg
+        assert "general_configurations" in msg
+
+    def test_standard_missing_engine_fails(self):
+        """
+        Given: A standard connector missing ``engine`` from
+               general_configurations.
+        When: CO125 runs.
+        Then: A ValidationResult naming ``engine`` as missing.
+        """
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_general_configurations(
+                    ["engine_mode", "engine_group"]
+                ),
+            }
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "'engine'" in results[0].message
+
+    def test_standard_missing_engine_group_fails(self):
+        """
+        Given: A standard connector missing engine_group (both spellings)
+               from general_configurations.
+        When: CO125 runs.
+        Then: A ValidationResult naming ``engine_group`` as missing.
+        """
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_general_configurations(
+                    ["engine_mode", "engine"]
+                ),
+            }
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "engine_group" in results[0].message
+
+    def test_standard_missing_all_three_lists_all_three(self):
+        """
+        Given: A standard connector with an empty general_configurations
+               (no engine fields at all).
+        When: CO125 runs.
+        Then: A single ValidationResult naming all three engine ids.
+        """
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": {
+                    "description": "empty",
+                    "configurations": [],
+                },
+            }
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "engine_mode" in msg
+        assert "'engine'" in msg
+        assert "engine_group" in msg
+
+    def test_standard_no_general_configurations_fails(self):
+        """
+        Given: A standard connector whose connection.yaml has NO
+               general_configurations block at all.
+        When: CO125 runs.
+        Then: A ValidationResult - the engine picker is required.
+        """
+        connector = create_connector_object()
+        # Sanity: default fixture has no general_configurations.
+        assert (
+            connector.connection is not None
+            and connector.connection.general_configurations is None
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "general_configurations" in results[0].message
+
+    # ------------------------------------------------------------------
+    # Grouped - per-profile
+    # ------------------------------------------------------------------
+
+    def test_grouped_all_profiles_have_engine_triplet_passes(self):
+        """
+        Given: A grouped connector whose single profile exposes all three
+               engine ids inside ``profile.configurations``.
+        When: CO125 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [
+                    _grouped_profile(
+                        "plain.myint",
+                        ["engine_mode", "engine", "engine_group"],
+                    )
+                ]
+            },
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_grouped_profile_missing_engine_params_fails(self):
+        """
+        Given: A grouped connector whose profile has no engine fields.
+        When: CO125 runs.
+        Then: A single ValidationResult naming the profile id.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [
+                    _grouped_profile("plain.myint", ["username", "password"])
+                ]
+            },
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "plain.myint" in msg
+        assert "engine_mode" in msg
+
+    def test_grouped_multiple_profiles_reports_each_offender(self):
+        """
+        Given: A grouped connector with two profiles, one good and one bad.
+        When: CO125 runs.
+        Then: Exactly one ValidationResult - the bad profile.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [
+                    _grouped_profile(
+                        "plain.good",
+                        ["engine_mode", "engine", "engine_group"],
+                    ),
+                    _grouped_profile(
+                        "plain.bad",
+                        ["username"],
+                    ),
+                ]
+            },
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "plain.bad" in results[0].message
+        assert "plain.good" not in results[0].message
+
+    # ------------------------------------------------------------------
+    # Appendix G exclusion + short-circuits
+    # ------------------------------------------------------------------
+
+    def test_appendix_g_integration_is_skipped(self):
+        """
+        Given: A standard connector whose XSOAR handler resolves to an
+               integration on the Appendix G engine/proxy exclusion list
+               (here: 'TAXII Server'), and its general_configurations
+               deliberately omits every engine field.
+        When: CO125 runs.
+        Then: No validation errors - Appendix G integrations are
+              excluded from CO125; CO127 validates the opposite direction.
+        """
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_general_configurations(
+                    ["some_other_field"]
+                ),
+            }
+        )
+        # Wire the XSOAR handler to an Appendix G integration id.
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="TAXII Server",
+            display_name="TAXII Server",
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_appendix_g_normalization_matches_hyphens_and_case(self):
+        """
+        Given: An XSOAR handler resolving to 'aws-sns-listener' (Appendix G
+               entry stored as 'AWS-SNS-Listener').
+        When: CO125 runs.
+        Then: Normalization matches - connector is skipped, no results.
+        """
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_general_configurations(
+                    ["some_other_field"]
+                ),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="aws-sns-listener",
+            display_name="AWS SNS Listener",
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_no_connection_short_circuits(self):
+        """
+        Given: A connector with no ConnectorConnectionData (missing or
+               broken connection.yaml).
+        When: CO125 runs.
+        Then: No errors - nothing to validate.
+        """
+        connector = create_connector_object()
+        connector.connection = None
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_error_path_points_to_connection_yaml(self):
+        """
+        Given: A failing standard connector.
+        When: CO125 runs.
+        Then: The result path ends in connection.yaml (per CO118/CO119).
+        """
+        connector = create_connector_object()
+        # Default fixture has no general_configurations - guaranteed fail.
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert str(results[0].path).endswith("connection.yaml")

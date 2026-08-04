@@ -1,0 +1,4 @@
+changes:
+- description: Added a new `demisto-sdk upload-custom-integration` command that safely uploads a custom integration to the Cortex Platform. Before uploading, it verifies that both `commonfields.id` and `name` in the integration YAML end with the `_copy` suffix, preventing ID conflicts.
+  type: feature
+pr_number: 5469

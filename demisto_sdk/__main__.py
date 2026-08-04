@@ -172,6 +172,23 @@ def register_commands(_args: list[str] = []):  # noqa: C901
             name="upload", help="Uploads an entity to Cortex XSOAR or Cortex XSIAM."
         )(upload)
 
+    if command_name == "upload-custom-integration" or register_all:
+        from demisto_sdk.commands.upload.upload_custom_integration_setup import (
+            upload_custom_integration,
+        )
+
+        app.command(
+            name="upload-custom-integration",
+            help=(
+                "Upload a custom integration to Cortex Platform with '_copy' marker "
+                "safety enforcement. Targets the Cortex Platform marketplace exclusively "
+                "(marketplace=platform, cannot be overridden). "
+                "Validates that 'commonfields.id' and 'name' end with '_copy' before "
+                "uploading, preventing ID conflicts with system pack integrations. "
+                "Only accepts -i/--input and --force-id flags."
+            ),
+        )(upload_custom_integration)
+
     if command_name == "download" or register_all:
         from demisto_sdk.commands.download.download_setup import download
 

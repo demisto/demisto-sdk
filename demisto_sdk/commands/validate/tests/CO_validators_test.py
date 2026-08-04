@@ -69,6 +69,21 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO117_is_capability_
 from demisto_sdk.commands.validate.validators.CO_validators.CO118_is_valid_connection_metadata import (
     IsValidConnectionMetadataValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO119_no_connection_general_configurations import (
+    NoConnectionGeneralConfigurationsValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO120_is_proxy_and_insecure_exists import (
+    IsProxyAndInsecureExistsValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO121_is_valid_interpolation import (
+    IsValidInterpolationValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO122_is_valid_viewgroup import (
+    IsValidViewgroupValidator,
+)
+from demisto_sdk.commands.validate.validators.CO_validators.CO123_is_profile_fields_covered import (
+    IsProfileFieldsCoveredValidator,
+)
 from demisto_sdk.commands.validate.validators.CO_validators.CO157_is_handler_description_templated import (
     IsHandlerDescriptionTemplatedValidator,
 )
@@ -2445,6 +2460,1043 @@ class TestCO118IsValidConnectionMetadata:
 
 
 # ============================================================
+# CO119 - NoConnectionGeneralConfigurationsValidator
+# ============================================================
+
+
+class TestCO119NoConnectionGeneralConfigurations:
+    """Tests for CO119: grouped connectors must not declare
+    'general_configurations' in connection.yaml.
+    """
+
+    @staticmethod
+    def _gc_block():
+        """A minimal but structurally-valid general_configurations block."""
+        return {
+            "description": "Common configurations for all connection profiles",
+            "configurations": [
+                {
+                    "fields": [
+                        {
+                            "id": "server_url",
+                            "title": "Server URL",
+                            "field_type": "input",
+                        }
+                    ]
+                }
+            ],
+        }
+
+    def test_non_grouped_with_general_configurations_passes(self):
+        """
+        Given: A NON-grouped connector whose connection.yaml declares
+               'general_configurations'.
+        When: CO119 runs.
+        Then: No validation errors are returned (rule is grouped-only).
+        """
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": self._gc_block(),
+            }
+        )
+        # Sanity: the fixture is really non-grouped.
+        assert not (connector.settings and connector.settings.grouped)
+
+        validator = NoConnectionGeneralConfigurationsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_grouped_without_general_configurations_passes(self):
+        """
+        Given: A grouped connector whose connection.yaml does NOT declare
+               'general_configurations'.
+        When: CO119 runs.
+        Then: No validation errors are returned.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+        )
+        # Sanity: the template really has no general_configurations.
+        assert (
+            connector.connection is not None
+            and connector.connection.general_configurations is None
+        )
+
+        validator = NoConnectionGeneralConfigurationsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_grouped_with_general_configurations_fails(self):
+        """
+        Given: A grouped connector whose connection.yaml DOES declare
+               'general_configurations'.
+        When: CO119 runs.
+        Then: A single ValidationResult is returned pointing at
+              connection.yaml.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "general_configurations": self._gc_block(),
+            },
+        )
+
+        validator = NoConnectionGeneralConfigurationsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "general_configurations" in msg
+        assert connector.object_id in msg
+        # Path is the connection.yaml file, per the CO118 pattern.
+        assert str(results[0].path).endswith("connection.yaml")
+
+
+# ============================================================
+# CO120 - IsProxyAndInsecureExistsValidator
+# ============================================================
+
+
+def _make_integration_with_params(*names: str):
+    """Stub integration exposing ``params`` with the given ``name`` values.
+
+    CO120 only reads ``integration.params[*].name`` (mirrors IN100), so a
+    ``SimpleNamespace`` per param is enough - no need for real Parameter /
+    Integration Pydantic construction.
+    """
+    return SimpleNamespace(
+        params=[SimpleNamespace(name=n) for n in names]
+    )
+
+
+def _override_resolved(handler, mapping):
+    """Replace ``handler.resolved_params`` with a list built from a
+    ``{connector_param_name: content_param_name}`` dict.
+
+    CO120 only reads ``rp.content_param_name`` so the other fields on
+    ResolvedParamMapping can be defaulted.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ResolvedParamMapping,
+    )
+
+    handler.resolved_params = [
+        ResolvedParamMapping(
+            connector_param_name=cn,
+            content_param_name=rn,
+        )
+        for cn, rn in mapping.items()
+    ]
+
+
+class TestCO120IsProxyAndInsecureExists:
+    """Tests for CO120: XSOAR handlers must expose 'proxy'/'insecure'
+    when the backing integration declares those params.
+    """
+
+    def test_non_xsoar_handler_skipped(self):
+        """
+        Given: A connector whose handler is non-XSOAR
+               (metadata.module != 'xsoar').
+        When: CO120 runs.
+        Then: The handler is skipped and no error is emitted, even when the
+              integration has proxy/insecure params.
+        """
+        connector = create_connector_object(
+            handlers=[
+                {
+                    "id": "sspm-myint",
+                    "metadata": {
+                        "module": "sspm",
+                        "ownership": {
+                            "team": "SSPM",
+                            "maintainers": ["@sspm-team"],
+                        },
+                    },
+                }
+            ]
+        )
+        # Sanity: not XSOAR.
+        assert not connector.handlers[0].is_xsoar
+
+        connector.handlers[0].related_integration = (
+            _make_integration_with_params("proxy", "insecure")
+        )
+        # Do not touch resolved_params - handler is skipped entirely anyway.
+
+        validator = IsProxyAndInsecureExistsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_integration_without_proxy_or_insecure_passes(self):
+        """
+        Given: An XSOAR handler whose integration declares no proxy/insecure
+               param.
+        When: CO120 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        connector.handlers[0].related_integration = (
+            _make_integration_with_params("client_id", "client_secret")
+        )
+        _override_resolved(connector.handlers[0], {})
+
+        validator = IsProxyAndInsecureExistsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_xsoar_handler_unresolved_integration_is_error(self):
+        """
+        Given: An XSOAR handler whose ``related_integration`` was NOT
+               resolved (None).
+        When: CO120 runs.
+        Then: A ValidationResult flags it (per updated design - unresolved
+              XSOAR handlers are a real bug, not something to silently pass).
+        """
+        connector = create_connector_object()
+        assert connector.handlers[0].is_xsoar  # precondition
+        connector.handlers[0].related_integration = None
+
+        validator = IsProxyAndInsecureExistsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "no resolvable backing integration" in msg
+        assert connector.object_id in msg
+
+    def test_direct_ids_present_passes(self):
+        """
+        Given: Integration has 'proxy' and 'insecure' params AND the handler
+               resolves 'proxy'/'insecure' content_param_names directly
+               (standard-shaped connection.yaml or ungrouped connector).
+        When: CO120 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        connector.handlers[0].related_integration = (
+            _make_integration_with_params("proxy", "insecure")
+        )
+        _override_resolved(
+            connector.handlers[0],
+            {"proxy": "proxy", "insecure": "insecure"},
+        )
+
+        validator = IsProxyAndInsecureExistsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_serializer_renamed_ids_pass(self):
+        """
+        Given: Grouped connector with namespaced field ids (e.g.
+               'plain_jira_v3_proxy') that are renamed to 'proxy' /
+               'insecure' by serializer.yaml field_mappings.
+        When: CO120 runs.
+        Then: The check accepts the resolved content_param_name equally -
+              no errors emitted.
+        """
+        connector = create_connector_object()
+        connector.handlers[0].related_integration = (
+            _make_integration_with_params("proxy", "insecure")
+        )
+        _override_resolved(
+            connector.handlers[0],
+            {
+                "plain_jira_v3_proxy": "proxy",
+                "plain_jira_v3_insecure": "insecure",
+            },
+        )
+
+        validator = IsProxyAndInsecureExistsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_proxy_missing_fails(self):
+        """
+        Given: Integration declares 'proxy' AND 'insecure' but the handler
+               only exposes 'insecure' (via any mechanism).
+        When: CO120 runs.
+        Then: Exactly one ValidationResult flags the missing 'proxy' family.
+        """
+        connector = create_connector_object()
+        connector.handlers[0].related_integration = (
+            _make_integration_with_params("proxy", "insecure")
+        )
+        _override_resolved(
+            connector.handlers[0],
+            {"insecure": "insecure"},
+        )
+
+        validator = IsProxyAndInsecureExistsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'proxy'" in msg
+        # Confirm we did NOT also emit an 'insecure' finding.
+        assert "'insecure' param" not in msg
+
+    def test_insecure_missing_fails(self):
+        """
+        Given: Integration declares 'proxy' AND 'insecure' but the handler
+               only exposes 'proxy'.
+        When: CO120 runs.
+        Then: Exactly one ValidationResult flags the missing 'insecure'
+              family.
+        """
+        connector = create_connector_object()
+        connector.handlers[0].related_integration = (
+            _make_integration_with_params("proxy", "insecure")
+        )
+        _override_resolved(
+            connector.handlers[0],
+            {"proxy": "proxy"},
+        )
+
+        validator = IsProxyAndInsecureExistsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'insecure'" in msg
+
+    def test_both_missing_fails_twice(self):
+        """
+        Given: Integration declares both families but the handler exposes
+               neither.
+        When: CO120 runs.
+        Then: Two ValidationResults - one per family - are returned.
+        """
+        connector = create_connector_object()
+        connector.handlers[0].related_integration = (
+            _make_integration_with_params("proxy", "insecure")
+        )
+        _override_resolved(connector.handlers[0], {})
+
+        validator = IsProxyAndInsecureExistsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 2
+        joined = " | ".join(r.message for r in results)
+        assert "'proxy'" in joined
+        assert "'insecure'" in joined
+
+    def test_insecure_alias_is_accepted(self):
+        """
+        Given: Integration YML uses the alternative alias 'unsecure' AND
+               the handler exposes 'verify' (another alias in the same
+               family).
+        When: CO120 runs.
+        Then: Passes - detection uses the full alias set on both sides.
+        """
+        connector = create_connector_object()
+        connector.handlers[0].related_integration = (
+            _make_integration_with_params("unsecure")
+        )
+        _override_resolved(
+            connector.handlers[0],
+            {"trust_any_cert": "verify"},
+        )
+
+        validator = IsProxyAndInsecureExistsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_proxy_alias_useproxy_is_accepted(self):
+        """
+        Given: Integration declares 'useproxy' AND the handler exposes
+               'use_proxy'.
+        When: CO120 runs.
+        Then: Passes.
+        """
+        connector = create_connector_object()
+        connector.handlers[0].related_integration = (
+            _make_integration_with_params("useproxy")
+        )
+        _override_resolved(
+            connector.handlers[0],
+            {"foo": "use_proxy"},
+        )
+
+        validator = IsProxyAndInsecureExistsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+
+# ============================================================
+# CO121 - IsValidInterpolationValidator
+# ============================================================
+
+
+def _make_integration_with_params_objs(*name_type_pairs):
+    """Stub integration exposing ``params`` where each entry has a ``name``
+    AND a ``type``. Used for CO121 (Sub-rule D needs param.type).
+
+    ``name_type_pairs`` is an iterable of ``(name, type)`` tuples.
+    """
+    return SimpleNamespace(
+        params=[
+            SimpleNamespace(name=n, type=t) for (n, t) in name_type_pairs
+        ]
+    )
+
+
+def _make_interpolated_profile(
+    profile_id: str,
+    mapping: str,
+    field_specs,
+):
+    """Build a connector connection.yaml override that defines a single
+    interpolated profile with the given interpolation_mapping and fields.
+
+    ``field_specs`` is an iterable of dicts describing each field, e.g.
+    ``[{"id": "credentials_username", "auth_parameter": "username"}]``.
+    Setting ``auth_parameter`` populates ``metadata.auth.parameter``.
+    """
+    fields = []
+    for spec in field_specs:
+        field = {
+            "id": spec["id"],
+            "title": spec.get("title", spec["id"]),
+            "field_type": spec.get("field_type", "input"),
+        }
+        if spec.get("auth_parameter"):
+            field["metadata"] = {"auth": {"parameter": spec["auth_parameter"]}}
+        fields.append(field)
+
+    return {
+        "profiles": [
+            {
+                "id": profile_id,
+                "type": "plain",
+                "title": "Test Profile",
+                "description": "for CO121 tests",
+                "metadata": {
+                    "xsoar": {
+                        "interpolated": True,
+                        "interpolation_mapping": mapping,
+                    }
+                },
+                "configurations": [{"fields": fields}],
+            }
+        ]
+    }
+
+
+def _wire_handler_to_profile(connector, profile_id: str, integration):
+    """Point the connector's first handler at the given profile id and stub
+    its ``related_integration`` to the supplied namespace.
+    """
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        HandlerAuthOption,
+        HandlerCapability,
+    )
+
+    h = connector.handlers[0]
+    h.capabilities = [
+        HandlerCapability(
+            id="automation-and-remediation",
+            auth_options=[HandlerAuthOption(id=profile_id)],
+        )
+    ]
+    h.related_integration = integration
+
+
+class TestCO121IsValidInterpolation:
+    """Tests for CO121: interpolation_mapping must be internally consistent
+    (LEFT is a valid profile auth-field name; LEFT is not a reserved general
+    param; RIGHT resolves in the integration; credentials suffix only on
+    type-9 params).
+    """
+
+    def test_non_interpolated_profile_is_skipped(self):
+        """
+        Given: A profile with metadata.xsoar.interpolated=false and NO
+               interpolation_mapping.
+        When: CO121 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object(
+            connection_data={
+                "profiles": [
+                    {
+                        "id": "plain.myint",
+                        "type": "plain",
+                        "title": "T",
+                        "description": "D",
+                        "metadata": {"xsoar": {"interpolated": False}},
+                        "configurations": [
+                            {"fields": [{"id": "x", "field_type": "input"}]}
+                        ],
+                    }
+                ]
+            }
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_valid_mapping_passes(self):
+        """
+        Given: An interpolated profile whose LEFT keys are valid auth-field
+               names and RIGHT values resolve on the backing integration.
+        When: CO121 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="username:credentials.identifier,password:credentials.password",
+                field_specs=[
+                    {"id": "credentials_username", "auth_parameter": "username"},
+                    {"id": "credentials_password", "auth_parameter": "password"},
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("credentials", 9)),
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == [], [r.message for r in results]
+
+    def test_left_is_reserved_engine_fails(self):
+        """
+        Sub-rule B: LEFT 'engine' is a reserved param and must not appear
+        on the LEFT.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="engine:credentials.identifier",
+                field_specs=[
+                    {"id": "engine", "auth_parameter": "engine"},
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("credentials", 9)),
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "reserved general param" in msg
+        assert "'engine'" in msg
+
+    def test_left_is_reserved_proxy_fails(self):
+        """
+        Sub-rule B: 'proxy' as LEFT must fail even when the profile has a
+        matching field id (matching field is irrelevant — the rule bans
+        the LEFT position for reserved params outright).
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="proxy:proxy",
+                field_specs=[
+                    {"id": "proxy", "auth_parameter": "proxy"},
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("proxy", 8)),
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "reserved general param" in results[0].message
+
+    def test_left_not_in_profile_fails(self):
+        """
+        Sub-rule A: LEFT that is neither a field id nor a
+        metadata.auth.parameter in the profile is a fail.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="does_not_exist:credentials.password",
+                field_specs=[
+                    {"id": "credentials", "auth_parameter": "credentials"},
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("credentials", 9)),
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "does not match any field id or metadata.auth.parameter" in results[0].message
+
+    def test_left_matches_field_id_serialized_form(self):
+        """
+        Sub-rule A: LEFT is allowed to match either the field's ``id``
+        (serialized form) OR its ``metadata.auth.parameter`` (deserialized
+        form). Here it matches the raw ``id``.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="raw_field_id:credentials.password",
+                field_specs=[
+                    # No auth_parameter — LEFT lookup falls back to field.id
+                    {"id": "raw_field_id"},
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("credentials", 9)),
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == [], [r.message for r in results]
+
+    def test_right_not_in_integration_fails(self):
+        """
+        Sub-rule C: RIGHT (after stripping the credentials suffix) must
+        exist as a param on the backing integration.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="username:ghost_param.identifier",
+                field_specs=[
+                    {"id": "credentials_username", "auth_parameter": "username"},
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("api_key", 4)),  # no ghost_param
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "not declared on the backing integration" in results[0].message
+        assert "'ghost_param'" in results[0].message
+
+    def test_credentials_suffix_on_non_type9_fails(self):
+        """
+        Sub-rule D: '.password' suffix is only valid when the integration
+        param has type=9. Here we use type=4 (ENCRYPTED) so the suffix is
+        wrong.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="api_key:api_key.password",
+                field_specs=[
+                    {"id": "credentials_key", "auth_parameter": "api_key"},
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("api_key", 4)),  # ENCRYPTED, not AUTH
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "credentials suffix" in msg
+        assert "type=9" in msg
+
+    def test_no_suffix_no_type_check(self):
+        """
+        Sub-rule D only triggers when the credentials suffix is present.
+        A plain 1:1 mapping (`api_key:api_key`) with a non-9 param is
+        perfectly valid.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="api_key:api_key",
+                field_specs=[
+                    {"id": "credentials_key", "auth_parameter": "api_key"},
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("api_key", 4)),
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == [], [r.message for r in results]
+
+    def test_no_xsoar_handler_references_profile_skips_C_D(self):
+        """
+        When no XSOAR handler references the profile, sub-rules C/D are
+        skipped (they need the integration). Sub-rules A/B still run.
+        Here: LEFT is valid → no error.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.orphan",
+                mapping="username:something_wrong.identifier",
+                field_specs=[
+                    {"id": "credentials_username", "auth_parameter": "username"},
+                ],
+            )
+        )
+        # Do NOT wire any handler to this profile — the fixture's default
+        # handler references "test-auth" (see connector_handler.yaml).
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == [], [r.message for r in results]
+
+    def test_malformed_pair_missing_colon(self):
+        """
+        A malformed 'left:right' pair (no colon) is caught by the LEFT-A
+        check and RIGHT-empty check.
+        """
+        connector = create_connector_object(
+            connection_data=_make_interpolated_profile(
+                profile_id="plain.myint",
+                mapping="not_a_pair",
+                field_specs=[
+                    {"id": "credentials", "auth_parameter": "credentials"},
+                ],
+            )
+        )
+        _wire_handler_to_profile(
+            connector,
+            "plain.myint",
+            _make_integration_with_params_objs(("credentials", 9)),
+        )
+
+        validator = IsValidInterpolationValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        # We expect BOTH the "LEFT not found" AND the "RIGHT empty" details
+        # (2 ValidationResults with the same profile_id).
+        messages = [r.message for r in results]
+        assert any("does not match any field id" in m for m in messages)
+        assert any("RIGHT for LEFT 'not_a_pair' is empty" in m for m in messages)
+
+
+# ============================================================
+# CO122 - IsValidViewgroupValidator
+# ============================================================
+
+
+def _stub_related_integration(object_id: str, display_name: str):
+    """Stub ``handler.related_integration`` with only the fields CO122
+    reads: ``object_id`` and ``display_name``.
+    """
+    return SimpleNamespace(object_id=object_id, display_name=display_name)
+
+
+def _grouped_connector_with_view_groups(view_groups):
+    """Build a grouped connector whose connection.yaml declares the given
+    ``view_groups`` list (list of dicts with id/label/help_text)."""
+    return create_connector_object(
+        connector_overrides={"settings": {"grouped": True}},
+        connection_data={"view_groups": view_groups},
+    )
+
+
+class TestCO122IsValidViewgroup:
+    """Tests for CO122: grouped connectors must have a view_group per XSOAR
+    handler, matching the handler's integration id AND display_name.
+    """
+
+    def test_non_grouped_short_circuits(self):
+        """
+        Given: A non-grouped connector (view_groups absent by design).
+        When: CO122 runs.
+        Then: No validation errors are returned - CO122 is grouped-only.
+        """
+        connector = create_connector_object()
+        # Even if we wire up a broken view_group state, non-grouped should skip.
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "my-integration", "My Integration"
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_valid_matching_view_group_passes(self):
+        """
+        Given: A grouped connector with a single XSOAR handler whose resolved
+               integration id and display_name match a declared view_group.
+        When: CO122 runs.
+        Then: No validation errors are returned.
+        """
+        connector = _grouped_connector_with_view_groups(
+            [{"id": "my-integration", "label": "My Integration"}]
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "my-integration", "My Integration"
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_missing_view_group_id_fails(self):
+        """
+        Given: A grouped connector whose XSOAR handler's integration id has
+               NO matching view_group in connection.yaml.
+        When: CO122 runs.
+        Then: One ValidationResult is returned, naming the expected id.
+        """
+        connector = _grouped_connector_with_view_groups(
+            [{"id": "some-other-vg", "label": "Some Other"}]
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "my-integration", "My Integration"
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "my-integration" in results[0].message
+        assert "id=" in results[0].message
+
+    def test_wrong_view_group_label_fails(self):
+        """
+        Given: A grouped connector whose view_group.id matches but whose
+               view_group.label does NOT match the integration's display_name.
+        When: CO122 runs.
+        Then: One ValidationResult is returned, naming both labels.
+        """
+        connector = _grouped_connector_with_view_groups(
+            [{"id": "my-integration", "label": "Wrong Label"}]
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "my-integration", "My Integration"
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "Wrong Label" in msg
+        assert "My Integration" in msg
+
+    def test_xsoar_handler_unresolved_integration_is_error(self):
+        """
+        Given: A grouped connector whose XSOAR handler has no resolved
+               ``related_integration`` (graph miss or unmapped id).
+        When: CO122 runs.
+        Then: A ValidationResult is emitted (NOT silently skipped) -
+              per the CO120 directive that unresolved XSOAR handlers are
+              errors, not skips.
+        """
+        connector = _grouped_connector_with_view_groups(
+            [{"id": "my-integration", "label": "My Integration"}]
+        )
+        connector.handlers[0].related_integration = None
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "no resolved integration" in results[0].message
+
+    def test_non_xsoar_handler_is_skipped(self):
+        """
+        Given: A grouped connector with a NON-XSOAR handler (out of scope).
+               The connection.yaml view_groups intentionally do NOT declare
+               anything for this handler.
+        When: CO122 runs.
+        Then: No validation errors are returned - non-XSOAR handlers are
+              never our team's responsibility.
+
+        Note: this test uses a mixed connector because CO111 forbids
+        pure non-XSOAR grouped connectors; here we just want to prove the
+        skip logic doesn't count the non-XSOAR handler.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "view_groups": [
+                    {"id": "my-integration", "label": "My Integration"}
+                ]
+            },
+            handlers=[
+                # The default XSOAR handler + resolves to my-integration.
+                {},
+                # A second, NON-XSOAR handler with no view_group to speak of.
+                {
+                    "id": "cwp-handler",
+                    "metadata": {
+                        "module": "cwp",
+                        "ownership": {"team": "cwp"},
+                    },
+                },
+            ],
+        )
+        # Assign integrations by handler.id (not index) - the parser may
+        # sort handlers alphabetically ('cwp-handler' < 'xsoar-test').
+        for handler in connector.handlers:
+            if handler.is_xsoar:
+                handler.related_integration = _stub_related_integration(
+                    "my-integration", "My Integration"
+                )
+            else:
+                # Intentionally set a mismatching integration on the
+                # non-XSOAR handler - CO122 should still skip it.
+                handler.related_integration = _stub_related_integration(
+                    "cwp-thing", "CWP Thing"
+                )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_multiple_xsoar_handlers_all_valid_passes(self):
+        """
+        Given: A grouped connector with two XSOAR handlers, each with a
+               matching view_group (id + label).
+        When: CO122 runs.
+        Then: No validation errors are returned.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "view_groups": [
+                    {"id": "int-one", "label": "Integration One"},
+                    {"id": "int-two", "label": "Integration Two"},
+                ]
+            },
+            handlers=[{"id": "xsoar-int-one"}, {"id": "xsoar-int-two"}],
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "int-one", "Integration One"
+        )
+        connector.handlers[1].related_integration = _stub_related_integration(
+            "int-two", "Integration Two"
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_multiple_xsoar_handlers_one_bad_id_fails(self):
+        """
+        Given: A grouped connector with two XSOAR handlers; the second one
+               has no matching view_group.
+        When: CO122 runs.
+        Then: A single ValidationResult per connector, aggregating all
+              handler-level issues, is returned.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "view_groups": [
+                    {"id": "int-one", "label": "Integration One"},
+                    # int-two intentionally missing.
+                ]
+            },
+            handlers=[{"id": "xsoar-int-one"}, {"id": "xsoar-int-two"}],
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "int-one", "Integration One"
+        )
+        connector.handlers[1].related_integration = _stub_related_integration(
+            "int-two", "Integration Two"
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        # First handler's issue absent, second handler's issue present.
+        assert "int-two" in results[0].message
+        assert "xsoar-int-two" in results[0].message
+
+    def test_empty_view_groups_with_xsoar_handler_fails(self):
+        """
+        Given: A grouped connector with no view_groups at all but an XSOAR
+               handler that expects one.
+        When: CO122 runs.
+        Then: A ValidationResult is returned.
+        """
+        connector = _grouped_connector_with_view_groups([])
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "my-integration", "My Integration"
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "my-integration" in results[0].message
+
+    def test_error_message_names_connector_and_path(self):
+        """
+        Given: A failing grouped connector.
+        When: CO122 runs.
+        Then: The message includes the connector id and the path is the
+              connection.yaml file (per the CO119 pattern).
+        """
+        connector = _grouped_connector_with_view_groups(
+            [{"id": "wrong", "label": "Wrong"}]
+        )
+        connector.handlers[0].related_integration = _stub_related_integration(
+            "my-integration", "My Integration"
+        )
+
+        validator = IsValidViewgroupValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert connector.object_id in results[0].message
+        assert str(results[0].path).endswith("connection.yaml")
+
+
+# ============================================================
 # CO177 - NoRemovedCapabilitiesValidator
 # ============================================================
 
@@ -2452,6 +3504,332 @@ class TestCO118IsValidConnectionMetadata:
 def _capabilities_payload(capabilities):
     """Build a capabilities.yaml override dict with the given capability list."""
     return {"capabilities": capabilities}
+
+
+# ============================================================
+# CO123 - IsProfileFieldsCoveredValidator
+# ============================================================
+
+
+def _profile_with_fields(profile_id: str, fields: list) -> dict:
+    """Build a connection.yaml profile block with the given fields.
+
+    Each entry in ``fields`` is a dict describing one ConnectorField
+    (id, field_type, metadata, ...). All fields are placed in a single
+    FieldGroup row inside ``configurations``.
+    """
+    return {
+        "id": profile_id,
+        "type": "plain",
+        "title": "T",
+        "configurations": [{"fields": fields}],
+    }
+
+
+def _xsoar_handler_using_profile(handler_id: str, profile_id: str) -> dict:
+    """Build a handler override dict that references ``profile_id`` via
+    ``capabilities[].auth_options[].id`` (XSOAR-owned by default)."""
+    return {
+        "id": handler_id,
+        "capabilities": [
+            {
+                "id": "fetch-issues",
+                "auth_options": [
+                    {"id": profile_id, "workloads": ["test-workload"]}
+                ],
+            }
+        ],
+    }
+
+
+class TestCO123IsProfileFieldsCovered:
+    """Tests for CO123: every non-auth field on an XSOAR-referenced auth
+    profile must have metadata.event.publish=true; ``engine_mode`` is
+    the single documented exemption.
+    """
+
+    def test_all_non_auth_fields_publish_passes(self):
+        """
+        Given: A connector whose XSOAR-referenced profile has one auth field
+               (no publish needed) and one non-auth field with publish=true.
+        When: CO123 runs.
+        Then: No validation errors are returned.
+        """
+        connector = create_connector_object(
+            handlers=[_xsoar_handler_using_profile("xsoar-h", "plain.myint")],
+            connection_data={
+                "profiles": [
+                    _profile_with_fields(
+                        "plain.myint",
+                        [
+                            {
+                                "id": "username",
+                                "field_type": "input",
+                                "metadata": {"auth": {"parameter": "username"}},
+                            },
+                            {
+                                "id": "log_level",
+                                "field_type": "select",
+                                "metadata": {"event": {"publish": True}},
+                            },
+                        ],
+                    )
+                ]
+            },
+        )
+
+        validator = IsProfileFieldsCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_non_auth_field_missing_publish_fails(self):
+        """
+        Given: A non-auth field on an XSOAR-referenced profile with
+               no metadata.event.publish.
+        When: CO123 runs.
+        Then: One ValidationResult per offending field is returned.
+        """
+        connector = create_connector_object(
+            handlers=[_xsoar_handler_using_profile("xsoar-h", "plain.myint")],
+            connection_data={
+                "profiles": [
+                    _profile_with_fields(
+                        "plain.myint",
+                        [
+                            {
+                                "id": "log_level",
+                                "field_type": "select",
+                                # metadata absent - no publish flag at all.
+                            }
+                        ],
+                    )
+                ]
+            },
+        )
+
+        validator = IsProfileFieldsCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "log_level" in msg
+        assert "plain.myint" in msg
+        assert "publish" in msg
+
+    def test_non_auth_field_publish_false_fails(self):
+        """
+        Given: A non-auth field with metadata.event.publish explicitly set
+               to false.
+        When: CO123 runs.
+        Then: A ValidationResult is returned - publish must be exactly
+              True (not merely present).
+        """
+        connector = create_connector_object(
+            handlers=[_xsoar_handler_using_profile("xsoar-h", "plain.myint")],
+            connection_data={
+                "profiles": [
+                    _profile_with_fields(
+                        "plain.myint",
+                        [
+                            {
+                                "id": "log_level",
+                                "field_type": "select",
+                                "metadata": {"event": {"publish": False}},
+                            }
+                        ],
+                    )
+                ]
+            },
+        )
+
+        validator = IsProfileFieldsCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "log_level" in results[0].message
+
+    def test_auth_field_never_needs_publish(self):
+        """
+        Given: An auth field (metadata.auth.parameter set) with no
+               event.publish flag.
+        When: CO123 runs.
+        Then: No error - auth fields are exempt because they are consumed
+              by the auth flow, not published as integration params.
+        """
+        connector = create_connector_object(
+            handlers=[_xsoar_handler_using_profile("xsoar-h", "plain.myint")],
+            connection_data={
+                "profiles": [
+                    _profile_with_fields(
+                        "plain.myint",
+                        [
+                            {
+                                "id": "api_key",
+                                "field_type": "input",
+                                "metadata": {"auth": {"parameter": "api_key"}},
+                            }
+                        ],
+                    )
+                ]
+            },
+        )
+
+        validator = IsProfileFieldsCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_engine_mode_is_exempt(self):
+        """
+        Given: A field with id=='engine_mode' and NO event.publish.
+        When: CO123 runs.
+        Then: No error - engine_mode is the single documented exemption
+              (UI-only field controlling the engine picker, not an
+              integration param).
+        """
+        connector = create_connector_object(
+            handlers=[_xsoar_handler_using_profile("xsoar-h", "plain.myint")],
+            connection_data={
+                "profiles": [
+                    _profile_with_fields(
+                        "plain.myint",
+                        [
+                            {"id": "engine_mode", "field_type": "select"}
+                        ],
+                    )
+                ]
+            },
+        )
+
+        validator = IsProfileFieldsCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_profile_not_referenced_by_xsoar_handler_is_skipped(self):
+        """
+        Given: A profile that no XSOAR handler references (only a non-XSOAR
+               handler references it).
+        When: CO123 runs.
+        Then: No error - CO123 only enforces the rule for XSOAR-owned
+              profiles.
+        """
+        connector = create_connector_object(
+            handlers=[
+                # A NON-XSOAR handler references the profile.
+                {
+                    "id": "cwp-handler",
+                    "metadata": {"module": "cwp", "ownership": {"team": "cwp"}},
+                    "capabilities": [
+                        {
+                            "id": "fetch-issues",
+                            "auth_options": [
+                                {
+                                    "id": "plain.cwponly",
+                                    "workloads": ["test-workload"],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+            connection_data={
+                "profiles": [
+                    _profile_with_fields(
+                        "plain.cwponly",
+                        [
+                            {
+                                "id": "log_level",
+                                "field_type": "select",
+                                # Intentionally no publish - would fail
+                                # if XSOAR-referenced.
+                            }
+                        ],
+                    )
+                ]
+            },
+        )
+
+        validator = IsProfileFieldsCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_multiple_offenders_produce_multiple_results(self):
+        """
+        Given: A profile with two non-auth fields, neither has publish.
+        When: CO123 runs.
+        Then: Two ValidationResults are returned - one per field.
+        """
+        connector = create_connector_object(
+            handlers=[_xsoar_handler_using_profile("xsoar-h", "plain.myint")],
+            connection_data={
+                "profiles": [
+                    _profile_with_fields(
+                        "plain.myint",
+                        [
+                            {"id": "log_level", "field_type": "select"},
+                            {"id": "region", "field_type": "input"},
+                        ],
+                    )
+                ]
+            },
+        )
+
+        validator = IsProfileFieldsCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 2
+        offenders = {r.message.split("field '")[1].split("'")[0] for r in results}
+        assert offenders == {"log_level", "region"}
+
+    def test_no_connection_file_short_circuits(self):
+        """
+        Given: A connector with no ConnectorConnectionData (e.g. broken
+               parse or missing connection.yaml).
+        When: CO123 runs.
+        Then: No error - nothing to validate.
+
+        Uses the default fixture and then wipes ``connector.connection``
+        to simulate the missing-file state cleanly.
+        """
+        connector = create_connector_object()
+        connector.connection = None
+
+        validator = IsProfileFieldsCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 0
+
+    def test_error_path_points_to_connection_yaml(self):
+        """
+        Given: A failing profile.
+        When: CO123 runs.
+        Then: The result path ends in connection.yaml (per CO118/CO119).
+        """
+        connector = create_connector_object(
+            handlers=[_xsoar_handler_using_profile("xsoar-h", "plain.myint")],
+            connection_data={
+                "profiles": [
+                    _profile_with_fields(
+                        "plain.myint",
+                        [{"id": "log_level", "field_type": "select"}],
+                    )
+                ]
+            },
+        )
+
+        validator = IsProfileFieldsCoveredValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert str(results[0].path).endswith("connection.yaml")
+
+
+# ============================================================
+# CO177 - NoRemovedCapabilitiesValidator
+# ============================================================
 
 
 class TestCO177NoRemovedCapabilities:
@@ -2874,3 +4252,4 @@ class TestCO157IsHandlerDescriptionTemplated:
         results = validator.obtain_invalid_content_items([connector])
 
         assert len(results) == 0
+

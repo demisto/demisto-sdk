@@ -84,6 +84,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO122_is_valid_viewg
 from demisto_sdk.commands.validate.validators.CO_validators.CO123_is_profile_fields_covered import (
     IsProfileFieldsCoveredValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO124_is_valid_grouped_connector_auth import (
+    IsValidGroupedConnectorAuthValidator,
+)
 from demisto_sdk.commands.validate.validators.CO_validators.CO157_is_handler_description_templated import (
     IsHandlerDescriptionTemplatedValidator,
 )
@@ -4253,3 +4256,203 @@ class TestCO157IsHandlerDescriptionTemplated:
 
         assert len(results) == 0
 
+
+# ============================================================
+# CO124 - IsValidGroupedConnectorAuthValidator
+# ============================================================
+
+
+_OMIT = object()
+
+
+def _profile_with_mapping(profile_id: str, mapping_value):
+    """Build a profile block whose metadata.xsoar.interpolation_mapping
+    is exactly ``mapping_value``. Pass ``_OMIT`` to omit the key entirely.
+    """
+    profile: dict = {
+        "id": profile_id,
+        "type": "plain",
+        "title": "T",
+        "configurations": [
+            {"fields": [{"id": "u", "field_type": "input"}]}
+        ],
+    }
+    if mapping_value is _OMIT:
+        profile["metadata"] = {"xsoar": {}}
+    else:
+        profile["metadata"] = {
+            "xsoar": {"interpolation_mapping": mapping_value}
+        }
+    return profile
+
+
+class TestCO124IsValidGroupedConnectorAuth:
+    """Tests for CO124: every profile in a grouped connector must declare
+    a non-empty metadata.xsoar.interpolation_mapping string.
+    """
+
+    def test_non_grouped_short_circuits(self):
+        """
+        Given: A standard (non-grouped) connector whose profile has NO
+               interpolation_mapping.
+        When: CO124 runs.
+        Then: No errors - CO124 is grouped-only.
+        """
+        connector = create_connector_object(
+            connection_data={
+                "profiles": [_profile_with_mapping("plain.x", _OMIT)]
+            }
+        )
+
+        validator = IsValidGroupedConnectorAuthValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_grouped_with_valid_mapping_passes(self):
+        """
+        Given: A grouped connector whose profile has a non-empty
+               interpolation_mapping.
+        When: CO124 runs.
+        Then: No errors.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [
+                    _profile_with_mapping(
+                        "plain.x", "username:credentials.identifier"
+                    )
+                ]
+            },
+        )
+
+        validator = IsValidGroupedConnectorAuthValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_grouped_with_missing_mapping_fails(self):
+        """
+        Given: A grouped connector whose profile has metadata.xsoar but
+               no interpolation_mapping key at all.
+        When: CO124 runs.
+        Then: One ValidationResult naming the profile and 'missing'.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [_profile_with_mapping("plain.x", _OMIT)]
+            },
+        )
+
+        validator = IsValidGroupedConnectorAuthValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "plain.x" in results[0].message
+        assert "missing" in results[0].message
+
+    def test_grouped_with_empty_string_mapping_fails(self):
+        """
+        Given: A grouped connector whose profile has
+               interpolation_mapping="" (present but empty).
+        When: CO124 runs.
+        Then: One ValidationResult naming the profile and 'empty'.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [_profile_with_mapping("plain.x", "")]
+            },
+        )
+
+        validator = IsValidGroupedConnectorAuthValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "plain.x" in results[0].message
+        assert "empty" in results[0].message
+
+    def test_grouped_with_whitespace_only_mapping_fails(self):
+        """
+        Given: A grouped connector whose profile has
+               interpolation_mapping="   " (whitespace only).
+        When: CO124 runs.
+        Then: One ValidationResult (treated as empty).
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [_profile_with_mapping("plain.x", "   ")]
+            },
+        )
+
+        validator = IsValidGroupedConnectorAuthValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert "empty" in results[0].message
+
+    def test_grouped_with_multiple_profiles_reports_all_offenders(self):
+        """
+        Given: A grouped connector with 3 profiles - one good, one
+               missing mapping, one empty mapping.
+        When: CO124 runs.
+        Then: 2 ValidationResults are returned, one per offender.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [
+                    _profile_with_mapping("plain.good", "u:v"),
+                    _profile_with_mapping("plain.missing", _OMIT),
+                    _profile_with_mapping("plain.empty", ""),
+                ]
+            },
+        )
+
+        validator = IsValidGroupedConnectorAuthValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 2
+        messages = [r.message for r in results]
+        assert any("plain.missing" in m and "missing" in m for m in messages)
+        assert any("plain.empty" in m and "empty" in m for m in messages)
+        assert not any("plain.good" in m for m in messages)
+
+    def test_error_path_points_to_connection_yaml(self):
+        """
+        Given: A failing grouped connector.
+        When: CO124 runs.
+        Then: The result path ends in connection.yaml (per CO118/CO119).
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            connection_data={
+                "profiles": [_profile_with_mapping("plain.x", _OMIT)]
+            },
+        )
+
+        validator = IsValidGroupedConnectorAuthValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        assert str(results[0].path).endswith("connection.yaml")
+
+    def test_no_connection_short_circuits(self):
+        """
+        Given: A grouped connector with no ConnectorConnectionData
+               (missing/broken connection.yaml).
+        When: CO124 runs.
+        Then: No errors - nothing to validate.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}}
+        )
+        connector.connection = None
+
+        validator = IsValidGroupedConnectorAuthValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []

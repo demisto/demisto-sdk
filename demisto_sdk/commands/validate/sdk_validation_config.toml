@@ -78,7 +78,8 @@ ignorable_errors = [
   "VC101",
   "AS103",
   "AG112",
-  "AG117"
+  "AG117",
+  "CO104"
 ]
 
 [Custom_Categories]
@@ -87,13 +88,33 @@ warning = []
 
 [connectors_path_based_validations]
 select = [
-  "CO100"
+  "CO100",
+  "CO101",
+  "CO102",
+  "CO104",
+  "CO105",
+  "CO106",
+  "CO118",
+  "CO157",
+  "CO164",
+  "CO190"
 ]
 warning = []
 
 [connectors_use_git]
 select = [
-  "CO100"
+  "CO100",
+  "CO101",
+  "CO102",
+  "CO103",
+  "CO104",
+  "CO105",
+  "CO106",
+  "CO118",
+  "CO157",
+  "CO177",
+  "CO164",
+  "CO190"
 ]
 warning = []
 
@@ -184,7 +205,6 @@ select = [
   "AG102",
   "AG103",
   "AG104",
-  "AG105",
   "AG106",
   "AG107",
   "AG108",
@@ -292,7 +312,7 @@ select = [
   "VC101",
   "BC115"
 ]
-warning = ["RM108", "PB130", "PB131", "GR107", "GR109", "GR103", "GR110", "GR101", "PA133", "AS106", "GR114", "BA131", "BA132", "MC101", "BA133"]
+warning = ["RM108", "PB130", "PB131", "GR107", "GR109", "GR103", "GR110", "GR101", "PA133", "AS106", "GR114", "BA131", "BA132", "MC101", "BA133", "AG105"]
 
 [support_level]
 
@@ -376,6 +396,7 @@ select = [
   "AG115",
   "AG116",
   "AG117",
+  "AG118",
   "PA100",
   "PA101",
   "PA102",
@@ -603,6 +624,7 @@ select = [
   "GR109",
   "GR113",
   "GR115",
+  "GR116",
   "AS102",
   "AS103",
   "AS104",

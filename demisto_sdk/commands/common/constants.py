@@ -975,6 +975,7 @@ ASSETS_MODELING_RULE_ID_SUFFIX = "AssetsModelingRule"
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
 PACKS_PACK_IGNORE_FILE_NAME = ".pack-ignore"
+CONNECTOR_IGNORE_FILE_NAME = ".connector-ignore"
 PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
 PACKS_README_FILE_NAME = INTEGRATIONS_README_FILE_NAME = SCRIPTS_README_FILE_NAME = (
     "README.md"
@@ -1327,7 +1328,7 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
 
 # A list of validation error codes that must always execute, regardless of ignore settings.
 # This addresses unique cases where validation must run first, then filter the relevant results afterward.
-ALWAYS_RUN_ON_ERROR_CODE = ["GR107", "GR109"]
+ALWAYS_RUN_ON_ERROR_CODE = ["GR107", "GR109", "CO157"]
 
 
 class GitStatuses(StrEnum):

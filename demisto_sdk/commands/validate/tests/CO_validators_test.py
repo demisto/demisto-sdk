@@ -90,6 +90,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO124_is_valid_group
 from demisto_sdk.commands.validate.validators.CO_validators.CO125_is_auth_profile_has_engine import (
     IsAuthProfileHasEngineValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO126_is_valid_engine_params import (
+    IsValidEngineParamsValidator,
+)
 from demisto_sdk.commands.validate.validators.CO_validators.CO157_is_handler_description_templated import (
     IsHandlerDescriptionTemplatedValidator,
 )
@@ -4923,3 +4926,522 @@ class TestCO125IsAuthProfileHasEngine:
         msg = results[0].message
         assert "plain.myint" in msg
         assert "engine_mode" in msg
+
+
+# ============================================================
+# CO126 - IsValidEngineParamsValidator
+# ============================================================
+
+
+def _canonical_engine_mode_field(field_id: str = "engine_mode") -> dict:
+    """A minimal but spec-compliant engine_mode field dict.
+
+    Matches the canonical Qualys shape: radio, horizontal, 3 keys.
+    """
+    return {
+        "id": field_id,
+        "field_type": "radio",
+        "options": {
+            "orientation": "horizontal",
+            "values": [
+                {"key": "no_engine", "label": "No engine"},
+                {"key": "engine", "label": "Engine"},
+                {"key": "engineGroup", "label": "Engine Group"},
+            ],
+        },
+    }
+
+
+def _canonical_engine_field(
+    field_id: str = "engine",
+    integration_id: str = "MyInt",
+    dynamic_field: str = "engine",
+    hidden: bool = True,
+) -> dict:
+    """A minimal spec-compliant engine/engineGroup select field."""
+    return {
+        "id": field_id,
+        "field_type": "select",
+        "metadata": {
+            "xsoar": {"config_type": "backend"},
+            "dynamic_values": {
+                "provider": "xsoar",
+                "trigger": ["on_create", "on_edit"],
+                "params": {
+                    "integrationID": integration_id,
+                    "dynamicField": dynamic_field,
+                },
+            },
+        },
+        "options": {
+            "create_modifiers": {"hidden": hidden},
+            "edit_modifiers": {"hidden": hidden},
+        },
+    }
+
+
+def _canonical_engine_triplet(integration_id: str = "MyInt") -> list:
+    """The three engine fields in the order they appear on disk."""
+    return [
+        _canonical_engine_mode_field(),
+        _canonical_engine_field(
+            "engine", integration_id, "engine", hidden=True
+        ),
+        _canonical_engine_field(
+            "engineGroup", integration_id, "engine-group", hidden=True
+        ),
+    ]
+
+
+def _standard_engine_gc(triplet: list) -> dict:
+    """Wrap an engine triplet as a general_configurations block."""
+    return {
+        "description": "Common configs",
+        "configurations": [{"fields": triplet}],
+    }
+
+
+class TestCO126IsValidEngineParams:
+    """Tests for CO126: engine triplet field-shape conformance.
+
+    CO125 (presence) is a prerequisite; CO126 only inspects fields that
+    are already there. Sub-rules covered: A/B/C engine_mode shape,
+    D same-FieldGroup, E field_type, F config_type, G/H/I dynamic_values,
+    J hidden-by-default.
+    """
+
+    # ------------------------------------------------------------------
+    # Happy paths + short-circuits
+    # ------------------------------------------------------------------
+
+    def test_standard_canonical_triplet_passes(self):
+        """
+        Given: A standard connector whose general_configurations exposes
+               a fully spec-compliant engine triplet.
+        When: CO126 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(
+                    _canonical_engine_triplet("MyInt")
+                ),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+
+        validator = IsValidEngineParamsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_no_engine_fields_short_circuits(self):
+        """
+        Given: A standard connector with no engine fields at all
+               (CO125's territory, not CO126's).
+        When: CO126 runs.
+        Then: No validation errors - CO126 only inspects fields present.
+        """
+        connector = create_connector_object()
+        validator = IsValidEngineParamsValidator()
+        results = validator.obtain_invalid_content_items([connector])
+        assert results == []
+
+    def test_no_connection_short_circuits(self):
+        """
+        Given: A connector with no ConnectorConnectionData.
+        When: CO126 runs.
+        Then: No errors.
+        """
+        connector = create_connector_object()
+        connector.connection = None
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_appendix_g_integration_is_skipped(self):
+        """
+        Given: A connector whose XSOAR handler resolves to an Appendix G
+               integration (e.g. TAXII Server) - even with a broken
+               triplet, CO126 must skip it (CO127 covers those).
+        When: CO126 runs.
+        Then: No errors.
+        """
+        broken = _canonical_engine_triplet("MyInt")
+        broken[0]["field_type"] = "input"  # broken engine_mode
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(broken),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="TAXII Server", display_name="TAXII Server"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    def test_appendix_h_integration_skips_options_key_set_check(self):
+        """
+        Given: A connector whose XSOAR handler resolves to an Appendix H
+               (single-engine) integration and whose engine_mode.options
+               has ONLY 2 keys (no_engine + engine). CO128 enforces the
+               2-key shape; CO126 must NOT double-flag it under sub-rule C.
+        When: CO126 runs (all other sub-rules still evaluated).
+        Then: The options-keys mismatch is NOT reported. Any OTHER
+              violation would still be reported.
+        """
+        # Use the same integration id in the field as the handler will
+        # resolve to; the H-appendix opt-out only silences sub-rule C
+        # (option-key-set), not sub-rule H (integrationID match).
+        triplet = _canonical_engine_triplet("Slack")
+        # Trim to 2 keys (Appendix H shape).
+        triplet[0]["options"]["values"] = [
+            {"key": "no_engine", "label": "No engine"},
+            {"key": "engine", "label": "Engine"},
+        ]
+        # Drop engineGroup entirely too (Appendix H doesn't emit it).
+        triplet = triplet[:2]
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="Slack", display_name="Slack"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------------
+    # engine_mode sub-rules (A, B, C)
+    # ------------------------------------------------------------------
+
+    def test_engine_mode_wrong_field_type_fails(self):
+        """A: engine_mode must be a radio."""
+        triplet = _canonical_engine_triplet("MyInt")
+        triplet[0]["field_type"] = "select"
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "engine_mode field_type must be 'radio'" in results[0].message
+
+    def test_engine_mode_wrong_orientation_fails(self):
+        """B: engine_mode.options.orientation must be horizontal."""
+        triplet = _canonical_engine_triplet("MyInt")
+        triplet[0]["options"]["orientation"] = "vertical"
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "orientation must be 'horizontal'" in results[0].message
+
+    def test_engine_mode_wrong_options_keys_fails(self):
+        """C: engine_mode.options.values keys must be exactly the set."""
+        triplet = _canonical_engine_triplet("MyInt")
+        triplet[0]["options"]["values"] = [
+            {"key": "no_engine", "label": "No engine"},
+            {"key": "wrong_key", "label": "Wrong"},
+        ]
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "engine_mode.options.values keys" in msg
+        assert "wrong_key" in msg
+
+    # ------------------------------------------------------------------
+    # Same FieldGroup (D)
+    # ------------------------------------------------------------------
+
+    def test_engine_fields_split_across_groups_fails(self):
+        """D: all three engine fields must live in the same FieldGroup."""
+        triplet = _canonical_engine_triplet("MyInt")
+        # Split: engine_mode in one group, engine + engineGroup in another.
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": {
+                    "description": "d",
+                    "configurations": [
+                        {"fields": [triplet[0]]},
+                        {"fields": triplet[1:]},
+                    ],
+                }
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "same FieldGroup" in results[0].message
+
+    # ------------------------------------------------------------------
+    # engine / engineGroup sub-rules (E, F, G, H, I, J)
+    # ------------------------------------------------------------------
+
+    def test_engine_wrong_field_type_fails(self):
+        """E: engine.field_type must be select."""
+        triplet = _canonical_engine_triplet("MyInt")
+        triplet[1]["field_type"] = "input"
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "engine field_type must be 'select'" in results[0].message
+
+    def test_engine_wrong_config_type_fails(self):
+        """F: metadata.xsoar.config_type must be backend."""
+        triplet = _canonical_engine_triplet("MyInt")
+        triplet[1]["metadata"]["xsoar"]["config_type"] = "frontend"
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "config_type must be 'backend'" in results[0].message
+
+    def test_engine_missing_dynamic_values_fails(self):
+        """G: metadata.dynamic_values must be present."""
+        triplet = _canonical_engine_triplet("MyInt")
+        del triplet[1]["metadata"]["dynamic_values"]
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "engine metadata.dynamic_values is missing" in results[0].message
+
+    def test_engine_wrong_provider_fails(self):
+        """G: dynamic_values.provider must be xsoar."""
+        triplet = _canonical_engine_triplet("MyInt")
+        triplet[1]["metadata"]["dynamic_values"]["provider"] = "external"
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "provider must be 'xsoar'" in results[0].message
+
+    def test_engine_missing_on_edit_trigger_fails(self):
+        """G: trigger set must contain BOTH on_create and on_edit."""
+        triplet = _canonical_engine_triplet("MyInt")
+        triplet[1]["metadata"]["dynamic_values"]["trigger"] = ["on_create"]
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert "on_edit" in results[0].message
+
+    def test_engine_wrong_integration_id_fails(self):
+        """H: params.integrationID must match handler's integration."""
+        triplet = _canonical_engine_triplet("MyInt")
+        triplet[1]["metadata"]["dynamic_values"]["params"]["integrationID"] = (
+            "OtherInt"
+        )
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "integrationID" in msg
+        assert "OtherInt" in msg
+
+    def test_engine_group_wrong_dynamic_field_fails(self):
+        """I: engineGroup.dynamicField must be 'engine-group'."""
+        triplet = _canonical_engine_triplet("MyInt")
+        triplet[2]["metadata"]["dynamic_values"]["params"]["dynamicField"] = (
+            "engine"
+        )
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "engine_group" in msg
+        assert "'engine-group'" in msg
+
+    def test_engine_hidden_false_fails(self):
+        """J: hidden must be true on both create and edit modifiers."""
+        triplet = _canonical_engine_triplet("MyInt")
+        triplet[1]["options"]["create_modifiers"]["hidden"] = False
+        triplet[1]["options"]["edit_modifiers"]["hidden"] = False
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "create_modifiers.hidden must be true" in msg
+        assert "edit_modifiers.hidden must be true" in msg
+
+    # ------------------------------------------------------------------
+    # Grouped connector (serializer rewrites)
+    # ------------------------------------------------------------------
+
+    def test_grouped_namespaced_ids_pass_after_serializer_resolution(self):
+        """Grouped connector where connection.yaml has NAMESPACED ids
+        that the handler's serializer rewrites back to the canonical
+        engine_mode / engine / engineGroup. CO126 must find and inspect
+        the engine fields via the resolved names.
+        """
+        triplet = _canonical_engine_triplet("MyInt")
+        # Namespace the ids.
+        triplet[0]["id"] = "plain_myint_engine_mode"
+        triplet[1]["id"] = "plain_myint_engine"
+        triplet[2]["id"] = "plain_myint_engineGroup"
+
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            handlers=[
+                _xsoar_handler_using_profile("xsoar-h", "plain.myint"),
+            ],
+            connection_data={
+                "profiles": [
+                    _grouped_profile("plain.myint", []),
+                ]
+            },
+        )
+        # Replace the auto-created empty profile fields with the
+        # namespaced triplet.
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            ConnectorField,
+            FieldGroup,
+        )
+        connector.connection.profiles[0].configurations = [
+            FieldGroup(fields=[ConnectorField(**f) for f in triplet])
+        ]
+        # Wire the serializer mapping + resolved integration.
+        _override_resolved(
+            connector.handlers[0],
+            {
+                "plain_myint_engine_mode": "engine_mode",
+                "plain_myint_engine": "engine",
+                "plain_myint_engineGroup": "engineGroup",
+            },
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert results == []
+
+    # ------------------------------------------------------------------
+    # Error path + connector id in message
+    # ------------------------------------------------------------------
+
+    def test_error_path_points_to_connection_yaml(self):
+        """Error path is connection.yaml (per CO118/CO119 pattern)."""
+        triplet = _canonical_engine_triplet("MyInt")
+        triplet[0]["field_type"] = "select"  # break engine_mode
+        connector = create_connector_object(
+            connection_data={
+                "general_configurations": _standard_engine_gc(triplet),
+            }
+        )
+        connector.handlers[0].related_integration = SimpleNamespace(
+            object_id="MyInt", display_name="My Int"
+        )
+        results = IsValidEngineParamsValidator().obtain_invalid_content_items(
+            [connector]
+        )
+        assert len(results) == 1
+        assert str(results[0].path).endswith("connection.yaml")
+        assert connector.object_id in results[0].message

@@ -4824,3 +4824,102 @@ class TestCO125IsAuthProfileHasEngine:
 
         assert len(results) == 1
         assert str(results[0].path).endswith("connection.yaml")
+
+    # ------------------------------------------------------------------
+    # Grouped serializer resolution (regression: raw namespaced ids
+    # from grouped connectors like Qualys were false-positived before
+    # CO125 was retrofitted to consult handler.resolved_params).
+    # ------------------------------------------------------------------
+
+    def test_grouped_namespaced_ids_resolved_via_serializer_pass(self):
+        """
+        Given: A grouped connector whose profile exposes NAMESPACED engine
+               field ids (e.g. ``plain_qualys_fim_engine_mode``) - as
+               happens on real disk for grouped connectors like Qualys -
+               and whose owning XSOAR handler's ``resolved_params`` (built
+               from serializer.yaml at parse time) rewrites those ids to
+               the canonical ``engine_mode`` / ``engine`` / ``engineGroup``.
+        When: CO125 runs.
+        Then: No validation errors - CO125 must resolve raw connection.yaml
+              ids through the handler's serializer before checking presence
+              of the engine triplet. Historically CO125 did an exact-id
+              match against the connection.yaml, which false-positived
+              every grouped connector on disk.
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            handlers=[
+                _xsoar_handler_using_profile("xsoar-h", "plain.myint"),
+            ],
+            connection_data={
+                "profiles": [
+                    _grouped_profile(
+                        "plain.myint",
+                        [
+                            # Raw ids, namespaced with the profile prefix.
+                            "plain_myint_engine_mode",
+                            "plain_myint_engine",
+                            "plain_myint_engineGroup",
+                        ],
+                    )
+                ]
+            },
+        )
+        # Serializer field_mappings simulation: raw namespaced ids ->
+        # canonical integration param names (what parser produces from
+        # serializer.yaml).
+        _override_resolved(
+            connector.handlers[0],
+            {
+                "plain_myint_engine_mode": "engine_mode",
+                "plain_myint_engine": "engine",
+                "plain_myint_engineGroup": "engineGroup",
+            },
+        )
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert results == []
+
+    def test_grouped_namespaced_ids_without_resolver_fail_reported(self):
+        """
+        Given: A grouped connector with NAMESPACED engine ids but NO
+               serializer rewrite in ``resolved_params`` (either no
+               serializer.yaml on disk, or the mapping is incomplete).
+        When: CO125 runs.
+        Then: The namespaced ids do NOT match the canonical engine ids
+              and CO125 reports the profile as missing all three engine
+              params. This proves the resolver is not silently accepting
+              raw namespaced ids - it explicitly requires the serializer
+              rewrite (which is the design intent).
+        """
+        connector = create_connector_object(
+            connector_overrides={"settings": {"grouped": True}},
+            handlers=[
+                _xsoar_handler_using_profile("xsoar-h", "plain.myint"),
+            ],
+            connection_data={
+                "profiles": [
+                    _grouped_profile(
+                        "plain.myint",
+                        [
+                            "plain_myint_engine_mode",
+                            "plain_myint_engine",
+                            "plain_myint_engineGroup",
+                        ],
+                    )
+                ]
+            },
+        )
+        # No _override_resolved call: default resolved_params come from
+        # the parser and are identity-only (no serializer.yaml written by
+        # create_connector_object).
+
+        validator = IsAuthProfileHasEngineValidator()
+        results = validator.obtain_invalid_content_items([connector])
+
+        assert len(results) == 1
+        msg = results[0].message
+        assert "plain.myint" in msg
+        assert "engine_mode" in msg

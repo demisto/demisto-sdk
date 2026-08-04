@@ -57,6 +57,17 @@ class AgentixAction(TestSuiteBase):
             yml["display"] = display
             self.build(yml=yml)
 
+    def create_evaluator_test_file(self, content: str = "scenarios: []\n"):
+        """Creates the action's evaluator test file (``<name>_test.yml``) next to
+        the action YML, so validators that require it (AG118) can find it.
+
+        Args:
+            content: The raw content to write into the evaluator test file.
+        """
+        test_file_path = self.dir_path / f"{self.dir_path.name}_test.yml"
+        test_file_path.write_text(content)
+        return test_file_path
+
     def set_agentix_action_name(self, name: str):
         self.yml.update({"name": name})
 

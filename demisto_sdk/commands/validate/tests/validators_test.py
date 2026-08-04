@@ -21,7 +21,6 @@ from demisto_sdk.commands.common.handlers import DEFAULT_JSON_HANDLER as json
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.parsers.related_files import RelatedFileType
@@ -700,9 +699,7 @@ def test_is_error_ignored_not_ignored_anywhere():
     Then:
     - The code is not ignored (returns False).
     """
-    item = _FakeContentItem(
-        own_ignored=[], related_ignored=[], has_related_file=False
-    )
+    item = _FakeContentItem(own_ignored=[], related_ignored=[], has_related_file=False)
     assert (
         is_error_ignored(
             "AG112",

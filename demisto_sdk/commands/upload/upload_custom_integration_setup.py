@@ -48,7 +48,9 @@ def upload_custom_integration(
     # The three options below are injected by @logging_setup_decorator and must
     # be present in the signature, but are hidden from --help output so the
     # user only sees -i/--input and --force-id.
-    console_log_threshold: str = typer.Option(None, "--console-log-threshold", hidden=True),
+    console_log_threshold: str = typer.Option(
+        None, "--console-log-threshold", hidden=True
+    ),
     file_log_threshold: str = typer.Option(None, "--file-log-threshold", hidden=True),
     log_file_path: str = typer.Option(None, "--log-file-path", hidden=True),
 ) -> None:

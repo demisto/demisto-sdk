@@ -128,7 +128,7 @@ Every validator is classified with an **"Applies To"** value so grouped-only che
 
 | Code | Validator Name | Applies To | Description | Status |
 | :---- | :---- | :---- | :---- | :---- |
-| CO129 | `IsValidConfigurationsMetadata` | Both | `metadata.title` must equal "Configuration"; `metadata.description` must equal "Adjust and refine your configuration" (§3.7). |  |
+| CO129 | `IsValidConfigurationsMetadata` | Both | `metadata.title` must equal "Configuration"; `metadata.description` must equal "Adjust and refine your configuration settings" (§3.7). Description enforced to the de-facto disk value (with trailing "settings") used by 328/356 XSOAR-owned connectors, rather than the shorter manifest wording, to minimize churn. | Done |
 | CO130 | IsValidFetch | Both | Ensure that if the connector has the “Fetch Issues” capability, it includes all related params existing and configured correctly — isFetch, incidentType, incidentFetchInterval, Mapper-in, classifier. |  |
 | CO131 | IsValidFeed | Both | Ensure that if the connector has the feed capability, it includes all related params as well (reputation, reliability, expiration interval, etc) and that they're configured correctly. Params to validate: feed, feedFetchInterval, feedReputation, feedReliability, feedExpirationPolicy, feedExpirationInterval, feedBypassExclusionList. |  |
 | CO132 | IsValidFetchAssets | Both | Ensure that if the connector has the fetch-assets capability, it includes all related params as well. Params to validate: isFetchAssets, assetsFetchInterval. |  |

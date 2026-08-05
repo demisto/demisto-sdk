@@ -93,6 +93,9 @@ from demisto_sdk.commands.validate.validators.CO_validators.CO125_is_auth_profil
 from demisto_sdk.commands.validate.validators.CO_validators.CO126_is_valid_engine_params import (
     IsValidEngineParamsValidator,
 )
+from demisto_sdk.commands.validate.validators.CO_validators.CO129_is_valid_configurations_metadata import (
+    IsValidConfigurationsMetadataValidator,
+)
 from demisto_sdk.commands.validate.validators.CO_validators.CO157_is_handler_description_templated import (
     IsHandlerDescriptionTemplatedValidator,
 )
@@ -5444,4 +5447,168 @@ class TestCO126IsValidEngineParams:
         )
         assert len(results) == 1
         assert str(results[0].path).endswith("connection.yaml")
+        assert connector.object_id in results[0].message
+
+
+# ============================================================
+# CO129 - IsValidConfigurationsMetadataValidator
+# ============================================================
+
+
+def _write_configurations_yaml(
+    connector,
+    title: str = "Configuration",
+    description: str = "Adjust and refine your configuration settings",
+    include_metadata: bool = True,
+) -> None:
+    """Write a minimal configurations.yaml onto the connector's on-disk
+    directory (the temp dir created by create_connector_object). The
+    validator reads configurations_file.file_content which will pick this
+    up on first access.
+
+    Pass ``include_metadata=False`` to write a valid YAML but omit the
+    metadata block entirely.
+    """
+    import yaml as _yaml
+
+    conn_dir = connector.path
+    if conn_dir.is_file():
+        conn_dir = conn_dir.parent
+    payload: dict = {}
+    if include_metadata:
+        payload["metadata"] = {"title": title, "description": description}
+    payload["view_groups"] = []
+    with open(conn_dir / "configurations.yaml", "w") as f:
+        _yaml.dump(payload, f)
+
+
+class TestCO129IsValidConfigurationsMetadata:
+    """Tests for CO129: configurations.yaml metadata block must expose
+    ``title == 'Configuration'`` AND
+    ``description == 'Adjust and refine your configuration settings'``.
+    """
+
+    def test_valid_metadata_passes(self):
+        """
+        Given: A connector with a spec-compliant configurations.yaml
+               metadata block.
+        When: CO129 runs.
+        Then: No validation errors.
+        """
+        connector = create_connector_object()
+        _write_configurations_yaml(connector)
+        results = (
+            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert results == []
+
+    def test_missing_configurations_file_short_circuits(self):
+        """
+        Given: A connector with NO configurations.yaml on disk (many
+               connectors legitimately don't have one).
+        When: CO129 runs.
+        Then: No errors - nothing to validate.
+        """
+        connector = create_connector_object()
+        # Explicitly do NOT write configurations.yaml.
+        results = (
+            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert results == []
+
+    def test_wrong_title_fails(self):
+        """B: title is wrong."""
+        connector = create_connector_object()
+        _write_configurations_yaml(connector, title="Config")
+        results = (
+            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "metadata.title must be 'Configuration'" in msg
+        assert "'Config'" in msg
+        assert str(results[0].path).endswith("configurations.yaml")
+
+    def test_wrong_description_fails(self):
+        """
+        Given: A connector whose configurations.yaml uses the shorter
+               'Adjust and refine your configuration' (matches the
+               manifest text but NOT the enforced disk consensus).
+        When: CO129 runs.
+        Then: A ValidationResult is returned - CO129 enforces the disk
+              consensus with the trailing 'settings' word.
+        """
+        connector = create_connector_object()
+        _write_configurations_yaml(
+            connector,
+            description="Adjust and refine your configuration",
+        )
+        results = (
+            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "metadata.description must be" in msg
+        assert "'Adjust and refine your configuration settings'" in msg
+
+    def test_both_wrong_aggregates_into_single_result(self):
+        """
+        Given: A connector whose configurations.yaml has both wrong
+               title AND wrong description.
+        When: CO129 runs.
+        Then: A single ValidationResult with BOTH sub-rule failures
+              aggregated into the message.
+        """
+        connector = create_connector_object()
+        _write_configurations_yaml(
+            connector,
+            title="Wrong Title",
+            description="Wrong description",
+        )
+        results = (
+            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        msg = results[0].message
+        assert "metadata.title must be" in msg
+        assert "metadata.description must be" in msg
+
+    def test_metadata_block_absent_fails(self):
+        """
+        Given: A connector whose configurations.yaml exists but has no
+               top-level ``metadata`` block at all.
+        When: CO129 runs.
+        Then: A single ValidationResult explaining that metadata is
+              missing / not a mapping.
+        """
+        connector = create_connector_object()
+        _write_configurations_yaml(connector, include_metadata=False)
+        results = (
+            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
+        assert "metadata block is missing or not a mapping" in results[0].message
+
+    def test_error_message_names_connector(self):
+        """Message includes the connector id (per CO118 pattern)."""
+        connector = create_connector_object()
+        _write_configurations_yaml(connector, title="Wrong")
+        results = (
+            IsValidConfigurationsMetadataValidator().obtain_invalid_content_items(
+                [connector]
+            )
+        )
+        assert len(results) == 1
         assert connector.object_id in results[0].message

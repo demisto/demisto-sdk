@@ -5612,3 +5612,598 @@ class TestCO129IsValidConfigurationsMetadata:
         )
         assert len(results) == 1
         assert connector.object_id in results[0].message
+
+
+# ============================================================
+# CO130 test helpers
+# ============================================================
+def _write_connector_yaml_file(connector, filename: str, payload: dict) -> None:
+    """Write ``filename`` (e.g. 'configurations.yaml') into the on-disk
+    directory that backs ``connector`` (the temp dir made by
+    ``create_connector_object``). The validator's related_file accessors
+    read the file lazily so writing after parse is fine.
+    """
+    import yaml as _yaml
+
+    conn_dir = connector.path
+    if conn_dir.is_file():
+        conn_dir = conn_dir.parent
+    with open(conn_dir / filename, "w") as f:
+        _yaml.dump(payload, f)
+
+
+def _fetch_issues_capability_entry(
+    capability_id: str = "fetch-issues",
+    include_incidentType: bool = True,
+    include_incidentFetchInterval: bool = True,
+    include_incomingMapperId: bool = True,
+    include_mappingId: bool = True,
+    incidentType_type: str = "select",
+    incidentType_dyn: str = "incident-type",
+    incidentFetchInterval_type: str = "duration",
+    incomingMapperId_type: str = "select",
+    incomingMapperId_dyn: str = "mapper-incoming",
+    mappingId_type: str = "select",
+    mappingId_dyn: str = "classifier",
+) -> dict:
+    """Build a raw configurations.yaml `configurations[]` entry dict for
+    the fetch-issues capability, letting each sub-check be individually
+    perturbed for negative tests."""
+    fields = []
+    if include_incidentType:
+        fields.append(
+            {
+                "id": "incidentType",
+                "title": "Issue Type",
+                "field_type": incidentType_type,
+                "metadata": {
+                    "dynamic_values": {
+                        "provider": "xsoar",
+                        "trigger": ["on_create", "on_edit"],
+                        "params": {
+                            "integrationID": "TestIntegration",
+                            "dynamicField": incidentType_dyn,
+                        },
+                    }
+                },
+            }
+        )
+    if include_incidentFetchInterval:
+        fields.append(
+            {
+                "id": "incidentFetchInterval",
+                "title": "Issues Fetch Interval",
+                "field_type": incidentFetchInterval_type,
+                "options": {
+                    "units": ["days", "hours", "minutes"],
+                    "output_format": "minutes",
+                    "default_value": {"minutes": 1},
+                },
+            }
+        )
+    if include_incomingMapperId:
+        fields.append(
+            {
+                "id": "incomingMapperId",
+                "title": "Incoming Mapper",
+                "field_type": incomingMapperId_type,
+                "metadata": {
+                    "dynamic_values": {
+                        "provider": "xsoar",
+                        "trigger": ["on_create", "on_edit"],
+                        "params": {
+                            "integrationID": "TestIntegration",
+                            "dynamicField": incomingMapperId_dyn,
+                        },
+                    },
+                    "xsoar": {"config_type": "backend"},
+                },
+            }
+        )
+    if include_mappingId:
+        fields.append(
+            {
+                "id": "mappingId",
+                "title": "Classifier",
+                "field_type": mappingId_type,
+                "metadata": {
+                    "dynamic_values": {
+                        "provider": "xsoar",
+                        "trigger": ["on_create", "on_edit"],
+                        "params": {
+                            "integrationID": "TestIntegration",
+                            "dynamicField": mappingId_dyn,
+                        },
+                    },
+                    "xsoar": {"config_type": "backend"},
+                },
+            }
+        )
+    return {
+        "id": capability_id,
+        "configurations": [{"fields": fields}],
+    }
+
+
+def _write_configurations_with_fetch_issues(
+    connector, capability_id: str = "fetch-issues", **field_overrides
+) -> None:
+    """Write a configurations.yaml with a fetch-issues capability entry."""
+    entry = _fetch_issues_capability_entry(
+        capability_id=capability_id, **field_overrides
+    )
+    _write_connector_yaml_file(
+        connector,
+        "configurations.yaml",
+        {
+            "metadata": {
+                "title": "Configuration",
+                "description": "Adjust and refine your configuration settings",
+            },
+            "view_groups": [],
+            "configurations": [entry],
+        },
+    )
+
+
+def _make_valid_serializer(capability_id: str = "fetch-issues"):
+    """Build a SerializerData model with the correct computed_fields
+    isFetch rule for the given capability id."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        ComputedCondition,
+        ComputedConditionGroup,
+        ComputedFieldRule,
+        ComputedOutput,
+        SerializerData,
+    )
+
+    return SerializerData(
+        field_mappings=[],
+        computed_fields=[
+            ComputedFieldRule(
+                output=[ComputedOutput(id="isFetch", value=True)],
+                any_of=[
+                    ComputedConditionGroup(
+                        conditions=[
+                            ComputedCondition(
+                                type="capability",
+                                options={
+                                    "capability_id": capability_id,
+                                    "value": "on",
+                                },
+                            )
+                        ]
+                    )
+                ],
+            )
+        ],
+    )
+
+
+def _wire_handler_for_fetch_issues(
+    connector,
+    capability_id: str = "fetch-issues",
+    serializer=None,
+    handler_index: int = 0,
+) -> None:
+    """Point ``connector.handlers[handler_index]`` at ``capability_id``
+    (adding it as a HandlerCapability) and attach ``serializer`` (or
+    the default valid serializer). Marks the handler as XSOAR-owned so
+    it participates in CO130's iteration."""
+    from demisto_sdk.commands.content_graph.objects.connector import (
+        HandlerCapability,
+    )
+
+    handler = connector.handlers[handler_index]
+    handler.metadata.module = "xsoar"
+    handler.capabilities = [
+        HandlerCapability(
+            id=capability_id,
+            auth_options=[],
+            workloads=[],
+            actions=[],
+        )
+    ]
+    handler.serializer = _make_valid_serializer(capability_id=capability_id)
+    if serializer is not None:
+        handler.serializer = serializer
+
+
+class TestCO130IsValidFetch:
+    """Tests for CO130: fetch-issues capability wiring.
+
+    Two parts per subscribing XSOAR handler:
+    - Part 1: serializer.yaml computed_fields emit `isFetch: true`
+      under capability condition `<cap_id> == on`.
+    - Part 2: configurations.yaml has an entry with id == cap_id,
+      containing incidentType/incidentFetchInterval/incomingMapperId/
+      mappingId with correct field_type + dynamicField.
+    """
+
+    # ------------------------------------------------------------
+    # Skip / no-op cases
+    # ------------------------------------------------------------
+    def test_no_fetch_issues_capability_short_circuits(self):
+        """A connector whose handlers don't subscribe to fetch-issues
+        produces no results."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        # default handler subscribes to "test-capability", not fetch-issues
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert results == []
+
+    def test_non_xsoar_handler_is_skipped(self):
+        """A handler with module != 'xsoar' subscribing to fetch-issues
+        is NOT checked (CO130 targets XSOAR-owned handlers only)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            HandlerCapability,
+        )
+
+        connector = create_connector_object()
+        handler = connector.handlers[0]
+        handler.metadata.module = "third_party"
+        handler.capabilities = [
+            HandlerCapability(
+                id="fetch-issues", auth_options=[], workloads=[], actions=[]
+            )
+        ]
+        handler.serializer = None  # would fail Part 1 if it were XSOAR
+        # No configurations.yaml either - would fail Part 2 if XSOAR
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Fully-valid happy path
+    # ------------------------------------------------------------
+    def test_valid_fetch_issues_wiring_passes(self):
+        """XSOAR handler subscribes to fetch-issues, serializer emits
+        isFetch, configurations.yaml has the required 4 fields."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        _write_configurations_with_fetch_issues(connector)
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert results == []
+
+    def test_valid_grouped_namespaced_capability_id_passes(self):
+        """Grouped connectors namespace capability ids (e.g.
+        `fetch-issues_qualys_fim`). CO130 must match by prefix."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(
+            connector, capability_id="fetch-issues_myprofile"
+        )
+        _write_configurations_with_fetch_issues(
+            connector, capability_id="fetch-issues_myprofile"
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert results == []
+
+    # ------------------------------------------------------------
+    # Part 1 - serializer computed_fields failures
+    # ------------------------------------------------------------
+    def test_missing_serializer_fails(self):
+        """Handler has no serializer at all - Part 1 fails."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        # Force serializer to None (helper defaulted it to valid).
+        connector.handlers[0].serializer = None
+        _write_configurations_with_fetch_issues(connector)
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        msg = results[0].message
+        assert "isFetch" in msg and "computed_fields" in msg
+
+    def test_serializer_computed_fields_flag_missing_fails(self):
+        """Serializer exists but has no isFetch computed rule."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            SerializerData,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(
+            connector,
+            serializer=SerializerData(field_mappings=[], computed_fields=[]),
+        )
+        _write_configurations_with_fetch_issues(connector)
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "does not emit" in results[0].message
+
+    def test_serializer_computed_flag_wrong_capability_id_fails(self):
+        """Rule emits isFetch but under the WRONG capability id."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        # Wire handler at cap-id "fetch-issues" but serializer references
+        # something else.
+        wrong_ser = _make_valid_serializer(capability_id="log-collection")
+        _wire_handler_for_fetch_issues(connector, serializer=wrong_ser)
+        _write_configurations_with_fetch_issues(connector)
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "does not emit" in results[0].message
+        assert "'fetch-issues == on'" in results[0].message
+
+    def test_serializer_computed_flag_value_false_fails(self):
+        """Rule structure exists but value is False (must be True)."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+        from demisto_sdk.commands.content_graph.objects.connector import (
+            ComputedCondition,
+            ComputedConditionGroup,
+            ComputedFieldRule,
+            ComputedOutput,
+            SerializerData,
+        )
+
+        connector = create_connector_object()
+        bad_ser = SerializerData(
+            field_mappings=[],
+            computed_fields=[
+                ComputedFieldRule(
+                    output=[ComputedOutput(id="isFetch", value=False)],
+                    any_of=[
+                        ComputedConditionGroup(
+                            conditions=[
+                                ComputedCondition(
+                                    type="capability",
+                                    options={
+                                        "capability_id": "fetch-issues",
+                                        "value": "on",
+                                    },
+                                )
+                            ]
+                        )
+                    ],
+                )
+            ],
+        )
+        _wire_handler_for_fetch_issues(connector, serializer=bad_ser)
+        _write_configurations_with_fetch_issues(connector)
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "does not emit" in results[0].message
+
+    # ------------------------------------------------------------
+    # Part 2 - configurations entry / field failures
+    # ------------------------------------------------------------
+    def test_configurations_file_missing_fails(self):
+        """XSOAR handler subscribes to fetch-issues but there's no
+        configurations.yaml at all."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        # Do NOT write configurations.yaml
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "no `configurations[]` entry with id 'fetch-issues'" in results[0].message
+
+    def test_capability_configurations_entry_missing_fails(self):
+        """configurations.yaml exists but has no entry for fetch-issues."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        _write_connector_yaml_file(
+            connector,
+            "configurations.yaml",
+            {
+                "metadata": {
+                    "title": "Configuration",
+                    "description": "Adjust and refine your configuration settings",
+                },
+                "view_groups": [],
+                "configurations": [
+                    {"id": "other-capability", "configurations": []}
+                ],
+            },
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "no `configurations[]` entry with id 'fetch-issues'" in results[0].message
+
+    def test_missing_incidentType_field_fails(self):
+        """Required field `incidentType` absent."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        _write_configurations_with_fetch_issues(
+            connector, include_incidentType=False
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "missing required field 'incidentType'" in results[0].message
+
+    def test_missing_incidentFetchInterval_field_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        _write_configurations_with_fetch_issues(
+            connector, include_incidentFetchInterval=False
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "missing required field 'incidentFetchInterval'" in results[0].message
+
+    def test_missing_incomingMapperId_field_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        _write_configurations_with_fetch_issues(
+            connector, include_incomingMapperId=False
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "missing required field 'incomingMapperId'" in results[0].message
+
+    def test_missing_mappingId_field_fails(self):
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        _write_configurations_with_fetch_issues(
+            connector, include_mappingId=False
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "missing required field 'mappingId'" in results[0].message
+
+    def test_incidentFetchInterval_wrong_field_type_fails(self):
+        """incidentFetchInterval must be a `duration` field, not `input`."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        _write_configurations_with_fetch_issues(
+            connector, incidentFetchInterval_type="input"
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'incidentFetchInterval'" in msg
+        assert "field_type='input'" in msg
+        assert "must be 'duration'" in msg
+
+    def test_incidentType_wrong_field_type_fails(self):
+        """incidentType must be a select."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        _write_configurations_with_fetch_issues(
+            connector, incidentType_type="input"
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'incidentType'" in msg
+        assert "must be 'select'" in msg
+
+    def test_incidentType_wrong_dynamic_field_fails(self):
+        """incidentType.dynamicField must be 'incident-type'."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        _write_configurations_with_fetch_issues(
+            connector, incidentType_dyn="issue-type"
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        msg = results[0].message
+        assert "'incidentType'" in msg
+        assert "dynamicField='issue-type'" in msg
+        assert "must be 'incident-type'" in msg
+
+    def test_mappingId_wrong_dynamic_field_fails(self):
+        """mappingId.dynamicField must be 'classifier'."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        _write_configurations_with_fetch_issues(
+            connector, mappingId_dyn="mapping"
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "dynamicField='mapping'" in results[0].message
+        assert "must be 'classifier'" in results[0].message
+
+    def test_incomingMapperId_wrong_dynamic_field_fails(self):
+        """incomingMapperId.dynamicField must be 'mapper-incoming'."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        _write_configurations_with_fetch_issues(
+            connector, incomingMapperId_dyn="incoming-mapper"
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert "dynamicField='incoming-mapper'" in results[0].message
+        assert "must be 'mapper-incoming'" in results[0].message
+
+    # ------------------------------------------------------------
+    # Aggregation
+    # ------------------------------------------------------------
+    def test_multiple_problems_aggregate_into_single_result(self):
+        """Missing serializer AND missing field -> one aggregated result."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        connector.handlers[0].serializer = None
+        _write_configurations_with_fetch_issues(
+            connector, include_mappingId=False
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        msg = results[0].message
+        assert "does not emit" in msg
+        assert "missing required field 'mappingId'" in msg
+
+    def test_error_path_points_to_configurations_yaml(self):
+        """Result.path should point at configurations.yaml."""
+        from demisto_sdk.commands.validate.validators.CO_validators.CO130_is_valid_fetch import (
+            IsValidFetchValidator,
+        )
+
+        connector = create_connector_object()
+        _wire_handler_for_fetch_issues(connector)
+        _write_configurations_with_fetch_issues(
+            connector, include_incidentType=False
+        )
+        results = IsValidFetchValidator().obtain_invalid_content_items([connector])
+        assert len(results) == 1
+        assert str(results[0].path).endswith("configurations.yaml")
